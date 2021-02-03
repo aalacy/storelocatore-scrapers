@@ -96,7 +96,7 @@ def fetch_data():
         if hours == "":
             hours = "<MISSING>"
         if phone == "":
-            phone = "1-855-277-4735"
+            phone = "<MISSING>"
         yield [
             website,
             loc,

@@ -68,8 +68,8 @@ def get_data(coord):
         tr = tree.xpath("//tr")
 
         for t in tr:
-            day = "".join(t.xpath("./td/text()"))
-            time = "".join(t.xpath(".//time/text()"))
+            day = "".join(t.xpath("./td[1]//text()"))
+            time = "".join(t.xpath("./td[2]//text()"))
             _tmp.append(f"{day}: {time}")
 
         hours_of_operation = ";".join(_tmp) or "<MISSING>"

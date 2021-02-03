@@ -2,10 +2,11 @@ import csv
 import sgrequests
 import bs4
 import itertools
+import re
 
 
 def write_output(data):
-    with open("data.csv", mode="w") as output_file:
+    with open("data.csv", mode="w", encoding="utf-8") as output_file:
         writer = csv.writer(
             output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
         )
@@ -91,13 +92,76 @@ def fetch_data():
                     .text.title()
                     .strip()
                 )
+                lat = ""
+                lng = ""
                 a = urlsoup.findAll("td")
                 es = []
                 for ass in a:
                     p = ass.findAll("p")
                     for ps in p:
                         if ps.text == "Fragrance Outlet":
-                            pass
+                            ps_a = ps.find("a")
+                            if not ps_a.has_attr("href"):
+                                lat = missingString
+                                lng = missingString
+                            else:
+                                if "https://www.google.com/maps?ll=" in ps_a["href"]:
+                                    latlng = (
+                                        re.search(r"ll=(.*?)&", str(ps_a["href"]))
+                                        .group(0)
+                                        .split(",")
+                                    )
+                                    if len(latlng) == 2:
+                                        lat = latlng[0].replace("@", "")
+                                        lng = latlng[1]
+                                    else:
+                                        lat = missingString
+                                        lng = missingString
+                                elif (
+                                    "https://www.google.com/maps/dir//" in ps_a["href"]
+                                ):
+                                    latlng = (
+                                        ps_a["href"]
+                                        .replace(
+                                            "https://www.google.com/maps/dir//", ""
+                                        )
+                                        .replace("https://www.google.com/maps/dir/", "")
+                                        .split("/")[0]
+                                        .split(",")
+                                    )
+                                    if len(latlng) == 2:
+                                        lat = latlng[0]
+                                        lng = latlng[1]
+                                    else:
+                                        lat = missingString
+                                        lng = missingString
+                                elif (
+                                    "https://www.google.com/maps/place" in ps_a["href"]
+                                ):
+                                    latlng = re.search(
+                                        r"@(.*?)/", str(ps_a["href"])
+                                    ).group(0)
+                                    if len(latlng) == 2:
+                                        lat = latlng[0].replace("@", "")
+                                        lng = latlng[1]
+                                    else:
+                                        lat = missingString
+                                        lng = missingString
+                                elif "https://www.google.com/maps/" in ps_a["href"]:
+                                    latlng = (
+                                        ps_a["href"]
+                                        .replace("https://www.google.com/maps/@", "")
+                                        .split(",")
+                                    )
+                                    if len(latlng) == 2:
+                                        lat = latlng[0]
+                                        lng = latlng[1]
+                                    else:
+                                        lat = missingString
+                                        lng = missingString
+                                elif "goo.gl" in ps_a["href"]:
+                                    lat = missingString
+                                    lng = missingString
                         elif "Email:" in ps.text:
                             pass
                         else:
@@ -137,7 +201,6 @@ def fetch_data():
                                         )
                                         for ele in e
                                     ]
-                                    print(es)
                                 else:
                                     e[0] = "{} {}".format(e[0], e[1])
                                     e[2] = "{}{}".format(e[2], e[3])
@@ -176,6 +239,14 @@ def fetch_data():
 
                 hours_of_operation = " ".join(itertools.chain.from_iterable(time))
 
+                cc = urlsoup.find("script", {"id": "apple-pay-shop-capabilities"})
+
+                countryCode = (
+                    re.search(r'"countryCode":(.*?),', str(cc))
+                    .group(1)
+                    .replace('"', "")
+                )
+
                 result.append(
                     [
                         locator_domain,
@@ -185,12 +256,12 @@ def fetch_data():
                         JSON["city"],
                         JSON["state"],
                         JSON["zip"],
-                        missingString,
+                        countryCode,
                         missingString,
                         JSON["phone"],
                         missingString,
-                        missingString,
-                        missingString,
+                        lat,
+                        lng,
                         hours_of_operation,
                     ]
                 )

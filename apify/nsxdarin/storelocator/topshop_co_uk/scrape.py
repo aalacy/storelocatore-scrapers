@@ -82,10 +82,25 @@ def fetch_data():
         lat = ""
         lng = ""
         hours = ""
+        Closed = False
         r2 = session.get(lurl, headers=headers)
         for line2 in r2.iter_lines():
             line2 = str(line2.decode("utf-8"))
+            if "temporarily closed" in line2:
+                Closed = True
             if "<title>" in line2:
+                if '"geo.region" content="United Kingdom-' in line2:
+                    state = (
+                        line2.split('"geo.region" content="United Kingdom-')[1]
+                        .split('"')[0]
+                        .replace("-", " ")
+                    )
+                if 'name="geo.region" content="Ireland-' in line2:
+                    state = (
+                        line2.split('name="geo.region" content="Ireland-')[1]
+                        .split('"')[0]
+                        .replace("-", " ")
+                    )
                 name = line2.split("<title>")[1].split(" |")[0]
                 add = line2.split('"streetAddress" content="')[1].split('"')[0]
                 city = line2.split('class="c-address-city">')[1].split("<")[0]
@@ -96,39 +111,18 @@ def fetch_data():
                 phone = line2.split('id="phone-main">')[1].split("<")[0]
                 lat = line2.split('itemprop="latitude" content="')[1].split('"')[0]
                 lng = line2.split('itemprop="longitude" content="')[1].split('"')[0]
-                days = line2.split('details-row-day">')
+                days = line2.split('itemprop="openingHours" content="')
                 for day in days:
-                    if 'c-hours-details-row-intervals">' in day:
-                        if (
-                            '<span class="c-hours-details-row-intervals-instance-open">'
-                            in day
-                        ):
-                            hrs = (
-                                day.split("<")[0]
-                                + ": "
-                                + day.split(
-                                    '<span class="c-hours-details-row-intervals-instance-open">'
-                                )[1].split("<")[0]
-                            )
-                            hrs = (
-                                hrs
-                                + "-"
-                                + day.split(
-                                    '<span class="c-hours-details-row-intervals-instance-close">'
-                                )[1].split("<")[0]
-                            )
-                        else:
-                            hrs = (
-                                day.split("<")[0]
-                                + ": "
-                                + day.split('c-hours-details-row-intervals">')[1].split(
-                                    "<"
-                                )[0]
-                            )
+                    if '<td class="c-hours-details' in day:
+                        hrs = day.split('"')[0]
                         if hours == "":
                             hours = hrs
                         else:
                             hours = hours + "; " + hrs
+        if state == "":
+            state = "<MISSING>"
+        if Closed:
+            hours = "Closed"
         yield [
             website,
             lurl,

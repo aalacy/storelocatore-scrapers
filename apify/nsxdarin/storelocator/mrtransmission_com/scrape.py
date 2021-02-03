@@ -82,6 +82,12 @@ def fetch_data():
                     )
                     hours = hours.replace("\\n", "").replace("<br/>", "; ")
                     if country == "US" or country == "CA":
+                        if loc == "":
+                            loc = "<MISSING>"
+                        if hours == "":
+                            hours = "<MISSING>"
+                        if phone == "":
+                            phone = "<MISSING>"
                         if add != "":
                             yield [
                                 website,

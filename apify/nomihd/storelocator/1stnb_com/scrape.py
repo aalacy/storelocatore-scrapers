@@ -6,7 +6,6 @@ import lxml.html
 import us
 from bs4 import BeautifulSoup as BS
 import json
-import os
 
 website = "1stnb.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -64,10 +63,6 @@ def write_output(data):
 def fetch_data():
     # Your scraper here
     loc_list = []
-
-    os.environ[
-        "PROXY_URL"
-    ] = "http://groups-BUYPROXIES94952:HKT2ZAHSvokX3hLibngLgo5nT@proxy.apify.com:8000/"
     session = SgRequests()
     stores_req = session.get("https://www.1stnb.com/locator")
     status = "Please solve this CAPTCHA to request unblock to the website"

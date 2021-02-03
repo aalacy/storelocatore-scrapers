@@ -74,7 +74,8 @@ def fetch_data():
             stores_list.append("".join(store.xpath("@href")).strip())
 
     for addr in addresses:
-        addresses_list.append("".join(addr.xpath(".//text()")).strip().split("\n"))
+        if len("".join(addr.xpath(".//text()")).strip()) > 0:
+            addresses_list.append("".join(addr.xpath(".//text()")).strip().split("\n"))
 
     coord_dict = {}
     temp_cord = (
@@ -103,23 +104,33 @@ def fetch_data():
         add_list = addresses_list[index]
 
         city_state_zip_index = -1
+        city_state_zip = ""
         for add in range(0, len(add_list)):
             if ", " in add_list[add] and "Suite" not in add_list[add]:
                 city_state_zip = add_list[add]
                 city_state_zip_index = add
                 break
+        if city_state_zip_index == -1:
+            street_address = ",".join(add_list[:-1]).replace(",,", ",").strip()
+            city_state_zip = add_list[-1]
+            city = city_state_zip.split(" ")[0].strip()
+            state = city_state_zip.split(" ")[1].strip()
+            zip = city_state_zip.split(" ")[2].strip()
 
-        street_address = ",".join(add_list[:city_state_zip_index])
-        city = city_state_zip.split(",")[0].strip()
-        state = (
-            city_state_zip.split(",", 1)[1]
-            .strip()
-            .split(" ")[0]
-            .strip()
-            .replace(",", "")
-            .strip()
-        )
-        zip = city_state_zip.split(",", 1)[1].strip().split(" ")[1].strip()
+        else:
+            street_address = (
+                ",".join(add_list[:city_state_zip_index]).replace(",,", ",").strip()
+            )
+            city = city_state_zip.split(",")[0].strip()
+            state = (
+                city_state_zip.split(",", 1)[1]
+                .strip()
+                .split(" ")[0]
+                .strip()
+                .replace(",", "")
+                .strip()
+            )
+            zip = city_state_zip.split(",", 1)[1].strip().split(" ")[1].strip()
 
         country_code = "<MISSING>"
         if us.states.lookup(state):
@@ -147,6 +158,28 @@ def fetch_data():
         except:
             pass
 
+        if len(phone) <= 0:
+            phone = (
+                "".join(
+                    store_sel.xpath('//div[@class="location-info"][1]//p[3]//text()')
+                )
+                .strip()
+                .replace("Phone:", "")
+                .strip()
+            )
+
+        if len(phone) <= 0:
+            phone = (
+                "".join(
+                    store_sel.xpath(
+                        '//div[@class="page_location_map"]/div[@class="info"][1]//p[3]//text()'
+                    )
+                )
+                .strip()
+                .replace("Phone:", "")
+                .strip()
+            )
+
         location_type = "<MISSING>"
 
         hours_of_operation = "<MISSING>"
@@ -171,6 +204,13 @@ def fetch_data():
             pass
 
         hours_of_operation = ";".join(hours_list).strip()
+        if len(hours_of_operation) <= 0:
+            try:
+                hours_of_operation = (
+                    store_req.text.split("Hours: ")[1].strip().split("<")[0].strip()
+                )
+            except:
+                pass
 
         latitude = ""
         longitude = ""

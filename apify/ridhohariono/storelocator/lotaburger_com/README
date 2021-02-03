@@ -1,0 +1,2 @@
+--ignore StreetAddressHasNumber (Confirmed scraped correctly)
+--ignore StoreNumberColumnValidator ("1300 San Mateo Blvd SE" The Store address does not have a Store Number on this website)

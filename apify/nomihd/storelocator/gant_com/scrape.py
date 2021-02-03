@@ -140,23 +140,24 @@ def fetch_data():
                     if phone == "" or phone is None:
                         phone = "<MISSING>"
 
-                    curr_list = [
-                        locator_domain,
-                        page_url,
-                        location_name,
-                        street_address,
-                        city,
-                        state,
-                        zip,
-                        country_code,
-                        store_number,
-                        phone,
-                        location_type,
-                        latitude,
-                        longitude,
-                        hours_of_operation,
-                    ]
-                    loc_list.append(curr_list)
+                    if country_code != "Ireland":
+                        curr_list = [
+                            locator_domain,
+                            page_url,
+                            location_name,
+                            street_address,
+                            city,
+                            state,
+                            zip,
+                            country_code,
+                            store_number,
+                            phone,
+                            location_type,
+                            latitude,
+                            longitude,
+                            hours_of_operation,
+                        ]
+                        loc_list.append(curr_list)
 
         # break
     return loc_list

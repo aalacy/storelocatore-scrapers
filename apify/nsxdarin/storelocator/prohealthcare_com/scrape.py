@@ -71,13 +71,10 @@ def fetch_data():
                         add = item.split('"line1":"')[1].split('"')[0]
                         name = item.split('"businessName":"')[1].split('"')[0]
                         try:
-                            phone = (
-                                item.split('"telephoneNumbers":[{"telephoneNumber":"')[
-                                    1
-                                ]
-                                .split('"')[0]
-                                .replace("+1 ", "")
-                            )
+                            phone = item.split('","telephoneUsage":"Office Phone"')[
+                                0
+                            ].rsplit('telephoneNumber":"', 1)[1]
+                            phone = phone.replace("+1 ", "")
                         except:
                             phone = "<MISSING>"
                         days = item.split('"dayOfWeek":"')
@@ -111,6 +108,8 @@ def fetch_data():
                         )
                         if addinfo not in infos:
                             infos.append(addinfo)
+                            if "100-33 4th Ave" in add:
+                                phone = "347-909-7044"
                             yield [
                                 website,
                                 loc,

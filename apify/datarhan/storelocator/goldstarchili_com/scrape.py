@@ -1,6 +1,5 @@
 import csv
 import json
-from lxml import etree
 
 from sgrequests import SgRequests
 
@@ -40,64 +39,72 @@ def fetch_data():
     session = SgRequests()
 
     items = []
+    scraped_items = []
 
     DOMAIN = "goldstarchili.com"
-    start_url = "https://www.goldstarchili.com/locations"
+    start_url = "https://api.momentfeed.com/v1/analytics/api/v2/llp/sitemap?auth_token=IGBJZEVPPPHLPFCX&country=US&multi_account=false"
 
     response = session.get(start_url)
-    dom = etree.HTML(response.text)
-    token = dom.xpath('//input[@name="__RequestVerificationToken"]/@value')[0]
-    post_url = "https://www.goldstarchili.com/api/stores?handler=GetLocationsByZip"
-    formdata = {
-        "query": "10001",
-        "__RequestVerificationToken": token,
-        "X-Requested-With": "XMLHttpRequest",
-    }
-    response = session.post(post_url, data=formdata)
     data = json.loads(response.text)
 
-    for poi in data:
-        store_url = poi["momentFeedLocationUrl"]
-        location_name = poi["name"]
-        location_name = location_name if location_name else "<MISSING>"
-        street_address = poi["address"]
-        location_type = "<MISSING>"
-        city = poi["locality"]
-        state = poi["region"]
-        zip_code = poi["postcode"]
-        country_code = poi["country"]
-        store_number = poi["storeNumber"]
-        phone = poi["phoneCleaned"]
-        phone = phone if phone else "<MISSING>"
-        latitude = poi["geo"]["latitude"]
-        latitude = latitude if latitude else "<MISSING>"
-        longitude = poi["geo"]["longitude"]
-        longitude = longitude if longitude else "<MISSING>"
-
+    for poi in data["locations"]:
+        address = poi["store_info"]["address"].replace(" ", "+")
+        locality = poi["store_info"]["locality"].replace(" ", "+")
+        region = poi["store_info"]["region"]
+        url = "https://api.momentfeed.com/v1/analytics/api/llp.json?address={}&locality={}&multi_account=false&pageSize=30&region={}"
+        url = url.format(address, locality, region)
         hdr = {"authorization": "IGBJZEVPPPHLPFCX"}
-        loc_url = "https://api.momentfeed.com/v1/analytics/api/llp.json?address={}&locality={}&multi_account=false&pageSize=30&region={}"
-        loc_response = session.get(
-            loc_url.format(
-                street_address.replace(" ", "+"), city.replace(" ", "+"), state
-            ),
-            headers=hdr,
-        )
+        loc_response = session.get(url, headers=hdr)
         data = json.loads(loc_response.text)
 
-        hours = data[0]["store_info"]["hours"].split(";")[:-1]
-        hours = [elem[2:].replace(",", " - ").replace("00", ":00") for elem in hours]
-        days = [
-            "Monday",
-            "Tuesday",
-            "Wednsday",
-            "Thursday",
-            "Friday",
-            "Satarday",
-            "Sunday",
+        store_url = "https://locations.goldstarchili.com" + data[0]["llp_url"]
+        location_name = [
+            elem["data"]
+            for elem in data[0]["custom_fields"]
+            if elem["name"] == "LLP_Name"
         ]
-        hours_of_operation = list(map(lambda day, hour: day + " " + hour, days, hours))
+        location_name = (
+            location_name[0] if location_name else data[0]["store_info"]["name"]
+        )
+        location_name = location_name if location_name else "<MISSING>"
+        street_address = data[0]["store_info"]["address"]
+        location_type = "<MISSING>"
+        city = data[0]["store_info"]["locality"]
+        state = data[0]["store_info"]["region"]
+        zip_code = data[0]["store_info"]["postcode"]
+        country_code = data[0]["store_info"]["country"]
+        store_number = data[0]["store_info"]["corporate_id"]
+        phone = data[0]["store_info"]["phone"]
+        phone = phone if phone else "<MISSING>"
+        latitude = data[0]["store_info"]["latitude"]
+        latitude = latitude if latitude else "<MISSING>"
+        longitude = data[0]["store_info"]["longitude"]
+        longitude = longitude if longitude else "<MISSING>"
+        hours_of_operation = ""
+        if type(data) == list:
+            hours = data[0]["store_info"]["hours"].split(";")[:-1]
+            hours = [elem[2:].replace(",", " - ") for elem in hours]
+
+            days = [
+                "Monday",
+                "Tuesday",
+                "Wednsday",
+                "Thursday",
+                "Friday",
+                "Satarday",
+                "Sunday",
+            ]
+            hours_of_operation = list(
+                map(lambda day, hour: day + " " + hour, days, hours)
+            )
         hours_of_operation = (
-            " ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
+            " ".join(hours_of_operation)
+            .replace("00 -", ":00 -")
+            .replace("00", ":00")
+            .replace("::", ":")
+            .replace("30", ":30")
+            if hours_of_operation
+            else "<MISSING>"
         )
 
         item = [
@@ -116,8 +123,9 @@ def fetch_data():
             longitude,
             hours_of_operation,
         ]
-
-        items.append(item)
+        if store_number not in scraped_items:
+            scraped_items.append(store_number)
+            items.append(item)
 
     return items
 

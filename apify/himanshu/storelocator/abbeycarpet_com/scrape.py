@@ -1,7 +1,6 @@
 import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
-import re
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 from sglogging import SgLogSetup
 
@@ -43,14 +42,13 @@ def fetch_data():
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36",
     }
-    base_url = "https://www.abbeycarpet.com/"
+    base_url = "https://www.abbeycarpet.com"
     search = DynamicZipSearch(
         country_codes=[SearchableCountries.USA],
-        max_search_results=10,
-        max_radius_miles=25,
+        max_search_results=200,
+        max_radius_miles=100,
     )
     for zip_code in search:
-
         location_url = (
             "https://www.abbeycarpet.com/StoreLocator.aspx?searchZipCode="
             + str(zip_code)
@@ -61,155 +59,127 @@ def fetch_data():
         except:
             continue
 
-        data = soup.find_all(
-            "div", {"class": "search-store__results-address col-xs-12 col-sm-4"}
-        )
-        condition = soup.find_all(
-            "div", {"class": "search-store__results-links col-xs-12 col-sm-4"}
-        )
-        hours_of_operation1 = []
-        latitude1 = []
-        longitude1 = []
-        for view in condition:
-            t = list(view.stripped_strings)
-            if len(t) == 3:
-                href = "https://abbeycarpet.com" + view.find_all("a")[-1]["href"]
-                try:
-                    r1 = session.get(href, headers=headers)
-                except:
-                    pass
-                soup1 = BeautifulSoup(r1.text, "lxml")
-                try:
-                    try:
-                        hours = soup1.find(
-                            text=re.compile(r"\bMon\b")
-                        ).parent.parent.parent
-                    except:
-                        hours = soup1.find(
-                            text=re.compile(r"\bby appointment only\b")
-                        ).parent.parent.parent
-                except:
-                    try:
-                        hours = soup1.find(
-                            text=re.compile(r"\bMonday\b")
-                        ).parent.parent.parent
-                    except:
-                        hours = "<MISSING>"
+        links = soup.find_all("a", {"class": "search-store__results-links-site"})
+        for link in links:
+            page_url = base_url + link.get("href")
+            home = session.get(page_url)
+            page_soup = BeautifulSoup(home.text, "lxml")
+            store_number = "<MISSING>"
+            phone = "<MISSING>"
+            hours_of_operation = "<MISSING>"
+            location_type = "<MISSING>"
 
-                if soup1.find("div", {"class": "mapWrapper"}) is not None:
-                    iframe = soup1.find("div", {"class": "mapWrapper"}).find("iframe")
-                    src = iframe["src"]
-                    if hours is not None and hours != []:
-                        try:
-                            t = list(hours.stripped_strings)
-                            hours_of_operation = (
-                                "".join(t).split("Showroom")[-1].replace("Hours", "")
-                            )
-                        except:
-                            pass
+            try:
+                address = page_soup.find("a", {"class": "footer-address"})[
+                    "href"
+                ].split("/")[-1]
+                if len(address.split(",")) == 4:
+                    name = address.split(",")[0]
+                else:
+                    name = " ".join(address.split(",")[:-3])
+                street = address.split(",")[-3]
+                city = address.split(",")[-2]
+                state = address.split(",")[-1].split()[:-1]
+                if len(address.split(",")[-1].split()) > 2:
+                    state = " ".join(state)
+                else:
+                    state = address.split(",")[-1].split()[0]
+                zip_code = address.split(",")[-1].split()[-1]
+                phone = page_soup.find("a", {"class": "footer-phone"}).text
+                location_type = "<MISSING>"
+                hrs = page_soup.find("p", {"class": "hours"}).text.split("\n")
+                hours_of_operation = " ".join(hrs)
+            except:
+                try:
+                    divs = page_soup.find_all(
+                        "div", {"class": "col-xs-12 col-sm-12 col-md-3 col-lg-3 "}
+                    )
+                    for div in divs:
+                        lst = div.text.split("\n")
+                        del lst[0]
+                        del lst[-1]
+                        if len(lst) > 4:
+                            del lst[1]
+                            name = lst[0]
+                            street = lst[1]
+                            city = lst[2].split(",")[0]
+                            state = lst[2].split(",")[1].split()[0]
+                            zip_code = lst[2].split(",")[1].split()[-1]
+                            for i in lst:
+                                if "T:" in i:
+                                    phone = i[3:]
 
-                    else:
-                        latitude = ""
-                        longitude = ""
-                        hours_of_operation = "<MISSING>"
-                    if src is not None and src != []:
-                        if "!3d" in src:
-                            longitude = src.split("!2d")[1].split("!3d")[0]
-                            latitude = src.split("!2d")[1].split("!3d")[1].split("!")[0]
-                        elif "place?zoom" in src:
-                            latitude = src.split("=")[2].split(",")[0]
-                            longitude = src.split("=")[2].split(",")[1].split("&")[0]
-                        elif "!3f" in src:
-                            longitude = src.split("!2d")[1].split("!3f")[0]
-                            latitude = (
-                                src.split("!2d")[1].split("!3f")[1].split("!4f")[0]
-                            )
                         else:
-                            latitude = ""
-                            longitude = ""
+                            hours_of_operation = " ".join(lst[1:])
+
+                except:
+                    continue
+
+            if page_soup.find("div", {"class": "mapWrapper"}) is not None:
+                iframe = page_soup.find("div", {"class": "mapWrapper"}).find("iframe")
+                src = iframe["src"]
+                if src is not None and src != []:
+                    if "!3d" in src:
+                        longitude = src.split("!2d")[1].split("!3d")[0]
+                        latitude = src.split("!2d")[1].split("!3d")[1].split("!")[0]
+                    elif "place?zoom" in src:
+                        latitude = src.split("=")[2].split(",")[0]
+                        longitude = src.split("=")[2].split(",")[1].split("&")[0]
+                    elif "!3f" in src:
+                        longitude = src.split("!2d")[1].split("!3f")[0]
+                        latitude = src.split("!2d")[1].split("!3f")[1].split("!4f")[0]
                     else:
                         latitude = ""
                         longitude = ""
                 else:
-                    try:
-                        src = soup1.find_all("iframe")[-1]
-                        if "!3d" in src["src"]:
-                            longitude = src["src"].split("!2d")[1].split("!3d")[0]
-                            latitude = (
-                                src["src"].split("!2d")[1].split("!3d")[1].split("!")[0]
-                            )
-                        elif "place?zoom" in src:
-                            latitude = src["src"].split("=")[2].split(",")[0]
-                            longitude = (
-                                src["src"].split("=")[2].split(",")[1].split("&")[0]
-                            )
-                        elif "!3f" in src["src"]:
-                            longitude = src["src"].split("!2d")[1].split("!3f")[0]
-                            latitude = (
-                                src["src"]
-                                .split("!2d")[1]
-                                .split("!3f")[1]
-                                .split("!4f")[0]
-                            )
-                        else:
-                            latitude = ""
-                            longitude = ""
-                    except:
+                    latitude = ""
+                    longitude = ""
+            else:
+                try:
+                    src = page_soup.find_all("iframe")[-1]
+                    if "!3d" in src["src"]:
+                        longitude = src["src"].split("!2d")[1].split("!3d")[0]
+                        latitude = (
+                            src["src"].split("!2d")[1].split("!3d")[1].split("!")[0]
+                        )
+                    elif "place?zoom" in src:
+                        latitude = src["src"].split("=")[2].split(",")[0]
+                        longitude = src["src"].split("=")[2].split(",")[1].split("&")[0]
+                    elif "!3f" in src["src"]:
+                        longitude = src["src"].split("!2d")[1].split("!3f")[0]
+                        latitude = (
+                            src["src"].split("!2d")[1].split("!3f")[1].split("!4f")[0]
+                        )
+                    else:
                         latitude = ""
                         longitude = ""
+                except:
+                    latitude = ""
+                    longitude = ""
 
-            else:
-                hours_of_operation = "<MISSING>"
-                latitude = ""
-                longitude = ""
-            latitude1.append(latitude)
-            longitude1.append(longitude)
-            hours_of_operation1.append(hours_of_operation)
-
-        for index, link in enumerate(data):
+            if name == "font>":
+                name = "Southern Carpet & Interiors"
             store = []
-            t = list(link.stripped_strings)
-            if len(t) == 4:
-                location_name = t[0]
-                street_address = t[1]
-                city = t[2].split(",")[0]
-                zipp = t[2].split(",")[-1].split(" ")[-1]
-                m = t[-2].split(",")[1].strip().split(" ")
-                m.pop(-1)
-                state = " ".join(m)
-                phone = t[3].split("&")[0]
-            else:
-                location_name = t[1]
-                street_address = t[2]
-                city = t[3].split(",")[0]
-                zipp = t[3].split(",")[-1].split(" ")[-1]
-                m = t[-2].split(",")[1].strip().split(" ")
-                m.pop(-1)
-                state = " ".join(m)
-                phone = t[4].split("&")[0]
-
             store.append(base_url)
-            store.append(location_name)
-            store.append(street_address)
+            store.append(name)
+            store.append(street)
             store.append(city)
-            store.append(state.replace("N. Carolina", "NC"))
-            store.append(zipp)
-            if zipp.isdigit():
+            store.append(state)
+            store.append(zip_code)
+            if zip_code.isdigit():
                 store.append("US")
             else:
                 store.append("CA")
-            store.append("<MISSING>")
-            store.append(phone.replace("800-709-3550", ""))
-            store.append("<MISSING>")
-            store.append(str(latitude1[index]) if latitude else "<MISSING>")
-            store.append(str(longitude1[index]) if longitude else "<MISSING>")
-            store.append(hours_of_operation1[index])
-            store.append("<INACCESSIBLE>")
+            store.append(store_number)
+            store.append(phone)
+            store.append(location_type)
+            store.append(str(latitude) if latitude else "<MISSING>")
+            store.append(str(longitude) if longitude else "<MISSING>")
+            store.append(hours_of_operation)
+            store.append(page_url)
             if store[2] in adress:
                 continue
             adress.append(store[2])
-
-            store = [x.strip() if x else "<MISSING>" for x in store]
             yield store
 
 

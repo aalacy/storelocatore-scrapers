@@ -49,12 +49,21 @@ def get_phone(data):
 
 
 def get_hours(data):
+    days = [
+        "monday",
+        "tuesday",
+        "wednesday",
+        "thursday",
+        "friday",
+        "saturday",
+        "sunday",
+    ]
     hours = data.get("hours")
     if not hours or not len(hours):
         return MISSING
 
     hours_of_operation = []
-    for day in hours:
+    for day in days:
         closed = hours[day].get("isClosed")
         if closed:
             hours_of_operation.append(f"{day}: Closed")
@@ -144,7 +153,7 @@ def query_locations(page=0, dedup_tracker=[]):
         "locale": "en",
     }
 
-    data = session.request(url, params=params, headers=headers).json()
+    data = session.get(url, params=params, headers=headers).json()
     results = data.get("response").get("results")
 
     for location in results:

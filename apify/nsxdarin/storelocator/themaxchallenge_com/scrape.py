@@ -38,7 +38,7 @@ def write_output(data):
 
 
 def fetch_data():
-    locs = []
+    locs = ["https://www.themaxchallenge.com/locations/new-albany-oh/"]
     url = "https://www.themaxchallenge.com/max-challenge-locations/"
     r = session.get(url, headers=headers)
     website = "themaxchallenge.com"
@@ -80,11 +80,10 @@ def fetch_data():
                 state = line2.split('"addressRegion":"')[1].split('"')[0]
                 add = line2.split('"streetAddress":"')[1].split('"')[0]
                 city = line2.split('"addressLocality":"')[1].split('"')[0]
-                phone = line2.split('"telephone":"')[1].split('"')[0]
                 lat = line2.split('"latitude":"')[1].split('"')[0]
                 lng = line2.split('"longitude":"')[1].split('"')[0]
                 zc = line2.split('"postalCode":"')[1].split('"')[0]
-            if '<a href="tel:' in line2:
+            if '<a href="tel:' in line2 and phone == "":
                 phone = line2.split('<a href="tel:')[1].split('"')[0]
             if "saddr=&daddr=" in line2 and add == "":
                 if "477 NJ-10" in line2:
@@ -109,6 +108,11 @@ def fetch_data():
                     zc = "77096"
                 else:
                     addinfo = line2.split("saddr=&daddr=")[1].split('"')[0]
+                    addinfo = (
+                        addinfo.replace("Route 31", "Route 31,")
+                        .replace("NJ", ",NJ")
+                        .replace(",,", ",")
+                    )
                     add = addinfo.split(",")[0]
                     city = addinfo.split(",")[1].strip()
                     state = addinfo.split(",")[2].strip().split(" ")[0]
@@ -121,12 +125,13 @@ def fetch_data():
                     .strip()
                     .split(")")[0]
                 )
+        if "new-albany-oh" in loc:
+            add = "<MISSING>"
+            city = "New Albany"
+            state = "OH"
+            zc = "<MISSING>"
         if add != "" and state != "USA" and CS is False:
-            if "new-albany-oh" in loc:
-                add = "<MISSING>"
-                city = "New Albany"
-                state = "OH"
-                zc = "<MISSING>"
+            state = name.rsplit(",", 1)[1].strip()
             if phone == "":
                 phone = "<MISSING>"
             if zc == "":
@@ -138,6 +143,28 @@ def fetch_data():
                 city = "Staten Island"
                 state = "NY"
                 zc = "10309"
+            if "seminole-fl" in loc:
+                zc = "33772"
+            if "flemington-nj" in loc:
+                add = "148 NJ-31 #3"
+                city = "Flemington"
+                state = "NJ"
+                zc = "08822"
+            if "hazlet-nj" in loc:
+                add = "3043 NJ-35"
+                city = "Hazlet"
+                state = "NJ"
+                zc = "07730"
+            if "ocean-nj" in loc:
+                add = "1710 NJ-35"
+                city = "Ocean"
+                state = "NJ"
+                zc = "07755"
+            if "lawrencevillepennington-nj" in loc:
+                add = "25 NJ-31 #9"
+                city = "Pennington"
+                state = "NJ"
+                zc = "08534"
             yield [
                 website,
                 loc,
