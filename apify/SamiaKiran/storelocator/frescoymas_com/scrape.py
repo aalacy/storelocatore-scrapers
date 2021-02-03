@@ -56,16 +56,23 @@ def fetch_data():
         lat = loc["Address"]["Latitude"]
         longt = loc["Address"]["Longitude"]
         phone = loc["Phone"]
-        street = loc["Address"]["AddressLine1"] + " " + loc["Address"]["AddressLine2"]
+        street = loc["Address"]["AddressLine2"]
         city = loc["Address"]["City"]
         state = loc["Address"]["State"]
         pcode = loc["Address"]["Zipcode"]
         ccode = loc["Address"]["Country"]
         hours = loc["WorkingHours"]
+        link = (
+            "https://www.frescoymas.com/storedetails?search="
+            + str(store)
+            + "&zipcode="
+            + str(pcode)
+            + "&referby=_sd"
+        )
         data.append(
             [
                 "https://www.frescoymas.com/",
-                "https://www.frescoymas.com/locator",
+                link,
                 title,
                 street,
                 city,

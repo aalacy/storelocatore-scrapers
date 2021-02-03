@@ -75,6 +75,8 @@ def extract(location, store_number, country):
         closes = elem["timeClose"]
         hours_of_operation.append(f"{day} {opens} - {closes}")
     hours_of_operation = " ".join(hours_of_operation)
+    if hours_of_operation == "0 None - None":
+        hours_of_operation = "<MISSING>"
 
     data = {
         "locator_domain": locator_domain,

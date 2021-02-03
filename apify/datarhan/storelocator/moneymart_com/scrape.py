@@ -72,7 +72,8 @@ def fetch_data():
         street_address = street_address if street_address else "<MISSING>"
         city = store_data.city
         city = city.text if city else "<MISSING>"
-        state = store_data.province
+        print(store_data)
+        state = store_data.state
         state = state.text if state else "<MISSING>"
         zip_code = store_data.postalcode.text
         if zip_code:
