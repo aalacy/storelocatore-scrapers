@@ -3,4 +3,4 @@ re
 sgzip
 bs4
 pandas
-sqrequests
+sgrequests
