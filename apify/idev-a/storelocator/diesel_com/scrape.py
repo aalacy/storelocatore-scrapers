@@ -44,7 +44,6 @@ def write_output(data):
 def parse_detail(data, base_url, locator_domain, country):
     rr = session.get(base_url)
     soup = bs(rr.text, "lxml")
-    # import pdb; pdb.set_trace()
     map_canvas = soup.select_one("div.map-canvas")["data-locations"]
     locations = json.loads(map_canvas)
     for location in locations:
