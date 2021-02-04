@@ -1,6 +1,7 @@
 import csv
 import json
 from lxml import etree
+from time import sleep
 from urllib.parse import urljoin
 
 from sgrequests import SgRequests
@@ -89,6 +90,7 @@ def fetch_data():
 
         with SgFirefox() as driver:
             driver.get(store_url)
+            sleep(5)
             loc_dom = etree.HTML(driver.page_source)
         hoo = loc_dom.xpath('//dd[@id="branch-detail-business-hours"]//text()')
         hoo = [elem.strip() for elem in hoo if elem.strip()]
