@@ -59,7 +59,6 @@ def fetch_data():
         except:
             continue
         for js in jso:
-
             if js["country"] != "CA":
                 continue
             try:
@@ -70,6 +69,40 @@ def fetch_data():
                 sid = js["uid"]
             except:
                 sid = "<MISSING>"
+            try:
+                hours = (
+                    "Monday "
+                    + js["monopen"]
+                    + "-"
+                    + js["monclose"]
+                    + " Tuesday "
+                    + js["tueopen"]
+                    + "-"
+                    + js["tueclose"]
+                    + " Wednesday "
+                    + js["wedopen"]
+                    + "-"
+                    + js["wedclose"]
+                    + " Thursday "
+                    + js["thropen"]
+                    + "-"
+                    + js["thrclose"]
+                    + " Friday "
+                    + js["friopen"]
+                    + "-"
+                    + js["friclose"]
+                    + " Saturday "
+                    + js["satopen"]
+                    + "-"
+                    + js["satclose"]
+                    + " Sunday "
+                    + js["sunopen"]
+                    + "-"
+                    + js["sunclose"]
+                    + " "
+                )
+            except:
+                hours = "<MISSING>"
             lat = js["latitude"]
             long = js["longitude"]
             street = js["address1"]
@@ -83,43 +116,6 @@ def fetch_data():
                 continue
             key_set.add(key)
 
-            try:
-                tim = js["storehours"]
-            except:
-                tim = None
-            if tim == "null" or tim == "" or tim is None:
-                tim = "<MISSING>"
-            else:
-                tim = (
-                    "Mon: "
-                    + js["monopen"]
-                    + " - "
-                    + js["monclose"]
-                    + " Tue: "
-                    + js["tueopen"]
-                    + " - "
-                    + js["tueclose"]
-                    + " Wed: "
-                    + js["wedopen"]
-                    + " - "
-                    + js["wedclose"]
-                    + " Thu: "
-                    + js["thropen"]
-                    + " - "
-                    + js["thrclose"]
-                    + " Fri: "
-                    + js["friopen"]
-                    + " - "
-                    + js["friclose"]
-                    + " Sat: "
-                    + js["satopen"]
-                    + " - "
-                    + js["satclose"]
-                    + " Sun: "
-                    + js["sunopen"]
-                    + " - "
-                    + js["sunclose"]
-                )
             try:
                 phone = js["phone"]
             except:
@@ -142,8 +138,8 @@ def fetch_data():
                     ltype,
                     lat,
                     long,
-                    tim,
-                    "https://stores.crocs.com/rest/locatorsearch",
+                    hours,
+                    "https://www.crocs.ca/store-locator/stores,en_CA,pg.html",
                 ]
             )
 
