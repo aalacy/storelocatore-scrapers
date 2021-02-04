@@ -1,5 +1,6 @@
 import csv
 import json
+from w3lib.url import add_or_replace_parameter
 
 from sgrequests import SgRequests
 
@@ -50,10 +51,18 @@ def fetch_data():
 
     DOMAIN = "platoscloset.com"
     start_url = "https://api.ordercloud.io/v1/suppliers?pageSize=20&page=1&Active=true&xp.isCoop=false&sortBy=Name"
+
     response = session.get(start_url, headers=hdr)
     data = json.loads(response.text)
+    all_locations = data["Items"]
+    for page in range(2, data["Meta"]["TotalPages"] + 1):
+        response = session.get(
+            add_or_replace_parameter(start_url, "page", str(page)), headers=hdr
+        )
+        data = json.loads(response.text)
+        all_locations += data["Items"]
 
-    for poi in data["Items"]:
+    for poi in all_locations:
         hoo_url = "https://api.ordercloud.io/v1/suppliers/{}/addresses/{}".format(
             poi["ID"], poi["ID"]
         )
