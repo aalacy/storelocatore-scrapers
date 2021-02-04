@@ -84,6 +84,8 @@ def fetch_data():
                             phone = "<MISSING>"
                         if storeinfo not in ids and country == "US":
                             ids.append(storeinfo)
+                            if "*" in add:
+                                add = add.split("*")[0].strip()
                             yield [
                                 website,
                                 loc,

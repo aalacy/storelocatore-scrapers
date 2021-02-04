@@ -3,8 +3,8 @@ import csv
 import time
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
-from datetime import timedelta
 from datetime import datetime as dt
+
 
 logger = SgLogSetup().get_logger("eddiev_com")
 
@@ -15,7 +15,7 @@ headers = {
 
 
 def write_output(data):
-    with open("data.csv", mode="w", newline="", encoding="utf8") as output_file:
+    with open("data.csv", mode="w", newline="") as output_file:
         writer = csv.writer(
             output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
         )
@@ -89,7 +89,7 @@ def fetch_data():
             days = hr.findAll("li")
             day = days[0].text.strip()
             time = days[1].text.strip()
-            now = dt.today() - timedelta(days=1)
+            now = dt.today()
             now = now.strftime("%a %b %d")
             time = time.replace(now, "").strip()
             time = time.replace(":00 EST 2021", "").strip()
@@ -102,6 +102,7 @@ def fetch_data():
         script = str(script)
         lat = script.split('"latitude":"')[1].split('"')[0]
         lng = script.split('"longitude":"')[1].split('"')[0]
+        storeid = link.split("/")[-1]
 
         data.append(
             [
@@ -113,7 +114,7 @@ def fetch_data():
                 state,
                 pcode,
                 "US",
-                "<MISSING>",
+                storeid,
                 phone,
                 "<MISSING>",
                 lat,
