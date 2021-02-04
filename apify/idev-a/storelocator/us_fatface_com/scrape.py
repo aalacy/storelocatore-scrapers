@@ -3,6 +3,7 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 from urllib.parse import urljoin
 import json
+import usaddress
 
 from util import Util  # noqa: I900
 
@@ -45,14 +46,14 @@ def write_output(data):
 def fetch_data():
     data = []
 
-    locator_domain = "https://us.www.fatface.com/"
-    base_url = "https://us.www.fatface.com/stores"
+    locator_domain = "https://us.fatface.com/"
+    base_url = "https://us.fatface.com/stores"
     r = session.get(base_url)
     soup = bs(r.text, "lxml")
     links = soup.select("a.b-find-a-store-noresult__letter-store")
     for link in links:
         page_url = urljoin(
-            "https://us.www.fatface.com",
+            "https://us.fatface.com",
             f"{link['href']}",
         )
         r1 = session.get(page_url)
@@ -62,13 +63,57 @@ def fetch_data():
         )
         location_name = location["name"]
         store_number = location["id"]
-        street_address = location["address1"] + myutil._valid1(
-            location.get("address2", "")
+        _address = f'{location["address1"]} {myutil._valid1(location.get("address2", ""))} {location["city"]}, {location["state"]} {location["postalCode"]} {location["countryCode"]}'
+        street_address = (
+            f'{location["address1"]} {myutil._valid1(location.get("address2", ""))}'
         )
-        city = myutil._valid(location["city"])
-        zip = myutil._valid(location["postalCode"])
-        state = myutil._valid(location["state"])
-        country_code = location["countryCode"]
+        city = location["city"]
+        state = location["state"]
+        zip = location["postalCode"]
+        country_code = location["countryCode"] or "US"
+        try:
+            address = usaddress.tag(
+                _address,
+                tag_mapping={
+                    "Recipient": "recipient",
+                    "AddressNumber": "address1",
+                    "AddressNumberPrefix": "address1",
+                    "AddressNumberSuffix": "address1",
+                    "StreetName": "address1",
+                    "StreetNamePreDirectional": "address1",
+                    "StreetNamePreModifier": "address1",
+                    "StreetNamePreType": "address1",
+                    "StreetNamePostDirectional": "address1",
+                    "StreetNamePostModifier": "address1",
+                    "StreetNamePostType": "address1",
+                    "CornerOf": "address1",
+                    "IntersectionSeparator": "address1",
+                    "LandmarkName": "address1",
+                    "USPSBoxGroupID": "address1",
+                    "USPSBoxGroupType": "address1",
+                    "USPSBoxID": "address1",
+                    "USPSBoxType": "address1",
+                    "BuildingName": "address2",
+                    "OccupancyType": "address2",
+                    "OccupancyIdentifier": "address2",
+                    "SubaddressIdentifier": "address2",
+                    "SubaddressType": "address2",
+                    "PlaceName": "city",
+                    "StateName": "state",
+                    "ZipCode": "zip_code",
+                },
+            )
+            street_address = (
+                address[0]["address1"]
+                + " "
+                + myutil._valid1(address[0].get("address2", ""))
+            )
+            city = myutil._valid(address[0]["city"])
+            zip = myutil._valid(address[0]["zip_code"])
+            state = myutil._valid(address[0].get("state", ""))
+        except:
+            pass
+
         phone = myutil._valid(location["phone"])
         location_type = "<MISSING>"
         latitude = location["latitude"]
@@ -98,6 +143,7 @@ def fetch_data():
         ]
 
         data.append(_item)
+
     return data
 
 
