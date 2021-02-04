@@ -62,13 +62,7 @@ def fetch_data():
         street_address = " ".join(address[:-2])
         _split = address[-2].split(",")
         city = _split[0]
-        state = ""
-        try:
-            state = _split[1].strip().split(" ")[0]
-        except:
-            import pdb
-
-            pdb.set_trace()
+        state = _split[1].strip().split(" ")[0]
         zip = _split[1].strip().split(" ")[1]
         country_code = "US"
         phone = address[-1]
