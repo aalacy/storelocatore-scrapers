@@ -9,9 +9,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup as b4
 
 
-
-
-
 def fetch_data():
     logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
     url = "https://bowtiecinemas.com/locations"
@@ -23,25 +20,27 @@ def fetch_data():
 
     stores = soup.find_all(
         "figure",
-        {"class": lambda x: x and all(i in x for i in ["c-house-block","c-house-block--grid"])},
+        {
+            "class": lambda x: x
+            and all(i in x for i in ["c-house-block", "c-house-block--grid"])
+        },
     )
-
-    son = []
 
     for i in stores:
         k = {}
-        k["url"] = "https://bowtiecinemas.com" + i.find("a",{'href':lambda x : x and 'info' in x})["href"]
+        k["url"] = (
+            "https://bowtiecinemas.com"
+            + i.find("a", {"href": lambda x: x and "info" in x})["href"]
+        )
         k["name"] = i.find("header").text
         try:
             address = list(
-                i.find(
-                    "p", {"class": "c-house-block__address"}
-                ).stripped_strings
+                i.find("p", {"class": "c-house-block__address"}).stripped_strings
             )
         except Exception:
             address = "<MISSING>"
 
-        k["phone"] = i.find("p", {"class":"c-house-block__phone"}).text.strip()
+        k["phone"] = i.find("p", {"class": "c-house-block__phone"}).text.strip()
         typ = " ".join(list(i.stripped_strings))
         k["type"] = "<MISSING>"
         if any(mark in typ for mark in ["OON", "oon", "pening", "PENING"]):
@@ -82,8 +81,6 @@ def fetch_data():
 
         yield k
 
-
-
     logzilla.info(f"Finished grabbing data!!")  # noqa
 
 
@@ -102,7 +99,7 @@ def scrape():
         country_code=MissingField(),
         phone=MappingField(mapping=["phone"]),
         store_number=MissingField(),
-        hours_of_operation=MappingField(mapping=["hours"],is_required = False),
+        hours_of_operation=MappingField(mapping=["hours"], is_required=False),
         location_type=MappingField(mapping=["type"]),
     )
 
