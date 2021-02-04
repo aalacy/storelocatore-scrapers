@@ -1,5 +1,3 @@
-sgzip
 sgrequests
+tenacity
 sglogging
-bs4
-lxml
