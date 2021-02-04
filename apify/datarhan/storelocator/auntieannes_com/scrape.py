@@ -41,7 +41,7 @@ def write_output(data):
 
 def fetch_data():
     # Your scraper here
-    session = SgRequests()
+    session = SgRequests().requests_retry_session(retries=10, backoff_factor=0.5)
 
     items = []
     scraped_items = []
@@ -87,7 +87,11 @@ def fetch_data():
             phone = poi_data.xpath('//a[@aria-label="Telephone Number"]/span/text()')
             phone = str(phone[0]) if phone else "<MISSING>"
 
-            store_response = session.get(store_url, headers=user_agent)
+            try:
+                store_response = session.get(store_url, headers=user_agent)
+            except Exception as e:
+                logger.info(f"!!! Warning, {store_url} passed with eception: {e}")
+                continue
             store_dom = etree.HTML(store_response.text)
             location_type = "<MISSING>"
             if "food truck" in location_name.lower():
