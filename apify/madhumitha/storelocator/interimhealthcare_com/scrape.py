@@ -85,8 +85,6 @@ def fetch_data():
             map_url = str(tag.find("script", attrs={"type": "text/javascript"}))
             lat = re.findall(r"[-+]?[0-9]*\.?[0-9]+", map_url)[-4]
             lon = re.findall(r"[-+]?[0-9]*\.?[0-9]+", map_url)[-3]
-            # lat = MISSING
-            # lon = MISSING
             country = "US"
             hours_of_operation = location_type = store_number = MISSING
 
