@@ -81,6 +81,7 @@ def fetch_data():
         longitude = handle_missing(row["longitude"])
         hours_of_operation = get_hours(page_url)
         if hours_of_operation == "<MISSING>":
+            street_address = "<MISSING>"
             location_type = "ONLINE_ONLY"
         else:
             location_type = "<MISSING>"
