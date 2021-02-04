@@ -63,7 +63,6 @@ def fetch_data():
         city = loc["locality"]
         state = loc["region"]
         pcode = loc["postcode"]
-        ccode = loc["country"]
         phone = loc["phone"]
         if "(" not in phone:
             phone = phone[0:3] + "-" + phone[3:6] + "-" + phone[6:10]
