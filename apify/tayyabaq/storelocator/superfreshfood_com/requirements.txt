@@ -1,4 +1,1 @@
-lxml
-beautifulsoup4
-requests==2.11.1
-sglogging
+sgrequests
