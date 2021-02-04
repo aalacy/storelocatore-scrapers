@@ -112,6 +112,8 @@ def fetch_data():
                             hours = hours + "; " + hrs
         if hours == "":
             hours = "<MISSING>"
+        if "elmhurst/90-15-queens-blvd" in loc:
+            hours = "Closed"
         yield [
             website,
             loc,
