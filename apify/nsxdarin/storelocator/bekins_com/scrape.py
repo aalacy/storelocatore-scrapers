@@ -18,6 +18,7 @@ def write_output(data):
         writer.writerow(
             [
                 "locator_domain",
+                "page_url",
                 "location_name",
                 "street_address",
                 "city",
@@ -70,25 +71,20 @@ def fetch_data():
                     name = line2.split("<h2>")[1].split("<")[0].replace("\t", "")
                 if '<div class="agent-address">' in line2:
                     h = line2
-                    try:
-                        g = next(lines)
-                        add = g.split("<")[0].strip().replace("\t", "")
-                        g = next(lines)
-                        city = g.split(",")[0].strip().replace("\t", "")
-                        state = (
-                            g.split(",")[1].split("&nbsp")[0].strip().replace("\t", "")
+                    if h.count(",") == 2:
+                        add = h.split(">")[1].split(",")[0]
+                        city = h.split(",")[1].strip()
+                        state = h.split(",")[2].strip().split(" ")[0]
+                        zc = h.split(",")[2].split("<")[0].rsplit(" ", 1)[1]
+                    else:
+                        add = (
+                            h.split(">")[1].split(",")[0]
+                            + " "
+                            + h.split(",")[1].strip()
                         )
-                        zc = (
-                            g.split("&nbsp;&nbsp;")[1]
-                            .split("<")[0]
-                            .strip()
-                            .replace("\t", "")
-                        )
-                    except:
-                        add = h.split(">")[1].split(",")[0].rsplit(" ", 1)[0]
-                        city = h.split(">")[1].split(",")[0].rsplit(" ", 1)[1]
-                        state = h.split(",")[1].strip().split(" ")[0]
-                        zc = h.split("</div>")[0].rsplit(" ", 1)[1]
+                        city = h.split(",")[2].strip()
+                        state = h.split(",")[3].strip().split(" ")[0]
+                        zc = h.split(",")[3].split("<")[0].rsplit(" ", 1)[1]
                 if "Phone:" in line2 and 'href="tel:' in line2:
                     phone = line2.split('href="tel:')[1].split('"')[0].replace("/", "")
         if "ams-relocation" in loc:
@@ -184,6 +180,7 @@ def fetch_data():
         lng = "<MISSING>"
         yield [
             website,
+            loc,
             name,
             add,
             city,
