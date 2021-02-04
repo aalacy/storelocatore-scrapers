@@ -46,8 +46,7 @@ def fetch_data():
     while True:
         json_data = session.get(
             "https://www.centura.org/rest/solr/location-search?_format=json&search=&location=USA&radius=0&page="
-            + str(page)
-            + "&type=",
+            + str(page),
             headers=headers,
         ).json()["response"]["docs"]
 
@@ -57,7 +56,10 @@ def fetch_data():
             try:
                 location_name = data["ts_search_facility_name"]
             except:
-                break
+                try:
+                    location_name = data["ss_field_facility_name"]
+                except:
+                    continue
             try:
                 street_address = (
                     data["ss_practice_address_line1"]
@@ -114,29 +116,24 @@ def fetch_data():
             except:
                 hours = "<MISSING>"
 
-            if "Suite" in street_address:
-                street_address = street_address.split("Suite")[0].strip()
-            if "Ste" in street_address:
-                street_address = street_address.split("Ste")[0].strip()
             store = []
-            store.append(base_url)
-            store.append(location_name)
-            store.append(street_address.replace("Floor", ""))
-            store.append(city)
-            store.append(state)
-            store.append(zipp)
-            store.append(country_code)
-            store.append(store_number)
-            store.append(phone)
-            store.append(location_type)
-            store.append(latitude)
-            store.append(longitude)
-            store.append(hours)
-            store.append(page_url)
+            store.append(base_url.strip())
+            store.append(location_name.strip())
+            store.append(street_address.strip().replace("Floor", ""))
+            store.append(city.strip())
+            store.append(state.strip())
+            store.append(zipp.strip())
+            store.append(country_code.strip())
+            store.append(str(store_number).strip())
+            store.append(phone.strip())
+            store.append(location_type.strip())
+            store.append(latitude.strip())
+            store.append(longitude.strip())
+            store.append(hours.strip())
+            store.append(page_url.strip())
             if str(store[2] + str(store[7]) + store[-1]) in adressessess:
                 continue
             adressessess.append(str(store[2] + str(store[7]) + store[-1]))
-            store = [str(x).strip() if x else "<MISSING>" for x in store]
             yield store
         page += 1
 
