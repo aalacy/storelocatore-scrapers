@@ -117,7 +117,15 @@ def fetch_data():
                     if country == "CA" or country == "US" or country == "GB":
                         if country == "GB":
                             state = "<MISSING>"
-                        if "Outlets " in add:
+                        if (
+                            "Outlets " in add
+                            and "Napa Premium" not in add
+                            and "80 Premium" not in add
+                            and "1 Premium Outlets" not in add
+                            and "One Premium Outlets" not in add
+                            and "5701" not in add
+                            and "100 Premium" not in add
+                        ):
                             add = add.split("Outlets ")[1]
                         if "- Pittsburgh " in add:
                             add = add.split("- Pittsburgh ")[1]
@@ -125,7 +133,7 @@ def fetch_data():
                             add = add.split("Outles ")[1]
                         if "- Lancaster " in add:
                             add = add.split("- Lancaster ")[1]
-                        if "Outlet Center " in add:
+                        if "Outlet Center " in add and "1025 Outlet" not in add:
                             add = add.split("Outlet Center ")[1]
                         if "Rehoboth Beach " in add:
                             add = add.split("Rehoboth Beach ")[1]
@@ -141,7 +149,11 @@ def fetch_data():
                         add = add.replace("- Smithfield ", "")
                         add = add.replace("at Silverthorne ", "")
                         add = add.replace("Portland International Airport ", "")
-                        if "Factory Stores " in add:
+                        if (
+                            "Factory Stores " in add
+                            and "4642" not in add
+                            and "615" not in add
+                        ):
                             add = add.split("Factory Stores ")[1]
                         add = add.replace("- South ", "")
                         add = add.replace("- Park City ", "")
@@ -208,7 +220,6 @@ def fetch_data():
                         add = add.replace("at Traverse Mountain ", "")
                         add = add.replace("- Galveston/Houston ", "")
                         add = add.replace("One Colorado ", "")
-                        add = add.replace("Freeport Village Station ", "")
                         add = add.replace("at Legends ", "")
                         add = add.replace("Cool Springs Pointe ", "")
                         add = add.replace("Great Lakes Crossing ", "")
@@ -272,6 +283,8 @@ def fetch_data():
                         add = add.replace("Swindon Designer Outlet Village ", "")
                         add = add.replace("One Stop Shopping Park ", "")
                         if state != "FR":
+                            if "Nike Factory Store - Merrimack" in name:
+                                add = "80 Premium Outlets Blvd."
                             yield [
                                 website,
                                 loc,
