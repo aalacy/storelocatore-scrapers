@@ -41,7 +41,7 @@ def para(k):
 
 
 def fetch_data():
-    # print(para({"homeUrl":"https://www.hilton.com/en/hotels/bhxbnhx-hampton-birmingham-jewellery-quarter/"}))
+    # noqa print(para({"homeUrl":"https://www.hilton.com/en/hotels/bhxbnhx-hampton-birmingham-jewellery-quarter/"}))
     logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
     url = "https://www.hilton.com/en/locations/united-kingdom/"
 
