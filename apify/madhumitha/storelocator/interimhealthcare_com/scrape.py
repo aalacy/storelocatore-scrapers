@@ -22,7 +22,7 @@ def fetch_data():
 
     data=[]
     found=[]
-    url_list = ["https://www.interimhealthcare.com/locations/?location=","https://www.interimhealthcare.com/locations/?location=&page=2","https://www.interimhealthcare.com/locations/?location=&page=3"]
+    url_list = ["https://www.interimhealthcare.com/locations","https://www.interimhealthcare.com/locations/?page=2"]
     for url in url_list:
         response = session.get(url)
         soup = BeautifulSoup(response.content, "html.parser")
@@ -49,9 +49,11 @@ def fetch_data():
             state = ad_list[-2]
             city_name = ad_list[-3]
             city = re.sub(",", "", city_name)
-            map_url = tag.find('script', attrs={'type':'text/javascript'}).text.strip()
+            map_url = str(tag.find('script', attrs={'type':'text/javascript'}))
             lat = re.findall(r'[-+]?[0-9]*\.?[0-9]+', map_url)[-4]
             lon = re.findall(r'[-+]?[0-9]*\.?[0-9]+', map_url)[-3]
+            # lat = MISSING
+            # lon = MISSING
             country= "US"
             hours_of_operation = location_type = store_number = MISSING
 
