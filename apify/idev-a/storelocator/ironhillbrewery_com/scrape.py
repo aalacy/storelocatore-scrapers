@@ -71,7 +71,6 @@ def fetch_data():
         zip = location["address"]["postalCode"]
         country_code = "US"
         phone = myutil._valid(location.get("telephone"))
-        # import pdb; pdb.set_trace()
         location_type = location["@type"]
         latitude = "<MISSING>"
         longitude = "<MISSING>"
