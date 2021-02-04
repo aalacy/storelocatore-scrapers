@@ -77,6 +77,8 @@ def fetch_data():
         longitude = poi["longitude"]
         longitude = longitude if longitude else "<MISSING>"
         hours_of_operation = "<MISSING>"
+        store_url = f'https://valuepawnandjewelry.com/stores/{state}/{city.replace(" ", "+")}/{street_address.replace(" ", "-").replace(".", "")}/'
+        store_url = store_url.lower()
 
         item = [
             DOMAIN,

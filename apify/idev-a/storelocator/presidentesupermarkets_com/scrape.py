@@ -48,7 +48,7 @@ def fetch_data():
     items = json.loads(r.text)
     data = []
     for item in items:
-        page_url = base_url
+        page_url = "<MISSING>"
         location_name = item["store"]
         street_address = myutil._valid(f"{item['address']} {item.get('address2', '')}")
         city = myutil._valid(item["city"])

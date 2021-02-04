@@ -96,7 +96,7 @@ def fetch_data():
             street_address = address.split(",")[0].strip()
             city_state = (
                 markers[index]
-                .split(",")[0]
+                .split("',")[0]
                 .strip()
                 .replace(location_name, "")
                 .strip()
@@ -105,6 +105,10 @@ def fetch_data():
             )
             street_address = street_address.replace(city_state, "").strip()
             city = city_state.rsplit(" ", 1)[0].strip()
+            if "," in city:
+                city = city.split(",")[0].strip()
+                street_address = street_address.replace(city, "").strip()
+
             state = city_state.rsplit(" ")[-1].strip()
             if len(state) != 2:
                 state = "<MISSING>"

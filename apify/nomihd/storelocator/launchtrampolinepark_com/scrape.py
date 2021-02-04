@@ -69,8 +69,8 @@ def fetch_data():
     )
 
     for store in stores:
-        if store["site_name"] != "Corporate":
-            page_url = store["website"]
+        if store["site_name"] != "Corporate" and store["site_name"] != "TEST":
+            page_url = store["full_site_url"]
 
             locator_domain = website
             location_name = store["site_name"]

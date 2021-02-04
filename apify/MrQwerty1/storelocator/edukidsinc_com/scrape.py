@@ -63,8 +63,8 @@ def get_data(page_url):
     phone = "".join(tree.xpath("//h2[2]/text()")).strip() or "<MISSING>"
     if phone.find("\n") != -1:
         phone = phone.split("\n")[0].strip()
-    latitude = "<MISSING>"
-    longitude = "<MISSING>"
+    latitude = "<INACCESSIBLE>"
+    longitude = "<INACCESSIBLE>"
     location_type = "<MISSING>"
     hours_of_operation = "<MISSING>"
 
