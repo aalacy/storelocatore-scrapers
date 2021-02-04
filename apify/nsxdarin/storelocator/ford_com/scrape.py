@@ -1,7 +1,6 @@
 import csv
 from sgrequests import SgRequests
 import sgzip
-import json
 from tenacity import retry, stop_after_attempt
 from sglogging import SgLogSetup
 
