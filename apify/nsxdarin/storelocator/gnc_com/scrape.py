@@ -89,7 +89,7 @@ def get_hours(soup):
     if not storeHours:
         return "<MISSING>"
 
-    openingHours = storeHours.findChildren("span")
+    openingHours = storeHours.findChildren("span", recursive=False)
     return ",".join(extract_hours(day) for day in openingHours)
 
 
