@@ -92,9 +92,7 @@ def fetch_data():
         store_number = "<MISSING>"
         phone = stores[key]["phoneAreaCode"] + " " + stores[key]["phone"]
         location_type = "<MISSING>"
-        hours_list = []
         hours_of_operation = stores[key]["storeHoursHTML"]
-        # hours_of_operation = "; ".join(hours_list).strip()
 
         latitude = stores[key]["latitude"]
         longitude = stores[key]["longitude"]
