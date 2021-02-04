@@ -100,7 +100,17 @@ def fetch_data():
         for index in range(0, len(raw_text)):
             if len("".join(raw_text[index]).strip()) > 0:
                 if "Hours of Operation:" in "".join(raw_text[index]).strip():
-                    hours = "".join(raw_text[index + 1 :]).strip()
+                    if "Monday" in "".join(raw_text[index]).strip():
+                        hours = (
+                            "".join(raw_text[index:])
+                            .strip()
+                            .replace("Hours of Operation:", "")
+                            .strip()
+                            .replace("&nbsp;", " ")
+                            .strip()
+                        )
+                    else:
+                        hours = "".join(raw_text[index + 1 :]).strip()
                     break
                 else:
                     add_list.append("".join(raw_text[index]).strip())
@@ -182,23 +192,24 @@ def fetch_data():
         if location_type == "":
             location_type = "<MISSING>"
 
-        curr_list = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        loc_list.append(curr_list)
+        if street_address != "<MISSING>":
+            curr_list = [
+                locator_domain,
+                page_url,
+                location_name,
+                street_address,
+                city,
+                state,
+                zip,
+                country_code,
+                store_number,
+                phone,
+                location_type,
+                latitude,
+                longitude,
+                hours_of_operation,
+            ]
+            loc_list.append(curr_list)
         # break
     return loc_list
 

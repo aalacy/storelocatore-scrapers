@@ -6,7 +6,7 @@ import lxml.html
 import us
 import json
 
-website = "topaminit.com"
+website = "stopaminit.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 session = SgRequests()
 headers = {
@@ -152,6 +152,7 @@ def fetch_data():
                         .strip()
                     )
 
+        hours_of_operation = hours_of_operation.split("\n")[0].strip()
         if store_number == "":
             store_number = "<MISSING>"
 

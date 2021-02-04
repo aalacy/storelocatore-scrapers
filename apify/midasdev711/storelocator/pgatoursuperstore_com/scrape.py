@@ -69,6 +69,9 @@ def fetch_data():
         if "Coming" in hours:
             continue
         phone = div.find("div", {"class": "phone"}).text
+        r = session.get(link, headers=headers, verify=False)
+        lat = r.text.split('"latitude": ', 1)[1].split(",", 1)[0]
+        longt = r.text.split('"longitude": ', 1)[1].split("\n", 1)[0]
         data.append(
             [
                 "https://www.pgatoursuperstore.com/",
@@ -82,8 +85,8 @@ def fetch_data():
                 store,
                 phone,
                 "<MISSING>",
-                "<MISSING>",
-                "<MISSING>",
+                lat,
+                longt,
                 hours,
             ]
         )

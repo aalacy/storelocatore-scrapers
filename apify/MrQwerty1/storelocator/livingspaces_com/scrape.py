@@ -36,14 +36,10 @@ def write_output(data):
 
 
 def get_urls():
-    urls = []
     session = SgRequests()
-    r = session.get("https://www.livingspaces.com/api/navigationapi/getStores")
-    js = r.json()["data"]
-    for j in js:
-        urls.append(j.get("StorePageUrl"))
-
-    return urls
+    r = session.get("https://www.livingspaces.com/stores")
+    tree = html.fromstring(r.text)
+    return tree.xpath("//div[@class='st-detail']/a/@href")
 
 
 def parse_html(tree, page_url):
@@ -122,6 +118,9 @@ def get_data(url):
         city = a.get("addressLocality") or "<MISSING>"
         state = a.get("addressRegion") or "<MISSING>"
         postal = a.get("postalCode") or "<MISSING>"
+
+        if city == "Scottsdale":
+            state = "AZ"
         country_code = "US"
         try:
             store_number = tree.xpath("//a[contains(@href, 'storeId=')]/@href")[

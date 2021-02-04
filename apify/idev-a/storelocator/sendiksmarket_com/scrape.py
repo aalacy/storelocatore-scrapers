@@ -41,7 +41,7 @@ def write_output(data):
 
 
 def fetch_data():
-    locator_domain = "https://www.sendiks.com/my-store/locations"
+    locator_domain = "https://www.sendiks.com/"
     base_url = "https://api.freshop.com/1/stores?app_key=sendiks&has_address=true&limit=-1&token=d4e5be6cc9f62cad0d0e126beb352c8b"
     r = session.get(base_url)
     locations = json.loads(r.text)["items"]
