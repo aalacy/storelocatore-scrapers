@@ -273,7 +273,7 @@ def fetch_data():
         if "Dealer" in js["Response"]:
             dealers = (
                 js["Response"]["Dealer"]
-                if type(js["Response"]["Dealer"]) == type([])
+                if isinstance(js["Response"]["Dealer"], list)
                 else [js["Response"]["Dealer"]]
             )
             for item in dealers:
