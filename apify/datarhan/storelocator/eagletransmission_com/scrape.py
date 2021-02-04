@@ -86,7 +86,7 @@ def fetch_data():
         hours_of_operation = "".join(
             loc_dom.xpath('//p[@class="adress"]/text()')[1:-1]
         ).strip()
-        hours_of_operation = hours_of_operation.replace(" Store Hours:", "")
+        hours_of_operation = hours_of_operation.replace("Store Hours: ", "")
 
         item = [
             DOMAIN,

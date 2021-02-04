@@ -53,20 +53,20 @@ def fetch_data():
 
         ad = j.xpath(".//a[1]/h5/text()")
         ad = list(filter(None, [a.strip() for a in ad]))
-        street_address = "".join(ad[0])
+        street_address = "".join(ad[0]).strip()
         line = ad[1]
-        city = "".join(line.split(",")[0])
+        city = "".join(line.split(",")[0]).strip()
         line = line.split(",")[1].strip()
-        postal = "".join(line.split()[1])
-        state = "".join(line.split()[0])
+        postal = "".join(line.split()[1]).strip()
+        state = "".join(line.split()[0]).strip()
         try:
             phone = "".join(ad[2])
         except IndexError:
             phone = "<MISSING>"
-        hours_of_operation = ";".join(ad[3:]) or "Closed"
+        hours_of_operation = ";".join(ad[3:]).strip() or "Closed"
         country_code = "US"
         store_number = "<MISSING>"
-        page_url = "".join(j.xpath(".//a[1]/@href")) or "<MISSING>"
+        page_url = "<MISSING>"
         location_name = (
             "".join(j.xpath(".//a/h4/text()")).replace("’", "").replace("‘", "")
             or "<MISSING>"
