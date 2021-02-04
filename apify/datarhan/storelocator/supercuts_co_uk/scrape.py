@@ -50,7 +50,6 @@ def fetch_data():
         '//div[@class="list-salons"]//li/a[contains(@href, "/salon/")]/@href'
     )
     for store_url in all_locations:
-        print(store_url)
         loc_response = session.get(store_url)
         loc_dom = etree.HTML(loc_response.text)
 
@@ -63,20 +62,23 @@ def fetch_data():
             raw_address = [" ".join(raw_address[:2])] + raw_address[2:]
         street_address = raw_address[0]
         if len(raw_address) == 4:
-            city = raw_address[1]
-            state = raw_address[2]
-            zip_code = raw_address[3]
+            city = raw_address[1].strip()
+            state = raw_address[2].strip()
+            zip_code = raw_address[3].strip()
         else:
-            city = raw_address[1]
+            city = raw_address[1].strip()
             state = "<MISSING>"
-            zip_code = raw_address[-1]
+            zip_code = raw_address[-1].strip()
+        if "/" in city:
+            street_address += " " + city
+            city = state
         country_code = "<MISSING>"
         store_number = "<MISSING>"
         location_type = "<MISSING>"
         phone = loc_dom.xpath(
             '//p[@class="phone"]/a[@class="phone-tracked-link"]/text()'
         )
-        phone = phone[0] if phone and phone[0].strip() else "<MISSING>"
+        phone = phone[0].strip() if phone and phone[0].strip() else "<MISSING>"
         latitude = loc_dom.xpath("//@data-lat")
         latitude = latitude[0] if latitude else "<MISSING>"
         longitude = loc_dom.xpath("//@data-lng")

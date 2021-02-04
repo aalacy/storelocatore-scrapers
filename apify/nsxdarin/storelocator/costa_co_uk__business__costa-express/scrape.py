@@ -71,6 +71,8 @@ def fetch_data():
             if name == "":
                 name = typ
             city = item["storeAddress"]["city"]
+            if "London" in city:
+                city = "London"
             state = "<MISSING>"
             zc = item["storeAddress"]["postCode"]
             country = "GB"
@@ -138,26 +140,26 @@ def fetch_data():
             loc = "<MISSING>"
             if city == "<MISSING>":
                 city = name
-                if "Belfast" in name:
-                    city = "Belfast"
-                if "Knightswick" in name:
-                    city = "Knightswick"
-                if "Lewes" in name:
-                    city = "Lewes"
-                if "Belper" in name:
-                    city = "Belper"
-                if "Barrow in Furness" in name:
-                    city = "Barrow in Furness"
-                if "Washington" in name:
-                    city = "Washington"
-                if "Purfleet" in add:
-                    city = "Purfleet"
-                if "Taunton" in name:
-                    city = "Taunton"
-                if "Hempstead Valley" in name:
-                    city = "Hempstead Valley"
-                if "Belfast" in add:
-                    city = "Belfast"
+            if "Belfast" in name:
+                city = "Belfast"
+            if "Knightswick" in name:
+                city = "Knightswick"
+            if "Lewes" in name:
+                city = "Lewes"
+            if "Belper" in name:
+                city = "Belper"
+            if "Barrow in Furness" in name:
+                city = "Barrow in Furness"
+            if "Washington" in name:
+                city = "Washington"
+            if "Purfleet" in add:
+                city = "Purfleet"
+            if "Taunton" in name:
+                city = "Taunton"
+            if "Hempstead Valley" in name:
+                city = "Hempstead Valley"
+            if "Belfast" in add:
+                city = "Belfast"
             addinfo = add + city + zc
             if "Mon: -; Tue: -; Wed: -; Thu: -; Fri: -; Sat: -; Sun: -" in hours:
                 hours = "<MISSING>"
@@ -277,26 +279,26 @@ def fetch_data():
                 loc = "<MISSING>"
                 if city == "<MISSING>":
                     city = name
-                    if "Belfast" in name:
-                        city = "Belfast"
-                    if "Knightswick" in name:
-                        city = "Knightswick"
-                    if "Lewes" in name:
-                        city = "Lewes"
-                    if "Belper" in name:
-                        city = "Belper"
-                    if "Barrow in Furness" in name:
-                        city = "Barrow in Furness"
-                    if "Washington" in name:
-                        city = "Washington"
-                    if "Purfleet" in add:
-                        city = "Purfleet"
-                    if "Taunton" in name:
-                        city = "Taunton"
-                    if "Hempstead Valley" in name:
-                        city = "Hempstead Valley"
-                    if "Belfast" in add:
-                        city = "Belfast"
+                if "Belfast" in name:
+                    city = "Belfast"
+                if "Knightswick" in name:
+                    city = "Knightswick"
+                if "Lewes" in name:
+                    city = "Lewes"
+                if "Belper" in name:
+                    city = "Belper"
+                if "Barrow in Furness" in name:
+                    city = "Barrow in Furness"
+                if "Washington" in name:
+                    city = "Washington"
+                if "Purfleet" in add:
+                    city = "Purfleet"
+                if "Taunton" in name:
+                    city = "Taunton"
+                if "Hempstead Valley" in name:
+                    city = "Hempstead Valley"
+                if "Belfast" in add:
+                    city = "Belfast"
                 addinfo = add + city + zc
                 if "Mon: -; Tue: -; Wed: -; Thu: -; Fri: -; Sat: -; Sun: -" in hours:
                     hours = "<MISSING>"

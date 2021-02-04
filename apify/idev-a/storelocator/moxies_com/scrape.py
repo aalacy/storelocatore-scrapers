@@ -61,7 +61,7 @@ def _parse_detail(locator_domain, links):
         latitude = direction[0].strip()
         longitude = direction[1].strip()
         hours_of_operation = soup1.select_one("h2.subtitle").text
-        if hours_of_operation == "This Location is Temporarily Closed":
+        if "closed" in hours_of_operation.lower():
             hours_of_operation = "Closed"
         else:
             tags = soup1.select("table.hours tr")

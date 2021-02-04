@@ -47,7 +47,13 @@ def fetch_data():
     logger.info("Pulling Stores")
     for line in r.iter_lines():
         line = str(line.decode("utf-8"))
-        if "united-kingdom" in line and "quality-inn-hotels/gb" in line:
+        if (
+            "united-kingdom" in line
+            and "quality-inn-hotels/gb" in line
+            and "gb166" not in line
+            and "gb219" not in line
+            and "gb224" not in line
+        ):
             locs.append(
                 line.strip().replace("\r", "").replace("\n", "").replace("\n", "")
             )
@@ -63,7 +69,7 @@ def fetch_data():
         lat = ""
         lng = ""
         hours = "<MISSING>"
-        r2 = session.get(loc, headers=headers)
+        r2 = session.get(loc, headers=headers, verify=False)
         for line2 in r2.iter_lines():
             line2 = str(line2.decode("utf-8"))
             if 'window.hotelInfoData = {"status":"OK"' in line2:
