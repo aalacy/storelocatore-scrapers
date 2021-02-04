@@ -1,17 +1,15 @@
 import csv
-import time
+import json
 
 from bs4 import BeautifulSoup
 
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support import expected_conditions as ec
-from selenium.webdriver.support.ui import WebDriverWait
+from sglogging import sglog
 
-from sglogging import SgLogSetup
+from sgrequests import SgRequests
 
-from sgselenium import SgChrome
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 
-log = SgLogSetup().get_logger("peets.com")
+log = sglog.SgLogSetup().get_logger(logger_name="peets.com")
 
 
 def write_output(data):
@@ -19,8 +17,6 @@ def write_output(data):
         writer = csv.writer(
             output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
         )
-
-        # Header
         writer.writerow(
             [
                 "locator_domain",
@@ -39,101 +35,108 @@ def write_output(data):
                 "hours_of_operation",
             ]
         )
-        # Body
         for row in data:
             writer.writerow(row)
 
 
 def fetch_data():
 
-    driver = SgChrome().chrome()
+    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
+    headers = {"User-Agent": user_agent}
+
+    session = SgRequests()
+
+    max_results = 25
+    max_distance = 30
+
+    dup_tracker = []
 
     data = []
-    all_links = []
-
     locator_domain = "peets.com"
 
-    base_link = "https://locations.peets.com/site-map/all"
-
-    driver.get(base_link)
-    WebDriverWait(driver, 50).until(
-        ec.presence_of_element_located(
-            (By.CSS_SELECTOR, ".sitemap-location.ng-binding")
-        )
+    search = DynamicGeoSearch(
+        country_codes=[SearchableCountries.USA],
+        max_radius_miles=max_distance,
+        max_search_results=max_results,
     )
-    time.sleep(1)
 
-    base = BeautifulSoup(driver.page_source, "lxml")
-    items = base.find_all(class_="sitemap-location ng-binding")
+    log.info("Searching zip_codes ..")
 
-    for item in items:
-        link = "https://locations.peets.com" + item["href"]
-        all_links.append(link)
-
-    log.info("Processing " + str(len(all_links)) + " links..can take up to 1 hour ..")
-    for link in all_links:
-        driver.get(link)
-        WebDriverWait(driver, 50).until(
-            ec.presence_of_element_located((By.CSS_SELECTOR, ".no-margin.ng-binding"))
+    for lat, lng in search:
+        base_link = (
+            "https://stockist.co/api/v1/u5687/locations/search?callback=jQuery214012681410710237628_1612239285797&tag=u5687&latitude=%s&longitude=%s&distance=%s"
+            % (lat, lng, max_distance)
         )
-        time.sleep(1)
 
-        item = BeautifulSoup(driver.page_source, "lxml")
+        req = session.get(base_link, headers=headers)
+        base = BeautifulSoup(req.text, "lxml")
+        js = base.text.split('locations":')[1].split(',"debug"')[0]
+        stores = json.loads(js)
 
-        location_name = item.h1.text.strip()
-        street_address = (
-            item.find_all("span", attrs={"itemprop": "streetAddress"})[-1]
-            .get_text(" ")
-            .strip()
-        )
-        city = item.find("span", attrs={"itemprop": "addressLocality"}).text.strip()
-        state = item.find("span", attrs={"itemprop": "addressRegion"}).text.strip()
-        zip_code = item.find("span", attrs={"itemprop": "postalCode"}).text.strip()
-        if len(zip_code) < 5:
-            zip_code = "0" + zip_code
-        location_type = "<MISSING>"
-        store_number = "<MISSING>"
-        country_code = "US"
-        phone = item.find("div", attrs={"itemprop": "telephone"}).text.strip()
-        try:
-            if (
-                "temporarily closed"
-                in item.find(class_="closed-store ng-binding").text.lower()
-            ):
-                hours_of_operation = "Temporarily Closed"
-        except:
-            hours_of_operation = item.find("dl", attrs={"itemprop": "openingHours"})[
-                "content"
-            ].strip()
+        result_coords = []
+
+        for store in stores:
+
+            if "peet" not in store["custom_fields"][0]["value"].lower():
+                continue
+
+            store_number = store["id"]
+            if store_number in dup_tracker:
+                continue
+            dup_tracker.append(store_number)
+
+            latitude = store["latitude"]
+            longitude = store["longitude"]
+
+            result_coords.append([latitude, longitude])
+
+            location_name = store["name"]
+            street_address = store["address_line_1"]
+            city = store["city"]
+            state = store["state"]
+            zip_code = store["postal_code"]
+            country_code = "US"
+            location_type = "<MISSING>"
+            phone = store["phone"]
+
+            raw_hours = store["custom_fields"]
+            hours_of_operation = ""
+            for raw_hour in raw_hours:
+                if "hour" in str(raw_hour).lower():
+                    hours_of_operation = (
+                        hours_of_operation
+                        + " "
+                        + raw_hour["name"].replace("Hours:", "").strip()
+                        + " "
+                        + raw_hour["value"]
+                    ).strip()
             if not hours_of_operation:
                 hours_of_operation = "<MISSING>"
-            else:
-                if "Sa" not in hours_of_operation:
-                    hours_of_operation = hours_of_operation + " Sa Closed"
-                if "Su" not in hours_of_operation:
-                    hours_of_operation = hours_of_operation + " Su Closed"
-        latitude = item.find("meta", attrs={"itemprop": "latitude"})["content"]
-        longitude = item.find("meta", attrs={"itemprop": "longitude"})["content"]
+            link = "<MISSING>"
 
-        data.append(
-            [
-                locator_domain,
-                link,
-                location_name,
-                street_address,
-                city,
-                state,
-                zip_code,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
-        )
-    driver.close()
+            # Store data
+            data.append(
+                [
+                    locator_domain,
+                    link,
+                    location_name,
+                    street_address,
+                    city,
+                    state,
+                    zip_code,
+                    country_code,
+                    store_number,
+                    phone,
+                    location_type,
+                    latitude,
+                    longitude,
+                    hours_of_operation,
+                ]
+            )
+
+        if len(result_coords) > 0:
+            search.mark_found(result_coords)
+
     return data
 
 

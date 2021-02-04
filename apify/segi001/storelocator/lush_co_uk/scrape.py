@@ -135,7 +135,7 @@ def fetch_data():
                         locator_domain,
                         url,
                         name,
-                        street,
+                        street.replace(",", ""),
                         city,
                         missingString,
                         zp,
