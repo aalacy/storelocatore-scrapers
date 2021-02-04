@@ -85,7 +85,7 @@ def fetch_data():
 
 
 def scrape():
-    url = "https://flyingbiscuit.com/"
+    url = "https://bowtiecinemas.com/"
     field_defs = SimpleScraperPipeline.field_definitions(
         locator_domain=ConstantField(url),
         page_url=MappingField(mapping=["url"]),
