@@ -47,14 +47,10 @@ def fetch_zip_code(url):
 
 def fetch_data():
     ids = []
-    search = (
-        sgzip.ClosestNSearch()
-    )  # TODO: OLD VERSION [sgzip==0.0.55]. UPGRADE IF WORKING ON SCRAPER!
+    search = sgzip.ClosestNSearch()
     search.initialize()
     code = search.next_zip()
     while code:
-        # logger.info('Pulling Zip Code %s...' % code)
-        # logger.info("remaining zipcodes: " + str(search.zipcodes_remaining()))
         result_coords = []
         url = (
             "https://www.ford.com/services/dealer/Dealers.json?make=Ford&radius=500&filter=&minDealers=1&maxDealers=100&postalCode="
@@ -65,7 +61,7 @@ def fetch_data():
         if "Dealer" in js["Response"]:
             dealers = (
                 js["Response"]["Dealer"]
-                if type(js["Response"]["Dealer"]) == type([])
+                if isinstance(js["Response"]["Dealer"] == [])
                 else [js["Response"]["Dealer"]]
             )
             for item in dealers:
