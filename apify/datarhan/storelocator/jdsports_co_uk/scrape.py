@@ -3,7 +3,6 @@ import json
 from lxml import etree
 from urllib.parse import urljoin
 
-from sgrequests import SgRequests
 from sgselenium import SgFirefox
 
 
