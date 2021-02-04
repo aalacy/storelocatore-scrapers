@@ -3,7 +3,6 @@ import json
 from lxml import etree
 from time import sleep
 
-from sgrequests import SgRequests
 from sgselenium.sgselenium import webdriver
 
 option = webdriver.ChromeOptions()
@@ -42,21 +41,11 @@ def write_output(data):
 
 def fetch_data():
     # Your scraper here
-    session = SgRequests()
 
     items = []
 
     DOMAIN = "cb2.com"
     start_url = "https://www.cb2.com/stores/"
-
-    headers = {
-        "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-        "accept-encoding": "gzip, deflate, br",
-        "accept-language": "ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7,pt;q=0.6",
-        "cookie": "Internationalization=ES|EUR; OriginCountry=ES;",
-        "upgrade-insecure-requests": "1",
-        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.96 Safari/537.36",
-    }
 
     with webdriver.Chrome(options=option) as driver:
         driver.get(start_url)
