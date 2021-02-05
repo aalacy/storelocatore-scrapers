@@ -70,7 +70,11 @@ def fetch_data():
             .replace("Open seven days a week", "")
             .strip()
         )
-        hours_of_operation = hours_of_operation[1:] if hours_of_operation.startswith(".") or hours_of_operation.startswith(",") else hours_of_operation
+        hours_of_operation = (
+            hours_of_operation[1:]
+            if hours_of_operation.startswith(".") or hours_of_operation.startswith(",")
+            else hours_of_operation
+        )
 
         data.append(
             [
