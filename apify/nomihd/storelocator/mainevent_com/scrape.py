@@ -61,7 +61,6 @@ def write_output(data):
 
 def fetch_data():
     # Your scraper here
-    loc_list = []
 
     search = DynamicZipSearch(
         country_codes=[SearchableCountries.USA], max_radius_miles=200
@@ -122,9 +121,7 @@ def fetch_data():
                         latitude = store["latitude"]
                         longitude = store["longitude"]
 
-                        latlng_tuple = (latitude, longitude)
-                        latlng_list = [latlng_tuple]
-                        search.mark_found(latlng_list)
+                        search.found_location_at(latitude, longitude)
 
                         if latitude == "" or latitude is None:
                             latitude = "<MISSING>"
@@ -170,9 +167,8 @@ def fetch_data():
                             longitude,
                             hours_of_operation,
                         ]
-                        loc_list.append(curr_list)
+                        yield curr_list
 
-    return loc_list
 
 
 def scrape():
