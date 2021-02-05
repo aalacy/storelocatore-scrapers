@@ -160,7 +160,7 @@ def fetch_data():
         ]
         loc_list.append(curr_list)
 
-    ################### casinos too #######################
+    ''' casinos too '''
 
     stores = stores_sel.xpath('//div[@class="too-location"]')
     for store in stores:
