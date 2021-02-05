@@ -112,11 +112,27 @@ def fetch_data():
             longitude = "<MISSING>"
 
         hours_of_operation = ""
+        hours_list = []
         try:
-            hours_of_operation = store["hourInfo"].split("\n")[0].strip()
+            hours = store["hourInfo"].split("\n")
+            for hour in hours:
+                if len("".join(hour).strip()) > 0:
+                    if "Closed Christmas" in "".join(hour).strip():
+                        break
+                    else:
+                        hours_list.append("".join(hour).strip())
         except:
             pass
 
+        hours_of_operation = (
+            "; ".join(hours_list)
+            .strip()
+            .replace(
+                "Special hours for senior customers and customers needing extra assistance",
+                "",
+            )
+            .strip()
+        )
         if hours_of_operation == "":
             hours_of_operation = "<MISSING>"
 
