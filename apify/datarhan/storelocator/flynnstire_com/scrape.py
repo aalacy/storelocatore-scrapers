@@ -63,7 +63,7 @@ def fetch_data():
             '//span[@class="retailer-name"]/following-sibling::span//text()'
         )[0].split(", ")[-1]
         zip_code = "<MISSING>"
-        geo = re.findall("latLng:\[(.+?)\],", loc_response.text)[0].split(",")
+        geo = re.findall(r"latLng:\[(.+?)\],", loc_response.text)[0].split(",")
         latitude = geo[0]
         longitude = geo[1]
         country_code = "<MISSING>"
