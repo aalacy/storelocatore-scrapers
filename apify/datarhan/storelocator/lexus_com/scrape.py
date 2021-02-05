@@ -53,6 +53,8 @@ def fetch_data():
             poi["id"], poi["dealerName"].lower()
         )
         location_name = poi["dealerName"]
+        if location_name == "Keyes Lexus of Valencia":
+            print(poi)
         location_name = location_name if location_name else "<MISSING>"
         street_address = poi["dealerAddress"]["address1"]
         street_address = street_address if street_address else "<MISSING>"
@@ -70,6 +72,9 @@ def fetch_data():
         if poi.get("hoursOfOperation"):
             if poi["hoursOfOperation"].get("Sales"):
                 for day, hours in poi["hoursOfOperation"]["Sales"].items():
+                    hours_of_operation.append(f"{day} {hours}")
+            else:
+                for day, hours in poi["hoursOfOperation"]["Service"].items():
                     hours_of_operation.append(f"{day} {hours}")
         hours_of_operation = (
             " ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
