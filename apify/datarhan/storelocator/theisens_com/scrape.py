@@ -1,8 +1,11 @@
 import csv
 import json
+from lxml import etree
+from time import sleep
 from urllib.parse import urljoin
 
 from sgrequests import SgRequests
+from sgselenium import SgFirefox
 
 
 def write_output(data):
@@ -84,14 +87,13 @@ def fetch_data():
         location_type = "<MISSING>"
         latitude = poi["location"]["latitude"]
         longitude = poi["location"]["longitude"]
-        hoo = []
-        for elem in poi["location"]["businessHours"]:
-            if elem["hours"]:
-                opens = elem["hours"][0]["openTime"].split("T")[-1].split(":30.1")[0]
-                closes = elem["hours"][0]["closeTime"].split("T")[-1].split(":30.1")[0]
-                hoo.append(f'{elem["day"]} {opens} - {closes}')
-            else:
-                hoo.append(f'{elem["day"]} ')
+
+        with SgFirefox() as driver:
+            driver.get(store_url)
+            sleep(5)
+            loc_dom = etree.HTML(driver.page_source)
+        hoo = loc_dom.xpath('//dd[@id="branch-detail-business-hours"]//text()')
+        hoo = [elem.strip() for elem in hoo if elem.strip()]
         hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
 
         item = [

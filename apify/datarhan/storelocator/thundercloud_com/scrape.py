@@ -71,11 +71,13 @@ def fetch_data():
             location_type = "Temp_closed"
         latitude = "<MISSING>"
         longitude = "<MISSING>"
-        hoo = poi_html.xpath(
+        hoo = poi_html.xpath('.//p[contains(text(), "Hours:")]/text()')
+        hoo_2 = poi_html.xpath(
             './/p[contains(text(), "Hours:")]/following-sibling::p/text()'
         )
-        if not hoo:
-            hoo = poi_html.xpath('.//p[contains(text(), "Hours:")]/text()')
+        if hoo_2:
+            hoo += hoo_2
+
         hoo = [elem.strip() for elem in hoo if elem.strip()]
         hours_of_operation = (
             " ".join(hoo).replace("Hours:", "").strip() if hoo else "<MISSING>"

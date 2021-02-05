@@ -53,7 +53,12 @@ def fetch_data():
         country_code = "US"
         store_number = j.get("id") or "<MISSING>"
         page_url = j.get("url") or "<MISSING>"
-        location_name = j.get("store").replace("&#8211;", "-")
+        location_name = (
+            j.get("store")
+            .replace("&#8211;", "-")
+            .replace("Click for Website -", "")
+            .strip()
+        )
         phone = j.get("phone") or "<MISSING>"
         latitude = j.get("lat") or "<MISSING>"
         longitude = j.get("lng") or "<MISSING>"

@@ -72,7 +72,7 @@ def fetch_data():
         idx = 3
         while True:
             if block[idx] == "Direct:":
-                phone = block[idx].replace("–", "-")
+                phone = block[idx + 1].replace("–", "-")
                 idx += 2
                 break
             idx += 1
