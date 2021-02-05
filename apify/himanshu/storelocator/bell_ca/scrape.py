@@ -4,7 +4,6 @@ from bs4 import BeautifulSoup
 import json
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 from sglogging import SgLogSetup
-import html5lib
 
 logger = SgLogSetup().get_logger("bell_ca")
 session = SgRequests()
