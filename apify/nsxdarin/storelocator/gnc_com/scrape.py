@@ -108,14 +108,14 @@ def search_zip(postal, tracker):
         "dwfrm_storelocator_maxdistance": "10",
         "dwfrm_storelocator_findbyzip": "Search",
     }
-    with get_session() as session:
-        # get the home page before each search to avoid captcha
-        session.get("https://www.gnc.com/stores", headers=headers)
-        sleep()
-        res = session.post(url, data=payload, headers=headers)
-        res.raise_for_status()
-
     try:
+        with get_session() as session:
+            # get the home page before each search to avoid captcha
+            session.get("https://www.gnc.com/stores", headers=headers)
+            sleep()
+            res = session.post(url, data=payload, headers=headers)
+            res.raise_for_status()
+
         data = get_json_data(res.text)
         locations = data.get("features", []) if data else []
         soup = BeautifulSoup(res.text, "html.parser")
@@ -204,6 +204,10 @@ def fetch_data():
         for future in futures:
             yield future.result()
             zip_searched += 1
+
+            logger.info(
+                f"found: {len(dedup_tracker)} | zipcodes: {zip_searched}/{len(zips)}"
+            )
 
 
 def scrape():
