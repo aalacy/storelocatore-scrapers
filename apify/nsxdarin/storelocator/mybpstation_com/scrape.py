@@ -7,7 +7,7 @@ logger = SgLogSetup().get_logger("mybpstation_com")
 
 search = DynamicGeoSearch(
     country_codes=[SearchableCountries.USA],
-    max_radius_miles=25,
+    max_radius_miles=10,
     max_search_results=None,
 )
 
