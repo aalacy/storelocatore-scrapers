@@ -4,7 +4,6 @@ import re
 import time
 import random
 import threading
-from tenacity import retry, stop_after_attempt
 from bs4 import BeautifulSoup
 from sglogging import SgLogSetup
 from sgrequests import SgRequests
@@ -100,28 +99,26 @@ def find_node(entityNum, soup):
     return node
 
 
-@retry(stop=stop_after_attempt(3))
 def fetch_locations(postal):
-    url = "https://www.gnc.com/on/demandware.store/Sites-GNC2-Site/default/Stores-FindStores"
-    payload = {
-        "dwfrm_storelocator_countryCode": "US",
-        "dwfrm_storelocator_distanceUnit": "mi",
-        "dwfrm_storelocator_postalCode": postal,
-        "dwfrm_storelocator_maxdistance": "10",
-        "dwfrm_storelocator_findbyzip": "Search",
-    }
-    with get_session() as session:
-        # get the home page before each search to avoid captcha
-        session.get("https://www.gnc.com/stores", headers=headers)
-        sleep()
-        res = session.post(url, data=payload, headers=headers)
-        res.raise_for_status()
-        return res
 
 
 def search_zip(postal, tracker):
     try:
-        res = fetch_locations(postal)
+        url = "https://www.gnc.com/on/demandware.store/Sites-GNC2-Site/default/Stores-FindStores"
+        payload = {
+            "dwfrm_storelocator_countryCode": "US",
+            "dwfrm_storelocator_distanceUnit": "mi",
+            "dwfrm_storelocator_postalCode": postal,
+            "dwfrm_storelocator_maxdistance": "10",
+            "dwfrm_storelocator_findbyzip": "Search",
+        }
+        with get_session() as session:
+            # get the home page before each search to avoid captcha
+            session.get("https://www.gnc.com/stores", headers=headers)
+            sleep()
+            res = session.post(url, data=payload, headers=headers)
+            res.raise_for_status()
+
         data = get_json_data(res.text)
         locations = data.get("features", []) if data else []
         soup = BeautifulSoup(res.text, "html.parser")
