@@ -68,8 +68,7 @@ def fetch_data():
             f'{location["address1"]} {myutil._valid1(location.get("address2", ""))}'
         )
         city = location["city"]
-        state = location["state"]
-        zip = location["postalCode"]
+        state = soup.select_one('span[itemprop="addressLocality"]').text
         country_code = location["countryCode"] or "US"
         try:
             address = usaddress.tag(
@@ -110,9 +109,20 @@ def fetch_data():
             )
             city = myutil._valid(address[0]["city"])
             zip = myutil._valid(address[0]["zip_code"])
-            state = myutil._valid(address[0].get("state", ""))
+            state = (
+                myutil._valid(address[0].get("state", ""))
+                .replace("None", "")
+                .replace(",", "")
+            )
         except:
             pass
+
+        _zip = ""
+        for _ in zip:
+            if _.isdigit():
+                _zip += _
+
+        zip = _zip
 
         phone = myutil._valid(location["phone"])
         location_type = "<MISSING>"
