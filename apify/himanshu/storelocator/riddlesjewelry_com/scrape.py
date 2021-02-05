@@ -89,7 +89,9 @@ def fetch_data():
                 hours = val[day + "open"] + "-" + val[day + "close"]
             else:
                 hours = "Closed"
-            hours_of_operation = (hours_of_operation + " " + day.title().replace("_", "") + " " + hours).strip()
+            hours_of_operation = (
+                hours_of_operation + " " + day.title().replace("_", "") + " " + hours
+            ).strip()
 
         tem_var.append(hours_of_operation)
         tem_var.append(page_url)
