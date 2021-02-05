@@ -100,22 +100,22 @@ def find_node(entityNum, soup):
 
 
 def search_zip(postal, tracker):
-    try:
-        url = "https://www.gnc.com/on/demandware.store/Sites-GNC2-Site/default/Stores-FindStores"
-        payload = {
-            "dwfrm_storelocator_countryCode": "US",
-            "dwfrm_storelocator_distanceUnit": "mi",
-            "dwfrm_storelocator_postalCode": postal,
-            "dwfrm_storelocator_maxdistance": "10",
-            "dwfrm_storelocator_findbyzip": "Search",
-        }
-        with get_session() as session:
-            # get the home page before each search to avoid captcha
-            session.get("https://www.gnc.com/stores", headers=headers)
-            sleep()
-            res = session.post(url, data=payload, headers=headers)
-            res.raise_for_status()
+    url = "https://www.gnc.com/on/demandware.store/Sites-GNC2-Site/default/Stores-FindStores"
+    payload = {
+        "dwfrm_storelocator_countryCode": "US",
+        "dwfrm_storelocator_distanceUnit": "mi",
+        "dwfrm_storelocator_postalCode": postal,
+        "dwfrm_storelocator_maxdistance": "10",
+        "dwfrm_storelocator_findbyzip": "Search",
+    }
+    with get_session() as session:
+        # get the home page before each search to avoid captcha
+        session.get("https://www.gnc.com/stores", headers=headers)
+        sleep()
+        res = session.post(url, data=payload, headers=headers)
+        res.raise_for_status()
 
+    try:
         data = get_json_data(res.text)
         locations = data.get("features", []) if data else []
         soup = BeautifulSoup(res.text, "html.parser")
