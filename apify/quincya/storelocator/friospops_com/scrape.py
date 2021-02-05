@@ -135,7 +135,9 @@ def fetch_data():
         if "569 1st St" in street_address:
             zip_code = "35007"
 
-        street_address = street_address.replace("TBD", "<MISSING>".replace("Frios Cart", "<MISSING>"))
+        street_address = street_address.replace(
+            "TBD", "<MISSING>".replace("Frios Cart", "<MISSING>")
+        )
         country_code = "US"
         store_number = "<MISSING>"
         location_type = "<MISSING>"
