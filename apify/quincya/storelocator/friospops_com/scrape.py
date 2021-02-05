@@ -57,8 +57,7 @@ def fetch_data():
         final_links.append(item.a["href"])
 
     data = []
-    for i, final_link in enumerate(final_links):
-        logger.info("Link %s of %s" % (i + 1, len(final_links)))
+    for final_link in final_links:
         logger.info(final_link)
 
         req = session.get(final_link, headers=headers)
@@ -80,7 +79,10 @@ def fetch_data():
             )[2].text
 
         if raw_address != "Historic Downtown McKinney":
-            if "coming soon" in raw_address[0].lower():
+            try:
+                if "coming soon" in str(raw_address).lower():
+                    continue
+            except:
                 continue
             try:
                 street_address = raw_address[-3].strip() + " " + raw_address[-2].strip()
