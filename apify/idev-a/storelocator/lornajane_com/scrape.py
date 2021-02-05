@@ -55,6 +55,9 @@ def fetch_data():
             + myutil._valid1(item.get("address2", ""))
         ).replace("None", "")
         city = myutil._valid(item["city"])
+        _split = street_address.split(",")
+        if len(_split) > 1 and _split[1].strip() in city:
+            street_address = _split[0]
         state = myutil._valid(item["stateCode"])
         zip = myutil._valid(myutil._digit(item["postalCode"]))
         country_code = item["countryCode"]
