@@ -1,5 +1,4 @@
 import csv
-import html as h
 import yaml
 
 from lxml import html
