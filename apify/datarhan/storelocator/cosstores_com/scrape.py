@@ -2,6 +2,7 @@ import csv
 from lxml import etree
 
 from sgrequests import SgRequests
+from sgscrape.sgpostal import International_Parser, parse_address
 
 
 def write_output(data):
@@ -41,48 +42,61 @@ def fetch_data():
     items = []
 
     DOMAIN = "cosstores.com"
-    start_url = "https://www.cosstores.com/ca/en/store-locator/united-states/"
+    start_urls = [
+        "https://www.cosstores.com/ca/en/store-locator/united-states/",
+        "https://www.cosstores.com/ca/en/store-locator/united-kingdom/",
+        "https://www.cosstores.com/ca/en/store-locator/canada/",
+    ]
 
-    response = session.get(start_url)
-    dom = etree.HTML(response.text)
+    for start_url in start_urls:
+        response = session.get(start_url)
+        dom = etree.HTML(response.text)
 
-    all_locations = dom.xpath('//div[@class="store"]')
-    for poi_html in all_locations:
-        store_url = "<MISSING>"
-        location_name = poi_html.xpath(".//h2/text()")
-        location_name = location_name[0] if location_name else "<MISSING>"
-        raw_address = poi_html.xpath(".//p/text()")[:4]
-        raw_address = [elem.strip() for elem in raw_address if elem.strip()]
-        street_address = raw_address[0].split(", ")[0]
-        city = raw_address[0].split(", ")[-1]
-        state = raw_address[2].split()[-1]
-        zip_code = raw_address[2].split()[0]
-        country_code = raw_address[-1].strip()
-        store_number = "<MISSING>"
-        phone = poi_html.xpath(".//p/text()")[4].split(": ")[-1]
-        location_type = "<MISSING>"
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
-        hours_of_operation = "<MISSING>"
+        all_locations = dom.xpath('//div[@class="store"]')
+        for poi_html in all_locations:
+            store_url = "<MISSING>"
+            location_name = poi_html.xpath(".//h2/text()")
+            location_name = location_name[0] if location_name else "<MISSING>"
+            raw_address = poi_html.xpath(".//p/text()")[:4]
+            raw_address = " ".join(
+                [elem.strip() for elem in raw_address if elem.strip()]
+            )
+            print(raw_address)
+            parsed_adr = parse_address(raw_address, International_Parser())
+            street_address = parsed_adr.street_address_1
+            city = parsed_adr.city
+            city = city if city else "<MISSING>"
+            state = parsed_adr.state
+            state = state if state else "<MISSING>"
+            zip_code = parsed_adr.postcode
+            zip_code = zip_code if zip_code else "<MISSING>"
+            country_code = parsed_adr.country
+            country_code = country_code if country_code else "<MISSING>"
+            store_number = "<MISSING>"
+            phone = poi_html.xpath(".//p/text()")[4].split(": ")[-1]
+            location_type = "<MISSING>"
+            latitude = "<MISSING>"
+            longitude = "<MISSING>"
+            hours_of_operation = "<MISSING>"
 
-        item = [
-            DOMAIN,
-            store_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip_code,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
+            item = [
+                DOMAIN,
+                store_url,
+                location_name,
+                street_address,
+                city,
+                state,
+                zip_code,
+                country_code,
+                store_number,
+                phone,
+                location_type,
+                latitude,
+                longitude,
+                hours_of_operation,
+            ]
 
-        items.append(item)
+            items.append(item)
 
     return items
 
