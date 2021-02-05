@@ -1,5 +1,7 @@
+import re
 import csv
 import json
+from lxml import etree
 
 from sgrequests import SgRequests
 
@@ -40,42 +42,45 @@ def fetch_data():
 
     items = []
 
-    DOMAIN = "lexus.com"
-    start_url = "https://www.lexus.com/rest/lexus/dealers?experience=dealers"
-    headers = {
-        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.193 Safari/537.36"
-    }
-    response = session.get(start_url, headers=headers)
-    data = json.loads(response.text)
+    DOMAIN = "suntrust.com"
+    start_url = "https://www.super1foods.net/locations/"
 
-    for poi in data["dealers"]:
-        store_url = "https://www.lexus.com/dealers/{}-{}".format(
-            poi["id"], poi["dealerName"].lower()
-        )
-        location_name = poi["dealerName"]
+    hdr = {
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.96 Safari/537.36"
+    }
+    response = session.get(start_url, headers=hdr)
+    dom = etree.HTML(response.text)
+    data = dom.xpath('//script[contains(text(), "stores =")]/text()')[0]
+    data = re.findall("stores =(.+?);", data)[0]
+    data = json.loads(data)
+
+    for poi in data:
+        store_url = "<MISSING>"
+        location_name = poi["name"]
         location_name = location_name if location_name else "<MISSING>"
-        street_address = poi["dealerAddress"]["address1"]
+        street_address = poi["address1"]
         street_address = street_address if street_address else "<MISSING>"
-        city = poi["dealerAddress"]["city"]
-        state = poi["dealerAddress"]["state"]
-        zip_code = poi["dealerAddress"]["zipCode"]
+        city = poi["city"]
+        city = city if city else "<MISSING>"
+        state = poi["state"]
+        state = state if state else "<MISSING>"
+        zip_code = poi["zipCode"]
+        zip_code = zip_code if zip_code else "<MISSING>"
         country_code = "<MISSING>"
-        store_number = poi["id"]
-        phone = poi["dealerPhone"]
+        store_number = poi["storeNumber"]
+        store_number = store_number if store_number else "<MISSING>"
+        phone = poi["phone"]
         phone = phone if phone else "<MISSING>"
         location_type = "<MISSING>"
-        latitude = poi["dealerLatitude"]
-        longitude = poi["dealerLongitude"]
-        hours_of_operation = []
-        if poi.get("hoursOfOperation"):
-            if poi["hoursOfOperation"].get("Sales"):
-                for day, hours in poi["hoursOfOperation"]["Sales"].items():
-                    hours_of_operation.append(f"{day} {hours}")
-            else:
-                for day, hours in poi["hoursOfOperation"]["Service"].items():
-                    hours_of_operation.append(f"{day} {hours}")
+        latitude = poi["latitude"]
+        latitude = latitude if latitude else "<MISSING>"
+        longitude = poi["longitude"]
+        longitude = longitude if longitude else "<MISSING>"
+        hours_of_operation = poi["hourInfo"]
         hours_of_operation = (
-            " ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
+            hours_of_operation.replace("<!--", " ").replace("-->", " ").strip()
+            if hours_of_operation
+            else "<MISSING>"
         )
 
         item = [
