@@ -39,8 +39,8 @@ def fetch_data():
 
     base_link = "https://manchuwok.com/wp-content/plugins/superstorefinder-wp/ssf-wp-xml.php?wpml_lang=en&t=1612506673105"
 
-    user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36'
-    headers = {'User-Agent': user_agent}
+    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
+    headers = {"User-Agent": user_agent}
 
     session = SgRequests()
     req = session.get(base_link, headers=headers)
@@ -89,7 +89,9 @@ def fetch_data():
         longitude = item.longitude.text.strip()
 
         try:
-            hours_of_operation = BeautifulSoup(item.operatinghours.text, "lxml").get_text(" ").strip()
+            hours_of_operation = (
+                BeautifulSoup(item.operatinghours.text, "lxml").get_text(" ").strip()
+            )
             if not hours_of_operation:
                 hours_of_operation = "<MISSING>"
         except:
