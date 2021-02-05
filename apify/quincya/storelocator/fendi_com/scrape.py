@@ -67,9 +67,14 @@ def fetch_data():
             if street_address[-1:] == ",":
                 street_address = street_address[:-1]
             city = store["address"]["town"]
-            state = store["address"]["region"]["isocodeShort"]
+            try:
+                state = store["address"]["region"]["isocodeShort"]
+            except:
+                state = "<MISSING>"
             zip_code = store["address"]["postalCode"]
             country_code = store["address"]["country"]["isocode"]
+            if country_code == "GB":
+                state = "<MISSING>"
             store_number = store["name"]
             location_type = "<MISSING>"
 

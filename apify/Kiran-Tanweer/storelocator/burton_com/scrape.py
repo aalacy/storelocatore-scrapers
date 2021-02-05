@@ -84,26 +84,30 @@ def fetch_data():
             or state == "PA"
             or state == "IL"
             or state == "ME"
+            or state == "MT"
         ):
             country = "US"
         else:
             country = "CAN"
-
         phone = loc.find("span", {"itemprop": "telephone"}).text.strip()
         link = loc.find("span", {"class": "view-details"}).find("a")["href"].strip()
         link = "https://www.burton.com/" + link
-        p = session.get(link, headers=headers, verify=False)
-        soups = BeautifulSoup(p.text, "html.parser")
-        info = soups.find("div", {"class": "hours"})
-        hours = info.find("h5").text.strip()
-        if hours == "Store Hours:":
+        hours = loc.find("meta", {"itemprop": "openingHours"})
+        if hours is None:
             hours = "<MISSING>"
         else:
-            hours = hours
-
+            hours = hours["content"]
+        hours = hours.replace("Mo-Sa", "Mon-Sat")
+        hours = hours.replace("Mo-Su", "Mon-Sun")
+        hours = hours.replace("Mo-Th", "Mon-Thurs")
+        if street == "675 Lionshead Place":
+            addr = loc.find("p", {"class": "address"}).text
+            addr = addr.split("\n")
+            street = addr[0] + " " + addr[1]
+            street = street.strip()
         data.append(
             [
-                url,
+                "https://www.burton.com/",
                 link,
                 title,
                 street,
