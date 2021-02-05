@@ -1,4 +1,3 @@
-
 import csv
 import json
 import re
@@ -106,7 +105,7 @@ def fetch_data():
             street_address = street_address.replace("Canal St New", "Canal St").strip()
             city = "New York"
 
-        street_address = (re.sub(' +', ' ', street_address)).strip()
+        street_address = (re.sub(" +", " ", street_address)).strip()
 
         country_code = "US"
         store_number = "<MISSING>"
