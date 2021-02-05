@@ -41,7 +41,6 @@ def fetch_data():
     session = SgRequests()
 
     items = []
-    scraped_items = []
 
     DOMAIN = "suntrust.com"
     start_url = "https://www.super1foods.net/locations/"
