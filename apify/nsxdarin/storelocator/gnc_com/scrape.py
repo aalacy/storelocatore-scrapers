@@ -99,9 +99,6 @@ def find_node(entityNum, soup):
     return node
 
 
-def fetch_locations(postal):
-
-
 def search_zip(postal, tracker):
     try:
         url = "https://www.gnc.com/on/demandware.store/Sites-GNC2-Site/default/Stores-FindStores"
