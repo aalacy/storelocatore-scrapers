@@ -78,7 +78,7 @@ def fetch_data():
         latitude = "<INACCESSIBLE>"
         longitude = "<INACCESSIBLE>"
         hours_of_operation = "; ".join(
-            [_ for _ in horizontal_rule.next_sibling.p.stripped_strings][1:]
+            [_ for _ in horizontal_rule.next_sibling.stripped_strings][1:]
         )
 
         _item = [
@@ -98,8 +98,7 @@ def fetch_data():
             hours_of_operation,
         ]
 
-        myutil._check_duplicate_by_loc(data, _item)
-
+        data.append(_item)
     return data
 
 
