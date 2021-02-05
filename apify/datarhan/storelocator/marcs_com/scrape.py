@@ -2,7 +2,6 @@ import re
 import csv
 from lxml import etree
 from urllib.parse import urljoin
-from requests.packages.urllib3.util import retry
 from tqdm import tqdm
 from tenacity import retry, stop_after_attempt
 from sgrequests import SgRequests
