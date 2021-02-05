@@ -2,7 +2,7 @@ from sgscrape.simple_scraper_pipeline import SimpleScraperPipeline
 from sgscrape.simple_scraper_pipeline import ConstantField
 from sgscrape.simple_scraper_pipeline import MappingField
 from sglogging import sglog
-
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 
 from sgrequests import SgRequests
 
@@ -11,15 +11,30 @@ from bs4 import BeautifulSoup as b4
 
 def fetch_data():
     logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
-    url = "https://www.workworld.com/wp-admin/admin-ajax.php?action=store_search&lat=38.35658&lng=-121.98774&max_results=5555&search_radius=5555&autoload=1"
     headers = {
         "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
     }
     session = SgRequests()
-    son = session.get(url, headers=headers).json()
 
-    for i in son:
-        yield i
+    ident = set()
+    search = DynamicGeoSearch(
+        country_codes=[SearchableCountries.AUSTRALIA],
+        max_radius_miles=500,
+        max_search_results=100,
+    )
+    for lat, lng in search:
+        son = session.get(
+            "https://www.workworld.com/wp-admin/admin-ajax.php?action=store_search&lat="
+            + str(lat)
+            + "&lng="
+            + str(lng)
+            + "&max_results=100&search_radius=500&autoload=1",
+            headers=headers,
+        ).json()
+        for i in son:
+            if (str(i["id"]) + str(i["permalink"])) not in ident:
+                ident.add(str(i["id"]) + str(i["permalink"]))
+                yield i
 
     logzilla.info(f"Finished grabbing data!!")  # noqa
 

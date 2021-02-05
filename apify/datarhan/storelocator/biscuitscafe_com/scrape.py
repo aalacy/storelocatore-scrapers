@@ -83,7 +83,6 @@ def fetch_data():
         if not latitude:
             latitude = re.findall(r"\d\d.\d\d\d\d\d\d", geo)[-1]
         longitude = re.findall(r"-\d\d\d.\d\d\d\d\d\d\d\d\d\d\d\d", geo)
-        longitude = longitude[0] if longitude else ""
         if not longitude:
             longitude = re.findall(r"-\d\d\d.\d\d\d\d\d\d", geo)
         longitude = longitude[0] if longitude else "<MISSING>"
