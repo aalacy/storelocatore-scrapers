@@ -63,8 +63,6 @@ def fetch_data():
         json_data = r.json()
         j = json_data["results"]
 
-        new_coordinates = []
-
         for i in j:
             store = []
             store.append("https://www.thelittleclinic.com/")
@@ -84,7 +82,7 @@ def fetch_data():
             lng = i["longitude"]
             store.append(lat)
             store.append(lng)
-            new_coordinates.append([lat, lng])
+            zip_codes.found_location_at(lat, lng)
             hours = " ".join(i["weekHours"])
             store.append(hours)
             store.append(
@@ -93,9 +91,6 @@ def fetch_data():
             )
             store = [str(x).strip() if x else "<MISSING>" for x in store]
             yield store
-
-        if len(new_coordinates) > 0:
-            zip_codes.mark_found(new_coordinates)
 
 
 def scrape():
