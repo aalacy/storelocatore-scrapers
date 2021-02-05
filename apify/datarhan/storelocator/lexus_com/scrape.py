@@ -53,8 +53,6 @@ def fetch_data():
             poi["id"], poi["dealerName"].lower()
         )
         location_name = poi["dealerName"]
-        if location_name == "Keyes Lexus of Valencia":
-            print(poi)
         location_name = location_name if location_name else "<MISSING>"
         street_address = poi["dealerAddress"]["address1"]
         street_address = street_address if street_address else "<MISSING>"
