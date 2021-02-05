@@ -40,8 +40,6 @@ def fetch_data():
     # Your scraper here
     session = SgRequests()
 
-    items = []
-
     DOMAIN = "eagletransmission.com"
 
     start_url = "https://eagletransmission.com/location"
@@ -105,9 +103,7 @@ def fetch_data():
             hours_of_operation,
         ]
 
-        items.append(item)
-
-    return items
+        yield item
 
 
 def scrape():
