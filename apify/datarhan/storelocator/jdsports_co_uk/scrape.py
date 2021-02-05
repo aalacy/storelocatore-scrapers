@@ -2,13 +2,9 @@ import csv
 import json
 from lxml import etree
 from urllib.parse import urljoin
-from sgrequests import SgRequests
-from sglogging import sglog
-import os
 
-log = sglog.SgLogSetup().get_logger(
-    logger_name="jdsports.co.uk", stdout_log_level="INFO"
-)
+from sgselenium import SgFirefox
+
 
 HEADERS_LIST_PAGE = {
     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
@@ -65,7 +61,6 @@ def write_output(data):
 
 
 def fetch_data():
-    os.environ["PROXY_URL"] = "http://groups-BUYPROXIES94952:{}@proxy.apify.com:8000/"
 
     items = []
     scraped_stores = []
@@ -73,29 +68,20 @@ def fetch_data():
     DOMAIN = "jdsports.co.uk"
     start_url = "https://www.jdsports.co.uk/store-locator/all-stores/"
 
-    response_text = get_page(start_url, HEADERS_LIST_PAGE)
-    dom = etree.HTML(response_text)
+    with SgFirefox() as driver:
+        driver.get(start_url)
+        dom = etree.HTML(driver.page_source)
 
-    try:
-        all_locations = dom.xpath('//a[@class="storeCard guest"]/@href')
-    except:
-        # TODO - if it was not "Access Denied", but some other unexpected page !!
-        exit(response_text)
-
+    all_locations = dom.xpath('//a[@class="storeCard guest"]/@href')
     for url in all_locations:
         store_url = urljoin(start_url, url)
+        with SgFirefox() as driver:
+            driver.get(store_url)
+            loc_dom = etree.HTML(driver.page_source)
 
-        response_text = get_page(store_url, HEADERS_STORE_PAGE)
-        loc_dom = etree.HTML(response_text)
-
-        try:
-            data = loc_dom.xpath(
-                '//script[@type="application/ld+json" and contains(text(), "Store")]/text()'
-            )[0]
-        except:
-            # TODO - if it was not "Access Denied", but some other unexpected page !!
-            exit(response_text)
-
+        data = loc_dom.xpath(
+            '//script[@type="application/ld+json" and contains(text(), "Store")]/text()'
+        )[0]
         poi = json.loads(data)
 
         location_name = poi["name"]
@@ -151,44 +137,12 @@ def fetch_data():
             hours_of_operation,
         ]
 
-        log.info("Store page done")
-
         check = "{} {}".format(store_number, street_address)
         if check not in scraped_stores:
             scraped_stores.append(check)
             items.append(item)
 
     return items
-
-
-def get_page(page_url, headers):
-    access_denied_text = "Access Denied"
-    response_text = access_denied_text
-
-    i = 1
-
-    # TODO set best value ??
-    max_tries = 10
-    while access_denied_text.lower() in response_text.lower():
-        session = SgRequests()
-
-        if i > 1:
-            log.info(f"Got {access_denied_text}. Retrying...")
-
-        log.info(f"Requesting page: {page_url}")
-
-        response = session.get(page_url, headers=headers)
-        response_text = response.text
-
-        # if proxy did not work for max_tries times in a row
-        if i >= max_tries:
-            exit(
-                f"{i} different IPs failed to access {page_url}. Is Proxy working correctly ?"
-            )
-
-        i += 1
-
-    return response_text
 
 
 def scrape():

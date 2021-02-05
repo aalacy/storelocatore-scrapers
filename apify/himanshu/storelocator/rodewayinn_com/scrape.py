@@ -1,3 +1,4 @@
+from bs4 import BeautifulSoup
 import csv
 from sgrequests import SgRequests
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
@@ -106,6 +107,14 @@ def fetch_data():
             store.append(longitude)
             store.append(hours_of_operation)
             store.append(page_url)
+            [
+                str(x).strip().replace("\n", "").replace("\t", "").replace("\r", "")
+                for x in store
+            ]
+            req = session.get(page_url, headers=headers)
+            soup = BeautifulSoup(req.text, "lxml")
+            if soup.find("strong", {"class", "text-uppercase"}):
+                continue
             yield store
 
     r = session.get(
@@ -147,6 +156,14 @@ def fetch_data():
         store.append(longitude if longitude else "<MISSING>")
         store.append(hours_of_operation if hours_of_operation else "<MISSING>")
         store.append(page_url if page_url else "<MISSING>")
+        [
+            str(x).strip().replace("\n", "").replace("\t", "").replace("\r", "")
+            for x in store
+        ]
+        req = session.get(page_url, headers=headers)
+        soup = BeautifulSoup(req.text, "lxml")
+        if soup.find("strong", {"class", "text-uppercase"}):
+            continue
         yield store
 
 
