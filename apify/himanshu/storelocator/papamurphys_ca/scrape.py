@@ -89,7 +89,6 @@ def fetch_data():
         store.append(hours_of_operation)
         store.append(page_url)
         store = [x.strip() if type(x) == str else x for x in store]
-        # logger.info(store)
         yield store
 
 
