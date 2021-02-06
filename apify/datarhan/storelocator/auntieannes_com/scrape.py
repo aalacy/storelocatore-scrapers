@@ -48,7 +48,12 @@ def fetch_data():
 
     DOMAIN = "auntieannes.com"
     user_agent = {
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.183 Safari/537.36"
+        "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+        "accept-encoding": "gzip, deflate, br",
+        "accept-language": "ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7,pt;q=0.6",
+        "referer": "https://www.auntieannes.com/",
+        "upgrade-insecure-requests": "1",
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.96 Safari/537.36",
     }
 
     start_url = "https://auntieannes.com/"
@@ -58,7 +63,11 @@ def fetch_data():
     for city_url in all_cities:
         logger.info(f"scraping city: {city_url}")
         full_city_url = urllib.parse.urljoin(start_url, city_url)
-        city_response = session.get(full_city_url, headers=user_agent)
+        try:
+            city_response = session.get(full_city_url, headers=user_agent)
+        except Exception as e:
+            logger.info(f"!!! Warning, {full_city_url} passed with eception: {e}")
+            continue
         city_dom = etree.HTML(city_response.text)
 
         all_poi_data = city_dom.xpath('//div[@class="city-list"]/ul/li')
