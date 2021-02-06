@@ -76,6 +76,9 @@ def fetch_data():
                     zc = addinfo.rsplit(" ", 1)[1]
                     if zc == "":
                         zc = "<MISSING>"
+                    if "1600 Mid Rivers Mall" in add:
+                        zc = "63376"
+                    add = add.replace("\\u2013", "-")
                     yield [
                         website,
                         loc,
