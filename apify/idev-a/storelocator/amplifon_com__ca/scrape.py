@@ -1,5 +1,6 @@
 import csv
 from sgrequests import SgRequests
+from bs4 import BeautifulSoup as bs
 import json
 
 from util import Util  # noqa: I900
@@ -85,9 +86,16 @@ def fetch_data():
         if location["phones"]:
             phone = myutil._valid(location["phones"][0]["phonenumber"])
         location_type = location["type"]
-        hours_of_operation = "<MISSING>"
         latitude = location["latitude"]
         longitude = location["longitude"]
+        rr = session.get(page_url)
+        soup1 = bs(rr.text, "lxml")
+        hours = []
+        for _ in soup1.select("#detailStoreInfo div.ds-list-week p.ds-single-day"):
+            hours.append(
+                f'{_.select_one("span.ds-day").text}: {_.select_one("span.ds-time").text}'
+            )
+        hours_of_operation = myutil._valid("; ".join(hours))
 
         _item = [
             locator_domain,
