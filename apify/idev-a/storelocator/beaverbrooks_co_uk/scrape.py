@@ -63,13 +63,18 @@ def _data():
     }
 
 
-def parse_second(url, data):
+def fetch_data():
+    data = []
+
     locator_domain = "https://www.beaverbrooks.co.uk/"
-    rr = session.get(url)
+    base_url = "https://www.beaverbrooks.co.uk/stores"
+    rr = session.get(base_url, headers=_headers())
     soup = bs(rr.text, "lxml")
-    links = soup.select("div.store-info a.store-link")
-    for link in links:
-        page_url = urljoin("https://www.beaverbrooks.co.uk", link["href"])
+    locations = soup.select("ul.stores-list li.stores-list__store")
+    for location in locations:
+        page_url = urljoin(
+            "https://www.beaverbrooks.co.uk", location["data-store-link"].strip()
+        )
         r1 = session.get(page_url)
         soup1 = bs(r1.text, "lxml")
         store_number = "<MISSING>"
@@ -78,8 +83,8 @@ def parse_second(url, data):
         state = "<MISSING>"
         location_type = "<MISSING>"
         hours_of_operation = "<MISSING>"
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
+        latitude = location["data-lat"]
+        longitude = location["data-long"]
         hours_of_operation = "<MISSING>"
         street_address = "<MISSING>"
         city = "<MISSING>"
@@ -134,19 +139,6 @@ def parse_second(url, data):
         ]
 
         myutil._check_duplicate_by_loc(data, _item)
-
-
-def fetch_data():
-    data = []
-
-    base_url = "https://www.beaverbrooks.co.uk/stores"
-    rr = session.get(base_url, headers=_headers())
-    soup = bs(rr.text, "lxml")
-    links = soup.select("div.columns a.location-link")
-    for link in links:
-        page_url = urljoin("https://www.beaverbrooks.co.uk", link["href"])
-        parse_second(page_url, data)
-
     return data
 
 
