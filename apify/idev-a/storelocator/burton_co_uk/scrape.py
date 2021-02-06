@@ -120,9 +120,7 @@ def parse_detail(page_url, data):
         data.append(_item)
 
 
-def fetch_data():
-    data = []
-
+def fetch_uk(data):
     base_url = "https://stores.burton.co.uk/index.html"
     r = session.get(base_url)
     soup = bs(r.text, "lxml")
@@ -130,6 +128,67 @@ def fetch_data():
     for link in links:
         page_url = urljoin("https://stores.burton.co.uk/", link["href"])
         parse_detail(page_url, data)
+
+
+def fetch_ca(data):
+    base_url = "https://www.burton.co.uk/store-locator?country=Canada"
+    locator_domain = "https://www.burton.co.uk/"
+    r = session.get(base_url)
+    soup = bs(r.text, "lxml")
+    scripts = [
+        _.contents[0]
+        for _ in soup.select("script")
+        if _.contents and '"stores":' in _.contents[0]
+    ]
+    locations = json.loads(
+        scripts[0].split('"stores":')[1].strip().split(',"selectedStore":')[0].strip()
+    )
+    for location in locations:
+        page_url = "<MISSING>"
+        location_type = location["brandName"]
+        location_name = location["name"]
+        street_address = location["address"]["line1"] + myutil._valid1(
+            location["address"]["line2"]
+        )
+        city = myutil._valid(location["address"]["city"])
+        country_code = location["address"]["country"]
+        state = "<MISSING>"
+        zip = myutil._valid(location["address"]["postcode"])
+        store_number = location["storeId"]
+        phone = myutil._valid(location["telephoneNumber"])
+        hours = []
+        for key, val in location["openingHours"].items():
+            hours.append(f"{key}: {val}")
+        hours_of_operation = "; ".join(hours)
+        latitude = myutil._valid(location["latitude"])
+        longitude = myutil._valid(location["longitude"])
+
+        _item = [
+            locator_domain,
+            page_url,
+            location_name,
+            street_address,
+            city,
+            state,
+            zip,
+            country_code,
+            store_number,
+            phone,
+            location_type,
+            latitude,
+            longitude,
+            hours_of_operation,
+        ]
+
+        data.append(_item)
+
+
+def fetch_data():
+    data = []
+
+    fetch_uk(data)
+
+    fetch_ca(data)
 
     return data
 
