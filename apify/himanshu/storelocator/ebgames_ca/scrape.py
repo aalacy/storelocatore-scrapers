@@ -52,7 +52,7 @@ def fetch_data():
         tem_var = []
 
         name = i["Name"]
-        if "CLOSED" in name.upper():
+        if "CLOSED" in name.strip().upper():
             continue
 
         st = i["Address"]
