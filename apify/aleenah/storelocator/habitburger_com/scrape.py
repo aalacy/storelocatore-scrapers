@@ -1,6 +1,7 @@
 import csv
 from sgselenium import SgSelenium
 import re
+import time
 from bs4 import BeautifulSoup
 from sglogging import SgLogSetup
 
@@ -61,7 +62,7 @@ def fetch_data():
         if cs != []:
             coming_soon.append(url)
             continue
-
+        time.sleep(2)
         soup = BeautifulSoup(driver.page_source, 'html.parser')
         scripts=soup.find_all("script")
         the_script= soup.find_all('script', {'type': 'application/ld+json'})[1]
