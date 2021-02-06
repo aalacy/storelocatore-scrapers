@@ -66,7 +66,12 @@ def fetch_data():
         r1 = session.get(page_url, headers=headers)
         soup1 = BeautifulSoup(r1.text, "lxml")
         log = soup1.find_all("iframe")[-1]["src"].split("!2d")[1].split("!3d")[0]
-        lat = soup1.find_all("iframe")[-1]["src"].split("!2d")[1].split("!3d")[1].split("!")[0]
+        lat = (
+            soup1.find_all("iframe")[-1]["src"]
+            .split("!2d")[1]
+            .split("!3d")[1]
+            .split("!")[0]
+        )
 
         store = []
         store.append("http://papamurphys.ca/")
