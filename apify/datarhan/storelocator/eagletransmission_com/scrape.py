@@ -7,7 +7,7 @@ from sgscrape.sgpostal import parse_address
 
 
 def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
+    with open("data.csv", mode="w") as output_file:
         writer = csv.writer(
             output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
         )
@@ -39,8 +39,6 @@ def write_output(data):
 def fetch_data():
     # Your scraper here
     session = SgRequests()
-
-    items = []
 
     DOMAIN = "eagletransmission.com"
 
@@ -105,9 +103,7 @@ def fetch_data():
             hours_of_operation,
         ]
 
-        items.append(item)
-
-    return items
+        yield item
 
 
 def scrape():
