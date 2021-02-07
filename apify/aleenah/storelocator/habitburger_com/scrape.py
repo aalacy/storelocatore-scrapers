@@ -71,7 +71,6 @@ def fetch_data():
             if "/locations/" in l:
                 if page_url[-1] != l:
                     page_url.append(l)
-                    print(l)
     del page_url[0]
     logger.info(len(page_url))
 
@@ -83,7 +82,7 @@ def fetch_data():
         if cs != []:
             coming_soon.append(url)
             continue
-        time.sleep(2)
+        time.sleep(5)
         soup = BeautifulSoup(driver.page_source, "html.parser")
 
         the_script = soup.find_all("script", {"type": "application/ld+json"})[1]
