@@ -76,6 +76,7 @@ def process_record(raw_results_from_one_zipcode):
 
             all_poi.append(
                 SgRecord(
+                    locator_domain=DOMAIN,
                     page_url=page_url,
                     location_name=location_name,
                     street_address=street_address,
@@ -89,7 +90,7 @@ def process_record(raw_results_from_one_zipcode):
                     latitude=latitude,
                     longitude=longitude,
                     locator_domain=DOMAIN,
-                    hours_of_operation=hours_of_operation,
+                    hours_of_operation=hours_of_operation
                 )
             )
 
