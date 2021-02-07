@@ -1,6 +1,8 @@
 import csv
 from sgrequests import SgRequests
+from bs4 import BeautifulSoup as bs
 import json
+from urllib.parse import urljoin
 
 from util import Util  # noqa: I900
 
@@ -40,41 +42,38 @@ def write_output(data):
             writer.writerow(row)
 
 
-def _phone(phone):
-    if phone:
-        return phone.split("\n")[0].strip().replace("Phone:", "")
-    else:
-        return "<MISSING>"
-
-
 def fetch_data():
     data = []
 
-    locator_domain = "https://www.martinsgroceriestogo.com/"
-    base_url = "https://api.freshop.com/1/stores?app_key=martins&has_address=true&limit=-1&token=a37ebe52509f935976c8ed2d68cbf25d"
+    locator_domain = "https://elahorro.net/"
+    base_url = "https://elahorro.net/es/tiendas"
     rr = session.get(base_url)
-    locations = json.loads(rr.text)["items"]
+    locations = json.loads(
+        rr.text.split(',"features":')[1]
+        .strip()
+        .split(',"pagination":null};')[0]
+        .strip()
+    )
     for location in locations:
-        page_url = myutil._valid(location.get("url"))
-        store_number = location["store_number"].strip()
-        location_name = myutil._valid(location["name"])
-        country_code = location.get("country", "US")
-        street_address = "<MISSING>"
-        if "address_1" in location:
-            street_address = location.get("address_1")
-        elif "address_0" in location:
-            street_address = location.get("address_0")
-
-        city = location["city"]
-        state = location["state"]
-        zip = location["postal_code"]
-        phone = _phone(location["phone"])
-        if phone == "<MISSING>":
-            phone = _phone(location["phone_md"])
-        location_type = "<MISSING>"
-        latitude = location["latitude"]
-        longitude = location["longitude"]
-        hours_of_operation = myutil._valid(location.get("hours"))
+        page_url = urljoin("https://elahorro.net", location["properties"]["url"])
+        store_number = location["id"]
+        location_name = location["properties"]["name"]
+        country_code = "US"
+        address = [
+            _
+            for _ in bs(location["properties"]["fulladdress"], "lxml")
+            .select_one(".locationaddress")
+            .stripped_strings
+        ]
+        street_address = address[0]
+        city = address[1].split(",")[0]
+        state = address[1].split(",")[1].strip()
+        zip = address[2].split("\xa0")[-1]
+        phone = "<MISSING>"
+        location_type = location["type"]
+        latitude = location["geometry"]["coordinates"][1]
+        longitude = location["geometry"]["coordinates"][0]
+        hours_of_operation = "<MISSING>"
 
         _item = [
             locator_domain,
