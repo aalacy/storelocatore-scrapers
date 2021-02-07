@@ -52,14 +52,14 @@ def fetch_data():
         "a[href*=locations]"
     )
     p = 0
-    for link in linklist:        
+    for link in linklist:
         link = "https://pterrys.com" + link["href"]
         if link in titlelist:
             continue
         titlelist.append(link)
         r = session.get(link, headers=headers, verify=False)
         soup = BeautifulSoup(r.text, "html.parser")
-        title = soup.find('title').text.split('-')[0]
+        title = soup.find("title").text.split("-")[0]
         divlist = soup.findAll("div", {"class": "itemContent"})
         address = re.sub(cleanr, "\n", str(divlist[0])).strip()
         address = re.sub(pattern, "\n", str(address)).strip().splitlines()
@@ -86,7 +86,7 @@ def fetch_data():
         except:
             pass
         try:
-            hours = hours.split('hours:',1)[1].strip()
+            hours = hours.split("hours:", 1)[1].strip()
         except:
             pass
         data.append(
@@ -104,7 +104,7 @@ def fetch_data():
                 "<MISSING>",
                 "<MISSING>",
                 "<MISSING>",
-                hours.replace('&amp;','&'),
+                hours.replace("&amp;", "&"),
             ]
         )
         p += 1
