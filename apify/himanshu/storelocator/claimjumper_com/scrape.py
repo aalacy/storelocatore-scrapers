@@ -1,8 +1,13 @@
 # -*- coding: utf-8 -*-
 import csv
 import json
+import time
 
 from bs4 import BeautifulSoup
+
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as ec
+from selenium.webdriver.support.ui import WebDriverWait
 
 from sglogging import SgLogSetup
 
@@ -86,6 +91,10 @@ def fetch_data():
 
         log.info(page_url)
         driver.get(page_url)
+        WebDriverWait(driver, 50).until(
+            ec.presence_of_element_located((By.ID, "mainContent"))
+        )
+        time.sleep(5)
 
         soup2 = BeautifulSoup(driver.page_source, "lxml")
 
