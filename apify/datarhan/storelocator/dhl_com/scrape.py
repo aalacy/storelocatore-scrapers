@@ -76,7 +76,6 @@ def scrape_country(country):
         if not data.get("servicePoints"):
             continue
 
-        coords = []
         for poi in data["servicePoints"]:
             store_url = ""
             store_url = store_url if store_url else "<MISSING>"
@@ -105,7 +104,7 @@ def scrape_country(country):
             latitude = poi["geoLocation"]["latitude"]
             longitude = poi["geoLocation"]["longitude"]
             if latitude and longitude:
-                coords.append((latitude, longitude))
+                search.found_location_at(latitude, longitude)
             latitude = latitude if latitude else "<MISSING>"
             longitude = longitude if longitude else "<MISSING>"
             hours_of_operation = []
@@ -138,8 +137,6 @@ def scrape_country(country):
             if check not in scrape_items:
                 scrape_items.append(check)
                 yield item
-        search.mark_found(coords)
-
 
 def scrape():
     data = fetch_data()
