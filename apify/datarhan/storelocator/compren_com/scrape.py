@@ -2,7 +2,7 @@ import csv
 from lxml import etree
 
 from sgrequests import SgRequests
-from sgscrape.sgpostal import International_Parser, parse_address
+from sgscrape.sgpostal import parse_address_usa
 
 
 def write_output(data):
@@ -120,7 +120,7 @@ def fetch_data():
         loc_name_2 = poi_html.xpath("store_number/text()")[0]
         location_name = f"Friendly Computers #{loc_name_1} - {loc_name_2}"
         street_address = poi_html.xpath("address/text()")[0]
-        structured_result = parse_address(street_address, International_Parser())
+        structured_result = parse_address_usa(street_address)
         street_address = structured_result.street_address_1
         city = structured_result.city
         if not city:
@@ -133,7 +133,7 @@ def fetch_data():
         state = state[0] if state else "<MISSING>"
         zip_code = poi_html.xpath("zipcode/text()")
         zip_code = zip_code[0] if zip_code else "<MISSING>"
-        country_code = "<MISSING>"
+        country_code = structured_result.country
         store_number = loc_name_2
         phone = poi_html.xpath("phone/text()")
         phone = phone[0] if phone else "<MISSING>"
