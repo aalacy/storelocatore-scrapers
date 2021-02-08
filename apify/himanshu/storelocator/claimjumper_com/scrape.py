@@ -91,10 +91,15 @@ def fetch_data():
 
         log.info(page_url)
         driver.get(page_url)
-        WebDriverWait(driver, 50).until(
-            ec.presence_of_element_located((By.ID, "mainContent"))
-        )
-        time.sleep(5)
+
+        try:
+            WebDriverWait(driver, 50).until(
+                ec.presence_of_element_located((By.ID, "mfLocationJsonLD"))
+            )
+        except:
+            pass
+
+        time.sleep(8)
 
         soup2 = BeautifulSoup(driver.page_source, "lxml")
 
