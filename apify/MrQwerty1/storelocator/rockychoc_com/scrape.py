@@ -63,10 +63,10 @@ def fetch_data():
     )
     text = text.split("markersCoords.push(")[1:]
     for t in text:
-        if t.find("function") != -1:
+        _id = t.split("id:")[1].split(",")[0].strip()
+        if _id == "0":
             break
 
-        _id = t.split("id:")[1].split(",")[0].strip()
         j = yaml.load(t.split(", id")[0] + "}", Loader=yaml.Loader)
         root = get_root(_id)
 
