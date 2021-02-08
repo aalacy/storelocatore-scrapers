@@ -90,7 +90,7 @@ def fetch_data():
                             if "Canada" in country:
                                 country = "CA"
                             else:
-                                county = "US"
+                                country = "US"
                             try:
                                 phone = item.split('"phone":"')[1].split('"')[0]
                             except:
