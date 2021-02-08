@@ -76,6 +76,8 @@ def fetch_data():
         longitude = "<MISSING>"
         hoo = poi_html.xpath('.//div[@class="hours"]/p[2]//text()')
         hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
+        if "fax" in hours_of_operation.lower():
+            hours_of_operation = "<MISSING>"
 
         item = [
             DOMAIN,
