@@ -34,7 +34,6 @@ def write_output(data):
 def fetch_data():
     out = []
     locator_domain = "https://www.marshalls.ca/"
-    page_url = "https://www.marshalls.ca/en/all-store-locations"
     api_url = "https://marketingsl.tjx.com/storelocator/GetAllStoresForChain"
     data = {"chain": "93", "lang": "en"}
 
@@ -58,6 +57,7 @@ def fetch_data():
         longitude = j.get("Longitude") or "<MISSING>"
         location_type = "<MISSING>"
         hours_of_operation = j.get("Hours") or "<MISSING>"
+        page_url = f"https://www.marshalls.ca/en/storelocator?store={store_number}"
 
         row = [
             locator_domain,
