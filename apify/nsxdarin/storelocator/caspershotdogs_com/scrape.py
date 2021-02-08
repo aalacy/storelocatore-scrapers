@@ -36,7 +36,6 @@ def write_output(data):
 
 def fetch_data():
     url = "https://caspershotdogs.com/pages/locations"
-    locs = []
     r = session.get(url, headers=headers, verify=False)
     if r.encoding is None:
         r.encoding = "utf-8"
