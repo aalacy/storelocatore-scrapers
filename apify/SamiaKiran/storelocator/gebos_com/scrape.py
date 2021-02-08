@@ -55,7 +55,7 @@ def fetch_data():
             "https://www.gebos.com/locations/"
             + title.split(",", 1)[0].replace(" ", "-").lower()
         )
-        print(link)
+
         lat = loc["lat"]
         longt = loc["lng"]
         phone = loc["phone"]
@@ -63,8 +63,10 @@ def fetch_data():
         city = loc["city"]
         state = loc["state"]
         pcode = loc["postal"]
-        hours = loc["hours1"]
-
+        try:
+            hours = loc["hours1"] + " " + loc["hours2"]
+        except:
+            hours = loc["hours1"]
         data.append(
             [
                 "https://www.gebos.com//",
