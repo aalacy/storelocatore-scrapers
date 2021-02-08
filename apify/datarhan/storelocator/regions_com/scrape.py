@@ -58,7 +58,7 @@ def process_record(raw_results_from_one_zipcode):
         store_number = ""
         location_type = poi["type"]
         if "bank-branch" in page_url:
-            location_type = "branchcd"
+            location_type = "branch"
         latitude = poi["lat"]
         longitude = poi["lng"]
 
