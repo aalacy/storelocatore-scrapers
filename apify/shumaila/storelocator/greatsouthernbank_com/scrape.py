@@ -46,7 +46,7 @@ def fetch_data():
     locations = session.get(url, headers=headers, verify=False).json()["branches"]
     for loc in locations:
         title = loc["name"]
-        store = loc["id"]
+        store = "<MISSING>"
         lat = loc["lat"]
         longt = loc["long"]
         street = loc["address"]
@@ -58,7 +58,10 @@ def fetch_data():
         detail = BeautifulSoup(detail, "html.parser")
         try:
             link = detail.find("a")["href"]
+            if "-84ead507913b" in link:
+                street = street + " Suite 150"
             r = session.get(link, headers=headers, verify=False)
+            store = r.text.split('"@id":"', 1)[1].split('"', 1)[0]
             soup = BeautifulSoup(r.text, "html.parser")
             hourd = soup.find("table", {"class": "hours"})
             hourd = hourd.findAll("tr")
