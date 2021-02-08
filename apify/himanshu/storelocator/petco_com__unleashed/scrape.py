@@ -1,7 +1,6 @@
 import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
-import re
 import json
 from sglogging import SgLogSetup
 
@@ -74,7 +73,6 @@ def fetch_data():
                     phone = store_soup.find(
                         "a", {"class": "phone gaq-link"}
                     ).text.strip()
-                    country_code = "US"
                     lat_lng = store_soup.find("a", {"class": "directions"})[
                         "href"
                     ].split("=")[-1]
