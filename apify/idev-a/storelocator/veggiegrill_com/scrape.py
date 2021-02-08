@@ -77,11 +77,10 @@ def fetch_data():
         phone = myutil._valid(
             location.find("a", string=re.compile("\\d{3}-\\d{4}")).text
         )
-        link = soup.find("div", attrs={"data-id": "5972"})
+        link = soup.find("div", attrs={"data-id": store_number})
         page_url = link.a["href"]
         r1 = session.get(page_url, headers=_headers())
         soup1 = bs(r1.text, "lxml")
-        store_number = "<MISSING>"
         location_type = "<MISSING>"
         latitude = "<INACCESSIBLE>"
         longitude = "<INACCESSIBLE>"
@@ -109,7 +108,7 @@ def fetch_data():
             hours_of_operation,
         ]
 
-        myutil._check_duplicate_by_loc(data, _item)
+        data.append(_item)
 
     return data
 

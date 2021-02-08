@@ -63,7 +63,6 @@ def fetch_data():
 
     session = SgRequests()
 
-    data = []
     found_poi = []
 
     locator_domain = "morganstanley.com"
@@ -140,10 +139,9 @@ def fetch_data():
                 if not link:
                     link = "<MISSING>"
 
-                search.mark_found([latitude, longitude])
+                search.found_location_at(latitude, longitude)
 
-                data.append(
-                    [
+                yield [
                         locator_domain,
                         link,
                         location_name,
@@ -159,7 +157,6 @@ def fetch_data():
                         longitude,
                         hours_of_operation,
                     ]
-                )
 
             offset = page_num * 10
             next_link = base_link + "&offset=" + str(offset)
@@ -168,7 +165,6 @@ def fetch_data():
                 "entities"
             ]
     driver.close()
-    return data
 
 
 def scrape():

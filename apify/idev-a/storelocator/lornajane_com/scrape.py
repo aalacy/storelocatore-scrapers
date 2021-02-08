@@ -40,17 +40,42 @@ def write_output(data):
             writer.writerow(row)
 
 
+def _street(val, city, name):
+    _split = val.split(",")
+    street_address = ""
+    for _ in _split:
+        if (
+            not _.lower().endswith("center")
+            and name not in _.lower()
+            and _.strip() != "San Tan Village"
+            and _.strip() != "Westfield Century City"
+        ):
+            street_address += _ + ","
+
+    street_address = street_address[:-1]
+
+    if len(_split) > 1 and _split[1].strip() in city:
+        street_address = _split[0]
+
+    return street_address
+
+
 def fetch_data():
-    locator_domain = "https://www.lornajane.com/store-finder"
+    locator_domain = "https://www.lornajane.com/"
     base_url = "https://www.lornajane.com/on/demandware.store/Sites-LJUS-Site/en_US/Stores-FindStores?showMap=true&radius=15&selectedCountryCode=US&postalCode=&radius=300%20mi"
     r = session.get(base_url)
     items = json.loads(r.text)["stores"]
     data = []
     for item in items:
-        page_url = base_url
+        page_url = "<MISSING>"
         location_name = item["name"]
-        street_address = myutil._valid(f"{item['address1']} {item.get('address2', '')}")
+        street_address = myutil._valid1(
+            myutil._valid(f"{item['address1']}")
+            + " "
+            + myutil._valid1(item.get("address2", ""))
+        ).replace("None", "")
         city = myutil._valid(item["city"])
+        street_address = _street(street_address, city, location_name)
         state = myutil._valid(item["stateCode"])
         zip = myutil._valid(myutil._digit(item["postalCode"]))
         country_code = item["countryCode"]
@@ -86,7 +111,7 @@ def fetch_data():
             longitude,
             hours_of_operation,
         ]
-        myutil._check_duplicate_by_loc(data, _item)
+        data.append(_item)
 
     return data
 

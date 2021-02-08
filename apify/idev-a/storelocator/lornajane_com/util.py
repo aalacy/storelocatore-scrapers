@@ -8,6 +8,12 @@ class Util:
         else:
             return "<MISSING>"
 
+    def _valid1(self, val):
+        if val:
+            return val.strip()
+        else:
+            return ""
+
     def _digit(self, val):
         return "".join(i for i in val if i.isdigit())
 

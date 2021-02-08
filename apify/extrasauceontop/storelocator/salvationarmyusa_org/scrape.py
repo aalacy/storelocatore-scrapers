@@ -30,12 +30,12 @@ def getdata():
 
     # Begin the loop
     x = 0
-    for lat_lon in search:
+    for lat, lon in search:
 
         params = {
             "isoCountry": "us",
-            "lat": lat_lon[0],
-            "lng": lat_lon[1],
+            "lat": lat,
+            "lng": lon,
             "distanceUnits": "MILES",
             "limit": 30,
         }
@@ -49,9 +49,9 @@ def getdata():
             store_number = "<MISSING>"
             page_url = (
                 "https://public.api.gdos.salvationarmy.org/search?isoCountry=us&lat="
-                + str(lat_lon[0])
+                + str(lat)
                 + "&lng="
-                + str(lat_lon[1])
+                + str(lon)
                 + "&distanceUnits=MILES&limit=30"
             )
 
@@ -67,8 +67,8 @@ def getdata():
             phone = location["phoneNumber"]
             if phone == "":
                 phone == "<MISSING>"
-            lat = location["location"]["latitude"]
-            lng = location["location"]["longitude"]
+            current_lat = location["location"]["latitude"]
+            current_lng = location["location"]["longitude"]
 
             # Create copies of location data for each service offered at a location
             servenum = len(location["services"])
@@ -87,8 +87,8 @@ def getdata():
                     states.append(state)
                     zips.append(zipp)
                     phones.append(phone)
-                    lats.append(lat)
-                    lngs.append(lng)
+                    lats.append(current_lat)
+                    lngs.append(current_lng)
 
                     location_types.append(service["category"]["name"])
 
@@ -105,15 +105,16 @@ def getdata():
                 states.append(state)
                 zips.append(zipp)
                 phones.append(phone)
-                lats.append(lat)
-                lngs.append(lng)
+                lats.append(current_lat)
+                lngs.append(current_lng)
 
                 location_types.append("<MISSING>")
+
+            search.found_location_at(current_lat, current_lng)
 
         # if x == 500:
         #     break
         x = x + 1
-        print(x)
 
     df = pd.DataFrame(
         {

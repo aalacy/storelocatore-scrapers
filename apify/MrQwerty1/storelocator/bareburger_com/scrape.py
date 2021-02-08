@@ -52,9 +52,9 @@ def fetch_data():
             postal = postal[1:]
         country_code = "US"
         store_number = "<MISSING>"
-        slug = j.get("slug")
-        page_url = f"https://order.bareburger.com/location/{slug}"
         location_name = j.get("name")
+        slug = j.get("slug") or location_name
+        page_url = f"https://order.bareburger.com/location/{slug}"
         phone = j.get("phone").get("value") or "<MISSING>"
         loc = a.get("geo")
         latitude = loc.get("lat") or "<MISSING>"

@@ -147,7 +147,7 @@ def fetch_data():
             zip_code = re.sub(r"\D", "", address[2]).strip()
         country_code = "US"
         store_number = "<MISSING>"
-        phone = row.find("div", {"class": "contact"}).text.strip()
+        phone = row.find("div", {"class": "contact"}).text.strip().replace("Tel: ", "")
         location_type = "<MISSING>"
         hours_of_operation = handle_missing(parse_hours(row))
         latitude = handle_missing(lat_long[i]["lat"])
