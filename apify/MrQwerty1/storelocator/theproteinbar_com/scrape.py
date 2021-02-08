@@ -75,7 +75,9 @@ def fetch_data():
         for d, t in zip(days, times):
             _tmp.append(f"{d.strip()}: {t.strip()}")
 
-        hours_of_operation = ";".join(_tmp) or "<MISSING>"
+        hours_of_operation = (
+            ";".join(_tmp).replace("Sat: Fri", "Sat: Closed;Fri") or "<MISSING>"
+        )
 
         row = [
             locator_domain,
