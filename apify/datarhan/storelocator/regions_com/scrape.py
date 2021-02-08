@@ -70,12 +70,13 @@ def process_record(raw_results_from_one_zipcode):
         hoo = [elem.strip() for elem in hoo if elem.strip()]
         hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
 
-        check = f"{location_name} {street_address}"
+        check = "{} {}".format(location_name, street_address)
         if check not in SCRAPED_POI:
             SCRAPED_POI.append(check)
 
             all_poi.append(
                 SgRecord(
+                    locator_domain=DOMAIN,
                     page_url=page_url,
                     location_name=location_name,
                     street_address=street_address,
@@ -88,7 +89,6 @@ def process_record(raw_results_from_one_zipcode):
                     location_type=location_type,
                     latitude=latitude,
                     longitude=longitude,
-                    locator_domain=DOMAIN,
                     hours_of_operation=hours_of_operation,
                 )
             )

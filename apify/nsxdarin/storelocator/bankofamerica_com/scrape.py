@@ -69,7 +69,7 @@ def fetch_data():
                                 if lurl not in locs:
                                     locs.append(lurl)
             logger.info((str(len(locs)) + " Locations Found..."))
-        if len(locs) <= 7100:
+        if len(locs) <= 7250:
             Found = True
             logger.info("Retrying...")
     for loc in locs:
@@ -116,7 +116,7 @@ def fetch_data():
                         lat = line2.split('"latitude": "')[1].split('"')[0]
                     if lng == "" and '"longitude": "' in line2:
                         lng = line2.split('"longitude": "')[1].split('"')[0]
-                    if phone == "" and '"telephone": "' in line2:
+                    if '"telephone": "' in line2:
                         phone = line2.split('"telephone": "')[1].split('"')[0]
                     if hours == "" and '"openingHours": "' in line2:
                         hours = (

@@ -71,6 +71,9 @@ def fetch_data():
             if poi["hoursOfOperation"].get("Sales"):
                 for day, hours in poi["hoursOfOperation"]["Sales"].items():
                     hours_of_operation.append(f"{day} {hours}")
+            else:
+                for day, hours in poi["hoursOfOperation"]["Service"].items():
+                    hours_of_operation.append(f"{day} {hours}")
         hours_of_operation = (
             " ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
         )

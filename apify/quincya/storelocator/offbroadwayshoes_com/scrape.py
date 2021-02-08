@@ -3,7 +3,15 @@ import json
 
 from bs4 import BeautifulSoup
 
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as ec
+from selenium.webdriver.support.ui import WebDriverWait
+
+from sglogging import SgLogSetup
+
 from sgselenium import SgChrome
+
+log = SgLogSetup().get_logger("offbroadwayshoes.com")
 
 
 def write_output(data):
@@ -39,7 +47,7 @@ def fetch_data():
 
     data = []
     found = []
-    locator_domain = "offbroadwayshoes.com"
+    locator_domain = "rackroomshoes.com"
 
     total = 1000
 
@@ -49,9 +57,10 @@ def fetch_data():
             break
 
         base_link = (
-            "https://www.offbroadwayshoes.com/store-finder?q=&page=%s&latitude=25.790654&longitude=-80.130045"
+            "https://www.rackroomshoes.com/store-finder?q=&page=%s&latitude=25.790654&longitude=-80.130045"
             % (i)
         )
+        print(base_link)
         driver.get(base_link)
         base = BeautifulSoup(driver.page_source, "lxml")
 
@@ -66,7 +75,6 @@ def fetch_data():
             zip_code = store["postalCode"]
             country_code = store["country"]
             store_number = store["name"]
-            location_type = "<MISSING>"
             phone = store["phone"]
             hours_of_operation = ""
             raw_hours = store["openings"]
@@ -76,10 +84,20 @@ def fetch_data():
                 ).strip()
             latitude = store["latitude"]
             longitude = store["longitude"]
-            link = "https://www.offbroadwayshoes.com/store/" + store_number
+            link = "https://www.rackroomshoes.com/store/" + store_number
             if link in found:
                 continue
             found.append(link)
+
+            driver.get(link)
+
+            WebDriverWait(driver, 50).until(
+                ec.presence_of_element_located((By.CLASS_NAME, "store-logo"))
+            )
+
+            base = BeautifulSoup(driver.page_source, "lxml")
+            location_type = base.find(class_="store-logo")["alt"]
+
             # Store data
             data.append(
                 [
