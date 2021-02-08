@@ -42,7 +42,7 @@ def fetch_data():
 
     items = []
 
-    DOMAIN = "suntrust.com"
+    DOMAIN = "super1foods.net"
     start_url = "https://www.super1foods.net/locations/"
 
     hdr = {
