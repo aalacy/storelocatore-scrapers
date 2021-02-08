@@ -56,9 +56,9 @@ def write_output(data):
         log.info(f"No of records being processed: {len(temp_list)}")
 
 
-def get_store_data(soup,link):
-    address = soup.find("address", {"class":"c-address"})
-    street = address.find("meta", {"itemprop": "streetAddress"})['content']
+def get_store_data(soup, link):
+    address = soup.find("address", {"class": "c-address"})
+    street = address.find("meta", {"itemprop": "streetAddress"})["content"]
     address = address.findAll("div", {"class": "c-AddressRow"})
     city = address[-2].find("span", {"class": "c-address-city"}).text
     try:
@@ -66,16 +66,18 @@ def get_store_data(soup,link):
     except:
         state = "<MISSING>"
     pcode = address[-2].find("span", {"class": "c-address-postal-code"}).text
-    ccode =  address[-1].text
-    lat = soup.find("meta", {"itemprop": "latitude"})['content']
-    longt = soup.find("meta", {"itemprop": "longitude"})['content']
+    ccode = address[-1].text
+    lat = soup.find("meta", {"itemprop": "latitude"})["content"]
+    longt = soup.find("meta", {"itemprop": "longitude"})["content"]
     phone = soup.find("span", {"itemprop": "telephone"}).text
-    title = soup.find("h1", {"class": "Hero-title"}).findAll('span')
-    title = title[0].text + " " + title[1].text 
-    hourlist =soup.find("table", {"class": "c-hours-details"}).find('tbody').findAll('tr')
+    title = soup.find("h1", {"class": "Hero-title"}).findAll("span")
+    title = title[0].text + " " + title[1].text
+    hourlist = (
+        soup.find("table", {"class": "c-hours-details"}).find("tbody").findAll("tr")
+    )
     hours = ""
     for hour in hourlist:
-        hours = hours + " "+ hour['content']
+        hours = hours + " " + hour["content"]
     data = [
         "https://versace.com/",
         link,
@@ -90,7 +92,7 @@ def get_store_data(soup,link):
         "<MISSING>",
         lat,
         longt,
-        hours
+        hours,
     ]
 
     return data
@@ -99,26 +101,35 @@ def get_store_data(soup,link):
 def fetch_data():
     # Your scraper here
     final_data = []
-    country_list = ['https://boutiques.versace.com/us/en-us/united-states','https://boutiques.versace.com/us/en-us/canada','https://boutiques.versace.com/us/en-us/puerto-rico','https://boutiques.versace.com/us/en-us/united-kingdom']
+    country_list = [
+        "https://boutiques.versace.com/us/en-us/united-states",
+        "https://boutiques.versace.com/us/en-us/canada",
+        "https://boutiques.versace.com/us/en-us/puerto-rico",
+        "https://boutiques.versace.com/us/en-us/united-kingdom",
+    ]
     if True:
         for country in country_list:
             r = session.get(country, headers=headers, verify=False)
             soup = BeautifulSoup(r.text, "html.parser")
-            linklist= soup.find("ul", {"class": "Directory-listLinks"}).findAll("a", {"class": "Directory-listLink"})
+            linklist = soup.find("ul", {"class": "Directory-listLinks"}).findAll(
+                "a", {"class": "Directory-listLink"}
+            )
             for link in linklist:
-                loc_link = link['href']
-                loc_link = loc_link.split('en-us/')[1]
-                loc_link = 'https://boutiques.versace.com/us/en-us/'+loc_link
-                count = link['data-count']
-                count = int(count.replace(')',"").replace('(',""))
+                loc_link = link["href"]
+                loc_link = loc_link.split("en-us/")[1]
+                loc_link = "https://boutiques.versace.com/us/en-us/" + loc_link
+                count = link["data-count"]
+                count = int(count.replace(")", "").replace("(", ""))
                 r = session.get(loc_link, headers=headers, verify=False)
                 soup = BeautifulSoup(r.text, "html.parser")
                 if count > 1:
-                    loclist= soup.find("ul", {"class": "Directory-listTeasers Directory-row"}).findAll("li")
+                    loclist = soup.find(
+                        "ul", {"class": "Directory-listTeasers Directory-row"}
+                    ).findAll("li")
                     for loc in loclist:
-                        loc_link = loc.find("a", {"class": "Teaser-link"})['href']
-                        loc_link = loc_link.split('en-us/')[1]
-                        loc_link = 'https://boutiques.versace.com/us/en-us/'+loc_link
+                        loc_link = loc.find("a", {"class": "Teaser-link"})["href"]
+                        loc_link = loc_link.split("en-us/")[1]
+                        loc_link = "https://boutiques.versace.com/us/en-us/" + loc_link
                         r = session.get(loc_link, headers=headers, verify=False)
                         soup = BeautifulSoup(r.text, "html.parser")
                         store_list = get_store_data(soup, loc_link)
