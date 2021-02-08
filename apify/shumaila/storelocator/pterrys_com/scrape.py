@@ -89,6 +89,14 @@ def fetch_data():
             hours = hours.split("hours:", 1)[1].strip()
         except:
             pass
+        try:
+            hours = hours.split("Hours:", 1)[1].strip()
+        except:
+            pass
+        try:
+            hours = hours.split("HOURS ", 1)[1].strip()
+        except:
+            pass
         data.append(
             [
                 "https://pterrys.com/",
