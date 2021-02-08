@@ -1,5 +1,8 @@
+import re
 import csv
 import json
+from lxml import etree
+from urllib.parse import urljoin
 
 from sgrequests import SgRequests
 
@@ -40,40 +43,50 @@ def fetch_data():
 
     items = []
 
-    DOMAIN = "primantibros.com"
-    start_url = (
-        "https://hosted.where2getit.com/primantibros/rest/locatorsearch?lang=en_US"
-    )
+    DOMAIN = "brewers.co.uk"
+    start_url = "https://www.brewers.co.uk/stores/stores"
 
-    headers = {
-        "Content-Type": "application/json",
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36",
-        "X-Requested-With": "XMLHttpRequest",
-    }
-    body = '{"request":{"appkey":"7CDBB1A2-4AC6-11EB-932C-8917919C4603","formdata":{"geoip":false,"dataview":"store_default","limit":200,"google_autocomplete":"true","geolocs":{"geoloc":[{"addressline":"17011","country":"","latitude":"","longitude":""}]},"searchradius":"500","where":{"or":{"retail":{"eq":""},"outlet":{"eq":""},"factory":{"eq":""},"promo":{"eq":""}}},"false":"0"}}}'
-    response = session.post(start_url, data=body, headers=headers)
-    data = json.loads(response.text)
+    response = session.get(start_url)
+    dom = etree.HTML(response.text)
 
-    for poi in data["response"]["collection"]:
-        store_url = poi["websiteurl"]
-        location_name = poi["name"]
-        location_name = location_name if location_name else "<MISSING>"
+    all_locations = dom.xpath('//a[contains(@href, "/stores/")]/@href')
+    for url in list(set(all_locations)):
+        store_url = urljoin(start_url, url)
+
+        loc_response = session.get(store_url)
+        loc_dom = etree.HTML(loc_response.text)
+        data = loc_dom.xpath("//@ng-init")[0]
+        data = re.findall(r"initSingle\((.+)\)", data)[0]
+        poi = json.loads(data)[0]
+
+        location_name = loc_dom.xpath('//h1[@class="inline h2"]/text()')
+        location_name = location_name[0].strip() if location_name else "<MISSING>"
         street_address = poi["address1"]
+        street_address = street_address if street_address else "<MISSING>"
+        if poi["address2"]:
+            street_address += ", " + poi["address2"]
         city = poi["city"]
-        state = poi["state"]
-        zip_code = poi["postalcode"]
+        city = city if city else "<MISSING>"
+        state = poi["county"]
+        state = state if state else "<MISSING>"
+        zip_code = poi["postcode"]
+        zip_code = zip_code if zip_code else "<MISSING>"
         country_code = poi["country"]
-        store_number = "<MISSING>"
+        country_code = country_code if country_code else "<MISSING>"
+        store_number = poi["id"]
         phone = poi["phone"]
         phone = phone if phone else "<MISSING>"
         location_type = "<MISSING>"
         latitude = poi["latitude"]
+        latitude = latitude if latitude else "<MISSING>"
         longitude = poi["longitude"]
-        hoo = []
-        for k, v in poi.items():
-            if "hours" in k:
-                day = k.replace("hours", "")
-                hoo.append(f"{day} {v}")
+        longitude = longitude if longitude else "<MISSING>"
+        hoo = loc_dom.xpath('//dl[@class="inline"]//text()')
+        hoo = [
+            elem.strip().replace("\n", "").replace("  ", " ")
+            for elem in hoo
+            if elem.strip()
+        ]
         hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
 
         item = [
