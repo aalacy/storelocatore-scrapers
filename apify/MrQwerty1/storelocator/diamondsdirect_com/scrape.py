@@ -57,6 +57,8 @@ def fetch_data():
         )
         page_url = f"https://diamondsdirect.com/{slug}"
         street_address = "".join(re.findall(r'line1:"(.*?)"', t)) or "<MISSING>"
+        if street_address.find("196 E Winchester") != -1:
+            continue
         line = "".join(re.findall(r'line2:"(.*?)"', t))
         city = line.split(",")[0].strip()
         line = line.split(",")[-1].strip()
