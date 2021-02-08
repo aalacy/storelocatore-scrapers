@@ -80,7 +80,9 @@ def fetch_data():
             req = session.get(page_url, headers=headers)
             base = BeautifulSoup(req.text, "lxml")
 
-            store.append(base.find(class_="banner__component simple-banner").img["title"])
+            store.append(
+                base.find(class_="banner__component simple-banner").img["title"]
+            )
             store.append(store_data["latitude"])
             store.append(store_data["longitude"])
             try:
