@@ -43,7 +43,6 @@ def fetch_data():
     for line in lines:
         if 'Book Now <span class="screenreadable">' in line:
             name = line.split('Book Now <span class="screenreadable">')[1].split("<")[0]
-            HoursFound = False
             website = "stoneyriver.com"
             typ = name.split(" |")[0]
             country = "US"
