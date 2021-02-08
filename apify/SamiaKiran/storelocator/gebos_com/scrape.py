@@ -63,7 +63,6 @@ def fetch_data():
         city = loc["city"]
         state = loc["state"]
         pcode = loc["postal"]
-        hours2 = loc["hours2"]
         try:
             hours = loc["hours1"] + " " + loc["hours2"]
         except:
