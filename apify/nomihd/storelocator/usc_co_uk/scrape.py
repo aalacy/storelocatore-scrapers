@@ -154,7 +154,7 @@ def fetch_data():
 
             if hours_of_operation == "" or hours_of_operation is None:
                 hours_of_operation = "<MISSING>"
-            if phone == "" or phone is None:
+            if phone == "" or phone == "N/A" or phone is None:
                 phone = "<MISSING>"
 
             curr_list = [
