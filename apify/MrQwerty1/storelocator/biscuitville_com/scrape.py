@@ -43,7 +43,7 @@ def fetch_data():
         "lat": "",
         "lng": "",
         "current_location": "Y",
-        "nonce": "a68ab3c59d",
+        "nonce": "bc44498f8b",
     }
 
     headers = {

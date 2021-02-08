@@ -64,7 +64,7 @@ def fetch_data():
         if "coming_soon" in str(item).lower():
             continue
 
-        link = item.a["href"]
+        link = item.a["href"].replace("&apos;s-herald-square", "'s-herald-square")
         req = session.get(link, headers=headers)
         base = BeautifulSoup(req.text, "lxml")
         logger.info(link)
@@ -87,9 +87,12 @@ def fetch_data():
         if "temporarily closed" in base.h1.text.lower():
             hours_of_operation = "Temporarily Closed"
         else:
-            hours_of_operation = " ".join(
-                list(base.find(class_="amlocator-schedule-table").stripped_strings)
-            )
+            try:
+                hours_of_operation = " ".join(
+                    list(base.find(class_="amlocator-schedule-table").stripped_strings)
+                )
+            except:
+                hours_of_operation = "<MISSING>"
 
         all_scripts = base.find_all("script")
         for script in all_scripts:

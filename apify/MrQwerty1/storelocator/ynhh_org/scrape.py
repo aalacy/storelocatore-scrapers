@@ -48,10 +48,14 @@ def fetch_data():
         for d in divs:
             line = d.xpath(".//address/text()")
             line = list(filter(None, [l.strip() for l in line]))
-            if line[0][0].isdigit():
-                street_address = line[0]
-            else:
-                street_address = line[1]
+
+            index = 0
+            for l in line:
+                if l[0].isdigit():
+                    break
+                index += 1
+
+            street_address = " ".join(", ".join(line[index:-1]).split())
             line = line[-1]
             city = line.split(",")[0].strip()
             line = line.split(",")[1].strip()

@@ -56,11 +56,23 @@ def fetch_data():
         data = loc_dom.xpath('//script[@type="application/ld+json"]/text()')[0]
         poi = json.loads(data)
 
-        location_name = poi["name"]
-        location_name = location_name if location_name else "<MISSING>"
+        location_name = loc_dom.xpath('//h1[@class="f-h1"]/text()')
+        location_name = (
+            location_name[0].split(" (")[0].split(" - ")[0]
+            if location_name
+            else "<MISSING>"
+        )
         if poi.get("address"):
             street_address = poi["address"]["streetAddress"]
             street_address = street_address if street_address else "<MISSING>"
+            if street_address == "Temporarily Closed":
+                address_raw = loc_dom.xpath(
+                    '//div[@class="branch-address f-h3"]/text()'
+                )
+                address_raw = [elem.strip() for elem in address_raw if elem.strip()]
+                if len(address_raw) == 3:
+                    address_raw = [", ".join(address_raw[:2])] + address_raw[2:]
+                street_address = address_raw[0]
             city = poi["address"]["addressLocality"]
             city = city if city else "<MISSING>"
             state = poi["address"]["addressRegion"]
@@ -86,7 +98,9 @@ def fetch_data():
             if phone:
                 phone = phone[0]
         phone = phone if phone else "<MISSING>"
-        location_type = poi["@type"]
+        location_type = "<MISSING>"
+        if loc_dom.xpath("//div[@data-permalink]"):
+            location_type = "Branch"
         latitude = "<MISSING>"
         longitude = "<MISSING>"
         hours_of_operation = loc_dom.xpath(

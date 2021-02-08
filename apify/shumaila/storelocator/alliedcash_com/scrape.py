@@ -1,11 +1,14 @@
-from bs4 import BeautifulSoup
 import csv
-
 from sgrequests import SgRequests
 
 session = SgRequests()
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+}
+headers = {
+    "Request-Id": "|HTTDs.jfJ5R",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.141 Safari/537.36",
+    "X-Requested-With": "XMLHttpRequest",
 }
 
 
@@ -40,102 +43,139 @@ def write_output(data):
 
 
 def fetch_data():
-    titlelist = []
-    data = []
-    url = "https://locations.alliedcash.com/index.html"
-    r = session.get(url, headers=headers, verify=False)
-    soup = BeautifulSoup(r.text, "html.parser")
-    statelist = soup.find("div", {"class": "c-directory-list"}).findAll(
-        "a", {"class": "c-directory-list-content-item-link"}
-    )
     p = 0
-    for stnow in statelist:
-        check1 = 0
-        stlink = "https://locations.alliedcash.com/" + stnow["href"]
-        r = session.get(stlink, headers=headers, verify=False)
-        soup = BeautifulSoup(r.text, "html.parser")
-        try:
-            citylist = soup.find("div", {"class": "c-directory-list"}).findAll(
-                "a", {"class": "c-directory-list-content-item-link"}
+    data = []
+    streetlist = []
+    states = [
+        "AL",
+        "AK",
+        "AZ",
+        "AR",
+        "CA",
+        "CO",
+        "CT",
+        "DC",
+        "DE",
+        "FL",
+        "GA",
+        "HI",
+        "ID",
+        "IL",
+        "IN",
+        "IA",
+        "KS",
+        "KY",
+        "LA",
+        "ME",
+        "MD",
+        "MA",
+        "MI",
+        "MN",
+        "MS",
+        "MO",
+        "MT",
+        "NE",
+        "NV",
+        "NH",
+        "NJ",
+        "NM",
+        "NY",
+        "NC",
+        "ND",
+        "OH",
+        "OK",
+        "OR",
+        "PA",
+        "RI",
+        "SC",
+        "SD",
+        "TN",
+        "TX",
+        "UT",
+        "VT",
+        "VA",
+        "WA",
+        "WV",
+        "WI",
+        "WY",
+    ]
+    for statenow in states:
+        gurl = (
+            "https://maps.googleapis.com/maps/api/geocode/json?address="
+            + statenow
+            + "&key=AIzaSyCT4uvUVAv4U6-Lgeg94CIuxUg-iM2aA4s&components=country%3AUS"
+        )
+        r = session.get(gurl, headers=headers, verify=False).json()
+        if r["status"] == "REQUEST_DENIED":
+            pass
+        else:
+            coord = r["results"][0]["geometry"]["location"]
+            latnow = coord["lat"]
+            lngnow = coord["lng"]
+        url = (
+            "https://locations.alliedcash.com/service/location/getlocationsnear?latitude="
+            + str(latnow)
+            + "&longitude="
+            + str(lngnow)
+            + "&radius=1000&brandFilter=Allied%20Cash"
+        )
+        loclist = session.get(url, headers=headers, verify=False).json()
+        for loc in loclist:
+            title = loc["ColloquialName"]
+            street = loc["Address1"] + " " + str(loc["Address2"])
+            city = loc["City"]
+            state = loc["StateCode"]
+            pcode = loc["ZipCode"]
+            phone = loc["FormattedPhone"]
+            lat = loc["Latitude"]
+            longt = loc["Longitude"]
+            store = loc["StoreNum"]
+            if street in streetlist:
+                continue
+            streetlist.append(street)
+            link = "https://locations.alliedcash.com/locations" + loc["Url"]
+            hours = (
+                "Monday "
+                + str(loc["MondayOpen"])
+                + "-"
+                + str(loc["MondayClose"])
+                + " Tuesday "
+                + str(loc["TuesdayOpen"])
+                + "-"
+                + str(loc["TuesdayClose"])
+                + " Wednesday "
+                + str(loc["WednesdayOpen"])
+                + "-"
+                + str(loc["WednesdayClose"])
+                + " Thursday "
+                + str(loc["ThursdayOpen"])
+                + "-"
+                + str(loc["ThursdayClose"])
+                + " Friday "
+                + str(loc["FridayOpen"])
+                + "-"
+                + str(loc["FridayClose"])
             )
-        except:
-            citylist = []
-            citylist.append(stlink)
-            check1 = 1
-        for citynow in citylist:
-            check2 = 0
-            if check1 == 0:
-                citylink = "https://locations.alliedcash.com/" + citynow["href"]
-                r = session.get(citylink, headers=headers, verify=False)
-                soup = BeautifulSoup(r.text, "html.parser")
-                try:
-                    branchlist = soup.find("div", {"class": "LocationCards"}).findAll(
-                        "a", {"class": "LocationCard-link--store"}
-                    )
-                except:
-                    branchlist = []
-                    branchlist.append(citylink)
-                    check2 = 1
-            else:
-                branchlist = []
-                branchlist.append(citylink)
-                check2 = 1
-            for branch in branchlist:
-                if check2 == 0:
-                    branch = "https://locations.alliedcash.com/" + branch["href"]
-                    branch = branch.replace("../", "")
-                    if branch in titlelist:
-                        continue
-                    titlelist.append(branch)
-                    r = session.get(branch, headers=headers, verify=False)
-                    soup = BeautifulSoup(r.text, "html.parser")
-                store = r.text.split('"ids":', 1)[1].split(",", 1)[0]
-                lat = r.text.split('"latitude":', 1)[1].split(",", 1)[0]
-                longt = r.text.split('"longitude":', 1)[1].split(",", 1)[0]
-                title = (
-                    soup.find("span", {"itemprop": "name"})
-                    .text.replace("\n", " ")
-                    .strip()
-                )
-                street = soup.find("span", {"class": "c-address-street-1"}).text
-                city = soup.find("span", {"class": "c-address-city"}).text
-                try:
-                    state = soup.find("abbr", {"class": "c-address-state"}).text
-                except:
-                    continue
-                pcode = soup.find("span", {"class": "c-address-postal-code"}).text
-                phone = soup.find("span", {"id": "telephone"}).text
-                hours = soup.find(
-                    "table", {"class": "c-location-hours-details"}
-                ).text.replace("PM", "PM ")
-                try:
-                    hours = hours.split("Week", 1)[1]
-                except:
-                    pass
-                data.append(
-                    [
-                        "https://alliedcash.com/",
-                        branch,
-                        title,
-                        street,
-                        city.replace(",", ""),
-                        state,
-                        pcode,
-                        "US",
-                        store,
-                        phone,
-                        "<MISSING>",
-                        lat,
-                        longt,
-                        hours.replace("Day of the WeekHours", "")
-                        .replace("day", "day ")
-                        .replace("Hours", "")
-                        .replace("Closed", "Closed ")
-                        .strip(),
-                    ]
-                )
+            data.append(
+                [
+                    "https://www.alliedcash.com/",
+                    link,
+                    title,
+                    street,
+                    city,
+                    state,
+                    pcode,
+                    "US",
+                    store,
+                    phone,
+                    "<MISSING>",
+                    lat,
+                    longt,
+                    hours,
+                ]
+            )
 
-                p += 1
+            p += 1
     return data
 
 

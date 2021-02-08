@@ -67,10 +67,8 @@ def fetch_data():
     hours = "<MISSING>"
 
     items = base.find_all(class_="owl-item")
-    log.info("Items found: " + str(len(items)))
     for item in items:
         if "data-address" in str(item):
-            log.info("Store data found ..")
             name = item.find(class_="wpgmza_carousel_info_holder").find_all("p")[1].text
             if name in found:
                 continue
@@ -96,6 +94,8 @@ def fetch_data():
                     phone = re.findall(r"[\d]{3}-[\d]{3}-[\d]{4}", str(item))[0]
                 except:
                     phone = "<MISSING>"
+            if "-" not in phone:
+                phone = "<MISSING>"
             typ = item.img["src"].split("/")[-1].split("-MapIcon")[0].strip()
             lat = item.div["data-latlng"].split(",")[0].strip()
             lng = item.div["data-latlng"].split(",")[1].strip()

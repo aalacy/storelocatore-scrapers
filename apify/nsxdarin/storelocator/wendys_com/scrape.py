@@ -127,8 +127,6 @@ def fetch_data():
             if r2.encoding is None:
                 r2.encoding = "utf-8"
             for line2 in r2.iter_lines(decode_unicode=True):
-                if "<span>Closed Temporarily.</span>" in line2:
-                    Closed = True
                 if 'itemprop="name">' in line2 and name == "":
                     name = line2.split('itemprop="name">')[1].split("<")[0]
                 if "'dimension4', '" in line2:
@@ -147,9 +145,12 @@ def fetch_data():
                     lng = line2.split('<meta itemprop="longitude" content="')[1].split(
                         '"'
                     )[0]
-                if hours == "" and "data-days='[{" in line2:
+                if hours == "" and "Restaurant Hours</h4>" in line2:
                     days = (
-                        line2.split("data-days='[{")[1].split("}]'")[0].split('"day":"')
+                        line2.split("Restaurant Hours</h4>")[1]
+                        .split("data-days='[{")[1]
+                        .split("}]'")[0]
+                        .split('"day":"')
                     )
                     for day in days:
                         if '"intervals"' in day:

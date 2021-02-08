@@ -82,13 +82,22 @@ def fetch_data():
         lat = ""
         lng = ""
         hours = ""
+        Closed = False
         r2 = session.get(lurl, headers=headers)
         for line2 in r2.iter_lines():
             line2 = str(line2.decode("utf-8"))
+            if "temporarily closed" in line2:
+                Closed = True
             if "<title>" in line2:
                 if '"geo.region" content="United Kingdom-' in line2:
                     state = (
                         line2.split('"geo.region" content="United Kingdom-')[1]
+                        .split('"')[0]
+                        .replace("-", " ")
+                    )
+                if 'name="geo.region" content="Ireland-' in line2:
+                    state = (
+                        line2.split('name="geo.region" content="Ireland-')[1]
                         .split('"')[0]
                         .replace("-", " ")
                     )
@@ -112,6 +121,8 @@ def fetch_data():
                             hours = hours + "; " + hrs
         if state == "":
             state = "<MISSING>"
+        if Closed:
+            hours = "Closed"
         yield [
             website,
             lurl,
