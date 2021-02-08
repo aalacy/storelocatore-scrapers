@@ -40,7 +40,6 @@ def fetch_data():
     if r.encoding is None:
         r.encoding = "utf-8"
     lines = r.iter_lines(decode_unicode=True)
-    HoursFound = False
     for line in lines:
         if 'Book Now <span class="screenreadable">' in line:
             name = line.split('Book Now <span class="screenreadable">')[1].split("<")[0]
