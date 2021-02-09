@@ -62,7 +62,12 @@ def fetch_data():
         ct = soup.find("section", {"id": "intro"}).findAll("p")
         hours = ""
         for t in ct:
-            if "Am" in t.text or "day" in t.text or "pm" in t.text:
+            if (
+                (("AM " in t.text and "PM" in t.text) or ("Closed on" in t.text))
+                or ("Am" in t.text and (":" in t.text or "-" in t.text))
+                or "Everyday" in t.text
+                or ("pm" in t.text and (":" in t.text or "-" in t.text))
+            ):
                 hours = hours + t.text + " "
             elif "Soon" in t.text or "Opening" in t.text:
                 flag = 1
@@ -86,6 +91,7 @@ def fetch_data():
                 phone = "<MISSING>"
         except:
             phone = "<MISSING>"
+        hours = hours.replace("1", " 1").replace("1 1", "11").strip()
         data.append(
             [
                 "https://www.extremepizza.com/",
