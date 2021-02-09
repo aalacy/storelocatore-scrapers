@@ -94,6 +94,12 @@ def fetch_data():
                             hours = hrs
                         else:
                             hours = hours + "; " + hrs
+                    if '"closed":true' in day:
+                        hrs = day.split('"weekDay":"')[1].split('"')[0] + ": Closed"
+                        if hours == "":
+                            hours = hrs
+                        else:
+                            hours = hours + "; " + hrs
         if name != "":
             if phone == "":
                 phone = "<MISSING>"
@@ -115,7 +121,7 @@ def fetch_data():
                 lng,
                 hours,
             ]
-    for x in range(3000, 4000):
+    for x in range(3320, 4000):
         url = "https://www.callitspring.com/api/stores/" + str(x)
         r = session.get(url, headers=headers)
         website = "callitspring.com"
@@ -158,6 +164,12 @@ def fetch_data():
                             + "-"
                             + day.split('"formattedHour":"')[1].split('"')[0]
                         )
+                        if hours == "":
+                            hours = hrs
+                        else:
+                            hours = hours + "; " + hrs
+                    if '"closed":true' in day:
+                        hrs = day.split('"weekDay":"')[1].split('"')[0] + ": Closed"
                         if hours == "":
                             hours = hrs
                         else:

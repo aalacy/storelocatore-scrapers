@@ -15,6 +15,7 @@ def write_output(data):
         writer = csv.writer(
             output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
         )
+        # Header
         writer.writerow(
             [
                 "locator_domain",
@@ -33,6 +34,7 @@ def write_output(data):
                 "page_url",
             ]
         )
+        # Body
         for row in data:
             writer.writerow(row)
 
@@ -63,12 +65,13 @@ def fetch_data():
             r = session.get(location_url, headers=headers)
         except:
             r = ""
-            continue
-        soup = BeautifulSoup(r.text, "lxml")
+            pass
+        soup = BeautifulSoup(r.text, "html5lib")
         data = soup.find("script", {"type": "application/json"}).text
         json_data = json.loads(data)
         if "lc_psc_locator" in json_data:
             if "psc_locator_app" in json_data["lc_psc_locator"]:
+
                 for i in json_data["lc_psc_locator"]["psc_locator_app"]["settings"][
                     "labs"
                 ]:
@@ -245,6 +248,11 @@ def fetch_data():
                         continue
                     addresses.append(store[2])
                     yield store
+            else:
+
+                pass
+        else:
+            pass
 
 
 def scrape():

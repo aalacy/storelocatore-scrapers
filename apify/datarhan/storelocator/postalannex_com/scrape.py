@@ -48,6 +48,8 @@ def fetch_data():
 
     all_locations = dom.xpath('//a[div[contains(text(), "Visit Website")]]/@href')
     for url in all_locations:
+        if "18001" in url:
+            continue
         store_url = urljoin(start_url, url)
         with SgFirefox() as driver:
             driver.get(store_url)
@@ -62,7 +64,7 @@ def fetch_data():
         state = loc_dom.xpath('//span[@itemprop="addressRegion"]/text()')
         state = state[0] if state else "<MISSING>"
         zip_code = loc_dom.xpath('//span[@itemprop="postalCode"]/text()')
-        zip_code = zip_code[-1] if zip_code else "<MISSING>"
+        zip_code = zip_code[1] if zip_code else "<MISSING>"
         country_code = "<MISSING>"
         store_number = store_url.split("/")[-1]
         phone = loc_dom.xpath('//a[@id="phone"]/text()')
