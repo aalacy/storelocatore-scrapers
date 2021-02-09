@@ -1,5 +1,6 @@
 import csv
 from sgrequests import SgRequests
+from bs4 import BeautifulSoup as bs
 import json
 
 from util import Util  # noqa: I900
@@ -59,16 +60,22 @@ def fetch_data():
         page_url = location["permalink"]
         store_number = id.split("-")[1]
         location_name = location["title"]
-        country_code = "PL"
+        country_code = "US"
         street_address = location["address"]
         city = location["city"]
         state = location["state"]
-        zip = "<MISSING>"
+        r1 = session.get(page_url)
+        soup = bs(r1.text, "lxml")
+        addr = [
+            _
+            for _ in soup.select_one("div.chalkboard-hoursandaddress").stripped_strings
+        ][:-1]
+        zip = addr[1].split(",")[1].strip().split(" ")[1].strip()
         phone = myutil._valid(location["phone"])
         location_type = "<MISSING>"
         latitude = location["lat"]
         longitude = location["lng"]
-        hours_of_operation = myutil._valid(location.get("hours"))
+        hours_of_operation = myutil._valid(location.get("hours") + " (daily)")
 
         _item = [
             locator_domain,
