@@ -78,7 +78,7 @@ def fetch_data():
         for hour in hourlist:
             start = (int)(hour["opens"].split(":")[0])
             if start > 12:
-                start = end - 12
+                start = start - 12
             endstr = (int)(hour["closes"].split(":")[0])
             if endstr > 12:
                 endstr = endstr - 12
