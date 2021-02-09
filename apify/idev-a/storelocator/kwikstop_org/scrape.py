@@ -93,7 +93,7 @@ def fetch_data():
                         state = address[1].strip().replace(",", "").strip()
 
                     country_code = "US"
-                    phone = myutil._valid(location1[-1])
+                    phone = myutil._valid(location1[-1].replace("Phone:", ""))
                     location_type = "<MISSING>"
                     latitude = block["mapLat"]
                     longitude = block["mapLng"]

@@ -108,42 +108,40 @@ def fetch_data():
 
         phone = stores[key]["te"]
         hours = stores[key]["op"]
-        hours_of_operation = (
-            "Monday:"
-            + hours["0"]
-            + "-"
-            + hours["1"]
-            + ";"
-            + "Tuesday:"
-            + hours["2"]
-            + "-"
-            + hours["3"]
-            + ";"
-            + "Wednesday:"
-            + hours["4"]
-            + "-"
-            + hours["5"]
-            + ";"
-            + "Thursday:"
-            + hours["6"]
-            + "-"
-            + hours["7"]
-            + ";"
-            + "Friday:"
-            + hours["8"]
-            + "-"
-            + hours["9"]
-            + ";"
-            + "Saturday:"
-            + hours["10"]
-            + "-"
-            + hours["11"]
-            + ";"
-            + "Sunday:"
-            + hours["12"]
-            + "-"
-            + hours["13"]
-        )
+        hours_of_operation = ""
+        if len(hours["0"].strip()) > 0:
+            hours_of_operation = (
+                hours_of_operation + "Monday:" + hours["0"] + "-" + hours["1"] + ";"
+            )
+
+        if len(hours["2"].strip()) > 0:
+            hours_of_operation = (
+                hours_of_operation + "Tuesday:" + hours["2"] + "-" + hours["3"] + ";"
+            )
+
+        if len(hours["4"].strip()) > 0:
+            hours_of_operation = (
+                hours_of_operation + "Wednesday:" + hours["4"] + "-" + hours["5"] + ";"
+            )
+
+        if len(hours["6"].strip()) > 0:
+            hours_of_operation = (
+                hours_of_operation + "Thursday:" + hours["6"] + "-" + hours["7"] + ";"
+            )
+        if len(hours["8"].strip()) > 0:
+            hours_of_operation = (
+                hours_of_operation + "Friday:" + hours["8"] + "-" + hours["9"] + ";"
+            )
+
+        if len(hours["10"].strip()) > 0:
+            hours_of_operation = (
+                hours_of_operation + "Saturday:" + hours["10"] + "-" + hours["11"] + ";"
+            )
+
+        if len(hours["12"].strip()) > 0:
+            hours_of_operation = (
+                hours_of_operation + "Sunday:" + hours["12"] + "-" + hours["13"]
+            )
 
         if latitude == "" or latitude is None:
             latitude = "<MISSING>"

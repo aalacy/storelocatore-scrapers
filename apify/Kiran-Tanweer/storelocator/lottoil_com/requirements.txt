@@ -1,0 +1,4 @@
+sgrequests
+sglogging
+beautifulsoup4
+usaddress
