@@ -1,6 +1,4 @@
 sgrequests
-sgzip
-sglogging
+html5lib
+sgselenium
 bs4
-selenium
-lxml

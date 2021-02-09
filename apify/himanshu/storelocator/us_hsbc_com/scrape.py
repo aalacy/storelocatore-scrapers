@@ -8,7 +8,7 @@ from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 
 def setUp():
     options = webdriver.FirefoxOptions()
-    headless = False
+    headless = True
     options.headless = headless
     profile = webdriver.FirefoxProfile()
     profile.set_preference("browser.formfill.enable", False)
@@ -22,16 +22,16 @@ def setUp():
         options=options,
         capabilities=capabilities,
         firefox_profile=profile,
-        executable_path=r"geckodriver.exe",
+        executable_path="geckodriver.exe",
     )
 
 
 def write_output(data):
-    with open("data.csv", mode="w", newline="") as output_file:
+    with open("hsbc.csv", mode="w", newline="") as output_file:
         writer = csv.writer(
             output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
         )
-
+        # Header
         writer.writerow(
             [
                 "locator_domain",
@@ -50,7 +50,7 @@ def write_output(data):
                 "page_url",
             ]
         )
-
+        # Body
         for row in data:
             writer.writerow(row)
 
@@ -132,7 +132,6 @@ def fetch_data():
                     location_name = soup.find(
                         "h2", {"class": "_1521gYSzrNIMk9R-rS4Hur"}
                     ).text
-
                     try:
                         phone = soup.find(
                             "div", {"class": "_1BVddhgeNL2TGp0jUBgsXb"}
@@ -167,7 +166,6 @@ def fetch_data():
                         .split("/")[1]
                         .split("&")[0]
                     )
-
                     store = []
                     store.append(base_url)
                     store.append(location_name if location_name else "<MISSING>")

@@ -2,20 +2,10 @@ import csv
 import time
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
-from selenium import webdriver
-import selenium.webdriver.chrome.service as service
+from sgselenium import SgSelenium
 import re
-import os
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger("worldmarkbywyndham_com")
-
-
-current_directoy = os.path.dirname(os.path.realpath(__file__))
 
 session = SgRequests()
-
-logger.info("start")
 
 
 def write_output(data):
@@ -23,7 +13,6 @@ def write_output(data):
         writer = csv.writer(
             output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
         )
-        # Header
         writer.writerow(
             [
                 "locator_domain",
@@ -42,7 +31,6 @@ def write_output(data):
                 "page_url",
             ]
         )
-        # Body
         for row in data:
             writer.writerow(row)
 
@@ -50,7 +38,7 @@ def write_output(data):
 def fetch_data():
     headers = {
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.121 Safari/537.36",
+        "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.96 Safari/537.36",
     }
     soup = bs(
         session.get(
@@ -58,53 +46,29 @@ def fetch_data():
         ).text,
         "html5lib",
     )
-
     child_selection = soup.find(
         lambda tag: (tag.name == "script")
         and "let's populate all child values in array" in tag.text
     ).text.split("value:")[1:]
-
     for value in child_selection:
-
         page_url = (
             "https://www.worldmarktheclub.com/resorts/"
             + str(value.split('"')[1].replace(".", "").replace("/", ""))
             + "/"
         )
-        logger.info(page_url)
-        options = webdriver.ChromeOptions()
         user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.50 Safari/537.36"
-        options.add_argument(f"user-agent={user_agent}")
-        options.add_argument("no-sandbox")
-        options.add_argument("--disable-gpu")
-        options.add_argument("--window-size=1024,600")
-        options.add_argument("--disable-dev-shm-usage")
-        options.add_experimental_option("excludeSwitches", ["enable-logging"])
-        capabilities = webdriver.DesiredCapabilities.CHROME.copy()
-        capabilities["acceptInsecureCerts"] = True
-        service_start = service.Service("C:chromedriver")
-        service_start.start()
-
-        driver = webdriver.Remote(
-            service_start.service_url,
-            options=options,
-            keep_alive=True,
-            desired_capabilities=capabilities,
-        )
-
+        driver = SgSelenium().firefox(user_agent=user_agent)
         driver.get(page_url)
-
         time.sleep(5)
-        soup = bs(driver.page_source, "lxml")
+        soup = bs(driver.page_source, "html5lib")
         RightFeature = len(soup.find_all("td", {"class": "RightFeature"}))
-
         if RightFeature == 2:
             data = list(
                 bs(
                     str(soup.find_all("td", {"class": "RightFeature"})[1]).split(
                         "Credit Values"
                     )[0],
-                    "lxml",
+                    "html5lib",
                 ).stripped_strings
             )
         else:
@@ -113,10 +77,9 @@ def fetch_data():
                     str(soup.find_all("td", {"class": "RightFeature"})[2]).split(
                         "Credit Values"
                     )[0],
-                    "lxml",
+                    "html5lib",
                 ).stripped_strings
             )
-
         coords = soup.find("a", text=re.compile("Resort Directions"))
         if coords:
             coords = coords["href"]
@@ -125,21 +88,17 @@ def fetch_data():
         else:
             lat = "<MISSING>"
             lng = "<MISSING>"
-
         try:
             location_name = soup.find("div", {"class": "title"}).text.strip()
         except:
             location_name = soup.find("span", {"class": "title"}).text.strip()
-
         if (
             "Mexico" in " ".join(data)
             or "Fiji" in " ".join(data)
             or "Australia" in " ".join(data)
         ):
             continue
-
         for index, value in enumerate(data):
-
             if (
                 value.replace("-", "").lower().strip() == "email"
                 or "(When " in value
@@ -151,12 +110,10 @@ def fetch_data():
         try:
             if "WorldMark" in data[0]:
                 del data[0]
-
             if not re.findall(r"[0-9]+", data[0]):
                 del data[0]
             if not re.findall(r"[0-9]+", data[0]):
                 del data[0]
-
             if "Fax" in data[-1] or "F:" in data[-1]:
                 del data[-1]
             if (
@@ -175,38 +132,27 @@ def fetch_data():
                 del data[-1]
             else:
                 phone = "<MISSING>"
-
             if data[-1] == "Canada":
                 del data[-1]
-
             street_address = data[0]
-
             if "\n" in data[0]:
                 street_address = data[0].split("\n")[0]
                 city = data[0].split("\n")[1].split(",")[0]
                 state = data[0].split("\n")[1].split(",")[1].split()[0]
                 zipp = data[0].split("\n")[1].split(",")[1].split()[1]
-
             else:
                 del data[0]
-
                 if len(data) == 1:
-
                     if "," not in data[0]:
                         city = data[0].split()[0]
                         state = data[0].split()[1]
                         zipp = data[0].split()[2]
                     else:
-
                         city = " ".join(data[0].split(",")[:-1])
-
                         partial_info = data[0].split(",")[-1].split()
-
                         if len(partial_info) == 2:
-
                             state = partial_info[0].replace("V8E", "<MISSING>")
                             zipp = partial_info[1].replace("0M8", "V8E 0M8")
-
                         elif len(partial_info) == 3:
                             state = partial_info[0]
                             zipp = " ".join(partial_info[1:])
@@ -223,7 +169,6 @@ def fetch_data():
                         city = data[0].split(",")[0]
                         state = data[0].split(",")[1].strip()
                         zipp = data[-1]
-
                 store = []
                 store.append("https://www.worldmarkbywyndham.com/")
                 store.append(location_name)
@@ -239,10 +184,12 @@ def fetch_data():
                 store.append(lng)
                 store.append("<MISSING>")
                 store.append(page_url)
-
-                store = [x.replace("–", "-") if type(x) == str else x for x in store]
-                store = [x.strip() if type(x) == str else x for x in store]
+                store = [
+                    x.replace("–", "-") if isinstance(x, str) else x for x in store
+                ]
+                store = [x.strip() if isinstance(x, str) else x for x in store]
                 yield store
+                driver.quit()
         except:
             continue
 

@@ -11,7 +11,6 @@ def write_output(data):
         writer = csv.writer(
             output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
         )
-
         writer.writerow(
             [
                 "locator_domain",
@@ -36,6 +35,7 @@ def write_output(data):
 
 
 def fetch_data():
+    addressess = []
     base_url = "https://sbarro.com"
     UsState = [
         "AL",
@@ -90,116 +90,107 @@ def fetch_data():
         "WY",
     ]
 
-    for region in UsState:
+    location_url = (
+        "https://sbarro.com/locations/?user_search=62232&radius=2100&unit=MI&count=All"
+    )
+    soup = bs(session.get(location_url).text, "lxml")
 
-        location_url = "https://sbarro.com/locations/?user_search=" + str(region)
-        soup = bs(session.get(location_url).text, "lxml")
+    for link in soup.find_all("section", {"class": "locations-result"}):
+        page_url = base_url + link.find("a")["href"]
+        if page_url.split("/")[-1]:
+            try:
+                location_name = link.find("h1", {"class": "location-name"}).text.strip()
+            except:
+                location_name = link.find("h2", {"class": "location-name"}).text.strip()
 
-        for link in soup.find_all("section", {"class": "locations-result"}):
+            addr = list(
+                link.find("p", {"class": "location-address nobottom"}).stripped_strings
+            )
 
-            page_url = base_url + link.find("a")["href"]
+            if len(addr) == 1:
+                address = usaddress.parse(addr[0])
 
-            if region is not page_url.split("/")[4].upper().strip():
-                continue
+                street_address = []
+                city = ""
+                state = ""
+                zipp = ""
+                for info in address:
+                    if "SubaddressType" in info:
+                        street_address.append(info[0])
 
-            if page_url.split("/")[-1]:
+                    if "SubaddressIdentifier" in info:
+                        street_address.append(info[0])
 
+                    if "Recipient" in info:
+                        street_address.append(info[0])
+
+                    if "International" in info:
+                        street_address.append(info[0])
+
+                    if "BuildingName" in info:
+                        street_address.append(info[0])
+
+                    if "AddressNumber" in info:
+                        street_address.append(info[0])
+
+                    if "StreetNamePreDirectional" in info:
+                        street_address.append(info[0])
+
+                    if "StreetNamePreType" in info:
+                        street_address.append(info[0])
+                    if "StreetName" in info:
+                        street_address.append(info[0])
+                    if "StreetNamePostType" in info:
+                        street_address.append(info[0])
+                    if "StreetNamePostDirectional" in info:
+                        street_address.append(info[0])
+                    if "OccupancyType" in info:
+                        street_address.append(info[0])
+                    if "OccupancyIdentifier" in info:
+                        street_address.append(info[0])
+
+                    if "PlaceName" in info:
+                        city = info[0]
+                    if "StateName" in info:
+                        state = info[0]
+                    if "ZipCode" in info:
+                        zipp = info[0]
+
+                street_address = " ".join(street_address)
+            else:
+                street_address = " ".join(addr[:-1])
+                city = addr[-1].split(",")[0]
                 try:
-                    location_name = link.find(
-                        "h1", {"class": "location-name"}
-                    ).text.strip()
-                except:
-                    location_name = link.find(
-                        "h2", {"class": "location-name"}
-                    ).text.strip()
-
-                addr = list(
-                    link.find(
-                        "p", {"class": "location-address nobottom"}
-                    ).stripped_strings
-                )
-
-                if len(addr) == 1:
-                    address = usaddress.parse(addr[0])
-
-                    street_address = []
-                    city = ""
-                    state = ""
-                    zipp = ""
-                    for info in address:
-                        if "SubaddressType" in info:
-                            street_address.append(info[0])
-
-                        if "SubaddressIdentifier" in info:
-                            street_address.append(info[0])
-
-                        if "Recipient" in info:
-                            street_address.append(info[0])
-
-                        if "International" in info:
-                            street_address.append(info[0])
-
-                        if "BuildingName" in info:
-                            street_address.append(info[0])
-
-                        if "AddressNumber" in info:
-                            street_address.append(info[0])
-
-                        if "StreetNamePreDirectional" in info:
-                            street_address.append(info[0])
-
-                        if "StreetNamePreType" in info:
-                            street_address.append(info[0])
-                        if "StreetName" in info:
-                            street_address.append(info[0])
-                        if "StreetNamePostType" in info:
-                            street_address.append(info[0])
-                        if "StreetNamePostDirectional" in info:
-                            street_address.append(info[0])
-                        if "OccupancyType" in info:
-                            street_address.append(info[0])
-                        if "OccupancyIdentifier" in info:
-                            street_address.append(info[0])
-
-                        if "PlaceName" in info:
-                            city = info[0]
-                        if "StateName" in info:
-                            state = info[0]
-                        if "ZipCode" in info:
-                            zipp = info[0]
-
-                    street_address = " ".join(street_address)
-                else:
-                    street_address = " ".join(addr[:-1])
-                    city = addr[-1].split(",")[0]
-
                     if len(addr[-1].split(",")[1].split()) == 2:
                         state = addr[-1].split(",")[1].split()[0]
                         zipp = addr[-1].split(",")[1].split()[-1]
                     else:
                         state = addr[-1].split(",")[1].split()[0]
                         zipp = "<MISSING>"
+                except:
+                    pass
 
-                if link.find("div", {"class": "location-phone location-cta"}):
-                    phone = (
-                        link.find("div", {"class": "location-phone location-cta"})
-                        .find("span", {"class": "btn-label"})
-                        .text.strip()
-                    )
+            if link.find("div", {"class": "location-phone location-cta"}):
+                phone = (
+                    link.find("div", {"class": "location-phone location-cta"})
+                    .find("span", {"class": "btn-label"})
+                    .text.strip()
+                )
 
-                else:
-                    phone = "<MISSING>"
+            else:
+                phone = "<MISSING>"
 
-                store_number = link["id"].split("-")[-1].strip()
-                lat = link["data-latitude"]
-                if lat == "0":
-                    lat = "<MISSING>"
+            store_number = link["id"].split("-")[-1].strip()
+            lat = link["data-latitude"]
+            if lat == "0":
+                lat = "<MISSING>"
 
-                lng = link["data-longitude"]
-                if lng == "0":
-                    lng = "<MISSING>"
+            lng = link["data-longitude"]
+            if lng == "0":
+                lng = "<MISSING>"
 
-                location_type = "Restaurant"
+            location_type = "Restaurant"
+            try:
                 location_soup = bs(session.get(page_url).text, "lxml")
                 hours = " ".join(
                     list(
@@ -210,6 +201,9 @@ def fetch_data():
                 ).replace("Hours of Operation", "")
                 if "Hours not available" in hours:
                     hours = "<MISSING>"
+            except:
+                hours = "<MISSING>"
+            if state in UsState:
                 store = []
                 store.append(base_url)
                 store.append(location_name)
@@ -225,7 +219,9 @@ def fetch_data():
                 store.append(lng)
                 store.append(hours)
                 store.append(page_url)
-                store = [x.strip() if x else "<MISSING>" for x in store]
+                if street_address in addressess:
+                    continue
+                addressess.append(street_address)
                 yield store
 
 
