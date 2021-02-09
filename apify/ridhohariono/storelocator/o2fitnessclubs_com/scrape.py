@@ -78,9 +78,9 @@ def fetch_store_urls():
     log.info("Fetching store URL")
     store_urls = []
     soup = pull_content(LOCATION_URL)
-    uls = soup.find_all("ul", {"class": "locations-list"})
-    for ul in uls:
-        stores = ul.find_all("a")
+    content = soup.find_all("div", {"class": "hs-accordion__item-content"})
+    for row in content:
+        stores = row.find("ul").find_all("a")
         for link in stores:
             store_urls.append(BASE_URL + link["href"])
     log.info("Found {} URL ".format(len(store_urls)))
@@ -93,6 +93,9 @@ def fetch_data():
     locations = []
     for page_url in store_urls:
         soup = pull_content(page_url)
+        comming_soon = soup.find("div", {"class": "location-description"}).find("h6")
+        if comming_soon and "COMING SOON" in comming_soon:
+            continue
         locator_domain = DOMAIN
         location_name = soup.find("title").text.strip()
         address = soup.find("div", {"class": "location-details"})
