@@ -98,6 +98,8 @@ def fetch_data():
             street_address = street_address + ", " + store_data["address2"]
 
         city = store_data["city"]
+        if city is not None:
+            city = city.strip()
         state = "<MISSING>"
         if "stateCode" in store_data:
             state = store_data["stateCode"].strip()
