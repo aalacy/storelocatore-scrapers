@@ -2,6 +2,7 @@ import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
 import json
+import datetime
 
 session = SgRequests()
 headers = {
@@ -73,8 +74,26 @@ def fetch_data():
         for day in days:
             if "'open': '" in day:
                 dc = dc + 1
+                dayname = day.split("'")[0]
+                dayname = "20" + dayname
+                year, month, dayt = (int(x) for x in dayname.split("-"))
+                wd = datetime.date(year, month, dayt).weekday()
+                if wd == 1:
+                    day_name = "Mon"
+                if wd == 2:
+                    day_name = "Tue"
+                if wd == 3:
+                    day_name = "Wed"
+                if wd == 4:
+                    day_name = "Thu"
+                if wd == 5:
+                    day_name = "Fri"
+                if wd == 6:
+                    day_name = "Sat"
+                if wd == 0:
+                    day_name = "Sun"
                 hrs = (
-                    day.split("'")[0]
+                    day_name
                     + ": "
                     + day.split("{'open': '")[1].split("'")[0]
                     + "-"
