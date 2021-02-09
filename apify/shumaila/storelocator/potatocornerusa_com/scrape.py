@@ -60,7 +60,6 @@ def fetch_data():
                     continue
                 title = mlink.find("a").text
                 link = "https://www.potatocornerusa.com" + link.replace("./", "/")
-
                 r = session.get(link, headers=headers, verify=False)
                 soup = BeautifulSoup(r.text, "html.parser")
                 try:

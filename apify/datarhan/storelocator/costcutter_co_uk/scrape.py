@@ -55,7 +55,7 @@ def fetch_data():
     all_locations = []
     all_coords = DynamicGeoSearch(
         country_codes=[SearchableCountries.BRITAIN],
-        max_radius_miles=50,
+        max_radius_miles=10,
         max_search_results=None,
     )
     for lat, lng in all_coords:
@@ -76,12 +76,19 @@ def fetch_data():
             './/a[@class="button set-local-home green clear short"]/@href'
         )
         store_url = urljoin(start_url, store_url[0]) if store_url else "<MISSING>"
+        if store_url in scraped_items:
+            continue
+        loc_response = session.get(store_url)
+        loc_dom = etree.HTML(loc_response.text)
+
         location_name = poi_html.xpath(".//h3/text()")
         location_name = location_name[0] if location_name else "<MISSING>"
-        street_address = poi_html.xpath("@data-addressline2")
-        street_address = street_address[0] if street_address else "<MISSING>"
         city = poi_html.xpath("@data-town")
         city = city[0] if city else "<MISSING>"
+        street_address = loc_dom.xpath("//address/text()")
+        if not street_address:
+            continue
+        street_address = street_address[0].strip().split(city)[0].strip()[:-1]
         state = poi_html.xpath("@data-county")
         state = state[0] if state and state[0].strip() else "<MISSING>"
         zip_code = poi_html.xpath("@data-postcode")
@@ -91,7 +98,7 @@ def fetch_data():
         store_number = store_number[0] if store_number else "<MISSING>"
         phone = poi_html.xpath('.//p[@class="tel"]/text()')
         phone = phone[0] if phone else "<MISSING>"
-        location_type = "<MISSING>"
+        location_type = poi_html.xpath("@data-fasciatype")[0]
         latitude = poi_html.xpath("@data-lat")
         latitude = latitude[0] if latitude else "<MISSING>"
         longitude = poi_html.xpath("@data-lon")
@@ -120,9 +127,8 @@ def fetch_data():
             hours_of_operation,
         ]
 
-        check = f"{location_name} {street_address}"
-        if check not in scraped_items:
-            scraped_items.append(check)
+        if store_url not in scraped_items:
+            scraped_items.append(store_url)
             items.append(item)
 
     return items

@@ -1,6 +1,7 @@
 import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
+from sgscrape.sgpostal import parse_address_intl
 
 session = SgRequests()
 headers = {
@@ -77,10 +78,11 @@ def fetch_data():
                 lng = line2.split('longitude" content="')[1].split('"')[0]
             if '<div class="r"><b>' in line2:
                 rawadd = line2.split('<div class="r"><b>')[1].split("<")[0]
-                add = "<MISSING>"
-                city = "<MISSING>"
+                addr = parse_address_intl(rawadd)
+                city = addr.city
+                zc = addr.postcode
+                add = addr.street_address_1
                 state = "<MISSING>"
-                zc = "<MISSING>"
         yield [
             website,
             loc,
