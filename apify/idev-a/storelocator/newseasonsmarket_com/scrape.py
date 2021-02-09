@@ -60,7 +60,7 @@ def fetch_data():
         page_url = location["permalink"]
         store_number = id.split("-")[1]
         location_name = location["title"]
-        country_code = "PL"
+        country_code = "US"
         street_address = location["address"]
         city = location["city"]
         state = location["state"]

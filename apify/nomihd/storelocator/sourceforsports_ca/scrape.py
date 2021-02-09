@@ -65,8 +65,8 @@ def fetch_data():
     # Your scraper here
     loc_list = []
 
-    search_url = "https://www.sourceforsports.ca/api/stores/GetStoresLocatorResult?lat={}&lng={}&range=200&rand=8"
-    coords = static_coordinate_list(radius=200, country_code=SearchableCountries.CANADA)
+    search_url = "https://www.sourceforsports.ca/api/stores/GetStoresLocatorResult?lat={}&lng={}&range=10000&rand=8"
+    coords = static_coordinate_list(radius=50, country_code=SearchableCountries.CANADA)
     ID_list = []
     for lat, lng in coords:
         stores_req = session.get(search_url.format(lat, lng), headers=headers)
