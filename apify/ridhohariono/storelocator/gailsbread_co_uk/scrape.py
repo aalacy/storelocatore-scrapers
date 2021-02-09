@@ -103,7 +103,7 @@ def fetch_data():
         soup = pull_content(page_url)
         info = parse_json(soup, "wpslMap_0")
         locator_domain = DOMAIN
-        location_name = handle_missing(info["store"])
+        location_name = handle_missing(info["store"]).replace("&#8217;", "'")
         if len(info["address2"]) > 0:
             street_address = "{}, {}".format(info["address"], info["address2"])
         else:
