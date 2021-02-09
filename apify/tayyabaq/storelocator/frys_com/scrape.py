@@ -44,14 +44,12 @@ def fetch_data():
     data = []
     location_name = []
     links = []
-    address_stores = []
     city = []
     street_address = []
     zipcode = []
     state = []
     latitude = []
     longitude = []
-    hours_of_operation = []
     phone = []
 
     base_link = "https://www.frys.com/ac/storeinfo/storelocator/?site=csfooter_B"
