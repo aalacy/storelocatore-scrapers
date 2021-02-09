@@ -1,7 +1,7 @@
 import csv
 from lxml import etree
 
-from sgscrape.sgpostal import parse_address
+from sgscrape.sgpostal import parse_address_intl
 from sgrequests import SgRequests
 
 
@@ -95,7 +95,7 @@ def fetch_data():
         location_name = loc_dom.xpath('//h1[@class="text-center"]/text()')
         location_name = location_name[0] if location_name else "<MISSING>"
         full_addr = " ".join(loc_dom.xpath('//span[@itemprop="address"]//text()'))
-        parsed_adr = parse_address(full_addr)
+        parsed_adr = parse_address_intl(full_addr)
         street_address = parsed_adr.street_address_1
         if parsed_adr.street_address_2:
             street_address += ", " + parsed_adr.street_address_2
