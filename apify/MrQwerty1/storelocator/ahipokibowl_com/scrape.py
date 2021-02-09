@@ -44,6 +44,8 @@ def fetch_data():
         street_address = (
             f"{j.get('address')} {j.get('address2') or ''}".strip() or "<MISSING>"
         )
+        if street_address.find(" @") != -1:
+            street_address = street_address.split(" @")[0].strip()
         city = j.get("city") or "<MISSING>"
         state = j.get("state") or "<MISSING>"
         postal = j.get("zip") or "<MISSING>"
