@@ -69,7 +69,6 @@ def fetch_data():
         city = loc["address"]["addressLocality"]
         state = loc["address"]["addressRegion"]
         pcode = loc["address"]["postalCode"]
-        ccode = loc["address"]["addressCountry"]
         lat = loc["geo"]["latitude"]
         longt = loc["geo"]["longitude"]
         phone = loc["telephone"]
@@ -80,9 +79,9 @@ def fetch_data():
             start = (int)(hour["opens"].split(":")[0])
             if start > 12:
                 start = end - 12
-            end = (int)(hour["closes"].split(":")[0])
-            if end > 12:
-                end = end - 12
+            endstr = (int)(hour["closes"].split(":")[0])
+            if endstr > 12:
+                endstr = endstr - 12
             hours = (
                 hours
                 + hour["dayOfWeek"]
@@ -91,7 +90,7 @@ def fetch_data():
                 + ":"
                 + hour["opens"].split(":")[1]
                 + " AM - "
-                + str(end)
+                + str(endstr)
                 + ":"
                 + hour["closes"].split(":")[1]
                 + " PM  "
