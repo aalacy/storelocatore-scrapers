@@ -68,7 +68,18 @@ def fetch_data():
         location_type = "<MISSING>"
         latitude = store["latitude"]
         longitude = store["longitude"]
-        hours_of_operation = store["hours"].replace("\n", " ")
+        hours = json.loads(store["schedule_data"])
+        hours_of_operation = ""
+        for x in hours:
+            hours_of_operation += (
+                x
+                + ": "
+                + hours[x]["open_time"]
+                + " - "
+                + hours[x]["closing_time"]
+                + " "
+            )
+        hours_of_operation = hours_of_operation.strip()
 
         data.append(
             [
