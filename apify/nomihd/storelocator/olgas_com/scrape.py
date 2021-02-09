@@ -70,13 +70,16 @@ def fetch_data():
         if page_url == "":
             page_url = "<MISSING>"
         locator_domain = website
-        location_name = store["store"]
+        location_name = store["store"].replace("&#8211;", "-").strip()
+
         if location_name == "":
             location_name = "<MISSING>"
 
         street_address = store["address"]
         if store["address2"] is not None and len(store["address2"]) > 0:
             street_address = street_address + ", " + store["address2"]
+
+        street_address = street_address.replace("Breeze Dining Court,", "").strip()
         city = store["city"]
         state = store["state"]
         zip = store["zip"]
