@@ -17,7 +17,7 @@ setup(
             "flake8==3.8.4",
             "flake8-eradicate==1.0.0",
             "flake8-requirements==1.3.3",
-            "flake8-safegraph-crawl==0.2",
+            "flake8-safegraph-crawl==0.4",
             "mypy==0.790",
             "mypy-extensions==0.4.3",
         ]
