@@ -150,15 +150,16 @@ def fetch_data():
                 "Restaurant Hours"
                 in "".join(sections[index].xpath("strong/text()")).strip()
             ):
-                hours = sections[index + 1].xpath(".//text()")
-                for hour in hours:
-                    if len("".join(hour).strip()) > 0:
+                days = sections[index + 1].xpath("text()")
+                time = sections[index + 1].xpath("span/text()")
+                for index in range(0, len(days)):
+                    if len("".join(days[index]).strip()) > 0:
                         hours_list.append(
-                            "".join(hour)
+                            "".join(days[index] + ":" + time[index])
                             .strip()
                             .encode("ascii", "replace")
                             .decode("utf-8")
-                            .replace("?", " ")
+                            .replace("?", "-")
                             .strip()
                         )
                 break
