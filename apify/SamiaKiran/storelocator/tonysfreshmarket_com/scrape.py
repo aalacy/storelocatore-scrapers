@@ -46,7 +46,14 @@ def write_output(data):
 def fetch_data():
     # Your scraper here
     final_data = []
-    url = "https://api.freshop.com/1/stores?app_key=tony_s_fresh_market&has_address=true&is_selectable=true&limit=100&token=af9ea972343673f533cd023d48c860e2"
+    myobj = {"app_key": "tony_s_fresh_market"}
+    url = "https://api.freshop.com/2/sessions/create"
+    token = session.post(url, data=myobj, headers=headers).json()["token"]
+    r = session.post(url, headers=headers, verify=False)
+    url = (
+        "https://api.freshop.com/1/stores?app_key=tony_s_fresh_market&has_address=true&is_selectable=true&limit=100&token="
+        + token
+    )
     r = session.get(url, headers=headers, verify=False)
     name_list = json.loads(r.text)["items"]
     url1 = "https://api.freshop.com/1/stores?app_key=tony_s_fresh_market&fields"
@@ -101,4 +108,5 @@ def scrape():
     log.info("Finished")
 
 
+scrape()
 scrape()
