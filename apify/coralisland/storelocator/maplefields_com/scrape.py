@@ -85,7 +85,11 @@ def fetch_data():
         output.append(
             get_value(store["phone"].replace("Maplefields Swanton", ""))
         )  # phone
-        output.append(get_value(store["description"].strip().replace("\r\n", ", ").replace("  ", " ")))  # location type
+        output.append(
+            get_value(
+                store["description"].strip().replace("\r\n", ", ").replace("  ", " ")
+            )
+        )  # location type
         output.append(get_value(store["lat"]))  # latitude
         output.append(get_value(store["lng"]))  # longitude
         hours = json.loads(store["open_hours"])
