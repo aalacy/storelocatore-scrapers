@@ -1,5 +1,5 @@
 import csv
-import json
+from bs4 import BeautifulSoup as bs
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -36,40 +36,40 @@ def write_output(data):
 
 
 def fetch_data():
-    base_url = "https://www.cotswoldoutdoor.com"
+    base_url = "https://www.longtallsally.com"
     res = session.get(
-        "https://www.cotswoldoutdoor.com/api/services/public/store/cotswold/en",
+        "https://www.longtallsally.com/store-finder",
     )
-    store_list = json.loads(res.text)
+    store_list = bs(res.text, "lxml").select(
+        "div#GreatBritainNorthernIreland div.card--flat"
+    )
     data = []
 
     for store in store_list:
-        location_name = store["name"]
-        store_number = store["code"]
-        city = store["city"]
+        location_name = store.select_one("a h5").string
+        page_url = base_url + store.select("a").pop()["href"]
+        city = "<MISSING>"
         state = "<MISSING>"
-        page_url = "https://www.cotswoldoutdoor.com/stores/" + store["alias"] + ".html"
-        street_address = store["street"]
-        zip = store["postalcode"]
-        country_code = store["country"]
-        if country_code != "GB":
-            continue
-        phone = store["phoneNumber"]
-        location_type = "<MISSING>"
-        latitude = store["latitude"]
-        longitude = store["longitude"]
-        hours = store["dailyOpeningHours"][0]
-        hours_of_operation = ""
-        for x in hours:
-            hours_of_operation += (
-                x["day"]
-                + ": "
-                + (
-                    "Closed"
-                    if x["open"] == 0
-                    else x["openTimeLabel"] + "-" + x["closeTimeInMinutes"]
-                )
-            )
+        street_address = (
+            store.select_one("span.storeSingleLine").string.replace("\r\n", " ").strip()
+        )
+        street_address = (
+            street_address[:-1] if street_address.endswith(",") else street_address
+        )
+        zip = store.select_one("span.storePostcode").string
+        country_code = "GB"
+        phone = store.select_one("a.storeTelephone").string
+        store_number = "<MISSING>"
+        location_type = store["data-storetype"]
+        latitude = store["data-latitude"]
+        longitude = store["data-longitude"]
+        hours = store.select_one("span.storeOpening").contents[2:]
+        hours = [x.strip() for x in hours if x.string is not None]
+        hours = [x for x in hours if x]
+        hours_of_operation = " ".join(hours) or "<MISSING>"
+        hours_of_operation = hours_of_operation.replace(
+            "Currently closed due to Government measures", "(Temporarily closed)"
+        )
 
         data.append(
             [
