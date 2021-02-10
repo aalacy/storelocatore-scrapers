@@ -4,7 +4,7 @@ import json
 from concurrent import futures
 from lxml import html
 from sgrequests import SgRequests
-from sgscrape.sgpostal import parse_address, International_Parser
+from sgscrape.sgpostal import International_Parser, parse_address
 
 
 def write_output(data):
@@ -38,7 +38,7 @@ def write_output(data):
 
 def get_urls():
     session = SgRequests()
-    r = session.get("https://locator.natwest.com/?")
+    r = session.get("https://locator-rbs.co.uk/?")
     tree = html.fromstring(r.text)
     token = "".join(tree.xpath("//input[@id='csrf-token']/@value"))
 
@@ -46,7 +46,7 @@ def get_urls():
         "CSRFToken": token,
         "lat": "51.5073509",
         "lng": "-0.1277583",
-        "site": "Natwest",
+        "site": "RBS",
         "pageDepth": "4",
         "search_term": "London",
         "searchMiles": "100",
@@ -57,7 +57,7 @@ def get_urls():
     }
 
     r = session.post(
-        "https://locator.natwest.com/content/branchlocator/en/natwest/_jcr_content/content/homepagesearch.search.html",
+        "https://locator-rbs.co.uk/content/branchlocator/en/rbs/_jcr_content/content/homepagesearch.search.html",
         data=data,
     )
     tree = html.fromstring(r.text)
@@ -68,14 +68,16 @@ def get_urls():
 
 
 def get_data(url):
-    locator_domain = "https://natwest.com"
-    page_url = f"https://locator.natwest.com{url}"
+    locator_domain = "https://rbs.co.uk"
+    page_url = f"https://locator-rbs.co.uk{url}"
 
     session = SgRequests()
     r = session.get(page_url)
     tree = html.fromstring(r.text)
 
     location_name = "".join(tree.xpath("//input[@id='branchName']/@value"))
+    if location_name.find("(") != -1:
+        location_name = location_name.split("(")[0].strip()
     line = tree.xpath("//div[@class='print']//td[@class='first']/text()")
     line = list(filter(None, [l.strip() for l in line]))
     line = " ".join(line)
@@ -102,16 +104,11 @@ def get_data(url):
         phone = phone.split("(")[0].strip()
 
     text = "".join(tree.xpath("//script[contains(text(), 'locationObject')]/text()"))
-    try:
-        text = text.split("locationObject =")[1].split(";")[0].strip()
-        js = json.loads(text)
-        latitude = js.get("LAT") or "<MISSING>"
-        longitude = js.get("LNG") or "<MISSING>"
-        location_type = js.get("TYPE") or "<MISSING>"
-    except IndexError:
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
-        location_type = "<MISSING>"
+    text = text.split("locationObject =")[1].split(";")[0].strip()
+    js = json.loads(text)
+    latitude = js.get("LAT") or "<MISSING>"
+    longitude = js.get("LNG") or "<MISSING>"
+    location_type = js.get("TYPE") or "<MISSING>"
 
     _tmp = []
     tr = tree.xpath("//tr[@class='time']")
@@ -150,6 +147,7 @@ def get_data(url):
 
 def fetch_data():
     out = []
+    s = set()
     urls = get_urls()
 
     with futures.ThreadPoolExecutor(max_workers=10) as executor:
@@ -157,7 +155,10 @@ def fetch_data():
         for future in futures.as_completed(future_to_url):
             row = future.result()
             if row:
-                out.append(row)
+                name = row[2]
+                if name not in s:
+                    s.add(name)
+                    out.append(row)
 
     return out
 
