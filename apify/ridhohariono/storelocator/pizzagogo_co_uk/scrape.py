@@ -97,15 +97,13 @@ def fetch_data():
         else:
             street_address = address[0].strip()
         if len(address) > 2:
-            if len(address) == 3:
-                city = address[1].strip()
-                state = "<MISSING>"
+            if len(address) > 4:
+                city = address[2].strip()
             else:
                 city = address[1].strip()
-                state = address[2].strip()
         else:
             city = "<MISSING>"
-            state = "<MISSING>"
+        state = "<MISSING>"
         zip_code = address[-1].strip()
         phone = store_info["phone"][i]
         country_code = "GB"

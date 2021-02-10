@@ -50,7 +50,7 @@ def fetch_data():
         res = session.get(link)
         store_list = bs(res.text, "lxml").select("div.fl-html div.row")
         for store in store_list:
-            page_url = "<MISSING>"
+            page_url = "https://www.sayleoil.com/location-category/"
             location_name = (
                 store.select_one("h2.loc-title")
                 .string.replace("’", "'")
@@ -87,6 +87,7 @@ def fetch_data():
                         state = address_detail.split(", ")[1].split(" ")[0]
                         zip = address_detail.split(", ")[1].split(" ")[1]
             phone = store.select_one("div.loc-meta").text.split("Phone: ")[1]
+            phone = phone.split("/")[0].strip()
             country_code = "<MISSING>"
             store_number = "<MISSING>"
             latitude = "<MISSING>"
