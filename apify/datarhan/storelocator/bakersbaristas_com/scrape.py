@@ -61,6 +61,8 @@ def fetch_data():
         state = get(poi, "state")
         zip_code = get(poi, "postal_code")
         country_code = get(poi, "country")
+        if country_code == "Ireland":
+            continue
         store_number = get(poi, "id")
         phone = get(poi, "phone")
         location_type = "<MISSING>"
@@ -68,8 +70,7 @@ def fetch_data():
         longitude = get(poi, "lng")
         hoo = []
         for day, hours in json.loads(poi["open_hours"]).items():
-            hours = hours[0]
-            hoo.append(f"{day} {hours}")
+            hoo.append(f"{day} {hours[0]}")
         hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
 
         item = [
