@@ -1,23 +1,9 @@
 import csv
-import requests  # ignore_check
-from requests.exceptions import ConnectionError
 from sgrequests import SgRequests
 import collections
 from sglogging import sglog
 
 log = sglog.SgLogSetup().get_logger(logger_name="redroof.com/hometowne-studios")
-
-
-def override_retries():
-    # monkey patch sgrequests in order to set max retries
-    def new_init(self):
-        requests.packages.urllib3.disable_warnings()
-        self.session = self.requests_retry_session(retries=0)
-
-    SgRequests.__init__ = new_init
-
-
-override_retries()
 
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
