@@ -93,7 +93,7 @@ def get_hours(soup):
     hours_of_operation = [extract_hours(day) for day in openingHours]
     for hours in hours_of_operation:
         if MISSING not in hours:
-            return ','.join(hours_of_operation)
+            return ",".join(hours_of_operation)
 
     return MISSING
 
@@ -201,11 +201,9 @@ def fetch_data():
     logger.info(f"total zips: {len(zips)}")
 
     with ThreadPoolExecutor() as executor:
-        logger.info(
-            f"initialize executor with {executor._max_workers} workers")
+        logger.info(f"initialize executor with {executor._max_workers} workers")
         futures = as_completed(
-            [executor.submit(search_zip, zipcode, dedup_tracker)
-             for zipcode in zips]
+            [executor.submit(search_zip, zipcode, dedup_tracker) for zipcode in zips]
         )
 
         for future in futures:
