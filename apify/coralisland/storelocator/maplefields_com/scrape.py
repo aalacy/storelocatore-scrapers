@@ -74,7 +74,7 @@ def fetch_data():
     for store in store_list:
         output = []
         output.append(base_url)  # url
-        output.append("https://maplefields.com/store-locator/")  # page url
+        output.append("https://maplefields.com/store-locator")  # page url
         output.append(get_value(store["title"]))  # location name
         output.append(get_value(store["street"]))  # address
         output.append(get_value(store["city"]))  # city
