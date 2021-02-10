@@ -3,7 +3,6 @@ import csv
 from sgrequests import SgRequests
 from sglogging import sglog
 import lxml.html
-import json
 
 website = "majestic.co.uk"
 domain = "https://www.majestic.co.uk"
