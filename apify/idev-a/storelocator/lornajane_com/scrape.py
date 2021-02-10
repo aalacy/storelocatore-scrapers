@@ -56,7 +56,6 @@ def fetch_data():
             + myutil._valid1(item.get("address2", ""))
         ).replace("None", "")
         city = myutil._valid(item["city"])
-        # street_address = _street(street_address, city, location_name)
         state = myutil._valid(item["stateCode"])
         zip = myutil._valid(myutil._digit(item["postalCode"]))
         raw_address = f"{street_address} {city}, {state} {zip}"
