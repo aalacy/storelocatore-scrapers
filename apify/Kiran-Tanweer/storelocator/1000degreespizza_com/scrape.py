@@ -100,6 +100,7 @@ def fetch_data():
                 state = locality[1]
                 pcode = "<MISSING>"
                 phone = addr[2].strip()
+                hours = "<MISSING>"
             if len(addr) == 2:
                 street = addr[0].strip()
                 locality = addr[1].strip()
@@ -108,6 +109,7 @@ def fetch_data():
                 state = locality[1]
                 pcode = "<MISSING>"
                 phone = "<MISSING>"
+                hours = "Coming Soon"
             if len(addr) == 4:
                 street = addr[0].strip()
                 locality = addr[1].strip()
@@ -117,6 +119,7 @@ def fetch_data():
                 pcode = "<MISSING>"
                 phone = addr[2].strip()
                 phone = phone.split('"d3ph">')[1].split("</span>")[0].strip()
+                hours = "<MISSING>"
             if len(addr) == 7:
                 street = addr[0].strip()
                 locality = addr[1].strip()
@@ -124,6 +127,7 @@ def fetch_data():
                 city = locality[0]
                 state = locality[1]
                 pcode = "<MISSING>"
+                hours = "<MISSING>"
                 phone = addr[2].strip()
                 phone = phone.split('"d3ph">')[1].split("</span>")[0].strip()
             state = state.strip()
@@ -165,7 +169,7 @@ def fetch_data():
                     "<MISSING>",
                     "<INACCESSIBLE>",
                     "<INACCESSIBLE>",
-                    "<MISSING>",
+                    hours,
                 ]
             )
     return data

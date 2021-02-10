@@ -65,7 +65,7 @@ def get_data(page_url):
     elif len(line) == 0:
         return
     else:
-        street_address = line[0]
+        street_address = ", ".join(line[:-1])
         line = line[-1]
         city = line.split(",")[0].strip()
         line = line.split(",")[1].strip()
@@ -75,7 +75,7 @@ def get_data(page_url):
             return
 
     country_code = "US"
-    store_number = "<MISSING>"
+    store_number = page_url.split("/")[-1]
     phone = "".join(tree.xpath("//div[@class='phone']/p/text()")).strip() or "<MISSING>"
 
     text = "".join(

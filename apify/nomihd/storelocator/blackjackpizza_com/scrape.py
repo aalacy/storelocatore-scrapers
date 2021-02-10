@@ -63,7 +63,7 @@ def fetch_data():
     # Your scraper here
     loc_list = []
 
-    search_url = "https://blackjackpizza.com/florida/locations/"
+    search_url = "https://blackjackpizza.com/locations/"
     stores_req = session.get(search_url, headers=headers)
     xml_text = (
         stores_req.text.split("LocationMap.xmldata = '")[1]
