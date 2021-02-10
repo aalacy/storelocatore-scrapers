@@ -71,10 +71,13 @@ def fetch_data():
             days = root.xpath("//p[.//*[contains(text(), 'Mon')]]/strong/strong/text()")
             times = root.xpath("//p[.//*[contains(text(), 'Mon')]]/strong/text()")
 
+        days = list(filter(None, [d.replace("\xa0", "").strip() for d in days]))
         for d, t in zip(days, times):
             _tmp.append(f"{d.strip()}: {t.strip()}")
 
-        hours_of_operation = ";".join(_tmp) or "<MISSING>"
+        hours_of_operation = (
+            ";".join(_tmp).replace("Sat: Fri", "Sat: Closed;Fri") or "<MISSING>"
+        )
 
         row = [
             locator_domain,
