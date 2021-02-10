@@ -111,7 +111,6 @@ def fetch_data():
         hours_list = []
         hours = store_json["properties"]["hoursOfOperation"]
         for day in hours.keys():
-            # print(hours[day])
             time = ""
             if len(hours[day]) > 0:
                 time = str(hours[day][0][0]) + "-" + str(hours[day][0][1])
