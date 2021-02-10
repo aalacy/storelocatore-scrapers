@@ -317,6 +317,8 @@ def fetch_data():
                         hours = "<MISSING>"
                     if phone == "":
                         phone = "<MISSING>"
+                    if purl == "" or purl is None:
+                        purl = "<MISSING>"
                     yield [
                         website,
                         purl,
