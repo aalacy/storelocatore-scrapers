@@ -68,7 +68,8 @@ def fetch_data():
         longitude = get(poi, "lng")
         hoo = []
         for day, hours in json.loads(poi["open_hours"]).items():
-            hoo.append(f"{day} {hours[0]}")
+            hours = hours[0]
+            hoo.append(f"{day} {hours}")
         hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
 
         item = [
