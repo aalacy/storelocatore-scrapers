@@ -68,7 +68,10 @@ def fetch_data():
             )
             store = json.loads(script)
 
-            if "gas" not in base.find(class_="StoreServices-wrapper table").text.lower():
+            if (
+                "gas"
+                not in base.find(class_="StoreServices-wrapper table").text.lower()
+            ):
                 continue
             location_name = store["name"]
             street_address = store["address"]["streetAddress"]
