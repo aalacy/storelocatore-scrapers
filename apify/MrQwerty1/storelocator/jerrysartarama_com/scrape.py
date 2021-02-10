@@ -65,12 +65,12 @@ def get_hours(page_url):
     except IndexError:
         latitude, longitude = "<MISSING>", "<MISSING>"
 
-    return latitude, longitude, hoo
+    return latitude, longitude, hoo, r.url
 
 
 def fetch_data():
     out = []
-    locator_domain = "https://www.jerrysretailstores.com/"
+    locator_domain = "https://jerrysartarama.com/"
     api_url = "https://www.jerrysretailstores.com/locations/"
 
     session = SgRequests()
@@ -93,7 +93,7 @@ def fetch_data():
         location_name = j.get("name").replace("&#8217;", "'")
         location_type = "<MISSING>"
         phone = a.get("telephone") or "<MISSING>"
-        latitude, longitude, hours_of_operation = get_hours(page_url)
+        latitude, longitude, hours_of_operation, page_url = get_hours(page_url)
 
         row = [
             locator_domain,
