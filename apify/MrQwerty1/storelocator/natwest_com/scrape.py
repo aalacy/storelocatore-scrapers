@@ -1,10 +1,10 @@
 import csv
+import json
 
 from concurrent import futures
-from datetime import datetime
 from lxml import html
 from sgrequests import SgRequests
-from sgscrape.sgpostal import International_Parser, parse_address
+from sgscrape.sgpostal import parse_address, International_Parser
 
 
 def write_output(data):
@@ -38,22 +38,47 @@ def write_output(data):
 
 def get_urls():
     session = SgRequests()
-    r = session.get("https://www.beatone.co.uk/bars")
+    r = session.get("https://locator.natwest.com/?")
+    tree = html.fromstring(r.text)
+    token = "".join(tree.xpath("//input[@id='csrf-token']/@value"))
+
+    data = {
+        "CSRFToken": token,
+        "lat": "51.5073509",
+        "lng": "-0.1277583",
+        "site": "Natwest",
+        "pageDepth": "4",
+        "search_term": "London",
+        "searchMiles": "100",
+        "offSetMiles": "50",
+        "maxMiles": "2000",
+        "listSizeInNumbers": "10000",
+        "search-type": "1",
+    }
+
+    r = session.post(
+        "https://locator.natwest.com/content/branchlocator/en/natwest/_jcr_content/content/homepagesearch.search.html",
+        data=data,
+    )
     tree = html.fromstring(r.text)
 
-    return tree.xpath("//a[@class='inner-item']/@href")
+    return tree.xpath(
+        "//div[@class=' results-block real branch']/a[@class='holder']/@href"
+    )
 
 
 def get_data(url):
-    locator_domain = "https://www.beatone.co.uk/"
-    page_url = f"https://www.beatone.co.uk{url}"
+    locator_domain = "https://natwest.com"
+    page_url = f"https://locator.natwest.com{url}"
 
     session = SgRequests()
     r = session.get(page_url)
     tree = html.fromstring(r.text)
 
-    location_name = tree.xpath("//h1/text()")[1].strip()
-    line = " ".join(tree.xpath("//ul[@class='menu vertical address']/li/text()"))
+    location_name = "".join(tree.xpath("//input[@id='branchName']/@value"))
+    line = tree.xpath("//div[@class='print']//td[@class='first']/text()")
+    line = list(filter(None, [l.strip() for l in line]))
+    line = " ".join(line)
     adr = parse_address(International_Parser(), line)
 
     street_address = (
@@ -62,44 +87,45 @@ def get_data(url):
         ).strip()
         or "<MISSING>"
     )
+
     city = adr.city or "<MISSING>"
     state = adr.state or "<MISSING>"
     postal = adr.postcode or "<MISSING>"
-    if postal == "<MISSING>":
-        postal = " ".join(street_address.split()[-2:])
-        street_address = street_address.replace(postal, "").strip()
     country_code = "GB"
-    store_number = "<MISSING>"
+    store_number = page_url.split("/")[-1].split("-")[0]
+
     phone = (
-        "".join(
-            tree.xpath("//ul[@class='menu vertical']//a[contains(@href, 'tel')]/text()")
-        ).strip()
+        "".join(tree.xpath("//div[@class='print']//td[./span]/text()")).strip()
         or "<MISSING>"
     )
+    if phone.find("(") != -1:
+        phone = phone.split("(")[0].strip()
 
+    text = "".join(tree.xpath("//script[contains(text(), 'locationObject')]/text()"))
     try:
-        text = "".join(tree.xpath("//script[contains(text(), 'new H.Map(')]/text()"))
-        text = text.split("center: ")[1].split("});")[0].strip()
-        lat, lng = "lat", "lng"
-        a = eval(text)
-        latitude = a.get(lat) or "<MISSING>"
-        longitude = a.get(lng) or "<MISSING>"
-    except:
+        text = text.split("locationObject =")[1].split(";")[0].strip()
+        js = json.loads(text)
+        latitude = js.get("LAT") or "<MISSING>"
+        longitude = js.get("LNG") or "<MISSING>"
+        location_type = js.get("TYPE") or "<MISSING>"
+    except IndexError:
         latitude = "<MISSING>"
         longitude = "<MISSING>"
-    location_type = "<MISSING>"
+        location_type = "<MISSING>"
 
     _tmp = []
-    divs = tree.xpath("//div[@class='opening-times']/div[./span]")
-    for d in divs:
-        day = "".join(d.xpath("./span/text()")).strip()
-        time = "".join(d.xpath("./text()")).strip()
-        _tmp.append(f"{day} {time}")
+    tr = tree.xpath("//tr[@class='time']")
 
-    hours_of_operation = (
-        ";".join(_tmp).replace("Today", datetime.today().strftime("%A")) or "<MISSING>"
-    )
-    if hours_of_operation.lower().count("closed") == 7:
+    for t in tr:
+        day = "".join(t.xpath("./td[1]/text()")).strip()
+        if t.xpath("./td[@colspan='3']"):
+            time = "Closed"
+        else:
+            time = "".join(t.xpath("./td/text()")[1:]).strip()
+        _tmp.append(f"{day}: {time}")
+
+    hours_of_operation = ";".join(_tmp) or "<MISSING>"
+    if hours_of_operation.lower().count("closed") >= 7:
         hours_of_operation = "Closed"
 
     row = [
