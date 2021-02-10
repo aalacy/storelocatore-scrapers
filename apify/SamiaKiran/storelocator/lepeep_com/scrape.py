@@ -69,13 +69,20 @@ def fetch_data():
             else:
                 address = temp[1].text + " " + temp[2].text
                 phone = temp[3].find("a").text
-            hourlist = loc.find("div", {"class": "wpsl-store-hours"}).findAll("tr")
-            hours = ""
-            for hour in hourlist:
-                hour = hour.findAll("td")
-                day = hour[0].text
-                time = hour[1].text
-                hours = hours + " " + day + " " + time
+            try:
+                hourlist = (
+                    loc.find("div", {"class": "wpsl-store-hours"})
+                    .find("table", {"class": "wpsl-opening-hours"})
+                    .findAll("tr")
+                )
+                hours = ""
+                for hour in hourlist:
+                    hour = hour.findAll("td")
+                    day = hour[0].text
+                    time = hour[1].text
+                    hours = hours + " " + day + " " + time
+            except:
+                hours = loc.find("div", {"class": "store-column temp-closed-note"}).text
             address = address.replace(",", " ")
             address = usaddress.parse(address)
             i = 0
