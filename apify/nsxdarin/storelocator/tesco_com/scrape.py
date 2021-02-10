@@ -77,7 +77,6 @@ def fetch_data():
     keys = set()
     search = DynamicGeoSearch(country_codes=[SearchableCountries.BRITAIN], max_search_results=MAX_RESULTS)
     for coord in search:
-        result_coords = []
         logger.info("remaining zipcodes: " + str(search.items_remaining()))
         lat, lng = coord[0], coord[1]
         url = URL_TEMPLATE.format(lat, lng)
@@ -86,7 +85,7 @@ def fetch_data():
         for store in stores:
             latitude = handle_missing(store['geo']['coordinates']['latitude'])
             longitude = handle_missing(store['geo']['coordinates']['longitude'])
-            result_coords.append((latitude, longitude))
+            search.found_location_at(latitude, longitude)
             store_number = handle_missing(store['altIds']['branchNumber'])
             key = store['id']
             if key in keys:
@@ -112,8 +111,6 @@ def fetch_data():
             if 'openingHours' in store:
                 hours_of_operation = parse_hours(store['openingHours'])
             yield [locator_domain, page_url, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation]
-            search.mark_found(result_coords)
-
 
 def scrape():
     data = fetch_data()

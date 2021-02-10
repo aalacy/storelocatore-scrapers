@@ -263,7 +263,7 @@ def fetch_data():
         if "Dealer" in js["Response"]:
             dealers = (
                 js["Response"]["Dealer"]
-                if isinstance(js["Response"]["Dealer"] == [])
+                if isinstance(js["Response"]["Dealer"], list)
                 else [js["Response"]["Dealer"]]
             )
             for item in dealers:
@@ -317,6 +317,8 @@ def fetch_data():
                         hours = "<MISSING>"
                     if phone == "":
                         phone = "<MISSING>"
+                    if purl == "" or purl is None:
+                        purl = "<MISSING>"
                     yield [
                         website,
                         purl,
