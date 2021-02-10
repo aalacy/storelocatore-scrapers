@@ -32,37 +32,28 @@ def fetch_data():
         soup = bs(res.text, "lxml")
         links = soup.select("div.elementor-widget-container table  a")
         for link in links:
-            try:
-                page_url = link["href"]
-                r1 = session.get(page_url)
-                soup1 = bs(r1.text, "lxml")
-                block = soup1.find(string=re.compile("located at")).split("located at")[
-                    1
-                ]
-                addr = parse_address_usa(block.strip())
-                phone = (
-                    soup1.find(string=re.compile("Phone Number:")).split(":")[1].strip()
-                )
-                hours_of_operation = "; ".join(
-                    [_.text for _ in soup1.select("div.elementor-text-editor p")[1:]]
-                )
-                record = SgRecord(
-                    page_url=page_url,
-                    location_name=link.text,
-                    street_address=addr.street_address_1,
-                    city=addr.city,
-                    state=addr.state,
-                    zip_postal=addr.postcode,
-                    country_code=addr.country,
-                    phone=phone,
-                    locator_domain=locator_domain,
-                    hours_of_operation=_valid1(hours_of_operation),
-                )
-                data.append(record)
-            except:
-                import pdb
-
-                pdb.set_trace()
+            page_url = link["href"]
+            r1 = session.get(page_url)
+            soup1 = bs(r1.text, "lxml")
+            block = soup1.find(string=re.compile("located at")).split("located at")[1]
+            addr = parse_address_usa(block.strip())
+            phone = soup1.find(string=re.compile("Phone Number:")).split(":")[1].strip()
+            hours_of_operation = "; ".join(
+                [_.text for _ in soup1.select("div.elementor-text-editor p")[1:]]
+            )
+            record = SgRecord(
+                page_url=page_url,
+                location_name=link.text,
+                street_address=addr.street_address_1,
+                city=addr.city,
+                state=addr.state,
+                zip_postal=addr.postcode,
+                country_code=addr.country,
+                phone=phone,
+                locator_domain=locator_domain,
+                hours_of_operation=_valid1(hours_of_operation),
+            )
+            data.append(record)
 
     return data
 
