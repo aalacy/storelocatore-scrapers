@@ -133,6 +133,12 @@ def fetch_data():
             state = add_list[-1].split(" ")[-2].strip()
             zip = add_list[-1].split(" ")[-1].strip()
 
+        if "suite" in city.lower():
+            street_address = (
+                street_address + ", " + " ".join(city.split(" ")[:2]).strip()
+            )
+            city = " ".join(city.split(" ")[2:]).strip()
+
         if zip.isdigit() is not True:
             zip = "<MISSING>"
 
@@ -169,6 +175,7 @@ def fetch_data():
             if (
                 len("".join(hour).strip()) > 0
                 and "Bar Open Late For Sporting Events!" not in hour
+                and "NOW OPEN!" not in hour
             ):
                 hours_list.append("".join(hour).strip())
 
