@@ -1,5 +1,7 @@
+import re
 import csv
 import json
+from lxml import etree
 
 from sgrequests import SgRequests
 
@@ -40,43 +42,44 @@ def fetch_data():
 
     items = []
 
-    DOMAIN = "primantibros.com"
-    start_url = (
-        "https://hosted.where2getit.com/primantibros/rest/locatorsearch?lang=en_US"
-    )
-
-    headers = {
-        "Content-Type": "application/json",
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36",
-        "X-Requested-With": "XMLHttpRequest",
+    DOMAIN = "hmv.com"
+    start_url = "https://www.hmv.com/store-finder"
+    hdr = {
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.193 Safari/537.36"
     }
-    body = '{"request":{"appkey":"7CDBB1A2-4AC6-11EB-932C-8917919C4603","formdata":{"geoip":false,"dataview":"store_default","limit":200,"google_autocomplete":"true","geolocs":{"geoloc":[{"addressline":"17011","country":"","latitude":"","longitude":""}]},"searchradius":"500","where":{"or":{"retail":{"eq":""},"outlet":{"eq":""},"factory":{"eq":""},"promo":{"eq":""}}},"false":"0"}}}'
-    response = session.post(start_url, data=body, headers=headers)
-    data = json.loads(response.text)
 
-    for poi in data["response"]["collection"]:
-        store_url = poi["websiteurl"]
+    response = session.get(start_url, headers=hdr)
+    dom = etree.HTML(response.text)
+    data = dom.xpath('//script[contains(text(), "var stores")]/text()')[0]
+    data = re.findall("var stores = (.+);", data)[0]
+    data = json.loads(data)
+
+    for poi in data:
+        store_url = "<MISSING>"
         location_name = poi["name"]
         location_name = location_name if location_name else "<MISSING>"
-        street_address = poi["address1"]
-        city = poi["city"]
-        state = poi["state"]
-        zip_code = poi["postalcode"]
-        country_code = poi["country"]
+        street_address = poi["addressL1"]
+        if poi.get("addressL2"):
+            street_address += ", " + poi["addressL2"]
+        street_address = street_address if street_address else "<MISSING>"
+        city = poi["addressCity"]
+        city = city if city else "<MISSING>"
+        state = "<MISSING>"
+        zip_code = poi["addressPostCode"]
+        zip_code = zip_code if zip_code else "<MISSING>"
+        country_code = "<MISSING>"
         store_number = "<MISSING>"
-        phone = poi["phone"]
+        phone = poi.get("telephoneNumber")
         phone = phone if phone else "<MISSING>"
         location_type = "<MISSING>"
         latitude = poi["latitude"]
+        latitude = latitude if latitude else "<MISSING>"
         longitude = poi["longitude"]
+        longitude = longitude if longitude else "<MISSING>"
         hoo = []
-        for k, v in poi.items():
-            if "hours" in k:
-                day = k.replace("hours", "")
-                hoo.append(f"{day} {v}")
-        hours_of_operation = (
-            " ".join(hoo).replace("holiday None", "") if hoo else "<MISSING>"
-        )
+        for elem in poi["storeOpeningTimesByWeek"][0]:
+            hoo.append(f'{elem["day"]} {elem["times"]}')
+        hours_of_operation = ", ".join(hoo) if hoo else "<MISSING>"
 
         item = [
             DOMAIN,
