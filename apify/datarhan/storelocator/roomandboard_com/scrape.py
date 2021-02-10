@@ -61,7 +61,6 @@ def fetch_data():
     all_locations = dom.xpath('//a[@class="Card-link Heading Heading--4"]/@href')
     for url in all_locations:
         store_url = urljoin(start_url, url)
-        print(store_url)
         loc_response = session.get(store_url, headers=headers)
         loc_dom = etree.HTML(loc_response.text)
         poi = loc_dom.xpath('//script[@id="store-schema-data"]/text()')[0]
