@@ -1,4 +1,5 @@
 import csv
+import re
 import time
 
 from random import randint
@@ -112,7 +113,11 @@ def fetch_data():
         try:
             hours_of_operation = " ".join(
                 list(item.find(class_="ubsf_details-opening-hours").stripped_strings)
-            )
+            ).replace("Special Opening Hours", "")
+            hours_of_operation = (
+                re.sub(r"[(\d]{2}/[\d]{2}/[\d]{4}", " ", hours_of_operation)
+            ).strip()
+            hours_of_operation = (re.sub(" +", " ", hours_of_operation)).strip()
         except:
             # Duplicates have no hours so skip
             continue
