@@ -51,7 +51,7 @@ def fetch_data():
 
     total = 1000
 
-    for i in range(50):
+    for i in range(150):
 
         if len(data) == int(total):
             break
