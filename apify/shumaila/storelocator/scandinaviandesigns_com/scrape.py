@@ -53,6 +53,8 @@ def fetch_data():
             continue
         link = link["href"]
         r = session.get(link, headers=headers, verify=False)
+        soup = BeautifulSoup(r.text, "html.parser")
+        title = soup.find("h2").text
         loc = r.text.split('<script type="application/ld+json">', 1)[1].split(
             "</script>", 1
         )[0]
