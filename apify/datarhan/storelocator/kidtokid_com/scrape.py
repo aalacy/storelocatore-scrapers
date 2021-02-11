@@ -1,5 +1,6 @@
 import csv
 import json
+from lxml import etree
 
 from sgrequests import SgRequests
 
@@ -70,6 +71,13 @@ def fetch_data():
         hours_of_operation = (
             poi["c_store-hours"].replace("\n", " ").replace("\t", " ").strip()
         )
+        if not hours_of_operation:
+            hours_of_operation = (
+                poi["hours_of_operation"].replace("\n", " ").replace("\t", " ")
+            )
+        if not hours_of_operation:
+            location_type = "coming soon"
+            hours_of_operation = "<MISSING>"
 
         item = [
             DOMAIN,
