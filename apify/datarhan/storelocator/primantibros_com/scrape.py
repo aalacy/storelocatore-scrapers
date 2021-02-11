@@ -74,7 +74,9 @@ def fetch_data():
             if "hours" in k:
                 day = k.replace("hours", "")
                 hoo.append(f"{day} {v}")
-        hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
+        hours_of_operation = (
+            " ".join(hoo).replace("holiday None", "") if hoo else "<MISSING>"
+        )
 
         item = [
             DOMAIN,

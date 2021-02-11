@@ -96,11 +96,10 @@ def fetch_data():
             except:
                 pass
         link = "https://locations.smoothiefactory.com" + loc1["llp_url"]
-        if (
-            "coming soon" in loc1["open_or_closed"]
-            or "temp closed" in loc1["open_or_closed"]
-        ):
+        if "coming soon" in loc1["open_or_closed"]:
             continue
+        if len(hours) < 3:
+            hours = "Temporarily Closed"
         data.append(
             [
                 "https://smoothiefactory.com/",
