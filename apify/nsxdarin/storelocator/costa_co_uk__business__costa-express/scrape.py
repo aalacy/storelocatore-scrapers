@@ -3,6 +3,7 @@ from sgrequests import SgRequests
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 import json
 from sglogging import SgLogSetup
+from sgscrape.sgpostal import parse_address_intl
 
 logger = SgLogSetup().get_logger("costa_co_uk__business__costa-express")
 
@@ -58,23 +59,28 @@ def fetch_data():
             store = item["storeNo8Digit"]
             typ = item["storeType"]
             phone = item["telephone"]
-            add = item["storeAddress"]["addressLine1"]
-            add = (
-                add
+            rawadd = item["storeAddress"]["addressLine1"]
+            rawadd = (
+                rawadd
                 + " "
                 + item["storeAddress"]["addressLine2"]
                 + " "
                 + item["storeAddress"]["addressLine3"]
             )
-            add = add.strip()
+            rawadd = rawadd.strip()
+            addr = parse_address_intl(rawadd)
+            city = addr.city
+            zc = addr.postcode
+            add = addr.street_address_1
+            state = "<MISSING>"
             name = item["storeNameExternal"]
             if name == "":
                 name = typ
-            city = item["storeAddress"]["city"]
-            if "London" in city:
-                city = "London"
-            state = "<MISSING>"
-            zc = item["storeAddress"]["postCode"]
+            try:
+                if "London" in city:
+                    city = "London"
+            except:
+                pass
             country = "GB"
             lng = item["longitude"]
             website = "costa.co.uk/business/costa-express"
@@ -133,8 +139,6 @@ def fetch_data():
                 phone = "<MISSING>"
             if add == "":
                 add = "<MISSING>"
-            if city == "":
-                city = item["storeAddress"]["addressLine3"]
             if city == "":
                 city = "<MISSING>"
             loc = "<MISSING>"

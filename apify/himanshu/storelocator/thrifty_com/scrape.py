@@ -42,11 +42,10 @@ def fetch_data():
     base_url = "https://www.thrifty.com/"
     search = DynamicZipSearch(
         country_codes=[SearchableCountries.USA, SearchableCountries.CANADA],
-        max_search_results=84,
-        max_radius_miles=100,
+        max_search_results=1000,
+        max_radius_miles=25,
     )
     for zip_code in search:
-        logger.info(f"{zip_code} | remaining: {search.items_remaining()}")
         page_url = (
             "https://www.thrifty.com/loc/modules/multilocation/?near_location="
             + str(zip_code)
@@ -90,9 +89,13 @@ def fetch_data():
             store.append(longitude if longitude else "<MISSING>")
             store.append(HOO if HOO else "<MISSING>")
             store.append(page_url if page_url else "<MISSING>")
-            if store[2] in addresses:
+            if store[2] + store[3] + store[5] in addresses:
                 continue
-            addresses.append(store[2])
+            addresses.append(store[2] + store[3] + store[5])
+            store = [
+                str(x).strip().replace("\n", "").replace("\t", "").replace("\r", "")
+                for x in store
+            ]
             yield store
 
 

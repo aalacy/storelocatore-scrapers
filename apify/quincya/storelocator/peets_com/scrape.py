@@ -73,8 +73,6 @@ def fetch_data():
         js = base.text.split('locations":')[1].split(',"debug"')[0]
         stores = json.loads(js)
 
-        result_coords = []
-
         for store in stores:
 
             if "peet" not in store["custom_fields"][0]["value"].lower():
@@ -88,7 +86,7 @@ def fetch_data():
             latitude = store["latitude"]
             longitude = store["longitude"]
 
-            result_coords.append([latitude, longitude])
+            search.found_location_at(latitude, longitude)
 
             location_name = store["name"]
             street_address = store["address_line_1"]
@@ -133,9 +131,6 @@ def fetch_data():
                     hours_of_operation,
                 ]
             )
-
-        if len(result_coords) > 0:
-            search.mark_found(result_coords)
 
     return data
 
