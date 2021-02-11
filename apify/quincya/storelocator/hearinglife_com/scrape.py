@@ -60,7 +60,7 @@ def fetch_data():
     base_link = "https://www.hearinglife.com/find-hearing-aid-center"
 
     driver.get(base_link)
-    WebDriverWait(driver, 100).until(
+    WebDriverWait(driver, 300).until(
         ec.presence_of_element_located((By.CLASS_NAME, "map-centers-list-item"))
     )
     time.sleep(2)
