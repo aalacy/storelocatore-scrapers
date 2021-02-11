@@ -76,8 +76,11 @@ def fetch_data():
             name = item["storeNameExternal"]
             if name == "":
                 name = typ
-            if "London" in city:
-                city = "London"
+            try:
+                if "London" in city:
+                    city = "London"
+            except:
+                pass
             country = "GB"
             lng = item["longitude"]
             website = "costa.co.uk"
@@ -136,7 +139,7 @@ def fetch_data():
                 phone = "<MISSING>"
             if add == "":
                 add = "<MISSING>"
-            if city == "":
+            if city == "" or city is None:
                 city = "<MISSING>"
             loc = "<MISSING>"
             if city == "<MISSING>":
