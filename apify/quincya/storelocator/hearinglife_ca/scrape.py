@@ -8,7 +8,7 @@ from sglogging import sglog
 
 from sgrequests import SgRequests
 
-log = sglog.SgLogSetup().get_logger(logger_name="hearinglife.com")
+log = sglog.SgLogSetup().get_logger(logger_name="hearinglife.ca")
 
 
 def write_output(data):

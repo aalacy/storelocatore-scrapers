@@ -102,7 +102,7 @@ def get_data(url):
     hours_of_operation = ";".join(_tmp) or "<MISSING>"
     isclosed = tree.xpath("//strong[contains(text(), 'closed')]")
     if isclosed:
-        hours_of_operation = "Closed"
+        hours_of_operation = "Temporarily Closed"
 
     row = [
         locator_domain,
