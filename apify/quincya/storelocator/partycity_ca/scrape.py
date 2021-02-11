@@ -44,7 +44,6 @@ def fetch_data():
 
     dup_tracker = []
 
-    data = []
     locator_domain = "partycity.ca"
 
     search = DynamicGeoSearch(
@@ -61,8 +60,6 @@ def fetch_data():
         )
         stores = session.get(base_link, headers=headers).json()
 
-        result_coords = []
-
         for store in stores:
 
             if "PTY" not in store["storeType"]:
@@ -76,7 +73,7 @@ def fetch_data():
             latitude = store["storeLatitude"]
             longitude = store["storeLongitude"]
 
-            result_coords.append([latitude, longitude])
+            search.found_location_at(latitude, longitude)
 
             location_name = store["storeName"]
             street_address = store["storeAddress1"]
@@ -122,8 +119,7 @@ def fetch_data():
                 store["storeCrxNodeName"],
             )
             # Store data
-            data.append(
-                [
+            yield [
                     locator_domain,
                     link,
                     location_name,
@@ -139,13 +135,6 @@ def fetch_data():
                     longitude,
                     hours_of_operation,
                 ]
-            )
-
-        if len(result_coords) > 0:
-            search.mark_found(result_coords)
-
-    return data
-
 
 def scrape():
     data = fetch_data()

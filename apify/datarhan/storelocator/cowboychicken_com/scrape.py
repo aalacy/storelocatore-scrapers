@@ -3,7 +3,7 @@ from lxml import etree
 from urllib.parse import urljoin
 
 from sgrequests import SgRequests
-from sgscrape.sgpostal import USA_Best_Parser, parse_address
+from sgscrape.sgpostal import parse_address_usa
 
 
 def write_output(data):
@@ -55,7 +55,7 @@ def fetch_data():
         location_name = poi_html.xpath('.//div[@class="list-left-con"]/a[1]/text()')
         location_name = location_name[0] if location_name else "<MISSING>"
         raw_address = poi_html.xpath('.//p[@class="address-block"]/text()')[0].strip()
-        parsed_adr = parse_address(raw_address, USA_Best_Parser())
+        parsed_adr = parse_address_usa(raw_address)
         country_code = parsed_adr.country
         city = parsed_adr.city
         city = city if city else "<MISSING>"
