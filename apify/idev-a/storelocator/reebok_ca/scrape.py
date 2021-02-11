@@ -77,10 +77,6 @@ def fetch_data():
             state = address[-2].split(",")[1].strip()
             zip = address[-1]
 
-        if not street_address:
-            import pdb
-
-            pdb.set_trace()
         state = state.encode("unicode-escape").decode("utf8").replace("\\xe9", "e")
         phone = myutil._valid(location["phone"])
         location_type = "<MISSING>"

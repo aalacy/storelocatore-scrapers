@@ -79,6 +79,11 @@ def parse_json(soup, js_variable):
 def fetch_data():
     log.info("Fetching store_locator data")
     soup = pull_content(LOCATION_URL)
+    store_address = (
+        soup.find("table", {"class": "table table-bordered table-striped"})
+        .find("tbody")
+        .find_all("tr")
+    )
     store_info = parse_json(soup, "wpgmaps_localize_marker_data")
     locations = []
     for index in store_info:
@@ -128,6 +133,28 @@ def fetch_data():
                 latitude,
                 longitude,
                 hours_of_operation,
+            ]
+        )
+    last_element = store_address[-1].find_all("td")
+    if last_element[2].text not in [val[3] for val in locations]:
+        address = last_element[1].text.strip().split(",")
+        log.info("Append {} => {}".format(location_name, street_address))
+        locations.append(
+            [
+                DOMAIN,
+                LOCATION_URL,
+                "Handy Mart",
+                address[0],
+                address[1],
+                address[2],
+                "<MISSING>",
+                "US",
+                "22",
+                last_element[2].text.strip(),
+                last_element[0].find("img")["alt"].strip(),
+                "<MISSING>",
+                "<MISSING>",
+                "<MISSING>",
             ]
         )
     return locations
