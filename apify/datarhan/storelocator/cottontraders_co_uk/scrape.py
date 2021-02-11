@@ -3,6 +3,7 @@ import json
 from lxml import etree
 
 from sgrequests import SgRequests
+from sgscrape.sgpostal import parse_address_intl
 
 
 def write_output(data):
@@ -57,8 +58,14 @@ def fetch_data():
         poi = json.loads(poi)
 
         location_name = poi["name"]
+        addr = " ".join(
+            loc_dom.xpath(
+                '//div[@class="b-store-locator_full-details_store_address"]/div/text()'
+            )
+        )
+        addr = parse_address_intl(addr)
         street_address = poi["address"]["streetAddress"]
-        city = poi["address"]["addressLocality"]
+        city = addr.city
         city = city if city else "<MISSING>"
         state = poi["address"]["addressRegion"]
         zip_code = poi["address"]["postalCode"]
