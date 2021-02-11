@@ -70,43 +70,39 @@ def fetch_data():
     ]
 
     for n in range(0, len(location_href)):
-        link = location_href[n]
-        links.append(link)
+        link = location_href[n]        
         req = session.get(link, headers=HEADERS)
         base = BeautifulSoup(req.text, "lxml")
-        location_name.append(base.find(id="text1").text.strip())
+        title = base.find(id="text1").text.strip()
         try:
             address = list(base.find(id="address").stripped_strings)
         except:
             continue
-        street_address.append(address[0])
-        city.append(address[1].split(",")[0])
-        state.append(address[1].split(",")[1].split()[0])
-        zipcode.append(address[1].split(",")[1].split()[1])
-        phone.append(address[2].split("Phone ")[1])
+        street = address[0]
+        city = address[1].split(",")[0]
+        state = address[1].split(",")[1].split()[0]
+        pcode = address[1].split(",")[1].split()[1]
+        phone = address[2].split("Phone ")[1]
         try:
             lat_lon = base.find("a", string="Google Map")
             lat, lon = parse_geo(str(lat_lon["href"]))
             if (lat == "") or (lat == []):
-                latitude.append("<MISSING>")
+                lat = "<MISSING>"
             else:
-                latitude.append(lat)
+                lat = lat
             if (lon == "") or (lon == []):
-                longitude.append("<MISSING>")
+                longt = "<MISSING>"
             else:
-                longitude.append(lon)
+                longt = lon
         except:
             map_link = lat_lon["href"]
             if "@" in map_link:
                 at_pos = map_link.rfind("@")
-                latitude.append(
-                    map_link[at_pos + 1 : map_link.find(",", at_pos)].strip()
-                )
-                longitude.append(
-                    map_link[
-                        map_link.find(",", at_pos) + 1 : map_link.find(",", at_pos + 15)
+                lat = map_link[at_pos + 1 : map_link.find(",", at_pos)].strip()
+                
+                longt =  map_link[map_link.find(",", at_pos) + 1 : map_link.find(",", at_pos + 15)
                     ].strip()
-                )
+                
             else:
                 try:
                     req = session.get(map_link, headers=HEADERS)
@@ -119,24 +115,24 @@ def fetch_data():
                         raw_gps[raw_gps.find("-") : raw_gps.find("&")].strip()
                     )
                 except:
-                    latitude.append("<MISSING>")
-                    longitude.append("<MISSING>")
-    for n in range(0, len(street_address)):
+                    lat = "<MISSING>"
+                    longt = "<MISSING>"
+    
         data.append(
             [
                 "https://www.frys.com",
-                links[n],
-                location_name[n],
-                street_address[n],
-                city[n],
-                state[n],
-                zipcode[n],
+                link,
+                title,
+                street,
+                city,
+                state,
+                pcode,
                 "US",
                 "<MISSING>",
-                phone[n],
+                phone,
                 "<MISSING>",
-                latitude[n],
-                longitude[n],
+                latitude,
+                longitude,
                 "<INACCESSIBLE>",
             ]
         )
