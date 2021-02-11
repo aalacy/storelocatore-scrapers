@@ -89,10 +89,13 @@ def fetch_data():
         )
         latitude = geo[0]
         longitude = geo[1]
-        hours_of_operation = poi["openingHours"]
-        hours_of_operation = (
-            " ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
-        )
+        hoo = loc_dom.xpath('//div[h2[text()="Hours"]]/following-sibling::div//text()')
+        hoo = [elem.strip() for elem in hoo if elem.strip()]
+        hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
+
+        if "," in city:
+            state = city.split(", ")[-1]
+            city = city.split(",")[0]
 
         item = [
             DOMAIN,

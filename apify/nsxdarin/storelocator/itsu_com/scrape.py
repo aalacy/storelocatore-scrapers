@@ -61,6 +61,8 @@ def fetch_data():
         if "closed" in str(item["hours"]):
             hours = "Closed"
         loc = item["single_url"].replace("\\", "")
+        if "0" not in hours:
+            hours = "<MISSING>"
         yield [
             website,
             loc,
@@ -125,32 +127,33 @@ def fetch_data():
                         else:
                             hours = hours + "; " + hrs
             if "temporarily closed" in line2:
-                hours = "temporarily closed"
+                hours = "<MISSING>"
         if phone == "":
             phone = "<MISSING>"
         if hours == "":
             hours = "<MISSING>"
         if "0" not in hours:
-            hours = "temporarily closed"
+            hours = "<MISSING>"
         add = add.replace("&#039;", "'").replace("&amp;", "&")
         city = city.replace("&#039;", "'").replace("&amp;", "&")
         name = name.replace("&#039;", "'").replace("&amp;", "&")
-        yield [
-            website,
-            loc,
-            name,
-            add,
-            city,
-            state,
-            zc,
-            country,
-            store,
-            phone,
-            typ,
-            lat,
-            lng,
-            hours,
-        ]
+        if "coming-soon" not in loc:
+            yield [
+                website,
+                loc,
+                name,
+                add,
+                city,
+                state,
+                zc,
+                country,
+                store,
+                phone,
+                typ,
+                lat,
+                lng,
+                hours,
+            ]
 
 
 def scrape():
