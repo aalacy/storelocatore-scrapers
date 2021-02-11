@@ -2,10 +2,7 @@ import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
 import json
-from sgscrape.sgpostal import (
-    International_Parser,
-    parse_address,
-)
+from sgscrape.sgpostal import parse_address_intl
 
 session = SgRequests()
 headers = {
@@ -61,7 +58,7 @@ def fetch_data():
             .replace("\\n", "")
             .replace("\\t", "")
         )
-        addr = parse_address(addinfo, International_Parser())
+        addr = parse_address_intl(addinfo)
         city = addr.city
         zc = addr.postcode
         add = addr.street_address_1

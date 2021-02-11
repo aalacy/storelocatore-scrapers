@@ -74,8 +74,36 @@ def fetch_data():
                     zc = "<MISSING>"
                     city = item.split("<br />")[1].split(",")[0]
                     state = item.split("<br />")[1].split(",")[1].split("<")[0].strip()
-                    phone = "<MISSING>"
-                    hours = "<MISSING>"
+                    phone = "807-343-4466"
+                    hours = ""
+                    loc = (
+                        "https://ginospizza.ca/locations/"
+                        + city.lower().replace(" ", "+")
+                        + "/"
+                        + store
+                    )
+                    r2 = session.get(loc, headers=headers)
+                    logger.info(loc)
+                    for line2 in r2.iter_lines():
+                        line2 = str(line2.decode("utf-8"))
+                        if '<dt class="list--description__term">' in line2:
+                            days = line2.split('<dt class="list--description__term">')
+                            for day in days:
+                                if '<dd class="list--description__data">' in day:
+                                    hrs = (
+                                        day.split("<")[0].strip()
+                                        + " "
+                                        + day.split(
+                                            '<dd class="list--description__data">'
+                                        )[1]
+                                        .split("<")[0]
+                                        .strip()
+                                        .replace("&mdash;", "-")
+                                    )
+                                    if hours == "":
+                                        hours = hrs
+                                    else:
+                                        hours = hours + "; " + hrs
                     yield [
                         website,
                         loc,
