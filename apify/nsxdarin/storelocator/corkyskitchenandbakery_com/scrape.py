@@ -1,5 +1,5 @@
 import csv
-from sgselenium import SgSelenium, SgChrome
+from sgselenium import SgChrome
 
 
 def write_output(data):
