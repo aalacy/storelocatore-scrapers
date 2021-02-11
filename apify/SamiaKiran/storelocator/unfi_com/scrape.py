@@ -67,7 +67,7 @@ def fetch_data():
     # Your scraper here
     data = []
     with SgChrome() as driver:
-        r = driver.get("https://www.unfi.com/locations")
+        driver.get("https://www.unfi.com/locations")
         loclist = driver.page_source.split('"markers":')[1].split(',"styleBubble":', 1)[
             0
         ]
