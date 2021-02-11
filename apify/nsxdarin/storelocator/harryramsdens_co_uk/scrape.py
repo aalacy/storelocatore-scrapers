@@ -2,7 +2,7 @@ import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
 import json
-from sgscrape.sgpostal import parse_address_intl, SgAddress
+from sgscrape.sgpostal import parse_address_intl
 
 session = SgRequests()
 headers = {
