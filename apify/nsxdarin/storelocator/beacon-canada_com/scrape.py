@@ -36,7 +36,6 @@ def write_output(data):
 
 
 def fetch_data():
-    locs = []
     url = "https://www.becn.com/api/store-locations?facets=&lat=50&long=-95&range=10000"
     r = session.get(url, headers=headers)
     country = "CA"
