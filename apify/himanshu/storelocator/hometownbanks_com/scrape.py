@@ -93,8 +93,12 @@ def fetch_data():
         html_title = (
             loc.find("div", {"class": "col-12 col-md"}).find("p").find("strong").text
         )
+        fin_title = html_title
+
         if html_title == "Casey's":
             html_title = "Casey's" + str(count)
+            fin_title = "Casey's"
+
             count = count + 1
             fin_zip = loc.find("div", {"class": "col-12 col-md"}).find("p")
             fin_zip = str(fin_zip).replace("<br/>", "|")
@@ -181,7 +185,7 @@ def fetch_data():
             [
                 base_url,
                 "https://www.hometownbanks.com/Locations/All",
-                html_title,
+                fin_title,
                 fin_street,
                 fin_city,
                 fin_state,
