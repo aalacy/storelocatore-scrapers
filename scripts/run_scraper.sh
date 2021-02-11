@@ -3,6 +3,11 @@ if [[ "$1" == "--debug" ]]; then
   EXTRA_PARAMS='-it --entrypoint /bin/bash'
 fi
 
+echo "-----------------"
+echo "Removing data.csv and /apify_docker_storage (using sudo powers) if they exist"
+test -f data.csv && rm data.csv
+test -d apify_docker_storage && sudo rm -rf apify_docker_storage
+
 base_path="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 domain=${PWD##*/}
 scraper_name=${domain}-scraper
