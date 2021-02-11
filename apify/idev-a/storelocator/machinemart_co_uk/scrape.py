@@ -59,7 +59,7 @@ def fetch_data():
         longitude = store["longitude"]
         res1 = session.get(page_url)
         hours = bs(res1.text, "lxml").select_one("div.times p").contents[2:]
-        hours = [x.string for x in hours if x.string != None]
+        hours = [x.string for x in hours if x.string is not None]
         hours_of_operation = " ".join(hours) or "<MISSING>"
 
         data.append(
