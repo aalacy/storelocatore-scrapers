@@ -42,15 +42,6 @@ def parse_geo(url):
 
 def fetch_data():
     data = []
-    location_name = []
-    links = []
-    city = []
-    street_address = []
-    zipcode = []
-    state = []
-    latitude = []
-    longitude = []
-    phone = []
 
     base_link = "https://www.frys.com/ac/storeinfo/storelocator/?site=csfooter_B"
 
