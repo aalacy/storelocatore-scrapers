@@ -4,6 +4,7 @@ from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 import pandas as pd
 import re
 
+
 def getdata():
     # Initiate session, sgzip search object and base url
     session = SgRequests()
