@@ -42,9 +42,6 @@ def fetch_data():
     items = []
 
     DOMAIN = "delfriscosgrille.com"
-    headers = {
-        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.193 Safari/537.36",
-    }
     start_url = "https://delfriscosgrille.com/location-search/"
 
     with SgChrome() as driver:
@@ -80,7 +77,9 @@ def fetch_data():
         latitude = latitude if latitude else "<MISSING>"
         longitude = poi["long"]
         longitude = longitude if longitude else "<MISSING>"
-        hoo = dom.xpath('//h2[contains(text(), "Hours")]/following-sibling::p/text()')
+        hoo = loc_dom.xpath(
+            '//h2[contains(text(), "Hours")]/following-sibling::p/text()'
+        )
         hoo = [elem.strip() for elem in hoo]
         hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
 
