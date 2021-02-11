@@ -70,7 +70,7 @@ def fetch_data():
     ]
 
     for n in range(0, len(location_href)):
-        link = location_href[n]        
+        link = location_href[n]
         req = session.get(link, headers=HEADERS)
         base = BeautifulSoup(req.text, "lxml")
         title = base.find(id="text1").text.strip()
@@ -99,10 +99,10 @@ def fetch_data():
             if "@" in map_link:
                 at_pos = map_link.rfind("@")
                 lat = map_link[at_pos + 1 : map_link.find(",", at_pos)].strip()
-                
-                longt =  map_link[map_link.find(",", at_pos) + 1 : map_link.find(",", at_pos + 15)
-                    ].strip()
-                
+
+                longt = map_link[
+                    map_link.find(",", at_pos) + 1 : map_link.find(",", at_pos + 15)
+                ].strip()
             else:
                 try:
                     req = session.get(map_link, headers=HEADERS)
@@ -117,7 +117,6 @@ def fetch_data():
                 except:
                     lat = "<MISSING>"
                     longt = "<MISSING>"
-    
         data.append(
             [
                 "https://www.frys.com",
@@ -145,4 +144,3 @@ def scrape():
 
 
 scrape()
-
