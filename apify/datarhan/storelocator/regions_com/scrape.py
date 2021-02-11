@@ -49,9 +49,9 @@ def process_record(raw_results_from_one_zipcode):
         if not poi.get("store_url"):
             continue
         page_url = "https://www.regions.com" + poi["store_url"]
-        location_name = poi["title"]
-        street_address = poi["address"].split("<br />")[0]
-        city = poi["address"].split("<br />")[-1].split(",")[0]
+        location_name = poi["title"].replace("&#39;", "'")
+        street_address = poi["address"].split("<br />")[0].replace("&#39;", "'")
+        city = poi["address"].split("<br />")[-1].split(",")[0].replace("&#39;", "'")
         state = poi["address"].split("<br />")[-1].split(",")[-1].split()[0]
         zip_postal = poi["address"].split("<br />")[-1].split(",")[-1].split()[-1]
         country_code = "US"
