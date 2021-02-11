@@ -34,12 +34,6 @@ def write_output(data):
                 writer.writerow(row)
 
 
-def parse_geo(url):
-    lon = re.findall(r"\,(--?[\d\.]*)", url)[0]
-    lat = re.findall(r"\&ll=([\d\.]*)", url)[0]
-    return lat, lon
-
-
 def fetch_data():
     data = []
 
@@ -75,15 +69,14 @@ def fetch_data():
         pcode = address[1].split(",")[1].split()[1]
         phone = address[2].split("Phone ")[1]
         try:
-            lat_longt = base.find("a", string="Google Map")
-            lat, longt = parse_geo(str(lat_lon["href"]))
-            if lat == "":
-                lat = "<MISSING>"
-            if longt == "":
-                longt = "<MISSING>"
+            lat, longt = (
+                base.select_one("a[href*=maps?]")
+                .split("ll=", 1)[1]
+                .split("&", 1)[0]
+                .split(",")
+            )
         except:
-            lat = "<MISSING>"
-            longt = "<MISSING>"
+            lat = longt = "<MISSING>"
         data.append(
             [
                 "https://www.frys.com",
