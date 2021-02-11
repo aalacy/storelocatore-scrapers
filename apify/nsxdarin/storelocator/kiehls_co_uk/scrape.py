@@ -59,7 +59,7 @@ def fetch_data():
                 + "&ajax=true"
             )
             logger.info("%s - %s..." % (str(x), str(y)))
-            website = "kiehsls.co.uk"
+            website = "kiehls.co.uk"
             r = session.get(url, headers=headers)
             for item in json.loads(r.content)["storelocatorresults"]["stores"]:
                 name = item["name"]
