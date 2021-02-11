@@ -78,7 +78,30 @@ def fetch_data():
         longitude = poi["location"]["longitude"]
         longitude = longitude if longitude else "<MISSING>"
         hours_of_operation = poi["openingHours"]
-        hours_of_operation = hours_of_operation if hours_of_operation else "<MISSING>"
+        if not hours_of_operation:
+            details_url = (
+                "https://storefrontgateway.saveonfoods.com/api/{}/attributes".format(
+                    poi["id"]
+                )
+            )
+            d_response = session.get(details_url)
+            d_data = json.loads(d_response.text)
+            d_data = json.loads(
+                [
+                    elem
+                    for elem in d_data["attributes"]
+                    if elem["name"] == "Departments"
+                ][0]["value"]
+            )
+            weekdays = d_data["Pharmacy"]["Weekdays"]
+            saturday = d_data["Pharmacy"]["Saturday"]
+            sunday = d_data["Pharmacy"]["Sunday"]
+            hours_of_operation = (
+                f"Weekdays {weekdays}, Saturday {saturday}, Sunday {sunday}"
+            )
+        hours_of_operation = (
+            hours_of_operation.replace(";", " ") if hours_of_operation else "<MISSING>"
+        )
 
         item = [
             DOMAIN,
