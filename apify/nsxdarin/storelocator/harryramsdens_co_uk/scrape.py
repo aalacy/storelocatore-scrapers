@@ -83,6 +83,8 @@ def fetch_data():
         except:
             pass
         phone = "<MISSING>"
+        if hours == "":
+            hours = "<MISSING>"
         yield [
             website,
             loc,
