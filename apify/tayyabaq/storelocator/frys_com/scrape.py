@@ -75,39 +75,15 @@ def fetch_data():
         pcode = address[1].split(",")[1].split()[1]
         phone = address[2].split("Phone ")[1]
         try:
-            lat_lon = base.find("a", string="Google Map")
-            lat, lon = parse_geo(str(lat_lon["href"]))
-            if (lat == "") or (lat == []):
+            lat_longt = base.find("a", string="Google Map")
+            lat, longt = parse_geo(str(lat_lon["href"]))
+            if lat == "":
                 lat = "<MISSING>"
-            else:
-                lat = lat
-            if (lon == "") or (lon == []):
+            if longt == "":
                 longt = "<MISSING>"
-            else:
-                longt = lon
         except:
-            map_link = lat_lon["href"]
-            if "@" in map_link:
-                at_pos = map_link.rfind("@")
-                lat = map_link[at_pos + 1 : map_link.find(",", at_pos)].strip()
-
-                longt = map_link[
-                    map_link.find(",", at_pos) + 1 : map_link.find(",", at_pos + 15)
-                ].strip()
-            else:
-                try:
-                    req = session.get(map_link, headers=HEADERS)
-                    maps = BeautifulSoup(req.text, "lxml")
-                    raw_gps = maps.find("meta", attrs={"itemprop": "image"})["content"]
-                    latitude.append(
-                        raw_gps[raw_gps.find("=") + 1 : raw_gps.find("%")].strip()
-                    )
-                    longitude.append(
-                        raw_gps[raw_gps.find("-") : raw_gps.find("&")].strip()
-                    )
-                except:
-                    lat = "<MISSING>"
-                    longt = "<MISSING>"
+            lat = "<MISSING>"
+            longt = "<MISSING>"
         data.append(
             [
                 "https://www.frys.com",
@@ -121,8 +97,8 @@ def fetch_data():
                 "<MISSING>",
                 phone,
                 "<MISSING>",
-                latitude,
-                longitude,
+                lat,
+                longt,
                 "<INACCESSIBLE>",
             ]
         )
