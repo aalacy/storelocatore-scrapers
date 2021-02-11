@@ -74,7 +74,9 @@ def fetch_data():
         hours = [
             _
             for _ in location.select_one(".store-item__hours").text.split("\n")
-            if _.strip() and _ != "Book An Appointment"
+            if _.strip()
+            and _.strip() != "Book An Appointment"
+            and _.strip() != "GRAND OPENING"
         ]
         hours_of_operation = myutil._valid("; ".join(hours))
 
