@@ -2,7 +2,6 @@ import csv
 import re
 
 from concurrent import futures
-from lxml import html
 from sgrequests import SgRequests
 
 
