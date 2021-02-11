@@ -67,7 +67,7 @@ def fetch_data():
     # Your scraper here
     data = []
     with SgChrome() as driver:
-        driver.get("https://www.unfi.com/locations")
+        r = driver.get("https://www.unfi.com/locations")
         loclist = driver.page_source.split('"markers":')[1].split(',"styleBubble":', 1)[
             0
         ]
@@ -79,9 +79,13 @@ def fetch_data():
         lat = loc["latitude"]
         longt = loc["longitude"]
         street = soup.find("span", {"itemprop": "streetAddress"}).text
-        city = soup.find("span", {"itemprop": "addressLocality"}).text
+        city = soup.find("span", {"itemprop": "addressLocality"}).text.replace(",", "")
         state = soup.find("span", {"itemprop": "addressRegion"}).text
         pcode = soup.find("span", {"class": "postal-code"}).text
+        try:
+            phone = soup.find("span", {"itemprop": "telephone"}).text
+        except:
+            phone = "<MISSING>"
         data.append(
             [
                 "https://www.unfi.com/",
@@ -93,7 +97,7 @@ def fetch_data():
                 pcode,
                 "US",
                 "<MISSING>",
-                "<MISSING>",
+                phone,
                 "<MISSING>",
                 lat,
                 longt,
