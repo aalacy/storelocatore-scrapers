@@ -92,9 +92,9 @@ def fetch_data():
             typ = "Temporary Closed"
         if city == "":
             city = missingString
-        if lat == "0" or lat == 0:
+        if float(lat) == 0:
             lat = missingString
-        if lng == "0" or lng == 0:
+        if float(lng) == 0:
             lng = missingString
         result.append(
             [
