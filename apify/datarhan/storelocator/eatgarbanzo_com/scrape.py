@@ -96,7 +96,11 @@ def fetch_data():
                 for elem in hoo.xpath("//text()")
                 if elem.strip()
             ]
-        hours_of_operation = " ".join(hoo).strip() if hoo else "<MISSING>"
+        hours_of_operation = (
+            " ".join(hoo).strip().split(" Online")[0].replace("Opens on 1.4.21 ", "")
+            if hoo
+            else "<MISSING>"
+        )
         if hours_of_operation == "CLOSED":
             continue
 
