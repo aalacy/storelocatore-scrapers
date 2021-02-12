@@ -1,6 +1,7 @@
 import re
 import csv
 import json
+from lxml import etree
 
 from sgrequests import SgRequests
 
@@ -42,52 +43,64 @@ def fetch_data():
     items = []
 
     DOMAIN = "saveonfoods.com"
-    start_urls = [
-        "https://shop.saveonfoods.com/api/stores/v7/chains/8E4E398/stores?skip=0&take=999&region=AB",
-        "https://shop.saveonfoods.com/api/stores/v7/chains/8E4E398/stores?skip=0&take=999&region=BC",
-        "https://shop.saveonfoods.com/api/stores/v7/chains/8E4E398/stores?skip=0&take=999&region=MB",
-        "https://shop.saveonfoods.com/api/stores/v7/chains/8E4E398/stores?skip=0&take=999&region=SK",
-        "https://shop.saveonfoods.com/api/stores/v7/chains/8E4E398/stores?skip=0&take=999&region=YT",
-    ]
+    start_url = "https://www.saveonfoods.com/sm/pickup/rsid/987/store"
 
-    all_locations = []
-    for url in start_urls:
-        response = session.get(url)
-        data = re.findall('({"Stores".+})', response.text)[0]
-        data = json.loads(data)
-        all_locations += data["Stores"]
+    response = session.get(start_url)
+    dom = etree.HTML(response.text)
+    data = dom.xpath('//script[contains(text(), "PRELOADED_STATE__=")]/text()')[0]
+    data = re.findall("PRELOADED_STATE__=(.+)", data)[0]
+    data = json.loads(data)
 
-    for poi in all_locations:
-        store_url = "https://shop.saveonfoods.com/store/" + poi["PseudoStoreId"]
-        location_name = poi["Retailer"]["DisplayName"]
+    for poi in data["stores"]["allStores"]["items"]:
+        store_url = "https://www.saveonfoods.com/sm/pickup/rsid/987/store"
+        location_name = poi["name"]
         location_name = location_name if location_name else "<MISSING>"
-        street_address = poi["Sections"][0]["Address"]["AddressLine1"]
-        if poi["Sections"][0]["Address"]["AddressLine2"]:
-            street_address += ", " + poi["Sections"][0]["Address"]["AddressLine2"]
-        if poi["Sections"][0]["Address"]["AddressLine3"]:
-            street_address += ", " + poi["Sections"][0]["Address"]["AddressLine3"]
+        street_address = poi["addressLine1"]
+        if poi["addressLine2"]:
+            street_address += ", " + poi["addressLine2"]
+        if poi["addressLine3"]:
+            street_address += ", " + poi["addressLine3"]
         street_address = street_address if street_address else "<MISSING>"
-        city = poi["Sections"][0]["Address"]["City"]
+        city = poi["city"]
         city = city if city else "<MISSING>"
-        state = poi["Sections"][0]["Address"]["Region"]
+        state = poi["countyProvinceState"]
         state = state if state else "<MISSING>"
-        zip_code = poi["Sections"][0]["Address"]["PostalCode"]
+        zip_code = poi["postCode"]
         zip_code = zip_code if zip_code else "<MISSING>"
-        country_code = poi["Sections"][0]["Address"]["CountryCode"]
+        country_code = poi["country"]
         country_code = country_code if country_code else "<MISSING>"
-        store_number = poi["Retailer"]["StoreGroupId"]
-        store_number = store_number if store_number else "<MISSING>"
-        phone = poi["Sections"][0]["Phone"]
+        store_number = "<MISSING>"
+        phone = poi["phone"]
         phone = phone if phone else "<MISSING>"
-        location_type = poi["Sections"][0]["Section"]
-        location_type = location_type if location_type else "<MISSING>"
-        latitude = poi["Sections"][0]["Coordinates"]["Latitude"]
+        location_type = "<MISSING>"
+        latitude = poi["location"]["latitude"]
         latitude = latitude if latitude else "<MISSING>"
-        longitude = poi["Sections"][0]["Coordinates"]["Longitude"]
+        longitude = poi["location"]["longitude"]
         longitude = longitude if longitude else "<MISSING>"
-        hours_of_operation = poi["Sections"][0]["SectionSchedule"]
+        hours_of_operation = poi["openingHours"]
+        if not hours_of_operation:
+            details_url = (
+                "https://storefrontgateway.saveonfoods.com/api/{}/attributes".format(
+                    poi["id"]
+                )
+            )
+            d_response = session.get(details_url)
+            d_data = json.loads(d_response.text)
+            d_data = json.loads(
+                [
+                    elem
+                    for elem in d_data["attributes"]
+                    if elem["name"] == "Departments"
+                ][0]["value"]
+            )
+            weekdays = d_data["Pharmacy"]["Weekdays"]
+            saturday = d_data["Pharmacy"]["Saturday"]
+            sunday = d_data["Pharmacy"]["Sunday"]
+            hours_of_operation = (
+                f"Weekdays {weekdays}, Saturday {saturday}, Sunday {sunday}"
+            )
         hours_of_operation = (
-            hours_of_operation[0] if hours_of_operation else "<MISSING>"
+            hours_of_operation.replace(";", " ") if hours_of_operation else "<MISSING>"
         )
 
         item = [
