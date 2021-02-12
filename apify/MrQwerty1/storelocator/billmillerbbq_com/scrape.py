@@ -82,6 +82,8 @@ def get_data(page_url):
         _tmp.append(f"{day} {time}")
 
     hours_of_operation = ";".join(_tmp) or "Coming Soon"
+    if hours_of_operation == "Coming Soon":
+        location_type = hours_of_operation
 
     row = [
         locator_domain,

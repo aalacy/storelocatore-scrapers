@@ -85,7 +85,7 @@ def fetch_data():
     locations = []
     for page_url in store_urls:
         soup = pull_content(page_url)
-        info = parse_json(soup)["@graph"][4]
+        info = parse_json(soup)["@graph"][5]
         locator_domain = DOMAIN
         location_name = handle_missing(info["name"])
         address = info["address"].replace(",,", ",")
