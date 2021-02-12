@@ -61,13 +61,22 @@ def fetch_data():
             req = session.get(link, headers=headers)
             base = BeautifulSoup(req.text, "lxml")
 
-            script = (
-                base.find("script", attrs={"type": "application/ld+json"})
-                .text.replace("\n", "")
-                .strip()
-            )
-            store = json.loads(script)
+            if (
+                "gas"
+                not in base.find(class_="StoreServices-wrapper table").text.lower()
+            ):
+                continue
 
+            try:
+                script = (
+                    base.find("script", attrs={"type": "application/ld+json"})
+                    .text.replace("\n", "")
+                    .strip()
+                )
+            except:
+                log.info(link)
+                raise
+            store = json.loads(script)
             location_name = store["name"]
             street_address = store["address"]["streetAddress"]
             city = store["address"]["addressLocality"]
