@@ -169,6 +169,9 @@ def fetch_data():
         if phone == "":
             phone = "<MISSING>"
 
+        if street == "709 W. Main St. 618-663-4894":
+            street = "709 W. Main St."
+
         if title != "Mach 21 Liquor Store":
 
             data.append(

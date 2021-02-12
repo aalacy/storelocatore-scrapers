@@ -70,7 +70,7 @@ def fetch_data():
             ].text
             street2 = med.find_all("p", {"class": "coh-paragraph coh-ce-e013c31a"})[1]
             if street2:
-                street1 = street1 + " " + street2.text
+                street1 = street1 + street2.text
             city = med.find("p", {"class": "coh-paragraph coh-ce-6ae15eb3"}).text.split(
                 ","
             )[0]
@@ -145,9 +145,9 @@ def fetch_data():
             store.append("<MISSING>")
             store.append(hours_of_operation)
             store.append(med_url)
-            if store[2] in addresses:
+            if store[1] + store[2] + store[5] in addresses:
                 continue
-            addresses.append(store[2])
+            addresses.append(store[1] + store[2] + store[5])
             yield store
 
         if int(counts) > 10:
@@ -175,7 +175,7 @@ def fetch_data():
                         "p", {"class": "coh-paragraph coh-ce-e013c31a"}
                     )[1]
                     if street2:
-                        street1 = street1 + " " + street2.text
+                        street1 = street1 + street2.text
                     city = med.find(
                         "p", {"class": "coh-paragraph coh-ce-6ae15eb3"}
                     ).text.split(",")[0]
@@ -248,9 +248,10 @@ def fetch_data():
                     store.append("<MISSING>")
                     store.append(hours_of_operation)
                     store.append(med_url)
-                    if store[2] in addresses:
+                    if store[1] + store[2] + store[5] in addresses:
                         continue
-                    addresses.append(store[2])
+                    addresses.append(store[1] + store[2] + store[5])
+
                     yield store
 
 

@@ -123,6 +123,13 @@ def fetch_data():
         if storeid == "133":
             street = "Mile 1 Teller Hwy"
             city = "Nome"
+        if storeid == "122":
+            street = "155 Main St."
+            city = "Fort Yukon"
+        if storeid == "112":
+            street = "229 Pisokak St. Utqiagvik, Alaska"
+            city = "Utqiagvik"
+
         data.append(
             [
                 "https://www.alaskacommercial.com/",
