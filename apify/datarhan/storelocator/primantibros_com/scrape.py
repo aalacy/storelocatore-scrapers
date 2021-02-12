@@ -55,7 +55,6 @@ def fetch_data():
     data = json.loads(response.text)
 
     for poi in data["response"]["collection"]:
-        store_url = poi["websiteurl"]
         location_name = poi["name"]
         location_name = location_name if location_name else "<MISSING>"
         street_address = poi["address1"]
@@ -63,7 +62,7 @@ def fetch_data():
         state = poi["state"]
         zip_code = poi["postalcode"]
         country_code = poi["country"]
-        store_number = "<MISSING>"
+        store_number = poi["clientkey"]
         phone = poi["phone"]
         phone = phone if phone else "<MISSING>"
         location_type = "<MISSING>"
@@ -77,6 +76,7 @@ def fetch_data():
         hours_of_operation = (
             " ".join(hoo).replace("holiday None", "") if hoo else "<MISSING>"
         )
+        store_url = f'https://locations.primantibros.com/{state}/{city.replace(" ", "-")}/{store_number}/'
 
         item = [
             DOMAIN,
