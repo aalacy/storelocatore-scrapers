@@ -76,7 +76,6 @@ class Util:
         for item in data:
             if item[3] == _item[3]:
                 is_duplicated = True
-                print("is_duplicated")
                 break
 
         if not is_duplicated:
