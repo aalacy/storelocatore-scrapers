@@ -48,7 +48,6 @@ def fetch_data():
     data = json.loads(response.text)
 
     for poi in data:
-        print(poi)
         store_url = "https://pizzastudio.com/locations/" + poi["locationurl"]
         location_name = poi["locationname"]
         street_address = poi.get("address1")
