@@ -8,6 +8,7 @@ logger = SgLogSetup().get_logger("onehourheatandair_com")
 session = SgRequests()
 headers = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.116 Safari/537.36",
+    "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
     "X-Requested-With": "XMLHttpRequest",
 }
 
@@ -40,20 +41,17 @@ def write_output(data):
 
 
 def fetch_data():
-    url = "https://www.onehourheatandair.com/locations/?CallAjax=GetLocations"
+    url = "https://www.onehourheatandair.com/locations/"
     locs = []
-    payload = {"CallAjax": "GetLocations"}
+    payload = {"_m_": "LocationList"}
     r = session.post(url, headers=headers, data=payload)
-    if r.encoding is None:
-        r.encoding = "utf-8"
-    for line in r.iter_lines(decode_unicode=True):
-        if '"Path":"' in line:
-            items = line.split('"Path":"')
-            for item in items:
-                if '"ExternalDomain":' in item:
-                    locs.append(
-                        "https://www.onehourheatandair.com" + item.split('"')[0]
-                    )
+    for line in r.iter_lines():
+        line = str(line.decode("utf-8"))
+        if "View Website</a>" in line:
+            locs.append(
+                "https://www.onehourheatandair.com"
+                + line.split('href="')[1].split('"')[0]
+            )
     for loc in locs:
         logger.info(("Pulling Location %s..." % loc))
         website = "onehourheatandair.com"
