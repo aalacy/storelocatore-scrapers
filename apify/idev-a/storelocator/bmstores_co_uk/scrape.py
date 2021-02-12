@@ -1,7 +1,6 @@
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
-from sgscrape.sgpostal import parse_address_usa
 import json
 from bs4 import BeautifulSoup as bs
 
@@ -23,7 +22,6 @@ def fetch_data():
             verify=False,
         )
         store_list = json.loads(res.text)["features"]
-        data = []
         for store in store_list:
             page_url = base_url + store["properties"]["link"]
             res = session.get(page_url, verify=False)
@@ -63,7 +61,6 @@ def fetch_data():
             street_address = street_address.replace("\n", " ").strip()
             phone = "<MISSING>" if "Get" in phone else phone
             country_code = "GB"
-            store_number = "<MISSING>"
             location_type = store["type"]
             latitude = store["geometry"]["coordinates"][0]
             longitude = store["geometry"]["coordinates"][1]
