@@ -48,16 +48,21 @@ def fetch_data():
 
     all_locations = dom.xpath('//div[contains(@id, "cc-location")]')
     for poi_html in all_locations:
-        store_url = "<MISSING>"
+        store_url = "https://www.coffeeculturecafe.com/find-your-location/"
         store_url = store_url if store_url else "<MISSING>"
         location_name = poi_html.xpath('.//div[@class="store-name"]/text()')
         location_name = location_name[0] if location_name else "<MISSING>"
         street_address = poi_html.xpath('.//div[@class="store-address"]/text()')
         street_address = street_address[0] if street_address else "<MISSING>"
         city = poi_html.xpath('.//div[@class="store-city"]/text()')[0].split(", ")[0]
-        state = poi_html.xpath('.//div[@class="store-city"]/text()')[0].split(", ")[-1]
+        state = poi_html.xpath('.//div[@class="store-city"]/text()')[0].split(", ")[1]
         zip_code = "<MISSING>"
         country_code = "<MISSING>"
+        if (
+            "USA"
+            in poi_html.xpath('.//div[@class="store-city"]/text()')[0].split(", ")[-1]
+        ):
+            country_code = "USA"
         store_number = poi_html.xpath("@id")[0].split("-")[-1]
         phone = poi_html.xpath('.//div[@class="store-phone"]/text()')[0].split(": ")[-1]
         location_type = "<MISSING>"
