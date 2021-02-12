@@ -1,5 +1,4 @@
 import csv
-import json
 import urllib.parse
 from lxml import etree
 from sglogging import SgLogSetup
@@ -42,14 +41,19 @@ def write_output(data):
 
 def fetch_data():
     # Your scraper here
-    session = SgRequests()
+    session = SgRequests().requests_retry_session(retries=10, backoff_factor=0.5)
 
     items = []
     scraped_items = []
 
     DOMAIN = "auntieannes.com"
     user_agent = {
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.183 Safari/537.36"
+        "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+        "accept-encoding": "gzip, deflate, br",
+        "accept-language": "ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7,pt;q=0.6",
+        "referer": "https://www.auntieannes.com/",
+        "upgrade-insecure-requests": "1",
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.96 Safari/537.36",
     }
 
     start_url = "https://auntieannes.com/"
@@ -59,7 +63,11 @@ def fetch_data():
     for city_url in all_cities:
         logger.info(f"scraping city: {city_url}")
         full_city_url = urllib.parse.urljoin(start_url, city_url)
-        city_response = session.get(full_city_url, headers=user_agent)
+        try:
+            city_response = session.get(full_city_url, headers=user_agent)
+        except Exception as e:
+            logger.info(f"!!! Warning, {full_city_url} passed with eception: {e}")
+            continue
         city_dom = etree.HTML(city_response.text)
 
         all_poi_data = city_dom.xpath('//div[@class="city-list"]/ul/li')
@@ -68,8 +76,6 @@ def fetch_data():
             store_url = urllib.parse.urljoin(start_url, store_url)
             location_name = poi_data.xpath('.//a[@class="generic-link"]/text()')[0]
             location_name = str(location_name) if location_name else "<MISSING>"
-            if "temporarily closed" in location_name.lower():
-                continue
             street_address = poi_data.xpath(
                 './/div[@class="city-details"]/span[1]/text()'
             )
@@ -90,7 +96,11 @@ def fetch_data():
             phone = poi_data.xpath('//a[@aria-label="Telephone Number"]/span/text()')
             phone = str(phone[0]) if phone else "<MISSING>"
 
-            store_response = session.get(store_url, headers=user_agent)
+            try:
+                store_response = session.get(store_url, headers=user_agent)
+            except Exception as e:
+                logger.info(f"!!! Warning, {store_url} passed with eception: {e}")
+                continue
             store_dom = etree.HTML(store_response.text)
             location_type = "<MISSING>"
             if "food truck" in location_name.lower():
@@ -131,8 +141,9 @@ def fetch_data():
                 hours_of_operation,
             ]
 
-            if location_name not in scraped_items:
-                scraped_items.append(location_name)
+            check = f"{store_number} {location_name}"
+            if check not in scraped_items:
+                scraped_items.append(check)
                 items.append(item)
 
     return items

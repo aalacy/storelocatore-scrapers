@@ -1,3 +1,2 @@
-requests
-pout
 sglogging
+sgrequests

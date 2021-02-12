@@ -7,7 +7,7 @@ from bs4 import BeautifulSoup as bs
 import re
 import json
 from datetime import datetime
-import sgzip
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 from sglogging import SgLogSetup
 
 logger = SgLogSetup().get_logger('bmw_co_uk')
@@ -27,17 +27,16 @@ def write_output(data):
 
 def fetch_data(): 
     addresses = []
-    search = sgzip.ClosestNSearch() # TODO: OLD VERSION [sgzip==0.0.55]. UPGRADE IF WORKING ON SCRAPER!
-    search.initialize(country_codes=['gb'])
     MAX_RESULTS = 100
     MAX_DISTANCE = 20
-    coord = search.next_coord()
     base_url = "https://www.bmw.co.uk/"
 
-    while coord:
+    search = DynamicGeoSearch(country_codes=[SearchableCountries.BRITAIN],
+                              max_radius_miles = MAX_DISTANCE,
+                              max_search_results = MAX_RESULTS)
+    for coord in search:
         # logger.info("remaining zipcodes: " + str(search.zipcodes_remaining()))
         
-        result_coords = []
         json_data = session.get("https://discover.bmw.co.uk/proxy/api/dealers?q="+str(coord[0])+","+str(coord[1])+"&type=new").json()
         
         
@@ -77,7 +76,8 @@ def fetch_data():
             else:
                 hours = "<MISSING>"
             
-            result_coords.append((lat,lng))
+            search.found_location_at(lat,lng)
+
             store = []
             store.append(base_url)
             store.append(location_name)
@@ -99,16 +99,7 @@ def fetch_data():
                 continue
             addresses.append(store[2])
             yield store
-        if len(json_data) < MAX_RESULTS:
-            # logger.info("max distance update")
-            search.max_distance_update(MAX_DISTANCE)
-        elif len(json_data) == MAX_RESULTS:
-            # logger.info("max count update")
-            search.max_count_update(result_coords)
-        else:
-            raise Exception("expected at most " + str(MAX_RESULTS) + " results")
-        coord = search.next_coord()
-    
+
     
 def scrape():
     data = fetch_data()

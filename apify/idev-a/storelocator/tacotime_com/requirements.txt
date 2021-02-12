@@ -1,0 +1,5 @@
+sgrequests
+beautifulsoup4
+sglogging
+lxml
+us
