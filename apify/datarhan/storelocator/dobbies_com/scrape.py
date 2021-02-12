@@ -1,6 +1,7 @@
 import csv
 import json
 from lxml import etree
+from time import sleep
 
 from sgrequests import SgRequests
 from sgselenium import SgChrome
@@ -59,8 +60,7 @@ def fetch_data():
             street_address += ", " + poi["storeAddress"]["houseNumber"]
         city = poi["storeAddress"]["city"]
         city = city if city else "<MISSING>"
-        state = poi["storeAddress"]["county"]
-        state = state if state else "<MISSING>"
+        state = "<MISSING>"
         zip_code = poi["storeAddress"]["postcode"]
         zip_code = zip_code if zip_code else "<MISSING>"
         country_code = poi["storeAddress"]["countryCode"]
@@ -75,6 +75,7 @@ def fetch_data():
 
         with SgChrome() as driver:
             driver.get(store_url)
+            sleep(2)
             loc_dom = etree.HTML(driver.page_source)
         hours_of_operation = loc_dom.xpath('//div[@class="x-storeHours"]/p/text()')
         hours_of_operation = (
