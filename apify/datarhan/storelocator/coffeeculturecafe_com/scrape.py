@@ -1,6 +1,4 @@
 import csv
-import json
-from time import sleep
 from lxml import etree
 
 from sgrequests import SgRequests
