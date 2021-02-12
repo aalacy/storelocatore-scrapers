@@ -61,6 +61,8 @@ def fetch_data():
         state = get(poi, "state")
         zip_code = get(poi, "postal_code")
         country_code = get(poi, "country")
+        if country_code == "Ireland":
+            continue
         store_number = get(poi, "id")
         phone = get(poi, "phone")
         location_type = "<MISSING>"

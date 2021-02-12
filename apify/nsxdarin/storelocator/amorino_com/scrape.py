@@ -105,6 +105,12 @@ def fetch_data():
                         hours = "<MISSING>"
                     hours = "<INACCESSIBLE>"
                     store = "<MISSING>"
+                    if "637 Canal" in add:
+                        phone = "504-510-2398"
+                    if "7700 Windrose Ave" in add:
+                        phone = "972-943-8534"
+                    if "414 Amsterdam Avenue" in add:
+                        phone = "212-877-5700"
                     yield [
                         website,
                         loc,
