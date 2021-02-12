@@ -1,10 +1,7 @@
 import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
-from sgscrape.sgpostal import (
-    International_Parser,
-    parse_address,
-)
+from sgscrape.sgpostal import parse_address_intl
 
 session = SgRequests()
 headers = {
@@ -82,7 +79,7 @@ def fetch_data():
                 name = line2.split('"title": "')[1].split('"')[0]
             if '"streetAddress": "' in line2:
                 addinfo = line2.split('"streetAddress": "')[1].split('"')[0]
-                addr = parse_address(addinfo, International_Parser())
+                addr = parse_address_intl(addinfo)
                 city = addr.city
                 zc = addr.postcode
                 add = addr.street_address_1
@@ -112,6 +109,8 @@ def fetch_data():
             name = name.split(" Temp")[0]
         if " TEMP" in name:
             name = name.split(" TEMP")[0]
+        if "guildford-tesco" in loc:
+            zc = "GU2"
         yield [
             website,
             loc,
