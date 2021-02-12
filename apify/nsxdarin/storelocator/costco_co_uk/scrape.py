@@ -47,7 +47,7 @@ def fetch_data():
     logger.info("Pulling Stores")
     for item in json.loads(r.content)["data"]:
         name = item["displayName"]
-        loc = "https://costco.co.uk" + item["url"].replace("\\", "")
+        loc = "<MISSING>"
         add = item["line1"] + " " + item["line2"]
         add = add.strip()
         phone = item["phone"]

@@ -52,7 +52,11 @@ def fetch_data():
 
         location_name = loc_dom.xpath('//span[@class="location-title"]/text()')
         location_name = location_name[0] if location_name else "<MISSING>"
+        if "Mexico" in location_name:
+            continue
         street_address = loc_dom.xpath('//div[@class="address"]/text()')
+        if "any questions" in street_address[0]:
+            street_address = street_address[1:]
         street_address = street_address[0] if street_address else "<MISSING>"
         city = loc_dom.xpath('//span[@class="city"]/text()')
         city = city[0] if city else "<MISSING>"

@@ -69,11 +69,13 @@ def fetch_data():
         phone = loc_dom.xpath('//p[@class="contact"]//a[contains(@href, "tel")]/text()')
         phone = phone[0] if phone else "<MISSING>"
         location_type = "<MISSING>"
-        geo = re.findall('startLatlng":"(.+?)",', loc_response.text)[0].split(",")
-        latitude = geo[0]
-        latitude = latitude if latitude else "<MISSING>"
-        longitude = geo[1]
-        longitude = longitude if longitude else "<MISSING>"
+        geo = re.findall('startLatlng":"(.+?)",', loc_response.text)
+        latitude = "<MISSING>"
+        longitude = "<MISSING>"
+        if geo:
+            geo = [0].split(",")
+            latitude = geo[0]
+            longitude = geo[1]
         hours_of_operation = loc_dom.xpath(
             '//h3[span[contains(text(), "View ")]]/following-sibling::ul//text()'
         )

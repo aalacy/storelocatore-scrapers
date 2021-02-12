@@ -6,6 +6,30 @@ from urllib.parse import urljoin
 from sgselenium import SgFirefox
 
 
+HEADERS_LIST_PAGE = {
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+    "Accept-Encoding": "gzip, deflate, br",
+    "Accept-Language": "en-US,en;q=0.5",
+    "Connection": "keep-alive",
+    "Host": "www.jdsports.co.uk",
+    "TE": "Trailers",
+    "Upgrade-Insecure-Requests": "1",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:84.0) Gecko/20100101 Firefox/84.0",
+}
+
+HEADERS_STORE_PAGE = {
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+    "Accept-Encoding": "gzip, deflate, br",
+    "Accept-Language": "en-US,en;q=0.5",
+    "Connection": "keep-alive",
+    "Host": "www.jdsports.co.uk",
+    "Referer": "https://www.jdsports.co.uk/store-locator/all-stores/",
+    "TE": "Trailers",
+    "Upgrade-Insecure-Requests": "1",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:84.0) Gecko/20100101 Firefox/84.0",
+}
+
+
 def write_output(data):
     with open("data.csv", mode="w", encoding="utf-8") as output_file:
         writer = csv.writer(
@@ -37,7 +61,6 @@ def write_output(data):
 
 
 def fetch_data():
-    # Your scraper here
 
     items = []
     scraped_stores = []
@@ -48,13 +71,14 @@ def fetch_data():
     with SgFirefox() as driver:
         driver.get(start_url)
         dom = etree.HTML(driver.page_source)
-    all_locations = dom.xpath('//a[@class="storeCard guest"]/@href')
 
+    all_locations = dom.xpath('//a[@class="storeCard guest"]/@href')
     for url in all_locations:
         store_url = urljoin(start_url, url)
         with SgFirefox() as driver:
             driver.get(store_url)
             loc_dom = etree.HTML(driver.page_source)
+
         data = loc_dom.xpath(
             '//script[@type="application/ld+json" and contains(text(), "Store")]/text()'
         )[0]
@@ -62,7 +86,11 @@ def fetch_data():
 
         location_name = poi["name"]
         street_address = poi["address"]["streetAddress"]
-        street_address = street_address if street_address else "<MISSING>"
+        street_address = (
+            street_address.replace("&amp;", "&") if street_address else "<MISSING>"
+        )
+        if street_address.endswith(","):
+            street_address = street_address[:-1]
         city = poi["address"]["addressLocality"]
         city = city if city else "<MISSING>"
         state = poi["address"]["addressRegion"]

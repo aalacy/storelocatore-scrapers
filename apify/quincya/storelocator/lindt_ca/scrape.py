@@ -50,9 +50,7 @@ def fetch_data():
     max_results = 8
     max_distance = 200
 
-    all_store_data = []
-
-    dup_tracker = []
+    dup_tracker = set()
 
     search = DynamicGeoSearch(
         country_codes=[SearchableCountries.CANADA],
@@ -82,7 +80,6 @@ def fetch_data():
         }
 
         res_json = session.post(base_link, headers=headers, data=payload).json()["data"]
-        new_coordinates = []
 
         for loc in res_json:
 
@@ -90,7 +87,7 @@ def fetch_data():
 
             store_number = loc["uid"]
             if store_number not in dup_tracker:
-                dup_tracker.append(store_number)
+                dup_tracker.add(store_number)
             else:
                 continue
 
@@ -100,7 +97,7 @@ def fetch_data():
 
             lat = loc["lat_individual"]
             longit = loc["lng_individual"]
-            new_coordinates.append([lat, longit])
+            search.found_location_at(lat, longit)
 
             raw_address = (
                 loc["short_description"]
@@ -112,10 +109,15 @@ def fetch_data():
                 .replace(" Québec", " ,Québec")
                 .replace('<span style="font-size: 16px; ">', "")
                 .replace("Les Avenues Vaudreuil -", "")
+                .replace("Carrefour Laval", "Carrefour, Laval")
                 .replace("<br />", ",")
                 .split("&nbsp")[0]
                 .split(",")
             )
+
+            if raw_address[0] == "":
+                raw_address.pop(0)
+
             if "CANADA" in raw_address[-1].upper():
                 raw_address.pop(-1)
             street_address = " ".join(raw_address[:-2]).strip()
@@ -140,9 +142,12 @@ def fetch_data():
                 zip_code = "G2K 1N4"
 
             if "#2058" not in street_address and "Mode Unit" not in street_address:
-                digit = re.search(r"\d", street_address).start(0)
-                if digit != 0:
-                    street_address = street_address[digit:]
+                try:
+                    digit = re.search(r"\d", street_address).start(0)
+                    if digit != 0:
+                        street_address = street_address[digit:]
+                except:
+                    pass
 
             country_code = "CA"
             hours = loc["further_information_content"].replace("\r\n", " ").strip()
@@ -169,13 +174,7 @@ def fetch_data():
                 page_url,
             ]
 
-            all_store_data.append(store_data)
-
-        if len(new_coordinates) > 0:
-            search.mark_found(new_coordinates)
-
-    return all_store_data
-
+            yield store_data
 
 def scrape():
     data = fetch_data()

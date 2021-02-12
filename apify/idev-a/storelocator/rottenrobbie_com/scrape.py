@@ -43,7 +43,7 @@ def fetch_data():
     store_list = json.loads(res.text)
     data = []
     for store in store_list:
-        page_url = "<MISSING>"
+        page_url = "https://www.rottenrobbie.com/locations/"
         location_name = store["store"]
         street_address = store["address"]
         city = store["city"]

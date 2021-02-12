@@ -9,7 +9,7 @@ from sglogging import SgLogSetup
 session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36",
-    "IsoCode": "US",
+    "IsoCode": "",
     "CultureCode": "en-US",
     "Current-Page": "https://riamoneytransfer.com/us/en/ria-locator",
     "Accept": "application/json, text/plain, */*",
@@ -54,7 +54,7 @@ def get(location, key):
     return location.get(key, MISSING) or MISSING
 
 
-def extract(location, store_number):
+def extract(location, store_number, country):
     locator_domain = "riamoneytransfer.com"
     page_url = MISSING
     location_name = get(location, "name")
@@ -62,7 +62,7 @@ def extract(location, store_number):
     city = get(location, "city")
     state = get(location, "state")
     zip = MISSING
-    country_code = MISSING
+    country_code = country
     store_number = get(location, "locationId")
     phone = get(location, "phone")
     location_type = get(location, "locationType")
@@ -75,6 +75,8 @@ def extract(location, store_number):
         closes = elem["timeClose"]
         hours_of_operation.append(f"{day} {opens} - {closes}")
     hours_of_operation = " ".join(hours_of_operation)
+    if hours_of_operation == "0 None - None":
+        hours_of_operation = "<MISSING>"
 
     data = {
         "locator_domain": locator_domain,
@@ -96,26 +98,27 @@ def extract(location, store_number):
 
 
 @retry(stop=stop_after_attempt(5))
-def fetch(lat, lng):
+def fetch(lat, lng, country):
     body = {
-        "CountryTo": "US",
+        "CountryTo": country,
         "FindLocationType": "RMT",
         "Lat": "",
         "Latitude": lat,
         "Long": "",
         "Longitude": lng,
-        "RequestCountry": "US",
+        "RequestCountry": country,
         "RequiredPayoutAgents": False,
         "RequiredReceivingAgents": False,
         "RequiredReceivingAndPayoutAgents": False,
         "PayAgentId": None,
     }
+    new_headers = headers
+    new_headers["IsoCode"] = country
     result = session.put(
         "https://riamoneytransfer.com/api/location/agent-locations",
         json=body,
-        headers=headers,
+        headers=new_headers,
     ).json()
-
     return result
 
 
@@ -134,33 +137,45 @@ def set_jwt_token_header(session):
 
 def fetch_data():
     searched = []
-    search = DynamicGeoSearch(
+    all_coordinates = {}
+    us_search = DynamicGeoSearch(
         country_codes=[SearchableCountries.USA], max_radius_miles=50
     )
+    ca_search = DynamicGeoSearch(
+        country_codes=[SearchableCountries.CANADA], max_radius_miles=50
+    )
+    uk_search = DynamicGeoSearch(
+        country_codes=[SearchableCountries.BRITAIN], max_radius_miles=50
+    )
+    all_coordinates = {"CA": ca_search, "UK": uk_search, "US": us_search}
 
-    set_jwt_token_header(session)
-
-    for lat, lng in search:
+    for country, coordinates in all_coordinates.items():
+        set_jwt_token_header(session)
         coords = []
-        try:
-            locations = fetch(lat, lng)
-        except Exception as e:
-            logger.error(f"error fetching data for {lat} {lng}: {e}")
-            continue
-        for location in locations:
-            if type(location) == str:
+        for lat, lng in coordinates:
+            try:
+                locations = fetch(lat, lng, country)
+            except Exception as e:
+                logger.error(f"error fetching data for {lat} {lng}: {e}")
                 continue
-            store_number = get(location, "locationId")
-            if store_number in searched:
-                continue
-            searched.append(store_number)
+            if len(locations) == 1:
+                set_jwt_token_header(session)
+            print(country, len(locations))
+            for location in locations:
+                if type(location) == str:
+                    continue
+                loc_id = get(location, "locationId")
+                check = f"{country} {loc_id}"
+                if check in searched:
+                    continue
+                searched.append(loc_id)
 
-            poi = extract(location, store_number)
-            if not poi:
-                continue
-            coords.append([poi.get("latitude"), poi.get("longitude")])
+                poi = extract(location, loc_id, country)
+                if not poi:
+                    continue
+                coords.append([poi.get("latitude"), poi.get("longitude")])
 
-            yield [poi[field] for field in FIELDS]
+                yield [poi[field] for field in FIELDS]
 
 
 def scrape():

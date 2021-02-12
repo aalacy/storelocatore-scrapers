@@ -59,7 +59,9 @@ def fetch_data():
                 ", ".join(a.get("lines")).replace("Inside Pets at Home,", "").strip()
                 or "<MISSING>"
             )
-            city = a.get("city") or "<MISSING>"
+            city = a.get("city") or "<INACCESSIBLE>"
+            if city.find("(") != -1:
+                city = "<INACCESSIBLE>"
             state = "<MISSING>"
             postal = a.get("zipcode") or "<MISSING>"
             if postal.find("(") != -1:
