@@ -1,6 +1,7 @@
 import csv
 from sgrequests import SgRequests
 import json
+from sgscrape.sgpostal import parse_address_intl
 
 from util import Util  # noqa: I900
 
@@ -57,6 +58,8 @@ def fetch_data():
         city = myutil._valid(item["city"])
         state = myutil._valid(item["stateCode"])
         zip = myutil._valid(myutil._digit(item["postalCode"]))
+        raw_address = f"{street_address} {city}, {state} {zip}"
+        addr = parse_address_intl(raw_address)
         country_code = item["countryCode"]
         store_number = item["ID"]
         phone = myutil._valid_phone(item.get("phone", ""))
@@ -78,7 +81,7 @@ def fetch_data():
             locator_domain,
             page_url,
             location_name,
-            street_address,
+            addr.street_address_1,
             city,
             state,
             zip,
