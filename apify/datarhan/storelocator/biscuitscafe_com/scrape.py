@@ -3,7 +3,7 @@ import csv
 from lxml import etree
 
 from sgrequests import SgRequests
-from sgscrape.sgpostal import USA_Best_Parser, parse_address
+from sgscrape.sgpostal import parse_address_usa
 
 
 def write_output(data):
@@ -68,13 +68,13 @@ def fetch_data():
             raw_address = poi_html.xpath('.//div[@class="wpb_wrapper"]/*[2]/text()')
 
         raw = " ".join([elem.strip() for elem in raw_address[:4] if elem.strip()])
-        parsed_addr = parse_address(raw, USA_Best_Parser())
+        parsed_addr = parse_address_usa(raw)
         city = parsed_addr.city
         state = parsed_addr.state
         zip_code = parsed_addr.postcode
         country_code = "<MISSING>"
         store_number = "<MISSING>"
-        phone = poi_html.xpath('//*[strong[contains(text(), "Phone:")]]/text()')
+        phone = poi_html.xpath('//strong[contains(text(), "Phone:")]/following::text()')
         phone = phone[0].strip() if phone else "<MISSING>"
         location_type = "<MISSING>"
         geo = poi_html.xpath(".//iframe/@src")[0]
