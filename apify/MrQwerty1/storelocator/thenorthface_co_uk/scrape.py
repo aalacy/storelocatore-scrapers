@@ -75,6 +75,8 @@ def fetch_data():
     for j in js:
         locator_domain = url
         location_name = f"{j.get('name')}"
+        if location_name.lower().find("north face") == -1:
+            continue
         street_address = j.get("address1") or "<MISSING>"
         city = j.get("city") or "<MISSING>"
         postal = j.get("postalcode") or "<MISSING>"

@@ -57,12 +57,13 @@ def fetch_data():
         loc_dom = etree.HTML(loc_response.text)
 
         location_name = poi["name"]
-        raw_address = poi["address"].split(", ")
-        raw_address = [elem.strip() for elem in raw_address]
-        street_address = raw_address[0]
-        city = raw_address[1]
+        addr = poi["address"].split(", ")
+        street_address = " ".join(addr[:-2])
+        city = addr[-2]
+        city = city if city else "<MISSING>"
         state = "<MISSING>"
-        zip_code = raw_address[-1]
+        zip_code = addr[-1]
+        zip_code = zip_code if zip_code else "<MISSING>"
         country_code = "<MISSING>"
         store_number = poi["id"]
         phone = "<MISSING>"

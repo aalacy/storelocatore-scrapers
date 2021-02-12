@@ -74,7 +74,7 @@ def fetch_data():
         zip_code = parsed_addr.postcode
         country_code = parsed_addr.county
         store_number = "<MISSING>"
-        phone = poi_html.xpath('//*[strong[contains(text(), "Phone:")]]/text()')
+        phone = poi_html.xpath('//strong[contains(text(), "Phone:")]/following::text()')
         phone = phone[0].strip() if phone else "<MISSING>"
         location_type = "<MISSING>"
         geo = poi_html.xpath(".//iframe/@src")[0]

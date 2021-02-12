@@ -51,7 +51,7 @@ def fetch_data():
     data = json.loads(response.text)
 
     for poi in data:
-        store_url = "<MISSING>"
+        store_url = "https://www.aztecamex.com/locations/"
         location_name = etree.HTML(poi["store"])
         location_name = location_name.xpath("//text()")
         location_name = location_name[0] if location_name else "<MISSING>"

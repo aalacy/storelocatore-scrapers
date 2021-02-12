@@ -48,7 +48,10 @@ def fetch_data():
         tree = html.fromstring(text)
         line = tree.xpath("//div[@class='loc-result-card-address-container']//a/text()")
         line = list(filter(None, [l.strip() for l in line]))
-        street_address = ", ".join(line[:-1]) or "<MISSING>"
+        street_address = line[0] or "<MISSING>"
+        if len(line[:-1]) >= 2:
+            if line[1].lower().find("suite") != -1:
+                street_address += f", {line[1]}"
         line = line[-1]
         city = line.split(",")[0].strip()
         line = line.split(",")[1].strip()
