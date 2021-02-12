@@ -164,7 +164,11 @@ def fetch_data():
                 city = "Hempstead Valley"
             if "Belfast" in add:
                 city = "Belfast"
-            addinfo = add + city + zc
+            if add is None:
+                add = "<MISSING>"
+            if zc is None:
+                zc = "<MISSING>"
+            addinfo = rawadd
             if "Mon: -; Tue: -; Wed: -; Thu: -; Fri: -; Sat: -; Sun: -" in hours:
                 hours = "<MISSING>"
             if store not in ids and addinfo not in adds:
@@ -303,7 +307,11 @@ def fetch_data():
                     city = "Hempstead Valley"
                 if "Belfast" in add:
                     city = "Belfast"
-                addinfo = add + city + zc
+                if add is None:
+                    add = "<MISSING>"
+                if zc is None:
+                    zc = "<MISSING>"
+                addinfo = rawadd
                 if "Mon: -; Tue: -; Wed: -; Thu: -; Fri: -; Sat: -; Sun: -" in hours:
                     hours = "<MISSING>"
                 if store not in ids and addinfo not in adds:

@@ -109,6 +109,8 @@ def fetch_data():
             name = name.split(" Temp")[0]
         if " TEMP" in name:
             name = name.split(" TEMP")[0]
+        if "guildford-tesco" in loc:
+            zc = "GU2"
         yield [
             website,
             loc,

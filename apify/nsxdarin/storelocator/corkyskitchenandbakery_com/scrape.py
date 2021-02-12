@@ -1,5 +1,5 @@
 import csv
-from sgselenium import SgSelenium
+from sgselenium import SgChrome
 
 
 def write_output(data):
@@ -31,8 +31,8 @@ def write_output(data):
 
 def fetch_data():
     url = "https://www.corkyskitchenandbakery.com/locations"
-    driver = SgSelenium().chrome()
-    driver.get(url)
+    with SgChrome() as driver:
+        driver.get(url)
     website = "corkyskitchenandbakery.com"
     typ = "<MISSING>"
     country = "US"
