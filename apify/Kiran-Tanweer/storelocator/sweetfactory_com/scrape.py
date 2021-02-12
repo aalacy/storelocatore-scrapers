@@ -134,6 +134,7 @@ def fetch_data():
                             hoo = hoo.replace("Tue", "Tue ")
                             hoo = hoo.replace("Mon", "Mon ")
                             hoo = hoo.replace("Sat", "Sat ")
+                            hoo = hoo.replace("Open now", "")
                             hoo = re.sub(pattern, " ", hoo)
                             hoo = re.sub(cleanr, " ", hoo)
                 else:
@@ -151,8 +152,8 @@ def fetch_data():
                         "<MISSING>",
                         phone,
                         "<MISSING>",
-                        "<MISSING>",
-                        "<MISSING>",
+                        "<INACCESSIBLE>",
+                        "<INACCESSIBLE>",
                         hoo,
                     ]
                 )
