@@ -69,7 +69,7 @@ def fetch_data():
         street_address = poi["streetAddress"]
         city = poi["city"]
         state = poi["state"]
-        zip_code = poi.get("postalCode")
+        zip_code = poi["address"]["postalCode"]
         zip_code = zip_code if zip_code else "<MISSING>"
         country_code = poi.get("country")
         country_code = country_code if country_code else "<MISSING>"

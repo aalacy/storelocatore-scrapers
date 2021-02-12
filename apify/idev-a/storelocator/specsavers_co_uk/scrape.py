@@ -122,7 +122,10 @@ def fetch_data():
                 if "yextDisplayLng" in store["response"].keys()
                 else "<MISSING>"
             )
-
+        if len(city.split(", ")) == 2:
+            tmp = city.split(", ")
+            state = tmp.pop()
+            city = tmp[0]
         phone = soup.select_one("span.contact--store-telephone--text").string
         country_code = (
             store["response"]["countryCode"]
