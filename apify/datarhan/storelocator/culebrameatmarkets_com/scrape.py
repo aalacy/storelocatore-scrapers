@@ -42,7 +42,7 @@ def fetch_data():
     items = []
 
     DOMAIN = "culebrameatmarkets.com"
-    start_url = "https://www.culebrameatmarkets.com/#"
+    start_url = "https://www.culebrameatmarkets.com/home.html"
 
     response = session.get(start_url)
     dom = etree.HTML(response.text)
