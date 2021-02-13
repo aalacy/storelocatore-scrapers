@@ -103,13 +103,11 @@ def fetch_data():
                 k["phone"] = info.find("li", {"class": "tel"}).text.strip()
             except Exception:
                 k["phone"] = "<MISSING>"
-
-            if not k["street_address"]:
-                try:
-                    addressno = info.find("li", {"class": "dir"}).text.strip()
-                    k["street_address"] = addressno
-                except Exception:
-                    pass
+            addressno = None
+            try:
+                addressno = info.find("li", {"class": "dir"}).text.strip()
+            except Exception:
+                pass
 
             try:
                 k["hours"] = info.find_all("li", {"class": "hora"})
@@ -119,8 +117,10 @@ def fetch_data():
                 k["hours"] = "; ".join(h)
             except Exception:
                 k["hours"] = "<MISSING>"
-
-            k["raw"] = addressno + ", " + raw_addr
+            if addressno:
+                if len(addressno) > len(k["street_address"]):
+                    k["street_address"] = addressno
+            k["raw"] = addressno + ", " + raw_addr if addressno else raw_addr
             yield k
 
     logzilla.info(f"Finished grabbing data!!")  # noqa
