@@ -51,6 +51,7 @@ def _headers():
 
 
 def fetch_data():
+    locator_domain = "https://www.nealtire.com/"
     session.get("https://www.nealtire.com/", headers=_headers())
     base_url = "https://www.nealtire.com/Tires"
     r = session.get(base_url, headers=_headers())
@@ -60,7 +61,7 @@ def fetch_data():
     for location in locations:
         page_url = location.select_one(".locwidget-name a")["href"]
         location_name = location.select_one(".locwidget-name").text
-        street_address = location.select_one(".locwidget-addr").text
+        street_address = location.select_one(".locwidget-addr").text.replace(",", "")
         city = location.select_one(".locwidget-csz").text.split(",")[0]
         state = (
             location.select_one(".locwidget-csz")
@@ -82,7 +83,7 @@ def fetch_data():
         longitude = location.select_one(".locwidget-latlong").text.split(",")[1]
         r1 = session.get(page_url, headers=_headers())
         soup1 = bs(r1.text, "lxml")
-        hours = soup1.select("#ndauhours li.ndauday")
+        hours = soup1.select("#ndau-mobile #ndauhours li.ndauday")
         _hours = []
         for hour in hours:
             text = [_ for _ in hour.stripped_strings]
@@ -90,7 +91,7 @@ def fetch_data():
         hours_of_operation = "; ".join(_hours)
 
         _item = [
-            base_url,
+            locator_domain,
             page_url,
             location_name,
             street_address,

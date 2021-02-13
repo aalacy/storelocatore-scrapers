@@ -65,7 +65,6 @@ def fetch_data():
 
         stores = session.get(base_link, headers=headers).json()
 
-        new_coordinates = []
         for store in stores:
             location_name = (
                 (store["brand"] + " " + store["name"])
@@ -94,13 +93,12 @@ def fetch_data():
 
             latitude = store["lat"]
             longitude = store["lng"]
-            new_coordinates.append([latitude, longitude])
+            search.found_location_at(latitude, longitude)
 
             link = store["website_url"]
 
             # Store data
-            data.append(
-                [
+            yield [
                     locator_domain,
                     link,
                     location_name,
@@ -116,12 +114,6 @@ def fetch_data():
                     longitude,
                     hours_of_operation,
                 ]
-            )
-
-        if len(new_coordinates) > 0:
-            search.mark_found(new_coordinates)
-    return data
-
 
 def scrape():
     data = fetch_data()
