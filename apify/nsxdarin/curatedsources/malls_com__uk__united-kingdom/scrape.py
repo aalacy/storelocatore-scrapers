@@ -83,6 +83,12 @@ def fetch_data():
                 zc = addr.postcode
                 add = addr.street_address_1
                 state = "<MISSING>"
+        if city == "" or city is None:
+            city = "<MISSING>"
+        if zc == "" or zc is None:
+            zc = "<MISSING>"
+        if add == "" or add is None:
+            add = "<MISSING>"
         yield [
             website,
             loc,
