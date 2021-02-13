@@ -62,6 +62,7 @@ def fetch_data():
     types = []
 
     driver.get("https://www.habitburger.com/locations/all/")
+    time.sleep(5)
     uls = driver.find_elements_by_class_name("reglist")
     del uls[-1]  # china
     for ul in uls:
