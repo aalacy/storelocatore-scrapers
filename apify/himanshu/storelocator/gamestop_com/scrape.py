@@ -79,7 +79,6 @@ def fetch_stores(driver, data):
 
 def fetch_locations(coord, csrf_token, driver, tracker):
     lat, lng = coord
-    logger.info(str(coord))
     data = fetch_stores(
         driver, {"radius": 100, "lat": lat, "long": lng, "csrf_token": csrf_token}
     )
@@ -147,7 +146,7 @@ def get_driver():
     }
 
     driver = SgChrome(user_agent=headers["User-Agent"]).driver()
-    driver.set_script_timeout(300)
+    driver.set_script_timeout(500)
     return driver
 
 
