@@ -3,7 +3,7 @@ from sglogging import sglog
 import subprocess
 import json
 from Naked.toolshed.shell import muterun_js  # noqa
-from sgaddress import SgAddress
+from sgscrape import sgpostal as parser
 import re
 
 LOCATOR_DOMAIN = "www.factory-connection.com"
@@ -63,31 +63,19 @@ def fetch_data():
         location_name = check_missing(row["name"])
         formatted_address = row["formatted_address"]
 
-        addrs = SgAddress(formatted_address)
-        street_address = addrs.street_address()
-
+        addrs = parser.parse_address_usa(formatted_address)
+        street_address = check_missing(addrs.street_address_1)
+        street_address = (
+            (street_address + ", " + addrs.street_address_2)
+            if addrs.street_address_2
+            else street_address
+        )
         location_type = check_missing()
-        # if no/wrong street address by usaddress parsing
-        # except city, state, zip consider the rest as street_address
-        # https://safegraph-crawl.atlassian.net/browse/SLC-5624?focusedCommentId=22714
-        if not street_address or len(street_address) <= 7:
-            raw_street_address = addrs.BuildingName + street_address
-            res = parse_missing_street_address(raw_street_address)
-            location_type = res[0]
-            street_address = res[1]
 
-        # handle missing city for wrong parsing
-        # of "THE CROSSINGS SHOPPING CENTER 114 THE CROSSINGS CROSSVILLE, TN 38555"
-        # and "415 N WEST ST RIVER PLAZA BAINBRIDGE, GA 39817"
-        # by usaddress
-        city = addrs.city()
-        if not city or "PLAZA" in city:
-            city = get_missing_city(formatted_address)
-            street_address = street_address.replace(city, "")
-
-        state = addrs.state()
-        zip = addrs.zip()
-        country_code = "US"
+        city = addrs.city
+        state = addrs.state
+        zip = addrs.postcode
+        country_code = addrs.country
 
         store_number = check_missing()
         phone = row["tel"]
@@ -95,15 +83,11 @@ def fetch_data():
             phone = row["formatted_tel"]
 
         phone = check_missing(phone)
-
-        if addrs.BuildingName:
-            location_type = addrs.BuildingName.strip()
-        elif addrs.Recipient:
-            location_type = addrs.Recipient.strip()
-
         latitude = check_missing(row["latitude"])
         longitude = check_missing(row["longitude"])
-        hours_of_operation = get_hours_of_operation(row["opening_hours"])
+        hours_of_operation = get_hours_of_operation(row["opening_hours"]).replace(
+            "\n", "; "
+        )
 
         data.append(
             [
@@ -149,11 +133,9 @@ def parse_missing_street_address(raw_street_address):
 
 def npm_install():
     log.info("Custom npm install")
-    res = subprocess.call("npm install", shell=True)
-
-    if res != 0:
-        log.error("Error running npm install")
-        exit("EXIT")
+    subprocess.call("npm install axios", shell=True)
+    subprocess.call("npm install atob", shell=True)
+    subprocess.call("npm install pako", shell=True)
 
 
 def get_hours_of_operation(hours):

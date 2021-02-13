@@ -47,6 +47,14 @@ def para(k):
         hours.pop(0)
     k["hours"] = prefix + ": " + "; ".join(k["hours"])
 
+    if len(k["phone"]) < 8:
+        candidates = soup.find_all("a", {"href": lambda x: x and "tel:" in x})
+        phones = []
+        phones.append("<MISSING>")
+        for i in candidates:
+            phones.append(i["href"].split("tel:")[1].strip())
+        k["phone"] = phones[-1]
+
     return k
 
 
@@ -60,7 +68,6 @@ def fetch_data():
     son = session.get(url, headers=headers).text
     son = '{"stores":' + son + "}"
     son = json.loads(son)
-
     lize = utils.parallelize(
         search_space=son["stores"],
         fetch_results_for_rec=para,
@@ -91,7 +98,10 @@ def scrape():
     field_defs = SimpleScraperPipeline.field_definitions(
         locator_domain=ConstantField(url),
         page_url=MappingField(
-            mapping=["web"], value_transform=lambda x: str(url + x).replace("//", "/")
+            mapping=["web"],
+            value_transform=lambda x: str(url + x)
+            .replace("//", "/")
+            .replace("https:/", "https://"),
         ),
         location_name=MappingField(mapping=["name"]),
         latitude=MappingField(
