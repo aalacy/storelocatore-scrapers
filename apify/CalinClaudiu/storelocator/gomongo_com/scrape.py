@@ -16,7 +16,7 @@ def fetch_data():
     session = SgRequests()
 
     search = DynamicZipSearch(
-        country_codes=[ SearchableCountries.USA],
+        country_codes=[SearchableCountries.USA],
         max_radius_miles=2500,
         max_search_results=50,
     )
@@ -28,13 +28,15 @@ def fetch_data():
             maxZ = search.items_remaining()
         found = 0
 
-        son = session.get(url +'"'+ str(zipcode) +'"'+ ext, headers=headers).json()
+        son = session.get(url + '"' + str(zipcode) + '"' + ext, headers=headers).json()
 
-        
         for i in son["response"]["entities"]:
-            search.found_location_at(i["yextDisplayCoordinate"]["latitude"], i["yextDisplayCoordinate"]["longitude"])
+            search.found_location_at(
+                i["yextDisplayCoordinate"]["latitude"],
+                i["yextDisplayCoordinate"]["longitude"],
+            )
             if i["featuredMessage"]["url"] not in identities:
-                identities.add(i["featuredMessage"]["url"])                
+                identities.add(i["featuredMessage"]["url"])
                 found += 1
                 try:
                     i["address"]["line2"] = i["address"]["line2"]
@@ -43,7 +45,9 @@ def fetch_data():
                 yield i
         total += found
         progress = str(round(100 - (search.items_remaining() / maxZ * 100), 2)) + "%"
-        logzilla.info(f"{zipcode} | found: {found} | total: {total} | progress: {progress}")
+        logzilla.info(
+            f"{zipcode} | found: {found} | total: {total} | progress: {progress}"
+        )
 
     searchCA = DynamicZipSearch(
         country_codes=[SearchableCountries.CANADA],
@@ -56,11 +60,13 @@ def fetch_data():
             maxZ = searchCA.items_remaining()
         found = 0
 
-        son = session.get(url +'"'+ str(zipcode) +'"'+ ext, headers=headers).json()
+        son = session.get(url + '"' + str(zipcode) + '"' + ext, headers=headers).json()
 
-        
         for i in son["response"]["entities"]:
-            search.found_location_at(i["yextDisplayCoordinate"]["latitude"], i["yextDisplayCoordinate"]["longitude"])
+            search.found_location_at(
+                i["yextDisplayCoordinate"]["latitude"],
+                i["yextDisplayCoordinate"]["longitude"],
+            )
             if i["featuredMessage"]["url"] not in identities:
                 identities.add(i["featuredMessage"]["url"])
                 found += 1
@@ -71,20 +77,23 @@ def fetch_data():
                 yield i
         total += found
         progress = str(round(100 - (searchCA.items_remaining() / maxZ * 100), 2)) + "%"
-        logzilla.info(f"{zipcode} | found: {found} | total: {total} | progress: {progress}")
+        logzilla.info(
+            f"{zipcode} | found: {found} | total: {total} | progress: {progress}"
+        )
 
-    
     logzilla.info(f"Finished grabbing data!!")  # noqa
+
 
 def fix_comma(x):
     h = []
     try:
-        for i in x.split(','):
-            if len(i.strip())>=1:
+        for i in x.split(","):
+            if len(i.strip()) >= 1:
                 h.append(i)
-        return ', '.join(h)
+        return ", ".join(h)
     except Exception:
         return x
+
 
 def human_hours(k):
     h = []
@@ -95,67 +104,66 @@ def human_hours(k):
             k[i]["isClosed"] = k[i]["isClosed"]
         except Exception:
             k[i]["isClosed"] = False
-            
+
         if k[i]["isClosed"]:
-            h.append(i+': Closed')
+            h.append(i + ": Closed")
         else:
-            hours = str(i)+': '
+            hours = str(i) + ": "
             for j in k[i]["openIntervals"]:
-                hours = hours+j["start"]+"-"+j["end"]
-                if len(k[i]["openIntervals"])>1:
-                    hours = hours+' & '
+                hours = hours + j["start"] + "-" + j["end"]
+                if len(k[i]["openIntervals"]) > 1:
+                    hours = hours + " & "
             if hours[-2] == "&":
                 hours.pop(-2)
                 hours = hours.strip()
             h.append(hours)
     return "; ".join(h)
 
+
 def scrape():
     url = "https://www.gomongo.com/"
     field_defs = sp.SimpleScraperPipeline.field_definitions(
         locator_domain=sp.ConstantField(url),
         page_url=sp.MappingField(
-            mapping=["featuredMessage","url"],
+            mapping=["featuredMessage", "url"],
         ),
         location_name=sp.MappingField(
             mapping=["name"],
         ),
         latitude=sp.MappingField(
-            mapping=["yextDisplayCoordinate","latitude"],
+            mapping=["yextDisplayCoordinate", "latitude"],
         ),
         longitude=sp.MappingField(
-            mapping=["yextDisplayCoordinate","longitude"],
+            mapping=["yextDisplayCoordinate", "longitude"],
         ),
         street_address=sp.MultiMappingField(
-            mapping=[["address","line1"], ["address","line2"]],
-            multi_mapping_concat_with = ", ",
-            value_transform = fix_comma,
+            mapping=[["address", "line1"], ["address", "line2"]],
+            multi_mapping_concat_with=", ",
+            value_transform=fix_comma,
         ),
         city=sp.MappingField(
-            mapping=["address","city"],
+            mapping=["address", "city"],
         ),
         state=sp.MappingField(
-            mapping=["address","region"],
+            mapping=["address", "region"],
         ),
         zipcode=sp.MappingField(
-            mapping=["address","postalCode"],
+            mapping=["address", "postalCode"],
         ),
         country_code=sp.MappingField(
-            mapping=["address","countryCode"],
+            mapping=["address", "countryCode"],
         ),
         phone=sp.MappingField(
             mapping=["mainPhone"],
         ),
         store_number=sp.MappingField(
-            mapping=["meta","id"],
+            mapping=["meta", "id"],
         ),
         hours_of_operation=sp.MappingField(
-            mapping=["hours"],
-            raw_value_transform = human_hours
+            mapping=["hours"], raw_value_transform=human_hours
         ),
         location_type=sp.MappingField(
-            mapping=["meta","schemaTypes"],
-            raw_value_transform = lambda x : ', '.join(x)
+            mapping=["meta", "schemaTypes"], raw_value_transform=lambda x: ", ".join(x)
         ),
         raw_address=sp.MissingField(),
     )
