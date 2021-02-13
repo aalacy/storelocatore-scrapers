@@ -4,11 +4,11 @@ import requests
 import sgzip
 from Scraper import Scrape
 from sglogging import SgLogSetup
+from sgzip.dynamic import SearchableCountries
+from sgzip.static import static_coordinate_list
+import re
 
 logger = SgLogSetup().get_logger('aao-usa_com')
-
-
-
 
 URL = "https://aao-usa.com"
 
@@ -50,10 +50,12 @@ class Scraper(Scrape):
         countries = []
         location_types = []
         stores = []
+        page_urls=[]
 
         url = "https://shopaao.com/AAOStoreLocators/index.php"
+        sgcoord = static_coordinate_list(radius=200, country_code=SearchableCountries.USA)
 
-        for coords in sgzip.coords_for_radius(200):
+        for coords in sgcoord:
             data = {
                 "ajax": "1",
                 "action": "get_nearby_stores",
@@ -78,7 +80,7 @@ class Scraper(Scrape):
             if store["name"] not in self.seen:
                 # Store ID
                 location_id = "<MISSING>"
-
+                page_url = "https://aao-usa.com/pages/aao-store-locator"
                 # Name
                 location_title = store["name"]
 
@@ -94,19 +96,28 @@ class Scraper(Scrape):
                     country = self.exceptions[store["address"]]["country"]
                 else:
                     street_address = " ".join(store["address"].split(",")[:-4])
+                    if len(store["address"].split(","))>4:
 
-                    # State
-                    state = store["address"].split(",")[-3]
+                        # State
+                        state = store["address"].split(",")[-3]
 
-                    # city
-                    city = store["address"].split(",")[-4]
+                        # city
+                        city = store["address"].split(",")[-4]
 
-                    # zip
-                    zipcode = store["address"].split(",")[-2]
+                        # zip
+                        zipcode = store["address"].split(",")[-2]
 
-                    # Country
-                    country = store["address"].split(",")[-1]
-
+                        # Country
+                        country = store["address"].split(",")[-1]
+                    else:
+                        temp_address= store["address"]
+                        pattern = 'space# \d{4,5}'
+                        temp_address = re.sub(pattern,",",temp_address)
+                        temp_address = temp_address.split(",")
+                        street_address = temp_address[0]
+                        city = temp_address[1]
+                        state = temp_address[2].split(" ")[1]
+                        zipcode = temp_address[2].split(" ")[2]
                 # Lat
                 lat = store["lat"]
 
@@ -121,20 +132,22 @@ class Scraper(Scrape):
 
                 # Store data
                 locations_ids.append(location_id)
+                page_urls.append(page_url)
                 locations_titles.append(location_title)
                 street_addresses.append(street_address)
-                states.append(state)
-                zip_codes.append(zipcode)
+                states.append(state.lstrip())
+                zip_codes.append(zipcode.lstrip())
                 hours.append(hour)
                 latitude_list.append(lat)
                 longitude_list.append(lon)
                 phone_numbers.append(phone)
-                cities.append(city)
-                countries.append(country)
+                cities.append(city.lstrip())
+                countries.append(country.lstrip())
                 location_types.append(location_type)
                 self.seen.append(location_title)
 
         for (
+            page_url,
             locations_title,
             street_address,
             city,
@@ -148,6 +161,7 @@ class Scraper(Scrape):
             country,
             location_type,
         ) in zip(
+            page_urls,
             locations_titles,
             street_addresses,
             cities,
@@ -167,6 +181,7 @@ class Scraper(Scrape):
                 self.data.append(
                     [
                         self.url,
+                        page_url,
                         locations_title,
                         street_address,
                         city,

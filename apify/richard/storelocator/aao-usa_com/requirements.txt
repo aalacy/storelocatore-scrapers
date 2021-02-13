@@ -1,4 +1,4 @@
-selenium==3.141.0
-requests
-sglogging
-sgzip==0.0.55
+sgzip==0.2.1
+sgvalidator==0.0.71
+requests==2.25.1
+sglogging==0.0.4
