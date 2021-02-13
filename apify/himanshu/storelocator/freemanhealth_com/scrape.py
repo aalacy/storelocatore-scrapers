@@ -44,7 +44,7 @@ def url_list():
     loc_url = "https://freemanhealth.com/all-locations"
     while True:
         try:
-            res = session.get(loc_url)
+            res = session.get(loc_url, headers=headers)
             soup = BeautifulSoup(res.text, "html5lib")
             curr_url = soup.find(class_="pager__item is-active").find("a").get("href")
             url_list.append(curr_url)
@@ -65,7 +65,7 @@ def location_type():
     filter_name = ""
     location_type_dict = {}
     base_url = "https://freemanhealth.com/all-locations"
-    res = session.get(base_url)
+    res = session.get(base_url, headers=headers)
     soup = BeautifulSoup(res.text, "html5lib")
     filters = soup.find_all(class_="facet-item")
     for filter in filters:
@@ -98,7 +98,7 @@ def fetch_data(list1, loc_dict):
         base_gap = random.randint(1, 5)
         time.sleep(base_gap)
         page = base_url + url
-        res = session.get(page)
+        res = session.get(page, headers=headers)
         soup = BeautifulSoup(res.text, "html5lib")
         records = soup.find_all("article", {"role": "article"})
         for record in records:
