@@ -117,7 +117,7 @@ def fetch_data():
                 k["hours"] = "; ".join(h)
             except Exception:
                 k["hours"] = "<MISSING>"
-            if addressno:
+            if addressno and k["street_address"]:
                 if len(addressno) > len(k["street_address"]):
                     k["street_address"] = addressno
             k["raw"] = addressno + ", " + raw_addr if addressno else raw_addr
