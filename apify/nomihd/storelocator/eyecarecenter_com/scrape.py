@@ -61,8 +61,6 @@ def write_output(data):
 
 def fetch_data():
     # Your scraper here
-    loc_list = []
-
     search = DynamicGeoSearch(
         country_codes=[SearchableCountries.USA], max_radius_miles=50
     )
@@ -123,9 +121,7 @@ def fetch_data():
                 latitude = store_json["geo"]["latitude"]
                 longitude = store_json["geo"]["longitude"]
 
-                latlng_tuple = (latitude, longitude)
-                latlng_list = [latlng_tuple]
-                search.mark_found(latlng_list)
+                search.found_location_at(latitude, longitude)
 
                 if latitude == "" or latitude is None:
                     latitude = "<MISSING>"
@@ -163,9 +159,8 @@ def fetch_data():
                     longitude,
                     hours_of_operation,
                 ]
-                loc_list.append(curr_list)
+                yield curr_list
 
-    return loc_list
 
 
 def scrape():

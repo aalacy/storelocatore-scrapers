@@ -107,12 +107,16 @@ def fetch_data():
         )
 
         street_address = raw_address[0].strip()
-        if street_address == "None":
+        if street_address == "None" or not street_address:
             try:
                 raw_address = list(base.find(id="address").stripped_strings)
             except:
                 try:
                     raw_address = list(base.find(class_="pslAddress").stripped_strings)
+                    if "\n" in raw_address[0]:
+                        raw_address = (
+                            raw_address[0].replace("\n", "<br/>").split("<br/>")
+                        )
                 except:
                     raw_address = base.h3.text.replace("NUE ZAN", "NUE<br/>ZAN").split(
                         "<br/>"
@@ -142,6 +146,9 @@ def fetch_data():
             zip_code = "32073"
         else:
             raise
+
+        if street_address[-1:] == ",":
+            street_address = street_address[:-1]
 
         country_code = "US"
         store_number = "<MISSING>"
