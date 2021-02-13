@@ -130,6 +130,7 @@ def figure_out(first, second):
     for i in h:
         if mostly_numbers(i) > 90:
             k["phone"] = i
+            break
 
     return k
 
