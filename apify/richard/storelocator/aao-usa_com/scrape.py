@@ -1,7 +1,5 @@
 import json
-
-import requests
-import sgzip
+from sgrequests import SgRequests
 from Scraper import Scrape
 from sglogging import SgLogSetup
 from sgzip.dynamic import SearchableCountries
@@ -11,6 +9,7 @@ import re
 logger = SgLogSetup().get_logger("aao-usa_com")
 
 URL = "https://aao-usa.com"
+session = SgRequests()
 
 
 class Scraper(Scrape):
@@ -66,7 +65,7 @@ class Scraper(Scrape):
                 "lng": coords[1],
             }
             headers = {"cookie": "PHPSESSID=5deb3c76a4d67a494af32b91957192d5"}
-            r = requests.post(url=url, data=data, headers=headers)
+            r = session.post(url=url, data=data, headers=headers)
             decoded_data = r.text.encode().decode("utf-8-sig")
             data = (
                 json.loads(decoded_data)["stores"]
@@ -112,7 +111,7 @@ class Scraper(Scrape):
                         country = store["address"].split(",")[-1]
                     else:
                         temp_address = store["address"]
-                        pattern = "space# \d{4,5}"
+                        pattern = r"space# \d{4,5}"
                         temp_address = re.sub(pattern, ",", temp_address)
                         temp_address = temp_address.split(",")
                         street_address = temp_address[0]
