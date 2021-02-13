@@ -8,7 +8,7 @@ from sgzip.dynamic import SearchableCountries
 from sgzip.static import static_coordinate_list
 import re
 
-logger = SgLogSetup().get_logger('aao-usa_com')
+logger = SgLogSetup().get_logger("aao-usa_com")
 
 URL = "https://aao-usa.com"
 
@@ -50,10 +50,12 @@ class Scraper(Scrape):
         countries = []
         location_types = []
         stores = []
-        page_urls=[]
+        page_urls = []
 
         url = "https://shopaao.com/AAOStoreLocators/index.php"
-        sgcoord = static_coordinate_list(radius=200, country_code=SearchableCountries.USA)
+        sgcoord = static_coordinate_list(
+            radius=200, country_code=SearchableCountries.USA
+        )
 
         for coords in sgcoord:
             data = {
@@ -75,7 +77,6 @@ class Scraper(Scrape):
             logger.info(
                 f"{len(data)} stores scraped for coords Lat: {coords[0]} Long:  {coords[1]}"
             )
-
         for store in stores:
             if store["name"] not in self.seen:
                 # Store ID
@@ -96,7 +97,7 @@ class Scraper(Scrape):
                     country = self.exceptions[store["address"]]["country"]
                 else:
                     street_address = " ".join(store["address"].split(",")[:-4])
-                    if len(store["address"].split(","))>4:
+                    if len(store["address"].split(",")) > 4:
 
                         # State
                         state = store["address"].split(",")[-3]
@@ -110,9 +111,9 @@ class Scraper(Scrape):
                         # Country
                         country = store["address"].split(",")[-1]
                     else:
-                        temp_address= store["address"]
-                        pattern = 'space# \d{4,5}'
-                        temp_address = re.sub(pattern,",",temp_address)
+                        temp_address = store["address"]
+                        pattern = "space# \d{4,5}"
+                        temp_address = re.sub(pattern, ",", temp_address)
                         temp_address = temp_address.split(",")
                         street_address = temp_address[0]
                         city = temp_address[1]
@@ -145,7 +146,6 @@ class Scraper(Scrape):
                 countries.append(country.lstrip())
                 location_types.append(location_type)
                 self.seen.append(location_title)
-
         for (
             page_url,
             locations_title,
