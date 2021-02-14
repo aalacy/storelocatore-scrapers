@@ -45,12 +45,12 @@ def fetch_data():
         "Accept": "application/json, text/plain, */*",
         "Accept-Encoding": "gzip, deflate, br",
         "Accept-Language": "ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7,pt;q=0.6",
-        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c3IiOiJhbm9uLXRlbXBsYXRlLXVzZXIiLCJjaWQiOiI3YzRhMjJjOC0yNjk1LTQyMDMtOTI2Zi02NGRmM2M2NjY0MjQiLCJvcmRlcmlkIjoiMG9qdkZNUDVoVUNEbXJqRGVrSGNvQSIsInUiOiIyOTgzMzEwIiwidXNydHlwZSI6ImJ1eWVyIiwicm9sZSI6WyJNZUFkZHJlc3NBZG1pbiIsIk1lQWRtaW4iLCJNZUNyZWRpdENhcmRBZG1pbiIsIk1lWHBBZG1pbiIsIlNob3BwZXIiLCJTdXBwbGllclJlYWRlciIsIlN1cHBsaWVyQWRkcmVzc1JlYWRlciIsIlBhc3N3b3JkUmVzZXQiLCJCdXllclJlYWRlciIsIkRvY3VtZW50UmVhZGVyIl0sIm5iZiI6MTYxMjM0MjcxNCwiZXhwIjoxNjEyOTQ4MTE0LCJpYXQiOjE2MTIzNDMzMTQsImlzcyI6Imh0dHBzOi8vYXV0aC5vcmRlcmNsb3VkLmlvIiwiYXVkIjoiaHR0cHM6Ly9hcGkub3JkZXJjbG91ZC5pbyJ9.GWu5FzlXZWEuPh5bbXpZqGz1OrH34npcvCOZ4dHS_v4",
+        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c3IiOiJhbm9uLXRlbXBsYXRlLXVzZXIiLCJjaWQiOiI3YzRhMjJjOC0yNjk1LTQyMDMtOTI2Zi02NGRmM2M2NjY0MjQiLCJvcmRlcmlkIjoicVhzd0hjZ2NtRS1QUnVhSnJ0dUJrQSIsInUiOiIyOTgzMzEwIiwidXNydHlwZSI6ImJ1eWVyIiwicm9sZSI6WyJNZUFkZHJlc3NBZG1pbiIsIk1lQWRtaW4iLCJNZUNyZWRpdENhcmRBZG1pbiIsIk1lWHBBZG1pbiIsIlNob3BwZXIiLCJTdXBwbGllclJlYWRlciIsIlN1cHBsaWVyQWRkcmVzc1JlYWRlciIsIlBhc3N3b3JkUmVzZXQiLCJCdXllclJlYWRlciIsIkRvY3VtZW50UmVhZGVyIl0sIm5iZiI6MTYxMzIwNzcxMiwiZXhwIjoxNjEzODEzMTEyLCJpYXQiOjE2MTMyMDgzMTIsImlzcyI6Imh0dHBzOi8vYXV0aC5vcmRlcmNsb3VkLmlvIiwiYXVkIjoiaHR0cHM6Ly9hcGkub3JkZXJjbG91ZC5pbyJ9.NOuLqZRCL_cqnlDSxzFvoKbHZF2K5bQoFn5N7gfsZmU",
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.96 Safari/537.36",
     }
 
     DOMAIN = "platoscloset.com"
-    start_url = "https://api.ordercloud.io/v1/suppliers?pageSize=20&page=1&Active=true&xp.isCoop=false&sortBy=Name"
+    start_url = "https://api.ordercloud.io/v1/suppliers?page=1&pageSize=100&Active=true"
 
     response = session.get(start_url, headers=hdr)
     data = json.loads(response.text)
