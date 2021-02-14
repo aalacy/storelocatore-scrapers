@@ -137,6 +137,8 @@ def fetch_data():
                         .decode("utf-8")
                         .replace("?", "-")
                         .strip()
+                        .replace("Hours", "")
+                        .strip()
                     )
 
         location_type = "<MISSING>"
