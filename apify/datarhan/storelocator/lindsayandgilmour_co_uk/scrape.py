@@ -1,4 +1,3 @@
-import re
 import csv
 from lxml import etree
 
@@ -37,44 +36,40 @@ def write_output(data):
 
 def fetch_data():
     # Your scraper here
-    session = SgRequests()
+    session = SgRequests().requests_retry_session(retries=0, backoff_factor=0.3)
 
     items = []
+    scraped_items = []
 
-    DOMAIN = "culebrameatmarkets.com"
-    start_url = "https://www.culebrameatmarkets.com/home.html"
+    DOMAIN = "lindsayandgilmour.co.uk"
+    start_url = "https://lindsayandgilmour.co.uk/location/branch-list/"
 
     response = session.get(start_url)
     dom = etree.HTML(response.text)
 
-    all_locations = dom.xpath('//div[@class="paragraph"]')[1:]
+    all_locations = dom.xpath('//div[@class="ct-code-block"]/table/tbody/tr')[1:]
     for poi_html in all_locations:
-        store_url = "<MISSING>"
         raw_data = poi_html.xpath(".//text()")
-        raw_data = [
-            elem.strip().replace("\u200b", "") for elem in raw_data if elem.strip()
-        ]
-        if len(raw_data) == 4:
-            raw_data = [" ".join(raw_data[:2])] + raw_data[2:]
-        if "San Antonio" in raw_data[0]:
-            raw_data = [raw_data[0].split(" San")[0]] + [
-                "San" + raw_data[0].split(" San")[-1] + " " + raw_data[1],
-                raw_data[-1],
-            ]
-        location_name = "<MISSING>"
-        street_address = raw_data[0]
-        city = raw_data[1].split(",")[0].strip()
-        state = raw_data[1].split(",")[-1].split()[0].strip()
-        zip_code = raw_data[1].split(",")[-1].split()[-1].strip()
-        country_code = "<MISSING>"
-        store_number = "<MISSING>"
-        phone = raw_data[-1]
-        phone = phone.strip() if phone and "," not in phone else "<MISSING>"
+        raw_data = [elem.strip() for elem in raw_data if elem.strip()]
+        if raw_data[0] == "Branch":
+            continue
+
+        store_url = "<MISSING>"
         location_type = "<MISSING>"
-        geo = poi_html.xpath(".//preceding-sibling::div/iframe/@src")[0]
-        latitude = re.findall("long=(.+?)&", geo)[0]
-        longitude = re.findall("lat=(.+?)&", geo)[0]
-        hours_of_operation = "<MISSING>"
+        hours_of_operation = raw_data[-1]
+        if "David Wynne" in hours_of_operation:
+            hours_of_operation = "<MISSING>"
+        location_name = raw_data[0]
+        address_raw = raw_data[1].split(", ")
+        street_address = address_raw[0]
+        city = address_raw[1]
+        state = "<MISSING>"
+        zip_code = address_raw[-1].replace("\n", " ")
+        country_code = "UK"
+        store_number = "<MISSING>"
+        phone = raw_data[2]
+        latitude = "<MISSING>"
+        longitude = "<MISSING>"
 
         item = [
             DOMAIN,
@@ -93,7 +88,10 @@ def fetch_data():
             hours_of_operation,
         ]
 
-        items.append(item)
+        check = f"{location_name} {street_address}"
+        if check not in scraped_items:
+            scraped_items.append(check)
+            items.append(item)
 
     return items
 

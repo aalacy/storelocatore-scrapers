@@ -74,7 +74,6 @@ def fetch_data():
                 store_url = "https://" + poi["homeurl"]
             else:
                 store_url = "<MISSING>"
-            print(store_url)
             if "www.myeyelevel.com" not in store_url:
                 continue
             loc_response = session.get(store_url)
@@ -112,7 +111,9 @@ def fetch_data():
             longitude = longitude if longitude else "<MISSING>"
             hours_of_operation = poi["centerOpenTime"]
             hours_of_operation = (
-                hours_of_operation if hours_of_operation else "<MISSING>"
+                hours_of_operation.replace(",", " ").strip()
+                if hours_of_operation
+                else "<MISSING>"
             )
 
             item = [
