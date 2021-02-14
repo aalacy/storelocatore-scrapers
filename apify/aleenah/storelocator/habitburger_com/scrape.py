@@ -88,11 +88,6 @@ def fetch_data():
         if cs != []:
             coming_soon.append(url)
             continue
-        WebDriverWait(driver, 60).until(
-            EC.presence_of_element_located(
-                (By.CSS_SELECTOR, '[type="application/ld+json"]')
-            )
-        )
         time.sleep(5)
         soup = BeautifulSoup(driver.page_source, "html.parser")
 
