@@ -74,7 +74,6 @@ def fetch_data():
                 store_url = "https://" + poi["homeurl"]
             else:
                 store_url = "<MISSING>"
-            print(store_url)
             if "www.myeyelevel.com" not in store_url:
                 continue
             loc_response = session.get(store_url)
