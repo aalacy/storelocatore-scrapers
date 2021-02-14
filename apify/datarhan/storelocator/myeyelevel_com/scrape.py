@@ -112,7 +112,9 @@ def fetch_data():
             longitude = longitude if longitude else "<MISSING>"
             hours_of_operation = poi["centerOpenTime"]
             hours_of_operation = (
-                hours_of_operation if hours_of_operation else "<MISSING>"
+                hours_of_operation.replace(",", " ").strip()
+                if hours_of_operation
+                else "<MISSING>"
             )
 
             item = [
