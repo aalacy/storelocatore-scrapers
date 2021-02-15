@@ -72,7 +72,13 @@ def fetch_data():
         longitude = poi["lon"]
         hoo = etree.HTML(poi["hours"])
         hoo = [elem.strip() for elem in hoo.xpath(".//text()") if elem.strip]
-        hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
+        hours_of_operation = " ".join(hoo).split("Start")[0] if hoo else "<MISSING>"
+        hours_of_operation = hours_of_operation.replace("Catering Options", "")
+        hours_of_operation = (
+            hours_of_operation.split("Sign")[0]
+            .split("Click")[0]
+            .replace(" Delivery Available", "")
+        )
 
         item = [
             DOMAIN,
