@@ -1,100 +1,106 @@
+from bs4 import BeautifulSoup
 import csv
-import re
-import pdb
-import requests
-from lxml import etree
-import json
-import usaddress
+from sgrequests import SgRequests
 
+session = SgRequests()
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+}
 
-base_url = 'https://www.muellerinc.com'
-
-def validate(item):    
-    if item == None:
-        item = ''
-    if type(item) == int or type(item) == float:
-        item = str(item)
-    if type(item) == list:
-        item = ' '.join(item)
-    return item.replace('\u2013', '-').strip()
-
-def get_value(item):
-    if item == None :
-        item = '<MISSING>'
-    item = validate(item)
-    if item == '':
-        item = '<MISSING>'    
-    return item
-
-def eliminate_space(items):
-    rets = []
-    for item in items:
-        item = validate(item)
-        if item != '':
-            rets.append(item)
-    return rets
-
-def parse_address(address):
-    address = usaddress.parse(address)
-    street = ''
-    city = ''
-    state = ''
-    zipcode = ''
-    for addr in address:
-        if addr[1] == 'PlaceName':
-            city += addr[0].replace(',', '') + ' '
-        elif addr[1] == 'ZipCode':
-            zipcode = addr[0].replace(',', '')
-        elif addr[1] == 'StateName':
-            state = addr[0].replace(',', '') + ' '
-        else:
-            street += addr[0].replace(',', '') + ' '
-    return { 
-        'street': get_value(street), 
-        'city' : get_value(city), 
-        'state' : get_value(state), 
-        'zipcode' : get_value(zipcode)
-    }
 
 def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+    with open("data.csv", mode="w") as output_file:
+        writer = csv.writer(
+            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+        )
+
+        # Header
+        writer.writerow(
+            [
+                "locator_domain",
+                "page_url",
+                "location_name",
+                "street_address",
+                "city",
+                "state",
+                "zip",
+                "country_code",
+                "store_number",
+                "phone",
+                "location_type",
+                "latitude",
+                "longitude",
+                "hours_of_operation",
+            ]
+        )
+        # Body
         for row in data:
             writer.writerow(row)
 
+
 def fetch_data():
-    output_list = []
-    url = "https://www.muellerinc.com/o/rest/mups/location/"
-    page_url = ''
-    session = requests.Session()
-    request = session.get(url)
-    store_list = json.loads(request.text)
-    for store in store_list:
-        url_key = validate(store['urlKey'])
-        store_link = 'https://www.muellerinc.com/o/rest/mups/location/'+url_key
-        store_info = json.loads(session.get(store_link).text)
-        output = []
-        output.append(base_url) # url
-        output.append(store_link) # page url
-        output.append(get_value(store_info['name'])) #location name
-        output.append(get_value(store_info['addressline1'])) #address
-        output.append(get_value(store_info['city'])) #city
-        output.append(get_value(store_info['statecode'])) #state
-        output.append(get_value(store_info['zipcode'])) #zipcode
-        output.append('US') #country code
-        output.append(get_value(store_info['locationId'])) #store_info_number
-        output.append(get_value(store_info['branchPhones'][0]['branchphonenumber'])) #phone
-        output.append('Steel Buildings, Metal Buildings, Metal Roofing - Mueller, Inc') #location type
-        output.append(get_value(store_info['latitude'])) #latitude
-        output.append(get_value(store_info['longitude'])) #longitude
-        store_hours = eliminate_space(etree.HTML(validate(store_info['businesshourshtmltext'])).xpath('.//text()'))
-        output.append(get_value(store_hours)) #opening hours
-        output_list.append(output)
-    return output_list
+    data = []
+    url = "https://www.muellerinc.com/o/services/mups/location/"
+    p = 0
+    loclist = session.get(url, headers=headers, verify=False).json()
+
+    for loc in loclist:
+        link = "https://www.muellerinc.com/o/services/mups/location/" + loc[
+            "name"
+        ].lower().strip().replace(" ", "-")
+        if "coming-soon" in link:
+            continue
+        r = session.get(link, headers=headers, verify=False).json()
+        store = str(r["locationId"])
+        title = str(r["name"])
+        lat = r["latitude"]
+        longt = r["longitude"]
+        phone = r["branchPhones"][0]["branchphonenumber"]
+        phone = phone[0:3] + "-" + phone[3:6] + "-" + phone[6:10]
+        street = r["addressline1"]
+        if str(r["addressline2"]) == "":
+            pass
+        else:
+            street = street + " " + r["addressline2"]
+        city = r["city"]
+        state = r["state"]
+        pcode = r["zipcode"]
+        hours = (
+            BeautifulSoup(r["businesshourshtmltext"], "html.parser")
+            .text.replace("\xa0", "")
+            .replace("\n", " ")
+            .strip()
+        )
+        link = "https://www.muellerinc.com/branchlocations/tx/" + loc[
+            "name"
+        ].lower().strip().replace(" ", "-")
+        data.append(
+            [
+                "https://www.muellerinc.com/",
+                link,
+                title,
+                street,
+                city,
+                state,
+                pcode,
+                "US",
+                store,
+                phone,
+                "<MISSING>",
+                lat,
+                longt,
+                hours,
+            ]
+        )
+
+        p += 1
+    return data
+
 
 def scrape():
+
     data = fetch_data()
     write_output(data)
+
 
 scrape()
