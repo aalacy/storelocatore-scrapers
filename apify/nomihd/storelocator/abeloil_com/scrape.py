@@ -59,7 +59,7 @@ def fetch_data():
     # Your scraper here
     loc_list = []
 
-    home_req = session.get("https://www.abeloil.com/")
+    session.get("https://www.abeloil.com/")
     search_url = "https://www.powr.io/wix/map/public.json?pageId=mainPage&compId=comp-jxlx28pu&viewerCompId=comp-jxlx28pu&siteRevision=246&viewMode=site&deviceType=desktop&locale=en&tz=America%2FChicago&width=620&height=420&instance=h3GWKCccR94Y7a6lgSbsdJVb4aG9prQWYrrgOimif0Q.eyJpbnN0YW5jZUlkIjoiM2NmZmZjZWYtNjhhNy00ODFjLWEyZDUtYzA4YWIzYTRhMzdjIiwiYXBwRGVmSWQiOiIxMzQwYzVlZC1hYWM1LTIzZWYtNjkzYy1lZDIyMTY1Y2ZkODQiLCJzaWduRGF0ZSI6IjIwMjEtMDItMTNUMDk6MzE6MTcuMDE2WiIsInZlbmRvclByb2R1Y3RJZCI6ImJ1c2luZXNzIiwiZGVtb01vZGUiOmZhbHNlLCJhaWQiOiIxOGE1MjEzNy0wNWVhLTQ2ODAtYTZhMC0zN2IzMjRhZTkzYmUiLCJzaXRlT3duZXJJZCI6Ijk4NWQwOGU2LTM5NTQtNDE2ZC05MDNmLTJhZmY0MDM5YTUyYiJ9&currency=USD&currentCurrency=USD&vsi=a698f35c-ceb3-4ca5-8d03-64c4bfd3abaa&commonConfig=%7B%22brand%22%3A%22wix%22%2C%22bsi%22%3A%22745a37fa-79b6-49a8-a7aa-710d6b6983a0%7C2%22%2C%22BSI%22%3A%22745a37fa-79b6-49a8-a7aa-710d6b6983a0%7C2%22%7D&url=https://www.abeloil.com/"
     stores_req = session.get(search_url)
     stores = json.loads(stores_req.text)["content"]["locations"]
