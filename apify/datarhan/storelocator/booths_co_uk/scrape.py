@@ -67,7 +67,7 @@ def fetch_data():
         state = state if state else "<MISSING>"
         zip_code = addrr.postcode
         zip_code = zip_code if zip_code else "<MISSING>"
-        country_code = 'UK'
+        country_code = "UK"
         store_number = "<MISSING>"
         phone = loc_dom.xpath('//li[@class="phone"]/text()')
         phone = phone[0] if phone else "<MISSING>"
