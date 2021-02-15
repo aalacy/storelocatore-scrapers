@@ -1,6 +1,8 @@
 import csv
 from sgrequests import SgRequests
+from sgrequests import SgRequests
 from sglogging import SgLogSetup
+from bs4 import BeautifulSoup
 
 logger = SgLogSetup().get_logger("anixter_com")
 session = SgRequests()
@@ -216,6 +218,150 @@ def fetch_data():
             store.append(hours_of_operation)
             store.append(page_url)
             yield store
+
+    uk_url = "https://www.anixter.com/en_us/about-us/contact-us/global-locations-contact-info/europe/united-kingdom.html"
+    req = session.get(uk_url, headers=headers)
+    soup = BeautifulSoup(req.text, "html5lib")
+    locs = soup.find_all("div", {"class": "text parbase section"})
+    for i, loc in enumerate(locs, start=1):
+        if loc.find("h4"):
+            continue
+        else:
+            try:
+                address = loc.find("p").text.split("\n")
+                if len(address) > 4:
+                    location_name = "<MISSING>"
+                    city = "<MISSING>"
+                    state = "<MISSING>"
+                    zip_code = "<MISSING>"
+                    latitude = "<MISSING>"
+                    longitude = "<MISSING>"
+                    h_o_o = "<MISSING>"
+                    page_url = "<MISSING>"
+                    country_code = "UK"
+                    count = 0
+
+                    if len(address) == 5:
+                        street_address = address[0]
+                        if len(address[1].split(",")) > 1:
+                            city = address[1].split(",")[0]
+                            state = address[1].split(",")[1].split()[0]
+                            zip_code = (
+                                address[1].split(",")[1].split()[1]
+                                + " "
+                                + address.split(",")[1].split()[2]
+                            )
+                        else:
+                            city = address[1].split()[0]
+                            zip_code = (
+                                address[1].split()[1] + " " + address[1].split()[2]
+                            )
+
+                        phone = address[4].split(":")[1]
+
+                    elif len(address) == 6:
+                        if count < 3:
+                            if count == 0:
+                                location_name = address[0]
+                                street_address = (
+                                    address[1].split(",")[0]
+                                    + " "
+                                    + address[1].split(",")[1]
+                                )
+
+                            else:
+                                street_address = address[0] + " " + address[1]
+                            city = address[2].split(",")[0]
+                            state = address[2].split(",")[1]
+                            phone = address[4].split(":")[1]
+
+                            try:
+                                zip_code = address[2].split(",")[2].replace("\\xa0", "")
+                            except:
+                                state = address[2].split(",")[1].split(" ")[0]
+                                zip_code = (
+                                    address[2].split(",")[1].split(" ")[-2]
+                                    + " "
+                                    + address[2].split(",")[1].split(" ")[-1]
+                                )
+
+                        else:
+                            street_address = address[0]
+                            city = address[1].split(" ")[0]
+                            zip_code = (
+                                address[1].split(" ")[-2]
+                                + " "
+                                + address[1].split(" ")[-1]
+                            )
+                            phone = address[4].split(":")[1]
+                        count = count + 1
+                    else:
+                        if len(address) > 8:
+                            street_address = address[0]
+                            city = address[1].split(",")[0]
+                            state = address[1].split(",")[1].split(" ")[0]
+                            zip_code = (
+                                address[1].split(",")[1].split(" ")[-2]
+                                + " "
+                                + address[1].split(",")[1].split(" ")[-1]
+                            )
+                            phone = address[5].split(":")[1]
+                        else:
+                            street_address = address[0] + " " + address[1]
+                            phone = address[4].split(":")[1]
+                            if len(address[2].split(",")) > 1:
+                                city = address[2].split(",")[0]
+                                zip_code = (
+                                    address[2].split(",")[1].split(" ")[-2]
+                                    + " "
+                                    + address[2].split(",")[1].split(" ")[-1]
+                                )
+                                if len(address[2].split(",")[1].split(" ")) > 4:
+                                    state = (
+                                        address[2].split(",")[1].split(" ")[1]
+                                        + " "
+                                        + address[2].split(",")[1].split(" ")[2]
+                                    )
+                                else:
+                                    state = address[2].split(",")[1].split(" ")[1]
+                            else:
+                                city = address[2].split(" ")[0]
+                                zip_code = (
+                                    address[2].split(" ")[-2]
+                                    + " "
+                                    + address[2].split(" ")[-1]
+                                )
+                store = []
+                store.append(base_url)
+                store.append(location_name)
+                store.append(street_address)
+                if store[-1] in addresses:
+                    continue
+                addresses.append(store[-1])
+                store.append(city)
+                store.append(state)
+                store.append(zip_code)
+                store.append(country_code)
+                store.append("<MISSING>")
+                store.append(phone if phone else "<MISSING>")
+                store.append("<MISSING>")
+                store.append(latitude)
+                store.append(longitude)
+                store.append(h_o_o)
+                store.append(page_url)
+                store = [
+                    str(s)
+                    .strip()
+                    .replace("\n", "")
+                    .replace("\\xa0", "")
+                    .replace("oemsolutionssales@anixter.com", "+44 (0)1142 709300")
+                    if s
+                    else "<MISSING>"
+                    for s in store
+                ]
+                yield store
+            except:
+                continue
 
 
 def scrape():
