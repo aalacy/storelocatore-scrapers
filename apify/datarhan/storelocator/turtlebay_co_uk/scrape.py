@@ -58,20 +58,26 @@ def fetch_data():
             street_address += " " + poi["address"]["line2"]
         street_address = street_address if street_address else "<MISSING>"
         city = poi["address"]["city"]
-        city = city if city else "<MISSING>"
+        city = city if city and "n/a" not in city else "<MISSING>"
         state = "<MISSING>"
         zip_code = poi["address"]["postcode"]
-        zip_code = zip_code if zip_code else "<MISSING>"
+        zip_code = zip_code if zip_code and "n/a" not in zip_code else "<MISSING>"
         country_code = "UK"
         store_number = poi["id"]
         phone = poi["contact"]
-        phone = phone[0]["phone"] if phone else "<MISSING>"
+        phone = (
+            phone[0]["phone"]
+            if phone and "n/a" not in phone[0]["phone"]
+            else "<MISSING>"
+        )
         location_type = "<MISSING>"
         if "t open right now" in zip_code:
             location_type = "temporary closed"
             zip_code = "<MISSING>"
         latitude = poi["address"]["latitude"]
+        latitude = latitude if latitude and "n/a" not in latitude else "<MISSING>"
         longitude = poi["address"]["longitude"]
+        longitude = longitude if longitude and "n/a" not in longitude else "<MISSING>"
         hours_of_operation = "<MISSING>"
         if poi["openingHours"]:
             hours_of_operation = " ".join(
