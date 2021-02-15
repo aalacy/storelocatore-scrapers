@@ -43,8 +43,7 @@ def fetch_data():
         lng = "<MISSING>"
         text = driver.page_source
         text = str(text).replace("\r", "").replace("\n", "").replace("\t", "")
-        text = str(text.decode("utf-8"))
-        if '"@type":"Restaurant","' in str(text):
+        if '"@type":"Restaurant","' in text:
             items = text.split('"@type":"Restaurant","')
             for item in items:
                 if '"streetAddress":"' in item:
