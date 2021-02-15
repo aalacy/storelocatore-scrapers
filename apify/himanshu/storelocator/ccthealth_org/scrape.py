@@ -134,7 +134,6 @@ def fetch_data():
         store = [str(x).strip() if x else "<MISSING>" for x in store]
 
         yield store
-    # return returnres;
 
 
 def scrape():
