@@ -1,6 +1,5 @@
 from bs4 import BeautifulSoup
 import csv
-import re
 import json
 
 from sgrequests import SgRequests
@@ -43,8 +42,6 @@ def write_output(data):
 
 def fetch_data():
     data = []
-    pattern = re.compile(r"\s\s+")
-    cleanr = re.compile(r"<[^>]+>")
     url = "https://industrialbarreandride.com/locations"
     r = session.get(url, headers=headers, verify=False)
     soup = BeautifulSoup(r.text, "html.parser")
