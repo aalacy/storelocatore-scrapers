@@ -68,7 +68,7 @@ def fetch_data():
             street_address = addr.street_address_1.replace(
                 "Hilldale Shopping Center", ""
             )
-            city = addr.city
+            city = addr.city.replace("Kerrytown", "").replace(",", "")
             state = addr.state
             zip = addr.postcode
             phone = block[1]

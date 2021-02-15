@@ -76,12 +76,12 @@ def fetch_data():
             pass
         latitude = json_data["lat"]
         longitude = json_data["lon"]
-        zipp = json_data["zip"]
+        zipp = json_data["zip"].replace("90045", "90401")
         city = json_data["city"]
         location_name = json_data["name"]
         phone = json_data["phone"]
         state = json_data["state"]
-        street_address = json_data["address"]
+        street_address = json_data["address"].replace(", Santa Monica, CA 90401", "")
         page_url = locator_domain + i["href"]
 
         store = [
