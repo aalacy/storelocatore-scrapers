@@ -46,7 +46,6 @@ def fetch_data():
         "Accept": "*/*",
     }
 
-    addresses = []
     base_url = "https://www.gianteagle.com"
 
     # it will used in store data.
