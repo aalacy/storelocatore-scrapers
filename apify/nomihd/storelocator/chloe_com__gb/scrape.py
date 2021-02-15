@@ -99,7 +99,6 @@ def fetch_data():
             country_code = "GB"
             phone = store_json["wpcf-yoox-store-phone"]
             hours_of_operation = ""
-            hours_list = []
             hours_of_operation = store_json["wpcf-yoox-store-hours"]
             if "Temporarily closed" in hours_of_operation:
                 hours_of_operation = "<MISSING>"
