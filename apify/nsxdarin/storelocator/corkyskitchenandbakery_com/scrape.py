@@ -42,7 +42,6 @@ def fetch_data():
         lat = "<MISSING>"
         lng = "<MISSING>"
         for line in driver.page_source:
-            line = str(line.decode("utf-8"))
             if '"@type":"Restaurant","' in line:
                 items = line.split('"@type":"Restaurant","')
                 for item in items:
