@@ -56,7 +56,6 @@ def fetch_data():
 
     search_url = "https://www.davidclulow.com/store-finder/"
     stores_req = session.get(search_url, headers=headers)
-    stores_sel = lxml.html.fromstring(stores_req.text)
 
     json_text = (
         stores_req.text.split("var maplistScriptParamsKo =")[1]
