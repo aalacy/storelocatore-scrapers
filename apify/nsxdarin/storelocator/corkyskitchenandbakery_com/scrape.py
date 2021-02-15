@@ -45,7 +45,7 @@ def fetch_data():
         text = str(text).replace("\r", "").replace("\n", "").replace("\t", "")
         text = str(text.decode("utf-8"))
         if '"@type":"Restaurant","' in str(text):
-            items = line.split('"@type":"Restaurant","')
+            items = text.split('"@type":"Restaurant","')
             for item in items:
                 if '"streetAddress":"' in item:
                     add = item.split('"streetAddress":"')[1].split('"')[0]
