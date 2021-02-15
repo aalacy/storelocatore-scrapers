@@ -41,43 +41,45 @@ def fetch_data():
         hours = "<MISSING>"
         lat = "<MISSING>"
         lng = "<MISSING>"
-        for line in driver.page_source:
-            if '"@type":"Restaurant","' in line:
-                items = line.split('"@type":"Restaurant","')
-                for item in items:
-                    if '"streetAddress":"' in item:
-                        add = item.split('"streetAddress":"')[1].split('"')[0]
-                        phone = item.split('"telephone":"')[1].split('"')[0]
-                        city = item.split('"addressLocality":"')[1].split('"')[0]
-                        state = item.split('"addressRegion":"')[1].split('"')[0]
-                        hours = (
-                            item.split('"openingHours":["')[1]
-                            .split("]")[0]
-                            .replace('","', "; ")
-                            .replace('"', "")
-                        )
-                        zc = item.split('"postalCode":"')[1].split('"')[0]
-                        if "0" not in hours:
-                            hours = "<MISSING>"
-                        name = city
-                        if "0000" in phone:
-                            phone = "<MISSING>"
-                        yield [
-                            website,
-                            loc,
-                            name,
-                            add,
-                            city,
-                            state,
-                            zc,
-                            country,
-                            store,
-                            phone,
-                            typ,
-                            lat,
-                            lng,
-                            hours,
-                        ]
+        text = driver.page_source
+        text = str(text).replace("\r", "").replace("\n", "").replace("\t", "")
+        text = str(text.decode("utf-8"))
+        if '"@type":"Restaurant","' in str(text):
+            items = text.split('"@type":"Restaurant","')
+            for item in items:
+                if '"streetAddress":"' in item:
+                    add = item.split('"streetAddress":"')[1].split('"')[0]
+                    phone = item.split('"telephone":"')[1].split('"')[0]
+                    city = item.split('"addressLocality":"')[1].split('"')[0]
+                    state = item.split('"addressRegion":"')[1].split('"')[0]
+                    hours = (
+                        item.split('"openingHours":["')[1]
+                        .split("]")[0]
+                        .replace('","', "; ")
+                        .replace('"', "")
+                    )
+                    zc = item.split('"postalCode":"')[1].split('"')[0]
+                    if "0" not in hours:
+                        hours = "<MISSING>"
+                    name = city
+                    if "0000" in phone:
+                        phone = "<MISSING>"
+                    yield [
+                        website,
+                        loc,
+                        name,
+                        add,
+                        city,
+                        state,
+                        zc,
+                        country,
+                        store,
+                        phone,
+                        typ,
+                        lat,
+                        lng,
+                        hours,
+                    ]
 
 
 def scrape():
