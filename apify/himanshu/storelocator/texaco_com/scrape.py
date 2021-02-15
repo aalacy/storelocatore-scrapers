@@ -63,7 +63,15 @@ def fetch_data():
             + "}"
         )
         for loc in lt["stations"]:
-            store_url = "<MISSING>"
+            store_url = (
+                "https://www.texaco.com/find-gas-station/{}-{}-{}-{}-id{}".format(
+                    loc["address"].replace(" ", "-").replace(".", ""),
+                    loc["city"].replace(" ", "-"),
+                    loc["state"],
+                    loc["zip"],
+                    loc["id"],
+                )
+            )
             location_name = loc["name"]
             city = loc["city"]
             street_address = loc["address"]
