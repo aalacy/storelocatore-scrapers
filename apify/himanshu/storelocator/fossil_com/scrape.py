@@ -53,7 +53,6 @@ def minute_to_hours(time):
 
 def fetch_data():
     return_main_object = []
-    addresses = []
     countries = ["US", "CA", "UK"]
     for country_code in countries:
         headers = {
@@ -83,7 +82,6 @@ def fetch_data():
         location_type = "<MISSING>"
         latitude = "<MISSING>"
         longitude = "<MISSING>"
-        raw_address = ""
         hours_of_operation = "<MISSING>"
 
         for script in soup.find_all("poi"):
