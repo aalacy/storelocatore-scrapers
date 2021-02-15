@@ -56,7 +56,7 @@ def fetch_data():
         location_name = poi["name"]
         location_name = location_name if location_name else "<MISSING>"
         street_address = poi["address"]
-        city = poi["city"]
+        city = location_name.split(", ")[0]
         city = city if city else "<MISSING>"
         state = poi["state"]
         state = state if state else "<MISSING>"
