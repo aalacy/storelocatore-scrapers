@@ -1,0 +1,4 @@
+sgzip==0.2.0
+lxml==4.5.2
+sgvalidator==0.0.71
+sgrequests==0.1.3
