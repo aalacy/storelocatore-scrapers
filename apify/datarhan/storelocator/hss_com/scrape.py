@@ -41,7 +41,6 @@ def fetch_data():
     session = SgRequests()
 
     items = []
-    scraped_items = []
 
     DOMAIN = "hss.com"
     start_url = (
