@@ -72,6 +72,8 @@ def fetch_data():
             city = addr.city
             zc = addr.postcode
             add = addr.street_address_1
+            zc = item["storeAddress"]["postCode"]
+            city = item["storeAddress"]["city"]
             state = "<MISSING>"
             name = item["storeNameExternal"]
             if name == "":
@@ -206,7 +208,19 @@ def fetch_data():
             for item in json.loads(r.content)["stores"]:
                 store = item["storeNo8Digit"]
                 typ = item["storeType"]
-                phone = item["telephone"]
+                rawadd = item["storeAddress"]["addressLine1"]
+                rawadd = (
+                    rawadd
+                    + " "
+                    + item["storeAddress"]["addressLine2"]
+                    + " "
+                    + item["storeAddress"]["addressLine3"]
+                )
+                rawadd = rawadd.strip()
+                addr = parse_address_intl(rawadd)
+                city = addr.city
+                zc = addr.postcode
+                add = addr.street_address_1
                 add = item["storeAddress"]["addressLine1"]
                 add = (
                     add
