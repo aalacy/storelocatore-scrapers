@@ -69,6 +69,7 @@ def fetch_data():
         country_code = "<MISSING>"
         store_number = "<MISSING>"
         phone = raw_data[-1]
+        phone = phone.strip() if phone and "," not in phone else "<MISSING>"
         location_type = "<MISSING>"
         geo = poi_html.xpath(".//preceding-sibling::div/iframe/@src")[0]
         latitude = re.findall("long=(.+?)&", geo)[0]
