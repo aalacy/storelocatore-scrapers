@@ -47,7 +47,7 @@ def fetch_data():
 
     us_coords = DynamicGeoSearch(
         country_codes=[SearchableCountries.USA],
-        max_radius_miles=50,
+        max_radius_miles=10,
         max_search_results=None,
     )
     ca_coords = DynamicGeoSearch(
@@ -104,7 +104,9 @@ def fetch_data():
                     closes = elem["closingTime"]
                     hours_of_operation.append("{} {} - {}".format(day, opens, closes))
                 hours_of_operation = (
-                    ", ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
+                    ", ".join(hours_of_operation).split(", HOLIDAY")[0]
+                    if hours_of_operation
+                    else "<MISSING>"
                 )
 
                 item = [
