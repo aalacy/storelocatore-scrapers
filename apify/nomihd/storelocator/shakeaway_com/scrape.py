@@ -138,10 +138,7 @@ def fetch_data():
         if len(hours) > 0:
             for hour in hours:
                 hours_list.append(
-                    "".join(hour.xpath(".//text()"))
-                    .strip()
-                    .replace(" - ", ":")
-                    .strip()
+                    "".join(hour.xpath(".//text()")).strip().replace(" - ", ":").strip()
                 )
         else:
             hours = store_sel.xpath("//table//tr/td[1]/p[2]/text()")
