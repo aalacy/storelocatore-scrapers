@@ -23,7 +23,7 @@ def fetch_data():
     "content-type": "application/x-www-form-urlencoded"
     }
     base_url = "https://pretzelmaker.com"
-    data = "locateStore=true&country=USA&latitude=21.2099072&longitude=72.84736"
+    data = "locateStore=true&country=USA"
     r = session.post("https://pretzelmaker.com/locations/",headers=headers,data=data)
     soup = BeautifulSoup(r.text,"lxml")
     return_main_object = []
@@ -46,10 +46,36 @@ def fetch_data():
                 store.append(store_data["sl_longitude"])
                 store.append("<MISSING>")
                 return_main_object.append(store)
-    return return_main_object
+    yield return_main_object
+
+    data = "locateStore=true&country=Canada"
+    r = session.post("https://pretzelmaker.com/locations/",headers=headers,data=data)
+    soup = BeautifulSoup(r.text,"lxml")
+    return_main_object = []
+    for script in soup.find_all("script"):
+        if 'var stores = ' in script.text:
+            location_list = json.loads(script.text.split("var stores = ")[1].split("}];")[0] + "}]")
+            for store_data in location_list:
+                store = []
+                store.append("https://pretzelmaker.com")
+                store.append(store_data['sl_name'])
+                store.append(store_data["sl_address"])
+                store.append(store_data['sl_city'])
+                store.append(store_data['sl_state'])
+                store.append(store_data["sl_zip"])
+                store.append("CA")
+                store.append(store_data["sl_id"])
+                store.append(store_data["sl_phone"] if store_data["sl_phone"] != "*" and store_data["sl_phone"] != "TBD" else "<MISSING>")
+                store.append("pretzel maker")
+                store.append(store_data["sl_latitude"])
+                store.append(store_data["sl_longitude"])
+                store.append("<MISSING>")
+                return_main_object.append(store)
+    yield return_main_object
 
 def scrape():
     data = fetch_data()
-    write_output(data)
+    for i in data:
+        write_output(i)
 
 scrape()
