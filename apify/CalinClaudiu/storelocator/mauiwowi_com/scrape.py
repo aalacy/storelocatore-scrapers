@@ -13,7 +13,8 @@ def para(url):
         "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
     }
     session = SgRequests()
-    soup = b4(session.get(url, headers=headers).text, "lxml")
+    goodStuff = session.get(url, headers=headers).text
+    soup = b4(goodStuff, "lxml")
 
     k = {}
     k["page_url"] = url
