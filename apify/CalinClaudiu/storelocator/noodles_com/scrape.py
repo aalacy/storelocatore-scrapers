@@ -41,8 +41,10 @@ def fetch_axml(
 
     location_nodes = root_node.find_all(location_node_name, location_node_properties)
 
+    results = []
     for location in location_nodes:
-        return {"dic": location_parser(location), "requrl": request_url}
+        results.append({"dic": location_parser(location), "requrl": request_url})
+    return results
 
 
 def fetch_data():
@@ -114,7 +116,8 @@ def fetch_data():
         print_stats_interval=15,
     )
     for i in j:
-        yield i
+        for h in i:
+            yield h
 
 
 def pretty_hours(k):
