@@ -1,6 +1,6 @@
 import re
 
-import base
+import base  # noqa
 from urllib.parse import urljoin
 
 from sglogging import SgLogSetup
