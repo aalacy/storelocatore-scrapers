@@ -75,6 +75,7 @@ def fetch_data():
         json_locations = json.loads(r_locations.text)
 
         if len(json_locations) <= 0:
+            logger.info("No more locations")
             break
         logger.info(
             str(skip_counter) + " json_locations == " + str(len(json_locations))
