@@ -35,7 +35,7 @@ def write_output(data):
 
 def get_data():
     rows = []
-    locator_domain = "https://www.brewdog.com/uk"
+    locator_domain = "https://www.brewdog.com"
     api_url = "https://www.brewdog.com/uk/bar_pages/bar/locator/view_all/1/"
     session = SgRequests()
     r = session.get(api_url)
@@ -59,6 +59,8 @@ def get_data():
             or "<MISSING>"
         )
         city = a.city or "<MISSING>"
+        if city == "Manchester Manchester":
+            city = "Manchester"
         state = a.state or "<MISSING>"
         postal = a.postcode or "<MISSING>"
         store_number = "<MISSING>"

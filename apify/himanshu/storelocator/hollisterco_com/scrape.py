@@ -1,9 +1,18 @@
 import re
 import csv
 import json
+<< << << < HEAD
 from bs4 import BeautifulSoup
 from tenacity import retry, stop_after_attempt
+== == == =
+import lxml.html
+from bs4 import BeautifulSoup
+>>>>>> > ace3b2690b4a87cf4de2615a1aece403015c4229
 from sgrequests import SgRequests
+from sglogging import SgLogSetup
+import datetime
+
+logger = SgLogSetup().get_logger("hollisterco_com")
 
 headers = {
     'User-Agent': "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0"
