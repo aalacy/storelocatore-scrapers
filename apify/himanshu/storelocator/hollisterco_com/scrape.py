@@ -54,7 +54,7 @@ def fetch_locations(base_url, session):
     soup = BeautifulSoup(res.text, "lxml")
     links = soup.find_all("li", {"class": "view-all-stores__store"})
 
-    return [link.a["href"] for link in links if link.a["href"]]
+    return [link.a["href"] for link in links if is_location(link.a["href"])]
 
 
 def is_location(link):
