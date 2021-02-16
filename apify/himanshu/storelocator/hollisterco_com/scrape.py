@@ -47,7 +47,7 @@ def write_output(data):
 def fetch_locations(base_url, session):
     location_url = f"{base_url}/shop/ViewAllStoresDisplayView?storeId=11205&catalogId=10201&langId=-1"
 
-    session.get(base_url, headers=headers, timeout=10)
+    session.get(base_url, headers=headers, timeout=20)
     res = session.get(location_url, headers=headers)
     res.raise_for_status()
 
@@ -64,7 +64,7 @@ def is_location(link):
 @retry(stop=stop_after_attempt(3))
 def fetch_location(url, session):
 
-    res = session.get(url, headers=headers, timeout=10)
+    res = session.get(url, headers=headers, timeout=20)
     if res.status_code == 404:
         return None
 
@@ -88,6 +88,7 @@ def extract_data(soup):
 
 
 def fetch_data():
+
     base_url = "https://www.hollisterco.com"
     requests = SgRequests()
     links = fetch_locations(base_url, requests)
