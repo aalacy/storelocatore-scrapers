@@ -47,6 +47,7 @@ def fetch_data():
         "Connection": "keep-alive",
     }
     base_url = "https://www.wyndhamhotels.com"
+    locator_domain = "https://www.wyndhamhotels.com/hojo"
     location_url1 = "https://www.wyndhamhotels.com/hojo/locations"
     try:
         r = session.get(location_url1, headers=headers, allow_redirects=False)
@@ -103,7 +104,7 @@ def fetch_data():
                     state = "<MISSING>"
                 phone = h["telephone"]
                 store = []
-                store.append("https://www.wyndhamhotels.com/hojo")
+                store.append(locator_domain)
                 store.append(location_name if location_name else "<MISSING>")
                 store.append(street_address.strip() if street_address else "<MISSING>")
                 store.append(city if city else "<MISSING>")
@@ -160,7 +161,7 @@ def fetch_data():
             state = "<MISSING>"
         phone = h["telephone"]
         store = []
-        store.append("https://www.wyndhamhotels.com/tryp")
+        store.append(locator_domain)
         store.append(location_name if location_name else "<MISSING>")
         store.append(street_address.strip() if street_address else "<MISSING>")
         store.append(city if city else "<MISSING>")
