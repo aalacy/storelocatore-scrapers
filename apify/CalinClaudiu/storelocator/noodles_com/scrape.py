@@ -4,24 +4,27 @@ from sgscrape.simple_scraper_pipeline import MappingField
 from sgscrape.simple_scraper_pipeline import MissingField
 from sgscrape import simple_network_utils as net_utils
 from sgscrape import simple_utils as utils
+from typing import Callable
+from typing import Dict
+from typing import List
 import bs4
 from bs4 import BeautifulSoup
 import json
 
 
 def fetch_axml(
-    request_url: str,  # noqa
-    root_node_name: str,  # noqa
-    location_node_name: str,  # noqa
-    method: str = "GET",  # noqa
+    request_url: str,
+    root_node_name: str,
+    location_node_name: str,
+    method: str = "GET",
     location_parser: Callable[[bs4.Tag], dict] = xml_to_dict,  # noqa
-    location_node_properties: Dict[str, str] = {},  # noqa
-    query_params: dict = {},  # noqa
-    data_params: dict = {},  # noqa
-    headers: dict = {},  # noqa
-    xml_parser: str = "lxml",  # noqa
+    location_node_properties: Dict[str, str] = {},
+    query_params: dict = {},
+    data_params: dict = {},
+    headers: dict = {},
+    xml_parser: str = "lxml",
     retries: int = 10,
-) -> List[dict]:  # noqa
+) -> List[dict]:
 
     response = net_utils.fetch_data(
         request_url=request_url,
