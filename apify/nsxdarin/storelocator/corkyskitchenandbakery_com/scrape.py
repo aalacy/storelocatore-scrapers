@@ -56,7 +56,10 @@ def fetch_data():
                         city = item.split('"addressLocality":"')[1].split('"')[0]
                     except:
                         city = "<MISSING>"
-                    state = item.split('"addressRegion":"')[1].split('"')[0]
+                    try:
+                        state = item.split('"addressRegion":"')[1].split('"')[0]
+                    except:
+                        state = "<MISSING>"
                     try:
                         hours = (
                             item.split('"openingHours":["')[1]
