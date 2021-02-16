@@ -4,10 +4,10 @@ from sgscrape.simple_scraper_pipeline import MappingField
 from sgscrape.simple_scraper_pipeline import MissingField
 from sgscrape import simple_network_utils as net_utils
 from sgscrape import simple_utils as utils
-from typing import Callable
-from typing import Dict
-from typing import List
 import bs4
+from typing import Callable
+from typing import List
+from typing import Dict
 from bs4 import BeautifulSoup
 import json
 
@@ -17,7 +17,7 @@ def fetch_axml(
     root_node_name: str,
     location_node_name: str,
     method: str = "GET",
-    location_parser: Callable[[bs4.Tag], dict] = xml_to_dict,  # noqa
+    location_parser: Callable[[bs4.Tag], dict] = utils.xml_to_dict,
     location_node_properties: Dict[str, str] = {},
     query_params: dict = {},
     data_params: dict = {},
@@ -35,7 +35,7 @@ def fetch_axml(
         retries=retries,
     )
 
-    xml_result = BeautifulSoup(response.text, xml_parser)
+    xml_result = BeautifulSoup(response.text, "lxml")
 
     root_node = xml_result.find(root_node_name)
 
@@ -229,11 +229,11 @@ def scrape():
             "<MISSING>",
         )
         .strip(),
-        store_number=MissingField(),  # MappingField(mapping=['id']),
+        store_number=MissingField(),
         hours_of_operation=MappingField(
             mapping=["dic", "div class=[nap-col]-2"], value_transform=pretty_hours
         ),
-        location_type=MissingField(),  # MappingField(mapping=['properties','features'], is_required = False)
+        location_type=MissingField(),
     )
 
     pipeline = SimpleScraperPipeline(
