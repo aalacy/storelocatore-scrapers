@@ -107,9 +107,13 @@ def fetch_data():
                     zc = "65807"
             if phone == "" and '<a href="tel:' in line2:
                 phone = line2.split('<a href="tel:')[1].split('"')[0]
+            if 'btn-icon" href="tel:' in line2:
+                phone = line2.split('btn-icon" href="tel:')[1].split('"')[0]
             if 'data-lat="' in line2:
                 lat = line2.split('data-lat="')[1].split('"')[0]
                 lng = line2.split('data-lng="')[1].split('"')[0]
+        if "martin-center" in loc:
+            hours = "Mon-Fri: 6 a.m.-9:30 p.m."
         if hours == "":
             hours = "<MISSING>"
         if "cox-north" in loc and "emergency" not in loc and "pharmacy" not in loc:
