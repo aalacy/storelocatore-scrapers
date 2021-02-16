@@ -1,21 +1,15 @@
 import re
 import csv
 import json
-<< << << < HEAD
 from bs4 import BeautifulSoup
 from tenacity import retry, stop_after_attempt
-== == == =
-import lxml.html
-from bs4 import BeautifulSoup
->>>>>> > ace3b2690b4a87cf4de2615a1aece403015c4229
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
-import datetime
 
 logger = SgLogSetup().get_logger("hollisterco_com")
 
 headers = {
-    'User-Agent': "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0"
+    "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0"
 }
 
 
@@ -60,7 +54,7 @@ def fetch_locations(base_url, session):
     soup = BeautifulSoup(res.text, "lxml")
     links = soup.find_all("li", {"class": "view-all-stores__store"})
 
-    return [link.a['href'] for link in links if link.a['href']]
+    return [link.a["href"] for link in links if link.a["href"]]
 
 
 def is_location(link):
@@ -80,11 +74,15 @@ def fetch_location(url, session):
 
 
 def extract_data(soup):
-    scripts = soup.find_all('script')
+    scripts = soup.find_all("script")
 
     for script in scripts:
         if script.string and "geoNodeUniqueId" in script.string:
-            data = json.loads(script.string.split("try {digitalData.set('physicalStore',")[1].split(");}")[0])
+            data = json.loads(
+                script.string.split("try {digitalData.set('physicalStore',")[1].split(
+                    ");}"
+                )[0]
+            )
 
             return data
 
@@ -95,7 +93,7 @@ def fetch_data():
     links = fetch_locations(base_url, requests)
 
     for link in links:
-        page_url = f'{base_url}{link}'
+        page_url = f"{base_url}{link}"
         data = fetch_location(page_url, requests)
         if not data:
             continue
