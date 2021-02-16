@@ -73,6 +73,8 @@ def fetch_data():
             location_name = "<MISSING>"
 
         street_address = store["street"]
+        if len(street_address.split(",")) == 4:
+            street_address = street_address.split(",")[0].strip()
         city = store["city"]
         state = store["state"].replace(".", "").strip()
         zip = store["postal_code"]
