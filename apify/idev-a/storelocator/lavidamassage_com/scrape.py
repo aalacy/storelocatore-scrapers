@@ -102,9 +102,8 @@ def fetch_data():
                 hours_of_operation,
             ]
             myutil._check_duplicate_by_loc(data, _item)
+            search.found_location_at(latitude, longitude)
 
-    if new_coordinates:
-        search.mark_found(new_coordinates)
     return data
 
 
