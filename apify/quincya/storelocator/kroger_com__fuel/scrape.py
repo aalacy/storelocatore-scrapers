@@ -55,10 +55,17 @@ def fetch_data():
     locator_domain = "kroger.com"
 
     log.info("Processing " + str(len(items)) + " links ...")
-    for item in items:
+    for i, item in enumerate(items):
         link = item.text
         if "stores/details" in link:
-            log.info(link)
+
+            # New session every 20
+            if i % 20 == 0:
+                if i > 0:
+                    log.info("Getting next 20 ..")
+                    log.info(link)
+                    session = SgRequests()
+
             req = session.get(link, headers=headers)
             base = BeautifulSoup(req.text, "lxml")
 
@@ -93,7 +100,9 @@ def fetch_data():
                     base.find(class_="StoreAddress-storeAddressGuts")
                     .get_text(" ")
                     .replace(",", "")
+                    .replace("8  Rd", "8 Rd")
                     .replace(" .", ".")
+                    .replace("..", ".")
                     .split("  ")
                 )
                 street_address = raw_address[0].strip()
