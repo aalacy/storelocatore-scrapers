@@ -8,6 +8,7 @@ import bs4
 from typing import Callable
 from typing import List
 from typing import Dict
+from typing import Generator
 from bs4 import BeautifulSoup
 import json
 
@@ -24,7 +25,7 @@ def fetch_axml(
     headers: dict = {},
     xml_parser: str = "lxml",
     retries: int = 10,
-) -> List[dict]:
+) -> Generator[dict]:
 
     response = net_utils.fetch_data(
         request_url=request_url,
