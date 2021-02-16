@@ -73,12 +73,17 @@ def fetch_data():
 
     for store in links_list:
         page_url = store
-        stores_req = session.get(page_url, headers=headers)
-        store_sel = lxml.html.fromstring(stores_req.text)
+        log.info(page_url)
+        store_req = session.get(page_url, headers=headers)
+        if store_req.url == "https://www.ruralking.com/cms/noroute/":
+            continue
+
+        store_sel = lxml.html.fromstring(store_req.text)
         locator_domain = website
         location_name = "".join(
             store_sel.xpath('//h3[@class="store-header__title"]/text()')
         ).strip()
+
         if location_name == "":
             location_name = "<MISSING>"
 
@@ -91,20 +96,29 @@ def fetch_data():
         ).strip()
         location_type = "<MISSING>"
         hours_of_operation = ""
-        latitude = "".join(
-            stores_req.text.split("google.maps.LatLng(")[1]
-            .strip()
-            .split(",")[0]
-            .strip()
-        ).strip()
-        longitude = "".join(
-            stores_req.text.split("google.maps.LatLng(")[1]
-            .strip()
-            .split(",")[1]
-            .strip()
-            .split(")")[0]
-            .strip()
-        ).strip()
+        latitude = ""
+        longitude = ""
+        try:
+            latitude = "".join(
+                store_req.text.split("google.maps.LatLng(")[1]
+                .strip()
+                .split(",")[0]
+                .strip()
+            ).strip()
+        except:
+            pass
+
+        try:
+            longitude = "".join(
+                store_req.text.split("google.maps.LatLng(")[1]
+                .strip()
+                .split(",")[1]
+                .strip()
+                .split(")")[0]
+                .strip()
+            ).strip()
+        except:
+            pass
 
         details = store_sel.xpath('//div[@class="detail-box"]')
         for det in details:

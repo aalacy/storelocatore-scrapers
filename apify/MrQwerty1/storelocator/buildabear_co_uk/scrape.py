@@ -56,7 +56,10 @@ def get_data(page_url):
     if location_name.find("null,") != -1:
         return
     a = j.get("address") or {}
+    second = "".join(tree.xpath("//div[@class='second-address']/text()")).strip()
     street_address = a.get("streetAddress") or "<MISSING>"
+    if second:
+        street_address += f", {second}"
     city = a.get("addressLocality") or "<MISSING>"
     state = a.get("addressRegion") or "<MISSING>"
     postal = a.get("postalCode") or "<MISSING>"
