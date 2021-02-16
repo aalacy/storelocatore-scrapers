@@ -8,9 +8,6 @@ from sglogging import SgLogSetup
 logger = SgLogSetup().get_logger("phs_org")
 
 
-crawled = []  # noqa
-
-
 class Scrape(base.Spider):
     def crawl(self):
         base_url = "https://www.phs.org/locations/Pages/hospitals.aspx"
