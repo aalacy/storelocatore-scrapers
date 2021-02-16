@@ -75,7 +75,7 @@ def fetch_data():
         "Referer": "https://savers.co.uk/store-finder",
         "Accept-Language": "en-US,en-GB;q=0.9,en;q=0.8",
     }
-    home_req = session.get("https://savers.co.uk/", timeout=(30, 30), headers=headers)
+    session.get("https://savers.co.uk/", timeout=(30, 30), headers=headers)
 
     csrf_token = session.get(
         "https://savers.co.uk/ajaxCSRFToken", timeout=(30, 30), headers=headers
@@ -97,7 +97,6 @@ def fetch_data():
     }
 
     coords = static_coordinate_list(radius=20, country_code=SearchableCountries.BRITAIN)
-    ID_list = []
     for lat, lng in coords:
         log.info(f"Pulling stores for {lat,lng}")
         data = {
