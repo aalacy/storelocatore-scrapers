@@ -8,7 +8,6 @@ import bs4
 from typing import Callable
 from typing import List
 from typing import Dict
-from typing import Generator
 from bs4 import BeautifulSoup
 import json
 
@@ -25,7 +24,7 @@ def fetch_axml(
     headers: dict = {},
     xml_parser: str = "lxml",
     retries: int = 10,
-) -> Generator[dict]:
+) -> List[dict]:
 
     response = net_utils.fetch_data(
         request_url=request_url,
@@ -43,7 +42,7 @@ def fetch_axml(
     location_nodes = root_node.find_all(location_node_name, location_node_properties)
 
     for location in location_nodes:
-        yield {"dic": location_parser(location), "requrl": request_url}
+        return {"dic": location_parser(location), "requrl": request_url}
 
 
 def fetch_data():
@@ -115,8 +114,7 @@ def fetch_data():
         print_stats_interval=15,
     )
     for i in j:
-        for h in i:
-            yield h
+        yield i
 
 
 def pretty_hours(k):
@@ -223,13 +221,13 @@ def scrape():
             value_transform=lambda x: x.split("itemprop=telephone id=telephone': ")[-1]
             .split("}")[0]
             .replace('"', "")
-            .replace("'", ""),
-        )
-        .replace(
-            "{div class=[nap-address-header]: {i class=[fa, fa-map-marker] aria-hidden=true: {",
-            "<MISSING>",
-        )
-        .strip(),
+            .replace("'", "")
+            .replace(
+                "{div class=[nap-address-header]: {i class=[fa, fa-map-marker] aria-hidden=true: {",
+                "<MISSING>",
+            )
+            .strip(),
+        ),
         store_number=MissingField(),
         hours_of_operation=MappingField(
             mapping=["dic", "div class=[nap-col]-2"], value_transform=pretty_hours
