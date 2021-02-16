@@ -114,23 +114,197 @@ def fetch_data():
                                     hours = hours + "; " + hrs
                     except:
                         hours = "<MISSING>"
-                    if country == "CA" or country == "US":
-                        yield [
-                            website,
-                            loc,
-                            name,
-                            add,
-                            city,
-                            state,
-                            zc,
-                            country,
-                            store,
-                            phone,
-                            typ,
-                            lat,
-                            lng,
-                            hours,
-                        ]
+                    if country == "CA" or country == "US" or country == "GB":
+                        if country == "GB":
+                            state = "<MISSING>"
+                        if (
+                            "Outlets " in add
+                            and "Napa Premium" not in add
+                            and "80 Premium" not in add
+                            and "1 Premium Outlets" not in add
+                            and "One Premium Outlets" not in add
+                            and "5701" not in add
+                            and "100 Premium" not in add
+                        ):
+                            add = add.split("Outlets ")[1]
+                        if "- Pittsburgh " in add:
+                            add = add.split("- Pittsburgh ")[1]
+                        if "Outles " in add:
+                            add = add.split("Outles ")[1]
+                        if "- Lancaster " in add:
+                            add = add.split("- Lancaster ")[1]
+                        if (
+                            "Outlet Center " in add
+                            and "1025 Outlet" not in add
+                            and "199 Outlet" not in add
+                        ):
+                            add = add.split("Outlet Center ")[1]
+                        if "Rehoboth Beach " in add:
+                            add = add.split("Rehoboth Beach ")[1]
+                        if "Sugarloaf Mills " in add:
+                            add = add.split("Sugarloaf Mills ")[1]
+                        if "- Williamsburg " in add:
+                            add = add.split("- Williamsburg ")[1]
+                        if "Pigeon Forge " in add:
+                            add = add.split("Pigeon Forge ")[1]
+                        add = add.replace("Seaside Factory Stores ", "")
+                        add = add.replace("Arundel Mills 7000", "7000")
+                        add = add.replace("- Howell ", "")
+                        add = add.replace("- Smithfield ", "")
+                        add = add.replace("at Silverthorne ", "")
+                        add = add.replace("Portland International Airport ", "")
+                        if (
+                            "Factory Stores " in add
+                            and "4642" not in add
+                            and "615" not in add
+                        ):
+                            add = add.split("Factory Stores ")[1]
+                        add = add.replace("- South ", "")
+                        add = add.replace("- Park City ", "")
+                        add = add.replace("The Outlet Shoppes at Oshkosh ", "")
+                        add = add.replace("at Castle Rock ", "")
+                        add = add.replace("Settlers Green Outlet Village ", "")
+                        add = add.replace("- Myrtle Beach ", "")
+                        add = add.replace("Silver Sands Factory Store ", "")
+                        add = add.replace("The Forum Shops at Caesars ", "")
+                        add = add.replace("- Hilton Head ", "")
+                        add = add.replace("- Jeffersonville ", "")
+                        add = add.replace("Shoppes at the Parkway - Celebration ", "")
+                        add = add.replace("- Charleston ", "")
+                        add = add.replace("- Sevierville ", "")
+                        add = add.replace("Ontario Mills ", "")
+                        add = add.replace("- North ", "")
+                        add = add.replace("The Great Mall ", "")
+                        add = add.replace("Legends at Village West ", "")
+                        add = add.replace("Louisiana Boardwalk ", "")
+                        add = add.replace("Arizona Mills Mall ", "")
+                        add = add.replace("Grapevine Mills 3", "3")
+                        add = add.replace("Gurnee Mills 6", "6")
+                        add = add.replace("- The Walk ", "")
+                        add = add.replace("Wisconsin Dells Outlet Center ", "")
+                        add = add.replace("- Locust Grove ", "")
+                        add = add.replace("- Fort Myers ", "")
+                        add = add.replace("at Loveland ", "")
+                        add = add.replace("South Plaza Shopping Center ", "")
+                        add = add.replace("The Outlet Shoppes at El Paso ", "")
+                        add = add.replace("- Gonzales ", "")
+                        add = add.replace("- Branson", "")
+                        add = add.replace("of Niagara Falls ", "")
+                        add = add.replace("- Deer Park ", "")
+                        add = add.replace("Opry Mills Mall ", "")
+                        add = add.replace("Potomac Mills 2700", "2700")
+                        add = add.replace("Concord Mills 8", "8")
+                        add = add.replace("The Shops at Terrell ", "")
+                        add = add.replace("Dolphin Mall ", "")
+                        add = add.replace("at Orange ", "")
+                        add = add.replace("Omaha - Nebraska Crossings ", "")
+                        add = add.replace("- Grand Rapids ", "")
+                        add = add.replace("Plaza San Clemente ", "")
+                        add = add.replace("Lenox Square ", "")
+                        add = add.replace("- International Drive ", "")
+                        add = add.replace("Village at Meridian ", "")
+                        add = add.replace("West End Shopping Center Lubbock ", "")
+                        add = add.replace("of Chicago - Rosemont ", "")
+                        add = add.replace("at Tejon Pkwy. ", "")
+                        add = add.replace("Nike Factory Store ", "")
+                        add = add.replace("- National Harbor ", "")
+                        add = add.replace("of Mississippi ", "")
+                        add = add.replace("Auburn - Outlet Collection of Seattle ", "")
+                        add = add.replace("at Barstow ", "")
+                        add = add.replace("Sky View Center ", "")
+                        add = add.replace("The Shoppes at Broad ", "")
+                        add = add.replace("Outlet Mall of Georgia ", "")
+                        add = add.replace("at Rainbow Harbor ", "")
+                        add = add.replace("- Foxwoods ", "")
+                        add = add.replace("The Outlet Shoppes of the Bluegrass ", "")
+                        add = add.replace("Twin Cities ", "")
+                        add = add.replace("of Little Rock ", "")
+                        add = add.replace("South Coast Plaza ", "")
+                        add = add.replace("Fashion Valley Mall ", "")
+                        add = add.replace("at Traverse Mountain ", "")
+                        add = add.replace("- Galveston/Houston ", "")
+                        add = add.replace("One Colorado ", "")
+                        add = add.replace("at Legends ", "")
+                        add = add.replace("Cool Springs Pointe ", "")
+                        add = add.replace("Great Lakes Crossing ", "")
+                        add = add.replace("Jordan Landing ", "")
+                        add = add.replace("The Outlet Shoppes at Atlanta ", "")
+                        add = add.replace("The Outlet Shoppes at Burlington ", "")
+                        add = add.replace("at Bergen Town Center ", "")
+                        add = add.replace("NorthPark Center ", "")
+                        add = add.replace("Grand Prairie 29", "29")
+                        add = add.replace("The Sands Shopping Center - Oceanside ", "")
+                        add = add.replace("Mall of America ", "")
+                        add = add.replace("Kress Building ", "")
+                        add = add.replace("- Mebane ", "")
+                        add = add.replace("Jordan Creek Town Center ", "")
+                        add = add.replace("Silverado Ranch Plaza ", "")
+                        add = add.replace("- Westgate ", "")
+                        add = add.replace("at Columbus ", "")
+                        add = add.replace("The Shops at Pembroke Gardens ", "")
+                        add = add.replace("Barracks Road Shopping Center ", "")
+                        add = add.replace("- Daytona Beach ", "")
+                        add = add.replace("at Montehiedra ", "")
+                        add = add.replace("Livingston designer outlet ", "")
+                        add = add.replace("Thurrock Shopping Park ", "")
+                        add = add.replace("Parkgate Shopping Park ", "")
+                        add = add.replace("Cheshire Oaks Designer Outlet ", "")
+                        add = add.replace("Braintree Outlet Village ", "")
+                        add = add.replace("East Midlands Designer Outlet ", "")
+                        add = add.replace("One Stop Shopping Park ", "")
+                        add = add.replace("East Midlands Designer Outlet ", "")
+                        add = add.replace("Strathkelvin Retail Park ", "")
+                        add = add.replace("Swindon Designer Outlet Village ", "")
+                        add = add.replace("York Designer Outlet ", "")
+                        add = add.replace("Manchester Fort Retail Park ", "")
+                        add = add.replace("Kingsmere Retail Park ", "")
+                        add = add.replace("Scarborough Town Centre ", "")
+                        add = add.replace("Winter Garden Village ", "")
+                        add = add.replace("Square One Shopping Centre ", "")
+                        add = add.replace("Celebration Pointe 4", "4")
+                        add = add.replace("Marketplace at Factoria ", "")
+                        add = add.replace("- Fort Worth ", "")
+                        add = add.replace("The Promenade at Westlake ", "")
+                        add = add.replace("of Des Moines ", "")
+                        add = add.replace("Valencia Marketplace ", "")
+                        add = add.replace("Country Club Plaza ", "")
+                        add = add.replace("Rolling Hills Plaza ", "")
+                        add = add.replace("Mountain Grove at Citrus Plaza ", "")
+                        add = add.replace("Resorts World Birmingham ", "")
+                        add = add.replace("Arnison Retail Park ", "")
+                        add = add.replace("The Outlet Shoppes at Laredo ", "")
+                        add = add.replace("Elliott's Field Retail Park ", "")
+                        add = add.replace("The Eaton Center ", "")
+                        add = add.replace("Burloak Centre ", "")
+                        add = add.replace("Gretna Gateway Outlet Village ", "")
+                        add = add.replace("London Designer Outlet ", "")
+                        add = add.replace("Kingsgate Retail Park ", "")
+                        add = add.replace(
+                            "Affinity Sterling Mills Outlet Shopping ", ""
+                        )
+                        add = add.replace("Manchester Fort Retail Park ", "")
+                        add = add.replace("York Designer Outlet ", "")
+                        add = add.replace("Swindon Designer Outlet Village ", "")
+                        add = add.replace("One Stop Shopping Park ", "")
+                        if state != "FR":
+                            if "Nike Factory Store - Merrimack" in name:
+                                add = "80 Premium Outlets Blvd."
+                            yield [
+                                website,
+                                loc,
+                                name,
+                                add,
+                                city,
+                                state,
+                                zc,
+                                country,
+                                store,
+                                phone,
+                                typ,
+                                lat,
+                                lng,
+                                hours,
+                            ]
 
 
 def scrape():
