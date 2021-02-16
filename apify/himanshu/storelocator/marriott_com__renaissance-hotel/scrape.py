@@ -1,7 +1,6 @@
 import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
-import re
 import json
 
 session = SgRequests()
@@ -76,7 +75,7 @@ def fetch_data():
                 if page_res.status_code == 200:
                     page_soup = BeautifulSoup(page_res.text, "html5lib")
                     position = page_soup.find("meta", {"name": "geo.position"})
-                    if position != None:
+                    if position is not None:
                         co_ord = position.get("content")
                         latitude = co_ord.split(";")[0]
                         longitude = co_ord.split(";")[1]
