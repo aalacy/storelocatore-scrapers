@@ -26,9 +26,6 @@ def para(tup):
     while "Looks like server failed to load your request" in soup.text and counter < 15:
         soup = get_soup(tup[1])
         counter += 1
-    if counter > 15:
-        print(tup)
-        raise Exception
     k = {}
     k["index"] = tup[0]
     k["requrl"] = tup[1]
