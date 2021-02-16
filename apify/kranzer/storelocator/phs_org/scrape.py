@@ -8,7 +8,7 @@ from sglogging import SgLogSetup
 logger = SgLogSetup().get_logger("phs_org")
 
 
-crawled = []
+crawled = []  # noqa
 
 
 class Scrape(base.Spider):
