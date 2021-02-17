@@ -52,7 +52,7 @@ def fetch_data():
     page = 0
     found = []
 
-    driver = SgChrome().driver()
+    driver = SgChrome(executable_path='./chromedriver').driver()
     locator_domain = "rackroomshoes.com"
     run = True
 
@@ -81,19 +81,13 @@ def fetch_data():
             phone = get(store, "phone")
 
             openings = store["openings"]
-            hours_of_operation = ",".join(f"{day} {openings[day]}" for day in openings)
+            hours_of_operation = ",".join(
+                f"{day} {openings[day]}" for day in openings)
 
             latitude = get(store, "latitude")
             longitude = get(store, "longitude")
             link = "https://www.rackroomshoes.com/store/" + store_number
-
-            driver.get(link)
-            WebDriverWait(driver).until(
-                ec.presence_of_element_located((By.CLASS_NAME, "store-logo"))
-            )
-
-            base = BeautifulSoup(driver.page_source, "lxml")
-            location_type = base.find(class_="store-logo")["alt"]
+            location_type = "Off Broadway Shoe Warehouse" if store['hideStore'] == 'true' else "Rack Room Shoes"
 
             # Store data
             yield [
