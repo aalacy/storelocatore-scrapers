@@ -91,6 +91,12 @@ def fetch_data():
         hours_of_operation = (
             ", ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
         )
+        hours_of_operation = hours_of_operation.replace(
+            "Regular and after hours medical care, ", ""
+        )
+        hours_of_operation = hours_of_operation.replace(
+            ", including weekends and holidays", ""
+        )
 
         item = [
             DOMAIN,
