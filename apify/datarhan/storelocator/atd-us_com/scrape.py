@@ -50,17 +50,34 @@ def fetch_data():
         max_radius_miles=200,
         max_search_results=None,
     )
-    headers = {
-        "Host": "www.atd-us.com",
-        "X-Anonymous-Consents": "%5B%5D",
-        "Accept": "application/json, text/plain, */*",
-        "Authorization": "bearer 382c0be2-0fc9-46ef-8422-fe15a5de471b",
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
-    }
+
+    headers = {}
+    headers["Content-Type"] = "application/json"
+    headers["Content-Length"] = "0"
+
+    def get_auth():
+        auth_url = "https://www.atd-us.com/authorizationserver/oauth/token?client_id=atd-ce&client_secret=secret&grant_type=client_credentials"
+        auth = session.post(auth_url, headers=headers).json()
+        return str(auth["token_type"] + " " + auth["access_token"])
+
+    headers["Authorization"] = get_auth()
+    headers["Host"] = "www.atd-us.com"
+    headers["X-Anonymous-Consents"] = "%5B%5D"
+    headers["Accept"] = "application/json, text/plain, */*"
+    headers[
+        "User-Agent"
+    ] = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36"
 
     for lat, lng in all_coordinates:
         response = session.get(start_url.format(lat, lng), headers=headers)
         data = json.loads(response.text)
+
+        try:
+            data["warehouseList"] = data["warehouseList"]
+        except Exception:
+            headers["Authorization"] = get_auth()
+            response = session.get(start_url.format(lat, lng), headers=headers)
+            data = json.loads(response.text)
 
         for poi in data["warehouseList"]:
             store_url = "<MISSING>"
