@@ -73,6 +73,8 @@ def fetch_data():
     for j in js:
         street_address = j.get("address1") or "<MISSING>"
         cs = j.get("city_state")
+        if not cs:
+            continue
         city = cs.split(",")[0].strip()
         state = cs.split(",")[-1].strip()
         postal = j.get("address2").split()[-1]
