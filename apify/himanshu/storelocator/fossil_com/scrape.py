@@ -94,6 +94,14 @@ def fetch_data():
             )
             city = script.find("city").text
             state = script.find("state").text
+            if len(state) <= 0:
+                state = script.find("province").text
+
+            if len(state) > 0:
+                page_url = "https://stores.fossil.com/{}/{}/{}/".format(
+                    state, city, store_number
+                )
+
             zipp = script.find("postalcode").text
             country_code = script.find("country").text
             latitude = script.find("latitude").text
