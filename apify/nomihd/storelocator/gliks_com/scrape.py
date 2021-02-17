@@ -70,122 +70,128 @@ def fetch_data():
     # Your scraper here
     loc_list = []
 
-    search_url = "https://rebase.global.ssl.fastly.net/api/places/index.json?api_key=a0f289f0b91b1b6177194e9e0336f7ef"
-    stores_req = session.get(search_url, headers=headers)
-    stores = json.loads(stores_req.text)["locations"]
-    for store_json in stores:
-        page_url = "https://www.gliks.com/pages/store-locator"
-        latitude = store_json["latitude"]
-        longitude = store_json["longitude"]
+    search_url = [
+        "https://rebase.global.ssl.fastly.net/api/places/index.json?api_key=a0f289f0b91b1b6177194e9e0336f7ef",
+        "https://rebase.global.ssl.fastly.net/api/places/index.json?api_key=a0f289f0b91b1b6177194e9e0336f7ef&lat=38.716&lng=-90.131",
+    ]
+    for s_url in search_url:
+        stores_req = session.get(s_url, headers=headers)
+        stores = json.loads(stores_req.text)["locations"]
+        for store_json in stores:
+            page_url = "https://www.gliks.com/pages/store-locator"
+            latitude = store_json["latitude"]
+            longitude = store_json["longitude"]
 
-        location_name = store_json["info"]["name"]
+            location_name = store_json["info"]["name"]
 
-        locator_domain = website
+            locator_domain = website
 
-        location_type = "<MISSING>"
-
-        street_address = store_json["info"]["location"]["street"]
-
-        city = store_json["info"]["location"]["city"]
-        state = store_json["info"]["location"]["state"]
-        zip = store_json["info"]["location"]["zip"]
-        country_code = store_json["info"]["location"]["country"]
-        phone = store_json["info"]["phone"]
-        hours_of_operation = ""
-        hours_list = []
-        hours = store_json["info"]["hours"]
-        try:
-            daytime = "Monday:" + hours["mon_1_open"] + "-" + hours["mon_1_close"]
-            hours_list.append(daytime)
-        except:
-            pass
-        try:
-            daytime = "Tuesday:" + hours["tue_1_open"] + "-" + hours["tue_1_close"]
-            hours_list.append(daytime)
-        except:
-            pass
-        try:
-            daytime = "Wednesday:" + hours["wed_1_open"] + "-" + hours["wed_1_close"]
-            hours_list.append(daytime)
-        except:
-            pass
-        try:
-            daytime = "Thursday:" + hours["thu_1_open"] + "-" + hours["thu_1_close"]
-            hours_list.append(daytime)
-        except:
-            pass
-        try:
-            daytime = "Friday:" + hours["fri_1_open"] + "-" + hours["fri_1_close"]
-            hours_list.append(daytime)
-        except:
-            pass
-        try:
-            daytime = "Saturday:" + hours["sat_1_open"] + "-" + hours["sat_1_close"]
-            hours_list.append(daytime)
-        except:
-            pass
-        try:
-            daytime = "Sunday:" + hours["sun_1_open"] + "-" + hours["sun_1_close"]
-            hours_list.append(daytime)
-        except:
-            pass
-
-        hours_of_operation = "; ".join(hours_list).strip()
-
-        store_number = str(store_json["id"])
-        if store_number == "":
-            store_number = "<MISSING>"
-
-        if location_name == "":
-            location_name = "<MISSING>"
-
-        if street_address == "" or street_address is None:
-            street_address = "<MISSING>"
-
-        if city == "" or city is None:
-            city = "<MISSING>"
-
-        if state == "" or state is None:
-            state = "<MISSING>"
-
-        if zip == "" or zip is None:
-            zip = "<MISSING>"
-
-        if country_code == "" or country_code is None:
-            country_code = "<MISSING>"
-
-        if phone == "" or phone is None:
-            phone = "<MISSING>"
-
-        if latitude == "" or latitude is None:
-            latitude = "<MISSING>"
-        if longitude == "" or longitude is None:
-            longitude = "<MISSING>"
-
-        if hours_of_operation == "":
-            hours_of_operation = "<MISSING>"
-
-        if location_type == "":
             location_type = "<MISSING>"
 
-        curr_list = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        loc_list.append(curr_list)
-        # break
+            street_address = store_json["info"]["location"]["street"]
+
+            city = store_json["info"]["location"]["city"]
+            state = store_json["info"]["location"]["state"]
+            zip = store_json["info"]["location"]["zip"]
+            country_code = store_json["info"]["location"]["country"]
+            phone = store_json["info"]["phone"]
+            hours_of_operation = ""
+            hours_list = []
+            hours = store_json["info"]["hours"]
+            try:
+                daytime = "Monday:" + hours["mon_1_open"] + "-" + hours["mon_1_close"]
+                hours_list.append(daytime)
+            except:
+                pass
+            try:
+                daytime = "Tuesday:" + hours["tue_1_open"] + "-" + hours["tue_1_close"]
+                hours_list.append(daytime)
+            except:
+                pass
+            try:
+                daytime = (
+                    "Wednesday:" + hours["wed_1_open"] + "-" + hours["wed_1_close"]
+                )
+                hours_list.append(daytime)
+            except:
+                pass
+            try:
+                daytime = "Thursday:" + hours["thu_1_open"] + "-" + hours["thu_1_close"]
+                hours_list.append(daytime)
+            except:
+                pass
+            try:
+                daytime = "Friday:" + hours["fri_1_open"] + "-" + hours["fri_1_close"]
+                hours_list.append(daytime)
+            except:
+                pass
+            try:
+                daytime = "Saturday:" + hours["sat_1_open"] + "-" + hours["sat_1_close"]
+                hours_list.append(daytime)
+            except:
+                pass
+            try:
+                daytime = "Sunday:" + hours["sun_1_open"] + "-" + hours["sun_1_close"]
+                hours_list.append(daytime)
+            except:
+                pass
+
+            hours_of_operation = "; ".join(hours_list).strip()
+
+            store_number = str(store_json["id"])
+            if store_number == "":
+                store_number = "<MISSING>"
+
+            if location_name == "":
+                location_name = "<MISSING>"
+
+            if street_address == "" or street_address is None:
+                street_address = "<MISSING>"
+
+            if city == "" or city is None:
+                city = "<MISSING>"
+
+            if state == "" or state is None:
+                state = "<MISSING>"
+
+            if zip == "" or zip is None:
+                zip = "<MISSING>"
+
+            if country_code == "" or country_code is None:
+                country_code = "<MISSING>"
+
+            if phone == "" or phone is None:
+                phone = "<MISSING>"
+
+            if latitude == "" or latitude is None:
+                latitude = "<MISSING>"
+            if longitude == "" or longitude is None:
+                longitude = "<MISSING>"
+
+            if hours_of_operation == "":
+                hours_of_operation = "<MISSING>"
+
+            if location_type == "":
+                location_type = "<MISSING>"
+
+            curr_list = [
+                locator_domain,
+                page_url,
+                location_name,
+                street_address,
+                city,
+                state,
+                zip,
+                country_code,
+                store_number,
+                phone,
+                location_type,
+                latitude,
+                longitude,
+                hours_of_operation,
+            ]
+            loc_list.append(curr_list)
+            # break
 
     return loc_list
 
