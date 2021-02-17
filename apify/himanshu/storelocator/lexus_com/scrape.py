@@ -56,13 +56,10 @@ def fetch_data():
             store = []
             store.append("https://www.lexus.com")
             store.append(store_data["dealerName"])
-            store.append(
-                store_data["dealerAddress"]["address1"]
-                + " "
-                + store_data["dealerAddress"]["address2"]
-                if store_data["dealerAddress"]["address2"] != None
-                else store_data["dealerAddress"]["address1"]
-            )
+            street_adr = store_data["dealerAddress"]["address1"]
+            if store_data["dealerAddress"]["address2"]:
+                street_adr += " " + store_data["dealerAddress"]["address2"]
+            store.append(street_adr)
             if store[-1] in addresses:
                 continue
             addresses.append(store[-1])
