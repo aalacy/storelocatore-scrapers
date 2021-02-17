@@ -5,6 +5,7 @@ from lxml import etree
 from urllib.parse import urljoin
 
 from sgrequests import SgRequests
+from sgselenium import SgChrome
 from sgscrape.sgpostal import parse_address_intl
 
 
@@ -53,8 +54,9 @@ def fetch_data():
     all_locations = dom.xpath('//a[@class="single-location__image"]/@href')
     for store_url in all_locations:
         store_url = urljoin(start_url, store_url)
-        loc_response = session.get(store_url)
-        loc_dom = etree.HTML(loc_response.text)
+        with SgChrome() as driver:
+            driver.get(store_url)
+            loc_dom = etree.HTML(driver.page_source)
 
         location_name = loc_dom.xpath(
             '//h1[@class="hero__title title-lg location-title-label"]/span/text()'
@@ -76,7 +78,8 @@ def fetch_data():
         location_type = "<MISSING>"
         store_number = "<MISSING>"
         phone = "<MISSING>"
-        geo = re.findall(r"center: \[(.+?)\],", loc_response.text)[0].split(",")
+        geo_data = loc_dom.xpath('//script[contains(text(), "center:")]/text()')[0]
+        geo = re.findall(r"center: \[(.+?)\],", geo_data)[0].split(",")
         latitude = geo[0]
         longitude = geo[1]
         hours_of_operation = loc_dom.xpath(
@@ -101,7 +104,8 @@ def fetch_data():
             ]
         if not hours_of_operation:
             hours_of_operation = []
-            store_id = re.findall(r"var id=\'(\d+)\'", loc_response.text)[0]
+            id_data = loc_dom.xpath('//script[contains(text(), "var id")]/text()')[0]
+            store_id = re.findall(r"var id=\'(\d+)\'", id_data)[0]
             hoo_response = session.get(
                 f"https://backend.cheerfy.com/shop-service/timetable/?scope_locations={store_id}"
             )
