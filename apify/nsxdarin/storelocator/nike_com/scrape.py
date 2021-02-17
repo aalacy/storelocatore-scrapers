@@ -133,7 +133,11 @@ def fetch_data():
                             add = add.split("Outles ")[1]
                         if "- Lancaster " in add:
                             add = add.split("- Lancaster ")[1]
-                        if "Outlet Center " in add and "1025 Outlet" not in add:
+                        if (
+                            "Outlet Center " in add
+                            and "1025 Outlet" not in add
+                            and "199 Outlet" not in add
+                        ):
                             add = add.split("Outlet Center ")[1]
                         if "Rehoboth Beach " in add:
                             add = add.split("Rehoboth Beach ")[1]
