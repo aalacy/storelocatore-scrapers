@@ -63,7 +63,9 @@ def fetch_data():
         phone = loc["phone"]
         street = loc["address"]
         city = loc["city"]
-        state = "<MISSING>"
+        state = loc["state"]
+        if not state:
+            state = "<MISSING>"
         pcode = loc["zipcode"]
         r = session.get(link, headers=headers, verify=False)
         soup = BeautifulSoup(r.text, "html.parser")
