@@ -39,7 +39,6 @@ def write_output(data):
 
 
 def fetch_data():
-    locs = []
     url = "https://www.ymca.org.uk/find-your-local-ymca"
     r = session.get(url, headers=headers)
     website = "ymca.org/uk"
