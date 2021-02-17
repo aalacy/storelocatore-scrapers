@@ -37,13 +37,13 @@ def write_output(data):
 
 def get_nonce():
     with SgFirefox() as driver:
-        driver.get('https://biscuitville.com/')
+        driver.get("https://biscuitville.com/")
         source = driver.page_source
 
     tree = html.fromstring(source)
-    text = ''.join(tree.xpath("//script[contains(text(), 'nonce')]/text()"))
+    text = "".join(tree.xpath("//script[contains(text(), 'nonce')]/text()"))
 
-    return ''.join(re.findall(r'"nonce":"(.+)"', text))
+    return "".join(re.findall(r'"nonce":"(.+)"', text))
 
 
 def fetch_data():
