@@ -9,18 +9,6 @@ locator_domain = "https://www.ellianos.com/"
 base_url = "https://www.ellianos.com/locations/"
 
 
-def _headers():
-    return {
-        "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
-        "Accept": "*/*",
-        "Accept-Language": "en-US,en;q=0.9,ko;q=0.8",
-        "Accept-Encoding": "gzip, deflate, br",
-        "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
-        "Origin": "https://lavidamassage.com",
-        "Referer": "https://lavidamassage.com/locations/",
-    }
-
-
 def _hours(dom_locs, location):
     hours = []
     for _ in dom_locs:
@@ -38,9 +26,8 @@ def _hours(dom_locs, location):
 
 def fetch_data():
     with SgRequests() as session:
-        res = session.get(base_url, headers=_headers())
+        res = session.get(base_url)
         soup = bs(res.text, "lxml")
-        # import pdb; pdb.set_trace()
         dom_locs = soup.select(
             "div.edgtf-section-inner-margin div.wpb_column div.vc_column-inner"
         )
