@@ -88,7 +88,7 @@ def fetch_data():
             link = "https://www.rackroomshoes.com/store/" + store_number
 
             driver.get(link)
-            WebDriverWait(driver, 50).until(
+            WebDriverWait(driver).until(
                 ec.presence_of_element_located((By.CLASS_NAME, "store-logo"))
             )
 
