@@ -1,5 +1,5 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from lxml import etree
 
 base_url = "https://www.grifolsplasma.com"
@@ -62,7 +62,7 @@ def write_output(data):
 def fetch_data():
     output_list = []
     url = "https://www.grifolsplasma.com/en/locations/find-a-donation-center"
-    session = requests.Session()
+    session = SgRequests()
     source = session.get(url).text
     response = etree.HTML(source)
     link_list = response.xpath('//div[@id="all-centers-grid-results"]//a/@href')
