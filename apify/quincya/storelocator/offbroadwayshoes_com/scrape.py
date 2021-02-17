@@ -1,14 +1,7 @@
 import csv
 import json
-
 from bs4 import BeautifulSoup
-
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support import expected_conditions as ec
-from selenium.webdriver.support.ui import WebDriverWait
-
 from sglogging import SgLogSetup
-
 from sgselenium import SgChrome
 
 log = SgLogSetup().get_logger("offbroadwayshoes.com")
@@ -48,11 +41,19 @@ def get(entity, key):
     return entity.get(key, MISSING) or MISSING
 
 
+def get_location_type(store):
+    hide_store = store["hideStore"] == "true"
+    if hide_store:
+        return "Off Broadway Shoe Warehouse"
+    else:
+        return "Rack Room Shoes"
+
+
 def fetch_data():
     page = 0
     found = []
 
-    driver = SgChrome(executable_path='./chromedriver').driver()
+    driver = SgChrome(executable_path="./chromedriver").driver()
     locator_domain = "rackroomshoes.com"
     run = True
 
@@ -81,13 +82,12 @@ def fetch_data():
             phone = get(store, "phone")
 
             openings = store["openings"]
-            hours_of_operation = ",".join(
-                f"{day} {openings[day]}" for day in openings)
+            hours_of_operation = ",".join(f"{day} {openings[day]}" for day in openings)
 
             latitude = get(store, "latitude")
             longitude = get(store, "longitude")
             link = "https://www.rackroomshoes.com/store/" + store_number
-            location_type = "Off Broadway Shoe Warehouse" if store['hideStore'] == 'true' else "Rack Room Shoes"
+            location_type = get_location_type(store)
 
             # Store data
             yield [
