@@ -1,7 +1,7 @@
 import csv
 import json
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
-
+from sglogging import sglog
 from sgrequests import SgRequests
 
 
@@ -37,18 +37,17 @@ def write_output(data):
 
 def fetch_data():
     # Your scraper here
+    logger = sglog.SgLogSetup().get_logger(logger_name="Scraper")
     session = SgRequests()
 
     items = []
-    scraped_items = []
 
     DOMAIN = "atd-us.com"
-    start_url = "https://www.atd-us.com/atdcewebservices/v2/atdus/warehouse/search?latlong={},{}&distance=5000&lang=en&curr=USD"
+    start_url = "https://www.atd-us.com/atdcewebservices/v2/atdus/warehouse/search?latlong={},{}&distance=1000&lang=en&curr=USD"
 
     all_coordinates = DynamicGeoSearch(
         country_codes=[SearchableCountries.USA],
-        max_radius_miles=200,
-        max_search_results=None,
+        max_search_results=100,
     )
 
     headers = {}
@@ -68,10 +67,15 @@ def fetch_data():
         "User-Agent"
     ] = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36"
 
+    identities = set()
+    maxZ = all_coordinates.items_remaining()
+    total = 0
+
     for lat, lng in all_coordinates:
         response = session.get(start_url.format(lat, lng), headers=headers)
         data = json.loads(response.text)
-
+        found = 0
+        coords = []
         try:
             data["warehouseList"] = data["warehouseList"]
         except Exception:
@@ -102,6 +106,8 @@ def fetch_data():
             longitude = poi["addressData"]["latlong"].split(",")[-1]
             longitude = longitude if longitude else "<MISSING>"
             hours_of_operation = "<MISSING>"
+            latlong = (latitude, longitude)
+            coords.append(latlong)
 
             item = [
                 DOMAIN,
@@ -120,10 +126,18 @@ def fetch_data():
                 hours_of_operation,
             ]
 
-            if store_number not in scraped_items:
-                scraped_items.append(store_number)
+            if store_number not in identities:
+                identities.add(store_number)
                 items.append(item)
+                found += 1
+        progress = str(round(100 - (all_coordinates.items_remaining() / maxZ * 100), 2))
+        total += found
+        logger.info(
+            f"{round(lat,4)}, {round(lng,4)} | found: {found} | total: {total} | progress: {progress}"
+        )
+        all_coordinates.mark_found(coords)
 
+    logger.info(f"Finished grabbing data!!")  # noqa
     return items
 
 
