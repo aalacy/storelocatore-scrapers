@@ -1,8 +1,8 @@
 import re
 import csv
 import json
-from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 from sgrequests import SgRequests
 
 
@@ -44,41 +44,47 @@ def fetch_data():
     scraped_items = []
 
     DOMAIN = "associatedbank.com"
-    start_url = "https://locatorapi.moneypass.com/Service.svc/locations/atm?format=json&callback=MoneyPassServiceCallback&spatialFilter=nearby({},{},%2040%20)&start=0&count=100&key=SFoS4aJaTztUVy3"
+    start_url = "https://spatial.virtualearth.net/REST/v1/data/e0ac722002794ad6b6cb3e5b3320e23b/AssociatedProduction/AssociatedBank?$filter=Branch%20Eq%27Yes%27%20Or%20ATM%20Eq%27Yes%27%20Or%20NonBranchLocation%20Eq%27Yes%27&spatialFilter=nearby({},{},%2080%20)&$select=EntityID,AddressLine,Latitude,Longitude,PostalCode,DriveUpHours,LobbyHours,LocationName,PrimaryCity,State,Phone,ATM,Branch,DAATMs,MortgageOfficer,AISRep,SafeDepositBox,PrivateClient,InstitutionalTrust,InstantIssueCards,NonBranchLocation&$*&$format=json&jsonp=SDSServiceCallback&key=Apc8XDQjnMpfQnJXz8qbV_y8lRaMTqq35W_gbey3U-P3j2EmFs7eCjLO-fofpeMJ"
     search = DynamicGeoSearch(
         country_codes=[SearchableCountries.USA],
-        max_radius_miles=50,
+        max_radius_miles=30,
         max_search_results=None,
     )
     for lat, lng in search:
-
         response = session.get(start_url.format(lat, lng))
-        data = re.findall(r"MoneyPassServiceCallback\((.+)\);", response.text)[0]
+        data = re.findall(r"ServiceCallback\((.+)\)", response.text)[0]
         data = json.loads(data)
 
-        for poi in data["results"]:
+        for poi in data["d"]["results"]:
             store_url = "<MISSING>"
-            location_name = poi["atmLocation"]["name"]
+            location_name = poi["LocationName"]
             location_name = location_name if location_name else "<MISSING>"
-            street_address = poi["atmLocation"]["address"]["street"]
+            street_address = poi["AddressLine"]
             street_address = street_address if street_address else "<MISSING>"
-            city = poi["atmLocation"]["address"]["city"]
+            city = poi["PrimaryCity"]
             city = city if city else "<MISSING>"
-            state = poi["atmLocation"]["address"]["state"]
+            state = poi["State"]
             state = state if state else "<MISSING>"
-            zip_code = poi["atmLocation"]["address"]["postalCode"]
+            zip_code = poi["PostalCode"]
             zip_code = zip_code if zip_code else "<MISSING>"
-            country_code = poi["atmLocation"]["address"]["country"]
-            country_code = country_code if country_code else "<MISSING>"
-            store_number = poi["atmLocation"]["id"]
+            country_code = "USA"
+            store_number = poi["EntityID"]
             store_number = store_number if store_number else "<MISSING>"
-            phone = "<MISSING>"
+            phone = poi["Phone"]
+            phone = phone if phone else "<MISSING>"
             location_type = "<MISSING>"
-            latitude = poi["atmLocation"]["coordinates"]["latitude"]
+            if poi["Branch"] == "Yes":
+                location_type = "Branch"
+            else:
+                location_type = "ATM"
+            latitude = poi["Latitude"]
             latitude = latitude if latitude else "<MISSING>"
-            longitude = poi["atmLocation"]["coordinates"]["longitude"]
+            longitude = poi["Longitude"]
             longitude = longitude if longitude else "<MISSING>"
-            hours_of_operation = "<MISSING>"
+            hours_of_operation = poi["LobbyHours"].replace("/", "")
+            hours_of_operation = (
+                hours_of_operation if hours_of_operation else "<MISSING>"
+            )
 
             item = [
                 DOMAIN,
