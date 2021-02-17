@@ -70,7 +70,7 @@ def fetch_data():
         state = state if state else "<MISSING>"
         zip_code = addr.postcode
         zip_code = zip_code if zip_code else "<MISSING>"
-        country_code = addr.postcode
+        country_code = addr.country
         country_code = country_code if country_code else "<MISSING>"
         store_number = "<MISSING>"
         phone = loc_dom.xpath('//a[contains(@href, "tel")]/span/text()')
@@ -80,6 +80,8 @@ def fetch_data():
             .split("map-")[-1]
             .split("-")[:3]
         )
+        if geo[-1] == "385":
+            geo = geo[:-1]
         latitude = geo[0]
         latitude = latitude if latitude else "<MISSING>"
         longitude = geo[-1]
