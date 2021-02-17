@@ -41,7 +41,7 @@ def write_output(data):
 
 def fetch_data():
     addressesess = []
-    for q in range(0, 5):
+    for q in range(1, 5):
         url = (
             "https://www.montblanc.com/api/richemont1//wcs/resources/store/montblanc_US/storelocator/boutiques?pageSize=1000&pageNumber="
             + str(q)
@@ -67,6 +67,7 @@ def fetch_data():
                     data["address"]["countryCode"] == "CA"
                     or data["address"]["countryCode"] == "US"
                     or data["address"]["countryCode"] == "USA"
+                    or data["address"]["countryCode"] == "GB"
                 ):
                     if "Reseller" != data["attributes"][0]["values"][0]["value"]:
                         raw_address = data["address"]["line1"]
@@ -201,7 +202,16 @@ def fetch_data():
                         )
                         state = data["address"]["state"]
                         city = data["address"]["city"]
+                        if phone == "-0":
+                            phone = "<MISSING>"
                         store = []
+                        zipp = zipp.split(" ")
+                        if zipp[0] == "0":
+                            zipp = "<MISSING>"
+                        elif zipp[-1].isdigit():
+                            zipp = zipp[-1]
+                        else:
+                            zipp = " ".join(zipp)
                         store_number = ""
                         store.append("https://www.montblanc.com/")
                         store.append(location_name)
@@ -263,7 +273,7 @@ def fetch_data():
                         )
                         store.append(city)
                         store.append(state)
-                        store.append(zipp.split(" ")[-1])
+                        store.append(zipp)
                         store.append(countryCode)
                         store.append(store_number)
                         store.append(phone)
@@ -287,3 +297,4 @@ def scrape():
 
 
 scrape()
+fetch_data()
