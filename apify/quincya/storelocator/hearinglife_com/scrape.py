@@ -51,7 +51,9 @@ def fetch_data():
 
     for store in stores:
         location_name = BeautifulSoup(store["Title"], "lxml").text.strip()
-        street_address = BeautifulSoup(store["Address"], "lxml").text.split("(")[0].strip()
+        street_address = (
+            BeautifulSoup(store["Address"], "lxml").text.split("(")[0].strip()
+        )
 
         digit = re.search(r"\d", street_address).start(0)
         if digit != 0:
@@ -71,7 +73,13 @@ def fetch_data():
         hours_of_operation = ""
         raw_hours = store["OpeningDayHours"]
         for raw_hour in raw_hours:
-            hours_of_operation = (hours_of_operation + " " + raw_hour["Day"] + " " + raw_hour["OpeningHours"]).strip()
+            hours_of_operation = (
+                hours_of_operation
+                + " "
+                + raw_hour["Day"]
+                + " "
+                + raw_hour["OpeningHours"]
+            ).strip()
         latitude = store["Latitude"]
         longitude = store["Longitude"]
         store_number = store["Id"]
