@@ -94,7 +94,9 @@ def fetch_data():
         hours_of_operation = hours_of_operation.replace(
             "Regular and after hours medical care, ", ""
         )
-        hours_of_operation = hours_of_operation.replace(", including weekends and holidays", "")
+        hours_of_operation = hours_of_operation.replace(
+            ", including weekends and holidays", ""
+        )
 
         item = [
             DOMAIN,
