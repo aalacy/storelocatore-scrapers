@@ -3,6 +3,7 @@ import json
 from lxml import etree
 
 from sgrequests import SgRequests
+from sgscrape.sgpostal import parse_address_intl
 
 
 def write_output(data):
@@ -71,6 +72,7 @@ def fetch_data():
         street_address = poi["address"]
         if poi["address2"]:
             street_address += ", " + poi["address2"]
+        street_address = parse_address_intl(street_address).street_address_1
         street_address = street_address if street_address else "<MISSING>"
         city = poi["city"]
         city = city if city else "<MISSING>"
@@ -96,7 +98,11 @@ def fetch_data():
                 for elem in hoo.xpath("//text()")
                 if elem.strip()
             ]
-        hours_of_operation = " ".join(hoo).strip() if hoo else "<MISSING>"
+        hours_of_operation = (
+            " ".join(hoo).strip().split(" Online")[0].replace("Opens on 1.4.21 ", "")
+            if hoo
+            else "<MISSING>"
+        )
         if hours_of_operation == "CLOSED":
             continue
 
