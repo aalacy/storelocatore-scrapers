@@ -114,6 +114,7 @@ def fetch_data():
         if phone == "":
             phone = "<MISSING>"
         store = "<MISSING>"
+        add = add.replace("[{: Closed;", "").strip()
         yield [
             website,
             loc,

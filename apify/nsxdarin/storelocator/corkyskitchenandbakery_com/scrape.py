@@ -56,7 +56,10 @@ def fetch_data():
                         city = item.split('"addressLocality":"')[1].split('"')[0]
                     except:
                         city = "<MISSING>"
-                    state = item.split('"addressRegion":"')[1].split('"')[0]
+                    try:
+                        state = item.split('"addressRegion":"')[1].split('"')[0]
+                    except:
+                        state = "<MISSING>"
                     try:
                         hours = (
                             item.split('"openingHours":["')[1]
@@ -75,22 +78,23 @@ def fetch_data():
                     name = city
                     if "0000" in phone:
                         phone = "<MISSING>"
-                    yield [
-                        website,
-                        loc,
-                        name,
-                        add,
-                        city,
-                        state,
-                        zc,
-                        country,
-                        store,
-                        phone,
-                        typ,
-                        lat,
-                        lng,
-                        hours,
-                    ]
+                    if city != "<MISSING>":
+                        yield [
+                            website,
+                            loc,
+                            name,
+                            add,
+                            city,
+                            state,
+                            zc,
+                            country,
+                            store,
+                            phone,
+                            typ,
+                            lat,
+                            lng,
+                            hours,
+                        ]
 
 
 def scrape():
