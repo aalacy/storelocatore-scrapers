@@ -47,7 +47,6 @@ def fetch_data():
         headers = {
             "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36"
         }
-        base_url = "https://www.lexus.com"
         r = session.get(
             "https://www.lexus.com/rest/dealersByZipAndPma/" + str(zip_code),
             headers=headers,
