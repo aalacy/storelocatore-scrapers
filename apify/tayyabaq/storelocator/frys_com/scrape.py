@@ -34,23 +34,8 @@ def write_output(data):
                 writer.writerow(row)
 
 
-def parse_geo(url):
-    lon = re.findall(r"\,(--?[\d\.]*)", url)[0]
-    lat = re.findall(r"\&ll=([\d\.]*)", url)[0]
-    return lat, lon
-
-
 def fetch_data():
     data = []
-    location_name = []
-    links = []
-    city = []
-    street_address = []
-    zipcode = []
-    state = []
-    latitude = []
-    longitude = []
-    phone = []
 
     base_link = "https://www.frys.com/ac/storeinfo/storelocator/?site=csfooter_B"
 
@@ -71,72 +56,43 @@ def fetch_data():
 
     for n in range(0, len(location_href)):
         link = location_href[n]
-        links.append(link)
         req = session.get(link, headers=HEADERS)
-        base = BeautifulSoup(req.text, "lxml")
-        location_name.append(base.find(id="text1").text.strip())
+        base = BeautifulSoup(req.text, "html.parser")
+        title = base.find(id="text1").text.strip()
         try:
             address = list(base.find(id="address").stripped_strings)
         except:
             continue
-        street_address.append(address[0])
-        city.append(address[1].split(",")[0])
-        state.append(address[1].split(",")[1].split()[0])
-        zipcode.append(address[1].split(",")[1].split()[1])
-        phone.append(address[2].split("Phone ")[1])
+        street = address[0]
+        city = address[1].split(",")[0]
+        state = address[1].split(",")[1].split()[0]
+        pcode = address[1].split(",")[1].split()[1]
+        phone = address[2].split("Phone ")[1]
         try:
-            lat_lon = base.find("a", string="Google Map")
-            lat, lon = parse_geo(str(lat_lon["href"]))
-            if (lat == "") or (lat == []):
-                latitude.append("<MISSING>")
-            else:
-                latitude.append(lat)
-            if (lon == "") or (lon == []):
-                longitude.append("<MISSING>")
-            else:
-                longitude.append(lon)
+
+            lat, longt = (
+                base.select_one("a[href*=google]")["href"]
+                .split("ll=", 1)[1]
+                .split("&", 1)[0]
+                .split(",")
+            )
         except:
-            map_link = lat_lon["href"]
-            if "@" in map_link:
-                at_pos = map_link.rfind("@")
-                latitude.append(
-                    map_link[at_pos + 1 : map_link.find(",", at_pos)].strip()
-                )
-                longitude.append(
-                    map_link[
-                        map_link.find(",", at_pos) + 1 : map_link.find(",", at_pos + 15)
-                    ].strip()
-                )
-            else:
-                try:
-                    req = session.get(map_link, headers=HEADERS)
-                    maps = BeautifulSoup(req.text, "lxml")
-                    raw_gps = maps.find("meta", attrs={"itemprop": "image"})["content"]
-                    latitude.append(
-                        raw_gps[raw_gps.find("=") + 1 : raw_gps.find("%")].strip()
-                    )
-                    longitude.append(
-                        raw_gps[raw_gps.find("-") : raw_gps.find("&")].strip()
-                    )
-                except:
-                    latitude.append("<MISSING>")
-                    longitude.append("<MISSING>")
-    for n in range(0, len(street_address)):
+            lat = longt = "<MISSING>"
         data.append(
             [
                 "https://www.frys.com",
-                links[n],
-                location_name[n],
-                street_address[n],
-                city[n],
-                state[n],
-                zipcode[n],
+                link,
+                title,
+                street,
+                city,
+                state,
+                pcode,
                 "US",
                 "<MISSING>",
-                phone[n],
+                phone,
                 "<MISSING>",
-                latitude[n],
-                longitude[n],
+                lat,
+                longt,
                 "<INACCESSIBLE>",
             ]
         )
