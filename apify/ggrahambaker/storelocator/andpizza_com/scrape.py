@@ -61,6 +61,7 @@ def fetch_data():
         street_address = addy["address1"]
         if addy["address2"] is not None:
             street_address += " " + addy["address2"]
+        street_address = street_address.replace("3041 3041", "3041").strip()
 
         city = addy["city"]
         state = addy["state"]
@@ -75,7 +76,7 @@ def fetch_data():
             hours += day["label"] + " " + day["value"] + " "
 
         country_code = "US"
-        page_url = "<MISSING>"
+        page_url = "https://andpizza.com/locations/"
         store_number = loc["id"]
         location_type = "<MISSING>"
 

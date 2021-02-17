@@ -3,10 +3,7 @@ from sgrequests import SgRequests
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 import json
 from sglogging import SgLogSetup
-from sgscrape.sgpostal import (
-    International_Parser,
-    parse_address,
-)
+from sgscrape.sgpostal import parse_address_intl
 
 logger = SgLogSetup().get_logger("costa_co_uk__business__costa-express")
 
@@ -71,7 +68,7 @@ def fetch_data():
                 + item["storeAddress"]["addressLine3"]
             )
             rawadd = rawadd.strip()
-            addr = parse_address(rawadd, International_Parser())
+            addr = parse_address_intl(rawadd)
             city = addr.city
             zc = addr.postcode
             add = addr.street_address_1
@@ -79,8 +76,11 @@ def fetch_data():
             name = item["storeNameExternal"]
             if name == "":
                 name = typ
-            if "London" in city:
-                city = "London"
+            try:
+                if "London" in city:
+                    city = "London"
+            except:
+                pass
             country = "GB"
             lng = item["longitude"]
             website = "costa.co.uk/business/costa-express"
@@ -164,6 +164,12 @@ def fetch_data():
                 city = "Hempstead Valley"
             if "Belfast" in add:
                 city = "Belfast"
+            if add is None:
+                add = "<MISSING>"
+            if city is None:
+                city = "<MISSING>"
+            if zc is None:
+                zc = "<MISSING>"
             addinfo = add + city + zc
             if "Mon: -; Tue: -; Wed: -; Thu: -; Fri: -; Sat: -; Sun: -" in hours:
                 hours = "<MISSING>"
