@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import csv
 import json
 import re
@@ -78,6 +79,7 @@ def fetch_data():
 
     logger.info("Processing %s links .." % (len(all_links)))
     for link in all_links:
+        logger.info(link)
         req = session.get(link, headers=headers)
         base = BeautifulSoup(req.text, "lxml")
 

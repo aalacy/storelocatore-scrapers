@@ -53,10 +53,7 @@ def fetch_data():
             phone = item["phone"]
         except:
             phone = "<MISSING>"
-        try:
-            loc = item["web"].replace("\\", "")
-        except:
-            loc = "<MISSING>"
+        loc = "https://www.coffeebeanery.com/pages/store-locator"
         try:
             hours = (
                 item["schedule"]
@@ -74,6 +71,8 @@ def fetch_data():
         except:
             zc = "<MISSING>"
         store = item["id"]
+        if item["country"] == "Guam":
+            state = "Guam"
         hours = hours.replace("\r", "").replace(" :", ":")
         yield [
             website,
