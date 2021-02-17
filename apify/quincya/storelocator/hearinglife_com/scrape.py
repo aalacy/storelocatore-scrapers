@@ -85,10 +85,6 @@ def fetch_data():
         store_number = store["Id"]
         link = "https://www.hearinglife.com/find-hearing-aid-center"
 
-        # if state == "Arlington":
-        #     city = state
-        #     state = "VA"
-
         # Store data
         data.append(
             [
