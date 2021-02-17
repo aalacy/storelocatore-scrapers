@@ -119,13 +119,7 @@ def fetch_data():
             zip_code = "78238"
         country_code = "US"
         store_number = "<MISSING>"
-
-        try:
-            location_type = ",".join(
-                (base.find(class_="property_features").ul.stripped_strings)
-            )
-        except:
-            location_type = "<MISSING>"
+        location_type = "<MISSING>"
         phone = (
             base.find(class_="css_table_cell address")
             .p.text.replace("Reservations:", "")
