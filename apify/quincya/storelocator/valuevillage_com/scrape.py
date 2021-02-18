@@ -52,10 +52,10 @@ def fetch_data():
     for store_data in location_list:
         store_details = json.loads(BeautifulSoup(store_data["info"], "lxml").text)
         link = store_details["url"]
-        if "savers-thrift" not in link:
+        if "valuevillage-thrift" not in link:
             continue
         store = []
-        store.append("https://www.savers.com")
+        store.append("valuevillage.com")
         store.append(store_details["location_name"])
         store.append(
             (store_details["address_1"] + " " + store_details["address_2"]).strip()
