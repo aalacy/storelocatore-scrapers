@@ -114,6 +114,13 @@ def fetch_data():
                         state = "OK"
                         zc = "74501"
                     state = state.replace(" USA", "").replace(" US", "")
+                    add2 = item.split(',"address":"')[1].split('"')[0]
+                    add2 = add2.replace(", USA", "").replace(", ", ",")
+                    if add2.count(",") == 2:
+                        address = add2.split(",")[0]
+                        city = add2.split(",")[1]
+                        state = add2.split(",")[2]
+                        zc = "<INACCESSIBLE>"
                     yield [
                         website,
                         loc,

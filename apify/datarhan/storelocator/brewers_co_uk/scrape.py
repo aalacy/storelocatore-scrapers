@@ -60,11 +60,16 @@ def fetch_data():
         poi = json.loads(data)[0]
 
         location_name = loc_dom.xpath('//h1[@class="inline h2"]/text()')
-        location_name = location_name[0].strip() if location_name else "<MISSING>"
+        location_name = (
+            " ".join(location_name[0].split()).strip() if location_name else "<MISSING>"
+        )
         street_address = poi["address1"]
         street_address = street_address if street_address else "<MISSING>"
         if poi["address2"]:
-            street_address += ", " + poi["address2"]
+            street_address += " " + poi["address2"]
+        street_address = " ".join(
+            [elem.strip() for elem in street_address.split() if elem.strip()]
+        ).replace("  ", " ")
         city = poi["city"]
         city = city if city else "<MISSING>"
         state = poi["county"]
@@ -82,11 +87,7 @@ def fetch_data():
         longitude = poi["longitude"]
         longitude = longitude if longitude else "<MISSING>"
         hoo = loc_dom.xpath('//dl[@class="inline"]//text()')
-        hoo = [
-            elem.strip().replace("\n", "").replace("  ", " ")
-            for elem in hoo
-            if elem.strip()
-        ]
+        hoo = [" ".join(elem.split()) for elem in hoo if elem.strip()]
         hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
 
         item = [

@@ -105,6 +105,10 @@ def fetch_data():
                 phone = "<MISSING>"
             if hours == "":
                 hours = "<MISSING>"
+            if "0" not in hours:
+                hours = "Sun-Sat: Closed"
+            if hours.count("Th:") == 2:
+                hours = hours.replace("Th: Closed", "Fr: Closed")
             yield [
                 website,
                 loc,
@@ -179,6 +183,10 @@ def fetch_data():
                 phone = "<MISSING>"
             if hours == "":
                 hours = "<MISSING>"
+            if "0" not in hours:
+                hours = "Sun-Sat: Closed"
+            if hours.count("Th:") == 2:
+                hours = hours.replace("Th: Closed", "Fr: Closed")
             yield [
                 website,
                 loc,
