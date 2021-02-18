@@ -55,7 +55,7 @@ for zip_code in search:
         zipp = ""
 
         for item in city_zipp:
-            if re.search(r"\d", item) == None:
+            if re.search(r"\d", item) is None:
                 city = city + " " + item
             else:
                 zipp = zipp + " " + item
@@ -71,7 +71,7 @@ for zip_code in search:
         phone_list = grid.find("a").text.strip()
         phone = ""
         for item in phone_list:
-            if re.search(r"\d", item) != None:
+            if re.search(r"\d", item) is not None:
                 phone = phone + item
             if len(phone) == 11:
                 break
