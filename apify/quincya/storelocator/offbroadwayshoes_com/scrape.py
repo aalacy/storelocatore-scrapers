@@ -1,10 +1,8 @@
 import csv
 import json
-import time
 from bs4 import BeautifulSoup
 from sglogging import SgLogSetup
 from sgselenium import SgChrome
-from tenacity import retry, stop_after_attempt
 
 log = SgLogSetup().get_logger("offbroadwayshoes.com")
 
@@ -51,16 +49,6 @@ def get_location_type(store):
         return "Rack Room Shoes"
 
 
-@retry(stop=stop_after_attempt(3))
-def fetch_page(page, driver):
-    base_link = f"https://www.rackroomshoes.com/store-finder?q=&page={page}&latitude=25.790654&longitude=-80.130045"
-    driver.get(base_link)
-    time.sleep(3)
-
-    soup = BeautifulSoup(driver.page_source, "lxml")
-    return json.loads(soup.text)
-
-
 def fetch_data():
     page = 0
     found = []
@@ -70,7 +58,12 @@ def fetch_data():
     run = True
 
     while run:
-        result = fetch_page(page, driver)
+        base_link = f"https://www.rackroomshoes.com/store-finder?q=&page={page}&latitude=25.790654&longitude=-80.130045"
+
+        driver.get(base_link)
+        base = BeautifulSoup(driver.page_source, "lxml")
+
+        result = json.loads(base.text)
         stores = result["data"]
         total = result["total"]
 
