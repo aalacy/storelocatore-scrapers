@@ -66,7 +66,6 @@ def fetch_data():
         lat = temp["latitude"]
         longt = temp["longitude"]
         phone = temp["fran_phone"]
-        tempstreet = temp["fran_address_2"]
         try:
             street = (
                 temp["fran_address"]
