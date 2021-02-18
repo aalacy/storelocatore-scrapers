@@ -280,12 +280,14 @@ def fetch_data():
                     hours = "<MISSING>"
                 if phone == "":
                     phone = "<MISSING>"
-                if add == "":
+                if add == "" or add is None:
                     add = "<MISSING>"
                 if city == "":
                     city = item["storeAddress"]["addressLine3"]
-                if city == "":
+                if city == "" or city is None:
                     city = "<MISSING>"
+                if zc == "" or zc is None:
+                    zc = "<MISSING>"
                 loc = "<MISSING>"
                 if city == "<MISSING>":
                     city = name
