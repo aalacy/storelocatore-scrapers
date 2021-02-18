@@ -53,7 +53,7 @@ def fetch_data():
     page = 0
     found = []
 
-    driver = SgChrome(executable_path="./chromedriver").driver()
+    driver = SgChrome().driver()
     locator_domain = "rackroomshoes.com"
     run = True
 
