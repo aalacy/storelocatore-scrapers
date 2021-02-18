@@ -4,8 +4,6 @@ from bs4 import BeautifulSoup as bs
 import re
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 
-print(pd.__version__)
-
 page_urls = []
 locator_domains = []
 country_codes = []
