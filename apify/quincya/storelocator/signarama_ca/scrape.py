@@ -80,7 +80,11 @@ def fetch_data():
     for item in items:
         link = "https://signarama.ca" + item.a["href"]
         location_name = item["data-name"]
-        street_address = item["data-address"]
+        try:
+            street_address = list(item.find_all(class_="m-0")[1].stripped_strings)[0]
+        except:
+            street_address = list(item.find_all(class_="m-0")[0].stripped_strings)[0]
+        street_address = street_address.replace("  ", " ")
         city = item["data-city"]
         state = item["data-state"]
         zip_code = item["data-zip"]

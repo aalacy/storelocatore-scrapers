@@ -50,6 +50,8 @@ def fetch_data():
 
     for poi in data:
         store_url = poi["ShoppingCentreUrl"]
+        if store_url and ".ie" in store_url:
+            continue
         store_url = store_url if store_url else "<MISSING>"
         location_name = poi["Name"]
         location_name = location_name if location_name else "<MISSING>"
@@ -63,7 +65,7 @@ def fetch_data():
         state = state if state else "<MISSING>"
         zip_code = poi["Address"]["Postcode"]
         zip_code = zip_code if zip_code else "<MISSING>"
-        country_code = "UK"
+        country_code = "<MISSING>"
         store_number = poi["Id"]
         phone = "<MISSING>"
         location_type = "<MISSING>"
