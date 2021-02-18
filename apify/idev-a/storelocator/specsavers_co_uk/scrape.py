@@ -160,7 +160,7 @@ def fetch_data():
                 hours_of_operation=hours_of_operation,
                 location_type=location_type,
                 store_number=store_number,
-                country_code=country_code
+                country_code=country_code,
             )
             yield record
 
