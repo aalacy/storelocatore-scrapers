@@ -1,4 +1,3 @@
-import csv
 import json
 from bs4 import BeautifulSoup as bs
 from sgscrape.sgrecord import SgRecord
@@ -124,7 +123,7 @@ def fetch_data():
             if "hours" in store["response"].keys():
                 hours = store["response"]["hours"].split(",")
                 hours_data = {}
-                
+
                 hours_of_operation = ""
                 for x in hours:
                     contents = x.split(":")
