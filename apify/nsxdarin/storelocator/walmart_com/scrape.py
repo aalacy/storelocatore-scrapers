@@ -56,7 +56,7 @@ def fetch_data():
         website = "walmart.com"
         typ = "Walmart"
         session = SgRequests()
-        r2 = session.get(url, headers=headers)
+        r2 = session.get(url, headers=headers, timeout=15)
         if r2.encoding is None:
             r2.encoding = "utf-8"
         for line2 in r2.iter_lines(decode_unicode=True):
