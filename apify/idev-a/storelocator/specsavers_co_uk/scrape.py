@@ -11,7 +11,6 @@ def fetch_data():
         res = session.get("https://www.specsavers.co.uk/stores/full-store-list")
         soup = bs(res.text, "lxml")
         store_links = soup.select("div.item-list ul li a")
-        data = []
         for store_link in store_links:
             page_url = "https://www.specsavers.co.uk/stores/" + store_link["href"]
             missing_urls = [
@@ -161,6 +160,7 @@ def fetch_data():
                 hours_of_operation=hours_of_operation,
                 location_type=location_type,
                 store_number=store_number,
+                country_code=country_code
             )
             yield record
 
