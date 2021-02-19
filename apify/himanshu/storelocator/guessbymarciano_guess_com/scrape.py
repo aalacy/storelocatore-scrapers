@@ -74,7 +74,7 @@ def fetch_data():
                 country_code = "US"
                 store_number = "<MISSING>"
                 phone = location_soup.find("a", {"title": "Call store"}).text
-                location_type = "Marciano"
+                location_type = "<MISSING>"
                 raw_loc = (
                     location_soup.find("a", {"title": "Get directions"})["href"]
                     .split("=")[-1]
