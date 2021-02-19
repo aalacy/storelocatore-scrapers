@@ -58,7 +58,9 @@ def fetch_data():
         store.append("valuevillage.com")
         store.append(store_details["location_name"])
         store.append(
-            (store_details["address_1"] + " " + store_details["address_2"]).strip()
+            (store_details["address_1"] + " " + store_details["address_2"])
+            .replace(", Cornerstone Mall", "")
+            .strip()
         )
         store.append(store_details["city"])
         store.append(store_details["region"])
@@ -71,11 +73,10 @@ def fetch_data():
         store.append(location_soup.find(class_="location-logo")["data-brand"])
         store.append(store_data["lat"])
         store.append(store_data["lng"])
-        store.append(
-            " ".join(
-                list(location_soup.find("div", {"class": "hours"}).stripped_strings)
-            )
-        )
+        hours = " ".join(
+            list(location_soup.find("div", {"class": "hours"}).stripped_strings)
+        ).replace("Holiday ", "")
+        store.append(hours)
         store.append(link)
         return_main_object.append(store)
     return return_main_object
