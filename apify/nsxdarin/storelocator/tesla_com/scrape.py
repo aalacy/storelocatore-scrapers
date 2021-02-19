@@ -82,9 +82,12 @@ def fetch_data():
                 if addinfo.count(" ") == 2:
                     city = addinfo.split(" ")[2]
                     zc = addinfo.split(" ")[0] + " " + addinfo.split(" ")[1]
-                else:
+                elif addinfo.count(" ") == 3:
                     city = addinfo.split(" ")[2] + " " + addinfo.split(" ")[3]
                     zc = addinfo.split(" ")[0] + " " + addinfo.split(" ")[1]
+                else:
+                    city = addinfo.strip()
+                    zc = "<MISSING>"
             if '<span class="type">' in line2:
                 typ = line2.split('<span class="type">')[1].split("<")[0]
                 if phone == "":
@@ -197,6 +200,10 @@ def fetch_data():
         typ = typ.replace("; ", "")
         if typ == "":
             typ = "Store"
+        if phone == "":
+            phone = "<MISSING>"
+        if "St Albans" in name:
+            zc = "<MISSING>"
         yield [
             website,
             loc,

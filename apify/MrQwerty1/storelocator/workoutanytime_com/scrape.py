@@ -49,7 +49,7 @@ def fetch_data():
     text = (
         "".join(tree.xpath("//script[contains(text(), 'storeDataAry')]/text()"))
         .split(" = ")[1]
-        .replace(";\n", "")
+        .split(";\n")[0]
     )
     js = json.loads(text)
 
