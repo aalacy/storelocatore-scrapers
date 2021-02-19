@@ -3,7 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-import time
 
 session = SgRequests()
 
@@ -39,7 +38,6 @@ def write_output(data):
 
 def fetch_data():
     addresses = []
-    base_url = "https://f45training.com/"
     r = session.get("https://f45training.com/find-a-studio/").text
     soup = BeautifulSoup(r, "html5lib")
     script = str(soup.find(text=re.compile("window.studios")))
