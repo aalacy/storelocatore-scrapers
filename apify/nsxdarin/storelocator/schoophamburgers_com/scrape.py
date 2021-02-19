@@ -48,6 +48,7 @@ def fetch_data():
     hours = "<MISSING>"
     lat = "<MISSING>"
     lng = "<MISSING>"
+    add = ""
     logger.info("Pulling Stores")
     for line in r.iter_lines():
         line = str(line.decode("utf-8"))
@@ -57,6 +58,7 @@ def fetch_data():
             '<span class="text" id="' in line
             and "iew Map</span>" not in line
             and "VIEW ALL LOCATIONS" not in line
+            and add != ""
         ):
             phone = line.split('">')[1].split("<")[0]
             yield [
