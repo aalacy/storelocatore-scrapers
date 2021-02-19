@@ -74,7 +74,7 @@ def fetch_data():
         city = city if city else "<MISSING>"
         state = addr.state
         state = state if state else "<MISSING>"
-        zip_code = addr.postcode
+        zip_code = " ".join(raw_address.split()[-2:])
         zip_code = zip_code if zip_code else "<MISSING>"
         phone = loc_dom.xpath('//p[contains(text(), "Tel:")]/text()')
         phone = phone[0].split(": ")[-1] if phone else "<MISSING>"
