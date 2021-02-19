@@ -2,6 +2,7 @@ import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
+import json
 
 session = SgRequests()
 
@@ -12,7 +13,6 @@ def write_output(data):
             output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
         )
 
-        # Header
         writer.writerow(
             [
                 "locator_domain",
@@ -31,18 +31,11 @@ def write_output(data):
                 "page_url",
             ]
         )
-        # Body
         for row in data:
             writer.writerow(row)
 
 
 def fetch_data():
-    urls = [
-        "https://www.graduatehotels.com/cincinnati/",
-        "https://www.graduatehotels.com/providence/",
-        "https://www.graduatehotels.com/richmond/",
-        "https://www.graduatehotels.com/state-college/",
-    ]
     headers = {
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36"
     }
@@ -113,57 +106,7 @@ def fetch_data():
                 .strip()
             )
         except:
-            try:
-                for i in urls:
-                    req = session.get(i, headers=headers)
-                    page_sup = BeautifulSoup(req.text, "lxml")
-                    address = (
-                        page_sup.find("a", {"class": "map-link"})["href"]
-                        .split("//")[2]
-                        .split(",")
-                    )
-                    street_address = address[0]
-                    city = address[1]
-                    state = address[2].split()[0]
-                    zipp = address[2].split()[1]
-                    location_name = city
-                    try:
-                        phone_tag = " ".join(
-                            list(
-                                soup_loc.find(
-                                    "div", class_="columns footer-contact"
-                                ).stripped_strings
-                            )
-                        )
-                        phone_list = re.findall(
-                            re.compile(r".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"),
-                            str(phone_tag),
-                        )
-                        if phone_list:
-                            phone = phone_list[0].strip()
-                        else:
-                            phone = "<MISSING>"
-                    except:
-                        phone = "<INACCESSIBLE>"
-                    coord = page_sup.find("a", {"class": "map-link"})["href"]
-                    r_c = session.get(coord, headers=headers)
-                    soup_c = BeautifulSoup(r_c.text, "lxml")
-                    latitude = (
-                        soup_c.find_all("meta")[-7]["content"]
-                        .split("markers=")[1]
-                        .split("%2C")[0]
-                        .strip()
-                    )
-                    longitude = (
-                        soup_c.find_all("meta")[-7]["content"]
-                        .split("markers=")[1]
-                        .split("%2C")[1]
-                        .split("&")[0]
-                        .strip()
-                    )
-
-            except:
-                pass
+            pass
 
         if "View Tucson on" in city:
             city = "Tucson"
@@ -183,6 +126,8 @@ def fetch_data():
             phone = "517 348 0900"
             latitude = "<MISSING>"
             longitude = "<MISSING>"
+        if "New York" in location_name:
+            location_name = "Roosevelt Island"
         location_type = "Graduate Hotel"
         store = [
             locator_domain,
