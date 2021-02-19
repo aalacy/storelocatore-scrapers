@@ -101,7 +101,9 @@ def fetch_data():
         soup = pull_content(page_url)
         locator_domain = DOMAIN
         location_name = find_meta(soup, {"name": "geo.placename"})
-        street_address = find_meta(soup, {"property": "og:street_address"})
+        street_address = handle_missing(
+            find_meta(soup, {"property": "og:street_address"}).replace(".,", "")
+        )
         city = find_meta(soup, {"property": "og:locality"})
         zip_code = find_meta(soup, {"property": "og:postal_code"})
         state = find_meta(soup, {"property": "og:region"})
