@@ -92,8 +92,8 @@ def fetch_data():
                     line2.split("<span class='hours'>")[1].split("<\\/span>")[0].strip()
                 )
                 hours = hours.replace("<br \\/>", "; ")
-                if "HOURS<br \/>Monday" in hours:
-                    hours = hours.split("HOURS<br \/>")[1]
+                if "HOURS<br \\/>Monday" in hours:
+                    hours = hours.split("HOURS<br \\/>")[1]
         hours = hours.replace("LIMITED STORE HOURS; ", "")
         yield [
             website,
