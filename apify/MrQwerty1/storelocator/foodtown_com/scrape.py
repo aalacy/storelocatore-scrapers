@@ -31,10 +31,19 @@ def write_output(data):
             writer.writerow(row)
 
 
+def get_token():
+    session = SgRequests()
+    data = {"app_key": "foodtown", "referrer": "https://www.foodtown.com/"}
+    r = session.post("https://api.freshop.com/2/sessions/create", data=data)
+
+    return r.json()["token"]
+
+
 def fetch_data():
     out = []
     locator_domain = "https://www.foodtown.com/"
-    api_url = "https://api.freshop.com/1/stores?app_key=foodtown&has_address=true&is_selectable=true&limit=100&token=d2dc3e06d9870614a5555a325f86885f"
+    token = get_token()
+    api_url = f"https://api.freshop.com/1/stores?app_key=foodtown&has_address=true&is_selectable=true&limit=-1&token={token}"
 
     session = SgRequests()
     r = session.get(api_url)
