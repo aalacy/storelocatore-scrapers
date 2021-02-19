@@ -45,7 +45,7 @@ def fetch_data():
 
     for store in store_list:
         page_url = store["permalink"]
-        location_name = store["store"].replace("’", "'")
+        location_name = store["store"].replace("’", "'").replace("&#8217;", "'")
         store_number = store["id"]
         city = store["city"]
         state = store["state"]

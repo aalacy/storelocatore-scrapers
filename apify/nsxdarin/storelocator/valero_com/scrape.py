@@ -142,6 +142,20 @@ def fetch_data():
                             hours = "<MISSING>"
                             if phone == "":
                                 phone = "<MISSING>"
+                            if phone == "0":
+                                phone = "<MISSING>"
+                            if (
+                                "1" not in phone
+                                and "2" not in phone
+                                and "3" not in phone
+                                and "4" not in phone
+                                and "5" not in phone
+                                and "6" not in phone
+                                and "7" not in phone
+                                and "8" not in phone
+                                and "9" not in phone
+                            ):
+                                phone = "<MISSING>"
                             if store not in locs:
                                 locs.append(store)
                                 yield [
