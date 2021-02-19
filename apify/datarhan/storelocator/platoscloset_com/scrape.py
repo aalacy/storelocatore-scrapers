@@ -85,6 +85,8 @@ def fetch_data():
         location_type = "<MISSING>"
         latitude = poi["xp"]["latitude"]
         longitude = poi["xp"]["longitude"]
+        if latitude in [0.0, 0]:
+            continue
         hoo = data["xp"]["hours"]
         hours_of_operation = []
         for day, hours in hoo.items():
