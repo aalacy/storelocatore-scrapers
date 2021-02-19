@@ -63,10 +63,8 @@ def fetch_data():
         else:
             all_locations.append(url)
 
-    print(len(all_locations))
     for url in all_locations:
         store_url = urljoin(start_url, url)
-        print(store_url)
         loc_response = session.get(store_url)
         loc_dom = etree.HTML(loc_response.text)
         poi = loc_dom.xpath("//@data-storejson")[0]
