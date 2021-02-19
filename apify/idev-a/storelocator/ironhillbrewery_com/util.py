@@ -59,6 +59,7 @@ class Util:
             return (
                 val.strip()
                 .replace("–", "-")
+                .replace(u"\u200b", "")
                 .encode("unicode-escape")
                 .decode("utf8")
                 .replace("\\xa0\\xa", "")

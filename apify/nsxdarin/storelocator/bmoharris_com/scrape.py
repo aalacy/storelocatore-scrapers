@@ -1,5 +1,5 @@
-import csv
 import json
+import csv
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -101,8 +101,8 @@ def fetch_data():
     if r.encoding is None:
         r.encoding = "utf-8"
     for line in r.iter_lines(decode_unicode=True):
-        if '{"mondayopen":"' in line:
-            items = line.split('{"mondayopen":"')
+        if '{"mondayopen":' in line:
+            items = line.split('{"mondayopen":')
             for item in items:
                 if '"collectionname":"' not in item:
                     bid = item.split(',"id":"')[1].split('"')[0]
@@ -177,8 +177,8 @@ def fetch_data():
     if r.encoding is None:
         r.encoding = "utf-8"
     for line in r.iter_lines(decode_unicode=True):
-        if '{"mondayopen":"' in line:
-            items = line.split('{"mondayopen":"')
+        if '{"mondayopen":' in line:
+            items = line.split('{"mondayopen":')
             for item in items:
                 if '"collectionname":"' not in item:
                     bid = item.split(',"id":"')[1].split('"')[0]
