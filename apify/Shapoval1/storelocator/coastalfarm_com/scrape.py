@@ -69,7 +69,6 @@ def get_data(url):
         "Cache-Control": "no-cache",
     }
     r = session.get(page_url, headers=headers)
-    tree = html.fromstring(r.content)
     content = r.text.split("var serverSideViewModel =")[1].split(";")[0]
     content = "[" + content + "]"
     content = re.sub("storeId:", '"storeId":', content)
