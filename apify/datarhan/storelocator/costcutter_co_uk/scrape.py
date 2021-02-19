@@ -1,4 +1,3 @@
-import re
 import csv
 from lxml import etree
 from urllib.parse import urljoin
@@ -77,24 +76,19 @@ def fetch_data():
             './/a[@class="button set-local-home green clear short"]/@href'
         )
         store_url = urljoin(start_url, store_url[0]) if store_url else "<MISSING>"
+        if store_url in scraped_items:
+            continue
+        loc_response = session.get(store_url)
+        loc_dom = etree.HTML(loc_response.text)
 
         location_name = poi_html.xpath(".//h3/text()")
         location_name = location_name[0] if location_name else "<MISSING>"
-        street_address = ""
-        if poi_html.xpath("@data-addressline1"):
-            street_address = poi_html.xpath("@data-addressline1")[0]
-        if poi_html.xpath("@data-addressline2") and street_address:
-            street_address += ", " + poi_html.xpath("@data-addressline2")[0]
-        else:
-            street_address = poi_html.xpath("@data-addressline2")[0]
-        if "CASTLEMILK" in street_address:
-            loc_response = session.get(store_url)
-            street_address = re.findall('storeAddress = "(.+?)";', loc_response.text)[
-                0
-            ].split(", ")[:2]
-            street_address = ", ".join(street_address)
         city = poi_html.xpath("@data-town")
         city = city[0] if city else "<MISSING>"
+        street_address = loc_dom.xpath("//address/text()")
+        if not street_address:
+            continue
+        street_address = street_address[0].strip().split(city)[0].strip()[:-1]
         state = poi_html.xpath("@data-county")
         state = state[0] if state and state[0].strip() else "<MISSING>"
         zip_code = poi_html.xpath("@data-postcode")
@@ -133,9 +127,8 @@ def fetch_data():
             hours_of_operation,
         ]
 
-        check = f"{location_name} {street_address}"
-        if check not in scraped_items:
-            scraped_items.append(check)
+        if store_url not in scraped_items:
+            scraped_items.append(store_url)
             items.append(item)
 
     return items
