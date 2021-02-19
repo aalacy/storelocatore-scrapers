@@ -59,6 +59,9 @@ def fetch_data():
             and "iew Map</span>" not in line
             and "VIEW ALL LOCATIONS" not in line
             and add != ""
+            and city != ""
+            and state != ""
+            and zc != ""
         ):
             phone = line.split('">')[1].split("<")[0]
             yield [
