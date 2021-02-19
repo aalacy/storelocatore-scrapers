@@ -202,6 +202,8 @@ def fetch_data():
             typ = "Store"
         if phone == "":
             phone = "<MISSING>"
+        if "St Albans" in name:
+            zc = "<MISSING>"
         yield [
             website,
             loc,
