@@ -1,11 +1,6 @@
 import csv
 from sgselenium import SgChrome
 
-session = SgRequests()
-headers = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
-}
-
 
 def write_output(data):
     with open("data.csv", mode="w") as output_file:
@@ -35,7 +30,6 @@ def write_output(data):
 
 
 def fetch_data():
-    locs = []
     url = "https://www.woodysdiners.com/locations"
     with SgChrome() as driver:
         driver.get(url)
@@ -53,7 +47,7 @@ def fetch_data():
             '{"__typename":"CustomForm","id":11687,"allowAttachments":false,"des'
             in text
         ):
-            items = line.split(
+            items = text.split(
                 '{"__typename":"CustomForm","id":11687,"allowAttachments":false,"des'
             )[1].split('"RestaurantLocation","id":')
             for item in items:
