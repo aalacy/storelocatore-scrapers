@@ -71,14 +71,20 @@ def fetch_data():
             store_number = poi["EntityID"]
             store_number = store_number if store_number else "<MISSING>"
             phone = poi["Phone"]
+            phone = phone if phone else "<MISSING>"
             location_type = "<MISSING>"
             if poi["Branch"] == "Yes":
                 location_type = "Branch"
+            else:
+                location_type = "ATM"
             latitude = poi["Latitude"]
             latitude = latitude if latitude else "<MISSING>"
             longitude = poi["Longitude"]
             longitude = longitude if longitude else "<MISSING>"
             hours_of_operation = poi["LobbyHours"].replace("/", "")
+            hours_of_operation = (
+                hours_of_operation if hours_of_operation else "<MISSING>"
+            )
 
             item = [
                 DOMAIN,
