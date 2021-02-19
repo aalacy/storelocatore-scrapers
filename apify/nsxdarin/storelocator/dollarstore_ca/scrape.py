@@ -35,7 +35,6 @@ def write_output(data):
 
 
 def fetch_data():
-    locs = []
     url = "https://www.dollarstore.ca/wp-json/wpgmza/v1/features/base64eJyrVkrLzClJLVKyUqqOUcpNLIjPTIlRsopRMoxR0gEJFGeUFni6FAPFomOBAsmlxSX5uW6ZqTkpELFapVoABU0Wug/"
     r = session.get(url, headers=headers)
     website = "dollarstore.ca"
