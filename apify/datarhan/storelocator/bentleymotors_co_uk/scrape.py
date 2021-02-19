@@ -79,7 +79,7 @@ def fetch_data():
         for elem in data["addresses"][0]["departments"][0]["openingHours"]:
             if elem["periods"]:
                 day = elem["day"]
-                if elem["closed"] == False:
+                if elem["closed"] is False:
                     opens = elem["periods"][0]["open"]
                     closes = elem["periods"][0]["close"]
                     hoo.append(f"{day} {opens} - {closes}")
