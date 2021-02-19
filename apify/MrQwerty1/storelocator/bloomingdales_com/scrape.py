@@ -60,6 +60,8 @@ def get_data(url):
     locator_domain = "https://www.bloomingdales.com"
     page_url = url.replace(".json", "")
     location_name = j.get("name") or "<MISSING>"
+    if location_name.find("Bloomingdale's") == -1:
+        return
 
     street_address = (
         f"{j.get('address1')} {j.get('address2') or ''}".strip() or "<MISSING>"
@@ -83,7 +85,6 @@ def get_data(url):
             start = str(interval.get("start"))
             end = str(interval.get("end"))
 
-            # normalize 9:30 -> 09:30
             if len(start) == 3:
                 start = f"0{start}"
 
