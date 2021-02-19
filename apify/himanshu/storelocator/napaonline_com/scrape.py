@@ -82,7 +82,7 @@ def get_session(reset=False):
     reset_request_count()
     # print out what the new IP is ...
     if show_logs == True:
-        r = thread_local.session.get('https://jsonip.com/')
+        r = thread_local.get_session().get('https://jsonip.com/')
         log(
             f"new IP for thread id {threading.current_thread().ident}: {r.json()['ip']}")
 
@@ -124,7 +124,7 @@ def get(url, attempt=1):
     try:
         sleep()
         session = get_session()
-        session.session.cookies.clear()
+        session.get_session().cookies.clear()
         log(f'getting {url}')
         r = session.get(url, headers=headers, timeout=15)
         log(f'status for {url} >>> ', r.status_code)

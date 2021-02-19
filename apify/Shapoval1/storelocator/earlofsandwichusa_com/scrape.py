@@ -56,7 +56,7 @@ def get_data(url):
     r = session.get(url)
     j = r.json()
 
-    locator_domain = "https://www.bloomingdales.com"
+    locator_domain = "https://earlofsandwichusa.com"
     page_url = url.replace(".json", "")
     location_name = j.get("name") or "<MISSING>"
 

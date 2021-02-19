@@ -1,11 +1,10 @@
 import csv
-import urllib.request
 from sgrequests import SgRequests
 import gzip
 from sglogging import SgLogSetup
+import time
 
 logger = SgLogSetup().get_logger("bankofamerica_com")
-
 
 session = SgRequests()
 headers = {
@@ -45,7 +44,7 @@ def fetch_data():
     sitemaps = []
     addinfos = []
     url = "https://locators.bankofamerica.com/sitemap/sitemap_index.xml"
-    r = session.get(url, headers=headers)
+    r = session.get(url, headers=headers, stream=True)
     Found = True
     while Found:
         Found = False
@@ -58,7 +57,9 @@ def fetch_data():
             logger.info(("Pulling Sitemap %s..." % sm))
             smurl = sm
             with open("branches.xml.gz", "wb") as f:
-                f.write(urllib.request.urlopen(smurl).read())
+                r = session.get(smurl, headers=headers)
+                time.sleep(3)
+                f.write(r.content)
                 f.close()
                 with gzip.open("branches.xml.gz", "rt") as f:
                     for line in f:
@@ -68,7 +69,7 @@ def fetch_data():
                                 if lurl not in locs:
                                     locs.append(lurl)
             logger.info((str(len(locs)) + " Locations Found..."))
-        if len(locs) <= 7000:
+        if len(locs) <= 7150:
             Found = True
             logger.info("Retrying...")
     for loc in locs:
@@ -115,7 +116,7 @@ def fetch_data():
                         lat = line2.split('"latitude": "')[1].split('"')[0]
                     if lng == "" and '"longitude": "' in line2:
                         lng = line2.split('"longitude": "')[1].split('"')[0]
-                    if phone == "" and '"telephone": "' in line2:
+                    if '"telephone": "' in line2:
                         phone = line2.split('"telephone": "')[1].split('"')[0]
                     if hours == "" and '"openingHours": "' in line2:
                         hours = (
