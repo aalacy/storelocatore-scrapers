@@ -52,7 +52,6 @@ def fetch_data():
     )
     for state_url in all_states:
         full_state_url = urllib.parse.urljoin(start_url, state_url)
-        print(full_state_url)
         state_response = session.get(full_state_url)
         state_dom = etree.HTML(state_response.text)
 
