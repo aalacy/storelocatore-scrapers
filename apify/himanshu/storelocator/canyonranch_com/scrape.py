@@ -39,7 +39,7 @@ def fetch_data():
     headers = {
         "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36"
     }
-    base_url = "https://www.canyonranch.com"
+
     r = session.get("https://www.canyonranch.com/", headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
     addresses = []
