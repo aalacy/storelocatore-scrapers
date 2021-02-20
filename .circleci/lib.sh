@@ -127,7 +127,7 @@ check_dependencies() {
 	updated_crawler="$(get_updated_crawler)"
 	if ! is_node_scraper "$updated_crawler"; then
 		requirements_path="${updated_crawler}/requirements.txt"
-		unpinned_dependencies=$(cat "$requirements_path" | grep -v '==' || true)
+		unpinned_dependencies=$(cat "$requirements_path" | awk NF | grep -v '==' || true)
 		if [ ! -z "$unpinned_dependencies" ]; then
 			formatted_unpinned_dependencies="${unpinned_dependencies//$'\n'/', '}"
 			echo "FAIL: found unpinned dependencies in requirements.txt: $formatted_unpinned_dependencies"
@@ -137,14 +137,23 @@ check_dependencies() {
 	return $exit_status
 }
 
+# https://stackoverflow.com/a/17841619
+join_by() {
+	local d=$1
+	shift
+	local f=$1
+	shift
+	printf %s "$f" "${@/#/$d}"
+}
+
 check_internal_library_versions() {
 	exit_status=0
 	updated_crawler="$(get_updated_crawler)"
 	if ! is_node_scraper "$updated_crawler"; then
 		requirements_path="${updated_crawler}/requirements.txt"
-		internal_library_regex="$(printf "|%s" "${internal_libraries[@]}")"
-		outdated_internal_libraries=$(piprot "$requirements_path" | grep -E "$internal_library_regex" || true)
-		if [ ! -z "$outdated_internal_libraries" ]; then
+		internal_library_regex="$(join_by "|" "${internal_libraries[@]}")"
+		outdated_internal_libraries=$(piprot --outdated "$requirements_path" | grep -E "$internal_library_regex" || true)
+		if [ -n "$outdated_internal_libraries" ]; then
 			formatted_outdated_internal_libraries="${outdated_internal_libraries//$'\n'/', '}"
 			echo "FAIL: found outdated SafeGraph libraries in requirements.txt: $formatted_outdated_internal_libraries"
 			exit_status=1
