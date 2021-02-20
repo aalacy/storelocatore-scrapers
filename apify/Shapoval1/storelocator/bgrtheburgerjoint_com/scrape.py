@@ -97,7 +97,8 @@ def get_data(url):
     store_number = "<MISSING>"
     location_name = " ".join(
         tree.xpath(
-            '//div[@class="et_pb_with_border et_pb_module et_pb_text et_pb_text_0  et_pb_text_align_left et_pb_bg_layout_dark"]/div[@class="et_pb_text_inner"]/h2//text()'
+            '//div[@class="et_pb_with_border et_pb_module et_pb_text et_pb_text_0  et_pb_text_align_left et_pb_bg_'
+            'layout_dark"]/div[@class="et_pb_text_inner"]/h2//text()'
         )
     ).split(",")[0]
     phone = (
