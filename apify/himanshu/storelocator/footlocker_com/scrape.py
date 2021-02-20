@@ -13,7 +13,7 @@ def parser(location_soup, page_url):
             location_soup.find("span", {"class": "c-address-street-1"}).stripped_strings
         )
     )
-    if location_soup.find("span", {"class": "c-address-street-2"}) != None:
+    if location_soup.find("span", {"class": "c-address-street-2"}) is not None:
         street_address = (
             street_address
             + " "
