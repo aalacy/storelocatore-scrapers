@@ -78,7 +78,7 @@ def get_data(url):
     line = (
         "".join(
             tree.xpath(
-                '//div[1][@class="x-text"]/p/span/text() | //div[1][@class="x-text"]/p/text()'
+                "//div[1][@class='x-text']/p/span/text() | //div[1][@class='x-text']/p/text()"
             )
         )
         .replace("\n", "")
@@ -97,12 +97,11 @@ def get_data(url):
     store_number = "<MISSING>"
     location_name = " ".join(
         tree.xpath(
-            '//div[@class="et_pb_with_border et_pb_module et_pb_text et_pb_text_0  et_pb_text_align_left et_pb_bg_'
-            'layout_dark"]/div[@class="et_pb_text_inner"]/h2//text()'
+            "//div[@class='et_pb_with_border et_pb_module et_pb_text et_pb_text_0  et_pb_text_align_left et_pb_bg_layout_dark']/div[@class='et_pb_text_inner']/h2//text()"
         )
     ).split(",")[0]
     phone = (
-        "".join(tree.xpath('//a[contains(@href, "tel")]/text()'))
+        "".join(tree.xpath("//a[contains(@href, 'tel')]/text()"))
         .replace("Phone:", "")
         .strip()
     )
@@ -111,7 +110,7 @@ def get_data(url):
     longitude = latlon.split(",")[0].strip()
     location_type = "<MISSING>"
     hours_of_operation = (
-        " ".join(tree.xpath('//div[2][@class="x-text"]/p[1]//text()'))
+        " ".join(tree.xpath("//div[2][@class='x-text']/p[1]//text()"))
         .replace("\n", " ")
         .strip()
         or "<MISSING>"
