@@ -76,8 +76,11 @@ def fetch_data():
             name = item["storeNameExternal"]
             if name == "":
                 name = typ
-            if "London" in city:
-                city = "London"
+            try:
+                if "London" in city:
+                    city = "London"
+            except:
+                pass
             country = "GB"
             lng = item["longitude"]
             website = "costa.co.uk/business/costa-express"
@@ -161,6 +164,12 @@ def fetch_data():
                 city = "Hempstead Valley"
             if "Belfast" in add:
                 city = "Belfast"
+            if add is None:
+                add = "<MISSING>"
+            if city is None:
+                city = "<MISSING>"
+            if zc is None:
+                zc = "<MISSING>"
             addinfo = add + city + zc
             if "Mon: -; Tue: -; Wed: -; Thu: -; Fri: -; Sat: -; Sun: -" in hours:
                 hours = "<MISSING>"
@@ -271,12 +280,14 @@ def fetch_data():
                     hours = "<MISSING>"
                 if phone == "":
                     phone = "<MISSING>"
-                if add == "":
+                if add == "" or add is None:
                     add = "<MISSING>"
                 if city == "":
                     city = item["storeAddress"]["addressLine3"]
-                if city == "":
+                if city == "" or city is None:
                     city = "<MISSING>"
+                if zc == "" or zc is None:
+                    zc = "<MISSING>"
                 loc = "<MISSING>"
                 if city == "<MISSING>":
                     city = name

@@ -101,7 +101,6 @@ def fetch_data():
             page_url = (
                 "".join(t.xpath('.//a[@itemprop="url"]/@href')).strip() or "<MISSING>"
             )
-
             if page_url != "<MISSING>":
                 phone, latitude, longitude, hours_of_operation = get_info(page_url)
             else:
@@ -114,6 +113,15 @@ def fetch_data():
             if street_address.find("-") != -1 and street_address.find("(") == -1:
                 phone = street_address
                 street_address = "<MISSING>"
+            if page_url.find("Toronto-Signature") != -1:
+                session = SgRequests()
+                r = session.get(page_url)
+                trees = html.fromstring(r.text)
+                street_address = (
+                    "".join(trees.xpath('//div[@class="grid-span-3"]/text()[2]'))
+                    .replace("\n", "")
+                    .strip()
+                )
             country_code = country
             store_number = "<MISSING>"
             location_type = "<MISSING>"
