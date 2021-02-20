@@ -67,10 +67,10 @@ def fetch_data():
 
     base_links = [
         "https://www.games-workshop.com/en-US/store/fragments/resultsJSON.jsp?latitude=40.2475923&radius=20000&longitude=-77.03341790000002",
-        "https://www.games-workshop.com/en-US/store/fragments/resultsJSON.jsp?latitude=52.911635&radius=1000&longitude=-0.645514",
+        "https://www.games-workshop.com/en-GB/store/fragments/resultsJSON.jsp?latitude=53.2362&radius=500&longitude=-1.42718",
     ]
 
-    driver = SgChrome().chrome()
+    driver = SgChrome().driver()
     time.sleep(2)
 
     for base_link in base_links:
@@ -87,17 +87,20 @@ def fetch_data():
             if store["type"] == "independentRetailer":
                 continue
 
-            # Country
-            country = store["country"] if "country" in store.keys() else "<MISSING>"
-            if country not in ["CA", "US", "GB"]:
-                continue
-
             # Store ID
             location_id = (
                 store["storeId"]
                 if "storeId" in store.keys()
                 else store["id"].split("-")[-1]
             )
+
+            # Country
+            country = store["country"] if "country" in store.keys() else "<MISSING>"
+            if country not in ["CA", "US", "GB"]:
+                if "county" in store.keys():
+                    country = "GB"
+                else:
+                    continue
 
             # Name
             location_title = (
@@ -111,12 +114,19 @@ def fetch_data():
                 street_address = store["address1"]
 
             street_address = (re.sub(" +", " ", street_address)).strip()
-            digit = re.search(r"\d", street_address).start(0)
-            if digit != 0:
-                street_address = street_address[digit:]
+
+            try:
+                digit = re.search(r"\d", street_address).start(0)
+                if digit != 0:
+                    street_address = street_address[digit:]
+            except:
+                pass
 
             # State
             state = store["state"] if "state" in store.keys() else "<MISSING>"
+
+            if country == "GB":
+                state = store["county"] if "county" in store.keys() else "<MISSING>"
 
             # city
             city = store["city"] if "city" in store.keys() else "<MISSING>"
@@ -129,6 +139,9 @@ def fetch_data():
             )
             if len(zipcode) == 4:
                 zipcode = "0" + zipcode
+
+            if country == "GB" and " " not in zipcode:
+                continue
 
             # store type
             store_type = "<MISSING>"
