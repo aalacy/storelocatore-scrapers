@@ -25,7 +25,7 @@ headers = {
 
 
 def write_output(data):
-    with open("data.csv", mode="w", newline="", encoding="utf8") as output_file:
+    with open("data.csv", mode="w", newline="") as output_file:
         writer = csv.writer(
             output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
         )
@@ -113,6 +113,8 @@ def fetch_data():
             coords = coords.split(",")
             lat = coords[0]
             lng = coords[1]
+            street = street.replace("&#039;", "'")
+            title = title.replace("&#039;", "'")
             link = "https://originaljoes.ca/home/" + title
             link = link.replace(" ", "-")
             if hours == "CLOSED FOR : RENOVATIONS":
