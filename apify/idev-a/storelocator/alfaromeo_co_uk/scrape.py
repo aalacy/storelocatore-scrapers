@@ -12,7 +12,7 @@ def fetch_data():
         res = session.get(base_url)
         store_list = json.loads(res.text[9:-1])["results"]
         for store in store_list:
-            page_url = store["WEBSITE"]
+            page_url = store["WEBSITE"].strip()
             location_name = store["COMPNAME2"]
             zip = store["ZIPCODE"]
             city = store["TOWN"]
