@@ -39,7 +39,6 @@ def fetch_data():
     session = SgRequests()
 
     items = []
-    scraped_items = []
 
     DOMAIN = "snappytomatopizza.co.uk"
     start_url = "https://snappytomatopizza.co.uk/selector/restaurant/"
