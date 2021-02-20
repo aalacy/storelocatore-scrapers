@@ -1,0 +1,4 @@
+lxml==4.6.2
+sgselenium==0.0.15
+selenium==3.141.0
+beautifulsoup4==4.9.3
