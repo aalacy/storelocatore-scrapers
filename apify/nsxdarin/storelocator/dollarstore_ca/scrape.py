@@ -100,6 +100,9 @@ def fetch_data():
                         phone = phone.split(">")[1].split("<")[0]
                     if phone == "":
                         phone = "<MISSING>"
+                    if "0000" in lat or "0000" in lng:
+                        lat = "<MISSING>"
+                        lng = "<MISSING>"
                     yield [
                         website,
                         loc,
