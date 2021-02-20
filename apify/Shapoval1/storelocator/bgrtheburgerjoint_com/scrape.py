@@ -4,6 +4,7 @@ from lxml import html
 from sgrequests import SgRequests
 from concurrent import futures
 
+
 def write_output(data):
     with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
         writer = csv.writer(
@@ -32,11 +33,13 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
+
 def get_urls():
     session = SgRequests()
     r = session.get("https://bgrtheburgerjoint.com/locations-menus/")
     tree = html.fromstring(r.text)
     return tree.xpath("//a[@class='et_pb_button et_pb_bg_layout_dark']/@href")
+
 
 def get_data(url):
     locator_domain = "https://bgrtheburgerjoint.com"
@@ -131,6 +134,7 @@ def get_data(url):
 
     return row
 
+
 def fetch_data():
     out = []
     urls = get_urls()
@@ -143,9 +147,11 @@ def fetch_data():
 
     return out
 
+
 def scrape():
     data = fetch_data()
     write_output(data)
+
 
 if __name__ == "__main__":
     scrape()
