@@ -116,7 +116,6 @@ def get_data(url):
         .strip()
         or "<MISSING>"
     )
-
     row = [
         locator_domain,
         page_url,
