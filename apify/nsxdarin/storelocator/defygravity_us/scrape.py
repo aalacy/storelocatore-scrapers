@@ -107,6 +107,30 @@ def fetch_data():
                 lng,
                 hours,
             ]
+    loc = "http://www.defygravity.us/durham"
+    name = "DefyGravity Durham"
+    add = "4300 Emperor Blvd, #250"
+    city = "Durham"
+    state = "NC"
+    zc = "27703"
+    phone = "919.825.1010"
+    hours = "Temporarily Closed"
+    yield [
+        website,
+        loc,
+        name,
+        add,
+        city,
+        state,
+        zc,
+        country,
+        store,
+        phone,
+        typ,
+        lat,
+        lng,
+        hours,
+    ]
 
 
 def scrape():
