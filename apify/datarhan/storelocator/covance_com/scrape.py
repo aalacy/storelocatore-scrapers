@@ -1,8 +1,8 @@
 import csv
-import pyap
 from lxml import etree
 
 from sgrequests import SgRequests
+from sgscrape.sgpostal import parse_address_intl
 
 
 def write_output(data):
@@ -52,34 +52,28 @@ def fetch_data():
     for poi_html in all_locations[1:]:
         store_url = "<MISSING>"
         location_name = poi_html.xpath('.//li[@class="name"]/text()')
-        location_name = location_name[0] if location_name else "<MISSING>"
+        if not location_name:
+            continue
+        location_name = (
+            location_name[0].replace("<", "") if location_name else "<MISSING>"
+        )
         raw_address = poi_html.xpath('.//li[@class="address"]/text()')
         raw_address = [elem.strip() for elem in raw_address if elem.strip()]
         full_addr = " ".join(raw_address).replace("\n", " ").replace("\t", " ")
-        addr = pyap.parse(full_addr, country="GB")
-        if "," not in poi_html.xpath('.//li[@class="title"]/text()')[0]:
-            if "Bristol" not in poi_html.xpath('.//li[@class="title"]/text()')[0]:
-                if not addr:
-                    continue
-        country_code = "<MISSING>"
-        if "USA" in raw_address[-1]:
-            country_code = "USA"
-            raw_address = raw_address[:-1] + [" ".join(raw_address[-1].split()[:-1])]
-        country_code = "<MISSING>"
-        city = poi_html.xpath('.//li[@class="title"]/text()')[0].split(", ")[0]
-        city = city.replace("CRU", "").strip() if city else "<MISSING>"
-        street_address = (
-            raw_address[0].replace(city, "").replace("\n", " ").replace("\t", " ")
-        )
-        state = (
-            poi_html.xpath('.//li[@class="title"]/text()')[0].split(", ")[-1].strip()
-        )
-        if "Bristol" in state:
-            state = "TN"
-        street_address = street_address.split(", {}".format(state))[0]
-        zip_code = raw_address[-1].split()[-1]
-        if len(zip_code) == 3:
-            zip_code = " ".join(raw_address[-1].split()[-2:])
+        addr = parse_address_intl(full_addr)
+        country_code = addr.country
+        country_code = country_code if country_code else "<MISSING>"
+        if country_code not in ["Usa", "<MISSING>", "UK", "United Kingdom"]:
+            continue
+        city = addr.city
+        city = city if city else "<MISSING>"
+        street_address = addr.street_address_1
+        if addr.street_address_2:
+            street_address = addr.street_address_2 + addr.street_address_1
+        state = addr.state
+        state = state if state else "<MISSING>"
+        zip_code = addr.postcode
+        zip_code = zip_code if zip_code else "<MISSING>"
         store_number = "<MISSING>"
         phone = poi_html.xpath('.//li[@class="phone"]/a/text()')
         phone = phone[0] if phone else "<MISSING>"
@@ -87,29 +81,6 @@ def fetch_data():
         latitude = "<MISSING>"
         longitude = "<MISSING>"
         hours_of_operation = "<MISSING>"
-
-        if zip_code in street_address:
-            street_address = street_address.replace(zip_code, "")
-
-        for elem in ["UK", "FAX", "Kingdom"]:
-            if elem in zip_code:
-                zip_code = "<MISSING>"
-        if city == state:
-            state = "<MISSING>"
-        if state == "Maidenhead":
-            state = "<MISSING>"
-            zip_code = "<MISSING>"
-        if "England" in raw_address[-1]:
-            zip_code = raw_address[-1].replace(" England", "")
-            state = raw_address[-2].split(", ")[0]
-            street_address = " ".join(raw_address[:2])
-        if "The Clove Building" in raw_address[0]:
-            street_address = " ".join(raw_address[:2])
-            zip_code = raw_address[3]
-        if len(state.strip()) > 2:
-            state = "<MISSING>"
-        if street_address.endswith(","):
-            street_address = street_address[:-1]
 
         item = [
             DOMAIN,

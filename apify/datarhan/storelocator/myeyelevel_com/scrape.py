@@ -3,7 +3,7 @@ import json
 from lxml import etree
 
 from sgrequests import SgRequests
-from sgscrape.sgpostal import parse_address_usa
+from sgscrape.sgpostal import parse_address_intl
 
 
 def write_output(data):
@@ -81,7 +81,7 @@ def fetch_data():
             raw_address = loc_dom.xpath(
                 '//ul[@class="copyUl"]//span[@class="link"]/text()'
             )[0]
-            structured_adr = parse_address_usa(raw_address)
+            structured_adr = parse_address_intl(raw_address)
             location_name = poi["centerName"]
             location_name = location_name if location_name else "<MISSING>"
             street_address = structured_adr.street_address_1
