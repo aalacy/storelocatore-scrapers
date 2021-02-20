@@ -2,7 +2,6 @@ import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 import re
-from sgscrape import sgpostal as parser
 from sglogging import SgLogSetup
 import lxml.html
 
