@@ -1,6 +1,9 @@
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
-import json
+from sgrequests import SgRequests
+from sgscrape.sgpostal import parse_address_intl
+from bs4 import BeautifulSoup as bs
+import demjson
 
 locator_domain = "https://www.qdstores.co.uk/"
 base_url = "https://www.qdstores.co.uk/static/store-finder.html"
@@ -15,40 +18,58 @@ def _headers():
     }
 
 
+def _hoo(soup, number):
+    hours = soup.select("div.opening-times")
+    temp = []
+    for _ in hours:
+        if _["data-id"] == f"opening-{number}":
+            keys = [t.text for t in _.select("dt")]
+            values = [t.text for t in _.select("dd")]
+            for tt in range(len(keys)):
+                if keys[tt] in [
+                    "Monday",
+                    "Tuesday",
+                    "Wednesday",
+                    "Thursday",
+                    "Friday",
+                    "Saturday",
+                    "Sunday",
+                ]:
+                    temp.append(f"{keys[tt]}: {values[tt]}")
+            return "; ".join(temp)
+
+
 def fetch_data():
-    # with SgRequests() as session:
-    # res = session.get(base_url, headers=_headers())
-    # soup = (
-    #     res.text.split("Stores =")[1]
-    #     .strip()
-    #     .split("// Initiates the class once the DOM is ready")[0]
-    #     .strip()
-    # )
-    # json_data = (
-    #     soup.replace("\t", "").replace("\n", "").replace("\r", "")[:-3] + "}"
-    # )
-    locations = json.loads()
-    for _ in locations:
-        hours = []
-        for key, value in json.loads(_["open_hours"]).items():
-            hours.append(f"{key}: {value[0]}")
-        hours_of_operation = "; ".join(hours)
-        record = SgRecord(
-            page_url=_["website"],
-            store_number=_["id"],
-            location_name=_["title"],
-            street_address=_["street"],
-            city=_["city"],
-            state=_["state"],
-            zip_postal=_["postal_code"],
-            country_code=_["country"],
-            phone=_["phone"],
-            latitude=_["lat"],
-            longitude=_["lng"],
-            locator_domain=locator_domain,
-            hours_of_operation=hours_of_operation,
+    with SgRequests() as session:
+        res = session.get(base_url, headers=_headers())
+        soup = bs(res.text, "lxml")
+        body = (
+            res.text.split("Stores =")[1]
+            .strip()
+            .split("// Initiates the class once the DOM is ready")[0]
+            .strip()
         )
-        yield record
+        json_data = (
+            body.replace("\t", "").replace("\n", "").replace("\r", "")[:-3] + "}"
+        )
+        locations = demjson.decode(json_data)
+        for key, _ in locations.items():
+            addr = parse_address_intl(_["address"].replace("<br />", " "))
+            record = SgRecord(
+                store_number=_["number"],
+                location_name=_["name"],
+                street_address=addr.street_address_1,
+                city=addr.city,
+                state=addr.state,
+                zip_postal=addr.postcode,
+                country_code="uk",
+                latitude=_["lat"],
+                longitude=_["lng"],
+                phone=_["tel"],
+                locator_domain=locator_domain,
+                hours_of_operation=_hoo(soup, _["number"]),
+            )
+            yield record
 
 
 if __name__ == "__main__":
