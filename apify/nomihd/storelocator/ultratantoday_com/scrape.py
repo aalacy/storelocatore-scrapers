@@ -68,7 +68,7 @@ def fetch_data():
     json_text = "".join(
         stores_sel.xpath('//script[@id="__NEXT_DATA__"]/text()')
     ).strip()
-    stores = json.loads(json_text)["props"]["pageProps"]["data"]["allLocations"][
+    stores = json.loads(json_text)["props"]["pageProps"]["data"]["filterLocations"][
         "edges"
     ]
 
@@ -81,7 +81,7 @@ def fetch_data():
 
         if len(page_url) > 0:
             page_url = "https://ultratantoday.com/stores/" + page_url[0]
-
+            log.info(page_url)
             store_req = session.get(page_url, headers=headers)
             store_sel = lxml.html.fromstring(store_req.text)
             if "This page could not be found" not in store_req.text:

@@ -37,12 +37,13 @@ def write_output(data):
 
 def fetch_data():
     # Your scraper here
-    session = SgRequests()
+    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
 
     items = []
     scraped_items = []
 
     DOMAIN = "postnet.com"
+    start_url = "https://locations.postnet.com/search?q={}"
 
     states = [
         "AL",
@@ -98,8 +99,6 @@ def fetch_data():
         "WY",
     ]
 
-    start_url = "https://locations.postnet.com/search?q={}"
-
     for state in states:
         response = session.get(start_url.format(state))
         dom = etree.HTML(response.text)
@@ -126,12 +125,10 @@ def fetch_data():
             zip_code = zip_code[0] if zip_code else "<MISSING>"
             country_code = store_dom.xpath("//address/@data-country")
             country_code = country_code[0] if country_code else "<MISSING>"
-            store_number = ""
-            store_number = store_number if store_number else "<MISSING>"
+            store_number = "<MISSING>"
             phone = store_dom.xpath('//span[@itemprop="telephone"]/text()')
             phone = phone[0] if phone else "<MISSING>"
-            location_type = ""
-            location_type = location_type if location_type else "<MISSING>"
+            location_type = "<MISSING>"
             latitude = store_dom.xpath('//meta[@itemprop="latitude"]/@content')
             latitude = latitude[0] if latitude else "<MISSING>"
             longitude = store_dom.xpath('//meta[@itemprop="longitude"]/@content')
@@ -168,9 +165,8 @@ def fetch_data():
                 longitude,
                 hours_of_operation,
             ]
-
-            if location_name not in scraped_items:
-                scraped_items.append(location_name)
+            if street_address not in scraped_items:
+                scraped_items.append(street_address)
                 items.append(item)
 
     return items

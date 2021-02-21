@@ -105,23 +105,29 @@ def fetch_data():
                                 country = "US"
                             if store not in locs:
                                 if country == "CA" or country == "US":
-                                    locs.append(store)
-                                    yield [
-                                        website,
-                                        lurl,
-                                        name,
-                                        add,
-                                        city,
-                                        state,
-                                        zc,
-                                        country,
-                                        store,
-                                        phone,
-                                        typ,
-                                        lat,
-                                        lng,
-                                        hours,
-                                    ]
+                                    if (
+                                        "-ku" not in add
+                                        and "Mexico" not in city
+                                        and "137." not in lng
+                                        and "<MISSING>" not in add
+                                    ):
+                                        locs.append(store)
+                                        yield [
+                                            website,
+                                            lurl,
+                                            name,
+                                            add,
+                                            city,
+                                            state,
+                                            zc,
+                                            country,
+                                            store,
+                                            phone,
+                                            typ,
+                                            lat,
+                                            lng,
+                                            hours,
+                                        ]
 
 
 def scrape():
