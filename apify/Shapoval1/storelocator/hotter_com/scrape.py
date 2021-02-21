@@ -40,8 +40,7 @@ def fetch_data():
     session = SgRequests()
     r = session.get(api_url)
     block1 = r.text.split("var stores = [")[1].split("]")[0]
-    block2 = r.text.split("var stockists = [")[1].split("]")[0]
-    block = "[" + block1 + "," + block2 + "]"
+    block = "[" + block1 + "]"
     js = json.loads(block)
     for j in js:
         ad = j.get("custom_data")

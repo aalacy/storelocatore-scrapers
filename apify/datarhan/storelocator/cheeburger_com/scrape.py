@@ -58,7 +58,11 @@ def fetch_data():
         location_name = poi_html.xpath('.//div[@class="vc_toggle_title"]/h4/text()')
         location_name = location_name[0] if location_name else "<MISSING>"
         street_address = poi_html.xpath('.//div[@class="address"]/h5/text()')
-        street_address = street_address[0] if street_address else "<MISSING>"
+        street_address = (
+            " ".join([e for e in street_address[:2] if "Phone" not in e])
+            if street_address
+            else "<MISSING>"
+        )
         raw_adr = f"{location_name} {street_address}"
         addr = parse_address_usa(raw_adr)
         zip_code = addr.postcode
@@ -83,9 +87,7 @@ def fetch_data():
         ]
         phone = phone[0].split()[-1] if phone else "<MISSING>"
         location_type = "<MISSING>"
-        geo = poi_html.xpath(
-            './/div[@class="address"]/h5/a[contains(@href, "maps")]/@href'
-        )
+        geo = poi_html.xpath('.//a[contains(@href, "/@")]/@href')
         latitude = "<MISSING>"
         longitude = "<MISSING>"
         if geo:
