@@ -178,7 +178,7 @@ def fetch_data():
                 )
 
                 p += 1
-            except Exception as e:
+            except:
                 soup = BeautifulSoup(r.text, "html.parser")
                 try:
                     content = soup.find(
