@@ -105,12 +105,11 @@ def fetch_data():
         if "CLOSED" == tim.strip():
             continue
         phone = soup.find("span", {"itemprop": "telephone"}).text
-        # logger.info(soup.find('iframe').get('src'))
+
         long, lat = re.findall(
             r".*!2d(.*)!3d([\d\.]+)!", soup.find("iframe").get("src")
         )[0]
 
-        # logger.info(lat,long)
         all.append(
             [
                 "https://www.picklemans.com/",
