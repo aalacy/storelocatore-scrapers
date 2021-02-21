@@ -62,7 +62,6 @@ def fetch_data():
 
     for url in all_locations:
         store_url = urljoin(start_url, url)
-        print(store_url)
         with SgChrome() as driver:
             driver.get(store_url)
             loc_dom = etree.HTML(driver.page_source)
