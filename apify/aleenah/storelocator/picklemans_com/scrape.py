@@ -45,12 +45,8 @@ all = []
 
 def fetch_data():
     # Your scraper here
-    page_url = []
-    driver.get(
-        "https://www.picklemans.com/locations.php"
-    )  # ,headers={'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.132 Safari/537.36'})
+    driver.get("https://www.picklemans.com/locations.php")
     soup = BeautifulSoup(driver.page_source, "html.parser")
-    # logger.info(soup)
     urls = soup.find_all("p", {"class": "storemapper-address"})
     logger.info(len(urls))
     for url in urls:
@@ -88,8 +84,7 @@ def fetch_data():
                     timl = timli[1].text
             else:
                 type = "open"
-        # logger.info(timl)
-        print(timl)
+
         try:
             tim = (
                 re.findall(
