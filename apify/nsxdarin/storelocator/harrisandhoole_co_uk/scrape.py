@@ -72,6 +72,13 @@ def fetch_data():
         lat = ""
         lng = ""
         hours = ""
+        monhrs = ""
+        tuehrs = ""
+        wedhrs = ""
+        thuhrs = ""
+        frihrs = ""
+        sathrs = ""
+        sunhrs = ""
         r2 = session.get(purl, headers=headers)
         for line2 in r2.iter_lines():
             line2 = str(line2.decode("utf-8"))
@@ -99,10 +106,35 @@ def fetch_data():
                 hrs = day + ": " + line2.split('"opensAt": "')[1].split('"')[0]
             if '"closesAt": "' in line2:
                 hrs = hrs + "-" + line2.split('At": "')[1].split('"')[0]
-                if hours == "":
-                    hours = hrs
-                else:
-                    hours = hours + "; " + hrs
+                if "Mon" in hrs:
+                    monhrs = hrs
+                if "Tue" in hrs:
+                    tuehrs = hrs
+                if "Wed" in hrs:
+                    wedhrs = hrs
+                if "Thu" in hrs:
+                    thuhrs = hrs
+                if "Fri" in hrs:
+                    frihrs = hrs
+                if "Sat" in hrs:
+                    sathrs = hrs
+                if "Sun" in hrs:
+                    sunhrs = hrs
+        hours = (
+            monhrs
+            + "; "
+            + tuehrs
+            + "; "
+            + wedhrs
+            + "; "
+            + thuhrs
+            + "; "
+            + frihrs
+            + "; "
+            + sathrs
+            + "; "
+            + sunhrs
+        )
         if "TEMPORARILY" in name.upper():
             hours = "TEMPORARILY CLOSED"
         if " Temp" in name:
