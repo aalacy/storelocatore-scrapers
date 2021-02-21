@@ -56,34 +56,6 @@ def fetch_data():
 
     data = '{"query":"query GetMap($id: ID!) {\\n getMap(id: $id) {\\n id\\n name\\n owner\\n markerColor\\n markerShape\\n markerSize\\n markerIcon\\n markerBorder\\n markerCustomImage\\n markerCustomIcon\\n markerCustomStyle\\n defaultZoom\\n gestureHandling\\n zoomHandling\\n zoomControl\\n fullscreenControl\\n streetViewControl\\n mapType\\n showTraffic\\n showTransit\\n showBicycling\\n showSidebar\\n showModals\\n showDirectionsButton\\n showSearchbox\\n showCurrentLocation\\n showTitle\\n showLightbox\\n showBranding\\n highlightSelectedMarker\\n permission\\n password\\n mapStyle\\n mapStyleGenerated\\n mapStyleRoads\\n mapStyleLandmarks\\n mapStyleLabels\\n mapStyleIcons\\n modalPosition\\n modalBackgroundColor\\n modalPadding\\n modalRadius\\n modalShadow\\n modalTail\\n modalTitleVisible\\n modalTitleColor\\n modalTitleSize\\n modalTitleWeight\\n modalAddressVisible\\n modalAddressLink\\n modalAddressColor\\n modalAddressSize\\n modalAddressWeight\\n modalNoteVisible\\n modalNoteColor\\n modalNoteSize\\n modalNoteWeight\\n itemsOrder\\n groupsCollapsed\\n categories(limit: 1000) {\\n items {\\n id\\n name\\n collapsed\\n itemsOrder\\n markerColor\\n markerSize\\n markerIcon\\n markerShape\\n markerBorder\\n markerCustomImage\\n markerCustomIcon\\n }\\n nextToken\\n }\\n shapes(limit: 1000) {\\n items {\\n id\\n lat\\n long\\n zoom\\n name\\n paths\\n fill\\n stroke\\n color\\n width\\n height\\n type\\n }\\n nextToken\\n }\\n markers(limit: 1000) {\\n items {\\n id\\n name\\n lat\\n long\\n placeId\\n formattedAddress\\n notes\\n createdAt\\n color\\n icon\\n size\\n shape\\n border\\n customImage\\n customIcon\\n customStyle\\n useCoordinates\\n }\\n nextToken\\n }\\n }\\n}\\n","variables":{"id":"b37b90e4-2e04-4604-acdf-ad47099f14bb"}}'
     r = session.post(api_url, headers=headers, data=data)
-    tag = {
-        "Recipient": "recipient",
-        "AddressNumber": "address1",
-        "AddressNumberPrefix": "address1",
-        "AddressNumberSuffix": "address1",
-        "StreetName": "address1",
-        "StreetNamePreDirectional": "address1",
-        "StreetNamePreModifier": "address1",
-        "StreetNamePreType": "address1",
-        "StreetNamePostDirectional": "address1",
-        "StreetNamePostModifier": "address1",
-        "StreetNamePostType": "address1",
-        "CornerOf": "address1",
-        "IntersectionSeparator": "address1",
-        "LandmarkName": "address1",
-        "USPSBoxGroupID": "address1",
-        "USPSBoxGroupType": "address1",
-        "USPSBoxID": "address1",
-        "USPSBoxType": "address1",
-        "BuildingName": "address2",
-        "OccupancyType": "address2",
-        "OccupancyIdentifier": "address2",
-        "SubaddressIdentifier": "address2",
-        "SubaddressType": "address2",
-        "PlaceName": "city",
-        "StateName": "state",
-        "ZipCode": "postal",
-    }
     js = r.json()["data"]["getMap"]["markers"]["items"]
     for j in js:
         line = "".join(j.get("formattedAddress"))
