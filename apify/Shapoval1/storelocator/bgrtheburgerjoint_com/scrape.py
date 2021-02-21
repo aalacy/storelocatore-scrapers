@@ -86,6 +86,7 @@ def get_data(url):
     )
     if page_url.find("kuwait") != -1:
         return
+
     a = usaddress.tag(line, tag_mapping=tag)[0]
     street_address = f"{a.get('address1')} {a.get('address2')} {a.get('recipient')}".replace(
         "None", ""
@@ -96,10 +97,12 @@ def get_data(url):
     country_code = "US"
     store_number = "<MISSING>"
     location_name = " ".join(
-        tree.xpath(
-            "//div[@class='et_pb_with_border et_pb_module et_pb_text et_pb_text_0  et_pb_text_align_left et_pb_bg_layout_dark']/div[@class='et_pb_text_inner']/h2//text()"
-        )
+        tree.xpath("//div[@class='et_pb_text_inner']/h2//text()")
     ).split(",")[0]
+    if page_url.find("bwi-airport") != -1:
+        location_name = location_name.split("CREATE")[0].strip()
+    if page_url.find("monroe-st") != -1:
+        location_name = location_name.split("FEATURED")[0].strip()
     phone = (
         "".join(tree.xpath("//a[contains(@href, 'tel')]/text()"))
         .replace("Phone:", "")
