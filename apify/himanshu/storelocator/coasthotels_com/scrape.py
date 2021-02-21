@@ -72,7 +72,7 @@ def fetch_data():
         except:
             lat = longt = "<MISSING>"
         phone = loc["telephone"]
-       
+
         data.append(
             [
                 "https://www.coasthotels.com/",
