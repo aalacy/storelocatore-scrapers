@@ -1,8 +1,9 @@
 import csv
 from lxml import etree
-from sgscrape.sgpostal import parse_address, International_Parser
-from sgrequests import SgRequests
 from concurrent.futures import ThreadPoolExecutor, as_completed
+
+from sgscrape.sgpostal import parse_address_intl
+from sgrequests import SgRequests
 
 
 def write_output(data):
@@ -84,7 +85,6 @@ def fetch_locations(session):
 
 
 def fetch_location(store_url, session):
-    parser = International_Parser()
     loc_response = session.get(store_url)
     loc_dom = etree.HTML(loc_response.text)
 
@@ -92,7 +92,7 @@ def fetch_location(store_url, session):
     location_name = loc_dom.xpath('//h1[@class="text-center"]/text()')
     location_name = location_name[0] if location_name else "<MISSING>"
     raw_address = " ".join(loc_dom.xpath('//span[@itemprop="address"]//text()'))
-    parsed_adr = parse_address(parser, raw_address=raw_address)
+    parsed_adr = parse_address_intl(raw_address)
     street_address = parsed_adr.street_address_1
     if parsed_adr.street_address_2:
         street_address += ", " + parsed_adr.street_address_2
