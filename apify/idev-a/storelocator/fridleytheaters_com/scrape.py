@@ -13,15 +13,15 @@ def fetch_data():
     with SgRequests() as session:
         res = session.get(base_url)
         soup = bs(res.text, "lxml")
-        links = soup.select(".state-locations figure.theater-box a")
+        links = soup.select(".state-locations figure.theater-box figcaption")
         for link in links:
-            page_url = urljoin("https://www.fridleytheatres.com", link["href"])
+            page_url = urljoin(
+                "https://www.fridleytheatres.com", link.select_one("a")["href"]
+            )
             r1 = session.get(page_url)
             soup1 = bs(r1.text, "lxml")
             location_name = soup1.select_one("h1#theater-name").text
-            _addr = " ".join(
-                [_ for _ in soup1.select_one("div#info-left").stripped_strings]
-            )
+            _addr = " ".join([_ for _ in link.stripped_strings][:-1])
             addr = parse_address_usa(_addr)
             _phone = [_ for _ in soup1.select_one("div#info-right").stripped_strings]
             hours_of_operation = "<MISSING>"
