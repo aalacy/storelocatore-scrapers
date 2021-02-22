@@ -48,7 +48,7 @@ def fetch_data():
     for dt in main:
         name = ""
         for val in dt.find_all("p", recursive=False):
-            if val.find("strong") != None:
+            if val.find("strong") is not None:
                 name = val.find("strong").text
             loc_address = list(val.find("span").stripped_strings)
             loc_lat = val.find("a", text="Map Location")["href"].split("@")
