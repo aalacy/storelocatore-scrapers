@@ -56,6 +56,11 @@ def fetch_data():
         country = item["country"]
         zc = item["zip"]
         loc = item["url"]
+        r2 = session.get(loc, headers=headers)
+        for line in r2.iter_lines():
+            line = str(line.decode("utf-8"))
+            if '"street":"' in line:
+                add = line.split('"street":"')[1].split('"')[0]
         phone = item["phone"]
         for day in item["openingHours"]:
             hrs = day["openingDay"] + ": " + day["openingHour"]
@@ -72,6 +77,7 @@ def fetch_data():
             phone = phone.split("(")[0].strip()
         if country == "United Kingdom":
             country = "GB"
+            add = add.replace("&#039;", "'")
             yield [
                 website,
                 loc,
