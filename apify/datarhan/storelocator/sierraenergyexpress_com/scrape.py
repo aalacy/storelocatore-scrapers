@@ -58,7 +58,8 @@ def fetch_data():
         addr = parse_address_intl(raw_address)
         street_address = addr.street_address_1
         if addr.street_address_2:
-            street_address = addr.street_address_2 + " " + addr.street_address_1
+            street_address += " " + addr.street_address_2
+        street_address = street_address.replace(".Suite", ". Suite")
         city = addr.city
         city = city if city else "<MISSING>"
         state = addr.state
