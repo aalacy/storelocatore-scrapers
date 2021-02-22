@@ -1,23 +1,9 @@
 import csv
 import json
-import time
+from time import sleep
 
 from sgrequests import SgRequests
-from sgselenium import SgChrome, SgSelenium
-
-DOMAIN = "musicgoround.com"
-
-
-class SgSeleniumDelay(SgSelenium):
-    """
-    Added delay to get token.
-    Returns list of dictionaries
-    """
-
-    def get_default_headers_for(driver, request_url: str) -> dict:
-        driver.get(request_url)
-        time.sleep(10)
-        return driver.get_cookies()
+from sgselenium import SgChrome
 
 
 def write_output(data):
@@ -51,14 +37,16 @@ def write_output(data):
 
 
 def fetch_data():
-    with SgChrome() as driver:
-        headers = SgSeleniumDelay.get_default_headers_for(
-            driver, "https://www.musicgoround.com/locations"
-        )
-        for elem in headers:
-            if elem["name"] == "ordercloud.access-token":
-                token = elem["value"]
+    DOMAIN = "musicgoround.com"
+    start_url = "https://www.musicgoround.com/locations"
 
+    with SgChrome() as driver:
+        driver.get(start_url)
+        sleep(10)
+        request_cookies_browser = driver.get_cookies()
+    token = [
+        e for e in request_cookies_browser if e["name"] == "ordercloud.access-token"
+    ][0]["value"]
     hdr = {
         "Accept": "application/json, text/plain, */*",
         "Accept-Encoding": "gzip, deflate, br",
