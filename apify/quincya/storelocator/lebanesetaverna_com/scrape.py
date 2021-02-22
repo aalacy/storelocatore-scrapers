@@ -38,7 +38,10 @@ def write_output(data):
 
 def fetch_data():
 
-    base_links = ["https://www.lebanesetaverna.com/lebanese-taverna", "https://www.lebanesetaverna.com/leb-tav"]
+    base_links = [
+        "https://www.lebanesetaverna.com/lebanese-taverna",
+        "https://www.lebanesetaverna.com/leb-tav",
+    ]
 
     user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
     headers = {"User-Agent": user_agent}
@@ -62,7 +65,12 @@ def fetch_data():
             raw_data = list(item.stripped_strings)
             if "menu" in raw_data[-1].lower():
                 raw_data.pop(-1)
-            raw_address = raw_data[1].replace("Avenue, NW", "Avenue NW").replace(", SUITE", " SUITE").split(",")
+            raw_address = (
+                raw_data[1]
+                .replace("Avenue, NW", "Avenue NW")
+                .replace(", SUITE", " SUITE")
+                .split(",")
+            )
 
             street_address = raw_address[0]
             city = raw_address[1].strip()
