@@ -10,8 +10,6 @@ base_url = "https://www.fridleytheatres.com/locations"
 
 
 def fetch_data():
-    data = []
-
     with SgRequests() as session:
         res = session.get(base_url)
         soup = bs(res.text, "lxml")
@@ -30,7 +28,7 @@ def fetch_data():
             msg = soup1.select_one("div#fxp-message img")["alt"]
             if "temporarily closed" in msg:
                 hours_of_operation = "Closed"
-            record = SgRecord(
+            yield SgRecord(
                 page_url=page_url,
                 location_name=location_name,
                 street_address=addr.street_address_1,
@@ -42,9 +40,6 @@ def fetch_data():
                 locator_domain=locator_domain,
                 hours_of_operation=hours_of_operation,
             )
-            data.append(record)
-
-    return data
 
 
 if __name__ == "__main__":
