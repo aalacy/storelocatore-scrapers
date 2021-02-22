@@ -18,56 +18,55 @@ longitudes = []
 hours_of_operations = []
 
 with SgChrome() as driver:
-  driver.get("https://www.rockandbrews.com/locations")
-  html = driver.page_source
-  soup = bs(html, "html.parser")
+    driver.get("https://www.rockandbrews.com/locations")
+    html = driver.page_source
+    soup = bs(html, "html.parser")
 
-  grids = soup.find_all("div", attrs={"class": "col-md-4 col-xs-12 pm-location"})
+    grids = soup.find_all("div", attrs={"class": "col-md-4 col-xs-12 pm-location"})
 
-  for grid in grids:
-    locator_domain = "rockandbrews.com"
-    page_url = "rockandbrews.com/locations"
-    
-    name = grid.find("h4").text
-    address = grid.find("span").text
+    for grid in grids:
+        locator_domain = "rockandbrews.com"
+        page_url = "rockandbrews.com/locations"
 
+        name = grid.find("h4").text
+        address = grid.find("span").text
 
-    full_address = grid.find("a").text
-    city_state_zipp = full_address.replace(address, "").strip()
-    
-    city = city_state_zipp.split(", ")[0]
-    state = city_state_zipp.split(", ")[1].split(" ")[0]
-    zipp = city_state_zipp.split(", ")[1].split(" ")[1]
+        full_address = grid.find("a").text
+        city_state_zipp = full_address.replace(address, "").strip()
 
-    if len(state) < 2:
-        pass
-    else:
-        country_code = "US"
+        city = city_state_zipp.split(", ")[0]
+        state = city_state_zipp.split(", ")[1].split(" ")[0]
+        zipp = city_state_zipp.split(", ")[1].split(" ")[1]
 
-        store_number = "<MISSING>"
-        phone = "<MISSING>"
-        location_type = "<MISSING>"
+        if len(state) < 2:
+            pass
+        else:
+            country_code = "US"
 
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
+            store_number = "<MISSING>"
+            phone = "<MISSING>"
+            location_type = "<MISSING>"
 
-        hour = grid.find("div", attrs={"class": "hours"}).text
-        
-        locator_domains.append(locator_domain)
-        page_urls.append(page_url)
-        location_names.append(name)
-        street_addresses.append(address)
-        citys.append(city)
-        states.append(state)
-        zips.append(zipp)
-        country_codes.append(country_code)
-        store_numbers.append(store_number)
-        phones.append(phone)
-        location_types.append(location_type)
-        latitudes.append(latitude)
-        longitudes.append(longitude)
-        hours_of_operations.append(hour)
-  
+            latitude = "<MISSING>"
+            longitude = "<MISSING>"
+
+            hour = grid.find("div", attrs={"class": "hours"}).text
+
+            locator_domains.append(locator_domain)
+            page_urls.append(page_url)
+            location_names.append(name)
+            street_addresses.append(address)
+            citys.append(city)
+            states.append(state)
+            zips.append(zipp)
+            country_codes.append(country_code)
+            store_numbers.append(store_number)
+            phones.append(phone)
+            location_types.append(location_type)
+            latitudes.append(latitude)
+            longitudes.append(longitude)
+            hours_of_operations.append(hour)
+
 
 df = pd.DataFrame(
     {
@@ -89,5 +88,3 @@ df = pd.DataFrame(
 )
 
 df.to_csv("data.csv")
-
-
