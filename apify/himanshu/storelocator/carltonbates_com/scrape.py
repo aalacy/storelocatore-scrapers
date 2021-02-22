@@ -1,8 +1,8 @@
-import csv
-from sgrequests import SgRequests
-from bs4 import BeautifulSoup
 import re
-import json
+import csv
+from bs4 import BeautifulSoup
+
+from sgrequests import SgRequests
 
 
 def write_output(data):
