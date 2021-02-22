@@ -82,7 +82,10 @@ def fetch_data():
                         lng = "<MISSING>"
                     typ = "Restaurant"
                     website = "kfc.ca"
-                    loc = "<MISSING>"
+                    loc = (
+                        "https://www.kfc.ca/store/"
+                        + item.split('"AddressDisplyName":"')[1].split('"')[0]
+                    )
                     hours = ""
                     if '"Hours":[]' in item:
                         hours = "<MISSING>"

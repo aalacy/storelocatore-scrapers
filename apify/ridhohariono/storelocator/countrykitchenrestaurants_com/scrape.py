@@ -92,7 +92,14 @@ def fetch_data():
         city = handle_missing(location["city"])
         state = handle_missing(location["state"])
         zip_code = handle_missing(location["postal_code"])
-        country_code = "US"
+        if location["country"] == "USA" or location["country"] == "United States":
+            country_code = "US"
+        elif location["country"] == "CA" or location["country"] == "CAN":
+            country_code = "CA"
+        elif location["country"] == "UK" or location["country"] == "United Kingdom":
+            country_code = "UK"
+        else:
+            country_code = location["country"]
         store_number = row["id"]
         phone = handle_missing(bs(location["extra_fields"]["phone"], "lxml").text)
         location_type = "<MISSING>"

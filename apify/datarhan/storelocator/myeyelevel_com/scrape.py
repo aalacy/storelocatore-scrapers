@@ -3,7 +3,7 @@ import json
 from lxml import etree
 
 from sgrequests import SgRequests
-from sgscrape.sgpostal import parse_address
+from sgscrape.sgpostal import parse_address_intl
 
 
 def write_output(data):
@@ -74,7 +74,6 @@ def fetch_data():
                 store_url = "https://" + poi["homeurl"]
             else:
                 store_url = "<MISSING>"
-            print(store_url)
             if "www.myeyelevel.com" not in store_url:
                 continue
             loc_response = session.get(store_url)
@@ -82,7 +81,7 @@ def fetch_data():
             raw_address = loc_dom.xpath(
                 '//ul[@class="copyUl"]//span[@class="link"]/text()'
             )[0]
-            structured_adr = parse_address(raw_address)
+            structured_adr = parse_address_intl(raw_address)
             location_name = poi["centerName"]
             location_name = location_name if location_name else "<MISSING>"
             street_address = structured_adr.street_address_1
@@ -112,7 +111,9 @@ def fetch_data():
             longitude = longitude if longitude else "<MISSING>"
             hours_of_operation = poi["centerOpenTime"]
             hours_of_operation = (
-                hours_of_operation if hours_of_operation else "<MISSING>"
+                hours_of_operation.replace(",", " ").strip()
+                if hours_of_operation
+                else "<MISSING>"
             )
 
             item = [
