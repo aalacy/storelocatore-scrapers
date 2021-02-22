@@ -12,6 +12,7 @@ base_url = "https://www.ellianos.com/locations/"
 def _hours(dom_locs, location):
     hours = []
     address = ""
+    phone = ""
     for _ in dom_locs:
         if (
             _.select_one("h4.edgtf-team-name")
@@ -27,7 +28,11 @@ def _hours(dom_locs, location):
                 address = _.select_one("div.edgtf-team-description").text
             except:
                 pass
-    return ("; ".join(hours) or "<MISSING>").replace("–", "-"), address
+            try:
+                phone = _.select_one("p.edgtf-team-position").text
+            except:
+                pass
+    return ("; ".join(hours) or "<MISSING>").replace("–", "-"), address, phone
 
 
 def fetch_data():
@@ -55,7 +60,7 @@ def fetch_data():
             ):
                 location_type = "COMING SOON"
                 title = _["title"].split("-")[0].strip()
-            hours_of_operation, address = _hours(dom_locs, _)
+            hours_of_operation, address, phone = _hours(dom_locs, _)
             if not address:
                 address = _["address"]
             addr = parse_address_intl(address)
@@ -68,6 +73,7 @@ def fetch_data():
                 state=addr.state,
                 zip_postal=addr.postcode,
                 country_code="US",
+                phone=phone,
                 latitude=_["location"]["lat"],
                 longitude=_["location"]["lng"],
                 locator_domain=locator_domain,
