@@ -62,7 +62,7 @@ def fetch_data():
     location_url = "https://www.circlek.com/stores_new.php?lat=40.75&lng=-73.99&distance=9999999999&services=&region=global"
     stores = session.get(location_url, headers=headers).json()["stores"]
     for key in stores.keys():
-        if stores[key]["op_status"] == "Open":
+        if stores[key]["op_status"] == "Open" and stores[key]["display_brand"]=="Circle K":
             page_url = "https://www.circlek.com" + stores[key]["url"]
             logger.info(page_url)
             store_req = session.get(page_url, headers=headers)
