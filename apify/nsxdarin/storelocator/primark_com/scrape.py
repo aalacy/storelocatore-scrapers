@@ -76,8 +76,11 @@ def fetch_data():
         lng = ""
         hours = ""
         country = "US"
-        if "-kingdom/" in loc:
-            country = "GB"
+        if "-kingdom/" in loc or "-states/" in loc:
+            if "-kingdom/" in loc:
+                country = "GB"
+            else:
+                country = "US"
             r2 = session.get(loc, headers=headers)
             for line2 in r2.iter_lines():
                 line2 = str(line2.decode("utf-8"))
