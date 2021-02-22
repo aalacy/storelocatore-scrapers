@@ -1,7 +1,7 @@
 import csv
 import json
 import bs4
-import bypass_req
+import req
 
 
 def write_output(data):
@@ -41,7 +41,7 @@ def fetch_data():
     missingString = "<MISSING>"
 
     def createRequest(link):
-        r = bypass_req.Req()
+        r = req.Req()
         r.setTimeout(TIMEOUT)
         return r.get(link)
 
