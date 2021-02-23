@@ -35,6 +35,7 @@ def fetch_data():
                 res = session.get(page_url)
                 latitude = res.text.split("var pca_default_position_lat = '")[1].split("'")[0]
                 longitude = res.text.split("var pca_default_position_long = '")[1].split("'")[0]
+                
             record = SgRecord(
                 page_url=page_url,
                 location_name=location_name,
