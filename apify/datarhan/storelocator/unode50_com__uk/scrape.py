@@ -105,7 +105,8 @@ def fetch_data():
         country_code = addr.country
         country_code = "UK"
         store_number = poi["id"]
-        phone = "<MISSING>"
+        phone = poi["contact_phone"]
+        phone = phone if phone else "<MISSING>"
         location_type = "<MISSING>"
         hours_of_operation = "<MISSING>"
 
