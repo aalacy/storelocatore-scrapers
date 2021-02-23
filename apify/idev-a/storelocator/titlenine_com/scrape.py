@@ -3,7 +3,7 @@ from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 from urllib.parse import urljoin
-from sgscrape.sgpostal import parse_address_lntl
+from sgscrape.sgpostal import parse_address_intl
 import json
 
 
@@ -24,7 +24,7 @@ def fetch_data():
             _address = " ".join([_.strip() for _ in block[0].split("\n") if _.strip()])
             if len(_address.split("/")) > 1:
                 _address = _address.split("/")[1]
-            addr = parse_address_lntl(_address)
+            addr = parse_address_intl(_address)
             street_address = addr.street_address_1.replace(
                 "Hilldale Shopping Center", ""
             )
