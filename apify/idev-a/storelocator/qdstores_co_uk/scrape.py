@@ -1,7 +1,6 @@
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
-from sgscrape.sgpostal import parse_address_intl
 from bs4 import BeautifulSoup as bs
 import demjson
 
@@ -54,14 +53,22 @@ def fetch_data():
         )
         locations = demjson.decode(json_data)
         for key, _ in locations.items():
-            addr = parse_address_intl(_["address"].replace("<br />", " "))
+            street_address = "<MISSING>"
+            city = "<MISSING>"
+            zip_postal = "<MISSING>"
+            try:
+                addr = _["address"].split("<br />")
+                street_address = " ".join(addr[:-2])
+                city = addr[-2]
+                zip_postal = addr[-1]
+            except:
+                pass
             record = SgRecord(
                 store_number=_["number"],
                 location_name=_["name"],
-                street_address=addr.street_address_1,
-                city=addr.city,
-                state=addr.state,
-                zip_postal=addr.postcode,
+                street_address=street_address,
+                city=city,
+                zip_postal=zip_postal,
                 country_code="uk",
                 latitude=_["lat"],
                 longitude=_["lng"],

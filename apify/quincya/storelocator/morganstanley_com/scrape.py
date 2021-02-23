@@ -43,9 +43,8 @@ def write_output(data):
 
 def fetch_data():
 
-    driver = SgChrome().chrome(
-        user_agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
-    )
+    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
+    driver = SgChrome(user_agent=user_agent).driver()
 
     base_link = "https://advisor.morganstanley.com/search?profile=16348&q=19125&r=2500"
 
@@ -142,21 +141,21 @@ def fetch_data():
                 search.found_location_at(latitude, longitude)
 
                 yield [
-                        locator_domain,
-                        link,
-                        location_name,
-                        street_address,
-                        city,
-                        state,
-                        zip_code,
-                        country_code,
-                        store_number,
-                        phone,
-                        location_type,
-                        latitude,
-                        longitude,
-                        hours_of_operation,
-                    ]
+                    locator_domain,
+                    link,
+                    location_name,
+                    street_address,
+                    city,
+                    state,
+                    zip_code,
+                    country_code,
+                    store_number,
+                    phone,
+                    location_type,
+                    latitude,
+                    longitude,
+                    hours_of_operation,
+                ]
 
             offset = page_num * 10
             next_link = base_link + "&offset=" + str(offset)
