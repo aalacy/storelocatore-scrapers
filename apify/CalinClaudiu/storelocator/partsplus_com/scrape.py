@@ -52,12 +52,8 @@ def paraThis(url):
     k["data"] = {}
     k["parsed"] = {}
     k["data"]["websiteUrl"] = url
-    try:
-        stuff = soup.find("div", {"class": lambda x: x and "locator-address-time" in x})
-        stuff = stuff.find("div", {"class": "col-sm-6"})
-    except Exception:
-        print(url)
-        raise Exception
+    stuff = soup.find("div", {"class": lambda x: x and "locator-address-time" in x})
+    stuff = stuff.find("div", {"class": "col-sm-6"})
 
     try:
         k["data"]["name"] = stuff.find("h2").text.strip()
@@ -208,7 +204,7 @@ def fetch_data():
 
     lize = utils.parallelize(
         search_space=static_zipcode_list(
-            radius=200, country_code=SearchableCountries.USA
+            radius=100, country_code=SearchableCountries.USA
         ),
         fetch_results_for_rec=para,
         max_threads=10,
