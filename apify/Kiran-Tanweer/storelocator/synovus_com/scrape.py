@@ -67,12 +67,12 @@ def write_output(data1):
 
 def fetch_data():
     data = []
-    state_list = ["Alabama", "Florida", "Georgia", "South Carolina", "Tenessee"]
+    state_list = ["Alabama", "Florida", "Georgia", "South Carolina", "Tennessee"]
     for state in state_list:
         url = (
             "https://www.mapquestapi.com/search/v2/radius?origin="
             + state
-            + "&radius=100&distanceUnit=dm&hostedData=mqap.36969_Synovus&ambiguities=ignore&key=Gmjtd%7Cluu7n961n1%2Crw%3Do5-ly10h&callback=window.MapManager.processSearchResults&_=1606874485792"
+            + "&radius=1000&distanceUnit=dm&hostedData=mqap.36969_Synovus&ambiguities=ignore&key=Gmjtd%7Cluu7n961n1%2Crw%3Do5-ly10h&callback=window.MapManager.processSearchResults&_=1606874485792"
         )
         r = session.get(url, headers=headers, verify=False)
         response = r.text
@@ -168,6 +168,11 @@ def fetch_data():
                 types = "ATM"
             if types == "Synovus Mortgage":
                 types = "Mortgage"
+            if (
+                Hours
+                == "Monday: Closed, Tuesday: Closed, Wednesday: Closed, Thursday: Closed, friday: Closed, saturday: Closed, Sunday: Closed"
+            ):
+                Hours = "Closed"
             data.append(
                 [
                     "https://www.synovus.com/",
