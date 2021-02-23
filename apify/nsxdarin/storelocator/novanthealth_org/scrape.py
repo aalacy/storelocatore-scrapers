@@ -39,6 +39,7 @@ def write_output(data):
 
 
 def fetch_data():
+    ids = []
     url = "https://www.novanthealth.org/DesktopModules/NHLocationFinder/API/Location/ByType"
     payload = {
         "LocationGroupId": "1",
@@ -48,7 +49,7 @@ def fetch_data():
         "SubTypes": "",
         "Keyword": "",
         "SortOrder": "",
-        "MaxLocations": "100",
+        "MaxLocations": "2500",
         "MapBounds": "",
     }
     r = session.post(url, headers=headers, data=payload)
@@ -77,7 +78,10 @@ def fetch_data():
                     add = item.split('"AddressLine":"')[1].split('"')[0]
                     city = item.split('"City":"')[1].split('"')[0]
                     state = item.split('"State":"')[1].split('"')[0]
-                    zc = item.split('"PostalCode":"')[1].split('"')[0]
+                    try:
+                        zc = item.split('"PostalCode":"')[1].split('"')[0]
+                    except:
+                        zc = "<MISSING>"
                     typ = "<MISSING>"
                     try:
                         phone = item.split('"PrimaryPhone":"')[1].split('"')[0]
@@ -91,22 +95,27 @@ def fetch_data():
                     )
                     if "Breast Imaging Center" in name and "Greensboro" in name:
                         loc = "https://www.novanthealthimaging.com/locations/greensboro/greensboro-breast-center/"
-                    yield [
-                        website,
-                        loc,
-                        name,
-                        add,
-                        city,
-                        state,
-                        zc,
-                        country,
-                        store,
-                        phone,
-                        typ,
-                        lat,
-                        lng,
-                        hours,
-                    ]
+                    if hours == "":
+                        hours = "<MISSING>"
+                    addinfo = name
+                    if addinfo not in ids:
+                        ids.append(addinfo)
+                        yield [
+                            website,
+                            loc,
+                            name,
+                            add,
+                            city,
+                            state,
+                            zc,
+                            country,
+                            store,
+                            phone,
+                            typ,
+                            lat,
+                            lng,
+                            hours,
+                        ]
 
 
 def scrape():
