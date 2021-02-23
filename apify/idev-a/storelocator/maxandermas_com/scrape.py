@@ -29,7 +29,7 @@ def _valid(val):
 
 
 def fetch_data():
-    with SgRequests.Session() as session:
+    with SgRequests() as session:
         locator_domain = "https://www.maxandermas.com/locations/"
         base_url = "https://www.maxandermas.com/wp-json/wpgmza/v1/features/base64eJyrVkrLzClJLVKyUqqOUcpNLIjPTIlRsopRMopR0gEJFGeUFni6FAPFomOBAsmlxSX5uW6ZqTkpELFapVoABXgWuw"
         res = session.get(base_url, headers=_headers)
