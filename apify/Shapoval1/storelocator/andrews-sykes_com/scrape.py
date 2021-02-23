@@ -67,8 +67,12 @@ def get_data():
         state = "".join(j.get("addressRegion")) or "<MISSING>"
         postal = "".join(j.get("postalCode")) or "<MISSING>"
         country_code = "".join(j.get("Country")) or "<MISSING>"
+        if country_code != "United Kingdom":
+            continue
         store_number = "<MISSING>"
         location_name = "".join(j.get("name")) or "<MISSING>"
+        if location_name == "Sedgefield":
+            continue
         phone = "".join(j.get("telephone")) or "<MISSING>"
         page_url = "https://www.andrews-sykes.com/locations/"
         latitude = "".join(j.get("latitude")) or "<MISSING>"

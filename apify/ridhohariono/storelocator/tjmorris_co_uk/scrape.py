@@ -101,7 +101,11 @@ def fetch_data():
         address = content.find("p", {"itemprop": "address"}).get_text(
             strip=True, separator=","
         )
-        phone = handle_missing(content.find("p", {"class": "telephone"}).text.strip())
+        phone = content.find("p", {"class": "telephone"})
+        if phone:
+            phone = handle_missing(phone.text.strip())
+        else:
+            phone = "<MISSING>"
         latitude = handle_missing(content.find("span", {"itemprop": "latitude"}).text)
         longitude = handle_missing(content.find("span", {"itemprop": "longitude"}).text)
         split_addr = address.split(",")
@@ -121,12 +125,12 @@ def fetch_data():
             zip_code = split_addr[-1]
         country_code = "UK"
         store_number = "<MISSING>"
-        get_hours = (
-            content.find("div", {"id": "normalOpeningTimes"})
-            .find("table")
-            .get_text(strip=True, separator=",")
-        )
-        hours_of_operation = handle_missing(parse_hours(get_hours))
+        get_hours = content.find("div", {"id": "normalOpeningTimes"})
+        if get_hours:
+            get_hours = get_hours.find("table").get_text(strip=True, separator=",")
+            hours_of_operation = handle_missing(parse_hours(get_hours))
+        else:
+            hours_of_operation = "<MISSING>"
         location_type = "<MISSING>"
         log.info("Append info to locations")
         locations.append(
