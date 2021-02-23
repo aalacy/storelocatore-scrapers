@@ -34,50 +34,46 @@ def write_output(data):
 
 def fetch_data():
     out = []
-    locator_domain = "https://wildflowerbread.com"
-    api_url = "https://wildflowerbread.com/locations/"
-
+    locator_domain = "https://www.baers.com"
+    api_url = "https://www.baers.com/stores/"
     session = SgRequests()
+
     r = session.get(api_url)
     tree = html.fromstring(r.text)
-    block = tree.xpath('//div[@class="eight columns locations"]/div[@class="row"]')
+    block = tree.xpath(
+        '//div[@class="store-list l-row--mar-lg no-mar-bottom"]/div[contains(@class, "store-result")]'
+    )
     for b in block:
 
         street_address = "".join(
-            b.xpath('.//span[2][@itemprop="streetAddress"]/text()')
+            b.xpath('.//div[@class="store-result__address__street1"]/text()')
         )
-        city = "".join(b.xpath('.//span[@itemprop="addressLocality"]/text()'))
-        postal = "".join(b.xpath('.//span[@itemprop="postalCode"]/text()'))
-        state = "".join(b.xpath('.//span[@itemprop="addressRegion"]/text()'))
+        city = "".join(b.xpath('.//span[@class="store-result__address__city"]/text()'))
+        postal = "".join(b.xpath('.//span[@class="store-result__address__zip"]/text()'))
+        state = "".join(
+            b.xpath('.//span[@class="store-result__address__state"]/text()')
+        )
         country_code = "US"
         store_number = "<MISSING>"
-        location_name = "".join(b.xpath('.//span[@itemprop="name"]/a/text()'))
-        slug = "".join(b.xpath('.//span[@itemprop="name"]/a/@href'))
-        page_url = f"{locator_domain}{slug}"
-        phone = "".join(b.xpath('.//a[@itemprop="telephone"]/text()'))
-        latln = "".join(b.xpath('.//p[@class="view-more inline"]/a/@href')).split(
-            "%40"
-        )[1:]
-        latln = "".join(latln).replace("%2C", ",")
-        if city == "Phoenix":
-            session = SgRequests()
-            r = session.get(page_url)
-            block = r.text.split("var latlng = new google.maps.LatLng(")[1].split(");")[
-                0
-            ]
-            latln = block
-        latitude = latln.split(",")[0]
-        longitude = latln.split(",")[1]
-        location_type = "<MISSING>"
-        hours_of_operation = "".join(
-            b.xpath('.//span[1][@itemprop="streetAddress"]/text()')
-        ).replace("Open ", "")
-        if location_name.find("Airport") != -1:
-            hours_of_operation = "<MISSING>"
-        if location_name.find("Closed") != -1:
-            hours_of_operation = "Closed"
-            location_name = location_name.split("-")[1].split("-")[0].strip()
+        location_name = "".join(b.xpath('.//a[@class="store-result__name"]/text()'))
 
+        phone = "".join(
+            b.xpath(
+                './/a[@class="store-result__phone store-result__phone--1 accentlink"]/text()'
+            )
+        )
+        latitude = "".join(b.xpath(".//@data-lat"))
+        longitude = "".join(b.xpath(".//@data-lon"))
+        location_type = "<MISSING>"
+        hours_of_operation = (
+            " ".join(b.xpath('.//div[@class="store-result__hours__hours"]//text()'))
+            .replace("\n", "")
+            .replace("Open", "")
+            .strip()
+        )
+        if hours_of_operation.find("Temporarily closed") != -1:
+            hours_of_operation = "Closed"
+        page_url = " ".join(b.xpath('.//a[@class="store-result__name"]/@href'))
         row = [
             locator_domain,
             page_url,
