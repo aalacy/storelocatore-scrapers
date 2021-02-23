@@ -47,13 +47,17 @@ def fetch_data():
     soup = BeautifulSoup(r.text, "html.parser")
     divlist = soup.select("a[href*=dentist]")
     for div in divlist:
+
         title = div.text.strip().replace("\n", "")
         link = div["href"]
         if link.find("http") == -1:
             link = "https://sunrisedental.com" + link
         r = session.get(link, headers=headers, verify=False)
         soup = BeautifulSoup(r.text, "html.parser")
-        address = soup.find("iframe")["title"].replace("United States", "").strip()
+        try:
+            address = soup.find("iframe")["title"].replace("United States", "").strip()
+        except:
+            continue
         phone = soup.find("small").text.strip()
         try:
             hours = soup.text.split("Monday:", 1)[1].splitlines()[0:7]

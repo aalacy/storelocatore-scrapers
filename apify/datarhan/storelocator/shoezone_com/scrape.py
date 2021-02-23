@@ -3,6 +3,7 @@ import json
 from lxml import etree
 
 from sgrequests import SgRequests
+from sgscrape.sgpostal import parse_address_intl
 
 
 def write_output(data):
@@ -58,19 +59,14 @@ def fetch_data():
 
         location_name = poi["Name"]
         location_name = location_name if location_name else "<MISSING>"
-        if len(poi["Address"].split(",")) == 3:
-            street_address = ", ".join(poi["Address"].split(",")[:-1])
-        else:
-            street_address = poi["Address"].split(", ")[0]
-        city = poi["Address"].split(",")[-1].strip()
-        if city.startswith("."):
-            city = city[1:]
-        city_check = ["Park", "Street", "Shop", "Spa", "Sq."]
-        for elem in city_check:
-            if elem in city:
-                street_address += ", " + city
-                city = "<MISSING>"
-        state = "<MISSING>"
+        addr = parse_address_intl(poi["Address"])
+        street_address = addr.street_address_1
+        if addr.street_address_2:
+            street_address = f"{addr.street_address_2} {addr.street_address_1}"
+        city = addr.city
+        city = city if city else "<MISSING>"
+        state = addr.state
+        state = state if state else "<MISSING>"
         zip_code = poi["PostCode"]
         zip_code = zip_code if zip_code else "<MISSING>"
         country_code = poi["Country"]
@@ -84,16 +80,6 @@ def fetch_data():
         longitude = longitude if longitude else "<MISSING>"
         hours_of_operation = poi["OpeningTimes"]
         hours_of_operation = hours_of_operation if hours_of_operation else "<MISSING>"
-
-        if "Centre" in city:
-            street_address += ", " + " ".join(city.split()[:-1])
-            city = city.split()[-1]
-        if "Ctr." in city:
-            street_address += ", " + ".".join(city.split(".")[:-1])
-            city = city.split(".")[-1].strip()
-        if "Ctr." in street_address:
-            city = city.split(".")[-1].strip()
-            street_address = street_address.split(" ")[-1]
 
         item = [
             DOMAIN,
