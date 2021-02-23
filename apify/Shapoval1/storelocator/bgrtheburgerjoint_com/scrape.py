@@ -73,7 +73,6 @@ def get_data(url):
         "StateName": "state",
         "ZipCode": "postal",
     }
-
     r = session.get(page_url)
     tree = html.fromstring(r.text)
     line = (
@@ -85,6 +84,7 @@ def get_data(url):
         .replace("\n", "")
         .strip()
     )
+
     if page_url.find("kuwait") != -1:
         return
 
