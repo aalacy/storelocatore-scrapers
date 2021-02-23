@@ -55,12 +55,11 @@ def get_urls():
     return urls
 
 
-def get_data(url):
+def get_data(page_url):
     locator_domain = "https://pizzaranch.com"
-    page_url = url
 
     session = SgRequests()
-    r = session.get(url)
+    r = session.get(page_url)
     tree = html.fromstring(r.text)
 
     location_name = "".join(tree.xpath("//h1[@itemprop='name']//text()")).strip()
@@ -95,13 +94,10 @@ def get_data(url):
         else:
             _tmp.append(f"{day} Closed")
 
-    if _tmp:
-        hours_of_operation = ";".join(_tmp)
+    hours_of_operation = ";".join(_tmp) or "<MISSING>"
 
-        if hours_of_operation.count("Closed") == 7:
-            return
-    else:
-        return
+    if hours_of_operation.count("Closed") == 7:
+        hours_of_operation = "Closed"
 
     row = [
         locator_domain,
