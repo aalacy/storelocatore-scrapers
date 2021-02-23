@@ -81,6 +81,7 @@ def fetch_data():
                         )
     for loc in locs:
         purl = loc.split("|")[0]
+        purl = purl.replace("&amp;", "&").replace("&#39;", "'")
         state = loc.split("|")[1].upper()
         logger.info(purl)
         name = ""
@@ -144,22 +145,25 @@ def fetch_data():
                             hours = hrs
                         else:
                             hours = hours + "; " + hrs
-        yield [
-            website,
-            purl,
-            name,
-            add,
-            city,
-            state,
-            zc,
-            country,
-            store,
-            phone,
-            typ,
-            lat,
-            lng,
-            hours,
-        ]
+        if add != "":
+            if phone == "":
+                phone = "<MISSING>"
+            yield [
+                website,
+                purl,
+                name,
+                add,
+                city,
+                state,
+                zc,
+                country,
+                store,
+                phone,
+                typ,
+                lat,
+                lng,
+                hours,
+            ]
 
 
 def scrape():
