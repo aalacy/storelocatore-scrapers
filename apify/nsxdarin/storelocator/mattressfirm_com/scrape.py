@@ -46,7 +46,6 @@ def fetch_data():
     if r.encoding is None:
         r.encoding = "utf-8"
     for line in r.iter_lines(decode_unicode=True):
-        print(line)
         if "sitemap_stores" in line:
             sms.append(line.split(">")[1].split("<")[0])
     for sm in sms:
