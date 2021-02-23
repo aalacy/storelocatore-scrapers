@@ -47,7 +47,7 @@ def fetch_data():
         if "<loc>https://locations.53.com/" in line:
             lurl = line.split(">")[1].split("<")[0]
             count = lurl.count("/")
-            if count == 5:
+            if count >= 5:
                 locs.append(lurl)
     for loc in locs:
         logger.info(("Pulling Location %s..." % loc))
