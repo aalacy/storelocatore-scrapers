@@ -43,7 +43,7 @@ with SgChrome() as driver:
             country_code = "US"
 
             store_number = "<MISSING>"
-            
+
             location_type = "<MISSING>"
 
             latitude = "<MISSING>"
@@ -60,7 +60,6 @@ with SgChrome() as driver:
 
             div = soup.find("div", attrs={"id": "location"})
             phone = div.find("a")["href"].replace("tel:", "")
-
 
             locator_domains.append(locator_domain)
             page_urls.append(page_url)
