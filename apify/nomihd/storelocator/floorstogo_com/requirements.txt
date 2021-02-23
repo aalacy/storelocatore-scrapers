@@ -1,6 +1,6 @@
-sgrequests
-sglogging
-sgzip
+sgrequests==0.1.4
+sgscrape==0.0.21
+sglogging==0.0.4
 lxml==4.5.2
-# uncomment if you use selenium
-# selenium==3.141.0
+sgvalidator==0.0.71
+sgzip==0.2.1

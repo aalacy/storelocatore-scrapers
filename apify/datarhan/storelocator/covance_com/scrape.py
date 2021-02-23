@@ -63,6 +63,8 @@ def fetch_data():
         addr = parse_address_intl(full_addr)
         country_code = addr.country
         country_code = country_code if country_code else "<MISSING>"
+        if country_code not in ["Usa", "<MISSING>", "UK", "United Kingdom"]:
+            continue
         city = addr.city
         city = city if city else "<MISSING>"
         street_address = addr.street_address_1
