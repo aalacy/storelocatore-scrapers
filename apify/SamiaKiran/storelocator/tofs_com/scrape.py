@@ -1,6 +1,5 @@
 import csv
 import json
-import time
 from sgrequests import SgRequests
 
 session = SgRequests()
