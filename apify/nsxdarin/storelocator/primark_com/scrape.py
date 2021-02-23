@@ -76,6 +76,7 @@ def fetch_data():
         lng = ""
         hours = ""
         country = "US"
+        Closed = False
         if "-kingdom/" in loc or "-states/" in loc:
             if "-kingdom/" in loc:
                 country = "GB"
@@ -84,6 +85,8 @@ def fetch_data():
             r2 = session.get(loc, headers=headers)
             for line2 in r2.iter_lines():
                 line2 = str(line2.decode("utf-8"))
+                if 'c-hours-details-row-intervals">Temporarily Closed' in line2:
+                    Closed = True
                 if "<title>" in line2:
                     name = line2.split("<title>")[1].split("|")[0].strip()
                 if '"line1":"' in line2:
@@ -126,6 +129,8 @@ def fetch_data():
                 addinfo = add + "|" + city + "|" + zc
                 if addinfo not in infos:
                     infos.append(addinfo)
+                    if Closed:
+                        hours = "Temporary Closed"
                     yield [
                         website,
                         loc,
