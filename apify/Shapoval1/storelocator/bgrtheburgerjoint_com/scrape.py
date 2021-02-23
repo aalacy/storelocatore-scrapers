@@ -73,6 +73,7 @@ def get_data(url):
         "StateName": "state",
         "ZipCode": "postal",
     }
+
     r = session.get(page_url)
     tree = html.fromstring(r.text)
     line = (
