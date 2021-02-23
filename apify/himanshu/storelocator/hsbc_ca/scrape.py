@@ -115,7 +115,7 @@ def fetch_data():
                         ).click()
                     except:
                         break
-                soup = bs(driver.page_source, "lxml")
+                soup = bs(driver.page_source, "html5lib")
                 names = []
                 for dt in soup.find_all("h2", {"class": "_1521gYSzrNIMk9R-rS4Hur"}):
                     names.append(dt)
@@ -127,7 +127,7 @@ def fetch_data():
                         + "]/button/h2"
                     ).click()
                     time.sleep(3)
-                    soup = bs(driver.page_source, "lxml")
+                    soup = bs(driver.page_source, "html5lib")
                     location_name = soup.find(
                         "h2", {"class": "_1521gYSzrNIMk9R-rS4Hur"}
                     ).text
