@@ -84,25 +84,25 @@ def fetch_data():
             + ", Sun: "
             + sun
         )
-        if title is "":
+        if title == "":
             title = "<MISSING>"
-        if store is "":
+        if store == "":
             store = "<MISSING>"
-        if lat is "":
+        if lat == "":
             lat = "<MISSING>"
-        if longt is "":
+        if longt == "":
             longt = "<MISSING>"
-        if street is "":
+        if street == "":
             street = "<MISSING>"
-        if city is "":
+        if city == "":
             city = "<MISSING>"
-        if pcode is "":
+        if pcode == "":
             pcode = "<MISSING>"
-        if ccode is "":
+        if ccode == "":
             ccode = "UK"
-        if store_type is "":
+        if store_type == "":
             store_type = "<MISSING>"
-        if hours_of_operation is "":
+        if hours_of_operation == "":
             hours_of_operation = "<MISSING>"
         data.append(
             [
@@ -126,10 +126,8 @@ def fetch_data():
 
 
 def scrape():
-    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
     data = fetch_data()
     write_output(data)
-    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
 
 
 scrape()
