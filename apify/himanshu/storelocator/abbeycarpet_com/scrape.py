@@ -75,9 +75,10 @@ def fetch_data():
                 ].split("/")[-1]
                 if len(address.split(",")) == 4:
                     name = address.split(",")[0]
+                    street = address.split(",")[1]
                 else:
-                    name = " ".join(address.split(",")[:-3])
-                street = address.split(",")[-3]
+                    name = address.split(",")[0]
+                    street = "".join(address.split(",")[1:-2])
                 city = address.split(",")[-2]
                 state = address.split(",")[-1].split()[:-1]
                 if len(address.split(",")[-1].split()) > 2:
