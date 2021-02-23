@@ -102,7 +102,8 @@ def fetch_data():
                 zip_code = " ".join(street_address.split()[:2])
                 street_address = street_address.replace(zip_code, "")
         zip_code = zip_code if zip_code else "<MISSING>"
-        country_code = addr.country
+        if len(zip_code.split()[-1]) != 3:
+            continue
         country_code = "UK"
         store_number = poi["id"]
         phone = poi["contact_phone"]
