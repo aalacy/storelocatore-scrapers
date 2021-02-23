@@ -72,7 +72,7 @@ def fetch_data():
             while LFound:
                 try:
                     LFound = False
-                    website = "libertyfax.com"
+                    website = "libertytax.com"
                     typ = "<MISSING>"
                     hours = ""
                     name = ""
@@ -124,6 +124,9 @@ def fetch_data():
                         hours = "<MISSING>"
                     if phone == "":
                         phone = "<MISSING>"
+                    if "00000" in lat or "00000" in lng:
+                        lat = "<MISSING>"
+                        lng = "<MISSING>"
                     yield [
                         website,
                         loc,
