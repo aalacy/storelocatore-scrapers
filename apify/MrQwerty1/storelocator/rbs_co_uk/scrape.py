@@ -1,5 +1,6 @@
 import csv
 import json
+import re
 
 from concurrent import futures
 from lxml import html
@@ -70,7 +71,7 @@ def get_urls():
 def get_data(url):
     locator_domain = "https://rbs.co.uk"
     page_url = f"https://locator-rbs.co.uk{url}"
-
+    pattern = r"(\b[A-Z]{1,2}[0-9][A-Z0-9]? [0-9][ABD-HJLNP-UW-Z]{2}\b)"
     session = SgRequests()
     r = session.get(page_url)
     tree = html.fromstring(r.text)
@@ -80,8 +81,9 @@ def get_data(url):
         location_name = location_name.split("(")[0].strip()
     line = tree.xpath("//div[@class='print']//td[@class='first']/text()")
     line = list(filter(None, [l.strip() for l in line]))
-    line = " ".join(line)
-    adr = parse_address(International_Parser(), line)
+    postal = line[-1]
+    line = ", ".join(line[:-1])
+    adr = parse_address(International_Parser(), line, postcode=postal)
 
     street_address = (
         f"{adr.street_address_1} {adr.street_address_2 or ''}".replace(
