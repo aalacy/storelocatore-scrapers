@@ -43,7 +43,9 @@ def fetch_data():
         js = r.json()
 
         for j in js:
-            page_url = "https://www.dippindots.com" + j.get("llp_url") or "<MISSING>"
+            page_url = (
+                "https://www.dippindots.com/loc" + j.get("llp_url") or "<MISSING>"
+            )
             location_type = j.get("open_or_closed").capitalize() or "<MISSING>"
 
             j = j["store_info"]
