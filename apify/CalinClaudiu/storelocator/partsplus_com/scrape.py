@@ -173,7 +173,11 @@ def fetch_data():
                     + ", "
                     + str(i["address2"] if i["address2"] else "")
                 )
-                k["address"] = parsedAddress.street_address_1 if parsedAddress.street_address_1 else ""
+                k["address"] = (
+                    parsedAddress.street_address_1
+                    if parsedAddress.street_address_1
+                    else ""
+                )
                 if parsedAddress.street_address_2:
                     k["address"] = k["address"] + ", " + parsedAddress.street_address_2
 
