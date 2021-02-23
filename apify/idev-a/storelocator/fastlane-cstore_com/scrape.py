@@ -9,7 +9,6 @@ locator_domain = "http://fastlane-cstore.com"
 
 def fetch_data():
     with SgRequests() as session:
-        base_url = "http://fastlane-cstore.com"
         page_url = "http://fastlane-cstore.com/locations.html"
         headers = {
             "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
@@ -65,8 +64,6 @@ def fetch_data():
             street_address = address.pop().strip()
             street_address = street_address.replace("Address: ", "")
             country_code = "US"
-            store_number = "<MISSING>"
-            hours_of_operation = "<MISSING>"
             phone = detail[1].split("\n")[2][0:14].replace("\xa0", "")
             phone = "<MISSING>" if phone == "" else phone
 
