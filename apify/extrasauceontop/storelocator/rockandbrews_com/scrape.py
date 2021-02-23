@@ -26,6 +26,7 @@ with SgChrome() as driver:
 
     for grid in grids:
         locator_domain = "rockandbrews.com"
+        phone = "<MISSING>"
 
         name = grid.find("h4").text
         address = grid.find("span").text
@@ -59,7 +60,10 @@ with SgChrome() as driver:
             soup = bs(html, "html.parser")
 
             div = soup.find("div", attrs={"id": "location"})
-            phone = div.find("a")["href"].replace("tel:", "")
+            try:
+                phone = div.find("a")["href"].replace("tel:", "")
+            except Exception:
+                phone = "<MISSING>"
 
             locator_domains.append(locator_domain)
             page_urls.append(page_url)
