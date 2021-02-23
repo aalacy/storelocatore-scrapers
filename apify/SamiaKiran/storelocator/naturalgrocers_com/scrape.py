@@ -80,14 +80,18 @@ def get_store_data(loc):
         except:
             phone = loc.find("div", {"class", "store_telephone_number"}).text
         pcode = loc.find("span", {"class", "postal-code"}).text
-        hourlist = loc.find("div", {"class", "office-hours"}).findAll(
-            "div", {"class", "office-hours__item"}
-        )
         hours = ""
-        for hour in hourlist:
-            day = hour.find("span", {"class", "office-hours__item-label"}).text
-            time = hour.find("span", {"class", "office-hours__item-slots"}).text
-            hours = hours + day + " " + time + " "
+        if loc.find("div", {"class", "office-hours"}):
+            hourlist = loc.find("div", {"class", "office-hours"}).findAll(
+                "div", {"class", "office-hours__item"}
+            )
+
+            for hour in hourlist:
+                day = hour.find("span", {"class", "office-hours__item-label"}).text
+                time = hour.find("span", {"class", "office-hours__item-slots"}).text
+                hours = hours + day + " " + time + " "
+        else:
+            hours = "<MISSING>"
     data = [
         "https://www.naturalgrocers.com/",
         link,
