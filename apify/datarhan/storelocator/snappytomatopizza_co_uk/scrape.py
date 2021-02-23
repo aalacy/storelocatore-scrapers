@@ -66,16 +66,26 @@ def fetch_data():
         country_code = "<MISSING>"
         store_number = store_url.split("/")[-2]
         phone = loc_dom.xpath('//a[contains(@href, "tel")]/text()')
-        phone = phone[0] if phone else "<MISSING>"
+        phone = phone[0].split(":")[-1].strip() if phone else "<MISSING>"
         location_type = "<MISSING>"
         latitude = loc_dom.xpath("//@data-latitude")
         latitude = latitude[0] if latitude else "<MISSING>"
         longitude = loc_dom.xpath("//@data-longitude")
         longitude = longitude[0].strip() if longitude else "<MISSING>"
-        hoo = loc_dom.xpath(
-            '//h3[contains(text(), "Opening Hours")]/following-sibling::div[1]/div[@class="table_row "]//text()'
-        )
-        hoo = [elem.strip() for elem in hoo if elem.strip()]
+        hoo = []
+        hours = loc_dom.xpath(
+            '//div[@class="store_schedule desktop_store__bl"]//div[contains(@class, "table_row")]'
+        )[1:]
+        for elem in hours:
+            day = elem.xpath('.//div[@class="table_day"]/span/text()')[0]
+            opens = elem.xpath('.//div[@class="table_open"]/span/text()')
+            opens = opens[0] if opens else "closed"
+            closes = elem.xpath('.//div[@class="table_close"]/span/text()')
+            closes = closes[0] if closes else "closed"
+            if opens == "closed":
+                hoo.append(f"{day} closed")
+            else:
+                hoo.append(f"{day} {opens} - {closes}")
         hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
 
         item = [
