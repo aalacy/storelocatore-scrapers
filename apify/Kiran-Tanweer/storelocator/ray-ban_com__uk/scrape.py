@@ -103,7 +103,7 @@ def fetch_data():
             hoo = "Closed"
         data.append(
             [
-                "https://stores.ray-ban.com/",
+                "https://www.ray-ban.com/",
                 link,
                 title,
                 street,
