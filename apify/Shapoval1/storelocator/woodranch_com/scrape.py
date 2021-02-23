@@ -47,10 +47,14 @@ def get_data(url):
     session = SgRequests()
     r = session.get(page_url)
     tree = html.fromstring(r.content)
-    street_address = " ".join(
-        tree.xpath('//span[@itemprop="streetAddress"]/text()')
-    ).replace("\n", "")
+    street_address = tree.xpath('//span[@itemprop="streetAddress"]/text()')
+    if len(street_address) > 1:
+        street_address = "".join(street_address[1])
+    else:
+        street_address = "".join(street_address)
     city = "".join(tree.xpath('//span[@itemprop="addressLocality"]/text()'))
+    if city.find("(") != -1:
+        city = city.split("(")[0].strip()
     state = "".join(tree.xpath('//span[@itemprop="addressRegion"]/text()'))
     postal = "".join(tree.xpath('//span[@itemprop="postalCode"]/text()'))
     country_code = "US"

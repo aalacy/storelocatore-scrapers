@@ -68,6 +68,15 @@ def fetch_data():
                     .replace("<br \\/>", " ")
                     .replace("  ", " ")
                 )
+                if "<div class='address'><p>" in item:
+                    addinfo = item.split("<div class='address'><p>")[1].split("<\\/p>")[
+                        0
+                    ]
+                    addinfo = (
+                        addinfo.replace("<br \\/>", " ")
+                        .replace("\\n", "")
+                        .replace("  ", " ")
+                    )
                 try:
                     phone = item.split("Phone: <\\/span>")[1].split("<")[0].strip()
                 except:
@@ -89,6 +98,8 @@ def fetch_data():
                     city = "<MISSING>"
                 if zc == "" or zc is None:
                     zc = "<MISSING>"
+                name = name.replace("\\u2013", "-")
+                add = add.replace("\\u2013", "-")
                 yield [
                     website,
                     loc,

@@ -99,8 +99,8 @@ def fetch_data():
                 )
             )
             .replace("Hours of operation:", "")
-            .replace(":", "")
             .replace("Hours of operation", "")
+            .replace(": ", "")
             .strip()
             or "<MISSING>"
         )
