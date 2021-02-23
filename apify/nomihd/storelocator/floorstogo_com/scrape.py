@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import csv
 from sgrequests import SgRequests
 from sglogging import sglog
 import lxml.html
@@ -44,7 +43,6 @@ def fetch_records_for(zipcode):
 
 
 def process_record(raw_results_from_one_zipcode):
-    loc_list = []
     for stores in raw_results_from_one_zipcode:
         for store in stores:
             temp_text = store.xpath(
@@ -119,7 +117,7 @@ def process_record(raw_results_from_one_zipcode):
                                     ).strip()
                                 break
                 else:
-                    page_url = search_url
+                    page_url = "<MISSING>"
                     latitude = "<MISSING>"
                     longitude = "<MISSING>"
 
