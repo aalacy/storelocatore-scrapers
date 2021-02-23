@@ -1,7 +1,6 @@
 from bs4 import BeautifulSoup
 from sgrequests import SgRequests
 import csv
-import json
 
 session = SgRequests()
 headers = {
