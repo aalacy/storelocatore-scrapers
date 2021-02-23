@@ -73,7 +73,7 @@ def fetch_data():
                         0
                     ]
                     addinfo = (
-                        addinfo.replace("<br \/>", " ")
+                        addinfo.replace("<br \\/>", " ")
                         .replace("\\n", "")
                         .replace("  ", " ")
                     )
