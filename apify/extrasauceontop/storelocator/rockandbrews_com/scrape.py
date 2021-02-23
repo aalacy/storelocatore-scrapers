@@ -52,7 +52,7 @@ with SgChrome() as driver:
 
             hour = grid.find("div", attrs={"class": "hours"}).text
 
-            location_url_format = name.replace(" ", "-")
+            location_url_format = name.replace(" ", "-").replace("&", "-and-")
             page_url = "https://www.rockandbrews.com/" + location_url_format
 
             driver.get(page_url)
