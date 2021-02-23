@@ -78,7 +78,7 @@ if __name__ == "__main__":
         with SgWriter() as writer:
             results = parallelize(
                 search_space=static_coordinate_list(
-                    radius=10, country_code=SearchableCountries.USA
+                    radius=100, country_code=SearchableCountries.USA
                 ),
                 fetch_results_for_rec=partial(fetch_records_for, http),
                 processing_function=process_record,
