@@ -9,8 +9,7 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 import json
 
-start_url = "https://lavidamassage.com/locations/"
-locator_domain = "https://lavidamassage.com"
+locator_domain = "https://daphnes.biz/"
 base_url = "https://easylocator.net/ajax/search_by_lat_lon_geojson/daphnes/%s/%s/500/150/null/null"
 
 
@@ -78,7 +77,7 @@ if __name__ == "__main__":
         with SgWriter() as writer:
             results = parallelize(
                 search_space=static_coordinate_list(
-                    radius=100, country_code=SearchableCountries.USA
+                    radius=10, country_code=SearchableCountries.USA
                 ),
                 fetch_results_for_rec=partial(fetch_records_for, http),
                 processing_function=process_record,
