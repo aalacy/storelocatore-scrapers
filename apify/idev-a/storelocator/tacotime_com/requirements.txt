@@ -1,5 +1,5 @@
-sgrequests
-beautifulsoup4
-sglogging
-lxml
-us
+sgvalidator==0.0.71
+us==1.0.0
+sgrequests==0.1.4
+sgscrape==0.0.21
+beautifulsoup4==4.9.3
