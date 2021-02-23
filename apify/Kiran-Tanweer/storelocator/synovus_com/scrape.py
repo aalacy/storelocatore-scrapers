@@ -81,7 +81,6 @@ def fetch_data():
 
         for loc in data2:
             location = '"fields' + loc
-            # print(loc)
             location = location.rstrip(',"')
             title = location.split('"Name":"', 1)[1].split('"')[0]
             latlng = location.split('"latLng":{', 1)[1].split("}")[0]
