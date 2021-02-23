@@ -69,6 +69,8 @@ def fetch_data():
 
     for store in stores:
         page_url = store["locationUrl"]
+        if page_url == "":
+            page_url = "<MISSING>"
 
         locator_domain = website
         location_name = store["title"]
@@ -159,12 +161,37 @@ def fetch_data():
             time = "".join(hour.xpath("td[2]/text()")).strip()
             hours_list.append(day + ":" + time)
 
+        if len(hours) <= 0:
+            try:
+                hours = (
+                    desc.split("Hours</h3>")[1]
+                    .strip()
+                    .replace("<p>", "")
+                    .replace("</p>", "")
+                    .strip()
+                    .replace("<br />", "")
+                    .strip()
+                    .split("\n")
+                )
+                for hour in hours:
+                    if len("".join(hour).strip()) > 0:
+                        if (
+                            "New Years Day CLOSED" not in hour
+                            or "Boxing Day CLOSED" not in hour
+                            or "Christmas Day CLOSED" not in hour
+                        ):
+
+                            hours_list.append("".join(hour).strip())
+            except:
+                pass
         hours_of_operation = (
             "; ".join(hours_list)
             .strip()
             .encode("ascii", "replace")
             .decode("utf-8")
             .replace("?", "-")
+            .strip()
+            .replace("&amp;", "&")
             .strip()
         )
         latitude = store["latitude"]
