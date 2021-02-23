@@ -173,6 +173,8 @@ def fetch_data():
             addinfo = add + city + zc
             if "Mon: -; Tue: -; Wed: -; Thu: -; Fri: -; Sat: -; Sun: -" in hours:
                 hours = "<MISSING>"
+            if "Bideford" in name:
+                city = "Bideford"
             if store not in ids and addinfo not in adds:
                 adds.append(addinfo)
                 ids.append(store)
@@ -280,12 +282,14 @@ def fetch_data():
                     hours = "<MISSING>"
                 if phone == "":
                     phone = "<MISSING>"
-                if add == "":
+                if add == "" or add is None:
                     add = "<MISSING>"
                 if city == "":
                     city = item["storeAddress"]["addressLine3"]
-                if city == "":
+                if city == "" or city is None:
                     city = "<MISSING>"
+                if zc == "" or zc is None:
+                    zc = "<MISSING>"
                 loc = "<MISSING>"
                 if city == "<MISSING>":
                     city = name
@@ -309,6 +313,8 @@ def fetch_data():
                     city = "Hempstead Valley"
                 if "Belfast" in add:
                     city = "Belfast"
+                if "Bideford" in name:
+                    city = "Bideford"
                 addinfo = add + city + zc
                 if "Mon: -; Tue: -; Wed: -; Thu: -; Fri: -; Sat: -; Sun: -" in hours:
                     hours = "<MISSING>"

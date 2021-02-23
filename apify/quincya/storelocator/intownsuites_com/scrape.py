@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import csv
 import json
 import re
@@ -78,6 +79,7 @@ def fetch_data():
 
     logger.info("Processing %s links .." % (len(all_links)))
     for link in all_links:
+        logger.info(link)
         req = session.get(link, headers=headers)
         base = BeautifulSoup(req.text, "lxml")
 
@@ -117,13 +119,7 @@ def fetch_data():
             zip_code = "78238"
         country_code = "US"
         store_number = "<MISSING>"
-
-        try:
-            location_type = ",".join(
-                (base.find(class_="property_features").ul.stripped_strings)
-            )
-        except:
-            location_type = "<MISSING>"
+        location_type = "<MISSING>"
         phone = (
             base.find(class_="css_table_cell address")
             .p.text.replace("Reservations:", "")

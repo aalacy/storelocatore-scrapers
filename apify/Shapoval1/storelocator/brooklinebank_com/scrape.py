@@ -90,7 +90,9 @@ def fetch_data():
             for t in tr:
                 day = " ".join("".join(t.xpath("./td[1]//text()")).split())
                 start = " ".join("".join(t.xpath("./td[2]//text()")).split())
-                close = " ".join("".join(t.xpath("./td[3]//text()")).split())
+                close = " ".join(
+                    "".join(t.xpath("./td[3]//text() | ./td[4]//text()")).split()
+                )
                 _tmp.append(f"{day}: {start} - {close}")
 
             hours_of_operation = ";".join(_tmp) or "<MISSING>"
