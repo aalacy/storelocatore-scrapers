@@ -40,7 +40,6 @@ def fetch_data():
     session = SgRequests()
 
     items = []
-    scraped_items = []
 
     DOMAIN = "darascornermarket.com"
     start_url = "https://www.darascornermarket.com/locations"
@@ -67,7 +66,7 @@ def fetch_data():
         store_number = "<MISSING>"
         phone = "<MISSING>"
         location_type = "<MISSING>"
-        geo = re.findall("LatLng\((.+?)\);", loc_response.text)[0].split(",")
+        geo = re.findall(r"LatLng\((.+?)\);", loc_response.text)[0].split(",")
         latitude = geo[0]
         longitude = geo[1]
         hours_of_operation = loc_dom.xpath('//span[@itemprop="openingHours"]/text()')
