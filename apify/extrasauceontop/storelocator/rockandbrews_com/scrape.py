@@ -26,7 +26,6 @@ with SgChrome() as driver:
 
     for grid in grids:
         locator_domain = "rockandbrews.com"
-        page_url = "rockandbrews.com/locations"
 
         name = grid.find("h4").text
         address = grid.find("span").text
@@ -44,13 +43,24 @@ with SgChrome() as driver:
             country_code = "US"
 
             store_number = "<MISSING>"
-            phone = "<MISSING>"
+            
             location_type = "<MISSING>"
 
             latitude = "<MISSING>"
             longitude = "<MISSING>"
 
             hour = grid.find("div", attrs={"class": "hours"}).text
+
+            location_url_format = name.replace(" ", "-")
+            page_url = "https://www.rockandbrews.com/" + location_url_format
+
+            driver.get(page_url)
+            html = driver.page_source
+            soup = bs(html, "html.parser")
+
+            div = soup.find("div", attrs={"id": "location"})
+            phone = div.find("a")["href"].replace("tel:", "")
+
 
             locator_domains.append(locator_domain)
             page_urls.append(page_url)
