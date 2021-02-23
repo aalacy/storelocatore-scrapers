@@ -68,7 +68,7 @@ def fetch_data():
     json_text = "".join(
         stores_sel.xpath('//script[@id="__NEXT_DATA__"]/text()')
     ).strip()
-    stores = json.loads(json_text)["props"]["pageProps"]["data"]["allLocations"][
+    stores = json.loads(json_text)["props"]["pageProps"]["data"]["filterLocations"][
         "edges"
     ]
 
@@ -81,7 +81,7 @@ def fetch_data():
 
         if len(page_url) > 0:
             page_url = "https://ultratantoday.com/stores/" + page_url[0]
-
+            log.info(page_url)
             store_req = session.get(page_url, headers=headers)
             store_sel = lxml.html.fromstring(store_req.text)
             if "This page could not be found" not in store_req.text:
@@ -93,7 +93,7 @@ def fetch_data():
                 ][0]
 
                 locator_domain = website
-                location_name = store_json["name"]
+                location_name = "".join(store_sel.xpath("//div/h1/text()")).strip()
                 if location_name == "":
                     location_name = "<MISSING>"
 
@@ -102,6 +102,12 @@ def fetch_data():
                 state = store_json["stateIso"]
                 zip = store_json["postalCode"]
 
+                street_address = (
+                    street_address.replace(city + ",", "")
+                    .replace(state, "")
+                    .replace(zip, "")
+                    .strip()
+                )
                 country_code = store_json["countryIso"]
                 if country_code == "" or country_code is None:
                     country_code = "<MISSING>"
@@ -123,6 +129,7 @@ def fetch_data():
                 phone = store_json["phone"]
 
                 location_type = "<MISSING>"
+                location_type = store_json["name"]
                 hours = store_json["businessHours"]
                 hours_list = []
                 for hour in hours:
