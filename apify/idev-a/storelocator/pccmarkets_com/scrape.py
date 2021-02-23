@@ -14,6 +14,12 @@ def fetch_data():
         locations = soup.select("div.pcc-section-bleed div.pcc-billboard")
         for _ in locations:
             page_url = _.select_one("div.pcc-billboard-details h4 a")["href"]
+            soup1 = bs(session.get(page_url).text, "lxml")
+            markers = (
+                soup1.select_one("picture.picture.mb-sm source")["data-srcset"]
+                .split("markers=")[1]
+                .split(",")
+            )
             location_name = _.select_one("div.pcc-billboard-details h4 a").text
             addr = [
                 _addr
@@ -36,6 +42,8 @@ def fetch_data():
                 zip_postal=addr[1].split(",")[1].strip().split(" ")[1].strip(),
                 country_code="US",
                 phone=phone,
+                latitude=markers[0],
+                longitude=markers[1],
                 locator_domain=locator_domain,
                 hours_of_operation=hours_of_operation,
             )
