@@ -2,7 +2,6 @@ from bs4 import BeautifulSoup as bs
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
-from sgrequests import SgRequests
 
 locator_domain = "http://fastlane-cstore.com"
 
