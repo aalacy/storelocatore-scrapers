@@ -1,5 +1,6 @@
 import csv
 import json
+from lxml import etree
 
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 from sgrequests import SgRequests
@@ -37,12 +38,31 @@ def write_output(data):
 
 def fetch_data():
     # Your scraper here
-    session = SgRequests()
+    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
 
     items = []
     scraped_items = []
 
     DOMAIN = "dollartree.com"
+
+    response = session.get("https://www.dollartree.com/locations/")
+    dom = etree.HTML(response.text)
+    url_dict = {}
+    all_states = dom.xpath("//a[@data-galoc]/@href")[2:]
+    for url in all_states:
+        response = session.get(url)
+        dom = etree.HTML(response.text)
+        all_cities = dom.xpath('//td[h2[@class="citiesclass"]]//a/@href')
+        for url in all_cities:
+            response = session.get(url)
+            dom = etree.HTML(response.text)
+            all_locations = dom.xpath('//div[@class="storeinfo_div "]')
+            for loc in all_locations:
+                loc_url = loc.xpath(".//a/@href")[0]
+                street_address = (
+                    loc.xpath(".//@data-galoc")[0].split(",")[0].split("- ")[-1]
+                )
+                url_dict[street_address] = loc_url
 
     start_url = (
         "https://hosted.where2getit.com/dollartree/rest/locatorsearch?lang=en_US"
@@ -73,14 +93,14 @@ def fetch_data():
             location_name = location_name if location_name else "<MISSING>"
             street_address = poi["address1"]
             if poi.get("address2"):
-                street_address += ", " + poi["address2"]
+                street_address += " " + poi["address2"]
             if poi.get("address3"):
-                street_address += ", " + poi["address3"]
-            street_address = (
-                ", ".join(street_address.split(",")[:-1])
-                if street_address
-                else "<MISSING>"
-            )
+                street_address += " " + poi["address3"]
+            street_address = street_address if street_address else "<MISSING>"
+            for k, v in url_dict.items():
+                if k in street_address:
+                    store_url = v
+                    break
             city = poi["city"]
             city = city if city else "<MISSING>"
             state = poi["state"]
@@ -91,7 +111,7 @@ def fetch_data():
             zip_code = zip_code if zip_code else "<MISSING>"
             country_code = poi["country"]
             country_code = country_code if country_code else "<MISSING>"
-            store_number = poi["uid"]
+            store_number = poi["clientkey"]
             store_number = store_number if store_number else "<MISSING>"
             phone = poi["phone"]
             phone = phone if phone else "<MISSING>"
