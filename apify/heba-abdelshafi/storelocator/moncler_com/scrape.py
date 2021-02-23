@@ -58,11 +58,14 @@ def fetch_data():
         if (
             country["href"].find("storeslocator/canada") > -1
             or country["href"].find("storeslocator/united-states") > -1
+            or country["href"].find("storeslocator/united-kingdom") > -1
         ):
             cclink = "https://www.moncler.com" + country["href"].split("..")[1]
             ccode = "US"
             if country["href"].find("storeslocator/canada") > -1:
                 ccode = "CA"
+            elif country["href"].find("storeslocator/united-kingdom") > -1:
+                ccode = "GB"
             r = session.get(cclink, headers=headers, verify=False)
             soup = BeautifulSoup(r.text, "html.parser")
             maindiv = soup.find("ul", {"class": "Directory-listLinks"})
@@ -94,6 +97,7 @@ def fetch_data():
                             "https://www.moncler.com/en-us"
                             + branch["href"].split("../en-us")[1]
                         )
+
                         r = session.get(link, headers=headers, verify=False)
                         soup = BeautifulSoup(r.text, "html.parser")
 
@@ -106,7 +110,10 @@ def fetch_data():
                         "span", {"class": "c-address-street-1"}
                     ).text.replace("\n", " ")
                     city = soup.find("span", {"class": "c-address-city"}).text
-                    state = soup.find("abbr", {"itemprop": "addressRegion"}).text
+                    if ccode != "GB":
+                        state = soup.find("abbr", {"itemprop": "addressRegion"}).text
+                    else:
+                        state = "<MISSING>"
                     pcode = soup.find("span", {"class": "c-address-postal-code"}).text
                     try:
                         phone = soup.find("div", {"id": "phone-main"}).text

@@ -87,13 +87,17 @@ def fetch_data():
         lng = coords[1]
         link = loc.split('<a href="')[1].split('" class')[0].strip()
         link = "https://www.pizzaville.ca" + link
+        address = loc.split('"small-title">')[1].split("Tel:")[0]
+        address = address.split("</span>")[1]
+        address = address.rstrip("<br />")
+        street = address.replace("<br />", ", ")
+        street = street.replace(" , ", ", ")
+        state = "<MISSING>"
+        pcode = "<MISSING>"
         r = session.get(link, headers=headers)
         bs = BeautifulSoup(r.text, "html.parser")
         div_right = bs.find("div", {"class": "column right"})
-        street = div_right.find("h2").text
         info = div_right.findAll("span")
-        state = "<MISSING>"
-        pcode = "<MISSING>"
         title = info[-3].text
         city = info[-2].text
         phone = info[-1].text

@@ -1,92 +1,152 @@
 import csv
-from sgrequests import SgRequests
-from bs4 import BeautifulSoup
-from random import randint
-import time
 import json
+
+from bs4 import BeautifulSoup
+
 from sglogging import SgLogSetup
 
-logger = SgLogSetup().get_logger('fusian_com')
+from sgrequests import SgRequests
 
-
+logger = SgLogSetup().get_logger("fusian_com")
 
 
 def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+    with open("data.csv", mode="w") as output_file:
+        writer = csv.writer(
+            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+        )
 
         # Header
-        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(
+            [
+                "locator_domain",
+                "page_url",
+                "location_name",
+                "street_address",
+                "city",
+                "state",
+                "zip",
+                "country_code",
+                "store_number",
+                "phone",
+                "location_type",
+                "latitude",
+                "longitude",
+                "hours_of_operation",
+            ]
+        )
         # Body
         for row in data:
             writer.writerow(row)
 
+
 def fetch_data():
-      
+
     base_link = "https://www.fusian.com/locations"
 
-    user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36'
-    headers = {'User-Agent' : user_agent}
+    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
+    headers = {"User-Agent": user_agent}
 
     session = SgRequests()
 
     req = session.get(base_link, headers=headers)
-    time.sleep(randint(1,2))
-    try:
-      base = BeautifulSoup(req.text,"lxml")
-    except (BaseException):
-      logger.info('[!] Error Occured. ')
-      logger.info('[?] Check whether system is Online.')
+    base = BeautifulSoup(req.text, "lxml")
 
     items = base.find_all(class_="intrinsic")
     locator_domain = "fusian.com"
 
-    data=[]
+    data = []
     for item in items:
-        link = "https://www.fusian.com" + item.a['href']
-
+        link = item.a["href"]
+        if "http" not in link:
+            link = "https://www.fusian.com" + link
+        logger.info(link)
         req = session.get(link, headers=headers)
-        time.sleep(randint(1,2))
-        try:
-          base = BeautifulSoup(req.text,"lxml")
-        except (BaseException):
-          logger.info('[!] Error Occured. ')
-          logger.info('[?] Check whether system is Online.')
+        base = BeautifulSoup(req.text, "lxml")
 
         location_name = base.h1.text[1:-1].title()
-        logger.info(location_name)
 
-        all_scripts = base.find_all('script', attrs={'type': "application/ld+json"})
+        fin_script = ""
+        all_scripts = base.find_all("script")
         for script in all_scripts:
-          if "latitude" in str(script):
-            script = script.text.replace('\n', '').strip()
-            break
+            if "latitude" in str(script):
+                fin_script = str(script)
+                break
 
-        script = base.find_all('script', attrs={'type': "application/ld+json"})[-2].text.replace('\n', '').strip()
-        store_data = json.loads(script)
+        store_data = json.loads(fin_script.split(">")[1].split("<")[0])
+        street_address = store_data["address"]["streetAddress"]
+        city = store_data["address"]["addressLocality"]
+        state = store_data["address"]["addressRegion"]
+        zip_code = store_data["address"]["postalCode"]
+        phone = store_data["telephone"]
+        latitude = store_data["geo"]["latitude"]
+        longitude = store_data["geo"]["longitude"]
 
-        street_address = store_data['address']['streetAddress']
-        city = store_data['address']['addressLocality']
-        state = store_data['address']['addressRegion']
-        zip_code = store_data['address']['postalCode']
+        if "855 W" in street_address and location_name != "Grandview":
+            raw_address = base.find(class_="sqs-block map-block sqs-block-map")
+            store_data = json.loads(raw_address["data-block-json"])["location"]
+            street_address = store_data["addressLine1"]
+            city = store_data["addressLine2"].split(",")[0].strip()
+            state = store_data["addressLine2"].split(",")[1].strip()
+            zip_code = store_data["addressLine2"].split(",")[2].strip()
+
+            phone = "<MISSING>"
+            if "Phone" in base.find_all(class_="sqs-block-content")[3].text:
+                phone = list(
+                    base.find_all(class_="sqs-block-content")[3].stripped_strings
+                )[-1]
+
+            latitude = store_data["mapLat"]
+            longitude = store_data["mapLng"]
+
         country_code = "US"
         store_number = "<MISSING>"
-        phone = store_data['telephone']
-        latitude = store_data['geo']['latitude']
-        longitude = store_data['geo']['longitude']
 
         hours_of_operation = base.find_all(class_="sqs-block-content")[3].p.text.strip()
-        if hours_of_operation == "sun-thurs: 11a – 9p":
-            hours_of_operation = hours_of_operation + " " + base.find_all(class_="sqs-block-content")[3].find_all('p')[1].text.strip()
+        if "sun-thurs" in hours_of_operation:
+            hours_of_operation = (
+                hours_of_operation
+                + " "
+                + base.find_all(class_="sqs-block-content")[3]
+                .find_all("p")[1]
+                .text.strip()
+            )
+        hours_of_operation = (
+            hours_of_operation.replace("p", "p ").replace("  ", " ").strip()
+        )
+
+        if "p" not in hours_of_operation:
+            hours_of_operation = " ".join(
+                list(base.find_all(class_="sqs-block-content")[3].stripped_strings)[-2:]
+            )
+
         location_type = "<MISSING>"
-    
-        data.append([locator_domain, link, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
+
+        data.append(
+            [
+                locator_domain,
+                link,
+                location_name,
+                street_address,
+                city,
+                state,
+                zip_code,
+                country_code,
+                store_number,
+                phone,
+                location_type,
+                latitude,
+                longitude,
+                hours_of_operation,
+            ]
+        )
 
     return data
-    
+
+
 def scrape():
     data = fetch_data()
     write_output(data)
 
-scrape()
 
+scrape()
