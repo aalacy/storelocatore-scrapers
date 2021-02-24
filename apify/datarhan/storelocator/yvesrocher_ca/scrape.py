@@ -1,7 +1,7 @@
 import re
 import csv
+import json
 from lxml import etree
-from urllib.parse import urljoin
 
 from sgrequests import SgRequests
 
@@ -47,49 +47,42 @@ def fetch_data():
 
     response = session.get(start_url)
     dom = etree.HTML(response.text)
-    data = dom.xpath('//script[contains(text(), "dataLayerOptions")]/text()')[0]
-    data = re.findall('hrefu003d"(.+?)"u003e', data.replace("\\", ""))
-    all_locations = [elem for elem in data if "all-about-our" in elem]
+    all_locations = dom.xpath(
+        '//li[@class="m-t_S inline-block p-x_default tab_text_size_default width_25p"]/a[contains(@href, "/stores-and-spa/")]/@href'
+    )
 
     for url in all_locations:
-        store_url = urljoin(start_url, url)
+        store_url = f"https://www.yvesrocher.ca/en{url}"
+        if "spa//" in store_url:
+            continue
         loc_response = session.get(store_url)
-        loc_dom = etree.HTML(loc_response.text)
-        data = loc_dom.xpath('//script[contains(text(), "dataLayerOptions")]/text()')[0]
-        data = data.replace("u003c", "<").replace("u003d", "=").replace("u003e", ">")
-        loc_dom = etree.HTML(re.findall('html":"(.+?)","js', data.replace("\\", ""))[0])
+        poi = re.findall("store = (.+);", loc_response.text)[0]
+        poi = json.loads(poi)
 
-        location_name = loc_dom.xpath('//meta[@itemprop="name"]/@content')[0]
-        street_address = loc_dom.xpath('//meta[@itemprop="streetAddress"]/@content')
-        street_address = (
-            street_address[0]
-            .replace("u0027", "'")
-            .replace("u00E9", "é")
-            .replace("u00E8", "è")
-            .replace("u00F4", "ô")
-            if street_address
-            else "<MISSING>"
-        )
-        city = loc_dom.xpath('//meta[@itemprop="addressLocality"]/@content')
-        city = city[0] if city[0].strip() else "<MISSING>"
-        state = "<MISSING>"
-        zip_code = loc_dom.xpath('//meta[@itemprop="postalCode"]/@content')
-        zip_code = zip_code[0] if zip_code else "<MISSING>"
-        country_code = "<MISSING>"
+        location_name = poi["name"]
+        street_address = poi["address1"]
+        if poi["address2"]:
+            street_address += " " + poi["address2"]
+        city = poi["city"]
+        city = city if city else "<MISSING>"
+        state = poi["region"]
+        zip_code = poi["zipCode"]
+        zip_code = zip_code if zip_code else "<MISSING>"
+        country_code = poi["countryName"]
         store_number = "<MISSING>"
-        phone = loc_dom.xpath('//meta[@itemprop="telephone"]/@content')
-        phone = phone[0] if phone else "<MISSING>"
-        location_type = loc_dom.xpath("//div/@itemtype")[0].split("/")[-1]
-        latitude = loc_dom.xpath('//meta[@itemprop="latitude"]/@content')
-        latitude = latitude[0] if latitude else "<MISSING>"
-        longitude = loc_dom.xpath('//meta[@itemprop="longitude"]/@content')
-        longitude = longitude[0] if longitude else "<MISSING>"
-        hours_of_operation = loc_dom.xpath('//table[@class="horaire-table"]//text()')
-        hours_of_operation = (
-            " ".join([elem.strip() for elem in hours_of_operation])
-            if hours_of_operation
-            else "<MISSING>"
-        )
+        phone = poi["phoneNumber"]
+        phone = phone if phone else "<MISSING>"
+        location_type = "<MISSING>"
+        latitude = poi["location"][1]
+        latitude = latitude if latitude else "<MISSING>"
+        longitude = poi["location"][0]
+        longitude = longitude if longitude else "<MISSING>"
+        hoo = []
+        for k, hours in poi.items():
+            if "opening" in k:
+                day = k.replace("opening", "")
+                hoo.append(f"{day} {hours}")
+        hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
 
         item = [
             DOMAIN,

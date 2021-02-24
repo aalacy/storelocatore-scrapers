@@ -64,7 +64,8 @@ def fetch_data():
         zip_code = zip_code[0] if zip_code else "<MISSING>"
         country_code = "<MISSING>"
         store_number = "<MISSING>"
-        phone = "<MISSING>"
+        phone = loc_dom.xpath('//a[@itemprop="telephone"]/text()')
+        phone = phone[0] if phone else "<MISSING>"
         location_type = "<MISSING>"
         geo = re.findall(r"LatLng\((.+?)\);", loc_response.text)[0].split(",")
         latitude = geo[0]

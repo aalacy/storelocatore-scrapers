@@ -21,7 +21,6 @@ def fetch_data():
             zip = store["attributes"]["Store.postCode"][0]
             city = store["attributes"]["Store.city"][0]
             country_code = "UK"
-            state = store["attributes"]["Store.state"][0]
             street_address = store["attributes"]["Store.addressLine1"][0] + " "
             street_address += (
                 store["attributes"]["Store.addressLine2"][0]
@@ -42,7 +41,6 @@ def fetch_data():
                 street_address=street_address.strip(),
                 city=city,
                 zip_postal=zip,
-                state=state,
                 phone=phone,
                 locator_domain=locator_domain,
                 country_code=country_code,
