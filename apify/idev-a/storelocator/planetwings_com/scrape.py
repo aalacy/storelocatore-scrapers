@@ -37,7 +37,6 @@ def fetch_data():
                 country_code = address_detail.pop()
                 zip = address_detail.pop()
                 street_address = " ".join(address)
-                # import pdb;pdb.set_trace()
             state = location_name.split(", ").pop()
             city = location_name.split(", ")[0]
             try:
