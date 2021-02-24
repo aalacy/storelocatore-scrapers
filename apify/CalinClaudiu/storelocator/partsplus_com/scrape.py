@@ -98,6 +98,15 @@ def paraThis(url):
     k["data"]["hours"] = k["data"]["hours"].replace("pm:", "pm;")
     k["data"]["serviceDealerType"] = "<MISSING>"
 
+    if not k["parsed"]["address"]:
+        k["parsed"]["address"] = "<MISSING>"
+    if not k["parsed"]["city"]:
+        k["parsed"]["city"] = "<MISSING>"
+    if not k["parsed"]["state"]:
+        k["parsed"]["state"] = "<MISSING>"
+    if not k["parsed"]["zip"]:
+        k["parsed"]["zip"] = "<MISSING>"
+
     return k
 
 
@@ -238,23 +247,19 @@ def fetch_data():
             print_stats_interval=10,
         )
         for j in lize:
-            if (
-                str(
+            try:
+                recordIdent = str(
                     j["parsed"]["address"]
                     + j["parsed"]["city"]
                     + j["parsed"]["state"]
                     + j["parsed"]["zip"]
                 )
-                not in otherIdent
-            ):
-                otherIdent.add(
-                    str(
-                        j["parsed"]["address"]
-                        + j["parsed"]["city"]
-                        + j["parsed"]["state"]
-                        + j["parsed"]["zip"]
-                    )
-                )
+            except Exception:
+                logzilla.info(f"had troubles with this record : {j}")
+                raise Exception
+
+            if recordIdent not in otherIdent:
+                otherIdent.add(recordIdent)
                 yield j
 
     logzilla.info(f"Finished grabbing data!!")  # noqa
