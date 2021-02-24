@@ -71,8 +71,14 @@ def fetch_data():
         store = etree.HTML(data)
         output = []
         detail = eliminate_space(store.xpath('.//div[@class="center-address"]//text()'))
+        if detail[-2] == "999":
+            detail.pop(-2)
+            detail.pop(-1)
+            detail.append(detail[-1])
+
         if len(detail) > 0:
             output.append(base_url)  # url
+
             if len(detail) == 6:
                 output.append(detail[0])  # location name
                 output.append(detail[2])  # address
