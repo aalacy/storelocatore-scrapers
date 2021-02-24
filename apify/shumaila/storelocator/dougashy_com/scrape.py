@@ -1,6 +1,5 @@
 from bs4 import BeautifulSoup
 import csv
-
 from sgrequests import SgRequests
 
 session = SgRequests()
