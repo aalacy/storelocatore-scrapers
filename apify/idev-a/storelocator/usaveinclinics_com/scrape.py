@@ -71,7 +71,7 @@ def fetch_data():
                 locator_domain=locator_domain,
                 latitude=latitude,
                 longitude=longitude,
-                location_type=location_type
+                location_type=location_type,
             )
             yield record
 
