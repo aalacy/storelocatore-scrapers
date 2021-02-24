@@ -59,13 +59,7 @@ def fetch_data():
     url = "https://www.royrogersrestaurants.com/locations"
     r = session.get(url, headers=headers, verify=False)
     soup = BeautifulSoup(r.text, "html.parser")
-    linklist = soup.find(
-        "div",
-        {
-            "class": "locations-overview js-view-dom-id-c0930adbb4fa0c7c89099acc444d0add7f16ce4183b883d8e5e132e7c8089493"
-        },
-    )
-    locations = linklist.findAll("ul", {"class": "locations"})
+    locations = soup.findAll("ul", {"class": "locations"})
     for loc in locations:
         allloc = loc.findAll("li")
         for l in allloc:
@@ -129,8 +123,8 @@ def fetch_data():
             if len(coords) == 35:
                 coord = str(coords[3])
                 coord = coord.split('"coordinates":[')[1].split("]}")[0]
-                lat = coord.split(",")[0].strip()
-                lng = coord.split(",")[1].strip()
+                lng = coord.split(",")[0].strip()
+                lat = coord.split(",")[1].strip()
             else:
                 lat = "<MISSING>"
                 lng = "<MISSING>"
