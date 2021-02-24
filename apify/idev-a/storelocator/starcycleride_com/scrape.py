@@ -12,7 +12,9 @@ locator_domain = "https://www.starcycleride.com"
 def fetch_data():
     with SgRequests() as session:
         res = session.get("https://www.starcycleride.com/studios/")
-        stores = bs(res.text, "lxml").select("div.locations div.location-state div.ng-star-inserted")
+        stores = bs(res.text, "lxml").select(
+            "div.locations div.location-state div.ng-star-inserted"
+        )
         for store in stores:
             page_url = locator_domain + store.select_one("a")["href"]
             res = session.get(page_url)
