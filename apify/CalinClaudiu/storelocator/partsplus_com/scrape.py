@@ -82,9 +82,13 @@ def paraThis(url):
 
     k["parsed"]["city"] = parsedAddress.city if parsedAddress.city else "<MISSING>"
     k["parsed"]["state"] = parsedAddress.state if parsedAddress.state else "<MISSING>"
-    k["parsed"]["zip"] = parsedAddress.postcode if parsedAddress.postcode else "<MISSING>"
+    k["parsed"]["zip"] = (
+        parsedAddress.postcode if parsedAddress.postcode else "<MISSING>"
+    )
     k["parsed"]["raw"] = rawa
-    k["data"]["country"] = parsedAddress.country if parsedAddress.country else "<MISSING>"
+    k["data"]["country"] = (
+        parsedAddress.country if parsedAddress.country else "<MISSING>"
+    )
     k["data"]["phone"] = phone
     k["data"]["companyLocationId"] = "<MISSING>"
 
@@ -179,7 +183,9 @@ def fetch_data():
 
                 k["city"] = parsedAddress.city if parsedAddress.city else "<MISSING>"
                 k["state"] = parsedAddress.state if parsedAddress.state else "<MISSING>"
-                k["zip"] = parsedAddress.postcode if parsedAddress.postcode else "<MISSING>"
+                k["zip"] = (
+                    parsedAddress.postcode if parsedAddress.postcode else "<MISSING>"
+                )
                 k["raw"] = (
                     str(i["address1"] if i["address1"] else "")
                     + ", "
