@@ -46,7 +46,6 @@ def fetch_data():
     store_detail = []
     return_main_object = []
     result = []
-    addresses = []
     k = soup.find_all("a", {"class": "Directory-listLink"})
 
     for i in k:
