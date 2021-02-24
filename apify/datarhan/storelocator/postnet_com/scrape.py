@@ -47,7 +47,7 @@ def fetch_data():
     start_url = "https://locations.postnet.com/search?q={}"
 
     all_codes = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA], max_radius_miles=200
+        country_codes=[SearchableCountries.USA], max_radius_miles=100
     )
     for code in all_codes:
         response = session.get(start_url.format(code))
