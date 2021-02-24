@@ -46,8 +46,6 @@ def fetch_data():
         street_address = "".join(
             b.xpath('.//span[2][@itemprop="streetAddress"]/text()')
         )
-        if street_address.find("Main Concourse") != -1:
-            continue
         city = "".join(b.xpath('.//span[@itemprop="addressLocality"]/text()'))
         postal = "".join(b.xpath('.//span[@itemprop="postalCode"]/text()'))
         state = "".join(b.xpath('.//span[@itemprop="addressRegion"]/text()'))
