@@ -108,7 +108,7 @@ def fetch_data():
                         hours = hours + day + " Closed "
             except:
                 hours = "<MISSING>"
-        except Exception as e:
+        except:
             try:
                 address = (
                     soup.find("div", {"class": "address-nav"})
