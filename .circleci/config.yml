@@ -10,7 +10,7 @@ jobs:
           command: |
             source ./.circleci/lib.sh
             check_diffs
-  
+
   check-required-files:
     docker:
       - image: cimg/base:2020.01
@@ -21,7 +21,7 @@ jobs:
           command: |
             source ./.circleci/lib.sh
             check_required_files
-  
+
   check-forbidden-files:
     docker:
       - image: cimg/base:2020.01
@@ -39,7 +39,7 @@ jobs:
       tag: <<parameters.python-version>>
     parameters:
       cache-prefix:
-        default: 'v1'
+        default: 'v2'
         description: Cache prefix (increment to clear)
         type: string
       python-version:
@@ -106,6 +106,18 @@ jobs:
             if [ "${#UPDATED_PYTHON_FILES[@]}" -gt 0 ]; then
                 mypy "${UPDATED_PYTHON_FILES[@]}"
             fi
+      - run:
+          name: Check all python dependencies are pinned
+          command: |
+            source ./venv/bin/activate
+            source ./.circleci/lib.sh
+            check_dependencies
+      - run:
+          name: Check internal library versions are up to date
+          command: |
+            source ./venv/bin/activate
+            source ./.circleci/lib.sh
+            check_internal_library_versions
 
   node-lint-updates:
     executor: node/default

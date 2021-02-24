@@ -38,12 +38,12 @@ def get_data(postal):
     _tmp_out = []
     session = SgRequests()
     locator_domain = "https://woodforest.com/"
-    api_url = (
+    page_url = (
         f"https://woodforest.com/Lib/WFNB.Functions.GetLocations.ashx?address="
-        f"&city=&state=&zipCode={postal}&distance=20&display=45"
+        f"&city=&state=&zipCode={postal}&distance=50&display=45"
     )
 
-    r = session.post(api_url)
+    r = session.post(page_url)
     js = r.json().get("locations") or []
     for j in js:
         a = j.get("address", {})
@@ -59,10 +59,6 @@ def get_data(postal):
         latitude = g.get("latitude") or "<MISSING>"
         longitude = g.get("longitude") or "<MISSING>"
         location_type = j.get("type", {}).get("displayAs") or "<MISSING>"
-        page_url = (
-            f"https://woodforest.com/Home/About-Us/Contact-Us/Locations/SearchResults.aspx"
-            f"#address=&city=&state=&zipCode={postal}&distance=30"
-        )
 
         hours = j.get("lobby")
         _tmp = []
@@ -105,7 +101,7 @@ def fetch_data():
     s = set()
     zips = static_zipcode_list(radius=20, country_code=SearchableCountries.USA)
 
-    with futures.ThreadPoolExecutor(max_workers=1) as executor:
+    with futures.ThreadPoolExecutor(max_workers=5) as executor:
         future_to_url = {executor.submit(get_data, postal): postal for postal in zips}
         for future in futures.as_completed(future_to_url):
             rows = future.result()
