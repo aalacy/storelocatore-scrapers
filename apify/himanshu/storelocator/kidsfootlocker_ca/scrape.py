@@ -73,11 +73,11 @@ def fetch_data():
                     street_address2 = soup2.find(
                         "span", {"class": "c-address-street-2"}
                     )
-                    if street_address2 != None:
+                    if street_address2 is not None:
                         street_address1 = street_address2.text
                     city = soup2.find("span", {"class": "c-address-city"}).text
                     state1 = soup2.find("abbr", {"class": "c-address-state"})
-                    if state1 != None:
+                    if state1 is not None:
                         state = state1.text
                     else:
                         state = "<MISSING>"
@@ -86,7 +86,7 @@ def fetch_data():
                         "div", {"class": "Phone-display Phone-display--withLink"}
                     ).text
                     hours1 = soup2.find("table", {"class": "c-hours-details"})
-                    if hours1 != None:
+                    if hours1 is not None:
                         hours = " ".join(list(hours1.stripped_strings)).replace(
                             "Day of the Week Hours", ""
                         )
@@ -145,11 +145,11 @@ def fetch_data():
                         street_address2 = soup5.find(
                             "span", {"class": "c-address-street-2"}
                         )
-                        if street_address2 != None:
+                        if street_address2 is not None:
                             street_address1 = street_address2.text
                         city = soup5.find("span", {"class": "c-address-city"}).text
                         state1 = soup5.find("abbr", {"class": "c-address-state"})
-                        if state1 != None:
+                        if state1 is not None:
                             state = state1.text
                         else:
                             state = "<MISSING>"
@@ -174,7 +174,7 @@ def fetch_data():
                             .split("5D=")[-3:][1]
                             .split("&dro")[0]
                         )
-                        if hours1 != None:
+                        if hours1 is not None:
                             hours = " ".join(list(hours1.stripped_strings)).replace(
                                 "Day of the Week Hours", ""
                             )
@@ -211,11 +211,11 @@ def fetch_data():
             name1 = soup6.find("span", {"class": "LocationName-geo"}).text
             street_address = soup6.find("span", {"class": "c-address-street-1"}).text
             street_address2 = soup6.find("span", {"class": "c-address-street-2"})
-            if street_address2 != None:
+            if street_address2 is not None:
                 street_address1 = street_address2.text
             city = soup6.find("span", {"class": "c-address-city"}).text
             state1 = soup6.find("abbr", {"class": "c-address-state"})
-            if state1 != None:
+            if state1 is not None:
                 state = state1.text
             else:
                 state = "<MISSING>"
@@ -224,7 +224,7 @@ def fetch_data():
                 "div", {"class": "Phone-display Phone-display--withLink"}
             ).text
             hours1 = soup6.find("table", {"class": "c-hours-details"})
-            if hours1 != None:
+            if hours1 is not None:
                 hours = " ".join(list(hours1.stripped_strings)).replace(
                     "Day of the Week Hours", ""
                 )
