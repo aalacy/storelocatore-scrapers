@@ -54,12 +54,11 @@ def fetch_data():
         for line in r.iter_lines():
             line = str(line.decode("utf-8"))
             if '<div class="subhead-h3"><a href="' in line:
-                lurl = (
-                    "https://www.providence.org"
-                    + line.split('<div class="subhead-h3"><a href="')[1].split('"')[0]
-                )
-                if lurl not in locs:
-                    locs.append(lurl)
+                stub = line.split('<div class="subhead-h3"><a href="')[1].split('"')[0]
+                if "http" not in stub:
+                    lurl = "https://www.providence.org" + stub
+                    if lurl not in locs:
+                        locs.append(lurl)
     for loc in locs:
         logger.info(loc)
         name = ""
