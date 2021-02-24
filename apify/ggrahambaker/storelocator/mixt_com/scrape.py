@@ -1,5 +1,4 @@
 import csv
-import os
 from sgselenium import SgSelenium
 import json
 
@@ -76,7 +75,6 @@ def fetch_data():
             for h in content[3:-2]:
                 hours += h + " "
 
-            href = store.find_element_by_css_selector("a").get_attribute("href")
             country_code = "US"
             location_type = "<MISSING>"
             phone_number = "<MISSING>"
