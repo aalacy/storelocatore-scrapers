@@ -58,9 +58,9 @@ def paraThis(url):
     try:
         k["data"]["name"] = stuff.find("h2").text.strip()
     except Exception:
-        k["data"]["name"] = ""
-    k["data"]["latitude"] = ""
-    k["data"]["longitude"] = ""
+        k["data"]["name"] = "<MISSING>"
+    k["data"]["latitude"] = "<MISSING>"
+    k["data"]["longitude"] = "<MISSING>"
     addressData = stuff.find("ul", {"class": "locator-address"}).find_all("li")
     rawa = []
     phone = []
@@ -80,19 +80,23 @@ def paraThis(url):
             k["parsed"]["address"] + ", " + parsedAddress.street_address_2
         )
 
-    k["parsed"]["city"] = parsedAddress.city if parsedAddress.city else ""
-    k["parsed"]["state"] = parsedAddress.state if parsedAddress.state else ""
-    k["parsed"]["zip"] = parsedAddress.postcode if parsedAddress.postcode else ""
+    k["parsed"]["city"] = parsedAddress.city if parsedAddress.city else "<MISSING>"
+    k["parsed"]["state"] = parsedAddress.state if parsedAddress.state else "<MISSING>"
+    k["parsed"]["zip"] = (
+        parsedAddress.postcode if parsedAddress.postcode else "<MISSING>"
+    )
     k["parsed"]["raw"] = rawa
-    k["data"]["country"] = parsedAddress.country if parsedAddress.country else ""
+    k["data"]["country"] = (
+        parsedAddress.country if parsedAddress.country else "<MISSING>"
+    )
     k["data"]["phone"] = phone
-    k["data"]["companyLocationId"] = ""
+    k["data"]["companyLocationId"] = "<MISSING>"
 
     hoursData = list(stuff.find("ul", {"class": "locator-timing"}).stripped_strings)
 
     k["data"]["hours"] = "Ingonyama nengw enamabala" + ": ".join(hoursData)
     k["data"]["hours"] = k["data"]["hours"].replace("pm:", "pm;")
-    k["data"]["serviceDealerType"] = ""
+    k["data"]["serviceDealerType"] = "<MISSING>"
 
     return k
 
@@ -177,9 +181,11 @@ def fetch_data():
                 if parsedAddress.street_address_2:
                     k["address"] = k["address"] + ", " + parsedAddress.street_address_2
 
-                k["city"] = parsedAddress.city if parsedAddress.city else ""
-                k["state"] = parsedAddress.state if parsedAddress.state else ""
-                k["zip"] = parsedAddress.postcode if parsedAddress.postcode else ""
+                k["city"] = parsedAddress.city if parsedAddress.city else "<MISSING>"
+                k["state"] = parsedAddress.state if parsedAddress.state else "<MISSING>"
+                k["zip"] = (
+                    parsedAddress.postcode if parsedAddress.postcode else "<MISSING>"
+                )
                 k["raw"] = (
                     str(i["address1"] if i["address1"] else "")
                     + ", "
