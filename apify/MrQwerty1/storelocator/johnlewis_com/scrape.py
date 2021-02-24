@@ -1,4 +1,5 @@
 import csv
+import json
 
 from concurrent import futures
 from lxml import html
@@ -37,35 +38,28 @@ def write_output(data):
 
 def get_urls():
     session = SgRequests()
-    r = session.get("https://www.tortilla.co.uk/locations-overview/")
+    r = session.get("https://www.johnlewis.com/our-shops")
     tree = html.fromstring(r.text)
 
-    return tree.xpath(
-        "//a[@class='GTM-Tracking-Location-Listing-Page-Restaurant-Location-Link']/@href"
-    )
+    return tree.xpath("//a[@class='store-locator-list__store-link']/@href")
 
 
-def get_data(page_url):
-    locator_domain = "https://www.tortilla.co.uk/"
+def get_data(url):
+    locator_domain = "https://www.johnlewis.com/"
+    page_url = f"https://www.johnlewis.com{url}"
 
     session = SgRequests()
     r = session.get(page_url)
     tree = html.fromstring(r.text)
 
-    location_name = "".join(
-        tree.xpath("//div[@class='b-location-header-inner__title']/text()")
-    ).strip()
-    line = "".join(
-        tree.xpath(
-            "//span[text()='Contact']/following-sibling::p[1]//text()|//div[@class='b-location-info-right-coming-soon-contact']/p//text()"
-        )
-    ).strip()
-
+    location_name = " ".join(
+        "".join(tree.xpath("//h1[@class='shop-title']//text()")).split()
+    )
+    line = "".join(tree.xpath("//p[@class='shop-details-address']/text()")).strip()
     postal = " ".join(line.split()[-2:])
+    if postal.find("London") != -1:
+        postal = postal.split()[-1].strip()
     line = line.replace(postal, "").strip()
-    if line.endswith(","):
-        line = line[:-1]
-
     adr = parse_address(International_Parser(), line, postcode=postal)
     street_address = (
         f"{adr.street_address_1} {adr.street_address_2 or ''}".replace(
@@ -75,29 +69,35 @@ def get_data(page_url):
     )
 
     city = adr.city or "<MISSING>"
+    if city == "<MISSING>":
+        city = location_name.split(",")[-1].strip()
+
     state = adr.state or "<MISSING>"
     postal = adr.postcode or "<MISSING>"
     country_code = "GB"
-    store_number = (
-        "".join(tree.xpath("//div[@data-postid]/@data-postid")) or "<MISSING>"
-    )
-    if store_number == "<MISSING>":
-        return
+    store_number = "<MISSING>"
     phone = (
         "".join(
-            tree.xpath(
-                "//div[@class='b-location-info-contact']//a[contains(@href, 'tel')]/text()"
-            )
+            tree.xpath("//span[@class='shop-details-telephone-number']/text()")
         ).strip()
         or "<MISSING>"
     )
-    latitude = "".join(tree.xpath("//div[@data-lat]/@data-lat")) or "<MISSING>"
-    longitude = "".join(tree.xpath("//div[@data-lng]/@data-lng")) or "<MISSING>"
+    text = "".join(tree.xpath("//script[@id='jsonPageData']/text()")) or "{}"
+    js = json.loads(text)
+    latitude = js.get("latitude") or "<MISSING>"
+    longitude = js.get("longitude") or "<MISSING>"
     location_type = "<MISSING>"
 
-    hours = tree.xpath("//span[text()='Opening Hours']/following-sibling::p/text()")
-    hours = list(filter(None, [h.strip() for h in hours]))
-    hours_of_operation = ";".join(hours) or "Closed"
+    _tmp = []
+    days = tree.xpath("//dt[@class='opening-day']/text()")
+    times = tree.xpath("//dd[@class='opening-time']/text()")
+
+    for d, t in zip(days, times):
+        _tmp.append(f"{d.strip()}: {t.strip()}")
+
+    hours_of_operation = ";".join(_tmp).replace("*", "") or "<MISSING>"
+    if hours_of_operation.count("Temporarily Closed") == 7:
+        hours_of_operation = "Temporarily Closed"
 
     row = [
         locator_domain,
