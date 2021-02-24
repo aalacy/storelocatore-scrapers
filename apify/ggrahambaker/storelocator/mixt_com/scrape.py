@@ -77,9 +77,6 @@ def fetch_data():
                 hours += h + " "
 
             href = store.find_element_by_css_selector("a").get_attribute("href")
-
-            start_idx = href.find("/@")
-            end_idx = href.find("z/data")
             country_code = "US"
             location_type = "<MISSING>"
             phone_number = "<MISSING>"
