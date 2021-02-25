@@ -1,15 +1,18 @@
 # -*- coding: utf-8 -*-
-import csv
 from sgrequests import SgRequests
 from sglogging import sglog
 import lxml.html
-from sgzip.dynamic import DynamicZipSearch, SearchableCountries
+from sgzip.dynamic import SearchableCountries
 from sgzip.static import static_zipcode_list
+from sgscrape.simple_utils import parallelize
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
 
 website = "floorstogo.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 session = SgRequests()
 
+url_list = []
 headers = {
     "Connection": "keep-alive",
     "Cache-Control": "max-age=0",
@@ -27,71 +30,20 @@ headers = {
 }
 
 
-def write_output(data):
-    with open("data.csv", mode="w", newline="", encoding="utf8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        temp_list = []  # ignoring duplicates
-        for row in data:
-            comp_list = [
-                row[2].strip(),
-                row[3].strip(),
-                row[4].strip(),
-                row[5].strip(),
-                row[6].strip(),
-                row[8].strip(),
-                row[10].strip(),
-            ]
-            if comp_list not in temp_list:
-                temp_list.append(comp_list)
-                writer.writerow(row)
-
-        log.info(f"No of records being processed: {len(temp_list)}")
-
-
-def fetch_data():
-    # Your scraper here
-    loc_list = []
-    zips = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA],
-        max_radius_miles=75,
-        max_search_results=5,
+def fetch_records_for(zipcode):
+    log.info(f"pulling records for zipcode: {zipcode}")
+    search_url = (
+        "https://www.floorstogo.com/StoreLocator.aspx?&searchZipCode=" + zipcode
     )
-    zips = ["94010"]
-    zips = static_zipcode_list(radius=200, country_code=SearchableCountries.USA)
-    # for zip_code in zips:
-    if True:
-        for zip_code in zips:
-            log.info(f"{zip_code} | remaining: {zips.items_remaining()}")
+    stores_req = session.get(search_url, headers=headers)
+    stores_sel = lxml.html.fromstring(stores_req.text)
+    stores = stores_sel.xpath('//table[@class="MasterTable_Default"]/tbody/tr')
 
-        search_url = (
-            "https://www.floorstogo.com/StoreLocator.aspx?&searchZipCode=" + zip_code
-        )
-        stores_req = session.get(search_url, headers=headers)
-        stores_sel = lxml.html.fromstring(stores_req.text)
-        stores = stores_sel.xpath('//table[@class="MasterTable_Default"]/tbody/tr')
+    yield stores
+
+
+def process_record(raw_results_from_one_zipcode):
+    for stores in raw_results_from_one_zipcode:
         for store in stores:
             temp_text = store.xpath(
                 ".//div[@class='search-store__results-address col-xs-12 col-sm-4']/p"
@@ -137,30 +89,35 @@ def fetch_data():
                     longitude = "<INACCESSIBLE>"
 
                     url = "https://www.floorstogo.com" + web
-                    store_req = session.get(url, headers=headers)
-                    store_sel = lxml.html.fromstring(store_req.text)
-                    page_url = store_req.url
-                    locations = store_sel.xpath('//div[@class="multi-location"]')
-                    if len(locations) <= 0:
-                        locations = store_sel.xpath('//div[@class="single-location"]')
-                    hours_of_operation = ""
-                    for loc in locations:
-                        if (
-                            phone
-                            == "".join(
-                                loc.xpath('a[@class="footer-phone"]/text()')
-                            ).strip()
-                        ):
-                            hours_of_operation = "".join(
-                                loc.xpath('p[@class="hours"]/text()')
-                            ).strip()
-                            if not hours_of_operation:
-                                hours_of_operation = "".join(
-                                    store_sel.xpath('.//p[@class="hours"]/text()')
+                    if url not in url_list:
+                        url_list.append(url)
+                        log.info(url)
+                        store_req = session.get(url, headers=headers)
+                        store_sel = lxml.html.fromstring(store_req.text)
+                        page_url = store_req.url
+                        locations = store_sel.xpath('//div[@class="multi-location"]')
+                        if len(locations) <= 0:
+                            locations = store_sel.xpath(
+                                '//div[@class="single-location"]'
+                            )
+                        hours_of_operation = ""
+                        for loc in locations:
+                            if (
+                                phone
+                                == "".join(
+                                    loc.xpath('a[@class="footer-phone"]/text()')
                                 ).strip()
-                            break
+                            ):
+                                hours_of_operation = "".join(
+                                    loc.xpath('p[@class="hours"]/text()')
+                                ).strip()
+                                if not hours_of_operation:
+                                    hours_of_operation = "".join(
+                                        store_sel.xpath('.//p[@class="hours"]/text()')
+                                    ).strip()
+                                break
                 else:
-                    page_url = search_url
+                    page_url = "<MISSING>"
                     latitude = "<MISSING>"
                     longitude = "<MISSING>"
 
@@ -169,31 +126,38 @@ def fetch_data():
                 if phone == "":
                     phone = "<MISSING>"
 
-                curr_list = [
-                    locator_domain,
-                    page_url,
-                    location_name,
-                    street_address,
-                    city,
-                    state,
-                    zip,
-                    country_code,
-                    store_number,
-                    phone,
-                    location_type,
-                    latitude,
-                    longitude,
-                    hours_of_operation,
-                ]
-                loc_list.append(curr_list)
-
-    return loc_list
+                yield SgRecord(
+                    locator_domain=locator_domain,
+                    page_url=page_url,
+                    location_name=location_name,
+                    street_address=street_address,
+                    city=city,
+                    state=state,
+                    zip_postal=zip,
+                    country_code=country_code,
+                    store_number=store_number,
+                    phone=phone,
+                    location_type=location_type,
+                    latitude=latitude,
+                    longitude=longitude,
+                    hours_of_operation=hours_of_operation,
+                )
 
 
 def scrape():
     log.info("Started")
-    data = fetch_data()
-    write_output(data)
+    with SgWriter() as writer:
+        results = parallelize(
+            search_space=static_zipcode_list(
+                radius=200, country_code=SearchableCountries.USA
+            ),
+            fetch_results_for_rec=fetch_records_for,
+            processing_function=process_record,
+            max_threads=4,  # tweak to see what's fastest
+        )
+        for rec in results:
+            writer.write_row(rec)
+
     log.info("Finished")
 
 

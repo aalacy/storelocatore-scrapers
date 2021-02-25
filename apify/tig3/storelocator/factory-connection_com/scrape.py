@@ -63,7 +63,7 @@ def fetch_data():
         location_name = check_missing(row["name"])
         formatted_address = row["formatted_address"]
 
-        addrs = parser.parse_address_usa(formatted_address)
+        addrs = parser.parse_address_intl(formatted_address)
         street_address = check_missing(addrs.street_address_1)
         street_address = (
             (street_address + ", " + addrs.street_address_2)

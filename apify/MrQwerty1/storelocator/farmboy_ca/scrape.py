@@ -47,7 +47,11 @@ def fetch_data():
         page_url = "".join(a.xpath(".//a[./img]/@href")) or "<MISSING>"
         line = a.xpath(".//div[@id='sin']/*[1]//text()")
         line = list(filter(None, [l.strip() for l in line]))
-        street_address = ", ".join(line[:-2]) or "<MISSING>"
+
+        if line[0][0].isdigit():
+            street_address = line[0].replace(", 2", "")
+        else:
+            street_address = line[1]
         if street_address.endswith(","):
             street_address = street_address[:-1]
         postal = line[-1]

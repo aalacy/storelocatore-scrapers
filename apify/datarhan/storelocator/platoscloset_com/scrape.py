@@ -1,8 +1,10 @@
 import csv
 import json
+from time import sleep
 from w3lib.url import add_or_replace_parameter
 
 from sgrequests import SgRequests
+from sgselenium import SgChrome
 
 
 def write_output(data):
@@ -41,23 +43,30 @@ def fetch_data():
 
     items = []
 
+    DOMAIN = "platoscloset.com"
+    start_url = "https://www.platoscloset.com/locations?country=US&page=1"
+    post_url = "https://api.ordercloud.io/v1/suppliers?page=1&pageSize=100&Active=true"
+
+    with SgChrome() as driver:
+        driver.get(start_url)
+        sleep(10)
+        request_cookies_browser = driver.get_cookies()
+
+    token = [e for e in request_cookies_browser if e["name"] == "pc_.token"][0]["value"]
     hdr = {
         "Accept": "application/json, text/plain, */*",
         "Accept-Encoding": "gzip, deflate, br",
         "Accept-Language": "ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7,pt;q=0.6",
-        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c3IiOiJhbm9uLXRlbXBsYXRlLXVzZXIiLCJjaWQiOiI3YzRhMjJjOC0yNjk1LTQyMDMtOTI2Zi02NGRmM2M2NjY0MjQiLCJvcmRlcmlkIjoicVhzd0hjZ2NtRS1QUnVhSnJ0dUJrQSIsInUiOiIyOTgzMzEwIiwidXNydHlwZSI6ImJ1eWVyIiwicm9sZSI6WyJNZUFkZHJlc3NBZG1pbiIsIk1lQWRtaW4iLCJNZUNyZWRpdENhcmRBZG1pbiIsIk1lWHBBZG1pbiIsIlNob3BwZXIiLCJTdXBwbGllclJlYWRlciIsIlN1cHBsaWVyQWRkcmVzc1JlYWRlciIsIlBhc3N3b3JkUmVzZXQiLCJCdXllclJlYWRlciIsIkRvY3VtZW50UmVhZGVyIl0sIm5iZiI6MTYxMzIwNzcxMiwiZXhwIjoxNjEzODEzMTEyLCJpYXQiOjE2MTMyMDgzMTIsImlzcyI6Imh0dHBzOi8vYXV0aC5vcmRlcmNsb3VkLmlvIiwiYXVkIjoiaHR0cHM6Ly9hcGkub3JkZXJjbG91ZC5pbyJ9.NOuLqZRCL_cqnlDSxzFvoKbHZF2K5bQoFn5N7gfsZmU",
+        "Authorization": f"Bearer {token}",
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.96 Safari/537.36",
     }
 
-    DOMAIN = "platoscloset.com"
-    start_url = "https://api.ordercloud.io/v1/suppliers?page=1&pageSize=100&Active=true"
-
-    response = session.get(start_url, headers=hdr)
+    response = session.get(post_url, headers=hdr)
     data = json.loads(response.text)
     all_locations = data["Items"]
     for page in range(2, data["Meta"]["TotalPages"] + 1):
         response = session.get(
-            add_or_replace_parameter(start_url, "page", str(page)), headers=hdr
+            add_or_replace_parameter(post_url, "page", str(page)), headers=hdr
         )
         data = json.loads(response.text)
         all_locations += data["Items"]
@@ -85,6 +94,8 @@ def fetch_data():
         location_type = "<MISSING>"
         latitude = poi["xp"]["latitude"]
         longitude = poi["xp"]["longitude"]
+        if latitude in [0.0, 0]:
+            continue
         hoo = data["xp"]["hours"]
         hours_of_operation = []
         for day, hours in hoo.items():

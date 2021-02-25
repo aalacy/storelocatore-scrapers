@@ -1,7 +1,7 @@
 if [[ "$1" == "--help" ]]; then
   echo "Usage:"
   echo "./run_scraper.sh [--windows] [--debug]"
-  echo "--windows [optional] For Windows users"
+  echo "--windows [optional] For Windows users and outputs python stdout()/stderr() to file "
   echo "--debug [optional] To launch the Docker container in interactive shell mode, instead of executing the script"
   exit 0
 fi
@@ -47,3 +47,9 @@ docker build -t $scraper_name --no-cache .
 rm -rf apify_docker_storage
 
 docker run -e GOOGLE_API_KEY -e PROXY_URL -e PROXY_PASSWORD -e APIFY_LOCAL_STORAGE_DIR=apify_storage -e APIFY_TOKEN='' -v "${base_path}/apify_docker_storage:/apify_storage" $EXTRA_PARAMS ${scraper_name}:latest
+
+
+if [ -n "${WINDZ+x}" ]; then
+	error_filename="$(date +"%Y-%m-%d_%H-%M")"
+	docker logs "$(docker container ls --format '{{.Names}}' --latest)" 2>&1 |tee "${base_path}/${scraper_name}_${error_filename}.log"
+fi
