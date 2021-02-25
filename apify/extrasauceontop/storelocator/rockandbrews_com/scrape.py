@@ -66,8 +66,8 @@ with SgChrome(executable_path="chromedriver.exe") as driver:
             except Exception:
                 phone = "<MISSING>"
 
-            if bool(re.search('[a-zA-Z]', phone)):
-                phone="<MISSING>"
+            if bool(re.search("[a-zA-Z]", phone)):
+                phone = "<MISSING>"
 
             locator_domains.append(locator_domain)
             page_urls.append(page_url)
