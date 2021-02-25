@@ -80,7 +80,7 @@ def fetch_data():
         if not hoo:
             hoo = loc_dom.xpath('//p[contains(text(), "am -")]/text()')
         if not hoo:
-            location_type = "closed"
+            continue
         hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
 
         item = [

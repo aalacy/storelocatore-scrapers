@@ -70,6 +70,14 @@ def get_data(store_number):
     city = adr.city or "<MISSING>"
     state = adr.state or "<MISSING>"
     postal = adr.postcode or "<MISSING>"
+
+    if location_name == "Kingston":
+        city = street_address
+        street_address = "<MISSING>"
+
+    if city == "<MISSING>":
+        city = location_name.split()[0]
+
     country_code = "GB"
     phone = j.get("phone_number") or "<MISSING>"
     latitude = j.get("latitude") or "<MISSING>"
