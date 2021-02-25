@@ -82,24 +82,37 @@ def fetch_data():
 
         ad = j.xpath(".//h5/text()")
         ad = list(filter(None, [a.strip() for a in ad]))
-        line = ' '.join(ad[:2])
+        line = " ".join(ad[:2])
         a = usaddress.tag(line, tag_mapping=tag)[0]
-        street_address = f"{a.get('address1')} {a.get('address2')}".replace('None','').strip()
-        city = a.get('city')
-        postal = a.get('postal')
-        state = a.get('state')
-        phone = ''.join(j.xpath('.//strong[contains(text(), "hours")]/preceding-sibling::text()[2]')).replace('\n','').strip() or '<MISSING>'
-        hours_of_operation = j.xpath('.//strong[contains(text(), "hours")]/following-sibling::text()')
+        street_address = f"{a.get('address1')} {a.get('address2')}".replace(
+            "None", ""
+        ).strip()
+        city = a.get("city")
+        postal = a.get("postal")
+        state = a.get("state")
+        phone = (
+            "".join(
+                j.xpath(
+                    './/strong[contains(text(), "hours")]/preceding-sibling::text()[2]'
+                )
+            )
+            .replace("\n", "")
+            .strip()
+            or "<MISSING>"
+        )
+        hours_of_operation = j.xpath(
+            './/strong[contains(text(), "hours")]/following-sibling::text()'
+        )
         hours_of_operation = list(filter(None, [a.strip() for a in hours_of_operation]))
-        hours_of_operation = ' '.join(hours_of_operation) or '<MISSING>'
+        hours_of_operation = " ".join(hours_of_operation) or "<MISSING>"
         country_code = "US"
         store_number = "<MISSING>"
-        page_url = 'https://mezeh.com/locations/'
-        location_name = ' '.join(j.xpath('.//h4/text()')).strip()
-        if location_name.find('temporarily closed') != -1:
-            location_name = location_name.split('temporarily closed')[0].strip()
-        if location_name.find('spring forest') != -1:
-            hours_of_operation = 'Temporarily closed'
+        page_url = "https://mezeh.com/locations/"
+        location_name = " ".join(j.xpath(".//h4/text()")).strip()
+        if location_name.find("temporarily closed") != -1:
+            location_name = location_name.split("temporarily closed")[0].strip()
+        if location_name.find("spring forest") != -1:
+            hours_of_operation = "Temporarily closed"
         latitude = "<MISSING>"
         longitude = "<MISSING>"
         location_type = "<MISSING>"
