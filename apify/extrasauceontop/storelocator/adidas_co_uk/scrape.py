@@ -82,7 +82,7 @@ for url in urls:
                 for key in keys:
                     hours_op = hours_op + " " + day[key]
 
-            if bool(re.search(r"\d", hours_op)) == False:
+            if bool(re.search(r"\d", hours_op)) is False:
                 hours_op = "<MISSING>"
 
             if int(latitude) == 0 and int(longitude) == 0:
