@@ -84,15 +84,25 @@ def get_data(url):
         .replace("\n", "")
         .strip()
     )
+<<<<<<< HEAD
+=======
+
+>>>>>>> origin/SLC-8838
     if page_url.find("kuwait") != -1:
         return
 
     a = usaddress.tag(line, tag_mapping=tag)[0]
+<<<<<<< HEAD
     street_address = (
         f"{a.get('address1')} {a.get('address2')} {a.get('recipient')}".replace(
             "None", ""
         ).strip()
     )
+=======
+    street_address = f"{a.get('address1')} {a.get('address2')} {a.get('recipient')}".replace(
+        "None", ""
+    ).strip()
+>>>>>>> origin/SLC-8838
     city = a.get("city")
     state = a.get("state")
     postal = a.get("postal")
