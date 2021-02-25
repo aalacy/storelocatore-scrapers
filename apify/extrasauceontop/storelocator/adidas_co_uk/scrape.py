@@ -75,7 +75,6 @@ for url in urls:
             hours = store_data["openingHours"]
 
             hours_op = ""
-            bad_list = []
             for day in hours:
                 keys = day.keys()
 
