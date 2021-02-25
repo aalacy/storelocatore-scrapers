@@ -39,7 +39,6 @@ def para(k):
         "https://www.loblaws.ca/api/pickup-locations/" + k["storeId"], headers=headers
     ).json()
 
-    k["domain"], k["page_url"] = determine(ban, ide)
     try:
         k["hours"] = "; ".join(
             [str(i["day"] + ": " + i["hours"]) for i in k["storeDetails"]["storeHours"]]
@@ -49,6 +48,7 @@ def para(k):
         k["hours"] = k["openNowResponseData"]["hours"]
         k["storeDetails"] = {}
         k["storeDetails"]["phoneNumber"] = k["contactNumber"]
+    k["domain"], k["page_url"] = determine(ban, ide)
     k["storeBannerId"] = ban
     k["storeId"] = ide
 
