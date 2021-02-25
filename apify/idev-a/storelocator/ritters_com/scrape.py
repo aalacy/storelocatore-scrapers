@@ -72,7 +72,7 @@ def fetch_data():
                 longitude=longitude,
                 hours_of_operation=hours_of_operation.replace("\r\n", " ")
                 .replace("\n", " ")
-                .split("Call us")[0]
+                .split("Call us")[0],
             )
             yield record
 
