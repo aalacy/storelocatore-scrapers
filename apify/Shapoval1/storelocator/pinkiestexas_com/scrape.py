@@ -80,7 +80,9 @@ def fetch_data():
 
         for a, h in zip(adr, hours):
             name = "".join(a.xpath("./strong/text()"))
-            hours_of_operation = "".join(h.xpath("./text()")).replace("\n", "")
+            hours_of_operation = (
+                "".join(h.xpath("./text()")).replace("\n", "").replace("Hours:", "")
+            ).replace("â€“", "-")
             b = usaddress.tag(name, tag_mapping=tag)[0]
             block = "".join(a.xpath("./text()[1]"))
             x = usaddress.tag(block, tag_mapping=tag)[0]
