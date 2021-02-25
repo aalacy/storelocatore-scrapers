@@ -1,5 +1,5 @@
 import re
-import base
+import base  # noqa: I900
 import json
 from sgrequests import SgRequests
 from w3lib.html import remove_tags
