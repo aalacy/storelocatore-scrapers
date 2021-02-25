@@ -35,15 +35,13 @@ def write_output(data):
 
 def fetch_data():
     out = []
-    locator_domain = "https://mezeh.com"
-    page_url = "https://mezeh.com/locations/"
+    locator_domain = "https://www.fatshack.com"
+    page_url = "https://www.fatshack.com/locations"
 
     session = SgRequests()
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:84.0) Gecko/20100101 Firefox/84.0"
-    }
-    r = session.get(page_url, headers=headers)
+    r = session.get(page_url)
     tree = html.fromstring(r.text)
+    div = tree.xpath('//div[@class="flex-col-locations w-dyn-item"]')
     tag = {
         "Recipient": "recipient",
         "AddressNumber": "address1",
@@ -72,47 +70,50 @@ def fetch_data():
         "StateName": "state",
         "ZipCode": "postal",
     }
-    div = tree.xpath(
-        '//div[@class="column_attr clearfix align_left mobile_align_left"]'
-    )
-    for j in div:
-        coming_soon = "".join(j.xpath(".//h3/strong/text()"))
-        if coming_soon.find("coming soon") != -1:
-            continue
-
-        ad = j.xpath(".//h5/text()")
-        ad = list(filter(None, [a.strip() for a in ad]))
-        line = " ".join(ad[:2])
-        a = usaddress.tag(line, tag_mapping=tag)[0]
-        street_address = f"{a.get('address1')} {a.get('address2')}".replace(
-            "None", ""
-        ).strip()
-        city = a.get("city")
-        postal = a.get("postal")
-        state = a.get("state")
-        phone = (
-            "".join(
-                j.xpath(
-                    './/strong[contains(text(), "hours")]/preceding-sibling::text()[2]'
+    for d in div:
+        line = (
+            " ".join(
+                d.xpath(
+                    './/div[@class="flex-col-address-wrapper-locations"]/a[contains(@href, "goo")]//text()'
                 )
             )
             .replace("\n", "")
             .strip()
+        )
+        a = usaddress.tag(line, tag_mapping=tag)[0]
+        street_address = f"{a.get('address1')} {a.get('address2')}".replace(
+            "None", ""
+        ).strip()
+        city = "".join(a.get("city")).replace("Â", "").strip()
+        postal = "".join(a.get("postal")).replace("Â", "").strip()
+        state = "".join(a.get("state")).strip()
+        phone = (
+            " ".join(
+                d.xpath(
+                    './/div[@class="flex-col-address-wrapper-locations"]/a[contains(@href, "tel")]//text()'
+                )
+            )
             or "<MISSING>"
         )
-        hours_of_operation = j.xpath(
-            './/strong[contains(text(), "hours")]/following-sibling::text()'
-        )
-        hours_of_operation = list(filter(None, [a.strip() for a in hours_of_operation]))
-        hours_of_operation = " ".join(hours_of_operation) or "<MISSING>"
         country_code = "US"
         store_number = "<MISSING>"
-        page_url = "https://mezeh.com/locations/"
-        location_name = " ".join(j.xpath(".//h4/text()")).strip()
-        if location_name.find("temporarily closed") != -1:
-            location_name = location_name.split("temporarily closed")[0].strip()
-        if location_name.find("spring forest") != -1:
-            hours_of_operation = "Temporarily closed"
+        location_name = "".join(
+            d.xpath('.//h4[@class="flex-col-heading-locations"]/text()')
+        )
+        hours_of_operation = (
+            " ".join(
+                d.xpath(
+                    './/div[@class="flex-col-hours-text-locations w-richtext"]/p//text()'
+                )
+            )
+            .replace("\n", "")
+            .replace(" â ", "-")
+            .replace(" â", ";")
+            .replace(" â", "")
+            .replace("  Â ", "")
+            .replace(" Â ", "")
+            .strip()
+        )
         latitude = "<MISSING>"
         longitude = "<MISSING>"
         location_type = "<MISSING>"
