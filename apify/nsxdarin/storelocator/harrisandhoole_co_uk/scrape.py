@@ -1,10 +1,7 @@
 import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
-from sgscrape.sgpostal import (
-    International_Parser,
-    parse_address,
-)
+from sgscrape.sgpostal import parse_address_intl
 
 session = SgRequests()
 headers = {
@@ -75,6 +72,13 @@ def fetch_data():
         lat = ""
         lng = ""
         hours = ""
+        monhrs = ""
+        tuehrs = ""
+        wedhrs = ""
+        thuhrs = ""
+        frihrs = ""
+        sathrs = ""
+        sunhrs = ""
         r2 = session.get(purl, headers=headers)
         for line2 in r2.iter_lines():
             line2 = str(line2.decode("utf-8"))
@@ -82,7 +86,7 @@ def fetch_data():
                 name = line2.split('"title": "')[1].split('"')[0]
             if '"streetAddress": "' in line2:
                 addinfo = line2.split('"streetAddress": "')[1].split('"')[0]
-                addr = parse_address(addinfo, International_Parser())
+                addr = parse_address_intl(addinfo)
                 city = addr.city
                 zc = addr.postcode
                 add = addr.street_address_1
@@ -102,16 +106,43 @@ def fetch_data():
                 hrs = day + ": " + line2.split('"opensAt": "')[1].split('"')[0]
             if '"closesAt": "' in line2:
                 hrs = hrs + "-" + line2.split('At": "')[1].split('"')[0]
-                if hours == "":
-                    hours = hrs
-                else:
-                    hours = hours + "; " + hrs
+                if "Mon" in hrs:
+                    monhrs = hrs
+                if "Tue" in hrs:
+                    tuehrs = hrs
+                if "Wed" in hrs:
+                    wedhrs = hrs
+                if "Thu" in hrs:
+                    thuhrs = hrs
+                if "Fri" in hrs:
+                    frihrs = hrs
+                if "Sat" in hrs:
+                    sathrs = hrs
+                if "Sun" in hrs:
+                    sunhrs = hrs
+        hours = (
+            monhrs
+            + "; "
+            + tuehrs
+            + "; "
+            + wedhrs
+            + "; "
+            + thuhrs
+            + "; "
+            + frihrs
+            + "; "
+            + sathrs
+            + "; "
+            + sunhrs
+        )
         if "TEMPORARILY" in name.upper():
             hours = "TEMPORARILY CLOSED"
         if " Temp" in name:
             name = name.split(" Temp")[0]
         if " TEMP" in name:
             name = name.split(" TEMP")[0]
+        if "guildford-tesco" in loc:
+            zc = "GU2"
         yield [
             website,
             loc,

@@ -40,7 +40,7 @@ def fetch_data():
 
     base_link = "https://www.alohagas.com/aloha-gas/"
 
-    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36"
+    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
     headers = {"User-Agent": user_agent}
 
     session = SgRequests()
@@ -49,7 +49,6 @@ def fetch_data():
 
     data = []
     found_poi = []
-    found_links = []
     final_links = []
 
     locator_domain = "alohagas.com"
@@ -64,9 +63,8 @@ def fetch_data():
 
         for next_item in next_items:
             link = "https://www.alohagas.com" + next_item.a["href"]
-            if link not in found_links:
+            if link not in final_links:
                 final_links.append(link)
-                found_links.append(link)
 
     for final_link in final_links:
         req = session.get(final_link, headers=headers)
