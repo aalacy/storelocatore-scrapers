@@ -34,7 +34,6 @@ def write_output(data):
 def fetch_data():
     out = []
     locator_domain = "https://foxtrotco.com"
-    # api_url = "https://api.foxtrotchicago.com/v5/retail-stores/?region_id="
     lol = [1, 2, 3]
     for i in lol:
         api_url = f"https://api.foxtrotchicago.com/v5/retail-stores/?region_id={i}"
