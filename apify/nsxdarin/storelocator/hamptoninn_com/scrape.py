@@ -1,10 +1,13 @@
 import csv
 from sgrequests import SgRequests
+from sglogging import SgLogSetup
 
 session = SgRequests()
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
+
+logger = SgLogSetup().get_logger("hamptoninn_com")
 
 
 def write_output(data):
@@ -116,8 +119,9 @@ def fetch_data():
             if "en/hotels/united-kingdom" in line:
                 locs.append(line.split("<loc>")[1].split("<")[0] + "|GB")
     for loc in locs:
+        logger.info(loc.split("|")[0])
         country = loc.split("|")[1]
-        r2 = session.get(loc.split("|")[0], headers=headers, verify=False)
+        r2 = session.get(loc.split("|")[0], headers=headers, verify=False, stream=True)
         if r2.encoding is None:
             r2.encoding = "utf-8"
         lines = r2.iter_lines(decode_unicode=True)
