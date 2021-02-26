@@ -68,7 +68,7 @@ def fetch_data():
         store.append(location_details[3].replace("Ph: ", ""))
         store.append("<MISSING>")
         # There was 1 entry which did not have url on its name so i had to get it from a different part
-        if location.find("a") != None:
+        if location.find("a") is not None:
             geo_location = location.find("a")["href"]
             lat = geo_location.split("/@")[1].split(",")[0]
             lng = geo_location.split("/@")[1].split(",")[1]
