@@ -38,14 +38,14 @@ def para(k):
     }
     try:
         k = session.get(
-        "https://www.loblaws.ca/api/pickup-locations/" + k["storeId"], headers=headers
-    ).json()
+            "https://www.loblaws.ca/api/pickup-locations/" + k["storeId"],
+            headers=headers,
+        ).json()
     except Exception:
         k = backup
         k["hours"] = k["openNowResponseData"]["hours"]
         k["storeDetails"] = {}
         k["storeDetails"]["phoneNumber"] = k["contactNumber"]
-        
 
     try:
         k["hours"] = "; ".join(
