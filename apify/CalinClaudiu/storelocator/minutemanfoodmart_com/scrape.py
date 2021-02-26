@@ -43,16 +43,16 @@ def get_locations(url):
             k["raw"] = bs_data[2]
             k["phone"] = bs_data[-2]
 
-            nice = k["raw"].split(',')
+            nice = k["raw"].split(",")
             addressData = []
             for i in nice:
                 addressData.append(i.strip())
-            
+
             k["address"] = addressData[0]
 
             k["city"] = addressData[1]
-            k["state"] = addressData[2].split(' ')[0]
-            k["zip"] = addressData[2].split(' ')[1]
+            k["state"] = addressData[2].split(" ")[0]
+            k["zip"] = addressData[2].split(" ")[1]
             k["country"] = ""
         else:
             k["lat"] = js_data["lat"] if js_data["lat"] else ""
@@ -60,16 +60,16 @@ def get_locations(url):
             k["storeno"] = bs_data[0]
             k["raw"] = bs_data[1]
 
-            nice = k["raw"].split(',')
+            nice = k["raw"].split(",")
             addressData = []
             for i in nice:
                 addressData.append(i.strip())
-            
+
             k["address"] = addressData[0]
 
             k["city"] = addressData[1]
-            k["state"] = addressData[2].split(' ')[0]
-            k["zip"] = addressData[2].split(' ')[1]
+            k["state"] = addressData[2].split(" ")[0]
+            k["zip"] = addressData[2].split(" ")[1]
             k["country"] = ""
         yield k
 
