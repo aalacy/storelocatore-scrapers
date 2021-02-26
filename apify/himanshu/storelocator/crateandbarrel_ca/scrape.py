@@ -7,6 +7,7 @@ import json
 logger = SgLogSetup().get_logger("crateandbarrel_ca")
 session = SgRequests()
 
+
 def write_output(data):
     with open("data.csv", mode="w", newline="") as output_file:
         writer = csv.writer(
