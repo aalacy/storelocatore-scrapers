@@ -51,7 +51,7 @@ def fetch_data():
     data = json.loads(response.text)
 
     for poi in data["GetClientStores"]:
-        store_url = "https://sunshinefoodstores.com/ajax/index.php"
+        store_url = "https://sunshinefoodstores.com/contact"
         location_name = poi["ClientStoreName"]
         location_name = location_name if location_name else "<MISSING>"
         street_address = poi["AddressLine1"]
