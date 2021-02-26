@@ -1,11 +1,13 @@
 import re
 import csv
 import json
+import demjson
 import yaml
 from lxml import etree
 from urllib.parse import urljoin
 
 from sgselenium import SgChrome
+from sgscrape.sgpostal import parse_address_intl
 
 
 def write_output(data):
@@ -65,26 +67,65 @@ def fetch_data():
         with SgChrome() as driver:
             driver.get(store_url)
             loc_dom = etree.HTML(driver.page_source)
-        poi = loc_dom.xpath('//script[contains(text(), "mainEntityOfPage")]/text()')[0]
-        poi = json.loads(poi)
+        poi = loc_dom.xpath('//script[contains(text(), "mainEntityOfPage")]/text()')
+        if poi:
+            poi = json.loads(poi[0])
 
-        location_name = poi["name"]
-        location_name = location_name if location_name else "<MISSING>"
-        street_address = poi["address"]["streetAddress"]
-        street_address = street_address if street_address else "<MISSING>"
-        city = poi["address"]["addressLocality"]
-        city = city if city else "<MISSING>"
-        state = "<MISSING>"
-        zip_code = poi["address"]["postalCode"]
-        zip_code = zip_code if zip_code else "<MISSING>"
-        country_code = poi["address"]["addressRegion"]
-        store_number = "<MISSING>"
-        phone = "<MISSING>"
-        location_type = poi["@type"]
-        latitude = poi["geo"]["latitude"]
-        longitude = poi["geo"]["longitude"]
-        hoo = poi["openingHours"]
-        hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
+            location_name = poi["name"]
+            location_name = location_name if location_name else "<MISSING>"
+            street_address = poi["address"]["streetAddress"]
+            street_address = street_address if street_address else "<MISSING>"
+            city = poi["address"]["addressLocality"]
+            city = city if city else "<MISSING>"
+            state = "<MISSING>"
+            zip_code = poi["address"]["postalCode"]
+            zip_code = zip_code if zip_code else "<MISSING>"
+            country_code = poi["address"]["addressRegion"]
+            store_number = "<MISSING>"
+            phone = "<MISSING>"
+            location_type = poi["@type"]
+            latitude = poi["geo"]["latitude"]
+            longitude = poi["geo"]["longitude"]
+            hoo = poi["openingHours"]
+            hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
+        else:
+            location_name = loc_dom.xpath(
+                '//span[@class="dropdown-block_title-copy"]/text()'
+            )
+            location_name = location_name[0] if location_name else "<MISSING>"
+            raw_address = loc_dom.xpath(
+                '//div[h3[contains(text(), "location address")]]/following-sibling::div[1]/p/text()'
+            )[0]
+            addr = parse_address_intl(raw_address)
+            street_address = addr.street_address_1
+            if addr.street_address_2:
+                street_address += " " + addr.street_address_2
+            street_address = street_address if street_address else "<MISSING>"
+            city = addr.city
+            city = city if city else "<MISSING>"
+            state = "<MISSING>"
+            zip_code = addr.postcode
+            zip_code = zip_code if zip_code else "<MISSING>"
+            country_code = loc_dom.xpath('//meta[@name="countrycode"]/@content')
+            country_code = country_code[0] if country_code else "<MISSING>"
+            store_number = "<MISSING>"
+            phone = "<MISSING>"
+            location_type = "<MISSING>"
+
+            data = loc_dom.xpath('//script[contains(text(), "googleMarkers")]/text()')[
+                0
+            ]
+            data = re.findall("googleMarkers = (.+);", data)[0]
+            data = demjson.decode(data.replace("' + '", ""))
+            for e in data:
+                if e["locationName"] == location_name:
+                    geo = e["coordinates"]
+                    break
+            latitude = geo["lat"]
+            longitude = geo["lng"]
+            hoo = loc_dom.xpath('//div[@class="openhours-scheduler"]//text()')
+            hoo = [elem.strip() for elem in hoo if elem.strip()]
+            hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
 
         item = [
             DOMAIN,

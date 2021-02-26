@@ -42,12 +42,17 @@ def para(url):
     try:
         addressData = []
         for i in soup.find_all("span", {"class": "spnLDTCIAddress"}):
-            if "!!" not in i.text():
-                addressData.append(i.text())
+            if "!!" not in i.text:
+                addressData.append(i.text)
 
         k["address"] = ", ".join(addressData)
     except Exception:
-        k["address"] = "<MISSING>"
+        pass
+    if not k["address"]:
+        try:
+            k["address"] = soup.find("span", {"itemprop": "streetAddress"})["content"]
+        except Exception:
+            k["address"] = "<MISSING>"
 
     try:
         k["city"] = soup.find("span", {"itemprop": "addressLocality"}).text.strip()
