@@ -8,7 +8,7 @@ session = SgRequests()
 
 
 def log(*args, **kwargs):
-    if show_logs == True:
+    if show_logs is True:
         logger.info(" ".join(map(str, args)), **kwargs)
 
 
