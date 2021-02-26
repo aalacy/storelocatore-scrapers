@@ -45,8 +45,6 @@ def fetch_data():
     r = session.get("https://yogenfruz.com/find-a-store/")
     soup = BeautifulSoup(r.text, "html5lib")
     addresses = []
-
-    locator_domain = base_url
     location_name = "<MISSING>"
     street_address = "<MISSING>"
     city = "<MISSING>"
