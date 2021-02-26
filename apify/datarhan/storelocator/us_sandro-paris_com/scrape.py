@@ -51,7 +51,7 @@ def fetch_data():
         country_code = poi["properties"]["countryCode"]
         if country_code != "us":
             continue
-        store_url = 'https://us.sandro-paris.com/en/stores'
+        store_url = "https://us.sandro-paris.com/en/stores"
         location_name = poi["properties"]["title"]
         location_name = location_name if location_name else "<MISSING>"
         city = poi["properties"]["city"]
@@ -66,11 +66,11 @@ def fetch_data():
         state = state if state else "<MISSING>"
         store_number = poi["id"]
         location_type = "<MISSING>"
-        if '<' in location_name:
-            location_name = location_name.split('<')[0]
-            location_type = 'temporarily closed'
+        if "<" in location_name:
+            location_name = location_name.split("<")[0]
+            location_type = "temporarily closed"
         phone = poi["properties"]["phone"]
-        phone = phone if phone and phone != '0' else '<MISSING>'
+        phone = phone if phone and phone != "0" else "<MISSING>"
         latitude = poi["lat"]
         longitude = poi["lng"]
         hours_of_operation = poi["properties"]["storeHours"].replace("|", "")
