@@ -5,7 +5,7 @@ from sgscrape.simple_scraper_pipeline import MissingField
 from sgscrape import simple_network_utils as net_utils
 from sgscrape import simple_utils as utils
 import json
-import requests  # noqa
+from requests import exceptions
 from sglogging import sglog
 from sgrequests import SgRequests
 
@@ -46,7 +46,7 @@ def para(tup):
                 k["requrl"] = "<MISSING>"
                 k["index"] = tup[0]
                 k["STATUS"] = True
-        except requests.exceptions.RequestException as e:
+        except exceptions.RequestException as e:
             if "404" in str(e):
                 k = {}
                 k["STATUS"] = False
