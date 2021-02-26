@@ -1,29 +1,9 @@
 import csv
 from bs4 import BeautifulSoup as bs
 import time
-from selenium import webdriver
+from sgselenium import SgSelenium
 from selenium.webdriver.common.keys import Keys
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
-
-
-def setUp():
-    options = webdriver.FirefoxOptions()
-    headless = True
-    options.headless = headless
-    profile = webdriver.FirefoxProfile()
-    profile.set_preference("browser.formfill.enable", False)
-    profile.set_preference("devtools.jsonview.enabled", False)
-    profile.set_preference("useAutomationExtension", False)
-    profile.set_preference("dom.webdriver.enabled", False)
-    profile.update_preferences()
-    capabilities = webdriver.DesiredCapabilities.FIREFOX
-    capabilities["marionette"] = True
-    return webdriver.Firefox(
-        options=options,
-        capabilities=capabilities,
-        firefox_profile=profile,
-        executable_path="geckodriver",
-    )
 
 
 def write_output(data):
@@ -55,11 +35,15 @@ def write_output(data):
 
 def fetch_data():
     base_url = "https://www.hsbc.ca"
-    driver = setUp()
+    driver = SgSelenium().firefox()
+    driver.firefox_profile.set_preference("browser.formfill.enable", False)
+    driver.firefox_profile.set_preference("devtools.jsonview.enabled", False)
+    driver.firefox_profile.set_preference("useAutomationExtension", False)
+    driver.firefox_profile.set_preference("dom.webdriver.enabled", False)
     zipcodes = DynamicZipSearch(
         country_codes=[SearchableCountries.CANADA],
-        max_radius_miles=100,
-        max_search_results=200,
+        max_radius_miles=50,
+        max_search_results=2000,
     )
     addressess = []
     phone = ""

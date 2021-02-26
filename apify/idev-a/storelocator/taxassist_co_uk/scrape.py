@@ -32,39 +32,32 @@ def fetch_data():
             soup1 = bs(r1.text, "lxml")
             details = soup1.select("main div.mt-auto a.outline")
             for detail in details:
-                try:
-                    r2 = session.get(detail["href"])
-                    soup2 = bs(r2.text, "lxml")
-                    location = json.loads(
-                        _fix(
-                            soup2.find(
-                                "script", type="application/ld+json"
-                            ).string.strip()
-                        )
+                r2 = session.get(detail["href"])
+                soup2 = bs(r2.text, "lxml")
+                location = json.loads(
+                    _fix(
+                        soup2.find("script", type="application/ld+json").string.strip()
                     )
-                    if location["address"]["streetAddress"] == "Coming Soon":
-                        continue
-                    hours = []
-                    for _ in location["openingHoursSpecification"]:
-                        hours.append(f"{_['dayOfWeek']}: {_['opens']}-{_['closes']}")
-                    yield SgRecord(
-                        page_url=detail["href"],
-                        location_type=location["@type"],
-                        location_name=location["name"],
-                        street_address=location["address"]["streetAddress"],
-                        city=location["name"],
-                        zip_postal=location["address"]["postalCode"],
-                        country_code="uk",
-                        latitude=location["geo"]["latitude"],
-                        longitude=location["geo"]["longitude"],
-                        phone=location["telephone"],
-                        locator_domain=locator_domain,
-                        hours_of_operation="; ".join(hours),
-                    )
-                except:
-                    import pdb
-
-                    pdb.set_trace()
+                )
+                if location["address"]["streetAddress"] == "Coming Soon":
+                    continue
+                hours = []
+                for _ in location["openingHoursSpecification"]:
+                    hours.append(f"{_['dayOfWeek']}: {_['opens']}-{_['closes']}")
+                yield SgRecord(
+                    page_url=detail["href"],
+                    location_type=location["@type"],
+                    location_name=location["name"],
+                    street_address=location["address"]["streetAddress"],
+                    city=location["name"],
+                    zip_postal=location["address"]["postalCode"],
+                    country_code="uk",
+                    latitude=location["geo"]["latitude"],
+                    longitude=location["geo"]["longitude"],
+                    phone=location["telephone"],
+                    locator_domain=locator_domain,
+                    hours_of_operation="; ".join(hours),
+                )
 
 
 if __name__ == "__main__":
