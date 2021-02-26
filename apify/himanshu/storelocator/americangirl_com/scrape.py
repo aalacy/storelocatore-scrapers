@@ -92,8 +92,8 @@ def fetch_data():
             store = [x.replace("—", "-") if type(x) == str else x for x in store]
             store = [x.strip() if type(x) == str else x for x in store]
             return_main_object.append(store)
-        except Exception as e:
-            raise
+        except:
+            pass
     return return_main_object
 
 
