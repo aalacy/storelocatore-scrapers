@@ -5,6 +5,7 @@ from sgscrape.simple_scraper_pipeline import MissingField
 from sgscrape import simple_network_utils as net_utils
 from sgscrape import simple_utils as utils
 import json
+from requests import exceptions  # noqa
 from sglogging import sglog
 from sgrequests import SgRequests
 
@@ -17,39 +18,42 @@ def para(tup):
         "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
     }
     try:
-        if len(tup[1]) > 0:
-            k = json.loads(
-                str(
-                    next(
-                        net_utils.fetch_xml(
-                            root_node_name="body",
-                            location_node_name="script",
-                            location_node_properties={
-                                "type": "application/ld+json",
-                                "id": "schema-webpage",
-                            },
-                            request_url=tup[1],
-                            headers=headers,
-                        )
-                    )["script type=application/ld+json id=schema-webpage"]
-                )
-                .replace("\u0119", "e")
-                .replace("\u011f", "g")
-                .replace("\u0144", "n")
-                .replace("\u0131", "i"),
-                strict=False,
-            )  # ['script type=application/ld+json']).rsplit(';',1)[0])
-            k["STATUS"] = True
-        else:
-            k["requrl"] = "<MISSING>"
-            k["index"] = tup[0]
-            k["STATUS"] = True
-    except Exception as e:
-        if "Bad status code: 404" not in str(e):
-            raise Exception
-        else:
-            k = {}
-            k["STATUS"] = False
+        try:
+            if len(tup[1]) > 0:
+                k = json.loads(
+                    str(
+                        next(
+                            net_utils.fetch_xml(
+                                root_node_name="body",
+                                location_node_name="script",
+                                location_node_properties={
+                                    "type": "application/ld+json",
+                                    "id": "schema-webpage",
+                                },
+                                request_url=tup[1],
+                                headers=headers,
+                            )
+                        )["script type=application/ld+json id=schema-webpage"]
+                    )
+                    .replace("\u0119", "e")
+                    .replace("\u011f", "g")
+                    .replace("\u0144", "n")
+                    .replace("\u0131", "i"),
+                    strict=False,
+                )  # ['script type=application/ld+json']).rsplit(';',1)[0])
+                k["STATUS"] = True
+            else:
+                k["requrl"] = "<MISSING>"
+                k["index"] = tup[0]
+                k["STATUS"] = True
+        except exceptions.RequestException as e:
+            if "404" in str(e):
+                k = {}
+                k["STATUS"] = False
+            else:
+                raise Exception
+    except StopIteration:
+        return
 
     k["index"] = tup[0]
     k["requrl"] = tup[1]
@@ -211,7 +215,7 @@ def get_brand(brand, humanBrand):
                     print_stats_interval=20,
                 )
                 for store in par:
-                    if store["STATUS"]:
+                    if store and store["STATUS"]:
                         uscagb = 0
                         try:
                             if (
