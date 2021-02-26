@@ -56,7 +56,9 @@ def fetch_data():
             req = session.get(link, headers=headers)
             base = BeautifulSoup(req.text, "lxml")
 
-            script = base.find("script", attrs={"type": "application/ld+json"}).contents[0]
+            script = base.find(
+                "script", attrs={"type": "application/ld+json"}
+            ).contents[0]
             store = json.loads(script)
 
             location_name = store["name"]
