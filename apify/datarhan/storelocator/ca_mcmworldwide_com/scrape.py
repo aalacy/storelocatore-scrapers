@@ -71,9 +71,9 @@ def fetch_data():
         state = raw_address[2]
         zip_code = raw_address[-2].strip()
         if len(zip_code) == 2:
-            zip_code = '<MISSING>'
+            zip_code = "<MISSING>"
         if len(zip_code.split()) == 3:
-            zip_code = ' '.join(zip_code.split()[1:])
+            zip_code = " ".join(zip_code.split()[1:])
         country_code = raw_address[-1].strip()
         if country_code != "Canada":
             continue
