@@ -34,6 +34,7 @@ def write_output(data):
                 "latitude",
                 "longitude",
                 "hours_of_operation",
+                "raw_address",
             ]
         )
 
@@ -64,6 +65,7 @@ def fetch_data():
         formatted_address = row["formatted_address"]
 
         addrs = parser.parse_address_intl(formatted_address)
+        raw = formatted_address
         street_address = check_missing(addrs.street_address_1)
         street_address = (
             (street_address + ", " + addrs.street_address_2)
@@ -72,16 +74,15 @@ def fetch_data():
         )
         location_type = check_missing()
 
-        city = addrs.city
-        state = addrs.state
-        zip = addrs.postcode
-        country_code = addrs.country
+        city = check_missing(addrs.city)
+        state = check_missing(addrs.state)
+        zip = check_missing(addrs.postcode)
+        country_code = check_missing(addrs.country)
 
         store_number = check_missing()
         phone = row["tel"]
         if not phone and row["formatted_tel"]:
             phone = row["formatted_tel"]
-
         phone = check_missing(phone)
         latitude = check_missing(row["latitude"])
         longitude = check_missing(row["longitude"])
@@ -105,30 +106,11 @@ def fetch_data():
                 latitude,
                 longitude,
                 hours_of_operation,
+                raw,
             ]
         )
 
     return data
-
-
-# For cases when there is no city
-def get_missing_city(formatted_address):
-    lst1 = formatted_address.split(",")
-    return lst1[0].split(" ")[-1]
-
-
-# missing or invalid/too short street address
-def parse_missing_street_address(raw_street_address):
-    rgx = re.compile(r"^[a-zA-Z\s]+")
-    res = rgx.findall(raw_street_address)
-
-    building_name = ""
-    street_address = ""
-    if res:
-        building_name = res[0].strip()
-        street_address = raw_street_address.replace(building_name, "", 1).strip()
-
-    return building_name, street_address
 
 
 def npm_install():

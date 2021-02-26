@@ -1,7 +1,7 @@
 import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
-from sgselenium import SgChrome
+import time
 
 logger = SgLogSetup().get_logger("mattressfirm_com")
 
@@ -80,32 +80,34 @@ def fetch_data():
         city = ""
         state = ""
         zc = ""
-        with SgChrome() as driver:
-            driver.get(url)
-            text = driver.page_source
-            text = str(text).replace("\r", "").replace("\n", "").replace("\t", "")
-            if "Mattress Firm Clearance" in text:
+        session = SgRequests()
+        time.sleep(2)
+        r2 = session.get(loc, headers=headers)
+        if r2.encoding is None:
+            r2.encoding = "utf-8"
+        for line2 in r2.iter_lines(decode_unicode=True):
+            if "Mattress Firm Clearance" in line2:
                 typ = "Mattress Firm Clearance"
-            if name == "" and "<title>" in text:
-                name = text.split("<title>")[1].split("<")[0]
+            if name == "" and "<title>" in line2:
+                name = line2.split("<title>")[1].split("<")[0]
                 if "|" in name:
                     name = name.split(" |")[0]
-            if '"telephone": "' in text:
-                phone = text.split('"telephone": "')[1].split('"')[0]
-            if '"streetAddress": "' in text:
-                add = text.split('"streetAddress": "')[1].split('"')[0]
-            if '"addressLocality": "' in text:
-                city = text.split('"addressLocality": "')[1].split('"')[0]
-            if '"addressRegion": "' in text:
-                state = text.split('"addressRegion": "')[1].split('"')[0]
-            if '"postalCode": "' in text:
-                zc = text.split('"postalCode": "')[1].split('"')[0]
-            if '"openingHours": "' in text:
-                hours = text.split('"openingHours": "')[1].split('"')[0]
-            if '"latitude": "' in text:
-                lat = text.split('"latitude": "')[1].split('"')[0]
-            if '"longitude": "' in text:
-                lng = text.split('"longitude": "')[1].split('"')[0]
+            if '"telephone": "' in line2:
+                phone = line2.split('"telephone": "')[1].split('"')[0]
+            if '"streetAddress": "' in line2:
+                add = line2.split('"streetAddress": "')[1].split('"')[0]
+            if '"addressLocality": "' in line2:
+                city = line2.split('"addressLocality": "')[1].split('"')[0]
+            if '"addressRegion": "' in line2:
+                state = line2.split('"addressRegion": "')[1].split('"')[0]
+            if '"postalCode": "' in line2:
+                zc = line2.split('"postalCode": "')[1].split('"')[0]
+            if '"openingHours": "' in line2:
+                hours = line2.split('"openingHours": "')[1].split('"')[0]
+            if '"latitude": "' in line2:
+                lat = line2.split('"latitude": "')[1].split('"')[0]
+            if '"longitude": "' in line2:
+                lng = line2.split('"longitude": "')[1].split('"')[0]
         if phone == "":
             phone = "<MISSING>"
         if hours == "":
