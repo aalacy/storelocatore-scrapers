@@ -1,8 +1,5 @@
 import csv
-import re
-import pdb
-import requests
-from lxml import etree
+from sgrequests import SgRequests
 import json
 from datetime import datetime
 
@@ -68,7 +65,7 @@ def fetch_data():
         "https://prd.location.enterprise.com/enterprise-sls/search/location/national/web/country/GB?locale=en_US&cor=US",
     ]
 
-    session = requests.Session()
+    session = SqRequests()
     headers = {
         "Accept": "application/json, text/plain, */*",
         "Content-Type": "application/json",
