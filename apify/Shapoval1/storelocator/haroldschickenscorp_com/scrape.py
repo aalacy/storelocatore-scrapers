@@ -42,7 +42,6 @@ def fetch_data():
     r = session.get(page_url)
     block = r.text.split("var LocationDataUS = ")[1].split(";")[0]
     js = json.loads(json.dumps(eval(block)))
-    print(js)
     for j in js:
         line = j[0]
         line = html.fromstring(line)
