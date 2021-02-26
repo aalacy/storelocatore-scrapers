@@ -78,6 +78,9 @@ def fetch_data():
             continue
 
         store_url = poi["url"]
+        loc_response = session.get(store_url)
+        loc_dom = etree.HTML(loc_response.text)
+
         location_name = poi["name"]
         if location_name == "g":
             continue
@@ -102,12 +105,34 @@ def fetch_data():
                 zip_code = " ".join(street_address.split()[:2])
                 street_address = street_address.replace(zip_code, "")
         zip_code = zip_code if zip_code else "<MISSING>"
-        country_code = addr.country
+        if len(zip_code.split()[-1]) != 3:
+            continue
         country_code = "UK"
         store_number = poi["id"]
-        phone = "<MISSING>"
+        phone = poi["contact_phone"]
+        phone = phone if phone else "<MISSING>"
         location_type = "<MISSING>"
-        hours_of_operation = "<MISSING>"
+        data = loc_dom.xpath(
+            '//script[@ type="text/x-magento-init" and contains(text(), "openingHours")]/text()'
+        )
+        hoo = []
+        if data:
+            data = json.loads(data[0])
+            hours = data["*"]["Magento_Ui/js/core/app"]["components"][
+                "smile-storelocator-store"
+            ]["schedule"]["openingHours"]
+            hours = [e[0] if e else "closed" for e in hours]
+            days = [
+                "Monday",
+                "Tuesday",
+                "Wednsday",
+                "Thursday",
+                "Friday",
+                "Saturday",
+                "Sunday",
+            ]
+            hoo = list(map(lambda d, h: d + " " + h, days, hours))
+        hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
 
         item = [
             DOMAIN,
