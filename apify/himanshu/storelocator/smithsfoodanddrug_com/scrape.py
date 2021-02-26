@@ -119,7 +119,6 @@ def fetch_data():
         )
         store.append(page_url)
         store = [str(x).strip() if x else "<MISSING>" for x in store]
-        # print("store---",store)
         yield store
 
 
