@@ -65,7 +65,6 @@ def fetch_data():
     location_type = "<MISSING>"
     latitude = "<MISSING>"
     longitude = "<MISSING>"
-    raw_address = ""
     hours_of_operation = "<MISSING>"
     page_url = "http://www.educationaloutfitters.com/states"
     for script in soup.find_all("li", {"class": "navList-item"}):
