@@ -16,6 +16,8 @@ def fetch_data():
             "div.locations div.location-state div.ng-star-inserted"
         )
         for store in stores:
+            if "studios" not in store.select_one("a")["href"]:
+                continue
             page_url = locator_domain + store.select_one("a")["href"]
             res = session.get(page_url)
             detail = bs(res.text, "lxml")
@@ -34,6 +36,9 @@ def fetch_data():
                     else ""
                 )
             )
+            if location_name == "Santa Barbara":
+                city = location_name
+                state = "CA"
             try:
                 phone = store.select_one("a div.card-text > p").string
             except:
