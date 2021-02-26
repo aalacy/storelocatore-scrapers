@@ -98,7 +98,7 @@ def parse_query(url):
     return {k: v[0].strip() for k, v in query.items()}
 
 
-cached = {}
+cached = {}  # noqa
 
 
 def fetch_poi(details, store_number, session):
