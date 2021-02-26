@@ -6,6 +6,7 @@ from sgrequests import SgRequests
 from sglogging import SgLogSetup
 from urllib.parse import urljoin, urlparse, parse_qs
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from typing import Dict
 
 logger = SgLogSetup().get_logger("midas_com")
 
@@ -98,7 +99,7 @@ def parse_query(url):
     return {k: v[0].strip() for k, v in query.items()}
 
 
-cached = {}  # noqa
+cached: Dict[int, dict] = {}  # noqa
 
 
 def fetch_poi(details, store_number, session):
