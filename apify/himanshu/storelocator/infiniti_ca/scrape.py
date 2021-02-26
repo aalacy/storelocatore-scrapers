@@ -65,13 +65,6 @@ def fetch_data():
         max_radius_miles=50,
         max_search_results=200,
     )
-
-    headers = {
-        "Accept": "*/*",
-        "clientKey": "lVqTrQx76FnGUhV6AFi7iSy9aXRwLIy7",
-        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36",
-        "apiKey": "mKvJTEihQ3gYy0GhoYKWrAbKfzWt3PsE",
-    }
     list_of_urls = []
 
     for coord in search:
@@ -87,17 +80,12 @@ def fetch_data():
         if "dealers" in r1:
             locator_domain = "https://www.infiniti.ca/"
             location_name = ""
-            street_address = ""
-            city = ""
-            state = ""
             zipp = ""
             country_code = "US"
-            store_number = ""
             phone = ""
             location_type = ""
             latitude = ""
             longitude = ""
-            raw_address = ""
             hours_of_operation = ""
             for location in r1["dealers"]:
                 storeNumber = "<MISSING>"
