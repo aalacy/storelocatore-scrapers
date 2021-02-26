@@ -54,6 +54,7 @@ def fetch_data():
                     latitude = result.get("field_store_geolocation").split(",")[0]
                     longitude = result.get("field_store_geolocation").split(",")[1]
                 yield SgRecord(
+                    page_url=page_url,
                     store_number=result.get("field_store_id"),
                     location_name=result.get("field_store_name"),
                     street_address=", ".join(
