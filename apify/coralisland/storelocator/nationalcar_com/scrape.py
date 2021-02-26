@@ -65,7 +65,7 @@ def fetch_data():
         "https://prd.location.enterprise.com/enterprise-sls/search/location/national/web/country/GB?locale=en_US&cor=US",
     ]
 
-    session = SqRequests()
+    session = SgRequests()
     headers = {
         "Accept": "application/json, text/plain, */*",
         "Content-Type": "application/json",
