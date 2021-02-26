@@ -5,7 +5,7 @@ from sgscrape.simple_scraper_pipeline import MissingField
 from sgscrape import simple_network_utils as net_utils
 from sgscrape import simple_utils as utils
 import json
-from requests import exceptions
+from requests import exceptions  # noqa
 from sglogging import sglog
 from sgrequests import SgRequests
 
