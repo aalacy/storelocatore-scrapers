@@ -28,6 +28,7 @@ def write_output(data):
         writer.writerow(
             [
                 "locator_domain",
+                "page_url",
                 "location_name",
                 "street_address",
                 "city",
@@ -88,8 +89,10 @@ def fetch_data():
                         if store not in ids:
                             ids.append(store)
                             logger.info(("Pulling Store ID #%s..." % store))
+                            purl = "https://www.fisherautoparts.com/Fisher-Store-Locator.aspx"
                             yield [
                                 website,
+                                purl,
                                 name,
                                 add,
                                 city,
