@@ -167,7 +167,6 @@ def fetch_data():
                             longitude,
                             hours_of_operation,
                             page_url,
-                            raw_address,
                         ]
                         yield curr_list
 
