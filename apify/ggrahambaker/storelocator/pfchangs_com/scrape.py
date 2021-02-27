@@ -40,41 +40,65 @@ def write_output(data):
 
 
 def fetch_data():
-    data = []
     titlelist = []
+    data = []
     url = "https://www.pfchangs.com/locations/us.html"
     r = session.get(url, headers=headers, verify=False)
-    p = 0
     soup = BeautifulSoup(r.text, "html.parser")
-    statelist = soup.findAll("a", {"class": "Directory-listLink"})
-    for slink in statelist:
-        slink = "https://www.pfchangs.com/locations/" + slink["href"]
-        r = session.get(slink, headers=headers, verify=False)
-        soup = BeautifulSoup(r.text, "html.parser")
+    statelist = soup.findAll(
+        "a", {"class": "Directory-listLink"}
+    )
+    p = 0
+    for stnow in statelist:
+        check1 = 0
+        stlink = "https://www.pfchangs.com/locations/" + stnow["href"]        
+        r = session.get(stlink, headers=headers, verify=False)
+        soup = BeautifulSoup(r.text, "html.parser")       
+        
         citylist = soup.findAll("a", {"class": "Directory-listLink"})
-        for clink in citylist:
-            clink = clink["href"].replace("../", "https://www.pfchangs.com/locations/")
-            r = session.get(clink, headers=headers, verify=False)
-            soup = BeautifulSoup(r.text, "html.parser")
-            linklist = soup.findAll("a", {"class": "Teaser-titleLink"})
-            flag = 0
-            if len(linklist) == 0:
-                linklist.append(clink)
-                flag = 1
-            for link in linklist:
-                if flag == 0:
-                    link = link["href"].replace(
+        
+        if len(citylist) == 0:
+            citylist = []
+            citylist.append(stlink)
+            check1 = 1
+            
+        for citynow in citylist:
+            check2 = 0
+            if check1 == 0:
+                citylink = citynow["href"].replace("../", "https://www.pfchangs.com/locations/")
+                print(citylink)
+                r = session.get(citylink, headers=headers, verify=False)
+                soup = BeautifulSoup(r.text, "html.parser")
+                try:
+                    branchlist = soup.findAll("a", {"class": "Teaser-titleLink"})
+                except:
+                    branchlist = []
+                    branchlist.append(citylink)
+                    check2 = 1
+            else:
+                branchlist = []
+                branchlist.append(citynow)
+                check2 = 1
+            for branch in branchlist:
+                if check2 == 0:
+                    branch = branch["href"].replace(
                         "../../../../", "https://www.pfchangs.com/locations/"
                     )
-                    link = link.replace("../../", "https://www.pfchangs.com/locations/")
-                    if link in titlelist:
-                        continue
-                    r = session.get(link, headers=headers, verify=False)
+                    branch = branch.replace("../../", "https://www.pfchangs.com/locations/")
+                    
+                    #titlelist.append(branch)
+                    r = session.get(branch, headers=headers, verify=False)
                     soup = BeautifulSoup(r.text, "html.parser")
+                    print('1')
+                
+
                 try:
                     title = soup.find("h1").find("span", {"class": "LocationName"}).text
                 except:
-                    continue
+                    print('2', branch)
+                    print('error')
+                link = branch
+               
                 street = soup.find("meta", {"itemprop": "streetAddress"})["content"]
                 city = soup.find("meta", {"itemprop": "addressLocality"})["content"]
                 lat = soup.find("meta", {"itemprop": "latitude"})["content"]
@@ -89,7 +113,7 @@ def fetch_data():
                 hours = hours.replace("11", " 11")
                 hours = hours.replace("Closed", " Closed ")
                 store = store.replace(".html", "")
-                if "Closed" in title:
+                if link in titlelist:
                     continue
                 titlelist.append(link)
                 data.append(
@@ -110,12 +134,14 @@ def fetch_data():
                         hours,
                     ]
                 )
-
+                print(p,data[p])
+                
                 p += 1
     return data
 
 
 def scrape():
+
     data = fetch_data()
     write_output(data)
 
