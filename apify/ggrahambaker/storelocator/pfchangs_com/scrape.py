@@ -45,33 +45,46 @@ def fetch_data():
     url = "https://www.pfchangs.com/locations/us.html"
     r = session.get(url, headers=headers, verify=False)
     soup = BeautifulSoup(r.text, "html.parser")
-    statelist = soup.findAll("a", {"class": "Directory-listLink"})
+    statelist = soup.find("section", {"class": "StateList"}).findAll(
+        "a", {"class": "Directory-listLink"}
+    )
     p = 0
     for stnow in statelist:
         check1 = 0
         stlink = "https://www.pfchangs.com/locations/" + stnow["href"]
+
         r = session.get(stlink, headers=headers, verify=False)
         soup = BeautifulSoup(r.text, "html.parser")
-
-        citylist = soup.findAll("a", {"class": "Directory-listLink"})
-
-        if len(citylist) == 0:
+        citylist = []
+        try:
+            citylist = soup.find("section", {"class": "CityList"}).findAll(
+                "a", {"class": "Directory-listLink"}
+            )
+        except:
             citylist = []
             citylist.append(stlink)
             check1 = 1
-
+        if len(citylist) == 1:
+            citylist = []
+            citylist.append(stlink)
+            check1 = 1
         for citynow in citylist:
             check2 = 0
             if check1 == 0:
                 citylink = citynow["href"].replace(
                     "../", "https://www.pfchangs.com/locations/"
                 )
-                print(citylink)
                 r = session.get(citylink, headers=headers, verify=False)
                 soup = BeautifulSoup(r.text, "html.parser")
                 try:
-                    branchlist = soup.findAll("a", {"class": "Teaser-titleLink"})
+                    branchlist = soup.find(
+                        "ul", {"class": "Directory-listTeasers"}
+                    ).findAll("a", {"class": "Teaser-titleLink"})
                 except:
+                    branchlist = []
+                    branchlist.append(citylink)
+                    check2 = 1
+                if len(branchlist) == 0:
                     branchlist = []
                     branchlist.append(citylink)
                     check2 = 1
@@ -88,18 +101,13 @@ def fetch_data():
                         "../../", "https://www.pfchangs.com/locations/"
                     )
 
-                    # titlelist.append(branch)
                     r = session.get(branch, headers=headers, verify=False)
                     soup = BeautifulSoup(r.text, "html.parser")
-                    print("1")
-
                 try:
                     title = soup.find("h1").find("span", {"class": "LocationName"}).text
                 except:
-                    print("2", branch)
-                    print("error")
-                link = branch
-
+                    pass
+                link = branch.replace("../", "")
                 street = soup.find("meta", {"itemprop": "streetAddress"})["content"]
                 city = soup.find("meta", {"itemprop": "addressLocality"})["content"]
                 lat = soup.find("meta", {"itemprop": "latitude"})["content"]
@@ -135,7 +143,6 @@ def fetch_data():
                         hours,
                     ]
                 )
-                print(p, data[p])
 
                 p += 1
     return data
