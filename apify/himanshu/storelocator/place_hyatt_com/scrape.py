@@ -1,6 +1,7 @@
 import csv
 from bs4 import BeautifulSoup
 import json
+import html5lib
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
 
@@ -45,6 +46,9 @@ def fetch_data():
         headers=headers,
     )
     soup = BeautifulSoup(r.text, "lxml")
+    htmldoc = html5lib.parse(r.text)
+    if "-------" in htmldoc:
+        soup = "NA"
     data_coming = soup.find_all("li", {"class": "property b-mb2"})
     for j in data_coming:
         if "Opening Soon" in j.text:
