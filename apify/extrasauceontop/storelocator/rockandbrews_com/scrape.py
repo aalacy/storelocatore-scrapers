@@ -1,6 +1,7 @@
 from sgselenium import SgChrome
 from bs4 import BeautifulSoup as bs
 import pandas as pd
+import re
 
 locator_domains = []
 page_urls = []
@@ -17,7 +18,7 @@ latitudes = []
 longitudes = []
 hours_of_operations = []
 
-with SgChrome() as driver:
+with SgChrome(executable_path="chromedriver.exe") as driver:
     driver.get("https://www.rockandbrews.com/locations")
     html = driver.page_source
     soup = bs(html, "html.parser")
@@ -63,6 +64,9 @@ with SgChrome() as driver:
             try:
                 phone = div.find("a")["href"].replace("tel:", "")
             except Exception:
+                phone = "<MISSING>"
+
+            if bool(re.search("[a-zA-Z]", phone)):
                 phone = "<MISSING>"
 
             locator_domains.append(locator_domain)

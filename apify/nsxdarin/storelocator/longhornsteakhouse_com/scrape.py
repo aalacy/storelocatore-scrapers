@@ -4,7 +4,6 @@ import time
 from sglogging import SgLogSetup
 
 logger = SgLogSetup().get_logger("longhornsteakhouse_com")
-
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
@@ -84,6 +83,41 @@ def fetch_data():
                     .replace('<span class="times">', "")
                     .strip()
                 )
+            if '"weekda' in line2:
+                day = line2.split('"weekda')[1].split('">')[1].split("<")[0]
+                if "(" in day:
+                    day = day.split("(")[1].split(")")[0]
+            if "&nbsp;-&nbsp;" in line2 and "EST 20" in line2:
+                hrs = (
+                    day
+                    + ": "
+                    + line2.replace('<span class="whitetxt">', "")
+                    .replace("</span>", "")
+                    .split(" ")[4]
+                    .rsplit(":00", 1)[0]
+                    + "-"
+                    + line2.split("&nbsp;-&nbsp;")[1].split(" ")[4].rsplit(":00", 1)[0]
+                )
+                if hours == "":
+                    hours = hrs
+                else:
+                    hours = hours + "; " + hrs
+            if "AM&nbsp;-&nbsp;" in line2:
+                hrs = (
+                    day
+                    + ": "
+                    + line2.replace("\r", "")
+                    .replace("\t", "")
+                    .replace("\n", "")
+                    .strip()
+                    .replace("&nbsp;-&nbsp;", "-")
+                    .replace('<span class="whitetxt">', "")
+                    .replace("</span>", "")
+                )
+                if hours == "":
+                    hours = hrs
+                else:
+                    hours = hours + "; " + hrs
             if "<title>" in line2:
                 name = line2.split("<title>")[1].split(" |")[0]
             if 'id="restAddress" value="' in line2:

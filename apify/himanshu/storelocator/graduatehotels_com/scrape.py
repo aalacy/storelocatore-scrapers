@@ -12,6 +12,7 @@ def write_output(data):
             output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
         )
 
+        # Header
         writer.writerow(
             [
                 "locator_domain",
@@ -30,6 +31,7 @@ def write_output(data):
                 "page_url",
             ]
         )
+        # Body
         for row in data:
             writer.writerow(row)
 
@@ -70,6 +72,15 @@ def fetch_data():
                 .stripped_strings
             )
             street_address = address[0].strip()
+            openings = soup_loc.find("p", class_="lead banner-copy")[
+                "data-main-subtitle"
+            ]
+            if "Opening Summer 2021" in openings:
+                location_type = "Coming Soon"
+            elif "Opening Spring 2021" in openings:
+                location_type = "Coming Soon"
+            else:
+                location_type = "Graduate Hotel"
             city = address[1].split(",")[0].strip()
             state = address[1].split(",")[1].split()[0].strip()
             zipp = address[1].split(",")[1].split()[-1].strip()
@@ -127,7 +138,7 @@ def fetch_data():
             longitude = "<MISSING>"
         if "New York" in location_name:
             location_name = "Roosevelt Island"
-        location_type = "Graduate Hotel"
+
         store = [
             locator_domain,
             location_name,
