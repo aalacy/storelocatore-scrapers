@@ -3,8 +3,7 @@ from sglogging import sglog
 import subprocess
 import json
 from Naked.toolshed.shell import muterun_js  # noqa
-from sgaddress import SgAddress
-import re
+from sgscrape import sgpostal as parser
 
 LOCATOR_DOMAIN = "www.factory-connection.com"
 PAGE_URL = "https://app.locatedmap.com/initwidget/?instanceId=fb5794db-1003-4eb9-8d61-3912f1b0e26a&compId=comp-k2z7snsm&viewMode=site&styleId=style-k2z7svc0"
@@ -34,12 +33,33 @@ def write_output(data):
                 "latitude",
                 "longitude",
                 "hours_of_operation",
+                "raw_address",
             ]
         )
 
         # Body
         for row in data:
             writer.writerow(row)
+
+
+def parse_this(raw_address, which):
+    if which == "intl":
+        addrs = parser.parse_address_intl(raw_address)
+    else:
+        addrs = parser.parse_address_usa(raw_address)
+
+    street_address = check_missing(addrs.street_address_1)
+    street_address = (
+        (street_address + ", " + addrs.street_address_2)
+        if addrs.street_address_2
+        else street_address
+    )
+    city = check_missing(addrs.city)
+    state = check_missing(addrs.state)
+    zip = check_missing(addrs.postcode)
+    country_code = check_missing(addrs.country)
+
+    return (street_address, city, state, zip, country_code)
 
 
 def fetch_data():
@@ -62,48 +82,21 @@ def fetch_data():
     for row in jsn:
         location_name = check_missing(row["name"])
         formatted_address = row["formatted_address"]
+        raw = formatted_address.replace("Lousiana", "Louisiana")
 
-        addrs = SgAddress(formatted_address)
-        street_address = addrs.street_address()
+        street_address, city, state, zip, country_code = parse_this(raw, "intl")
 
         location_type = check_missing()
-        # if no/wrong street address by usaddress parsing
-        # except city, state, zip consider the rest as street_address
-        # https://safegraph-crawl.atlassian.net/browse/SLC-5624?focusedCommentId=22714
-        if not street_address or len(street_address) <= 7:
-            raw_street_address = addrs.BuildingName + street_address
-            res = parse_missing_street_address(raw_street_address)
-            location_type = res[0]
-            street_address = res[1]
-
-        # handle missing city for wrong parsing
-        # of "THE CROSSINGS SHOPPING CENTER 114 THE CROSSINGS CROSSVILLE, TN 38555"
-        # and "415 N WEST ST RIVER PLAZA BAINBRIDGE, GA 39817"
-        # by usaddress
-        city = addrs.city()
-        if not city or "PLAZA" in city:
-            city = get_missing_city(formatted_address)
-            street_address = street_address.replace(city, "")
-
-        state = addrs.state()
-        zip = addrs.zip()
-        country_code = "US"
-
         store_number = check_missing()
         phone = row["tel"]
         if not phone and row["formatted_tel"]:
             phone = row["formatted_tel"]
-
         phone = check_missing(phone)
-
-        if addrs.BuildingName:
-            location_type = addrs.BuildingName.strip()
-        elif addrs.Recipient:
-            location_type = addrs.Recipient.strip()
-
         latitude = check_missing(row["latitude"])
         longitude = check_missing(row["longitude"])
-        hours_of_operation = get_hours_of_operation(row["opening_hours"])
+        hours_of_operation = get_hours_of_operation(row["opening_hours"]).replace(
+            "\n", "; "
+        )
 
         data.append(
             [
@@ -121,30 +114,11 @@ def fetch_data():
                 latitude,
                 longitude,
                 hours_of_operation,
+                raw,
             ]
         )
 
     return data
-
-
-# For cases when there is no city
-def get_missing_city(formatted_address):
-    lst1 = formatted_address.split(",")
-    return lst1[0].split(" ")[-1]
-
-
-# missing or invalid/too short street address
-def parse_missing_street_address(raw_street_address):
-    rgx = re.compile(r"^[a-zA-Z\s]+")
-    res = rgx.findall(raw_street_address)
-
-    building_name = ""
-    street_address = ""
-    if res:
-        building_name = res[0].strip()
-        street_address = raw_street_address.replace(building_name, "", 1).strip()
-
-    return building_name, street_address
 
 
 def npm_install():

@@ -53,8 +53,9 @@ def fetch_data():
         t = t.split("window.lctr.results.push(")[1].split(");")[0]
         j = json.loads(t)
         street_address = (
-            f"{j.get('street')} {j.get('AddressLine') or ''}".strip() or "<MISSING>"
+            f"{j.get('AddressLine')} {j.get('street') or ''}".strip() or "<MISSING>"
         )
+        street_address = " ".join(street_address.split())
         city = j.get("city") or "<MISSING>"
         state = j.get("county") or "<MISSING>"
         postal = j.get("PostalCode") or "<MISSING>"
