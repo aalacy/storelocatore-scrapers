@@ -1,10 +1,12 @@
 import csv
 from sgrequests import SgRequests
+from sglogging import sglog
 from bs4 import BeautifulSoup
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 
 
 session = SgRequests()
+log = sglog.SgLogSetup().get_logger(logger_name="gabesstores_com")
 
 
 def write_output(data):
@@ -42,7 +44,7 @@ def fetch_data():
     }
     base_url = "https://www.gabesstores.com"
     addresses = []
-
+    url_list = []
     zipcodes = DynamicZipSearch(
         country_codes=[SearchableCountries.USA],
         max_radius_miles=100,
@@ -82,16 +84,29 @@ def fetch_data():
                 phone = "<MISSING>"
             latitude = i["yextDisplayCoordinate"]["latitude"]
             longitude = i["yextDisplayCoordinate"]["longitude"]
+            time = ""
             if "landingPageUrl" in i:
                 page_url = i["landingPageUrl"]
-                k1 = session.get(page_url, headers=headers)
-                soup2 = BeautifulSoup(k1.text, "lxml")
-                time = " ".join(
-                    list(soup2.find("tbody", {"class": "hours-body"}).stripped_strings)
-                )
+                if page_url == "https://www.gabesstores.com/":
+                    continue
+
+                if page_url not in url_list:
+                    url_list.append(page_url)
+                    log.info(page_url)
+                    k1 = session.get(page_url, headers=headers)
+                    soup2 = BeautifulSoup(k1.text, "lxml")
+                    time = " ".join(
+                        list(
+                            soup2.find(
+                                "tbody", {"class": "hours-body"}
+                            ).stripped_strings
+                        )
+                    )
+                else:
+                    continue
             else:
                 page_url = "<MISSING>"
-            store_number = page_url.split("-")[1]
+            store_number = "<MISSING>"
             store = [
                 locator_domain,
                 location_name,
