@@ -75,7 +75,6 @@ def fetch_store_urls():
     soup = pull_content(LOCATION_URL)
     content = soup.find("ul", {"class": "Directory-listLinks"})
     links = content.find_all("a", {"class": "Directory-listLink"})
-    print(links)
     for link in links:
         count = link["data-count"].replace(")", "").replace("(", "")
         if int(count) > 1:
