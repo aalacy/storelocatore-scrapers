@@ -69,7 +69,7 @@ def fetch_data():
                     lat = item.split('"latitude":')[1].split(",")[0]
                     lng = item.split('"longitude":')[1].split(",")[0]
                     typ = "<MISSING>"
-                    purl = "<MISSING>"
+                    purl = "https://pizzahut.ca/huts/ca-1/" + store
                     try:
                         phone = item.split('"phone":"')[1].split('"')[0]
                     except:
