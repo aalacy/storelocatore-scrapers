@@ -40,6 +40,7 @@ def write_output(data):
         )
         writer.writerow(
             [
+                "page_url",
                 "locator_domain",
                 "location_name",
                 "street_address",
@@ -70,9 +71,17 @@ def fetch_data():
         data = session.get(link).text
         store = etree.HTML(data)
         output = []
+        output.append(link)  # page_url
         detail = eliminate_space(store.xpath('.//div[@class="center-address"]//text()'))
+        if len(detail) > 3:
+            if detail[-2] == "999":
+                detail.pop(-2)
+                detail.pop(-1)
+                detail.append(detail[-1])
+
         if len(detail) > 0:
             output.append(base_url)  # url
+
             if len(detail) == 6:
                 output.append(detail[0])  # location name
                 output.append(detail[2])  # address
@@ -123,7 +132,8 @@ def fetch_data():
                     store.xpath('.//div[@class="center-column-2"]//p//text()')
                 )
                 output.append(get_value(store_hours))  # opening hours
-            output_list.append(output)
+            if output not in output_list:
+                output_list.append(output)
     return output_list
 
 

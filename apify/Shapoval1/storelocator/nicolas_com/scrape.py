@@ -1,5 +1,6 @@
 import csv
 import json
+from lxml import html
 from sgrequests import SgRequests
 
 
@@ -48,7 +49,6 @@ def fetch_data():
     js = json.loads(div)
     for j in js.values():
         location_name = "".join(j.get("displayName")).replace("&#039;", "`")
-        hours_of_operation = "<MISSING>"
         street_address = "".join(j.get("address")).replace("&#039;", "`")
         city = "".join(j.get("town"))
         postal = j.get("postcode")
@@ -62,7 +62,64 @@ def fetch_data():
         latitude = j.get("latitude")
         longitude = j.get("longitude")
         location_type = "<MISSING>"
-        phone = "<MISSING>"
+        session = SgRequests()
+        r = session.get(page_url)
+        tree = html.fromstring(r.text)
+        phone = " ".join(tree.xpath('//a[contains(@href, "tel")]/text()'))
+        hours = tree.xpath('//div[@class="ns-StoreDetails-openingsTimesDetail"]')
+        days = tree.xpath('//div[@class="ns-StoreDetails-openingsDay"]//text()')
+        days = list(filter(None, [a.strip() for a in days]))
+        tmp = []
+        _tmp = []
+        for h in hours:
+            open = (
+                "".join(
+                    h.xpath(
+                        './div[@class="ns-StoreDetails-openingsTimesDetailAM"]/text()'
+                    )
+                )
+                .replace("\n", "")
+                .replace("\t", "")
+                .strip()
+            )
+            close = (
+                "".join(
+                    h.xpath(
+                        './div[@class="ns-StoreDetails-openingsTimesDetailPM"]/text()'
+                    )
+                )
+                .replace("\n", "")
+                .replace("\t", "")
+                .strip()
+            )
+            line = f"{open}-{close}"
+            tmp.append(line)
+        closed = (
+            "".join(
+                tree.xpath(
+                    '//div[@class="ns-StoreDetails-openingsTimesDetail ns-StoreDetails-openingsTimesDetail--closed"]/text()'
+                )
+            )
+            .replace("\n", "")
+            .replace("\t", "")
+            .strip()
+        )
+        if (
+            "".join(
+                tree.xpath(
+                    '//div[@class="ns-StoreDetails-openingsTimes"]/div[contains(@class, "ns-StoreDetails-openingsTimesDetail ns-StoreDetails-openingsTimesDetail--closed")]/text()'
+                )
+            )
+            .replace("\n", "")
+            .replace("\t", "")
+            .strip()
+            == "Closed"
+        ):
+            tmp.append(closed)
+
+        for d, t in zip(days, tmp):
+            _tmp.append(f"{d.strip()}: {t.strip()}")
+        hours_of_operation = ";".join(_tmp) or "<MISSING>"
         row = [
             locator_domain,
             page_url,
