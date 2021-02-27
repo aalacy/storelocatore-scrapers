@@ -1,6 +1,7 @@
 import csv
 from bs4 import BeautifulSoup
 import json
+import html5lib
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
 
