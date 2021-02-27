@@ -56,7 +56,7 @@ def fetch_data():
         location_name = location_name if location_name else "<MISSING>"
         street_address = poi["address"].split(",")[0]
         street_address = street_address if street_address else "<MISSING>"
-        city = poi["location"]["city"]
+        city = poi["address"].split(",")[1].strip()
         city = city if city else "<MISSING>"
         state = poi["location"]["state"]
         state = state if state else "<MISSING>"
@@ -70,6 +70,12 @@ def fetch_data():
                 poi["title"]
             )
         )
+        if not phone:
+            phone = dom.xpath(
+                '//p[a[contains(text(), "{}")]]/following-sibling::p[contains(text(), "Tel")]/text()'.format(
+                    zip_code
+                )
+            )
         phone = phone[0].split(":")[-1] if phone else "<MISSING>"
         location_type = "<MISSING>"
         latitude = poi["location"]["lat"]
@@ -81,8 +87,23 @@ def fetch_data():
                 poi["title"]
             )
         )
+        if not hours_of_operation:
+            hours_of_operation = dom.xpath(
+                '//h3[contains(text(), "{}")]//following-sibling::div[1]//p[contains(text(), "营业时间")]/text()'.format(
+                    poi["title"]
+                )
+            )
+        if not hours_of_operation:
+            hours_of_operation = dom.xpath(
+                '//p[a[contains(text(), "{}")]]/following-sibling::p[contains(text(), "Open Hours")]/text()'.format(
+                    zip_code
+                )
+            )
         hours_of_operation = (
-            hours_of_operation[0].replace("Open Hours：", "")
+            hours_of_operation[0]
+            .replace("Open Hours：", "")
+            .replace("营业时间：", "")
+            .replace("营业时间:", "")
             if hours_of_operation
             else "<MISSING>"
         )
