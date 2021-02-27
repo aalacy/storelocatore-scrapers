@@ -1,7 +1,0 @@
-sgscrape
-sglogging
-sgselenium
-selenium
-sgrequests
-bs4
-beautifulsoup4==4.7.1
