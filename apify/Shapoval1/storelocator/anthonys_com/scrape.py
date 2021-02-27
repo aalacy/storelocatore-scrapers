@@ -140,12 +140,22 @@ def get_data(url):
         hours_of_operation = "Temporarily closed"
     if hours_of_operation.find("Anthony’s Cabana") != -1:
         hours_of_operation = "<MISSING>"
-    if street_address.find("1207") != -1:
-        hours_of_operation = "<MISSING>"
     if hours_of_operation.find("Not currently available.") != -1:
         hours_of_operation = "Closed"
+    if street_address.find("1207") != -1:
+        hours_of_operation = (
+            " ".join(
+                tree.xpath(
+                    '//h3[contains(text(),"Hours:")]/following-sibling::div[1]//text()'
+                )
+            )
+            .replace("\n", "")
+            .strip()
+        )
     if street_address.find("550") != -1:
         hours_of_operation = hours_of_operation.split("call")[1].strip()
+    if location_name.find("Anthony’s Cabana") != -1:
+        hours_of_operation = "Closed"
     row = [
         locator_domain,
         page_url,
