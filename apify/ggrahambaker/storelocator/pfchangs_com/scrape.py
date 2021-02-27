@@ -45,27 +45,27 @@ def fetch_data():
     url = "https://www.pfchangs.com/locations/us.html"
     r = session.get(url, headers=headers, verify=False)
     soup = BeautifulSoup(r.text, "html.parser")
-    statelist = soup.findAll(
-        "a", {"class": "Directory-listLink"}
-    )
+    statelist = soup.findAll("a", {"class": "Directory-listLink"})
     p = 0
     for stnow in statelist:
         check1 = 0
-        stlink = "https://www.pfchangs.com/locations/" + stnow["href"]        
+        stlink = "https://www.pfchangs.com/locations/" + stnow["href"]
         r = session.get(stlink, headers=headers, verify=False)
-        soup = BeautifulSoup(r.text, "html.parser")       
-        
+        soup = BeautifulSoup(r.text, "html.parser")
+
         citylist = soup.findAll("a", {"class": "Directory-listLink"})
-        
+
         if len(citylist) == 0:
             citylist = []
             citylist.append(stlink)
             check1 = 1
-            
+
         for citynow in citylist:
             check2 = 0
             if check1 == 0:
-                citylink = citynow["href"].replace("../", "https://www.pfchangs.com/locations/")
+                citylink = citynow["href"].replace(
+                    "../", "https://www.pfchangs.com/locations/"
+                )
                 print(citylink)
                 r = session.get(citylink, headers=headers, verify=False)
                 soup = BeautifulSoup(r.text, "html.parser")
@@ -84,21 +84,22 @@ def fetch_data():
                     branch = branch["href"].replace(
                         "../../../../", "https://www.pfchangs.com/locations/"
                     )
-                    branch = branch.replace("../../", "https://www.pfchangs.com/locations/")
-                    
-                    #titlelist.append(branch)
+                    branch = branch.replace(
+                        "../../", "https://www.pfchangs.com/locations/"
+                    )
+
+                    # titlelist.append(branch)
                     r = session.get(branch, headers=headers, verify=False)
                     soup = BeautifulSoup(r.text, "html.parser")
-                    print('1')
-                
+                    print("1")
 
                 try:
                     title = soup.find("h1").find("span", {"class": "LocationName"}).text
                 except:
-                    print('2', branch)
-                    print('error')
+                    print("2", branch)
+                    print("error")
                 link = branch
-               
+
                 street = soup.find("meta", {"itemprop": "streetAddress"})["content"]
                 city = soup.find("meta", {"itemprop": "addressLocality"})["content"]
                 lat = soup.find("meta", {"itemprop": "latitude"})["content"]
@@ -134,8 +135,8 @@ def fetch_data():
                         hours,
                     ]
                 )
-                print(p,data[p])
-                
+                print(p, data[p])
+
                 p += 1
     return data
 
