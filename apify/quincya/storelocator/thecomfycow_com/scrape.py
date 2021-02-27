@@ -79,8 +79,12 @@ def fetch_data():
         )
 
         street_address = raw_data[-2][: raw_data[-2].find(",")].strip()
-        city = raw_data[-2][raw_data[-2].find(",") + 1 : raw_data[-2].rfind(",")].strip()
-        state = raw_data[-2][raw_data[-2].rfind(",") + 1 : raw_data[-2].rfind(" ")].strip()
+        city = raw_data[-2][
+            raw_data[-2].find(",") + 1 : raw_data[-2].rfind(",")
+        ].strip()
+        state = raw_data[-2][
+            raw_data[-2].rfind(",") + 1 : raw_data[-2].rfind(" ")
+        ].strip()
         zip_code = raw_data[-2][raw_data[-2].rfind(" ") + 1 :].strip()
         country_code = "US"
         store_number = "<MISSING>"
