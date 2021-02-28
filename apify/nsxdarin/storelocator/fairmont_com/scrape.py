@@ -127,6 +127,14 @@ def fetch_data():
                 lat = line2.split('Latitude" value="')[1].split('"')[0]
             if 'Longitude" value="' in line2:
                 lng = line2.split('Longitude" value="')[1].split('"')[0]
+        if " Est" in zc:
+            zc = zc.split(" Est")[0].strip()
+        if "900 Canada Place" in add:
+            zc = "V6C 3L5"
+        if "900 West Georgia Street" in add:
+            zc = "V6C 2W6"
+        if "1038 Canada Place" in add:
+            zc = "V6C 0B9"
         yield [
             website,
             purl,
