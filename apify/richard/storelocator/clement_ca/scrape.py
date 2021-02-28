@@ -1,5 +1,5 @@
 import json
-from Scraper import Scrape
+from Scraper import Scrape  # noqa: I900
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as BS
 
