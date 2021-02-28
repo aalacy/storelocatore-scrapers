@@ -60,6 +60,7 @@ def fetch_data():
         )
 
         for i, poi_html in enumerate(all_locations):
+            store_url = "https://www.eurosparni.co.uk/nearest-store"
             location_name = poi_html.xpath('.//h1[@id="storeName"]/text()')
             if not location_name:
                 continue
@@ -69,10 +70,7 @@ def fetch_data():
             )
             raw_address = " ".join([e.strip() for e in raw_address if e.strip()])
             addr = parse_address_intl(raw_address)
-            street_address = addr.street_address_1
-            if addr.street_address_2:
-                street_address += " " + addr.street_address_2
-            street_address = street_address if street_address else "<MISSING>"
+            street_address = raw_address.split(",")[0]
             city = addr.city
             city = city if city else "<MISSING>"
             state = "<MISSING>"
