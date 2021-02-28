@@ -4,9 +4,9 @@ import csv
 class Scrape:
     def __init__(self, url):
         self.url = url
-        
+
     def write_output(self, data):
-        with open("data.csv", newline="", mode="w",encoding="utf-8") as output_file:
+        with open("data.csv", newline="", mode="w", encoding="utf-8") as output_file:
             writer = csv.writer(
                 output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
             )
@@ -27,7 +27,7 @@ class Scrape:
                     "latitude",
                     "longitude",
                     "hours_of_operation",
-                    "page_url"
+                    "page_url",
                 ]
             )
             # Body
