@@ -101,9 +101,15 @@ def fetch_data():
         city = (
             city.replace("Atlanta Park", "Atlanta")
             .replace("Rimrock Mall", "Billings")
+            .replace("(Flagler)", "")
+            .replace("Square", "")
+            .replace("Mass", "")
+            .replace("(Shadyside)", "")
             .strip()
         )
-        street_address = street_address.replace(city, "").strip()
+        street_address = (
+            street_address.replace(city, "").replace("Shadyside", "").strip()
+        )
         state = state.split("-")[0]
         zip_code = "<MISSING>"
         country_code = "US"
