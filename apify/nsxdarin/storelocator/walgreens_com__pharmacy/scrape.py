@@ -64,7 +64,6 @@ def fetch_data():
                 "zip": code,
             }
             r = session.post(url, headers=headers, data=json.dumps(payload))
-            lines = r.iter_lines()
             website = "walgreens.com/pharmacy"
             for item in json.loads(r.content)["results"]:
                 loc = "https://www.walgreens.com" + item["storeSeoUrl"]
