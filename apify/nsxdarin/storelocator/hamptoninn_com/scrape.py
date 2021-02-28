@@ -132,7 +132,7 @@ def fetch_data():
         name = ""
         add = ""
         city = ""
-        state = ""
+        state = "<MISSING>"
         zc = ""
         lat = ""
         lng = ""
@@ -151,13 +151,32 @@ def fetch_data():
                 ].split("-")[0]
             if '"addressLocality": "' in line2:
                 city = line2.split('"addressLocality": "')[1].split('"')[0]
-                state = "<MISSING>"
+            if '"addressRegion": "' in line2:
+                state = line2.split('"addressRegion": "')[1].split('"')[0]
             if '"latitude": "' in line2:
                 lat = line2.split('"latitude": "')[1].split('"')[0]
             if '"longitude": "' in line2:
                 lng = line2.split('"longitude": "')[1].split('"')[0]
             if '"postalCode": "' in line2:
                 zc = line2.split('"postalCode": "')[1].split('"')[0]
+            if '"telephone": \'' in line2:
+                phone = line2.split('"telephone": \'')[1].split("'")[0].strip()
+            if '"name": \'' in line2:
+                name = line2.split('"name": \'')[1].split("'")[0].strip()
+            if '"streetAddress": \'' in line2:
+                add = line2.split('"streetAddress": \'')[1].split("'")[0].strip()
+            if '"url": \'' in line2:
+                store = line2.split("/index.html")[0].rsplit("-", 1)[1]
+            if '"addressLocality": \'' in line2:
+                city = line2.split('"addressLocality": \'')[1].split("'")[0].strip()
+            if '"addressRegion": \'' in line2:
+                state = line2.split('"addressRegion": \'')[1].split("'")[0].strip()
+            if '"postalCode": \'' in line2:
+                zc = line2.split('"postalCode": \'')[1].split("'")[0].strip()
+            if '"latitude": \'' in line2:
+                lat = line2.split('"latitude": \'')[1].split("'")[0].strip()
+            if '"longitude": \'' in line2:
+                lng = line2.split('"longitude": \'')[1].split("'")[0].strip()
         yield [
             website,
             purl,
