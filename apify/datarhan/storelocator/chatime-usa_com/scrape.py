@@ -69,16 +69,21 @@ def fetch_data():
         location_name = location_name[0] if location_name else "<MISSING>"
         raw_address = poi_html.xpath(".//address/text()")[0].strip()
         addr = parse_address_intl(raw_address)
-        street_address = addr.street_address_1
-        if addr.street_address_2:
-            street_address += " " + addr.street_address_2
-        street_address = street_address if street_address else "<MISSING>"
+        street_address = raw_address.split(",")[0]
         city = addr.city
         city = city if city else "<MISSING>"
         state = addr.state
-        state = state if state else "<MISSING>"
-        zip_code = addr.postcode
-        zip_code = zip_code if zip_code else "<MISSING>"
+        if not state:
+            state = raw_address.split()[-2]
+        if "," in state:
+            city = state.split(",")[-1]
+            state = state.split(",")[0]
+        if "Abercorn" in state:
+            city = state
+            state = "<MISSING>"
+        zip_code = raw_address.split()[-1]
+        if "Extention" in zip_code:
+            zip_code = "<MISSING>"
         country_code = addr.country
         country_code = country_code if country_code else "<MISSING>"
         store_number = poi["i"]
