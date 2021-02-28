@@ -124,9 +124,6 @@ def fetch_data():
             store_url = "http://store-locations.underarmour.com/{}/{}/{}/".format(
                 state, city.replace(" ", "-"), store_number
             )
-            # store_response = session.get(store_url)
-            # if store_response.status_code == 404:
-            #     store_url = '<MISSING>'
 
             item = [
                 DOMAIN,
