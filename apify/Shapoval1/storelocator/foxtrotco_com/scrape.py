@@ -65,15 +65,19 @@ def fetch_data():
             street_address = j.get("address")
             city = j.get("city")
             postal = j.get("zip")
-            state = j.get("state")
+            state = "".join(j.get("state"))
             country_code = "US"
             store_number = "<MISSING>"
-            location_name = j.get("name")
+            location_name = "".join(j.get("name"))
+            location_type = "<MISSING>"
+            if state.find("DC") != -1:
+                location_type = "Coming Soon"
             phone = j.get("phone")
             latitude = j.get("lat")
-            page_url = "https://foxtrotco.com/stores"
+            slug = location_name.replace(" ", "-").lower()
+            page_url = f"https://foxtrotco.com/stores/{slug}"
             longitude = j.get("lon")
-            location_type = "<MISSING>"
+
             hours = j.get("operating_hours")
             tmp = []
             days = [
