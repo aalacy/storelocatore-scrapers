@@ -64,9 +64,17 @@ def fetch_data():
         store_number = "<MISSING>"
         location_type = "<MISSING>"
         phone = raw_data[4].strip()
-        hours_of_operation = raw_data[5].strip()
+        if "-" not in phone:
+            phone = "<MISSING>"
         latitude = "<MISSING>"
         longitude = "<MISSING>"
+        try:
+            hours_of_operation = raw_data[5].strip()
+        except:
+            if "temporarily" in item.text.lower():
+                hours_of_operation = "Closed Temporarily"
+            else:
+                hours_of_operation = "<MISSING>"
 
         data.append(
             [

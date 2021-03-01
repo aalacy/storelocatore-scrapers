@@ -1,3 +1,2 @@
-lxml==4.3.3
-sgselenium	
-beautifulsoup4==4.7.1
+undetected_chromedriver==2.1.2
+beautifulsoup4==4.9.3
