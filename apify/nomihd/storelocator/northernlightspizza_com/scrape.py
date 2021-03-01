@@ -27,8 +27,6 @@ headers = {
 
 def fetch_data():
     # Your scraper here
-    loc_list = []
-
     url_list = [
         "https://www.northernlightspizza.com/wp-json/wpgmza/v1/markers/base64eJyrVkrLzClJLVKyUqqOUcpNLIjPTIlRsopRMopR0gEJFGeUgsSKgYLRsbVKtQCWBhBO",
         "https://www.northernlightspizza.com/wp-json/wpgmza/v1/markers/base64eJyrVkrLzClJLVKyUqqOUcpNLIjPTIlRsopRMo5R0gEJFGeUgsSKgYLRsbVKtQCWHhBP",
