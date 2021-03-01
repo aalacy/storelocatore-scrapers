@@ -1,5 +1,6 @@
 import csv
 import json
+import re
 from sgrequests import SgRequests
 from sglogging import sglog
 from bs4 import BeautifulSoup
@@ -74,12 +75,11 @@ def fetch_data():
             title = "Wren Kitchens" + " " + address["title"]
             lat = address["lat"]
             longt = address["lng"]
-            try:
-                street = (
-                    address["address"]["firstLine"] + " " + ["address"]["secondLine"]
-                )
-            except:
+            address2 = address["address"]["secondLine"]
+            if not address2:
                 street = address["address"]["firstLine"]
+            else:
+                street = address["address"]["firstLine"] + " " + address2
             city = address["address"]["town"]
             state = address["address"]["county"]
             pcode = address["address"]["postCode"]
@@ -100,7 +100,7 @@ def fetch_data():
                     pcode,
                     "UK",
                     "<MISSING>",
-                    phone,
+                    phone.strip(),
                     "<MISSING>",
                     lat,
                     longt,
