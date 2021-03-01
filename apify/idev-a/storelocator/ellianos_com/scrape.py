@@ -11,17 +11,28 @@ base_url = "https://www.ellianos.com/locations/"
 
 def _hours(dom_locs, location):
     hours = []
+    address = ""
+    phone = ""
     for _ in dom_locs:
         if (
             _.select_one("h4.edgtf-team-name")
             and _.select_one("h4.edgtf-team-name").text.strip().lower()
             == location["title"].strip().lower()
-            and _.select_one("div.wpb_text_column")
         ):
-            hours = [
-                hour for hour in _.select_one("div.wpb_text_column").stripped_strings
-            ]
-    return ("; ".join(hours) or "<MISSING>").replace("–", "-")
+            if _.select_one("div.wpb_text_column"):
+                hours = [
+                    hour
+                    for hour in _.select_one("div.wpb_text_column").stripped_strings
+                ]
+            try:
+                address = _.select_one("div.edgtf-team-description").text
+            except:
+                pass
+            try:
+                phone = _.select_one("p.edgtf-team-position").text
+            except:
+                pass
+    return ("; ".join(hours) or "<MISSING>").replace("–", "-"), address, phone
 
 
 def fetch_data():
@@ -49,8 +60,11 @@ def fetch_data():
             ):
                 location_type = "COMING SOON"
                 title = _["title"].split("-")[0].strip()
-            addr = parse_address_intl(_["address"])
-            record = SgRecord(
+            hours_of_operation, address, phone = _hours(dom_locs, _)
+            if not address:
+                address = _["address"]
+            addr = parse_address_intl(address)
+            yield SgRecord(
                 store_number=_["id"],
                 location_name=title,
                 location_type=location_type,
@@ -58,13 +72,13 @@ def fetch_data():
                 city=addr.city,
                 state=addr.state,
                 zip_postal=addr.postcode,
-                country_code=_["location"]["country"],
+                country_code="US",
+                phone=phone,
                 latitude=_["location"]["lat"],
                 longitude=_["location"]["lng"],
                 locator_domain=locator_domain,
-                hours_of_operation=_hours(dom_locs, _),
+                hours_of_operation=hours_of_operation,
             )
-            yield record
 
 
 if __name__ == "__main__":

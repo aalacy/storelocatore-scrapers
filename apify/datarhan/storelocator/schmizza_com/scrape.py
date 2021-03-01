@@ -40,7 +40,7 @@ def fetch_data():
     # Your scraper here
     items = []
 
-    DOMAIN = "schlotzskys.com"
+    DOMAIN = "schmizza.com"
     start_url = "https://schmizza.com/locations/"
 
     with SgChrome() as driver:

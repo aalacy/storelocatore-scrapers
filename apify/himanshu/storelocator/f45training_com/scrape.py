@@ -3,43 +3,8 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from random import choice
 
 session = SgRequests()
-
-
-def get_proxy():
-    url = "https://www.sslproxies.org/"
-    r = session.get(url)
-    soup = BeautifulSoup(r.content, "lxml")
-    return {
-        "https": (
-            choice(
-                list(
-                    map(
-                        lambda x: x[0] + ":" + x[1],
-                        list(
-                            zip(
-                                map(lambda x: x.text, soup.findAll("td")[::8]),
-                                map(lambda x: x.text, soup.findAll("td")[1::8]),
-                            )
-                        ),
-                    )
-                )
-            )
-        )
-    }
-
-
-def proxy_request(url, **kwargs):
-    while 1:
-        try:
-            proxy = get_proxy()
-            r = session.get(url, proxies=proxy, timeout=5, **kwargs)
-            break
-        except:
-            pass
-    return r
 
 
 def write_output(data):
@@ -47,6 +12,7 @@ def write_output(data):
         writer = csv.writer(
             output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
         )
+        # Header
         writer.writerow(
             [
                 "locator_domain",
@@ -65,15 +31,15 @@ def write_output(data):
                 "page_url",
             ]
         )
+        # Body
         for row in data:
             writer.writerow(row)
 
 
 def fetch_data():
     addresses = []
-
     r = session.get("https://f45training.com/find-a-studio/").text
-    soup = BeautifulSoup(r, "lxml")
+    soup = BeautifulSoup(r, "html5lib")
     script = str(soup.find(text=re.compile("window.studios")))
     jsondata = json.loads(
         script.split("window.studios = ")[1]
@@ -81,21 +47,26 @@ def fetch_data():
         .replace("};", "}")
     )["hits"]
 
-    location_name = "<MISSING>"
-    street_address = "<INACCESSIBLE>"
-    city = "<INACCESSIBLE>"
-    state = "<INACCESSIBLE>"
-    zipp = "<INACCESSIBLE>"
-    country_code = "<INACCESSIBLE>"
-    store_number = "<INACCESSIBLE>"
-    phone = "<INACCESSIBLE>"
-    latitude = "<INACCESSIBLE>"
-    longitude = "<INACCESSIBLE>"
-
     for i in jsondata:
+        location_name = "<MISSING>"
+        street_address = "<INACCESSIBLE>"
+        city = "<INACCESSIBLE>"
+        state = "<INACCESSIBLE>"
+        zip = "<INACCESSIBLE>"
+        country_code = "<INACCESSIBLE>"
+        store_number = "<INACCESSIBLE>"
+        phone = "<INACCESSIBLE>"
+        latitude = "<INACCESSIBLE>"
+        longitude = "<INACCESSIBLE>"
         if i["country"] == "United States":
             location_name = i["name"]
-            street_address = i["location"]
+            address = i["location"]
+            try:
+                street_address = address.split(",")[0].strip()
+                city = address.split(",")[1].strip()
+                zip = address.split(",")[2].strip().split(" ")[1]
+            except:
+                pass
             state = i["state"]
             country_code = "US"
             store_number = i["id"]
@@ -103,7 +74,13 @@ def fetch_data():
             longitude = i["_geoloc"]["lng"]
         elif i["country"] == "Canada":
             location_name = i["name"]
-            street_address = i["location"]
+            address = i["location"]
+            try:
+                street_address = address.split(",")[0].strip()
+                city = address.split(",")[1].strip()
+                zip = address.split(",")[2].strip().split(" ")[1]
+            except:
+                pass
             state = i["state"]
             country_code = "CA"
             store_number = i["id"]
@@ -113,8 +90,8 @@ def fetch_data():
             continue
 
         page_url = "https://f45training.com/" + i["slug"]
-        location_request = proxy_request(page_url, headers={})
-        location_soup = BeautifulSoup(location_request.text, "lxml")
+        location_request = session.get(page_url)
+        location_soup = BeautifulSoup(location_request.text, "html5lib")
         if location_soup.find("a", {"href": re.compile("tel:")}) is None:
             phone = "<MISSING>"
         else:
@@ -131,7 +108,7 @@ def fetch_data():
         store.append(street_address if street_address else "<MISSING>")
         store.append(city if city else "<MISSING>")
         store.append(state if state else "<MISSING>")
-        store.append(zipp if zipp else "<MISSING>")
+        store.append(zip if zip else "<MISSING>")
         store.append(country_code if country_code else "<MISSING>")
         store.append(store_number if store_number else "<MISSING>")
         store.append(phone if phone else "<MISSING>")
@@ -144,6 +121,12 @@ def fetch_data():
         if store[2] in addresses:
             continue
         addresses.append(store[2])
+        store = [
+            str(x).encode("ascii", "ignore").decode("ascii").strip()
+            if x
+            else "<MISSING>"
+            for x in store
+        ]
         yield store
 
 

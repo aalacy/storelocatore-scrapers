@@ -1,0 +1,5 @@
+dms2dec==0.1
+sgvalidator==0.0.71
+sgscrape==0.0.22
+sgrequests==0.1.4
+beautifulsoup4==4.9.3

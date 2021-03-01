@@ -1,15 +1,10 @@
 import csv
 import json
-
+import time
 from bs4 import BeautifulSoup
-
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support import expected_conditions as ec
-from selenium.webdriver.support.ui import WebDriverWait
-
 from sglogging import SgLogSetup
-
 from sgselenium import SgChrome
+from tenacity import retry, stop_after_attempt
 
 log = SgLogSetup().get_logger("offbroadwayshoes.com")
 
@@ -48,6 +43,24 @@ def get(entity, key):
     return entity.get(key, MISSING) or MISSING
 
 
+def get_location_type(store):
+    hide_store = store["hideStore"] == "true"
+    if hide_store:
+        return "Off Broadway Shoe Warehouse"
+    else:
+        return "Rack Room Shoes"
+
+
+@retry(stop=stop_after_attempt(3))
+def fetch_page(page, driver):
+    base_link = f"https://www.rackroomshoes.com/store-finder?q=&page={page}&latitude=25.790654&longitude=-80.130045"
+    driver.get(base_link)
+    time.sleep(3)
+
+    soup = BeautifulSoup(driver.page_source, "lxml")
+    return json.loads(soup.text)
+
+
 def fetch_data():
     page = 0
     found = []
@@ -57,12 +70,7 @@ def fetch_data():
     run = True
 
     while run:
-        base_link = f"https://www.rackroomshoes.com/store-finder?q=&page={page}&latitude=25.790654&longitude=-80.130045"
-
-        driver.get(base_link)
-        base = BeautifulSoup(driver.page_source, "lxml")
-
-        result = json.loads(base.text)
+        result = fetch_page(page, driver)
         stores = result["data"]
         total = result["total"]
 
@@ -86,14 +94,7 @@ def fetch_data():
             latitude = get(store, "latitude")
             longitude = get(store, "longitude")
             link = "https://www.rackroomshoes.com/store/" + store_number
-
-            driver.get(link)
-            WebDriverWait(driver).until(
-                ec.presence_of_element_located((By.CLASS_NAME, "store-logo"))
-            )
-
-            base = BeautifulSoup(driver.page_source, "lxml")
-            location_type = base.find(class_="store-logo")["alt"]
+            location_type = get_location_type(store)
 
             # Store data
             yield [

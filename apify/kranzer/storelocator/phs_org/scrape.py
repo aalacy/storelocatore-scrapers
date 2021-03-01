@@ -29,7 +29,7 @@ class Scrape(base.Spider):
             )
             i = base.Item(hs["tree"])
             i.add_value("location_name", href.xpath("./strong/a/text()")[0])
-            i.add_value("locator_domain", sel["url"])
+            i.add_value("locator_domain", mini_url)
             i.add_value("page_url", hs["url"])
             i.add_xpath(
                 "phone",

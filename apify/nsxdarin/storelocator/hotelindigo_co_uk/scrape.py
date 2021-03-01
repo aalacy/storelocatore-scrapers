@@ -89,6 +89,7 @@ def fetch_data():
                     ):
                         hours = ""
                     else:
+                        phone = phone.replace("+5", "").strip()
                         yield [
                             website,
                             lurl,

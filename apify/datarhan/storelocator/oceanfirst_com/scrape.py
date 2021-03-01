@@ -58,6 +58,10 @@ def fetch_data():
         location_name = location_name[0] if location_name else "<MISSING>"
         raw_address = loc_dom.xpath('//div[@class="branch-address"]/text()')
         raw_address = [elem.strip() for elem in raw_address if elem.strip()]
+        location_type = "<MISSING>"
+        if "Temporarily Closed" in raw_address[0]:
+            raw_address = raw_address[1:]
+            location_type = "Temporarily Closed"
         street_address = raw_address[0]
         city = raw_address[-1].split(", ")[0]
         state = raw_address[-1].split(", ")[-1].split()[0]
@@ -66,18 +70,12 @@ def fetch_data():
         store_number = "<MISSING>"
         phone = loc_dom.xpath('//span[@class="phone"]/text()')
         phone = phone[0] if phone else "<MISSING>"
-        location_type = "<MISSING>"
         geo = re.findall(r"LatLng\((.+)\)", loc_response.text)[0].split(", ")
         latitude = geo[0]
         longitude = geo[1]
-        hours_of_operation = loc_dom.xpath(
-            '//div[@class="branch_hours_days clearfix"]//text()'
-        )
-        hours_of_operation = (
-            " ".join(hours_of_operation).split("January")[0].strip()
-            if hours_of_operation
-            else "<MISSING>"
-        )
+        hoo = loc_dom.xpath('//div[@class="branch_hours_days clearfix"]//text()')
+        hoo = " ".join(hoo).split("January")[0].strip() if hoo else "<MISSING>"
+        hours_of_operation = hoo.strip() if hoo and hoo.strip() else "<MISSING>"
 
         item = [
             DOMAIN,

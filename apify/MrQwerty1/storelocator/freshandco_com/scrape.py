@@ -42,37 +42,29 @@ def fetch_data():
     session = SgRequests()
     r = session.get(page_url)
     tree = html.fromstring(r.text)
-    text = "".join(
-        tree.xpath("//script[contains(text(), 'window.locationsData = ')]/text()")
-    )
-    text = text.split("window.locationsData = ")[1]
+    text = "".join(tree.xpath("//script[contains(text(), 'locations:')]/text()"))
+
+    text = text.split("locations:")[1].split("apiKey")[0].strip()[:-1]
     js = json.loads(text)
 
     for j in js:
-        location_name = j.get("title").get("rendered")
+        location_name = j.get("name")
         store_number = j.get("id")
-        j = j.get("acf").get("location_details")[0]
-        street_address = j.get("street_address") or "<MISSING>"
-        line = j.get("city_state_zip")
-        city = line.split(",")[0].strip()
-        line = line.split(",")[1].strip()
-        state = line.split()[0]
-        postal = line.split()[1]
+        street_address = j.get("street") or "<MISSING>"
+        city = j.get("city") or "<MISSING>"
+        state = j.get("state") or "<MISSING>"
+        postal = j.get("postal_code") or "<MISSING>"
         country_code = "US"
         phone = j.get("phone_number") or "<MISSING>"
-        loc = j.get("geolocation")[0]
-        latitude = loc.get("latitude") or "<MISSING>"
-        longitude = loc.get("longitude") or "<MISSING>"
+        latitude = j.get("lat") or "<MISSING>"
+        longitude = j.get("lng") or "<MISSING>"
         location_type = "<MISSING>"
 
-        _tmp = []
-        hours = j.get("hours")[0].get("day")
-        for h in hours:
-            day = h.get("name")
-            time = h.get("time")
-            _tmp.append(f"{day}: {time}")
-
-        hours_of_operation = ";".join(_tmp) or "<MISSING>"
+        source = j.get("hours") or "<html></html>"
+        root = html.fromstring(source)
+        hours = root.xpath("//p/text()")
+        hours = list(filter(None, [h.strip() for h in hours]))
+        hours_of_operation = ";".join(hours) or "<MISSING>"
 
         row = [
             locator_domain,
