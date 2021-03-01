@@ -1,11 +1,16 @@
 import csv
 from sgrequests import SgRequests
-import time
 from sglogging import SgLogSetup
+from sgselenium import SgChrome
 
 logger = SgLogSetup().get_logger("longhornsteakhouse_com")
 headers = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36",
+    "authority": "www.longhornsteakhouse.com",
+    "scheme": "https",
+    "cache-control": "max-age=0",
+    "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+    "method": "GET",
 }
 
 
@@ -47,7 +52,6 @@ def fetch_data():
             lurl = line.split("<loc>")[1].split("<")[0]
             locs.append(lurl)
     for loc in locs:
-        time.sleep(1)
         logger.info("Pulling Location %s..." % loc)
         website = "longhornsteakhouse.com"
         typ = "Restaurant"
@@ -62,51 +66,51 @@ def fetch_data():
         hours = ""
         country = ""
         name = ""
-        session = SgRequests()
         store = loc.rsplit("/", 1)[1]
-        r2 = session.get(loc, headers=headers)
-        for line2 in r2.iter_lines():
-            line2 = str(line2.decode("utf-8"))
-            if 'id="restLatLong" value="' in line2:
-                lat = line2.split('id="restLatLong" value="')[1].split(",")[0]
+        with SgChrome() as driver:
+            driver.get(url)
+            text = driver.page_source
+            text = str(text).replace("\r", "").replace("\n", "").replace("\t", "")
+            if 'id="restLatLong" value="' in text:
+                lat = text.split('id="restLatLong" value="')[1].split(",")[0]
                 lng = (
-                    line2.split('id="restLatLong" value="')[1]
+                    text.split('id="restLatLong" value="')[1]
                     .split(",")[1]
                     .split('"')[0]
                 )
-            if '<span id="popRestHrs">' in line2:
+            if '<span id="popRestHrs">' in text:
                 hours = (
-                    line2.split('<span id="popRestHrs">')[1]
+                    text.split('<span id="popRestHrs">')[1]
                     .split("<br></span>")[0]
                     .replace("</span>", "")
                     .replace("<br>", "; ")
                     .replace('<span class="times">', "")
                     .strip()
                 )
-            if '"weekda' in line2:
-                day = line2.split('"weekda')[1].split('">')[1].split("<")[0]
+            if '"weekda' in text:
+                day = text.split('"weekda')[1].split('">')[1].split("<")[0]
                 if "(" in day:
                     day = day.split("(")[1].split(")")[0]
-            if "&nbsp;-&nbsp;" in line2 and "EST 20" in line2:
+            if "&nbsp;-&nbsp;" in text and "EST 20" in text:
                 hrs = (
                     day
                     + ": "
-                    + line2.replace('<span class="whitetxt">', "")
+                    + text.replace('<span class="whitetxt">', "")
                     .replace("</span>", "")
                     .split(" ")[4]
                     .rsplit(":00", 1)[0]
                     + "-"
-                    + line2.split("&nbsp;-&nbsp;")[1].split(" ")[4].rsplit(":00", 1)[0]
+                    + text.split("&nbsp;-&nbsp;")[1].split(" ")[4].rsplit(":00", 1)[0]
                 )
                 if hours == "":
                     hours = hrs
                 else:
                     hours = hours + "; " + hrs
-            if "AM&nbsp;-&nbsp;" in line2:
+            if "AM&nbsp;-&nbsp;" in text:
                 hrs = (
                     day
                     + ": "
-                    + line2.replace("\r", "")
+                    + text.replace("\r", "")
                     .replace("\t", "")
                     .replace("\n", "")
                     .strip()
@@ -118,42 +122,42 @@ def fetch_data():
                     hours = hrs
                 else:
                     hours = hours + "; " + hrs
-            if "<title>" in line2:
-                name = line2.split("<title>")[1].split(" |")[0]
-            if 'id="restAddress" value="' in line2:
-                add = line2.split('id="restAddress" value="')[1].split(",")[0]
-                city = line2.split('id="restAddress" value="')[1].split(",")[1]
-                state = line2.split('id="restAddress" value="')[1].split(",")[2]
+            if "<title>" in text:
+                name = text.split("<title>")[1].split(" |")[0]
+            if 'id="restAddress" value="' in text:
+                add = text.split('id="restAddress" value="')[1].split(",")[0]
+                city = text.split('id="restAddress" value="')[1].split(",")[1]
+                state = text.split('id="restAddress" value="')[1].split(",")[2]
                 zc = (
-                    line2.split('id="restAddress" value="')[1]
+                    text.split('id="restAddress" value="')[1]
                     .split(",")[3]
                     .split('"')[0]
                 )
                 country = "US"
-            if '"streetAddress":"' in line2:
+            if '"streetAddress":"' in text:
                 if add == "":
-                    add = line2.split('"streetAddress":"')[1].split('"')[0]
-                    country = line2.split('"addressCountry":"')[1].split('"')[0]
-                    city = line2.split('"addressLocality":"')[1].split('"')[0]
-                    state = line2.split('"addressRegion":"')[1].split('"')[0]
-                    zc = line2.split('"postalCode":"')[1].split('"')[0]
+                    add = text.split('"streetAddress":"')[1].split('"')[0]
+                    country = text.split('"addressCountry":"')[1].split('"')[0]
+                    city = text.split('"addressLocality":"')[1].split('"')[0]
+                    state = text.split('"addressRegion":"')[1].split('"')[0]
+                    zc = text.split('"postalCode":"')[1].split('"')[0]
                 if lat == "":
                     try:
-                        lat = line2.split('"latitude":"')[1].split('"')[0]
-                        lng = line2.split('"longitude":"')[1].split('"')[0]
+                        lat = text.split('"latitude":"')[1].split('"')[0]
+                        lng = text.split('"longitude":"')[1].split('"')[0]
                     except:
                         lat = "<MISSING>"
                         lng = "<MISSING>"
                 try:
                     hours = (
-                        line2.split('"openingHours":["')[1]
+                        text.split('"openingHours":["')[1]
                         .split('"]')[0]
                         .replace('","', "; ")
                     )
                 except:
                     pass
-            if ',"telephone":"' in line2:
-                phone = line2.split(',"telephone":"')[1].split('"')[0]
+            if ',"telephone":"' in text:
+                phone = text.split(',"telephone":"')[1].split('"')[0]
         if hours == "":
             hours = "<MISSING>"
         if phone == "":
