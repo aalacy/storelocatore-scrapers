@@ -67,7 +67,6 @@ def fetch_data():
             if "closing" in loc.lower():
                 continue
             data = str(soup)
-            divs = soup.find_all("div", {"class": "card-body"})
             all.append(
                 [
                     "https://rompnroll.com",
