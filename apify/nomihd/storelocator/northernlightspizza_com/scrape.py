@@ -9,32 +9,18 @@ import json
 website = "northernlightspizza.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 session = SgRequests()
-headers = {
-    "authority": "www.northernlightspizza.com",
-    "sec-ch-ua": '"Chromium";v="88", "Google Chrome";v="88", ";Not A Brand";v="99"',
-    "accept": "*/*",
-    "x-requested-with": "XMLHttpRequest",
-    "sec-ch-ua-mobile": "?0",
-    "x-wp-nonce": "8bd42dc3e8",
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36",
-    "sec-fetch-site": "same-origin",
-    "sec-fetch-mode": "cors",
-    "sec-fetch-dest": "empty",
-    "referer": "https://www.northernlightspizza.com/locations/",
-    "accept-language": "en-US,en-GB;q=0.9,en;q=0.8",
-}
 
 
 def fetch_data():
     # Your scraper here
+    session.get("https://www.northernlightspizza.com/locations/")
     url_list = [
         "https://www.northernlightspizza.com/wp-json/wpgmza/v1/markers/base64eJyrVkrLzClJLVKyUqqOUcpNLIjPTIlRsopRMopR0gEJFGeUgsSKgYLRsbVKtQCWBhBO",
         "https://www.northernlightspizza.com/wp-json/wpgmza/v1/markers/base64eJyrVkrLzClJLVKyUqqOUcpNLIjPTIlRsopRMo5R0gEJFGeUgsSKgYLRsbVKtQCWHhBP",
     ]
     for search_url in url_list:
-        stores_req = session.get(search_url, headers=headers)
+        stores_req = session.get(search_url)
         stores = json.loads(stores_req.text)
-
         for store in stores:
             page_url = "https://www.northernlightspizza.com/locations/"
             location_type = "<MISSING>"
