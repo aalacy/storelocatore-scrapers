@@ -66,6 +66,8 @@ def fetch_data():
             "x-requested-with": "XMLHttpRequest",
         }
         response = session.post(start_url, data=formdata, headers=headers)
+        if response.status_code != 200:
+            continue
         data = json.loads(response.text)
 
         for poi in data:
