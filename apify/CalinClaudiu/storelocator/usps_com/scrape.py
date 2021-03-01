@@ -48,17 +48,12 @@ def fetch_data():
 
         try:
             results = results["locations"]
-            new_coordinates = []
             if len(results) > 0:
                 for i in results:
                     try:
-                        pair = (
-                            i["latitude"],
-                            i["longitude"],
-                        )
-                        new_coordinates.append(pair)
+                        search.found_location_at(i["latitude"], i["longitude"])
                     except Exception:
-                        pair = ""
+                        pass
                     if i["locationID"] not in identities:
                         identities.add(i["locationID"])
                         try:
@@ -78,7 +73,6 @@ def fetch_data():
 
                         yield i
 
-            search.mark_found(new_coordinates)
         except Exception:
             continue
 

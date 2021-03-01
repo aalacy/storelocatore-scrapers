@@ -72,7 +72,7 @@ def fetch_data():
         city = parsed_addr.city
         state = parsed_addr.state
         zip_code = parsed_addr.postcode
-        country_code = "<MISSING>"
+        country_code = parsed_addr.county
         store_number = "<MISSING>"
         phone = poi_html.xpath('//strong[contains(text(), "Phone:")]/following::text()')
         phone = phone[0].strip() if phone else "<MISSING>"

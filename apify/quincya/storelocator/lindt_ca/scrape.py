@@ -50,9 +50,7 @@ def fetch_data():
     max_results = 8
     max_distance = 200
 
-    all_store_data = []
-
-    dup_tracker = []
+    dup_tracker = set()
 
     search = DynamicGeoSearch(
         country_codes=[SearchableCountries.CANADA],
@@ -82,7 +80,6 @@ def fetch_data():
         }
 
         res_json = session.post(base_link, headers=headers, data=payload).json()["data"]
-        new_coordinates = []
 
         for loc in res_json:
 
@@ -90,7 +87,7 @@ def fetch_data():
 
             store_number = loc["uid"]
             if store_number not in dup_tracker:
-                dup_tracker.append(store_number)
+                dup_tracker.add(store_number)
             else:
                 continue
 
@@ -100,7 +97,7 @@ def fetch_data():
 
             lat = loc["lat_individual"]
             longit = loc["lng_individual"]
-            new_coordinates.append([lat, longit])
+            search.found_location_at(lat, longit)
 
             raw_address = (
                 loc["short_description"]
@@ -177,13 +174,7 @@ def fetch_data():
                 page_url,
             ]
 
-            all_store_data.append(store_data)
-
-        if len(new_coordinates) > 0:
-            search.mark_found(new_coordinates)
-
-    return all_store_data
-
+            yield store_data
 
 def scrape():
     data = fetch_data()

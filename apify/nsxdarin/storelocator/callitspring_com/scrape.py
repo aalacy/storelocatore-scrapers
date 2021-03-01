@@ -94,11 +94,21 @@ def fetch_data():
                             hours = hrs
                         else:
                             hours = hours + "; " + hrs
+                    if '"closed":true' in day:
+                        hrs = day.split('"weekDay":"')[1].split('"')[0] + ": Closed"
+                        if hours == "":
+                            hours = hrs
+                        else:
+                            hours = hours + "; " + hrs
         if name != "":
             if phone == "":
                 phone = "<MISSING>"
             if hours == "":
                 hours = "<MISSING>"
+            if "0" not in hours:
+                hours = "Sun-Sat: Closed"
+            if hours.count("Th:") == 2:
+                hours = hours.replace("Th: Closed", "Fr: Closed")
             yield [
                 website,
                 loc,
@@ -115,7 +125,7 @@ def fetch_data():
                 lng,
                 hours,
             ]
-    for x in range(3000, 4000):
+    for x in range(3320, 4000):
         url = "https://www.callitspring.com/api/stores/" + str(x)
         r = session.get(url, headers=headers)
         website = "callitspring.com"
@@ -162,11 +172,21 @@ def fetch_data():
                             hours = hrs
                         else:
                             hours = hours + "; " + hrs
+                    if '"closed":true' in day:
+                        hrs = day.split('"weekDay":"')[1].split('"')[0] + ": Closed"
+                        if hours == "":
+                            hours = hrs
+                        else:
+                            hours = hours + "; " + hrs
         if name != "":
             if phone == "":
                 phone = "<MISSING>"
             if hours == "":
                 hours = "<MISSING>"
+            if "0" not in hours:
+                hours = "Sun-Sat: Closed"
+            if hours.count("Th:") == 2:
+                hours = hours.replace("Th: Closed", "Fr: Closed")
             yield [
                 website,
                 loc,

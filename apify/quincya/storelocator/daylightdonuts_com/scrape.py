@@ -59,7 +59,6 @@ def fetch_data():
     url = "http://www.daylightdonuts.com/wp-admin/admin-ajax.php"
 
     found_poi = []
-    data = []
 
     max_results = 100
     max_distance = 200
@@ -122,10 +121,9 @@ def fetch_data():
 
             latitude = store["lat"]
             longitude = store["lng"]
-            search.mark_found([latitude, longitude])
+            search.found_location_at(latitude, longitude)
 
-            data.append(
-                [
+            yield [
                     locator_domain,
                     page_url,
                     location_name,
@@ -141,9 +139,6 @@ def fetch_data():
                     longitude,
                     hours_of_operation,
                 ]
-            )
-
-    return data
 
 
 def scrape():

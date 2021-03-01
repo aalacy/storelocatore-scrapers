@@ -10,4 +10,4 @@ sgrequests==0.0.15
 six==1.15.0
 urllib3==1.25.11
 termcolor
-sgzip==0.0.55
+sgzip

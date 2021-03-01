@@ -77,20 +77,25 @@ def get_json_data(html):
 
 def get_phone(soup):
     phone = soup.find("a", class_="store-phone")
-    return re.sub("(|)", "", phone.getText()) or "<MISSING>" if phone else "<MISSING>"
+    return re.sub("(|)", "", phone.getText()) or MISSING if phone else MISSING
 
 
 def extract_hours(node):
-    return node.getText().strip().replace("\n", " ")
+    return node.getText().strip().replace("\n", " ").replace("null", MISSING)
 
 
 def get_hours(soup):
     storeHours = soup.find("div", class_="storeLocatorHours")
     if not storeHours:
-        return "<MISSING>"
+        return MISSING
 
-    openingHours = storeHours.findChildren("span")
-    return ",".join(extract_hours(day) for day in openingHours)
+    openingHours = storeHours.find_all("span", recursive=False)
+    hours_of_operation = [extract_hours(day) for day in openingHours]
+    for hours in hours_of_operation:
+        if MISSING not in hours:
+            return ",".join(hours_of_operation)
+
+    return MISSING
 
 
 def find_node(entityNum, soup):

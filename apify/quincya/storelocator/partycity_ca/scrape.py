@@ -1,4 +1,7 @@
 import csv
+import json
+
+from bs4 import BeautifulSoup
 
 from sgrequests import SgRequests
 
@@ -44,7 +47,6 @@ def fetch_data():
 
     dup_tracker = []
 
-    data = []
     locator_domain = "partycity.ca"
 
     search = DynamicGeoSearch(
@@ -61,8 +63,6 @@ def fetch_data():
         )
         stores = session.get(base_link, headers=headers).json()
 
-        result_coords = []
-
         for store in stores:
 
             if "PTY" not in store["storeType"]:
@@ -76,7 +76,7 @@ def fetch_data():
             latitude = store["storeLatitude"]
             longitude = store["storeLongitude"]
 
-            result_coords.append([latitude, longitude])
+            search.found_location_at(latitude, longitude)
 
             location_name = store["storeName"]
             street_address = store["storeAddress1"]
@@ -86,65 +86,51 @@ def fetch_data():
             country_code = "CA"
             location_type = "<MISSING>"
             phone = store["storeTelephone"]
-            hours = store["workingHours"]["general"]
-            hours_of_operation = (
-                "Monday "
-                + hours["monOpenTime"]
-                + "-"
-                + hours["monCloseTime"]
-                + " Tuesday "
-                + hours["tueOpenTime"]
-                + "-"
-                + hours["tueCloseTime"]
-                + " Wednesday "
-                + hours["wedOpenTime"]
-                + "-"
-                + hours["wedCloseTime"]
-                + " Thursday "
-                + hours["thuOpenTime"]
-                + "-"
-                + hours["thuCloseTime"]
-                + " Friday "
-                + hours["friOpenTime"]
-                + "-"
-                + hours["friCloseTime"]
-                + " Saturday "
-                + hours["satOpenTime"]
-                + "-"
-                + hours["satCloseTime"]
-                + " Sunday "
-                + hours["sunOpenTime"]
-                + "-"
-                + hours["sunCloseTime"]
-            ).strip()
+
             link = "https://www.partycity.ca/en/store-details/%s/%s.store.html" % (
                 state.lower(),
                 store["storeCrxNodeName"],
             )
+
+            req = session.get(link, headers=headers)
+            base = BeautifulSoup(req.text, "lxml")
+
+            hours_of_operation = ""
+            raw_hours = base.find(
+                class_="store-locator__store-info__hours-table"
+            ).find_all("tr")
+            for raw_hour in raw_hours:
+                day = raw_hour.find(
+                    class_="store-locator__store-info__hours-table__day"
+                ).text
+                hours_js = json.loads(raw_hour["data-working-hours"])
+                hours_of_operation = (
+                    hours_of_operation
+                    + " "
+                    + day
+                    + " "
+                    + hours_js["open"]
+                    + "-"
+                    + hours_js["close"]
+                ).strip()
+
             # Store data
-            data.append(
-                [
-                    locator_domain,
-                    link,
-                    location_name,
-                    street_address,
-                    city,
-                    state,
-                    zip_code,
-                    country_code,
-                    store_number,
-                    phone,
-                    location_type,
-                    latitude,
-                    longitude,
-                    hours_of_operation,
-                ]
-            )
-
-        if len(result_coords) > 0:
-            search.mark_found(result_coords)
-
-    return data
+            yield [
+                locator_domain,
+                link,
+                location_name,
+                street_address,
+                city,
+                state,
+                zip_code,
+                country_code,
+                store_number,
+                phone,
+                location_type,
+                latitude,
+                longitude,
+                hours_of_operation,
+            ]
 
 
 def scrape():

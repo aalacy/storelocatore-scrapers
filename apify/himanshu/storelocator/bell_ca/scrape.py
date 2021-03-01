@@ -1,115 +1,144 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
-import re
 import json
-import sgzip
-import time
-import unidecode
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 from sglogging import SgLogSetup
 
-logger = SgLogSetup().get_logger('bell_ca')
-
-
+logger = SgLogSetup().get_logger("bell_ca")
+session = SgRequests()
 
 
 def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
-        # Body
+    with open("data.csv", mode="w") as output_file:
+        writer = csv.writer(
+            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+        )
+        writer.writerow(
+            [
+                "locator_domain",
+                "location_name",
+                "street_address",
+                "city",
+                "state",
+                "zip",
+                "country_code",
+                "store_number",
+                "phone",
+                "location_type",
+                "latitude",
+                "longitude",
+                "hours_of_operation",
+                "page_url",
+            ]
+        )
         for row in data:
             writer.writerow(row)
 
+
 def fetch_data():
     headers = {
-    'Accept': 'text/html, */*; q=0.01',
-    'Accept-Encoding': 'gzip, deflate, br',
-    'Accept-Language': 'en-US,en;q=0.9,gu;q=0.8',
-    'Connection': 'keep-alive',
-    'Host':'bellca.know-where.com',
-    'Origin': 'https://www.bell.ca',
-    'Referer': 'https://www.bell.ca/Store_Locator',
-    'Sec-Fetch-Mode': 'cors',
-    'Sec-Fetch-Site': 'cross-site',
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.130 Safari/537.36',
+        "Accept": "text/html, */*; q=0.01",
+        "Accept-Encoding": "gzip, deflate, br",
+        "Accept-Language": "en-US,en;q=0.9,gu;q=0.8",
+        "Connection": "keep-alive",
+        "Host": "bellca.know-where.com",
+        "Origin": "https://www.bell.ca",
+        "Referer": "https://www.bell.ca/Store_Locator",
+        "Sec-Fetch-Mode": "cors",
+        "Sec-Fetch-Site": "cross-site",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.130 Safari/537.36",
     }
     addresses = []
-    search = sgzip.ClosestNSearch() # TODO: OLD VERSION [sgzip==0.0.55]. UPGRADE IF WORKING ON SCRAPER!
-    search.initialize(country_codes= ["CA"])
-    MAX_RESULTS = 25
-    MAX_DISTANCE = 40
-    coord = search.next_coord()
-    while coord:
+    search = DynamicGeoSearch(
+        country_codes=[SearchableCountries.CANADA],
+        max_radius_miles=25,
+        max_search_results=250,
+    )
+
+    for x, y in search:
         result_coords = []
-        x = coord[0]
-        # x = "45.203238"
-        y = coord[1]
-        # y = "-67.27968"
+        r = session.get(
+            "https://bellca.know-where.com/bellca/cgi/selection?lang=en&loadedApiKey=main&ll="
+            + str(x)
+            + "%2C"
+            + str(y)
+            + "&stype=ll&async=results&key",
+            headers=headers,
+        )
 
-        # logger.info('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
-        r = requests.get("https://bellca.know-where.com/bellca/cgi/selection?lang=en&loadedApiKey=main&ll="+str(x)+"%2C"+str(y)+"&stype=ll&async=results&key", headers=headers)
-
-        soup = BeautifulSoup(r.text,"lxml")
-        data = soup.find_all("script", {"type":"application/ld+json"})
-        hours = soup.find_all("ul", {"class":"rsx-sl-store-list-hours"})
+        soup = BeautifulSoup(r.text, "html5lib")
+        data = soup.find_all("script", {"type": "application/ld+json"})
+        hours = soup.find_all("ul", {"class": "rsx-sl-store-list-hours"})
         hours1 = []
         for time in hours:
-            hours1.append(' '.join(list(time.stripped_strings)).replace(" ","").replace("p.m.","p.m. ").replace("Closed","Closed "))
+            hours1.append(
+                " ".join(list(time.stripped_strings))
+                .replace(" ", "")
+                .replace("p.m.", "p.m. ")
+                .replace("Closed", "Closed ")
+            )
         try:
-            lat = r.text.split("poilat")[1].split(",")[0].replace('"',"").replace(":","")
-            lng = r.text.split("poilon")[1].split(",")[0].replace('"',"").replace(":","")
+            lat = (
+                r.text.split("poilat")[1]
+                .split(",")[0]
+                .replace('"', "")
+                .replace(":", "")
+            )
+            lng = (
+                r.text.split("poilon")[1]
+                .split(",")[0]
+                .replace('"', "")
+                .replace(":", "")
+            )
         except:
-            lat="<MISSING>"
-            lng="<MISSING>"
+            lat = "<MISSING>"
+            lng = "<MISSING>"
 
-        for index,i in enumerate(data):
-            json_data = json.loads(i.text)
-            street_address = json_data['address']['streetAddress']
-            city = json_data['address']['addressLocality']
-            state = json_data['address']['addressRegion']
-            zipp = json_data['address']['postalCode']
-            location_name = json_data['name']
-            phone = json_data['telephone']
-            
-            result_coords.append((lat,lng))
+        for index, i in enumerate(data):
+            text = i.text.replace("\n", "").replace("\t", "").replace("\r", "")
+            try:
+                json_data = json.loads(text)
+            except:
+                pass
+            street_address = json_data["address"]["streetAddress"]
+            city = json_data["address"]["addressLocality"]
+            state = json_data["address"]["addressRegion"]
+            zipp = json_data["address"]["postalCode"]
+            location_name = json_data["name"]
+            phone = json_data["telephone"]
+            result_coords.append((lat, lng))
+            if "Bell" in location_name:
+                location_type = "Bell store"
+            elif "Source" in location_name:
+                location_type = "The Source"
+            else:
+                location_type = "Other retailer"
             store = []
             store.append("https://www.bell.ca")
-            store.append(location_name if location_name else '<MISSING>')
-            store.append(street_address if street_address else '<MISSING>')
-            store.append(city if city else '<MISSING>')
-            store.append(state if state else '<MISSING>')
-            store.append(zipp if zipp else '<MISSING>')
+            store.append(location_name.strip() if location_name else "<MISSING>")
+            store.append(street_address.strip() if street_address else "<MISSING>")
+            store.append(city.strip() if city else "<MISSING>")
+            store.append(state.strip() if state else "<MISSING>")
+            store.append(zipp.strip() if zipp else "<MISSING>")
             store.append("CA")
-            store.append('<MISSING>')
-            store.append(phone if phone else '<MISSING>')
-            store.append('<MISSING>')
+            store.append("<MISSING>")
+            store.append(phone.strip() if phone else "<MISSING>")
+            store.append(location_type if location_type else "<MISSING>")
             store.append("<INACCESSIBLE>")
             store.append("<INACCESSIBLE>")
-            store.append(hours1[index])
+            store.append(hours1[index].strip())
             store.append("<MISSING>")
             if store[2] in addresses:
                 continue
             addresses.append(store[2])
-            store = [unidecode.unidecode(x).strip() if x else "<MISSING>" for x in store]
             yield store
-            # logger.info("data == " + str(store))
-            # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
 
-        if len(data) < MAX_RESULTS:
-            # logger.info("max distance update")
-            search.max_distance_update(MAX_DISTANCE)
-        elif len(data) == MAX_RESULTS:
-            # logger.info("max count update")
-            search.max_count_update(result_coords)
-        else:
-            raise Exception("expected at most " + str(MAX_RESULTS) + " results")
-        coord = search.next_coord()
 
 def scrape():
     data = fetch_data()
     write_output(data)
 
+
 scrape()
+fetch_data()

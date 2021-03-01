@@ -55,7 +55,7 @@ def query_zip(zip_code):
 
 def fetch_data():
     locator_domain = "https://www.dillons.com/"
-    addresses = []
+    addresses = set()
     zip_codes = DynamicZipSearch(
         country_codes=[SearchableCountries.CANADA, SearchableCountries.USA],
         max_radius_miles=100,
@@ -86,7 +86,7 @@ def fetch_data():
                     location_type = "store"
                 latitude = key["latitude"]
                 longitude = key["longitude"]
-                zip_codes.mark_found((latitude, longitude))
+                zip_codes.found_location_at(latitude, longitude)
                 hours_of_operation = ""
                 if key["ungroupedFormattedHours"]:
                     for hr in key["ungroupedFormattedHours"]:
@@ -119,7 +119,7 @@ def fetch_data():
                 store.append(page_url)
                 if store[2] in addresses:
                     continue
-                addresses.append(store[2])
+                addresses.add(store[2])
                 yield store
         if datas is not None:
             if "fuel" in datas:
@@ -172,7 +172,7 @@ def fetch_data():
                     store.append(page_url)
                     if store[2] in addresses:
                         continue
-                    addresses.append(store[2])
+                    addresses.add(store[2])
                     yield store
 
 

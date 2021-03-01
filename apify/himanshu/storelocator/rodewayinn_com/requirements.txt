@@ -1,5 +1,5 @@
 sgzip
 sgrequests
-datetime
 sglogging
-
+bs4
+lxml

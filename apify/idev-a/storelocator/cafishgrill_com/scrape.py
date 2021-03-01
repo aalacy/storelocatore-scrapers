@@ -100,10 +100,14 @@ def fetch_data():
         hours = []
         _hours = soup1.select("span")
         if len(_hours) > 1:
-            for x in range(len(_hours) - 1):
+            x = 0
+            while x < len(_hours):
                 hours.append(f"{_hours[x].text}:{_hours[x+1].text}")
+                x += 2
 
         hours_of_operation = myutil._valid("; ".join(hours))
+        if script["Fax_number"] == "COMING SOON":
+            hours_of_operation = "COMING SOON"
 
         _item = [
             locator_domain,
