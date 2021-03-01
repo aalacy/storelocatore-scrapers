@@ -102,15 +102,21 @@ def fetch_data():
                 output.append("US")  # country code
                 output.append("<MISSING>")  # store_number
                 output.append(detail[-1])  # phone
-                output.append(
-                    "Pride for Donors. Passion for Patients | GRIFOLS"
-                )  # location type
+                output.append("<MISSING>")  # location type
                 geo_loc = data.split(";f=")[1].split(";var")[0].split(";e=")
                 output.append(geo_loc[0].replace("+", ""))  # latitude
                 output.append(geo_loc[1])  # longitude
                 store_hours = eliminate_space(
                     store.xpath('.//div[@class="center-column-2"]//p//text()')
                 )
+                testDay = False
+                hours = []
+                for i in store_hours:
+                    if "day" in i:
+                        testDay = True
+                    if testDay:
+                        hours.append(i)
+                store_hours = hours
                 output.append(get_value(store_hours))  # opening hours
             else:
                 output.append(detail[0])  # location name
@@ -122,15 +128,22 @@ def fetch_data():
                 output.append("US")  # country code
                 output.append("<MISSING>")  # store_number
                 output.append(detail[-1])  # phone
-                output.append(
-                    "Pride for Donors. Passion for Patients | GRIFOLS"
-                )  # location type
+                output.append("<MISSING>")  # location type
                 geo_loc = data.split(";f=")[1].split(";var")[0].split(";e=")
                 output.append(geo_loc[0].replace("+", ""))  # latitude
                 output.append(geo_loc[1])  # longitude
                 store_hours = eliminate_space(
                     store.xpath('.//div[@class="center-column-2"]//p//text()')
                 )
+
+                testDay = False
+                hours = []
+                for i in store_hours:
+                    if "day" in i:
+                        testDay = True
+                    if testDay:
+                        hours.append(i)
+                store_hours = hours
                 output.append(get_value(store_hours))  # opening hours
             if output not in output_list:
                 output_list.append(output)

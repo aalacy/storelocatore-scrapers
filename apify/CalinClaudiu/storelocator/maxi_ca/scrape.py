@@ -29,7 +29,7 @@ def determine(banner, ide):
 def para(k):
     session = SgRequests()
     ban = k["storeBannerId"]
-    ide = k["storeId"]
+    ide = k["id"]
     backup = k
     backupPhone = k["contactNumber"]
     headers = {
@@ -38,14 +38,20 @@ def para(k):
     }
     try:
         k = session.get(
-            "https://www.loblaws.ca/api/pickup-locations/" + k["storeId"],
+            "https://www.loblaws.ca/api/pickup-locations/" + k["id"],
             headers=headers,
         ).json()
     except Exception:
-        k = backup
-        k["hours"] = k["openNowResponseData"]["hours"]
-        k["storeDetails"] = {}
-        k["storeDetails"]["phoneNumber"] = k["contactNumber"]
+        try:
+            k = session.get(
+                "https://www.loblaws.ca/api/pickup-locations/" + k["StoreId"],
+                headers=headers,
+            ).json()
+        except Exception:
+            k = backup
+            k["hours"] = k["openNowResponseData"]["hours"]
+            k["storeDetails"] = {}
+            k["storeDetails"]["phoneNumber"] = backupPhone
 
     try:
         k["hours"] = "; ".join(
@@ -61,6 +67,7 @@ def para(k):
     k["storeId"] = ide
     if not k["storeDetails"]["phoneNumber"]:
         k["storeDetails"]["phoneNumber"] = backupPhone
+
     return k
 
 
