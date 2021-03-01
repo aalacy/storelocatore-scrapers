@@ -48,8 +48,6 @@ session = SgRequests()
 def fetch_data():
     # Your scraper here
 
-    page_url = []
-    con = "US"
     res = session.get("https://www.awaytravel.com/ca/en/")
     soup = BeautifulSoup(res.text, "html.parser")
     stores = re.findall(r'href="(/stores/[^"]+)"', str(soup))
