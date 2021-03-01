@@ -1,2 +1,2 @@
-bs4
-sgrequests
+sgrequests==0.1.4
+beautifulsoup4==4.9.3
