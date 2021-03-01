@@ -101,7 +101,7 @@ def fetch_data():
             street = address[0].strip()
         hours = hours.replace("<br/>", ", ")
         store_url = "https://www.calicocorners.com/" + link
-        storeid = link.split("=")[1].STRIP()
+        storeid = link.split("=")[1].strip()
 
         data.append(
             [
