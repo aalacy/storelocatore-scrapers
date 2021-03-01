@@ -31,15 +31,22 @@ def para(k):
     ban = k["storeBannerId"]
     ide = k["storeId"]
     backup = k
+    backupPhone = k["contactNumber"]
     headers = {
         "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36",
         "Site-Banner": ban,
     }
-    k = session.get(
-        "https://www.loblaws.ca/api/pickup-locations/" + k["storeId"], headers=headers
-    ).json()
+    try:
+        k = session.get(
+            "https://www.loblaws.ca/api/pickup-locations/" + k["storeId"],
+            headers=headers,
+        ).json()
+    except Exception:
+        k = backup
+        k["hours"] = k["openNowResponseData"]["hours"]
+        k["storeDetails"] = {}
+        k["storeDetails"]["phoneNumber"] = k["contactNumber"]
 
-    k["domain"], k["page_url"] = determine(ban, ide)
     try:
         k["hours"] = "; ".join(
             [str(i["day"] + ": " + i["hours"]) for i in k["storeDetails"]["storeHours"]]
@@ -49,9 +56,11 @@ def para(k):
         k["hours"] = k["openNowResponseData"]["hours"]
         k["storeDetails"] = {}
         k["storeDetails"]["phoneNumber"] = k["contactNumber"]
+    k["domain"], k["page_url"] = determine(ban, ide)
     k["storeBannerId"] = ban
     k["storeId"] = ide
-
+    if not k["storeDetails"]["phoneNumber"]:
+        k["storeDetails"]["phoneNumber"] = backupPhone
     return k
 
 
