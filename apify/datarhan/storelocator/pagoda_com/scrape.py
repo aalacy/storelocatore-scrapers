@@ -1,4 +1,6 @@
+import re
 import csv
+import demjson
 import urllib.parse
 from lxml import etree
 
@@ -64,19 +66,32 @@ def fetch_data():
                 continue
             store_url = urllib.parse.urljoin(start_url, store_url[0])
             store_name_fromlist = store_data.xpath(".//a/text()")
-            store_number = "<MISSING>"
             location_type = "<MISSING>"
-            hours_of_operation = "<MISSING>"
             store_response = session.get(store_url)
             store_dom = etree.HTML(store_response.text)
+            data = store_dom.xpath(
+                '//script[contains(text(), "storeInformation")]/text()'
+            )
+            if not data:
+                continue
+            data = re.findall("storeInformation = (.+);", data[0].replace("\n", ""))[0]
+            data = demjson.decode(data)
+
+            store_number = data["name"]
             location_name = store_dom.xpath('//h1[@itemprop="name"]/text()')
             if not location_name:
                 location_name = store_name_fromlist
             location_name = location_name[0] if location_name else "<MISSING>"
-            street_address = store_dom.xpath('//span[@itemprop="streetAddress"]/text()')
+            street_address = store_data.xpath(
+                './/span[@itemprop="streetAddress"]/text()'
+            )
             if not street_address:
                 continue
-            street_address = street_address[0] if street_address else "<MISSING>"
+            street_address = (
+                street_address[0].strip().replace("   ", " ")
+                if street_address
+                else "<MISSING>"
+            )
             city = store_dom.xpath('//span[@itemprop="addressLocality"]/text()')
             city = city[0] if city else "<MISSING>"
             state = store_dom.xpath('//span[@itemprop="addressRegion"]/text()')
@@ -87,13 +102,15 @@ def fetch_data():
             phone = phone[0] if phone else "<MISSING>"
             country_code = store_dom.xpath('//span[@itemprop="addressCountry"]/text()')
             country_code = country_code[0] if country_code else "<MISSING>"
-            geo_data = store_dom.xpath('//a[@class="link-directions"]/@href')[0].split(
-                "/"
-            )[-1]
-            latitude = geo_data.split(",")[0]
+            latitude = data["latitude"]
             latitude = latitude if latitude else "<MISSING>"
-            longitude = geo_data.split(",")[-1]
+            longitude = data["longitude"]
             longitude = longitude if longitude else "<MISSING>"
+
+            hoo = []
+            for day, hours in data["openings"].items():
+                hoo.append(f"{day} {hours}")
+            hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
 
             item = [
                 DOMAIN,
@@ -112,8 +129,8 @@ def fetch_data():
                 hours_of_operation,
             ]
 
-            if location_name not in scraped_locations:
-                scraped_locations.append(location_name)
+            if store_number not in scraped_locations:
+                scraped_locations.append(store_number)
                 items.append(item)
 
     return items

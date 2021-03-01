@@ -50,10 +50,18 @@ def fetch_data():
     js = r.json()["items"]
 
     for j in js:
-        street_address = (
-            f"{j.get('address_1')} {j.get('address_2') or ''}".strip() or "<MISSING>"
-        )
+        adr0 = j.get("address_0") or ""
+        adr1 = j.get("address_1") or ""
+        adr2 = j.get("address_2") or ""
+        if adr0.lower().find("shopping") != -1:
+            adr0 = ""
+        if adr2.lower().find("shopping") != -1:
+            adr2 = ""
+
+        street_address = f"{adr0} {adr1} {adr2}".strip()
         city = j.get("city") or "<MISSING>"
+        if city.find(",") != -1:
+            city = city.split(",")[-1].strip()
         state = j.get("state") or "<MISSING>"
         postal = j.get("postal_code") or "<MISSING>"
         country_code = "US"
