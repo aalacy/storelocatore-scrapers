@@ -44,7 +44,6 @@ def write_output(data):
 def fetch_data():
     data = []
     links = []
-    p = 0
     cleanr = re.compile("<.*?>")
     url = "http://pizzafusion.com/locations/"
     page = session.get(url, headers=headers)
@@ -76,7 +75,6 @@ def fetch_data():
             td = td.replace("\r", "|")
             td = td.replace("||", "|")
         except:
-            logger.info(link)
             page = session.get(link, headers=headers)
             soup = BeautifulSoup(page.text, "html.parser")
             maindiv = soup.find("div", {"id": "117"})
