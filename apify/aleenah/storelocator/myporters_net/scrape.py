@@ -42,7 +42,7 @@ def fetch_data():
     all = []
     driver.get(url)
 
-    stores = json.loads(re.findall("locations = (\[[^\]]+\])", driver.page_source)[0])
+    stores = json.loads(re.findall("locations = (\[[^]]+\])", driver.page_source)[0])
 
     for store in stores:
         try:
