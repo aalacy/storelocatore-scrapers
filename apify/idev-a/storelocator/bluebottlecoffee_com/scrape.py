@@ -13,7 +13,6 @@ def _valid(val):
     return (
         val.strip()
         .replace("–", "-")
-        .replace("-", "-")
         .encode("unicode-escape")
         .decode("utf8")
         .replace("\\xa", "")
@@ -44,6 +43,9 @@ def fetch_data():
                 states = " ".join(full[-1].split(",")[-1].split()[:-1])
                 if len(states) == 2:
                     addressses = " ".join(full[:-1])
+                    addressses = addressses.replace(
+                        "Entrance is on 52nd St", ""
+                    ).replace("NW corner of Tower 4", "")
                     page_url = dt["url"]
                     r1 = session.get(page_url)
                     soup = bs(r1.text, "lxml")
