@@ -82,7 +82,6 @@ def fetch_data():
                         + "&openDays=7"
                     )
                     r2 = session.get(hurl, headers=headers)
-                    print(hurl)
                     for line2 in r2.iter_lines():
                         line2 = str(line2.decode("utf-8"))
                         if '"hours":{"physical":' in line2:
