@@ -39,7 +39,6 @@ def fetch_records_for(zipcode):
 
 
 def process_record(raw_results_from_one_zipcode):
-    loc_list = []
     for stores in raw_results_from_one_zipcode:
         if len(stores) > 0 and isinstance(stores, dict):
             for key in stores.keys():
