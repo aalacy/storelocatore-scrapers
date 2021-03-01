@@ -59,9 +59,8 @@ def fetch_data():
 
     all_store_data = []
     for link in link_list:
-
         driver.get(link)
-        driver.implicitly_wait(5)
+        driver.implicitly_wait(10)
 
         main = driver.find_element_by_css_selector(
             "script[type='application/ld+json']"
