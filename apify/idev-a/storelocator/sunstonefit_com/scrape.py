@@ -12,9 +12,16 @@ locator_domain = "https://www.sunstonefit.com"
 def fetch_data():
     with SgRequests() as session:
         res = session.get("https://www.sunstonefit.com/studios")
-        stores = dirtyjson.loads(res.text.split("var locations = ")[1].split("var infowindow")[0].replace("\n", "").strip()[:-1])
+        stores = dirtyjson.loads(
+            res.text.split("var locations = ")[1]
+            .split("var infowindow")[0]
+            .replace("\n", "")
+            .strip()[:-1]
+        )
         for store in stores:
-            detail = bs(res.text, "lxml").select("#LiveAccordionWrapper5349 > div")[store["accordion"] - 1]
+            detail = bs(res.text, "lxml").select("#LiveAccordionWrapper5349 > div")[
+                store["accordion"] - 1
+            ]
             page_url = locator_domain + detail.select_one("a")["href"]
             location_name = store["title"]
             address = store["html"].split("</h5>").pop().replace("<br>", ", ")
