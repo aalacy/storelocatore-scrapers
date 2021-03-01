@@ -26,8 +26,15 @@ def _valid1(val):
 def fetch_data():
     with SgRequests() as session:
         locations = session.get(json_url).json()
+        links = []
         for link in locations:
             page_url = f"http://www.charterfitness.com/location/charter-fitness-of-{'-'.join(link['city'].lower().split(' '))}"
+            links.append(page_url)
+
+        links.append(
+            "https://www.charterfitness.com/location/charter-fitness-of-mishawaka/"
+        )
+        for page_url in links:
             phone = ""
             hours_of_operation = ""
             try:
