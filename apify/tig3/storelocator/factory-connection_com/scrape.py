@@ -4,7 +4,6 @@ import subprocess
 import json
 from Naked.toolshed.shell import muterun_js  # noqa
 from sgscrape import sgpostal as parser
-import re
 
 LOCATOR_DOMAIN = "www.factory-connection.com"
 PAGE_URL = "https://app.locatedmap.com/initwidget/?instanceId=fb5794db-1003-4eb9-8d61-3912f1b0e26a&compId=comp-k2z7snsm&viewMode=site&styleId=style-k2z7svc0"
@@ -43,6 +42,26 @@ def write_output(data):
             writer.writerow(row)
 
 
+def parse_this(raw_address, which):
+    if which == "intl":
+        addrs = parser.parse_address_intl(raw_address)
+    else:
+        addrs = parser.parse_address_usa(raw_address)
+
+    street_address = check_missing(addrs.street_address_1)
+    street_address = (
+        (street_address + ", " + addrs.street_address_2)
+        if addrs.street_address_2
+        else street_address
+    )
+    city = check_missing(addrs.city)
+    state = check_missing(addrs.state)
+    zip = check_missing(addrs.postcode)
+    country_code = check_missing(addrs.country)
+
+    return (street_address, city, state, zip, country_code)
+
+
 def fetch_data():
     npm_install()
 
@@ -63,22 +82,11 @@ def fetch_data():
     for row in jsn:
         location_name = check_missing(row["name"])
         formatted_address = row["formatted_address"]
+        raw = formatted_address.replace("Lousiana", "Louisiana")
 
-        addrs = parser.parse_address_intl(formatted_address)
-        raw = formatted_address
-        street_address = check_missing(addrs.street_address_1)
-        street_address = (
-            (street_address + ", " + addrs.street_address_2)
-            if addrs.street_address_2
-            else street_address
-        )
+        street_address, city, state, zip, country_code = parse_this(raw, "intl")
+
         location_type = check_missing()
-
-        city = check_missing(addrs.city)
-        state = check_missing(addrs.state)
-        zip = check_missing(addrs.postcode)
-        country_code = check_missing(addrs.country)
-
         store_number = check_missing()
         phone = row["tel"]
         if not phone and row["formatted_tel"]:

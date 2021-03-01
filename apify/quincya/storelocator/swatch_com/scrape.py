@@ -118,20 +118,15 @@ def fetch_data():
                 except:
                     pass
                 try:
-                    hours = base.find_all(class_="opening")
-                    if len(hours) == 1:
-                        hours_of_operation = " ".join(
-                            list(base.find(class_="opening").span.stripped_strings)
+                    hours_of_operation = " ".join(
+                        list(
+                            base.find(
+                                class_="opening-holder locator-holder content-module"
+                            )
+                            .find(class_="table")
+                            .stripped_strings
                         )
-                    else:
-                        hours_of_operation = (
-                            " ".join(list(hours[0].span.stripped_strings))
-                            + " "
-                            + hours[1].text.replace("\n", " ").strip()
-                        )
-                        hours_of_operation = (
-                            re.sub(" +", " ", hours_of_operation)
-                        ).strip()
+                    ).strip()
                 except:
                     pass
             else:
