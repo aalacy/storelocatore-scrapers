@@ -18,8 +18,6 @@ headers = {
 
 def fetch_data():
     # Your scraper here
-    loc_list = []
-
     search_url = "https://www.petros.com/locations/"
     stores_req = session.get(search_url, headers=headers)
     stores_sel = lxml.html.fromstring(stores_req.text)
@@ -51,7 +49,6 @@ def fetch_data():
                     else:
                         add_list.append("".join(address[index]).strip())
 
-        print(add_list)
         raw_address = " ".join(add_list).strip()
         formatted_addr = parser.parse_address_usa(raw_address)
         street_address = formatted_addr.street_address_1
