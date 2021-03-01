@@ -1,5 +1,6 @@
 import csv
 from sgrequests import SgRequests
+import datetime
 
 session = SgRequests()
 headers = {
@@ -74,11 +75,46 @@ def fetch_data():
                         phone = item.split('"phone":"')[1].split('"')[0]
                     except:
                         phone = "<MISSING>"
-                    hours = "<MISSING>"
+                    hours = ""
+                    hurl = (
+                        "https://api.pizzahut.io/v1/hut?sector=ca-1&hutId="
+                        + store
+                        + "&openDays=7"
+                    )
+                    r2 = session.get(hurl, headers=headers)
+                    for line2 in r2.iter_lines():
+                        line2 = str(line2.decode("utf-8"))
+                        if '"hours":{"physical":' in line2:
+                            days = (
+                                line2.split('"hours":{"physical":')[1]
+                                .split("}],")[0]
+                                .split('{"disposition":"collection","open":"')
+                            )
+                            for day in days:
+                                if '"close":"' in day:
+                                    dt = day.split("T")[0]
+                                    year, month, dday = (int(x) for x in dt.split("-"))
+                                    ans = datetime.date(year, month, dday)
+                                    weekday = ans.strftime("%A")
+                                    hrs = (
+                                        weekday
+                                        + ": "
+                                        + day.split("T")[1].split(":00-")[0]
+                                        + "-"
+                                        + day.split('"close":"')[1]
+                                        .split("T")[1]
+                                        .split(":00-")[0]
+                                    )
+                                    if hours == "":
+                                        hours = hrs
+                                    else:
+                                        hours = hours + "; " + hrs
                     if "(" in phone:
                         phone = "(" + phone.split("(")[1]
                     if "(" in add:
                         add = add.split("(")[0].strip()
+                    if hours == "":
+                        hours = "<MISSING>"
                     if phone != "5555555555":
                         yield [
                             website,
