@@ -70,9 +70,14 @@ def fetch_data():
         lat = ""
         lng = ""
         hours = ""
+        hours2 = ""
         r2 = session.get(loc, headers=headers)
         for line2 in r2.iter_lines():
             line2 = str(line2.decode("utf-8"))
+            if '<div class="hours-text text-muted">' in line2 and hours2 == "":
+                hours2 = line2.split('<div class="hours-text text-muted">')[1].split(
+                    "<"
+                )[0]
             if '"name":"' in line2:
                 name = line2.split('"name":"')[1].split('"')[0]
                 try:
@@ -126,6 +131,8 @@ def fetch_data():
                 state = "<MISSING>"
             name = name.replace("\\u0027", "'")
             add = add.replace("\\u0027", "'")
+            if hours2 != "":
+                hours = hours2
             yield [
                 website,
                 loc,
