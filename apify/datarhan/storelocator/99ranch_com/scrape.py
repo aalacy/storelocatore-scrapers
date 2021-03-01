@@ -41,7 +41,7 @@ def fetch_data():
     items = []
 
     DOMAIN = "99ranch.com"
-    start_url = "https://api.freshop.com/1/stores?app_key=99_ranch_market&has_address=true&is_selectable=true&token=2115d87c0f8326694b5748bfba5a499c"
+    start_url = "https://api.freshop.com/1/stores?app_key=99_ranch_market&has_address=true&is_selectable=true"
     headers = {
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
     }

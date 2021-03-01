@@ -55,7 +55,7 @@ def fetch_data():
         title = soup.findAll("h1")[1].text
         address = soup.find("h6").text
         if "Add Me to Seating WaitList" in address:
-            address = soup.findAll("h5")[2].text
+            address = soup.findAll("h5", {"class": "entry-sub-title"})[1].text
         address = usaddress.parse(address)
 
         i = 0
