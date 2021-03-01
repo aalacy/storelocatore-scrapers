@@ -47,18 +47,22 @@ def fetch_data():
                     page_url = dt["url"]
                     r1 = session.get(page_url)
                     soup = bs(r1.text, "lxml")
-                    hours = ""
+                    hours = []
                     hours_of_operation = ""
-                    for h in soup.find("div", {"class": "mw5 mw-100-ns"}).find_all(
-                        ("div", {"class": "dt wi-100 pb10 f5"})
-                    ):
-                        hours = hours + " " + " ".join(list(h.stripped_strings))
-                    hours_of_operation = hours.split("We’ve reopened")[0].split(
-                        "To help slow the"
-                    )[0]
-                    hours_of_operation = re.sub(r"\s+", " ", hours_of_operation).strip()
-                    if hours_of_operation == "Temporarily Closed":
-                        hours_of_operation = "Closed"
+                    for _ in soup.select("div.mw5.mw-100-ns div.dt.wi-100.pb10.f5"):
+                        time = "".join(
+                            [_t for _t in _.select_one("div.dtc.tr").stripped_strings]
+                        )
+                        hours.append(f"{_.select_one('div.dtc').text}: {time}")
+
+                    if not hours:
+                        hours_of_operation = soup.find(
+                            "div", {"class": "mw5 mw-100-ns"}
+                        ).text
+                    else:
+                        hours_of_operation = re.sub(
+                            r"\s+", " ", "; ".join(hours)
+                        ).strip()
                     yield SgRecord(
                         page_url=page_url,
                         location_name=name,
