@@ -56,25 +56,44 @@ def fetch_data():
             req = session.get(link, headers=headers)
             base = BeautifulSoup(req.text, "lxml")
 
-            script = (
-                base.find("script", attrs={"type": "application/ld+json"})
-                .text.replace("\n", "")
-                .strip()
-            )
+            script = base.find(
+                "script", attrs={"type": "application/ld+json"}
+            ).contents[0]
             store = json.loads(script)
 
-            location_name = store["name"]
-            street_address = store["address"]["streetAddress"]
-            city = store["address"]["addressLocality"]
-            state = store["address"]["addressRegion"]
-            zip_code = store["address"]["postalCode"]
+            location_name = base.find(
+                "h1", {"data-qa": "storeDetailsHeader"}
+            ).text.strip()
+
+            try:
+                street_address = store["address"]["streetAddress"]
+                city = store["address"]["addressLocality"]
+                state = store["address"]["addressRegion"]
+                zip_code = store["address"]["postalCode"]
+            except:
+                raw_address = (
+                    base.find(class_="StoreAddress-storeAddressGuts")
+                    .get_text(" ")
+                    .replace(",", "")
+                    .replace(" .", ".")
+                    .replace("..", ".")
+                    .split("  ")
+                )
+                street_address = raw_address[0].strip()
+                city = raw_address[1].strip()
+                state = raw_address[2].strip()
+                zip_code = raw_address[3].split("Get")[0].strip()
+
             country_code = "US"
             store_number = link.split("/")[-1]
             location_type = "<MISSING>"
-            phone = store["telephone"]
-            if not phone:
+            try:
+                phone = store["telephone"]
+                if not phone:
+                    phone = "<MISSING>"
+            except:
                 phone = "<MISSING>"
-            hours_of_operation = store["openingHours"][0]
+            hours_of_operation = " ".join(store["openingHours"])
             latitude = store["geo"]["latitude"]
             longitude = store["geo"]["longitude"]
 

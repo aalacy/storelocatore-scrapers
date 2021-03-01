@@ -1,11 +1,14 @@
 import json
-
-from Scraper import Scrape
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-
+from Scraper import Scrape  # noqa: I900
+from sgrequests import SgRequests
+from bs4 import BeautifulSoup as BS
 
 URL = "https://www.clement.ca/"
+session = SgRequests()
+headers = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.66 Safari/537.36",
+    "Accept": "application/json",
+}
 
 
 class Scraper(Scrape):
@@ -13,14 +16,14 @@ class Scraper(Scrape):
         Scrape.__init__(self, url)
         self.data = []
         self.pc_lookup = {
-            'G': 'QC',
-            'H': 'QC',
-            'J': 'QC',
-            'K': 'ON',
-            'L': 'ON',
-            'M': 'ON',
-            'N': 'ON',
-            'P': 'ON',
+            "G": "QC",
+            "H": "QC",
+            "J": "QC",
+            "K": "ON",
+            "L": "ON",
+            "M": "ON",
+            "N": "ON",
+            "P": "ON",
         }
 
     def fetch_data(self):
@@ -38,52 +41,51 @@ class Scraper(Scrape):
         countries = []
         location_types = []
 
-        options = Options()
-        options.add_argument("--headless")
-        options.add_argument("--no-sandbox")
-        options.add_argument("--disable-dev-shm-usage")
-        driver = webdriver.Chrome(self.CHROME_DRIVER_PATH, options=options)
-
-        location_url = 'https://www.clement.ca/en/retailers/ajax/listretailer/'
-        driver.get(location_url)
-        stores = json.loads(driver.find_element_by_css_selector('pre').text)
+        location_url = "https://www.clement.ca/en/retailers/ajax/listretailer/"
+        stores_req = session.get(location_url, headers=headers)
+        stores = json.loads(stores_req.text.strip())
 
         for store in stores:
             # Store ID
-            location_id = store['retailer_id']
+            location_id = store["retailer_id"]
 
             # Name
-            location_title = store['name']
+            location_title = store["name"]
 
             # Type
-            location_type = '<MISSING>'
+            location_type = "<MISSING>"
 
             # Street
-            street_address = store['street']
+            street_address = store["street"]
 
             # city
-            city = store['city']
+            city = store["city"]
 
             # zip
-            zipcode = store['postcode']
+            zipcode = store["postcode"]
 
             # State
             state = self.pc_lookup[zipcode[0]]
 
             # Lat
-            lat = store['latitude']
+            lat = store["latitude"]
 
             # Long
-            lon = store['longitude']
+            lon = store["longitude"]
 
             # Phone
-            phone = store['phone']
+            phone = store["phone"]
 
             # Hour
-            hour = store['opening_hours']
+            hour = "; ".join(
+                BS(store["opening_hours"], "lxml")
+                .get_text()
+                .replace("*Mask mandatory", "")
+                .split("\n")
+            ).strip()
 
             # Country
-            country = store['country_id']
+            country = store["country_id"]
 
             # Store data
             locations_ids.append(location_id)
@@ -100,18 +102,18 @@ class Scraper(Scrape):
             location_types.append(location_type)
 
         for (
-                locations_title,
-                street_address,
-                city,
-                state,
-                zipcode,
-                phone_number,
-                latitude,
-                longitude,
-                hour,
-                location_id,
-                country,
-                location_type,
+            locations_title,
+            street_address,
+            city,
+            state,
+            zipcode,
+            phone_number,
+            latitude,
+            longitude,
+            hour,
+            location_id,
+            country,
+            location_type,
         ) in zip(
             locations_titles,
             street_addresses,
@@ -144,10 +146,9 @@ class Scraper(Scrape):
                         latitude,
                         longitude,
                         hour,
+                        "<MISSING>",
                     ]
                 )
-
-        driver.quit()
 
 
 scrape = Scraper(URL)

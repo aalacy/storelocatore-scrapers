@@ -129,7 +129,7 @@ def fetch_data():
                 "https://sunrisedental.com/",
                 link,
                 title,
-                street,
+                street.replace(" o", ""),
                 city,
                 state.upper(),
                 pcode,
@@ -139,7 +139,11 @@ def fetch_data():
                 "<MISSING>",
                 "<MISSING>",
                 "<MISSING>",
-                hours.replace("\xa0", " ").replace("pm", "pm ").replace("  ", " "),
+                hours.replace("\xa0", " ")
+                .replace("pm", "pm ")
+                .replace("  ", " ")
+                .replace("Closed", "Closed ")
+                .strip(),
             ]
         )
 
