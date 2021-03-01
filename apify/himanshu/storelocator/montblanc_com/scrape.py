@@ -73,6 +73,10 @@ def fetch_data():
                         raw_address = data["address"]["line1"]
                         raw_address1 = raw_address
                         countryCode = data["address"]["countryCode"]
+                        if countryCode == "GB":
+                            countryCode = "UK"
+                        else:
+                            countryCode = data["address"]["countryCode"]
                         if "phone1" in data["address"]:
                             phone = data["address"]["phone1"]
                         else:
@@ -283,6 +287,7 @@ def fetch_data():
                         store.append(hours.strip())
                         store.append(page_url)
                         store = [str(x).strip() if x else "<MISSING>" for x in store]
+
                         if str(raw_address1 + page_url) in addressesess:
                             continue
                         addressesess.append(str(raw_address1 + page_url))
