@@ -1,5 +1,6 @@
 import csv
 from lxml import etree
+from time import sleep
 
 from sgselenium import SgChrome
 
@@ -43,6 +44,7 @@ def fetch_data():
 
     with SgChrome() as driver:
         driver.get(start_url)
+        sleep(15)
         dom = etree.HTML(driver.page_source)
 
     all_locations = dom.xpath('//div[@class="store_locator_result_list_item"]')
