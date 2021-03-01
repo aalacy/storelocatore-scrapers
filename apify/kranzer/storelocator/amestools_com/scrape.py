@@ -31,7 +31,6 @@ class Scrape(base.Spider):
                 i.add_value(
                     "location_name", result.get("title", ""), lambda x: x.strip()
                 )
-                store_number = ""
                 if "#" in result.get("title", ""):
                     i.add_value(
                         "store_number", result.get("title", "").split("#")[1].strip()
