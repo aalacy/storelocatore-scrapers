@@ -43,8 +43,9 @@ def fetch_data():
         page_url = "<MISSING>"
 
         location_type = "<MISSING>"
-        if "Coming Soon" in store["notes"]:
-            location_type = "Coming Soon"
+        if store["notes"] is not None:
+            if "Coming Soon" in store["notes"]:
+                location_type = "Coming Soon"
 
         location_name = store["name"]
         locator_domain = website
