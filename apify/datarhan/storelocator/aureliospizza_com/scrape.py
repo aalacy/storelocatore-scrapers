@@ -8,10 +8,6 @@ from lxml import etree
 from sgrequests import SgRequests
 
 
-def sleep():
-    time.sleep(random.randint(2, 5))
-
-
 def write_output(data):
     with open("data.csv", mode="w", newline="", encoding="utf-8") as output_file:
         writer = csv.writer(
@@ -61,9 +57,12 @@ def fetch_data():
     data = json.loads(data[0])
 
     for poi in data["KOObject"][0]["locations"]:
-        sleep()
+        time.sleep(random.randint(2, 15))
         store_url = poi["locationUrl"]
-        loc_response = session.get(store_url, headers=headers)
+        status_code = ""
+        while status_code != 200:
+            loc_response = session.get(store_url, headers=headers)
+            status_code = loc_response.status_code
         loc_dom = etree.HTML(loc_response.text)
         raw_address = loc_dom.xpath('//div[@class="location"]//a/text()')
         raw_address = [elem.strip() for elem in raw_address if elem.strip()]
