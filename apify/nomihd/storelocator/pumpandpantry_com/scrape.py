@@ -151,9 +151,6 @@ def fetch_data():
         if "#" in location_name:
             store_number = location_name.split("#")[1].strip()
         hours_list = []
-        # hours = store_sel.xpath(
-        #     '//div[@class="store_locator_single_opening_hours"]/text()'
-        # )
         for hour in hours:
             if len("".join(hour).strip()) > 0:
                 hours_list.append("".join(hour).strip())
