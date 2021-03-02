@@ -1,4 +1,3 @@
-from bs4 import BeautifulSoup
 import csv
 import time
 from sgrequests import SgRequests
@@ -57,7 +56,6 @@ def write_output(data):
 
 def fetch_data():
     data = []
-    total = 0
     for i in range(1906, 3000):
         count = str(i)
         url = "https://gb.ecco.com/api/store/finder/000101" + count
