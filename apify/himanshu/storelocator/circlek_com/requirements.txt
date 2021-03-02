@@ -1,4 +1,4 @@
 sglogging==0.0.4
-sgscrape==0.0.21
-sgrequests==0.1.4
-lxml==4.5.2
+sgscrape==0.0.22
+sgrequests==0.1.6
+lxml==4.6.2

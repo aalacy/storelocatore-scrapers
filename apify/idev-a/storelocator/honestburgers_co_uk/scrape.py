@@ -78,6 +78,9 @@ def fetch_data():
                 )
             except:
                 hours_of_operation = "Temporarily Closed"
+            street_address = (
+                "<MISSING>" if "Delivery" in street_address else street_address
+            )
             record = SgRecord(
                 page_url=page_url,
                 location_name=location_name,

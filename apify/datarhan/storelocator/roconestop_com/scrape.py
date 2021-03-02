@@ -46,12 +46,12 @@ def fetch_data():
     response = session.get(start_url)
     dom = etree.HTML(response.text)
 
-    all_locations = dom.xpath('//strong[contains(text(), "ROC #")]')
+    all_locations = dom.xpath('//strong[contains(text(), "ROC")]')
     for poi_html in all_locations:
         store_url = "http://roconestop.com/locations/"
         location_name = poi_html.xpath("text()")
         location_name = location_name[0] if location_name else "<MISSING>"
-        raw_data = poi_html.xpath(".//following::text()")[:3]
+        raw_data = poi_html.xpath(".//following::text()")[:4]
         raw_data = [e.strip() for e in raw_data if e.strip()]
         if "Stuckey" in raw_data[0]:
             raw_data = raw_data[1:]
@@ -61,7 +61,8 @@ def fetch_data():
         zip_code = raw_data[1].split(", ")[-1].split()[-1]
         country_code = "<MISSING>"
         store_number = location_name.split("#")[-1].strip()
-        phone = raw_data[-1].split(":")[-1].strip()
+        phone = [e.split(":")[-1] for e in raw_data if ":" in e]
+        phone = phone[0].strip() if phone else "<MISSING>"
         location_type = "<MISSING>"
         latitude = "<MISSING>"
         longitude = "<MISSING>"
