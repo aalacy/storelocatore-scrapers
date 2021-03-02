@@ -81,30 +81,32 @@ def fetch_data():
     if "data" in data:
         all_locations = data["data"]
         for poi in all_locations:
-            location_name = poi['name']
+            location_name = poi["name"]
             location_name = location_name if location_name else "<MISSING>"
-            street_address = poi['address1']
-            if poi.get('address2'):
-                street_address += ' ' + poi['address2']
+            street_address = poi["address1"]
+            if poi.get("address2"):
+                street_address += " " + poi["address2"]
             street_address = street_address if street_address else "<MISSING>"
-            city = poi['city']
+            city = poi["city"]
             city = city if city else "<MISSING>"
-            state = poi['state_code']
-            zip_code = poi['postal_code']
+            state = poi["state_code"]
+            zip_code = poi["postal_code"]
             zip_code = zip_code if zip_code else "<MISSING>"
-            country_code = poi['country_code']
-            store_number = poi['id']
-            phone = poi['phone']
-            location_type = poi['_type']
-            latitude = poi['latitude']
-            longitude = poi['longitude']
+            country_code = poi["country_code"]
+            store_number = poi["id"]
+            phone = poi["phone"]
+            location_type = poi["_type"]
+            latitude = poi["latitude"]
+            longitude = poi["longitude"]
             hoo = []
-            if poi.get('store_hours'):
-                hoo = etree.HTML(poi['store_hours']).xpath('//text()')
+            if poi.get("store_hours"):
+                hoo = etree.HTML(poi["store_hours"]).xpath("//text()")
                 hoo = [e.strip() for e in hoo if e]
             hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
-            store_url = 'https://locations.penningtons.com/{}-{}-{}'
-            store_url = store_url.format(state.lower(), city.replace(' ', '-').lower(), store_number)
+            store_url = "https://locations.penningtons.com/{}-{}-{}"
+            store_url = store_url.format(
+                state.lower(), city.replace(" ", "-").lower(), store_number
+            )
 
             item = [
                 DOMAIN,
