@@ -1,4 +1,3 @@
-import re
 import csv
 from bs4 import BeautifulSoup as bs
 from sgrequests import SgRequests
@@ -12,7 +11,6 @@ HEADERS = {
     "Host": "www.brownsshoes.com",
     "Referer": "https://www.brownsshoes.com/en/find-a-store",
     "Sec-Fetch-Dest": "empty",
-    "Sec-Fetch-Mode": "cors",
     "Sec-Fetch-Site": "origin",
     "X-Requested-With": "XMLHttpRequest",
     "Accept": "application/json, text/plain, */*",
@@ -69,34 +67,14 @@ def handle_missing(field):
     return field.strip()
 
 
-def fetch_store_urls():
-    log.info("Fetching store URL")
-    store_urls = []
-    soup = pull_content(LOCATION_URL)
-    stores = soup.find_all("div", {"class": "all-stores"})
-    # .find_all(
-    #     "div", {"class": "all-stores"}
-    # )
-    # for store in stores:
-    #     link = store.find("h2").find("a")["href"]
-    #     if "shop.balzacs.com" not in link:
-    #         link = BASE_URL + link
-    #     store_urls.append(link)
-    # log.info("Found {} URL ".format(len(store_urls)))
-    # return store_urls
-
-
 def fetch_data():
     log.info("Fetching store_locator data")
-    # store_urls = fetch_store_urls()
     soup = pull_content(LOCATION_URL)
     stores = soup.find("div", {"class": "store-locator-results"}).find_all(
         "div", {"class": "bs-store-details"}
     )
     locations = []
     for row in stores:
-        #     soup = pull_content(page_url)
-        #     row = soup.find("div", {"class": "location-details"})
         info = row.find("div", {"class": "store-details"})
         locator_domain = DOMAIN
         location_name = handle_missing(
