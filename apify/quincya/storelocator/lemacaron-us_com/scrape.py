@@ -108,10 +108,27 @@ def fetch_data():
                 latitude = "<MISSING>"
                 longitude = "<MISSING>"
 
-        hours = (
+        hours_of_operation = (
             base.find(class_="text-fade px-2 mb-3").text.replace("\r\n", " ").strip()
         )
-        hours_of_operation = (re.sub(" +", " ", hours)).strip()
+        if not hours_of_operation:
+            try:
+                hours_raw = (
+                    base.find(class_="text-fade px-2 mb-3")
+                    .next_element.text.replace("\r\n", " ")
+                    .strip()
+                )
+                if "am" in hours_raw.lower() or "pm" in hours_raw.lower():
+                    hours_of_operation = hours_raw
+            except:
+                pass
+        if not hours_of_operation:
+            rows = list(base.address.stripped_strings)
+            for row in rows:
+                if "day-" in row:
+                    hours_of_operation = hours_of_operation + " " + row
+
+        hours_of_operation = (re.sub(" +", " ", hours_of_operation)).strip()
 
         if "(" in hours_of_operation:
             hours_of_operation = hours_of_operation[
