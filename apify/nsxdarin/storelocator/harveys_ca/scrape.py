@@ -8,7 +8,7 @@ headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
 
-logger = SgLogSetup().get_logger("kelseys_ca")
+logger = SgLogSetup().get_logger("harveys_ca")
 
 
 def write_output(data):
@@ -41,9 +41,9 @@ def write_output(data):
 def fetch_data():
     locs = []
     session = SgRequests()
-    url = "https://iosapi.kelseys.ca/CaraAPI/APIService/getStoreList?from=60.000,-150.000&to=39.000,-50.000&eCommOnly=N"
+    url = "https://aws-api.harveys.ca/CaraAPI/APIService/getStoreList?from=60.000,-150.000&to=39.000,-50.000&eCommOnly=N"
     r = session.get(url, headers=headers)
-    website = "kelseys.ca"
+    website = "harveys.ca"
     typ = "<MISSING>"
     country = "CA"
     logger.info("Pulling Stores")
@@ -53,7 +53,7 @@ def fetch_data():
         if '"storeNumber":' in line:
             sid = line.split('"storeNumber":')[1].split(",")[0].strip()
             locs.append(
-                "https://iosapi.kelseys.ca/CaraAPI/APIService/getStoreDetails?storeNumber="
+                "https://aws-api.harveys.ca/CaraAPI/APIService/getStoreDetails?storeNumber="
                 + sid
                 + "&numberOfStoreHours=7"
             )
@@ -81,7 +81,7 @@ def fetch_data():
             if '"name": "storeUrlSlug_EN",' in line2:
                 g = next(lines)
                 purl = (
-                    "https://www.kelseys.ca/en/restaurants/"
+                    "https://www.harveys.ca/en/restaurants/"
                     + g.split('"value": "')[1].split('"')[0]
                     + ".html"
                 )
@@ -124,7 +124,7 @@ def fetch_data():
         if city == "":
             city = name.rsplit(" ", 1)[1]
         if purl == "":
-            purl = "https://www.kelseys.ca/en/locations.html"
+            purl = "https://www.harveys.ca/en/locations.html"
         if phone == "":
             phone = "<MISSING>"
         if store != "9999":
