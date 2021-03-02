@@ -43,7 +43,7 @@ def fetch_data():
     items = []
 
     start_url = "https://www.healthtrax.com/locations"
-    domain = re.findall("://(.+?)/", start_url)[0].replace('www.', '')
+    domain = re.findall("://(.+?)/", start_url)[0].replace("www.", "")
     hdr = {
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.16; rv:86.0) Gecko/20100101 Firefox/86.0"
     }
