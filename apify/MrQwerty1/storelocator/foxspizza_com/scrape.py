@@ -1,7 +1,7 @@
 import csv
 import usaddress
 
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent import futures
 from lxml import html
 from sgrequests import SgRequests
 
@@ -25,9 +25,13 @@ def get_urls():
     return tree.xpath("//loc/text()")
 
 
-def get_data(url):
+def get_data(page_url):
     locator_domain = 'https://foxspizza.com/'
-    page_url = url
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:85.0) Gecko/20100101 Firefox/85.0',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+    }
+
     tag = {'Recipient': 'recipient', 'AddressNumber': 'address1', 'AddressNumberPrefix': 'address1',
            'AddressNumberSuffix': 'address1', 'StreetName': 'address1', 'StreetNamePreDirectional': 'address1',
            'StreetNamePreModifier': 'address1', 'StreetNamePreType': 'address1',
@@ -40,7 +44,7 @@ def get_data(url):
            'ZipCode': 'postal'}
 
     session = SgRequests()
-    r = session.get(url)
+    r = session.get(page_url, headers=headers)
     tree = html.fromstring(r.text)
 
     location_name = ''.join(tree.xpath("//h5[@class='blog_title']//text()")).strip()
@@ -69,17 +73,14 @@ def get_data(url):
 
 def fetch_data():
     out = []
-    threads = []
     urls = get_urls()
 
-    with ThreadPoolExecutor(max_workers=10) as executor:
-        for url in urls:
-            threads.append(executor.submit(get_data, url))
-
-    for task in as_completed(threads):
-        row = task.result()
-        if row:
-            out.append(row)
+    with futures.ThreadPoolExecutor(max_workers=1) as executor:
+        future_to_url = {executor.submit(get_data, url): url for url in urls}
+        for future in futures.as_completed(future_to_url):
+            row = future.result()
+            if row:
+                out.append(row)
 
     return out
 
