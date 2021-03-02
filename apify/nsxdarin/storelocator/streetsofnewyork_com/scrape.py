@@ -75,15 +75,15 @@ def fetch_data():
         longitude = get(location, "lng")
 
         phone = get(location, "phone")
+        if "Signal Butte Rd & Baseline Rd" in location_name:
+            phone = "4807712292"
+        if "7th St & Greenway Pkwy" in location_name:
+            phone = "6029323429"
+        if "d St & Camelback R" in location_name:
+            phone = "6026917664"
+        if "7th Ave & Carefree Hwy" in location_name:
+            phone = "6232639788"
         hours_of_operation = ",".join(get(location, "schemaHours"))
-        if "16838 N 7th St Target Center" in street_address:
-            phone = "(602) 584-5004"
-        if "1959 S Signal Butte Rd" in street_address:
-            phone = "(480) 771-2292"
-        if "2805 W Carefree Highway" in street_address:
-            phone = "(623) 323-4560"
-        if "214 E Camelback Road" in street_address:
-            phone = "(602) 926-7624"
         yield [
             locator_domain,
             page_url,
