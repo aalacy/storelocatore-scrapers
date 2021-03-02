@@ -1,4 +1,3 @@
-black @ git+git://github.com/psf/black@dea81b7ad5cfa04c3572771c34af823449d0a8f3
 sgrequests==0.1.6
 sgvalidator==0.0.71
 sgzip==0.2.1
