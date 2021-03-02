@@ -88,12 +88,12 @@ def fetch_data():
                             "https://www.fionnmaccools.com/en/locations/"
                             + store
                             + "/"
-                            + city.lower()
+                            + city.lower().replace(".", "").replace("'", "")
                             + "-"
                             + street.replace(" ", "-").lower()
                             + ".html"
                         )
-                        purl = purl.replace(".", "").replace("'", "")
+                        purl = purl
                         try:
                             hours = (
                                 item.split("hours: ")[1]
