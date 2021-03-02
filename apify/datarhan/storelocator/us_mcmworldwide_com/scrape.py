@@ -63,7 +63,6 @@ def fetch_data():
         )
 
     for poi_html in all_locations:
-        store_url = "https://us.mcmworldwide.com/en_US/storelocator"
         location_name = poi_html.xpath('.//span[@class="store-name txt-mono"]/text()')
         location_name = location_name[0].strip() if location_name else "<MISSING>"
         raw_address = poi_html.xpath('.//p[@class="store-address"]/span/text()')
@@ -96,6 +95,9 @@ def fetch_data():
         hoo = poi_html.xpath('.//div[@class="store-hours"]//text()')
         hoo = [e.strip() for e in hoo if e.strip()]
         hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
+        store_url = "https://us.mcmworldwide.com/en_US/stores/{}/{}".format(
+            location_name.lower().replace(" ", "-"), store_number
+        )
 
         item = [
             DOMAIN,
