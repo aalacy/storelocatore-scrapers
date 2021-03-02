@@ -1,4 +1,4 @@
-lxml==4.3.4
-requests==2.11.1
-# uncomment if you use selenium
-# selenium==3.141.0
+sgvalidator==0.0.71
+sglogging==0.0.4
+lxml==4.1.1
+sgrequests==0.1.6
