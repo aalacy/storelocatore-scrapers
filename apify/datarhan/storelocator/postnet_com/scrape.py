@@ -3,6 +3,7 @@ import json
 from lxml import etree
 
 from sgrequests import SgRequests
+from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 
 
 def write_output(data):
@@ -45,62 +46,11 @@ def fetch_data():
     DOMAIN = "postnet.com"
     start_url = "https://locations.postnet.com/search?q={}"
 
-    states = [
-        "AL",
-        "AK",
-        "AZ",
-        "AR",
-        "CA",
-        "CO",
-        "CT",
-        "DC",
-        "DE",
-        "FL",
-        "GA",
-        "HI",
-        "ID",
-        "IL",
-        "IN",
-        "IA",
-        "KS",
-        "KY",
-        "LA",
-        "ME",
-        "MD",
-        "MA",
-        "MI",
-        "MN",
-        "MS",
-        "MO",
-        "MT",
-        "NE",
-        "NV",
-        "NH",
-        "NJ",
-        "NM",
-        "NY",
-        "NC",
-        "ND",
-        "OH",
-        "OK",
-        "OR",
-        "PA",
-        "RI",
-        "SC",
-        "SD",
-        "TN",
-        "TX",
-        "UT",
-        "VT",
-        "VA",
-        "WA",
-        "WV",
-        "WI",
-        "WY",
-    ]
-
-    for state in states:
-        response = session.get(start_url.format(state))
+    all_codes = DynamicZipSearch(
+        country_codes=[SearchableCountries.USA], max_radius_miles=100
+    )
+    for code in all_codes:
+        response = session.get(start_url.format(code))
         dom = etree.HTML(response.text)
 
         all_urls = dom.xpath(

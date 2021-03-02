@@ -1,6 +1,7 @@
 from sgselenium import SgChrome
 from bs4 import BeautifulSoup as bs
 import pandas as pd
+import re
 
 locator_domains = []
 page_urls = []
@@ -17,7 +18,7 @@ latitudes = []
 longitudes = []
 hours_of_operations = []
 
-with SgChrome() as driver:
+with SgChrome(executable_path="chromedriver.exe") as driver:
     driver.get("https://www.rockandbrews.com/locations")
     html = driver.page_source
     soup = bs(html, "html.parser")
@@ -26,7 +27,7 @@ with SgChrome() as driver:
 
     for grid in grids:
         locator_domain = "rockandbrews.com"
-        page_url = "rockandbrews.com/locations"
+        phone = "<MISSING>"
 
         name = grid.find("h4").text
         address = grid.find("span").text
@@ -44,13 +45,29 @@ with SgChrome() as driver:
             country_code = "US"
 
             store_number = "<MISSING>"
-            phone = "<MISSING>"
+
             location_type = "<MISSING>"
 
             latitude = "<MISSING>"
             longitude = "<MISSING>"
 
             hour = grid.find("div", attrs={"class": "hours"}).text
+
+            location_url_format = name.replace(" ", "-").replace("&", "-and-")
+            page_url = "https://www.rockandbrews.com/" + location_url_format
+
+            driver.get(page_url)
+            html = driver.page_source
+            soup = bs(html, "html.parser")
+
+            div = soup.find("div", attrs={"id": "location"})
+            try:
+                phone = div.find("a")["href"].replace("tel:", "")
+            except Exception:
+                phone = "<MISSING>"
+
+            if bool(re.search("[a-zA-Z]", phone)):
+                phone = "<MISSING>"
 
             locator_domains.append(locator_domain)
             page_urls.append(page_url)
