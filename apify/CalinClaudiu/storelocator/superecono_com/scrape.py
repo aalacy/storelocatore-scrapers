@@ -147,6 +147,29 @@ def fetch_data():
                 if len(addressno) > len(k["street_address"]):
                     k["street_address"] = addressno
             k["raw"] = addressno + ", " + raw_addr if addressno else raw_addr
+
+            try:
+                k["latitude"], k["longitude"] = (
+                    soup1.find("div", {"class": "google-maps-link"})
+                    .find("a")["href"]
+                    .split("ll=", 1)[1]
+                    .split("&", 1)[0]
+                    .split(",")
+                )
+            except Exception:
+                k["latitude"], k["longitude"] = ["<MISSING>", "<MISSING>"]
+
+            if k["latitude"] == "<MISSING>":
+                try:
+                    k["latitude"], k["longitude"] = (
+                        soup1.find("a", {"jstcache": "46"})["href"]
+                        .split("ll=", 1)[1]
+                        .split("&", 1)[0]
+                        .split(",")
+                    )
+                except Exception:
+                    k["latitude"], k["longitude"] = ["<MISSING>", "<MISSING>"]
+
             yield k
 
     logzilla.info(f"Finished grabbing data!!")  # noqa
@@ -158,8 +181,8 @@ def scrape():
         locator_domain=sp.ConstantField(url),
         page_url=sp.MappingField(mapping=["page_url"]),
         location_name=sp.MappingField(mapping=["location_name"]),
-        latitude=sp.MissingField(),
-        longitude=sp.MissingField(),
+        latitude=sp.MappingField(mapping=["latitude"]),
+        longitude=sp.MappingField(mapping=["longitude"]),
         street_address=sp.MappingField(
             mapping=["street_address"], part_of_record_identity=True
         ),
