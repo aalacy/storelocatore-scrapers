@@ -1,8 +1,6 @@
 import csv
-from itertools import islice
 from sgrequests import SgRequests
 from sglogging import sglog
-from bs4 import BeautifulSoup
 
 website = "dibellas_com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
