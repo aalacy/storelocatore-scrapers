@@ -1,8 +1,37 @@
+import re
+import json
 import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
-import re
-import json
+import usaddress as usadr
+
+tm = {
+    "Recipient": "recipient",
+    "AddressNumber": "address1",
+    "AddressNumberPrefix": "address1",
+    "AddressNumberSuffix": "address1",
+    "StreetName": "address1",
+    "StreetNamePreDirectional": "address1",
+    "StreetNamePreModifier": "address1",
+    "StreetNamePreType": "address1",
+    "StreetNamePostDirectional": "address1",
+    "StreetNamePostModifier": "address1",
+    "StreetNamePostType": "address1",
+    "BuildingName": "address1",
+    "CornerOf": "address1",
+    "IntersectionSeparator": "address1",
+    "LandmarkName": "address1",
+    "USPSBoxGroupID": "address1",
+    "USPSBoxGroupType": "address1",
+    "OccupancyType": "address1",
+    "OccupancyIdentifier": "address1",
+    "PlaceName": "city",
+    "StateName": "state",
+    "ZipCode": "zip_code",
+    "SubaddressType": "address1",
+    "SubaddressType": "address1",
+    "SubaddressIdentifier": "address1",
+}
 
 session = SgRequests()
 
@@ -12,7 +41,6 @@ def write_output(data):
         writer = csv.writer(
             output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
         )
-        # Header
         writer.writerow(
             [
                 "locator_domain",
@@ -31,15 +59,15 @@ def write_output(data):
                 "page_url",
             ]
         )
-        # Body
         for row in data:
             writer.writerow(row)
 
 
 def fetch_data():
     addresses = []
-    r = session.get("https://f45training.com/find-a-studio/").text
-    soup = BeautifulSoup(r, "html5lib")
+
+    r = session.get("https://f45training.com/find-a-studio/")
+    soup = BeautifulSoup(r.text, "html5lib")
     script = str(soup.find(text=re.compile("window.studios")))
     jsondata = json.loads(
         script.split("window.studios = ")[1]
@@ -49,39 +77,62 @@ def fetch_data():
 
     for i in jsondata:
         location_name = "<MISSING>"
-        street_address = "<INACCESSIBLE>"
-        city = "<INACCESSIBLE>"
-        state = "<INACCESSIBLE>"
-        zip = "<INACCESSIBLE>"
-        country_code = "<INACCESSIBLE>"
-        store_number = "<INACCESSIBLE>"
-        phone = "<INACCESSIBLE>"
-        latitude = "<INACCESSIBLE>"
-        longitude = "<INACCESSIBLE>"
+        street_address = "<MISSING>"
+        city = "<MISSING>"
+        state = "<MISSING>"
+        zipp = "<MISSING>"
+        country_code = "<MISSING>"
+        store_number = "<MISSING>"
+        phone = "<MISSING>"
+        latitude = "<MISSING>"
+        longitude = "<MISSING>"
+
         if i["country"] == "United States":
-            location_name = i["name"]
+            latitude = i["_geoloc"]["lat"]
+            longitude = i["_geoloc"]["lng"]
+            location_name = i["name"].replace("F45", "").strip()
             address = i["location"]
             try:
-                street_address = address.split(",")[0].strip()
-                city = address.split(",")[1].strip()
-                zip = address.split(",")[2].strip().split(" ")[1]
+                addr_format = usadr.tag(address, tm)
+                addr = list(addr_format[0].items())
+                street_address = addr[0][1]
             except:
                 pass
+            try:
+                city = address.split(",")[1].strip()
+            except:
+                pass
+            try:
+                postal_code = "".join(address.split(",")[2]).strip()
+                zipp1 = re.search(r"\d{5}(-\d{4})?$", postal_code)
+                zipp = zipp1.group(0)
+            except:
+                pass
+
             state = i["state"]
             country_code = "US"
             store_number = i["id"]
-            latitude = i["_geoloc"]["lat"]
-            longitude = i["_geoloc"]["lng"]
+
         elif i["country"] == "Canada":
-            location_name = i["name"]
+            location_name = i["name"].replace("F45", "").strip()
             address = i["location"]
             try:
                 street_address = address.split(",")[0].strip()
                 city = address.split(",")[1].strip()
-                zip = address.split(",")[2].strip().split(" ")[1]
+                postal_code1 = "".join(address.split(","))
+                temp_zipp = re.search(r"[A-Z]\d[A-Z]\s\d[A-Z]\d", postal_code1)
+                a = temp_zipp.group(0)
+                if len(a) == 7:
+                    zipp = a
+                else:
+                    zipp = "<MISSING>"
             except:
                 pass
-            state = i["state"]
+            try:
+                state = i["state"].split("(")[1].replace(")", "")
+            except:
+                state = "<MISSING>"
+
             country_code = "CA"
             store_number = i["id"]
             latitude = i["_geoloc"]["lat"]
@@ -92,15 +143,19 @@ def fetch_data():
         page_url = "https://f45training.com/" + i["slug"]
         location_request = session.get(page_url)
         location_soup = BeautifulSoup(location_request.text, "html5lib")
-        if location_soup.find("a", {"href": re.compile("tel:")}) is None:
-            phone = "<MISSING>"
+        if location_request.status_code != 200:
+            phone = "<INACCESSIBLE>"
         else:
-            phone = (
-                location_soup.find("a", {"href": re.compile("tel:")})
-                .text.split("/")[0]
-                .split(",")[0]
-                .replace("(JF45)", "")
-            )
+            try:
+                phone = (
+                    location_soup.find("a", {"href": re.compile("tel:")})
+                    .text.split("/")[0]
+                    .split(",")[0]
+                    .replace("(JF45)", "")
+                )
+            except:
+                phone = "<INACCESSIBLE>"
+                pass
 
         store = []
         store.append("https://f45training.com/")
@@ -108,25 +163,18 @@ def fetch_data():
         store.append(street_address if street_address else "<MISSING>")
         store.append(city if city else "<MISSING>")
         store.append(state if state else "<MISSING>")
-        store.append(zip if zip else "<MISSING>")
+        store.append(zipp if zipp else "<MISSING>")
         store.append(country_code if country_code else "<MISSING>")
         store.append(store_number if store_number else "<MISSING>")
-        store.append(phone if phone else "<MISSING>")
-        store.append("f45")
+        store.append(phone if phone else "<INACCESSIBLE>")
+        store.append("F45")
         store.append(latitude if latitude else "<MISSING>")
         store.append(longitude if longitude else "<MISSING>")
         store.append("<MISSING>")
         store.append(page_url if page_url else "<MISSING>")
-
         if store[2] in addresses:
             continue
         addresses.append(store[2])
-        store = [
-            str(x).encode("ascii", "ignore").decode("ascii").strip()
-            if x
-            else "<MISSING>"
-            for x in store
-        ]
         yield store
 
 

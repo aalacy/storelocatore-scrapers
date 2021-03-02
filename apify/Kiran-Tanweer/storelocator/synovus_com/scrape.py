@@ -158,16 +158,7 @@ def fetch_data():
             Hours = Hours.rstrip()
             Hours = Hours.lstrip()
             types = location.split('"BankShortName":"', 1)[1].split('"')[0]
-            if types == "Synovus":
-                types = "Bank"
-            if types == "Synovus Bank and ATM":
-                types = "Bank and ATM"
-            if types == "":
-                types = "<MISSING>"
-            if types == "Synovus ATM":
-                types = "ATM"
-            if types == "Synovus Mortgage":
-                types = "Mortgage"
+
             if (
                 Hours
                 == "Monday: Closed, Tuesday: Closed, Wednesday: Closed, Thursday: Closed, friday: Closed, saturday: Closed, Sunday: Closed"
