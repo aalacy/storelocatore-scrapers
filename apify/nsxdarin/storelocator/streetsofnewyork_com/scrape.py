@@ -76,14 +76,6 @@ def fetch_data():
 
         phone = get(location, "phone")
         hours_of_operation = ",".join(get(location, "schemaHours"))
-        if "16838 N 7th St Target Center" in street_address:
-            phone = "(602) 584-5004"
-        if "1959 S Signal Butte Rd" in street_address:
-            phone = "(480) 771-2292"
-        if "2805 W Carefree Highway" in street_address:
-            phone = "(623) 323-4560"
-        if "214 E Camelback Road" in street_address:
-            phone = "(602) 926-7624"
         yield [
             locator_domain,
             page_url,
