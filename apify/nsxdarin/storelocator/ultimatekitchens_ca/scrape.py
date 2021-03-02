@@ -77,7 +77,6 @@ def fetch_data():
                         lng = item.split("longitude:")[1].split(",")[0].strip()
                         add = item.split("streetnumber:")[1].split(",")[0].strip()
                         add = add + " " + item.split("street:")[1].split(",")[0].strip()
-                        street = item.split("street:")[1].split(",")[0].strip()
                         city = item.split("city: ")[1].split(",")[0]
                         store = item.split('"gsx$storenumber":{"$t":"')[1].split('"')[0]
                         name = item.split('"gsx$storename":{"$t":"')[1].split('"')[0]
