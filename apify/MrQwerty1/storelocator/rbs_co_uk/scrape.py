@@ -80,8 +80,9 @@ def get_data(url):
         location_name = location_name.split("(")[0].strip()
     line = tree.xpath("//div[@class='print']//td[@class='first']/text()")
     line = list(filter(None, [l.strip() for l in line]))
-    line = " ".join(line)
-    adr = parse_address(International_Parser(), line)
+    postal = line[-1]
+    line = ", ".join(line[:-1])
+    adr = parse_address(International_Parser(), line, postcode=postal)
 
     street_address = (
         f"{adr.street_address_1} {adr.street_address_2 or ''}".replace(

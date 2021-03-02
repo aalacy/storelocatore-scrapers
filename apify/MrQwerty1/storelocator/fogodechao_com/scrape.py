@@ -45,14 +45,26 @@ def get_hours(page_url):
     if check:
         return "Coming Soon"
 
-    return (
+    hours = ";".join(
+        tree.xpath(
+            "//ul[@class='hours__list' and .//p[contains(text(),'Dinner') or contains(text(), 'DINNER')]]//li[contains(@class, 'hours')]/text()"
+        )
+    ).strip()
+    lunch = (
         ";".join(
             tree.xpath(
-                "//ul[@class='hours__list' and .//p[contains(text(),'Dinner') or contains(text(), 'DINNER')]]//li[contains(@class, 'hours')]/text()"
+                "//p[contains(text(),'Lunch')]/following-sibling::ul[1]/li/text()"
             )
-        )
-        or "<MISSING>"
+        ).strip()
+        or ""
     )
+
+    if lunch:
+        out = f"{hours};Lunch: {lunch}"
+    else:
+        out = hours or "<MISSING>"
+
+    return out
 
 
 def fetch_data():
