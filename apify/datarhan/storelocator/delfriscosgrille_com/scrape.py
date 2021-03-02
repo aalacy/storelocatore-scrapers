@@ -53,7 +53,8 @@ def fetch_data():
     data = json.loads(data)
 
     for poi in data:
-        store_url = urljoin(start_url, poi["id"])
+        base_url = "https://delfriscosgrille.com"
+        store_url = urljoin(base_url, poi["id"])
         with SgChrome() as driver:
             driver.get(store_url)
             loc_dom = etree.HTML(driver.page_source)

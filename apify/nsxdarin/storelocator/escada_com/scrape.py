@@ -109,6 +109,7 @@ def fetch_data():
                                         "-ku" not in add
                                         and "Mexico" not in city
                                         and "137." not in lng
+                                        and "<MISSING>" not in add
                                     ):
                                         locs.append(store)
                                         yield [

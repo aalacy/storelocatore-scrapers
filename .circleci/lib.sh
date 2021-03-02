@@ -4,6 +4,7 @@ crawler_subdir_regex='apify(\/[^/]+){3}'
 required_python_files=('Dockerfile' 'requirements.txt' 'scrape.py')
 required_node_files=('Dockerfile' 'scrape.js' 'package.json')
 forbidden_files=('chromedriver' 'geckodriver' 'validate.py' 'data.csv')
+internal_libraries=('sgscrape' 'sgcrawler' 'sgrequests' 'sgselenium' 'sglogging' 'sgzip' 'sggrid')
 
 list_diffs() {
 	current_branch=$(git rev-parse --abbrev-ref HEAD)
@@ -21,7 +22,7 @@ list_updated_crawlers() {
 		sort |
 		uniq |
 		grep -E "$crawler_subdir_regex" || true
-	}
+}
 
 get_updated_crawler() {
 	mapfile -t updated_subdirs < <(list_updated_crawlers)
@@ -101,13 +102,11 @@ check_required_files() {
 	exit_status=0
 	updated_crawler="$(get_updated_crawler)"
 	if is_node_scraper "$updated_crawler"; then
-		for required_file in "${required_node_files[@]}"
-		do
+		for required_file in "${required_node_files[@]}"; do
 			check_required_file "${updated_crawler}" "${required_file}" || exit_status=1
 		done
 	else
-		for required_file in "${required_python_files[@]}"
-		do
+		for required_file in "${required_python_files[@]}"; do
 			check_required_file "${updated_crawler}" "${required_file}" || exit_status=1
 		done
 	fi
@@ -117,9 +116,49 @@ check_required_files() {
 check_forbidden_files() {
 	exit_status=0
 	updated_crawler="$(get_updated_crawler)"
-	for forbidden_file in "${forbidden_files[@]}"
-	do
+	for forbidden_file in "${forbidden_files[@]}"; do
 		check_forbidden_file "${updated_crawler}" "${forbidden_file}" || exit_status=1
 	done
 	return $exit_status
+}
+
+check_dependencies() {
+	exit_status=0
+	updated_crawler="$(get_updated_crawler)"
+	if ! is_node_scraper "$updated_crawler"; then
+		requirements_path="${updated_crawler}/requirements.txt"
+		unpinned_dependencies=$(cat "$requirements_path" | awk NF | grep -v '==' || true)
+		if [ ! -z "$unpinned_dependencies" ]; then
+			formatted_unpinned_dependencies="${unpinned_dependencies//$'\n'/', '}"
+			echo "FAIL: found unpinned dependencies in requirements.txt: $formatted_unpinned_dependencies"
+			exit_status=1
+		fi
+	fi
+	return $exit_status
+}
+
+# https://stackoverflow.com/a/17841619
+join_by() {
+	local d=$1
+	shift
+	local f=$1
+	shift
+	printf %s "$f" "${@/#/$d}"
+}
+
+check_internal_library_versions() {
+	exit_status=0
+	updated_crawler="$(get_updated_crawler)"
+	if ! is_node_scraper "$updated_crawler"; then
+		requirements_path="${updated_crawler}/requirements.txt"
+		internal_library_regex="$(join_by "|" "${internal_libraries[@]}")"
+		outdated_internal_libraries=$(piprot --outdated "$requirements_path" | grep -E "$internal_library_regex" || true)
+		if [ -n "$outdated_internal_libraries" ]; then
+			formatted_outdated_internal_libraries="${outdated_internal_libraries//$'\n'/', '}"
+			echo "FAIL: found outdated SafeGraph libraries in requirements.txt: $formatted_outdated_internal_libraries"
+			exit_status=1
+		fi
+	fi
+	return $exit_status
+
 }

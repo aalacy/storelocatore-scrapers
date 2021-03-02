@@ -1,6 +1,7 @@
 import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
+import json
 
 session = SgRequests()
 headers = {
@@ -38,90 +39,44 @@ def write_output(data):
 
 
 def fetch_data():
-    locs = []
-    url = "https://www.coffeebeanery.com/tools/store-locator"
+    url = "https://cdn.shopify.com/s/files/1/0069/1719/3781/t/102/assets/sca.storelocatordata.json?v=1613366058&formattedAddress=&boundsNorthEast=&boundsSouthWest="
     r = session.get(url, headers=headers)
     website = "coffeebeanery.com"
     typ = "<MISSING>"
     country = "US"
     logger.info("Pulling Stores")
-    for line in r.iter_lines():
-        line = str(line.decode("utf-8"))
-        if "-black.png\")'  onmouseover='hoverStart(" in line:
-            items = line.split("onmouseover='hoverStart(")
-            for item in items:
-                if "div class='distance'>" in item:
-                    locs.append(
-                        "https://stores.boldapps.net/front-end/get_store_info.php?shop=coffee-beanery1.myshopify.com&data=detailed&store_id="
-                        + item.split(")")[0]
-                    )
-    for loc in locs:
-        logger.info(loc)
-        lurl = "<MISSING>"
-        name = ""
-        add = ""
-        city = ""
-        state = ""
-        zc = ""
-        store = loc.rsplit("=", 1)[1]
-        phone = ""
-        lat = "<MISSING>"
-        lng = "<MISSING>"
-        hours = ""
-        r2 = session.get(loc, headers=headers)
-        for line2 in r2.iter_lines():
-            line2 = str(line2.decode("utf-8"))
-            if "<span class='name'>" in line2:
-                name = line2.split("<span class='name'>")[1].split("<")[0].strip()
-                add = line2.split("<span class='address'>")[1].split("<")[0].strip()
-                city = line2.split("<span class='city'>")[1].split("<")[0].strip()
-                try:
-                    add = (
-                        add
-                        + " "
-                        + line2.split("<span class='address2'>")[1]
-                        .split("<")[0]
-                        .strip()
-                    )
-                    add = add.strip()
-                except:
-                    pass
-                state = (
-                    line2.split("<span class='prov_state'>")[1].split("<")[0].strip()
-                )
-                try:
-                    zc = (
-                        line2.split("<span class='postal_zip'>")[1]
-                        .split("<")[0]
-                        .strip()
-                    )
-                except:
-                    zc = "<MISSING>"
-                try:
-                    phone = line2.split("<span class='phone'>")[1].split("<")[0].strip()
-                except:
-                    phone = "<MISSING>"
-                try:
-                    lurl = (
-                        line2.split("Website: <\\/span><a href='")[1]
-                        .split("'")[0]
-                        .replace("\\", "")
-                    )
-                except:
-                    pass
-                try:
-                    hours = (
-                        line2.split("<span class='hours'>")[1]
-                        .split("<\\/span>")[0]
-                        .replace("<br \\/>", "; ")
-                    )
-                except:
-                    hours = "<MISSING>"
-            if "<span class='country'> Guam" in line2:
-                state = "Guam"
+    for item in json.loads(r.content):
+        lat = item["lat"]
+        lng = item["lng"]
+        name = item["name"]
+        try:
+            phone = item["phone"]
+        except:
+            phone = "<MISSING>"
+        loc = "https://www.coffeebeanery.com/pages/store-locator"
+        try:
+            hours = (
+                item["schedule"]
+                .replace("<br>", "; ")
+                .replace("\\r", "")
+                .replace("|", ":")
+            )
+        except:
+            hours = "<MISSING>"
+        add = item["address"]
+        city = item["city"]
+        state = item["state"]
+        try:
+            zc = item["postal"]
+        except:
+            zc = "<MISSING>"
+        store = item["id"]
+        if item["country"] == "Guam":
+            state = "Guam"
+        hours = hours.replace("\r", "").replace(" :", ":")
         yield [
             website,
-            lurl,
+            loc,
             name,
             add,
             city,
