@@ -93,7 +93,16 @@ def fetch_data():
                     phone = "<MISSING>"
             except:
                 phone = "<MISSING>"
-            hours_of_operation = " ".join(store["openingHours"])
+            hours_of_operation = (
+                " ".join(store["openingHours"])
+                .replace("Su-Sa", "Sun - Sat:")
+                .replace("Su-Fr", "Sun - Fri:")
+                .replace("-00:00", " - Midnight")
+                .replace("Su ", "Sun")
+                .replace("Mo-Fr", "Mon - Fri")
+                .replace("Sa ", "Sat ")
+                .replace("  ", " ")
+            ).strip()
             latitude = store["geo"]["latitude"]
             longitude = store["geo"]["longitude"]
 
