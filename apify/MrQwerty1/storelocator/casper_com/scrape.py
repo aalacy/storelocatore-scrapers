@@ -71,6 +71,8 @@ def fetch_data():
             for k, v in hours.items():
                 if k == "holidayHours":
                     continue
+                if type(v) == str:
+                    continue
 
                 day = k
                 interval = v.get("openIntervals")[0]
