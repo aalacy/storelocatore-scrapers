@@ -7,28 +7,22 @@
   scrape.py
   requirements.txt  # <- see section on generating this
   .gitignore
-  run_scraper.sh    # <- copy over from ./scripts/
-  validate.py       # <- copy over from ./scripts/
+  cp_scripts.sh     # <- run this script to copy scripts to current dir.
+  run_scraper.sh    # <- [copied]
+  validate.py       # <- [copied]
+  apify_to_csv.py   # <- [copied]
+  csv-differ.py     # <- [copied]
 ```
 
 ### When starting a work on a new crawler...
 1. Create the directory in the Jira ticket headline.
 2. Copy files over from the template to the crawler dir.
-3. Copy `./scripts/run_scraper.sh` and `./scripts/validate.py` to the crawler dir.
+3. Run `./cp_scripts.sh` to copy useful scripts to the current dir.
 
 ### Absolutely make sure that:
+1. You generate a `requirements.txt` file. See our [official guide](./reqfile.md).
 1. Your crawler works in Docker.
 2. To do that, you can run `./run_scraper.sh`
     * If you're running it in Windows, make sure to `./run_scraper.sh --windows`
 3. Make sure that `python3 validate.py` runs successfully, and write down all the exceptions in the `README.md` of your 
    crawler dir.
-
-### Generating the requirements.txt file
-Your `requirements.txt` file should include _all_ the dependencies the crawler will require, together with their exact 
-versions.
-
-An easy way to do that, is:
-1. Navigate to the new crawl folder.
-2. Execute `python3 -m venv .` to create a local virtual environment.
-3. Run `pip install sgcrawler` to get the latest supported versions of most libraries.
-4. Run `pip freeze`, and paste the output to `requirements.txt`. In bash: `pip freeze > requirements.txt`

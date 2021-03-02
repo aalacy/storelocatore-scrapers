@@ -15,10 +15,9 @@ like Linux or Mac OS_
 * `python3` - this will allow you to execute your code locally, for a quicker turnaround. Minimum version: `3.8.0`.
 * `libpostal` - this library will allow you to use address parsing in your crawls.
 * `chromedriver`, `geckodriver` - these will allow you to use a headless browser.
-* It's recommended (but not required) that you use a `venv` to manage your Python libraries.
-    * See [documentation and setup instructions](https://docs.python.org/3/library/venv.html).
-    * See [how to use it in our project](./cookbook/dir_skeleton.md) (section on generating requirements.txt).
-
+* `venv` - It's recommended (but not required) that you use a `venv` to manage your Python libraries. 
+    * See our [official virtual environment guide](./cookbook/reqfile.md) for installation and usage.
+    
 
 ## To run your scraper:
 ### In Docker
