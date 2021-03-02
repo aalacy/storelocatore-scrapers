@@ -39,7 +39,6 @@ def write_output(data):
 
 
 def fetch_data():
-    locs = []
     for x in range(1, 4):
         url = "https://holidayinnclub.com/api/resorts?page=" + str(x)
         r = session.get(url, headers=headers)
