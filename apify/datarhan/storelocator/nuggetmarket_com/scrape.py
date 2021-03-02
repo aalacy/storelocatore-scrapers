@@ -70,6 +70,7 @@ def fetch_data():
         country_code = "<MISSING>"
         poi_number = "<MISSING>"
         phone = loc_dom.xpath('//span[@itemprop="telephone"]/text()')
+        phone = phone[0] if phone else "<MISSING>"
         poi_type = "<MISSING>"
         if "Fork Lift" in poi_name:
             poi_type = "Fork Lift"
