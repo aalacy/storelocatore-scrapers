@@ -82,18 +82,53 @@ def fetch_data():
             location_name = "<MISSING>"
 
         street_address = stores[key]["st"]
-        city = stores[key]["ct"]
+        city = stores[key]["ct"].strip()
         state = ""
+        phone = ""
+        hours = []
         log.info(page_url)
         store_req = session.get(page_url, headers=headers)
         store_sel = lxml.html.fromstring(store_req.text)
-        temp_addrss = "".join(
-            store_sel.xpath('//div[@class="store_locator_single_address"]/text()')
-        ).strip()
-        try:
-            state = temp_addrss.split(",")[-1].strip().split(" ")[0].strip()
-        except:
-            pass
+        sections = store_sel.xpath(
+            '//div[@class="so-widget-sow-editor so-widget-sow-editor-base"]'
+        )
+        for sec in sections:
+            if (
+                "ADDRESS"
+                in "".join(sec.xpath('h3[@class="widget-title"]/text()')).strip()
+            ):
+
+                address = sec.xpath(".//p/strong/text()")
+                add_list = []
+                for add in address:
+                    if (
+                        len("".join(add).strip()) > 0
+                        and "Pump & Pantry" not in "".join(add).strip()
+                    ):
+                        add_list.append("".join(add).strip())
+
+                if len(street_address) <= 0:
+                    street_address = add_list[0].strip()
+
+                try:
+                    state = add_list[1].split(",")[-1].strip().split(" ")[0].strip()
+                except:
+                    pass
+
+            if (
+                "PHONE"
+                in "".join(sec.xpath('h3[@class="widget-title"]/text()')).strip()
+            ):
+
+                phone = "".join(sec.xpath(".//p/strong/text()")).strip()
+
+            if (
+                "HOURS"
+                in "".join(sec.xpath('h3[@class="widget-title"]/text()')).strip()
+            ):
+
+                hours = sec.xpath(".//p/strong/text()")
+
         zip = stores[key]["zp"]
 
         country_code = "<MISSING>"
@@ -115,13 +150,10 @@ def fetch_data():
         store_number = ""
         if "#" in location_name:
             store_number = location_name.split("#")[1].strip()
-        phone = "".join(
-            store_sel.xpath('//div[@class="store_locator_single_contact"]/a/text()')
-        ).strip()
         hours_list = []
-        hours = store_sel.xpath(
-            '//div[@class="store_locator_single_opening_hours"]/text()'
-        )
+        # hours = store_sel.xpath(
+        #     '//div[@class="store_locator_single_opening_hours"]/text()'
+        # )
         for hour in hours:
             if len("".join(hour).strip()) > 0:
                 hours_list.append("".join(hour).strip())
