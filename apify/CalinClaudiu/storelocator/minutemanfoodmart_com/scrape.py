@@ -1,6 +1,5 @@
 from sgscrape import simple_scraper_pipeline as sp
 from sglogging import sglog
-from sgscrape import sgpostal as parser
 
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as b4
@@ -44,30 +43,34 @@ def get_locations(url):
             k["raw"] = bs_data[2]
             k["phone"] = bs_data[-2]
 
-            nice = parser.parse_address_intl(k["raw"])
-            k["address"] = nice.street_address_1
-            if nice.street_address_2:
-                k["address"] = k["address"] + ", " + nice.street_address_2
+            nice = k["raw"].split(",")
+            addressData = []
+            for i in nice:
+                addressData.append(i.strip())
 
-            k["city"] = nice.city if nice.city else ""
-            k["state"] = nice.state if nice.state else ""
-            k["zip"] = nice.postcode if nice.postcode else ""
-            k["country"] = nice.country if nice.country else ""
+            k["address"] = addressData[0]
+
+            k["city"] = addressData[1]
+            k["state"] = addressData[2].split(" ")[0]
+            k["zip"] = addressData[2].split(" ")[1]
+            k["country"] = ""
         else:
             k["lat"] = js_data["lat"] if js_data["lat"] else ""
             k["lon"] = js_data["lng"] if js_data["lng"] else ""
             k["storeno"] = bs_data[0]
             k["raw"] = bs_data[1]
 
-            nice = parser.parse_address_intl(k["raw"])
-            k["address"] = nice.street_address_1
-            if nice.street_address_2:
-                k["address"] = k["address"] + ", " + nice.street_address_2
+            nice = k["raw"].split(",")
+            addressData = []
+            for i in nice:
+                addressData.append(i.strip())
 
-            k["city"] = nice.city if nice.city else ""
-            k["state"] = nice.state if nice.state else ""
-            k["zip"] = nice.postcode if nice.postcode else ""
-            k["country"] = nice.country if nice.country else ""
+            k["address"] = addressData[0]
+
+            k["city"] = addressData[1]
+            k["state"] = addressData[2].split(" ")[0]
+            k["zip"] = addressData[2].split(" ")[1]
+            k["country"] = ""
         yield k
 
 
@@ -93,7 +96,7 @@ def fix_comma(x):
 
 
 def scrape():
-    url = "minutemanfoodmart"
+    url = "https://www.minutemanfoodmart.com/"
     field_defs = sp.SimpleScraperPipeline.field_definitions(
         locator_domain=sp.ConstantField(url),
         page_url=sp.MissingField(),

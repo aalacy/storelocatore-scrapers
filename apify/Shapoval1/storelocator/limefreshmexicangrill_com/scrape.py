@@ -76,7 +76,13 @@ def fetch_data():
             )
             or "<MISSING>"
         )
-
+        if location_name.find("Orlando") != -1:
+            line = j.get("description")
+            line = html.fromstring(line)
+            add = line.xpath("//p[1]//text()")
+            city = "".join(add[1]).split(",")[0]
+            state = "".join(add[1]).split(",")[1].strip().split()[0]
+            hours_of_operation = " ".join(line.xpath("//p[2]//text()"))
         row = [
             locator_domain,
             page_url,
