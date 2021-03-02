@@ -83,6 +83,8 @@ def fetch_data():
             state = location["stateOrProvinceName"]
             zipp = location["postalCode"]
             country_code = location["country"]
+            if country_code == "GB":
+                state = "<MISSING>"
             latitude = str(location["latitude"])
             longitude = str(location["longitude"])
             phone = location["telephone"]
