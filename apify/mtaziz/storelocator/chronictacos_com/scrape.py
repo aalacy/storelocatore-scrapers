@@ -37,9 +37,6 @@ def write_output(data):
             writer.writerow(row)
 
 
-logger = SgLogSetup().get_logger('picturehouses_com')
-
-
 def write_output(data):
     with open("data.csv", mode="w") as output_file:
         writer = csv.writer(
@@ -86,14 +83,12 @@ def get_urls():
             us_r = session.get(url)
             us_tree = html.fromstring(us_r.text)
             us_location_detail_url = us_tree.xpath('//h3[contains(@class, "l-location")]/a/@href')
-            print(us_location_detail_url)
             for url_location in us_location_detail_url:
                 all_location_urls.append(url_location)
         elif "canada" in url:
             ca_r = session.get(url)
             ca_tree = html.fromstring(ca_r.text)
             ca_location_detail_url = ca_tree.xpath('//section[contains(@class, "menu-section")]//a/@href')
-            print(ca_location_detail_url)
             for url_location in ca_location_detail_url:
                 full_url = locator_domain + "/" + url_location
                 all_location_urls.append(full_url)
@@ -102,7 +97,6 @@ def get_urls():
             jp_r = session.get(url)
             jp_tree = html.fromstring(jp_r.text)
             jp_location_detail_url = jp_tree.xpath('//section[contains(@class, "menu-section")]//li[1]/a/@href')
-            print(jp_location_detail_url)
             for url_location in jp_location_detail_url:
                 full_url = locator_domain + "/" + url_location
                 all_location_urls.append(full_url)
@@ -119,7 +113,6 @@ def fetch_data():
     items = []
     for url_location in urls:
         r_location = session.get(url_location)
-        print(url_location)
         tree_obj = html.fromstring(r_location.text)
         json_raw_data = tree_obj.xpath('//script[@type="application/ld+json"]/text()')
         json_raw_data = json_raw_data[1]
@@ -173,13 +166,11 @@ def fetch_data():
         hoo2 = [" ".join(i.strip().split()) for i in hoo1 if i]
         hoo3 = "; ".join(hoo2)
         if hoo3:
-            print("hoo: ", hoo)
             hoo1 = [i.strip() for i in hoo.split('\n')]
             hoo2 = [" ".join(i.strip().split()) for i in hoo1 if i]
             hoo3 = "; ".join(hoo2)
             hours_of_operation = hoo3
         else:
-            print("hoo: empty ", hoo)
             hours_of_operation = '<MISSING>'
 
         row = [
