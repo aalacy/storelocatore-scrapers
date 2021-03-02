@@ -89,6 +89,8 @@ def fetch_data():
             else:
                 hours = hours + "; " + hrs
         if '"holidayHours":' in line and city != "" and city != "undefined":
+            if state == "Ontario" or state == "Manitoba":
+                country = "CA"
             yield [
                 website,
                 loc,
