@@ -65,9 +65,6 @@ def write_output(data):
 
 def fetch_data():
     addresses = []
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36"
-    }
 
     r = session.get("https://f45training.com/find-a-studio/")
     soup = BeautifulSoup(r.text, "html5lib")
@@ -107,7 +104,7 @@ def fetch_data():
                 pass
             try:
                 postal_code = "".join(address.split(",")[2]).strip()
-                zipp1 = re.search("\d{5}(-\d{4})?$", postal_code)
+                zipp1 = re.search(r"\d{5}(-\d{4})?$", postal_code)
                 zipp = zipp1.group(0)
             except:
                 pass
