@@ -1,6 +1,7 @@
 import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
+from sgscrape import sgpostal as parser
 
 session = SgRequests()
 
@@ -33,6 +34,14 @@ def write_output(data):
         # Body
         for row in data:
             writer.writerow(row)
+
+
+def parse_usa(x):
+    return parser.parse_address_usa(x)
+
+
+def parse_intl(x):
+    return parser.parse_address_intl(x)
 
 
 def fetch_data():
@@ -97,6 +106,26 @@ def fetch_data():
             country_code = loc.find("country").text
 
             page_url = "<MISSING>"
+            if not state:
+                if url == gb_url:
+                    state = "<MISSING>"
+            if any(not i for i in [street_address, city, state, zip_code]):
+                raw_addr = []
+                for i in [street_address, city, state, zip_code]:
+                    if i:
+                        raw_addr.append(i)
+                raw_addr = " ".join(raw_addr)
+                if url == us_url:
+                    parsed = parse_usa(raw_addr)
+                else:
+                    parsed = parse_intl(raw_addr)
+
+                street_address = parsed.street_address_1
+                if parsed.street_address_2:
+                    street_address = street_address + ", " + parsed.street_address_2
+                city = parsed.city if parsed.city else "<MISSING>"
+                state = parsed.state if parsed.state else "<MISSING>"
+                zip_code = parsed.postcode if parsed.postcode else "<MISSING>"
 
             store_data = [
                 locator_domain,
@@ -114,6 +143,11 @@ def fetch_data():
                 hours,
                 page_url,
             ]
+            z = 0
+            while z < len(store_data):
+                if not store_data[z]:
+                    store_data[z] = "<MISSING>"
+                z += 1
 
             all_store_data.append(store_data)
 

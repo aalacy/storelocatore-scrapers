@@ -47,7 +47,7 @@ def fetch_data():
         if "<loc>https://locations.53.com/" in line:
             lurl = line.split(">")[1].split("<")[0]
             count = lurl.count("/")
-            if count == 5:
+            if count >= 5:
                 locs.append(lurl)
     for loc in locs:
         logger.info(("Pulling Location %s..." % loc))
@@ -91,6 +91,14 @@ def fetch_data():
                 days = (
                     line2.split("data-days='")[1].split("}]' data")[0].split('"day":"')
                 )
+                if '"intervals"' not in line2.split("data-days='")[1].split("}]' data")[
+                    0
+                ].split('"day":"'):
+                    days = (
+                        line2.split("data-days='")[2]
+                        .split("}]' data")[0]
+                        .split('"day":"')
+                    )
                 for day in days:
                     if '"intervals"' in day:
                         if '"intervals":[]' in day:
@@ -114,6 +122,15 @@ def fetch_data():
         if phone == "":
             phone = "<MISSING>"
         store = "<MISSING>"
+        add = add.replace("[{: Closed;", "").strip()
+        if "effingham/200-east-jefferson-ave" in loc:
+            add = "200 East Jefferson Ave"
+            city = "Effingham"
+            state = "IL"
+            zc = "62401"
+            phone = "(217) 342-5700"
+            name = "Fifth Third Bank Effingham"
+            hours = "MONDAY: 900-1700; TUESDAY: 900-1700; WEDNESDAY: 900-1700; THURSDAY: 900-1700; FRIDAY: 900-1800; SATURDAY: 900-1200; SUNDAY: Closed"
         yield [
             website,
             loc,

@@ -85,15 +85,14 @@ def fetch_data():
                 street_address = store_json["address"]["streetAddress"]
                 city_state = store_json["address"]["addressLocality"]
                 city = ""
-                state = ""
+                state = "<MISSING>"
                 if "," in city_state:
                     city = city_state.split(",")[0].strip()
-                    state = city_state.split(",")[-1].strip()
                 else:
                     city = city_state
 
                 zip = store_json["address"]["postalCode"]
-                phone = store_json["telephone"]
+                phone = store_json["telephone"].replace("TEL", "").strip()
                 days = store_sel.xpath('//span[@class="day__label"]/text()')
                 time = store_sel.xpath('//span[@class="day__hours"]/text()')
                 hours_list = []

@@ -42,7 +42,7 @@ def write_output(data):
 
 def fetch_data():
     locs = []
-    url = "https://www.museums.co.uk/jm-ajax/get_listings/?lang=&search_keywords=&search_location=&search_categories%5B%5D=&filter_job_type%5B%5D=freelance&filter_job_type%5B%5D=full-time&filter_job_type%5B%5D=internship&filter_job_type%5B%5D=part-time&filter_job_type%5B%5D=temporary&filter_job_type%5B%5D=&per_page=100&orderby=featured&order=DESC&page=1&show_pagination=false&form_data=search_keywords%3D%26search_location%3D%26search_categories%255B%255D%3D%26search_region%3D%26filter_job_type%255B%255D%3Dfreelance%26filter_job_type%255B%255D%3Dfull-time%26filter_job_type%255B%255D%3Dinternship%26filter_job_type%255B%255D%3Dpart-time%26filter_job_type%255B%255D%3Dtemporary%26filter_job_type%255B%255D%3D"
+    url = "https://www.museums.co.uk/jm-ajax/get_listings/?lang=&search_keywords=&search_location=&search_categories%5B%5D=&filter_job_type%5B%5D=freelance&filter_job_type%5B%5D=full-time&filter_job_type%5B%5D=internship&filter_job_type%5B%5D=part-time&filter_job_type%5B%5D=temporary&filter_job_type%5B%5D=&per_page=2000&orderby=featured&order=DESC&page=1&show_pagination=false&form_data=search_keywords%3D%26search_location%3D%26search_categories%255B%255D%3D%26search_region%3D%26filter_job_type%255B%255D%3Dfreelance%26filter_job_type%255B%255D%3Dfull-time%26filter_job_type%255B%255D%3Dinternship%26filter_job_type%255B%255D%3Dpart-time%26filter_job_type%255B%255D%3Dtemporary%26filter_job_type%255B%255D%3D"
     r = session.get(url, headers=headers, timeout=90)
     website = "museums.co.uk"
     typ = "<MISSING>"

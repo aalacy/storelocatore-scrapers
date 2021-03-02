@@ -1,3 +1,5 @@
 sgscrape
 sglogging
-sgzip==0.0.55
+sgrequests
+bs4
+beautifulsoup4==4.7.1

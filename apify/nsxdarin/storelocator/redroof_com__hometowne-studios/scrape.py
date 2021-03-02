@@ -2,7 +2,6 @@ import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
 
-session = SgRequests()
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
@@ -40,6 +39,7 @@ def write_output(data):
 def fetch_data():
     locs = []
     url = "https://www.redroof.com/sitemap.xml"
+    session = SgRequests()
     r = session.get(url, headers=headers)
     website = "redroof.com/hometowne-studios crawler"
     typ = "<MISSING>"
@@ -63,6 +63,7 @@ def fetch_data():
         lat = ""
         lng = ""
         hours = "<MISSING>"
+        session = SgRequests()
         r2 = session.get(loc, headers=headers)
         for line2 in r2.iter_lines():
             line2 = str(line2.decode("utf-8"))

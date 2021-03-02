@@ -85,9 +85,13 @@ def fetch_data():
         location_type = "<MISSING>"
 
         street_address = store_json["street"]
+        if store_json["additional"] is not None and len(store_json["additional"]) > 0:
+            street_address = street_address + ", " + store_json["additional"]
 
         city = store_json["city"]
         state = store_json["region"]
+        if state == "Northern Ireland":
+            continue
         zip = store_json["postalCode"]
         country_code = store_json["country"]
         phone = store_json["telephone"]
