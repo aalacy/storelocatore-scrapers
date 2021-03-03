@@ -67,13 +67,21 @@ def fetch_data():
             soup1 = b4(test, "lxml")
             k = {}
             k["page_url"] = i
+            k["location_name"] = ""
 
             try:
                 k["location_name"] = soup.find(
                     "div", {"class": "wbp_wrapper"}
                 ).text.strip()
             except Exception:
-                k["location_name"] = "<MISSING>"
+                k["location_name"] = ""
+            if not k["location_name"]:
+                try:
+                    k["location_name"] = soup1.find(
+                        "div", {"class": "place-name"}
+                    ).text.strip()
+                except Exception:
+                    k["location_name"] = "<MISSING>"
 
             try:
                 raw_addr = soup1.find(
@@ -81,19 +89,37 @@ def fetch_data():
                 ).text
             except Exception:
                 raw_addr = "<MISSING>"
+
+            if all(
+                string in raw_addr
+                for string in ["852", "uebrada", "rujillo", "00976", "lto"]
+            ):
+                raw_addr = "Carr. 852 Km. 2.7 Bo. Quebrada Grande Trujillo Alto 00976 Puerto Rico"
             parsed = parser.parse_address_intl(raw_addr)
             k["street_address"] = parsed.street_address_1
             if parsed.street_address_2:
                 k["street_address"] = (
                     k["street_address"] + ", " + parsed.street_address_2
                 )
-            k["city"] = parsed.city
-            k["zipcode"] = parsed.postcode
-            try:
-                k["state"] = parsed.country.replace("Puerto Rico", "PR")
-            except Exception:
+            k["city"] = parsed.city if parsed.city else "<MISSING>"
+            k["zipcode"] = parsed.postcode if parsed.postcode else "<MISSING>"
+            k["state"] = ""
+            if parsed.state:
+                k["state"] = parsed.state
+            else:
+                if parsed.country:
+                    k["state"] = parsed.country.replace("Puerto Rico", "PR")
+            if not k["state"]:
                 k["state"] = "<MISSING>"
 
+            if all(
+                string in raw_addr
+                for string in ["Paseo del Caf", "Yauco", "00698", "Puerto Rico"]
+            ):
+                k["street_address"] = "Calle Comercio Paseo del Café #48"
+                k["city"] = "Yauco"
+                k["zipcode"] = "00698"
+                k["state"] = "PR"
             try:
                 info = soup.find("ul", {"class": "info-tiendas"})
             except Exception:
@@ -121,6 +147,29 @@ def fetch_data():
                 if len(addressno) > len(k["street_address"]):
                     k["street_address"] = addressno
             k["raw"] = addressno + ", " + raw_addr if addressno else raw_addr
+
+            try:
+                k["latitude"], k["longitude"] = (
+                    soup1.find("div", {"class": "google-maps-link"})
+                    .find("a")["href"]
+                    .split("ll=", 1)[1]
+                    .split("&", 1)[0]
+                    .split(",")
+                )
+            except Exception:
+                k["latitude"], k["longitude"] = ["<MISSING>", "<MISSING>"]
+
+            if k["latitude"] == "<MISSING>":
+                try:
+                    k["latitude"], k["longitude"] = (
+                        soup1.find("a", {"jstcache": "46"})["href"]
+                        .split("ll=", 1)[1]
+                        .split("&", 1)[0]
+                        .split(",")
+                    )
+                except Exception:
+                    k["latitude"], k["longitude"] = ["<MISSING>", "<MISSING>"]
+
             yield k
 
     logzilla.info(f"Finished grabbing data!!")  # noqa
@@ -132,8 +181,8 @@ def scrape():
         locator_domain=sp.ConstantField(url),
         page_url=sp.MappingField(mapping=["page_url"]),
         location_name=sp.MappingField(mapping=["location_name"]),
-        latitude=sp.MissingField(),
-        longitude=sp.MissingField(),
+        latitude=sp.MappingField(mapping=["latitude"]),
+        longitude=sp.MappingField(mapping=["longitude"]),
         street_address=sp.MappingField(
             mapping=["street_address"], part_of_record_identity=True
         ),

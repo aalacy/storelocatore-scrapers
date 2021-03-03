@@ -42,6 +42,7 @@ def get_hours(page_url):
     pp = tree.xpath(
         "//h2[contains(text(),'Lobby Hours')]/following-sibling::p[1]/text()|.//p[contains(text(), 'Lobby Hours')]/text()"
     )
+
     pp = list(filter(None, [p.strip() for p in pp]))
     if not pp:
         pp = tree.xpath("//div[@id='hours']/p[1]/text()")
