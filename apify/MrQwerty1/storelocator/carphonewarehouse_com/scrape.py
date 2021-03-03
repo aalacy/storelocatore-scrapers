@@ -63,9 +63,15 @@ def fetch_data():
         postal = adr.postcode or "<MISSING>"
         if len(street_address) < 10:
             street_address = line.split(",")[0].strip() or "<MISSING>"
+
+        location_name = j.get("branch_name")
+        if city == "<MISSING>":
+            if location_name[0].isdigit() or location_name[0] == "(":
+                city = " ".join(location_name.split()[1:])
+            else:
+                city = location_name
         country_code = "GB"
         store_number = j.get("branch_id") or "<MISSING>"
-        location_name = j.get("branch_name")
         phone = j.get("telephone") or "<MISSING>"
         if not phone[0].isdigit():
             phone = "<MISSING>"
