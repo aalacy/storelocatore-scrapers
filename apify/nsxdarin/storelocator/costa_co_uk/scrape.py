@@ -3,10 +3,7 @@ from sgrequests import SgRequests
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 import json
 from sglogging import SgLogSetup
-from sgscrape.sgpostal import (
-    International_Parser,
-    parse_address,
-)
+from sgscrape.sgpostal import parse_address_intl
 
 logger = SgLogSetup().get_logger("costa_co_uk")
 
@@ -71,16 +68,21 @@ def fetch_data():
                 + item["storeAddress"]["addressLine3"]
             )
             rawadd = rawadd.strip()
-            addr = parse_address(rawadd, International_Parser())
+            addr = parse_address_intl(rawadd)
             city = addr.city
             zc = addr.postcode
             add = addr.street_address_1
+            zc = item["storeAddress"]["postCode"]
+            city = item["storeAddress"]["city"]
             state = "<MISSING>"
             name = item["storeNameExternal"]
             if name == "":
                 name = typ
-            if "London" in city:
-                city = "London"
+            try:
+                if "London" in city:
+                    city = "London"
+            except:
+                pass
             country = "GB"
             lng = item["longitude"]
             website = "costa.co.uk"
@@ -139,7 +141,7 @@ def fetch_data():
                 phone = "<MISSING>"
             if add == "":
                 add = "<MISSING>"
-            if city == "":
+            if city == "" or city is None:
                 city = "<MISSING>"
             loc = "<MISSING>"
             if city == "<MISSING>":
@@ -164,7 +166,11 @@ def fetch_data():
                 city = "Hempstead Valley"
             if "Belfast" in add:
                 city = "Belfast"
-            addinfo = add + city + zc
+            if add is None:
+                add = "<MISSING>"
+            if zc is None:
+                zc = "<MISSING>"
+            addinfo = rawadd
             if "Mon: -; Tue: -; Wed: -; Thu: -; Fri: -; Sat: -; Sun: -" in hours:
                 hours = "<MISSING>"
             if store not in ids and addinfo not in adds:
@@ -202,7 +208,19 @@ def fetch_data():
             for item in json.loads(r.content)["stores"]:
                 store = item["storeNo8Digit"]
                 typ = item["storeType"]
-                phone = item["telephone"]
+                rawadd = item["storeAddress"]["addressLine1"]
+                rawadd = (
+                    rawadd
+                    + " "
+                    + item["storeAddress"]["addressLine2"]
+                    + " "
+                    + item["storeAddress"]["addressLine3"]
+                )
+                rawadd = rawadd.strip()
+                addr = parse_address_intl(rawadd)
+                city = addr.city
+                zc = addr.postcode
+                add = addr.street_address_1
                 add = item["storeAddress"]["addressLine1"]
                 add = (
                     add
@@ -303,7 +321,11 @@ def fetch_data():
                     city = "Hempstead Valley"
                 if "Belfast" in add:
                     city = "Belfast"
-                addinfo = add + city + zc
+                if add is None:
+                    add = "<MISSING>"
+                if zc is None:
+                    zc = "<MISSING>"
+                addinfo = rawadd
                 if "Mon: -; Tue: -; Wed: -; Thu: -; Fri: -; Sat: -; Sun: -" in hours:
                     hours = "<MISSING>"
                 if store not in ids and addinfo not in adds:

@@ -100,6 +100,16 @@ def fetch_data():
                 hours = "<MISSING>"
             hours = hours.replace("; Dining Room Open", "").replace("-->", "")
             purl = "<MISSING>"
+            hours = (
+                hours.replace("&#8211;", "-").replace("<br/>", "").replace("<br />", "")
+            )
+            if "phone." in hours:
+                hours = hours.split("phone.")[1].strip()
+            if "Annapolis" in city:
+                lat = "38.99067"
+                lng = "-76.546898"
+            if hours == "":
+                hours = "<MISSING>"
             yield [
                 website,
                 purl,

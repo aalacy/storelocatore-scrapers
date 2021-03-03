@@ -5,7 +5,7 @@ from lxml import etree
 
 from sgrequests import SgRequests
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
-from sgscrape.sgpostal import International_Parser, parse_address
+from sgscrape.sgpostal import parse_address_intl
 
 
 def write_output(data):
@@ -66,6 +66,8 @@ def fetch_data():
             "x-requested-with": "XMLHttpRequest",
         }
         response = session.post(start_url, data=formdata, headers=headers)
+        if response.status_code != 200:
+            continue
         data = json.loads(response.text)
 
         for poi in data:
@@ -80,7 +82,7 @@ def fetch_data():
             location_name = location_name if location_name else "<MISSING>"
             raw_address = loc_dom.xpath('//div[@class="address"]/text()')
             raw_address = [elem.strip() for elem in raw_address if elem.strip()]
-            addr = parse_address(" ".join(raw_address), International_Parser())
+            addr = parse_address_intl(" ".join(raw_address))
             if addr.street_address_2:
                 street_address = f"{addr.street_address_2} {addr.street_address_1}"
             else:
@@ -108,7 +110,9 @@ def fetch_data():
                 longitude = geo[1]
             hoo = loc_dom.xpath('//div[@class="opening_times"]//text()')
             hoo = [elem.strip() for elem in hoo if elem.strip()]
-            hours_of_operation = " ".join(hoo[2:]) if hoo else "<MISSING>"
+            hours_of_operation = (
+                " ".join(hoo[2:]).split(" Call ")[0] if hoo else "<MISSING>"
+            )
 
             item = [
                 DOMAIN,

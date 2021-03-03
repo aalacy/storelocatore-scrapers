@@ -52,6 +52,8 @@ def fetch_data():
         street_address = store["street"]
         zip = store["postalcode"]
         country_code = store["country"]
+        if country_code != "GB":
+            continue
         phone = store["phoneNumber"]
         location_type = "<MISSING>"
         latitude = store["latitude"]

@@ -1,4 +1,4 @@
-bs4
-sgselenium
-sglogging
-sgzip
+beautifulsoup4==4.9.3
+sgselenium==0.0.15
+sglogging==0.0.4
+sgzip==0.2.1
