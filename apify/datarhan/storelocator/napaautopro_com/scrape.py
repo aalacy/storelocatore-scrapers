@@ -72,9 +72,9 @@ def fetch_data():
         )[0]
         poi = json.loads(poi)
 
-        location_name = poi["name"]
-        street_address = poi["address"]["streetAddress"]
-        city = poi["address"]["addressLocality"]
+        location_name = poi["name"].replace("&#039;", "'")
+        street_address = poi["address"]["streetAddress"].replace("&#039;", "'")
+        city = poi["address"]["addressLocality"].replace("&#039;", "'")
         state = poi["address"]["addressRegion"]
         zip_code = poi["address"]["postalCode"]
         zip_code = zip_code if zip_code else "<MISSING>"
@@ -86,6 +86,10 @@ def fetch_data():
         latitude = poi["geo"]["latitude"]
         longitude = poi["geo"]["longitude"]
         hours_of_operation = poi["openingHours"]
+        if "Sa " not in hours_of_operation:
+            hours_of_operation += " Sa Closed"
+        if "Su " not in hours_of_operation:
+            hours_of_operation += " Su Closed"
 
         item = [
             DOMAIN,
