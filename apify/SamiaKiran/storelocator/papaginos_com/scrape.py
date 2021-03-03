@@ -58,7 +58,7 @@ def fetch_data():
     for loc in loclist:
         title = loc["name"]
         store = loc["number"]
-        sublink = "https://www.papaginos.com/" + str(store)
+        sublink = "https://locations.papaginos.com/" + str(store)
 
         lat = loc["latitude"]
         longt = loc["longitude"]
@@ -94,7 +94,7 @@ def fetch_data():
             store_type = "<MISSING>"
         hours_of_operation = ""
         for k in loc["storehours"]:
-            hours_of_operation = hours_of_operation + k["days"] + " " + k["times"]
+            hours_of_operation = hours_of_operation + k["days"] + " " + k["times"] + " "
         data.append(
             [
                 "https://www.papaginos.com",

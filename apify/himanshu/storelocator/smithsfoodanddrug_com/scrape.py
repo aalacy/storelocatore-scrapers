@@ -88,15 +88,7 @@ def fetch_data():
         location_type = "<MISSING>"
         lat = data["geo"]["latitude"]
         lng = data["geo"]["longitude"]
-        f = data["department"]
-        data_h = ""
-        for h in f:
-            if "openingHours" in h:
-                data_h = " ".join(h["openingHours"])
-        if data_h:
-            hours = (" ".join(data["openingHours"])) + ", Pharmacy hours : " + data_h
-        else:
-            hours = " ".join(data["openingHours"])
+        hours = " ".join(data["openingHours"])
         store = []
         store.append(base_url)
         store.append(location_name)
@@ -113,9 +105,9 @@ def fetch_data():
         store.append(
             hours.replace("Su-Sa", "Sun - Sat :")
             .replace("-00:00", " - Midnight")
-            .replace("Su", "Sun")
+            .replace("Su ", "Sun")
             .replace("Mo-Fr", "Mon - Fri")
-            .replace("Sa", "Sat")
+            .replace("Sa ", "Sat")
         )
         store.append(page_url)
         store = [str(x).strip() if x else "<MISSING>" for x in store]

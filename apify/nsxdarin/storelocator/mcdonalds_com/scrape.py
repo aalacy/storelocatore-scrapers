@@ -46,7 +46,7 @@ def fetch_data():
         "Referer": "https://www.mcdonalds.com/us/en-us/restaurant-locator.html",
     }
 
-    r = session.get(url, headers=headers, timeout=90, stream=True)
+    r = session.get(url, headers=headers, timeout=90, stream=True, verify=False)
     array = json.loads(r.content)
 
     country = "US"
@@ -98,22 +98,23 @@ def fetch_data():
             )
         except:
             hours = "<MISSING>"
-        yield [
-            website,
-            page_url,
-            name,
-            add,
-            city,
-            state,
-            zc,
-            country,
-            store,
-            phone,
-            typ,
-            lat,
-            lng,
-            hours,
-        ]
+        if "Maharastra" not in state:
+            yield [
+                website,
+                page_url,
+                name,
+                add,
+                city,
+                state,
+                zc,
+                country,
+                store,
+                phone,
+                typ,
+                lat,
+                lng,
+                hours,
+            ]
 
 
 def scrape():
