@@ -1,16 +1,18 @@
 import csv
 import sys
 
-if __name__=="__main__":
+if __name__ == "__main__":
     if len(sys.argv) < 4:
         print("CsvDiffer")
-        print("Usage: python csv-differ.py new-data-file.csv old-data-file.csv <csv-identity-field> [--verbose]")
+        print(
+            "Usage: python csv-differ.py new-data-file.csv old-data-file.csv <csv-identity-field> [--verbose]"
+        )
         exit(1)
 
     file_new_path = sys.argv[1]
     file_old_path = sys.argv[2]
     csv_id_field = sys.argv[3]
-    verbose = True if len(sys.argv) == 5 and sys.argv[4] == '--verbose' else False
+    verbose = True if len(sys.argv) == 5 and sys.argv[4] == "--verbose" else False
 
     with open(file_new_path) as file_new:
         with open(file_old_path) as file_old:
@@ -36,7 +38,9 @@ if __name__=="__main__":
 
             print(divider)
             print("Summary:")
-            print(f"Common: {len(common)} | Missing in new: {len(not_in_new)} | Missing in old: {len(not_in_old)} | {file_new_path} records: {new_lines} | {file_old_path} records: {old_lines}")
+            print(
+                f"Common: {len(common)} | Missing in new: {len(not_in_new)} | Missing in old: {len(not_in_old)} | {file_new_path} records: {new_lines} | {file_old_path} records: {old_lines}"
+            )
 
             if verbose:
 
