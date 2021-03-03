@@ -59,7 +59,7 @@ def write_output(data):
 
 def get_store_data(loc):
     pattern = re.compile(r"\s\s+")
-    title = loc.find("div", {"class", "card-text"}).find("h3").text
+    title = loc.find("div", {"class", "card-text"}).find("h3").text.replace("–", "")
     link = loc.find("div", {"class", "author-name text-center"}).find("a")["href"]
     if link in unique_locations:
         return None
