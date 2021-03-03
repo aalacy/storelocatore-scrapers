@@ -49,9 +49,9 @@ def process_record(raw_results_from_one_zipcode):
         if not poi.get("store_url"):
             continue
         page_url = "https://www.regions.com" + poi["store_url"]
-        location_name = poi["title"]
-        street_address = poi["address"].split("<br />")[0]
-        city = poi["address"].split("<br />")[-1].split(",")[0]
+        location_name = poi["title"].replace("&#39;", "'")
+        street_address = poi["address"].split("<br />")[0].replace("&#39;", "'")
+        city = poi["address"].split("<br />")[-1].split(",")[0].replace("&#39;", "'")
         state = poi["address"].split("<br />")[-1].split(",")[-1].split()[0]
         zip_postal = poi["address"].split("<br />")[-1].split(",")[-1].split()[-1]
         country_code = "US"
@@ -106,7 +106,7 @@ if __name__ == "__main__":
             ),
             fetch_results_for_rec=fetch_records_for,
             processing_function=process_record,
-            max_threads=16,  # tweak to see what's fastest
+            max_threads=32,  # tweak to see what's fastest
         )
         for rec in results:
             writer.write_row(rec)

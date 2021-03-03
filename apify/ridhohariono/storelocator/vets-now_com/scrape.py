@@ -66,13 +66,6 @@ def parse_json(soup):
     return data
 
 
-def parse_hours(table):
-    if not table:
-        return "<MISSING>"
-    hoo = table.get_text(strip=True, separator=",").replace("day,", "day: ")
-    return hoo
-
-
 def fetch_store_urls():
     log.info("Fetching store URL")
     soup = pull_content(LOCATION_URL)
@@ -92,7 +85,7 @@ def fetch_data():
     locations = []
     for page_url in store_urls:
         soup = pull_content(page_url)
-        info = parse_json(soup)["@graph"][4]
+        info = parse_json(soup)["@graph"][5]
         locator_domain = DOMAIN
         location_name = handle_missing(info["name"])
         address = info["address"].replace(",,", ",")
@@ -100,16 +93,26 @@ def fetch_data():
         address = re.sub(r",$", "", address.strip()).split(",")
         del address[0]
         if len(address) > 2:
-            street_address = ", ".join(address[:-2]).strip()
-            city = address[-2].strip()
-            zip_code = address[-1]
+            if len(address) > 4:
+                street_address = ", ".join(address[:-3]).strip()
+                city = address[-3].strip()
+            else:
+                street_address = ", ".join(address[:-2]).strip()
+                city = address[-2].strip()
+            if "United Kingdom" in city:
+                city = location_name.replace("Vets Now ", "").strip()
         else:
             street_address = address[0].strip()
             city = re.sub(
                 r"[A-Z]{1,2}[0-9R][0-9A-Z]? [0-9][A-Z]{2}", "", address[1]
             ).strip()
-            zip_code = address[1].replace(city, "").strip()
         state = "<MISSING>"
+        zip_code = handle_missing(
+            re.findall(
+                r"[A-Z]{1,2}[0-9A-Z]{1,2}[0-9A-Z]? [0-9][A-Z]{2}",
+                ",".join(address).strip(),
+            )[0]
+        )
         country_code = "GB"
         store_number = "<MISSING>"
         phone = handle_missing(info["telephone"])

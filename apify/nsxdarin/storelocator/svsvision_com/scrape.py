@@ -160,6 +160,31 @@ def fetch_data():
                         lng,
                         hours,
                     ]
+    name = "Troy"
+    add = "6828 Rochester Rd."
+    city = "Troy"
+    state = "MI"
+    zc = "48085"
+    phone = "248-710-1100"
+    lat = "<MISSING>"
+    lng = "<MISSING>"
+    hours = "Monday: 9:00-8:00; Tuesday: 9:00-6:00; Wednesday: 9:00-6:00; Thursday: 9:00-6:00; Friday: 9:00-6:00; Saturday: 9:00-6:00"
+    yield [
+        website,
+        loc,
+        name,
+        add,
+        city,
+        state,
+        zc,
+        country,
+        store,
+        phone,
+        typ,
+        lat,
+        lng,
+        hours,
+    ]
 
 
 def scrape():

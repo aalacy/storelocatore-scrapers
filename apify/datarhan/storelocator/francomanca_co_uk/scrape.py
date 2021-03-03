@@ -65,6 +65,8 @@ def fetch_data():
         address = parse_address_intl(raw_address)
         street_address = address.street_address_1
         street_address = street_address if street_address else "<MISSING>"
+        if "Italy" in street_address:
+            continue
         city = address.city
         city = city if city else "<MISSING>"
         state = address.state
@@ -81,7 +83,9 @@ def fetch_data():
         phone = loc_dom.xpath('//a[@class="tel"]/text()')
         phone = phone[0] if phone else "<MISSING>"
         location_type = "<MISSING>"
-        hours_of_operation = "<MISSING>"
+        hoo = loc_dom.xpath('//div[@class="opening_hours"]/text()')
+        hoo = [elem.strip() for elem in hoo if elem.strip()]
+        hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
 
         item = [
             DOMAIN,
