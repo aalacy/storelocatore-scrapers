@@ -89,7 +89,7 @@ def fetch_data():
             street_address,
             city,
             state,
-            '<MISSING>',#zip_code,
+            "<MISSING>",  # zip_code,
             country_code,
             store_number,
             phone,
