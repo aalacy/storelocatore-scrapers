@@ -69,6 +69,8 @@ def fetch_data():
         phone = loc_dom.xpath('//div[@class="branch-telephone"]/a/text()')
         phone = phone[0] if phone else "<MISSING>"
         location_type = "<MISSING>"
+        if loc_dom.xpath('//h1[contains(text(), "Coming Soon")]/text()'):
+            location_type = "coming soon"
         geo = re.findall(r"LatLng\((.+)\);", loc_response.text)[0].split(",")
         latitude = geo[0].strip() if geo[0].strip() else "<MISSING>"
         longitude = geo[1].strip() if geo[1].strip() else "<MISSING>"
