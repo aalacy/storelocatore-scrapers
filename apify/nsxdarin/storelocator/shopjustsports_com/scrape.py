@@ -65,7 +65,7 @@ def fetch_data():
     for loc in locs:
         locurl = loc.split("|")[0]
         logger.info(locurl)
-        lurl = "<MISSING>"
+        lurl = "https://www.shopjustsports.com/apps/store-locator"
         name = ""
         add = ""
         city = ""

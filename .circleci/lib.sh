@@ -127,7 +127,7 @@ check_dependencies() {
 	updated_crawler="$(get_updated_crawler)"
 	if ! is_node_scraper "$updated_crawler"; then
 		requirements_path="${updated_crawler}/requirements.txt"
-		unpinned_dependencies=$(cat "$requirements_path" | grep -v '==' || true)
+		unpinned_dependencies=$(cat "$requirements_path" | awk NF | grep -v '==' || true)
 		if [ ! -z "$unpinned_dependencies" ]; then
 			formatted_unpinned_dependencies="${unpinned_dependencies//$'\n'/', '}"
 			echo "FAIL: found unpinned dependencies in requirements.txt: $formatted_unpinned_dependencies"

@@ -54,7 +54,11 @@ def fetch_data():
         data = r.json()["data"]
         for store_data in data:
             store = []
-            store.append("https://www.lexus.com")
+            store.append(
+                "https://www.lexus.com/dealers/{}-{}".format(
+                    store_data["id"], store_data["dealerName"].replace(" ", "-").lower()
+                )
+            )
             store.append(store_data["dealerName"])
             street_adr = store_data["dealerAddress"]["address1"]
             if store_data["dealerAddress"]["address2"]:

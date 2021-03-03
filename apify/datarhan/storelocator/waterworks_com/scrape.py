@@ -1,5 +1,6 @@
 import csv
 import json
+from lxml import etree
 
 from sgrequests import SgRequests
 
@@ -59,6 +60,9 @@ def fetch_data():
         store_url = "https://www.waterworks.com/us_en/{}".format(
             poi["rewrite_request_path"]
         )
+        loc_response = session.get(store_url)
+        loc_dom = etree.HTML(loc_response.text)
+
         location_name = poi["store_name"]
         street_address = poi["address"]
         city = poi["city"]
@@ -75,7 +79,11 @@ def fetch_data():
         location_type = "<MISSING>"
         latitude = poi["latitude"]
         longitude = poi["longitude"]
-        hours_of_operation = "{} {}".format(poi["businessdays"], poi["weekendhours"])
+        hoo = loc_dom.xpath(
+            '//dt[contains(text(), "Hours")]/following-sibling::dd//text()'
+        )
+        hoo = [elem.strip() for elem in hoo if elem.strip()]
+        hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
 
         item = [
             DOMAIN,

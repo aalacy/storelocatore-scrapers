@@ -1,4 +1,5 @@
 import csv
+import json
 
 from bs4 import BeautifulSoup
 
@@ -113,8 +114,17 @@ def fetch_data():
 
         phone_number = base.find(class_="phone-number").text.strip()
 
-        lat = "<MISSING>"
-        longit = "<MISSING>"
+        all_scripts = base.find_all("script")
+        for script in all_scripts:
+            if "latitude" in str(script):
+                break
+        try:
+            store = json.loads(str(script).split(">")[1].split("<")[0])
+            lat = store["geo"]["latitude"]
+            longit = store["geo"]["longitude"]
+        except:
+            lat = "<MISSING>"
+            longit = "<MISSING>"
         location_type = "<MISSING>"
         store_number = "<MISSING>"
         page_url = link

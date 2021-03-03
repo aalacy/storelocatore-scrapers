@@ -97,7 +97,26 @@ def fetch_data():
             city = "<MISSING>"
         if zc == "" or zc is None:
             zc = "<MISSING>"
-        if ", Ireland" not in rawadd:
+        name = name.replace("&amp;#039;", "'").replace("&amp;", "&")
+        add = add.replace("&amp;#039;", "'").replace("&amp;", "&")
+        if city == "Keynes":
+            city = "Milton Keynes"
+        if city == "<MISSING>" and "Headquarters" not in loc:
+            city = loc
+        if "(" in city:
+            city = city.split("(")[0].strip()
+        if "station/alderney-1/" in loc:
+            add = "St Martins"
+        if "station/south-elmsall" in loc:
+            add = "Barnsley Road"
+        if "headquarters-12" in loc:
+            add = "Barmston Mere"
+        if ", Ireland" not in rawadd and ", Spain" not in rawadd:
+            if add == "<MISSING>":
+                try:
+                    add = rawadd.split(",")[0].strip()
+                except:
+                    pass
             yield [
                 website,
                 loc,

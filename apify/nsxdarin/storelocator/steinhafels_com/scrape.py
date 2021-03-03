@@ -61,13 +61,13 @@ def fetch_data():
             name = name + " Mattress Store"
         if item["IsFurnitureStore"] is True:
             name = name + " Furniture Store"
-        hours = "Sun: " + item["SundayHours"]
-        hours = hours + "; Mon: " + item["MondayHours"]
-        hours = hours + "; Tue: " + item["TuesdayHours"]
-        hours = hours + "; Wed: " + item["WednesdayHours"]
-        hours = hours + "; Thu: " + item["ThursdayHours"]
-        hours = hours + "; Fri: " + item["FridayHours"]
-        hours = hours + "; Sat: " + item["SaturdayHours"]
+        hours = item["SundayHours"]
+        hours = hours + "; " + item["MondayHours"]
+        hours = hours + "; " + item["TuesdayHours"]
+        hours = hours + "; " + item["WednesdayHours"]
+        hours = hours + "; " + item["ThursdayHours"]
+        hours = hours + "; " + item["FridayHours"]
+        hours = hours + "; " + item["SaturdayHours"]
         yield [
             website,
             loc,
