@@ -2,6 +2,7 @@ import csv
 import json
 
 from sgrequests import SgRequests
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 
 
 def write_output(data):
@@ -50,11 +51,62 @@ def fetch_data():
         "x-requested-with": "XMLHttpRequest",
     }
 
-    body = "division%5B%5D=1&productline%5B%5D=1&productline%5B%5D=2&productline%5B%5D=3&productline%5B%5D=4&division%5B%5D=2&productline%5B%5D=5&division%5B%5D=5&productline%5B%5D=18&productline%5B%5D=19&productline%5B%5D=25&division%5B%5D=3&productline%5B%5D=10&productline%5B%5D=14&productline%5B%5D=13&productline%5B%5D=12&geocodeResults=%5B%7B%22address_components%22%3A%5B%7B%22long_name%22%3A%22Manchester%22%2C%22short_name%22%3A%22Manchester%22%2C%22types%22%3A%5B%22locality%22%2C%22political%22%5D%7D%2C%7B%22long_name%22%3A%22Manchester%22%2C%22short_name%22%3A%22Manchester%22%2C%22types%22%3A%5B%22postal_town%22%5D%7D%2C%7B%22long_name%22%3A%22Greater+Manchester%22%2C%22short_name%22%3A%22Greater+Manchester%22%2C%22types%22%3A%5B%22administrative_area_level_2%22%2C%22political%22%5D%7D%2C%7B%22long_name%22%3A%22England%22%2C%22short_name%22%3A%22England%22%2C%22types%22%3A%5B%22administrative_area_level_1%22%2C%22political%22%5D%7D%2C%7B%22long_name%22%3A%22United+Kingdom%22%2C%22short_name%22%3A%22GB%22%2C%22types%22%3A%5B%22country%22%2C%22political%22%5D%7D%5D%2C%22formatted_address%22%3A%22Manchester%2C+UK%22%2C%22geometry%22%3A%7B%22bounds%22%3A%7B%22south%22%3A53.39990299999999%2C%22west%22%3A-2.3000969%2C%22north%22%3A53.5445879%2C%22east%22%3A-2.1468288%7D%2C%22location%22%3A%7B%22lat%22%3A53.4807593%2C%22lng%22%3A-2.2426305%7D%2C%22location_type%22%3A%22APPROXIMATE%22%2C%22viewport%22%3A%7B%22south%22%3A53.39990299999999%2C%22west%22%3A-2.3000969%2C%22north%22%3A53.5445879%2C%22east%22%3A-2.1468288%7D%7D%2C%22place_id%22%3A%22ChIJ2_UmUkxNekgRqmv-BDgUvtk%22%2C%22types%22%3A%5B%22locality%22%2C%22political%22%5D%7D%5D&radius=147.95"
-    response = session.post(start_url, data=body, headers=headers)
-    data = json.loads(response.text)
+    all_locations = []
+    all_coordinates = DynamicGeoSearch(
+        country_codes=[SearchableCountries.BRITAIN],
+        max_radius_miles=10,
+        max_search_results=None,
+    )
+    for lat, lng in all_coordinates:
+        radius = 60.7
+        lat_min = float(lat) - (0.009 * radius)
+        lat_max = float(lat) + (0.009 * radius)
+        lng_min = float(lng) - (0.009 * radius)
+        lng_max = float(lng) + (0.009 * radius)
+        lat_min = str(lat_min)
+        lat_max = str(lat_max)
+        lng_min = str(lng_min)
+        lng_max = str(lng_max)
 
-    for poi in data["stores"]:
+        formdata = {
+            str("division[]"): "1",
+            str("productline[]"): "1",
+            str("productline[]"): "2",
+            str("productline[]"): "3",
+            str("productline[]"): "4",
+            str("division[]"): "2",
+            str("productline[]"): "5",
+            str("productline[]"): "6",
+            str("division[]"): "5",
+            str("productline[]"): "18",
+            str("productline[]"): "19",
+            str("productline[]"): "25",
+            str("division[]"): "3",
+            str("productline[]"): "10",
+            str("productline[]"): "14",
+            str("productline[]"): "13",
+            str("productline[]"): "12",
+            "chanel-only": "1",
+            "geocodeResults": '[{"address_components":[],"formatted_address":"","geometry":{"bounds":{"south":%s,"west":%s,"north":%s,"east":%s},"location":{"lat":%s,"lng":%s},"location_type":"GEOMETRIC_CENTER","viewport":{"south":%s,"west":%s,"north":%s,"east":%s}},"place_id":"","types":["route"]}]'
+            % (
+                lat_min,
+                lng_min,
+                lat_max,
+                lng_max,
+                lat,
+                lng,
+                lat_min,
+                lng_min,
+                lat_max,
+                lng_max,
+            ),
+            "radius": "60.7",
+        }
+        response = session.post(start_url, data=formdata, headers=headers)
+        data = json.loads(response.text)
+        all_locations += data["stores"]
+
+    for poi in all_locations:
         store_url = "<MISSING>"
         location_name = poi["translations"][0]["name"]
         location_name = location_name if location_name else "<MISSING>"

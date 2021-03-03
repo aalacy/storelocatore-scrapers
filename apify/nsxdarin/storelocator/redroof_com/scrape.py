@@ -89,6 +89,9 @@ def fetch_data():
         intl = ["OT", "FU", "RJ", "SP"]
         if "1051 Tiffany" in add:
             state = "OH"
+        if "," in city:
+            city = city.split(",")[0].strip()
+        city = city.replace(" area", "")
         if state not in intl and "troy/11191" not in loc:
             yield [
                 website,
