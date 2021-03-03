@@ -1,8 +1,8 @@
-import csv
-from lxml import html
 from sgrequests import SgRequests
-import json
 from sglogging import SgLogSetup
+import csv
+import json
+from lxml import html
 
 logger = SgLogSetup().get_logger("picturehouses_com")
 
@@ -45,7 +45,9 @@ def get_urls_from_page_src():
     us_locations_url = "https://www.chronictacos.com/us-locations"
     ca_locations_url = "https://www.chronictacos.com/canada-locations"
     jp_locations_url = "https://www.chronictacos.com/japan-locations"
-    list_of_countries_urls = [us_locations_url, ca_locations_url, jp_locations_url]
+    list_of_countries_urls = [us_locations_url,
+                              ca_locations_url,
+                              jp_locations_url]
     all_location_urls = []
     for url in list_of_countries_urls:
         if "us" in url:
@@ -87,7 +89,9 @@ def get_data_from_page_src():
     for page_url_from_page_src in page_urls_from_page_src:
         r_location = session.get(page_url_from_page_src)
         tree_obj = html.fromstring(r_location.text)
-        json_raw_data = tree_obj.xpath('//script[@type="application/ld+json"]/text()')
+        json_raw_data = tree_obj.xpath(
+            '//script[@type="application/ld+json"]/text()'
+        )
         json_raw_data = json_raw_data[1]
         json_data = json.loads(json_raw_data, strict=False)
         locator_domain = locator_domain_url
@@ -196,7 +200,9 @@ def fetch_data():
     for page_url_from_api_res in page_urls_from_api_res:
         r_location = session.get(page_url_from_api_res)
         tree_obj = html.fromstring(r_location.text)
-        json_raw_data = tree_obj.xpath('//script[@type="application/ld+json"]/text()')
+        json_raw_data = tree_obj.xpath(
+            '//script[@type="application/ld+json"]/text()'
+        )
         json_raw_data = json_raw_data[1]
         json_data = json.loads(json_raw_data, strict=False)
         locator_domain = locator_domain_url
@@ -259,8 +265,8 @@ def fetch_data():
             "<MISSING>" in hours_of_operation
             and "<MISSING>" in street_address
             and "<MISSING>" in phone
-            and not "<MISSING>" in longitude
-            and not "<MISSING>" in latitude
+            and "<MISSING>" not in longitude
+            and "<MISSING>" not in latitude
         ):
             for idx, sd in enumerate(supporting_data):
                 if city in sd and state in sd:
@@ -268,7 +274,9 @@ def fetch_data():
                     r_cs = session.get(url_coming_soon)
                     tree_cs = html.fromstring(r_cs.text)
                     raw_data_cs = tree_cs.xpath("//body//text()")
-                    raw_data_cs = " ".join("".join(raw_data_cs).strip().split()).lower()
+                    raw_data_cs = " ".join("".join(raw_data_cs)
+                                           .strip()
+                                           .split()).lower()
                     if "coming soon" in raw_data_cs:
                         hours_of_operation = "Coming Soon"
                     else:
