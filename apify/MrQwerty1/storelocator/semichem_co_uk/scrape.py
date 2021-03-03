@@ -44,13 +44,15 @@ def fetch_data():
     js = r.json()
 
     for j in js:
+        location_name = j.get("title") or "<MISSING>"
         adr1 = j.get("address_line_1") or ""
         adr2 = j.get("address_line_2") or ""
         adr3 = j.get("address_line_3") or ""
+
         if adr3:
-            line = f"{adr1},{adr2},{adr3}".strip()
+            line = f"{adr1}, {adr2}, {adr3}".strip()
         else:
-            line = f"{adr1},{adr2}".strip()
+            line = f"{adr1}, {adr2}".strip()
         postal = j.get("postcode") or "<MISSING>"
 
         adr = parse_address(International_Parser(), line, postcode=postal)
@@ -69,11 +71,16 @@ def fetch_data():
         postal = adr.postcode or "<MISSING>"
         country_code = "GB"
         store_number = j.get("store_id") or "<MISSING>"
-        location_name = j.get("title") or "<MISSING>"
         phone = j.get("telephone_number") or "<MISSING>"
         latitude = j.get("latitude") or "<MISSING>"
         longitude = j.get("longitude") or "<MISSING>"
         location_type = "<MISSING>"
+
+        if location_name == "Castlemilk":
+            city = "Castlemilk"
+        if location_name == "Clydebank":
+            city = "Clydebank"
+            street_address = " ".join(street_address.split()[:-1])
 
         _tmp = []
         days = [
