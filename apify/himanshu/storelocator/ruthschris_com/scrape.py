@@ -147,8 +147,6 @@ def fetch_data():
                 continue
             if "Panama" in country_code1:
                 continue
-            if "Puerto Rico" in country_code1:
-                continue
             if "Mexico" in country_code1:
                 continue
             if "Singapore" in country_code1:

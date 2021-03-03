@@ -63,8 +63,9 @@ def fetch_data():
             + loc.split("studio-detail/")[1]
         )
         r2 = session.get(loc, headers=headers)
-        for line2 in r2.iter_lines():
-            line2 = str(line2.decode("utf-8"))
+        if r2.encoding is None:
+            r2.encoding = "utf-8"
+        for line2 in r2.iter_lines(decode_unicode=True):
             if '"id":' in line2:
                 store = line2.split('"id":')[1].split(",")[0]
                 name = line2.split('"name":"')[1].split('"')[0]
@@ -78,9 +79,16 @@ def fetch_data():
                 zc = line2.split(',"postalCode":"')[1].split('"')[0]
                 lat = line2.split('"unformattedText7":"')[1].split('"')[0]
                 lng = line2.split('"unformattedText8":"')[1].split('"')[0]
-                phone = line2.split(',"phone":"')[1].split('"')[0].encode("utf-8")
+                try:
+                    phone = line2.split(',"phone":"')[1].split('"')[0]
+                except:
+                    phone = "<MISSING>"
         if add == "":
             add = "<MISSING>"
+        if "939-2510" in phone:
+            phone = "480-939-2510"
+        if phone is None or phone == "":
+            phone = "<MISSING>"
         yield [
             website,
             lurl,
