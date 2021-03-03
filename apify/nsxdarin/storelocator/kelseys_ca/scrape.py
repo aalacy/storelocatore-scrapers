@@ -43,7 +43,7 @@ def fetch_data():
     session = SgRequests()
     url = "https://iosapi.kelseys.ca/CaraAPI/APIService/getStoreList?from=60.000,-150.000&to=39.000,-50.000&eCommOnly=N"
     r = session.get(url, headers=headers)
-    website = "kelsey.ca"
+    website = "kelseys.ca"
     typ = "<MISSING>"
     country = "CA"
     logger.info("Pulling Stores")

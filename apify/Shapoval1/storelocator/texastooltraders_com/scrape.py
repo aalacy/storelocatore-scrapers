@@ -77,13 +77,16 @@ def fetch_data():
     for j in div:
         ad = " ".join(j.xpath("./text()[1]"))
         a = usaddress.tag(ad, tag_mapping=tag)[0]
-        street_address = f"{a.get('address1')} {a.get('address2')}".replace(
-            "None", ""
-        ).strip()
+        street_address = (
+            f"{a.get('address1')} {a.get('address2')}".replace("None", "")
+            .replace("-", "")
+            .strip()
+        )
         city = "".join(a.get("city"))
         if city.find("Weimar") != -1:
             continue
-
+        if city.find(")") != -1:
+            city = city.split(")")[1].strip()
         postal = "".join(a.get("postal"))
         state = a.get("state")
         phone = "".join(j.xpath("./text()[2]"))
@@ -98,6 +101,8 @@ def fetch_data():
                 + " "
                 + "".join(j.xpath(".//text()[4]"))
             )
+        if hours_of_operation.find("Monday Monday ") != -1:
+            hours_of_operation = hours_of_operation.replace("Monday Monday ", "Monday")
         country_code = "US"
         store_number = "<MISSING>"
         location_name = "<MISSING>"
