@@ -1,7 +1,6 @@
 import csv
-
 from sgrequests import SgRequests
-from sgscrape.sgpostal import International_Parser, parse_address
+from sgscrape.sgpostal import parse_address, International_Parser
 
 
 def write_output(data):
@@ -35,62 +34,75 @@ def write_output(data):
 
 def fetch_data():
     out = []
-    locator_domain = "https://www.carphonewarehouse.com/"
-    api_url = "https://www.carphonewarehouse.com/services/storedata?filter=&count=1000&lat=51.5073509&lng=-0.1277583"
+    locator_domain = "https://sostrenegrene.com/"
+    api_url = (
+        "https://sostrenegrene.com/umbraco/api/store/search?latitude=0&longitude=0"
+    )
+    headers = {"culture": "en-GB"}
 
     session = SgRequests()
-    r = session.get(api_url)
-    js = r.json().values()
+    r = session.get(api_url, headers=headers)
+    js = r.json()["stores"]
 
     for j in js:
-        line = j.get("AddressLine") or ""
-        postal = j.get("postcode") or ""
-        if "ireland" in postal.lower() or "ireland" in line.lower():
-            continue
-        if "Currys" in line:
-            line = ",".join(line.split(",")[1:])
+        j = j.get("store")
 
-        adr = parse_address(International_Parser(), line, postcode=postal)
+        line = j.get("address")
 
+        adr = parse_address(International_Parser(), line)
         street_address = (
             f"{adr.street_address_1} {adr.street_address_2 or ''}".replace(
                 "None", ""
             ).strip()
             or "<MISSING>"
         )
+
         city = adr.city or "<MISSING>"
         state = adr.state or "<MISSING>"
         postal = adr.postcode or "<MISSING>"
-        if len(street_address) < 10:
-            street_address = line.split(",")[0].strip() or "<MISSING>"
+        if postal == "<MISSING>":
+            street_address = line.split(",")[0]
+            postal = line.split(",")[1].replace(city, "").strip()
+
         country_code = "GB"
-        store_number = j.get("branch_id") or "<MISSING>"
-        location_name = j.get("branch_name")
-        phone = j.get("telephone") or "<MISSING>"
-        if not phone[0].isdigit():
-            phone = "<MISSING>"
-        page_url = (
-            f'https://www.carphonewarehouse.com/store-locator/{j.get("pageName")}.html'
-        )
-        latitude = j.get("Latitude") or "<MISSING>"
-        longitude = j.get("Longitude") or "<MISSING>"
+        store_number = j.get("id") or "<MISSING>"
+        page_url = f'https://sostrenegrene.com{j.get("url")}'
+        location_name = j.get("name")
+        phone = j.get("phone") or "<MISSING>"
+        loc = j.get("location")
+        latitude = loc.get("latitude") or "<MISSING>"
+        longitude = loc.get("longitude") or "<MISSING>"
         location_type = "<MISSING>"
 
         _tmp = []
         days = [
-            "monday",
-            "tuesday",
-            "wednesday",
-            "thursday",
-            "friday",
-            "saturday",
-            "sunday",
+            "Sunday",
+            "Monday",
+            "Tuesday",
+            "Wednesday",
+            "Thursday",
+            "Friday",
+            "Saturday",
         ]
-        for d in days:
-            time = j.get(d)
-            _tmp.append(f"{d.capitalize()}: {time}")
+        hours = j.get("openingHours") or []
+        if len(hours) > 7:
+            hours = hours[:7]
+
+        for h in hours:
+            index = h.get("dayOfWeek")
+            day = days[index]
+
+            start = h.get("opens")
+            if start:
+                end = h.get("closes")
+                _tmp.append(f"{day}: {start} - {end}")
+            else:
+                _tmp.append(f"{day}: Closed")
 
         hours_of_operation = ";".join(_tmp) or "<MISSING>"
+        if hours_of_operation.count("Closed") == 7:
+            hours_of_operation = "Closed"
+
         row = [
             locator_domain,
             page_url,
@@ -107,7 +119,6 @@ def fetch_data():
             longitude,
             hours_of_operation,
         ]
-
         out.append(row)
 
     return out

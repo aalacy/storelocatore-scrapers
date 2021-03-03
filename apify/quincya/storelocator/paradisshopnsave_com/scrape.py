@@ -70,19 +70,18 @@ def fetch_data():
             raw_hours[raw_hours.find("Hours") + 6 :].replace("PM", "PM ").strip()
         )
 
-        # Maps
-        map_link = item.a["href"]
-        session = SgRequests()
-        req = session.get(map_link, headers=headers)
-        maps = BeautifulSoup(req.text, "lxml")
+        latitude = "<MISSING>"
+        longitude = "<MISSING>"
 
-        try:
-            raw_gps = maps.find("meta", attrs={"itemprop": "image"})["content"]
-            latitude = raw_gps[raw_gps.find("=") + 1 : raw_gps.find("%")].strip()
-            longitude = raw_gps[raw_gps.find("-") : raw_gps.find("&")].strip()
-        except:
-            latitude = "<MISSING>"
-            longitude = "<MISSING>"
+        if "62 West Main Street" in street_address:
+            latitude = "47.24964896"
+            longitude = "-68.6641096"
+        elif "58 Main Street" in street_address:
+            latitude = "47.35509647"
+            longitude = "-68.4177085"
+        elif "397 North Main Street" in street_address:
+            latitude = "44.79950738"
+            longitude = "-68.75601408"
 
         if city == "Brewer":
             location_name = location_name + " - Brewer"
