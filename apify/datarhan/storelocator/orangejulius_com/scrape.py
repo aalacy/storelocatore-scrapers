@@ -1,8 +1,9 @@
-import re
 import csv
 import json
+from urllib.parse import urljoin
 
 from sgrequests import SgRequests
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 
 
 def write_output(data):
@@ -43,35 +44,39 @@ def fetch_data():
     items = []
     scraped_items = []
 
-    start_url = "https://webapi.dairyqueen.com/v3/store/locator?callback=jQuery111304643188529110178_1606299141114&latitude=40.75368539999999&longitude=-73.9991637&radius=50000&mallMenu=true&conditions=dairy_queen"
-    response = session.get(start_url)
-    data = re.findall(r".+\d+\((.+)\)", response.text)[0]
-    data = json.loads(data)
+    start_url = "https://orangejulius.com/api/vtl/locations?country=us&lat={}&long={}"
 
-    for poi in data:
-        store_url = "<MISSING>"
-        location_name = poi["address"]["store_name"]
+    all_locations = []
+    all_coordinates = DynamicGeoSearch(
+        country_codes=[SearchableCountries.USA], max_radius_miles=200
+    )
+    for lat, lng in all_coordinates:
+        response = session.get(start_url.format(lat, lng))
+        data = json.loads(response.text)
+        all_locations += data["locations"]
+
+    for poi in all_locations:
+        store_url = urljoin(start_url, poi["url"])
+        location_name = poi["title"]
         location_name = location_name if location_name else "<MISSING>"
-        street_address = poi["address"]["street_address"]
+        street_address = poi["address3"]
         street_address = street_address if street_address else "<MISSING>"
-        city = poi["address"]["city"]
+        city = poi["city"]
         city = city if city else "<MISSING>"
-        state = poi["address"]["state_province_abbr"]
+        state = poi["stateProvince"]
         state = state if state else "<MISSING>"
-        zip_code = poi["address"]["postal_code"]
+        zip_code = poi["postalCode"]
         zip_code = zip_code if zip_code else "<MISSING>"
-        country_code = poi["address"]["country_abbr"]
+        country_code = poi["country"]
         country_code = country_code if country_code else "<MISSING>"
-        store_number = poi["store_no"]
-        phone = poi["phone_number"]
-        phone = phone if phone else "<MISSING>"
-        location_type = ""
-        location_type = location_type if location_type else "<MISSING>"
-        latitude = poi["geo_data"]["latitude"]
-        latitude = latitude if latitude else "<MISSING>"
-        longitude = poi["geo_data"]["longitude"]
+        store_number = poi["storeNo"]
+        phone = "<MISSING>"
+        location_type = "<MISSING>"
+        latitude = poi["latlong"].split(",")[0]
+        longitude = poi["latlong"].split(",")[1]
         longitude = longitude if longitude else "<MISSING>"
-        hours_of_operation = "<MISSING>"
+        hoo = poi.get("storeHours")
+        hours_of_operation = hoo if hoo else "<MISSING>"
 
         item = [
             DOMAIN,
@@ -89,8 +94,8 @@ def fetch_data():
             longitude,
             hours_of_operation,
         ]
-        if location_name not in scraped_items:
-            scraped_items.append(location_name)
+        if store_number not in scraped_items:
+            scraped_items.append(store_number)
             items.append(item)
 
     return items
