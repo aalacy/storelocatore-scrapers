@@ -57,7 +57,7 @@ def get_urls():
 
 
 def get_data(url):
-    locator_domain = "http://www.shunfatsupermarket.com/find-a-location/"
+    locator_domain = "http://www.shunfatsupermarket.com/"
     page_url = url
     session = SgRequests()
     tag = {

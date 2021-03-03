@@ -71,16 +71,13 @@ def fetch_data():
             street_address = raw_data[1].strip()
         city = location_name.split("CREUSET")[-1].strip()
         state = raw_data[-4].strip()
-        if "london" in location_name.lower():
-            state = "London"
-            if "•" in location_name:
-                city = location_name.split("•")[1].strip()
+        if "•" in location_name:
+            city = location_name.split("•")[1].strip()
         zip_code = raw_data[-3].strip()
         if "," in zip_code:
             state = zip_code.split(",")[0].strip()
             zip_code = " ".join(zip_code.split(",")[1:]).strip()
-        if city == state:
-            state = "<MISSING>"
+        state = "<MISSING>"
         country_code = "GB"
         store_number = "<MISSING>"
         location_type = "<MISSING>"
