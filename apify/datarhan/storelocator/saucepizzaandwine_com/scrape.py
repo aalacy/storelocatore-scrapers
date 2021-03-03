@@ -51,7 +51,6 @@ def fetch_data():
         '//a[contains(@href, "https://www.saucepizzaandwine.com/locations/")]/@href'
     )
     for store_url in list(set(all_locations)):
-        print(store_url)
         if store_url == "https://www.saucepizzaandwine.com/locations/":
             continue
         loc_response = session.get(store_url)
