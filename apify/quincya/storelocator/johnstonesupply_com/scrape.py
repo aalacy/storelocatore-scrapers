@@ -113,10 +113,94 @@ def fetch_data():
             store_number = store["storeCode"]
             location_type = "<MISSING>"
             phone = store["phoneNumber"].split("<")[0].split(" (")[0].strip()
-            hours_of_operation = "<MISSING>"
             latitude = "<MISSING>"
             longitude = "<MISSING>"
-            link = "<MISSING>"
+
+            link = "https://www.johnstonesupply.com/store%s/contact-us" % (store_number)
+            req = session.get(link, headers=headers)
+            base = BeautifulSoup(req.text, "lxml")
+
+            got_res = False
+            hours_of_operation = "<MISSING>"
+            results = base.find_all(class_="col-7 col-md-9 col-lg-8")
+            if results:
+                for res in results:
+                    if "#" in res.p.text:
+                        if "#" + store_number in res.p.text:
+                            got_res = True
+                            break
+                    elif (
+                        location_name.split("-")[0].strip()
+                        in res.p.text.replace("nio - Bro", "nio Bro").strip()
+                    ):
+                        got_res = True
+                        break
+                    else:
+                        if street_address in res.find(class_="d-block").text:
+                            got_res = True
+                            break
+                if got_res:
+                    try:
+                        hours_of_operation = (
+                            " ".join(
+                                list(res.find(class_="text-875rem").stripped_strings)
+                            )
+                            .replace("\r\n", " ")
+                            .replace("  ", " ")
+                            .strip()
+                        )
+                    except:
+                        pass
+            else:
+                results = base.find_all(class_="card h-100")
+                if results:
+                    for res in results:
+                        if "#" in res.find(class_="card-title mb-0").text:
+                            if (
+                                store_number
+                                == res.find(class_="card-title mb-0").text.split("#")[
+                                    -1
+                                ]
+                            ):
+                                got_res = True
+                                break
+                    if got_res:
+                        try:
+                            hours_of_operation = (
+                                " ".join(
+                                    list(
+                                        res.find(
+                                            class_="text-darkblue"
+                                        ).stripped_strings
+                                    )
+                                )
+                                .replace("\r\n", " ")
+                                .replace("  ", " ")
+                                .strip()
+                            )
+                        except:
+                            pass
+                    try:
+                        map_link = res.iframe["src"]
+                        lat_pos = map_link.rfind("!3d")
+                        latitude = map_link[
+                            lat_pos + 3 : map_link.find("!", lat_pos + 5)
+                        ].strip()
+                        lng_pos = map_link.find("!2d")
+                        longitude = map_link[
+                            lng_pos + 3 : map_link.find("!", lng_pos + 5)
+                        ].strip()
+                    except:
+                        pass
+            hours_of_operation = (
+                hours_of_operation.split("After Hours")[0]
+                .split("24 Hour Emergency")[0]
+                .split("Emergency")[0]
+                .split("(Saturday)")[0]
+                .replace("—", "-")
+                .replace("Hours:", "")
+                .strip()
+            )
 
             # Store data
             data.append(
@@ -156,10 +240,20 @@ def fetch_data():
         store_number = item.find_all("a")[-1]["href"].split("tore")[1]
         location_type = "<MISSING>"
         phone = item.find_all("a")[-2].text
-        hours_of_operation = "<MISSING>"
         latitude = "<MISSING>"
         longitude = "<MISSING>"
-        link = "<MISSING>"
+
+        link = "https://www.johnstonesupply.com/store%s/contact-us" % (store_number)
+        req = session.get(link, headers=headers)
+        base = BeautifulSoup(req.text, "lxml")
+
+        hours_of_operation = "<MISSING>"
+        results = base.find_all(class_="col-7 col-md-9 col-lg-8")
+        for res in results:
+            if store_number == res.p.text.split("#")[-1]:
+                hours_of_operation = " ".join(
+                    list(res.find(class_="text-875rem").stripped_strings)
+                )
 
         # Store data
         data.append(

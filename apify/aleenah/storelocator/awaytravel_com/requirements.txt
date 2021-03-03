@@ -1,4 +1,4 @@
-beautifulsoup4==4.8.0
-sgrequests==0.0.6
-sgselenium
-sglogging
+sgrequests==0.1.6
+sgselenium==0.0.15
+sglogging==0.0.4
+beautifulsoup4==4.9.3
