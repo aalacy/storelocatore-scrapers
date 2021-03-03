@@ -18,7 +18,7 @@ latitudes = []
 longitudes = []
 hours_of_operations = []
 
-with SgChrome(executable_path="chromedriver.exe") as driver:
+with SgChrome() as driver:
     driver.get("https://www.rockandbrews.com/locations")
     html = driver.page_source
     soup = bs(html, "html.parser")

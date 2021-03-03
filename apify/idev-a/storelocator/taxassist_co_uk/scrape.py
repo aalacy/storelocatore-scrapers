@@ -43,7 +43,10 @@ def fetch_data():
                     continue
                 hours = []
                 for _ in location["openingHoursSpecification"]:
-                    hours.append(f"{_['dayOfWeek']}: {_['opens']}-{_['closes']}")
+                    hour = f"{_['opens']}-{_['closes']}"
+                    if hour == "00:00-00:00":
+                        hour = "closed"
+                    hours.append(f"{_['dayOfWeek']}: {hour}")
                 yield SgRecord(
                     page_url=detail["href"],
                     location_type=location["@type"],
