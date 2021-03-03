@@ -176,6 +176,7 @@ def fetch_data():
 
             yield store_data
 
+
 def scrape():
     data = fetch_data()
     write_output(data)

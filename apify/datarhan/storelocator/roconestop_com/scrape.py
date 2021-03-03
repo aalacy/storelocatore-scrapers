@@ -62,7 +62,7 @@ def fetch_data():
         country_code = "<MISSING>"
         store_number = location_name.split("#")[-1].strip()
         phone = [e.split(":")[-1] for e in raw_data if ":" in e]
-        phone = phone[0] if phone else "<MISSING>"
+        phone = phone[0].strip() if phone else "<MISSING>"
         location_type = "<MISSING>"
         latitude = "<MISSING>"
         longitude = "<MISSING>"

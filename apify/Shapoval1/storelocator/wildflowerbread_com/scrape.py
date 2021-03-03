@@ -52,6 +52,10 @@ def fetch_data():
         country_code = "US"
         store_number = "<MISSING>"
         location_name = "".join(b.xpath('.//span[@itemprop="name"]/a/text()'))
+        if location_name.find("Airport") != -1:
+            street_address = "".join(
+                b.xpath('.//span[1][@itemprop="streetAddress"]/text()')
+            )
         slug = "".join(b.xpath('.//span[@itemprop="name"]/a/@href'))
         page_url = f"{locator_domain}{slug}"
         phone = "".join(b.xpath('.//a[@itemprop="telephone"]/text()'))
@@ -75,7 +79,7 @@ def fetch_data():
         if location_name.find("Airport") != -1:
             hours_of_operation = "<MISSING>"
         if location_name.find("Closed") != -1:
-            hours_of_operation = "Closed"
+            hours_of_operation = "Temporarily closed"
             location_name = location_name.split("-")[1].split("-")[0].strip()
 
         row = [
