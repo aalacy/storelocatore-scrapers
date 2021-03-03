@@ -1,15 +1,9 @@
 import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
-from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
+import json
 
 logger = SgLogSetup().get_logger("mybpstation_com")
-
-search = DynamicGeoSearch(
-    country_codes=[SearchableCountries.USA],
-    max_radius_miles=10,
-    max_search_results=None,
-)
 
 session = SgRequests()
 headers = {
@@ -46,28 +40,62 @@ def write_output(data):
 
 def fetch_data():
     ids = []
-    url = ""
-    for lat, lng in search:
-        lats = int(lat)
-        latn = lats + 1
-        lnge = int(lng)
-        lngw = lnge - 1
-        logger.info((str(lat) + "," + str(lng)))
+    boxes = ["18.91619|-171.791110603|71.3577635769|-66.96466"]
+    while len(boxes) >= 1:
+        swlat = boxes[0].split("|")[0]
+        swlng = boxes[0].split("|")[1]
+        nelat = boxes[0].split("|")[2]
+        nelng = boxes[0].split("|")[3]
+        boxes.pop(0)
         url = (
             "https://bpretaillocator.geoapp.me/api/v1/locations/within_bounds?sw%5B%5D="
-            + str(lats)
+            + swlat
             + "&sw%5B%5D="
-            + str(lngw)
+            + swlng
             + "&ne%5B%5D="
-            + str(latn)
+            + nelat
             + "&ne%5B%5D="
-            + str(lnge)
-            + "&autoload=true&travel_mode=driving&avoid_tolls=false&avoid_highways=false&show_stations_on_route=true&corridor_radius=25&key=AIzaSyDHlZ-hOBSpgyk53kaLADU18wq00TLWyEc&format=json"
+            + nelng
+            + "&key=AIzaSyDHlZ-hOBSpgyk53kaLADU18wq00TLWyEc&format=json"
         )
         r = session.get(url, headers=headers)
-        if r.encoding is None:
-            r.encoding = "utf-8"
-        for line in r.iter_lines(decode_unicode=True):
+        for item in json.loads(r.content):
+            try:
+                sw1 = (
+                    str(item["bounds"]["sw"])
+                    .split(",")[0]
+                    .replace("[", "")
+                    .replace(" ", "")
+                    .replace("]", "")
+                )
+                sw2 = (
+                    str(item["bounds"]["sw"])
+                    .split(",")[1]
+                    .replace("[", "")
+                    .replace(" ", "")
+                    .replace("]", "")
+                )
+                ne1 = (
+                    str(item["bounds"]["ne"])
+                    .split(",")[0]
+                    .replace("[", "")
+                    .replace(" ", "")
+                    .replace("]", "")
+                )
+                ne2 = (
+                    str(item["bounds"]["ne"])
+                    .split(",")[1]
+                    .replace("[", "")
+                    .replace(" ", "")
+                    .replace("]", "")
+                )
+                newbox = sw1 + "|" + sw2 + "|" + ne1 + "|" + ne2
+                boxes.append(newbox)
+            except:
+                pass
+        logger.info("Areas Remaining: " + str(len(boxes)))
+        for line in r.iter_lines():
+            line = str(line.decode("utf-8"))
             if '{"id":"' in line:
                 items = line.split('{"id":"')
                 for item in items:

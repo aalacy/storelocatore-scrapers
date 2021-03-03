@@ -57,6 +57,8 @@ def fetch_data():
             link = loc.find("a")["href"]
             r = session.get(link, headers=headers, verify=False)
             soup = BeautifulSoup(r.text, "html.parser")
+            store = r.text.split("full_address :")[1].split("title :", 1)[0]
+            store = store.split('id : "')[1].split('",', 1)[0]
             title = soup.find("h1", {"class": "headline headline--1"}).text
             address = soup.findAll(
                 "p", {"class": "theatre-details__sidebar-group-item--address"}
@@ -82,10 +84,10 @@ def fetch_data():
                     title,
                     street,
                     city,
-                    state,
+                    state.strip(),
                     "<MISSING>",
                     "US",
-                    "<MISSING>",
+                    store,
                     phone,
                     "<MISSING>",
                     "<MISSING>",

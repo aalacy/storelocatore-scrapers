@@ -55,29 +55,69 @@ def fetch_data():
     locator_domain = "kroger.com"
 
     log.info("Processing " + str(len(items)) + " links ...")
-    for item in items:
+    for i, item in enumerate(items):
         link = item.text
         if "stores/details" in link:
+
+            # New session every 20
+            if i % 20 == 0:
+                if i > 0:
+                    log.info("Getting next 20 ..")
+                    log.info(link)
+                    session = SgRequests()
+
             req = session.get(link, headers=headers)
             base = BeautifulSoup(req.text, "lxml")
 
-            script = (
-                base.find("script", attrs={"type": "application/ld+json"})
-                .text.replace("\n", "")
-                .strip()
-            )
-            store = json.loads(script)
+            try:
+                if (
+                    "gas"
+                    not in base.find(class_="StoreServices-wrapper table").text.lower()
+                ):
+                    continue
+            except:
+                continue
 
+            try:
+                script = (
+                    base.find("script", attrs={"type": "application/ld+json"})
+                    .text.replace("\n", "")
+                    .strip()
+                )
+            except:
+                log.info(link)
+                raise
+            store = json.loads(script)
             location_name = store["name"]
-            street_address = store["address"]["streetAddress"]
-            city = store["address"]["addressLocality"]
-            state = store["address"]["addressRegion"]
-            zip_code = store["address"]["postalCode"]
+
+            try:
+                street_address = store["address"]["streetAddress"]
+                city = store["address"]["addressLocality"]
+                state = store["address"]["addressRegion"]
+                zip_code = store["address"]["postalCode"]
+            except:
+                raw_address = (
+                    base.find(class_="StoreAddress-storeAddressGuts")
+                    .get_text(" ")
+                    .replace(",", "")
+                    .replace("8  Rd", "8 Rd")
+                    .replace(" .", ".")
+                    .replace("..", ".")
+                    .split("  ")
+                )
+                street_address = raw_address[0].strip()
+                city = raw_address[1].strip()
+                state = raw_address[2].strip()
+                zip_code = raw_address[3].split("Get")[0].strip()
+
             country_code = "US"
             store_number = "/".join(link.split("/")[-2:])
             location_type = "<MISSING>"
-            phone = store["telephone"]
-            if not phone:
+            try:
+                phone = store["telephone"]
+                if not phone:
+                    phone = "<MISSING>"
+            except:
                 phone = "<MISSING>"
 
             hours_of_operation = ""

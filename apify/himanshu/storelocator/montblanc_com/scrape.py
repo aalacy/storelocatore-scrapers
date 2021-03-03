@@ -41,7 +41,7 @@ def write_output(data):
 
 def fetch_data():
     addressesess = []
-    for q in range(0, 5):
+    for q in range(1, 5):
         url = (
             "https://www.montblanc.com/api/richemont1//wcs/resources/store/montblanc_US/storelocator/boutiques?pageSize=1000&pageNumber="
             + str(q)
@@ -67,11 +67,16 @@ def fetch_data():
                     data["address"]["countryCode"] == "CA"
                     or data["address"]["countryCode"] == "US"
                     or data["address"]["countryCode"] == "USA"
+                    or data["address"]["countryCode"] == "GB"
                 ):
                     if "Reseller" != data["attributes"][0]["values"][0]["value"]:
                         raw_address = data["address"]["line1"]
                         raw_address1 = raw_address
                         countryCode = data["address"]["countryCode"]
+                        if countryCode == "GB":
+                            countryCode = "UK"
+                        else:
+                            countryCode = data["address"]["countryCode"]
                         if "phone1" in data["address"]:
                             phone = data["address"]["phone1"]
                         else:
@@ -201,7 +206,16 @@ def fetch_data():
                         )
                         state = data["address"]["state"]
                         city = data["address"]["city"]
+                        if phone == "-0":
+                            phone = "<MISSING>"
                         store = []
+                        zipp = zipp.split(" ")
+                        if zipp[0] == "0":
+                            zipp = "<MISSING>"
+                        elif zipp[-1].isdigit():
+                            zipp = zipp[-1]
+                        else:
+                            zipp = " ".join(zipp)
                         store_number = ""
                         store.append("https://www.montblanc.com/")
                         store.append(location_name)
@@ -263,7 +277,7 @@ def fetch_data():
                         )
                         store.append(city)
                         store.append(state)
-                        store.append(zipp.split(" ")[-1])
+                        store.append(zipp)
                         store.append(countryCode)
                         store.append(store_number)
                         store.append(phone)
@@ -273,6 +287,7 @@ def fetch_data():
                         store.append(hours.strip())
                         store.append(page_url)
                         store = [str(x).strip() if x else "<MISSING>" for x in store]
+
                         if str(raw_address1 + page_url) in addressesess:
                             continue
                         addressesess.append(str(raw_address1 + page_url))
@@ -287,3 +302,4 @@ def scrape():
 
 
 scrape()
+fetch_data()

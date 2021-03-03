@@ -1,8 +1,13 @@
 # -*- coding: utf-8 -*-
-import csv
 from sgrequests import SgRequests
 from sglogging import sglog
 import json
+from sgscrape.simple_utils import parallelize
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+from sgzip.dynamic import SearchableCountries
+from sgzip.static import static_zipcode_list
+import datetime
 
 website = "raymourflanigan.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -13,151 +18,100 @@ headers = {
     "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.198 Safari/537.36"
 }
 
-
-def write_output(data):
-    with open("data.csv", mode="w", newline="", encoding="utf8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        temp_list = []  # ignoring duplicates
-        for row in data:
-            comp_list = [
-                row[2].strip(),
-                row[3].strip(),
-                row[4].strip(),
-                row[5].strip(),
-                row[6].strip(),
-                row[8].strip(),
-                row[10].strip(),
-            ]
-            if comp_list not in temp_list:
-                temp_list.append(comp_list)
-                writer.writerow(row)
-
-        log.info(f"No of records being processed: {len(temp_list)}")
+url_list = []
 
 
-def fetch_data():
-    # Your scraper here
-    loc_list = []
-
+def fetch_records_for(zipcode):
+    log.info(f"pulling records for zipcode: {zipcode}")
     search_url = (
         "https://www.raymourflanigan.com/api/custom/location-search"
-        "?postalCode=11236&distance=100000&includeShowroom"
+        "?postalCode={}&distance=100&includeShowroom"
         "Locations=true&includeOutletLocations=true&include"
         "ClearanceLocations=true&includeAppointments=true"
     )
 
-    stores_req = session.get(search_url, headers=headers)
+    stores_req = session.get(search_url.format(zipcode), headers=headers)
     stores = json.loads(stores_req.text)["locations"]
-    for store_json in stores:
-        page_url = "https://www.raymourflanigan.com" + store_json["url"]
-        locator_domain = website
-        location_name = store_json["displayName"]
-        street_address = store_json["addressLine1"]
-        city = store_json["city"]
-        state = store_json["stateProvince"]
-        zip = store_json["postalCode"]
-        country_code = ""
+    yield stores
 
-        if street_address == "":
-            street_address = "<MISSING>"
 
-        if city == "":
-            city = "<MISSING>"
+def process_record(raw_results_from_one_zipcode):
+    for stores in raw_results_from_one_zipcode:
+        for store_json in stores:
+            if store_json["url"] not in url_list:
+                url_list.append(store_json["url"])
 
-        if state == "":
-            state = "<MISSING>"
+                page_url = "https://www.raymourflanigan.com" + store_json["url"]
+                log.info(page_url)
+                locator_domain = website
+                location_name = store_json["displayName"]
+                street_address = store_json["addressLine1"]
+                city = store_json["city"]
+                state = store_json["stateProvince"]
+                zip = store_json["postalCode"]
+                country_code = "US"
 
-        if zip == "":
-            zip = "<MISSING>"
+                store_number = store_json["businessUnitCode"]
+                phone = store_json["phoneNumber"]
 
-        if country_code == "":
-            country_code = "<MISSING>"
+                location_type = "Showroom"
+                if store_json["clearanceCenter"] is True:
+                    location_type = "clearanceCenter"
+                if store_json["outlet"] is True:
+                    location_type = "outlet"
 
-        store_number = store_json["businessUnitCode"]
-        phone = store_json["phoneNumber"]
+                hours_of_operation = ""
+                hours = store_json["hours"]
+                hours_list = []
+                for key, hour in hours.items():
+                    if (
+                        hours[key] is not None
+                        and hours[key]["open"] is not None
+                        and hours[key]["close"] is not None
+                    ):
+                        day = key
+                        if day == "today":
+                            day = datetime.datetime.now().strftime("%A")
+                        hours_of_operation = hours_list.append(
+                            day + ":" + hours[key]["open"] + "-" + hours[key]["close"]
+                        )
+                hours_of_operation = "; ".join(hours_list).strip()
 
-        location_type = "<MISSING>"
-        hours_of_operation = ""
-        hours = store_json["hours"]
-        for day, hour in hours.items():
-            if (
-                hours[day] is not None
-                and hours[day]["open"] is not None
-                and hours[day]["close"] is not None
-            ):
-                hours_of_operation = (
-                    hours_of_operation
-                    + day
-                    + ":"
-                    + hours[day]["open"]
-                    + "-"
-                    + hours[day]["close"]
-                    + ""
+                latitude = store_json["latitude"]
+                longitude = store_json["longitude"]
+
+                yield SgRecord(
+                    locator_domain=locator_domain,
+                    page_url=page_url,
+                    location_name=location_name,
+                    street_address=street_address,
+                    city=city,
+                    state=state,
+                    zip_postal=zip,
+                    country_code=country_code,
+                    store_number=store_number,
+                    phone=phone,
+                    location_type=location_type,
+                    latitude=latitude,
+                    longitude=longitude,
+                    hours_of_operation=hours_of_operation,
                 )
-        hours_of_operation = hours_of_operation.strip()
-
-        latitude = store_json["latitude"]
-        longitude = store_json["longitude"]
-
-        if latitude == "":
-            latitude = "<MISSING>"
-        if longitude == "":
-            longitude = "<MISSING>"
-
-        if hours_of_operation == "":
-            hours_of_operation = "<MISSING>"
-        if phone == "":
-            phone = "<MISSING>"
-
-        curr_list = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        loc_list.append(curr_list)
-
-        # break
-    return loc_list
 
 
 def scrape():
     log.info("Started")
-    data = fetch_data()
-    write_output(data)
+    with SgWriter() as writer:
+        results = parallelize(
+            search_space=static_zipcode_list(
+                radius=10, country_code=SearchableCountries.USA
+            ),
+            fetch_results_for_rec=fetch_records_for,
+            processing_function=process_record,
+            max_threads=32,  # tweak to see what's fastest
+        )
+        for rec in results:
+            writer.write_row(rec)
+
     log.info("Finished")
 
 
