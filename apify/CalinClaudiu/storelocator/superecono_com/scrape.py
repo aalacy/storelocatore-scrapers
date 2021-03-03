@@ -54,10 +54,6 @@ def fetch_data():
         )
         for i in links:
             pages.append(i["href"])
-        pages = [
-            "https://www.superecono.com/tiendas/trujilloalto-quebrada-grande/",
-            "https://www.superecono.com/tiendas/yauco/",
-        ]
         for i in pages:
             driver.get(i)
 
