@@ -128,6 +128,22 @@ def fetch_data():
             pcode = pcode.replace(",", "")
 
             pcode = "<MISSING>"
+            street = street.strip()
+
+            if city.find("null") != -1:
+                city = city.lstrip("null").strip()
+            if link == "https://www.zoomcare.com/clinic/zoomcare-downtown-portland":
+                street = "900 SW 5th Ave (enter on 4th) null"
+                city = "Portland"
+                state = "OR"
+            if street.find("null") != -1:
+                street = street.replace("null", "")
+            if link == "https://www.zoomcare.com/clinic/zoomcare-bellevue":
+                street = "10425 NE 8th St #4 Lincoln Square"
+                city = "Bellevue"
+            street = street.strip()
+            city = city.strip()
+            state = state.strip()
 
             data.append(
                 [
