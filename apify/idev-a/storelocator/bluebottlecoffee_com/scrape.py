@@ -58,13 +58,17 @@ def fetch_data():
                         hours.append(f"{_.select_one('div.dtc').text}: {time}")
 
                     if not hours:
-                        hours_of_operation = soup.find(
-                            "div", {"class": "mw5 mw-100-ns"}
-                        ).text
+                        if soup.find("div", {"class": "mw5 mw-100-ns"}):
+                            hours_of_operation = soup.find(
+                                "div", {"class": "mw5 mw-100-ns"}
+                            ).text
                     else:
                         hours_of_operation = re.sub(
                             r"\s+", " ", "; ".join(hours)
                         ).strip()
+
+                    if "reopened" in hours_of_operation:
+                        hours_of_operation = ""
                     yield SgRecord(
                         page_url=page_url,
                         location_name=name,
