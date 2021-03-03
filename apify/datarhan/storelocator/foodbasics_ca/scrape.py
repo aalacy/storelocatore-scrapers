@@ -62,7 +62,7 @@ def fetch_data():
         all_locations += dom.xpath('//section[@class="store"]')
 
     for poi_html in all_locations:
-        raw_data = poi_html.xpath('//p[@class="si-info"]/text()')
+        raw_data = poi_html.xpath('.//p[@class="si-info"]/text()')
         raw_data = [e.strip() for e in raw_data if e.strip()]
         store_url = "https://www.foodbasics.ca/find-your-food-basics.en.html"
         location_name = raw_data[0]
