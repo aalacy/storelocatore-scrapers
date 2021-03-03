@@ -3,7 +3,6 @@ from sgscrape import sgpostal as parser
 from sglogging import sglog
 
 
-from sgrequests import SgRequests
 from bs4 import BeautifulSoup as b4
 
 from sgselenium import SgFirefox
@@ -13,25 +12,35 @@ from selenium.webdriver.support import expected_conditions as EC
 import time
 
 
+def try_again_addr(soup, soup1, raw_addr, k):
+    addr_candidates = []
+    goodSoFar = ""
+    freshData = (
+        soup.find("div", {"class": "wpb_wrapper"})
+        .find("li", {"class": "dir"})
+        .text.strip()
+    )
+
+    for i in list(k[j] for j in ["city", "state", "zipcode"]):
+        if i:
+            if i.strip() not in freshData:
+                goodSoFar = goodSoFar + i + " "
+    goodSoFar = goodSoFar.strip()
+    addr_candidates.append(str(freshData + " " + goodSoFar))
+    for i in addr_candidates:
+        x = ""
+        parsed = parser.parse_address_intl(i)
+        if parsed.street_address_1:
+            x = x + parsed.street_address_1
+            if parsed.street_address_2:
+                x = x + ", " + parsed.street_address_2
+        if x:
+            return x
+
+
 def fetch_data():
     logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
     url = "https://www.superecono.com/tiendas"
-    headers = {
-        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
-    }
-    session = SgRequests()
-    soup = b4(session.get(url, headers=headers).text, "lxml")
-
-    pages = []
-    links = soup.find_all(
-        "a",
-        {
-            "class": lambda x: x
-            and all(i in x for i in ["mpc-button", "mpc-transition", "mpc-inited"])
-        },
-    )
-    for i in links:
-        pages.append(i["href"])
     with SgFirefox() as driver:
         driver.get(url)
         soup = b4(driver.page_source, "lxml")
@@ -45,7 +54,10 @@ def fetch_data():
         )
         for i in links:
             pages.append(i["href"])
-
+        pages = [
+            "https://www.superecono.com/tiendas/trujilloalto-quebrada-grande/",
+            "https://www.superecono.com/tiendas/yauco/",
+        ]
         for i in pages:
             driver.get(i)
 
@@ -96,7 +108,9 @@ def fetch_data():
             ):
                 raw_addr = "Carr. 852 Km. 2.7 Bo. Quebrada Grande Trujillo Alto 00976 Puerto Rico"
             parsed = parser.parse_address_intl(raw_addr)
-            k["street_address"] = parsed.street_address_1
+            k["street_address"] = (
+                parsed.street_address_1 if parsed.street_address_1 else "<MISSING>"
+            )
             if parsed.street_address_2:
                 k["street_address"] = (
                     k["street_address"] + ", " + parsed.street_address_2
@@ -147,6 +161,30 @@ def fetch_data():
                 if len(addressno) > len(k["street_address"]):
                     k["street_address"] = addressno
             k["raw"] = addressno + ", " + raw_addr if addressno else raw_addr
+
+            try:
+                k["latitude"], k["longitude"] = (
+                    soup1.find("div", {"class": "google-maps-link"})
+                    .find("a")["href"]
+                    .split("ll=", 1)[1]
+                    .split("&", 1)[0]
+                    .split(",")
+                )
+            except Exception:
+                k["latitude"], k["longitude"] = ["<MISSING>", "<MISSING>"]
+
+            if k["latitude"] == "<MISSING>":
+                try:
+                    k["latitude"], k["longitude"] = (
+                        soup1.find("a", {"jstcache": "46"})["href"]
+                        .split("ll=", 1)[1]
+                        .split("&", 1)[0]
+                        .split(",")
+                    )
+                except Exception:
+                    k["latitude"], k["longitude"] = ["<MISSING>", "<MISSING>"]
+            if k["street_address"] == "<MISSING>":
+                k["street_address"] = try_again_addr(soup, soup1, raw_addr, k)
             yield k
 
     logzilla.info(f"Finished grabbing data!!")  # noqa
@@ -158,8 +196,8 @@ def scrape():
         locator_domain=sp.ConstantField(url),
         page_url=sp.MappingField(mapping=["page_url"]),
         location_name=sp.MappingField(mapping=["location_name"]),
-        latitude=sp.MissingField(),
-        longitude=sp.MissingField(),
+        latitude=sp.MappingField(mapping=["latitude"]),
+        longitude=sp.MappingField(mapping=["longitude"]),
         street_address=sp.MappingField(
             mapping=["street_address"], part_of_record_identity=True
         ),

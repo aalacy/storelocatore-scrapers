@@ -61,10 +61,29 @@ def fetch_data():
                     city = loc.split("/")[4].replace("-", " ").title()
                     zc = "<MISSING>"
                     phone = item.split(',"phone":"')[1].split('"')[0]
-                    hours = "<MISSING>"
+                    hours = ""
                     store = "<MISSING>"
                     lat = item.split('"lat":')[1].split(",")[0]
                     lng = item.split('"lng":')[1].split(",")[0]
+                    r2 = session.get(loc, headers=headers)
+                    logger.info(loc)
+                    for line2 in r2.iter_lines():
+                        line2 = str(line2.decode("utf-8"))
+                        if '"postalCode": "' in line2:
+                            zc = line2.split('"postalCode": "')[1].split('"')[0]
+                        if 'day"' in line2 and "<" not in line2:
+                            day = line2.split('"')[1]
+                        if '"opens": "' in line2:
+                            ope = line2.split('"opens": "')[1].split('"')[0]
+                        if '"closes": "' in line2:
+                            clo = line2.split('"closes": "')[1].split('"')[0]
+                            hrs = day + ": " + ope + "-" + clo
+                            if hours == "":
+                                hours = hrs
+                            else:
+                                hours = hours + "; " + hrs
+                    if hours == "":
+                        hours = "<MISSING>"
                     yield [
                         website,
                         loc,

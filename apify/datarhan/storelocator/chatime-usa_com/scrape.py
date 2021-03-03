@@ -1,9 +1,10 @@
+import re
 import csv
 import json
 from lxml import etree
 
 from sgrequests import SgRequests
-from sgscrape.sgpostal import parse_address_intl
+from sgscrape.sgpostal import parse_address_usa
 
 
 def write_output(data):
@@ -68,11 +69,14 @@ def fetch_data():
         location_name = poi_html.xpath(".//h3/text()")
         location_name = location_name[0] if location_name else "<MISSING>"
         raw_address = poi_html.xpath(".//address/text()")[0].strip()
-        addr = parse_address_intl(raw_address)
+        addr = parse_address_usa(raw_address)
         street_address = raw_address.split(",")[0]
+        street_address = street_address.split(" Chicago IL")[0].strip()
         city = addr.city
         city = city if city else "<MISSING>"
-        state = addr.state
+        if street_address.endswith(city):
+            street_address = street_address.replace(city, "").strip()
+        state = re.findall("【(.+)】", location_name)[0]
         if not state:
             state = raw_address.split()[-2]
         if "," in state:
