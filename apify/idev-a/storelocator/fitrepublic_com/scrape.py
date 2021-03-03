@@ -48,6 +48,9 @@ def fetch_data():
                         [_ for _ in horizontal_rule.next_sibling.stripped_strings][1:]
                     )
             except Exception as err:
+                import pdb
+
+                pdb.set_trace()
                 log.info(str(err))
             yield SgRecord(
                 page_url=_["website"],
