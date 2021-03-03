@@ -36,7 +36,7 @@ def write_output(data):
 
 def fetch_data():
     # Your scraper here
-    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
+    session = SgRequests().requests_retry_session(retries=0, backoff_factor=0.3)
 
     items = []
     scraped_items = []
@@ -69,14 +69,17 @@ def fetch_data():
     for poi in all_locations:
         location_name = poi["officeName"]
         store_number = poi["masterCustomerId"]
-        store_url = "https://www.remax.com/real-estate-offices/remax-{}/{}"
+        city = poi["city"]
+        state = poi["state"]
+        store_url = "https://www.remax.com/real-estate-offices/remax-{}-{}-{}/{}"
         store_url = store_url.format(
-            location_name.replace("RE/MAX ", "").replace(" ", "-"), store_number
+            location_name.replace("RE/MAX ", "").replace(" ", "-"),
+            city.replace(" ", "-"),
+            state,
+            store_number,
         )
         location_name = location_name if location_name else "<MISSING>"
         street_address = poi["address1"]
-        city = poi["city"]
-        state = poi["state"]
         zip_code = poi["postalCode"]
         country_code = poi["countryCode"]
         phone = poi["phones"]
