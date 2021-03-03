@@ -7,7 +7,7 @@ from urllib.request import urlopen, Request
 from tenacity import retry, stop_after_attempt
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-logger = SgLogSetup().get_logger('jdsports_co_uk')
+logger = SgLogSetup().get_logger("jdsports_co_uk")
 
 
 def write_output(data):
@@ -55,7 +55,7 @@ def fetch_location_data(url):
 
 
 def fetch_location(url):
-    store_url = urljoin('https://www.jdsports.co.uk', url)
+    store_url = urljoin("https://www.jdsports.co.uk", url)
     poi = fetch_location_data(store_url)
     if not poi:
         return None
@@ -120,13 +120,11 @@ def fetch_location(url):
 @retry(stop=stop_after_attempt(3))
 def get(url):
     try:
-        headers = {
-            'User-Agent': 'Mozilla/5.0'
-        }
+        headers = {"User-Agent": "Mozilla/5.0"}
         with urlopen(Request(url, headers=headers)) as session:
             return session.read()
     except Exception as e:
-        logger.error(f'exception >>> {e}')
+        logger.error(f"exception >>> {e}")
         if e.code == 404:
             return None
         raise e
