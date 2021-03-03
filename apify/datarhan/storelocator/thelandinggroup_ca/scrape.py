@@ -62,6 +62,9 @@ def fetch_data():
         location_name = location_name[0].strip() if location_name else "<MISSING>"
         addr = parse_address_intl(raw_address)
         street_address = addr.street_address_1
+        if addr.street_address_2:
+            street_address += " " + addr.street_address_2
+        street_address = street_address.replace("Sw Building", "SW Building 38")
         city = addr.city
         city = city if city else "<MISSING>"
         state = addr.state
@@ -80,7 +83,9 @@ def fetch_data():
         longitude = longitude[0] if longitude else "<MISSING>"
         hoo = hoo = loc_dom.xpath('//div[@id="hours_content"]//text()')
         hoo = [elem.strip() for elem in hoo if elem.strip()]
-        hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
+        hours_of_operation = (
+            " ".join(hoo).split("temporarily closed. ")[-1] if hoo else "<MISSING>"
+        )
 
         item = [
             DOMAIN,
