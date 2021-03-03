@@ -3,7 +3,6 @@ from sgscrape import sgpostal as parser
 from sglogging import sglog
 
 
-from sgrequests import SgRequests
 from bs4 import BeautifulSoup as b4
 
 from sgselenium import SgFirefox
