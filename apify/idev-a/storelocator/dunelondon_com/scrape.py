@@ -31,6 +31,15 @@ def fetch_data():
             hours = bs(store["openinghours"], "lxml").select_one("p").contents
             hours = [x for x in hours if x.string is not None]
             hours_of_operation = " ".join(hours)
+            if latitude == "" or latitude is None:
+                res = session.get(page_url)
+                latitude = res.text.split("var pca_default_position_lat = '")[1].split(
+                    "'"
+                )[0]
+                longitude = res.text.split("var pca_default_position_long = '")[
+                    1
+                ].split("'")[0]
+
             record = SgRecord(
                 page_url=page_url,
                 location_name=location_name,

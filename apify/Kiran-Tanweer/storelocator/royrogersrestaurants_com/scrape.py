@@ -123,11 +123,13 @@ def fetch_data():
             if len(coords) == 35:
                 coord = str(coords[3])
                 coord = coord.split('"coordinates":[')[1].split("]}")[0]
-                lat = coord.split(",")[0].strip()
-                lng = coord.split(",")[1].strip()
+                lng = coord.split(",")[0].strip()
+                lat = coord.split(",")[1].strip()
             else:
                 lat = "<MISSING>"
                 lng = "<MISSING>"
+            if street.find("Travel Plaza") != -1:
+                street = street.split("Travel Plaza")[1].strip()
             data.append(
                 [
                     "https://www.royrogersrestaurants.com/",
