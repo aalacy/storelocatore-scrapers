@@ -57,7 +57,10 @@ def fetch_data():
         state = poi["properties"]["state"]
         state = state if state else "<MISSING>"
         zip_code = poi["properties"]["zip"]
-        zip_code = zip_code if zip_code else "<MISSING>"
+        zip_code = zip_code.strip() if zip_code else "<MISSING>"
+        if len(zip_code) > 5:
+            state = zip_code[:2]
+            zip_code = zip_code[2:].strip()
         country_code = poi["properties"]["countryCode"]
         country_code = country_code if country_code else "<MISSING>"
         if country_code != "us":
@@ -73,8 +76,18 @@ def fetch_data():
         longitude = longitude if longitude else "<MISSING>"
         hoo = []
         if poi["properties"].get("storeHours"):
-            hoo = poi["properties"]["storeHours"].replace("|", "")
-        hours_of_operation = hoo if hoo else "<MISSING>"
+            days = [
+                "Sunday",
+                "Monday",
+                "Tuesday",
+                "Wednesday",
+                "Thursday",
+                "Friday",
+                "Saturday",
+            ]
+            hours = poi["properties"]["storeHours"].split(" | ")
+            hoo = list(map(lambda d, h: d + " " + h, days, hours))
+        hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
 
         item = [
             DOMAIN,
