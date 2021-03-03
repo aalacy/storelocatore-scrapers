@@ -62,8 +62,6 @@ def get_data(url):
     location_name = (
         f"{j.get('name')} {j.get('geomodifier') or ''}".strip() or "<MISSING>"
     )
-    if location_name.lower().find("atm ") != -1:
-        return
 
     a = j.get("address", {}) or {}
     street_address = f"{a.get('line1')} {a.get('line2') or ''}".strip() or "<MISSING>"
@@ -85,6 +83,9 @@ def get_data(url):
         try:
             interval = d.get("intervals")[0]
             start = str(interval.get("start"))
+            if start == "0":
+                _tmp.append("24 hours")
+                break
             end = str(interval.get("end"))
 
             # normalize 9:30 -> 09:30
