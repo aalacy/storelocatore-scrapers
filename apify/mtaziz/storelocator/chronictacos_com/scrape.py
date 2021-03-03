@@ -4,7 +4,8 @@ from sgrequests import SgRequests
 import json
 from sglogging import SgLogSetup
 
-logger = SgLogSetup().get_logger('picturehouses_com')
+logger = SgLogSetup().get_logger("picturehouses_com")
+
 
 def write_output(data):
     with open("data.csv", mode="w") as output_file:
@@ -35,8 +36,10 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
+
 session = SgRequests()
 locator_domain_url = "https://www.chronictacos.com"
+
 
 def get_urls_from_page_src():
     us_locations_url = "https://www.chronictacos.com/us-locations"
@@ -48,27 +51,33 @@ def get_urls_from_page_src():
         if "us" in url:
             us_r = session.get(url)
             us_tree = html.fromstring(us_r.text)
-            us_location_detail_url = us_tree.xpath('//h3[contains(@class, "l-location")]/a/@href')
+            us_location_detail_url = us_tree.xpath(
+                '//h3[contains(@class, "l-location")]/a/@href'
+            )
             for url_location in us_location_detail_url:
                 all_location_urls.append(url_location)
         elif "canada" in url:
             ca_r = session.get(url)
             ca_tree = html.fromstring(ca_r.text)
-            ca_location_detail_url = ca_tree.xpath('//section[contains(@class, "menu-section")]//a/@href')
+            ca_location_detail_url = ca_tree.xpath(
+                '//section[contains(@class, "menu-section")]//a/@href'
+            )
             for url_location in ca_location_detail_url:
-                full_url = locator_domain_url+"/"+url_location
+                full_url = locator_domain_url + "/" + url_location
                 all_location_urls.append(full_url)
 
         elif "japan" in url:
             jp_r = session.get(url)
             jp_tree = html.fromstring(jp_r.text)
-            jp_location_detail_url = jp_tree.xpath('//section[contains(@class, "menu-section")]//li[1]/a/@href')
+            jp_location_detail_url = jp_tree.xpath(
+                '//section[contains(@class, "menu-section")]//li[1]/a/@href'
+            )
 
             for url_location in jp_location_detail_url:
-                full_url = locator_domain_url+"/"+url_location
+                full_url = locator_domain_url + "/" + url_location
                 all_location_urls.append(full_url)
         else:
-            all_location_urls = ''
+            all_location_urls = ""
     return all_location_urls
 
 
@@ -82,90 +91,97 @@ def get_data_from_page_src():
         json_raw_data = json_raw_data[1]
         json_data = json.loads(json_raw_data, strict=False)
         locator_domain = locator_domain_url
-        page_url = json_data['url']
-        location_name = json_data['name']
-        street_address_data = json_data['address']['streetAddress'].strip()
+        page_url = json_data["url"]
+        location_name = json_data["name"]
+        street_address_data = json_data["address"]["streetAddress"].strip()
         if street_address_data:
             street_address = street_address_data
         else:
             street_address = "<MISSING>"
 
-        city_data = json_data['address']['addressLocality'].strip()
+        city_data = json_data["address"]["addressLocality"].strip()
         if city_data:
             city = city_data
         else:
             city = "<MISSING>"
-        state_data = json_data['address']['addressRegion'].strip()
+        state_data = json_data["address"]["addressRegion"].strip()
 
         if state_data:
             state = state_data
         else:
             state = "<MISSING>"
 
-        country_code_data = json_data['address']['addressCountry']
+        country_code_data = json_data["address"]["addressCountry"]
         if country_code_data:
             country_code = country_code_data.strip()
         else:
             country_code = "<MISSING>"
 
-        zip_data = json_data['address']['postalCode'].strip()
+        zip_data = json_data["address"]["postalCode"].strip()
         if zip_data:
             zip = zip_data
         else:
             zip = "<MISSING>"
 
-        store_number = '<MISSING>'
-        phone_data = json_data['telephone']
+        store_number = "<MISSING>"
+        phone_data = json_data["telephone"]
         if phone_data:
             phone = phone_data
         else:
             phone = "<MISSING>"
 
-        location_type = json_data['@type']
-        latitude = json_data['geo']['latitude']
-        longitude = json_data['geo']['longitude']
+        location_type = json_data["@type"]
+        latitude = json_data["geo"]["latitude"]
+        longitude = json_data["geo"]["longitude"]
 
-        hoo = json_data['openingHours']
-        hoo1 = [i.strip() for i in hoo.split('\n')]
+        hoo = json_data["openingHours"]
+        hoo1 = [i.strip() for i in hoo.split("\n")]
         hoo2 = [" ".join(i.strip().split()) for i in hoo1 if i]
         hoo3 = "; ".join(hoo2)
         if hoo3:
-            hoo1 = [i.strip() for i in hoo.split('\n')]
+            hoo1 = [i.strip() for i in hoo.split("\n")]
             hoo2 = [" ".join(i.strip().split()) for i in hoo1 if i]
             hoo3 = "; ".join(hoo2)
             hours_of_operation = hoo3
         else:
-            hours_of_operation = '<MISSING>'
+            hours_of_operation = "<MISSING>"
 
         row = [
-                locator_domain,
-                page_url,
-                location_name,
-                street_address,
-                city,
-                state,
-                zip,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-                ]
+            locator_domain,
+            page_url,
+            location_name,
+            street_address,
+            city,
+            state,
+            zip,
+            country_code,
+            store_number,
+            phone,
+            location_type,
+            latitude,
+            longitude,
+            hours_of_operation,
+        ]
         items_psrc.append(row)
     return items_psrc
 
 
 def get_urls_from_api_res():
-    payload = {'latitude':33.9127807, 'longitude':-118.3520389, 'range':10000,'city_zip':90250, 'city_state':'', 'search_by_state':''}
-    url_api_endpoint = 'https://www.chronictacos.com/locations/storelist'
+    payload = {
+        "latitude": 33.9127807,
+        "longitude": -118.3520389,
+        "range": 10000,
+        "city_zip": 90250,
+        "city_state": "",
+        "search_by_state": "",
+    }
+    url_api_endpoint = "https://www.chronictacos.com/locations/storelist"
     r = session.post(url_api_endpoint, data=payload)
     json_raw_data = r.text
     json_data_api = json.loads(json_raw_data, strict=False)
     page_urls = []
-    for json_data in json_data_api['data']:
-        page_url = json_data['catering_url'].strip()
+    for json_data in json_data_api["data"]:
+        page_url = json_data["catering_url"].strip()
         page_urls.append(page_url)
     return page_urls
 
@@ -184,92 +200,99 @@ def fetch_data():
         json_raw_data = json_raw_data[1]
         json_data = json.loads(json_raw_data, strict=False)
         locator_domain = locator_domain_url
-        page_url = json_data['url']
-        location_name = json_data['name']
+        page_url = json_data["url"]
+        location_name = json_data["name"]
 
-        street_address_data = json_data['address']['streetAddress'].strip()
+        street_address_data = json_data["address"]["streetAddress"].strip()
         if street_address_data:
             street_address = street_address_data
         else:
             street_address = "<MISSING>"
 
-        city_data = json_data['address']['addressLocality'].strip()
+        city_data = json_data["address"]["addressLocality"].strip()
         if city_data:
             city = city_data
         else:
             city = "<MISSING>"
 
-        state_data = json_data['address']['addressRegion'].strip()
+        state_data = json_data["address"]["addressRegion"].strip()
         if state_data:
             state = state_data
         else:
             state = "<MISSING>"
 
-        country_code_data = json_data['address']['addressCountry']
+        country_code_data = json_data["address"]["addressCountry"]
         if country_code_data:
             country_code = country_code_data.strip()
         else:
             country_code = "<MISSING>"
 
-        zip_data = json_data['address']['postalCode'].strip()
+        zip_data = json_data["address"]["postalCode"].strip()
         if zip_data:
             zip = zip_data
         else:
             zip = "<MISSING>"
 
-        store_number = '<MISSING>'
-        phone_data = json_data['telephone']
+        store_number = "<MISSING>"
+        phone_data = json_data["telephone"]
         if phone_data:
             phone = phone_data
         else:
             phone = "<MISSING>"
-        location_type = json_data['@type']
-        latitude = json_data['geo']['latitude'].strip() or "<MISSING>"
-        longitude = json_data['geo']['longitude'].strip() or "<MISSING>"
+        location_type = json_data["@type"]
+        latitude = json_data["geo"]["latitude"].strip() or "<MISSING>"
+        longitude = json_data["geo"]["longitude"].strip() or "<MISSING>"
 
-        hoo = json_data['openingHours']
-        hoo1 = [i.strip() for i in hoo.split('\n')]
+        hoo = json_data["openingHours"]
+        hoo1 = [i.strip() for i in hoo.split("\n")]
         hoo2 = [" ".join(i.strip().split()) for i in hoo1 if i]
         hoo3 = "; ".join(hoo2)
         if hoo3:
-            hoo1 = [i.strip() for i in hoo.split('\n')]
+            hoo1 = [i.strip() for i in hoo.split("\n")]
             hoo2 = [" ".join(i.strip().split()) for i in hoo1 if i]
             hoo3 = "; ".join(hoo2)
             hours_of_operation = hoo3
         else:
-            hours_of_operation = '<MISSING>'
+            hours_of_operation = "<MISSING>"
 
-        if "<MISSING>" in hours_of_operation and "<MISSING>" in street_address and "<MISSING>" in phone and not "<MISSING>" in longitude and not "<MISSING>" in latitude:
+        if (
+            "<MISSING>" in hours_of_operation
+            and "<MISSING>" in street_address
+            and "<MISSING>" in phone
+            and not "<MISSING>" in longitude
+            and not "<MISSING>" in latitude
+        ):
             for idx, sd in enumerate(supporting_data):
                 if city in sd and state in sd:
                     url_coming_soon = supporting_data[idx][1]
                     r_cs = session.get(url_coming_soon)
                     tree_cs = html.fromstring(r_cs.text)
-                    raw_data_cs = tree_cs.xpath('//body//text()')
-                    raw_data_cs = ' '.join(''.join(raw_data_cs).strip().split()).lower()
+                    raw_data_cs = tree_cs.xpath("//body//text()")
+                    raw_data_cs = " ".join("".join(raw_data_cs).strip().split()).lower()
                     if "coming soon" in raw_data_cs:
                         hours_of_operation = "Coming Soon"
                     else:
                         hours_of_operation = "<MISSING>"
 
         row = [
-                locator_domain,
-                page_url,
-                location_name,
-                street_address,
-                city,
-                state,
-                zip,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-                ]
+            locator_domain,
+            page_url,
+            location_name,
+            street_address,
+            city,
+            state,
+            zip,
+            country_code,
+            store_number,
+            phone,
+            location_type,
+            latitude,
+            longitude,
+            hours_of_operation,
+        ]
         items.append(row)
     return items
+
 
 def scrape():
     data = fetch_data()
