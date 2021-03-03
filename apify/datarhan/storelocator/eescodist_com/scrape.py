@@ -48,7 +48,7 @@ def fetch_data():
 
     all_locations = dom.xpath('//div[@class="col three"]/p')[2:]
     for poi_html in all_locations:
-        store_url = "<MISSING>"
+        store_url = "https://buy.eescodist.com/content/branch-locator"
         location_name = "<MISSING>"
         raw_data = poi_html.xpath("text()")
         street_address = raw_data[0]

@@ -81,12 +81,11 @@ def fetch_data():
             .replace(",", " -", 2)
             for x in tArray
         )
+        store_page = el["slug"].strip()
         result.append(
             [
                 locator_domain,
-                "{}{}".format(
-                    locator_domain, el["store_page"].strip().replace("/", "", 1)
-                ),
+                "{}{}".format(locator_domain + "locations/", store_page),
                 el["name"],
                 el["address"],
                 el["city"],

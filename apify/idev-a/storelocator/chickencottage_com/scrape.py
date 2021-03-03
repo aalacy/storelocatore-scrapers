@@ -10,7 +10,7 @@ locator_domain = "https://chickencottage.com"
 def fetch_data():
     with SgRequests() as session:
         res = session.post(
-            "https://chickencottage.com/restaurants/?/front/get/55.378051/-3.435973/1"
+            "https://chickencottage.com/restaurants/?/front/get/53.8337367/-2.4290148/1"
         )
         store_list = json.loads(res.text)
         for store in store_list:
@@ -22,7 +22,7 @@ def fetch_data():
             address_detail = detail.select_one("li.lpr-location-address").contents
             address_detail = [x for x in address_detail if x.string is not None]
             country_code = "UK"
-            except_ids = ["124", "125"]
+            except_ids = ["124", "125", "126"]
             if store_number == "1":
                 state = "<MISSING>"
                 address_detail = address_detail[:-1]

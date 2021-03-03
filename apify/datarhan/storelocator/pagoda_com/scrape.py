@@ -88,7 +88,9 @@ def fetch_data():
             if not street_address:
                 continue
             street_address = (
-                street_address[0].strip() if street_address else "<MISSING>"
+                street_address[0].strip().replace("   ", " ")
+                if street_address
+                else "<MISSING>"
             )
             city = store_dom.xpath('//span[@itemprop="addressLocality"]/text()')
             city = city[0] if city else "<MISSING>"

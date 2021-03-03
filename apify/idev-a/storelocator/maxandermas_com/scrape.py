@@ -28,6 +28,15 @@ def _valid(val):
     )
 
 
+def _filter(blocks, hours):
+    for block in blocks:
+        if "SUN" in block.text:
+            for _ in block.stripped_strings:
+                if "DINE" in _valid(_):
+                    continue
+                hours += _valid(_).split("|")
+
+
 def fetch_data():
     with SgRequests() as session:
         locator_domain = "https://www.maxandermas.com/locations/"
@@ -40,10 +49,11 @@ def fetch_data():
             soup = bs(r1.text, "lxml")
             hours = []
             try:
-                hours = [
-                    _valid(_)
-                    for _ in soup.select_one('span[style*="#ef3e42"]').stripped_strings
-                ][1].split("|")
+                blocks = soup.select("div.et_pb_text_inner h2")
+                _filter(blocks, hours)
+                if not hours:
+                    blocks = soup.select("div.et_pb_text_inner p")
+                    _filter(blocks, hours)
             except:
                 pass
             if (
