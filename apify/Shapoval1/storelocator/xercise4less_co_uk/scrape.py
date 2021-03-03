@@ -94,8 +94,16 @@ def get_data(url):
         or "<MISSING>"
     )
     phone = "".join(tree.xpath('//a[contains(@href, "tel:")]/text()')) or "<MISSING>"
-    latitude = "<MISSING>"
-    longitude = "<MISSING>"
+    text = "".join(tree.xpath('//ul/li/a[contains(text(), "view in maps")]/@href'))
+    try:
+        if text.find("ll=") != -1:
+            latitude = text.split("ll=")[1].split(",")[0]
+            longitude = text.split("ll=")[1].split(",")[1].split("&")[0]
+        else:
+            latitude = text.split("@")[1].split(",")[0]
+            longitude = text.split("@")[1].split(",")[1]
+    except IndexError:
+        latitude, longitude = "<MISSING>", "<MISSING>"
     location_type = "<MISSING>"
     hours_of_operation = (
         " ".join(

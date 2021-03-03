@@ -64,7 +64,7 @@ def fetch_data():
     stores_req = session.get(search_url)
     stores = json.loads(stores_req.text)["content"]["locations"]
     for store_json in stores:
-        page_url = "https://www.abeloil.com/"
+        page_url = "<MISSING>"
         latitude = store_json["lat"]
         longitude = store_json["lng"]
 

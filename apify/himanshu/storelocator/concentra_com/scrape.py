@@ -79,16 +79,14 @@ def fetch_data():
         if longitude == "":
             longitude = "<MISSING>"
 
-        hours = (
-            " ".join(
-                list(soup.find("div", {"class": "hours-container"}).stripped_strings)
-            )
-            .replace("Hours", "")
-            .strip()
-        )
+        hours = store_sel.xpath('//div[@class="hours-container"]/div[1]/div/text()')
+        hours_list = []
+        for index in range(0, len(hours), 2):
+            hours_list.append(hours[index].strip() + ":" + hours[index + 1].strip())
 
-        if len(hours) <= 0:
-            hours = "<MISSING>"
+        hours_of_operation = "; ".join(hours_list).strip()
+        if len(hours_of_operation) <= 0:
+            hours_of_operation = "<MISSING>"
 
         if len(phone) <= 0:
             phone = "<MISSING>"
@@ -106,7 +104,7 @@ def fetch_data():
         store.append(location_type)
         store.append(latitude)
         store.append(longitude)
-        store.append(hours)
+        store.append(hours_of_operation)
         store.append(page_url)
         yield store
 

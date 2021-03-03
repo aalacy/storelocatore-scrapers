@@ -3,6 +3,7 @@ import csv
 from sgrequests import SgRequests
 from sglogging import sglog
 import lxml.html
+from sgscrape import sgpostal as parser
 
 website = "majestic.co.uk"
 domain = "https://www.majestic.co.uk"
@@ -87,19 +88,18 @@ def fetch_data():
             store_req = session.get(page_url, headers=headers)
             store_sel = lxml.html.fromstring(store_req.text)
             location_type = "<MISSING>"
-            address = "".join(
+            raw_address = "".join(
                 store_sel.xpath('//p[@class="store__address"]/text()')
             ).strip()
 
-            street_address = ", ".join(address.split(",")[:-2]).strip()
-            city = address.split(",")[-2].strip()
-            state = "<MISSING>"
-            zip = address.split(",")[-1].strip()
+            formatted_addr = parser.parse_address_intl(raw_address)
+            street_address = formatted_addr.street_address_1
+            if formatted_addr.street_address_2:
+                street_address = street_address + ", " + formatted_addr.street_address_2
 
-            if len(zip.split(" ")) == 3:
-                street_address = ", ".join(address.split(",")[:-1]).strip()
-                city = zip.split(" ", 1)[0].strip()
-                zip = zip.split(" ", 1)[1].strip()
+            city = formatted_addr.city
+            state = formatted_addr.state
+            zip = formatted_addr.postcode
 
             if "temporarily closed" in store_req.text:
                 location_type = "temporarily closed"

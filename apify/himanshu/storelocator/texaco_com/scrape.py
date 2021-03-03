@@ -43,23 +43,21 @@ def fetch_data():
     scraped_items = []
 
     DOMAIN = "texaco.com"
+    start_url = "https://www.texaco.com/api/app/techron2go/ws_getChevronTexacoNearMe_r2.aspx?callback=jQuery22304128364136082625_1613584397139&lat=%s&lng=%s&oLat=%s&oLng=%s&brand=ChevronTexaco&radius=35"
+
     headers = {
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.102 Safari/537.36",
         "Content-Type": "application/json; charset=utf-8",
     }
-
     all_coordinates = DynamicGeoSearch(
         country_codes=[SearchableCountries.USA],
-        max_radius_miles=50,
+        max_radius_miles=10,
         max_search_results=None,
     )
     for lat, lng in all_coordinates:
-        r = session.get(
-            f"https://www.texaco.com/api/app/techron2go/ws_getChevronTexacoNearMe_r2.aspx?callback=jQuery22306785250418595727_1564653077932&lat={lat}&lng={lng}&oLat={lat}&oLng={lng}&brand=ChevronTexaco&radius=100&_=1564653077933",
-            headers=headers,
-        )
+        r = session.get(start_url % (lat, lng, lat, lng), headers=headers)
         lt = json.loads(
-            r.text.split("jQuery22306785250418595727_1564653077932(")[1].split("})")[0]
+            r.text.split("jQuery22304128364136082625_1613584397139(")[1].split("})")[0]
             + "}"
         )
         for loc in lt["stations"]:
