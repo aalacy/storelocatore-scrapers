@@ -45,8 +45,11 @@ def fetch_data():
     for j in js:
         line = j.get("AddressLine") or ""
         postal = j.get("postcode") or ""
-        if postal.lower() == "ireland":
+        if "ireland" in postal.lower() or "ireland" in line.lower():
             continue
+        if "Currys" in line:
+            line = ",".join(line.split(",")[1:])
+
         adr = parse_address(International_Parser(), line, postcode=postal)
 
         street_address = (
@@ -58,6 +61,8 @@ def fetch_data():
         city = adr.city or "<MISSING>"
         state = adr.state or "<MISSING>"
         postal = adr.postcode or "<MISSING>"
+        if len(street_address) < 10:
+            street_address = line.split(",")[0].strip() or "<MISSING>"
         country_code = "GB"
         store_number = j.get("branch_id") or "<MISSING>"
         location_name = j.get("branch_name")
