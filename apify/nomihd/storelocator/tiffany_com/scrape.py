@@ -138,7 +138,8 @@ def fetch_data():
                 if longitude == "" or longitude is None:
                     longitude = "<MISSING>"
 
-                hours_of_operation = json_data["openingHours"]
+                if "permanently closed" in json_data["openingHours"]:
+                    hours_of_operation = "permanently closed"
 
                 if hours_of_operation == "":
                     hours_of_operation = "<MISSING>"

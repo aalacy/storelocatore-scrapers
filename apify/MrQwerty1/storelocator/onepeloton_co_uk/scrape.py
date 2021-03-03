@@ -58,6 +58,10 @@ def fetch_data():
         longitude = j.get("longitude") or "<MISSING>"
         location_type = "<MISSING>"
         hours_of_operation = ";".join(j.get("hours_of_operation") or []) or "<MISSING>"
+        if "http" in hours_of_operation:
+            hours_of_operation = "<INACCESSIBLE>"
+        if hours_of_operation == "<MISSING>" and country_code == "US":
+            hours_of_operation = "<INACCESSIBLE>"
 
         row = [
             locator_domain,

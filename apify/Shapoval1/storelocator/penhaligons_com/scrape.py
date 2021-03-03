@@ -63,6 +63,8 @@ def fetch_data():
     for j in js["stores"]:
         a = j.get("address")
         street_address = f"{a.get('line1')} {a.get('line2')}".strip()
+        if street_address.find("25 Kings Road") != -1:
+            street_address = street_address.split(",")[0].strip()
         city = a.get("town")
         postal = a.get("postalCode")
         state = "<MISSING>"
@@ -75,6 +77,10 @@ def fetch_data():
             "".join(j.get("displayName")).replace("'", "-").replace(" ", "-").lower()
         )
         page_url = f"https://www.penhaligons.com/us/en/stores/{slug2}/{slug1}"
+        if page_url.find("burlington-arcade") != -1:
+            continue
+        if page_url.find("canary-wharf") != -1:
+            street_address = street_address + " " + "Canary Wharf"
         location_name = j.get("displayName")
         phone = a.get("phone") or "<MISSING>"
         latitude = j.get("geoPoint").get("latitude")

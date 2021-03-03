@@ -1,8 +1,13 @@
 import csv
 import json
 import re
+import time
 
 from bs4 import BeautifulSoup
+
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as ec
+from selenium.webdriver.support.ui import WebDriverWait
 
 from sgrequests import SgRequests
 
@@ -75,10 +80,20 @@ def fetch_data():
         req = session.get(link, headers=headers)
         base = BeautifulSoup(req.text, "lxml")
 
-        if "coming soon" in base.find(class_="post-content").text.lower():
+        if "coming soon" in base.find(class_="title-heading-center").text.lower():
             continue
 
         driver.get(link)
+        time.sleep(2)
+        try:
+            WebDriverWait(driver, 50).until(
+                ec.presence_of_element_located((By.TAG_NAME, "h1"))
+            )
+
+        except:
+            driver.refresh()
+            time.sleep(10)
+        time.sleep(2)
 
         base = BeautifulSoup(driver.page_source, "lxml")
 
@@ -89,11 +104,12 @@ def fetch_data():
         raw_data = list(base.find(class_="content-container").stripped_strings)
 
         phone = raw_data[1].replace("TBA", "<MISSING>")
-        hours_of_operation = " ".join(raw_data[4:])
+        hours_of_operation = (
+            " ".join(raw_data[4:]).replace("Opening March 1st", "").strip()
+        )
 
         if (
             not hours_of_operation
-            or "opening" in hours_of_operation.lower()
             or "Monday: Tuesday: Wednesday: Thursday: Friday: Saturday: Sunday:"
             in hours_of_operation
         ):
