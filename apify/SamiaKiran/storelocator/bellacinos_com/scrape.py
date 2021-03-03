@@ -2,9 +2,11 @@ import csv
 import json
 from datetime import datetime
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
+from sglogging import sglog
 
-logger = SgLogSetup().get_logger("bellacinos_com")
+website = "bellacinos_com"
+log = sglog.SgLogSetup().get_logger(logger_name=website)
+session = SgRequests()
 
 session = SgRequests()
 headers = {
@@ -13,7 +15,7 @@ headers = {
 
 
 def write_output(data):
-    with open("data.csv", mode="w") as output_file:
+    with open("data.csv", mode="w", newline="", encoding="utf8") as output_file:
         writer = csv.writer(
             output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
         )
@@ -37,19 +39,20 @@ def write_output(data):
                 "hours_of_operation",
             ]
         )
-        # Body
         for row in data:
             writer.writerow(row)
+        log.info(f"No of records being processed: {len(data)}")
 
 
 def fetch_data():
     # Your scraper here
     final_data = []
-    url = "https://momentfeed-prod.apigee.net/api/llp.json?auth_token=BAVYISWKYNNQTIXK&center=31.8039734986,-98.8223185136653&coordinates=10.74167474861858,-141.02202554491512,37.493303137349145,-106.62261148241522&multi_account=false&page=1&pageSize=60"
-    r = session.get(url, headers=headers, verify=False)
+    url = "https://api.momentfeed.com/v1/analytics/api/llp.json?auth_token=BAVYISWKYNNQTIXK&center=31.8039734986,-98.8223185136653&coordinates=10.74167474861858,-141.02202554491512,37.493303137349145,-106.62261148241522&multi_account=false&page=1&pageSize=60"
+    r = session.get(url, headers=headers)
     loclist = r.text
     loclist = json.loads(loclist)
     for loc in loclist:
+
         phone = loc["store_info"]["phone"]
         title = loc["store_info"]["name"]
         street = loc["store_info"]["address"]
@@ -94,8 +97,11 @@ def fetch_data():
 
 
 def scrape():
+    log.info("Started")
     data = fetch_data()
     write_output(data)
+    log.info("Finished")
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()
