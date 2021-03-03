@@ -20,39 +20,29 @@ def _headers():
 
 
 def fetch_data():
-    data = []
-
     with SgRequests() as session:
         res = session.get(base_url, headers=_headers())
         locations = json.loads(res.text)["data"]
         for _ in locations:
-            try:
-                hours = []
-                for key, val in _["hours"].items():
-                    hours.append(f"{key}: {val}")
-                hours_of_operation = "; ".join(hours)
-                addr = parse_address_usa(_["address"])
-                record = SgRecord(
-                    store_number=_["_id"],
-                    location_name=_["name"],
-                    street_address=addr.street_address_1,
-                    city=addr.city,
-                    state=addr.state,
-                    zip_postal=addr.postcode,
-                    country_code=addr.country,
-                    phone=_["phone"],
-                    latitude=_["lat"],
-                    longitude=_["lng"],
-                    locator_domain=locator_domain,
-                    hours_of_operation=hours_of_operation,
-                )
-                data.append(record)
-            except:
-                import pdb
-
-                pdb.set_trace()
-
-    return data
+            hours = []
+            for key, val in _["hours"].items():
+                hours.append(f"{key}: {val}")
+            hours_of_operation = "; ".join(hours)
+            addr = parse_address_usa(_["address"])
+            yield SgRecord(
+                store_number=_["_id"],
+                location_name=_["name"],
+                street_address=addr.street_address_1,
+                city=addr.city,
+                state=addr.state,
+                zip_postal=addr.postcode,
+                country_code=addr.country,
+                phone=_["phone"],
+                latitude=_["lat"],
+                longitude=_["lng"],
+                locator_domain=locator_domain,
+                hours_of_operation=hours_of_operation,
+            )
 
 
 if __name__ == "__main__":

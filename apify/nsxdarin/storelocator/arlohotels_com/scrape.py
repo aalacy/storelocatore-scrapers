@@ -103,8 +103,10 @@ def fetch_data():
                     add = "351 W 38th St"
             if 'data-center-lat="' in line2:
                 lat = line2.split('data-center-lat="')[1].split('"')[0]
-                lng = line2.split('-lng="')[1].split('"')
+                lng = line2.split('lng="')[1].split('"')[0]
         if add != "":
+            if "midtown" in loc:
+                name = name + " - Coming Soon"
             yield [
                 website,
                 loc,

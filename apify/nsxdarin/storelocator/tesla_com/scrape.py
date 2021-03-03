@@ -64,8 +64,11 @@ def fetch_data():
         r2 = session.get(loc, headers=headers)
         lines = r2.iter_lines()
         HFound = True
+        CS = False
         for line2 in lines:
             line2 = str(line2.decode("utf-8"))
+            if '<span class="coming-soon">Coming Soon</span>' in line2:
+                CS = True
             if "<title>" in line2:
                 name = line2.split("<title>")[1].split(" |")[0]
             if '<span class="street-address">' in line2:
@@ -204,6 +207,8 @@ def fetch_data():
             phone = "<MISSING>"
         if "St Albans" in name:
             zc = "<MISSING>"
+        if CS:
+            name = name + " - Coming Soon"
         yield [
             website,
             loc,
@@ -237,6 +242,7 @@ def fetch_data():
         add = ""
         city = ""
         HFound = True
+        CS = False
         state = ""
         zc = ""
         store = "<MISSING>"
@@ -248,6 +254,8 @@ def fetch_data():
         lines = r2.iter_lines()
         for line2 in r2.iter_lines():
             line2 = str(line2.decode("utf-8"))
+            if '<span class="coming-soon">Coming Soon</span>' in line2:
+                CS = True
             if "<title>" in line2:
                 name = line2.split("<title>")[1].split(" |")[0]
             if '<span class="street-address">' in line2:
@@ -373,6 +381,8 @@ def fetch_data():
         typ = typ.replace("; ", "")
         if typ == "":
             typ = "Store"
+        if CS:
+            name = name + " - Coming Soon"
         yield [
             website,
             loc,
@@ -407,6 +417,7 @@ def fetch_data():
         typ = ""
         state = ""
         zc = ""
+        CS = False
         store = "<MISSING>"
         phone = ""
         lat = ""
@@ -417,6 +428,8 @@ def fetch_data():
         lines = r2.iter_lines()
         for line2 in lines:
             line2 = str(line2.decode("utf-8"))
+            if '<span class="coming-soon">Coming Soon</span>' in line2:
+                CS = True
             if "<title>" in line2:
                 name = line2.split("<title>")[1].split(" |")[0]
             if '<span class="street-address">' in line2:
@@ -571,6 +584,8 @@ def fetch_data():
         typ = typ.replace("; ", "")
         if typ == "":
             typ = "Store"
+        if CS:
+            name = name + " - Coming Soon"
         yield [
             website,
             loc,
