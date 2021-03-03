@@ -42,7 +42,7 @@ def fetch_data():
     items = []
 
     start_url = "https://stores.mooresclothing.com/index.html"
-    domain = 'mooresclothing.com'
+    domain = "mooresclothing.com"
     response = session.get(start_url)
     dom = etree.HTML(response.text)
     all_locations = []
