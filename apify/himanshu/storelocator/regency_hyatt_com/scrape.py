@@ -1,6 +1,7 @@
 import csv
 from bs4 import BeautifulSoup
 import json
+import html5lib
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
 
@@ -47,6 +48,9 @@ def fetch_data():
         headers=headers,
     )
     soup = BeautifulSoup(r.text, "lxml")
+    htmldoc = html5lib.parse(r.text)
+    if "-------" in htmldoc:
+        soup = "NA"
     links = soup.find_all("a", {"class": "b-text_copy-3"})
     for link in links:
         if "hyatt-regency" in link["href"]:
