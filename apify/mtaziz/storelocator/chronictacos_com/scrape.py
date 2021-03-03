@@ -262,11 +262,11 @@ def fetch_data():
             hours_of_operation = "<MISSING>"
 
         if (
-            "<MISSING>" in hours_of_operation
-            and "<MISSING>" in street_address
-            and "<MISSING>" in phone
-            and "<MISSING>" not in longitude
-            and "<MISSING>" not in latitude
+            "<MISSING>" in hours_of_operation and
+            "<MISSING>" in street_address and
+            "<MISSING>" in phone and
+            "<MISSING>" not in longitude and
+            "<MISSING>" not in latitude
         ):
             for idx, sd in enumerate(supporting_data):
                 if city in sd and state in sd:
