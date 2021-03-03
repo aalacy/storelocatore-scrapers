@@ -48,7 +48,6 @@ def fetch_data():
         j = j.get("store")
 
         line = j.get("address")
-        print(line)
 
         adr = parse_address(International_Parser(), line)
         street_address = (
