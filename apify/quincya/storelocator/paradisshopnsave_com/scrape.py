@@ -72,6 +72,7 @@ def fetch_data():
 
         # Maps
         map_link = item.a["href"]
+        session = SgRequests()
         req = session.get(map_link, headers=headers)
         maps = BeautifulSoup(req.text, "lxml")
 
