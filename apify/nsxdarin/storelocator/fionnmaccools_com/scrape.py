@@ -105,7 +105,15 @@ def fetch_data():
                             )
                         except:
                             hours = "<MISSING>"
-                        if store not in ids:
+                        if "; , storenotice" in hours:
+                            hours = hours.split("; , storenotice")[0].strip()
+                        if "; Monday to Friday " in hours:
+                            hours = hours.split("; Monday to Friday ")[0].strip()
+                        if ", storenotice:" in hours:
+                            hours = hours.split(", storenotice:")[0].strip()
+                        if " Holidays:" in hours:
+                            hours = hours.split(" Holidays:")[0].strip()
+                        if store not in ids and "FIONN MACCOOL" in name.upper():
                             ids.append(store)
                             yield [
                                 website,

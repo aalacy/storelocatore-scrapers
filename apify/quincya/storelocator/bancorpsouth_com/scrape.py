@@ -1,9 +1,12 @@
 import csv
-import re
 
 from bs4 import BeautifulSoup
 
+from sglogging import SgLogSetup
+
 from sgrequests import SgRequests
+
+logger = SgLogSetup().get_logger("bancorpsouth.com")
 
 
 def write_output(data):
@@ -37,111 +40,149 @@ def write_output(data):
 
 
 def fetch_data():
+
+    states = [
+        "AL",
+        "AK",
+        "AZ",
+        "AR",
+        "CA",
+        "CO",
+        "CT",
+        "DC",
+        "DE",
+        "FL",
+        "GA",
+        "HI",
+        "ID",
+        "IL",
+        "IN",
+        "IA",
+        "KS",
+        "KY",
+        "LA",
+        "ME",
+        "MD",
+        "MA",
+        "MI",
+        "MN",
+        "MS",
+        "MO",
+        "MT",
+        "NE",
+        "NV",
+        "NH",
+        "NJ",
+        "NM",
+        "NY",
+        "NC",
+        "ND",
+        "OH",
+        "OK",
+        "OR",
+        "PA",
+        "RI",
+        "SC",
+        "SD",
+        "TN",
+        "TX",
+        "UT",
+        "VT",
+        "VA",
+        "WA",
+        "WV",
+        "WI",
+        "WY",
+    ]
+
     session = SgRequests()
+
     headers = {
-        "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
+        "Accept": "application/json, text/plain, */*",
+        "Accept-Encoding": "gzip, deflate, br",
+        "Accept-Language": "en-US,en;q=0.9",
+        "Connection": "keep-alive",
+        "Content-Type": "application/json;charset=UTF-8",
+        "Host": "www.bancorpsouth.com",
+        "Origin": "https://www.bancorpsouth.com",
+        "Referer": "https://www.bancorpsouth.com/find-a-location",
+        "Sec-Fetch-Dest": "empty",
+        "Sec-Fetch-Mode": "cors",
+        "Sec-Fetch-Site": "same-origin",
+        "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.111 Safari/537.36",
     }
+
     locator_domain = "bancorpsouth.com"
 
     all_store_data = []
-    all_links = []
 
-    base_link = "https://www.bancorpsouth.com/sitemap.xml"
-    req = session.get(base_link, headers=headers)
-    base = BeautifulSoup(req.text, "lxml")
+    base_link = "https://www.bancorpsouth.com/SiteServices/BranchLocatorSearch"
 
-    items = base.find_all("loc")
-    for item in items:
-        if "find-a-location/" in item.text:
-            link = item.text
-            if link not in all_links:
-                all_links.append(link)
+    for st in states:
+        logger.info(st)
+        payload = {"Location": st, "LocationType": "1"}
 
-    for link in all_links:
-        if "atm" in link:
-            continue
+        stores = session.post(base_link, headers=headers, json=payload).json()[
+            "results"
+        ]
 
-        req = session.get(link, headers=headers)
-        base = BeautifulSoup(req.text, "lxml")
+        for store in stores:
 
-        location_name = base.h1.text.strip()
+            link = "https://www.bancorpsouth.com" + store["link"]
+            if "atm" in link:
+                continue
 
-        raw_address = list(
-            base.find(class_="row-fluid branch-info")
-            .find(class_="span6")
-            .stripped_strings
-        )
+            location_name = store["branchName"]
+            street_address = store["street1"]
+            city = store["city"]
+            state = store["state"]
+            zip_code = store["zip"]
+            country_code = "US"
 
-        street_address = " ".join(raw_address[:-3]).strip()
-        city_line = raw_address[-3].strip().split(",")
-        city = city_line[0].strip()
-        state = city_line[-1].strip().split()[0].strip()
-        zip_code = city_line[-1].strip().split()[1].strip()
-        country_code = "US"
-        store_number = "<MISSING>"
-        location_type = "<MISSING>"
-        phone = raw_address[-1].split("or")[0].strip()
+            store_number = "<MISSING>"
+            phone = store["phone"].split("or")[0].strip()
 
-        if (
-            "temporarily closed"
-            in base.find(class_="row-fluid branch-info").text.lower()
-        ):
-            hours_of_operation = "Temporarily Closed"
-        else:
-            hours_of_operation = (
-                " ".join(
-                    list(
-                        base.find(class_="row-fluid branch-info")
-                        .find_all(class_="span6")[1]
-                        .stripped_strings
-                    )[1:3]
-                )
-                .split("Drive")[0]
-                .split("Services")[0]
-                .replace("  ", " ")
-                .strip()
+            hours_of_operation = " ".join(
+                list(BeautifulSoup(store["hours"], "lxml").stripped_strings)
             )
-        if not hours_of_operation:
-            try:
-                hours_of_operation = (
-                    list(
-                        base.find(class_="row-fluid branch-info")
-                        .find_all(class_="span6")[1]
-                        .stripped_strings
-                    )[0]
-                    .replace("Lobby:", "")
-                    .strip()
-                )
-            except:
+            if not hours_of_operation:
                 hours_of_operation = "<MISSING>"
+            latitude = store["latitude"]
+            longitude = store["longitude"]
 
-        try:
-            map_str = base.find(id="content").text
-            re.findall(r"[0-9]{2}\.[0-9]+", map_str)[0]
-            latitude = re.findall(r"[0-9]{2}\.[0-9]+", map_str)[0]
-            longitude = re.findall(r"-[0-9]{2,3}\.[0-9]+", map_str)[0]
-        except:
-            latitude = "<MISSING>"
-            longitude = "<MISSING>"
+            location_type = "Branch, "
 
-        all_store_data.append(
-            [
-                locator_domain,
-                link,
-                location_name,
-                street_address,
-                city,
-                state,
-                zip_code,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
-        )
+            if store["isMortgage"]:
+                location_type = location_type + "Mortgage, "
+            if store["isDrive"]:
+                location_type = location_type + "Drive-Thru, "
+            if store["isATM"]:
+                location_type = location_type + "ATM, "
+            if store["isInsurance"]:
+                location_type = location_type + "Insurance, "
+            if store["isLPO"]:
+                location_type = location_type + "Loan Production Office,"
+
+            location_type = location_type.strip()[:-1]
+
+            all_store_data.append(
+                [
+                    locator_domain,
+                    link,
+                    location_name,
+                    street_address,
+                    city,
+                    state,
+                    zip_code,
+                    country_code,
+                    store_number,
+                    phone,
+                    location_type,
+                    latitude,
+                    longitude,
+                    hours_of_operation,
+                ]
+            )
 
     return all_store_data
 
