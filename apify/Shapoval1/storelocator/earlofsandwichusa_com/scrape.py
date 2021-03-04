@@ -35,7 +35,6 @@ def write_output(data):
 
 
 def get_urls():
-    allurls1 = []
     allurls = []
     session = SgRequests()
     ca = session.get("https://locations.earlofsandwichusa.com/index.html")
