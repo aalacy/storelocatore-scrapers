@@ -16,7 +16,7 @@ def validate(item):
 
 
 def get_value(item):
-    if item == None:
+    if item is None:
         item = "<MISSING>"
     item = validate(item)
     if item == "":
