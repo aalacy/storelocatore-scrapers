@@ -99,6 +99,9 @@ def fetch_data():
             longitude = "<MISSING>"
             hours_of_operation = "<MISSING>"
 
+        if state in ["Fiji", "Mauritius"]:
+            continue
+
         item = [
             domain,
             store_url,
