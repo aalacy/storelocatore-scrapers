@@ -27,7 +27,7 @@ def fetch_data():
         locator_domain = "https://spiritsunlimited.com/"
         base_url = "https://spiritsunlimited.com/"
         soup = bs(session.get(base_url, headers=_headers).text, "lxml")
-        with SgChrome(executable_path=r"/mnt/g/work/mia/chromedriver.exe") as driver:
+        with SgChrome() as driver:
             script = soup.find("script", id="city-hive-wf-inject-data").string
             locations = driver.execute_script(
                 "return " + script.split(" = ")[1].strip()
