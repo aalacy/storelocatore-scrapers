@@ -74,7 +74,11 @@ def get_data(url):
     phone = j.get("phone") or "<MISSING>"
     latitude = j.get("latitude") or "<MISSING>"
     longitude = j.get("longitude") or "<MISSING>"
-    location_type = "<MISSING>"
+    isoutlet = j.get("customByName").get("Outlet")
+    if isoutlet:
+        location_type = "Outlet"
+    else:
+        location_type = "Retail"
     days = j.get("hours", {}).get("days") or []
 
     _tmp = []
