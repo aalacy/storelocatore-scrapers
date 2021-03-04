@@ -4,7 +4,7 @@ import json
 from lxml import etree
 
 from sgrequests import SgRequests
-from sgscrape.sgpostal import parse_address_usa
+from sgscrape.sgpostal import parse_address_intl
 
 
 def write_output(data):
@@ -68,26 +68,21 @@ def fetch_data():
         store_url = "<MISSING>"
         location_name = poi_html.xpath(".//h3/text()")
         location_name = location_name[0] if location_name else "<MISSING>"
-        raw_address = poi_html.xpath(".//address/text()")[0].strip()
-        addr = parse_address_usa(raw_address)
-        street_address = raw_address.split(",")[0]
-        street_address = street_address.split(" Chicago IL")[0].strip()
+        raw_address = poi_html.xpath(".//address//text()")
+        raw_address = [
+            e.strip() for e in raw_address if e.strip() and "get " not in e.lower()
+        ]
+        raw_address = " ".join(raw_address)
+        addr = parse_address_intl(raw_address)
+        street_address = addr.street_address_1
+        if not street_address:
+            street_address = addr.street_address_2
+        if not street_address:
+            street_address = raw_address.split(",")[0]
         city = addr.city
         city = city if city else "<MISSING>"
-        if street_address.endswith(city):
-            street_address = street_address.replace(city, "").strip()
-        state = re.findall("【(.+)】", location_name)[0]
-        if not state:
-            state = raw_address.split()[-2]
-        if "," in state:
-            city = state.split(",")[-1]
-            state = state.split(",")[0]
-        if "Abercorn" in state:
-            city = state
-            state = "<MISSING>"
-        zip_code = raw_address.split()[-1]
-        if "Extention" in zip_code:
-            zip_code = "<MISSING>"
+        state = addr.state
+        zip_code = addr.postcode
         country_code = addr.country
         country_code = country_code if country_code else "<MISSING>"
         store_number = poi["i"]
