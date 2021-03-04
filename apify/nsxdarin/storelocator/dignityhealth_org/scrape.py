@@ -79,98 +79,101 @@ def fetch_data():
                             .replace("&amp;", "&")
                         )
     for loc in locs:
-        loc = loc.replace("\\u0026", "&")
-        logger.info("Pulling Location %s..." % loc)
-        website = "dignityhealth.org"
-        typ = "<MISSING>"
-        hours = ""
-        name = ""
-        add = ""
-        city = ""
-        state = ""
-        zc = ""
-        country = "US"
-        store = ""
-        phone = ""
-        lat = ""
-        lng = ""
-        r2 = session.get(loc, headers=headers)
-        for line2 in r2.iter_lines():
-            line2 = str(line2.decode("utf-8"))
-            if 'property="og:title" content="' in line2:
-                name = line2.split('property="og:title" content="')[1].split('"')[0]
-                if " |" in name:
-                    name = name.split(" |")[0]
-            if '[{"altTagText":"' in line2 and add == "":
-                add = line2.split('"address":')[1].split('"line1":"')[1].split('"')[0]
-                city = line2.split('{"city":"')[1].split('"')[0]
-                state = line2.split(',"region":"')[1].split('"')[0]
-                zc = line2.split('"postalCode":"')[1].split('"')[0]
-            if 'itemprop="telephone" id="phone-main">' in line2:
-                phone = line2.split('itemprop="telephone" id="phone-main">')[1].split(
-                    "<"
-                )[0]
-            if '<meta itemprop="latitude" content="' in line2:
-                lat = line2.split('<meta itemprop="latitude" content="')[1].split('"')[
-                    0
-                ]
-                lng = line2.split('<meta itemprop="longitude" content="')[1].split('"')[
-                    0
-                ]
-            if ',"id":"' in line2:
-                store = line2.split(',"id":"')[1].split('"')[0]
-            if (
-                '><span class="c-hours-today js-hours-today" data-days=' in line2
-                and hours == ""
-            ):
-                days = (
-                    line2.split(
-                        '><span class="c-hours-today js-hours-today" data-days='
-                    )[1]
-                    .split("}]'")[0]
-                    .split('"day":"')
-                )
-                for day in days:
-                    if '"intervals"' in day:
-                        dname = day.split('"')[0]
-                        if '"isClosed":true' in day:
-                            hrs = dname + ": Closed"
-                        else:
-                            if '{"end":2359,"start":0}' in day:
-                                hrs = dname + ": 24 Hours"
+        if "locations.dignityhealth" in loc:
+            loc = loc.replace("\\u0026", "&")
+            logger.info("Pulling Location %s..." % loc)
+            website = "dignityhealth.org"
+            typ = "<MISSING>"
+            hours = ""
+            name = ""
+            add = ""
+            city = ""
+            state = ""
+            zc = ""
+            country = "US"
+            store = ""
+            phone = ""
+            lat = ""
+            lng = ""
+            r2 = session.get(loc, headers=headers)
+            for line2 in r2.iter_lines():
+                line2 = str(line2.decode("utf-8"))
+                if 'property="og:title" content="' in line2:
+                    name = line2.split('property="og:title" content="')[1].split('"')[0]
+                    if " |" in name:
+                        name = name.split(" |")[0]
+                if '[{"altTagText":"' in line2 and add == "":
+                    add = (
+                        line2.split('"address":')[1].split('"line1":"')[1].split('"')[0]
+                    )
+                    city = line2.split('{"city":"')[1].split('"')[0]
+                    state = line2.split(',"region":"')[1].split('"')[0]
+                    zc = line2.split('"postalCode":"')[1].split('"')[0]
+                if 'itemprop="telephone" id="phone-main">' in line2:
+                    phone = line2.split('itemprop="telephone" id="phone-main">')[
+                        1
+                    ].split("<")[0]
+                if '<meta itemprop="latitude" content="' in line2:
+                    lat = line2.split('<meta itemprop="latitude" content="')[1].split(
+                        '"'
+                    )[0]
+                    lng = line2.split('<meta itemprop="longitude" content="')[1].split(
+                        '"'
+                    )[0]
+                if ',"id":"' in line2:
+                    store = line2.split(',"id":"')[1].split('"')[0]
+                if (
+                    '><span class="c-hours-today js-hours-today" data-days=' in line2
+                    and hours == ""
+                ):
+                    days = (
+                        line2.split(
+                            '><span class="c-hours-today js-hours-today" data-days='
+                        )[1]
+                        .split("}]'")[0]
+                        .split('"day":"')
+                    )
+                    for day in days:
+                        if '"intervals"' in day:
+                            dname = day.split('"')[0]
+                            if '"isClosed":true' in day:
+                                hrs = dname + ": Closed"
                             else:
-                                hrs = (
-                                    dname
-                                    + ": "
-                                    + day.split('"start":')[1].split("}")[0]
-                                    + "-"
-                                    + day.split('"end":')[1].split(",")[0]
-                                )
-                        if hours == "":
-                            hours = hrs
-                        else:
-                            hours = hours + "; " + hrs
-        if hours == "":
-            hours = "<MISSING>"
-        if phone == "":
-            phone = "<MISSING>"
-        if add != "":
-            yield [
-                website,
-                loc,
-                name,
-                add,
-                city,
-                state,
-                zc,
-                country,
-                store,
-                phone,
-                typ,
-                lat,
-                lng,
-                hours,
-            ]
+                                if '{"end":2359,"start":0}' in day:
+                                    hrs = dname + ": 24 Hours"
+                                else:
+                                    hrs = (
+                                        dname
+                                        + ": "
+                                        + day.split('"start":')[1].split("}")[0]
+                                        + "-"
+                                        + day.split('"end":')[1].split(",")[0]
+                                    )
+                            if hours == "":
+                                hours = hrs
+                            else:
+                                hours = hours + "; " + hrs
+            if hours == "":
+                hours = "<MISSING>"
+            if phone == "":
+                phone = "<MISSING>"
+            if add != "":
+                yield [
+                    website,
+                    loc,
+                    name,
+                    add,
+                    city,
+                    state,
+                    zc,
+                    country,
+                    store,
+                    phone,
+                    typ,
+                    lat,
+                    lng,
+                    hours,
+                ]
 
 
 def scrape():
