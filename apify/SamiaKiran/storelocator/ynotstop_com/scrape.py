@@ -66,12 +66,17 @@ def fetch_data():
             temp = loc.find("div", {"class": "DetailWrap"})
             title = temp.find("h3").text
             address = temp.find("h4").text
-            try:
+            temp_check = loc.find("div", {"class": "EditorText"}).text
+            if "Coming Soon!" in temp_check:
+                phone = "<MISSING>"
+                hours = "<MISSING>"
+            else:
                 phone = temp.find("div", {"class": "PhoneTag"})
                 phone = phone.find("h2").text
-                hours = loc.find("li").text.split("|")[0]
-            except:
-                phone = "<MISSING>"
+                try:
+                    hours = loc.find("li").text.split("|")[0]
+                except:
+                    hours = "<MISSING>"
             title = title.replace("'", "\\'")
             for temp_coords in coords:
                 if title in temp_coords:

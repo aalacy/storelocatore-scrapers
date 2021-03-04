@@ -52,7 +52,7 @@ def fetch_data():
     }
     all_locations = []
     all_codes = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA], max_radius_miles=200
+        country_codes=[SearchableCountries.USA], max_radius_miles=30
     )
     for code in all_codes:
         response = session.get(start_url.format(code), headers=headers)
