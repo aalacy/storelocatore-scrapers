@@ -50,7 +50,6 @@ def fetch_data():
     for store_url in all_locations:
         if "wuhan" in store_url:
             continue
-        print(store_url)
         with SgFirefox() as driver:
             driver.get(store_url)
             loc_dom = etree.HTML(driver.page_source)
