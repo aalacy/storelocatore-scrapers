@@ -135,9 +135,6 @@ def get_address(location, name):
     # cases where city names are joined with the rest of the address
     address = re.sub(fr"\d{city}", "", address, re.IGNORECASE)
 
-    if not address:
-        print(location)
-
     components = address.split(", ")
     # cases where the address has the format of "City, State, Country" ex: Albany, NY, USA
     components = list(
@@ -193,7 +190,7 @@ def extract(company, location, name):
 def fetch_locations(slug, name):
     try:
         company = fetch_company(slug)
-        locations = fetch_company_locations(company)
+        locations = fetch_company_locations(company)f
         return [extract(company, location, name) for location in locations]
     except Exception as e:
         logger.info(f"retrying: {slug} >>> {e}")
