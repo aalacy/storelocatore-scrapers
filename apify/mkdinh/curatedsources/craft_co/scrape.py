@@ -9,7 +9,7 @@ user_agent = "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML
 
 driver = SgChrome(user_agent=user_agent).driver()
 driver.set_page_load_timeout(2 * 60 * 60)
-driver.set_script_timeout(60)
+driver.set_script_timeout(120)
 
 fields = [
     "locator_domain",
@@ -209,7 +209,8 @@ def fetch_data():
     driver.execute_script(f'window.open("{base_url}")')
     time.sleep(5)
     for slug, url, name, rank in fortune_500_companies:
-        yield fetch_locations(slug, name)
+        pois = fetch_locations(slug, name)
+        yield pois
 
 
 def scrape():
