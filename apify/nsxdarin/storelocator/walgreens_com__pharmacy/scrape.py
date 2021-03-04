@@ -72,7 +72,7 @@ def fetch_data():
                 country = "US"
                 lng = item["longitude"]
                 add = item["store"]["address"]["street"]
-                zc = item["store"]["address"]["postalCode"]
+                zc = item["store"]["address"]["zip"]
                 city = item["store"]["address"]["city"]
                 state = item["store"]["address"]["state"]
                 name = item["store"]["name"]
