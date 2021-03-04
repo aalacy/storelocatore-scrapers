@@ -74,7 +74,9 @@ def fetch_data():
             else city_state_zip.split(" ")[1].strip()
         )
         zip_code = city_state_zip.split(" ")[2].strip()
-        phone = handle_missing(re.sub(r", For Home.*", "", get_text(row, "span.slp_result_phone")))
+        phone = handle_missing(
+            re.sub(r", For Home.*", "", get_text(row, "span.slp_result_phone"))
+        )
         hoo = get_text(row, "span.slp_result_hours").strip()
         hoo = re.sub(r"Express.*", "", hoo).replace("\n", "")
         hoo = re.sub(r"Drive.*", "", hoo)
