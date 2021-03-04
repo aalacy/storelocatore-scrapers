@@ -7,7 +7,7 @@ from sglogging import SgLogSetup
 logger = SgLogSetup().get_logger("craft_co")
 user_agent = "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.125 Safari/537.36"
 
-driver = SgChrome(user_agent=user_agent, executable_path="./chromedriver").driver()
+driver = SgChrome(user_agent=user_agent).driver()
 driver.set_page_load_timeout(2 * 60 * 60)
 driver.set_script_timeout(120)
 
