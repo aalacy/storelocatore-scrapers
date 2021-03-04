@@ -194,7 +194,7 @@ def scrape():
     list1 = airports_list(work_url)
     for url in list1:
         data = fetch_data(url)
-        if data == False:
+        if data is False:
             break
         else:
             write_output(data)
