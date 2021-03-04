@@ -121,12 +121,13 @@ def fetch_data():
             output.append(lurl)
             output.append(get_value(store["locationNameTranslation"]))  # location name
             addinfo = get_value(store["addressLines"])
-            if ") Ltd" in addinfo:
+            if "1978) Ltd" in addinfo:
                 addinfo = addinfo.split(") Ltd")[1].strip()
-            if "Rent A Car" in addinfo:
+            if "Enterprise Rent A Car" in addinfo:
                 addinfo = addinfo.split("Rent A Car")[1].strip()
-            if " Airport " in addinfo:
-                addinfo = addinfo.split(" Airport ")[1].strip()
+            addinfo = addinfo.replace("Williamsport Regional Airport ", "")
+            addinfo = addinfo.replace("Ronald Reagan Wash Natl Airprt ", "")
+            addinfo = addinfo.replace("Luis Munoz Marin Intl Airport ", "")
             output.append(addinfo)  # address
             output.append(get_value(store["city"]))  # city
             try:
