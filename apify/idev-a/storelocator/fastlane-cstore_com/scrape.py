@@ -24,8 +24,6 @@ def fetch_data():
         while True:
             if idx == len(store_list):
                 break
-            if location_type == "Hotels":
-                break
             if store_list[idx].text.replace("\n", "").replace("\xa0", "").strip() == "":
                 idx += 1
                 continue
@@ -60,7 +58,8 @@ def fetch_data():
             state = address_detail.split(", ")[1].split(" ")[0]
             state = state[:-1] if state.endswith(".") else state
             zip = address_detail.split(", ")[1].split(" ")[1]
-            street_address = address.pop().strip()
+            address = [x.strip() for x in address if "FastLane" not in x]
+            street_address = " ".join(address).strip()
             street_address = street_address.replace("Address: ", "")
             country_code = "US"
             phone = detail[1].split("\n")[2][0:14].replace("\xa0", "")
@@ -68,7 +67,7 @@ def fetch_data():
 
             record = SgRecord(
                 page_url=page_url,
-                location_name=location_name,
+                location_name=location_name.strip(),
                 street_address=street_address,
                 city=city,
                 zip_postal=zip,
