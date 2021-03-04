@@ -77,7 +77,7 @@ def fetch_data():
                 )[0]
             if '<span itemprop="telephone">' in line2:
                 phone = line2.split('<span itemprop="telephone">')[1].split("<")[0]
-            if '<abbr title="' in line2:
+            if '<abbr title="' in line2 and '<abbr title="Sunday">' in line2:
                 hrs = line2.split("<strong>")[1].split("</strong>")[0]
                 hrs = hrs.replace("</abbr>:</strong>", ": ")[0]
                 hrs = hrs.replace('<abbr title="Sunday">', "")
