@@ -1,4 +1,3 @@
-import re
 import csv
 import json
 from lxml import etree
@@ -69,16 +68,14 @@ def fetch_data():
         location_name = poi_html.xpath(".//h3/text()")
         location_name = location_name[0] if location_name else "<MISSING>"
         raw_address = poi_html.xpath(".//address//text()")
-        raw_address = [
-            e.strip() for e in raw_address if e.strip() and "get " not in e.lower()
-        ]
-        raw_address = " ".join(raw_address)
+        raw_address = [e.strip() for e in raw_address if e.strip() and 'get ' not in e.lower()]
+        raw_address = ' '.join(raw_address)
         addr = parse_address_intl(raw_address)
         street_address = addr.street_address_1
         if not street_address:
             street_address = addr.street_address_2
         if not street_address:
-            street_address = raw_address.split(",")[0]
+            street_address = raw_address.split(',')[0]
         city = addr.city
         city = city if city else "<MISSING>"
         state = addr.state
