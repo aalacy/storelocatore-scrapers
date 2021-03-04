@@ -1,6 +1,6 @@
 import re
 import csv
-from time import sleep
+import time
 from sgselenium import SgChrome
 from sglogging import SgLogSetup
 
@@ -60,7 +60,7 @@ def fetch_company(slug):
                 "operationName": "getCompany",
                 "variables":{{
                         "slug":"{slug}"
-                    }}  
+                    }}
                 }})
             }})
             .then(res => res.json())
@@ -93,7 +93,6 @@ def get_country_code(location, company):
 
 def fetch_company_locations(company):
     slug = company.get("slug")
-    hq_id = company.get("hqLocation").get("id")
     # bypassing same origin constraints
     query = driver.execute_async_script(
         f"""
@@ -108,9 +107,9 @@ def fetch_company_locations(company):
               "variables":{{
                     "countryCodes":["CA", "US"],
                     "page":1,
-                    "per":1000,   
+                    "per":1000,
                     "slug":"{slug}"
-                  }}  
+                  }}
             }})
         }})
         .then(res => res.json())
@@ -127,41 +126,39 @@ def fetch_company_locations(company):
 
 
 def get_address(location, name):
-    try:
-        address = location.get("address")
-        if not address:
-            return name
+    address = location.get("address")
+    if not address:
+        return name
 
-        city = location.get("city") or ""
-        state = location.get("state") or ""
-        # cases where city names are joined with the rest of the address
-        address = re.sub(f"\d{city}", "", address, re.IGNORECASE)
+    city = location.get("city") or ""
+    state = location.get("state") or ""
+    # cases where city names are joined with the rest of the address
+    address = re.sub(fr"\d{city}", "", address, re.IGNORECASE)
 
-        components = address.split(", ")
-        length = len(components)
-        # cases where the address has the format of "City, State, Country" ex: Albany, NY, USA
+    if not address:
+        print(location)
 
-        components = list(
-            filter(
-                lambda x: not re.match(f"USA|CANADA|{city}|{state}", x, re.IGNORECASE),
-                components,
-            )
+    components = address.split(", ")
+    # cases where the address has the format of "City, State, Country" ex: Albany, NY, USA
+    components = list(
+        filter(
+            lambda x: not re.match(f"USA|CANADA|{city}|{state}", x, re.IGNORECASE),
+            components,
         )
+    )
 
-        if not len(components):
-            return name
+    if not len(components):
+        return name
 
-        # cases where the address may have city information
-        last_component = components[-1]
-        if re.match(re.escape(last_component), city, re.IGNORECASE) or re.match(
-            re.escape(city), last_component, re.IGNORECASE
-        ):
-            components.pop()
+    # cases where the address may have city information
+    last_component = components[-1]
+    if re.match(re.escape(last_component), city, re.IGNORECASE) or re.match(
+        re.escape(city), last_component, re.IGNORECASE
+    ):
+        components.pop()
 
-        cleaned_address = ", ".join(components)
-        return cleaned_address.replace("\r\n", " ") or name
-    except Exception as e:
-        print(e)
+    cleaned_address = ", ".join(components)
+    return cleaned_address.replace("\r\n", " ") or name
 
 
 MISSING = "<MISSING>"
@@ -198,15 +195,19 @@ def fetch_locations(slug, name):
         company = fetch_company(slug)
         locations = fetch_company_locations(company)
         return [extract(company, location, name) for location in locations]
-    except Exception as ex:
-        logger.info(f"retrying: {slug}")
+    except Exception as e:
+        logger.info(f"retrying: {slug} >>> {e}")
         return fetch_locations(slug, name)
 
 
 def fetch_data():
-    driver.get(f"https://craft.co")
+    base_url = "https://craft.co"
     fortune_500_companies = get_fortune_500_companies()
 
+    driver.get(base_url)
+    # bypass cloudflare bot detection
+    driver.execute_script(f'window.open("{base_url}")')
+    time.sleep(5)
     for slug, url, name, rank in fortune_500_companies:
         yield fetch_locations(slug, name)
 
