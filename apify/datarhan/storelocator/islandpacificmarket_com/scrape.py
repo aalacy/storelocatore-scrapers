@@ -41,7 +41,7 @@ def fetch_data():
 
     start_url = "https://islandpacificmarket.com/stores/"
     domain = re.findall("://(.+?)/", start_url)[0].replace("www.", "")
-    
+
     with SgFirefox() as driver:
         driver.get(start_url)
         dom = etree.HTML(driver.page_source)
