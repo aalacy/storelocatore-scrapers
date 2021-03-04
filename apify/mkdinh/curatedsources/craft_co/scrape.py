@@ -190,7 +190,7 @@ def extract(company, location, name):
 def fetch_locations(slug, name):
     try:
         company = fetch_company(slug)
-        locations = fetch_company_locations(company)f
+        locations = fetch_company_locations(company)
         return [extract(company, location, name) for location in locations]
     except Exception as e:
         logger.info(f"retrying: {slug} >>> {e}")
