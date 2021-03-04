@@ -33,6 +33,7 @@ def write_output(data):
 
 
 def fetch_data():
+
     out = []
     locator_domain = "http://foodsource.net/"
     page_url = "http://foodsource.net/index.php/locations"
