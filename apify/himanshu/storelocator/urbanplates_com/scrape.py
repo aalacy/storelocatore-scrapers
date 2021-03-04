@@ -3,7 +3,7 @@ import csv
 import json
 from lxml import etree
 
-from sgselenium import SgFirefox
+from sgselenium import SgChrome
 from sgscrape.sgpostal import parse_address_usa
 
 
@@ -43,7 +43,7 @@ def fetch_data():
 
     start_url = "https://urbanplates.com/locations/"
     domain = re.findall("://(.+?)/", start_url)[0].replace("www.", "")
-    with SgFirefox() as driver:
+    with SgChrome() as driver:
         driver.get(start_url)
         dom = etree.HTML(driver.page_source)
     data = dom.xpath('//script[contains(text(), "gmpAllMapsInfo")]/text()')[0]
