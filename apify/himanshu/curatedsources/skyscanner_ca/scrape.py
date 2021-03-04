@@ -110,7 +110,6 @@ def airports_list(link):
 
 def fetch_data(url):
     locator_domain = "https://www.skyscanner.co.in/"
-    location_no = "<MISSING>"
     location_type = "Airport"
     hours_of_operation = "24 Hrs"
     country_code = "UNITED KINGDOM"
@@ -180,7 +179,7 @@ def fetch_data(url):
     location.append(state)
     location.append(zip_code)
     location.append(country_code)
-    location.append(location_no)
+    location.append(store_number)
     location.append(phone)
     location.append(location_type)
     location.append(latitude)
