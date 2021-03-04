@@ -37,10 +37,10 @@ def write_output(data):
 def fetch_data():
     out = []
     locator_domain = "http://www.freshandco.com/"
-    page_url = "http://www.freshandco.com/locations"
+    api_url = "http://www.freshandco.com/locations"
 
     session = SgRequests()
-    r = session.get(page_url)
+    r = session.get(api_url)
     tree = html.fromstring(r.text)
     text = "".join(tree.xpath("//script[contains(text(), 'locations:')]/text()"))
 
@@ -49,6 +49,7 @@ def fetch_data():
 
     for j in js:
         location_name = j.get("name")
+        page_url = f"http://www.freshandco.com{j.get('url')}"
         store_number = j.get("id")
         street_address = j.get("street") or "<MISSING>"
         city = j.get("city") or "<MISSING>"
