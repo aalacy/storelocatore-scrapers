@@ -34,7 +34,6 @@ def eliminate_space(items):
 
 
 def fetch_data():
-    output_list = []
     url = "https://eatbychloe.com/locations/"
     session = SgRequests()
     request = session.get(url)
