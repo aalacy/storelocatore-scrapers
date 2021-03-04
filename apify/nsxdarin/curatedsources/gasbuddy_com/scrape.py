@@ -347,6 +347,7 @@ def write_output(data):
 
 
 def fetch_data():
+    locinfo = []
     website = "gasbuddy.com"
     for state in states:
         count = 0
@@ -385,7 +386,7 @@ def fetch_data():
                     lat = item["latitude"]
                     lng = item["longitude"]
                     loc = "<MISSING>"
-                    if phone == "":
+                    if phone == "" or phone is None:
                         phone = "<MISSING>"
                     if zc == "":
                         zc = "<MISSING>"
@@ -403,25 +404,28 @@ def fetch_data():
                                 btype = btype + ", " + brand["branding_type"]
                     except:
                         btype = "<MISSING>"
-                    yield [
-                        website,
-                        loc,
-                        os,
-                        stat,
-                        btype,
-                        name,
-                        add,
-                        city,
-                        state,
-                        zc,
-                        country,
-                        store,
-                        phone,
-                        typ,
-                        lat,
-                        lng,
-                        hours,
-                    ]
+                    addinfo = add + "|" + city + "|" + state + "|" + zc
+                    if addinfo not in locinfo:
+                        locinfo.append(addinfo)
+                        yield [
+                            website,
+                            loc,
+                            os,
+                            stat,
+                            btype,
+                            name,
+                            add,
+                            city,
+                            state,
+                            zc,
+                            country,
+                            store,
+                            phone,
+                            typ,
+                            lat,
+                            lng,
+                            hours,
+                        ]
             except:
                 Found = False
 
@@ -467,7 +471,7 @@ def fetch_data():
                     lat = item["latitude"]
                     lng = item["longitude"]
                     loc = "<MISSING>"
-                    if phone == "":
+                    if phone == "" or phone is None:
                         phone = "<MISSING>"
                     if zc == "":
                         zc = "<MISSING>"
@@ -485,25 +489,28 @@ def fetch_data():
                                 btype = btype + ", " + brand["branding_type"]
                     except:
                         btype = "<MISSING>"
-                    yield [
-                        website,
-                        loc,
-                        os,
-                        stat,
-                        btype,
-                        name,
-                        add,
-                        city,
-                        state,
-                        zc,
-                        country,
-                        store,
-                        phone,
-                        typ,
-                        lat,
-                        lng,
-                        hours,
-                    ]
+                    addinfo = add + "|" + city + "|" + state + "|" + zc
+                    if addinfo not in locinfo:
+                        locinfo.append(addinfo)
+                        yield [
+                            website,
+                            loc,
+                            os,
+                            stat,
+                            btype,
+                            name,
+                            add,
+                            city,
+                            state,
+                            zc,
+                            country,
+                            store,
+                            phone,
+                            typ,
+                            lat,
+                            lng,
+                            hours,
+                        ]
             except:
                 Found = False
 
@@ -545,7 +552,7 @@ def fetch_data():
                     lat = item["latitude"]
                     lng = item["longitude"]
                     loc = "<MISSING>"
-                    if phone == "":
+                    if phone == "" or phone is None:
                         phone = "<MISSING>"
                     if zc == "":
                         zc = "<MISSING>"
@@ -563,25 +570,28 @@ def fetch_data():
                                 btype = btype + ", " + brand["branding_type"]
                     except:
                         btype = "<MISSING>"
-                    yield [
-                        website,
-                        loc,
-                        os,
-                        stat,
-                        btype,
-                        name,
-                        add,
-                        city,
-                        state,
-                        zc,
-                        country,
-                        store,
-                        phone,
-                        typ,
-                        lat,
-                        lng,
-                        hours,
-                    ]
+                    addinfo = add + "|" + city + "|" + state + "|" + zc
+                    if addinfo not in locinfo:
+                        locinfo.append(addinfo)
+                        yield [
+                            website,
+                            loc,
+                            os,
+                            stat,
+                            btype,
+                            name,
+                            add,
+                            city,
+                            state,
+                            zc,
+                            country,
+                            store,
+                            phone,
+                            typ,
+                            lat,
+                            lng,
+                            hours,
+                        ]
             except:
                 Found = False
 
