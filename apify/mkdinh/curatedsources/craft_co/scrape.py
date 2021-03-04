@@ -1,13 +1,13 @@
 import re
 import csv
 from time import sleep
-from sgselenium import SgSelenium
+from sgselenium import SgChrome
 from sglogging import SgLogSetup
 
 logger = SgLogSetup().get_logger("craft_co")
 user_agent = "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.125 Safari/537.36"
 
-driver = SgSelenium().chrome(user_agent=user_agent)
+driver = SgChrome(user_agent=user_agent, executable_path="./chromedriver").driver()
 driver.set_page_load_timeout(2 * 60 * 60)
 driver.set_script_timeout(60)
 
@@ -39,10 +39,10 @@ def write_output(data):
             writer.writerows(rows)
 
 
-def get_fortune_100_companies():
-    with open("fortune_100.csv") as file:
+def get_fortune_500_companies():
+    with open("fortune_500.csv") as file:
         reader = csv.reader(file, delimiter=",")
-        header = next(reader)
+        next(reader)
         return [record for record in reader]
 
 
@@ -127,38 +127,41 @@ def fetch_company_locations(company):
 
 
 def get_address(location, name):
-    address = location.get("address")
-    if not address:
-        return name
+    try:
+        address = location.get("address")
+        if not address:
+            return name
 
-    city = location.get("city")
-    state = location.get("state")
-    # cases where city names are joined with the rest of the address
-    address = re.sub(f"\d{city}", "", address, re.IGNORECASE)
+        city = location.get("city") or ""
+        state = location.get("state") or ""
+        # cases where city names are joined with the rest of the address
+        address = re.sub(f"\d{city}", "", address, re.IGNORECASE)
 
-    components = address.split(", ")
-    length = len(components)
-    # cases where the address has the format of "City, State, Country" ex: Albany, NY, USA
+        components = address.split(", ")
+        length = len(components)
+        # cases where the address has the format of "City, State, Country" ex: Albany, NY, USA
 
-    components = list(
-        filter(
-            lambda x: not re.match(f"USA|CANADA|{city}|{state}", x, re.IGNORECASE),
-            components,
+        components = list(
+            filter(
+                lambda x: not re.match(f"USA|CANADA|{city}|{state}", x, re.IGNORECASE),
+                components,
+            )
         )
-    )
 
-    if not len(components):
-        return name
+        if not len(components):
+            return name
 
-    # cases where the address may have city information
-    last_component = components[-1]
-    if re.match(last_component, city, re.IGNORECASE) or re.match(
-        city, last_component, re.IGNORECASE
-    ):
-        components.pop()
+        # cases where the address may have city information
+        last_component = components[-1]
+        if re.match(re.escape(last_component), city, re.IGNORECASE) or re.match(
+            re.escape(city), last_component, re.IGNORECASE
+        ):
+            components.pop()
 
-    cleaned_address = ", ".join(components)
-    return cleaned_address.replace("\r\n", " ") or name
+        cleaned_address = ", ".join(components)
+        return cleaned_address.replace("\r\n", " ") or name
+    except Exception as e:
+        print(e)
 
 
 MISSING = "<MISSING>"
@@ -202,11 +205,9 @@ def fetch_locations(slug, name):
 
 def fetch_data():
     driver.get(f"https://craft.co")
-    failed = []
-    fortune_100_companies = get_fortune_100_companies()
-    slugs = [company[0] for company in fortune_100_companies]
+    fortune_500_companies = get_fortune_500_companies()
 
-    for slug, url, name, rank in fortune_100_companies:
+    for slug, url, name, rank in fortune_500_companies:
         yield fetch_locations(slug, name)
 
 
