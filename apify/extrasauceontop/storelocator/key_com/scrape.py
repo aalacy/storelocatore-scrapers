@@ -22,6 +22,7 @@ latitudes = []
 longitudes = []
 hours_of_operations = []
 
+
 def getdata():
     x = 0
     for search_lat, search_lon in search:
@@ -110,29 +111,30 @@ def getdata():
             current_coords = [latitude, longitude]
             coords.append(current_coords)
         search.mark_found(coords)
-    
+
     df = pd.DataFrame(
-    {
-        "locator_domain": locator_domains,
-        "page_url": page_urls,
-        "location_name": location_names,
-        "street_address": street_addresses,
-        "city": citys,
-        "state": states,
-        "zip": zips,
-        "store_number": store_numbers,
-        "phone": phones,
-        "latitude": latitudes,
-        "longitude": longitudes,
-        "hours_of_operation": hours_of_operations,
-        "country_code": country_codes,
-        "location_type": location_types,
+        {
+            "locator_domain": locator_domains,
+            "page_url": page_urls,
+            "location_name": location_names,
+            "street_address": street_addresses,
+            "city": citys,
+            "state": states,
+            "zip": zips,
+            "store_number": store_numbers,
+            "phone": phones,
+            "latitude": latitudes,
+            "longitude": longitudes,
+            "hours_of_operation": hours_of_operations,
+            "country_code": country_codes,
+            "location_type": location_types,
         }
     )
 
     writedata(df)
 
-def writedata(df)
+
+def writedata(df):
     df = df.fillna("<MISSING>")
     df = df.replace(r"^\s*$", "<MISSING>", regex=True)
 
@@ -150,5 +152,6 @@ def writedata(df)
     df = df.fillna("<MISSING>")
 
     df.to_csv("data.csv", index=True)
+
 
 getdata()
