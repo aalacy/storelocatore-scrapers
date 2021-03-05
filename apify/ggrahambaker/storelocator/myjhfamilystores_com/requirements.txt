@@ -1,4 +1,5 @@
 lxml==4.3.4
-sgselenium
+sgrequests
+beautifulsoup4==4.7.1
 usaddress==0.5.10
 sglogging

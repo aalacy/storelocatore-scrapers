@@ -1,93 +1,125 @@
-from sgrequests import SgRequests
-from bs4 import BeautifulSoup
 import csv
-import time
-from random import randint
 import re
-import json
-from sglogging import SgLogSetup
 
-logger = SgLogSetup().get_logger('qualitymartnc_com')
-
+from sgrequests import SgRequests
 
 
 def write_output(data):
-	with open('data.csv', mode='w', encoding="utf-8") as output_file:
-		writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+    with open("data.csv", mode="w", encoding="utf-8") as output_file:
+        writer = csv.writer(
+            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+        )
 
-		# Header
-		writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-		# Body
-		for row in data:
-			writer.writerow(row)
+        # Header
+        writer.writerow(
+            [
+                "locator_domain",
+                "page_url",
+                "location_name",
+                "street_address",
+                "city",
+                "state",
+                "zip",
+                "country_code",
+                "store_number",
+                "phone",
+                "location_type",
+                "latitude",
+                "longitude",
+                "hours_of_operation",
+            ]
+        )
+        # Body
+        for row in data:
+            writer.writerow(row)
+
 
 def fetch_data():
-	
-	base_link = "https://qualitymartnc.com/locations/"
 
-	user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36'
-	HEADERS = {'User-Agent' : user_agent}
+    base_link = "https://qualitymartnc.com/wp-json/wpgmza/v1/markers/base64eJyrVkrLzClJLVKyUqqOUcpNLIjPTIlRsopRMoxR0gEJFGeUgsSKgYLRsbVKtQCV7hBN"
 
-	session = SgRequests()
-	req = session.get(base_link, headers = HEADERS)
-	time.sleep(randint(1,2))
-	try:
-		base = BeautifulSoup(req.text,"lxml")
-		logger.info("Got today page")
-	except (BaseException):
-		logger.info('[!] Error Occured. ')
-		logger.info('[?] Check whether system is Online.')
+    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36"
+    headers = {"User-Agent": user_agent}
 
-	data = []
-	locator_domain = "qualitymartnc.com"
+    session = SgRequests()
+    store_data = session.get(base_link, headers=headers).json()
 
-	all_scripts = base.find_all('script')
-	for script in all_scripts:
-		if "lng" in str(script):
-			script = script.text.replace('\n', '').strip()
-			break
+    data = []
+    locator_domain = "qualitymartnc.com"
 
-	start_pos = script.find("wpgmaps_localize_marker_data")
-	clean_script = script[start_pos+31:script.find("}}}",start_pos)+3]
-	store_data = json.loads(clean_script)["1"]
+    for store in store_data:
+        location_name = store["title"].upper()
 
-	for store_num in store_data:
-		store = store_data[store_num]
-		location_name = store['title']
-		logger.info(location_name)
-		
-		raw_address = store['address'].split(",")
-		street_address = " ".join(raw_address[:-2]).strip()
-		city = raw_address[-2].strip()
-		state = raw_address[-1].strip()[:-6].strip()
-		zip_code = raw_address[-1][-6:].strip()
+        raw_address = store["address"].replace("N Advance", "N, Advance").split(",")
+        if "USA" in raw_address[-1].upper():
+            raw_address.pop(-1)
 
-		country_code = "US"
-		store_number = location_name.split("#")[1]
-		
-		raw_types = store['desc']
-		location_type = raw_types[raw_types.rfind("strong>")+7:raw_types.rfind("</p>")].replace("<br />",",").replace(",,","")
-		if location_type[:1] == ",":
-			location_type = location_type[1:]
-		if not location_type:
-			location_type = "<MISSING>"
-		try:
-			phone = re.findall("[(\d)]{5} [\d]{3}-[\d]{4}", store['desc'])[0]
-		except:
-			phone = "<MISSING>"
+        street_address = raw_address[0].strip()
+        city = raw_address[1].strip()
+        state = raw_address[-1].strip()[:-6].strip()
+        zip_code = raw_address[-1][-6:].strip()
 
-		hours_of_operation = store['desc'].split("<br />")[2]
-		if "Hours:" in hours_of_operation:
-			hours_of_operation = hours_of_operation.replace("Hours:","").strip() + " daily"
-		latitude = store['lat']
-		longitude = store['lng']
+        if "NC" in zip_code:
+            state = "NC"
+            zip_code = "<MISSING>"
+        if not state:
+            state = raw_address[2].strip()
 
-		data.append([locator_domain, base_link, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
+        country_code = "US"
+        store_number = location_name.split("#")[1]
 
-	return data
+        raw_types = store["description"]
+        location_type = (
+            raw_types[raw_types.rfind("strong>") + 7 : raw_types.rfind("</p>")]
+            .replace("<br />", ",")
+            .replace(",,", "")
+        )
+        if location_type[:1] == ",":
+            location_type = location_type[1:]
+        if not location_type:
+            location_type = "<MISSING>"
+        try:
+            phone = re.findall(r"[(\d)]{5} [\d]{3}-[\d]{4}", store["description"])[0]
+        except:
+            phone = "<MISSING>"
+
+        hours_of_operation = store["description"].split("<br />")[2]
+        if "Hours:" in hours_of_operation:
+            hours_of_operation = (
+                hours_of_operation.replace("Hours:", "").strip() + " daily"
+            )
+        latitude = store["lat"]
+        longitude = store["lng"]
+
+        if float(latitude) == 0:
+            latitude = "<MISSING>"
+            longitude = "<MISSING>"
+
+        data.append(
+            [
+                locator_domain,
+                "https://qualitymartnc.com/locations/",
+                location_name,
+                street_address,
+                city,
+                state,
+                zip_code,
+                country_code,
+                store_number,
+                phone,
+                location_type,
+                latitude,
+                longitude,
+                hours_of_operation,
+            ]
+        )
+
+    return data
+
 
 def scrape():
-	data = fetch_data()
-	write_output(data)
+    data = fetch_data()
+    write_output(data)
+
 
 scrape()

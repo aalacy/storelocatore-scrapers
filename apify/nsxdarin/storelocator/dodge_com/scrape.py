@@ -1,9 +1,10 @@
 import csv
 from sgrequests import SgRequests
-import sgzip
 from sglogging import SgLogSetup
+from sgzip.static import static_zipcode_list
+from sgzip.dynamic import SearchableCountries
+from tenacity import retry, stop_after_attempt
 
-session = SgRequests()
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
@@ -38,104 +39,97 @@ def write_output(data):
             writer.writerow(row)
 
 
+def parse_hours(json_hours):
+    days = [
+        "sunday",
+        "monday",
+        "tuesday",
+        "wednesday",
+        "thursday",
+        "friday",
+        "saturday",
+    ]
+    hours = []
+    for day in days:
+        if json_hours[day]["closed"]:
+            hours.append(f"{day}: closed")
+        else:
+            open_time = (
+                json_hours[day]["open"]["time"] + " " + json_hours[day]["open"]["ampm"]
+            )
+            close_time = (
+                json_hours[day]["close"]["time"]
+                + " "
+                + json_hours[day]["close"]["ampm"]
+            )
+            hours.append(f"{day}: {open_time}-{close_time}")
+    return ", ".join(hours)
+
+
+def handle_missing(x):
+    if not x:
+        return "<MISSING>"
+    return x
+
+
+@retry(stop=stop_after_attempt(5))
+def get_url(url):
+    session = SgRequests()
+    return session.get(url, headers=headers).json()
+
+
 def fetch_data():
-    ids = []
-    for code in sgzip.for_radius(50):
+    ids = set()
+    codes = static_zipcode_list(radius=50, country_code=SearchableCountries.USA)
+    for code in codes:
         logger.info("Pulling Zip Code %s..." % code)
         url = (
             "https://www.dodge.com/bdlws/MDLSDealerLocator?brandCode=D&func=SALES&radius=50&resultsPage=1&resultsPerPage=100&zipCode="
             + code
         )
-        r = session.get(url, headers=headers)
-        lines = r.iter_lines()
-        for line in lines:
-            line = str(line.decode("utf-8"))
-            if '"dealerCode" : "' in line:
-                store = line.split('"dealerCode" : "')[1].split('"')[0]
-                website = "dodge.com"
-                typ = "Dealer"
-                country = "US"
-                hours = "Sunday: Closed"
-                add = ""
-                name = ""
-                state = ""
-                city = ""
-                phone = ""
-                lat = ""
-                lng = ""
-            if '"dealerName" : "' in line:
-                name = line.split('"dealerName" : "')[1].split('"')[0]
-            if '"dealerAddress1" : "' in line:
-                add = line.split('"dealerAddress1" : "')[1].split('"')[0]
-            if '"dealerAddress2" : "' in line:
-                add = add + " " + line.split('"dealerAddress2" : "')[1].split('"')[0]
-                add = add.strip()
-            if '"dealerState" : "' in line:
-                state = line.split('"dealerState" : "')[1].split('"')[0]
-            if '"dealerCity" : "' in line:
-                city = line.split('"dealerCity" : "')[1].split('"')[0]
-            if '"dealerZipCode" : "' in line:
-                zc = line.split('"dealerZipCode" : "')[1].split('"')[0]
-            if '"website" : "' in line:
-                purl = line.split('"website" : "')[1].split('"')[0]
-            if '"phoneNumber" : "' in line:
-                phone = line.split('"phoneNumber" : "')[1].split('"')[0]
-            if '"dealerShowroomLongitude" : "' in line:
-                lng = line.split('"dealerShowroomLongitude" : "')[1].split('"')[0]
-            if '"dealerShowroomLatitude" : "' in line:
-                lat = line.split('"dealerShowroomLatitude" : "')[1].split('"')[0]
-            if 'day"' in line and '"sunday" :' not in line:
-                dayname = line.split('"')[1].title()
-                next(lines)
-                next(lines)
-                next(lines)
-                g = next(lines)
-                h = next(lines)
-                g = str(g.decode("utf-8"))
-                h = str(h.decode("utf-8"))
-                hours = (
-                    hours
-                    + "; "
-                    + dayname
-                    + ": "
-                    + g.split('"time" : "')[1].split('"')[0]
-                    + h.split('"ampm" : "')[1].split('"')[0]
-                )
-                next(lines)
-                next(lines)
-                g = next(lines)
-                h = next(lines)
-                g = str(g.decode("utf-8"))
-                h = str(h.decode("utf-8"))
-                hours = (
-                    hours
-                    + "-"
-                    + g.split('"time" : "')[1].split('"')[0]
-                    + h.split('"ampm" : "')[1].split('"')[0]
-                )
-            if '"service"' in line:
-                if len(zc) == 9:
-                    zc = zc[:5] + "-" + zc[-4:]
-                if purl == "":
-                    purl = "<MISSING>"
-                if store not in ids:
-                    ids.append(store)
-                    yield [
-                        website,
-                        purl,
-                        name,
-                        add,
-                        city,
-                        state,
-                        zc,
-                        country,
-                        store,
-                        phone,
-                        typ,
-                        lat,
-                        lng,
-                        hours,
-                    ]
+        r = get_url(url)
+        if "error" in r:
+            continue
+        dealers = r["dealer"]
+        logger.info(f"found {len(dealers)} dealers")
+        for dealer in dealers:
+            store_number = handle_missing(dealer["dealerCode"])
+            if store_number in ids:
+                continue
+            else:
+                ids.add(store_number)
+            website = "dodge.com"
+            typ = "<MISSING>"
+            name = handle_missing(dealer["dealerName"])
+            country = handle_missing(dealer["dealerShowroomCountry"])
+            add = handle_missing(dealer["dealerAddress1"])
+            add2 = dealer["dealerAddress2"]
+            if add2:
+                add = f"add {add2}"
+            state = handle_missing(dealer["dealerState"])
+            city = handle_missing(dealer["dealerCity"])
+            zc = handle_missing(dealer["dealerZipCode"][0:5])
+            purl = handle_missing(dealer["website"])
+            phone = handle_missing(dealer["phoneNumber"])
+            lat = handle_missing(dealer["dealerShowroomLatitude"])
+            lng = handle_missing(dealer["dealerShowroomLongitude"])
+            hours = parse_hours(dealer["departments"]["sales"]["hours"])
+            yield [
+                website,
+                purl,
+                name,
+                add,
+                city,
+                state,
+                zc,
+                country,
+                store_number,
+                phone,
+                typ,
+                lat,
+                lng,
+                hours,
+            ]
 
 
 def scrape():

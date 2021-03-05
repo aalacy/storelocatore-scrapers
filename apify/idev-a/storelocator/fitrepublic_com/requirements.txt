@@ -1,0 +1,5 @@
+sgvalidator==0.0.71
+sgrequests==0.1.6
+sglogging==0.0.4
+sgscrape==0.0.22
+beautifulsoup4==4.9.3

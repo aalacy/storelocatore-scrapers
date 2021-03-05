@@ -1,0 +1,4 @@
+sgvalidator==0.0.71
+sgrequests==0.0.15
+demjson==2.2.4
+w3lib==1.22.0

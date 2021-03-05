@@ -1,158 +1,183 @@
 import csv
 from sgrequests import SgRequests
-from bs4 import BeautifulSoup
-import re
-import json
-import sgzip
 import phonenumbers
+from tenacity import retry, stop_after_attempt
 from sglogging import SgLogSetup
+from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 
-logger = SgLogSetup().get_logger('owensmarket_com')
+logger = SgLogSetup().get_logger("owensmarket_com")
 
-
-
-
-session = SgRequests()
 
 def write_output(data):
-    with open('data.csv', mode='w', encoding="utf-8") as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
-        # Body
+    with open("data.csv", mode="w", newline="") as output_file:
+        writer = csv.writer(
+            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+        )
+        writer.writerow(
+            [
+                "locator_domain",
+                "location_name",
+                "street_address",
+                "city",
+                "state",
+                "zip",
+                "country_code",
+                "store_number",
+                "phone",
+                "location_type",
+                "latitude",
+                "longitude",
+                "hours_of_operation",
+                "page_url",
+            ]
+        )
         for row in data:
             writer.writerow(row)
-def fetch_data():
-    addresses = []
-    search = sgzip.ClosestNSearch() # TODO: OLD VERSION [sgzip==0.0.55]. UPGRADE IF WORKING ON SCRAPER!
-    search.initialize()
-    MAX_RESULTS = 70
-    MAX_DISTANCE = 50
-    current_results_len = 0     
-    zip_code = search.next_zip()
 
+
+@retry(stop=stop_after_attempt(7))
+def query_zip(zip_code):
+    session = SgRequests()
     headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
+        "User-Agent": "PostmanRuntime/7.19.0",
+        "content-type": "application/json;charset=UTF-8",
     }
-    while zip_code:
+    data = (
+        r'{"query":"\n      query storeSearch($searchText: String!, $filters: [String]!) {\n        storeSearch(searchText: $searchText, filters: $filters) {\n          stores {\n            ...storeSearchResult\n          }\n          fuel {\n            ...storeSearchResult\n          }\n          shouldShowFuelMessage\n        }\n      }\n      \n  fragment storeSearchResult on Store {\n    banner\n    vanityName\n    divisionNumber\n    storeNumber\n    phoneNumber\n    showWeeklyAd\n    showShopThisStoreAndPreferredStoreButtons\n    storeType\n    distance\n    latitude\n    longitude\n    tz\n    ungroupedFormattedHours {\n      displayName\n      displayHours\n      isToday\n    }\n    address {\n      addressLine1\n      addressLine2\n      city\n      countryCode\n      stateCode\n      zip\n    }\n    pharmacy {\n      phoneNumber\n    }\n    departments {\n      code\n    }\n    fulfillmentMethods{\n      hasPickup\n      hasDelivery\n    }\n  }\n","variables":{"searchText":"'
+        + str(zip_code)
+        + '","filters":[]},"operationName":"storeSearch"}'
+    )
+    r = session.post(
+        "https://www.kroger.com/stores/api/graphql", headers=headers, data=data
+    )
+    return r.json()["data"]["storeSearch"]
+
+
+def fetch_data():
+    locator_domain = "https://www.owensmarket.com/"
+    addresses = []
+    zip_codes = DynamicZipSearch(
+        country_codes=[SearchableCountries.CANADA, SearchableCountries.USA],
+        max_radius_miles=100,
+        max_search_results=100,
+    )
+    for zip_code in zip_codes:
+        datas = query_zip(zip_code)
         result_coords = []
-        base_url = "https://www.owensmarket.com"
-        location_url= "https://www.owensmarket.com/stores/search?searchText="+str(zip_code)
-        try:
-            r = session.get(location_url, headers=headers)
-        except:
-            pass
-        soup= BeautifulSoup(r.text,"lxml")
-        # logger.info(soup)
-        script = soup.find(lambda tag: (tag.name == "script") and "window.__INITIAL_STATE__" in tag.text).text
-        str_json = script.split("JSON.parse('")[1].split("')")[0].replace("\\","\\\\").split('"contentHash":"W/\\')[0].replace('"/"}]}},','"/"}]}}}}}')
-        # logger.info(str_json)
-        s = json.loads(re.sub(r"\s+", " ",str_json))
-        # logger.info(s)
-        if 'stores' in s['storeSearch']['storeSearchReducer']['searchResults']:
-            for i in s['storeSearch']['storeSearchReducer']['searchResults']['stores']:
-                # logger.info(i)
-                location_name = (i['vanityName'])
-                store_number = i['storeNumber']
-                latitude = i['latitude']
-                longitude = i['longitude']
-                street_address = (str(i['address']['addressLine1'])+" "+str(i['address']['addressLine2']).replace("None",""))
-                city = (i['address']['city'])
-                zipp = (i['address']['zip'])
-                state = (i['address']['stateCode'])
-                # logger.info(state)
-                if i['phoneNumber']:
-                    phone = phonenumbers.format_number(phonenumbers.parse(i['phoneNumber'], 'US'), phonenumbers.PhoneNumberFormat.NATIONAL)
+        if datas is not None:
+            for key in datas["stores"]:
+                location_name = key["vanityName"]
+                street_address = key["address"]["addressLine1"].capitalize()
+                city = key["address"]["city"].capitalize()
+                state = key["address"]["stateCode"]
+                zipp = key["address"]["zip"]
+                country_code = key["address"]["countryCode"]
+                store_number = key["storeNumber"]
+                if key["phoneNumber"]:
+                    phone = phonenumbers.format_number(
+                        phonenumbers.parse(str(key["phoneNumber"]), "US"),
+                        phonenumbers.PhoneNumberFormat.NATIONAL,
+                    )
                 else:
                     phone = "<MISSING>"
-                page_url = "https://www.owensmarket.com/stores/details/"+str(i['divisionNumber'])+"/"+str(store_number)
-                hours_of_operation = ''
-                for k in i['ungroupedFormattedHours']:
-                    hours_of_operation = hours_of_operation +' '+k['displayName']+' '+k['displayHours']
+                if key["banner"]:
+                    location_type = key["banner"]
+                else:
+                    location_type = "store"
+                latitude = key["latitude"]
+                longitude = key["longitude"]
+                hours_of_operation = ""
+                if key["ungroupedFormattedHours"]:
+                    for hr in key["ungroupedFormattedHours"]:
+                        hours_of_operation += (
+                            hr["displayName"] + ": " + hr["displayHours"] + ", "
+                        )
+                else:
+                    hours_of_operation = "<INACCESSIBLE>"
+                page_url = (
+                    "https://www.owensmarket.com/stores/details/"
+                    + str(key["divisionNumber"])
+                    + "/"
+                    + str(store_number)
+                )
+
                 store = []
-                store.append(base_url)
+                store.append(locator_domain if locator_domain else "<MISSING>")
                 store.append(location_name if location_name else "<MISSING>")
                 store.append(street_address if street_address else "<MISSING>")
                 store.append(city if city else "<MISSING>")
                 store.append(state if state else "<MISSING>")
                 store.append(zipp if zipp else "<MISSING>")
-                store.append("US")
+                store.append(country_code if country_code else "<MISSING>")
                 store.append(store_number if store_number else "<MISSING>")
                 store.append(phone if phone else "<MISSING>")
-                store.append("store")
-                store.append( latitude if latitude else "<MISSING>")
-                store.append( longitude if longitude else "<MISSING>")
-                store.append(hours_of_operation if hours_of_operation else "<MISSING>")
-                store.append(page_url)
-                # logger.info(str(store))
-                if store[2] in addresses:
-                    continue
-                addresses.append(store[2])
-                yield store
-        try:
-            r1 = session.get(location_url, headers=headers)
-        except:
-            pass
-        soup1= BeautifulSoup(r1.text,"lxml")
-        script = soup1.find(lambda tag: (tag.name == "script") and "window.__INITIAL_STATE__" in tag.text).text
-        str_json1 = script.split("JSON.parse('")[1].split("')")[0].replace("\\","\\\\").split('"contentHash":"W/\\')[0].replace('"/"}]}},','"/"}]}}}}}')
-        # logger.info(str_json1)
-        s1 = json.loads(re.sub(r"\s+", " ",str_json1))
-        # logger.info(s1)
-        if 'fuel' in s1['storeSearch']['storeSearchReducer']['searchResults']:
-            for i in s1['storeSearch']['storeSearchReducer']['searchResults']['fuel']:
-                location_name = (i['vanityName'])
-                store_number = i['storeNumber']
-                latitude = i['latitude']
-                longitude = i['longitude']
-                street_address = (str(i['address']['addressLine1'])+" "+str(i['address']['addressLine2']).replace("None",""))
-                city = (i['address']['city'])
-                zipp = (i['address']['zip'])
-                state = (i['address']['stateCode'])
-                if i['phoneNumber']:
-                    phone = phonenumbers.format_number(phonenumbers.parse(i['phoneNumber'], 'US'), phonenumbers.PhoneNumberFormat.NATIONAL)
-                else:
-                    phone = "<MISSING>"
-                page_url = "https://www.owensmarket.com/stores/details/"+str(i['divisionNumber'])+"/"+str(store_number)
-                hours_of_operation = ''
-                if i['ungroupedFormattedHours']:
-                    for k in i['ungroupedFormattedHours']:
-                        hours_of_operation = hours_of_operation +' '+k['displayName']+' '+k['displayHours']
-                else:
-                    hours_of_operation = "<MISSING>"
-                store = []
-                store.append(base_url)
-                store.append(location_name if location_name else "<MISSING>")
-                store.append(street_address if street_address else "<MISSING>")
-                store.append(city if city else "<MISSING>")
-                store.append(state if state else "<MISSING>")
-                store.append(zipp if zipp else "<MISSING>")
-                store.append("US")
-                store.append(store_number if store_number else "<MISSING>")
-                store.append(phone if phone else "<MISSING>")
-                store.append("fuel")
-                store.append( latitude if latitude else "<MISSING>")
-                store.append( longitude if longitude else "<MISSING>")
+                store.append(location_type if location_type else "<MISSING>")
+                store.append(latitude if latitude else "<MISSING>")
+                store.append(longitude if longitude else "<MISSING>")
                 store.append(hours_of_operation if hours_of_operation else "<MISSING>")
                 store.append(page_url)
                 if store[2] in addresses:
                     continue
                 addresses.append(store[2])
-                # logger.info(str(store))
                 yield store
-        if current_results_len < MAX_RESULTS:
-            # logger.info("max distance update")
-            search.max_distance_update(MAX_DISTANCE)
-        elif current_results_len == MAX_RESULTS:
-            # logger.info("max count update")                                                                        
-            search.max_count_update(result_coords)
-        else:
-            raise Exception("expected at most " + str(MAX_RESULTS) + " results")
-        zip_code = search.next_zip()
-        # break
+        if datas is not None:
+            if "fuel" in datas:
+                for key1 in datas["fuel"]:
+                    location_name = key1["vanityName"]
+                    street_address = key1["address"]["addressLine1"].capitalize()
+                    city = key1["address"]["city"].capitalize()
+                    state = key1["address"]["stateCode"]
+                    zipp = key1["address"]["zip"]
+                    country_code = key1["address"]["countryCode"]
+                    store_number = key1["storeNumber"]
+                    phone = key1["phoneNumber"]
+                    if key["banner"]:
+                        location_type = key["banner"]
+                    else:
+                        location_type = "fuel"
+                    latitude = key1["latitude"]
+                    longitude = key1["longitude"]
+                    result_coords.append((latitude, longitude))
+                    hours_of_operation = ""
+                    if key1["ungroupedFormattedHours"]:
+                        for hr in key1["ungroupedFormattedHours"]:
+                            hours_of_operation += (
+                                hr["displayName"] + ": " + hr["displayHours"] + ", "
+                            )
+                    else:
+                        hours_of_operation = "<MISSING>"
+                    page_url = (
+                        "https://www.owensmarket.com/stores/details/"
+                        + str(key1["divisionNumber"])
+                        + "/"
+                        + str(store_number)
+                    )
+                    store = []
+                    store.append(locator_domain if locator_domain else "<MISSING>")
+                    store.append(location_name if location_name else "<MISSING>")
+                    store.append(street_address if street_address else "<MISSING>")
+                    store.append(city if city else "<MISSING>")
+                    store.append(state if state else "<MISSING>")
+                    store.append(zipp if zipp else "<MISSING>")
+                    store.append(country_code if country_code else "<MISSING>")
+                    store.append(store_number if store_number else "<MISSING>")
+                    store.append(phone if phone else "<MISSING>")
+                    store.append(location_type if location_type else "<MISSING>")
+                    store.append(latitude if latitude else "<MISSING>")
+                    store.append(longitude if longitude else "<MISSING>")
+                    store.append(
+                        hours_of_operation if hours_of_operation else "<MISSING>"
+                    )
+                    store.append(page_url)
+                    if store[2] in addresses:
+                        continue
+                    addresses.append(store[2])
+                    yield store
+
+
 def scrape():
     data = fetch_data()
     write_output(data)
+
+
 scrape()

@@ -4,7 +4,7 @@ import time
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
 import usaddress
-import requests
+
 
 logger = SgLogSetup().get_logger("officetaverngrill_com")
 
@@ -65,17 +65,24 @@ def fetch_data():
         phone = phone.lstrip()
         address = soup.text.split("ADDRESS:", 1)[1].split("Less", 1)[0]
         googlelink = soup.findAll("span", {"class": "underline ai-rf"})
+        lat = "<MISSING>"
+        longt = "<MISSING>"
         for g in googlelink:
-            if "maps" in g.find("a").get("href"):
-                googlel = g.find("a").get("href")
-                break
-        try:
-            googlel = requests.head(googlel, allow_redirects=True).url
-        except:
-            googlel = requests.head(googlel, allow_redirects=True).url
-        lat = googlel.split("@", 1)[1].split(",")[0]
-        long = googlel.split("@", 1)[1].split(",")[1]
 
+            try:
+                if "goo.gl/maps" in g.find("a").get("href"):
+                    r1 = session.get(
+                        g.find("a").get("href"), headers=headers, verify=False
+                    )
+
+                    lat, longt = (
+                        r1.url.split("@", 1)[1].split("/data", 1)[0].split(",", 1)
+                    )
+                    longt = longt.split(",", 1)[0]
+
+                    break
+            except:
+                pass
         address = address.strip()
         address = usaddress.parse(address)
 
@@ -133,7 +140,7 @@ def fetch_data():
                 phone,
                 "<MISSING>",
                 lat,
-                long,
+                longt,
                 hours.replace("\n", " "),
             ]
         )

@@ -1,5 +1,5 @@
-lxml==4.3.4
-sgrequests
-beautifulsoup4==4.7.1
+sgrequests==0.0.15
+beautifulsoup4
 sglogging
 phonenumbers
+lxml

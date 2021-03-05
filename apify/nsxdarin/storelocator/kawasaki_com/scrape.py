@@ -86,6 +86,12 @@ def fetch_data():
                         typ = "<MISSING>"
                         store = item.split('"KmcDealerNumber\\":\\"')[1].split("\\")[0]
                         hours = "<MISSING>"
+                        try:
+                            purl = item.split('"WebsiteUrl\\":\\"')[1].split("\\")[0]
+                        except:
+                            purl = "<MISSING>"
+                        if purl == "":
+                            purl = "<MISSING>"
                         if store not in ids:
                             ids.append(store)
                             yield [

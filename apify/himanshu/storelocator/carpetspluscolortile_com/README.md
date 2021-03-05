@@ -1,12 +1,12 @@
-# How to write a Node.js scraper for SafeGraph using the Apify CheerioCrawler
+# How to write a Python3 scraper for SafeGraph (Simple)
 
-You can start writing your scraper in scrape.js between `// Begin scraper` and `// End scraper` comments. 
+Note: This template differs from the older `python3` template in that you don't need to worry about javascript related files such as `scrape.js` and `package.json`. This template also builds faster if you're testing it in a local docker image.
 
-Your logic will run agianst every URL in the RequestList. Note that you can use a RequestQueue instead of a RequestList if this scrape requires URLs to be generated dynamically (https://sdk.apify.com/docs/api/requestqueue).
+Please write your scraper such that running `scrape.py` produces a file `data.csv` containing the scraped data.
 
-Documentation on using the CheerioCrawler: https://sdk.apify.com/docs/api/cheeriocrawler
-
-Remember to update `package.json` with all dependencies needed to run your scraper.
+Remember to update `requirements.txt` with all dependencies needed to run your scraper. 
 Please make sure that:
-* Your scraper can be run successfully by executing https://github.com/SafeGraphInc/crawl-service/blob/master/scripts/run_scraper.sh
+* Your scraper can be run successfully by executing https://github.com/SafeGraphInc/crawl-service/blob/master/scripts/run_scraper.sh 
 * The resulting output passes https://github.com/SafeGraphInc/crawl-service/blob/master/scripts/validate.py
+
+1 address with no number,zip code not ain state this website

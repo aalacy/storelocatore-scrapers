@@ -1,5 +1,4 @@
+lxml
+bs4
 sgselenium
-lxml==4.3.4
-sgselenium
-beautifulsoup4==4.7.1
 sglogging

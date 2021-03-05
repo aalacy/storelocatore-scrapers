@@ -1,104 +1,137 @@
+from bs4 import BeautifulSoup
 import csv
 import re
-import pdb
-import requests
-from lxml import etree
-import json
 import usaddress
+from sgrequests import SgRequests
 
-base_url = 'https://reamsfoods.com'
+session = SgRequests()
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+}
 
-def validate(item):    
-    if type(item) == list:
-        item = ' '.join(item)
-    return item.strip()
-
-def get_value(item):
-    if item == None :
-        item = '<MISSING>'
-    item = validate(item)
-    if item == '':
-        item = '<MISSING>'    
-    return item
-
-def eliminate_space(items):
-    rets = []
-    for item in items:
-        item = validate(item)
-        if item != '':
-            rets.append(item)
-    return rets
-
-def parse_address(address):
-    address = usaddress.parse(address)
-    street = ''
-    city = ''
-    state = ''
-    zipcode = ''
-    for addr in address:
-        if addr[1] == 'PlaceName':
-            city += addr[0].replace(',', '') + ' '
-        elif addr[1] == 'ZipCode':
-            zipcode = addr[0]
-        elif addr[1] == 'StateName':
-            state = addr[0]
-        else:
-            street += addr[0].replace(',', '') + ' '
-    return { 
-        'street': get_value(street), 
-        'city' : get_value(city), 
-        'state' : get_value(state), 
-        'zipcode' : get_value(zipcode)
-    }
 
 def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+    with open("data.csv", mode="w") as output_file:
+        writer = csv.writer(
+            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+        )
+
+        # Header
+        writer.writerow(
+            [
+                "locator_domain",
+                "page_url",
+                "location_name",
+                "street_address",
+                "city",
+                "state",
+                "zip",
+                "country_code",
+                "store_number",
+                "phone",
+                "location_type",
+                "latitude",
+                "longitude",
+                "hours_of_operation",
+            ]
+        )
+        # Body
         for row in data:
             writer.writerow(row)
 
+
 def fetch_data():
-    output_list = []
-    url = "https://reamsfoods.com/locations/"
-    session = requests.Session()
-    request = session.get(url)
-    response = etree.HTML(request.text)
-    store_list = response.xpath('//div[contains(@class, "et_pb_module et_pb_image")]//a/@href')
-    for link in store_list:
-        link = base_url + link
-        store = etree.HTML(session.get(link).text)
-        output = []
-        output.append(base_url) # url
-        output.append(get_value(store.xpath('.//h1//text()'))) #location name
-        store = store.xpath('.//div[@class="et_pb_module et_pb_text et_pb_text_2 et_pb_bg_layout_light  et_pb_text_align_left"]')[0]
-        address = parse_address(get_value(store.xpath('.//address//text()')))
-        output.append(address['street'])
-        output.append(address['city'])
-        output.append(address['state'])
-        output.append(address['zipcode'])
-        output.append('US') #country code
-        output.append("<MISSING>") #store_number
-        output.append(get_value(eliminate_space(store.xpath('.//p//a/text()')) )) #phone
-        detail = eliminate_space(store.xpath('.//p//text()'))
-        start_point = 0
-        end_point = len(detail)-1
-        store_hours = ''
-        for idx, de in enumerate(detail):
-            if 'hours' in de.lower() and start_point == 0:
-                start_point = idx
-            if 'location' in de.lower() and end_point == len(detail)-1:
-                end_point = idx
-        store_hours = ' '.join(detail[start_point:end_point])
-        output.append("Reams Food Store | Fresh Produce, Delicious Meats") #location type
-        output.append("<MISSING>") #latitude
-        output.append("<MISSING>") #longitude
-        output.append(get_value(store_hours)) #opening hours
-        output_list.append(output)
-    return output_list
+    data = []
+    pattern = re.compile(r"\s\s+")
+    url = "https://reamsfoods.com/"
+    r = session.get(url, headers=headers, verify=False)
+    soup = BeautifulSoup(r.text, "html.parser")
+    divlist = soup.find("ul", {"id": "top-menu"}).findAll("li")[5].findAll("a")[1:]
+
+    p = 0
+    for div in divlist:
+        title = div.text.replace("Location", "").strip()
+        link = div["href"]
+        r = session.get(link, headers=headers, verify=False)
+        soup = BeautifulSoup(r.text, "html.parser")
+        content = (
+            soup.text.split("Address", 1)[1].split("\n", 1)[1].split("Location", 1)[0]
+        )
+        longt, lat = (
+            soup.find("iframe")["src"]
+            .split("!2d", 1)[1]
+            .split("!2m", 1)[0]
+            .split("!3d", 1)
+        )
+        content = re.sub(pattern, "\n", content).strip()
+        address = content.split("\n", 1)[0]
+        phone = content.split("Phone", 1)[1].split("Main")[0].replace(":", "").strip()
+        try:
+            phone = phone.split("Store", 1)[0]
+        except:
+            pass
+        hours = content.split("Hours", 1)[1].replace("\n", " ").replace(":", "").strip()
+
+        address = address.replace("\n", " ").strip()
+        address = usaddress.parse(address)
+        i = 0
+        street = ""
+        city = ""
+        state = ""
+        pcode = ""
+        while i < len(address):
+            temp = address[i]
+            if (
+                temp[1].find("Address") != -1
+                or temp[1].find("Street") != -1
+                or temp[1].find("Occupancy") != -1
+                or temp[1].find("Recipient") != -1
+                or temp[1].find("BuildingName") != -1
+                or temp[1].find("USPSBoxType") != -1
+                or temp[1].find("USPSBoxID") != -1
+            ):
+                street = street + " " + temp[0]
+            if temp[1].find("PlaceName") != -1:
+                city = city + " " + temp[0]
+            if temp[1].find("StateName") != -1:
+                state = state + " " + temp[0]
+            if temp[1].find("ZipCode") != -1:
+                pcode = pcode + " " + temp[0]
+            i += 1
+        street = street.lstrip().replace(",", "")
+        city = city.lstrip().replace(",", "")
+        state = state.lstrip().replace(",", "")
+        pcode = pcode.lstrip().replace(",", "")
+
+        if len(city) < 2:
+            city = title
+        data.append(
+            [
+                "https://reamsfoods.com/",
+                link,
+                title,
+                street,
+                city,
+                state,
+                pcode,
+                "US",
+                "<MISSING>",
+                phone,
+                "<MISSING>",
+                lat,
+                longt,
+                hours,
+            ]
+        )
+
+        p += 1
+    return data
+
 
 def scrape():
+
     data = fetch_data()
     write_output(data)
+
 
 scrape()

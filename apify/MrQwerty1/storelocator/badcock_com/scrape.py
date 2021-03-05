@@ -42,15 +42,17 @@ def get_rows(url):
     li = tree.xpath("//li[@data-shopid]")
     locator_domain = "https://www.badcock.com/"
     for l in li:
-        store_number = "".join(l.xpath("./@data-shopid"))
         location_name = "".join(l.xpath(".//a[@class='shop-link']/text()")).strip()
+        store_number = location_name.split("(")[1].replace(")", "").strip()
+        if location_name.lower().find("coming") != -1:
+            continue
         page_url = "https://www.badcock.com" + "".join(
             l.xpath(".//a[@class='shop-link']/@href")
         )
         line = l.xpath(".//div[@class='short-description']/p[not(./strong)]/text()")
         line = list(filter(None, [l.strip() for l in line]))
         street_address = line[0]
-        line = line[-1]
+        line = line[1]
         city = line.split(",")[0].strip()
         line = line.split(",")[1].strip()
         state = line.split()[0]

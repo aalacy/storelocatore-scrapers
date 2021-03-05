@@ -1,7 +1,6 @@
 import csv
-import json
-import sgzip
-from sgzip import SearchableCountries
+import jstyleson
+from lxml import etree
 
 from sgrequests import SgRequests
 
@@ -41,114 +40,89 @@ def fetch_data():
     session = SgRequests()
 
     items = []
-    scraped_items = []
 
     DOMAIN = "underarmour.ca"
-    start_url = (
-        "https://hosted.where2getit.com/underarmour/2015/rest/locatorsearch?lang=en_US"
+    start_url = "http://store-locations.underarmour.com/"
+
+    response = session.get(start_url)
+    dom = etree.HTML(response.text)
+
+    all_locations = []
+    states_urls = dom.xpath(
+        '//h3[contains(text(), "Canada")]/following-sibling::ul//a/@href'
     )
-
-    all_codes = []
-    ca_codes = sgzip.for_radius(radius=200, country_code=SearchableCountries.CANADA)
-    for code in ca_codes:
-        all_codes.append(code)
-
-    body = '{"request":{"appkey":"24358678-428E-11E4-8BC2-2736C403F339","formdata":{"geoip":false,"dataview":"store_default","order":"UASPECIALITY, UAOUTLET, AUTHORIZEDDEALER, rank,_distance","limit":10,"geolocs":{"geoloc":[{"addressline":"","country":"CA","latitude":"","longitude":"","state":"","province":"","city":"","address1":"","postalcode":"%s"}]},"searchradius":"25|35|45|50|60|70|80|90|100|110|120|130|140|150|160|170|180|190|200|210|220|230|240|250","where":{"or":{"UASPECIALITY":{"eq":"1"},"UAOUTLET":{"eq":"1"},"AUTHORIZEDDEALER":{"eq":"1"}}},"false":"0"}}}'
-    headers = {
-        "Accept": "application/json, text/javascript, */*; q=0.01",
-        "Content-Type": "application/json",
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.67 Safari/537.36",
-        "X-Requested-With": "XMLHttpRequest",
-    }
-
-    for code in all_codes:
-        response = session.post(start_url, data=body % code, headers=headers)
-        data = json.loads(response.text)
-        if not data["response"].get("collection"):
-            continue
-
-        for poi in data["response"]["collection"]:
-            location_name = poi["name"]
-            location_name = location_name if location_name else "<MISSING>"
-            street_address = poi["address1"]
-            street_address = street_address if street_address else "<MISSING>"
-            city = poi["city"]
-            city = city if city else "<MISSING>"
-            state = poi["state"]
-            if not state:
-                state = poi["province"]
-            state = state if state else "<MISSING>"
-            zip_code = poi["postalcode"]
-            zip_code = zip_code if zip_code else "<MISSING>"
-            country_code = poi["country"]
-            if country_code != "CA":
-                continue
-            country_code = country_code if country_code else "<MISSING>"
-            store_number = poi["clientkey"]
-            store_number = store_number if store_number else "<MISSING>"
-            phone = poi["phone"]
-            phone = phone if phone else "<MISSING>"
-            location_type = poi["dealertype"]
-            location_type = location_type if location_type else "<MISSING>"
-            latitude = poi["latitude"]
-            latitude = latitude if latitude else "<MISSING>"
-            longitude = poi["longitude"]
-            longitude = longitude if longitude else "<MISSING>"
-            hours_of_operation = []
-            hours_dict = {}
-            for key, value in poi.items():
-                if "date" in key:
-                    continue
-                if "temp" in key:
-                    continue
-                if "close" in key:
-                    day = key.replace("close", "")
-                    if hours_dict.get(day):
-                        hours_dict[day]["closes"] = value
-                    else:
-                        hours_dict[day] = {}
-                        hours_dict[day]["closes"] = value
-                if "open" in key:
-                    day = key.replace("open", "")
-                    if hours_dict.get(day):
-                        hours_dict[day]["opens"] = value
-                    else:
-                        hours_dict[day] = {}
-                        hours_dict[day]["closes"] = value
-            hours_of_operation = (
-                ", ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
+    for url in states_urls:
+        state_response = session.get(url)
+        state_dom = etree.HTML(state_response.text)
+        cities_urls = state_dom.xpath('//a[@linktrack="State index"]/@href')
+        for c_url in cities_urls:
+            city_response = session.get(c_url)
+            city_dom = etree.HTML(city_response.text)
+            all_locations += city_dom.xpath(
+                '//a[@data-gaact="Click_to_Store_Details"]/@href'
             )
 
-            check = "{} {}".format(location_name, street_address)
-            if check in scraped_items:
-                continue
-            store_url = "http://store-locations.underarmour.ca/{}/{}/{}/".format(
-                state, city.replace(" ", "-"), store_number
-            )
-            store_response = session.get(store_url)
-            if store_response.status_code == 404:
-                store_url = "<MISSING>"
+    for url in list(set(all_locations)):
+        loc_response = session.get(url)
+        loc_dom = etree.HTML(loc_response.text)
+        store_data = loc_dom.xpath(
+            '//script[@type="application/ld+json" and contains(text(), "streetAddress")]/text()'
+        )
+        poi = jstyleson.loads(store_data[0])
 
-            item = [
-                DOMAIN,
-                store_url,
-                location_name,
-                street_address,
-                city,
-                state,
-                zip_code,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
+        store_url = url
+        location_name = poi["name"]
+        location_name = location_name if location_name else "<MISSING>"
+        street_address = poi["address"]["streetAddress"]
+        street_address = street_address if street_address else "<MISSING>"
+        city = poi["address"]["addressLocality"]
+        city = city if city else "<MISSING>"
+        state = poi["address"]["addressRegion"]
+        state = state if state else "<MISSING>"
+        zip_code = poi["address"]["postalCode"]
+        zip_code = zip_code if zip_code else "<MISSING>"
+        country_code = poi["address"]["addressCountry"]
+        country_code = country_code if country_code else "<MISSING>"
+        store_number = poi["@id"]
+        store_number = store_number if store_number else "<MISSING>"
+        phone = poi["telephone"]
+        if phone:
+            phone = phone if phone != "#" else ""
+        phone = phone if phone else "<MISSING>"
+        location_type = poi["@type"]
+        location_type = location_type if location_type else "<MISSING>"
+        latitude = poi["geo"]["latitude"]
+        latitude = latitude if latitude else "<MISSING>"
+        longitude = poi["geo"]["longitude"]
+        longitude = longitude if longitude else "<MISSING>"
+        hours_of_operation = []
+        for elem in poi["openingHoursSpecification"]:
+            day = elem["dayOfWeek"][0]
+            opens = elem["opens"]
+            closes = elem["closes"]
+            hours_of_operation.append(f"{day} {opens} - {closes}")
+        hours_of_operation = (
+            ", ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
+        )
 
-            if check not in scraped_items:
-                scraped_items.append(check)
-                items.append(item)
+        item = [
+            DOMAIN,
+            store_url,
+            location_name,
+            street_address,
+            city,
+            state,
+            zip_code,
+            country_code,
+            store_number,
+            phone,
+            location_type,
+            latitude,
+            longitude,
+            hours_of_operation,
+        ]
+
+        items.append(item)
 
     return items
 

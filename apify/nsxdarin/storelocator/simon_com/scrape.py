@@ -52,6 +52,18 @@ def fetch_data():
                         "https://www.simon.com/mall/"
                         + item.split('"MallShortName":"')[1].split('"')[0]
                     )
+                    hours = ""
+                    r2 = session.get(loc, headers=headers)
+                    for line2 in r2.iter_lines():
+                        line2 = str(line2.decode("utf-8"))
+                        if '"HoursOutlook":{"' in line2:
+                            hours = (
+                                line2.split('"HoursOutlook":{"')[1]
+                                .split('"},"Hours":')[0]
+                                .replace('","', "; ")
+                                .replace('":"Open', ":")
+                                .replace('":"Abierto', ":")
+                            )
                     store = item.split('"Id":')[1].split(",")[0]
                     country = item.split('"CountryName":"')[1].split('"')[0]
                     if country == "CANADA":
@@ -72,7 +84,8 @@ def fetch_data():
                         phone = item.split('"PhoneNumber":{"Origin":"')[1].split('"')[0]
                     except:
                         phone = "<MISSING>"
-                    hours = "<MISSING>"
+                    if hours == "":
+                        hours = "<MISSING>"
                     if country == "CA" or country == "US":
                         yield [
                             website,

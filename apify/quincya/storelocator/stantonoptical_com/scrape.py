@@ -1,5 +1,8 @@
 import csv
 import json
+import time
+
+from datetime import date
 
 from bs4 import BeautifulSoup
 
@@ -166,6 +169,15 @@ def fetch_data():
             sun = " Sunday Closed"
 
         hours_of_operation = mon + tue + wed + thu + fri + sat + sun
+
+        open_date = store["StoreOpeningDate"].split("T")[0]
+        today = date.today().strftime("%Y-%m-%d")
+
+        open_date = time.strptime(open_date, "%Y-%m-%d")
+        today = time.strptime(today, "%Y-%m-%d")
+
+        if open_date > today:
+            hours_of_operation = "Coming Soon"
 
         phone = "<INACCESSIBLE>"
 

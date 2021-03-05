@@ -89,7 +89,7 @@ def get(url, attempt=1):
     try:
         # sleep()
         session = get_session()
-        session.session.cookies.clear()
+        session.get_session().cookies.clear()
         log(f'getting {url}')
         r = session.get(url, headers=headers, timeout=15)
         log(f'status for {url} >>> ', r.status_code)

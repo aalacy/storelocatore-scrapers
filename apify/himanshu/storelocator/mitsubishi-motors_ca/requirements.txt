@@ -1,5 +1,5 @@
-lxml==4.3.4
-beautifulsoup4==4.7.1
 sgrequests
-googletrans
+bs4
 sglogging
+google_trans_new
+lsml

@@ -1,5 +1,5 @@
 sgrequests
-beautifulsoup4==4.7.1
-sgzip==0.0.55
-html5lib
+bs4
+lxml
 unicodedata
+sgzip

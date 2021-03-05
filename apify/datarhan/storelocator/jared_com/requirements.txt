@@ -1,0 +1,4 @@
+w3lib==1.22.0
+sgrequests==0.0.15
+sgzip==0.1.0
+sgvalidator==0.0.71

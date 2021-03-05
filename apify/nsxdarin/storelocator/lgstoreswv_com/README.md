@@ -1,0 +1,2 @@
+--ignore CountValidator --ignore StateLevelCountValidator (Expected 122 POI, but found 107 on website)
+--ignore StreetAddressHasNumber --ignore GeoConsistencyValidator --ignore CountryValidator --ignore StoreNumberColumnValidator --ignore LatLngDuplicationValidator (Confirmed on website)

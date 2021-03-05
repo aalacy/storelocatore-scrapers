@@ -1,6 +1,2 @@
-selenium==3.141.0
-bs4==0.0.1
-usaddress
 sgrequests
-lxml
-sglogging
+bs4==0.0.1

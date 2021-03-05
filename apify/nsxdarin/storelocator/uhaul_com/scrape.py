@@ -1,225 +1,303 @@
+import re
 import csv
-from sgrequests import SgRequests
-import time
-import random
+import json
 import threading
-from concurrent.futures import ThreadPoolExecutor, as_completed
-from ssl import SSLError
+from bs4 import BeautifulSoup
 from sglogging import SgLogSetup
+from urllib.parse import urljoin
+from sgrequests import SgRequests
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
-logger = SgLogSetup().get_logger('uhaul_com')
-
-
-
-
+logger = SgLogSetup().get_logger("uhaul_com")
+latlng = []
 thread_local = threading.local()
 
 headers = {
-    'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36',
-    'connection': 'Keep-Alive'
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36",
+    "connection": "Keep-Alive",
 }
 
 
 def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',',
-                            quotechar='"', quoting=csv.QUOTE_ALL)
-        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip",
-                         "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+    with open("data.csv", mode="w") as output_file:
+        writer = csv.writer(
+            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+        )
+        writer.writerow(
+            [
+                "locator_domain",
+                "page_url",
+                "location_name",
+                "street_address",
+                "city",
+                "state",
+                "zip",
+                "country_code",
+                "store_number",
+                "phone",
+                "location_type",
+                "latitude",
+                "longitude",
+                "hours_of_operation",
+            ]
+        )
         for row in data:
             writer.writerow(row)
 
 
-def random_sleep():
-    time.sleep(random.random()*2)
-
-
 def get_session(reset=False):
+    global thread_local
     # give each thread its own session object
     # if using proxy, each thread's session should have a unique IP
-    if (not hasattr(thread_local, "session")) or (reset==True):
-        thread_local.session = SgRequests()
+    if not hasattr(thread_local, "session") or reset or thread_local.request_count > 10:
+        thread_local.session = SgRequests().requests_retry_session(retries=0)
+        thread_local.request_count = 0
+
     return thread_local.session
 
 
+def fetch(url, reset=False):
+    global thread_local
+    response = get_session(reset).get(url, headers=headers)
+    thread_local.request_count += 1
+    return response
+
+
 def get_state_urls():
-    state_urls = []
-    session = get_session()
-    url = 'https://www.uhaul.com/Locations/US_and_Canada/'
-    r = session.get(url, headers=headers)
-    for line in r.iter_lines(decode_unicode=True):
-        if "<a href='/Locations/" in line:
-            lurl = 'https://www.uhaul.com' + \
-                line.split("href='")[1].split("'")[0]
-            state_urls.append(lurl)
-    return state_urls
+    r = fetch("https://www.uhaul.com/Locations/US_and_Canada/")
+    soup = BeautifulSoup(r.text, "html.parser")
+    states = soup.select("#mainRow li.cell a")
+    return [urljoin("https://www.uhaul.com", state["href"]) for state in states]
 
 
 def get_city_urls(state_urls):
-    cities_all = []
-    with ThreadPoolExecutor(max_workers=8) as executor:
-        futures = [executor.submit(get_cities_in_state, url)
-                   for url in state_urls]
-        for result in as_completed(futures):
-            cities_all.extend(result.result())
-    return cities_all
-
-
-def get_cities_in_state(state_url):
     cities = []
-    session = get_session()
-
-    #logger.info('Pulling State %s ...' % state_url)
-    random_sleep()
-    try:
-      r = session.get(state_url, headers=headers)
-    except SSLError:
-      session = get_session(reset=True)
-      r = session.get(state_url, headers=headers)
-    #logger.info('status: ', r.status_code)
-
-    for line in r.iter_lines(decode_unicode=True):
-        if "<a href='/Locations/" in line:
-            lurl = 'https://www.uhaul.com' + \
-                line.split("href='")[1].split("'")[0]
-            if lurl not in cities:
-                cities.append(lurl)
+    with ThreadPoolExecutor() as executor:
+        logger.info(f"scrape cities with {executor._max_workers} workers")
+        futures = [executor.submit(get_cities_in_state, url) for url in state_urls]
+        for future in as_completed(futures):
+            cities.extend(future.result())
 
     return cities
 
 
+def get_cities_in_state(state_url, retry_count=0):
+    try:
+        r = fetch(state_url, retry_count > 0)
+        soup = BeautifulSoup(r.text, "html.parser")
+        cities = soup.select("#mainRow li.cell a")
+        return [urljoin("https://www.uhaul.com", city["href"]) for city in cities]
+    except Exception as e:
+        if retry_count < 3:
+            return get_cities_in_state(state_url, retry_count + 1)
+
+        logger.error(e)
+        return []
+
+
 def get_location_urls(city_urls):
-    locations_all = []
-
-    with ThreadPoolExecutor(max_workers=8) as executor:
-        futures = [executor.submit(get_locations_in_city, url)
-                   for url in city_urls]
-        for result in as_completed(futures):
-            locations_all.extend(result.result())
-
-    return locations_all
+    with ThreadPoolExecutor() as executor:
+        logger.info(f"scrape locations with {executor._max_workers} workers")
+        futures = [executor.submit(get_locations_in_city, url) for url in city_urls]
+        for future in as_completed(futures):
+            yield from future.result()
 
 
-def get_locations_in_city(city_url):
-    locs = []
-    session = get_session()
-    allids = []
-    coords = []
-    alllocs = []
-    #logger.info('Pulling City %s ...' % city_url)
-    try: 
-      r2 = session.get(city_url, headers=headers)
-    except SSLError:
-      session = get_session(reset=True)
-      r2=session.get(city_url, headers=headers)
-    #logger.info('status: ', r2.status_code)
-    lines = r2.iter_lines(decode_unicode=True)
-    for line2 in lines:
-        if '"entityNum":"' in line2:
-            items = line2.split('"lat":')
-            for item in items:
-                if '"entityNum":"' in item:
-                    lat = item.split(',')[0]
-                    lng = item.split('"long":')[1].split(',')[0]
-                    pid = item.split('"entityNum":"')[1].split('"')[0]
-                    coords.append(pid + '|' + lat + '|' + lng)
-        if '<ul class="sub-nav ">' in line2:
-            try:
-                next(lines)
-                g = next(lines)
-                if 'href="' not in g:
-                    g = next(lines)
-                lurl = g.split('href="')[1].split('/"')[0]
-                if 'http' not in lurl:
-                    lurl = 'https://www.uhaul.com' + lurl
-                enum = lurl.rsplit('/', 1)[1]
-                alllocs.append(lurl + '|' + enum)
-            except StopIteration:
-                break
+def get_locations_in_city(city_url, retry_count=0):
+    try:
+        r = fetch(city_url, retry_count > 0)
+        soup = BeautifulSoup(r.text, "html.parser")
+        scripts = soup.select("script")
+        location_script = next(
+            filter(lambda script: re.search("entityNum", script.string or ""), scripts),
+            None,
+        )
+        if not location_script:
+            return []
 
-    for location in alllocs:
-        for place in coords:
-            if location.split('|')[1] == place.split('|')[0]:
-                plat = place.split('|')[1]
-                plng = place.split('|')[2]
-                lurl = location.split('|')[0]
-                lid = lurl.rsplit('/', 1)[1]
-                lurl = 'https://www.uhaul.com/Locations/Truck-Rentals/' + lid
-                if lid not in allids:
-                    allids.append(lid)
-                    locs.append(lurl + '|' + plat + '|' + plng)
+        matched = re.search(r"mapPins\s=\s*(\[\{.*\}\])", location_script.string)
+        data = json.loads(matched.group(1))
+        locations = [loc for loc in data if loc["entityNum"]]
 
-    return locs
+        links = soup.select(".sub-nav a")
+        for loc in locations:
+            link = next(
+                filter(lambda link: re.search(loc["entityNum"], link["href"]), links)
+            )
+            href = link["href"]
+            loc["url"] = (
+                urljoin("https://www.uhaul.com", href)
+                if "uhaul.com" not in href
+                else href
+            )
+
+        return locations
+    except Exception as e:
+        if retry_count < 3:
+            return get_locations_in_city(city_url, retry_count + 1)
+
+        logger.error(e)
+        return []
+
+
+MISSING = "<MISSING>"
+
+
+def get_street_address(address):
+    street_address = address.get("streetAddress")
+    if not street_address:
+        return MISSING
+
+    cleaned = re.sub(r"\s*\(.*\)\s*", "", street_address)
+    if not cleaned:
+        return MISSING
+
+    return cleaned
+
+
+def get_country_code(country, postal):
+    if country == "United States" or re.search("us", country, re.I):
+        return "US"
+
+    if re.search("ca", country, re.I):
+        return "CA"
+
+    return MISSING
+
+
+def get_phone(data):
+    phone = data.get("telephone")
+    if phone:
+        return phone
+
+    contact = data.get("contactPoint") or data.get("ContactPoint")
+    if not contact:
+        return MISSING
+
+    if isinstance(contact, list):
+        if not len(contact):
+            return MISSING
+        return get(contact[0], "telephone")
+
+    return get(contact, "telephone")
+
+
+def get_hours(hours):
+    if not hours or not len(hours):
+        return MISSING
+
+    if isinstance(hours, list):
+        return ",".join(hours)
+
+    return hours
+
+
+def get_hours_from_page(soup):
+    hours = soup.find_all("li", itemprop="openingHours")
+    if not hours or not len(hours):
+        title = soup.find("h4", id="hoursTitle")
+        if not title:
+            return None
+
+        ul = title.find_next("ul")
+        if not ul:
+            return None
+
+        hours = ul.find_all("li", recursive=False)
+
+    hours_of_operations = [hour.getText().strip() for hour in hours]
+
+    return ",".join(hour for hour in hours_of_operations if hour)
+
+
+def get(location, key):
+    return location.get(key, MISSING) or MISSING
+
+
+def get_location(loc, retry_count=0):
+    locator_domain = "uhaul.com"
+    page_url = loc.get("url")
+    store_number = loc.get("entityNum")
+    location_type = "<MISSING>"
+    lat = loc.get("lat")
+    lng = loc.get("long")
+
+    try:
+        r = fetch(page_url, retry_count > 0)
+        soup = BeautifulSoup(r.text, "html.parser")
+        scripts = soup.find_all("script", type="application/ld+json")
+        location_script = next(
+            filter(lambda script: re.search('"address"', script.string or ""), scripts),
+            None,
+        )
+
+        if not location_script:
+            return None
+
+        data = json.loads(location_script.string)
+        location_name = get(data, "name")
+
+        address = get(data, "address")
+        street_address = get_street_address(address)
+        city = address.get("addressLocality")
+        state = address.get("addressRegion")
+        postal = address.get("postalCode")
+        country_code = get_country_code(address.get("addressCountry"), postal)
+
+        phone = get_phone(data)
+        hours = get_hours_from_page(soup) or get_hours(data.get("openingHours"))
+        if "Sat" not in hours:
+            hours = hours + "; Sat: Closed"
+        if "Sun" not in hours:
+            hours = hours + "; Sun: Closed"
+        ll = str(lat) + "|" + str(lng)
+        if ll not in latlng:
+            latlng.append(ll)
+            return [
+                locator_domain,
+                page_url,
+                location_name,
+                street_address,
+                city,
+                state,
+                postal,
+                country_code,
+                store_number,
+                phone,
+                location_type,
+                lat,
+                lng,
+                hours,
+            ]
+
+    except Exception as e:
+        if retry_count < 3:
+            return get_location(loc, retry_count + 1)
+
+        logger.error(e)
+        return []
 
 
 def fetch_data():
-
     states = get_state_urls()
+    logger.info(f"states: {len(states)}")
     cities = get_city_urls(states)
-    locs = get_location_urls(cities)
+    logger.info(f"cities: {len(cities)}")
 
-    with ThreadPoolExecutor(max_workers=8) as executor:
+    completed = 0
+    locs = get_location_urls(cities)
+    with ThreadPoolExecutor() as executor:
         futures = [executor.submit(get_location, loc) for loc in locs]
-        for result in as_completed(futures):
-            record = result.result()
-            if record is not None:
+        for future in as_completed(futures):
+            record = future.result()
+            if record:
+                completed += 1
+                if completed % 100 == 0:
+                    logger.info(f"locations found: {completed}")
+
                 yield record
 
-
-def get_location(loc):
-
-    session = get_session()
-    #logger.info('Pulling Location %s ...' % loc.split('|')[0])
-    website = 'uhaul.com'
-    typ = ''
-    hours = ''
-    name = ''
-    add = ''
-    city = ''
-    state = ''
-    zc = ''
-    country = ''
-    store = ''
-    phone = ''
-    lat = loc.split('|')[1]
-    lng = loc.split('|')[2]
-    lurl = loc.split('|')[0]
-    store = lurl.rsplit('/', 1)[1]
-
-    try:
-      r2 = session.get(lurl, headers=headers, timeout=5)
-    except SSLError:
-      session = get_session(reset=True)
-      r2 = session.get(lurl, headers=headers, timeout=5)
-    #logger.info('status: ', r2.status_code)
-
-    for line2 in r2.iter_lines(decode_unicode=True):
-        if '<small class="text-light">(' in line2 and 'all room' not in line2:
-            typ = line2.split('<small class="text-light">(')[1].split(')')[0]
-        if ',"addressRegion":"' in line2:
-            state = line2.split(',"addressRegion":"')[1].split('"')[0]
-            name = line2.split('"name":"')[1].split('"')[0]
-            country = line2.split(',"addressCountry":"')[1].split('"')[0]
-            if 'United' in country:
-                country = 'US'
-            if 'Canada' in country:
-                country = 'CA'
-            city = line2.split('"addressLocality":"')[1].split('"')[0]
-            zc = line2.split('"postalCode":"')[1].split('"')[0]
-            add = line2.split('"streetAddress":"')[1].split('"')[0]
-            phone = line2.split('"telephone":"')[1].split('"')[0]
-            hours = line2.split('"openingHours":')[
-                1].split(',"aggregateRating')[0]
-            hours = hours.replace('[', '').replace(']', '').replace(
-                '","', '; ').replace('"', '')
-    if hours == '':
-        hours = '<MISSING>'
-    if typ == '':
-        typ = 'U-Haul'
-    if phone == '':
-        phone = '<MISSING>'
-    if add != '':
-        return [website, lurl, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+    logger.info(f"locations found: {completed}")
 
 
 def scrape():
@@ -227,4 +305,5 @@ def scrape():
     write_output(data)
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()
