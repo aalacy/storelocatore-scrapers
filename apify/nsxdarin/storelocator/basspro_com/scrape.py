@@ -77,18 +77,10 @@ def fetch_data():
                 )[0]
             if '<span itemprop="telephone">' in line2:
                 phone = line2.split('<span itemprop="telephone">')[1].split("<")[0]
-            if '<abbr title="' in line2 and '<abbr title="Sunday">' in line2:
-                hrs = line2.split("<strong>")[1].split("</strong>")[0]
-                hrs = hrs.replace("</abbr>:</strong>", ": ")[0]
-                hrs = hrs.replace('<abbr title="Sunday">', "")
-                hrs = hrs.replace('<abbr title="Monday">', "")
-                hrs = hrs.replace('<abbr title="Tuesday">', "")
-                hrs = hrs.replace('<abbr title="Wednesday">', "")
-                hrs = hrs.replace('<abbr title="Thursday">', "")
-                hrs = hrs.replace('<abbr title="Friday">', "")
-                hrs = hrs.replace('<abbr title="Saturday">', "")
-            if "p.m.</span>" in line2:
-                hrs = hrs + line2.split("<span>")[1].split("<")[0]
+            if '<p itemprop="openingHours" content="' in line2:
+                hrs = line2.split('<p itemprop="openingHours" content="')[1].split('"')[
+                    0
+                ]
                 if hours == "":
                     hours = hrs
                 else:
@@ -106,6 +98,12 @@ def fetch_data():
                     .split("<")[0]
                     .strip()
                 )
+            if 'content="https://www.google.com/maps/place/' in line2:
+                try:
+                    lat = line2.split("@")[1].split(",")[0]
+                    lng = line2.split("@")[1].split(",")[1]
+                except:
+                    pass
             if 'property="og:title" content="' in line2:
                 name = line2.split('property="og:title" content="')[1].split('"')[0]
                 name = name.split(" |")[0]
@@ -138,6 +136,10 @@ def fetch_data():
                             hours = hrs
                         else:
                             hours = hours + "; " + hrs
+        if lat == "":
+            lat = "<MISSING>"
+        if lng == "":
+            lng = "<MISSING>"
         yield [
             website,
             loc,
