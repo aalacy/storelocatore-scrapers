@@ -31,13 +31,16 @@ def fetch_data():
             page_url = _.select_one("div.summary-title a")["href"]
             if not page_url.startswith("http"):
                 page_url = "https://meltshop.olo.com" + page_url
-            hours_of_operation = _.select("div.summary-excerpt p")[0].text
-            if len(_.select("div.summary-excerpt p")) > 4:
+            hours_of_operation = "; ".join(
+                [hour for hour in _.select("div.summary-excerpt p")[0].stripped_strings]
+            )
+            if len(_.select("div.summary-excerpt p")) > 3:
                 hours_of_operation += "; " + _.select("div.summary-excerpt p")[1].text
             block = [a for a in _.select("div.summary-excerpt p")[-2].stripped_strings]
             street_address = block[0]
-            if len(block) > 4:
+            if len(block) > 3:
                 street_address = " ".join(block[:2])
+            street_address = street_address.replace(",", "")
             state_zip = block[-2]
             phone = block[-1]
             if len(block) == 2:
@@ -45,7 +48,7 @@ def fetch_data():
                 phone = ""
 
             yield SgRecord(
-                page_url=page_url,
+                page_url="https://www.meltshop.com/locations",
                 location_name=_.select_one("div.summary-title a").text,
                 street_address=street_address,
                 city=state_zip.split(",")[0],
