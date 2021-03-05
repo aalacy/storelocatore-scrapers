@@ -67,21 +67,28 @@ def get_data_from_uk():
         phone_numbers_uk = ["+" + i.split("+")[-1] for i in address_data_uk3 if i]
 
     for idxuk1, address in enumerate(address_data_uk3):
-        locator_domain = locator_domain_url
-        page_url = "<MISSING>"
-        location_name = location_names_uk[idxuk1] or "<MISSING>"
-        paddress = parse_address_intl(address)
+        address_without_phone_data = address.split("+")
+        address_wpd = address_without_phone_data[0].strip()
+        address_wpd1 = address_wpd.split("Temporarily closed")[0].strip()
+        paddress = parse_address_intl(address_wpd1)
         street_address = paddress.street_address_1 or "<MISSING>"
         city = paddress.city or "<MISSING>"
         state = paddress.state or "<MISSING>"
         zip = paddress.postcode or "<MISSING>"
+        locator_domain = locator_domain_url
+        page_url = "<MISSING>"
+        location_name = location_names_uk[idxuk1] or "<MISSING>"
         country_code = "UK"
         store_number = "<MISSING>"
         phone = phone_numbers_uk[idxuk1] or "<MISSING>"
         location_type = "<MISSING>"
         latitude = "<MISSING>"
         longitude = "<MISSING>"
-        hours_of_operation = "<MISSING>"
+        hoo = address_wpd.split("Temporarily closed")[1].strip()
+        if hoo:
+            hours_of_operation = "<MISSING>"
+        else:
+            hours_of_operation = "Temporarily closed"
         row_uk = [
             locator_domain,
             page_url,
