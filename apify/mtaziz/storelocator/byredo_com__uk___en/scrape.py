@@ -46,9 +46,9 @@ headers = {
     "Connection": "keep-alive",
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.121 Safari/537.36",
 }
-params = {}
-r_uk = session.get(base_url_uk, headers=headers, params=params)
-r_us = session.get(base_url_us, headers=headers, params=params)
+
+r_uk = session.get(base_url_uk, headers=headers)
+r_us = session.get(base_url_us, headers=headers)
 
 
 def get_data_from_uk():
