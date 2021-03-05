@@ -32,6 +32,7 @@ def fetch_data():
             if x == 3:
                 x = 0
                 yield SgRecord(
+                    page_url=base_url,
                     street_address=street_address,
                     city=city,
                     state=state,
