@@ -1,0 +1,3 @@
+sgvalidator==0.0.71
+w3lib==1.22.0
+sgrequests==0.1.6
