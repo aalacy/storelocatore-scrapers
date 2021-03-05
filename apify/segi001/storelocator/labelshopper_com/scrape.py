@@ -47,7 +47,7 @@ def fetch_data():
     nonceSource = s.get("https://www.labelshopper.com/find-stores/").text
 
     nonceScript = bs4.BeautifulSoup(nonceSource, features="lxml").find(
-        "script", {"id": "fvm-footer-0-js-extra"}
+        "script", {"id": "wpgmza-js-extra"}
     )
 
     nonceVariable = re.search(

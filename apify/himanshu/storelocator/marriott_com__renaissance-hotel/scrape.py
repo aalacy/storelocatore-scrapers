@@ -7,11 +7,10 @@ session = SgRequests()
 
 
 def write_output(data):
-    with open("data.csv", newline="", mode="w") as output_file:
+    with open("data.csv", mode="w", newline="") as output_file:
         writer = csv.writer(
             output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
         )
-
         writer.writerow(
             [
                 "locator_domain",
@@ -30,7 +29,6 @@ def write_output(data):
                 "page_url",
             ]
         )
-
         for row in data:
             writer.writerow(row)
 
@@ -51,24 +49,57 @@ def fetch_data():
     hours_of_operation = "<MISSING>"
     page_url = "<MISSING>"
 
-    regions = []
+    country_list = [
+        "Alberta",
+        "Quebec",
+        "United Kingdom",
+        "Alabama",
+        "Arizona",
+        "California",
+        "Colorado",
+        "District Of Columbia",
+        "Florida",
+        "Georgia",
+        "Illinois",
+        "Indiana",
+        "Iowa",
+        "Louisiana",
+        "Maryland",
+        "Massachusetts",
+        "Michigan",
+        "Minnesota",
+        "Missouri",
+        "Nevada",
+        "New Jersey",
+        "New York",
+        "North Carolina",
+        "Ohio",
+        "Oklahoma",
+        "Pennsylvania",
+        "Rhode Island",
+        "South Carolina",
+        "Tennessee",
+        "Texas",
+        "Virginia",
+        "Washington",
+    ]
     headers = {
-        "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36"
     }
     locator_domain = "https://renaissance-hotels.marriott.com"
     base_url = "https://renaissance-hotels.marriott.com/locations-list-view"
     base_res = session.get(base_url, headers=headers)
     base_soup = BeautifulSoup(base_res.text, "html5lib")
-    regions = base_soup.find_all(class_="locations-list__regions")
-    for region in regions:
-        if region.find(class_="locations-list__region heading-large").text in [
-            "Canada",
-            "United States",
-        ]:
-            for hotel in region.find_all(class_="locations-list__hotel"):
+    countries = base_soup.find_all(class_="locations-list__country")
+    for country in countries:
+        if country.text.replace("\n", "").strip() in country_list:
+            for hotel in country.find_next_sibling().find_all("li"):
                 link = hotel.find("a")
                 city = link.text.split(",")[0]
                 location_name = link.text.split(",")[1].strip()
+                if "Test" in location_name:
+                    continue
+
                 url = link.get("href")
                 page_url = locator_domain + "/" + url
                 page_res = session.get(page_url, headers=headers)
@@ -98,7 +129,13 @@ def fetch_data():
                             .replace(".\n", "")
                             .replace('\n"', '"')
                         )
-                        json_data = json.loads(data)
+
+                        with open("jsondata.py", "w") as jsonoutput:
+                            jsonoutput.write(data)
+
+                        with open("jsondata.py", "r") as jsoninput:
+                            json_data = json.load(jsoninput)
+
                         latitude = json_data["geo"]["latitude"]
                         longitude = json_data["geo"]["longitude"]
                         street_address = json_data["address"]["streetAddress"]
@@ -106,6 +143,8 @@ def fetch_data():
                         zip_code = json_data["address"]["postalCode"]
                         country_code = json_data["address"]["addressCountry"]
                         phone = json_data["contactPoint"][0]["telephone"]
+                else:
+                    continue
 
                 location = []
                 location.append(locator_domain if locator_domain else "<MISSING>")
