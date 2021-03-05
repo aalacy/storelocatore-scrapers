@@ -11,6 +11,9 @@
 * [Generating a Python requirements file](./cookbook/reqfile.md)
 * Logging.
 
+### Declarative Pipeline
+* [Using the Declarative Field Mapping](./cookbook/declarative_pipeline.md)
+
 ### Fetching data [TODO]
 * Request anything over HTTP
 * Parse JSON results
@@ -23,9 +26,6 @@
 * When to use a static vs dynamic list?
 * Using a static zipcode / coordinate list
 * Using a dynamic zipcode / coordinate list
-
-### Data Pipeline
-* [Using the Declarative data pipeline](./cookbook/declarative_pipeline.md)
 
 ### Misc [TODO]
 * ...

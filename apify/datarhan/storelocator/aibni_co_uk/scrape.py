@@ -104,7 +104,7 @@ def fetch_data():
             scraped_items.append(check)
             items.append(item)
 
-    return items
+    return items[0:5]
 
 
 def scrape():
