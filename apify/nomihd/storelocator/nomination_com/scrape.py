@@ -120,7 +120,7 @@ def fetch_data():
             if longitude == "" or longitude is None:
                 longitude = "<MISSING>"
 
-            if hours_of_operation == "":
+            if hours_of_operation == "" or hours_of_operation is None:
                 hours_of_operation = "<MISSING>"
 
             if location_type == "":
