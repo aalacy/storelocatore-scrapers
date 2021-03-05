@@ -69,7 +69,6 @@ def fetch_data():
         city = address[1].strip()
         state = address[2].split(" ")[1]
         zip_code = address[2].split(" ")[2]
-        print(address[2].split(" "))
         phone = info[-1].strip()
         hours_of_operation = "<MISSING>"
         store_number = "<MISSING>"
