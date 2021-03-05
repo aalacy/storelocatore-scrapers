@@ -53,8 +53,12 @@ def fetch_data():
     for poi in data:
         location_name = poi["location_name"]
         store_url = dom.xpath(
-            '//a[*[contains(text(), "{}")]]/@href'.format(location_name.split()[0])
+            '//a[*[contains(text(), "{}")]]/@href'.format(location_name)
         )
+        if not store_url:
+            store_url = dom.xpath(
+                '//a[*[contains(text(), "{}")]]/@href'.format(location_name.split()[0])
+            )
         store_url = urljoin(start_url, store_url[0]) if store_url else start_url
         street_address = poi["address"]
         street_address = street_address if street_address else "<MISSING>"
