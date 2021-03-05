@@ -21,6 +21,7 @@ location_types = []
 latitudes = []
 longitudes = []
 hours_of_operations = []
+coords = []
 
 x = 0
 for search_lat, search_lon in search:
