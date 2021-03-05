@@ -2,6 +2,7 @@ import re
 import csv
 import json
 from lxml import etree
+from urllib.parse import urljoin
 
 from sgrequests import SgRequests
 
@@ -50,9 +51,11 @@ def fetch_data():
     data = json.loads(data)
 
     for poi in data:
-        store_url = start_url
         location_name = poi["location_name"]
-        location_name = location_name if location_name else "<MISSING>"
+        store_url = dom.xpath(
+            '//a[*[contains(text(), "{}")]]/@href'.format(location_name.split()[0])
+        )
+        store_url = urljoin(start_url, store_url[0]) if store_url else start_url
         street_address = poi["address"]
         street_address = street_address if street_address else "<MISSING>"
         city = poi["city"]
