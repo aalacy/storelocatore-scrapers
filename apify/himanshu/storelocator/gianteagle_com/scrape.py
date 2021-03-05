@@ -75,6 +75,7 @@ def fetch_data():
         json_locations = json.loads(r_locations.text)
 
         if len(json_locations) <= 0:
+            logger.info("No more locations")
             break
         logger.info(
             str(skip_counter) + " json_locations == " + str(len(json_locations))
@@ -100,6 +101,20 @@ def fetch_data():
             state = location_super_market["Address"]["State"]["Abbreviation"]
             zipp = location_super_market["Address"]["Zip"]
             phone = location_super_market["TelephoneNumbers"][0]["DisplayNumber"]
+
+            number = location_super_market["StoreDisplayName"].split(":")[0].strip()
+            page_url = (
+                "https://gianteagle.com/stores/"
+                + state
+                + "/"
+                + city
+                + "/"
+                + location_name.replace(" ", "-").strip()
+                + "/"
+                + number
+            )
+            page_url = page_url.replace("-&", "").strip()
+
             latitude = str(location_super_market["Address"]["Coordinates"]["Latitude"])
             longitude = str(
                 location_super_market["Address"]["Coordinates"]["Longitude"]
