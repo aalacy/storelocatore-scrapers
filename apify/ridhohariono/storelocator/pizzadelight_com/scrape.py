@@ -1,4 +1,5 @@
 import csv
+import re
 from sgrequests import SgRequests
 from sglogging import sglog
 
@@ -69,8 +70,12 @@ def fetch_data():
     for row in store_info:
         page_url = "https://www.pizzadelight.com/find-a-restaurant"
         location_name = handle_missing(row["title"])
-        street_address = handle_missing(row["address"]["address"])
         city = handle_missing(row["address"]["city"])
+        street_address = handle_missing(row["address"]["address"])
+        if "Marystown" not in street_address:
+            street_address = re.sub(city + ".*", "", street_address)
+        street_address = re.sub(r"Hawke's Bay.*", "", street_address).strip()
+        street_address = re.sub(r",$", "", street_address)
         state = handle_missing(row["address"]["province"])
         if state == "PEI":
             state = "Prince Edward Island"

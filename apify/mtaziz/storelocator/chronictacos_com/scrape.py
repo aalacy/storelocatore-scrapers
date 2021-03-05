@@ -1,10 +1,10 @@
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
+from lxml import html
 import csv
 import json
-from lxml import html
 
-logger = SgLogSetup().get_logger("picturehouses_com")
+logger = SgLogSetup().get_logger("chronictacos_com")
 
 
 def write_output(data):
@@ -176,9 +176,7 @@ def get_urls_from_api_res():
         "search_by_state": "",
     }
     url_api_endpoint = "https://www.chronictacos.com/locations/storelist"
-    r = session.post(url_api_endpoint, data=payload)
-    json_raw_data = r.text
-    json_data_api = json.loads(json_raw_data, strict=False)
+    json_data_api = session.post(url_api_endpoint, data=payload).json()
     page_urls = []
     for json_data in json_data_api["data"]:
         page_url = json_data["catering_url"].strip()
