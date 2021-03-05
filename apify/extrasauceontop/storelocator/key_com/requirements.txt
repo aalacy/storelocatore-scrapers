@@ -1,3 +1,3 @@
 pandas==1.2.3
 sgzip==0.2.1
-sgrequests==0.1.6
+sgrequests==0.1.7
