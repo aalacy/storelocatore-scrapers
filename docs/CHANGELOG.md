@@ -11,6 +11,11 @@ _* Changelog start date is Feb 24, 2021. It is not retroactive._
 
 ## Log
 
+> [04/03/2021] __sgrequests==0.1.7__
+>
+> 1. Added retry behavior for `ChunkedError`s.
+
+
 > [24/02/2021] __Documentation Overhaul__
 >
 > 1. Making in-repo documentation more usable and comprehensive.
