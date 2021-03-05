@@ -1,9 +1,8 @@
+import re
 import csv
-import json
-from urllib.parse import urljoin
+from lxml import etree
 
 from sgrequests import SgRequests
-from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 
 
 def write_output(data):
@@ -38,44 +37,43 @@ def write_output(data):
 
 def fetch_data():
     # Your scraper here
-    session = SgRequests()
+    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
 
     items = []
-    scraped_items = []
 
-    DOMAIN = "remax.ca"
-    start_url = "https://www.remax.ca/api/v1/office/search/?from=0&size=16&category=Residential&text={}"
+    start_url = "https://redhedoil.com/locations/"
+    domain = re.findall("://(.+?)/", start_url)[0].replace("www.", "")
+    hdr = {
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
+    }
+    response = session.get(start_url, headers=hdr)
+    dom = etree.HTML(response.text)
 
-    all_locations = []
-    all_codes = DynamicZipSearch(
-        country_codes=[SearchableCountries.CANADA], max_radius_miles=100
+    all_locations = dom.xpath(
+        '//table[@style="width: 720px; height: 665px;"]/tbody/tr/td[@width!="1"]'
     )
-    for code in all_codes:
-        response = session.get(start_url.format(code.replace(" ", "+")))
-        data = json.loads(response.text)
-        all_locations += data["result"]["results"]
-
-    for poi in all_locations:
-        store_url = urljoin("https://www.remax.ca", poi["detailUrl"])
-        location_name = poi["officeName"]
-        location_name = location_name if location_name else "<MISSING>"
-        street_address = poi["address1"]
-        if poi.get("address2"):
-            street_address += " " + poi["address2"]
-        city = poi["city"]
-        state = poi["state"]
-        zip_code = poi["postalCode"]
-        country_code = poi["country"]
-        store_number = "<MISSING>"
-        phone = poi.get("telephone")
-        phone = phone if phone else "<MISSING>"
+    for poi_html in all_locations:
+        store_url = start_url
+        raw_data = poi_html.xpath(".//text()")
+        raw_data = [e.strip() for e in raw_data if e.strip() and "(" not in e]
+        if not raw_data:
+            continue
+        location_name = raw_data[0]
+        street_address = raw_data[1]
+        city = raw_data[2].split(", ")[0]
+        city = city if city else "<MISSING>"
+        state = raw_data[2].split(", ")[-1].split()[0]
+        zip_code = raw_data[2].split(", ")[-1].split()[-1]
+        country_code = "<MISSING>"
+        store_number = location_name.split("#")[-1].strip().split("/")[0].strip()
+        phone = poi_html.xpath(".//text()")[-2].strip()
         location_type = "<MISSING>"
-        latitude = poi["latitude"]
-        longitude = poi["longitude"]
+        latitude = "<MISSING>"
+        longitude = "<MISSING>"
         hours_of_operation = "<MISSING>"
 
         item = [
-            DOMAIN,
+            domain,
             store_url,
             location_name,
             street_address,
@@ -90,9 +88,8 @@ def fetch_data():
             longitude,
             hours_of_operation,
         ]
-        if store_url not in scraped_items:
-            scraped_items.append(store_url)
-            items.append(item)
+
+        items.append(item)
 
     return items
 
