@@ -4,7 +4,7 @@ from sgrequests import SgRequests
 from sglogging import SgLogSetup
 from sgscrape.sgpostal import parse_address_intl
 
-logger = SgLogSetup().get_logger('byredo_com__uk___en')
+logger = SgLogSetup().get_logger("byredo_com__uk___en")
 
 
 def write_output(data):
@@ -44,7 +44,7 @@ base_url_uk = "https://www.byredo.com/uk_en/find-a-store/united-kingdom"
 base_url_us = "https://www.byredo.com/uk_en/find-a-store/united-states"
 headers = {
     "Connection": "keep-alive",
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.121 Safari/537.36"
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.121 Safari/537.36",
 }
 params = {}
 r_uk = session.get(base_url_uk, headers=headers, params=params)
@@ -56,12 +56,15 @@ def get_data_from_uk():
     tds_uk = tree_uk.xpath('//div[@class="block-cms-text"]/table/tbody')
     items_uk = []
     for idxuk, td_uk in enumerate(tds_uk):
-        location_names_uk = td_uk.xpath('//tr/td/h2//descendant::text()')
-        address_data_uk = td_uk.xpath('//tr/td//text()[count(preceding-sibling::h2)=$count]', count='{}'.format(idxuk))
-        address_data_uk1 = ' '.join(address_data_uk)
+        location_names_uk = td_uk.xpath("//tr/td/h2//descendant::text()")
+        address_data_uk = td_uk.xpath(
+            "//tr/td//text()[count(preceding-sibling::h2)=$count]",
+            count="{}".format(idxuk),
+        )
+        address_data_uk1 = " ".join(address_data_uk)
         address_data_uk2 = address_data_uk1.split("Map")
-        address_data_uk3 = [' '.join(i.split()) for i in address_data_uk2 if i]
-        phone_numbers_uk = ["+" + i.split('+')[-1] for i in address_data_uk3 if i]
+        address_data_uk3 = [" ".join(i.split()) for i in address_data_uk2 if i]
+        phone_numbers_uk = ["+" + i.split("+")[-1] for i in address_data_uk3 if i]
 
     for idxuk1, address in enumerate(address_data_uk3):
         locator_domain = locator_domain_url
@@ -105,14 +108,15 @@ def get_data_from_us():
     tds_us = tree_us.xpath('//div[@class="block-cms-text"]/table/tbody')
     items_us = []
     for idxus, td_us in enumerate(tds_us):
-        location_names_us = td_us.xpath('//tr/td/h2//descendant::text()')
+        location_names_us = td_us.xpath("//tr/td/h2//descendant::text()")
         address_data_us = td_us.xpath(
-            '//tr/td//text()[count(preceding-sibling::h2)=$count]',
-            count='{}'.format(idxus))
-        address_data_us1 = ' '.join(address_data_us)
+            "//tr/td//text()[count(preceding-sibling::h2)=$count]",
+            count="{}".format(idxus),
+        )
+        address_data_us1 = " ".join(address_data_us)
         address_data_us2 = address_data_us1.split("Map")
-        address_data_us3 = [' '.join(i.split()) for i in address_data_us2 if i]
-        phone_numbers_us = ["+" + i.split('+')[-1] for i in address_data_us3 if i]
+        address_data_us3 = [" ".join(i.split()) for i in address_data_us2 if i]
+        phone_numbers_us = ["+" + i.split("+")[-1] for i in address_data_us3 if i]
 
     for idxus1, address in enumerate(address_data_us3):
         locator_domain = locator_domain_url
