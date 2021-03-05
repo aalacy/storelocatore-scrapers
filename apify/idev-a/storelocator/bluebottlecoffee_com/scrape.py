@@ -72,6 +72,8 @@ def fetch_data():
 
                     if "reopened" in hours_of_operation:
                         hours_of_operation = ""
+                    if "temporarily closed" in hours_of_operation:
+                        hours_of_operation = "temporarily closed"
                     yield SgRecord(
                         page_url=page_url,
                         location_name=name,
