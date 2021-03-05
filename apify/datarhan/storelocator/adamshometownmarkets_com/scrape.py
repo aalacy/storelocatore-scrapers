@@ -53,7 +53,7 @@ def fetch_data():
     for poi_html in all_locations:
         store_url = "https://www.adamshometownmarkets.com/locations/"
         location_name = poi_html.xpath(".//h4/text()")
-        location_name = location_name if location_name else "<MISSING>"
+        location_name = location_name[0] if location_name else "<MISSING>"
         street_address = poi_html.xpath('.//span[@class="locator-address"]/text()')
         street_address = street_address[0] if street_address else "<MISSING>"
         city = poi_html.xpath('.//span[@class="locator-storeinformation"]/text()')[
@@ -77,7 +77,7 @@ def fetch_data():
         latitude = "<MISSING>"
         longitude = "<MISSING>"
         hoo = poi_html.xpath('.//span[@class="locator-storehours"]/text()')
-        hoo = [e.strip() for e in hoo if e.strip()]
+        hoo = [e.strip() for e in hoo if e.strip() and "Heart" not in e]
         hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
 
         item = [
