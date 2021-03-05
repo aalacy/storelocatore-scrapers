@@ -59,7 +59,9 @@ def fetch_data():
     data = json.loads(response.text)
 
     for poi in data["features"]:
-        store_url = urljoin(start_url, poi["properties"]["slug"])
+        store_url = urljoin(
+            "https://locations.penningtons.com/", poi["properties"]["slug"]
+        )
         location_name = poi["properties"]["name"]
         location_name = location_name if location_name else "<MISSING>"
         street_address = poi["properties"]["addressLine1"]

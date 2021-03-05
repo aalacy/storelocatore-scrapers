@@ -27,31 +27,38 @@ def _valid(val):
 def fetch_data():
     with SgRequests() as session:
         locator_domain = "https://www.texasfamilyfitness.com/"
-        base_url = "https://www.texasfamilyfitness.com/locations?hsCtaTracking=caf4867a-b816-4709-999d-1eebe027f30f%7Cb5b9f7ad-b642-4020-bc2c-138fe5f58a13"
+        base_url = "https://www.texasfamilyfitness.com/locations"
         r = session.get(base_url, headers=_headers)
         content = bs(r.text, "lxml")
         stores = content.find_all("div", {"class": "location"})
 
         for store in stores:
-
+            page_url = store.select_one('div[data-hs-cos-field="club_page_link"] a')[
+                "href"
+            ]
             store_name = store.h2.text
-
-            addr = parse_address_intl(store.p.text.strip())
-
+            addr = parse_address_intl(
+                " ".join(
+                    [
+                        " ".join([dd for dd in _.stripped_strings])
+                        for _ in store.select("div.address p")
+                    ]
+                )
+            )
             phone = "".join(
                 [x for x in store.find("div", {"class": "phone"}).text if x.isnumeric()]
             )
-
-            hours = (
-                store.find("div", {"class": "club-hours-container"})
-                .text.replace("\n", " ")
-                .strip()
-                .replace("Club Hours:", "")
+            hours_of_operation = _valid(
+                "; ".join(
+                    [
+                        _.text
+                        for _ in store.select('div[data-hs-cos-field="club_hours"] p')
+                    ]
+                )
             )
 
-            hours_of_operation = _valid(hours)
-
             yield SgRecord(
+                page_url=page_url,
                 location_name=store_name,
                 street_address=addr.street_address_1,
                 city=addr.city,

@@ -4,6 +4,7 @@ import json
 from sglogging import SgLogSetup
 from lxml import etree
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from tenacity import retry, stop_after_attempt
 
 logger = SgLogSetup().get_logger("chainxy_com")
 
@@ -169,6 +170,7 @@ def parse_fields(dom):
     )
 
 
+@retry(stop=stop_after_attempt(7))
 def scrape_chain(chain_url):
     logger.info(f"Scraping chain {chain_url}")
     with SgRequests() as session:
