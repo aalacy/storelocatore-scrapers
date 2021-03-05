@@ -795,7 +795,8 @@ def fetch_data():
         except:
             continue
 
-    ########################## mmg locations ##################################
+    # --------------------------------  mmg locations --------------------------------
+
     url = "https://www.google.com/maps/d/embed?mid=1KdL2nJazZh47ZXogEriVKB3YLVk&msa=0&ll=40.860555025437755%2C-73.84279832234037&spn=0.005136%2C0.011362&iwloc=0004befb4696e25688410&output=embed&z=17"
     r = session.get(url)
     logger.info(url)
