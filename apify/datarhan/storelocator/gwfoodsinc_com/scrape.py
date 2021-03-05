@@ -72,7 +72,7 @@ def fetch_data():
         latitude = geo[0]
         longitude = geo[1]
         hoo = poi_html.xpath('.//div[@class="store-hours"]/text()')
-        hours_of_operation = " ".join(hoo).replace('br> ', '') if hoo else "<MISSING>"
+        hours_of_operation = " ".join(hoo).replace("br> ", "") if hoo else "<MISSING>"
 
         item = [
             domain,
