@@ -86,15 +86,23 @@ def fetch_data():
             latitude = poi["profile"]["geocodedCoordinate"]["lat"]
             longitude = poi["profile"]["geocodedCoordinate"]["long"]
         hoo = []
-        for elem in poi["profile"]["hours"]["normalHours"]:
-            day = elem["day"]
-            if elem["isClosed"]:
-                hoo.append(f"{day} closed")
-            else:
-                opens = str(elem["intervals"][0]["start"]).replace("00", ":00")
-                closes = str(elem["intervals"][0]["end"]).replace("00", ":00")
-                hoo.append(f"{day} {opens} - {closes}")
-        hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
+        if poi["profile"].get("hours"):
+            for elem in poi["profile"]["hours"]["normalHours"]:
+                day = elem["day"]
+                if elem["isClosed"]:
+                    hoo.append(f"{day} closed")
+                else:
+                    opens = str(elem["intervals"][0]["start"]).replace("00", ":00")
+                    closes = str(elem["intervals"][0]["end"]).replace("00", ":00")
+                    hoo.append(f"{day} {opens} - {closes}")
+        hours_of_operation = (
+            " ".join(hoo).replace(":000", "0:00") if hoo else "<MISSING>"
+        )
+
+        if store_url == "https://superdry.com":
+            store_url = "https://stores.superdry.com/{}/{}/{}".format(
+                country_code, city.replace(" ", "-"), street_address.replace(" ", "-")
+            )
 
         item = [
             DOMAIN,

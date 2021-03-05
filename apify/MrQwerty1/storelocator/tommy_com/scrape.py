@@ -33,8 +33,10 @@ def write_output(data):
             writer.writerow(row)
 
 
-def get_js():
+def get_js(coords):
     session = SgRequests()
+    lat, lng = coords
+
     data = {
         "request": {
             "appkey": "05D7DC22-D987-11E9-A0C5-022A407E493E",
@@ -44,10 +46,10 @@ def get_js():
                 "geolocs": {
                     "geoloc": [
                         {
-                            "addressline": "30313",
+                            "addressline": "",
                             "country": "",
-                            "latitude": "",
-                            "longitude": "",
+                            "latitude": f"{lat}",
+                            "longitude": f"{lng}",
                         }
                     ]
                 },
@@ -66,78 +68,74 @@ def get_js():
 
 def fetch_data():
     out = []
-    s = set()
-    url = "https://tommy.com/"
-    js = get_js()
+    locator_domain = "https://tommy.com/"
 
-    for j in js:
-        locator_domain = url
-        location_name = j.get("name")
-        street_address = (
-            f"{j.get('address1')} {j.get('address2') or ''}".strip() or "<MISSING>"
-        )
-        city = j.get("city") or "<MISSING>"
-        postal = j.get("postalcode") or "<MISSING>"
-        country_code = j.get("country") or "<MISSING>"
-        if country_code == "CA":
-            state = j.get("province") or "<MISSING>"
-        else:
-            state = j.get("state") or "<MISSING>"
-        store_number = j.get("clientkey")
-        if store_number in s:
-            continue
+    coords = [("13.4665", "144.7928"), ("29.94654", "-90.062343")]
+    for c in coords:
+        js = get_js(c)
 
-        s.add(store_number)
-        phone = j.get("phone") or "<MISSING>"
-        latitude = j.get("latitude") or "<MISSING>"
-        longitude = j.get("longitude") or "<MISSING>"
-        page_url = (
-            f"https://stores.tommy.com/{state.lower()}/{city.lower()}/{store_number}/"
-        )
-        location_type = "<MISSING>"
-
-        _tmp = []
-        days = [
-            "monday",
-            "tuesday",
-            "wednesday",
-            "thursday",
-            "friday",
-            "saturday",
-            "sunday",
-        ]
-
-        for day in days:
-            start = j.get(f"{day}open")
-            close = j.get(f"{day}close")
-
-            if start and start != close:
-                _tmp.append(f"{day.capitalize()}: {start} - {close}")
+        for j in js:
+            location_name = j.get("name")
+            street_address = (
+                f"{j.get('address1')} {j.get('address2') or ''}".strip() or "<MISSING>"
+            )
+            city = j.get("city") or "<MISSING>"
+            postal = j.get("postalcode") or "<MISSING>"
+            country_code = j.get("country") or "<MISSING>"
+            if country_code == "CA":
+                state = j.get("province") or "<MISSING>"
             else:
-                _tmp.append(f"{day.capitalize()}: Closed")
+                state = j.get("state") or "<MISSING>"
+            store_number = j.get("clientkey")
 
-        hours_of_operation = ";".join(_tmp) or "<MISSING>"
+            phone = j.get("phone") or "<MISSING>"
+            latitude = j.get("latitude") or "<MISSING>"
+            longitude = j.get("longitude") or "<MISSING>"
+            page_url = f"https://stores.tommy.com/{state.lower()}/{city.lower()}/{store_number}/"
+            location_type = "<MISSING>"
 
-        if hours_of_operation.count("Closed") == 7:
-            hours_of_operation = "Closed"
+            _tmp = []
+            days = [
+                "monday",
+                "tuesday",
+                "wednesday",
+                "thursday",
+                "friday",
+                "saturday",
+                "sunday",
+            ]
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
+            for day in days:
+                start = j.get(f"{day}open")
+                close = j.get(f"{day}close")
+
+                if start and start != close:
+                    _tmp.append(f"{day.capitalize()}: {start} - {close}")
+                else:
+                    _tmp.append(f"{day.capitalize()}: Closed")
+
+            hours_of_operation = ";".join(_tmp) or "<MISSING>"
+
+            if hours_of_operation.count("Closed") == 7:
+                hours_of_operation = "Closed"
+
+            row = [
+                locator_domain,
+                page_url,
+                location_name,
+                street_address,
+                city,
+                state,
+                postal,
+                country_code,
+                store_number,
+                phone,
+                location_type,
+                latitude,
+                longitude,
+                hours_of_operation,
+            ]
+            out.append(row)
 
     return out
 
