@@ -1,4 +1,3 @@
-from bs4 import BeautifulSoup
 import csv
 import time
 from sgrequests import SgRequests
@@ -65,20 +64,7 @@ def fetch_data():
         range(40646, 46070),
         range(52508, 56381),
     ):
-        ##        print(i)
-        ##        0001011957
-        ##        0001034489
-        ##        0001034497
-        ##        0001037067
-        ##        0001040646
-        ##        0001041625
-        ##        0001042871
-        ##        0001046069
-        ##        0001052508
-        ##        0001054083
-        ##        0001056380
 
-        ##    for i in range(1906, 3000):
         count = str(i)
         url = "https://gb.ecco.com/api/store/finder/00010" + count
         stores_req = session.get(url, headers=headers).json()
