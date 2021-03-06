@@ -34,23 +34,6 @@ def _valid(val):
     )
 
 
-def _h(val):
-    if val:
-        return val
-    else:
-        return "closed"
-
-
-def _phone(val):
-    return (
-        val.replace("(", "")
-        .replace(")", "")
-        .replace("-", "")
-        .replace(" ", "")
-        .isdigit()
-    )
-
-
 def fetch_data():
     with SgRequests() as session:
         locator_domain = "https://www.chickncone.com/"
