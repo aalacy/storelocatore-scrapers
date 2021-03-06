@@ -42,11 +42,13 @@ def fetch_data():
                 ]
             )
 
+            if "currently closed" in soup.select_one('p[itemprop="description"]').text:
+                hours_of_operation = "Closed"
             yield SgRecord(
                 page_url=page_url,
                 store_number=location["id"],
                 location_name=location["name"],
-                street_address=location["address1"],
+                street_address=f'{location["address1"]} {location["address2"]}',
                 city=location["city"],
                 state=location["state"],
                 zip_postal=location["postalCode"],

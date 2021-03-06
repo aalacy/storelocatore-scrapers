@@ -71,16 +71,29 @@ def fetch_data():
     li = tree.xpath('//div[@class="fl-rich-text"]')
     for j in li:
 
+        title = "".join(
+            j.xpath(".//p//span//strong//text() | .//p//strong//span//text()")
+        )
         line = "".join(j.xpath(".//p/text()")).strip().split("\n")
-        location_name = line[0]
-        phone = "".join(line[-1].split(":")[-1].strip()).replace(" – ", "-").strip()
-        line = line[1:-1]
+        location_name = "".join(line[0])
+        if len(line) > 2:
+            phone = "".join(line[-1].split(":")[-1].strip()).replace(" – ", "-").strip()
+        else:
+            phone = "<MISSING>"
+
+        if location_name.find("NCG ALTON") != -1:
+            line = line[1:]
+            phone = "<MISSING>"
+        else:
+            line = line[1:-1]
+
         if line[0].find(",") == -1:
             line = " ".join(line)
         else:
             line = line[0]
         line = line.replace("Address:", "").replace("\xa0", " ").strip()
         a = usaddress.tag(line, tag_mapping=tag)[0]
+
         street_address = f"{a.get('address1')} {a.get('address2') or ''}".strip()
         if street_address == "None":
             street_address = "<MISSING>"
@@ -95,6 +108,8 @@ def fetch_data():
         location_type = "<MISSING>"
 
         hours_of_operation = "<MISSING>"
+        if title.find("COMING SOON") != -1:
+            hours_of_operation = title.split("-")[1].strip().capitalize()
         row = [
             locator_domain,
             page_url,
