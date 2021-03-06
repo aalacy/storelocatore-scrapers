@@ -38,29 +38,27 @@ def write_output(data):
 
 
 def fetch_data():
-    locs = [
-        "https://www.providence.org/locations/axminster-medical-group-s-los-angeles"
-    ]
+    locs = []
     website = "stjosephhealth.org"
     country = "US"
     typ = "<MISSING>"
     store = "<MISSING>"
-    ##    for x in range(1, 151):
-    ##        logger.info("Page " + str(x))
-    ##        url = (
-    ##            "https://www.providence.org/locations?postal=90009&lookup=&lookupvalue=&page="
-    ##            + str(x)
-    ##            + "&radius=5000&term="
-    ##        )
-    ##        r = session.get(url, headers=headers)
-    ##        for line in r.iter_lines():
-    ##            line = str(line.decode("utf-8"))
-    ##            if '<div class="subhead-h3"><a href="' in line:
-    ##                stub = line.split('<div class="subhead-h3"><a href="')[1].split('"')[0]
-    ##                if "http" not in stub:
-    ##                    lurl = "https://www.providence.org" + stub
-    ##                    if lurl not in locs:
-    ##                        locs.append(lurl)
+    for x in range(1, 151):
+        logger.info("Page " + str(x))
+        url = (
+            "https://www.providence.org/locations?postal=90009&lookup=&lookupvalue=&page="
+            + str(x)
+            + "&radius=5000&term="
+        )
+        r = session.get(url, headers=headers)
+        for line in r.iter_lines():
+            line = str(line.decode("utf-8"))
+            if '<div class="subhead-h3"><a href="' in line:
+                stub = line.split('<div class="subhead-h3"><a href="')[1].split('"')[0]
+                if "http" not in stub:
+                    lurl = "https://www.providence.org" + stub
+                    if lurl not in locs:
+                        locs.append(lurl)
     for loc in locs:
         logger.info(loc)
         name = ""
