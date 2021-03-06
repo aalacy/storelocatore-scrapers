@@ -38,27 +38,29 @@ def write_output(data):
 
 
 def fetch_data():
-    locs = []
+    locs = [
+        "https://www.providence.org/locations/axminster-medical-group-s-los-angeles"
+    ]
     website = "stjosephhealth.org"
     country = "US"
     typ = "<MISSING>"
     store = "<MISSING>"
-    for x in range(1, 151):
-        logger.info("Page " + str(x))
-        url = (
-            "https://www.providence.org/locations?postal=90009&lookup=&lookupvalue=&page="
-            + str(x)
-            + "&radius=5000&term="
-        )
-        r = session.get(url, headers=headers)
-        for line in r.iter_lines():
-            line = str(line.decode("utf-8"))
-            if '<div class="subhead-h3"><a href="' in line:
-                stub = line.split('<div class="subhead-h3"><a href="')[1].split('"')[0]
-                if "http" not in stub:
-                    lurl = "https://www.providence.org" + stub
-                    if lurl not in locs:
-                        locs.append(lurl)
+    ##    for x in range(1, 151):
+    ##        logger.info("Page " + str(x))
+    ##        url = (
+    ##            "https://www.providence.org/locations?postal=90009&lookup=&lookupvalue=&page="
+    ##            + str(x)
+    ##            + "&radius=5000&term="
+    ##        )
+    ##        r = session.get(url, headers=headers)
+    ##        for line in r.iter_lines():
+    ##            line = str(line.decode("utf-8"))
+    ##            if '<div class="subhead-h3"><a href="' in line:
+    ##                stub = line.split('<div class="subhead-h3"><a href="')[1].split('"')[0]
+    ##                if "http" not in stub:
+    ##                    lurl = "https://www.providence.org" + stub
+    ##                    if lurl not in locs:
+    ##                        locs.append(lurl)
     for loc in locs:
         logger.info(loc)
         name = ""
@@ -74,10 +76,13 @@ def fetch_data():
         r2 = session.get(loc, headers=headers)
         for line2 in r2.iter_lines():
             line2 = str(line2.decode("utf-8"))
+            if '"telephone":"' in line2:
+                phone = line2.split('"telephone":"')[1].split('"')[0]
             if '<div class="hours-text text-muted">' in line2 and hours2 == "":
                 hours2 = line2.split('<div class="hours-text text-muted">')[1].split(
-                    "<"
+                    "</div"
                 )[0]
+                hours2 = hours2.replace("<p>", "").replace("</p>", "")
             if '"name":"' in line2:
                 name = line2.split('"name":"')[1].split('"')[0]
                 try:
