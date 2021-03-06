@@ -141,7 +141,7 @@ def fetch_data():
         data = {
             "ajax": "1",
             "action": "get_nearby_stores",
-            "distance": "100",
+            "distance": "2000000",
             "lat": latlongdict[i][0],
             "lng": latlongdict[i][1],
             "products": "1",
