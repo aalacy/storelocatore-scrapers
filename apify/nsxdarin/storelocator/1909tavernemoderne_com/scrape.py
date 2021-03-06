@@ -79,6 +79,13 @@ def fetch_data():
             city = "Laval"
             state = "Quebec"
             zc = "H7N5H9"
+            phone = "450-681-5181"
+            lat = "45.5563679"
+            lng = "-73.7223512"
+        if "montreal" in loc:
+            lat = "45.4960349"
+            lng = "-73.5728809"
+            phone = "514-416-9809"
         yield [
             website,
             loc,
