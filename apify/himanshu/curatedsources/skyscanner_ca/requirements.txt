@@ -1,5 +1,4 @@
-lxml==4.3.4
-requests==2.11.1
-beautifulsoup4==4.7.1
-sgrequests
-sglogging
+html5lib==0.5.1
+bs4==0.0.1
+sgrequests==0.1.6
+geopy==2.1.0
