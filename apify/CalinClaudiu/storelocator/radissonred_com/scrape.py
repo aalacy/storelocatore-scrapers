@@ -51,6 +51,10 @@ def para(tup):
                 k = {}
                 k["STATUS"] = False
             else:
+<<<<<<< Updated upstream
+=======
+                logzilla.info(f"Exception: {e}")
+>>>>>>> Stashed changes
                 raise Exception
     except StopIteration:
         return
