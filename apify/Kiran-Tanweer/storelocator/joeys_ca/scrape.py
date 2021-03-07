@@ -84,11 +84,15 @@ def fetch_data():
                     pcode = locdiv.find("span", {"itemprop": "postalCode"}).text
                     phone = locdiv.find("span", {"itemprop": "telephone"}).text
                     hours = locdiv.find("div", {"class": "content"}).findAll("p")[-1]
-                    hours = hours.find("time")
-                    if hours is None:
-                        hours = "<MISSING>"
+                    hours = hours.findAll("time")
+                    hoo = ""
+                    if len(hours) == 0:
+                        hoo = "<MISSING>"
                     else:
-                        hours = hours.text
+                        for hr in hours:
+                            hoo = hoo + " " + hr.text
+                    hoo = hoo.strip()
+
                     data.append(
                         [
                             "https://joeys.ca/",
@@ -104,7 +108,7 @@ def fetch_data():
                             "<MISSING>",
                             lat,
                             lng,
-                            hours,
+                            hoo,
                         ]
                     )
     return data

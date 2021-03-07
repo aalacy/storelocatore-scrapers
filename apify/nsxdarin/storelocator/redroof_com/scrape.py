@@ -67,6 +67,13 @@ def fetch_data():
         r2 = session.get(loc, headers=headers)
         for line2 in r2.iter_lines():
             line2 = str(line2.decode("utf-8"))
+            if '"rating_image_url' in line2:
+                name = (
+                    line2.split('"rating_image_url')[1]
+                    .split('"name\\":\\"')[1]
+                    .split('\\"')[0]
+                    .replace("\\u0026", "&")
+                )
             if 'Street1\\":\\"' in line2:
                 add = line2.split('Street1\\":\\"')[1].split("\\")[0]
                 zc = line2.split('"PostalCode\\":\\"')[1].split("\\")[0]
@@ -75,23 +82,33 @@ def fetch_data():
                 lat = line2.split('"Latitude\\":\\"')[1].split("\\")[0]
                 lng = line2.split('"Longitude\\":\\"')[1].split("\\")[0]
                 phone = line2.split('"PhoneNumber\\":\\"')[1].split("\\")[0]
-                name = line2.split('"Description\\":\\"')[1].split("\\")[0]
-        yield [
-            website,
-            loc,
-            name,
-            add,
-            city,
-            state,
-            zc,
-            country,
-            store,
-            phone,
-            typ,
-            lat,
-            lng,
-            hours,
-        ]
+        if state == "AB":
+            country = "CA"
+        else:
+            country = "US"
+        intl = ["OT", "FU", "RJ", "SP"]
+        if "1051 Tiffany" in add:
+            state = "OH"
+        if "," in city:
+            city = city.split(",")[0].strip()
+        city = city.replace(" area", "")
+        if state not in intl and "troy/11191" not in loc:
+            yield [
+                website,
+                loc,
+                name,
+                add,
+                city,
+                state,
+                zc,
+                country,
+                store,
+                phone,
+                typ,
+                lat,
+                lng,
+                hours,
+            ]
 
 
 def scrape():

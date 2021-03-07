@@ -43,11 +43,33 @@ def fetch_data():
     website = "schoophamburgers.com"
     typ = "<MISSING>"
     country = "US"
-    loc = "<MISSING>"
+    loc = "https://www.schoophamburgers.com/locations"
     store = "<MISSING>"
     hours = "<MISSING>"
     lat = "<MISSING>"
     lng = "<MISSING>"
+    name = "Warsaw, IN"
+    city = "Warsaw"
+    state = "IN"
+    phone = "574-268-9500"
+    add = "3501 Lake City Hwy"
+    zc = "46580"
+    yield [
+        website,
+        loc,
+        name,
+        add,
+        city,
+        state,
+        zc,
+        country,
+        store,
+        phone,
+        typ,
+        lat,
+        lng,
+        hours,
+    ]
     add = ""
     city = ""
     state = ""

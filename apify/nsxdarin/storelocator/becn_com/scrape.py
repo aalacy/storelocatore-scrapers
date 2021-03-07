@@ -1,6 +1,6 @@
 import csv
 from sgrequests import SgRequests
-from sgzip import sgzip
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 from sglogging import SgLogSetup
 
 logger = SgLogSetup().get_logger("becn_com")
@@ -9,6 +9,12 @@ session = SgRequests()
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
+
+search = DynamicGeoSearch(
+    country_codes=[SearchableCountries.USA],
+    max_radius_miles=25,
+    max_search_results=None,
+)
 
 
 def write_output(data):
@@ -40,9 +46,9 @@ def write_output(data):
 
 def fetch_data():
     ids = []
-    for coord in sgzip.coords_for_radius(50):
-        x = coord[0]
-        y = coord[1]
+    for lat, lng in search:
+        x = lat
+        y = lng
         logger.info(("Pulling Lat-Long %s,%s..." % (str(x), str(y))))
         url = (
             "https://site.becn.com/api-man/StoreLocation?facets=&lat="
@@ -86,6 +92,7 @@ def fetch_data():
                             ids.append(storeinfo)
                             if "*" in add:
                                 add = add.split("*")[0].strip()
+                            name = typ
                             yield [
                                 website,
                                 loc,

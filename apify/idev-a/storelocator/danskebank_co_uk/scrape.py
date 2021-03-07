@@ -5,7 +5,7 @@ from sgscrape.sgpostal import parse_address_intl
 import json
 
 locator_domain = "https://danskebank.co.uk/"
-base_url = "https://danskebank.co.uk/web/search/domapsearch/do?c={38ECF3E2-52C7-4220-8277-2CBF2E228531}&l=en&o=0&m=999&r=1.6416251051516655&q=Belfast&cl=54.59728500000001,-5.93012&lt=&f="
+base_url = "https://danskebank.co.uk/web/search/domapsearch/do?c={38ECF3E2-52C7-4220-8277-2CBF2E228531}&l=en&o=0&m=999&r=500&q=Belfast&cl=54.59728500000001,-5.93012&lt=&f="
 
 
 def fetch_data():
@@ -49,6 +49,7 @@ def fetch_data():
                 street_address=addr.street_address_1,
                 city=addr.city,
                 zip_postal=addr.postcode,
+                phone=_["PhoneNumber"],
                 country_code="GB",
                 latitude=_["Location"]["Coordinate.Latitude"],
                 longitude=_["Location"]["Coordinate.Longitude"],
