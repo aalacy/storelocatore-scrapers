@@ -1,3 +1,4 @@
 sgrequests
 requests-random-user-agent
 sglogging
+sgzip
