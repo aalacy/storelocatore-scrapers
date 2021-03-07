@@ -233,6 +233,7 @@ def get_data(url):
     r = session.get(page_url, headers=headers)
     tree = html.fromstring(r.text)
 
+
     line = (
         " ".join(
             tree.xpath(
