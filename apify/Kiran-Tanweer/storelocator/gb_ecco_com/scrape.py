@@ -2,6 +2,7 @@ import csv
 import time
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
+import itertools as it
 
 logger = SgLogSetup().get_logger("gb_ecco_com")
 
@@ -56,13 +57,19 @@ def write_output(data):
 
 def fetch_data():
     data = []
-    for i in range(1906, 3000):
+    for i in it.chain(
+        range(11906, 12937),
+        range(34489, 37068),
+        range(40646, 46070),
+        range(52508, 56381),
+    ):
+
         count = str(i)
-        url = "https://gb.ecco.com/api/store/finder/000101" + count
+        url = "https://gb.ecco.com/api/store/finder/00010" + count
         stores_req = session.get(url, headers=headers).json()
         if stores_req is not None:
             storetype = stores_req["StoreType"].strip()
-            if storetype != "PARTNER":
+            if storetype == "ECCO":
                 country = stores_req["CountryCode"].strip()
                 if country == "GB":
                     storeid = stores_req["StoreId"]
@@ -117,6 +124,8 @@ def fetch_data():
                         lng = "<MISSING>"
                     if phone is None:
                         phone = "<MISSING>"
+                    if phone == "":
+                        phone = "<MISSING>"
                     if title.find("/") != -1:
                         title = title.split("/")[0].strip()
                     hoo = hoo.strip()
@@ -135,7 +144,7 @@ def fetch_data():
                             city,
                             state,
                             pcode,
-                            "US",
+                            "UK",
                             storeid,
                             phone,
                             storetype,

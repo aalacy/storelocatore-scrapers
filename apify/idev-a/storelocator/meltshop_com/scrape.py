@@ -2,6 +2,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
+from sgscrape.sgpostal import parse_address_intl
 
 _headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.141 Safari/537.36",
@@ -18,6 +19,15 @@ def _valid(val):
         .replace("\\xa0", " ")
         .replace("\\xa", " ")
         .replace("\\xae", "")
+    )
+
+
+def _street(val):
+    return (
+        val.replace("Fulton & Williams", "")
+        .replace("26Th Street Btw 6Th & Broadway", "")
+        .replace("50Th Street Btw 6Th & 7Th Ave", "")
+        .replace("8Th Ave Btw 52Nd & 53Rd", "")
     )
 
 
@@ -46,14 +56,15 @@ def fetch_data():
             if len(block) == 2:
                 state_zip = block[-1]
                 phone = ""
-
+            _address = street_address + " " + state_zip
+            addr = parse_address_intl(_address)
             yield SgRecord(
                 page_url="https://www.meltshop.com/locations",
                 location_name=_.select_one("div.summary-title a").text,
-                street_address=street_address,
-                city=state_zip.split(",")[0],
-                state=state_zip.split(",")[1].strip().split(" ")[0],
-                zip_postal=state_zip.split(",")[1].strip().split(" ")[-1],
+                street_address=_street(addr.street_address_1),
+                city=addr.city,
+                state=addr.state,
+                zip_postal=addr.postcode,
                 country_code="US",
                 phone=phone,
                 locator_domain=locator_domain,
