@@ -73,11 +73,16 @@ def fetch_data():
                     continue
 
                 day = k
-                interval = v.get("openIntervals")[0]
-                start = interval.get("start")
-                end = interval.get("end")
-                line = f"{day.capitalize()}: {start} - {end}"
-                _tmp.append(line)
+                isclosed = v.get("isClosed")
+                if not isclosed:
+                    interval = v.get("openIntervals")[0]
+                    start = interval.get("start")
+                    end = interval.get("end")
+                    line = f"{day.capitalize()}: {start} - {end}"
+                    _tmp.append(line)
+                else:
+                    _tmp.append("Closed")
+                    break
 
             hours_of_operation = ";".join(_tmp) or "<MISSING>"
 
