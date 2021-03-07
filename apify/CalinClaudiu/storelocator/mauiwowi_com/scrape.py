@@ -14,6 +14,7 @@ def para(url):
     }
     session = SgRequests()
     goodStuff = session.get(url, headers=headers).text
+
     soup = b4(goodStuff, "lxml")
 
     k = {}
@@ -38,6 +39,21 @@ def para(url):
         k["lng"] = coords.split("lng", 1)[1].split('("', 1)[1].split('")', 1)[0]
     except Exception:
         k["lng"] = "<MISSING>"
+    check = 1
+    for i in k["lng"]:
+        if i.isdigit():
+            if i != 0:
+                check = 0
+    if check == 1:
+        k["lng"] = "<MISSING>"
+
+    check = 1
+    for i in k["lat"]:
+        if i.isdigit():
+            if i != 0:
+                check = 0
+    if check == 1:
+        k["lat"] = "<MISSING>"
 
     try:
         addressData = []
@@ -53,7 +69,8 @@ def para(url):
             k["address"] = soup.find("span", {"itemprop": "streetAddress"})["content"]
         except Exception:
             k["address"] = "<MISSING>"
-
+    if "Call/Email" in k["address"]:
+        k["address"] = "<MISSING>"
     try:
         k["city"] = soup.find("span", {"itemprop": "addressLocality"}).text.strip()
     except Exception:
@@ -114,7 +131,19 @@ def fetch_data():
         max_threads=10,
         print_stats_interval=10,
     )
+    counter = 0
     for i in lize:
+        if all(
+            i[k] == "<MISSING>"
+            for k in ["name", "address", "city", "state", "zip", "phone", "hours"]
+        ):
+            counter += 1
+            i = para(i["page_url"])
+            if all(
+                i[k] == "<MISSING>"
+                for k in ["name", "address", "city", "state", "zip", "phone", "hours"]
+            ):
+                i = para(i["page_url"])
         yield i
 
     logzilla.info(f"Finished grabbing data!!")  # noqa

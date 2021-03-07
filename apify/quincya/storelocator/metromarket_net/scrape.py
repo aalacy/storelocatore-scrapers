@@ -58,21 +58,47 @@ def fetch_data():
 
             script = (
                 base.find("script", attrs={"type": "application/ld+json"})
-                .text.replace("\n", "")
+                .contents[0]
+                .replace("\n", "")
                 .strip()
             )
             store = json.loads(script)
 
             location_name = store["name"]
-            street_address = store["address"]["streetAddress"]
-            city = store["address"]["addressLocality"]
-            state = store["address"]["addressRegion"]
-            zip_code = store["address"]["postalCode"]
+
+            try:
+                street_address = store["address"]["streetAddress"]
+                city = store["address"]["addressLocality"]
+                state = store["address"]["addressRegion"]
+                zip_code = store["address"]["postalCode"]
+            except:
+                raw_address = (
+                    base.find(class_="StoreAddress-storeAddressGuts")
+                    .get_text(" ")
+                    .replace(",", "")
+                    .replace(" .", ".")
+                    .replace("..", ".")
+                    .split("  ")
+                )
+                street_address = raw_address[0].strip()
+                city = raw_address[1].strip()
+                state = raw_address[2].strip()
+                zip_code = raw_address[3].split("Get")[0].strip()
+
             country_code = "US"
             store_number = link.split("/")[-1]
             location_type = "<MISSING>"
             phone = store["telephone"]
-            hours_of_operation = store["openingHours"][0]
+            hours_of_operation = (
+                " ".join(store["openingHours"])
+                .replace("Su-Sa", "Sun - Sat:")
+                .replace("Su-Fr", "Sun - Fri:")
+                .replace("-00:00", " - Midnight")
+                .replace("Su ", "Sun")
+                .replace("Mo-Fr", "Mon - Fri")
+                .replace("Sa ", "Sat ")
+                .replace("  ", " ")
+            ).strip()
             latitude = store["geo"]["latitude"]
             longitude = store["geo"]["longitude"]
 
