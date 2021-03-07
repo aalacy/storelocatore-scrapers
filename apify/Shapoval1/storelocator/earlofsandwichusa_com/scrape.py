@@ -35,6 +35,7 @@ def write_output(data):
 
 
 def get_urls():
+    allurls1 = []
     allurls = []
     session = SgRequests()
     ca = session.get("https://locations.earlofsandwichusa.com/index.html")
@@ -232,7 +233,6 @@ def get_data(url):
     }
     r = session.get(page_url, headers=headers)
     tree = html.fromstring(r.text)
-
 
     line = (
         " ".join(
