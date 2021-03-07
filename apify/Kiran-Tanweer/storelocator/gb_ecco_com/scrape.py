@@ -57,7 +57,6 @@ def write_output(data):
 
 def fetch_data():
     data = []
-    total = 0
     for i in it.chain(
         range(11906, 12937),
         range(34489, 37068),
