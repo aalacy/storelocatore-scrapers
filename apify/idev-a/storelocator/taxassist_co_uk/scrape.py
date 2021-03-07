@@ -4,6 +4,7 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 import json
 import re
+from sgscrape.sgpostal import parse_address_intl
 
 _headers = {
     "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
@@ -26,9 +27,10 @@ def fetch_data():
         base_url = "https://www.taxassist.co.uk/locations"
         r = session.get(base_url)
         soup = bs(r.text, "lxml")
-        links = soup.select("main div.row a.primary.outline")
+        links = [link["href"] for link in soup.select("main div.row a.primary.outline")]
+        links.append("https://www.taxassist.co.uk/accountants/york")
         for link in links:
-            r1 = session.get(link["href"])
+            r1 = session.get(link)
             soup1 = bs(r1.text, "lxml")
             details = soup1.select("main div.mt-auto a.outline")
             for detail in details:
@@ -43,13 +45,17 @@ def fetch_data():
                     continue
                 hours = []
                 for _ in location["openingHoursSpecification"]:
-                    hours.append(f"{_['dayOfWeek']}: {_['opens']}-{_['closes']}")
+                    hour = f"{_['opens']}-{_['closes']}"
+                    if hour == "00:00-00:00":
+                        hour = "closed"
+                    hours.append(f"{_['dayOfWeek']}: {hour}")
+                addr = parse_address_intl(soup2.select_one("address").text.strip())
                 yield SgRecord(
                     page_url=detail["href"],
                     location_type=location["@type"],
                     location_name=location["name"],
-                    street_address=location["address"]["streetAddress"],
-                    city=location["name"],
+                    street_address=addr.street_address_1,
+                    city=addr.city,
                     zip_postal=location["address"]["postalCode"],
                     country_code="uk",
                     latitude=location["geo"]["latitude"],

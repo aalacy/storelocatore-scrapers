@@ -53,17 +53,17 @@ def fetch_data():
         store_url = store_url if store_url else "<MISSING>"
         location_name = poi["name"]
         location_name = location_name if location_name else "<MISSING>"
-        if poi.get("address_0"):
-            street_address = poi["address_0"]
-            if poi.get("address_1"):
-                street_address += ", " + poi["address_1"]
-            if poi.get("address_2"):
-                street_address += ", " + poi["address_2"]
+        street_address = poi.get("address_1")
+        if street_address and poi.get("address_2"):
+            street_address += ", " + poi["address_2"]
+        elif street_address and not poi.get("address_2"):
+            pass
         else:
-            street_address = poi["address_1"]
-            if poi.get("address_2"):
-                street_address += ", " + poi["address_2"]
-        street_address = street_address if street_address else "<MISSING>"
+            street_address = poi.get("address_2")
+            if poi.get("address_0") and street_address:
+                street_address = poi["address_0"] + " " + street_address
+            if not street_address:
+                street_address = poi["address_0"]
         city = poi["city"]
         city = city if city else "<MISSING>"
         state = poi["state"]

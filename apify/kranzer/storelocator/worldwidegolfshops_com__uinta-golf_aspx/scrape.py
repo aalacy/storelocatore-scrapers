@@ -85,7 +85,7 @@ def fetch_data():
         store_number = data["@id"]
         location_type = "<MISSING>"
         latitude = data["geo"]["latitude"]
-        longitude = data["geo"]["latitude"]
+        longitude = data["geo"]["longitude"]
         page_url = link
         country_code = "US"
 
