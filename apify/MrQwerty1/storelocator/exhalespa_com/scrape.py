@@ -84,8 +84,10 @@ def get_data(url):
     location_type = "<MISSING>"
 
     _tmp = []
-    days = tree.xpath("//div[@class='text']/p/strong/text()")
-    times = tree.xpath("//div[@class='text']/p/text()")
+    days = tree.xpath("//div[@class='text']")[0].xpath(
+        ".//p/strong/text()|.//span/strong/text()"
+    )
+    times = tree.xpath("//div[@class='text']")[0].xpath(".//p/text()|.//span/text()")
     times = list(filter(None, [t.strip() for t in times]))
 
     for d, t in zip(days, times):
