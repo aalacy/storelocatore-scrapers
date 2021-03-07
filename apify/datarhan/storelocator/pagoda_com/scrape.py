@@ -113,7 +113,6 @@ def fetch_data():
                     hoo.append(f"{day} {hours}")
                 hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
             else:
-                print(etree.tostring(store_data))
                 store_url = "<MISSING>"
                 location_type = "<MISSING>"
                 store_number = "<MISSING>"
