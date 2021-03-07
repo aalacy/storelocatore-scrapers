@@ -60,6 +60,8 @@ def fetch_data():
         location_name = poi["officeName"]
         location_name = location_name if location_name else "<MISSING>"
         street_address = poi["address1"]
+        if poi.get("address2"):
+            street_address += " " + poi["address2"]
         city = poi["city"]
         state = poi["state"]
         zip_code = poi["postalCode"]
