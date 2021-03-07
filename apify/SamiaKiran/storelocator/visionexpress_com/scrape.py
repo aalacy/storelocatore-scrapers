@@ -47,7 +47,6 @@ def write_output(data):
 def fetch_data():
     # Your scraper here
     data = []
-    i = 1
     url = "https://www.visionexpress.com/opticians"
     r = session.get(url, headers=headers)
     loclist = r.text.split('"stores":[')[1].split('],"queryParams"', 1)[0]
