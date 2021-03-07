@@ -42,9 +42,12 @@ def write_output(data):
 
 
 def fetch_data():
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.72 Safari/537.36"
+    }
     sub_url = "https://locations.theupsstore.com/"
     base_url = "https://www.theupsstore.com/"
-    r = session.get("https://locations.theupsstore.com/")
+    r = session.get("https://locations.theupsstore.com/", headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
 
     addresses = []
@@ -71,7 +74,7 @@ def fetch_data():
         locations_url = sub_url + loc.find("a", {"class": "Directory-listLink"})["href"]
 
         try:
-            r1 = session.get(locations_url)
+            r1 = session.get(locations_url, headers=headers)
             soup1 = BeautifulSoup(r1.text, "lxml")
         except:
             continue
@@ -89,7 +92,6 @@ def fetch_data():
             )
 
             if loc_count == 1:
-                pass
                 try:
                     page_url = (
                         sub_url
@@ -98,7 +100,7 @@ def fetch_data():
                 except:
                     page_url = "<MISSING>"
 
-                r2 = session.get(page_url)
+                r2 = session.get(page_url, headers=headers)
                 soup2 = BeautifulSoup(r2.text, "lxml")
                 data = soup2.find("div", {"class": "NAP NAP--location"})
 
@@ -140,11 +142,9 @@ def fetch_data():
                     zipp = "<MISSING>"
                 country_code = "US"
                 try:
-                    store_number = (
-                        soup2.find("h2", {"class": "Heading--3"})
-                        .text.replace("The UPS Store #", "")
-                        .strip()
-                    )
+                    store_number = soup2.find("h2", {"class": "Heading--3"}).text.split(
+                        "#"
+                    )[-1]
                 except:
                     store_number = "<MISSING>"
                 try:
@@ -155,11 +155,26 @@ def fetch_data():
                 except:
                     phone = "<MISSING>"
                 try:
-                    hours_of_operation = soup2.find(
-                        "table", {"class": "c-hours-details"}
-                    ).text.replace("Store HoursDay of the WeekHours", "")
+                    hours_of_operation = (
+                        soup2.find("table", {"class": "c-hours-details"})
+                        .text.replace("Store HoursDay of the WeekHours", "")
+                        .strip()
+                    )
                 except:
                     hours_of_operation = "<MISSING>"
+
+                if (
+                    "https://locations.theupsstore.com/de/delmar/38660-sussex-hwy"
+                    in page_url
+                ):
+                    location_name = "Delmar"
+                    street_address = "38660 Sussex Hwy 10"
+                    city = "Delmar"
+                    state = "DE"
+                    zipp = "19940"
+                    country_code = "US"
+                    store_number = "6948"
+                    phone = "(302) 907-0455"
 
                 store = []
                 store.append(base_url)
@@ -182,12 +197,11 @@ def fetch_data():
                 yield store
 
             else:
-
                 locations_url1 = (
                     sub_url + page.find("a", {"class": "Directory-listLink"})["href"]
                 )
 
-                r3 = session.get(locations_url1)
+                r3 = session.get(locations_url1, headers=headers)
                 soup3 = BeautifulSoup(r3.text, "lxml")
                 all_locations1 = soup3.find(
                     "div", {"class": "Directory-content"}
@@ -204,7 +218,7 @@ def fetch_data():
                     except:
                         page_url = "<MISSING>"
 
-                    r4 = session.get(page_url)
+                    r4 = session.get(page_url, headers=headers)
                     soup4 = BeautifulSoup(r4.text, "lxml")
                     data1 = soup4.find("div", {"class": "NAP NAP--location"})
 
@@ -250,11 +264,9 @@ def fetch_data():
                         zipp = "<MISSING>"
                     country_code = "US"
                     try:
-                        store_number = (
-                            soup4.find("h2", {"class": "Heading--3"})
-                            .text.replace("The UPS Store #", "")
-                            .strip()
-                        )
+                        store_number = soup4.find(
+                            "h2", {"class": "Heading--3"}
+                        ).text.split("#")[-1]
                     except:
                         store_number = "<MISSING>"
                     try:
@@ -265,9 +277,11 @@ def fetch_data():
                     except:
                         phone = "<MISSING>"
                     try:
-                        hours_of_operation = soup4.find(
-                            "table", {"class": "c-hours-details"}
-                        ).text.replace("Store HoursDay of the WeekHours", "")
+                        hours_of_operation = (
+                            soup4.find("table", {"class": "c-hours-details"})
+                            .text.replace("Store HoursDay of the WeekHours", "")
+                            .strip()
+                        )
                     except:
                         hours_of_operation = "<MISSING>"
 
@@ -292,6 +306,93 @@ def fetch_data():
                         continue
                     addresses.append(store[2])
                     yield store
+
+    link = "https://locations.theupsstore.com/dc/washington"
+    r5 = session.get(link, headers=headers)
+    soup5 = BeautifulSoup(r5.text, "lxml")
+    all_locations2 = soup5.find("div", {"class": "Directory-content"}).find_all(
+        "li", {"class": "Directory-listTeaser"}
+    )
+    for page2 in all_locations2:
+        try:
+            page_url = (
+                sub_url
+                + page2.find("a", {"class": "Teaser-titleLink js-slide-title"})["href"]
+            )
+        except:
+            page_url = "<MISSING>"
+        r6 = session.get(page_url, headers=headers)
+        soup6 = BeautifulSoup(r6.text, "lxml")
+        data2 = soup6.find("div", {"class": "NAP NAP--location"})
+
+        try:
+            location_name = soup5.find(
+                "span", {"class": "LocationName-geo"}
+            ).text.strip()
+        except:
+            location_name = "<MISSING>"
+        try:
+            try:
+                street_address = (
+                    data2.find("span", {"class": "c-address-street-1"}).text.strip()
+                    + data2.find("span", {"class": "c-address-street-2"}).text.strip()
+                )
+            except:
+                street_address = data2.find(
+                    "span", {"class": "c-address-street-1"}
+                ).text.strip()
+        except:
+            street_address = "<MISSING>"
+        try:
+            city = data2.find("span", {"class": "c-address-city"}).text.strip()
+        except:
+            city = "<MISSING>"
+        try:
+            state = data2.find("abbr", {"class": "c-address-state"}).text.strip()
+        except:
+            state = "<MISSING>"
+        try:
+            zipp = data2.find("span", {"class": "c-address-postal-code"}).text.strip()
+        except:
+            zipp = "<MISSING>"
+        country_code = "US"
+        try:
+            store_number = soup6.find("h2", {"class": "Heading--3"}).text.split("#")[-1]
+        except:
+            store_number = "<MISSING>"
+        try:
+            phone = data2.find(
+                "span", {"class": "c-phone-number-span c-phone-main-number-span"}
+            ).text.strip()
+        except:
+            phone = "<MISSING>"
+        try:
+            hours_of_operation = (
+                soup6.find("table", {"class": "c-hours-details"})
+                .text.replace("Store HoursDay of the WeekHours", "")
+                .strip()
+            )
+        except:
+            hours_of_operation = "<MISSING>"
+        store = []
+        store.append(base_url)
+        store.append(location_name if location_name else "<MISSING>")
+        store.append(street_address if street_address else "<MISSING>")
+        store.append(city if city else "<MISSING>")
+        store.append(state if state else "<MISSING>")
+        store.append(zipp if zipp else "<MISSING>")
+        store.append(country_code if country_code else "<MISSING>")
+        store.append(store_number if store_number else "<MISSING>")
+        store.append(phone if phone else "<MISSING>")
+        store.append(location_type if location_type else "<MISSING>")
+        store.append(latitude if latitude else "<MISSING>")
+        store.append(longitude if longitude else "<MISSING>")
+        store.append(hours_of_operation if hours_of_operation else "<MISSING>")
+        store.append(page_url if page_url else "<MISSING>")
+        if store[2] in addresses:
+            continue
+        addresses.append(store[2])
+        yield store
 
 
 def scrape():
