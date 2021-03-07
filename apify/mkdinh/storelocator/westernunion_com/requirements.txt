@@ -1,4 +1,4 @@
-sgrequests
-requests-random-user-agent
-sglogging
-sgzip
+sgrequests==0.1.7
+requests-random-user-agent==2020.12.20
+sglogging==0.0.4
+sgzip==0.2.1
