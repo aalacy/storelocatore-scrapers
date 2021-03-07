@@ -11,7 +11,6 @@ from sglogging import sglog
 
 thread_local = threading.local()
 log = sglog.SgLogSetup().get_logger(logger_name="westernunion.com")
-crawled_urls = []
 
 FIELDS = [
     "locator_domain",
