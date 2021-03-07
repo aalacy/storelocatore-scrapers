@@ -62,6 +62,8 @@ def fetch_data():
             hours_of_operation = "<INACCESSIBLE>"
         if hours_of_operation == "<MISSING>" and country_code == "US":
             hours_of_operation = "<INACCESSIBLE>"
+        if j.get("is_coming_soon"):
+            hours_of_operation = "Coming Soon"
 
         row = [
             locator_domain,

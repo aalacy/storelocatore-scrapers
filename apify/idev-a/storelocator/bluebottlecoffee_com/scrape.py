@@ -38,6 +38,9 @@ def fetch_data():
                     continue
                 if full[-1] == "Ttukseom station — exit #1":
                     del full[-1]
+                if len(full[-1].split(",")) == 1:
+                    del full[-1]
+
                 city = full[-1].split(",")[0]
                 zipp = full[-1].split(",")[-1].split()[-1]
                 states = " ".join(full[-1].split(",")[-1].split()[:-1])
@@ -69,6 +72,8 @@ def fetch_data():
 
                     if "reopened" in hours_of_operation:
                         hours_of_operation = ""
+                    if "temporarily closed" in hours_of_operation:
+                        hours_of_operation = "temporarily closed"
                     yield SgRecord(
                         page_url=page_url,
                         location_name=name,
