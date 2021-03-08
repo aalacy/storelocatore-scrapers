@@ -45,7 +45,6 @@ def fetch_data():
 
     base_url = "https://www.brothersbar.com"
     r = session.get("https://www.brothersbar.com/", headers=headers)
-    soup = BeautifulSoup(r.text, "lxml")
     locator_domain = base_url
     location_name = ""
     street_address = "<MISSING>"
@@ -58,7 +57,6 @@ def fetch_data():
     location_type = "brothersbar"
     latitude = "<MISSING>"
     longitude = "<MISSING>"
-    raw_address = ""
     hours_of_operation = "<MISSING>"
 
     stores_sel = lxml.html.fromstring(r.text)
