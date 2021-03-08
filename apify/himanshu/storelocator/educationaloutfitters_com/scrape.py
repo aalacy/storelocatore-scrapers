@@ -106,6 +106,9 @@ def fetch_data():
                         except:
                             hours_of_operation = "<MISSING>"
 
+            hours_of_operation = hours_of_operation.replace(
+                "WALK INS WELCOME THRU MAY", ""
+            ).strip()
             d = soup_location.find("li", {"class": "store-address"})
             full_detail = list(d.stripped_strings)
             phone = soup_location.find("li", {"class": "store-tel"}).text.strip()
@@ -126,6 +129,8 @@ def fetch_data():
                     .replace("78213", "TX")
                 )
                 zipp = full_address[-1].split(",")[-1].strip().split()[-1]
+
+            page_url = lep.find("a")["href"]
             store = [
                 locator_domain,
                 location_name,
