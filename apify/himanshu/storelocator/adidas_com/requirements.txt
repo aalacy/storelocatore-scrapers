@@ -1,5 +1,3 @@
-lxml==4.3.4
-sgrequests
-beautifulsoup4==4.7.1
-sglogging
-sgzip==0.0.55
+sgrequests==0.1.7
+html5lib==1.1
+bs4==0.0.1
