@@ -61,7 +61,6 @@ def fetch_data():
         store_dom = etree.HTML(store_response.text)
 
         store_url = full_store_url
-        print(store_url)
         location_name = store_dom.xpath('//h1[@class="title"]/text()')
         location_name = (
             " ".join(location_name[0].strip().split()) if location_name else "<MISSING>"
