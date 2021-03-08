@@ -45,6 +45,7 @@ def fetch_records_for(zipcode):
 def process_record(raw_results_from_one_zipcode):
     for stores in raw_results_from_one_zipcode:
         for store in stores:
+            page_url = "<MISSING>"
             temp_text = store.xpath(
                 ".//div[@class='search-store__results-address col-xs-12 col-sm-4']/p"
             )
