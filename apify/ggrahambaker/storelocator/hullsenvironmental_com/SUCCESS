@@ -1,1 +1,3 @@
-0.0.17
+VALIDATOR_VERSION: 0.0.71
+COMMAND: .\scripts\validate.py data.csv
+PYTHON_VERSION: sys.version_info(major=3, minor=8, micro=3, releaselevel='final', serial=0)
