@@ -122,7 +122,7 @@ def fetch_data():
         street_address = poi.get("address1")
         if street_address:
             if poi["address2"]:
-                street_address += ", " + poi["address2"]
+                street_address = poi["address2"]
         else:
             street_address = poi.get("address2")
         street_address = street_address if street_address else "<MISSING>"

@@ -1,5 +1,4 @@
-sgrequests
-beautifulsoup4
-sglogging
-lxml
-us
+sgrequests==0.1.4
+sgscrape==0.0.21
+us==1.0.0
+beautifulsoup4==4.9.3

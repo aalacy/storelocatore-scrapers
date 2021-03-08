@@ -65,13 +65,13 @@ def fetch_data():
                     name = item.split("<")[0]
                     lat = ""
                     lng = ""
+                    zc = ""
                     store = item.split("#")[1].split("<")[0]
                     for mark in markers:
                         if mark.split("|")[0] == store:
                             lat = mark.split("|")[1]
                             lng = mark.split("|")[2]
                     add = item.split('</h3><p class="map__content">')[1].split("<")[0]
-                    zc = "<MISSING>"
                     city = item.split("<br />")[1].split(",")[0]
                     state = item.split("<br />")[1].split(",")[1].split("<")[0].strip()
                     phone = "807-343-4466"
@@ -104,6 +104,13 @@ def fetch_data():
                                         hours = hrs
                                     else:
                                         hours = hours + "; " + hrs
+                        if "maps.google.com/" in line2:
+                            zc = (
+                                line2.split("maps.google.com/")[1]
+                                .split('" target="')[0]
+                                .rsplit("%2C", 1)[1]
+                                .upper()
+                            )
                     yield [
                         website,
                         loc,

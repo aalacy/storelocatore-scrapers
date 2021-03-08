@@ -4,6 +4,9 @@ import re
 import time
 from bs4 import BeautifulSoup
 from sglogging import SgLogSetup
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as EC
 
 logger = SgLogSetup().get_logger("habitburger_com")
 
@@ -62,6 +65,9 @@ def fetch_data():
     types = []
 
     driver.get("https://www.habitburger.com/locations/all/")
+    WebDriverWait(driver, 60).until(
+        EC.presence_of_element_located((By.CLASS_NAME, "reglist"))
+    )
     uls = driver.find_elements_by_class_name("reglist")
     del uls[-1]  # china
     for ul in uls:
@@ -82,7 +88,7 @@ def fetch_data():
         if cs != []:
             coming_soon.append(url)
             continue
-        time.sleep(5)
+        time.sleep(10)
         soup = BeautifulSoup(driver.page_source, "html.parser")
 
         the_script = soup.find_all("script", {"type": "application/ld+json"})[1]

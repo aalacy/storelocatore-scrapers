@@ -52,8 +52,8 @@ def get_data(url):
     session = SgRequests()
     r = session.get(api_url)
     tree = html.fromstring(r.text)
-    text = "".join(tree.xpath("//script[contains(text(), 'var data =')]/text()"))
-    text = text.split("var data = { data: ")[1].split(" }")[0]
+    text = "".join(tree.xpath("//script[contains(text(), 'var data=')]/text()"))
+    text = text.split("var data={data:")[1].split("}\n")[0]
     js = json.loads(text)
 
     for j in js:

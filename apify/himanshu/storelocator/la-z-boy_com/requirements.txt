@@ -1,8 +1,8 @@
-lxml
-sgrequests
-bs4
-sgselenium
-selenium
-sgzip
-sglogging
+html5lib==1.1
+sgrequests==0.1.4
+bs4==0.0.1
+sgselenium==0.0.15
+selenium==3.0.4
+sgzip==0.2.1
+sglogging==0.0.4
 
