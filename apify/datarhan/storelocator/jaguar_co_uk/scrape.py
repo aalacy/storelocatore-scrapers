@@ -42,81 +42,67 @@ def fetch_data():
     scraped_items = []
 
     DOMAIN = "jaguar.co.uk"
-    start_url = "https://www.jaguar.co.uk/national-dealer-locator.html?radius=100&placeName={}&filter=All"
+    start_url = "https://www.jaguar.co.uk/retailers/retailer-opening-information.html"
     hdr = {
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.193 Safari/537.36"
     }
 
-    response = session.get(
-        "https://www.britannica.com/topic/list-of-cities-and-towns-in-the-United-Kingdom-2034188"
-    )
+    response = session.get(start_url, headers=hdr)
     dom = etree.HTML(response.text)
-    cities = dom.xpath("//section/h2/a/text()")
 
-    for city in cities:
-        response = session.get(start_url.format(city), headers=hdr)
-        dom = etree.HTML(response.text)
+    all_locations = dom.xpath('//th[@class="tg-yseo"]/a/@href')
+    for store_url in all_locations:
+        loc_response = session.get(store_url, headers=hdr)
+        loc_dom = etree.HTML(loc_response.text)
 
-        all_poi_html = dom.xpath('//div[@class="infoCardDealer infoCard"]')
-        for poi_html in all_poi_html:
-            store_url = poi_html.xpath('.//div[@class="dealerWebsiteDiv"]//a/@href')
-            store_url = store_url[0] if store_url else "<MISSING>"
-            location_name = poi_html.xpath(
-                './/span[@class="dealerNameText fontBodyCopyLarge"]/text()'
-            )
-            location_name = location_name[0] if location_name else "<MISSING>"
-            address_raw = poi_html.xpath('.//span[@class="addressText"]/text()')[
-                0
-            ].split(",")
-            if len(address_raw) == 5:
-                street_address = ", ".join(address_raw[:2])
-                city = address_raw[2]
-                state = address_raw[3]
-                zip_code = address_raw[-1]
-            if len(address_raw) == 4:
-                street_address = address_raw[0]
-                city = address_raw[1]
-                state = address_raw[2]
-                zip_code = address_raw[-1]
-            if len(address_raw) == 3:
-                street_address = address_raw[0]
-                city = address_raw[1]
-                state = "<MISSING>"
-                zip_code = address_raw[-1]
-            city = city.strip() if city else "<MISSING>"
-            country_code = "<MISSING>"
-            country_code = country_code if country_code else "<MISSING>"
-            store_number = poi_html.xpath("@data-ci-code")
-            store_number = store_number[0] if store_number else "<MISSING>"
-            phone = poi_html.xpath('.//span[@class="phoneNumber"]/a/text()')
-            phone = phone[0] if phone else "<MISSING>"
-            location_type = "<MISSING>"
-            latitude = poi_html.xpath("@data-lat")
-            latitude = latitude[0] if latitude else "<MISSING>"
-            longitude = poi_html.xpath("@data-lng")
-            longitude = longitude[0] if longitude else "<MISSING>"
-            hours_of_operation = "<MISSING>"
+        location_name = loc_dom.xpath('//h1[@class="headerBox__heroTitle fontH1"]/text()')
+        location_name = location_name[0] if location_name else "<MISSING>"
+        street_address = loc_dom.xpath('//span[@class="retailerContact__address1"]/text()')[0]
+        street_2 = loc_dom.xpath('//span[@class="retailerContact__address2"]/text()')
+        if street_2:
+            street_address += ' ' + street_2[0]
+        street_3 = loc_dom.xpath('//span[@class="retailerContact__address3"]/text()')
+        if street_3:
+            street_address += ' ' + street_3[0]
+        city = loc_dom.xpath('//span[@class="retailerContact__locality"]/text()')
+        city = city[0] if city else '<MISSING>'
+        state = loc_dom.xpath('//span[@class="retailerContact__county"]/text()')
+        state = state[0] if state else '<MISSING>'
+        zip_code = loc_dom.xpath('//span[@class="retailerContact__postcode"]/text()')
+        zip_code = zip_code[0] if zip_code else '<MISSING>'
+        country_code = "UK"
+        store_number = "<MISSING>"
+        phone = loc_dom.xpath('//a[@class="tel"]/text()')
+        phone = phone[0] if phone else "<MISSING>"
+        location_type = "<MISSING>"
+        latitude = loc_dom.xpath('//@data-lat')
+        latitude = latitude[0] if latitude else "<MISSING>"
+        longitude = loc_dom.xpath('//@data-long')
+        longitude = longitude[0] if longitude else "<MISSING>"
+        hoo = loc_dom.xpath('//h2[contains(text(), "SALES OPENING TIMES")]/following-sibling::table//text()')
+        hoo = [e.strip() for e in hoo if e.strip()]
+        hours_of_operation = ' '.join(hoo) if hoo else '<MISSING>'
 
-            item = [
-                DOMAIN,
-                store_url,
-                location_name,
-                street_address,
-                city,
-                state,
-                zip_code,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
-
-            if store_number not in scraped_items:
-                scraped_items.append(store_number)
-                items.append(item)
+        item = [
+            DOMAIN,
+            store_url,
+            location_name,
+            street_address,
+            city,
+            state,
+            zip_code,
+            country_code,
+            store_number,
+            phone,
+            location_type,
+            latitude,
+            longitude,
+            hours_of_operation,
+        ]
+        check = f'{location_name} {street_address}'
+        if check not in scraped_items:
+            scraped_items.append(check)
+            items.append(item)
 
     return items
 
