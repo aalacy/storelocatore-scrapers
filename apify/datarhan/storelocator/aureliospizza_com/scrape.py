@@ -1,11 +1,10 @@
 import re
 import csv
 import json
-import time
-import random
 from lxml import etree
 
 from sgrequests import SgRequests
+from sgselenium import SgFirefox
 
 
 def write_output(data):
@@ -57,13 +56,10 @@ def fetch_data():
     data = json.loads(data[0])
 
     for poi in data["KOObject"][0]["locations"]:
-        time.sleep(random.randint(2, 15))
         store_url = poi["locationUrl"]
-        status_code = ""
-        while status_code != 200:
-            loc_response = session.get(store_url, headers=headers)
-            status_code = loc_response.status_code
-        loc_dom = etree.HTML(loc_response.text)
+        with SgFirefox() as driver:
+            driver.get(store_url)
+            loc_dom = etree.HTML(driver.page_source)
         raw_address = loc_dom.xpath('//div[@class="location"]//a/text()')
         raw_address = [elem.strip() for elem in raw_address if elem.strip()]
         location_name = poi["title"]
@@ -86,10 +82,9 @@ def fetch_data():
         location_type = location_type if location_type else "<MISSING>"
         latitude = poi["latitude"]
         longitude = poi["longitude"]
-        sdesc_html = etree.HTML(poi["simpledescription"])
-        hours_of_operation = [
-            elem.strip() for elem in sdesc_html.xpath("//text()") if "am " in elem
-        ]
+        hours_of_operation = loc_dom.xpath(
+            '//h5[contains(text(), "Hours")]/following-sibling::p[1]/text()'
+        )
         hours_of_operation = (
             " ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
         )
