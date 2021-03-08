@@ -1,4 +1,4 @@
-FROM kevincollinsnc/sg:latest
+FROM safegraph/apify-python3:latest
 
 COPY . ./
 
