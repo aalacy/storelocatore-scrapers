@@ -64,11 +64,11 @@ def fetch_data():
         if addr.street_address_2:
             street_address += " " + addr.street_address_2
         street_address = street_address if street_address else "<MISSING>"
-        city = poi['location']['city']
-        city = city.split(',')[-1].strip() if city else "<MISSING>"
-        state = poi['location']['state']
+        city = poi["location"]["city"]
+        city = city.split(",")[-1].strip() if city else "<MISSING>"
+        state = poi["location"]["state"]
         state = state if state else "<MISSING>"
-        zip_code = poi['location']['postal_code']
+        zip_code = poi["location"]["postal_code"]
         zip_code = zip_code if zip_code else "<MISSING>"
         country_code = poi["location"]["country"]
         country_code = country_code if country_code else "<MISSING>"
