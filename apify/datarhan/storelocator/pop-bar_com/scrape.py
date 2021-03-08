@@ -56,6 +56,7 @@ def fetch_data():
         dom = etree.HTML(response.text)
         all_locations = dom.xpath('//div[@class="one-third-column"]/a/@href')
         all_locations += dom.xpath('//div[@class="one-column"]/a/@href')
+        all_locations += dom.xpath('//div[@class="one-half-column"]/a/@href')
 
         for url in list(set(all_locations)):
             if not url:
@@ -77,25 +78,32 @@ def fetch_data():
             street_address = street_address if street_address else "<MISSING>"
             street_address = street_address.split("(")[0].strip().replace("*", "")
             city = addr.city
-            city = city if city else "<MISSING>"
+            city = city.strip() if city else "<MISSING>"
             state = addr.state
             state = state if state else "<MISSING>"
             zip_code = addr.postcode
             zip_code = zip_code if zip_code else "<MISSING>"
+            if city == "M9":
+                zip_code += " M9"
+                city = location_name
             if "united-states" in start_url:
                 country_code = "US"
             else:
                 country_code = "CA"
             country_code = country_code if country_code else "<MISSING>"
             store_number = "<MISSING>"
-            phone = "<MISSING>"
+            phone = loc_dom.xpath(
+                '//div[@class="store-hours"]/div[@class="paragraf"]/text()'
+            )[-2].strip()
+            if "," in phone:
+                phone = "<MISSING>"
             location_type = "<MISSING>"
             latitude = "<MISSING>"
             longitude = "<MISSING>"
             hoo = loc_dom.xpath(
-                '//div[@class="store-hours"]/div[@class="paragraf"]/text()'
+                '//div[@class="store-hours"]/div[@class="paragraf"][1]/text()'
             )
-            hoo = [e.strip() for e in hoo if e.strip() if "am -" in e.lower()]
+            hoo = [e.strip() for e in hoo if e.strip()]
             hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
 
             item = [
