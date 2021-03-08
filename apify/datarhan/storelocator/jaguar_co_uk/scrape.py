@@ -55,33 +55,39 @@ def fetch_data():
         loc_response = session.get(store_url, headers=hdr)
         loc_dom = etree.HTML(loc_response.text)
 
-        location_name = loc_dom.xpath('//h1[@class="headerBox__heroTitle fontH1"]/text()')
+        location_name = loc_dom.xpath(
+            '//h1[@class="headerBox__heroTitle fontH1"]/text()'
+        )
         location_name = location_name[0] if location_name else "<MISSING>"
-        street_address = loc_dom.xpath('//span[@class="retailerContact__address1"]/text()')[0]
+        street_address = loc_dom.xpath(
+            '//span[@class="retailerContact__address1"]/text()'
+        )[0]
         street_2 = loc_dom.xpath('//span[@class="retailerContact__address2"]/text()')
         if street_2:
-            street_address += ' ' + street_2[0]
+            street_address += " " + street_2[0]
         street_3 = loc_dom.xpath('//span[@class="retailerContact__address3"]/text()')
         if street_3:
-            street_address += ' ' + street_3[0]
+            street_address += " " + street_3[0]
         city = loc_dom.xpath('//span[@class="retailerContact__locality"]/text()')
-        city = city[0] if city else '<MISSING>'
+        city = city[0] if city else "<MISSING>"
         state = loc_dom.xpath('//span[@class="retailerContact__county"]/text()')
-        state = state[0] if state else '<MISSING>'
+        state = state[0] if state else "<MISSING>"
         zip_code = loc_dom.xpath('//span[@class="retailerContact__postcode"]/text()')
-        zip_code = zip_code[0] if zip_code else '<MISSING>'
+        zip_code = zip_code[0] if zip_code else "<MISSING>"
         country_code = "UK"
         store_number = "<MISSING>"
         phone = loc_dom.xpath('//a[@class="tel"]/text()')
         phone = phone[0] if phone else "<MISSING>"
         location_type = "<MISSING>"
-        latitude = loc_dom.xpath('//@data-lat')
+        latitude = loc_dom.xpath("//@data-lat")
         latitude = latitude[0] if latitude else "<MISSING>"
-        longitude = loc_dom.xpath('//@data-long')
+        longitude = loc_dom.xpath("//@data-long")
         longitude = longitude[0] if longitude else "<MISSING>"
-        hoo = loc_dom.xpath('//h2[contains(text(), "SALES OPENING TIMES")]/following-sibling::table//text()')
+        hoo = loc_dom.xpath(
+            '//h2[contains(text(), "SALES OPENING TIMES")]/following-sibling::table//text()'
+        )
         hoo = [e.strip() for e in hoo if e.strip()]
-        hours_of_operation = ' '.join(hoo) if hoo else '<MISSING>'
+        hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
 
         item = [
             DOMAIN,
@@ -99,7 +105,7 @@ def fetch_data():
             longitude,
             hours_of_operation,
         ]
-        check = f'{location_name} {street_address}'
+        check = f"{location_name} {street_address}"
         if check not in scraped_items:
             scraped_items.append(check)
             items.append(item)
