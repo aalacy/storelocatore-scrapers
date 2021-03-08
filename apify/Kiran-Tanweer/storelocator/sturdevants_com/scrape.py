@@ -77,7 +77,7 @@ def fetch_data():
             country = address[4].strip()
         if country.find("United States") != -1:
             country = country.replace("United States", "US")
-        if any(char.isdigit() for char in country) == True:
+        if any(char.isdigit() for char in country) is True:
             pcode = country.split(" ")[0]
             country = country.split(" ")[1]
         else:
