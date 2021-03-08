@@ -44,7 +44,7 @@ def fetch_data():
     typ = "<MISSING>"
     country = "US"
     store = "<MISSING>"
-    hours = "<MISSING>"
+    hours = "Sun-Sat: 24 Hours"
     logger.info("Pulling Stores")
     for line in r.iter_lines():
         line = str(line.decode("utf-8"))

@@ -35,7 +35,7 @@ def fetch_data():
                 store_number=_["StoreCode"],
                 page_url=page_url,
                 location_name=location_name,
-                street_address=f'{_["Address"]["AddressLine1"]} {_["Address"]["AddressLine2"]}',
+                street_address=f'{_["Address"]["AddressLine2"]}',
                 city=_["Address"]["City"],
                 state=_["Address"]["State"],
                 zip_postal=_["Address"]["Zipcode"],
