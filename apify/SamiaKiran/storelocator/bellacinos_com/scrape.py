@@ -97,13 +97,19 @@ def fetch_data():
         longt = loc["store_info"]["longitude"]
         hour_list = loc["store_info"]["store_hours"]
         hour_list = hour_list.split(";")
+        hour_list = hour_list[:-1]
+        if len(hour_list) < 7:
+            if "1," not in hour_list[0]:
+                hour_list.insert(0, "1,Closed,")
+            elif "7," not in hour_list[5]:
+                hour_list.append("7,Closed,")
         hours = ""
-        for hour in hour_list[:-1]:
+        for hour in hour_list:
             hour = hour.split(",")
             day = daylist[hour[0]]
             open_time = hour[1]
             close_time = hour[2]
-            hours = hours + day + " " + open_time + " - " + close_time + " "
+            hours = hours + day + " " + open_time + " " + close_time + " "
         final_data.append(
             [
                 "https://bellacinos.com/",
