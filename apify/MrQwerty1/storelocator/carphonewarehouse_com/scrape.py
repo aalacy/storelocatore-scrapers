@@ -49,6 +49,9 @@ def fetch_data():
             continue
         if "Currys" in line:
             line = ",".join(line.split(",")[1:])
+            location_type = "Currys PC World"
+        else:
+            location_type = "<MISSING>"
 
         adr = parse_address(International_Parser(), line, postcode=postal)
 
@@ -80,7 +83,6 @@ def fetch_data():
         )
         latitude = j.get("Latitude") or "<MISSING>"
         longitude = j.get("Longitude") or "<MISSING>"
-        location_type = "<MISSING>"
 
         _tmp = []
         days = [
