@@ -1,4 +1,3 @@
-import re
 import csv
 import json
 from urllib.parse import urljoin
