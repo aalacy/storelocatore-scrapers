@@ -160,12 +160,12 @@ def fetch_data():
                 continue
             if len(locations) == 1:
                 set_jwt_token_header(session)
-            print(country, len(locations))
             for location in locations:
                 if type(location) == str:
                     continue
                 loc_id = get(location, "locationId")
-                check = f"{country} {loc_id}"
+                str_ad = get(location, "address")
+                check = f"{str_ad} {loc_id}"
                 if check in searched:
                     continue
                 searched.append(loc_id)
