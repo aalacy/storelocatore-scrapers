@@ -85,7 +85,7 @@ def fetch_data():
             phone = "6235263271"
         hours_of_operation = ",".join(get(location, "schemaHours"))
         if "Florentine Rd" in location_name:
-            hours = "Temporarily Closed"
+            hours_of_operation = "Temporarily Closed"
         yield [
             locator_domain,
             page_url,
