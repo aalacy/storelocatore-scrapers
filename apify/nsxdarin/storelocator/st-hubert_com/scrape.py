@@ -1,7 +1,6 @@
 import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
-import datetime
 import time
 
 headers = {
@@ -71,7 +70,6 @@ def fetch_data():
         lng = ""
         hours = ""
         purl = ""
-        weekday = ""
         session = SgRequests()
         r2 = session.get(loc, headers=headers)
         if r2.encoding is None:
@@ -105,12 +103,6 @@ def fetch_data():
                 lat = line2.split('"latitude": ')[1].split(",")[0]
             if '"longitude": ' in line2:
                 lng = line2.split('"longitude": ')[1].split(",")[0]
-            if '"date": "' in line2:
-                day = line2.split('"date": "')[1].split('"')[0]
-                dt = day
-                year, month, dday = (int(x) for x in dt.split("-"))
-                ans = datetime.date(year, month, dday)
-                weekday = ans.strftime("%A")
         r2 = session.get(purl, headers=headers)
         if r2.encoding is None:
             r2.encoding = "utf-8"
