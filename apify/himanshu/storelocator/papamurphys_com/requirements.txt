@@ -1,3 +1,1 @@
-lxml
-sgrequests
-
+sgrequests==0.1.8
