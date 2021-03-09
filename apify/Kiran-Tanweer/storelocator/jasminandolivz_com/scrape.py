@@ -62,7 +62,6 @@ def fetch_data():
     url = "https://www.jasminandolivz.com/locations"
     stores_req = session.get(url, headers=headers)
     soup = BeautifulSoup(stores_req.text, "html.parser")
-    locs = soup.findAll("div", {"class": "location-column"})
     loc_info = soup.findAll("div", {"class": "content-text locations"})
     title = soup.findAll("h2", {"class": "content-heading-2"})
     for info, tit in zip(loc_info, title):
