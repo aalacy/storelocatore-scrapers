@@ -59,7 +59,6 @@ def write_output(data):
 def fetch_data():
     data = []
     url = "https://snb.com/locations?range=20"
-    p = 0
     r = session.get(url, headers=headers, verify=False)
     soup = BeautifulSoup(r.text, "html.parser")
     divlist = soup.findAll("div", {"class": "location"})
