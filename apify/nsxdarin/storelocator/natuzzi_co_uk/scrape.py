@@ -53,8 +53,10 @@ def fetch_data():
                 if '"title":"' in item:
                     typ = item.split('"type":"')[1].split('"')[0]
                     loc = (
-                        "https://www.natuzzi.co.uk/"
-                        + item.split('href=\\"')[1].split("\\")[0]
+                        "https://www.natuzzi.co.uk/store"
+                        + item.split('<a target=\\"_blank\\" href=\\"\\/store')[
+                            1
+                        ].split("\\")[0]
                     )
                     store = item.split('"')[0]
                     name = item.split('"title":"')[1].split('"')[0]
