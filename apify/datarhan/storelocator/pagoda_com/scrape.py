@@ -45,8 +45,11 @@ def fetch_data():
     start_url = "https://www.pagoda.com/store-finder/view-all-states"
     scraped_locations = []
 
+    hdr = {
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
+    }
     session = SgRequests()
-    response = session.get(start_url)
+    response = session.get(start_url, headers=hdr)
     dom = etree.HTML(response.text)
 
     all_states = dom.xpath(
@@ -54,24 +57,23 @@ def fetch_data():
     )
     for state_url in all_states:
         full_state_url = urllib.parse.urljoin(start_url, state_url)
-        state_response = session.get(full_state_url)
+        state_response = session.get(full_state_url, headers=hdr)
         state_dom = etree.HTML(state_response.text)
 
-        all_stores = state_dom.xpath(
-            '//div[@class="inner-container storefinder-details view-all-stores"]/div/div[p[contains(text(), "Store List")]]'
-        )
+        all_stores = state_dom.xpath('//div/div[p[contains(text(), "Store List")]]')
         for store_data in all_stores:
             store_url = store_data.xpath(".//a/@href")
             if store_url and "/store/null" not in store_url:
                 store_url = urllib.parse.urljoin(start_url, store_url[0])
                 store_name_fromlist = store_data.xpath(".//a/text()")
                 location_type = "<MISSING>"
-                store_response = session.get(store_url)
+                store_response = session.get(store_url, headers=hdr)
                 store_dom = etree.HTML(store_response.text)
                 data = store_dom.xpath(
                     '//script[contains(text(), "storeInformation")]/text()'
                 )
                 if not data:
+                    print(store_url)
                     continue
                 data = re.findall(
                     "storeInformation = (.+);", data[0].replace("\n", "")
@@ -151,7 +153,7 @@ def fetch_data():
                 longitude,
                 hours_of_operation,
             ]
-            check = f"{location_name} {street_address}"
+            check = f"{location_name} {street_address} {phone}"
             if check not in scraped_locations:
                 scraped_locations.append(check)
                 items.append(item)
