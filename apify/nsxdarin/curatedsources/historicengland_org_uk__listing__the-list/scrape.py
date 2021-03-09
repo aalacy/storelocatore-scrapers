@@ -121,7 +121,7 @@ def fetch_data():
             if add == "" or add is None:
                 add = "<MISSING>"
             if rawadd == "":
-                rawaddd = "<MISSING>"
+                rawadd = "<MISSING>"
             if state == "" or state is None:
                 state = "<MISSING>"
             yield [
