@@ -65,7 +65,7 @@ def get_hours(location):
     hours_of_operations = []
     for hour in hours:
         day = days[hour["dayOfWeek"]]
-        closed = hour.get('closed', False)
+        closed = hour.get("closed", False)
 
         if closed:
             hours_of_operations.append(f"{day}: Closed")
@@ -74,7 +74,7 @@ def get_hours(location):
             end = hour["to1"]
             hours_of_operations.append(f"{day}: {start}-{end}")
 
-    return ', '.join(hours_of_operations)
+    return ", ".join(hours_of_operations)
 
 
 def fetch_data():
