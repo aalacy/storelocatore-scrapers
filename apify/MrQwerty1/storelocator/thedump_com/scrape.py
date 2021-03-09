@@ -124,7 +124,6 @@ def fetch_data():
         latitude, longitude = get_coords_from_google_url(text)
         location_type = "<MISSING>"
 
-        _tmp = []
         hours = d.xpath(".//span[@style='color:#000']//text()")
         hours = list(filter(None, [h.strip() for h in hours]))
 
