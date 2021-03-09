@@ -57,13 +57,15 @@ def fetch_data():
             state = j.get("stateCode") or "<MISSING>"
             postal = j.get("postalCode") or "<MISSING>"
 
-            adr = parse_address(International_Parser(), line, postcode=postal, city=city, state=state)
+            adr = parse_address(
+                International_Parser(), line, postcode=postal, city=city, state=state
+            )
 
             street_address = (
-                    f"{adr.street_address_1} {adr.street_address_2 or ''}".replace(
-                        "None", ""
-                    ).strip()
-                    or "<MISSING>"
+                f"{adr.street_address_1} {adr.street_address_2 or ''}".replace(
+                    "None", ""
+                ).strip()
+                or "<MISSING>"
             )
             city = adr.city or "<MISSING>"
             state = adr.state or "<MISSING>"
