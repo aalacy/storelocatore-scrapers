@@ -57,7 +57,6 @@ def fetch_data():
     location_type = "<MISSING>"
     latitude = "<MISSING>"
     longitude = "<MISSING>"
-    raw_address = ""
     hours_of_operation = "<MISSING>"
     page_url = "<MISSING>"
 
@@ -201,8 +200,8 @@ def fetch_data():
                     longitude = coords["src"].split("!2d")[1].split("!")[0].strip()
                     latitude = coords["src"].split("!3d")[1].split("!")[0].strip()
                 else:
-                    latitude = coord["src"].split("q=")[1].split(",")[0]
-                    longitude = coord["src"].split("q=")[1].split(",")[1].split("&")[0]
+                    latitude = coords["src"].split("q=")[1].split(",")[0]
+                    longitude = coords["src"].split("q=")[1].split(",")[1].split("&")[0]
 
                 info = (
                     soup_loc.find("div", class_="sections_group")
@@ -214,7 +213,7 @@ def fetch_data():
                 list_address = list(address.stripped_strings)
                 if len(list_address) > 1:
                     phone_list = re.findall(
-                        re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"),
+                        re.compile(".?(\\(?\\d{3}\\D{0,3}\\d{3}\\D{0,3}\\d{4}).?"),
                         str(list_address[-1]),
                     )
 
