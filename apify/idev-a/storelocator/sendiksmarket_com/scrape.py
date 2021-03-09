@@ -1,103 +1,83 @@
-import csv
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
-import json
+from datetime import datetime
+from datetime import timezone
 
-from util import Util  # noqa: I900
+_headers = {
+    "accept": "application/json, text/javascript, */*; q=0.01",
+    "accept-encoding": "gzip, deflate, br",
+    "accept-language": "en-US,en;q=0.9",
+    "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
+    "origin": "https://www.sendiks.com",
+    "referer": "https://www.sendiks.com/my-store",
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.141 Safari/537.36",
+}
 
-myutil = Util()
 
-
-session = SgRequests()
-
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+def _valid(val):
+    return (
+        val.strip()
+        .replace("–", "-")
+        .encode("unicode-escape")
+        .decode("utf8")
+        .replace("\\xa0\\xa", " ")
+        .replace("\\xa0", " ")
+        .replace("\\xa", " ")
+        .replace("\\xae", "")
+    )
 
 
 def fetch_data():
-    locator_domain = "https://www.sendiks.com/"
-    base_url = "https://api.freshop.com/1/stores?app_key=sendiks&has_address=true&limit=-1&token=d4e5be6cc9f62cad0d0e126beb352c8b"
-    r = session.get(base_url)
-    locations = json.loads(r.text)["items"]
-    data = []
-    for location in locations:
-        page_url = location["url"]
-        location_name = location["name"]
-        country_code = "US"
-        zip = location["postal_code"]
-        city = location["city"]
-        state = location["state"]
-        if "address_1" in location:
-            street_address = myutil._valid(location["address_1"])
-        else:
-            street_address = location["address_0"]
+    with SgRequests() as session:
+        locator_domain = "https://www.sendiks.com/"
+        session_url = "https://api.freshop.com/2/sessions/create"
+        utc_time = datetime.now().replace(tzinfo=timezone.utc)
+        data = {
+            "app_key": "sendiks",
+            "referrer": "https://www.sendiks.com/my-store",
+            "utc": str(utc_time.timestamp()),
+        }
+        token = session.post(session_url, data=data, headers=_headers).json()["token"]
+        base_url = f"https://api.freshop.com/1/stores?app_key=sendiks&has_address=true&limit=-1&token={token}"
+        locations = session.get(base_url).json()["items"]
+        data = []
+        for location in locations:
+            street_address = location.get("address_0")
+            if "address_1" in location:
+                street_address = location["address_1"]
 
-        phone = "<MISSING>"
-        if "phone_md" in location:
-            phone = location["phone_md"]
-        elif "phone" in location:
-            phone = location["phone"]
+            phone = "<MISSING>"
+            if "phone_md" in location:
+                phone = location["phone_md"]
+            elif "phone" in location:
+                phone = location["phone"]
 
-        store_number = location["store_number"]
-        location_type = "<MISSING>"
-        latitude = location["latitude"]
-        longitude = location["longitude"]
-        hours_of_operation = "<MISSING>"
-        if "hours_md" in location:
-            hours_of_operation = location["hours_md"]
-        elif "hours" in location:
-            hours_of_operation = location["hours"]
-        _item = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        myutil._check_duplicate_by_loc(data, _item)
+            hours_of_operation = "<MISSING>"
+            if "hours_md" in location:
+                hours_of_operation = location["hours_md"]
+            elif "hours" in location:
+                hours_of_operation = location["hours"]
 
-    return data
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+            yield SgRecord(
+                store_number=location["store_number"],
+                page_url=location.get("url"),
+                location_name=location["name"],
+                street_address=street_address,
+                city=location["city"],
+                state=location["state"],
+                zip_postal=location["postal_code"],
+                country_code="US",
+                phone=phone,
+                latitude=location["latitude"],
+                longitude=location["longitude"],
+                locator_domain=locator_domain,
+                hours_of_operation=_valid(hours_of_operation),
+            )
 
 
 if __name__ == "__main__":
-    scrape()
+    with SgWriter() as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)

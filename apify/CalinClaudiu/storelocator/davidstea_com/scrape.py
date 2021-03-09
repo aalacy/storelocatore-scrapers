@@ -78,7 +78,7 @@ def human_hours(x):
 
 
 def scrape():
-    url = "https://www.davidstea.com/"
+    url = "https://locations.davidstea.com/"
     field_defs = sp.SimpleScraperPipeline.field_definitions(
         locator_domain=sp.ConstantField(url),
         page_url=sp.MappingField(

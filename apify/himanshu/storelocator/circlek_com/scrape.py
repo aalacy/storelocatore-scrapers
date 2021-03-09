@@ -1,8 +1,8 @@
 import csv
-from sgrequests import SgRequests
-from sglogging import SgLogSetup
 import json
 import lxml.html
+from sglogging import SgLogSetup
+from sgrequests import SgRequests
 from sgscrape import sgpostal as parser
 
 logger = SgLogSetup().get_logger("circlek_com")
@@ -46,6 +46,7 @@ def fetch_data():
     }
     base_url = "https://www.circlek.com"
 
+    found_poi = []
     locator_domain = base_url
     location_name = ""
     street_address = ""
@@ -61,87 +62,109 @@ def fetch_data():
     hours_of_operation = ""
     location_url = "https://www.circlek.com/stores_new.php?lat=40.75&lng=-73.99&distance=9999999999&services=&region=global"
     stores = session.get(location_url, headers=headers).json()["stores"]
+    logger.info("Processing %s links.." % (len(stores)))
     for key in stores.keys():
-        if (
-            stores[key]["op_status"] == "Open"
-            and stores[key]["display_brand"] == "Circle K"
-        ):
-            page_url = "https://www.circlek.com" + stores[key]["url"]
-            logger.info(page_url)
-            store_req = session.get(page_url, headers=headers)
-            store_sel = lxml.html.fromstring(store_req.text)
-            json_list = store_sel.xpath('//script[@type="application/ld+json"]/text()')
-            for js in json_list:
-                if "LocalBusiness" in js:
-                    store_json = json.loads(js)
-                    location_name = stores[key]["display_brand"]
-                    if stores[key]["franchise"] == "1":
-                        location_type = "Brand Store"
-                    else:
-                        location_type = "Dealer/Distributor/Retail Partner"
+        if stores[key]["country"].upper() in ["US", "CA", "CANADA"]:
+            if (
+                stores[key]["display_brand"] == "Circle K"
+                and stores[key]["op_status"] != "Planned"
+                and stores[key]["op_status"] != "Future"
+            ):
+                page_url = "https://www.circlek.com" + stores[key]["url"]
+                try:
+                    store_req = session.get(page_url, headers=headers)
+                except:
+                    continue
+                store_sel = lxml.html.fromstring(store_req.text)
+                json_list = store_sel.xpath(
+                    '//script[@type="application/ld+json"]/text()'
+                )
+                for js in json_list:
+                    if "LocalBusiness" in js:
+                        store_json = json.loads(js)
+                        location_name = stores[key]["display_brand"].replace(
+                            "&#039;", "'"
+                        )
+                        if stores[key]["franchise"] == "1":
+                            location_type = "Brand Store"
+                        else:
+                            location_type = "Dealer/Distributor/Retail Partner"
 
-                    phone = store_json["telephone"]
-                    street_address = store_json["address"]["streetAddress"]
-                    city = store_json["address"]["addressLocality"]
-                    state = ""
-                    zipp = store_json["address"]["postalCode"]
-                    country_code = stores[key]["country"]
-                    latitude = store_json["geo"]["latitude"]
-                    longitude = store_json["geo"]["longitude"]
-                    store_number = stores[key]["cost_center"]
-                    raw_address = store_json["name"]
-                    formatted_addr = parser.parse_address_intl(raw_address)
-                    state = formatted_addr.state
-                    hours = store_sel.xpath(
-                        '//div[@class="columns large-12 middle hours-wrapper"]/div[contains(@class,"hours-item")]'
-                    )
-                    hours_list = []
-                    for hour in hours:
-                        day = "".join(hour.xpath("span[1]/text()")).strip()
-                        time = "".join(hour.xpath("span[2]/text()")).strip()
-                        hours_list.append(day + ":" + time)
+                        phone = store_json["telephone"]
+                        street_address = (
+                            store_json["address"]["streetAddress"]
+                            .replace("  ", " ")
+                            .replace("r&#039;", "'")
+                            .replace("&amp;", "&")
+                            .strip()
+                        )
+                        if street_address[-1:] == ",":
+                            street_address = street_address[:-1]
+                        city = store_json["address"]["addressLocality"].strip()
 
-                    hours_of_operation = "; ".join(hours_list).strip()
-                    if street_address == "" or street_address is None:
-                        street_address = "<MISSING>"
+                        if street_address + city in found_poi:
+                            continue
+                        found_poi.append(street_address + city)
 
-                    if city == "" or city is None:
-                        city = "<MISSING>"
+                        state = ""
+                        zipp = store_json["address"]["postalCode"].strip()
+                        country_code = stores[key]["country"]
+                        latitude = store_json["geo"]["latitude"]
+                        longitude = store_json["geo"]["longitude"]
+                        store_number = stores[key]["cost_center"]
+                        raw_address = store_json["name"]
+                        formatted_addr = parser.parse_address_intl(raw_address)
+                        state = formatted_addr.state
+                        hours = store_sel.xpath(
+                            '//div[@class="columns large-12 middle hours-wrapper"]/div[contains(@class,"hours-item")]'
+                        )
+                        hours_list = []
+                        for hour in hours:
+                            day = "".join(hour.xpath("span[1]/text()")).strip()
+                            time = "".join(hour.xpath("span[2]/text()")).strip()
+                            hours_list.append(day + ":" + time)
 
-                    if state == "" or state is None:
-                        state = "<MISSING>"
+                        hours_of_operation = "; ".join(hours_list).strip()
+                        if street_address == "" or street_address is None:
+                            street_address = "<MISSING>"
 
-                    if zipp == "" or zipp is None:
-                        zipp = "<MISSING>"
+                        if city == "" or city is None:
+                            city = "<MISSING>"
 
-                    if latitude == "" or latitude is None:
-                        latitude = "<MISSING>"
-                    if longitude == "" or longitude is None:
-                        longitude = "<MISSING>"
+                        if state == "" or state is None:
+                            state = "<MISSING>"
 
-                    if hours_of_operation == "":
-                        hours_of_operation = "<MISSING>"
+                        if zipp == "" or zipp is None:
+                            zipp = "<MISSING>"
 
-                    if phone == "" or phone is None:
-                        phone = "<MISSING>"
+                        if latitude == "" or latitude is None:
+                            latitude = "<MISSING>"
+                        if longitude == "" or longitude is None:
+                            longitude = "<MISSING>"
 
-                    curr_list = [
-                        locator_domain,
-                        location_name,
-                        street_address,
-                        city,
-                        state,
-                        zipp,
-                        country_code,
-                        store_number,
-                        phone,
-                        location_type,
-                        latitude,
-                        longitude,
-                        hours_of_operation,
-                        page_url,
-                    ]
-                    yield curr_list
+                        if hours_of_operation == "":
+                            hours_of_operation = "<MISSING>"
+
+                        if phone == "" or phone is None:
+                            phone = "<MISSING>"
+
+                        curr_list = [
+                            locator_domain,
+                            location_name,
+                            street_address,
+                            city,
+                            state,
+                            zipp,
+                            country_code,
+                            store_number,
+                            phone,
+                            location_type,
+                            latitude,
+                            longitude,
+                            hours_of_operation,
+                            page_url,
+                        ]
+                        yield curr_list
 
 
 def scrape():
