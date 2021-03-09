@@ -1,4 +1,2 @@
-sgrequests
-bs4
-lxml
-
+lxml==4.5.2
+sgrequests==0.1.7
