@@ -1,12 +1,8 @@
 import csv
 import json
-
 import lxml.html
-
 from sglogging import SgLogSetup
-
 from sgrequests import SgRequests
-
 from sgscrape import sgpostal as parser
 
 logger = SgLogSetup().get_logger("circlek_com")

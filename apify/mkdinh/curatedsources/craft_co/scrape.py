@@ -105,7 +105,7 @@ def fetch_company_locations(company):
             body: JSON.stringify({{
               "operationName": "getCompanyLocations",
               "variables":{{
-                    "countryCodes":["CA", "US"],
+                    "countryCodes":["CA", "US", "GB"],
                     "page":1,
                     "per":1000,
                     "slug":"{slug}"
