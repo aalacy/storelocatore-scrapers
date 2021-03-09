@@ -43,6 +43,12 @@ def fetch_data():
         city = ""
         if "addressRegion" in store_json["address"]:
             city = store_json["address"]["addressRegion"]
+        if city == "":
+            if "Chapelfield, Norwich" in street_address:
+                city = "Norwich"
+            else:
+                city = street_address.split(",")[-1].strip()
+                street_address = ", ".join(street_address.split(",")[:-1]).strip()
         state = "<MISSING>"
         zip = store_json["address"]["postalCode"]
         country_code = store_json["address"]["addressCountry"]
