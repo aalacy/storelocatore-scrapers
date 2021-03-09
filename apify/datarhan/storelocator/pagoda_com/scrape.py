@@ -73,7 +73,6 @@ def fetch_data():
                     '//script[contains(text(), "storeInformation")]/text()'
                 )
                 if not data:
-                    print(store_url)
                     continue
                 data = re.findall(
                     "storeInformation = (.+);", data[0].replace("\n", "")
