@@ -1,5 +1,4 @@
 from sgselenium import SgChrome
-from bs4 import BeautifulSoup as bs
 from sgrequests import SgRequests
 import pandas as pd
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
@@ -129,8 +128,6 @@ def reset_sessions(zipcode):
             try:
                 response = s.get(data_url, headers=headers)
                 response_json = response.json()
-
-                print("SUCCESS")
                 break
 
             except Exception:
