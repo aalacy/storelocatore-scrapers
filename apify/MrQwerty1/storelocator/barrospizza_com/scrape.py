@@ -66,9 +66,6 @@ def fetch_data():
         fri_sat = j.get("hours_friday_saturday")
         if fri_sat:
             _tmp.append(f"Fri - Sat: {fri_sat}")
-        lunch = j.get("hours_lunch")
-        if lunch:
-            _tmp.append(f"Lunch: {lunch}")
 
         hours_of_operation = ";".join(_tmp) or "<MISSING>"
 

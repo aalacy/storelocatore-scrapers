@@ -46,6 +46,11 @@ def fetch_data():
             continue
 
         raw_address = ", ".join(eliminate_space(store.xpath(".//p/text()"))).strip()
+
+        if "-" in raw_address:
+            if len(raw_address.split("-")) == 3:
+                raw_address = raw_address.rsplit(", ", 1)[0].strip()
+
         formatted_addr = parser.parse_address_intl(raw_address)
         street_address = formatted_addr.street_address_1
         if formatted_addr.street_address_2:
