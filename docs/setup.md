@@ -13,7 +13,8 @@ like Linux or Mac OS_
 
 ### Required to run locally
 * `python3` - this will allow you to execute your code locally, for a quicker turnaround. Minimum version: `3.8.0`.
-* `libpostal` - this library will allow you to use address parsing in your crawls.
+* `libpostal` - this library will allow you to use address parsing in your crawls. 
+    * See our [libpostal(Windows) installation guide](./setup/libpostal_windows.md) for help with installing on windows.
 * `chromedriver`, `geckodriver` - these will allow you to use a headless browser.
 * `venv` - It's recommended (but not required) that you use a `venv` to manage your Python libraries. 
     * See our [official virtual environment guide](./cookbook/reqfile.md) for installation and usage.
