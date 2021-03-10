@@ -112,15 +112,15 @@ def fetch_data():
                     hours = hrs
                 else:
                     hours = hours + "; " + hrs
-            purl = (
-                "https://www.harveys.ca/en/locations/"
-                + store
-                + "/"
-                + city.replace(" ", "-").lower().replace(".", "").replace("'", "")
-                + "-"
-                + add.replace(" ", "-").lower().replace(".", "").replace("'", "")
-                + ".html"
-            )
+        purl = (
+            "https://www.harveys.ca/en/locations/"
+            + store
+            + "/"
+            + city.replace(" ", "-").lower().replace(".", "").replace("'", "")
+            + "-"
+            + add.replace(" ", "-").lower().replace(".", "").replace("'", "")
+            + ".html"
+        )
         if zc == "":
             zc = "<MISSING>"
         if city == "":
