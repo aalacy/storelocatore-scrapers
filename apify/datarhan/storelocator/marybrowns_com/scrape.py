@@ -56,6 +56,8 @@ def fetch_data():
         location_name = poi["name"]
         addr = parse_address_intl(poi["address"])
         street_address = addr.street_address_1
+        if addr.street_address_2:
+            street_address += " " + addr.street_address_2
         street_address = street_address if street_address else "<MISSING>"
         city = addr.city
         city = city if city else "<MISSING>"
@@ -63,6 +65,9 @@ def fetch_data():
         state = state if state else "<MISSING>"
         zip_code = addr.postcode
         zip_code = zip_code if zip_code else "<MISSING>"
+        if "T0G" in street_address:
+            zip_code = street_address.split()[-1] + " " + zip_code
+            street_address = street_address.replace("T0G", "").strip()
         country_code = addr.country
         country_code = country_code if country_code else "<MISSING>"
         if "0" in country_code:
