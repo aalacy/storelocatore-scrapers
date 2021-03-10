@@ -66,7 +66,7 @@ def fetch_data():
             items = line.split('{"store_id":"')
             for item in items:
                 if (
-                    'store_department_name":"Pharmacy",' not in item
+                    '"store_department_name":"Store"' in item
                     and "jsonpcallbackHours" not in item
                 ):
                     sname = item.split('"store_name":"')[1].split('"')[0]

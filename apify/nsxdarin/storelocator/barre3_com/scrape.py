@@ -89,6 +89,8 @@ def fetch_data():
             phone = "480-939-2510"
         if phone is None or phone == "":
             phone = "<MISSING>"
+        if " (" in zc:
+            zc = zc.split(" (")[0]
         yield [
             website,
             lurl,
