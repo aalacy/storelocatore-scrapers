@@ -1,6 +1,8 @@
 import csv
 import json
+
 from sgrequests import SgRequests
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 
 
 def write_output(data):
@@ -38,15 +40,23 @@ def fetch_data():
     session = SgRequests()
 
     items = []
-    gathered_items = []
+    scraped_items = []
 
     DOMAIN = "monro.com"
-    start_url = "https://www.monro.com/wp-json/monro/v1/stores/brand?brand=1"
-    response = session.get(start_url)
-    data = json.loads(response.text)
+    start_url = "https://www.monro.com/wp-json/monro/v1/stores/coords?latitude={}&longitude={}&distance=50"
 
-    for poi in data["data"]:
-        store_url = "<MISSING>"
+    all_locations = []
+    all_coordinates = DynamicGeoSearch(
+        country_codes=[SearchableCountries.USA],
+        max_radius_miles=50,
+        max_search_results=None,
+    )
+    for lat, lng in all_coordinates:
+        response = session.get(start_url.format(lat, lng))
+        data = json.loads(response.text)
+        all_locations += data["data"]
+
+    for poi in all_locations:
         location_name = poi["BrandDisplayName"]
         street_address = poi["Address"]
         street_address = street_address if street_address else "<MISSING>"
@@ -92,6 +102,9 @@ def fetch_data():
         hours_of_operation = (
             ", ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
         )
+        store_url = "https://locations.monro.com/{}/{}/{}".format(
+            state, city.replace("Leroy", "Le-roy"), street_address.replace(" ", "-")
+        )
 
         item = [
             DOMAIN,
@@ -110,9 +123,8 @@ def fetch_data():
             hours_of_operation,
         ]
 
-        check = location_name.strip().lower() + " " + street_address.strip().lower()
-        if check not in gathered_items:
-            gathered_items.append(check)
+        if store_number not in scraped_items:
+            scraped_items.append(store_number)
             items.append(item)
 
     return items

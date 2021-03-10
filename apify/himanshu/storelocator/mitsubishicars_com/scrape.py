@@ -2,9 +2,7 @@ import csv
 from bs4 import BeautifulSoup
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
 
-logger = SgLogSetup().get_logger("mitsubishicars_com")
 session = SgRequests()
 
 
@@ -38,15 +36,15 @@ def write_output(data):
 def fetch_data():
     base_url = "https://www.mitsubishicars.com/"
     addressess = []
-    zip_codes = DynamicZipSearch(
+    search = DynamicZipSearch(
         country_codes=[SearchableCountries.USA],
+        max_radius_miles=100,
         max_search_results=100,
-        max_radius_miles=200,
     )
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.130 Safari/537.36"
     }
-    for index, zip_code in enumerate(zip_codes):
+    for index, zip_code in enumerate(search):
         try:
             link = (
                 "https://www.mitsubishicars.com/rs/dealers?bust=1569242590201&zipCode="
@@ -73,7 +71,6 @@ def fetch_data():
             page_url = ""
             if link:
                 page_url = "http://" + link.lower()
-
                 if (
                     "http://www.verneidemitsubishi.com" in page_url
                     or "http://www.kingautomitsubishi.com" in page_url
@@ -152,13 +149,20 @@ def fetch_data():
             store.append("<MISSING>")
             store.append(lat)
             store.append(lng)
-            store.append(hours_of_operation)
-            store.append(page_url)
+            try:
+                store.append(hours_of_operation.split("} Sales Hours ")[1])
+            except:
+                store.append(hours_of_operation)
+            store.append(page_url if page_url else "<MISSING>")
             if store[2] in addressess:
                 continue
             addressess.append(store[2])
             store = [
-                str(x).encode("ascii", "ignore").decode("ascii").strip()
+                str(x)
+                .encode("ascii", "replace")
+                .decode("ascii")
+                .strip()
+                .replace("?", "")
                 if x
                 else "<MISSING>"
                 for x in store

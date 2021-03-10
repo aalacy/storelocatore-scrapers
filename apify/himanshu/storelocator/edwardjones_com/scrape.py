@@ -14,8 +14,6 @@ def write_output(data):
         writer = csv.writer(
             output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
         )
-
-        # Header
         writer.writerow(
             [
                 "locator_domain",
@@ -34,7 +32,6 @@ def write_output(data):
                 "page_url",
             ]
         )
-        # Body
         for row in data:
             writer.writerow(row)
 
@@ -52,7 +49,6 @@ def fetch_data():
         max_search_results=100,
     )
     for zip_code in zipcodes:
-
         try:
             r = session.get(
                 "https://www.edwardjones.com/cgi/findFaByAddress.action?address="
@@ -64,7 +60,7 @@ def fetch_data():
             continue
 
         if "error" not in json_data and json_data["multipleLocations"] is False:
-            if json_data["faList"] != [] and json_data["faList"] is not None:
+            if json_data["faList"] is not [] and json_data["faList"] is not None:
                 for x in json_data["faList"]:
                     if x["additionalFaData"]["faInfo"] is not None:
                         location_name = x["additionalFaData"]["faInfo"]["convertedName"]
@@ -96,7 +92,7 @@ def fetch_data():
                         store.append("<MISSING>")
                         store.append(latitude)
                         store.append(longitude)
-                        store.append("<MISSING>")
+                        store.append("<INACCESIBLE>")
                         store.append(page_url)
                         if store[2] in address:
                             continue

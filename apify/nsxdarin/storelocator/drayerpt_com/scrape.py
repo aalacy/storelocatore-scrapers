@@ -103,7 +103,21 @@ def fetch_data():
                     hours = hrs
                 else:
                     hours = hours + "; " + hrs
-        hours = hours.replace("&amp;", "&")
+                HFound = True
+                while HFound:
+                    g = next(lines)
+                    g = str(g.decode("utf-8"))
+                    if "</div>" in g:
+                        HFound = False
+                    else:
+                        hrs = g.split("<")[0]
+                        hours = hours + "; " + g
+        hours = (
+            hours.replace("&amp;", "&")
+            .replace("<br />", "")
+            .replace("</span>", "")
+            .replace("</p>", "")
+        )
         yield [
             website,
             loc.split("|")[0],

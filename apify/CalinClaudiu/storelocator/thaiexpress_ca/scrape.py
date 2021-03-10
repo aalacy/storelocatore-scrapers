@@ -160,6 +160,8 @@ def clean_hours(x):
             .replace("\n", "; ")
             .replace("\r", "; ")
             .replace(": ;", ": Closed;")
+            .replace("&nbsp;", " ")
+            .replace("Â", " ")
             .replace(";;", ";")
             .replace("Temporairement fermé;", "")
             .replace("Temporarily closed;", "")
@@ -176,6 +178,8 @@ def clean_hours(x):
             .replace("\n", "; ")
             .replace("\r", "; ")
             .replace(": ;", ": Closed;")
+            .replace("&nbsp;", " ")
+            .replace("Â", " ")
             .replace(";;", ";")
             .replace("Temporairement fermé;", "")
             .replace("Temporarily closed;", "")
@@ -239,7 +243,7 @@ def scrape():
         data_fetcher=fetch_data,
         field_definitions=field_defs,
         log_stats_interval=15,
-        post_process_filter=lambda x: "Closed permanently" not in x["location_type"],
+        post_process_filter=lambda x: "Closed permanently" not in x.location_type(),
     )
 
     pipeline.run()

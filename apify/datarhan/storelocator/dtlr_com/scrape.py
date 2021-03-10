@@ -57,7 +57,8 @@ def fetch_data():
         all_locations += data["response"]["entities"]
 
     for poi in all_locations:
-        store_url = poi["landingPageUrl"]
+        store_url = poi.get("landingPageUrl")
+        store_url = store_url if store_url else "<MISSING>"
         location_name = poi["name"]
         location_name = location_name if location_name else "<MISSING>"
         street_address = poi["address"]["line1"]
@@ -87,15 +88,16 @@ def fetch_data():
             longitude = poi.get("yextDisplayCoordinate", {}).get("longitude")
         longitude = longitude if longitude else "<MISSING>"
         hours_of_operation = []
-        for day, hours in poi["hours"].items():
-            if day in ["reopenDate", "holidayHours"]:
-                continue
-            if type(hours) == dict and hours.get("isClosed"):
-                hours_of_operation.append(f"{day} closed")
-            else:
-                opens = hours["openIntervals"][0]["start"]
-                closes = hours["openIntervals"][0]["end"]
-                hours_of_operation.append(f"{day} {opens} - {closes}")
+        if poi.get("hours"):
+            for day, hours in poi["hours"].items():
+                if day in ["reopenDate", "holidayHours"]:
+                    continue
+                if type(hours) == dict and hours.get("isClosed"):
+                    hours_of_operation.append(f"{day} closed")
+                else:
+                    opens = hours["openIntervals"][0]["start"]
+                    closes = hours["openIntervals"][0]["end"]
+                    hours_of_operation.append(f"{day} {opens} - {closes}")
         hours_of_operation = (
             " ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
         )

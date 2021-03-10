@@ -1,5 +1,6 @@
 import csv
 import json
+from time import sleep
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 
 from sgrequests import SgRequests
@@ -37,7 +38,7 @@ def write_output(data):
 
 def fetch_data():
     # Your scraper here
-    session = SgRequests()
+    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
 
     items = []
     scraped_items = []
@@ -57,6 +58,14 @@ def fetch_data():
 
     for lat, lng in all_coordinates:
         response = session.post(start_url.format(lng, lat), headers=hdr)
+        passed = False
+        if "This request has been rate-limited." in response.text:
+            while not passed:
+                sleep(300)
+                response = session.post(start_url.format(lng, lat), headers=hdr)
+                if "This request has been rate-limited." not in response.text:
+                    passed = True
+
         all_poi_data = json.loads(response.text)
         for poi in all_poi_data["StoreLocations"]:
             location_name = poi["Name"]
@@ -100,10 +109,17 @@ def fetch_data():
 
             hours = poi["ExtraData"]["HoursOfOpStruct"]
             hours_of_operation = []
-            for key, day_name in days.items():
-                start = hours[key]["Ranges"][0]["StartTime"]
-                end = hours[key]["Ranges"][0]["EndTime"]
-                hours_of_operation.append("{} {} - {}".format(day_name, start, end))
+            if hours:
+                for key, day_name in days.items():
+                    if hours[key]["Ranges"]:
+                        start = hours[key]["Ranges"][0]["StartTime"]
+                        end = hours[key]["Ranges"][0]["EndTime"]
+                        hours_of_operation.append(
+                            "{} {} - {}".format(day_name, start, end)
+                        )
+                    else:
+                        hours_of_operation.append("{} closed".format(day_name))
+
             hours_of_operation = ", ".join(hours_of_operation)
 
             item = [

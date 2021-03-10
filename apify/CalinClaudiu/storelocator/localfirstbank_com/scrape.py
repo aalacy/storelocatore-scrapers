@@ -57,6 +57,15 @@ def fix_comma(x):
     if len(h) < 2:
         h = "<MISSING>"
 
+    backup = h
+    if "P.O." in h:
+        h = h.split("P.O.")[0].strip()
+        if len(h) > 3:
+            return fix_comma(h)
+        else:
+            h = backup
+            h = h.split("P.O.")[1].strip()
+            return fix_comma(h)
     return h
 
 

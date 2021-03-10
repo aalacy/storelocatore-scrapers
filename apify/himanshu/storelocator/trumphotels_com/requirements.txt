@@ -1,5 +1,4 @@
 lxml
-sgrequests
 bs4
-selenium
-
+sgselenium
+sglogging

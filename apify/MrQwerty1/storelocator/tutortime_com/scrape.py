@@ -1,8 +1,10 @@
 import csv
+import re
 
-from concurrent import futures
 from lxml import html
+from sgselenium import sgselenium
 from sgrequests import SgRequests
+from sgselenium.sgselenium import Options
 
 
 def write_output(data):
@@ -34,94 +36,86 @@ def write_output(data):
             writer.writerow(row)
 
 
+def get_id(text):
+    regex = r"\d{3,4}"
+    _id = re.findall(regex, text)
+    if _id:
+        return _id[0]
+    return "<MISSING>"
+
+
 def get_urls():
     session = SgRequests()
-    r = session.get(
-        "https://www.tutortime.com/sitemaps/www-tutortime-com-localschools.xml"
-    )
-    tree = html.fromstring(r.content)
-    return tree.xpath("//loc/text()")
-
-
-def get_data(page_url):
-    session = SgRequests()
-    r = session.get(page_url)
+    r = session.get("https://www.tutortime.com/child-care-centers/find-a-school/")
     tree = html.fromstring(r.text)
 
-    if r.url != page_url:
-        return
-    locator_domain = "https://www.tutortime.com/"
-    location_name = "".join(tree.xpath("//h1/text()")).strip()
-    street_address = (
-        "".join(
-            tree.xpath("//div[@class='school-info-row']//span[@class='street']/text()")
-        ).strip()
-        or "<MISSING>"
-    )
-    line = "".join(
-        tree.xpath("//div[@class='school-info-row']//span[@class='cityState']/text()")
-    ).strip()
-    city = line.split(",")[0].strip() or "<MISSING>"
-    line = line.split(",")[1].strip()
-    state = line.split()[0].strip()
-    postal = line.split()[1].strip()
-    country_code = "US"
-    store_number = page_url.split("-")[-1].replace("/", "")
-    phone = (
-        "".join(tree.xpath("//span[@class='localPhone']/text()")).strip() or "<MISSING>"
-    )
-    location_type = "<MISSING>"
-    latitude = (
-        "".join(
-            tree.xpath(
-                "//div[@class='school-info-row']//span[@class='addr']/@data-latitude"
-            )
-        )
-        or "<MISSING>"
-    )
-    longitude = (
-        "".join(
-            tree.xpath(
-                "//div[@class='school-info-row']//span[@class='addr']/@data-longitude"
-            )
-        )
-        or "<MISSING>"
-    )
-    hours_of_operation = (
-        "".join(tree.xpath("//div[./span[text()='Open:']]/text()")).strip()
-        or "<MISSING>"
-    )
-
-    row = [
-        locator_domain,
-        page_url,
-        location_name,
-        street_address,
-        city,
-        state,
-        postal,
-        country_code,
-        store_number,
-        phone,
-        location_type,
-        latitude,
-        longitude,
-        hours_of_operation,
-    ]
-
-    return row
+    return tree.xpath("//map[@id='USMap']/area/@href")
 
 
 def fetch_data():
     out = []
+    options = Options()
+    options.headless = True
+    fox = sgselenium.webdriver.Firefox(options=options)
+    locator_domain = "https://www.tutortime.com/"
+    location_type = "<MISSING>"
     urls = get_urls()
+    for u in urls:
+        fox.get(f"https://www.tutortime.com{u}")
+        tree = html.fromstring(fox.page_source)
+        divs = tree.xpath(
+            "//div[@class='locationCards thisBrand row']//div[@class='locationCard']"
+        )
 
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
-        future_to_url = {executor.submit(get_data, url): url for url in urls}
-        for future in futures.as_completed(future_to_url):
-            row = future.result()
-            if row:
-                out.append(row)
+        for d in divs:
+            slug = "".join(d.xpath(".//a[@class='schoolNameLink']/@href"))
+            page_url = f"https://www.tutortime.com{slug}"
+            location_name = "".join(
+                d.xpath(".//a[@class='schoolNameLink']//text()")
+            ).strip()
+            street_address = (
+                d.xpath(".//span[@class='street']/text()")[0].strip() or "<MISSING>"
+            )
+            line = d.xpath(".//span[@class='cityState']/text()")[0].strip()
+            city = line.split(",")[0].strip()
+            line = line.split(",")[1].strip()
+            state = line.split()[0].strip()
+            postal = line.split()[-1].strip()
+            country_code = "US"
+            store_number = get_id(slug)
+            phone = (
+                "".join(d.xpath(".//span[@class='tel']/text()")).strip() or "<MISSING>"
+            )
+            latitude = (
+                d.xpath(".//span[@class='addr']/@data-latitude")[0] or "<MISSING>"
+            )
+            longitude = (
+                d.xpath(".//span[@class='addr']/@data-longitude")[0] or "<MISSING>"
+            )
+            hours_of_operation = (
+                "".join(d.xpath(".//p[@class='hours']/text()")).strip() or "<MISSING>"
+            )
+
+            row = [
+                locator_domain,
+                page_url,
+                location_name,
+                street_address,
+                city,
+                state,
+                postal,
+                country_code,
+                store_number,
+                phone,
+                location_type,
+                latitude,
+                longitude,
+                hours_of_operation,
+            ]
+
+            out.append(row)
+
+    fox.close()
 
     return out
 

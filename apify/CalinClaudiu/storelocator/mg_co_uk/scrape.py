@@ -295,7 +295,9 @@ def scrape():
         ),
         hours_of_operation=sp.MappingField(
             mapping=["hours"],
-            value_transform=lambda x: x.replace("/", ":"),
+            value_transform=lambda x: x.replace("/", ":")
+            .replace("&nbsp;", " ")
+            .replace("Â", " "),
             is_required=False,
         ),
         location_type=sp.MissingField(),

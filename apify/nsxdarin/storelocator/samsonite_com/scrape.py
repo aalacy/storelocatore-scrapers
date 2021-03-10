@@ -1,6 +1,7 @@
 import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
+import time
 
 session = SgRequests()
 headers = {
@@ -61,6 +62,7 @@ def fetch_data():
             )
     for loc in locs:
         logger.info(loc)
+        time.sleep(5)
         r2 = session.get(loc, headers=headers)
         for line2 in r2.iter_lines():
             line2 = str(line2.decode("utf-8"))
@@ -118,22 +120,36 @@ def fetch_data():
                         typ = "<MISSING>"
                     hours = hours.replace('<li style=\\""color:red;\\"">', "")
                     hours = hours.replace("</li>", "")
-                    yield [
-                        website,
-                        loc,
-                        name,
-                        add,
-                        city,
-                        state,
-                        zc,
-                        country,
-                        store,
-                        phone,
-                        typ,
-                        lat,
-                        lng,
-                        hours,
-                    ]
+                    if "Commons," in add:
+                        add = add.split("Commons,")[1].strip()
+                    if "Promenade," in add:
+                        add = add.split("Promenade,")[1].strip()
+                    if "Fultondale," in add:
+                        add = add.split("Fultondale,")[1].strip()
+                    if "Galleria," in add:
+                        add = add.split("Galleria,")[1].strip()
+                    if "Outlets -" in add:
+                        add = add.split("Outlets -")[1].strip()
+                    hours = hours.replace("Opened with Reduced Hours", "").strip()
+                    if "Temporarily Closed" in hours:
+                        hours = "Temporarily Closed"
+                    if "Permanently" not in hours:
+                        yield [
+                            website,
+                            loc,
+                            name,
+                            add,
+                            city,
+                            state,
+                            zc,
+                            country,
+                            store,
+                            phone,
+                            typ,
+                            lat,
+                            lng,
+                            hours,
+                        ]
 
 
 def scrape():

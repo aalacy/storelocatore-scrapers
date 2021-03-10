@@ -31,15 +31,10 @@ def fetch_data():
                     + "&productCode=",
                     headers=headers,
                 ).json()
-                new_coordinates = []
                 if results["total"] > 0:
                     for i in results["data"]:
                         try:
-                            pair = (
-                                i["latitude"],
-                                i["longitude"],
-                            )
-                            new_coordinates.append(pair)
+                            pair = (i["latitude"], i["longitude"])
                         except Exception:
                             try:
                                 pair = (
@@ -47,10 +42,15 @@ def fetch_data():
                                     .split("lat=")[1]
                                     .split("&")[0]
                                     .strip(),
-                                    str(i["url"]).split("long=")[1].strip(),
+                                    str(i["url"]).split("long=")[1].strip()
                                 )
                             except Exception:
                                 pair = ""
+                        try:
+                            search.found_location_at(pair[0], pair[1])
+                        except:
+                            pass
+
                         if (
                             str(
                                 str(i["displayName"])
@@ -75,8 +75,6 @@ def fetch_data():
                             except Exception:
                                 i["openings"] = []
                             yield i
-
-                search.mark_found(new_coordinates)
             except Exception:
                 cont = False
 

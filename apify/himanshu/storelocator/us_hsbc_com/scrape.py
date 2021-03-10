@@ -1,33 +1,12 @@
 import csv
-from bs4 import BeautifulSoup as bs
-import time
-from selenium import webdriver
-from selenium.webdriver.common.keys import Keys
-from sgzip.dynamic import DynamicZipSearch, SearchableCountries
+from bs4 import BeautifulSoup
+from sgrequests import SgRequests
 
-
-def setUp():
-    options = webdriver.FirefoxOptions()
-    headless = False
-    options.headless = headless
-    profile = webdriver.FirefoxProfile()
-    profile.set_preference("browser.formfill.enable", False)
-    profile.set_preference("devtools.jsonview.enabled", False)
-    profile.set_preference("useAutomationExtension", False)
-    profile.set_preference("dom.webdriver.enabled", False)
-    profile.update_preferences()
-    capabilities = webdriver.DesiredCapabilities.FIREFOX
-    capabilities["marionette"] = True
-    return webdriver.Firefox(
-        options=options,
-        capabilities=capabilities,
-        firefox_profile=profile,
-        executable_path=r"geckodriver.exe",
-    )
+session = SgRequests()
 
 
 def write_output(data):
-    with open("data.csv", mode="w", newline="") as output_file:
+    with open("data.csv", mode="w") as output_file:
         writer = csv.writer(
             output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
         )
@@ -50,154 +29,147 @@ def write_output(data):
                 "page_url",
             ]
         )
-
         for row in data:
             writer.writerow(row)
 
 
 def fetch_data():
-    base_url = "https://www.us.hsbc.com/"
-    driver = setUp()
-    zipcodes = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA],
-        max_radius_miles=100,
-        max_search_results=200,
-    )
-    addressess = []
-    phone = ""
-    location_type = ""
-    hours_of_operation = ""
-    for zipcode in zipcodes:
-        driver.get("https://www.us.hsbc.com/branch-locator/")
-        try:
-            driver.find_element_by_xpath(
-                "/html/body/main/div[1]/div/section/div/div[3]/button"
-            ).click()
-        except:
-            pass
-        try:
-            for n in range(1, 3):
-                time.sleep(5)
+    base_url = "https://storelocator.asda.com/directory"
+    r = session.get(base_url)
+    soup = BeautifulSoup(r.text, "html5lib")
+    k = soup.find_all("li", {"class": "Directory-listItem"})
+    try:
+        for i in k:
+            link = i.find("a")["data-count"].split("(")[-1]
+            if link != "1)":
+                city_link = "https://storelocator.asda.com/" + i.find("a")["href"]
+                r1 = session.get(city_link)
+                soup1 = BeautifulSoup(r1.text, "html5lib")
+                citylink = soup1.find_all("li", {"class": "Directory-listItem"})
+                for c in citylink:
+                    link1 = c.find("a")["data-count"].split("(")[-1]
+                    if link1 != "1)":
+                        sublink = "https://storelocator.asda.com/" + c.find("a")["href"]
+                        r2 = session.get(sublink)
+                        soup2 = BeautifulSoup(r2.text, "html5lib")
+                        store_link = soup2.find_all("a", class_="Teaser-titleLink")
+                        for st in store_link:
+                            r3 = session.get(
+                                "https://storelocator.asda.com"
+                                + st["href"].replace("..", "")
+                            )
+                            page_url = "https://storelocator.asda.com" + st[
+                                "href"
+                            ].replace("..", "")
+                            soup3 = BeautifulSoup(r3.text, "html5lib")
+                            streetAddress = soup3.find(
+                                "meta", {"itemprop": "streetAddress"}
+                            )["content"]
+                            state = "<MISSING>"
+                            zip1 = soup3.find(
+                                "span", {"class": "c-address-postal-code"}
+                            ).text
+                            city = soup3.find("span", {"class": "c-address-city"}).text
+                            name = " ".join(
+                                list(
+                                    soup3.find(
+                                        "h1", {"class": "Core-title"}
+                                    ).stripped_strings
+                                )
+                            )
+                            phone = soup3.find(
+                                "div",
+                                {"class": "Phone-display Phone-display--withLink"},
+                            ).text
+                            hours = " ".join(
+                                list(
+                                    soup3.find("table", {"class": "c-hours-details"})
+                                    .find("tbody")
+                                    .stripped_strings
+                                )
+                            )
+                            latitude = soup3.find("meta", {"itemprop": "latitude"})[
+                                "content"
+                            ]
+                            longitude = soup3.find("meta", {"itemprop": "longitude"})[
+                                "content"
+                            ]
 
-                if n == 1:
-                    driver.find_element_by_xpath(
-                        "/html/body/main/div[2]/div/div/div/div/div[1]/div/button[2]"
-                    ).click()
-                    time.sleep(5)
-                    try:
-                        driver.find_element_by_xpath(
-                            "/html/body/main/div[2]/div/div/div/div/div[1]/div/div[2]/div/div/fieldset/span[2]/label"
-                        ).click()
-                    except:
-                        continue
-                    hours_of_operation = "Monday 24 hours Tuesday 24 hours Wednesday 24 hours Thursday 24 hours Friday 24 hours Saturday 24 hours Sunday 24 hours"
-                    location_type = "ATM"
-                else:
-                    location_type = "Branch"
-                    hours_of_operation = "Monday 9:00 AM - 5:00 PM Tuesday 9:00 AM - 5:00 PM Wednesday 9:00 AM - 5:00 PM Thursday 9:00 AM - 6:00 PM Friday 9:00 AM - 5:00 PM Saturday 9:00 AM - 1:00 PM Sunday Closed"
+                            tem_var = []
+                            tem_var.append("https://www.asda.com")
+                            tem_var.append(name)
+                            tem_var.append(streetAddress)
+                            tem_var.append(city)
+                            tem_var.append(state)
+                            tem_var.append(zip1)
+                            tem_var.append("US")
+                            tem_var.append("<MISSING>")
+                            tem_var.append(phone)
+                            tem_var.append("<MISSING>")
+                            tem_var.append(latitude)
+                            tem_var.append(longitude)
+                            tem_var.append(hours)
+                            tem_var.append(page_url)
+                            yield tem_var
 
-                driver.find_element_by_xpath(
-                    "/html/body/main/div[2]/div/div/div/div/div[1]/div/div[1]/div[2]/form/input"
-                ).send_keys(str(zipcode))
-                time.sleep(5)
-                driver.find_element_by_xpath(
-                    "/html/body/main/div[2]/div/div/div/div/div[1]/div/div[1]/div[2]/form/input"
-                ).send_keys(Keys.RETURN)
-                time.sleep(5)
-                while True:
-                    time.sleep(5)
-                    try:
-                        driver.find_element_by_xpath(
-                            "//*[text()='Show more results']"
-                        ).click()
-                    except:
-                        break
-                soup = bs(driver.page_source, "lxml")
-                names = []
-                for dt in soup.find_all("h2", {"class": "_1521gYSzrNIMk9R-rS4Hur"}):
-                    names.append(dt)
-                for index, i in enumerate(names):
-                    time.sleep(3)
-                    driver.find_element_by_xpath(
-                        "/html/body/main/div[2]/div/div/div/div/div[1]/div/ul/li["
-                        + str(index + 1)
-                        + "]/button/h2"
-                    ).click()
-                    time.sleep(3)
-                    driver.find_element_by_xpath(
-                        "/html/body/main/div[2]/div/div/div/div/div[1]/div/div[2]/div/button/span[1]"
-                    ).click()
-                    time.sleep(3)
-                    soup = bs(driver.page_source, "lxml")
-                    location_name = soup.find(
-                        "h2", {"class": "_1521gYSzrNIMk9R-rS4Hur"}
-                    ).text
+                    else:
+                        one_link = (
+                            "https://storelocator.asda.com/" + c.find("a")["href"]
+                        )
+                        page_url = one_link
+                        r4 = session.get(one_link)
+                        soup4 = BeautifulSoup(r4.text, "html5lib")
 
-                    try:
-                        phone = soup.find(
-                            "div", {"class": "_1BVddhgeNL2TGp0jUBgsXb"}
+                        streetAddress = soup4.find(
+                            "meta", {"itemprop": "streetAddress"}
+                        )["content"]
+                        state = "<MISSING>"
+                        zip1 = soup4.find(
+                            "span", {"class": "c-address-postal-code"}
                         ).text
-                    except:
-                        phone = "<MISSING>"
-                    list_data = (
-                        str(
-                            soup.find("div", {"class": "_1X8_uDMy4c2FRiCHTbit6u"}).find(
-                                "div", recursive=False
+                        city = soup4.find("span", {"class": "c-address-city"}).text
+                        name = " ".join(
+                            list(
+                                soup4.find(
+                                    "h1", {"class": "Core-title"}
+                                ).stripped_strings
                             )
                         )
-                        .split("<button")[0]
-                        .replace("<div>", "")
-                        .replace("<br/>", "")
-                        .split(",")
-                    )
-                    zipp = list_data[-1]
-                    state = list_data[-2].strip()
-                    city = list_data[-3]
-                    address = " ".join(list_data[:-3])
-                    storeno = "<MISSING>"
-                    country = "US"
-                    lat = (
-                        soup.find("a", {"class": "_3VOnY-qV7atMV73oAncmTd"})["href"]
-                        .split("origin=")[1]
-                        .split("/")[0]
-                    )
-                    lng = (
-                        soup.find("a", {"class": "_3VOnY-qV7atMV73oAncmTd"})["href"]
-                        .split("origin=")[1]
-                        .split("/")[1]
-                        .split("&")[0]
-                    )
+                        phone = soup4.find(
+                            "div", {"class": "Phone-display Phone-display--withLink"}
+                        ).text
+                        hours = " ".join(
+                            list(
+                                soup4.find("table", {"class": "c-hours-details"})
+                                .find("tbody")
+                                .stripped_strings
+                            )
+                        )
+                        latitude = soup4.find("meta", {"itemprop": "latitude"})[
+                            "content"
+                        ]
+                        longitude = soup4.find("meta", {"itemprop": "longitude"})[
+                            "content"
+                        ]
 
-                    store = []
-                    store.append(base_url)
-                    store.append(location_name if location_name else "<MISSING>")
-                    store.append(address if address else "<MISSING>")
-                    store.append(city if city else "<MISSING>")
-                    store.append(state if state else "<MISSING>")
-                    store.append(zipp if zipp else "<MISSING>")
-                    store.append(country if country else "<MISSING>")
-                    store.append(storeno if storeno else "<MISSING>")
-                    store.append(phone if phone else "<MISSING>")
-                    store.append(location_type)
-                    store.append(lat if lat else "<MISSING>")
-                    store.append(lng if lng else "<MISSING>")
-                    store.append(
-                        hours_of_operation
-                        if hours_of_operation.strip()
-                        else "<MISSING>"
-                    )
-                    store.append("<MISSING>")
-                    if str(store[2] + location_type) in addressess:
-                        continue
-                    addressess.append(str(store[2] + location_type))
-                    yield store
-                    time.sleep(2)
-                    driver.find_element_by_xpath(
-                        "//*[text()='Back to results']"
-                    ).click()
-            driver.refresh()
-        except:
-            continue
+                        tem_var = []
+                        tem_var.append("https://www.asda.com")
+                        tem_var.append(name)
+                        tem_var.append(streetAddress)
+                        tem_var.append(city)
+                        tem_var.append(state)
+                        tem_var.append(zip1)
+                        tem_var.append("US")
+                        tem_var.append("<MISSING>")
+                        tem_var.append(phone)
+                        tem_var.append("<MISSING>")
+                        tem_var.append(latitude)
+                        tem_var.append(longitude)
+                        tem_var.append(hours)
+                        tem_var.append(page_url)
+                        yield tem_var
+    except:
+        pass
 
 
 def scrape():

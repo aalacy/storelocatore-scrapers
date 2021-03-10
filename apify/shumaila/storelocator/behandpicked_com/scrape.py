@@ -1,90 +1,79 @@
 from bs4 import BeautifulSoup
 import csv
-import string
-import re, time
 import usaddress
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('behandpicked_com')
-
-
 
 session = SgRequests()
-headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
-           }
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+}
+
 
 def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+    with open("data.csv", mode="w") as output_file:
+        writer = csv.writer(
+            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+        )
 
         # Header
-        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(
+            [
+                "locator_domain",
+                "page_url",
+                "location_name",
+                "street_address",
+                "city",
+                "state",
+                "zip",
+                "country_code",
+                "store_number",
+                "phone",
+                "location_type",
+                "latitude",
+                "longitude",
+                "hours_of_operation",
+            ]
+        )
         # Body
         for row in data:
             writer.writerow(row)
 
 
 def fetch_data():
-    # Your scraper here
     data = []
     p = 0
-    cleanr = re.compile(r'<[^>]+>')
-    pattern = re.compile(r'\s\s+') 
-    url = 'https://behandpicked.com/handpicked-stores/'
+    url = "https://behandpicked.com/handpicked-stores/"
     r = session.get(url, headers=headers, verify=False)
-  
-    soup =BeautifulSoup(r.text, "html.parser")
-   
-    divlist = soup.find('div',{'class':'body'}).find('div',{'class':'container'})
-    titlelist = soup.find('div',{'class':'body'}).find('div',{'class':'container'}).findAll('strong')
-    content = re.sub(cleanr,' ',str(divlist))
-    content =re.sub(cleanr,'\n',str(content))
-    for i in range(1,len(titlelist)):
-        #if i == 1:
-         #   det,content= content.split(titlelist[0].text,1)
-        #else:
-       
-        det,content = content.split(titlelist[i].text,1)
-        
-        det = det.lstrip()
-        if i == (len(titlelist)):
-          
-            det = content
-        if i == 1:
-            det = det.split(titlelist[i-1].text)[1]
-        
-        if det.find('location is closed') > -1:
-            continue
-        title = titlelist[i-1].text
-        address = det.split('Phone')[0]
-        phone = det.split('Phone')[1].split('E-mail')[0]
+
+    soup = BeautifulSoup(r.text, "html.parser")
+
+    titlelist = soup.find("div", {"class": "category-banner-section"}).findAll("strong")
+    divlist = soup.find("div", {"class": "category-banner-section"}).text
+    for i in range(0, len(titlelist) - 1):
+        content = (
+            divlist.split(titlelist[i].text)[1]
+            .split(titlelist[i + 1].text)[0]
+            .replace(":", "")
+            .lstrip()
+            .replace("\n", " ")
+            .strip()
+        )
+        address = content.split("Phone", 1)[0].replace(":", "").lstrip()
+        phone = (
+            content.split("Phone", 1)[1].split("E-mail", 1)[0].replace(":", "").lstrip()
+        )
+        phone = phone.split("Hour", 1)[0].replace(":", "").lstrip()
+        hours = content.split("Hours", 1)[1].split("Th", 1)[0].replace(":", "").lstrip()
         try:
-            hours = det.split('Hours')[1].split('Th')[0]
-        except:
-            hours = det.split('Hours')[1].split('E-mail')[0]
-            phone = det.split('Phone')[1].split('\n')[-1]
-            
-        lat = '<MISSING>'
-        longt = '<MISSING>'
-        store = '<MISSING>'
-        ltype = '<MISSING>'
-        try:
-            address = address.split('\n',1)[0].lstrip()
+            hours = hours.split("Loc", 1)[0].replace(":", "").lstrip()
         except:
             pass
         try:
-            phone = phone.split('\n',1)[0].lstrip()
+            hours = hours.split("E-mail", 1)[0].strip()
         except:
             pass
-        try:
-            hours = hours.split('\n',1)[0].lstrip()
-        except:
-            pass
-        try:
-            hours = hours.split('Locate',1)[0].lstrip()
-        except:
-            pass
+        title = titlelist[i].text
+
         address = usaddress.parse(address)
         i = 0
         street = ""
@@ -93,7 +82,15 @@ def fetch_data():
         pcode = ""
         while i < len(address):
             temp = address[i]
-            if temp[1].find("Address") != -1 or temp[1].find("Street") != -1 or temp[1].find('Occupancy') != -1 or temp[1].find("Recipient") != -1 or temp[1].find("BuildingName") != -1 or temp[1].find("USPSBoxType") != -1 or temp[1].find("USPSBoxID") != -1:
+            if (
+                temp[1].find("Address") != -1
+                or temp[1].find("Street") != -1
+                or temp[1].find("Occupancy") != -1
+                or temp[1].find("Recipient") != -1
+                or temp[1].find("BuildingName") != -1
+                or temp[1].find("USPSBoxType") != -1
+                or temp[1].find("USPSBoxID") != -1
+            ):
                 street = street + " " + temp[0]
             if temp[1].find("PlaceName") != -1:
                 city = city + " " + temp[0]
@@ -102,41 +99,38 @@ def fetch_data():
             if temp[1].find("ZipCode") != -1:
                 pcode = pcode + " " + temp[0]
             i += 1
+        street = street.lstrip().replace(",", "")
+        city = city.lstrip().replace(",", "")
+        state = state.lstrip().replace(",", "")
+        pcode = pcode.lstrip().replace(",", "")
 
-        street = street.lstrip().replace(',','')
-        city = city.lstrip().replace(',','')
-        state = state.lstrip().replace(',','')
-        pcode = pcode.lstrip().replace(',','')
-        
-        #logger.info(det)        
-        data.append([
-                        'https://behandpicked.com/',
-                        'https://behandpicked.com/handpicked-stores/',                   
-                        title,
-                        street,
-                        city,
-                        state,
-                        pcode,
-                        'US',
-                        store,
-                        phone.replace(': ',''),
-                        ltype,
-                        lat,
-                        longt,
-                        hours.replace(': ','').replace('&amp;','-'),
-                    ])
-        #logger.info(p,data[p])
+        data.append(
+            [
+                "https://behandpicked.com/",
+                "https://behandpicked.com/handpicked-stores/",
+                title,
+                street,
+                city,
+                state,
+                pcode,
+                "US",
+                "<MISSING>",
+                phone.replace(": ", ""),
+                "<MISSING>",
+                "<MISSING>",
+                "<MISSING>",
+                hours.replace(": ", "").replace("&amp;", "-"),
+            ]
+        )
+
         p += 1
-  
-   
-        
     return data
 
 
 def scrape():
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
+
     data = fetch_data()
     write_output(data)
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
+
 
 scrape()

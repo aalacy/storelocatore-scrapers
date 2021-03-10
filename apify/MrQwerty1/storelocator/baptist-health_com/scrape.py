@@ -35,7 +35,7 @@ def write_output(data):
 
 def fetch_data():
     out = []
-    url = "https://impark.com/"
+    url = "https://baptist-health.com/"
 
     session = SgRequests()
     params = (

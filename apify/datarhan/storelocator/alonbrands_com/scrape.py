@@ -53,7 +53,7 @@ def fetch_data():
     all_locations = []
     all_coordinates = DynamicGeoSearch(
         country_codes=[SearchableCountries.USA],
-        max_radius_miles=200,
+        max_radius_miles=100,
         max_search_results=None,
     )
     for lat, lng in all_coordinates:
@@ -67,7 +67,7 @@ def fetch_data():
             "options[dropdown_style]": "none",
             "options[ignore_radius]": "0",
             "options[immediately_show_locations]": "1",
-            "options[initial_radius]": "10000",
+            "options[initial_radius]": "100",
             "options[label_directions]": "Directions",
             "options[label_email]": "Email",
             "options[label_fax]": "Fax:+",
@@ -86,7 +86,7 @@ def fetch_data():
             "options[use_sensor]": "false",
             "options[zoom_level]": "4",
             "options[zoom_tweak]": "1",
-            "radius": "10000",
+            "radius": "100",
         }
 
         response = session.post(start_url, headers=hdr, data=formdata)
@@ -94,7 +94,7 @@ def fetch_data():
         all_locations += data["response"]
 
     for poi in all_locations:
-        store_url = poi["url_link"]
+        store_url = poi["sl_pages_url"]
         store_url = store_url if store_url else "<MISSING>"
         location_name = poi["name"]
         location_name = location_name if location_name else "<MISSING>"

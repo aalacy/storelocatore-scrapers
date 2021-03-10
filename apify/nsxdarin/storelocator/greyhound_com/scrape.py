@@ -66,7 +66,10 @@ def fetch_data():
                     lat = item.split('"latitude":"')[1].split('"')[0]
                     lng = item.split('"longitude":"')[1].split('"')[0]
                     typ = item.split('"stationStopType":"')[1].split('"')[0]
-                    phone = item.split('"phoneNumberMain":"')[1].split('"')[0]
+                    try:
+                        phone = item.split('"phoneNumberMain":"')[1].split('"')[0]
+                    except:
+                        phone = "<MISSING>"
                     website = "greyhound.com"
                     store = item.split('"iataCode":"')[1].split('"')[0]
                     loc = (

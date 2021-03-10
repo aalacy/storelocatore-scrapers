@@ -1,5 +1,6 @@
 import csv
 import json
+from lxml import etree
 
 from sgrequests import SgRequests
 
@@ -52,12 +53,17 @@ def fetch_data():
 
     for poi in data["features"]:
         store_url = poi["properties"]["permalink"]
+        store_response = session.get(store_url + "our-location/", headers=headers)
+        store_dom = etree.HTML(store_response.text)
+        hoo = store_dom.xpath('//div[@class="location__hours"]//text()')
+        hoo = [elem.strip() for elem in hoo if elem.strip()]
+        hours_of_operation = ", ".join(hoo) if hoo else "<MISSING>"
+
         location_name = poi["properties"]["name"]
         location_name = location_name if location_name else "<MISSING>"
         address_raw = (
             poi["properties"]["address"].replace("\r\n", ", ").replace(", USA", "")
         )
-        print(poi["properties"]["address"])
         address_raw = address_raw.split(",")
         address_raw = [elem.strip() for elem in address_raw]
         if len(address_raw) > 4:
@@ -82,12 +88,16 @@ def fetch_data():
         latitude = latitude if latitude else "<MISSING>"
         longitude = poi["geometry"]["coordinates"][0]
         longitude = longitude if longitude else "<MISSING>"
-        hours_of_operation = "<MISSING>"
+
         if len(zip_code.strip()) == 2:
             zip_code = "<MISSING>"
         if city == "<MISSING>":
             city = street_address.split()[-1]
             street_address = " ".join(street_address.split()[:-1])
+        if zip_code == "<MISSING>":
+            zip_code = store_dom.xpath('//div[@class="location__addy"]/p/text()')[
+                2
+            ].split()[-1]
 
         item = [
             DOMAIN,

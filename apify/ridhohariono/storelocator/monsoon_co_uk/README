@@ -1,0 +1,4 @@
+--ignore CountryCodeFillRateChecker (Country code not US or CA)
+--ignore LatLngDuplicationValidator (Confirmed Scrape Correctly):
+        => https://www.monsoon.co.uk/on/demandware.store/Sites-monsoon-uk-Site/en_GB/Stores-FindStoreById?storeId=4046&ajax=true
+        => https://www.monsoon.co.uk/on/demandware.store/Sites-monsoon-uk-Site/en_GB/Stores-FindStoreById?storeId=1387&ajax=true

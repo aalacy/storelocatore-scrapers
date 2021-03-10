@@ -1,140 +1,102 @@
 import csv
 from sgrequests import SgRequests
-from bs4 import BeautifulSoup
-import re
-import json
-import time 
 
 session = SgRequests()
+import json
+from bs4 import BeautifulSoup
+
+base_url = "https://w-hotels.marriott.com/"
+
 
 def write_output(data):
-    with open('data.csv', mode='w', encoding="utf-8") as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", 'page_url'])
-        # Body
+    with open("data.csv", mode="w") as output_file:
+        writer = csv.writer(
+            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+        )
+        writer.writerow(
+            [
+                "locator_domain",
+                "location_name",
+                "street_address",
+                "city",
+                "state",
+                "zip",
+                "country_code",
+                "store_number",
+                "phone",
+                "location_type",
+                "latitude",
+                "longitude",
+                "hours_of_operation",
+                "page_url",
+            ]
+        )
         for row in data:
             writer.writerow(row)
-def request_wrapper(url,method,headers,data=None):
-   request_counter = 0
-   if method == "get":
-       while True:
-           try:
-               r = session.get(url,headers=headers)
-               return r
-               break
-           except:
-               time.sleep(2)
-               request_counter = request_counter + 1
-               if request_counter > 10:
-                   return None
-                   break
-   elif method == "post":
-       while True:
-           try:
-               if data:
-                   r = session.post(url,headers=headers,data=data)
-               else:
-                   r = session.post(url,headers=headers)
-               return r
-               break
-           except:
-               time.sleep(2)
-               request_counter = request_counter + 1
-               if request_counter > 10:
-                   return None
-                   break
-   else:
-       return None
+
+
 def fetch_data():
-    address = []
-    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',}
-    base_url = "https://w-hotels.marriott.com"
-    location_url = "https://w-hotels.marriott.com"
-    r = request_wrapper(location_url,"get",headers=headers)
-    soup = BeautifulSoup(r.text,"lxml")
-    data = soup.find_all("script",{"type":"text/javascript"})[5]
-    mp = (data.text.split("MARRIOTT_GEO_DATA = ")[1].replace('South America"}}};','South America"}}}'))
-    json_data = json.loads(mp)
-    canada = (json_data['tree']['north.america']['countries']['CA']['cities'])
-    for i in canada:
-        city = canada[i]['name']
-        k = (canada[i]['properties'].keys())
-        for j in k:
-            key  = (j)
-            mp1 = (canada[i]['properties'][j])
-            location_name  = mp1['name']
-            street_address = mp1['address']
-            state = mp1['state']
-            zipp = mp1['zipcode']
-            country_code = mp1['country']
-            phone =  mp1['phone']
-            latitude = mp1['latitude']
-            longitude = mp1['longitude']
-            data = street_address.lower().replace(" ","-")
-            page_url = "https://www.marriott.com/hotels/travel/"+str(key)
-            if city == 'Toronto':
-                continue
-            store = []
-            store.append(base_url if base_url else "<MISSING>")
-            store.append(location_name if location_name else "<MISSING>") 
-            store.append(street_address if street_address else "<MISSING>")
-            store.append(city if city else "<MISSING>")
-            store.append(state if state else "<MISSING>")
-            store.append(zipp if zipp else "<MISSING>")
-            store.append(country_code if country_code else "<MISSING>")
-            store.append("<MISSING>") 
-            store.append(phone if phone else "<MISSING>")
-            store.append("W Hotels Worldwide")
-            store.append(latitude if latitude else "<MISSING>")
-            store.append(longitude if longitude else "<MISSING>")
-            store.append("<MISSING>")
-            store.append(page_url if page_url else "<MISSING>")
-            if store[2] in address :
-                continue
-            address.append(store[2])
-            yield store 
-    United_state = (json_data['tree']['north.america']['countries']['US']['states'])
-    for i1 in United_state:
-        state = United_state[i1]['name']
-        k1 = (United_state[i1]['properties'].keys())
-        for j1 in k1:
-            key  = (j1)
-            mp2 = (United_state[i1]['properties'][j1])
-            location_name  = mp2['name']
-            street_address = mp2['address']
-            city =" ".join(mp2['city'].split("_us_us")[0].split("_")[:-1])
-            zipp = mp2['zipcode']
-            country_code = mp2['country']
-            phone =  mp2['phone']
-            latitude = mp2['latitude']
-            longitude = mp2['longitude']
-            data = street_address.lower().replace(" ","-")
-            page_url = "https://www.marriott.com/hotels/travel/"+str(key)
-            store = []
-            store.append(base_url if base_url else "<MISSING>")
-            store.append(location_name if location_name else "<MISSING>") 
-            store.append(street_address if street_address else "<MISSING>")
-            store.append(city if city else "<MISSING>")
-            store.append(state if state else "<MISSING>")
-            store.append(zipp if zipp else "<MISSING>")
-            store.append(country_code if country_code else "<MISSING>")
-            store.append("<MISSING>") 
-            store.append(phone if phone else "<MISSING>")
-            store.append("W Hotels Worldwide")
-            store.append(latitude if latitude else "<MISSING>")
-            store.append(longitude if longitude else "<MISSING>")
-            store.append("<MISSING>")
-            store.append(page_url if page_url else "<MISSING>")
-            if state == 'Pennsylvania' or state == 'Tennessee' :
-                continue
-            if store[2] in address :
-                continue
-            address.append(store[2])
-            yield store
+    url = "https://pacsys.marriott.com/data/marriott_properties_WH_en-US.json"
+    headers = {
+        "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3",
+        "upgrade-insecure-requests": "1",
+        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.132 Safari/537.36",
+    }
+    request = session.get(url, headers=headers)
+    soup = BeautifulSoup(request.text, "lxml")
+    data = soup.text
+    store_list = json.loads(data)
+    data_8 = store_list["regions"]
+    for i in data_8:
+        for j in i["region_countries"]:
+            for k in j["country_states"]:
+                for h in k["state_cities"]:
+                    for g in h["city_properties"]:
+                        if (
+                            "USA" in (g["country_name"])
+                            or "CA" in (g["country_code"])
+                            or "GB" in (g["country_code"])
+                        ):
+                            zipp = g["postal_code"]
+                            location_name = g["name"]
+                            street_address = g["address"]
+                            city = g["city"]
+                            state = g["state_name"]
+                            country_code = g["country_name"]
+                            phone = g["phone"]
+                            latitude = g["latitude"]
+                            longitude = g["longitude"]
+                            key = g["marsha_code"]
+                            page_url = "https://www.marriott.com/hotels/travel/" + str(
+                                key
+                            )
+                            output = []
+                            output.append(base_url if base_url else "<MISSING>")
+                            output.append(
+                                location_name.replace("™", "").replace("–", "-")
+                                if location_name.replace("™", "")
+                                else "<MISSING>"
+                            )
+                            output.append(
+                                street_address if street_address else "<MISSING>"
+                            )
+                            output.append(city if city else "<MISSING>")
+                            output.append(state if state else "<MISSING>")
+                            output.append(zipp if zipp else "<MISSING>")
+                            output.append(country_code if country_code else "<MISSING>")
+                            output.append(key)
+                            output.append(phone if phone else "<MISSING>")
+                            output.append("W Hotels Worldwide")
+                            output.append(latitude if latitude else "<MISSING>")
+                            output.append(longitude if longitude else "<MISSING>")
+                            output.append("<MISSING>")
+                            output.append(page_url if page_url else "<MISSING>")
+                            yield output
+
+
 def scrape():
     data = fetch_data()
     write_output(data)
+
+
 scrape()

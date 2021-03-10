@@ -52,7 +52,7 @@ def get_rows(url):
         line = l.xpath(".//div[@class='short-description']/p[not(./strong)]/text()")
         line = list(filter(None, [l.strip() for l in line]))
         street_address = line[0]
-        line = line[-1]
+        line = line[1]
         city = line.split(",")[0].strip()
         line = line.split(",")[1].strip()
         state = line.split()[0]

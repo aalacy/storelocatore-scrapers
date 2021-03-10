@@ -1,6 +1,6 @@
-sgrequests
-sglogging
+us==1.0.0
+sgrequests==0.0.15
 lxml==4.5.2
-us
-# uncomment if you use selenium
-# selenium==3.141.0
+sglogging==0.0.4
+sgvalidator==0.0.71
+bs4

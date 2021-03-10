@@ -50,7 +50,7 @@ def fetch_data():
     final_data = []
     with SgChrome() as driver:
         driver.get("https://www.tacocabana.com/locations")
-        time.sleep(15)
+        time.sleep(25)
         driver.find_element_by_xpath(
             "//button[contains(., 'view all locations')]"
         ).click()
@@ -90,7 +90,7 @@ def fetch_data():
                 city = temp[0]
                 state = temp[1]
                 pcode = temp[2]
-                phone = content[3]
+            phone = content[3]
         elif len(content) == 5:
             try:
                 street = content[2]
@@ -100,7 +100,6 @@ def fetch_data():
                 state = temp[1]
                 pcode = temp[2]
                 phone = content[4]
-
             except:
                 street = content[1]
                 street = street.replace("&amp;", "&")
@@ -109,7 +108,6 @@ def fetch_data():
                 state = temp[0]
                 pcode = temp[1]
                 phone = content[4]
-
         else:
             street = content[1]
             street = street.replace("&amp;", "&")
@@ -117,9 +115,12 @@ def fetch_data():
             state = content[3]
             pcode = content[4]
             phone = content[5]
-        hours = loc.text.split(")", 1)[1]
-        hours = hours.split("O", 1)[1]
-        hours = "O" + hours
+        try:
+            hours = loc.text.split(")", 1)[1]
+            hours = hours.split("O", 1)[1]
+            hours = "O" + hours
+        except:
+            hours = "<MISSING>"
         temp_list = json.loads(temp_r)
         lat = "<MISSING>"
         longt = "<MISSING>"

@@ -61,7 +61,6 @@ def write_output(data):
 
 def fetch_data():
     # Your scraper here
-    loc_list = []
     zips = DynamicZipSearch(
         country_codes=[SearchableCountries.USA], max_radius_miles=200
     )
@@ -75,7 +74,7 @@ def fetch_data():
         stores = json.loads(stores_req.text)["Locations"]
         for store_json in stores:
             if store_json["Country"] == "United States":
-                page_url = search_url
+                page_url = "<MISSING>"
                 locator_domain = website
                 location_name = store_json["BusinessName"]
                 street_address = store_json["StreetAddress"]
@@ -108,9 +107,7 @@ def fetch_data():
 
                 latitude = store_json["Latitude"]
                 longitude = store_json["Longitude"]
-                latlng_tuple = (latitude, longitude)
-                latlng_list = [latlng_tuple]
-                zips.mark_found(latlng_list)
+                zips.found_location_at(latitude, longitude)
                 if latitude == "":
                     latitude = "<MISSING>"
                 if longitude == "":
@@ -137,10 +134,7 @@ def fetch_data():
                     longitude,
                     hours_of_operation,
                 ]
-                loc_list.append(curr_list)
-
-        # break
-    return loc_list
+                yield curr_list
 
 
 def scrape():

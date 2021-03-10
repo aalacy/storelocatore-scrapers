@@ -1,7 +1,11 @@
 import csv
-import json
-
+from tenacity import retry, stop_after_attempt
 from sgrequests import SgRequests
+
+
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger("totalwine_com")
 
 
 def write_output(data):
@@ -34,10 +38,17 @@ def write_output(data):
             writer.writerow(row)
 
 
-def fetch_data():
-    # Your scraper here
+@retry(stop=stop_after_attempt(5))
+def get_url(url):
+    headers = {
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36"
+    }
     session = SgRequests()
+    response = session.get(url, headers=headers)
+    return response.json()
 
+
+def fetch_data():
     items = []
 
     DOMAIN = "totalwine.com"
@@ -97,16 +108,11 @@ def fetch_data():
     ]
 
     start_url = "https://www.totalwine.com/store-finder/api/store/storelocator/v1/storesbystate/{}"
-    headers = {
-        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36"
-    }
     all_locations = []
     for state in states:
-        response = session.get(start_url.format(state), headers=headers)
-        if not response.text.startswith("{"):
-            continue
-        data = json.loads(response.text)
+        data = get_url(start_url.format(state))
         if not data.get("stores"):
+            logger.info(f"no data found for state: {state}")
             continue
         all_locations += data["stores"]
 
@@ -116,7 +122,7 @@ def fetch_data():
         street_address = poi.get("address1")
         if street_address:
             if poi["address2"]:
-                street_address += ", " + poi["address2"]
+                street_address = poi["address2"]
         else:
             street_address = poi.get("address2")
         street_address = street_address if street_address else "<MISSING>"

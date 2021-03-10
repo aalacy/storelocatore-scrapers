@@ -1,8 +1,8 @@
-import re
 import csv
 from lxml import etree
 
 from sgrequests import SgRequests
+from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 
 
 def write_output(data):
@@ -40,55 +40,47 @@ def fetch_data():
     session = SgRequests()
 
     items = []
+    scraped_items = []
 
     DOMAIN = "familyvideo.com"
 
-    start_url = "https://www.familyvideo.com/storelocator/"
-    response = session.get(start_url)
-    dom = etree.HTML(response.text)
+    start_url = (
+        "http://apply.familyvideo.com/zip_locator.php?code={}&radius=200&more=no"
+    )
 
-    all_poi_html = dom.xpath('//div[@class="amlocator-stores-wrapper"]/div')
-    for poi_html in all_poi_html:
-        store_url = poi_html.xpath('.//a[@class="amlocator-link"]/@href')[0]
-        location_name = poi_html.xpath('.//a[@class="amlocator-link"]/text()')[0]
-        location_name = location_name if location_name else "<MISSING>"
-        address_raw = poi_html.xpath(
-            './/div[@class="amlocator-store-information"]/text()'
-        )
-        address_raw = [elem.strip() for elem in address_raw if elem.strip()]
-        street_address = address_raw[-1].split(":")[-1]
-        street_address = street_address if street_address else "<MISSING>"
-        city = address_raw[0].split(":")[-1]
-        city = city if city else "<MISSING>"
-        state = address_raw[2].split(":")[-1]
-        state = state if state else "<MISSING>"
-        zip_code = address_raw[1].split(":")[-1]
-        zip_code = zip_code if zip_code else "<MISSING>"
-        country_code = ""
-        country_code = country_code if country_code else "<MISSING>"
-        store_number = ""
-        store_number = store_number if store_number else "<MISSING>"
+    all_codes = DynamicZipSearch(
+        country_codes=[SearchableCountries.USA],
+        max_radius_miles=200,
+        max_search_results=None,
+    )
+    all_locations = []
+    for code in all_codes:
+        response = session.get(start_url.format(code))
+        dom = etree.HTML(response.text)
+        all_poi = dom.xpath('//td[@class="zipLocationText"]/div[@id="sidebar"]//text()')
+        all_poi = [elem.strip() for elem in all_poi if elem.strip()]
+        poi = []
+        for elem in all_poi:
+            if "Map It" in elem:
+                all_locations.append(poi)
+                poi = []
+                continue
+            poi.append(elem)
 
-        poi_response = session.get(store_url)
-        poi_dom = etree.HTML(poi_response.text)
-        phone = poi_dom.xpath('//a[contains(@href, "tel")]/text()')
-        phone = phone[0].strip() if phone else "<MISSING>"
-        location_type = ""
-        location_type = location_type if location_type else "<MISSING>"
-        geo_data = poi_dom.xpath('//script[contains(text(), "lng:")]/text()')[
-            0
-        ].replace("\n", "")
-        latitude = re.findall("lat: (.+?),", geo_data)[0]
-        longitude = re.findall("lng: (.+?),", geo_data)[0]
-        hours_of_operation = []
-        hours_html = poi_dom.xpath('//div[@class="amlocator-schedule-table"]/div')
-        for elem in hours_html:
-            day = elem.xpath(".//text()")[1].strip()
-            hours = elem.xpath(".//text()")[3].strip()
-            hours_of_operation.append("{} {}".format(day, hours))
-        hours_of_operation = (
-            ", ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
-        )
+    for poi in all_locations:
+        store_url = "http://apply.familyvideo.com/zip_locator.php"
+        location_name = "<MISSING>"
+        street_address = " ".join(poi[0].split()[1:])
+        city = poi[1].split(", ")[0]
+        state = poi[1].split(", ")[-1].split()[0]
+        zip_code = poi[1].split(", ")[-1].split()[-1]
+        country_code = "<MISSING>"
+        store_number = "<MISSING>"
+        phone = poi[2]
+        location_type = "<MISSING>"
+        latitude = "<MISSING>"
+        longitude = "<MISSING>"
+        hours_of_operation = " ".join(poi[3:])
 
         item = [
             DOMAIN,
@@ -106,8 +98,10 @@ def fetch_data():
             longitude,
             hours_of_operation,
         ]
-
-        items.append(item)
+        check = f"{location_name} {street_address}"
+        if check not in scraped_items:
+            scraped_items.append(check)
+            items.append(item)
 
     return items
 
