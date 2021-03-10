@@ -212,7 +212,6 @@ def fetch_data():
             hours = hours + " " + day + " " + time
         lat = r.text.split('"lat":')[1].split('",', 1)[0].replace('"', "")
         longt = r.text.split('"lng":')[1].split('",', 1)[0].replace('"', "")
-        temp_list = []  # ignoring duplicates
         for row in data:
             temp = row[9]
             if phone.strip() == temp:
