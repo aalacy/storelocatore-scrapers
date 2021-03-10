@@ -81,7 +81,7 @@ def fetch_data():
             r2 = session.get(lurl, headers=headers)
             for line2 in r2.iter_lines():
                 line2 = str(line2.decode("utf-8"))
-                if "coming soon" in line2:
+                if "coming soon" in line2 and "wide variety coming soon" not in line2:
                     CS = True
                 if "<title>" in line2:
                     name = line2.split("<title>")[1].split("<")[0]

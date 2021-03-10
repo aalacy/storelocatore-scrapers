@@ -135,6 +135,12 @@ def fetch_data():
                         == "Monday: - Tuesday: - Wednesday: - Thursday: - Friday: - Saturday: - Sunday: -"
                     ):
                         hoo = "<MISSING>"
+
+                    if street == "20 Castle Lane":
+                        temp = city
+                        city = pcode
+                        pcode = temp
+
                     data.append(
                         [
                             "https://gb.ecco.com/",
