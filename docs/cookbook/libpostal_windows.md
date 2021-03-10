@@ -43,18 +43,15 @@
     * In the msys installation folder -> home -> user (PC name) -> libpostal:
         * ###### example path: `"C:\msys64\home\[User]\libpostal\libpostal.def"`
     * create a new folder named `headers`
-	* inside the new folder named headers create a new folder named 'libpostal'
     * Copy libpostal.h from msys installation folder -> mingw64 -> include -> libpostal:
         * ###### example path:`"C:\msys64\mingw64\include\libpostal\libpostal.h"`
-    * place it in the last created `headers\libpostal\` folder
-        * ###### example path:`"C:\msys64\home\[User]\libpostal\headers\libpostal\"`
+    * place it in the newly created `headers` folder
+        * ###### example path:`"C:\msys64\home\[User]\libpostal\headers\"`
 ----
 7.
     * Start a command prompt which has access to the Microsoft toolchain. 
-        * ###### This can be done by e.g. installing the [Windows 10 SDK](https://developer.microsoft.com/en-us/windows/downloads/windows-10-sdk) and then running the ``x64 Native Tools Command Prompt`` 
-        * ###### You will also need Microsoft Visual C++ Build Tools. [Here's a direct download link.](https://go.microsoft.com/fwlink/?LinkId=691126)
+        * ###### This can be done by e.g. installing the [Windows 10 SDK](https://developer.microsoft.com/en-us/windows/downloads/windows-10-sdk) and then running the ``x64 Native Tools Command Prompt``
     * Assuming your python and msys are installed in standard locations, follow these steps to build + install postal:
-
 ```
 cd "C:\msys64\home\[User]\libpostal\"
 
