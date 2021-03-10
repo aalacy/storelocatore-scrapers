@@ -96,16 +96,6 @@ def fetch_data():
             page_url = "".join(b.xpath(".//h1/a/@href"))
             location_name = "".join(b.xpath(".//h1//text()"))
             phone = "".join(b.xpath(".//a[contains(@href, 'tel')]/text()"))
-            text = "".join(b.xpath(".//a[contains(text(), 'Get')]/@href"))
-            try:
-                if text.find("ll=") != -1:
-                    latitude = text.split("ll=")[1].split(",")[0]
-                    longitude = text.split("ll=")[1].split(",")[1].split("&")[0]
-                else:
-                    latitude = text.split("@")[1].split(",")[0]
-                    longitude = text.split("@")[1].split(",")[1]
-            except IndexError:
-                latitude, longitude = "<MISSING>", "<MISSING>"
             location_type = "<MISSING>"
             hours_of_operation = b.xpath(
                 ".//a[contains(@href, 'tel')]/following::p[1]//text()"
@@ -127,6 +117,20 @@ def fetch_data():
                 hours_of_operation = " ".join(hours_of_operation).replace(",", "")
 
             hours_of_operation = hours_of_operation.replace("\n", " ").strip()
+            session = SgRequests()
+            rr = session.get(page_url)
+            ttree = html.fromstring(rr.text)
+            text = "".join(ttree.xpath(".//a[1][contains(@href, 'google')]/@href"))
+            try:
+                if text.find("ll=") != -1:
+                    latitude = text.split("ll=")[1].split(",")[0]
+                    longitude = text.split("ll=")[1].split(",")[1].split("&")[0]
+                else:
+                    latitude = text.split("@")[1].split(",")[0]
+                    longitude = text.split("@")[1].split(",")[1]
+            except IndexError:
+                latitude, longitude = "<MISSING>", "<MISSING>"
+
             row = [
                 locator_domain,
                 page_url,
