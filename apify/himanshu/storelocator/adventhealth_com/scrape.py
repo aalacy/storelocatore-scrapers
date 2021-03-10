@@ -45,13 +45,8 @@ def fetch_data():
 
     start_url = "https://www.adventhealth.com/find-a-location"
     domain = re.findall("://(.+?)/", start_url)[0].replace("www.", "")
-    hdr = {
-        "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-        "accept-encoding": "gzip, deflate, br",
-        "upgrade-insecure-requests": "1",
-        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.192 Safari/537.36",
-    }
-    response = session.get(start_url, headers=hdr)
+
+    response = session.get(start_url)
     dom = etree.HTML(response.text)
 
     all_locations = dom.xpath(
@@ -59,7 +54,7 @@ def fetch_data():
     )
     next_page = dom.xpath('//a[@rel="next"]/@href')
     while next_page:
-        response = session.get(urljoin(start_url, next_page[0]), headers=hdr)
+        response = session.get(urljoin(start_url, next_page[0]))
         dom = etree.HTML(response.text)
         all_locations += dom.xpath(
             '//h3[@class="location-block__name h2 notranslate "]/a/@href'
@@ -68,7 +63,7 @@ def fetch_data():
 
     for url in all_locations:
         store_url = urljoin(start_url, url)
-        loc_response = session.get(store_url, headers=hdr)
+        loc_response = session.get(store_url)
         loc_dom = etree.HTML(loc_response.text)
         poi = loc_dom.xpath('//script[@type="application/ld+json"]/text()')[0]
         poi = json.loads(poi)
