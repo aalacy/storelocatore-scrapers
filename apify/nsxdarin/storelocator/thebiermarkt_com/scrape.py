@@ -103,7 +103,17 @@ def fetch_data():
                             hours = hours.split("Holiday")[0].strip()
                         if hours == "<MISSING>":
                             hours = "Temporarily Closed"
-                        purl = "https://www.thebiermarkt.com/en/locations.html"
+                        if "Esplanade" in name:
+                            loc = "https://www.thebiermarkt.com/en/locations/esplanade.html"
+                        if "Don Mills" in name:
+                            loc = "https://www.thebiermarkt.com/en/locations/don-mills.html"
+                        if "Montreal" in name:
+                            loc = "https://www.thebiermarkt.com/en/locations/montreal.html"
+                        if "Ottawa" in name:
+                            loc = (
+                                "https://www.thebiermarkt.com/en/locations/ottawa.html"
+                            )
+                            hours = "Sunday-Saturday: 3pm - 9pm"
                         if store not in ids and "permanently closed" not in hours:
                             ids.append(store)
                             yield [
