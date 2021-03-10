@@ -53,11 +53,27 @@ def fetch_data():
     for poi in all_locations[0]["markers"]:
         location_name = poi["title"]
         store_url = f'https://urbanplates.com/locations/{location_name.lower().replace(" ", "-")}'
+        with SgChrome() as driver:
+            driver.get(store_url)
+            loc_dom = etree.HTML(driver.page_source)
+
         location_name = location_name if location_name else "<MISSING>"
-        addr = parse_address_usa(poi["address"])
+        poi_html = etree.HTML(poi["description"])
+        raw_address = poi_html.xpath("//text()")
+        raw_address = [
+            e.strip() for e in raw_address if e.strip() and "Get Directions" not in e
+        ]
+        addr = parse_address_usa(" ".join(raw_address))
         street_address = addr.street_address_1
+        if addr.street_address_2:
+            street_address += " " + addr.street_address_2
+        street_address = street_address.split("Located")[0].strip()
+        if "Carlsbad" in location_name:
+            street_address += " Calle Barcelona"
         city = addr.city
         city = city if city else "<MISSING>"
+        if city == "Tysons Ii Tysons":
+            city = "Tysons"
         state = addr.state
         state = state if state else "<MISSING>"
         zip_code = addr.postcode
@@ -69,7 +85,11 @@ def fetch_data():
         location_type = "<MISSING>"
         latitude = poi["coord_x"]
         longitude = poi["coord_y"]
-        hours_of_operation = "<MISSING>"
+        hoo = loc_dom.xpath('//div[@class="storeHours"]//text()')
+        hoo = [e.strip() for e in hoo if e.strip()]
+        hours_of_operation = (
+            " ".join(hoo).replace("Store Hours ", "") if hoo else "<MISSING>"
+        )
 
         item = [
             domain,
