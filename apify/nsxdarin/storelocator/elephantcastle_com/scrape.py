@@ -48,6 +48,7 @@ def fetch_data():
     for line in r.iter_lines():
         line = str(line.decode("utf-8"))
         if '"city": "' in line:
+            country = "US"
             city = line.split('"city": "')[1].split('"')[0]
             state = ""
             loc = ""
