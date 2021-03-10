@@ -97,7 +97,7 @@ def get_data(url):
     phone = "".join(tree.xpath('//span[@itemprop="telephone"]/text()')) or "<MISSING>"
     latitude = "<MISSING>"
     longitude = "<MISSING>"
-    location_type = location_name
+    location_type = "<MISSING>"
     hours_of_operation = tree.xpath('//li[@itemprop="openingHours"]/text()')
     hours_of_operation = list(filter(None, [a.strip() for a in hours_of_operation]))
     hours_of_operation = " ".join(hours_of_operation) or "<MISSING>"
