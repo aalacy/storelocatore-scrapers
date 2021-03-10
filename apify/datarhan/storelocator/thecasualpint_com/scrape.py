@@ -4,7 +4,7 @@ import json
 from lxml import etree
 
 from sgrequests import SgRequests
-from sgscrape.sgpostal import parse_address_intl
+from sgscrape.sgpostal import parse_address_usa
 
 
 def write_output(data):
@@ -56,24 +56,30 @@ def fetch_data():
 
     for poi in data["places"]:
         poi_html = poi_html = etree.HTML(poi["content"])
-        store_url = poi_html.xpath("//a/@href")[0]
+        store_url = poi_html.xpath("//a[contains(@href, 'thecasualpint.com')]/@href")[0]
+        if "@" in store_url:
+            store_url = "https://centralphoenix.thecasualpint.com/beer-selection/"
         location_name = poi["title"]
         location_name = location_name if location_name else "<MISSING>"
-        addr = parse_address_intl(poi["address"])
+        addr = parse_address_usa(poi["address"])
         street_address = addr.street_address_1
         if addr.street_address_2:
             street_address += " " + addr.street_address_2
         street_address = street_address if street_address else "<MISSING>"
-        city = addr.city
-        city = city if city else "<MISSING>"
-        state = addr.state
+        city = poi["location"]["city"]
+        city = city.split(",")[-1].strip() if city else "<MISSING>"
+        state = poi["location"]["state"]
         state = state if state else "<MISSING>"
-        zip_code = addr.postcode
+        zip_code = poi["location"]["postal_code"]
         zip_code = zip_code if zip_code else "<MISSING>"
         country_code = poi["location"]["country"]
         country_code = country_code if country_code else "<MISSING>"
         store_number = poi["id"]
         phone = [e.strip() for e in poi_html.xpath(".//text()") if "(" in e]
+        if not phone:
+            loc_response = session.get(store_url, headers=hdr)
+            loc_dom = etree.HTML(loc_response.text)
+            phone = loc_dom.xpath('//li[@class="phone"]/a/text()')
         phone = phone[0].replace("phone:", "").strip() if phone else "<MISSING>"
         location_type = "<MISSING>"
         latitude = poi["location"]["lat"]

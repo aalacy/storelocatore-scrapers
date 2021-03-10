@@ -1,7 +1,6 @@
 import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
-import datetime
 import time
 
 headers = {
@@ -71,7 +70,6 @@ def fetch_data():
         lng = ""
         hours = ""
         purl = ""
-        weekday = ""
         session = SgRequests()
         r2 = session.get(loc, headers=headers)
         if r2.encoding is None:
@@ -105,16 +103,20 @@ def fetch_data():
                 lat = line2.split('"latitude": ')[1].split(",")[0]
             if '"longitude": ' in line2:
                 lng = line2.split('"longitude": ')[1].split(",")[0]
-            if '"date": "' in line2:
-                day = line2.split('"date": "')[1].split('"')[0]
-                dt = day
-                year, month, dday = (int(x) for x in dt.split("-"))
-                ans = datetime.date(year, month, dday)
-                weekday = ans.strftime("%A")
-            if '"store": {' in line2:
-                g = next(lines)
-                hrs = weekday + ": " + g.split(': "')[1].split('"')[0]
-                hrs = hrs + "-" + next(lines).split(': "')[1].split('"')[0]
+        r2 = session.get(purl, headers=headers)
+        if r2.encoding is None:
+            r2.encoding = "utf-8"
+        lines = r2.iter_lines(decode_unicode=True)
+        for line2 in lines:
+            if "h00" in line2:
+                if '<p id="storeDetailsHours"' in line2:
+                    hrs = (
+                        line2.split('<p id="storeDetailsHours"')[1]
+                        .split('">')[1]
+                        .split("<")[0]
+                    )
+                else:
+                    hrs = line2.split("<")[0]
                 if hours == "":
                     hours = hrs
                 else:
@@ -127,6 +129,9 @@ def fetch_data():
             purl = "https://www.kelseys.ca/en/locations.html"
         if phone == "":
             phone = "<MISSING>"
+        if hours == "":
+            hours = "<MISSING>"
+        hours = hours.replace("h00 ", "h00-").replace("h30 ", "h30-")
         if store != "9999":
             yield [
                 website,
