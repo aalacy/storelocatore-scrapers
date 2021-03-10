@@ -23,42 +23,63 @@ def _valid(val):
 
 
 def fetch_data():
+    urls = []
     with SgRequests() as session:
         locator_domain = "https://www.good-sam.com/"
         base_url = "https://www.good-sam.com/locations"
         soup = bs(session.get(base_url).text, "lxml")
         map_data = soup.select('map[name="image-map"] area')
-        import pdb
-
-        pdb.set_trace()
-        with SgFirefox(executable_path=r"/mnt/g/work/mia/geckodriver.exe") as driver:
+        request = ""
+        with SgFirefox() as driver:
             for _map in map_data:
                 url = f"{base_url}#radius=100&address={_map['title']}"
                 driver.get(url)
-                locations = session.get(base_url, headers=_headers).json()
-                for _ in locations:
-                    if _["country"] not in ["United States", "Canada", "USA"]:
+                for r in driver.requests:
+                    if "coveo/rest/v2" in r.path:
+                        request = r
+                finalUrl = (
+                    request.url
+                    + "?"
+                    + request.body.decode("utf-8").replace(
+                        "distance%3C100", "distance%3C1000000"
+                    )
+                )
+                locations = session.get(finalUrl, headers=_headers).json()
+                for _ in locations["results"]:
+                    if _["clickUri"] in urls:
                         continue
-                    hours = []
-                    if _["hours"]:
-                        for hour in bs(_["hours"], "lxml").select("tr"):
-                            hours.append(f"{hour.td.text}: {hour.select('td')[1].text}")
-                    location_name = _["store"].split("&#8211;")[0].split("\u2013")[0]
-                    if _["store"].split("&#8211;")[-1].strip().lower() == "coming soon":
-                        hours = ["Coming Soon"]
+                    urls.append(_["clickUri"])
+
+                    sufix = "46747"
+                    if _["raw"].get("faddress46747"):
+                        sufix = "46747"
+                    if _["raw"].get("faddress79929"):
+                        sufix = "79929"
+                    if _["raw"].get("fstreetaddress79929"):
+                        sufix = "79929"
+                    street_address = ""
+                    if f"faddress{sufix}" in _["raw"]:
+                        street_address = _["raw"][f"faddress{sufix}"]
+                    elif f"fstreetaddress{sufix}" in _["raw"]:
+                        street_address = _["raw"][f"fstreetaddress{sufix}"]
+                    latitude = longitude = ""
+                    if f"freflatitude{sufix}" in _["raw"]:
+                        latitude = _["raw"][f"freflatitude{sufix}"]
+                        longitude = _["raw"][f"freflongitude{sufix}"]
+                    elif f"flatitude{sufix}" in _["raw"]:
+                        latitude = _["raw"][f"flatitude{sufix}"]
+                        longitude = _["raw"][f"flongitude{sufix}"]
                     yield SgRecord(
-                        page_url="https://freshrestaurants.com/locations",
-                        location_name=location_name,
-                        street_address=f"{_['address']} {_['address2']}".strip(),
-                        city=_["city"],
-                        state=_["state"],
-                        zip_postal=_["zip"],
-                        country_code=_["country"],
-                        latitude=_["lat"],
-                        longitude=_["lng"],
-                        phone=_["phone"],
+                        page_url=_["clickUri"],
+                        location_name=_["Title"],
+                        street_address=street_address,
+                        city=_["raw"][f"fcity{sufix}"][0],
+                        state=_["raw"][f"fstate{sufix}"][0],
+                        country_code="US",
+                        latitude=latitude,
+                        longitude=longitude,
+                        phone=_["raw"][f"fphone{sufix}"],
                         locator_domain=locator_domain,
-                        hours_of_operation=_valid("; ".join(hours)),
                     )
 
 
