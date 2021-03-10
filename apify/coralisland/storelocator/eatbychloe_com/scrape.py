@@ -1,88 +1,112 @@
-import csv
-import re
-import pdb
-import requests
-from lxml import etree
-import json
+from sgrequests import SgRequests
+import lxml.html
+from sgscrape import sgpostal as parser
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+from sglogging import sglog
 
-base_url = 'https://eatbychloe.com'
+base_url = "https://eatbychloe.com"
+log = sglog.SgLogSetup().get_logger(logger_name="eatbychloe_com")
 
-def validate(item):    
+
+def validate(item):
     if type(item) == list:
-        item = ' '.join(item)
-    return item.strip().replace('\n', '').replace('\t', '')
+        item = " ".join(item)
+    return item.strip().replace("\n", "").replace("\t", "")
+
 
 def get_value(item):
-    if item == None :
-        item = '<MISSING>'
+    if item is None:
+        item = "<MISSING>"
     item = validate(item)
-    if item == '':
-        item = '<MISSING>'    
+    if item == "":
+        item = "<MISSING>"
     return item
+
 
 def eliminate_space(items):
     rets = []
     for item in items:
         item = validate(item)
-        if item != '':
+        if item != "":
             rets.append(item)
     return rets
 
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-        for row in data:
-            writer.writerow(row)
 
 def fetch_data():
-    output_list = []
     url = "https://eatbychloe.com/locations/"
-    session = requests.Session()
+    session = SgRequests()
     request = session.get(url)
-    response = etree.HTML(request.text)
-    store_list = response.xpath('//div[@id="locations-sidebar"]')[0].xpath('.//div[@class="location-item"]')
-    for store in store_list:
-        data_address = store.xpath('./@data-address')[0].split(', ')
-        street_address = data_address[1]
-        title = get_value(store.xpath('.//div[@class="location-wrap"]//text()'))
-        if 'COMING SOON!' in title:
-            continue
-        
-        output = []
-        output.append(base_url) # url
-        output.append(title) #location name
-        
-        info = eliminate_space(store.xpath('./p//text()'))
-        if len(info) > 3:
-            address = info[1:]
-        else:
-            address = info
-        output.append(validate(address[0])) #address
-        address = address[1].split(',')
-        output.append(address[0]) #city
-        if len(address) == 3:
-            output.append(address[1].strip().split(' ')[0]) #state
-            output.append(address[2].strip().split(' ')[0]) #zipcode
-        elif len(address) == 2:
-            output.append(address[1].strip().split(' ')[0]) #state
-            output.append(address[1].strip().split(' ')[1]) #zipcode
+    response = lxml.html.fromstring(request.text)
+    store_list = response.xpath('//div[@class="marker"]')
 
-        output.append(store.xpath('./@data-address')[0].split(', ').pop()) #country code
-        output.append("<MISSING>") #store_number
-        if len(info) > 2:
-            output.append(validate(info.pop())) #phone
-        else:
-            output.append("<MISSING>") #phone
-        output.append("Classic Taste, Plant-Based | Vegan Restaurant") #location type
-        output.append(store.xpath('./@data-latlng')[0].split(',')[0]) #latitude
-        output.append(store.xpath('./@data-latlng')[0].split(',')[1]) #longitude
-        output.append(get_value(store.xpath('.//div[@class="hours-item"]//text()'))) #opening hours
-        output_list.append(output)
-    return output_list
+    for store in store_list:
+        location_name = get_value(store.xpath(".//h4/text()"))
+        if "COMING SOON!" in location_name:
+            continue
+
+        raw_address = ", ".join(eliminate_space(store.xpath(".//p/text()"))).strip()
+
+        if "-" in raw_address:
+            if len(raw_address.split("-")) == 3:
+                raw_address = raw_address.rsplit(", ", 1)[0].strip()
+
+        formatted_addr = parser.parse_address_intl(raw_address)
+        street_address = formatted_addr.street_address_1
+        if formatted_addr.street_address_2:
+            street_address = street_address + ", " + formatted_addr.street_address_2
+
+        city = formatted_addr.city
+        state = formatted_addr.state
+        zip = formatted_addr.postcode
+        country_code = (
+            "".join(store.xpath("@data-region"))
+            .strip()
+            .replace("-locations", "")
+            .strip()
+        )
+        if country_code == "europe":
+            country_code = "GB"
+
+        store_number = "<MISSING>"
+        phone = "".join(store.xpath('.//p[@class="phone-number"]/text()')).strip()
+        location_type = "Classic Taste, Plant-Based | Vegan Restaurant"
+        latitude = "".join(store.xpath("@data-lat")).strip()
+        longitude = "".join(store.xpath("@data-lng")).strip()
+        hours_of_operation = get_value(
+            store.xpath('.//div[@class="hours-item"]//text()')
+        )
+
+        yield SgRecord(
+            locator_domain=base_url,
+            page_url=url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=zip,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=location_type,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+        )
+
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    log.info("Started")
+    count = 0
+    with SgWriter() as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
 
-scrape()
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
+
+
+if __name__ == "__main__":
+    scrape()

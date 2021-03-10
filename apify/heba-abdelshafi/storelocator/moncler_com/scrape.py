@@ -109,6 +109,12 @@ def fetch_data():
                     street = soup.find(
                         "span", {"class": "c-address-street-1"}
                     ).text.replace("\n", " ")
+                    try:
+                        street += ", " + soup.find(
+                            "span", {"class": "c-address-street-2"}
+                        ).text.replace("\n", " ")
+                    except:
+                        pass
                     city = soup.find("span", {"class": "c-address-city"}).text
                     if ccode != "GB":
                         state = soup.find("abbr", {"itemprop": "addressRegion"}).text
