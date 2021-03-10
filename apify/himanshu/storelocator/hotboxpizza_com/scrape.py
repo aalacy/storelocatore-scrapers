@@ -51,7 +51,11 @@ def fetch_data():
             driver.get(store_url)
             loc_dom = etree.HTML(driver.page_source)
 
-        location_name = loc_dom.xpath('//h2[@itemprop="headline"]/text()')
+        location_name = loc_dom.xpath('//h1[@itemprop="headline"]/text()')
+        if not location_name:
+            location_name = loc_dom.xpath('//div[@class="avia_textblock  "]/h2/text()')
+        if not location_name:
+            location_name = loc_dom.xpath('//h2[@itemprop="headline"]/text()')
         location_name = location_name[0] if location_name else "<MISSING>"
         raw_data = loc_dom.xpath('//script[@class="av-php-sent-to-frontend"]/text()')[0]
         street_address = re.findall("address'] = (.+?);", raw_data)[0][1:-1]
