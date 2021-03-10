@@ -5,7 +5,6 @@ from sglogging import sglog
 import us
 import lxml.html
 from sgselenium import SgChrome
-from requests.packages.urllib3.util.retry import Retry
 
 website = "ruralking.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
