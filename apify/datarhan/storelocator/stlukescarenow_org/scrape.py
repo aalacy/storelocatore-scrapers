@@ -53,7 +53,9 @@ def fetch_data():
         loc_dom = etree.HTML(loc_response.text)
 
         location_name = loc_dom.xpath('//div[@class="label"]/text()')
-        location_name = location_name[0] if location_name else "<MISSING>"
+        if not location_name:
+            location_name = loc_dom.xpath('//h1[@class="provider-name"]/text()')
+        location_name = location_name[0].strip() if location_name else "<MISSING>"
         street_address = loc_dom.xpath('//div[@class="line1"]/text()')
         street_address = street_address[0] if street_address else "<MISSING>"
         city = loc_dom.xpath('//div[@class="citystate"]/text()')[0].split(", ")[0]

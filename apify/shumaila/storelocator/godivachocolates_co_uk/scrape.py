@@ -99,7 +99,7 @@ def fetch_data():
                 longitude = "<MISSING>"
             postcode = store["postcode"]
             hours = store["working_hours"]
-            if postcode == "":
+            if postcode == "" or title == "Meadowhall":
                 postcode = " ".join(store["address"].split("\n")[1].split(" ")[0:2])
             data.append(
                 [
