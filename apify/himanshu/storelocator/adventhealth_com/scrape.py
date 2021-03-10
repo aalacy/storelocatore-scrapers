@@ -65,7 +65,6 @@ def fetch_data():
         if "adventhealth.com" not in url:
             continue
         loc_response = session.get(store_url)
-        print(store_url, loc_response.status_code)
         loc_dom = etree.HTML(loc_response.text)
 
         location_name = dom.xpath(
