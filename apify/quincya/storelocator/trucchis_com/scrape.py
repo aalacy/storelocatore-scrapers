@@ -78,9 +78,11 @@ def fetch_data():
             .find_all("p")[1]
             .text.replace("Phone", "")
         )
-        hours_of_operation = " ".join(
-            list(base.find(class_="collection-container").p.stripped_strings)
-        ).replace("Store Hours", "").strip()
+        hours_of_operation = (
+            " ".join(list(base.find(class_="collection-container").p.stripped_strings))
+            .replace("Store Hours", "")
+            .strip()
+        )
 
         locs = base.find(class_="list-of-locations").find_all(
             "a", string="Map & Directions"
