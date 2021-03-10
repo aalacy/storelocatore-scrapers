@@ -17,33 +17,39 @@ search = DynamicZipSearch(
     max_search_results=50,
 )
 
+
 def api_get(start_url, headers, timeout, attempts, maxRetries):
     error = False
     session = SgRequests()
     try:
-        results = session.post(start_url, headers=headers,  timeout=timeout)
+        results = session.post(start_url, headers=headers, timeout=timeout)
     except exceptions.RequestException as requestsException:
         if "ProxyError" in str(requestsException):
             attempts += 1
             error = True
         else:
             raise requestsException
-            
-    except urllibException.SSLError as urllibException:
-        if "BAD_RECORD_MAC" in str(e):
+
+    except urllibException.SSLError as urlException:
+        if "BAD_RECORD_MAC" in str(urlException):
             attempts += 1
             error = True
         else:
             raise urllibException
-        
+
     if error:
         if attempts < maxRetries:
-            results = api_post(start_url, headers, timeout, attempts, maxRetries)
+            results = api_get(start_url, headers, timeout, attempts, maxRetries)
         else:
-            TooManyRetries = "Retried "+str(maxRetres)+" times, got either SSLError or ProxyError" 
+            TooManyRetries = (
+                "Retried "
+                + str(maxRetries)
+                + " times, got either SSLError or ProxyError"
+            )
             raise TooManyRetries
     else:
         return results
+
 
 def write_output(data):
     with open("data.csv", mode="w") as output_file:
@@ -88,7 +94,7 @@ def fetch_data():
         try:
             r2 = session.get(url, headers=headers, timeout=15)
         except Exception:
-            r2 = api_get(url,headers,15,0,15)
+            r2 = api_get(url, headers, 15, 0, 15)
         if r2.encoding is None:
             r2.encoding = "utf-8"
         for line2 in r2.iter_lines(decode_unicode=True):
