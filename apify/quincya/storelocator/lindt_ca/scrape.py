@@ -87,8 +87,8 @@ def fetch_data():
 
         country_code = loc["country_id"]
         hours = (
-            "Monday " +
-            loc["opening_hours_monday"]
+            "Monday "
+            + loc["opening_hours_monday"]
             + " Tuesday "
             + loc["opening_hours_tuesday"]
             + " Wednesday "
