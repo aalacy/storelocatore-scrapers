@@ -60,7 +60,7 @@ def fetch_data():
         loc_dom = etree.HTML(loc_response.text)
 
         location_name = loc_dom.xpath('//h1[@class="et_pb_module_header"]/text()')
-        location_name = location_name[0] if location_name else "<MISSING>"
+        location_name = location_name[0].split(",")[0] if location_name else "<MISSING>"
         street_address = loc_dom.xpath('//span[@itemprop="address"]/text()')
         street_address = (
             " ".join([e.strip() for e in street_address])
@@ -100,10 +100,17 @@ def fetch_data():
             state = state if state else "<MISSING>"
             zip_code = addr.postcode
             zip_code = zip_code if zip_code else "<MISSING>"
+        state = state.replace(".", "")
         country_code = "<MISSING>"
         store_number = "<MISSING>"
         phone = loc_dom.xpath('//span[@itemprop="telephone"]/a/text()')
-        phone = phone[0] if phone else "<MISSING>"
+        if not phone:
+            phone = loc_dom.xpath('//span[@itemprop="telephone"]/text()')
+        if not phone:
+            phone = loc_dom.xpath('//a[contains(@href, "tel")]/text()')
+        if not phone:
+            phone = loc_dom.xpath('//div[@class="et_pb_text_inner"]/p[4]/text()')
+        phone = phone[0].strip() if phone else "<MISSING>"
         location_type = "<MISSING>"
         latitude = "<MISSING>"
         longitude = "<MISSING>"

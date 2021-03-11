@@ -6,6 +6,7 @@ from sgscrape import simple_network_utils as net_utils
 from sgscrape import simple_utils as utils
 import json
 from requests import exceptions  # noqa
+from urllib3 import exceptions as urlibException  # noqa
 from sglogging import sglog
 from sgrequests import SgRequests
 
@@ -19,39 +20,54 @@ def para(tup):
     }
     try:
         try:
-            if len(tup[1]) > 0:
-                k = json.loads(
-                    str(
-                        next(
-                            net_utils.fetch_xml(
-                                root_node_name="body",
-                                location_node_name="script",
-                                location_node_properties={
-                                    "type": "application/ld+json",
-                                    "id": "schema-webpage",
-                                },
-                                request_url=tup[1],
-                                headers=headers,
-                            )
-                        )["script type=application/ld+json id=schema-webpage"]
-                    )
-                    .replace("\u0119", "e")
-                    .replace("\u011f", "g")
-                    .replace("\u0144", "n")
-                    .replace("\u0131", "i"),
-                    strict=False,
-                )  # ['script type=application/ld+json']).rsplit(';',1)[0])
-                k["STATUS"] = True
+            try:
+                if len(tup[1]) > 0:
+                    k = json.loads(
+                        str(
+                            next(
+                                net_utils.fetch_xml(
+                                    root_node_name="body",
+                                    location_node_name="script",
+                                    location_node_properties={
+                                        "type": "application/ld+json",
+                                        "id": "schema-webpage",
+                                    },
+                                    request_url=tup[1],
+                                    headers=headers,
+                                )
+                            )["script type=application/ld+json id=schema-webpage"]
+                        )
+                        .replace("\u0119", "e")
+                        .replace("\u011f", "g")
+                        .replace("\u0144", "n")
+                        .replace("\u0131", "i"),
+                        strict=False,
+                    )  # ['script type=application/ld+json']).rsplit(';',1)[0])
+                    k["STATUS"] = True
+                else:
+                    k["requrl"] = "<MISSING>"
+                    k["index"] = tup[0]
+                    k["STATUS"] = True
+            except exceptions.RequestException as e:
+                if "404" in str(e):
+                    k = {}
+                    k["STATUS"] = False
+                if "ProxyError" in str(e):
+                    tup[2] += 1
+                    if tup[2] < 15:
+                        k = para(tup)
+                else:
+                    logzilla.info(f"Exception: {e}, retried {tup[2]} times")
+                    raise Exception
+        except urlibException.SSLError as e:
+            if "BAD_RECORD_MAC" in str(e):
+                tup[2] += 1
+                if tup[2] < 15:
+                    k = para(tup)
             else:
-                k["requrl"] = "<MISSING>"
-                k["index"] = tup[0]
-                k["STATUS"] = True
-        except exceptions.RequestException as e:
-            if "404" in str(e):
-                k = {}
-                k["STATUS"] = False
-            else:
+                logzilla.info(f"Exception: {e}, retried {tup[2]} times")
                 raise Exception
+
     except StopIteration:
         return
 
@@ -207,7 +223,7 @@ def get_brand(brand, humanBrand):
             if k["hotels"][0]["brand"] == brand:
                 par = utils.parallelize(
                     search_space=[
-                        [counter, z["overviewPath"]]
+                        [counter, z["overviewPath"], 0]
                         for counter, z in enumerate(k["hotels"])
                     ],
                     fetch_results_for_rec=para,

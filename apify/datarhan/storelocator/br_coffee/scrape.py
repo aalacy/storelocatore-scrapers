@@ -63,6 +63,8 @@ def fetch_data():
         zip_code = poi["address"].split()[-1]
         if "USA" in zip_code:
             zip_code = poi["postcode"]
+        if "States" in zip_code:
+            zip_code = poi["postcode"]
         zip_code = zip_code if zip_code else "<MISSING>"
         country_code = poi["countryCode"]
         country_code = country_code if country_code else "<MISSING>"
