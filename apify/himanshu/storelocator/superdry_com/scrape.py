@@ -73,6 +73,8 @@ def fetch_data():
         zip_code = poi["profile"]["address"]["postalCode"]
         zip_code = zip_code if zip_code else "<MISSING>"
         country_code = poi["profile"]["address"]["countryCode"]
+        if country_code not in ["US", "GB"]:
+            continue
         store_number = poi["profile"]["meta"]["id"]
         store_number = store_number if store_number else "<MISSING>"
         phone = poi["profile"].get("mainPhone")
