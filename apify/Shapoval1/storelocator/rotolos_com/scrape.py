@@ -48,7 +48,7 @@ def get_urls():
     r = session.get("https://rotolos.com/locations/", headers=headers)
     tree = html.fromstring(r.text)
 
-    return tree.xpath("//a[@class='view-details']/@href")
+    return set(tree.xpath("//a[@class='view-details']/@href"))
 
 
 def get_data(url):
