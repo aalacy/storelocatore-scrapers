@@ -45,7 +45,6 @@ def fetch_data():
     if r.encoding is None:
         r.encoding = "utf-8"
     for line in r.iter_lines(decode_unicode=True):
-        print(line)
         if "<loc>https://www.samsclub.com/club/" in line:
             lurl = line.split("<loc>")[1].split("<")[0]
             locs.append(lurl)
