@@ -24,7 +24,7 @@ def _valid(val):
 
 def fetch_data():
     with SgRequests() as session:
-        locator_domain = "https://www.kaiafit.com/locations/find-a-kaia-location"
+        locator_domain = "https://www.kaiafit.com/"
         base_url = "https://www.kaiafit.com/locations/find-a-kaia-location"
         res = session.get(base_url, headers=_headers).text
         locations = json.loads(
