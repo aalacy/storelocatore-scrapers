@@ -67,6 +67,7 @@ def fetch_data():
         lat = ""
         lng = ""
         hours = ""
+        CS = False
         r2 = session.get(loc, headers=headers)
         for line2 in r2.iter_lines():
             line2 = str(line2.decode("utf-8"))
@@ -83,6 +84,8 @@ def fetch_data():
                 zc = line2.split('"postalCode": "')[1].split('"')[0]
                 add = line2.split('"streetAddress": "')[1].split('"')[0]
                 city = line2.split('"addressLocality": "')[1].split('"')[0]
+            if "coming soon" in line2:
+                CS = True
             if "Regular Store Hours:</h5>" in line2:
                 try:
                     hours = (
@@ -113,6 +116,8 @@ def fetch_data():
             hours = hours.split("</p></div>")[0]
         if phone == "":
             phone = "<MISSING>"
+        if CS:
+            hours = "Coming Soon"
         yield [
             website,
             loc,
