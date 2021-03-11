@@ -70,6 +70,14 @@ def fetch_data():
         location_type = "<MISSING>"
         latitude = "<MISSING>"
         longitude = "<MISSING>"
+        geo = (
+            loc_dom.xpath("//iframe/@src")[0]
+            .split("!2d")[-1]
+            .split("!3m")[0]
+            .split("!3d")
+        )
+        latitude = geo[1].split("!")[0]
+        longitude = geo[0]
         hours_of_operation = "<MISSING>"
 
         item = [
