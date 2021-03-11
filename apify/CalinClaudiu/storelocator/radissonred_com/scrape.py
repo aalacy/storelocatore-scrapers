@@ -51,6 +51,7 @@ def para(tup):
                 k = {}
                 k["STATUS"] = False
             else:
+                logzilla.info(f"Exception: {e}")
                 raise Exception
     except StopIteration:
         return
