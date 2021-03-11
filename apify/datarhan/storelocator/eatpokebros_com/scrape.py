@@ -1,10 +1,9 @@
 import re
 import csv
-import json
 from lxml import etree
 
-from sgselenium import SgChrome
-from sgscrape.sgpostal import parse_address_usa
+from sgrequests import SgRequests
+from sgscrape.sgpostal import parse_address_intl
 
 
 def write_output(data):
@@ -39,57 +38,44 @@ def write_output(data):
 
 def fetch_data():
     # Your scraper here
+    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
+
     items = []
 
-    start_url = "https://urbanplates.com/locations/"
+    start_url = "https://eatpokebros.com/locations/"
     domain = re.findall("://(.+?)/", start_url)[0].replace("www.", "")
-    with SgChrome() as driver:
-        driver.get(start_url)
-        dom = etree.HTML(driver.page_source)
-    data = dom.xpath('//script[contains(text(), "gmpAllMapsInfo")]/text()')[0]
-    all_locations = re.findall("gmpAllMapsInfo = (.+);", data)[0]
-    all_locations = json.loads(all_locations)
+    hdr = {
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
+    }
+    response = session.get(start_url, headers=hdr)
+    dom = etree.HTML(response.text)
 
-    for poi in all_locations[0]["markers"]:
-        location_name = poi["title"]
-        store_url = f'https://urbanplates.com/locations/{location_name.lower().replace(" ", "-")}'
-        with SgChrome() as driver:
-            driver.get(store_url)
-            loc_dom = etree.HTML(driver.page_source)
-
-        location_name = location_name if location_name else "<MISSING>"
-        poi_html = etree.HTML(poi["description"])
-        raw_address = poi_html.xpath("//text()")
-        raw_address = [
-            e.strip() for e in raw_address if e.strip() and "Get Directions" not in e
-        ]
-        addr = parse_address_usa(" ".join(raw_address))
+    all_locations = dom.xpath('//div[@class="location"]')
+    for poi_html in all_locations:
+        store_url = start_url
+        location_name = poi_html.xpath(".//h3/text()")
+        location_name = location_name[0] if location_name else "<MISSING>"
+        raw_address = poi_html.xpath(".//address/text()")
+        raw_address = [e.strip() for e in raw_address if e.strip()]
+        addr = parse_address_intl(" ".join(raw_address))
         street_address = addr.street_address_1
         if addr.street_address_2:
             street_address += " " + addr.street_address_2
-        street_address = street_address.split("Located")[0].strip()
-        if "Carlsbad" in location_name:
-            street_address += " Calle Barcelona"
-        if "1782M" in street_address:
-            street_address = "1782M Galleria at Tysons II"
         city = addr.city
         city = city if city else "<MISSING>"
-        if city == "Tysons Ii Tysons":
-            city = "Tysons"
         state = addr.state
         state = state if state else "<MISSING>"
         zip_code = addr.postcode
         zip_code = zip_code if zip_code else "<MISSING>"
-        country_code = addr.country
-        country_code = country_code if country_code else "<MISSING>"
-        store_number = poi["id"]
-        phone = "<MISSING>"
+        country_code = "US"
+        store_number = "<MISSING>"
+        phone = poi_html.xpath('.//p[@class="phone"]/a/text()')
+        phone = phone[0] if phone else "<MISSING>"
         location_type = "<MISSING>"
-        latitude = poi["coord_x"]
-        longitude = poi["coord_y"]
-        days = loc_dom.xpath('//div[@class="days"]/text()')
-        hours = loc_dom.xpath('//div[@class="hours"]/text()')
-        hoo = list(map(lambda d, h: d.strip() + " " + h.strip(), days, hours))
+        latitude = "<MISSING>"
+        longitude = "<MISSING>"
+        hoo = poi_html.xpath('.//div[@class="hours"]/p/text()')
+        hoo = [e.strip() for e in hoo if e.strip()]
         hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
 
         item = [

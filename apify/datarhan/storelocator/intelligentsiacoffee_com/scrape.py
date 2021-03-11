@@ -1,10 +1,10 @@
 import re
 import csv
-import json
 from lxml import etree
+from urllib.parse import urljoin
 
-from sgselenium import SgChrome
-from sgscrape.sgpostal import parse_address_usa
+from sgrequests import SgRequests
+from sgscrape.sgpostal import parse_address_intl
 
 
 def write_output(data):
@@ -39,57 +39,52 @@ def write_output(data):
 
 def fetch_data():
     # Your scraper here
+    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
+
     items = []
 
-    start_url = "https://urbanplates.com/locations/"
+    start_url = "https://www.intelligentsia.com/pages/locations"
     domain = re.findall("://(.+?)/", start_url)[0].replace("www.", "")
-    with SgChrome() as driver:
-        driver.get(start_url)
-        dom = etree.HTML(driver.page_source)
-    data = dom.xpath('//script[contains(text(), "gmpAllMapsInfo")]/text()')[0]
-    all_locations = re.findall("gmpAllMapsInfo = (.+);", data)[0]
-    all_locations = json.loads(all_locations)
+    hdr = {
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
+    }
+    response = session.get(start_url, headers=hdr)
+    dom = etree.HTML(response.text)
 
-    for poi in all_locations[0]["markers"]:
-        location_name = poi["title"]
-        store_url = f'https://urbanplates.com/locations/{location_name.lower().replace(" ", "-")}'
-        with SgChrome() as driver:
-            driver.get(store_url)
-            loc_dom = etree.HTML(driver.page_source)
+    all_locations = dom.xpath('//li[@class="loc-item"]/div[1]/a/@href')
+    for url in all_locations:
+        store_url = urljoin(start_url, url)
+        loc_response = session.get(store_url)
+        loc_dom = etree.HTML(loc_response.text)
 
-        location_name = location_name if location_name else "<MISSING>"
-        poi_html = etree.HTML(poi["description"])
-        raw_address = poi_html.xpath("//text()")
-        raw_address = [
-            e.strip() for e in raw_address if e.strip() and "Get Directions" not in e
-        ]
-        addr = parse_address_usa(" ".join(raw_address))
+        location_name = loc_dom.xpath('//h2[@class="loc-detail__hero-text"]/text()')
+        location_name = location_name[-1] if location_name else "<MISSING>"
+        raw_address = loc_dom.xpath(
+            '//span[contains(text(), "Address")]/following-sibling::span/text()'
+        )[0]
+        addr = parse_address_intl(raw_address)
         street_address = addr.street_address_1
         if addr.street_address_2:
             street_address += " " + addr.street_address_2
-        street_address = street_address.split("Located")[0].strip()
-        if "Carlsbad" in location_name:
-            street_address += " Calle Barcelona"
-        if "1782M" in street_address:
-            street_address = "1782M Galleria at Tysons II"
+        street_address = street_address if street_address else "<MISSING>"
         city = addr.city
         city = city if city else "<MISSING>"
-        if city == "Tysons Ii Tysons":
-            city = "Tysons"
         state = addr.state
         state = state if state else "<MISSING>"
         zip_code = addr.postcode
         zip_code = zip_code if zip_code else "<MISSING>"
         country_code = addr.country
         country_code = country_code if country_code else "<MISSING>"
-        store_number = poi["id"]
-        phone = "<MISSING>"
+        store_number = "<MISSING>"
+        phone = loc_dom.xpath(
+            '//span[contains(text(), "Call")]/following-sibling::span/text()'
+        )
+        phone = phone[-1] if phone else "<MISSING>"
         location_type = "<MISSING>"
-        latitude = poi["coord_x"]
-        longitude = poi["coord_y"]
-        days = loc_dom.xpath('//div[@class="days"]/text()')
-        hours = loc_dom.xpath('//div[@class="hours"]/text()')
-        hoo = list(map(lambda d, h: d.strip() + " " + h.strip(), days, hours))
+        latitude = "<MISSING>"
+        longitude = "<MISSING>"
+        hoo = loc_dom.xpath('//div[@class="loc-hours__row"]/span/text()')
+        hoo = [e.strip() for e in hoo if e.strip()]
         hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
 
         item = [
