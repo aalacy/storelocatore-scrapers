@@ -57,9 +57,7 @@ def fetch_data():
         location_name = item.h4.text.strip()
         raw_address = list(item.a.stripped_strings)
 
-        street_address = (
-            item.span.text.encode("ascii", "replace").decode().replace("?", " ").strip()
-        )
+        street_address = item.span.text.strip()
         city_line = raw_address[-1].strip().split(",")
         city = city_line[0].strip()
         state = city_line[-1].strip().split()[0].strip()
@@ -69,7 +67,7 @@ def fetch_data():
         location_type = "<MISSING>"
 
         try:
-            phone = re.findall("[(\d)]{5} [\d]{3}-[\d]{4}", str(item))[0]
+            phone = re.findall(r"[(\d)]{5} [\d]{3}-[\d]{4}", str(item))[0]
         except:
             phone = "<MISSING>"
 
