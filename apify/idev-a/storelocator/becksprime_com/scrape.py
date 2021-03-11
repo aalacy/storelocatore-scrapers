@@ -2,7 +2,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
-import re
+import demjson
 
 _headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.182 Safari/537.36",
@@ -35,17 +35,16 @@ def fetch_data():
             _hour = list(_.select("div.group .grid-item")[1].stripped_strings)
             state_zip = _addr[1].split(",")[1].strip()
             page_url = locator_domain + _.h4.a["href"]
-            soup1 = bs(session.get(page_url, headers=_headers).text, "lxml")
-            coord = soup1.find(
-                "a", string=re.compile(r"GET DIRECTIONS", re.IGNORECASE)
-            )["href"]
-            latitude = longitude = ""
-            try:
-                lat_lng = coord.split("/@")[1].split("/data")[0].split(",")
-                latitude = lat_lng[0]
-                longitude = lat_lng[1]
-            except:
-                pass
+            res = session.get(page_url, headers=_headers).text
+            lat_lng = demjson.decode(
+                res.split("var heights =")[1]
+                .strip()
+                .split("var mapStyles =")[0]
+                .strip()[:-1]
+            )
+            latitude = lat_lng["lat"]
+            longitude = lat_lng["lng"]
+
             yield SgRecord(
                 page_url=page_url,
                 location_name=_.h4.text,
