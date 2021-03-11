@@ -75,6 +75,7 @@ def fetch_data():
                 page_url = "https://www.circlek.com" + stores[key]["url"]
                 try:
                     store_req = session.get(page_url, headers=headers)
+                    logger.info(page_url)
                 except:
                     continue
                 store_sel = lxml.html.fromstring(store_req.text)
@@ -133,6 +134,9 @@ def fetch_data():
                             hours_list.append(day + ":" + time)
 
                         hours_of_operation = "; ".join(hours_list).strip()
+                        if stores[key]["op_status"] == "Limitation COVID-19":
+                            hours_of_operation = "Coming Soon/Limitation COVID-19"
+
                         if street_address == "" or street_address is None:
                             street_address = "<MISSING>"
 
@@ -151,6 +155,16 @@ def fetch_data():
                             longitude = "<MISSING>"
 
                         if hours_of_operation == "":
+                            try:
+                                hours_of_operation = " ".join(
+                                    store_sel.xpath(
+                                        '//div[@class="columns large-12 middle hours-wrapper"]/text()'
+                                    )
+                                ).strip()
+                            except:
+                                hours_of_operation = "<MISSING>"
+
+                        if not hours_of_operation:
                             hours_of_operation = "<MISSING>"
 
                         if phone == "" or phone is None:

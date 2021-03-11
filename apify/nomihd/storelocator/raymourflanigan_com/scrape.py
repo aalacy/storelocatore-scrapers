@@ -7,7 +7,6 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgzip.dynamic import SearchableCountries
 from sgzip.static import static_zipcode_list
-import datetime
 
 website = "raymourflanigan.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -70,11 +69,14 @@ def process_record(raw_results_from_one_zipcode):
                         and hours[key]["close"] is not None
                     ):
                         day = key
-                        if day == "today":
-                            day = datetime.datetime.now().strftime("%A")
-                        hours_of_operation = hours_list.append(
-                            day + ":" + hours[key]["open"] + "-" + hours[key]["close"]
-                        )
+                        if day != "today":
+                            hours_list.append(
+                                day
+                                + ":"
+                                + hours[key]["open"]
+                                + "-"
+                                + hours[key]["close"]
+                            )
                 hours_of_operation = "; ".join(hours_list).strip()
 
                 latitude = store_json["latitude"]
