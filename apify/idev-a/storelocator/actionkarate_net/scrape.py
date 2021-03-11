@@ -33,8 +33,7 @@ def fetch_data():
     base_url = "https://actionkarate.net/"
     total = 0
     idx = 1
-    with SgFirefox(executable_path=r"/mnt/g/work/mia/geckodriver.exe") as driver:
-        # with webdriver.Firefox(executable_path=r"/mnt/g/work/mia/geckodriver.exe") as driver:
+    with SgFirefox() as driver:
         driver.get(base_url)
         close_btn = WebDriverWait(driver, 10).until(
             EC.presence_of_element_located(
