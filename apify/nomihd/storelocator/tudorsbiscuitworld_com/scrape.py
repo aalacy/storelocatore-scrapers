@@ -33,7 +33,6 @@ def fetch_data():
         location_name = "".join(
             store_sel.xpath('//span[@class="Header"]/a/text()')
         ).strip()
-        coord_title = coordinates[index].split(",")[2].replace("'", "").strip()
         raw_text = store_sel.xpath("//span/text()")
         raw_list = []
         for raw in raw_text:
