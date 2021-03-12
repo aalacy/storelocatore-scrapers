@@ -4,8 +4,6 @@ from bs4 import BeautifulSoup
 from sgrequests import SgRequests
 from tenacity import retry, stop_after_attempt
 
-session = SgRequests()
-
 
 def write_output(data):
     with open("data.csv", mode="w", newline="") as output_file:
@@ -38,7 +36,8 @@ def write_output(data):
 
 
 @retry(stop=stop_after_attempt(3))
-def fetch_location(url, headers, session):
+def fetch_location(url, headers):
+    session = SgRequests()
     soup = BeautifulSoup(session.get(url, headers=headers).text, "lxml")
 
     data = json.loads(
@@ -51,6 +50,7 @@ def fetch_location(url, headers, session):
 
 
 def fetch_data():
+    session = SgRequests()
     base_url = "https://www.kroger.com/"
 
     headers = {
@@ -68,7 +68,7 @@ def fetch_data():
 
     for url in soup.find_all("loc")[:-1]:
         page_url = url.text
-        data, location_soup = fetch_location(page_url, headers, session)
+        data, location_soup = fetch_location(page_url, headers)
 
         location_name = location_soup.find(
             "h1", {"data-qa": "storeDetailsHeader"}
