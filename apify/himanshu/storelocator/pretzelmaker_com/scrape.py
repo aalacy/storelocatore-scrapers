@@ -1,7 +1,7 @@
 import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
-from sgscrape import sgpostal as parser
+from sgscrape.sgpostal import parse_address, International_Parser
 import json
 
 
@@ -66,7 +66,7 @@ def fetch_data():
                         if store_data[i]:
                             raw_addr.append(store_data[i])
                     raw_addr = " ".join(raw_addr)
-                    nice = parser.parse_address_intl(raw_addr)
+                    nice = parse_address(International_Parser(), raw_addr)
                     store_data["sl_address"] = nice.street_address_1
                     if nice.street_address_2:
                         store_data["sl_address"] = (
@@ -122,7 +122,8 @@ def fetch_data():
                         if store_data[i]:
                             raw_addr.append(store_data[i])
                     raw_addr = " ".join(raw_addr)
-                    nice = parser.parse_address_intl(raw_addr)
+                    nice = parse_address(International_Parser(), raw_addr)
+
                     store_data["sl_address"] = nice.street_address_1
                     if nice.street_address_2:
                         store_data["sl_address"] = (
