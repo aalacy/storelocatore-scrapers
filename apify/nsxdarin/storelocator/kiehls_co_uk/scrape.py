@@ -116,6 +116,66 @@ def fetch_data():
                 hours = (
                     hours.replace("day", "day ").replace(" ;", ";").replace("  ", " ")
                 )
+                if "Nk-Lisburn Road" in name:
+                    add = "Unit 2 Osborne Buildings 717 Lisburn Road"
+                if "Debenhams-Liverpool" in name:
+                    add = "DEBENHAMS LIVERPOOL, UNIT 15 - 42 Lord Street"
+                if "87-135 BROMPTON ROAD" in add:
+                    add = "87-135 BROMPTON ROAD, Knightsbridge"
+                if "Kiehl's-Windsor" in name:
+                    add = "Unit 7, Windsor Royal Station Jubilee Arch"
+                if "PADDINGTON STATION - The Lawn" in add:
+                    add = "PADDINGTON STATION - The Lawn, Unit 3"
+                if "Kiehl's-Waterloo" in name:
+                    add = "UNIT 6, THE BALCONY - Waterloo Station"
+                if "unit su-09" in add:
+                    add = "unit su-09, Western arcade"
+                if "307 Kings Road" in add:
+                    add = "307 Kings Road (opposite Bluebird restaurant)"
+                if "Westfield Whitecity" in name:
+                    add = "Ariel Way, Shepherd's Bush"
+                if "46 Northcote Road" in add:
+                    add = "46 Northcote Road Clapham"
+                if "Space Nk-Victoria" in name:
+                    add = "Unit 6, 4 Cathedral Walk Cardinal Place"
+                if "34 Hill Street" in add:
+                    add = "34 Hill Street Richmond Surrey"
+                if "Space Nk-Kingston" in name:
+                    add = "2/2a Church Street Kingston-upon-Thames Surrey"
+                if "INTU Watford" in add:
+                    add = "INTU Watford, 300 the harlequin"
+                if "29 Oakdene Parade" in add:
+                    add = "29 Oakdene Parade Cobham Surrey"
+                if "81 Queens Road" in add:
+                    add = "81 Queens Road Clifton Bristol"
+                if "Pedmore Rd" in add:
+                    add = "Pedmore Rd, Brierley Hill"
+                if "Unit 16-18" in add:
+                    add = "Unit 16-18, Victoria Quarter Queen Victoria Quarter"
+                if "2 The Highway" in add:
+                    add = "2 The Highway Station Road"
+                if "NO.38" in add:
+                    add = "NO.38, HAYES ARCADE - St David's Dewi Sant"
+                if "Space Nk-Windsor" in name:
+                    add = "Unit 26, Windsor Royal Shopping Centre Windsor"
+                if "Kiehl's-Nottingham" in name:
+                    add = "14, ST PETERS GATE"
+                if "36-37 Princes Square" in add:
+                    add = "36-37 Princes Square 48 Buchanan Street"
+                if "Space Nk-Bournemouth" in name:
+                    add = "Unit 1, The Arcarde Gervis Place"
+                if "Debenhams-Bournemouth" in name:
+                    add = "The square, bourne Ave"
+                if "Unit Ds1" in add:
+                    add = "Unit Ds1, Overgate Centre"
+                if "130 MERCHANT HALL" in add:
+                    add = "130 MERCHANT HALL, CHAPELFIELD SHOPPING CENTRE"
+                if (
+                    ";Sunday" not in hours
+                    and "; Sunday" not in hours
+                    and "Sunday" in hours
+                ):
+                    hours = hours.replace("Sunday", "; Sunday")
                 if add not in ids and city != "Online":
                     ids.append(add)
                     poi = [

@@ -1,6 +1,7 @@
 import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
+from bs4 import BeautifulSoup
 
 logger = SgLogSetup().get_logger("anixter_com")
 session = SgRequests()
@@ -40,6 +41,7 @@ def fetch_data():
         "Accept": "application/json, text/javascript, */*; q=0.01",
     }
     base_url = "https://www.anixter.com"
+
     addresses = []
     US_states = [
         "AL",
@@ -110,7 +112,7 @@ def fetch_data():
             )
             city = data["address"]["town"]
             state = data["address"]["region"]["isocodeShort"]
-            zipp = data["address"]["postalCode"]
+            zip = data["address"]["postalCode"]
             country_code = data["address"]["region"]["countryIso"]
             phone = data["address"]["phone"]
             latitude = data["geoPoint"]["latitude"]
@@ -127,6 +129,7 @@ def fetch_data():
                 )
             else:
                 hours_of_operation = "<MISSING>"
+
             store = []
             store.append(base_url)
             store.append(location_name)
@@ -136,7 +139,7 @@ def fetch_data():
             addresses.append(store[-1])
             store.append(city)
             store.append(state)
-            store.append(zipp)
+            store.append(zip)
             store.append(country_code)
             store.append("<MISSING>")
             store.append(phone if phone else "<MISSING>")
@@ -146,8 +149,9 @@ def fetch_data():
             store.append(hours_of_operation)
             store.append(page_url)
             yield store
+
     addresses1 = []
-    US_states = [
+    CA_states = [
         "NL",
         "PE",
         "NS",
@@ -162,7 +166,7 @@ def fetch_data():
         "NT",
         "NU",
     ]
-    for state in US_states:
+    for state in CA_states:
         json_data = session.get(
             "https://www.anixter.com/en_us/pos/region?searchCode=CA-"
             + str(state)
@@ -181,7 +185,7 @@ def fetch_data():
             if "QUéBEC" == city:
                 city = "QUEBEC"
             state = data["address"]["region"]["isocodeShort"]
-            zipp = data["address"]["postalCode"]
+            zip = data["address"]["postalCode"]
             country_code = data["address"]["region"]["countryIso"]
             phone = data["address"]["phone"]
             latitude = data["geoPoint"]["latitude"]
@@ -197,6 +201,7 @@ def fetch_data():
                 )
             else:
                 hours_of_operation = "<MISSING>"
+
             store = []
             store.append(base_url)
             store.append(location_name)
@@ -206,7 +211,50 @@ def fetch_data():
             addresses1.append(store[-1])
             store.append(city)
             store.append(state)
-            store.append(zipp)
+            store.append(zip)
+            store.append(country_code)
+            store.append("<MISSING>")
+            store.append(phone if phone else "<MISSING>")
+            store.append("<MISSING>")
+            store.append(latitude)
+            store.append(longitude)
+            store.append(hours_of_operation)
+            store.append(page_url)
+            yield store
+
+    uk_url = "https://www.anixter.com/en_us/about-us/contact-us/global-locations-contact-info/europe/united-kingdom.html"
+    req = session.get(uk_url, headers=headers)
+    soup = BeautifulSoup(req.text, "html5lib")
+    country_code = "UK"
+    content = soup.find(class_="tab-par parsys")
+    locs_data = content.find_all(class_="text parbase section")
+    for loc in locs_data:
+        if loc.find("h4"):
+            location_name = loc.text.replace("\n", "")
+            continue
+        else:
+            info = loc.text.strip()
+            address = info.split("\n")[0] + info.split("\n")[1]
+            street_address = (
+                address.replace("\xa0", "").replace(",", " ").replace("\u200b", "")
+            )
+            city_info = info.split("\n")[2].replace("\xa0", "").replace("\u200b", "")
+            city = city_info.split(",")[0]
+            state = city_info.split(" ")[1].strip().replace(",", "")
+            try:
+                zip = city_info.split(" ")[2] + city_info.split(" ")[3]
+            except Exception:
+                pass
+
+            page_url = uk_url
+
+            store = []
+            store.append(base_url)
+            store.append(location_name)
+            store.append(street_address)
+            store.append(city)
+            store.append(state)
+            store.append(zip)
             store.append(country_code)
             store.append("<MISSING>")
             store.append(phone if phone else "<MISSING>")

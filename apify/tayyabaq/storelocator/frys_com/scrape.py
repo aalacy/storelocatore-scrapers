@@ -57,7 +57,7 @@ def fetch_data():
     for n in range(0, len(location_href)):
         link = location_href[n]
         req = session.get(link, headers=HEADERS)
-        base = BeautifulSoup(req.text, "lxml")
+        base = BeautifulSoup(req.text, "html.parser")
         title = base.find(id="text1").text.strip()
         try:
             address = list(base.find(id="address").stripped_strings)
@@ -69,8 +69,9 @@ def fetch_data():
         pcode = address[1].split(",")[1].split()[1]
         phone = address[2].split("Phone ")[1]
         try:
+
             lat, longt = (
-                base.select_one("a[href*=maps?]")
+                base.select_one("a[href*=google]")["href"]
                 .split("ll=", 1)[1]
                 .split("&", 1)[0]
                 .split(",")

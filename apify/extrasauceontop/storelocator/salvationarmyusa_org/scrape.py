@@ -71,7 +71,7 @@ def getdata():
                 phone == "<MISSING>"
             else:
                 phone = re.sub("[^0-9]", "", str(phone))
-                phone = phone[:9]
+                phone = phone[:10]
 
             if phone == "1800" or phone == "800":
                 phone = "1800SATRUCK"
