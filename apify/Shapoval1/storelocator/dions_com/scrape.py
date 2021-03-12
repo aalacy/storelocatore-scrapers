@@ -48,8 +48,7 @@ def fetch_data():
             "".join(j.xpath("./text()"))
             .split('{"content":"<a href=')[1]
             .split(">")[0]
-            .replace("\/", "/")
-            .replace("\/\/", "//")
+            .replace("\\/", "/")
         )
         session = SgRequests()
         r = session.get(page_url)
