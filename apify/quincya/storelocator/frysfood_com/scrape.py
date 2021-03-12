@@ -61,7 +61,9 @@ def fetch_data():
             ).contents[0]
             store = json.loads(script)
 
-            location_name = store["name"]
+            location_name = base.find(
+                "h1", {"data-qa": "storeDetailsHeader"}
+            ).text.strip()
 
             try:
                 street_address = store["address"]["streetAddress"]
@@ -91,7 +93,16 @@ def fetch_data():
                     phone = "<MISSING>"
             except:
                 phone = "<MISSING>"
-            hours_of_operation = store["openingHours"][0]
+            hours_of_operation = (
+                " ".join(store["openingHours"])
+                .replace("Su-Sa", "Sun - Sat:")
+                .replace("Su-Fr", "Sun - Fri:")
+                .replace("-00:00", " - Midnight")
+                .replace("Su ", "Sun")
+                .replace("Mo-Fr", "Mon - Fri")
+                .replace("Sa ", "Sat ")
+                .replace("  ", " ")
+            ).strip()
             latitude = store["geo"]["latitude"]
             longitude = store["geo"]["longitude"]
 

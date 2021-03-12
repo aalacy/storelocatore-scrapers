@@ -50,8 +50,12 @@ def fetch_data():
             for item in items:
                 if '"brand":{"key":"' in item:
                     phone = "<MISSING>"
+                    CS = False
                     name = item.split('"name":"')[1].split('"')[0]
-                    loc = item.split(',"url":"')[1].split('"')[0]
+                    loc = (
+                        "https://www.hyatt.com"
+                        + item.split('"url":"https://www.hyatt.com')[1].split('"')[0]
+                    )
                     lat = item.split('"latitude":')[1].split(",")[0]
                     lng = item.split('"longitude":')[1].split("}")[0]
                     typ = (
@@ -81,9 +85,30 @@ def fetch_data():
                         zc = "<MISSING>"
                     if typ == "":
                         typ = "<MISSING>"
+                    logger.info(loc)
+                    try:
+                        r2 = session.get(loc, headers=headers)
+                        for line2 in r2.iter_lines():
+                            line2 = str(line2.decode("utf-8"))
+                            if (
+                                '<span class="opening-date' in line2
+                                and "Opening 20" in line2
+                            ):
+                                CS = True
+                            if (
+                                "and beyond" in line2
+                                and "Now accepting reservations" in line2
+                            ):
+                                CS = True
+                            if '"telephone":"' in line2:
+                                phone = line2.split('"telephone":"')[1].split('"')[0]
+                    except:
+                        pass
                     if country == "GB" or country == "CA" or country == "US":
                         if "Club Maui, " in name:
                             name = "Hyatt Residence Club Maui, Kaanapali Beach"
+                        if CS:
+                            name = name + " - Coming Soon"
                         yield [
                             website,
                             loc,

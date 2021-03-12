@@ -45,7 +45,7 @@ def fetch_data():
 
     DOMAIN = "midas.com"
 
-    start_url = "https://www.midas.com/partialglobalsearch/getstorelist?zipcode={}&language=en-us"
+    start_url = "https://www.midas.com/getstoreslistasjson?dmanum=620&zipproxsort={}"
     hdr = {
         "accept": "*/*",
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.67 Safari/537.36",

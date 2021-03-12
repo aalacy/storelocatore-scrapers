@@ -44,7 +44,7 @@ def fetch_data():
 
     with SgChrome() as driver:
         driver.get(start_url)
-        sleep(5)
+        sleep(15)
         dom = etree.HTML(driver.page_source)
 
     all_locations = dom.xpath('//div[@class="store_locator_result_list_item"]')

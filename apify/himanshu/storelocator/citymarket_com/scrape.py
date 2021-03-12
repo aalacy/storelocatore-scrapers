@@ -87,15 +87,7 @@ def fetch_data():
         location_type = "<MISSING>"
         lat = data["geo"]["latitude"]
         lng = data["geo"]["longitude"]
-        f = data["department"]
-        data_h = ""
-        for h in f:
-            if "openingHours" in h:
-                data_h = " ".join(h["openingHours"])
-        if data_h:
-            hours = (" ".join(data["openingHours"])) + ", Pharmacy hours : " + data_h
-        else:
-            hours = " ".join(data["openingHours"])
+        hours = " ".join(data["openingHours"])
         store = []
         store.append(base_url)
         store.append(location_name)
