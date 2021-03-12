@@ -1,4 +1,5 @@
 import csv
+import re
 
 from bs4 import BeautifulSoup
 
@@ -37,76 +38,74 @@ def write_output(data):
 
 def fetch_data():
 
-    base_link = "https://www.immunotek.com/?sm-xml-search=1&lat=36.3716117&lng=-89.7153981&radius=0&namequery=36.3711471%2C%20-89.71921320000001&query_type=all&limit=0&locname&address&city&state&zip&pid=11279"
+    base_link = "https://www.immunotek.com/locations-2/"
 
     user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36"
     headers = {"User-Agent": user_agent}
 
     session = SgRequests()
-    stores = session.get(base_link, headers=headers).json()
+    req = session.get(base_link, headers=headers)
+    base = BeautifulSoup(req.text, "lxml")
 
     data = []
     locator_domain = "immunotek.com"
 
-    for store in stores:
-        location_name = (
-            "ImmunoTek " + store["name"].split(",")[0].replace("&#8211;", "-").strip()
-        )
-        link = store["permalink"].replace("/map/", "/location/")
-        try:
-            req = session.get(link, headers=headers)
-        except:
-            continue
-        base = BeautifulSoup(req.text, "lxml")
-
-        phone = base.find_all(style="text-align: center;")[1].text.strip()
-        hours_of_operation = (
-            base.find_all(style="text-align: center;")[-1]
-            .text.encode("ascii", "replace")
-            .decode()
-            .replace("?", "-")
-            .strip()
-        )
-
-        if "coming-soon" in str(base).lower():
-            hours_of_operation = "Tuesday-Saturday 10am - 4pm"
-            if "greenwood" in base.find(style="text-align: center;").text.lower():
-                phone = "864-377-8115"
-            elif "williamsport" in base.find(style="text-align: center;").text.lower():
-                phone = "570-666-9290"
-            elif "horn lake" in base.find(style="text-align: center;").text.lower():
-                phone = "662-913-2506"
-            else:
+    sections = base.find(
+        class_="et_pb_section et_pb_section_3 et_pb_with_background et_section_regular"
+    ).find_all("div", recursive=False)
+    for section in sections:
+        items = section.find_all("div", recursive=False)
+        for item in items:
+            if not list(item.stripped_strings):
+                continue
+            if "coming-soon" in str(item):
                 continue
 
-        street_address = (store["address"] + " " + store["address2"]).strip()
-        city = store["city"]
-        state = store["state"]
-        zip_code = store["zip"]
-        country_code = "US"
-        store_number = store["ID"]
-        location_type = "<MISSING>"
-        latitude = store["lat"]
-        longitude = store["lng"].split(",")[0]
+            location_name = "ImmunoTek " + item.p.text.split(",")[0].strip()
 
-        data.append(
-            [
-                locator_domain,
-                link,
-                location_name,
-                street_address,
-                city,
-                state,
-                zip_code,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
-        )
+            raw_address = list(item.find_all("p")[2].stripped_strings)
+            street_address = raw_address[0]
+            city = raw_address[1].split(",")[0]
+            state = raw_address[1].split(",")[1].split()[0]
+            zip_code = raw_address[1].split(",")[1].split()[1]
+            country_code = "US"
+            store_number = "<MISSING>"
+            location_type = "<MISSING>"
+            phone = item.find_all("p")[1].text
+
+            map_str = item.find_all("p")[2].a["href"]
+            try:
+                geo = re.findall(r"[0-9]{2}\.[0-9]+,-[0-9]{2,3}\.[0-9]+", map_str)[
+                    0
+                ].split(",")
+                latitude = geo[0]
+                longitude = geo[1]
+            except:
+                latitude = "<MISSING>"
+                longitude = "<MISSING>"
+
+            hours_of_operation = " ".join(
+                list(item.find_all("p")[3].stripped_strings)
+            ).strip()
+
+            data.append(
+                [
+                    locator_domain,
+                    base_link,
+                    location_name,
+                    street_address,
+                    city,
+                    state,
+                    zip_code,
+                    country_code,
+                    store_number,
+                    phone,
+                    location_type,
+                    latitude,
+                    longitude,
+                    hours_of_operation,
+                ]
+            )
     return data
 
 
