@@ -39,6 +39,7 @@ def write_output(data):
         writer.writerow(
             [
                 "locator_domain",
+                "page_url",
                 "location_name",
                 "street_address",
                 "city",
@@ -77,8 +78,57 @@ def fetch_data():
         for store in store_list:
             output = []
             output.append(base_url)  # url
+            lname = get_value(store["locationNameTranslation"])
+            branch = get_value(store["groupBranchNumber"])
+            lurl = ""
+            try:
+                lurlus = (
+                    "https://www.nationalcar.com/en/car-rental/locations/us/"
+                    + get_value(store["state"]).lower()
+                    + "/"
+                    + lname.lower().replace(" ", "-").replace(".", "").replace("'", "")
+                    + "-"
+                    + branch
+                    + ".html"
+                )
+            except:
+                lurlus = "<MISSING>"
+            try:
+                lurlca = (
+                    "https://www.nationalcar.com/en/car-rental/locations/ca/"
+                    + get_value(store["state"]).lower()
+                    + "/"
+                    + lname.lower().replace(" ", "-").replace(".", "").replace("'", "")
+                    + "-"
+                    + branch
+                    + ".html"
+                )
+            except:
+                lurlca = "<MISSING>"
+            lurlgb = (
+                "https://www.nationalcar.com/en/car-rental/locations/gb/"
+                + lname.lower().replace(" ", "-").replace(".", "").replace("'", "")
+                + "-"
+                + branch
+                + ".html"
+            )
+            if "/US" in url:
+                lurl = lurlus
+            if "/CA" in url:
+                lurl = lurlca
+            if "/GB" in url:
+                lurl = lurlgb
+            output.append(lurl)
             output.append(get_value(store["locationNameTranslation"]))  # location name
-            output.append(get_value(store["addressLines"]))  # address
+            addinfo = get_value(store["addressLines"])
+            if "1978) Ltd" in addinfo:
+                addinfo = addinfo.split(") Ltd")[1].strip()
+            if "Enterprise Rent A Car" in addinfo:
+                addinfo = addinfo.split("Rent A Car")[1].strip()
+            addinfo = addinfo.replace("Williamsport Regional Airport ", "")
+            addinfo = addinfo.replace("Ronald Reagan Wash Natl Airprt ", "")
+            addinfo = addinfo.replace("Luis Munoz Marin Intl Airport ", "")
+            output.append(addinfo)  # address
             output.append(get_value(store["city"]))  # city
             try:
                 output.append(get_value(store["state"]))  # state
@@ -110,6 +160,7 @@ def fetch_data():
                 day_of_week = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
                 for day in day_of_week:
                     store_hours.append(day + " " + validate(hours))
+
             output.append(get_value(store_hours))  # opening hours
             output_list.append(output)
     return output_list

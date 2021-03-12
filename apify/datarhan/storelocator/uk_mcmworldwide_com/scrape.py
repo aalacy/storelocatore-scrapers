@@ -2,6 +2,7 @@ import csv
 from lxml import etree
 
 from sgrequests import SgRequests
+from sgscrape.sgpostal import parse_address_intl
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 
 
@@ -43,7 +44,7 @@ def fetch_data():
     scraped_items = []
 
     DOMAIN = "mcmworldwide.com"
-    start_url = "https://uk.mcmworldwide.com/on/demandware.store/Sites-MCM-UK-Site/en_GB/Stores-FindByGeoLocation?lat={}&lng={}&source=storeLocator"
+    start_url = "https://uk.mcmworldwide.com/on/demandware.store/Sites-MCM-UK-Site/en_GB/Stores-FindByGeoLocation?showOnlyMcmBoutiquesFlag=false&lat={}&lng={}&source=storeLocator"
 
     hdr = {
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.192 Safari/537.36",
@@ -62,11 +63,13 @@ def fetch_data():
         )
 
     for poi_html in all_locations:
-        store_url = "<MISSING>"
         location_name = poi_html.xpath('.//span[@class="store-name txt-mono"]/text()')
         location_name = location_name[0].strip() if location_name else "<MISSING>"
         raw_address = poi_html.xpath('.//p[@class="store-address"]/span/text()')
-        street_address = raw_address[0]
+        addr = parse_address_intl(raw_address[0])
+        street_address = addr.street_address_1
+        if addr.street_address_2:
+            street_address += " " + addr.street_address_2
         city = raw_address[1]
         state = "<MISSING>"
         zip_code = raw_address[2]
@@ -80,11 +83,14 @@ def fetch_data():
         location_type = "<MISSING>"
         latitude = poi_html.xpath("@data-lat")
         latitude = latitude[0] if latitude else "<MISSING>"
-        longitude = poi_html.xpath("@data-lng")
-        longitude = longitude if longitude else "<MISSING>"
+        longitude = poi_html.xpath("@data-long")
+        longitude = longitude[0] if longitude else "<MISSING>"
         hoo = poi_html.xpath('.//div[@class="store-hours"]//text()')
         hoo = [e.strip() for e in hoo if e.strip()]
         hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
+        store_url = "https://uk.mcmworldwide.com/en_GB/stores/{}/{}".format(
+            location_name.lower().replace(" ", "-"), store_number
+        )
 
         item = [
             DOMAIN,

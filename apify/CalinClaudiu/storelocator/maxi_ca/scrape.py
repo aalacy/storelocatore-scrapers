@@ -29,7 +29,7 @@ def determine(banner, ide):
 def para(k):
     session = SgRequests()
     ban = k["storeBannerId"]
-    ide = k["storeId"]
+    ide = k["id"]
     backup = k
     backupPhone = k["contactNumber"]
     headers = {
@@ -38,14 +38,20 @@ def para(k):
     }
     try:
         k = session.get(
-            "https://www.loblaws.ca/api/pickup-locations/" + k["storeId"],
+            "https://www.loblaws.ca/api/pickup-locations/" + k["StoreId"],
             headers=headers,
         ).json()
     except Exception:
-        k = backup
-        k["hours"] = k["openNowResponseData"]["hours"]
-        k["storeDetails"] = {}
-        k["storeDetails"]["phoneNumber"] = k["contactNumber"]
+        try:
+            k = session.get(
+                "https://www.loblaws.ca/api/pickup-locations/" + k["id"],
+                headers=headers,
+            ).json()
+        except Exception:
+            k = backup
+            k["hours"] = k["openNowResponseData"]["hours"]
+            k["storeDetails"] = {}
+            k["storeDetails"]["phoneNumber"] = backupPhone
 
     try:
         k["hours"] = "; ".join(
@@ -61,6 +67,7 @@ def para(k):
     k["storeId"] = ide
     if not k["storeDetails"]["phoneNumber"]:
         k["storeDetails"]["phoneNumber"] = backupPhone
+    k["backupPhone"] = backupPhone
     return k
 
 
@@ -85,6 +92,10 @@ def fetch_data():
         print_stats_interval=20,
     )
     for i in lize:
+        if len(i["storeDetails"]["phoneNumber"]) < 3:
+            i["storeDetails"]["phoneNumber"] = i["backupPhone"]
+        if len(i["storeDetails"]["phoneNumber"]) < 3:
+            i["storeDetails"]["phoneNumber"] = "<MISSING>"
         yield i
 
 
@@ -140,6 +151,15 @@ def fix_comma(x):
     return h.strip()
 
 
+def fix_phone(x):
+    h = []
+    for i in x:
+        if i.isdigit():
+            h.append(i)
+    h = "".join(h)
+    return h if len(h) > 3 else "<MISSING>"
+
+
 def scrape():
     field_defs = SimpleScraperPipeline.field_definitions(
         locator_domain=MappingField(mapping=["domain"]),
@@ -174,7 +194,7 @@ def scrape():
         ),
         phone=MappingField(
             mapping=["storeDetails", "phoneNumber"],
-            value_transform=lambda x: x.replace("None", "<MISSING>"),
+            value_transform=fix_phone,
             is_required=False,
         ),
         store_number=MappingField(mapping=["storeId"]),
