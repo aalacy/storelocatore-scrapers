@@ -93,7 +93,7 @@ def fetch_data():
         longitude = poi_html.xpath("@data-lng")
         longitude = longitude if longitude else "<MISSING>"
         hoo = poi_html.xpath('.//div[@class="store-hours"]//text()')
-        hoo = [e.strip() for e in hoo if e.strip()]
+        hoo = [e.strip() for e in hoo if e.strip()][:2]
         hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
         store_url = "https://us.mcmworldwide.com/en_US/stores/{}/{}".format(
             location_name.lower().replace(" ", "-"), store_number
