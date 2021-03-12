@@ -155,14 +155,12 @@ def fetch_data():
                 for i in store:
                     if not i:
                         i = "<MISSING>"
-                return_main_object.append(store)
-    yield return_main_object
+                yield store
 
 
 def scrape():
     data = fetch_data()
-    for i in data:
-        write_output(i)
+    write_output(data)
 
 
 scrape()
