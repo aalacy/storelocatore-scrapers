@@ -122,6 +122,15 @@ def fetch_data():
             street = "1880 Middle Country Road"
         if state == "New York":
             state = "NY"
+
+        p = session.get(link, headers=headers, verify=False)
+        bs = BeautifulSoup(p.text, "html.parser")
+
+        coords = bs.find("div", {"class": "marker"})
+
+        lat = coords["data-lat"]
+        lng = coords["data-lng"]
+
         data.append(
             [
                 "https://www.snb.com/locations/",
@@ -135,8 +144,8 @@ def fetch_data():
                 "<MISSING>",
                 phone,
                 "<MISSING>",
-                "<INACCESSIBLE>",
-                "<INACCESSIBLE>",
+                lat,
+                lng,
                 hours,
             ]
         )
