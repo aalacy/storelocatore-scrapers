@@ -38,13 +38,15 @@ def fetch_data():
 
     session = SgRequests()
     for i in range(0, 100000, 50):
-        r = session.get(
-            f"https://liveapi.yext.com/v2/accounts/me/entities/geosearch?radius=2500&location=68801"
-            f"&limit=50&api_key=14efc7d52bdeb902194f4a9a47528a6f&v=20181201&offset={i}&searchIds=4385"
+        url = (
+            "https://liveapi.yext.com/v2/accounts/me/answers/vertical/query?v=20190101&api_key=bfdb2b2f2353a35445889a43252ad97b&jsLibVersion=v1.5.7&sessionTrackingEnabled=true&input=usa&experienceKey=frischsanswerstemplate&version=PRODUCTION&filters={}&facetFilters={}&verticalKey=Restaurants&limit=50"
+            + f"&offset={i}&locale=en&referrerPageUrl=https%3A%2F%2Flocations.frischs.com%2F"
         )
-        js = r.json()["response"]["entities"]
+        r = session.get(url)
+        js = r.json()["response"]["results"]
 
         for j in js:
+            j = j["data"]
 
             a = j.get("address")
             street_address = f"{a.get('line1')}".strip() or "<MISSING>"
@@ -58,13 +60,13 @@ def fetch_data():
             state = a.get("region") or "<MISSING>"
             postal = a.get("postalCode") or "<MISSING>"
             country_code = a.get("countryCode") or "<MISSING>"
-            store_number = "<MISSING>"
+            store_number = j.get("id") or "<MISSING>"
             phone = j.get("mainPhone") or "<MISSING>"
             latitude = j.get("yextDisplayCoordinate", {}).get("latitude") or "<MISSING>"
             longitude = (
                 j.get("yextDisplayCoordinate", {}).get("longitude") or "<MISSING>"
             )
-            location_type = "<MISSING>"
+            location_type = j.get("type") or "<MISSING>"
 
             hours = j.get("hours")
             _tmp = []

@@ -1,10 +1,10 @@
 import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
+import time
 
 logger = SgLogSetup().get_logger("samsclub_com__fuel")
 
-session = SgRequests()
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
@@ -39,6 +39,7 @@ def write_output(data):
 
 def fetch_data():
     locs = []
+    session = SgRequests()
     url = "https://www.samsclub.com/sitemap_locators.xml"
     r = session.get(url, headers=headers)
     if r.encoding is None:
@@ -62,6 +63,8 @@ def fetch_data():
         lat = ""
         lng = ""
         phone = ""
+        session = SgRequests()
+        time.sleep(3)
         store = loc.rsplit("/", 1)[1]
         locurl = "https://www.samsclub.com/api/node/clubfinder/" + store
         r2 = session.get(locurl, headers=headers)
@@ -83,8 +86,8 @@ def fetch_data():
                 city = line2.split('"city":"')[1].split('"')[0]
                 state = line2.split('"state":"')[1].split('"')[0]
                 phone = line2.split('"phone":"')[1].split('"')[0]
-                lat = line2.split('"latitude":')[1].split(",")[0]
-                lng = line2.split('"longitude":')[1].split("}")[0]
+                lat = line2.split('"latitude":')[1].split("}")[0]
+                lng = line2.split('"longitude":')[1].split(",")[0]
                 try:
                     fcinfo = line2.split(
                         '"displayName":"Fuel Center","operationalHours":{'

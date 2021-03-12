@@ -1,6 +1,7 @@
 import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
+from sgselenium import SgChrome
 
 session = SgRequests()
 headers = {
@@ -39,7 +40,7 @@ def write_output(data):
 
 def fetch_data():
     locs = []
-    url = "https://www.thecapitalgrille.com/locations/all-locations"
+    url = "https://www.thecapitalgrille.com/locations-sitemap.xml"
     r = session.get(url, headers=headers)
     website = "thecapitalgrille.com"
     typ = "<MISSING>"
@@ -47,11 +48,8 @@ def fetch_data():
     logger.info("Pulling Stores")
     for line in r.iter_lines():
         line = str(line.decode("utf-8"))
-        if '<a id="locDetailsId" href="/locations/' in line:
-            locs.append(
-                "https://www.thecapitalgrille.com"
-                + line.split('href="')[1].split('"')[0]
-            )
+        if "<loc>https://www.thecapitalgrille.com/locations/" in line:
+            locs.append(line.split("<loc>")[1].split("<")[0])
     for loc in locs:
         logger.info(loc)
         name = ""
@@ -64,26 +62,27 @@ def fetch_data():
         lat = ""
         lng = ""
         hours = ""
-        r2 = session.get(loc, headers=headers)
-        for line2 in r2.iter_lines():
-            line2 = str(line2.decode("utf-8"))
-            if "<title>" in line2:
-                name = line2.split("<title>")[1].split(" |")[0]
-            if '"postalCode":"' in line2:
-                zc = line2.split('"postalCode":"')[1].split('"')[0]
-            if '"addressRegion":"' in line2:
-                state = line2.split('"addressRegion":"')[1].split('"')[0]
-            if '"streetAddress":"' in line2:
-                add = line2.split('"streetAddress":"')[1].split('"')[0]
-                phone = line2.split('telephone":"')[1].split('"')[0]
-            if '"addressRegion":"' in line2:
-                city = line2.split('addressLocality":"')[1].split('"')[0]
-            if '"latitude":"' in line2:
-                lat = line2.split('"latitude":"')[1].split('"')[0]
-                lng = line2.split('"longitude":"')[1].split('"')[0]
-            if ',"openingHours":["' in line2:
+        with SgChrome() as driver:
+            driver.get(url)
+            text = driver.page_source
+            text = str(text).replace("\r", "").replace("\n", "").replace("\t", "")
+            if "<title>" in text:
+                name = text.split("<title>")[1].split(" |")[0]
+            if '"postalCode":"' in text:
+                zc = text.split('"postalCode":"')[1].split('"')[0]
+            if '"addressRegion":"' in text:
+                state = text.split('"addressRegion":"')[1].split('"')[0]
+            if '"streetAddress":"' in text:
+                add = text.split('"streetAddress":"')[1].split('"')[0]
+                phone = text.split('telephone":"')[1].split('"')[0]
+            if '"addressRegion":"' in text:
+                city = text.split('addressLocality":"')[1].split('"')[0]
+            if '"latitude":"' in text:
+                lat = text.split('"latitude":"')[1].split('"')[0]
+                lng = text.split('"longitude":"')[1].split('"')[0]
+            if ',"openingHours":["' in text:
                 hours = (
-                    line2.split(',"openingHours":["')[1]
+                    text.split(',"openingHours":["')[1]
                     .split('"]')[0]
                     .replace('","', "; ")
                 )
