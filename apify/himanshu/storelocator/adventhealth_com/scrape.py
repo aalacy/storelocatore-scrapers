@@ -1,6 +1,5 @@
 import re
 import csv
-import json
 from lxml import etree
 from urllib.parse import urljoin
 
@@ -45,13 +44,8 @@ def fetch_data():
 
     start_url = "https://www.adventhealth.com/find-a-location"
     domain = re.findall("://(.+?)/", start_url)[0].replace("www.", "")
-    hdr = {
-        "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-        "accept-encoding": "gzip, deflate, br",
-        "upgrade-insecure-requests": "1",
-        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.192 Safari/537.36",
-    }
-    response = session.get(start_url, headers=hdr)
+
+    response = session.get(start_url)
     dom = etree.HTML(response.text)
 
     all_locations = dom.xpath(
@@ -59,7 +53,7 @@ def fetch_data():
     )
     next_page = dom.xpath('//a[@rel="next"]/@href')
     while next_page:
-        response = session.get(urljoin(start_url, next_page[0]), headers=hdr)
+        response = session.get(urljoin(start_url, next_page[0]))
         dom = etree.HTML(response.text)
         all_locations += dom.xpath(
             '//h3[@class="location-block__name h2 notranslate "]/a/@href'
@@ -68,15 +62,17 @@ def fetch_data():
 
     for url in all_locations:
         store_url = urljoin(start_url, url)
-        loc_response = session.get(store_url, headers=hdr)
+        if "adventhealth.com" not in url:
+            continue
+        loc_response = session.get(store_url)
         loc_dom = etree.HTML(loc_response.text)
-        poi = loc_dom.xpath('//script[@type="application/ld+json"]/text()')[0]
-        poi = json.loads(poi)
-        if type(poi) == list:
-            poi = poi[1]
 
-        location_name = poi["name"]
-        location_name = location_name if location_name else "<MISSING>"
+        location_name = dom.xpath(
+            '//span[@class="location-bar__name-text notranslate"]/text()'
+        )
+        location_name = location_name[0].strip() if location_name else "<MISSING>"
+        if location_name.endswith(","):
+            location_name = location_name[:-1]
         street_address = loc_dom.xpath('//span[@property="streetAddress"]/text()')
         street_address = street_address[0].strip() if street_address else "<MISSING>"
         if street_address.endswith(","):
@@ -91,10 +87,12 @@ def fetch_data():
         country_code = country_code[0] if country_code else "<MISSING>"
         store_number = "<MISSING>"
         phone = loc_dom.xpath('//a[@class="telephone"]/text()')
-        phone = phone[0] if phone else "<MISSING>"
+        phone = phone[0].strip() if phone and phone[0].strip() else "<MISSING>"
         location_type = "<MISSING>"
-        latitude = loc_dom.xpath("//@data-lat")[0]
-        longitude = loc_dom.xpath("//@data-lng")[0]
+        latitude = loc_dom.xpath("//@data-lat")
+        latitude = latitude[0] if latitude else "<MISSING>"
+        longitude = loc_dom.xpath("//@data-lng")
+        longitude = longitude[0] if longitude else "<MISSING>"
         hoo = loc_dom.xpath('//div[@class="location-block__office-hours-hours"]/text()')
         hoo = [e.strip() for e in hoo if e.strip()]
         hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"

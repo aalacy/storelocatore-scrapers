@@ -92,7 +92,7 @@ def fetch_data():
         hours = html.fromstring(hours)
         hours_of_operation = hours.xpath("//*/text()")
         hours_of_operation = list(filter(None, [a.strip() for a in hours_of_operation]))
-        hours_of_operation = "".join(hours_of_operation)
+        hours_of_operation = ";".join(hours_of_operation)
         if hours_of_operation.find("Online") != -1:
             hours_of_operation = hours_of_operation.split("Online")[0]
         if hours_of_operation.find("COMING SOON") != -1:

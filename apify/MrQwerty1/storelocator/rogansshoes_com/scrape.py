@@ -41,7 +41,7 @@ def get_urls():
 
     return set(
         tree.xpath(
-            "//div[@class='ContentPage Faq']//a[@title and contains(@href,'../')]/@href"
+            "//div[@class='ContentPage Faq']//a[@title and contains(@href,'../rogans')]/@href"
         )
     )
 
