@@ -722,32 +722,36 @@ def fetch_data():
                     )[0]["href"]
                 except:
                     map_url = page_soup.find(class_="site-info").a["href"]
-            coords = session.get(map_url).url
+            try:
+                coords = session.get(map_url).url
 
-            if "/@" in coords:
-                lat = coords.split("/@")[1].split(",")[0]
-                lng = coords.split("/@")[1].split(",")[1]
-            else:
-                map_soup = BeautifulSoup(session.get(map_url).text, "lxml")
-                file_name = open("data.txt", "w", encoding="utf-8")
-                file_name.write(str(map_soup))
-                try:
-                    map_href = map_soup.find(
-                        "a", {"href": re.compile("https://maps.google.com/maps?")}
-                    )["href"]
-                    lat = (
-                        str(BeautifulSoup(session.get(map_href).text, "lxml"))
-                        .split("/@")[1]
-                        .split(",")[0]
-                    )
-                    lng = (
-                        str(BeautifulSoup(session.get(map_href).text, "lxml"))
-                        .split("/@")[1]
-                        .split(",")[1]
-                    )
-                except:
-                    lat = str(map_soup).split("/@")[1].split(",")[0]
-                    lng = str(map_soup).split("/@")[1].split(",")[1]
+                if "/@" in coords:
+                    lat = coords.split("/@")[1].split(",")[0]
+                    lng = coords.split("/@")[1].split(",")[1]
+                else:
+                    map_soup = BeautifulSoup(session.get(map_url).text, "lxml")
+                    file_name = open("data.txt", "w", encoding="utf-8")
+                    file_name.write(str(map_soup))
+                    try:
+                        map_href = map_soup.find(
+                            "a", {"href": re.compile("https://maps.google.com/maps?")}
+                        )["href"]
+                        lat = (
+                            str(BeautifulSoup(session.get(map_href).text, "lxml"))
+                            .split("/@")[1]
+                            .split(",")[0]
+                        )
+                        lng = (
+                            str(BeautifulSoup(session.get(map_href).text, "lxml"))
+                            .split("/@")[1]
+                            .split(",")[1]
+                        )
+                    except:
+                        lat = str(map_soup).split("/@")[1].split(",")[0]
+                        lng = str(map_soup).split("/@")[1].split(",")[1]
+            except:
+                lat = "<MISSING>"
+                lng = "<MISSING>"
             store = []
             store.append(base_url)
             store.append(location_name)
