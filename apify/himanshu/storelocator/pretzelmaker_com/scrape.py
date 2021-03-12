@@ -47,9 +47,11 @@ def fetch_data():
     soup = BeautifulSoup(r.text, "lxml")
     return_main_object = []
     for script in soup.find_all("script"):
-        if "var stores = " in script.text:
+        content = script.string
+
+        if content and "var stores = " in content:
             location_list = json.loads(
-                script.text.split("var stores = ")[1].split("}];")[0] + "}]"
+                content.split("var stores = ")[1].split("}];")[0] + "}]"
             )
             for store_data in location_list:
                 store = []
@@ -102,9 +104,10 @@ def fetch_data():
     r = session.post("https://pretzelmaker.com/locations/", headers=headers, data=data)
     soup = BeautifulSoup(r.text, "lxml")
     for script in soup.find_all("script"):
-        if "var stores = " in script.text:
+        content = script.string
+        if content and "var stores = " in content:
             location_list = json.loads(
-                script.text.split("var stores = ")[1].split("}];")[0] + "}]"
+                content.split("var stores = ")[1].split("}];")[0] + "}]"
             )
             for store_data in location_list:
                 store = []
