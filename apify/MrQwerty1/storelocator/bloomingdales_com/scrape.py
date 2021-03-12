@@ -1,5 +1,5 @@
 import csv
-
+from lxml import html
 from sgrequests import SgRequests
 
 
@@ -32,6 +32,31 @@ def write_output(data):
             writer.writerow(row)
 
 
+def get_types():
+    session = SgRequests()
+    r = session.get("https://locations.bloomingdales.com/")
+    tree = html.fromstring(r.text)
+
+    out = dict()
+    _types = [
+        ("AllStores", "Retail"),
+        ("OutletStores", "Outlet"),
+        ("Restaurants", "Restaurant"),
+    ]
+    for t in _types:
+        _id = t[0]
+        _type = t[1]
+        li = tree.xpath(f"//div[@id='{_id}']//li[@class='c-LocationGridList-item']")
+        for l in li:
+            slug = "".join(l.xpath(".//h2/a/@href"))
+            if not out.get(slug):
+                out[slug] = _type
+            else:
+                out[slug] = f"{out[slug]}, {_type}"
+
+    return out
+
+
 def fetch_data():
     rows = []
     session = SgRequests()
@@ -39,6 +64,8 @@ def fetch_data():
 
     r = session.get("https://locations.bloomingdales.com/index.json")
     js = r.json()["keys"]
+    _types = get_types()
+
     for j in js:
         slug = j.get("url")
         j = j.get("loc")
@@ -59,17 +86,7 @@ def fetch_data():
         phone = j.get("phone") or "<MISSING>"
         latitude = j.get("latitude") or "<MISSING>"
         longitude = j.get("longitude") or "<MISSING>"
-        isoutlet = j.get("customByName").get("Outlet")
-        isrest = j.get("customByName").get("Restaurant")
-        _types = []
-        if isoutlet:
-            _types.append("Outlet")
-        else:
-            _types.append("Retail")
-        if isrest:
-            _types.append("Restaurant")
-
-        location_type = ", ".join(_types)
+        location_type = _types.get(slug)
         days = j.get("hours", {}).get("days") or []
 
         _tmp = []

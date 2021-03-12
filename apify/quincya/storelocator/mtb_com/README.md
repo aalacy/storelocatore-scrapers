@@ -1,1 +1,1 @@
- --ignore CentroidValidator --ignore StreetAddressHasNumber --ignore StreetAddressHasStateName --ignore CountValidator --ignore StateLevelCountValidator (Confirmed scraped correctly)
+--ignore CentroidValidator --ignore StreetAddressHasNumber --ignore StreetAddressHasStateName --ignore GeoConsistencyValidator (Confirmed scraped correctly)
