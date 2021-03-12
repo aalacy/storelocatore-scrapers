@@ -2,11 +2,7 @@ import csv
 
 from bs4 import BeautifulSoup
 
-from sglogging import SgLogSetup
-
 from sgrequests import SgRequests
-
-logger = SgLogSetup().get_logger("kalahariresorts_com")
 
 
 def write_output(data):
