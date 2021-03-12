@@ -87,23 +87,27 @@ def fetch_data():
 
         country_code = loc["country_id"]
         hours = (
-            loc["opening_hours_monday"]
-            + " "
+            "Monday "
+            + loc["opening_hours_monday"]
+            + " Tuesday "
             + loc["opening_hours_tuesday"]
-            + " "
+            + " Wednesday "
             + loc["opening_hours_wednesday"]
-            + " "
+            + " Thursday "
             + loc["opening_hours_thursday"]
-            + " "
+            + " Friday "
             + loc["opening_hours_friday"]
-            + " "
+            + " Saturday "
             + loc["opening_hours_saturday"]
-            + " "
+            + " Sunday "
             + loc["opening_hours_sunday"]
         ).strip()
 
         if "Temporarily closed" in location_name:
             location_type = "Temporarily Closed"
+
+        if hours == "Monday  Tuesday  Wednesday  Thursday  Friday  Saturday  Sunday":
+            hours = "<MISSING>"
 
         location_name = location_name.split("(")[0].strip()
 
