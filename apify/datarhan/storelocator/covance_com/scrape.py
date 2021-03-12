@@ -2,7 +2,10 @@ import csv
 from lxml import etree
 
 from sgrequests import SgRequests
+from sglogging import SgLogSetup
 from sgscrape.sgpostal import parse_address_intl
+
+logger = SgLogSetup().get_logger("covance_com")
 
 
 def write_output(data):
@@ -104,8 +107,10 @@ def fetch_data():
 
 
 def scrape():
+    logger.info("start scraping")
     data = fetch_data()
     write_output(data)
+    logger.info("end scraping")
 
 
 if __name__ == "__main__":
