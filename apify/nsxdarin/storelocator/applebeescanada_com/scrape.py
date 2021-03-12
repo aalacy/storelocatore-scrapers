@@ -20,7 +20,6 @@ def write_output(data):
                 "locator_domain",
                 "page_url",
                 "location_name",
-                "raw_address",
                 "street_address",
                 "city",
                 "state",
@@ -53,15 +52,14 @@ def fetch_data():
     for loc in locs:
         logger.info(loc)
         name = ""
-        add = "<MISSING>"
-        city = "<MISSING>"
-        state = "<MISSING>"
-        zc = "<MISSING>"
+        add = ""
+        city = ""
+        state = ""
+        zc = ""
         store = "<MISSING>"
         phone = ""
         lat = ""
         lng = ""
-        rawadd = ""
         hours = ""
         HFound = False
         r2 = session.get(loc, headers=headers)
@@ -73,9 +71,60 @@ def fetch_data():
                     .split('">')[1]
                     .split("<")[0]
                     .replace("&#8217;", "'")
+                    .replace("&#8211;", "-")
                 )
-            if "f70ae497d35c23cef87a0a2b64ea7d9a" in line2:
-                rawadd = line2.split('">')[1].split("<")[0]
+            if (
+                '<div class="tb-field" data-toolset-blocks-field="' in line2
+                and add == ""
+            ):
+                addinfo = (
+                    line2.split('<div class="tb-field" data-toolset-blocks-field="')[1]
+                    .split('">')[1]
+                    .split("<")[0]
+                )
+                addinfo = addinfo.replace("Falls ON", "Falls, ON")
+                addinfo = addinfo.replace("Canada", "").replace("  ", " ")
+                addinfo = addinfo.replace("ON,", "ON")
+                if "388 Country Hills Blvd" in addinfo:
+                    add = "388 Country Hills Blvd NE #707"
+                    city = "Calgary"
+                    state = "AB"
+                    zc = "T3K 5J6"
+                else:
+                    add = addinfo.split(",")[0].strip()
+                    city = addinfo.split(",")[1].strip()
+                    state = addinfo.split(",")[2].strip().split(" ")[0]
+                    zc = addinfo.split(",")[2].strip().split(" ", 1)[1]
+                if add == "Regina":
+                    state = "SK"
+                    city = "Regina"
+                    add = addinfo.split(",")[1].strip()
+                    zc = addinfo.split(",")[2].strip()
+                if add == "Thunder Bay":
+                    state = "ON"
+                    city = "Thunder Bay"
+                    add = addinfo.split(",")[1].strip()
+                    zc = addinfo.split(",")[2].strip()
+                if add == "Niagara Falls":
+                    state = "ON"
+                    city = "Niagara Falls"
+                    add = addinfo.split(",")[1].strip()
+                    zc = addinfo.split(",")[2].strip()
+                if add == "Winnipeg":
+                    city = "Winnipeg"
+                    state = "MB"
+                    add = addinfo.split(",")[1].strip()
+                    zc = addinfo.split(",")[2].strip()
+                if add == "Brandon":
+                    city = "Brandon"
+                    state = "MB"
+                    add = addinfo.split(",")[1].strip()
+                    zc = addinfo.split(",")[2].strip()
+                if add == "Ajax":
+                    city = "Ajax"
+                    state = "ON"
+                    add = addinfo.split(",")[1].strip()
+                    zc = addinfo.split(",")[2].strip()
             if "Call:</strong>&nbsp;&nbsp;" in line2:
                 phone = line2.split("Call:</strong>&nbsp;&nbsp;")[1].split("<")[0]
             if 'data-markerlat="' in line2:
@@ -99,7 +148,6 @@ def fetch_data():
             website,
             loc,
             name,
-            rawadd,
             add,
             city,
             state,
