@@ -3,7 +3,7 @@ from lxml import etree
 
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
-from sgscrape.sgpostal import parse_address_intl
+from sgscrape.sgpostal import parse_address, International_Parser
 
 logger = SgLogSetup().get_logger("covance_com")
 
@@ -62,7 +62,7 @@ def fetch_data():
         raw_address = poi_html.xpath('.//li[@class="address"]/text()')
         raw_address = [elem.strip() for elem in raw_address if elem.strip()]
         full_addr = " ".join(raw_address).replace("\n", " ").replace("\t", " ")
-        addr = parse_address_intl(full_addr)
+        addr = parse_address(International_Parser(), full_addr)
         country_code = addr.country
         country_code = country_code if country_code else "<MISSING>"
         if country_code not in ["Usa", "<MISSING>", "UK", "United Kingdom"]:
