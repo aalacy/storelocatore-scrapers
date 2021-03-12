@@ -133,7 +133,7 @@ def fetch_data():
 
         data.append(
             [
-                "https://www.snb.com/locations/",
+                "https://www.snb.com/",
                 link,
                 title,
                 street,
