@@ -59,7 +59,7 @@ def get_ids():
 
 def get_data(_id, coords):
     locator_domain = "https://paciugo.com/"
-    page_url = f"https://paciugo.com/store-locator/"
+    page_url = "https://paciugo.com/store-locator/"
     data = {"action": "ajaxretrievestorebyid", "storeID": _id}
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:86.0) Gecko/20100101 Firefox/86.0",
