@@ -88,8 +88,14 @@ def fetch_data():
             except:
                 hours = "Sun-Sat: Closed"
         typ = "Restaurant"
-        lat = array["lat"]
-        lng = array["lng"]
+        try:
+            lat = array["lat"]
+        except:
+            lat = "<MISSING>"
+        try:
+            lng = array["lng"]
+        except:
+            lng = "<MISSING>"
         yield [
             website,
             name,

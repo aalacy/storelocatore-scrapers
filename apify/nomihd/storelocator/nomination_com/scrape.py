@@ -85,6 +85,13 @@ def fetch_data():
 
             city = store_json["city"]
             state = "<MISSING>"
+            if " - " in city:
+                state = city.split(" - ")[1].strip()
+                city = city.split(" - ")[0].strip()
+            elif "," in city:
+                state = city.split(",")[1].strip()
+                city = city.split(",")[0].strip()
+
             zip = (
                 store_json["zip"]
                 .encode("ascii", "replace")
