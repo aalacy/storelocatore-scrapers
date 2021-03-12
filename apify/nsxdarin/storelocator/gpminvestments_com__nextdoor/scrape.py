@@ -72,6 +72,7 @@ def fetch_data():
                     if (
                         "3016 North John B Dennis" not in rawadd
                         and "5010 S Highway 69" not in rawadd
+                        and "881 Windham Rd. S." not in rawadd
                     ):
                         add = usaddress.tag(rawadd)
                         try:
@@ -121,6 +122,11 @@ def fetch_data():
                         city = add2.split(",")[1]
                         state = add2.split(",")[2]
                         zc = "<INACCESSIBLE>"
+                    if "881 Windham Rd. S." in rawadd:
+                        address = "881 Windham Rd. S."
+                        city = "Windham"
+                        state = "CT"
+                        zc = "06266-1132"
                     yield [
                         website,
                         loc,
