@@ -39,7 +39,6 @@ def fetch_data():
     # Your scraper here
     session = SgRequests()
 
-    items = []
     scraped_items = []
 
     DOMAIN = "covance.com"
@@ -101,9 +100,7 @@ def fetch_data():
         check = f"{street_address} {city}"
         if check not in scraped_items:
             scraped_items.append(check)
-            items.append(item)
-
-    return items
+            yield item
 
 
 def scrape():
