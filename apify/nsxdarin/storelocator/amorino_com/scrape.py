@@ -46,8 +46,8 @@ def fetch_data():
     logger.info("Pulling Stores")
     for line in r.iter_lines():
         line = str(line.decode("utf-8"))
-        if "{country:ao" in line:
-            items = line.split("{country:ao")
+        if ",stores:[{" in line:
+            items = line.split("{country:au")
             for item in items:
                 if ">window.__AMORINO__=" not in item:
                     name = item.split('name:"')[1].split('"')[0]
