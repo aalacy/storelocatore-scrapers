@@ -45,7 +45,6 @@ def fetch_data():
     data = "locateStore=true&country=USA"
     r = session.post("https://pretzelmaker.com/locations/", headers=headers, data=data)
     soup = BeautifulSoup(r.text, "lxml")
-    return_main_object = []
     for script in soup.find_all("script"):
         content = script.string
 
@@ -98,7 +97,7 @@ def fetch_data():
                 for i in store:
                     if not i:
                         i = "<MISSING>"
-                return_main_object.append(store)
+                yield store
 
     data = "locateStore=true&country=Canada"
     r = session.post("https://pretzelmaker.com/locations/", headers=headers, data=data)
