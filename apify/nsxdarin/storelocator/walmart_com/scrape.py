@@ -1,4 +1,4 @@
-import csv
+from sgscrape import simple_scraper_pipeline as sp
 from sgrequests import SgRequests
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 from sglogging import SgLogSetup
@@ -22,7 +22,7 @@ def api_get(start_url, headers, timeout, attempts, maxRetries):
     error = False
     session = SgRequests()
     try:
-        results = session.post(start_url, headers=headers, timeout=timeout)
+        results = session.get(start_url, headers=headers, timeout=timeout)
     except exceptions.RequestException as requestsException:
         if "ProxyError" in str(requestsException):
             attempts += 1
@@ -51,147 +51,134 @@ def api_get(start_url, headers, timeout, attempts, maxRetries):
         return results
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
-
-
 def fetch_data():
-    url = "https://www.walmart.com/sitemap_store_main.xml"
-    ids = []
+    # Need to add dedupe. Added it in pipeline.
     session = SgRequests(proxy_rotation_failure_threshold=20)
+    maxZ = search.items_remaining()
+    total = 0
     for code in search:
+        if search.items_remaining() > maxZ:
+            maxZ = search.items_remaining()
+        found = 0
         logger.info(("Pulling Zip Code %s..." % code))
         url = (
             "https://www.walmart.com/store/finder/electrode/api/stores?singleLineAddr="
             + code
             + "&distance=50"
         )
-        website = "walmart.com"
-        typ = "Walmart"
         try:
-            r2 = session.get(url, headers=headers, timeout=15)
+            r2 = session.get(url, headers=headers, timeout=15).json()
         except Exception:
-            r2 = api_get(url, headers, 15, 0, 15)
-        if r2.encoding is None:
-            r2.encoding = "utf-8"
-        for line2 in r2.iter_lines(decode_unicode=True):
-            if '"storesData":{"stores"' in line2:
-                items = line2.split('{"distance":')
-                for item in items:
-                    if '"buId":"' in item:
-                        loc = item.split('"detailsPageURL":"')[1].split('"')[0]
-                        name = (
-                            item.split('"storeType":{"id":"')[0]
-                            .rsplit('"displayName":"', 1)[1]
-                            .split('"')[0]
-                        )
-                        phone = (
-                            item.split('"storeType":{"id":"')[1]
-                            .split('"phone":"')[1]
-                            .split('"')[0]
-                        )
-                        add = item.split('"address":"')[1].split('"')[0]
-                        city = item.split('"city":"')[1].split('"')[0]
-                        state = item.split('"state":"')[1].split('"')[0]
-                        zc = item.split('"postalCode":"')[1].split('"')[0]
-                        store = loc.rsplit("/", 1)[1]
-                        country = "US"
-                        try:
-                            hours = (
-                                "Mon-Fri: "
-                                + item.split('}}],"operationalHours":{"')[1]
-                                .split('"monToFriHrs":')[1]
-                                .split('"startHr":"')[1]
-                                .split('"')[0]
-                                + "-"
-                                + item.split('}}],"operationalHours":{"')[1]
-                                .split('"monToFriHrs":')[1]
-                                .split('"endHr":"')[1]
-                                .split('"')[0]
-                            )
-                            hours = (
-                                hours
-                                + "; Sat: "
-                                + item.split('}}],"operationalHours":{"')[1]
-                                .split('"saturdayHrs":')[1]
-                                .split('"startHr":"')[1]
-                                .split('"')[0]
-                                + "-"
-                                + item.split('}}],"operationalHours":{"')[1]
-                                .split('"saturdayHrs":')[1]
-                                .split('"endHr":"')[1]
-                                .split('"')[0]
-                            )
-                            hours = (
-                                hours
-                                + "; Sun: "
-                                + item.split('}}],"operationalHours":{"')[1]
-                                .split('"sundayHrs":')[1]
-                                .split('"startHr":"')[1]
-                                .split('"')[0]
-                                + "-"
-                                + item.split('}}],"operationalHours":{"')[1]
-                                .split('"sundayHrs":')[1]
-                                .split('"endHr":"')[1]
-                                .split('"')[0]
-                            )
-                        except:
-                            hours = "<MISSING>"
-                        lat = item.split('"geoPoint":{"latitude":')[1].split(",")[0]
-                        lng = item.split('"longitude":')[1].split("}")[0]
-                        phone = item.split(',"phone":"')[1].split('"')[0]
-                        if "Supercenter" in name:
-                            typ = "Supercenter"
-                        if "Neighborhood Market" in name:
-                            typ = "Neighborhood Market"
-                        if hours == "":
-                            hours = "<MISSING>"
-                        if add != "" and store not in ids:
-                            ids.append(store)
-                            yield [
-                                website,
-                                loc,
-                                name,
-                                add,
-                                city,
-                                state,
-                                zc,
-                                country,
-                                store,
-                                phone,
-                                typ,
-                                lat,
-                                lng,
-                                hours,
-                            ]
+            r2 = api_get(url, headers, 15, 0, 15).json()
+        if r2["payload"]["nbrOfStores"]:
+            if int(r2["payload"]["nbrOfStores"]) > 0:
+                for store in r2["payload"]["storesData"]["stores"]:
+                    if store["geoPoint"]:
+                        if store["geoPoint"]["latitude"]:
+                            if store["geoPoint"]["longitude"]:
+                                search.found_location_at(
+                                    store["geoPoint"]["latitude"],
+                                    store["geoPoint"]["longitude"],
+                                )
+                    yield store
+        progress = str(round(100 - (search.items_remaining() / maxZ * 100), 2)) + "%"
+        total += found
+        logger.info(f"{code} | found: {found} | total: {total} | progress: {progress}")
+
+
+def human_hours(k):
+    if not k["open24Hours"]:
+        unwanted = ["open24", "todayHr", "tomorrowHr"]
+        h = []
+        for day in list(k):
+            if not any(i in day for i in unwanted):
+                if k[day]:
+                    if "temporaryHour" not in day:
+                        if k[day]["closed"]:
+                            h.append(str(day).capitalize() + ": Closed")
+                        else:
+                            if k[day]["openFullDay"]:
+                                h.append(str(day).capitalize() + ": 24Hours")
+                            else:
+                                h.append(
+                                    str(day).capitalize()
+                                    + ": "
+                                    + str(k[day]["startHr"])
+                                    + "-"
+                                    + str(k[day]["endHr"])
+                                )
+                    else:
+                        if k[day]:
+                            h.append("Temporary hours: " + str(k[day].items()))
+                else:
+                    h.append(str(day).capitalize() + ": <MISSING>")
+        return "; ".join(h)
+    else:
+        return "24/7"
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    url = "https://www.walmart.com/"
+    field_defs = sp.SimpleScraperPipeline.field_definitions(
+        locator_domain=sp.ConstantField(url),
+        page_url=sp.MappingField(
+            mapping=["detailsPageURL"],
+            part_of_record_identity=True,
+        ),
+        location_name=sp.MappingField(
+            mapping=["storeType", "name"],
+        ),
+        latitude=sp.MappingField(
+            mapping=["geoPoint", "latitude"],
+            part_of_record_identity=True,
+        ),
+        longitude=sp.MappingField(
+            mapping=["geoPoint", "longitude"],
+            part_of_record_identity=True,
+        ),
+        street_address=sp.MappingField(
+            mapping=["address", "address"],
+            part_of_record_identity=True,
+        ),
+        city=sp.MappingField(
+            mapping=["address", "city"],
+        ),
+        state=sp.MappingField(
+            mapping=["address", "state"],
+        ),
+        zipcode=sp.MappingField(
+            mapping=["address", "postalCode"],
+        ),
+        country_code=sp.MappingField(
+            mapping=["address", "country"],
+        ),
+        phone=sp.MappingField(
+            mapping=["phone"],
+            part_of_record_identity=True,
+        ),
+        store_number=sp.MappingField(
+            mapping=["id"],
+            part_of_record_identity=True,
+        ),
+        hours_of_operation=sp.MappingField(
+            mapping=["operationalHours"], raw_value_transform=human_hours
+        ),
+        location_type=sp.MappingField(
+            mapping=["storeType", "displayName"],
+            part_of_record_identity=True,
+        ),
+        raw_address=sp.MissingField(),
+    )
+
+    pipeline = sp.SimpleScraperPipeline(
+        scraper_name="pipeline",
+        data_fetcher=fetch_data,
+        field_definitions=field_defs,
+        log_stats_interval=5,
+    )
+
+    pipeline.run()
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()
