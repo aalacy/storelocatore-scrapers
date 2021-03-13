@@ -56,23 +56,6 @@ def fetch_data():
             longt = loc["lng"]
             temp = loc["popup_html"]
             loc = BeautifulSoup(temp, "html.parser")
-            ##            temp = (
-            ##                soup.find("div", {"class": "amlocator-info-popup"})
-            ##                .get_text(separator="|", strip=True)
-            ##                .split("|")
-            ##            )
-            ##            temp = temp[:-3]
-            ##            title = temp[0]
-            ##            street = (
-            ##                temp[1]
-            ##                .split(
-            ##                    ",",
-            ##                )[0]
-            ##                .split("Address: ")[1]
-            ##            )
-            ##            city = temp[3].split("City: ")[1]
-            ##            state = temp[2].split("State: ")[1]
-            ##            pcode = temp[4].split("Zip: ")[1]
             link = loc.find("a", {"class": "amlocator-link"})["href"]
             r = session.get(link, headers=headers)
             soup = BeautifulSoup(r.text, "html.parser")
