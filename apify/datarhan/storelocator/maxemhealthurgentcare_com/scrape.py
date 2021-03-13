@@ -76,9 +76,10 @@ def fetch_data():
         location_type = "<MISSING>"
         latitude = "<MISSING>"
         longitude = "<MISSING>"
-        hoo = raw_data[-2:]
+        hoo = raw_data[-3:]
         hoo = [e.strip() for e in hoo if e.strip() and "Fax" not in e]
-        hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
+        hoo = [e.strip() for e in hoo if e.strip() and "Ph:" not in e]
+        hours_of_operation = " ".join(hoo).split(" Click")[0] if hoo else "<MISSING>"
 
         item = [
             domain,
