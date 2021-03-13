@@ -53,7 +53,15 @@ def fetch_data():
         hours = store_sel.xpath(
             '//div[@class="section__content"]/div[@class="section__entry"]/ul/li'
         )
+        raw_text = "".join(
+            store_sel.xpath(
+                '//div[@class="section__content"]/div[@class="section__entry"]//text()'
+            )
+        ).strip()
+        if "COMING SOON" in raw_text:
+            location_type = "COMING SOON"
         hours_list = []
+
         for hour in hours:
             day = "".join(hour.xpath("span[1]/text()")).strip()
             time = "".join(hour.xpath("span[2]/text()")).strip()

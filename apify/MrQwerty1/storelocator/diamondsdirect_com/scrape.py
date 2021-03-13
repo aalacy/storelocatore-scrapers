@@ -36,13 +36,13 @@ def write_output(data):
 def fetch_data():
     out = []
     locator_domain = "https://diamondsdirect.com/"
-    api_url = "https://diamondsdirect.com/assets/bundle-2056.js"
+    api_url = "https://diamondsdirect.com/assets/bundle-0512.js"
 
     session = SgRequests()
     r = session.get(api_url)
     text = r.text
     text = text.split(
-        't.default=x;t.TeamModalContainer=(0,p.connect)(l,w)(x)},function(e,t){"use strict";Object.defineProperty(t,"__esModule",{value:!0});'
+        't.ERROR_RED="#EB3533"},function(e,t){"use strict";Object.defineProperty(t,"__esModule",{value:!0});var n='
     )[1].split(";t.ALL={")[0]
     for t in text.split("={")[1:]:
         if t.find('"store"') == -1:
