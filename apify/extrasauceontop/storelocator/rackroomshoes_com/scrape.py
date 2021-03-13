@@ -143,7 +143,6 @@ def getdata(start_num, search_code):
 search = ["33122", "98109"]
 for zipcode in search:
     failed_num = 0
-    coords = []
     while failed_num < 99:
 
         prev_fail = failed_num
