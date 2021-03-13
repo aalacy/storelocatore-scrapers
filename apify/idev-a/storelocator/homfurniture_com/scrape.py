@@ -38,7 +38,7 @@ def fetch_data():
         locator_domain = "https://www.homfurniture.com"
         base_url = "https://www.homfurniture.com/info/our-stores/locations"
         soup = bs(session.get(base_url, headers=_headers).text, "lxml")
-        with SgChrome(executable_path=r"/mnt/g/work/mia/chromedriver.exe") as driver:
+        with SgChrome() as driver:
             script = soup.select_one("script", type="text/inject-data").string
             locations = json.loads(
                 driver.execute_script('return decodeURIComponent("' + script + '")')
