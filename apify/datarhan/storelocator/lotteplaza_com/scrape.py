@@ -2,7 +2,7 @@ import re
 import csv
 from lxml import etree
 
-from sgselenium.sgselenium import webdriver
+from sgselenium import SgFirefox
 
 
 def write_output(data):
@@ -41,14 +41,15 @@ def fetch_data():
 
     start_url = "https://www.lotteplaza.com/locations/"
     domain = re.findall("://(.+?)/", start_url)[0].replace("www.", "")
-    driver = webdriver.Firefox()
-    driver.get(start_url)
-    dom = etree.HTML(driver.page_source)
+    with SgFirefox() as driver:
+        driver.get(start_url)
+        dom = etree.HTML(driver.page_source)
 
     all_locations = dom.xpath('//a[contains(text(), "View Details")]/@href')
     for store_url in all_locations:
-        driver.get(store_url)
-        loc_dom = etree.HTML(driver.page_source)
+        with SgFirefox() as driver:
+            driver.get(store_url)
+            loc_dom = etree.HTML(driver.page_source)
 
         location_name = loc_dom.xpath("//article/div/h1/text()")
         location_name = location_name[0].strip() if location_name else "<MISSING>"
@@ -96,7 +97,6 @@ def fetch_data():
 
         items.append(item)
 
-    driver.close()
     return items
 
 
