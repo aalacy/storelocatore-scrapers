@@ -1,7 +1,7 @@
 import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
-from sgscrape import sgpostal as parser
+from sgscrape.sgpostal import parse_address, International_Parser
 import json
 
 
@@ -45,7 +45,6 @@ def fetch_data():
     data = "locateStore=true&country=USA"
     r = session.post("https://pretzelmaker.com/locations/", headers=headers, data=data)
     soup = BeautifulSoup(r.text, "lxml")
-    return_main_object = []
     for script in soup.find_all("script"):
         content = script.string
 
@@ -66,7 +65,7 @@ def fetch_data():
                         if store_data[i]:
                             raw_addr.append(store_data[i])
                     raw_addr = " ".join(raw_addr)
-                    nice = parser.parse_address_intl(raw_addr)
+                    nice = parse_address(International_Parser(), raw_addr)
                     store_data["sl_address"] = nice.street_address_1
                     if nice.street_address_2:
                         store_data["sl_address"] = (
@@ -98,7 +97,7 @@ def fetch_data():
                 for i in store:
                     if not i:
                         i = "<MISSING>"
-                return_main_object.append(store)
+                yield store
 
     data = "locateStore=true&country=Canada"
     r = session.post("https://pretzelmaker.com/locations/", headers=headers, data=data)
@@ -122,7 +121,8 @@ def fetch_data():
                         if store_data[i]:
                             raw_addr.append(store_data[i])
                     raw_addr = " ".join(raw_addr)
-                    nice = parser.parse_address_intl(raw_addr)
+                    nice = parse_address(International_Parser(), raw_addr)
+
                     store_data["sl_address"] = nice.street_address_1
                     if nice.street_address_2:
                         store_data["sl_address"] = (
@@ -154,14 +154,12 @@ def fetch_data():
                 for i in store:
                     if not i:
                         i = "<MISSING>"
-                return_main_object.append(store)
-    yield return_main_object
+                yield store
 
 
 def scrape():
     data = fetch_data()
-    for i in data:
-        write_output(i)
+    write_output(data)
 
 
 scrape()
