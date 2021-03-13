@@ -80,6 +80,8 @@ def fetch_data():
         phone = store_dom.xpath(
             '//div[@class="content-group"]//a[contains(@href, "tel")]/text()'
         )
+        if not phone:
+            continue
         phone = phone[0].strip() if phone else "<MISSING>"
         location_type = ""
         location_type = location_type if location_type else "<MISSING>"

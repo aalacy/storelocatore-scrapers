@@ -71,6 +71,7 @@ def fetch_data():
                 and stores[key]["op_status"] != "Future"
             ):
                 page_url = "https://www.circlek.com" + stores[key]["url"]
+                logger.info(page_url)
                 try:
                     store_req = session.get(page_url, headers=headers)
                 except:
@@ -102,9 +103,9 @@ def fetch_data():
                             street_address = street_address[:-1]
                         city = store_json["address"]["addressLocality"].strip()
 
-                        if street_address + city in found_poi:
+                        if page_url in found_poi:
                             continue
-                        found_poi.append(street_address + city)
+                        found_poi.append(page_url)
 
                         state = ""
                         zipp = store_json["address"]["postalCode"].strip()
