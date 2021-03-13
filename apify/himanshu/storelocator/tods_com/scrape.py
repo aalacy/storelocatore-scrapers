@@ -58,7 +58,11 @@ def fetch_data():
             location_name = poi["D"]
             location_name = location_name if location_name else "<MISSING>"
             street_address = poi["U"]["address"]
-            street_address = street_address if street_address else "<MISSING>"
+            street_address = (
+                street_address.split("Plaza, ")[-1].split("hops, ")[-1].strip()
+                if street_address
+                else "<MISSING>"
+            )
             city = poi["U"]["city"]
             city = city if city else "<MISSING>"
             state = poi["U"].get("region")
