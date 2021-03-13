@@ -60,7 +60,6 @@ def fetch_data():
             location_soup = BeautifulSoup(location_request.text, "lxml")
             location_sel = lxml.html.fromstring(location_request.text)
 
-            name = location_soup.find("h2", {"class": "et_pb_slide_title"}).text
             address = location_sel.xpath(
                 '//div[@class="et_pb_column et_pb_column_1_4 et_pb_column_inner et_pb_column_inner_0"]//div[@class="et_pb_text_inner"]//text()'
             )
@@ -142,7 +141,7 @@ def fetch_data():
                 )
             geo_location = location_soup.find("iframe")["data-src"]
             store = []
-            store.append("https://vitalitybowls.com")
+            store.append(base_url)
             store.append(loc_name)
             store.append(street_address if street_address else "<MISSING>")
             store.append(city if city else "<MISSING>")
