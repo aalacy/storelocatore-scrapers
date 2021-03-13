@@ -40,7 +40,7 @@ def fetch_data():
     stores_req = session.post(search_url, json=data, headers=headers)
     stores = json.loads(stores_req.text)["data"]["getMap"]["markers"]["items"]
     for store in stores:
-        page_url = "<MISSING>"
+        page_url = "https://www.firenzapizza.com/location/"
 
         location_type = "<MISSING>"
         if store["notes"] is not None:
@@ -62,6 +62,10 @@ def fetch_data():
         else:
             state = "<MISSING>"
             zip = state_zip.split(" ")[-1].strip()
+
+        if state == "<MISSING>":
+            if "Puerto Rico" in "|".join(address).strip():
+                state = "Puerto Rico"
 
         country_code = "US"
 

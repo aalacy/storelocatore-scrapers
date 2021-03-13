@@ -1,6 +1,7 @@
 import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 
 session = SgRequests()
 headers = {
@@ -8,6 +9,13 @@ headers = {
 }
 
 logger = SgLogSetup().get_logger("dairyqueen_com")
+
+
+search = DynamicGeoSearch(
+    country_codes=[SearchableCountries.CANADA],
+    max_radius_miles=25,
+    max_search_results=None,
+)
 
 
 def write_output(data):
@@ -39,11 +47,31 @@ def write_output(data):
 
 def fetch_data():
     locs = []
+    for lat, lng in search:
+        url = (
+            "https://www.dairyqueen.com/api/vtl/locations?country=ca&lat="
+            + str(lat)
+            + "&long="
+            + str(lng)
+        )
+        r = session.get(url, headers=headers)
+        logger.info(str(lat) + "-" + str(lng))
+        for line in r.iter_lines():
+            line = str(line.decode("utf-8"))
+            if '"address3":"' in line:
+                items = line.split('"address3":"')
+                for item in items:
+                    if '"url":"' in item:
+                        lurl = (
+                            "https://www.dairyqueen.com/en-ca"
+                            + item.split('"url":"')[1].split('"')[0]
+                        )
+                        if lurl not in locs:
+                            locs.append(lurl)
     url = "https://www.dairyqueen.com/en-us/sitemap/sitemap-en-us.xml"
     r = session.get(url, headers=headers)
     website = "dairyqueen.com"
     typ = "<MISSING>"
-    country = "US"
     logger.info("Pulling Stores")
     for line in r.iter_lines():
         line = str(line.decode("utf-8"))
@@ -70,6 +98,7 @@ def fetch_data():
             if '"amenities"' in line2:
                 name = line2.split('{"address1":"')[1].split('"')[0]
                 add = line2.split('"address3":"')[1].split('"')[0]
+                country = line2.split('"country":"')[1].split('"')[0]
                 lat = line2.split('"latlong":"')[1].split('"')[0].split(",")[0]
                 lng = line2.split('"latlong":"')[1].split('"')[0].split(",")[1]
                 city = line2.split('"city":"')[1].split('"')[0]
