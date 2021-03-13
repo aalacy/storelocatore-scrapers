@@ -83,7 +83,7 @@ def fetch_data():
                     hours_of_operation = "temporarily closed"
 
         store = []
-        store.append("https://annashouseus.com")
+        store.append(base_url)
         store.append(location_details[0])
         if len(address.split(",")) == 3:
             store.append(address.split(",")[0])
