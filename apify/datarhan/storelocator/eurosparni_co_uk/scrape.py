@@ -74,8 +74,8 @@ def fetch_data():
             city = addr.city
             city = city if city else "<MISSING>"
             state = "<MISSING>"
-            zip_code = raw_address.split(", ")[-1].split()[-2:]
-            zip_code = " ".join(zip_code)
+            zip_code = " ".join(raw_address.split()[-2:])
+            zip_code = zip_code if zip_code else "<MISSING>"
             country_code = addr.country
             country_code = country_code if country_code else "<MISSING>"
             store_number = "<MISSING>"
@@ -91,6 +91,9 @@ def fetch_data():
             )
             hoo = [e.strip() for e in hoo if e.strip()][3:]
             hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
+
+            if zip_code == "2h L":
+                zip_code = "BT22 2hL"
 
             item = [
                 DOMAIN,
