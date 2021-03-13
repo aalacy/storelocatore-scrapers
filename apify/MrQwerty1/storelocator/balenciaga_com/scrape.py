@@ -1,5 +1,6 @@
 import csv
 from sgrequests import SgRequests
+from sgscrape.sgpostal import International_Parser, parse_address
 
 
 def write_output(data):
@@ -45,15 +46,30 @@ def fetch_data():
         js = r.json()["storesData"]["stores"]
 
         for j in js:
-            street_address = (
+            line = (
                 f"{j.get('address1')} {j.get('address2') or ''}".replace(
                     "\n", ", "
                 ).strip()
                 or "<MISSING>"
             )
+
             city = j.get("city") or "<MISSING>"
             state = j.get("stateCode") or "<MISSING>"
             postal = j.get("postalCode") or "<MISSING>"
+
+            adr = parse_address(
+                International_Parser(), line, postcode=postal, city=city, state=state
+            )
+
+            street_address = (
+                f"{adr.street_address_1} {adr.street_address_2 or ''}".replace(
+                    "None", ""
+                ).strip()
+                or "<MISSING>"
+            )
+            city = adr.city or "<MISSING>"
+            state = adr.state or "<MISSING>"
+            postal = adr.postcode or "<MISSING>"
             country_code = j.get("countryCode") or "<MISSING>"
             store_number = j.get("ID") or "<MISSING>"
             page_url = j.get("detailsUrl") or "<MISSING>"

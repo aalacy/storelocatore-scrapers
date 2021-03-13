@@ -72,7 +72,7 @@ def fetch_data():
                 country = "US"
                 lng = item["longitude"]
                 add = item["store"]["address"]["street"]
-                zc = item["store"]["address"]["postalCode"]
+                zc = item["store"]["address"]["zip"]
                 city = item["store"]["address"]["city"]
                 state = item["store"]["address"]["state"]
                 name = item["store"]["name"]
@@ -90,6 +90,40 @@ def fetch_data():
                             days = (
                                 line2.split("Pharmacy</strong></h3>")[1]
                                 .split("</ul></li><li")[0]
+                                .split('<li class="day"')
+                            )
+                            for day in days:
+                                if "pharmacyHoursList" not in day:
+                                    if ">Closed<" in day:
+                                        hrs = (
+                                            day.split(">")[1].split("<")[0] + ": Closed"
+                                        )
+                                    else:
+                                        hrs = (
+                                            day.split(">")[1].split("<")[0]
+                                            + ": "
+                                            + day.split("react-text:")[1]
+                                            .split(">")[1]
+                                            .split("<")[0]
+                                        )
+                                        hrs = (
+                                            hrs
+                                            + "-"
+                                            + day.split("react-text:")[3]
+                                            .split(">")[1]
+                                            .split("<")[0]
+                                        )
+                                    if hours == "":
+                                        hours = hrs
+                                    else:
+                                        hours = hours + "; " + hrs
+                        if (
+                            "Store &amp; Shopping</strong></h3>" in line2
+                            and hours == ""
+                        ):
+                            days = (
+                                line2.split("Store &amp; Shopping")[1]
+                                .split("</ul></li><")[0]
                                 .split('<li class="day"')
                             )
                             for day in days:

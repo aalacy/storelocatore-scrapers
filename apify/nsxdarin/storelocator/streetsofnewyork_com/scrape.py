@@ -75,8 +75,17 @@ def fetch_data():
         longitude = get(location, "lng")
 
         phone = get(location, "phone")
+        if "Signal Butte Rd & Baseline Rd" in location_name:
+            phone = "4807712292"
+        if "7th St & Greenway Pkwy" in location_name:
+            phone = "6029323429"
+        if "d St & Camelback R" in location_name:
+            phone = "6026917664"
+        if "27th Ave & Carefree Hwy" in location_name:
+            phone = "6235263271"
         hours_of_operation = ",".join(get(location, "schemaHours"))
-
+        if "Florentine Rd" in location_name:
+            hours_of_operation = "Temporarily Closed"
         yield [
             locator_domain,
             page_url,

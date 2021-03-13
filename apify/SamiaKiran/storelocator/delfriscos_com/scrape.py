@@ -1,5 +1,6 @@
 import csv
 import json
+from bs4 import BeautifulSoup
 from sgrequests import SgRequests
 from sglogging import sglog
 
@@ -65,6 +66,14 @@ def fetch_data():
         pcode = loc["zip"]
         link = loc["id"]
         link = "https://delfriscos.com/steakhouse/" + link + "/"
+        r = session.get(link, headers=headers, verify=False)
+        soup = BeautifulSoup(r.text, "html.parser")
+        hours = (
+            soup.find("div", {"id": "col-hours"})
+            .find("p")
+            .text.split("\n\n", 1)[0]
+            .replace("\n", " ")
+        )
         data.append(
             [
                 "https://delfriscos.com/",
@@ -80,7 +89,7 @@ def fetch_data():
                 "<MISSING>",
                 lat,
                 longt,
-                "<MISSING>",
+                hours,
             ]
         )
     return data

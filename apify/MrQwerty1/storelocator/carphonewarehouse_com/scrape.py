@@ -45,8 +45,14 @@ def fetch_data():
     for j in js:
         line = j.get("AddressLine") or ""
         postal = j.get("postcode") or ""
-        if postal.lower() == "ireland":
+        if "ireland" in postal.lower() or "ireland" in line.lower():
             continue
+        if "Currys" in line:
+            line = ",".join(line.split(",")[1:])
+            location_type = "Currys PC World"
+        else:
+            location_type = "<MISSING>"
+
         adr = parse_address(International_Parser(), line, postcode=postal)
 
         street_address = (
@@ -58,9 +64,17 @@ def fetch_data():
         city = adr.city or "<MISSING>"
         state = adr.state or "<MISSING>"
         postal = adr.postcode or "<MISSING>"
+        if len(street_address) < 10:
+            street_address = line.split(",")[0].strip() or "<MISSING>"
+
+        location_name = j.get("branch_name")
+        if city == "<MISSING>":
+            if location_name[0].isdigit() or location_name[0] == "(":
+                city = " ".join(location_name.split()[1:])
+            else:
+                city = location_name
         country_code = "GB"
         store_number = j.get("branch_id") or "<MISSING>"
-        location_name = j.get("branch_name")
         phone = j.get("telephone") or "<MISSING>"
         if not phone[0].isdigit():
             phone = "<MISSING>"
@@ -69,7 +83,6 @@ def fetch_data():
         )
         latitude = j.get("Latitude") or "<MISSING>"
         longitude = j.get("Longitude") or "<MISSING>"
-        location_type = "<MISSING>"
 
         _tmp = []
         days = [

@@ -56,10 +56,12 @@ def fetch_data():
         all_locations += data["result"]["results"]
 
     for poi in all_locations:
-        store_url = urljoin(start_url, poi["detailUrl"])
+        store_url = urljoin("https://www.remax.ca", poi["detailUrl"])
         location_name = poi["officeName"]
         location_name = location_name if location_name else "<MISSING>"
-        street_address = poi["officeName"]
+        street_address = poi["address1"]
+        if poi.get("address2"):
+            street_address += " " + poi["address2"]
         city = poi["city"]
         state = poi["state"]
         zip_code = poi["postalCode"]
