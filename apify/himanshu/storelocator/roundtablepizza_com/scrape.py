@@ -51,11 +51,12 @@ def fetch_data():
     ):
         name = dt["data-name"]
         address = dt["data-address1"]
-        city = dt["data-address2"].split(",")[0].strip().split("  ")[0]
-        state = dt["data-address2"].split(",")[0].strip().split("  ")[1]
-        temp_zip = dt["data-address2"].split(",")[1]
+        address2 = dt["data-address2"].replace(", CA   CA", "  CA")
+        city = address2.split(",")[0].strip().split("  ")[0]
+        state = address2.split(",")[0].strip().split("  ")[1]
+        temp_zip = address2.split(",")[1]
         if len(temp_zip) > 1:
-            zip = dt["data-address2"].split(",")[1]
+            zip = address2.split(",")[1]
         else:
             zip = "<MISSING>"
         if dt["data-phone"] == "":
