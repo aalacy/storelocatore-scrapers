@@ -47,9 +47,11 @@ def fetch_data():
         links = soup.select("ul.products li.product div.overflow a")
         for link in links:
             soup1 = bs(session.get(link["href"], headers=_headers).text, "lxml")
-            block = soup1.find("div", string=re.compile("ORDER ONLINE"))
+            block = soup1.find("div", string=re.compile(r"ORDER ONLINE", re.IGNORECASE))
             if not block:
-                block = soup1.find("p", string=re.compile("ORDER ONLINE"))
+                block = soup1.find(
+                    "p", string=re.compile(r"ORDER ONLINE", re.IGNORECASE)
+                )
             _detail = block.next_sibling
             detail = None
             hh = None

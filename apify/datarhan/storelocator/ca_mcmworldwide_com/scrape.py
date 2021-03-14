@@ -83,11 +83,16 @@ def fetch_data():
         location_type = "<MISSING>"
         latitude = poi_html.xpath("@data-lat")
         latitude = latitude[0] if latitude else "<MISSING>"
-        longitude = poi_html.xpath("@data-lng")
-        longitude = longitude if longitude else "<MISSING>"
+        longitude = poi_html.xpath("@data-long")
+        longitude = longitude[0] if longitude else "<MISSING>"
         hoo = poi_html.xpath('.//div[@class="store-hours"]//text()')
         hoo = [e.strip() for e in hoo if e.strip()]
         hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
+        hours_of_operation = hours_of_operation.replace("Store hours : ", "")
+        hours_of_operation = hours_of_operation.replace(
+            "Mon – Sat: 11:00am – 6:00pm Sun: 12:00pm – 6:00pm Mon – Sat: 11:00am – 6:00pm Sun: 12:00pm – 6:00pm",
+            "Mon – Sat: 11:00am – 6:00pm Sun: 12:00pm – 6:00pm",
+        )
         store_url = "https://ca.mcmworldwide.com/en_CA/stores/{}/{}".format(
             location_name.lower().replace(" ", "-").replace("'", ""), store_number
         )
