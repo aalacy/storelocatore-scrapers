@@ -98,6 +98,10 @@ def fetch_data():
                         hoo.append(f"{day} closed")
             hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
 
+            if country_code == "PR":
+                state = "PR"
+                country_code = "US"
+
             item = [
                 domain,
                 store_url,
