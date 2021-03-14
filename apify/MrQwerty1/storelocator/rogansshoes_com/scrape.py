@@ -54,28 +54,21 @@ def get_data(url):
     r = session.get(page_url)
     tree = html.fromstring(r.text)
 
-    name_nodes = tree.xpath("//*[@itemprop='name']/text()")
-    if len(name_nodes):
-        location_name = tree.xpath("//*[@itemprop='name']/text()")[0].strip()
-    else:
-        location_name = "<MISSING>"
-
-    address_nodes = tree.xpath("//*[@itemprop='address']/text()")
-    if len(address_nodes):
-        street_address = address_nodes[0].strip() or "<MISSING>"
-        city = address_nodes[1].replace(",", "").strip() or "<MISSING>"
-        state = address_nodes[2].strip() or "<MISSING>"
-        postal = address_nodes[3].strip() or "<MISSING>"
-    else:
-        street_address = "<MISSING>"
-        city = "<MISSING>"
-        state = "<MISSING>"
-        postal = "<MISSING>"
-
+    location_name = tree.xpath("//*[@itemprop='name']/text()")[0].strip()
+    street_address = (
+        tree.xpath("//*[@itemprop='address']/text()")[0].strip() or "<MISSING>"
+    )
+    city = (
+        tree.xpath("//*[@itemprop='address']/text()")[1].replace(",", "").strip()
+        or "<MISSING>"
+    )
+    state = tree.xpath("//*[@itemprop='address']/text()")[2].strip() or "<MISSING>"
+    postal = tree.xpath("//*[@itemprop='address']/text()")[3].strip() or "<MISSING>"
     country_code = "US"
     store_number = "<MISSING>"
-    telephone_nodes = tree.xpath("//*[@itemprop='telephone']//text()")
-    phone = "".join(telephone_nodes).strip() or "<MISSING>"
+    phone = (
+        "".join(tree.xpath("//*[@itemprop='telephone']//text()")).strip() or "<MISSING>"
+    )
     latitude = "<MISSING>"
     longitude = "<MISSING>"
     location_type = "<MISSING>"
