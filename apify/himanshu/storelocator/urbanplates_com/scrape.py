@@ -70,6 +70,8 @@ def fetch_data():
         street_address = street_address.split("Located")[0].strip()
         if "Carlsbad" in location_name:
             street_address += " Calle Barcelona"
+        if "1782M" in street_address:
+            street_address = "1782M Galleria at Tysons II"
         city = addr.city
         city = city if city else "<MISSING>"
         if city == "Tysons Ii Tysons":
@@ -85,11 +87,10 @@ def fetch_data():
         location_type = "<MISSING>"
         latitude = poi["coord_x"]
         longitude = poi["coord_y"]
-        hoo = loc_dom.xpath('//div[@class="storeHours"]//text()')
-        hoo = [e.strip() for e in hoo if e.strip()]
-        hours_of_operation = (
-            " ".join(hoo).replace("Store Hours ", "") if hoo else "<MISSING>"
-        )
+        days = loc_dom.xpath('//div[@class="days"]/text()')
+        hours = loc_dom.xpath('//div[@class="hours"]/text()')
+        hoo = list(map(lambda d, h: d.strip() + " " + h.strip(), days, hours))
+        hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
 
         item = [
             domain,
