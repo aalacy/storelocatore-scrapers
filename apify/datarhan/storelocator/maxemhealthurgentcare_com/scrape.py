@@ -55,7 +55,7 @@ def fetch_data():
         loc_dom = etree.HTML(loc_response.text)
 
         location_name = loc_dom.xpath('//h1[@class="post_title"]/text()')
-        location_name = location_name[0] if location_name else "<MISSING>"
+        location_name = location_name[0].strip() if location_name else "<MISSING>"
         raw_data = loc_dom.xpath(
             '//div[@class="profile_single_photo col-md-5"]/following-sibling::div[1]/p/text()'
         )
@@ -64,22 +64,24 @@ def fetch_data():
             continue
         if "suit" in raw_data[1].lower():
             raw_data = [" ".join(raw_data[:2])] + raw_data[2:]
-        street_address = raw_data[0]
-        city = raw_data[1].split(", ")[0]
-        state = raw_data[1].split(", ")[-1].split()[0]
-        zip_code = raw_data[1].split(", ")[-1].split()[-1]
+        street_address = raw_data[0].strip()
+        city = raw_data[1].split(", ")[0].strip()
+        state = raw_data[1].split(", ")[-1].split()[0].strip()
+        zip_code = raw_data[1].split(", ")[-1].split()[-1].strip()
         if len(zip_code) == 2:
             zip_code = "<MISSING>"
         country_code = "<MISSING>"
         store_number = "<MISSING>"
-        phone = raw_data[2].split(":")[-1].replace("Ph. ", "")
+        phone = raw_data[2].split(":")[-1].replace("Ph. ", "").strip()
         location_type = "<MISSING>"
         latitude = "<MISSING>"
         longitude = "<MISSING>"
         hoo = raw_data[-3:]
         hoo = [e.strip() for e in hoo if e.strip() and "Fax" not in e]
         hoo = [e.strip() for e in hoo if e.strip() and "Ph:" not in e]
-        hours_of_operation = " ".join(hoo).split(" Click")[0] if hoo else "<MISSING>"
+        hours_of_operation = (
+            " ".join(hoo).split(" Click")[0].strip() if hoo else "<MISSING>"
+        )
 
         item = [
             domain,
