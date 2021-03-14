@@ -113,6 +113,10 @@ def fetch_data():
                             hours = hrs
                         else:
                             hours = hours + "; " + hrs
+        if "for Base Entry" in add:
+            add = add.split("for Base Entry")[1].strip()
+        if "Commons Building" in add:
+            add = add.split("Commons Building")[1].strip()
         yield [
             website,
             loc,
