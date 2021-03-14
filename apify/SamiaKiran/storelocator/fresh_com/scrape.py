@@ -55,8 +55,6 @@ def fetch_data():
             if len(loc) < 5:
                 continue
             else:
-                print(loc)
-
                 title = loc.find("p", {"class": "subheader1 privacy-info-question"})
                 link = title.find("a")["href"]
                 title = title.text
