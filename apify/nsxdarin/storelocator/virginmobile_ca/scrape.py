@@ -48,8 +48,6 @@ def fetch_data():
     for lat, lng in search:
         session = SgRequests()
         logger.info(str(lat) + "-" + str(lng) + "...")
-        lat = "45.4215296"
-        lng = "-75.69719309999999"
         url = (
             "https://virgin.know-where.com/virginmobile/cgi/selection?lang=en&ll="
             + str(lat)

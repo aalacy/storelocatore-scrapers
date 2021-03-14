@@ -70,12 +70,15 @@ def fetch_data():
     out = []
     s = set()
     locator_domain = "https://www.fjallraven.com"
+    page_url = "<MISSING>"
     countries = [("London", "UK"), ("Dallas", "US"), ("Ontario", "CA")]
     for params in countries:
         js = get_js(params)
 
         for j in js:
-            store_number = j.get("clientkey")
+            store_number = j.get("clientkey") or "<MISSING>"
+            if not store_number.isdigit():
+                store_number = "<MISSING>"
             location_name = f"{j.get('name')}"
             street_address = j.get("address1") or "<MISSING>"
             street_address = " ".join(
@@ -93,13 +96,13 @@ def fetch_data():
 
             if country_code == "UK":
                 country_code = "GB"
+                state = "<MISSING>"
             if country_code == "US" and state == "<MISSING>":
                 continue
 
             phone = j.get("phone") or "<MISSING>"
             latitude = j.get("latitude") or "<MISSING>"
             longitude = j.get("longitude") or "<MISSING>"
-            page_url = j.get("website_url") or "<MISSING>"
             location_type = "<MISSING>"
 
             days = [
