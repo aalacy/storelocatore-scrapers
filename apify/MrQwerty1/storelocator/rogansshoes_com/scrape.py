@@ -67,7 +67,6 @@ def get_data(url):
         state = address_nodes[2].strip() or "<MISSING>"
         postal = address_nodes[3].strip() or "<MISSING>"
     else:
-        print(page_url)
         street_address = "<MISSING>"
         city = "<MISSING>"
         state = "<MISSING>"
