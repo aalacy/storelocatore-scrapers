@@ -1,8 +1,8 @@
 import csv
-import json
+from urllib.parse import urljoin
+from lxml import etree
 
 from sgrequests import SgRequests
-from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 
 
 def write_output(data):
@@ -37,74 +37,67 @@ def write_output(data):
 
 def fetch_data():
     items = []
-    scraped_items = []
 
     session = SgRequests()
 
-    headers = {
-        "accept": "application/json",
-        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.182 Safari/537.36",
-    }
-
     DOMAIN = "superdry.com"
-    start_url = "https://stores.superdry.com/search?q={}&qp={}&l=en"
+    start_urls = ["https://stores.superdry.com/gb", "https://stores.superdry.com/us"]
 
     all_locations = []
-    all_codes = DynamicZipSearch(
-        country_codes=[SearchableCountries.BRITAIN, SearchableCountries.USA],
-        max_radius_miles=50,
-    )
-    for code in all_codes:
-        response = session.get(start_url.format(code, code), headers=headers)
-        data = json.loads(response.text)
-        all_locations += data["response"]["entities"]
+    for start_url in start_urls:
+        response = session.get(start_url)
+        dom = etree.HTML(response.text)
+        all_urls = dom.xpath('//a[@class="Directory-listLink"]/@href')
+        for url in all_urls:
+            url = urljoin(start_url, url)
+            if "/gb/" in url and len(url.split("/")) > 5:
+                all_locations.append(url)
+                continue
+            elif "/us/" in url and len(url.split("/")) > 6:
+                all_locations.append(url)
+                continue
+            city_response = session.get(urljoin(start_url, url))
+            city_dom = etree.HTML(city_response.text)
+            all_locations += city_dom.xpath('//a[@class="Teaser-titleLink"]/@href')
+            sub_urls = city_dom.xpath('//a[@class="Directory-listLink"]/@href')
+            for url in sub_urls:
+                url = urljoin(start_url, url)
+                if "/gb/" in url and len(url.split("/")) > 5:
+                    all_locations.append(url)
+                    continue
+                elif "/us/" in url and len(url.split("/")) > 6:
+                    all_locations.append(url)
+                    continue
+                sub_response = session.get(urljoin(start_url, url))
+                sub_dom = etree.HTML(sub_response.text)
+                all_locations += sub_dom.xpath('//a[@class="Teaser-titleLink"]/@href')
 
-    for poi in all_locations:
-        store_url = poi["profile"]["websiteUrl"]
-        store_url = store_url if store_url else "<MISSING>"
-        location_name = poi["profile"]["c_cHeroSectionStoreName"]
-        location_name = location_name if location_name else "<MISSING>"
-        street_address = poi["profile"]["address"]["line1"]
-        street_address = street_address if street_address else "<MISSING>"
-        city = poi["profile"]["address"]["city"]
-        city = city if city else "<MISSING>"
-        state = poi["profile"]["address"]["region"]
-        state = state if state else "<MISSING>"
-        zip_code = poi["profile"]["address"]["postalCode"]
-        zip_code = zip_code if zip_code else "<MISSING>"
-        country_code = poi["profile"]["address"]["countryCode"]
-        if country_code not in ["US", "GB"]:
-            continue
-        store_number = poi["profile"]["meta"]["id"]
-        store_number = store_number if store_number else "<MISSING>"
-        phone = poi["profile"].get("mainPhone")
-        if phone:
-            phone = phone["number"]
-        phone = phone if phone else "<MISSING>"
+    for url in list(set(all_locations)):
+        store_url = urljoin(start_url, url)
+        print(store_url)
+        loc_response = session.get(store_url)
+        loc_dom = etree.HTML(loc_response.text)
+
+        location_name = loc_dom.xpath('//h1/span[@itemprop="name"]/text()')
+        location_name = location_name[0] if location_name else "<MISSING>"
+        street_address = loc_dom.xpath('//span[@class="c-address-street-1"]/text()')
+        street_address = street_address[0] if street_address else "<MISSING>"
+        city = loc_dom.xpath('//span[@class="c-address-city"]/text()')
+        city = city[0] if city else "<MISSING>"
+        state = loc_dom.xpath('//abbr[@itemprop="addressRegion"]/text()')
+        state = state[0] if state else "<MISSING>"
+        zip_code = loc_dom.xpath('//span[@itemprop="postalCode"]/text()')
+        zip_code = zip_code[0] if zip_code else "<MISSING>"
+        country_code = loc_dom.xpath('//abbr[@itemprop="addressCountry"]/text()')
+        country_code = country_code[0] if country_code else "<MISSING>"
+        store_number = "<MISSING>"
+        phone = loc_dom.xpath('//div[@itemprop="telephone"]/text()')
+        phone = phone[0] if phone else "<MISSING>"
         location_type = "<MISSING>"
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
-        if poi["profile"].get("geocodedCoordinate"):
-            latitude = poi["profile"]["geocodedCoordinate"]["lat"]
-            longitude = poi["profile"]["geocodedCoordinate"]["long"]
-        hoo = []
-        if poi["profile"].get("hours"):
-            for elem in poi["profile"]["hours"]["normalHours"]:
-                day = elem["day"]
-                if elem["isClosed"]:
-                    hoo.append(f"{day} closed")
-                else:
-                    opens = str(elem["intervals"][0]["start"]).replace("00", ":00")
-                    closes = str(elem["intervals"][0]["end"]).replace("00", ":00")
-                    hoo.append(f"{day} {opens} - {closes}")
-        hours_of_operation = (
-            " ".join(hoo).replace(":000", "0:00") if hoo else "<MISSING>"
-        )
-
-        if store_url == "https://superdry.com":
-            store_url = "https://stores.superdry.com/{}/{}/{}".format(
-                country_code, city.replace(" ", "-"), street_address.replace(" ", "-")
-            )
+        latitude = loc_dom.xpath('//meta[@itemprop="latitude"]/@content')[0]
+        longitude = loc_dom.xpath('//meta[@itemprop="longitude"]/@content')[0]
+        hoo = loc_dom.xpath('//table[@class="c-hours-details"]//text()')[2:16]
+        hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
 
         item = [
             DOMAIN,
@@ -122,9 +115,7 @@ def fetch_data():
             longitude,
             hours_of_operation,
         ]
-        if store_number not in scraped_items:
-            scraped_items.append(store_number)
-            items.append(item)
+        items.append(item)
 
     return items
 
