@@ -32,14 +32,17 @@ def _valid(val):
 
 
 def _url(blocks, name):
-    url = ""
+    url = phone = ""
     for block in blocks:
         if block.h3 and block.h3.text.strip() == name:
             url = (
                 locator_domain + block.find("a", href=re.compile(r"/locations"))["href"]
             )
+            _phone = block.find("a", href=re.compile(r"tel:"))
+            if _phone:
+                phone = _phone.text
             break
-    return url
+    return url, phone
 
 
 def fetch_data():
@@ -54,8 +57,7 @@ def fetch_data():
             .split(').data("wpgmp_maps");')[0]
         )
         for _ in locations["places"]:
-            page_url = _url(blocks, _["title"])
-            phone = ""
+            page_url, phone = _url(blocks, _["title"])
             hours_of_operation = ""
             try:
                 res1 = session.get(page_url, headers=_headers)
@@ -66,8 +68,7 @@ def fetch_data():
                             -1
                         ].string.strip()
                     )
-                    phone = loc.get("telephone")
-                    hours_of_operation = _valid(_["openingHours"])
+                    hours_of_operation = _valid(loc["openingHours"])
             except:
                 pass
             yield SgRecord(
