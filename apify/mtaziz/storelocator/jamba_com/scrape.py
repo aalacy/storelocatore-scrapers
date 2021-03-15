@@ -66,7 +66,7 @@ def fetch_data():
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.121 Safari/537.36",
     }
 
-    for zipcode in zips_radius100[1:5]:
+    for zipcode in zips_radius100:
         url_test_api = (
             "https://www.jamba.com/sitecore/api/v1.0/jamba/storelocator/locations?locationname=%s"
             % (zipcode)
