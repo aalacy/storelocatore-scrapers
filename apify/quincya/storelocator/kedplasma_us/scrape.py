@@ -55,7 +55,7 @@ def fetch_data():
     for item in items:
         if "OPENING" in item.text.upper():
             continue
-        location_name = "<MISSING>"
+        location_name = item.b.text.strip()
         street_address = item.a.text.split(",")[1].strip()[2:]
         city = item.b.text.split(",")[0].strip().split("-")[0]
         state = item.b.text.split(",")[1].strip()

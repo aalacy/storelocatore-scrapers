@@ -39,7 +39,9 @@ def fetch_data():
             ].text.replace(",", ";")
             if re.search(r"Temporarily Closed", _["store"], re.IGNORECASE):
                 hours_of_operation = "Temporarily Closed"
-            location_name = " ".join(_["store"].split("&#8211;")[0].split(" ")[:-1])
+            location_name = _["store"].split("&#8211;")[0]
+            if "-" in location_name:
+                location_name = " ".join(location_name.split(" ")[:-1])
             yield SgRecord(
                 page_url=_["permalink"],
                 store_number=_["id"],
