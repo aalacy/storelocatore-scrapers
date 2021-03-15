@@ -147,7 +147,10 @@ def fetch_data():
             day = elem["dayOfWeek"]
             opens = elem["openingTime"]
             closes = elem["closingTime"]
-            hours_of_operation.append(f"{day} {opens} - {closes}")
+            if opens == closes:
+                hours_of_operation.append(f"{day} closed")
+            else:
+                hours_of_operation.append(f"{day} {opens} - {closes}")
         hours_of_operation = (
             " ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
         )

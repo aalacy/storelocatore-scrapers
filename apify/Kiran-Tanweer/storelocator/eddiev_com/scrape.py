@@ -74,6 +74,7 @@ def write_output(data):
 
 def fetch_data():
     data = []
+    linklist = []
     url = "https://www.eddiev.com/locations/all-locations"
     r = session.get(url, headers=headers, verify=False)
     soup = BeautifulSoup(r.text, "html.parser")
@@ -81,6 +82,9 @@ def fetch_data():
     more_link = storelist.findAll("div", {"class", "more_links"})
     for link_div in more_link:
         link = link_div.find("a", {"id": "locDetailsId"})["href"]
+        linklist.append(link)
+    linklist.append("/locations/fl/fort-lauderdale/fort-lauderdale/8528")
+    for link in linklist:
         link = "https://www.eddiev.com" + link
         p = session.get(link, headers=headers, verify=False)
         bs = BeautifulSoup(p.text, "html.parser")
