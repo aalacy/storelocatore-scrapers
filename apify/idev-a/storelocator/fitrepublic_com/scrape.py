@@ -49,6 +49,7 @@ def fetch_data():
                     )
             except Exception as err:
                 log.info(str(err))
+
             yield SgRecord(
                 page_url=_["website"],
                 store_number=_["id"],

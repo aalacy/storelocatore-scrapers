@@ -84,6 +84,16 @@ def fetch_data():
                                 hours = hours + "; " + hrs
                     if hours == "":
                         hours = "<MISSING>"
+                    if state == "LITHONIA":
+                        city = "LITHONIA"
+                        state = "GA"
+                    if "200 Houston" in add:
+                        add = add.replace("200 Houston", "200")
+                    if "106 E FM 495" in add:
+                        lat = "26.207524"
+                        lng = "-98.151595"
+                    if add == "627":
+                        add = "627 Canal Blvd"
                     yield [
                         website,
                         loc,
