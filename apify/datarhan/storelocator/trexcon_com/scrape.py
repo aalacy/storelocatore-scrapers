@@ -98,6 +98,7 @@ def fetch_data():
             hours_of_operation = hours_of_operation.split("HOURS ")[1].split(" SUBWAY")[
                 0
             ]
+        hours_of_operation = hours_of_operation.replace("COUNTRY CAFE HOURS ", "")
 
         item = [
             domain,

@@ -120,8 +120,10 @@ def fetch_data():
                     "//dt[contains(text(), 'Phone')]/following-sibling::dd[1]/text()"
                 )
             )
-            or "<MISSING>"
+            or "<INACCESSIBLE>"
         )
+        if phone == "(213) 747-0655":
+            phone = "(310) 294-2189"
         latitude = j.get("lat") or "<MISSING>"
         longitude = j.get("lng") or "<MISSING>"
         location_type = "<MISSING>"
