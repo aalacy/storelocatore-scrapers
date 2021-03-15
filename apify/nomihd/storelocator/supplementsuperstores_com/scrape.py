@@ -98,6 +98,8 @@ def fetch_data():
             if len("".join(add).strip()) > 0:
                 add_list.append("".join(add).strip())
 
+        if "COMING SOON" in add_list:
+            continue
         street_address = add_list[0]
         city = add_list[1].split(",")[0].strip()
         state = add_list[1].split(",")[1].strip().split(" ")[0].strip()

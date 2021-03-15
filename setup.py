@@ -20,6 +20,7 @@ setup(
             "flake8-safegraph-crawl==0.4",
             "mypy==0.790",
             "mypy-extensions==0.4.3",
+            "piprot==0.9.11",
         ]
     },
 )

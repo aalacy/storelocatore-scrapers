@@ -88,7 +88,7 @@ def fetch_data():
         if cs != []:
             coming_soon.append(url)
             continue
-        time.sleep(5)
+        time.sleep(10)
         soup = BeautifulSoup(driver.page_source, "html.parser")
 
         the_script = soup.find_all("script", {"type": "application/ld+json"})[1]

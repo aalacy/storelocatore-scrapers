@@ -9,7 +9,7 @@ from sgrequests import SgRequests
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 logger = SgLogSetup().get_logger("uhaul_com")
-
+latlng = []
 thread_local = threading.local()
 
 headers = {
@@ -250,22 +250,25 @@ def get_location(loc, retry_count=0):
             hours = hours + "; Sat: Closed"
         if "Sun" not in hours:
             hours = hours + "; Sun: Closed"
-        return [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            lat,
-            lng,
-            hours,
-        ]
+        ll = str(lat) + "|" + str(lng)
+        if ll not in latlng:
+            latlng.append(ll)
+            return [
+                locator_domain,
+                page_url,
+                location_name,
+                street_address,
+                city,
+                state,
+                postal,
+                country_code,
+                store_number,
+                phone,
+                location_type,
+                lat,
+                lng,
+                hours,
+            ]
 
     except Exception as e:
         if retry_count < 3:

@@ -1,0 +1,4 @@
+sgvalidator==0.0.71
+sgrequests==0.1.4
+sgscrape==0.0.21
+lxml==4.5.2
