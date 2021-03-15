@@ -50,9 +50,9 @@ def fetch_data():
             for item in items:
                 if '"brand":{"key":"' in item:
                     phone = "<MISSING>"
-                    CS = False
                     name = item.split('"name":"')[1].split('"')[0]
                     if "Hyatt Regency" in name:
+                        CS = False
                         loc = (
                             "https://www.hyatt.com"
                             + item.split('"url":"https://www.hyatt.com')[1].split('"')[
