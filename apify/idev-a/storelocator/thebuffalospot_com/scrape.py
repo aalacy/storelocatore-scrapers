@@ -68,7 +68,7 @@ def fetch_data():
                             -1
                         ].string.strip()
                     )
-                    hours_of_operation = _valid(loc["openingHours"])
+                    hours_of_operation = _valid(loc.get("openingHours", []))
             except:
                 pass
             yield SgRecord(
