@@ -48,17 +48,17 @@ def fetch_data():
 
     all_locations = dom.xpath('//a[div[contains(text(), "Visit Website")]]/@href')
     for url in all_locations:
-        if "18001" in url:
-            continue
         store_url = urljoin(start_url, url)
         with SgFirefox() as driver:
             driver.get(store_url)
             loc_dom = etree.HTML(driver.page_source)
 
+        if loc_dom.xpath('//div[contains(text(), "Coming Soon")]'):
+            continue
         location_name = loc_dom.xpath('//div[@id="views_title"]/h1/text()')
         location_name = location_name[0] if location_name else "<MISSING>"
         street_address = loc_dom.xpath('//span[@itemprop="streetAddress"]/text()')
-        street_address = street_address[0] if street_address else "<MISSING>"
+        street_address = ' '.join(street_address) if street_address else "<MISSING>"
         city = loc_dom.xpath('//span[@itemprop="addressLocality"]/text()')
         city = city[0] if city else "<MISSING>"
         state = loc_dom.xpath('//span[@itemprop="addressRegion"]/text()')
