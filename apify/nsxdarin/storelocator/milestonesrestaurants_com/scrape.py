@@ -110,6 +110,9 @@ def fetch_data():
                             hours = hours.split("; Brunch")[0]
                         if "; Happy" in hours:
                             hours = hours.split("; Happy")[0]
+                        if phone == "":
+                            phone = "<MISSING>"
+                        hours = hours.replace("\\u0026", "&")
                         if store not in ids and "Permanently Closed" not in hours:
                             ids.append(store)
                             yield [

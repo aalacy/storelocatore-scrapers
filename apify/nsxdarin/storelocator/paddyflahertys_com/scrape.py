@@ -111,7 +111,7 @@ def fetch_data():
                             hours = hours.split(", storenotice")[0].strip()
                         if "Holiday" in hours:
                             hours = hours.split("Holiday")[0].strip()
-                        if store not in ids:
+                        if store not in ids and "PADDY FLAHERTY" in name.upper():
                             ids.append(store)
                             yield [
                                 website,

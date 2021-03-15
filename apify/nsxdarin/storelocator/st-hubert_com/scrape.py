@@ -1,10 +1,8 @@
 import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
-import datetime
 import time
 
-session = SgRequests()
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
@@ -41,6 +39,7 @@ def write_output(data):
 
 def fetch_data():
     locs = []
+    session = SgRequests()
     url = "https://api.st-hubert.com/CaraAPI/APIService/getStoreList?from=60.000,-150.000&to=39.000,-50.000&eCommOnly=N"
     r = session.get(url, headers=headers)
     website = "st-hubert.com"
@@ -58,7 +57,7 @@ def fetch_data():
                 + "&numberOfStoreHours=7"
             )
     for loc in locs:
-        time.sleep(2)
+        time.sleep(3)
         logger.info(loc)
         name = ""
         add = ""
@@ -71,7 +70,7 @@ def fetch_data():
         lng = ""
         hours = ""
         purl = ""
-        weekday = ""
+        session = SgRequests()
         r2 = session.get(loc, headers=headers)
         if r2.encoding is None:
             r2.encoding = "utf-8"
@@ -104,16 +103,20 @@ def fetch_data():
                 lat = line2.split('"latitude": ')[1].split(",")[0]
             if '"longitude": ' in line2:
                 lng = line2.split('"longitude": ')[1].split(",")[0]
-            if '"date": "' in line2:
-                day = line2.split('"date": "')[1].split('"')[0]
-                dt = day
-                year, month, dday = (int(x) for x in dt.split("-"))
-                ans = datetime.date(year, month, dday)
-                weekday = ans.strftime("%A")
-            if '"store": {' in line2:
-                g = next(lines)
-                hrs = weekday + ": " + g.split(': "')[1].split('"')[0]
-                hrs = hrs + "-" + next(lines).split(': "')[1].split('"')[0]
+        r2 = session.get(purl, headers=headers)
+        if r2.encoding is None:
+            r2.encoding = "utf-8"
+        lines = r2.iter_lines(decode_unicode=True)
+        for line2 in lines:
+            if "h00" in line2:
+                if '<p id="storeDetailsHours"' in line2:
+                    hrs = (
+                        line2.split('<p id="storeDetailsHours"')[1]
+                        .split('">')[1]
+                        .split("<")[0]
+                    )
+                else:
+                    hrs = line2.split("<")[0]
                 if hours == "":
                     hours = hrs
                 else:
@@ -122,22 +125,30 @@ def fetch_data():
             zc = "<MISSING>"
         if city == "":
             city = name.rsplit(" ", 1)[1]
-        yield [
-            website,
-            purl,
-            name,
-            add,
-            city,
-            state,
-            zc,
-            country,
-            store,
-            phone,
-            typ,
-            lat,
-            lng,
-            hours,
-        ]
+        if purl == "":
+            purl = "https://www.kelseys.ca/en/locations.html"
+        if phone == "":
+            phone = "<MISSING>"
+        if hours == "":
+            hours = "<MISSING>"
+        hours = hours.replace("h00 ", "h00-").replace("h30 ", "h30-")
+        if store != "9999":
+            yield [
+                website,
+                purl,
+                name,
+                add,
+                city,
+                state,
+                zc,
+                country,
+                store,
+                phone,
+                typ,
+                lat,
+                lng,
+                hours,
+            ]
 
 
 def scrape():

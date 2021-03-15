@@ -47,7 +47,11 @@ def fetch_data():
         locator_domain = website
         location_name = store_json["name"]
 
-        raw_address = store_json["address"]
+        raw_address = ", ".join(
+            store_sel.xpath(
+                '//div[@class="front matchHeight"]//div[@class="map-card__content"]/p/text()'
+            )
+        ).strip()
         formatted_addr = parser.parse_address_intl(raw_address)
         street_address = formatted_addr.street_address_1
         if formatted_addr.street_address_2:

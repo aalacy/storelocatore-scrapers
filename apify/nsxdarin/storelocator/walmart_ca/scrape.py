@@ -1,87 +1,137 @@
 import csv
-import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
+from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 from sglogging import SgLogSetup
 
-logger = SgLogSetup().get_logger('walmart_ca')
+logger = SgLogSetup().get_logger("walmart_ca")
 
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+}
 
+search = DynamicZipSearch(
+    country_codes=[SearchableCountries.CANADA],
+    max_radius_miles=20,
+    max_search_results=25,
+)
 
-session = SgRequests()
-headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
-           }
 
 def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+    with open("data.csv", mode="w") as output_file:
+        writer = csv.writer(
+            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+        )
+        writer.writerow(
+            [
+                "locator_domain",
+                "page_url",
+                "location_name",
+                "street_address",
+                "city",
+                "state",
+                "zip",
+                "country_code",
+                "store_number",
+                "phone",
+                "location_type",
+                "latitude",
+                "longitude",
+                "hours_of_operation",
+            ]
+        )
         for row in data:
             writer.writerow(row)
 
+
 def fetch_data():
-    url = 'https://www.walmart.ca/sitemap-stores-en.xml'
-    locs = []
-    r = session.get(url, headers=headers, verify=False)
-    if r.encoding is None: r.encoding = 'utf-8'
-    for line in r.iter_lines(decode_unicode=True):
-        if '<loc>https://www.walmart.ca/en/stores-near-me/' in line and '-only' not in line:
-            locs.append(line.split('<loc>')[1].split('<')[0])
-    logger.info(('Found %s Locations.' % str(len(locs))))
-    for loc in locs:
-        name = ''
-        add = ''
-        city = ''
-        state = ''
-        store = loc.rsplit('-',1)[1]
-        lat = ''
-        lng = ''
-        hours = ''
-        country = 'CA'
-        zc = ''
-        phone = ''
-        logger.info(('Pulling Location %s...' % loc))
-        website = 'walmart.ca'
-        typ = 'Store'
-        r2 = session.get(loc, headers=headers)
-        if r2.encoding is None: r2.encoding = 'utf-8'
-        lines = r2.iter_lines(decode_unicode=True)
-        for line2 in lines:
-            if '"dayOfWeek": [' in line2:
-                g = next(lines)
-                day = g.split('"')[1]
-                next(lines)
-                g = next(lines)
-                h = next(lines)
-                hrs = day + ': ' + g.split('"')[3] + '-' + h.split('"')[3]
-                if hours == '':
-                    hours = hrs
-                else:
-                    hours = hours + '; ' + hrs
-            if '"name": "' in line2:
-                name = line2.split('"name": "')[1].split('"')[0]
-            if '"streetAddress": "' in line2:
-                add = line2.split('"streetAddress": "')[1].split('"')[0]
-            if '"addressLocality": "' in line2:
-                city = line2.split('"addressLocality": "')[1].split('"')[0]
-            if '"addressRegion": "' in line2:
-                state = line2.split('"addressRegion": "')[1].split('"')[0]
-            if '"postalCode": "' in line2:
-                zc = line2.split('"postalCode": "')[1].split('"')[0]
-            if '"latitude": ' in line2:
-                lat = line2.split('"latitude": ')[1].split(',')[0]
-            if '"longitude": ' in line2:
-                lng = line2.split('"longitude": ')[1].replace('\t','').replace('\r','').replace('\n','').strip()
-            if '"telephone": "' in line2:
-                phone = line2.split('"telephone": "')[1].split('"')[0]
-        if 'Supercentre' in name:
-            typ = 'Supercentre'
-        if hours == '':
-            hours = '<MISSING>'
-        if add != '':
-            yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+    ids = []
+    for code in search:
+        logger.info(("Pulling Zip Code %s..." % code))
+        url = (
+            "https://www.walmart.ca/en/stores-near-me/api/searchStores?singleLineAddr="
+            + code.replace(" ", "")
+        )
+        website = "walmart.ca"
+        typ = "Walmart"
+        session = SgRequests()
+        r2 = session.get(url, headers=headers, timeout=15)
+        if r2.encoding is None:
+            r2.encoding = "utf-8"
+        for line2 in r2.iter_lines(decode_unicode=True):
+            if '"stores":[{"distance":' in line2:
+                items = line2.split('{"distance":')
+                for item in items:
+                    if '"address":{' in item:
+                        hours = ""
+                        name = item.split('"displayName":"')[1].split('"')[0]
+                        store = item.split('"id":')[1].split(",")[0]
+                        loc = (
+                            "https://www.walmart.ca/en/stores-near-me/"
+                            + name.replace(" ", "-").lower()
+                            + "-"
+                            + store
+                        )
+                        add = item.split('"address1":"')[1].split('"')[0]
+                        city = item.split('"city":"')[1].split('"')[0]
+                        state = item.split('"state":"')[1].split('"')[0]
+                        phone = item.split('"phone":"')[1].split('"')[0]
+                        lat = item.split('"latitude":')[1].split(",")[0]
+                        lng = item.split('"longitude":')[1].split("}")[0]
+                        zc = item.split('"postalCode":"')[1].split('"')[0]
+                        days = (
+                            item.split('"regularHours":[')[1]
+                            .split("]},")[0]
+                            .split('"start":"')
+                        )
+                        for day in days:
+                            if '"day":"' in day:
+                                if '"closed":true' in day:
+                                    hrs = (
+                                        day.split('"day":"')[1].split('"')[0]
+                                        + ": Closed"
+                                    )
+                                else:
+                                    hrs = (
+                                        day.split('"day":"')[1].split('"')[0]
+                                        + ": "
+                                        + day.split('"')[0]
+                                        + "-"
+                                        + day.split('"end":"')[1].split('"')[0]
+                                    )
+                                if hours == "":
+                                    hours = hrs
+                                else:
+                                    hours = hours + "; " + hrs
+                        country = "CA"
+                        if "Supercentre" in name:
+                            typ = "Supercenter"
+                        if "Neighborhood Market" in name:
+                            typ = "Neighborhood Market"
+                        if hours == "":
+                            hours = "<MISSING>"
+                        if add != "" and store not in ids:
+                            ids.append(store)
+                            yield [
+                                website,
+                                loc,
+                                name,
+                                add,
+                                city,
+                                state,
+                                zc,
+                                country,
+                                store,
+                                phone,
+                                typ,
+                                lat,
+                                lng,
+                                hours,
+                            ]
+
 
 def scrape():
     data = fetch_data()
     write_output(data)
+
 
 scrape()

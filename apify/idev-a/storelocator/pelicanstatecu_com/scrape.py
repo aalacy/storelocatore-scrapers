@@ -41,9 +41,7 @@ def fetch_data():
                     continue
                 page_url = urljoin(base_url, url)
                 hours_of_operation = ""
-                t1 = href.xpath(
-                    './/div[@class="lobbyHours" or @class="driveThroughHours"]/h5'
-                )
+                t1 = href.xpath('.//div[@class="lobbyHours"]/h5')
                 if t1:
                     for t in t1:
                         hours_of_operation += t.xpath("./text()")[0]
@@ -54,7 +52,7 @@ def fetch_data():
                         hours_of_operation += ";"
                 latitude = get_first(href.xpath("./@data-latitude"))
                 longitude = get_first(href.xpath("./@data-longitude"))
-                street_address = ", ".join(
+                street_address = " ".join(
                     href.xpath("./@data-address1 | ./@data-address2")
                 )
                 city = get_first(href.xpath("./@data-city"))
@@ -69,9 +67,8 @@ def fetch_data():
                 try:
                     store_number = get_id_from_link(page_url)
                 except:
-                    import pdb
+                    pass
 
-                    pdb.set_trace()
                 yield SgRecord(
                     page_url=page_url,
                     store_number=store_number,
@@ -85,7 +82,7 @@ def fetch_data():
                     longitude=longitude,
                     phone=phone,
                     locator_domain=locator_domain,
-                    hours_of_operation=hours_of_operation,
+                    hours_of_operation=hours_of_operation.replace("Lobby Hours:", ""),
                 )
 
 

@@ -88,8 +88,16 @@ def fetch_data():
         hours_of_operation = base.find(class_="hours").text.replace("\n", " ").strip()
         hours_of_operation = (re.sub(" +", " ", hours_of_operation)).strip()
 
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
+        map_str = base.address.a["href"]
+        try:
+            geo = re.findall(r"[0-9]{2}\.[0-9]+,-[0-9]{2,3}\.[0-9]+", map_str)[0].split(
+                ","
+            )
+            latitude = geo[0]
+            longitude = geo[1]
+        except:
+            latitude = "<MISSING>"
+            longitude = "<MISSING>"
 
         data.append(
             [

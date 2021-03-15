@@ -36,8 +36,8 @@ def write_output(data):
 
 search = DynamicZipSearch(
     country_codes=[SearchableCountries.USA],
-    max_radius_miles=50,
-    max_search_results=250,
+    max_radius_miles=20,
+    max_search_results=50,
 )
 
 session = SgRequests()
@@ -54,9 +54,9 @@ def fetch_data():
             logger.info(("Pulling Postal Code %s..." % code))
             url = "https://www.walgreens.com/locator/v1/stores/search?requestor=search"
             payload = {
-                "r": "250",
+                "r": "50",
                 "requestType": "dotcom",
-                "s": "100",
+                "s": "20",
                 "p": 1,
                 "q": code,
                 "lat": "",
@@ -72,7 +72,7 @@ def fetch_data():
                 country = "US"
                 lng = item["longitude"]
                 add = item["store"]["address"]["street"]
-                zc = item["store"]["address"]["postalCode"]
+                zc = item["store"]["address"]["zip"]
                 city = item["store"]["address"]["city"]
                 state = item["store"]["address"]["state"]
                 name = item["store"]["name"]
@@ -102,28 +102,57 @@ def fetch_data():
                                         hrs = (
                                             day.split(">")[1].split("<")[0]
                                             + ": "
-                                            + day.split("react-text:")[1]
-                                            .split(">")[1]
-                                            .split("<")[0]
+                                            + day.split('<li class="time">')[1].split(
+                                                "<"
+                                            )[0]
                                         )
                                         hrs = (
                                             hrs
                                             + "-"
-                                            + day.split("react-text:")[3]
-                                            .split(">")[1]
-                                            .split("<")[0]
+                                            + day.split("<!-- -->")[2].split("<")[0]
                                         )
                                     if hours == "":
                                         hours = hrs
                                     else:
                                         hours = hours + "; " + hrs
-                phone = (
-                    item["store"]["phone"]["areaCode"]
-                    + item["store"]["phone"]["number"]
-                )
-                if Closed:
-                    hours = "Temporarily Closed"
-                if store not in ids:
+                        if (
+                            "Store &amp; Shopping</strong></h3>" in line2
+                            and hours == ""
+                        ):
+                            days = (
+                                line2.split("Store &amp; Shopping")[1]
+                                .split("</ul></li><")[0]
+                                .split('<li class="day"')
+                            )
+                            for day in days:
+                                if "pharmacyHoursList" not in day:
+                                    if ">Closed<" in day:
+                                        hrs = (
+                                            day.split(">")[1].split("<")[0] + ": Closed"
+                                        )
+                                    else:
+                                        hrs = (
+                                            day.split(">")[1].split("<")[0]
+                                            + ": "
+                                            + day.split('<li class="time">')[1].split(
+                                                "<"
+                                            )[0]
+                                        )
+                                        hrs = (
+                                            hrs
+                                            + "-"
+                                            + day.split("<!-- -->")[2].split("<")[0]
+                                        )
+                                    if hours == "":
+                                        hours = hrs
+                                    else:
+                                        hours = hours + "; " + hrs
+                    phone = (
+                        item["store"]["phone"]["areaCode"]
+                        + item["store"]["phone"]["number"]
+                    )
+                    if Closed:
+                        hours = "Temporarily Closed"
                     ids.append(store)
                     yield [
                         website,

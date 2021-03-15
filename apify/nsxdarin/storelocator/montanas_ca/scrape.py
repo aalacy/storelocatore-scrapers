@@ -4,7 +4,6 @@ from sglogging import SgLogSetup
 import datetime
 import time
 
-session = SgRequests()
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
@@ -41,6 +40,7 @@ def write_output(data):
 
 def fetch_data():
     locs = []
+    session = SgRequests()
     url = "https://iosapi.montanas.ca/CaraAPI/APIService/getStoreList?from=60.000,-150.000&to=39.000,-50.000&eCommOnly=N"
     r = session.get(url, headers=headers)
     website = "montanas.ca"
@@ -58,7 +58,7 @@ def fetch_data():
                 + "&numberOfStoreHours=7"
             )
     for loc in locs:
-        time.sleep(2)
+        time.sleep(3)
         logger.info(loc)
         name = ""
         add = ""
@@ -72,18 +72,12 @@ def fetch_data():
         hours = ""
         purl = ""
         weekday = ""
+        session = SgRequests()
         r2 = session.get(loc, headers=headers)
         if r2.encoding is None:
             r2.encoding = "utf-8"
         lines = r2.iter_lines(decode_unicode=True)
         for line2 in lines:
-            if '"name": "storeUrlSlug_EN",' in line2:
-                g = next(lines)
-                purl = (
-                    "https://www.montanas.ca/en/restaurants/"
-                    + g.split('"value": "')[1].split('"')[0]
-                    + ".html"
-                )
             if '"storeNumber": ' in line2:
                 store = line2.split('"storeNumber": ')[1].split(",")[0]
             if '"storeName": "' in line2:
@@ -118,6 +112,15 @@ def fetch_data():
                     hours = hrs
                 else:
                     hours = hours + "; " + hrs
+        purl = (
+            "https://www.montanas.ca/en/locations/"
+            + store
+            + "/"
+            + city.replace(" ", "-").lower().replace(".", "").replace("'", "")
+            + "-"
+            + add.replace(" ", "-").lower().replace(".", "").replace("'", "")
+            + ".html"
+        )
         if zc == "":
             zc = "<MISSING>"
         if city == "":
