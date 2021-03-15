@@ -37,7 +37,7 @@ def fetch_data():
     base_url = "https://www.samedelman.com/store-locations"
     with SgChrome() as driver:
         driver.get(base_url)
-        WebDriverWait(driver, 10).until(
+        WebDriverWait(driver, 30).until(
             EC.presence_of_element_located((By.XPATH, "//div[@id='content']"))
         )
         soup = bs(driver.page_source, "lxml")
