@@ -13,6 +13,7 @@ def write_output(data):
             output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
         )
 
+        # Header
         writer.writerow(
             [
                 "locator_domain",
@@ -31,7 +32,7 @@ def write_output(data):
                 "page_url",
             ]
         )
-
+        # Body
         for row in data:
             writer.writerow(row)
 
@@ -105,8 +106,6 @@ def fetch_data():
                                 " ", "-"
                             ).replace(
                                 "--", "-"
-                            ).replace(
-                                "---", "-"
                             )
                         else:
                             page_url = "https://www.montblanc.com/en-gb/store-locator/stores/europe/united-kingdom/" + location_name.lower().replace(
@@ -118,6 +117,37 @@ def fetch_data():
                             ).replace(
                                 "--", "-"
                             )
+
+                        if (
+                            "https://www.montblanc.com/en-ar/store-locator/stores/america/united-states/montblanc-aventura-aventura-mall"
+                            in page_url
+                        ):
+                            page_url = "https://www.montblanc.com/en-us/store-locator/stores/america/united-states/montblanc-aventura-mall"
+                        if (
+                            "https://www.montblanc.com/en-ar/store-locator/stores/america/united-states/montblanc-boutique-mclean-–-tyson's-galleria"
+                            in page_url
+                        ):
+                            page_url = "https://www.montblanc.com/en-us/store-locator/stores/america/united-states/montblanc-mc-lean-tyson-s"
+                        if (
+                            "https://www.montblanc.com/en-ar/store-locator/stores/america/united-states/montblanc-chicago-o'hare"
+                            in page_url
+                        ):
+                            page_url = "https://www.montblanc.com/en-us/store-locator/stores/america/united-states/montblanc-chicago-o-hare"
+                        if (
+                            "https://www.montblanc.com/en-ar/store-locator/stores/america/united-states/montblanc-las-vegas-caesar's"
+                            in page_url
+                        ):
+                            page_url = "https://www.montblanc.com/en-us/store-locator/stores/america/united-states/montblanc-las-vegas-caesar-s"
+                        if (
+                            "https://www.montblanc.com/en-ar/store-locator/stores/america/united-states/montblanc-new-york-westfield-world-trade-center"
+                            in page_url
+                        ):
+                            page_url = "https://www.montblanc.com/en-us/store-locator/stores/america/united-states/montblanc-new-york-world-trade-center"
+                        if (
+                            "https://www.montblanc.com/en-gb/store-locator/stores/europe/united-kingdom/selfridges"
+                            in page_url
+                        ):
+                            page_url = "https://www.montblanc.com/en-gb/store-locator/stores/europe/united-kingdom/montblanc-boutique-london-selfridges"
 
                         r = session.get(page_url, headers=headers)
                         response1 = bs(r.text, "lxml")
