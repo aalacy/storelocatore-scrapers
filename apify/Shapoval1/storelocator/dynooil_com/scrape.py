@@ -78,7 +78,7 @@ def fetch_data():
         )
         a = usaddress.tag(ad, tag_mapping=tag)[0]
         street_address = f"{a.get('address1')} {a.get('address2')}".replace(
-            "\n", ""
+            "None", ""
         ).strip()
         city = a.get("city")
         postal = a.get("postal")
