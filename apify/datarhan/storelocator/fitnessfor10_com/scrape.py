@@ -93,8 +93,8 @@ def fetch_data():
             .split("!2m")[0]
             .split("!3d")
         )
-        latitude = geo[0]
-        longitude = geo[1]
+        latitude = geo[1]
+        longitude = geo[0]
         hoo = loc_dom.xpath(
             '//h5[contains(text(), "REGULAR STAFFED HOURS")]/following-sibling::div/*/text()'
         )

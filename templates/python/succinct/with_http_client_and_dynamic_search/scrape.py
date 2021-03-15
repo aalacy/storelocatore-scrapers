@@ -3,11 +3,21 @@ This is the set of succinct templates for a scraper. For Object Oriented templat
 
 Choose the functionality you need, populate/change what you need, but remember we consider these to be best practices.
 """
-from sgcrawler.sgcrawler_fun import *
-from sgcrawler.helper_definitions import *
+from typing import Any
+from sgcrawler.sgcrawler_fun import SgCrawlerUsingHttpAndDynamicSearchFun
+from sgcrawler.helper_definitions import ManualRecordTransformer
+from sgcrawler.helper_definitions import ManualRecordTransformerFun
+from sgcrawler.helper_definitions import DeclarativeTransformerAndFilter
+from sgcrawler.helper_definitions import DeclarativePipeline
+from sgscrape.sgrecord import SgRecord
+from sgscrape.simple_scraper_pipeline import SSPFieldDefinitions
+from sgscrape.simple_scraper_pipeline import ConstantField
+from sgscrape.simple_scraper_pipeline import MappingField
+from sgscrape.simple_scraper_pipeline import MultiMappingField
+from sgscrape.simple_scraper_pipeline import MissingField
+from sgzip.dynamic import SearchableCountries
+from sgzip.dynamic import DynamicZipSearch
 from sgrequests import SgRequests
-from sgscrape.simple_scraper_pipeline import *
-from sgzip.dynamic import SearchableCountries, DynamicZipSearch
 
 ########################################################################################################################
 #
@@ -22,6 +32,7 @@ from sgzip.dynamic import SearchableCountries, DynamicZipSearch
 # 3. [ RECOMMENDED ] Use a declarative transformer/filter - (line 59)
 #                    (`pip install sgscrape`, and see `sgscrape.simple_scraper_pipeline.py` for details)
 
+
 class MyManualTransformer(ManualRecordTransformer):
     """
     Manually transform your records to `SgRecord`, and uniquely-identify them.
@@ -31,15 +42,20 @@ class MyManualTransformer(ManualRecordTransformer):
         """
         Given a `raw` record, normalise it and populate the fields of the SgRecord.
         """
-        return SgRecord(locator_domain="example.com")  # Empty, for illustration purposes.
+        return SgRecord(
+            locator_domain="example.com"
+        )  # Empty, for illustration purposes.
 
     def uniq_id(self, record: SgRecord):
         """
         Returns the unique identifier of the record.
         Defaults to `store_number`, but if that's not the case, override to return the proper one.
         """
-        return record.page_url()  # For illustrative purposes; normally, try to leave it at default and see if it
+        return (
+            record.page_url()
+        )  # For illustrative purposes; normally, try to leave it at default and see if it
         # filters correctly.
+
 
 def my_manual_transformer(crawler_domain: str):
     """
@@ -47,33 +63,49 @@ def my_manual_transformer(crawler_domain: str):
     If the transformations are long, use helper methods instead of lambdas.
     """
     return ManualRecordTransformerFun(
-            uniq_id=lambda record: record.store_number(),
-            transform_record=lambda raw: SgRecord(locator_domain=crawler_domain)  # Empty, for illustration purposes.
-        )
+        uniq_id=lambda record: record.store_number(),
+        transform_record=lambda raw: SgRecord(
+            locator_domain=crawler_domain
+        ),  # Empty, for illustration purposes.
+    )
+
 
 def my_declarative_transformer(crawler_domain: str):
     """
     Using a declarative approach to indicate where fields can be found.
     """
     return DeclarativeTransformerAndFilter(
-            pipeline=DeclarativePipeline(
-                crawler_domain=crawler_domain,
-                field_definitions=SimpleScraperPipeline.field_definitions(
-                    locator_domain=ConstantField(crawler_domain),
-                    page_url=MappingField(mapping=["url_slug"]),
-                    location_name=MappingField(mapping=['name'], is_required=False),
-                    street_address=MultiMappingField(mapping=[["location", "address"], ["location", "address2"]]),
-                    city=MappingField(mapping=["location", "city"]),
-                    state=MappingField(mapping=["location", "state"]),
-                    zipcode=MappingField(mapping=["location", "zip"], is_required=False),
-                    country_code=MappingField(mapping=["location", "country_code"], is_required=False),
-                    store_number=MappingField(mapping=["external_id"], part_of_record_identity=True),
-                    phone=MappingField(mapping=["phone"], is_required=False),
-                    location_type=MappingField(mapping=["legal"], is_required=False),
-                    latitude=MappingField(mapping=["location", "latitude"], is_required=False),
-                    longitude=MappingField(mapping=["location", "longitude"], is_required=False),
-                    hours_of_operation=MissingField()),
-                fail_on_outlier=False))
+        pipeline=DeclarativePipeline(
+            crawler_domain=crawler_domain,
+            field_definitions=SSPFieldDefinitions(
+                locator_domain=ConstantField(crawler_domain),
+                page_url=MappingField(mapping=["url_slug"]),
+                location_name=MappingField(mapping=["name"], is_required=False),
+                street_address=MultiMappingField(
+                    mapping=[["location", "address"], ["location", "address2"]]
+                ),
+                city=MappingField(mapping=["location", "city"]),
+                state=MappingField(mapping=["location", "state"]),
+                zipcode=MappingField(mapping=["location", "zip"], is_required=False),
+                country_code=MappingField(
+                    mapping=["location", "country_code"], is_required=False
+                ),
+                store_number=MappingField(
+                    mapping=["external_id"], part_of_record_identity=True
+                ),
+                phone=MappingField(mapping=["phone"], is_required=False),
+                location_type=MappingField(mapping=["legal"], is_required=False),
+                latitude=MappingField(
+                    mapping=["location", "latitude"], is_required=False
+                ),
+                longitude=MappingField(
+                    mapping=["location", "longitude"], is_required=False
+                ),
+                hours_of_operation=MissingField(),
+            ),
+            fail_on_outlier=False,
+        )
+    )
 
 
 ########################################################################################################################
@@ -90,7 +122,7 @@ def my_declarative_transformer(crawler_domain: str):
 #
 
 if __name__ == "__main__":
-    domain = 'example.com'  # replace with your domain
+    domain = "example.com"  # replace with your domain
 
     def fetch_raw_using(self, http, next_item, found_location_at):
         # The `http` argument is `SgRequests` because that's what `make_http()` returns.
@@ -100,11 +132,18 @@ if __name__ == "__main__":
         # Use `self` to access `crawler_domain()` and `logger()`
 
         # Example:
-        locations = http.get(f"http://{self.crawler_domain()}/locations?zip={next_item}").json()
+        locations = http.get(
+            f"http://{self.crawler_domain()}/locations?zip={next_item}"
+        ).json()
         for raw in locations:
-            lat, long = raw['latitude'], raw['longitude']  # retrieve the (lat, long), if possible.
+            lat, long = (
+                raw["latitude"],
+                raw["longitude"],
+            )  # retrieve the (lat, long), if possible.
             found_location_at(lat, long)  # mark location found to speed up search
-            self.logger().debug(f"Something fishy here: {raw}")  # you can access the logger like so.
+            self.logger().debug(
+                f"Something fishy here: {raw}"
+            )  # you can access the logger like so.
             yield raw  # always yield each raw location you find.
 
     SgCrawlerUsingHttpAndDynamicSearchFun(
@@ -112,5 +151,5 @@ if __name__ == "__main__":
         transformer=MyManualTransformer(),  # OR: my_manual_transformer(...) OR: my_declarative_transformer(...)
         make_http=SgRequests(),
         make_dynamic_search=DynamicZipSearch(country_codes=[SearchableCountries.USA]),
-        fetch_raw_using=fetch_raw_using
+        fetch_raw_using=fetch_raw_using,
     ).run()

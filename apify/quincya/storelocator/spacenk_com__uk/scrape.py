@@ -1,20 +1,8 @@
-import csv
 import re
-import time
-
-from random import randint
-
-from bs4 import BeautifulSoup
-
-from selenium.webdriver.common.action_chains import ActionChains
-
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support import expected_conditions as ec
-from selenium.webdriver.support.ui import WebDriverWait
-
+import csv
+from sgrequests import SgRequests
 from sglogging import SgLogSetup
 
-from sgselenium import SgChrome
 
 logger = SgLogSetup().get_logger("spacenk_com")
 
@@ -49,127 +37,88 @@ def write_output(data):
             writer.writerow(row)
 
 
+MISSING = "<MISSING>"
+
+
+def get(entity, key):
+    return entity.get(key, MISSING) or MISSING
+
+
+def get_url(city, street_address, store_number):
+    city_path = re.sub(" ", "-", city).lower()
+    street_address_path = re.sub(" ", "-", street_address).lower()
+    return f"https://www.spacenk.com/uk/stores.html#!/l/{city_path}/{street_address_path}/{store_number}"
+
+
+def get_hours(location):
+    days = {
+        1: "Monday",
+        2: "Tuesday",
+        3: "Wednesday",
+        4: "Thursday",
+        5: "Friday",
+        6: "Saturday",
+        7: "Sunday",
+    }
+    hours = get(location, "openingHours")
+
+    hours_of_operations = []
+    for hour in hours:
+        day = days[hour["dayOfWeek"]]
+        closed = hour.get("closed", False)
+
+        if closed:
+            hours_of_operations.append(f"{day}: Closed")
+        else:
+            start = hour["from1"]
+            end = hour["to1"]
+            hours_of_operations.append(f"{day}: {start}-{end}")
+
+    return ", ".join(hours_of_operations)
+
+
 def fetch_data():
+    session = SgRequests()
+    url = "https://uberall.com/api/storefinders/bdwTQJoL7hB55B0EimfSmXjiMRV8eg/locations/all"
+    params = {"v": "20171219", "language": "en"}
 
-    base_link = "https://www.spacenk.com/us/en_US/stores.html#!"
+    result = session.get(url, params=params).json()
+    locations = result["response"]["locations"]
 
-    driver = SgChrome().chrome()
-    time.sleep(2)
-
-    driver.get(base_link)
-    time.sleep(randint(1, 2))
-
-    actions = ActionChains(driver)
-
-    WebDriverWait(driver, 50).until(
-        ec.presence_of_element_located((By.CSS_SELECTOR, ".ubsf_locations-list"))
-    )
-    time.sleep(randint(1, 2))
-
-    # Load full list
-    total_poi = ""
-    prev_total = 0
-    count = 0
-    while total_poi != prev_total and count < 10:
-        element = driver.find_elements_by_class_name("ubsf_locations-list-item")[-1]
-        actions.move_to_element(element).perform()
-        time.sleep(4)
-        prev_total = total_poi
-        base = BeautifulSoup(driver.page_source, "lxml")
-        total_poi = len(base.find_all(class_="ubsf_locations-list-item"))
-        count += 1
-
-    base = BeautifulSoup(driver.page_source, "lxml")
-
-    data = []
-    final_links = []
-
-    final_items = base.find_all(class_="ubsf_locations-list-item")
-    for final_item in final_items:
-        name = final_item.find(class_="ubsf_locations-list-item-name").text
-        if "Space NK Bloomingdale" in name:
-            continue
-        state = final_item.find(class_="ubsf_locations-list-item-zip-city").text
-        state = state[state.rfind(",") + 1 : -6].strip()
-        final_link = final_item.a["href"]
-        final_links.append([final_link, state])
-
-    for final in final_links:
-        final_link = final[0]
-
-        logger.info(final_link)
-        driver.get(final_link)
-        time.sleep(randint(1, 2))
-
-        WebDriverWait(driver, 150).until(
-            ec.presence_of_element_located(
-                (By.CSS_SELECTOR, ".ubsf_details-details-title")
-            )
-        )
-        time.sleep(randint(1, 2))
-
-        item = BeautifulSoup(driver.page_source, "lxml")
-
-        try:
-            hours_of_operation = " ".join(
-                list(item.find(class_="ubsf_details-opening-hours").stripped_strings)
-            ).replace("Special Opening Hours", "")
-            hours_of_operation = (
-                re.sub(r"[(\d]{2}/[\d]{2}/[\d]{4}", " ", hours_of_operation)
-            ).strip()
-            hours_of_operation = (re.sub(" +", " ", hours_of_operation)).strip()
-        except:
-            # Duplicates have no hours so skip
-            continue
-
+    for location in locations:
         locator_domain = "spacenk.com"
-        location_name = item.h1.text
+        store_number = get(location, "id")
+        location_name = get(location, "name")
+        location_type = MISSING
 
-        raw_address = item.find(class_="ubsf_details-address").text.split(",")
-        street_address = raw_address[0].strip()
-        city = raw_address[1].strip()
-        state = "<MISSING>"
-        zip_code = raw_address[2].strip()
-        country_code = "US"
-        if len(zip_code) > 5:
-            country_code = "GB"
-        store_number = final_link.split("/")[-1]
-        location_type = "<MISSING>"
-        phone = item.find(class_="ubsf_details-phone").text
+        street_address = get(location, "streetAndNumber")
+        city = get(location, "city")
+        state = get(location, "province")
+        postal = get(location, "zip")
+        country_code = get(location, "country")
+        latitude = get(location, "lat")
+        longitude = get(location, "lng")
 
-        try:
-            raw_gps = item.find(class_="ubsf_details-box-top-buttons-top").a["href"]
-            latitude = raw_gps[raw_gps.find("=") + 1 : raw_gps.find(",")].strip()
-            longitude = raw_gps[raw_gps.find(",") + 1 :].strip()
-        except:
-            latitude = "<MISSING>"
-            longitude = "<MISSING>"
+        phone = get(location, "phone")
+        page_url = get_url(city, street_address, store_number)
+        hours_of_operation = get_hours(location)
 
-        data.append(
-            [
-                locator_domain,
-                final_link,
-                location_name,
-                street_address,
-                city,
-                state,
-                zip_code,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
-        )
-
-    try:
-        driver.close()
-    except:
-        pass
-
-    return data
+        yield [
+            locator_domain,
+            page_url,
+            location_name,
+            street_address,
+            city,
+            state,
+            postal,
+            country_code,
+            store_number,
+            phone,
+            location_type,
+            latitude,
+            longitude,
+            hours_of_operation,
+        ]
 
 
 def scrape():
