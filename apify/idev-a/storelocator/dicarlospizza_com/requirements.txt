@@ -1,5 +1,5 @@
-selenium==3.141.0
-sgselenium==0.0.15
-sgscrape==0.0.23
 sgvalidator==0.0.71
+sgselenium==0.0.15
+selenium==3.141.0
+sgscrape==0.0.23
 lxml==4.6.2
