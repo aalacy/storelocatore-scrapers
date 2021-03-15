@@ -1,4 +1,4 @@
-sgrequests
-lxml
-bs4
-sglogging
+sgrequests==0.1.8
+lxml==4.6.2
+bs4==0.0.1
+sglogging==0.0.4
