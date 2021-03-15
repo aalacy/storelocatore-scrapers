@@ -38,7 +38,6 @@ def write_output(data):
 
 def fetch_data():
 
-    addressesess = []
     for q in range(1, 5):
         url = (
             "https://www.montblanc.com/api/richemont1//wcs/resources/store/montblanc_US/storelocator/boutiques?pageSize=1000&pageNumber="
