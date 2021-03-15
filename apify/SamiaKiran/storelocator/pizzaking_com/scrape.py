@@ -95,17 +95,26 @@ def fetch_data():
                                         pass
                                     else:
                                         linklist.append(post)
-
-                        hours = temp.find("div", {"class": "hours"}).text.replace(
-                            "\n", " "
-                        )
+                    hour_list = temp.findAll("div", {"class": "hours"})
+                    if len(hour_list) > 1:
+                        hours = ""
+                        for hour in hour_list:
+                            hours = hours + " " + hour.text.replace("\n", " ")
+                    else:
+                        hours = hour_list[0].text.replace("\n", " ")
                 except:
                     address = temp.find("div", {"class": "address"}).text.replace(
                         "\n", " "
                     )
                     phone = temp.find("div", {"class": "address"}).find("a").text
                     street = address.split(phone, 1)[0]
-                    hours = temp.find("div", {"class": "hours"}).text.replace("\n", " ")
+                    hour_list = temp.findAll("div", {"class": "hours"})
+                    if len(hour_list) > 1:
+                        hours = ""
+                        for hour in hour_list:
+                            hours = hours + " " + hour.text.replace("\n", " ")
+                    else:
+                        hours = hour_list[0].text.replace("\n", " ")
                 data.append(
                     [
                         "https://www.pizzaking.com/",
@@ -165,7 +174,13 @@ def fetch_data():
                 address = temp.find("div", {"class": "address"}).text.replace("\n", " ")
                 phone = temp.find("div", {"class": "address"}).find("a").text
                 street = address.split(phone, 1)[0]
-            hours = temp.find("div", {"class": "hours"}).text.replace("\n", " ")
+            hour_list = temp.findAll("div", {"class": "hours"})
+            if len(hour_list) > 1:
+                hours = ""
+                for hour in hour_list:
+                    hours = hours + " " + hour.text.replace("\n", " ")
+            else:
+                hours = hour_list[0].text.replace("\n", " ")
             data.append(
                 [
                     "https://www.pizzaking.com/",
@@ -208,10 +223,11 @@ def fetch_data():
         for hour in hour_list:
             hour = hour.findAll("td")
             day = hour[0].text
-            time = hour[1].text
+            time = hour[1].find("time").text
             hours = hours + " " + day + " " + time
         lat = r.text.split('"lat":')[1].split('",', 1)[0].replace('"', "")
         longt = r.text.split('"lng":')[1].split('",', 1)[0].replace('"', "")
+
         for row in data:
             temp = row[9]
             if phone.strip() == temp:
