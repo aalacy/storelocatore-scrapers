@@ -56,7 +56,7 @@ def fetch_data():
         loc_dom = etree.HTML(loc_response.text)
 
         location_name = loc_dom.xpath(
-            '//h1[@class="headerBox__heroTitle fontH1"]/text()'
+            '//h1[contains(@class, "headerBox__heroTitle")]/text()'
         )
         location_name = location_name[0] if location_name else "<MISSING>"
         street_address = loc_dom.xpath(

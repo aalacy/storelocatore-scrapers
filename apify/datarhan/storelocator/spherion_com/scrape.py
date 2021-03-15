@@ -87,7 +87,7 @@ def fetch_data():
         zip_code = zip_code if zip_code else "<MISSING>"
         country_code = "<MISSING>"
         store_number = "<MISSING>"
-        phone = poi["_source"]["field_phone"]
+        phone = poi["_source"].get("field_phone")
         phone = phone[0] if phone else "<MISSING>"
         location_type = "<MISSING>"
         latitude = poi["_source"]["lat_lon"][0]
