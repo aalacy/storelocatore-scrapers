@@ -33,6 +33,26 @@ def write_output(data):
             writer.writerow(row)
 
 
+def get_hours(page_url):
+    session = SgRequests()
+    r = session.get(page_url)
+    tree = html.fromstring(r.text)
+    hours = tree.xpath(
+        "//h4[@class='elementor-heading-title elementor-size-default']/text()"
+    )
+    hours = list(filter(None, [h.strip() for h in hours]))
+    hoo = ";".join(hours) or "<MISSING>"
+    hoo = (
+        hoo.replace(" | ", ": ")
+        .replace("OPEN DAILY;", "OPEN DAILY ")
+        .replace("HOURS: ", "")
+    )
+    if "Special" in hoo:
+        hoo = "<MISSING>"
+
+    return hoo
+
+
 def fetch_data():
     out = []
     locator_domain = "https://boardandbrew.com/"
@@ -58,19 +78,16 @@ def fetch_data():
         longitude = j.get("lng") or "<MISSING>"
         location_type = "<MISSING>"
 
-        _tmp = []
-        text = j.get("hours") or "<html></html>"
-        tree = html.fromstring(text)
-        tr = tree.xpath("//tr")
-        for t in tr:
-            day = "".join(t.xpath("./td[1]//text()")).strip()
-            time = "".join(t.xpath("./td[2]//text()")).strip()
-            _tmp.append(f"{day}: {time}")
+        if page_url != "<MISSING>":
+            hours_of_operation = get_hours(page_url)
+        else:
+            hours_of_operation = "<MISSING>"
 
-        hours_of_operation = ";".join(_tmp) or "<MISSING>"
         if "<" in location_name:
+            if "coming" in location_name.lower():
+                hours_of_operation = "Coming Soon"
+
             location_name = location_name.split("<")[0].strip()
-            hours_of_operation = "Coming Soon"
 
         row = [
             locator_domain,
