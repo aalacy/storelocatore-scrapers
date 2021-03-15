@@ -49,7 +49,6 @@ def write_output(data):
 
 def fetch_data():
     locs = []
-    ids = []
     for lat, lng in search:
         x = lat
         y = lng
