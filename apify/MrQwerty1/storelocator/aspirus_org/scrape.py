@@ -108,10 +108,30 @@ def clean_phone(text):
 
 
 def clean_hours(text_list):
+    if text_list[0] == "Business Hours":
+        text_list = text_list[1:]
     line = " ".join(text_list).lower().replace("pm", "pm;")
-    if ("24" in line or "always" in line or "everyday" in line) and len(text_list) == 1:
+    if "holidays:" in line:
+        line = line.split("holidays")[0].strip()
+    if "hospice" in line:
+        line = line.split("hospice")[0].strip()
+    if "after-hours" in line:
+        line = line.split("after-hours")[0].strip()
+    if "evenings by appointment" in line:
+        line = line.split("evenings by appointment")[0].strip()
+    if "rehab services" in line:
+        line = line.split("rehab services")[0].strip()
+    if "holidays closed" in line:
+        line = line.split("holidays closed")[0].strip()
+
+    if ("24" in line or "always" in line or "everyday" in line) and len(text_list) <= 2:
         return "24 hours"
-    if ("limited" in line) or ("guidelines" in line) or ("website" in line):
+    if (
+        ("limited" in line)
+        or ("guidelines" in line)
+        or ("website" in line)
+        or ("open by appointment" in line)
+    ):
         return "<MISSING>"
     if "hours" in line and "call" not in line:
         return line.split("hours")[-1].strip() or "<MISSING>"
@@ -159,7 +179,7 @@ def get_data(param):
     if not hours:
         hours_of_operation = "<MISSING>"
     else:
-        hours_of_operation = clean_hours(hours)
+        hours_of_operation = clean_hours(hours).replace("closed on holidays", "")
 
     row = [
         locator_domain,
