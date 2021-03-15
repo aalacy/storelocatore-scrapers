@@ -45,7 +45,6 @@ def write_output(data):
 
 
 session = SgRequests()
-all_store_urls = []
 url_base_map = "https://flooring.carpetone.com/"
 driver.get(url_base_map)
 time.sleep(randint(5, 10))
