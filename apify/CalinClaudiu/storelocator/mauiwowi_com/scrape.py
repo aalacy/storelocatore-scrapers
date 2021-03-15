@@ -1,9 +1,6 @@
 from sgscrape import simple_scraper_pipeline as sp
 from sglogging import sglog
 
-from sgscrape import simple_utils as utils
-
-
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as b4
 
@@ -125,25 +122,18 @@ def fetch_data():
     for i in links:
         pages.append(str("https://www.mauiwowi.com/" + i["href"]))
 
-    lize = utils.parallelize(
-        search_space=pages,
-        fetch_results_for_rec=para,
-        max_threads=10,
-        print_stats_interval=10,
-    )
-    counter = 0
-    for i in lize:
-        if all(
-            i[k] == "<MISSING>"
-            for k in ["name", "address", "city", "state", "zip", "phone", "hours"]
-        ):
-            counter += 1
-            i = para(i["page_url"])
-            if all(
+    for j in pages:
+        counter = 0
+        i = para(j)
+        while (
+            all(
                 i[k] == "<MISSING>"
                 for k in ["name", "address", "city", "state", "zip", "phone", "hours"]
-            ):
-                i = para(i["page_url"])
+            )
+            and counter < 10
+        ):
+            counter += 1
+            i = para(j)
         yield i
 
     logzilla.info(f"Finished grabbing data!!")  # noqa
