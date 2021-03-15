@@ -42,9 +42,9 @@ def fetch_data():
     items = []
 
     start_url = "https://www.sageveganbistro.com/our-story/#locations"
-    domain = re.findall("://(.+?)/", start_url)[0].replace('www.', '')
+    domain = re.findall("://(.+?)/", start_url)[0].replace("www.", "")
     hdr = {
-        'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36'
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
     }
     response = session.get(start_url, headers=hdr)
     dom = etree.HTML(response.text)
@@ -52,20 +52,22 @@ def fetch_data():
     all_locations = dom.xpath('//div[div[@class="sqs-block-content" and center]]')
     for poi_html in all_locations:
         store_url = start_url
-        location_name = poi_html.xpath('.//a/text()')[0].split('from')[-1].strip()
-        raw_address = poi_html.xpath('.//following-sibling::div/div/h3[1]/text()')
+        location_name = poi_html.xpath(".//a/text()")[0].split("from")[-1].strip()
+        raw_address = poi_html.xpath(".//following-sibling::div/div/h3[1]/text()")
         street_address = raw_address[0]
-        city = raw_address[-1].split(', ')[0]
-        state = raw_address[-1].split(', ')[-1].split()[0]
-        zip_code = raw_address[-1].split(', ')[-1].split()[-1]
-        country_code = '<MISSING>'
-        store_number = '<MISSING>'
-        phone = poi_html.xpath('.//following-sibling::div[1]//a[contains(@href, "tel")]/strong/text()')
-        phone = phone[0] if phone else '<MISSING>'
-        location_type = '<MISSING>'
-        latitude = '<MISSING>'
-        longitude = '<MISSING>'
-        hoo = poi_html.xpath('.//following-sibling::div/div/h3/text()')[2:]
+        city = raw_address[-1].split(", ")[0]
+        state = raw_address[-1].split(", ")[-1].split()[0]
+        zip_code = raw_address[-1].split(", ")[-1].split()[-1]
+        country_code = "<MISSING>"
+        store_number = "<MISSING>"
+        phone = poi_html.xpath(
+            './/following-sibling::div[1]//a[contains(@href, "tel")]/strong/text()'
+        )
+        phone = phone[0] if phone else "<MISSING>"
+        location_type = "<MISSING>"
+        latitude = "<MISSING>"
+        longitude = "<MISSING>"
+        hoo = poi_html.xpath(".//following-sibling::div/div/h3/text()")[2:]
         hoo = [e.strip() for e in hoo if e.strip()]
         hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
 
