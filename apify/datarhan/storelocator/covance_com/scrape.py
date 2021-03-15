@@ -2,7 +2,10 @@ import csv
 from lxml import etree
 
 from sgrequests import SgRequests
-from sgscrape.sgpostal import parse_address_intl
+from sglogging import SgLogSetup
+from sgscrape.sgpostal import parse_address, International_Parser
+
+logger = SgLogSetup().get_logger("covance_com")
 
 
 def write_output(data):
@@ -39,7 +42,6 @@ def fetch_data():
     # Your scraper here
     session = SgRequests()
 
-    items = []
     scraped_items = []
 
     DOMAIN = "covance.com"
@@ -60,7 +62,7 @@ def fetch_data():
         raw_address = poi_html.xpath('.//li[@class="address"]/text()')
         raw_address = [elem.strip() for elem in raw_address if elem.strip()]
         full_addr = " ".join(raw_address).replace("\n", " ").replace("\t", " ")
-        addr = parse_address_intl(full_addr)
+        addr = parse_address(International_Parser(), full_addr)
         country_code = addr.country
         country_code = country_code if country_code else "<MISSING>"
         if country_code not in ["Usa", "<MISSING>", "UK", "United Kingdom"]:
@@ -101,14 +103,14 @@ def fetch_data():
         check = f"{street_address} {city}"
         if check not in scraped_items:
             scraped_items.append(check)
-            items.append(item)
-
-    return items
+            yield item
 
 
 def scrape():
+    logger.info("start scraping")
     data = fetch_data()
     write_output(data)
+    logger.info("end scraping")
 
 
 if __name__ == "__main__":
