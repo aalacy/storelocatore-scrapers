@@ -1,5 +1,6 @@
 import csv
 import json
+from lxml import etree
 
 from sgrequests import SgRequests
 
@@ -48,6 +49,9 @@ def fetch_data():
 
     for poi in data:
         store_url = poi["website"]
+        loc_response = session.get(store_url)
+        loc_dom = etree.HTML(loc_response.text)
+
         location_name = poi["title"]
         location_name = location_name if location_name else "<MISSING>"
         street_address = poi["street"]
@@ -66,10 +70,10 @@ def fetch_data():
         location_type = "<MISSING>"
         latitude = poi["lat"]
         longitude = poi["lng"]
-        hoo = []
-        hoo_dict = json.loads(poi["open_hours"])
-        for day, hours in hoo_dict.items():
-            hoo.append(f"{day} {hours[0]}")
+        hoo = loc_dom.xpath(
+            '//h4[span[contains(text(), "hours")]]/following-sibling::div[1]//text()'
+        )
+        hoo = [e.strip() for e in hoo if e.strip()]
         hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
 
         item = [
