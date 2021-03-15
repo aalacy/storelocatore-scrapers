@@ -58,7 +58,7 @@ def fetch_data():
         location_name = loc_dom.xpath('//div[@id="views_title"]/h1/text()')
         location_name = location_name[0] if location_name else "<MISSING>"
         street_address = loc_dom.xpath('//span[@itemprop="streetAddress"]/text()')
-        street_address = ' '.join(street_address) if street_address else "<MISSING>"
+        street_address = " ".join(street_address) if street_address else "<MISSING>"
         city = loc_dom.xpath('//span[@itemprop="addressLocality"]/text()')
         city = city[0] if city else "<MISSING>"
         state = loc_dom.xpath('//span[@itemprop="addressRegion"]/text()')
