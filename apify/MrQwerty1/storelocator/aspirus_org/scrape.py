@@ -172,7 +172,6 @@ def get_data(param):
     if phone != "<MISSING>":
         phone = clean_phone(phone)
 
-    _tmp = []
     hours = tree.xpath(
         "//h3[./i[@class='fa fa-clock-o']]/following-sibling::ul//text()"
     )
