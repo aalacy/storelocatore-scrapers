@@ -1,56 +1,100 @@
-import csv
-from sgrequests import SgRequests
-from bs4 import BeautifulSoup
 import re
-import json
-session = SgRequests()
+import csv
+from lxml import etree
+
+from sgrequests import SgRequests
+
+
 def write_output(data):
-    with open('data.csv', mode='w', encoding="utf-8") as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+    with open("data.csv", mode="w", encoding="utf-8") as output_file:
+        writer = csv.writer(
+            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+        )
+
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
+        writer.writerow(
+            [
+                "locator_domain",
+                "page_url",
+                "location_name",
+                "street_address",
+                "city",
+                "state",
+                "zip",
+                "country_code",
+                "store_number",
+                "phone",
+                "location_type",
+                "latitude",
+                "longitude",
+                "hours_of_operation",
+            ]
+        )
         # Body
         for row in data:
             writer.writerow(row)
+
+
 def fetch_data():
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
+    # Your scraper here
+    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
+
+    items = []
+
+    start_url = "https://www.sageveganbistro.com/our-story/#locations"
+    domain = re.findall("://(.+?)/", start_url)[0].replace('www.', '')
+    hdr = {
+        'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36'
     }
-    base_url = "https://www.sageveganbistro.com"
-    r = session.get("https://www.sageveganbistro.com/our-story/#locations", headers=headers)
-    soup = BeautifulSoup(r.text, "lxml")
-    return_main_object = []
-    locator_domain = base_url
-    location_name = ""
-    street_address = "<MISSING>"
-    city = "<MISSING>"
-    state = "<MISSING>"
-    zipp = "<MISSING>"
-    country_code = "US"
-    store_number = "<MISSING>"
-    phone = "<MISSING>"
-    location_type = "sageveganbistro"
-    latitude = "<MISSING>"
-    longitude = "<MISSING>"
-    for script in soup.find_all("div", {"class": "sqs-block-content"}):
-        if len(list(script.stripped_strings)) >= 6:
-            
-            address_list = list(script.stripped_strings)
-            if "View fullsize" in address_list or "Thank you!" in address_list or "UberEats" in address_list :
-                continue
-            location_name = address_list[0]
-            street_address = address_list[1]
-            city = address_list[2].split(',')[0]
-            state = address_list[2].split(',')[1].strip().split(' ')[0]
-            zipp = address_list[2].split(',')[1].strip().split(' ')[1]
-            phone = address_list[3]
-            hour = " ".join(address_list[5:])
-            page_url = "https://www.sageveganbistro.com/contact"
-            store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
-                        store_number, phone, location_type, latitude, longitude, hour,page_url]
-            yield store
+    response = session.get(start_url, headers=hdr)
+    dom = etree.HTML(response.text)
+
+    all_locations = dom.xpath('//div[div[@class="sqs-block-content" and center]]')
+    for poi_html in all_locations:
+        store_url = start_url
+        location_name = poi_html.xpath('.//a/text()')[0].split('from')[-1].strip()
+        raw_address = poi_html.xpath('.//following-sibling::div/div/h3[1]/text()')
+        street_address = raw_address[0]
+        city = raw_address[-1].split(', ')[0]
+        state = raw_address[-1].split(', ')[-1].split()[0]
+        zip_code = raw_address[-1].split(', ')[-1].split()[-1]
+        country_code = '<MISSING>'
+        store_number = '<MISSING>'
+        phone = poi_html.xpath('.//following-sibling::div[1]//a[contains(@href, "tel")]/strong/text()')
+        phone = phone[0] if phone else '<MISSING>'
+        location_type = '<MISSING>'
+        latitude = '<MISSING>'
+        longitude = '<MISSING>'
+        hoo = poi_html.xpath('.//following-sibling::div/div/h3/text()')[2:]
+        hoo = [e.strip() for e in hoo if e.strip()]
+        hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
+
+        item = [
+            domain,
+            store_url,
+            location_name,
+            street_address,
+            city,
+            state,
+            zip_code,
+            country_code,
+            store_number,
+            phone,
+            location_type,
+            latitude,
+            longitude,
+            hours_of_operation,
+        ]
+
+        items.append(item)
+
+    return items
+
+
 def scrape():
     data = fetch_data()
     write_output(data)
-scrape()
+
+
+if __name__ == "__main__":
+    scrape()
