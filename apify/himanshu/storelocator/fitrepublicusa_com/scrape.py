@@ -54,7 +54,7 @@ def fetch_data():
     for i in k:
         store = []
         kp = i.find("a")
-        if kp != None:
+        if kp is not None:
             link = kp["href"]
 
             if "map=" in link:
