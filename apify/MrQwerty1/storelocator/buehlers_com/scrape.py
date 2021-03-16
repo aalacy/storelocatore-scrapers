@@ -82,6 +82,9 @@ def fetch_data():
         if hours.find("\n") != -1:
             hours = ";".join(list(filter(None, [h.strip() for h in hours.split("\n")])))
 
+        if "Special" in hours:
+            hours = hours.split(";Special")[0]
+
         hours_of_operation = hours or "<MISSING>"
 
         row = [

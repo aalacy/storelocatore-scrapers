@@ -22,7 +22,7 @@ def _valid(val):
         .replace("\\xa0\\xa", " ")
         .replace("\\xa0", " ")
         .replace("\\xa", " ")
-        .replace("\\xae", "")
+        .replace("\\xae", " ")
     )
 
 
@@ -53,14 +53,18 @@ def fetch_data():
                 hours_of_operation = ""
                 if _["locationHours"][0]:
                     hours_of_operation = "Su: " + _h(_["locationHours"][0]["sunday"])
-                    hours_of_operation += "; Mo" + _h(_["locationHours"][0]["monday"])
-                    hours_of_operation += "; Tu" + _h(_["locationHours"][0]["tuesday"])
-                    hours_of_operation += "; We" + _h(
+                    hours_of_operation += "; Mo " + _h(_["locationHours"][0]["monday"])
+                    hours_of_operation += "; Tu " + _h(_["locationHours"][0]["tuesday"])
+                    hours_of_operation += "; We " + _h(
                         _["locationHours"][0]["wednesday"]
                     )
-                    hours_of_operation += "; Th" + _h(_["locationHours"][0]["thursday"])
-                    hours_of_operation += "; Fr" + _h(_["locationHours"][0]["friday"])
-                    hours_of_operation += "; Sa" + _h(_["locationHours"][0]["saturday"])
+                    hours_of_operation += "; Th " + _h(
+                        _["locationHours"][0]["thursday"]
+                    )
+                    hours_of_operation += "; Fr " + _h(_["locationHours"][0]["friday"])
+                    hours_of_operation += "; Sa " + _h(
+                        _["locationHours"][0]["saturday"]
+                    )
                 yield SgRecord(
                     page_url=page_url,
                     location_name=_["title"],

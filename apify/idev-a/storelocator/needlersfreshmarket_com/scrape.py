@@ -41,11 +41,11 @@ def fetch_data():
                 state=_["state"],
                 zip_postal=_["postal_code"],
                 country_code=country,
-                phone=_["phone"],
+                phone=_["phone"].split("\n")[0],
                 latitude=_["latitude"],
                 longitude=_["longitude"],
                 locator_domain=locator_domain,
-                hours_of_operation=_["hours_md"].replace("Open", ""),
+                hours_of_operation=_["hours_md"].split("\n")[0].replace("Open", ""),
             )
 
 
