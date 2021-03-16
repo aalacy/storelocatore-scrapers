@@ -102,7 +102,8 @@ def fetch_data():
                 )
                 for hours_data in hoo
             ]
-            hours_of_operation = ", ".join(hoo) if hoo else "<MISSING>"
+            hoo = hoo[1:]
+            hours_of_operation = "; ".join(hoo) if hoo else "<MISSING>"
             row = [
                 locator_domain,
                 page_url,
