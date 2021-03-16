@@ -65,6 +65,10 @@ def get_data_from_uk():
         address_data_uk2 = address_data_uk1.split("Map")
         address_data_uk3 = [" ".join(i.split()) for i in address_data_uk2 if i]
         phone_numbers_uk = ["+" + i.split("+")[-1] for i in address_data_uk3 if i]
+        latlng_from_googlemap_url_uk = td_uk.xpath("//tr/td//p//a/@href")
+        latlng_from_googlemap_url_deduped_uk = list(
+            dict.fromkeys(latlng_from_googlemap_url_uk)
+        )
 
     for idxuk1, address in enumerate(address_data_uk3):
         address_without_phone_data = address.split("+")
@@ -82,8 +86,14 @@ def get_data_from_uk():
         store_number = "<MISSING>"
         phone = phone_numbers_uk[idxuk1] or "<MISSING>"
         location_type = "<MISSING>"
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
+        latitude = (
+            latlng_from_googlemap_url_deduped_uk[idxuk1].split("@")[1].split(",")[0]
+            or "<MISSING>"
+        )
+        longitude = (
+            latlng_from_googlemap_url_deduped_uk[idxuk1].split("@")[1].split(",")[1]
+            or "<MISSING>"
+        )
         hoo = address_wpd.split("Temporarily closed")[1].strip()
         if hoo:
             hours_of_operation = "<MISSING>"
@@ -124,6 +134,10 @@ def get_data_from_us():
         address_data_us2 = address_data_us1.split("Map")
         address_data_us3 = [" ".join(i.split()) for i in address_data_us2 if i]
         phone_numbers_us = ["+" + i.split("+")[-1] for i in address_data_us3 if i]
+        latlng_from_googlemap_url = td_us.xpath("//tr/td//p//a/@href")
+        latlng_from_googlemap_url_deduped = list(
+            dict.fromkeys(latlng_from_googlemap_url)
+        )
 
     for idxus1, address in enumerate(address_data_us3):
         locator_domain = locator_domain_url
@@ -138,8 +152,18 @@ def get_data_from_us():
         store_number = "<MISSING>"
         phone = phone_numbers_us[idxus1] or "<MISSING>"
         location_type = "<MISSING>"
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
+        if "@" in latlng_from_googlemap_url_deduped[idxus1]:
+            latitude = (
+                latlng_from_googlemap_url_deduped[idxus1].split("@")[1].split(",")[0]
+                or "<MISSING>"
+            )
+            longitude = (
+                latlng_from_googlemap_url_deduped[idxus1].split("@")[1].split(",")[1]
+                or "<MISSING>"
+            )
+        else:
+            latitude = "<MISSING>"
+            longitude = "<MISSING>"
         hours_of_operation = "<MISSING>"
         row_us = [
             locator_domain,

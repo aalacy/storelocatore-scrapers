@@ -83,9 +83,7 @@ def fetch_data():
             continue
 
         for store in store_data:
-            page_url = store["url"]
-            if not page_url:
-                page_url = "<MISSING>"
+            page_url = "<MISSING>"
 
             location_name = store["store"].replace("#038;", "")
             street_address = (store["address"] + " " + store["address2"]).strip()

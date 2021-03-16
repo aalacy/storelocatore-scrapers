@@ -44,11 +44,6 @@ def fetch_data():
         max_search_results=200,
     )
     address = []
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36",
-        "Content-Type": "application/json",
-        "Referer": "https://www.bmwusa.com/?bmw=grp:BMWcom:header:nsc-flyout",
-    }
     for zip_code in search:
         result_coords = []
         headers = {
@@ -260,7 +255,10 @@ def fetch_data():
             latitude = json_data["LAT"]
             longitude = json_data["LON"]
             result_coords.append((latitude, longitude))
-            location_name = soup.find("div", {"id": "detailsheading"}).text
+            try:
+                location_name = soup.find("div", {"id": "detailsheading"}).text
+            except:
+                location_name = "<MISSING>"
             st_data = (
                 soup.find_all("span", {"class": "notranslate"})[2]
                 .text.split(",")[0]
