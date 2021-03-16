@@ -22,7 +22,7 @@ def api_get(start_url, headers, timeout, attempts, maxRetries):
     error = False
     session = SgRequests()
     try:
-        results = session.post(start_url, headers=headers, timeout=timeout)
+        results = session.get(start_url, headers=headers, timeout=timeout)
     except exceptions.RequestException as requestsException:
         if "ProxyError" in str(requestsException):
             attempts += 1
@@ -117,6 +117,10 @@ def human_hours(k):
         return "24/7"
 
 
+def add_walmart(x):
+    return x if "Walmart" in x else "Walmart " + x
+
+
 def scrape():
     url = "https://www.walmart.com/"
     field_defs = sp.SimpleScraperPipeline.field_definitions(
@@ -127,6 +131,7 @@ def scrape():
         ),
         location_name=sp.MappingField(
             mapping=["storeType", "name"],
+            value_transform=add_walmart,
         ),
         latitude=sp.MappingField(
             mapping=["geoPoint", "latitude"],

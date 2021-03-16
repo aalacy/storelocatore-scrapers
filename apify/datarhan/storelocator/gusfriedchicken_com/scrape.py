@@ -74,9 +74,14 @@ def fetch_data():
         country_code = addr.country
         country_code = country_code if country_code else "<MISSING>"
         store_number = "<MISSING>"
-        phone = loc_dom.xpath('//p[contains(text(), "Store Phone:")]/a/text()')
+        phone = loc_dom.xpath('//*[contains(text(), "Store Phone:")]/a/text()')
         phone = phone[0] if phone else "<MISSING>"
         location_type = "<MISSING>"
+        temp_closed = loc_dom.xpath(
+            '//*[contains(text(), "Due to covid 19 we are closed until further notice")]'
+        )
+        if temp_closed:
+            location_type = "temporarily closed"
         geo = loc_dom.xpath('//a[@title="Google Maps link"]/@href')
         latitude = "<MISSING>"
         longitude = "<MISSING>"
@@ -84,9 +89,27 @@ def fetch_data():
             geo = geo[0].split("/@")[-1].split(",")[:2]
             latitude = geo[0]
             longitude = geo[1]
+        if longitude == "<MISSING>":
+            geo = (
+                loc_dom.xpath("//iframe/@src")[0]
+                .split("!2d")[-1]
+                .split("!2m")[0]
+                .split("!3d")
+            )
+            latitude = geo[1]
+            longitude = geo[0]
+        latitude = latitude.split("!")[0]
         hoo = loc_dom.xpath('//div[p[contains(text(), "Store Hours:")]]/p/text()')
+        if not hoo:
+            hoo = loc_dom.xpath('//div[contains(text(), "Store Hours:")]/p/text()')
+            if "We fry" in hoo[0]:
+                hoo = loc_dom.xpath('//div[contains(text(), "Store Hours:")]/text()')
         hoo = [e.strip() for e in hoo if e.strip()]
-        hours_of_operation = " ".join(hoo[1:]) if hoo else "<MISSING>"
+        hours_of_operation = (
+            " ".join(hoo).split("Store Hours: ")[-1].split(" We fry")[0]
+            if hoo
+            else "<MISSING>"
+        )
 
         item = [
             domain,
