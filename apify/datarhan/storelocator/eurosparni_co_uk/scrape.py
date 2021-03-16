@@ -74,7 +74,7 @@ def fetch_data():
             city = addr.city
             city = city if city else "<MISSING>"
             state = "<MISSING>"
-            zip_code = addr.postcode
+            zip_code = " ".join(raw_address.split()[-2:])
             zip_code = zip_code if zip_code else "<MISSING>"
             country_code = addr.country
             country_code = country_code if country_code else "<MISSING>"
