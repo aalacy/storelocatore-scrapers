@@ -107,7 +107,8 @@ def fetch_data():
                 )
 
             if "Phone:" in "".join(raw_text[index].xpath("strong/text()")).strip():
-                phone = "".join(raw_text[index].xpath("text()")).strip()
+                if len(phone) <= 0:
+                    phone = "".join(raw_text[index].xpath("text()")).strip()
 
             if (
                 "Store Hours:"

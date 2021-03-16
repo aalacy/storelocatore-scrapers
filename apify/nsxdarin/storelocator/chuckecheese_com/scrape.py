@@ -43,6 +43,7 @@ def write_output(data):
 def fetch_data():
     locs = []
     coord = [
+        "13.4,144.7",
         "18,-66",
         "60,-150",
         "20,-155",

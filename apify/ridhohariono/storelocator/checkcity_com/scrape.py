@@ -2,6 +2,7 @@ import csv
 import usaddress
 from bs4 import BeautifulSoup as bs
 from sgrequests import SgRequests
+from sglogging import sglog
 
 DOMAIN = "checkcity.com"
 BASE_URL = "https://www.checkcity.com/"
@@ -10,6 +11,7 @@ HEADERS = {
     "Accept": "application/json, text/plain, */*",
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
 }
+log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
 session = SgRequests()
 
 
@@ -43,7 +45,7 @@ def write_output(data):
 
 
 def pull_content(url):
-    soup = bs(session.get(url, headers=HEADERS).content, "html.parser")
+    soup = bs(session.get(url, headers=HEADERS).content, "lxml")
     return soup
 
 
@@ -85,7 +87,7 @@ def fetch_store_urls():
             if state_link not in store_link:
                 store_link = state_link + store_link
             store_urls.append(store_link)
-
+    log.info("Found {} URL ".format(len(store_urls)))
     return store_urls
 
 
@@ -128,9 +130,12 @@ def fetch_data():
             latitude = "<MISSING>"
             longitude = "<MISSING>"
             hours_content = content[1].find_all("td")[1]
-            hours_of_operation = handle_missing(
-                hours_content.get_text(strip=True, separator=",")
+            hours_of_operation = (
+                handle_missing(hours_content.get_text(strip=True, separator=","))
+                .strip()
+                .replace("\r\n", ",")
             )
+            log.info("Append {} => {}".format(location_name, street_address))
             locations.append(
                 [
                     locator_domain,
@@ -153,8 +158,11 @@ def fetch_data():
 
 
 def scrape():
+    log.info("Start {} Scraper".format(DOMAIN))
     data = fetch_data()
+    log.info("Found {} locations".format(len(data)))
     write_output(data)
+    log.info("Finish processed " + str(len(data)))
 
 
 scrape()

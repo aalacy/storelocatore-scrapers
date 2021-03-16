@@ -125,7 +125,7 @@ def fetch_data():
 
         store_number = "".join(store.xpath("@data-id")).strip()
         phone = "".join(
-            store.xpath('div[@class="address left"]/span[@class="street"]/text()')
+            store.xpath('div[@class="address left"]/span[@class="phone"]/text()')
         ).strip()
         location_type = "<MISSING>"
         try:
@@ -162,23 +162,27 @@ def fetch_data():
         if phone == "":
             phone = "<MISSING>"
 
-        curr_list = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        loc_list.append(curr_list)
+        if (
+            "This branch is permanently closed." not in hours_of_operation
+            and "ATM Only" not in location_name
+        ):
+            curr_list = [
+                locator_domain,
+                page_url,
+                location_name,
+                street_address,
+                city,
+                state,
+                zip,
+                country_code,
+                store_number,
+                phone,
+                location_type,
+                latitude,
+                longitude,
+                hours_of_operation,
+            ]
+            loc_list.append(curr_list)
 
     return loc_list
 

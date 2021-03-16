@@ -53,31 +53,9 @@ def handle_missing(field):
 def parse_hours(hour_content):
     hoo = []
     for row in hour_content:
-        if "holidayHours" in row:
-            start = (
-                str(row["holidayHours"][0]["start"] - 1200)
-                if row["holidayHours"][0]["start"] > 1200
-                else str(row["holidayHours"][0]["start"])
-            )
-            end = (
-                str(row["holidayHours"][0]["end"] - 1200)
-                if row["holidayHours"][0]["end"] > 1200
-                else str(row["holidayHours"][0]["end"])
-            )
-        else:
-            start = (
-                str(row["intervals"][0]["start"] - 1200)
-                if row["intervals"][0]["start"] > 1200
-                else str(row["intervals"][0]["start"])
-            )
-            end = (
-                str(row["intervals"][0]["end"] - 1200)
-                if row["intervals"][0]["end"] > 1200
-                else str(row["intervals"][0]["end"])
-            )
-        parse_start = start[:2] if len(start) > 3 else start[:1] + ":" + start[-2:]
-        parse_end = end[:2] if len(end) > 3 else end[:1] + ":" + end[-2:]
-        hours = parse_start + " PM - " + parse_end + " AM"
+        start = str(row["intervals"][0]["start"])
+        end = str(row["intervals"][0]["end"])
+        hours = "{}:{} - {}:{}".format(start[:2], start[-2:], end[:2], end[-2:])
         hoo.append(row["day"] + ": " + hours)
     return ", ".join(hoo)
 

@@ -1,5 +1,4 @@
-sgvalidator==0.0.71
 lxml==4.5.2
-sgselenium==0.0.12
-sgrequests
-sglogging
+sgvalidator==0.0.71
+tenacity==6.3.1
+sglogging==0.0.4

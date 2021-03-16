@@ -57,8 +57,7 @@ def fetch_data():
         final_links.append(item.a["href"])
 
     data = []
-    for i, final_link in enumerate(final_links):
-        logger.info("Link %s of %s" % (i + 1, len(final_links)))
+    for final_link in final_links:
         logger.info(final_link)
 
         req = session.get(final_link, headers=headers)
@@ -80,7 +79,10 @@ def fetch_data():
             )[2].text
 
         if raw_address != "Historic Downtown McKinney":
-            if "coming soon" in raw_address[0].lower():
+            try:
+                if "coming soon" in str(raw_address).lower():
+                    continue
+            except:
                 continue
             try:
                 street_address = raw_address[-3].strip() + " " + raw_address[-2].strip()
@@ -88,11 +90,15 @@ def fetch_data():
                 try:
                     street_address = raw_address[-2].strip()
                 except:
-                    continue
+                    street_address = "<MISSING>"
 
-            city_line = raw_address[-1].split(",")
+            try:
+                city_line = raw_address[-1].split(",")
+            except:
+                continue
             city = city_line[0].strip()
-
+            if len(city) > 30:
+                continue
             zip_code = city_line[-1][-6:].strip()
             if zip_code.isnumeric():
                 state = city_line[1].split()[0].strip()
@@ -129,6 +135,9 @@ def fetch_data():
         if "569 1st St" in street_address:
             zip_code = "35007"
 
+        street_address = street_address.replace(
+            "TBD", "<MISSING>".replace("Frios Cart", "<MISSING>")
+        )
         country_code = "US"
         store_number = "<MISSING>"
         location_type = "<MISSING>"
@@ -148,10 +157,7 @@ def fetch_data():
 
         hours_of_operation = hours_of_operation.replace("–", "-")
 
-        if "tbd" in hours_of_operation.lower():
-            continue
-
-        if "purchase pops" in hours_of_operation:
+        if "purchase pops" in hours_of_operation.lower():
             hours_of_operation = "<MISSING>"
 
         latitude = "<MISSING>"

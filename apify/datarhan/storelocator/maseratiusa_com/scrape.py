@@ -51,7 +51,9 @@ def fetch_data():
     for poi in data["L"][0]["O"]:
         store_url = poi["U"].get("url")
         store_url = store_url if store_url else "<MISSING>"
-        location_name = poi["U"]["dealername"]
+        location_name = poi["U"].get("dealername")
+        if not location_name:
+            continue
         location_name = location_name if location_name else "<MISSING>"
         street_address = poi["U"]["address"]
         street_address = street_address if street_address else "<MISSING>"

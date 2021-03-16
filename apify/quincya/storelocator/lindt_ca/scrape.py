@@ -1,13 +1,9 @@
 import csv
-import re
+import json
 
-from sglogging import sglog
+from bs4 import BeautifulSoup
 
 from sgrequests import SgRequests
-
-from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
-
-log = sglog.SgLogSetup().get_logger(logger_name="lindt.ca")
 
 
 def write_output(data):
@@ -41,148 +37,98 @@ def write_output(data):
 
 
 def fetch_data():
+
     session = SgRequests()
+
     headers = {
         "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
     }
     locator_domain = "lindt.ca"
 
-    max_results = 8
-    max_distance = 200
+    base_link = "https://www.lindt.ca/en/stores"
 
-    all_store_data = []
+    req = session.get(base_link, headers=headers)
+    base = BeautifulSoup(req.text, "lxml")
 
-    dup_tracker = []
+    all_scripts = base.find_all("script")
+    for script in all_scripts:
+        if "locationItems" in str(script):
+            script = script.contents[0].strip()
+            res_json = json.loads(script)["*"]["Magento_Ui/js/core/app"]["components"][
+                "locationList"
+            ]["locationItems"]
+            break
 
-    search = DynamicGeoSearch(
-        country_codes=[SearchableCountries.CANADA],
-        max_radius_miles=max_distance,
-        max_search_results=max_results,
-    )
+    for loc in res_json:
 
-    base_link = "https://lindt.locator.cloud/core_functions/ajaxdata.php"
+        location_name = loc["title"].strip()
 
-    for lat, lng in search:
-        log.info(
-            "Searching: %s, %s | Items remaining: %s"
-            % (lat, lng, search.items_remaining())
-        )
+        store_number = loc["location_id"]
+        phone_number = loc["phone"]
+        if not phone_number:
+            phone_number = "<MISSING>"
 
-        payload = {
-            "type": "getplacedata",
-            "locator_id": "63",
-            "client_id": "62",
-            "table_postfix": "lindt",
-            "lang": "en",
-            "lat": lat,
-            "lng": lng,
-            "radius": max_distance,
-            "limit": max_results,
-            "topic": "22,25,23,24,29",
-        }
+        lat = loc["latitude"]
+        longit = loc["longitude"]
 
-        res_json = session.post(base_link, headers=headers, data=payload).json()["data"]
-        new_coordinates = []
+        street_address = loc["street"].strip()
+        city = loc["city"].strip()
+        if city == "Bloomington":
+            continue
+        try:
+            state = loc["region"].replace("Bacău", "BC").replace("Alba", "AB").strip()
+        except:
+            state = "<MISSING>"
+        try:
+            zip_code = loc["zip"].strip()
+        except:
+            zip_code = "<MISSING>"
+        location_type = "Open"
 
-        for loc in res_json:
+        country_code = loc["country_id"]
+        hours = (
+            "Monday "
+            + loc["opening_hours_monday"]
+            + " Tuesday "
+            + loc["opening_hours_tuesday"]
+            + " Wednesday "
+            + loc["opening_hours_wednesday"]
+            + " Thursday "
+            + loc["opening_hours_thursday"]
+            + " Friday "
+            + loc["opening_hours_friday"]
+            + " Saturday "
+            + loc["opening_hours_saturday"]
+            + " Sunday "
+            + loc["opening_hours_sunday"]
+        ).strip()
 
-            location_name = loc["place_name"].strip()
+        if "Temporarily closed" in location_name:
+            location_type = "Temporarily Closed"
 
-            store_number = loc["uid"]
-            if store_number not in dup_tracker:
-                dup_tracker.append(store_number)
-            else:
-                continue
+        if hours == "Monday  Tuesday  Wednesday  Thursday  Friday  Saturday  Sunday":
+            hours = "<MISSING>"
 
-            phone_number = loc["phone_number"]
-            if not phone_number:
-                phone_number = "<MISSING>"
+        location_name = location_name.split("(")[0].strip()
 
-            lat = loc["lat_individual"]
-            longit = loc["lng_individual"]
-            new_coordinates.append([lat, longit])
+        store_data = [
+            locator_domain,
+            location_name,
+            street_address,
+            city,
+            state,
+            zip_code,
+            country_code,
+            store_number,
+            phone_number,
+            location_type,
+            lat,
+            longit,
+            hours,
+            base_link,
+        ]
 
-            raw_address = (
-                loc["short_description"]
-                .replace("\r\n", "")
-                .replace("Suite 211 Vaughan", "Suite 211, Vaughan")
-                .replace("Gare Vaudreuil", "Gare, Vaudreuil")
-                .replace("St N Waterloo", "St N, Waterloo")
-                .replace("New Brunswick, E1", "NewBrunswick E1")
-                .replace(" Québec", " ,Québec")
-                .replace('<span style="font-size: 16px; ">', "")
-                .replace("Les Avenues Vaudreuil -", "")
-                .replace("Carrefour Laval", "Carrefour, Laval")
-                .replace("<br />", ",")
-                .split("&nbsp")[0]
-                .split(",")
-            )
-
-            if raw_address[0] == "":
-                raw_address.pop(0)
-
-            if "CANADA" in raw_address[-1].upper():
-                raw_address.pop(-1)
-            street_address = " ".join(raw_address[:-2]).strip()
-            if ">" in street_address:
-                street_address = street_address.split(">")[1].strip()
-            city = raw_address[-2].replace("</span>", "").replace("No. 44", "").strip()
-            state = raw_address[-1].split()[0].strip()
-            zip_code = raw_address[-1].replace(state, "").replace("</span>", "").strip()
-            state = state.replace("New", "New ")
-            if "Unit" in city or "Suite" in city:
-                street_address = (
-                    street_address + " " + " ".join(city.split()[:2]).strip()
-                )
-                city = " ".join(city.split()[2:]).strip()
-
-            street_address = (re.sub(" +", " ", street_address)).strip()
-
-            if "5401 Boulevard" in street_address:
-                street_address = street_address.replace("Québec", "").strip()
-                city = "Québec"
-                state = "QC"
-                zip_code = "G2K 1N4"
-
-            if "#2058" not in street_address and "Mode Unit" not in street_address:
-                try:
-                    digit = re.search(r"\d", street_address).start(0)
-                    if digit != 0:
-                        street_address = street_address[digit:]
-                except:
-                    pass
-
-            country_code = "CA"
-            hours = loc["further_information_content"].replace("\r\n", " ").strip()
-            page_url = "<MISSING>"
-            location_type = "<MISSING>"
-
-            if "Temporarily" in loc["suggestion"]:
-                hours = "Temporarily Closed"
-
-            store_data = [
-                locator_domain,
-                location_name,
-                street_address,
-                city,
-                state,
-                zip_code,
-                country_code,
-                store_number,
-                phone_number,
-                location_type,
-                lat,
-                longit,
-                hours,
-                page_url,
-            ]
-
-            all_store_data.append(store_data)
-
-        if len(new_coordinates) > 0:
-            search.mark_found(new_coordinates)
-
-    return all_store_data
+        yield store_data
 
 
 def scrape():

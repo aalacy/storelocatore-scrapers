@@ -123,18 +123,22 @@ def fetch_data():
         details = eliminate_space(etree.HTML(store["description"]).xpath(".//text()"))
         phone = ""
         store_hours = []
+        fin_store_hours = ""
+
         for idx, de in enumerate(details):
             if "phone" in de.lower():
                 phone = details[idx + 1]
             if "hour" in de.lower():
                 store_hours = details[idx:]
+                if "Hours" in store_hours[0]:
+                    seperator = ", "
+                    fin_store_hours = fin_store_hours + seperator.join(store_hours)
         if (
             phone == ""
             and get_value(store["title"]) != "Pratts Mill - Prattville"
             and get_value(store["title"]) != "McGehee Road Laundromat"
         ):
             phone = details[-1]
-            store_hours = store_hours[:-1]
             address = validate(etree.HTML(store["address"]).xpath(".//text()")).split(
                 ","
             )
@@ -175,8 +179,9 @@ def fetch_data():
         )  # location type
         output.append(get_value(store["latitude"]))  # latitude
         output.append(get_value(store["longitude"]))  # longitude
-        output.append(get_value(store_hours).replace("Hours:", ""))  # opening hours
-        logger.info(output)
+        output.append(
+            get_value(fin_store_hours).replace("Hours: ", "")
+        )  # opening hours
         output_list.append(output)
     return output_list
 

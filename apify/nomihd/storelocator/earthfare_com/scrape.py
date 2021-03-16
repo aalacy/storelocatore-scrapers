@@ -80,8 +80,12 @@ def fetch_data():
             location_name = "<MISSING>"
 
         address = store.xpath("p/text()")
-        if len(address) <= 0:
+        if len("".join(address).strip()) <= 0:
             address = store.xpath("text()")
+
+        if len("".join(address).strip()) <= 0:
+            address = store.xpath("h6/text()")
+
         add_list = []
         phone = ""
         for add in address:
@@ -104,6 +108,9 @@ def fetch_data():
                             temp_text.replace("Phone:", "").replace("Ph:", "").strip()
                         )
                         break
+
+                elif "(" in temp_text and ")" in temp_text:
+                    phone = temp_text
                 else:
                     add_list.append("".join(temp_text))
 

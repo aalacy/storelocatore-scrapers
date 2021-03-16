@@ -63,6 +63,8 @@ def fetch_data():
         location_name = location_name[0].strip() if location_name else "<MISSING>"
         street_address = poi_html.xpath("@data-address")
         street_address = street_address[0] if street_address else "<MISSING>"
+        if poi_html.xpath(".//address/span/text()"):
+            street_address += ", " + poi_html.xpath(".//address/span/text()")[0]
         city = poi_html.xpath("@data-city")
         city = city[0] if city else "<MISSING>"
         state = poi_html.xpath("@data-state")

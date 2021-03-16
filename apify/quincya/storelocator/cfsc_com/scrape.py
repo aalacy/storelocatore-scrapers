@@ -50,7 +50,6 @@ def fetch_data():
     session = SgRequests()
 
     found_poi = []
-    data = []
 
     max_results = 50
     max_distance = 200
@@ -73,7 +72,6 @@ def fetch_data():
         req = session.get(link, headers=headers)
         base = BeautifulSoup(req.text, "lxml")
 
-        new_coordinates = []
         store_data = json.loads(base.text)["response"]["entities"]
         locator_domain = "cfsc.com"
 
@@ -135,10 +133,9 @@ def fetch_data():
                 geo = store["yextDisplayCoordinate"]
             latitude = geo["latitude"]
             longitude = geo["longitude"]
-            new_coordinates.append([latitude, longitude])
+            search.found_location_at(latitude, longitude)
 
-            data.append(
-                [
+            yield [
                     locator_domain,
                     page_url,
                     location_name,
@@ -154,13 +151,6 @@ def fetch_data():
                     longitude,
                     hours_of_operation,
                 ]
-            )
-
-        if len(new_coordinates) > 0:
-            search.mark_found(new_coordinates)
-
-    return data
-
 
 def scrape():
     data = fetch_data()

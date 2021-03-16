@@ -1,4 +1,4 @@
 sgrequests
+html5lib
+sgselenium
 bs4
-selenium
-lxml
