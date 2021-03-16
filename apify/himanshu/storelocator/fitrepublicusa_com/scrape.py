@@ -1,5 +1,4 @@
 import csv
-import requests
 from bs4 import BeautifulSoup
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
@@ -41,10 +40,6 @@ def write_output(data):
 
 
 def fetch_data():
-    address = []
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36",
-    }
     base_url = "https://www.fitrepublicusa.com/"
     r = session.get("https://www.fitrepublicusa.com/locations")
     soup = BeautifulSoup(r.text, "lxml")
@@ -59,7 +54,6 @@ def fetch_data():
     for i in k:
         store = []
         kp = i.find("a")
-        # logger.info(i.find("strong"))
         if kp != None:
             link = kp["href"]
 
@@ -77,7 +71,6 @@ def fetch_data():
         else:
             lat = "<MISSING>"
             lng = "<MISSING>"
-    # logger.info(_dict)
     data = list(
         soup.find_all("div", {"class": "sqs-block-content"})[3].stripped_strings
     )
