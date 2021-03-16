@@ -49,8 +49,6 @@ def fetch_data():
     info = []
     for lat, lng in search:
         try:
-            x = lat
-            y = lng
             logger.info(str(lat) + ", " + str(lng))
             url = (
                 "https://www.becn.com/api/store-locations?facets=&lat="
