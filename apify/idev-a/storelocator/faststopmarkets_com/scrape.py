@@ -36,7 +36,7 @@ def _desc(_):
 def fetch_data():
     locator_domain = "https://www.faststopmarkets.com/"
     base_url = "https://www.faststopmarkets.com/locations"
-    with SgFirefox() as driver:
+    with SgFirefox(executable_path=r"/mnt/g/work/mia/geckodriver.exe") as driver:
         driver.get(base_url)
         exist = False
         while not exist:
@@ -58,9 +58,12 @@ def fetch_data():
                         hours_of_operation = "; ".join(block[3:])
                         if re.search(r"coming soon", hours_of_operation, re.IGNORECASE):
                             continue
+                        location_name = bs(_["name"], "lxml").text
+                        store_number = location_name.split("#")[-1]
                         yield SgRecord(
+                            store_number=store_number,
                             page_url=driver.current_url,
-                            location_name=bs(_["name"], "lxml").text,
+                            location_name=location_name,
                             street_address=block[0],
                             city=addr.city,
                             state=addr.state,
