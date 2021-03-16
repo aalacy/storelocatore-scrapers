@@ -84,7 +84,7 @@ def fetch_data():
                     "<MISSING>",
                     "US",
                     store,
-                    "<MISSING>",
+                    phone,
                     "<MISSING>",
                     "<MISSING>",
                     "<MISSING>",
