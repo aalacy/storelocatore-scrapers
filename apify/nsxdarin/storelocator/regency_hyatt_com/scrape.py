@@ -120,6 +120,8 @@ def fetch_data():
                                 name = name + " - Coming Soon"
                             if "Salt Lake City" in name:
                                 hours = "Coming Soon"
+                            else:
+                                hours = "<MISSING>"
                             yield [
                                 website,
                                 loc,
