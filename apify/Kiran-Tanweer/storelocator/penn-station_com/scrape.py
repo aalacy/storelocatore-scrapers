@@ -67,12 +67,20 @@ def parse_address(raw_address):
     k["state"] = parsed.state if parsed.state else "<MISSING>"
     k["zip"] = parsed.postcode if parsed.postcode else "<MISSING>"
     k["raw_address"] = raw_address
-
-    return k
+    if k:
+        return k
+    else:
+        return {
+            "country": "",
+            "address": "",
+            "city": "",
+            "state": "",
+            "zip": "",
+            "raw_address": "",
+        }
 
 
 def fetch_data():
-    # Need to add dedupe. Added it in pipeline.
     session = SgRequests(proxy_rotation_failure_threshold=20)
     maxZ = search.items_remaining()
     total = 0
@@ -97,8 +105,9 @@ def fetch_data():
                             store["lat"],
                             store["lng"],
                         )
-                store = store.update(parse_address(store["address"]))
-                if store is not None:
+                store.update(parse_address(store["address"]))
+                if store:
+                    found += 1
                     yield store
         progress = str(round(100 - (search.items_remaining() / maxZ * 100), 2)) + "%"
         total += found
@@ -150,6 +159,7 @@ def scrape():
             mapping=["website"],
             value_transform=lambda x: x.rsplit("/", 1)[-1].strip(),
             part_of_record_identity=True,
+            is_required=False,
         ),
         hours_of_operation=sp.MissingField(),
         location_type=sp.MappingField(
