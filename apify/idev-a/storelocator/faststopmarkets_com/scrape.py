@@ -36,7 +36,7 @@ def _desc(_):
 def fetch_data():
     locator_domain = "https://www.faststopmarkets.com/"
     base_url = "https://www.faststopmarkets.com/locations"
-    with SgFirefox(executable_path=r"/mnt/g/work/mia/geckodriver.exe") as driver:
+    with SgFirefox() as driver:
         driver.get(base_url)
         exist = False
         while not exist:
