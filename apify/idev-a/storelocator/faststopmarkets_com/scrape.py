@@ -58,9 +58,12 @@ def fetch_data():
                         hours_of_operation = "; ".join(block[3:])
                         if re.search(r"coming soon", hours_of_operation, re.IGNORECASE):
                             continue
+                        location_name = bs(_["name"], "lxml").text
+                        store_number = location_name.split("#")[-1]
                         yield SgRecord(
+                            store_number=store_number,
                             page_url=driver.current_url,
-                            location_name=bs(_["name"], "lxml").text,
+                            location_name=location_name,
                             street_address=block[0],
                             city=addr.city,
                             state=addr.state,
