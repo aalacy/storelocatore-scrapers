@@ -2,6 +2,7 @@ import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
 from sgselenium import SgChrome
+import time
 
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 6.2; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36"
@@ -133,6 +134,7 @@ def fetch_data():
             lng,
             hours,
         ]
+        time.sleep(60)
 
 
 def scrape():

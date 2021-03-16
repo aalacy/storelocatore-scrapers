@@ -11,8 +11,12 @@ def fetch_data():
         locator_domain = "http://www.sneakypetes.com/"
         store_list = session.get(base_url).json()
         for store in store_list["markers"]:
-            addr = parse_address_intl(store["address"])
             soup = bs(session.get(store["link"]).text, "lxml")
+            addr = parse_address_intl(
+                soup.select_one('h1[itemprop="headline"] small')
+                .text.split("•")[0]
+                .strip()
+            )
             phone = soup.select_one("h1.single-title small").text.split("P: ").pop()
             hours_of_operation = soup.select_one("div.location-top h3").text
             hours_of_operation = (
@@ -22,7 +26,6 @@ def fetch_data():
                     "•", ""
                 )
             )
-
             yield SgRecord(
                 page_url=store["link"],
                 store_number=store["id"],
@@ -34,7 +37,6 @@ def fetch_data():
                 country_code="US",
                 latitude=store["lat"],
                 longitude=store["lng"],
-                location_type=store["type"],
                 phone=phone,
                 locator_domain=locator_domain,
                 hours_of_operation=hours_of_operation,
