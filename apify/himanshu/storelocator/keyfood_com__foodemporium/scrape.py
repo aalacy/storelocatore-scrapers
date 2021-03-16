@@ -80,9 +80,12 @@ def fetch_data():
             req = session.get(page_url, headers=headers)
             base = BeautifulSoup(req.text, "lxml")
 
-            store.append(
-                base.find(class_="banner__component simple-banner").img["title"]
-            )
+            try:
+                loc_type = base.find(class_="banner__component simple-banner").img["title"]
+            except:
+                loc_type = "<MISSING>"
+
+            store.append(loc_type)
             store.append(store_data["latitude"])
             store.append(store_data["longitude"])
             try:
