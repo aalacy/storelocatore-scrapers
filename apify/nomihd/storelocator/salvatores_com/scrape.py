@@ -36,7 +36,6 @@ def fetch_data():
         store_sel = lxml.html.fromstring(store_req.text)
         json_list = store_sel.xpath('//script[@type="application/ld+json"]/text()')
 
-        is_json_available = False
         for js in json_list:
             if "streetAddress" in js:
                 json_data = json.loads(js)
