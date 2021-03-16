@@ -88,6 +88,11 @@ def fetch_data():
         hoo = poi_html.xpath('.//div[@class="store-hours"]//text()')
         hoo = [e.strip() for e in hoo if e.strip()]
         hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
+        hours_of_operation = hours_of_operation.replace("Store hours : ", "")
+        hours_of_operation = hours_of_operation.replace(
+            "Mon – Sat: 11:00am – 6:00pm Sun: 12:00pm – 6:00pm Mon – Sat: 11:00am – 6:00pm Sun: 12:00pm – 6:00pm",
+            "Mon – Sat: 11:00am – 6:00pm Sun: 12:00pm – 6:00pm",
+        )
         store_url = "https://ca.mcmworldwide.com/en_CA/stores/{}/{}".format(
             location_name.lower().replace(" ", "-").replace("'", ""), store_number
         )
