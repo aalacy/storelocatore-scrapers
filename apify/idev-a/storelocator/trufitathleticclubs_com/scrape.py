@@ -44,7 +44,6 @@ def fetch_data():
         locations = json.loads(
             soup.select_one("locations-select")[":clubs"].replace("&quot;", '"')
         )
-        # import pdb; pdb.set_trace()
         for key, locs in locations.items():
             for loc in locs:
                 hours = []
