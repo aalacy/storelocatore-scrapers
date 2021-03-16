@@ -105,7 +105,7 @@ def fetch_data():
                     latitude = json_data["geo"]["latitude"]
                     longitude = json_data["geo"]["longitude"]
 
-            if is_json_available == False:
+            if is_json_available is False:
                 formatted_addr = parser.parse_address_usa(address)
                 street_address = formatted_addr.street_address_1
                 if formatted_addr.street_address_2:
