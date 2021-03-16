@@ -75,7 +75,7 @@ def fetch_data():
         location_type = "<MISSING>"
         latitude = poi["latitude"]
         longitude = poi["longitude"]
-        hours_of_operation = poi["hours"]
+        hours_of_operation = poi["hours"] + " Closed on Sundays"
 
         item = [
             domain,

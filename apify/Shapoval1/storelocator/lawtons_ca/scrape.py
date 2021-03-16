@@ -55,7 +55,7 @@ def get_urls():
 def get_data(url):
     locator_domain = "https://lawtons.ca"
 
-    page_url = url
+    page_url = "".join(url)
     session = SgRequests()
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:86.0) Gecko/20100101 Firefox/86.0",
@@ -105,6 +105,32 @@ def get_data(url):
         tree.xpath('//div[@class="fl-module-content fl-node-content"]/div/@data-lng')
     )
     location_type = "<MISSING>"
+    if location_name.find("Dartmouth Medical Centre") != -1:
+        return
+    if location_name.find("The Family Focus Medical Clinic") != -1:
+        return
+    if location_name.find("Scotia Square Medical") != -1:
+        return
+    if location_name.find("The Family Focus Medical Clinic") != -1:
+        return
+    if location_name.find("Park West Medical Clinic") != -1:
+        return
+    if location_name.find("Tantallon Walk-In Clinic") != -1:
+        return
+    if location_name.find("New Minas Walk-In Medical Clinic") != -1:
+        return
+    if location_name.find("Providence Walk-In Clinic") != -1:
+        return
+    if location_name.find("Dr. Manon LeRoux") != -1:
+        return
+    if location_name.find("West Side Medical Clinic") != -1:
+        return
+    if location_name.find("Sunday Walk-In Clinic") != -1:
+        return
+    if page_url.find("8") != -1 or page_url.find("7") != -1:
+        store_number = page_url.split("-")[2].replace("/", "").strip()
+    if phone.find("N/A") != -1:
+        phone = "<MISSING>"
     row = [
         locator_domain,
         page_url,
