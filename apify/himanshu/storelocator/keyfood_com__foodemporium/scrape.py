@@ -81,7 +81,9 @@ def fetch_data():
             base = BeautifulSoup(req.text, "lxml")
 
             try:
-                loc_type = base.find(class_="banner__component simple-banner").img["title"]
+                loc_type = base.find(class_="banner__component simple-banner").img[
+                    "title"
+                ]
             except:
                 loc_type = "<MISSING>"
 
