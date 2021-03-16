@@ -129,23 +129,22 @@ def fetch_data():
             purl = "https://www.harveys.ca/en/locations.html"
         if phone == "":
             phone = "<MISSING>"
-        if store != "9999":
-            yield [
-                website,
-                purl,
-                name,
-                add,
-                city,
-                state,
-                zc,
-                country,
-                store,
-                phone,
-                typ,
-                lat,
-                lng,
-                hours,
-            ]
+        yield [
+            website,
+            purl,
+            name,
+            add,
+            city,
+            state,
+            zc,
+            country,
+            store,
+            phone,
+            typ,
+            lat,
+            lng,
+            hours,
+        ]
 
 
 def scrape():
