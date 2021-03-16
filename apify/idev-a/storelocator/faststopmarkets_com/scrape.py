@@ -5,7 +5,6 @@ from sgscrape.sgpostal import parse_address_intl
 import json
 from bs4 import BeautifulSoup as bs
 import time
-import re
 
 
 def _valid(val):
@@ -28,7 +27,6 @@ def _desc(_):
         .replace("\u003e", ">")
         .replace("\u0026", "&")
         .replace("&nbsp;", "")
-        .replace("Drive Thru", "")
     )
     return [dd.text for dd in bs(desc, "lxml").select("p") if dd.text.strip()]
 
@@ -55,9 +53,9 @@ def fetch_data():
                             continue
                         addr = parse_address_intl(_["address"])
                         block = _desc(_)
+                        if block[3].startswith("Drive Thru"):
+                            del block[3]
                         hours_of_operation = "; ".join(block[3:])
-                        if re.search(r"coming soon", hours_of_operation, re.IGNORECASE):
-                            continue
                         location_name = bs(_["name"], "lxml").text
                         store_number = location_name.split("#")[-1]
                         yield SgRecord(
