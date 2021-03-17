@@ -77,12 +77,22 @@ def fetch_data():
             pcode = address[-1]
             street = temp[-3]
             hour_list = soup.findAll("tbody")[-1].findAll("td")
+<<<<<<< Updated upstream
             hours = ""
             for hour in hour_list[0:2]:
                 hour = hour.get_text(separator="|", strip=True).replace("|", " ")
                 hours = hours + " " + hour
             if not hours:
                 hours = "<MISSING>"
+=======
+            hour_list = soup.find("div", {"id": "rightSideBar"}).findAll("td")
+            log.info(link)
+            hours = ""
+            for hour in hour_list:
+                hour = hour.get_text(separator="|", strip=True).replace("|", " ")
+                hours = hours + " " + hour
+            hours = hours.split("General Manager",1)[0]
+>>>>>>> Stashed changes
             final_data.append(
                 [
                     "https://www.eddiemerlots.com/",
