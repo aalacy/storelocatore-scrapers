@@ -6,7 +6,6 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import json
 import us
-from sgselenium import SgChrome
 
 website = "brandsmartusa.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -45,7 +44,6 @@ def fetch_data():
         ]
 
         store_sel = ""
-        map_sel = ""
         location_name = ""
         street_address = ""
         city = ""
