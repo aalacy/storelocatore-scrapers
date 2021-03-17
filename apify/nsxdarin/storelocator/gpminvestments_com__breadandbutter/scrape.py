@@ -8,7 +8,7 @@ headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
 
-logger = SgLogSetup().get_logger("gpminvestments_com__breadandbutter")
+logger = SgLogSetup().get_logger("gpminvestments_com__nextdoor")
 
 
 def write_output(data):
@@ -41,7 +41,7 @@ def write_output(data):
 def fetch_data():
     url = "https://gpminvestments.com/store-locator/"
     r = session.get(url, headers=headers)
-    website = "gpminvestments.com/breadandbutter"
+    website = "gpminvestments.com/nextdoor"
     typ = "<MISSING>"
     country = "US"
     loc = "<MISSING>"
@@ -72,31 +72,40 @@ def fetch_data():
                     if (
                         "3016 North John B Dennis" not in rawadd
                         and "5010 S Highway 69" not in rawadd
+                        and "881 Windham Rd. S." not in rawadd
+                        and "1101 3rd Ave. S." not in rawadd
+                        and "4530 Tynecastle Highway" not in rawadd
                     ):
-                        add = usaddress.tag(rawadd)
                         try:
-                            address = (
-                                add[0]["AddressNumber"] + " " + add[0]["StreetName"]
-                            )
+                            add = usaddress.tag(rawadd)
+                            try:
+                                address = (
+                                    add[0]["AddressNumber"]
+                                    + " "
+                                    + add[0]["StreetName"]
+                                    + " "
+                                    + add[0]["StreetNamePostType"]
+                                )
+                            except:
+                                add = "<INACCESSIBLE>"
+                            if add == "":
+                                address = "<INACCESSIBLE>"
+                            try:
+                                city = add[0]["PlaceName"]
+                            except:
+                                city = "<INACCESSIBLE>"
+                            try:
+                                state = add[0]["StateName"]
+                            except:
+                                state = "<INACCESSIBLE>"
+                            try:
+                                zc = add[0]["ZipCode"]
+                            except:
+                                zc = "<INACCESSIBLE>"
                         except:
                             add = "<INACCESSIBLE>"
-                        try:
-                            add = add + " " + add[0]["StreetNamePostType"]
-                        except:
-                            pass
-                        if add == "":
-                            address = "<INACCESSIBLE>"
-                        try:
-                            city = add[0]["PlaceName"]
-                        except:
                             city = "<INACCESSIBLE>"
-                        try:
-                            state = add[0]["StateName"]
-                        except:
                             state = "<INACCESSIBLE>"
-                        try:
-                            zc = add[0]["ZipCode"]
-                        except:
                             zc = "<INACCESSIBLE>"
                     if store == "3003":
                         add = "832 North State of Franklin Road"
@@ -121,6 +130,21 @@ def fetch_data():
                         city = add2.split(",")[1]
                         state = add2.split(",")[2]
                         zc = "<INACCESSIBLE>"
+                    if "881 Windham Rd. S." in rawadd:
+                        address = "881 Windham Rd. S."
+                        city = "Windham"
+                        state = "CT"
+                        zc = "06266-1132"
+                    if "1101 3rd Ave. S." in rawadd:
+                        add = "1101 3rd Ave. S."
+                        city = "Myrtle Beach"
+                        state = "SC"
+                        zc = "29577"
+                    if "4530 Tynecastle Highway" in rawadd:
+                        add = "4530 Tynecastle Highway"
+                        city = "Banner Elk"
+                        state = "NC"
+                        zc = "28604"
                     yield [
                         website,
                         loc,
