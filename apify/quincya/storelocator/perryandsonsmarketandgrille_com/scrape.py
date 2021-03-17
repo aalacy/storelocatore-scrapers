@@ -3,11 +3,7 @@ import re
 
 from bs4 import BeautifulSoup
 
-from sglogging import SgLogSetup
-
 from sgrequests import SgRequests
-
-logger = SgLogSetup().get_logger("perryandsonsmarketandgrille_com")
 
 
 def write_output(data):
