@@ -47,6 +47,7 @@ def fetch_data():
         postal = j.get("postcode") or ""
         if "ireland" in postal.lower() or "ireland" in line.lower():
             continue
+
         if "Currys" in line:
             line = ",".join(line.split(",")[1:])
             location_type = "Currys PC World"
@@ -64,8 +65,18 @@ def fetch_data():
         city = adr.city or "<MISSING>"
         state = adr.state or "<MISSING>"
         postal = adr.postcode or "<MISSING>"
+        if postal.startswith("CO ") or postal.startswith("CO.") or postal == "N/A":
+            postal = "<MISSING>"
+
         if len(street_address) < 10:
             street_address = line.split(",")[0].strip() or "<MISSING>"
+
+        if (
+            "dublin" in postal.lower()
+            or "dublin" in line.lower()
+            or "dublin" in city.lower()
+        ):
+            continue
 
         location_name = j.get("branch_name")
         if city == "<MISSING>":
