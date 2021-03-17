@@ -49,7 +49,6 @@ def fetch_data():
             lurl = line.split("<loc>")[1].split("<")[0]
             if lurl.count("/") == 3:
                 locs.append(lurl)
-    print(len(locs))
     for loc in locs:
         logger.info(("Pulling Location %s..." % loc))
         website = "macys.com"
