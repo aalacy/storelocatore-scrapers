@@ -22,7 +22,7 @@ def fetch_data():
         loclist = soup.find("store").findAll("item")
         for loc in loclist:
             location_name = loc.find("location").text
-            store = loc.find("sortord").text
+            store_number = loc.find("sortord").text
             raw_address = loc.find("address").text.replace(",", "")
             formatted_addr = parser.parse_address_intl(raw_address)
             street_address = formatted_addr.street_address_1
@@ -53,11 +53,11 @@ def fetch_data():
                 state=state,
                 zip_postal=zip_postal,
                 country_code="CA",
-                store_number="<MISSING>",
+                store_number=store_number,
                 phone=phone,
                 location_type="<MISSING>",
-                latitude="<MISSING>",
-                longitude="<MISSING>",
+                latitude=latitude,
+                longitude=longitude,
                 hours_of_operation="<MISSING>",
                 raw_address=raw_address,
             )
