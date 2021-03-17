@@ -134,6 +134,8 @@ def fetch_data():
             phone = "<MISSING>"
         if "puerto-rico/" in loc:
             state = "PR"
+        if "-" in store:
+            store = "<MISSING>"
         yield [
             website,
             loc,
