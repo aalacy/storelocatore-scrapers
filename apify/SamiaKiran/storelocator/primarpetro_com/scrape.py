@@ -66,8 +66,8 @@ def fetch_data():
             address = address[2].split()
             state = address[0]
             pcode = address[1]
-            title =  title.replace(":", "")
-            store = title.split("#")[1].split("-",1)[0]
+            title = title.replace(":", "")
+            store = title.split("#")[1].split("-", 1)[0]
             i = i + 2
             final_data.append(
                 [
