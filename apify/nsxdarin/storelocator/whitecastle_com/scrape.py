@@ -21,6 +21,7 @@ def write_output(data):
         writer.writerow(
             [
                 "locator_domain",
+                "page_url",
                 "location_name",
                 "street_address",
                 "city",
@@ -88,10 +89,17 @@ def fetch_data():
             except:
                 hours = "Sun-Sat: Closed"
         typ = "Restaurant"
-        lat = array["lat"]
-        lng = array["lng"]
+        try:
+            lat = array["lat"]
+        except:
+            lat = "<MISSING>"
+        try:
+            lng = array["lng"]
+        except:
+            lng = "<MISSING>"
         yield [
             website,
+            loc,
             name,
             add,
             city,
