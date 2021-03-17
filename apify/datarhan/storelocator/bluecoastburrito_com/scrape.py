@@ -53,7 +53,6 @@ def fetch_data():
         '//a[contains(text(), "Locations")]/following-sibling::ul//a/@href'
     )
     for store_url in all_locations:
-        print(store_url)
         loc_response = session.get(store_url)
         loc_dom = etree.HTML(loc_response.text)
 
