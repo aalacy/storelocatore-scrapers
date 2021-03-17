@@ -1,3 +1,7 @@
 VALIDATOR_VERSION: 0.0.71
+<<<<<<< Updated upstream
 COMMAND: D:\SafeGraph\Current\dibellas_com\validate.py data.csv
+=======
+COMMAND: D:\SafeGraph\Current\countrystyle_com\validate.py data.csv --ignore CountryValidator
+>>>>>>> Stashed changes
 PYTHON_VERSION: sys.version_info(major=3, minor=7, micro=0, releaselevel='final', serial=0)
