@@ -42,7 +42,7 @@ def fetch_data():
     extractable_html = []
 
     with SgChrome(
-        is_headless=True, executable_path="C:/Users/zivko/Downloads/chromedriver.exe"
+        is_headless=True,
     ) as driver:
         driver.get("https://icuracao.com/store-locator")
         time.sleep(20)
