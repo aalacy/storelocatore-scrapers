@@ -66,18 +66,20 @@ def fetch_data():
             address = address[2].split()
             state = address[0]
             pcode = address[1]
+            title =  title.replace(":", "")
+            store = title.split("#")[1].split("-",1)[0]
             i = i + 2
             final_data.append(
                 [
                     "https://www.primarpetro.com/",
                     "https://www.primarpetro.com/locations.html",
-                    title.replace(":", ""),
+                    title,
                     street,
                     city,
                     state,
                     pcode,
                     "US",
-                    "<MISSING>",
+                    store,
                     "<MISSING>",
                     "<MISSING>",
                     "<MISSING>",
