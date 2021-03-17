@@ -2,7 +2,6 @@ import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
-from sglogging import SgLogSetup
 
 
 def write_output(data):
