@@ -1,1 +1,1 @@
-sgcrawler==0.0.5
+# Generate like so: https://github.com/SafeGraphCrawl/crawl-service/blob/master/docs/cookbook/reqfile.md

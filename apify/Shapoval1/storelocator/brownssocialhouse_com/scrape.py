@@ -101,6 +101,9 @@ def get_data(url):
         hours_of_operation = hours_of_operation.split("We will")[0].strip()
     if hours_of_operation.find("We are") != -1:
         hours_of_operation = hours_of_operation.split("We are")[0].strip()
+
+    if hours_of_operation.find("Delivery") != -1:
+        hours_of_operation = hours_of_operation.split(".")[1]
     js = "".join(
         tree.xpath('//div[@class="sqs-block map-block sqs-block-map"]/@data-block-json')
     )
@@ -108,7 +111,13 @@ def get_data(url):
     street_address = "".join(j.get("location").get("addressLine1")).strip()
     ad = "".join(j.get("location").get("addressLine2"))
     a = parse_address(International_Parser(), ad)
+
     postal = a.postcode or "<MISSING>"
+    if street_address.find("9719") != -1:
+        postal = "V1J 3X9"
+    if street_address.find("8120") != -1:
+        street_address = "8120 44TH Street"
+        postal = "T0B 0L0"
     city = a.city
     state = a.state
 
