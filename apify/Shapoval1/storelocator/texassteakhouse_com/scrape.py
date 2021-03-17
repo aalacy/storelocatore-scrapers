@@ -68,28 +68,32 @@ def fetch_data():
     }
     r = session.get(page_url)
     tree = html.fromstring(r.text)
-    block = tree.xpath('//div[./h4]')
+    block = tree.xpath("//div[./h4]")
     for b in block:
-        location_name = ''.join(b.xpath('.//h4/text()'))
-        line = b.xpath('.//p[1]/text()')
-        ad = ''.join(line[:2])
+        location_name = "".join(b.xpath(".//h4/text()"))
+        line = b.xpath(".//p[1]/text()")
+        ad = "".join(line[:2])
         a = usaddress.tag(ad, tag_mapping=tag)[0]
 
-        street_address = f"{a.get('address1')} {a.get('address2')}".replace('None','').strip()
-        phone = ''.join(line[2]).strip()
-        city = a.get('city')
-        state = a.get('state')
+        street_address = f"{a.get('address1')} {a.get('address2')}".replace(
+            "None", ""
+        ).strip()
+        phone = "".join(line[2]).strip()
+        city = a.get("city")
+        state = a.get("state")
         country_code = "US"
         store_number = "<MISSING>"
-        ll = ''.join(b.xpath('.//a[contains(@href, "google")]/@href'))
+        ll = "".join(b.xpath('.//a[contains(@href, "google")]/@href'))
         latitude = "<MISSING>"
         longitude = "<MISSING>"
-        if ll.find('z/') != -1:
-            latitude = ''.join(ll.split('/@')[1].split(',')[:1])
-            longitude = ll.split('/@')[1].split(',')[1]
+        if ll.find("z/") != -1:
+            latitude = "".join(ll.split("/@")[1].split(",")[:1])
+            longitude = ll.split("/@")[1].split(",")[1]
         location_type = "<MISSING>"
-        hours_of_operation = ' '.join(b.xpath('.//p[2]//text()')).replace('\n','').strip()
-        postal = a.get('postal')
+        hours_of_operation = (
+            " ".join(b.xpath(".//p[2]//text()")).replace("\n", "").strip()
+        )
+        postal = a.get("postal")
 
         row = [
             locator_domain,
