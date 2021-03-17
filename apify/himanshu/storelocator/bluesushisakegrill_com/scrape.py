@@ -52,15 +52,9 @@ def write_output(data):
 
 
 def fetch_data():
-    addresses = []
-    base_url = "https://bluesushisakegrill.com/"
     get_url = "https://bluesushisakegrill.com/locations"
     r = session.get(get_url)
     soup = BeautifulSoup(r.text, "html.parser")
-    store_name = []
-    store_detail = []
-    return_main_object = []
-    name1 = []
     main = soup.find_all("h3", {"class": "locations-item-title"})
     for i in main:
         title = i.find("a").text
