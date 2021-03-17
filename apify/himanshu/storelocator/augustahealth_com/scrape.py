@@ -100,14 +100,14 @@ def fetch_data():
         yield store
     r = session.get("https://www.augustahealth.com/urgent-care", headers=headers)
     soup = BeautifulSoup(r.text, "html.parser")
-    for loc in soup.find_all("div", class_="location"):
-        location_name = loc.h4.text.strip()
+    for locs in soup.find_all("div", class_="location"):
+        location_name = locs.h4.text.strip()
         if location_name == "Telehealth Urgent Care":
-            add = " ".join(list(loc.find("p", {"class": "address"}))).split("\n")
+            add = " ".join(list(locs.find("p", {"class": "address"}))).split("\n")
         elif location_name == "Crozet Convenient Care":
             add = " ".join(list("<MISSING>")).split("\n")
         else:
-            add = " ".join(list(loc.find("p", {"class": "address"}).find("a"))).split(
+            add = " ".join(list(locs.find("p", {"class": "address"}).find("a"))).split(
                 "\n"
             )
         if len(add) == 1:
@@ -133,18 +133,18 @@ def fetch_data():
 
         try:
             latitude = (
-                loc.find("p", class_="address")
+                locs.find("p", class_="address")
                 .find("a")["href"]
                 .split("@")[1]
                 .split(",")[0]
             )
             longitude = (
-                loc.find("p", class_="address")
+                locs.find("p", class_="address")
                 .find("a")["href"]
                 .split("@")[1]
                 .split(",")[1]
             )
-            phone = loc.find("p", class_="phone").text.strip()
+            phone = locs.find("p", class_="phone").text.strip()
         except:
             latitude = "<MISSING>"
             longitude = "<MISSING>"
@@ -152,7 +152,7 @@ def fetch_data():
         if location_name == "Crozet Convenient Care":
             hours_of_operation = "Temporarily Closed"
         else:
-            hours_of_operation = loc.find("div", class_="hours").text.strip()
+            hours_of_operation = locs.find("div", class_="hours").text.strip()
         location_type = "urgent-care"
         store_number = "<MISSING>"
         page_url = "https://www.augustahealth.com/urgent-care"

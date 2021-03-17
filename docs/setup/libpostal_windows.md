@@ -17,8 +17,9 @@
     * `./configure --datadir=/c`
         * ###### (Here /c stands for C: it will automatically create C:/libpostal , occupies a few GB of space feel free to change dir)
 ----
-4. Before continuing, we need to change a few files. 
-		###### Keep the `MSYS2 MingW 64-bit` shell open.
+4.
+    * Before continuing, we need to change a few files. 
+		* ###### Keep the `MSYS2 MingW 64-bit` shell open.
     * Go to your msys installation folder -> home -> user (PC name) -> libpostal,
         * ###### example path: `"C:\msys64\home\[User]\libpostal\libpostal.def"`
     * Open libpostal.def in your preffered text editor and replace it's contents with those found [after clicking this link.](https://raw.githubusercontent.com/openvenues/libpostal/216c947e37cd3d885b2a29b5b330406b7df739a4/libpostal.def)
