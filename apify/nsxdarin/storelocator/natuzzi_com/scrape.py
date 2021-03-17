@@ -146,6 +146,10 @@ def fetch_data():
                         if "<" in hours and hours != "<MISSING>":
                             hours = hours.split("<")[0]
                         hours = hours.strip()
+                        if "Burlington" in city and "Ontario" in city:
+                            city = "Burlington"
+                        if "Stati" in state:
+                            state = "MO"
                         yield [
                             website,
                             loc,
