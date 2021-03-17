@@ -55,11 +55,7 @@ def fetch_data():
         store_url = "https://interceramicusa.com/dealer-locator/"
         location_name = poi["store"]
         location_name = location_name if location_name else "<MISSING>"
-        location_name = (
-            location_name.replace("&#038;", "&")
-            .replace("\&#8217;", "'")
-            .replace("&#8217;", "'")
-        )
+        location_name = location_name.replace("&#038;", "&").replace("&#8217;", "'")
         city = poi["city"]
         city = city if city else "<MISSING>"
         state = poi["state"]
