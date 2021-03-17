@@ -8,7 +8,7 @@ headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
 
-logger = SgLogSetup().get_logger("gpminvestments_com__nextdoor")
+logger = SgLogSetup().get_logger("gpminvestments_com__breadandbutter")
 
 
 def write_output(data):
@@ -41,7 +41,7 @@ def write_output(data):
 def fetch_data():
     url = "https://gpminvestments.com/store-locator/"
     r = session.get(url, headers=headers)
-    website = "gpminvestments.com/nextdoor"
+    website = "gpminvestments.com/breadandbutter"
     typ = "<MISSING>"
     country = "US"
     loc = "<MISSING>"
