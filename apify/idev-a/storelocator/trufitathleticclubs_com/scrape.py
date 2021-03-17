@@ -28,6 +28,13 @@ def _sign(original, val):
         return f"-{val}"
 
 
+def _phone(val):
+    if val:
+        return val.split("Ext")[0]
+    else:
+        return ""
+
+
 def fetch_data():
     with SgRequests() as session:
         locator_domain = "https://trufitathleticclubs.com/"
@@ -43,10 +50,7 @@ def fetch_data():
                 for key, _ in loc["location_hours"].items():
                     hours.append(f"{key}: {_}")
 
-                url = "-".join(
-                    loc["club_name"].replace("Tru Fit", "").strip().split(" ")
-                )
-                page_url = f"https://trufitathleticclubs.com/clubs?club={url}"
+                page_url = f"https://trufitathleticclubs.com/clubs?club={loc['vanilla_slug'][0]['value']}"
                 yield SgRecord(
                     page_url=page_url,
                     store_number=loc["club_id"],
@@ -57,7 +61,7 @@ def fetch_data():
                     zip_postal=loc["zip_code"],
                     country_code="US",
                     location_type=loc["group"],
-                    phone=loc["phone"].split("Ext")[0],
+                    phone=_phone(loc["phone"]),
                     locator_domain=locator_domain,
                     hours_of_operation=_valid("; ".join(hours)),
                 )

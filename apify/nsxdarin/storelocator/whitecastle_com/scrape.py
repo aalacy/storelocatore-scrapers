@@ -21,6 +21,7 @@ def write_output(data):
         writer.writerow(
             [
                 "locator_domain",
+                "page_url",
                 "location_name",
                 "street_address",
                 "city",
@@ -98,6 +99,7 @@ def fetch_data():
             lng = "<MISSING>"
         yield [
             website,
+            loc,
             name,
             add,
             city,
