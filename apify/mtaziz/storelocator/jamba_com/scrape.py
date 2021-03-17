@@ -81,7 +81,7 @@ def fetch_data():
         for store in data_raw:
             store_number = store["StoreNumber"] or "<MISSING>"
             locator_domain = locator_domainname
-            page_url = "https://www.jamba.com/" + store["Url"] or "<MISSING>"
+            page_url = "https://www.jamba.com" + store["Url"] or "<MISSING>"
             location_name = store["LocationName"] or "<MISSING>"
             street_address = store["StreetAddress"] or "<MISSING>"
             city = store["City"] or "<MISSING>"
