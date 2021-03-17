@@ -34,7 +34,7 @@ def write_output(data):
             writer.writerow(row)
 
 
-def get_phone_hoo(page_url):
+def get_phone_hoo_coords(page_url):
     session = SgRequests()
     r = session.get(page_url)
     tree = html.fromstring(r.text)
@@ -42,7 +42,7 @@ def get_phone_hoo(page_url):
     line = tree.xpath("//p[@class='campAddress']/text()")
     line = list(filter(None, [l.strip() for l in line]))
     if not line:
-        return "<MISSING>", "<MISSING>"
+        return "<MISSING>", "<MISSING>", ("<MISSING>", "<MISSING>")
     phone = line[-1].replace("phone", "").replace(":", "").strip()
 
     _tmp = []
@@ -55,7 +55,15 @@ def get_phone_hoo(page_url):
 
     hours_of_operation = ";".join(_tmp) or "<MISSING>"
 
-    return phone, hours_of_operation
+    try:
+        text = "".join(tree.xpath("//iframe[contains(@src, 'google')]/@src"))
+        latitude = text.split("!3d")[1].strip().split("!")[0].strip()
+        longitude = text.split("!2d")[1].strip().split("!")[0].strip()
+        coords = (latitude, longitude)
+    except IndexError:
+        coords = ("<MISSING>", "<MISSING>")
+
+    return phone, hours_of_operation, coords
 
 
 def fetch_data():
@@ -98,7 +106,6 @@ def fetch_data():
 
     for d in divs:
         location_name = "".join(d.xpath("./div[@class='locationName']/text()")).strip()
-
         line = "".join(d.xpath("./address/text()")).strip()
         a = usaddress.tag(line, tag_mapping=tag)[0]
         street_address = f"{a.get('address1')} {a.get('address2') or ''}".strip()
@@ -111,10 +118,9 @@ def fetch_data():
         store_number = "<MISSING>"
         slug = "".join(d.xpath("./div[@class='locationWebsite']/a/@href"))
         page_url = f"{locator_domain}{slug}"
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
         location_type = "<MISSING>"
-        phone, hours_of_operation = get_phone_hoo(page_url)
+        phone, hours_of_operation, coords = get_phone_hoo_coords(page_url)
+        latitude, longitude = coords
 
         row = [
             locator_domain,

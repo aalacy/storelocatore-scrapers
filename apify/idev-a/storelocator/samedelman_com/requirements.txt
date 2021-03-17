@@ -1,0 +1,5 @@
+sgscrape==0.0.23
+selenium==3.141.0
+sgselenium==0.0.15
+sgvalidator==0.0.71
+beautifulsoup4==4.9.3
