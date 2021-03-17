@@ -108,6 +108,9 @@ def fetch_data():
                             temp_text.replace("Phone:", "").replace("Ph:", "").strip()
                         )
                         break
+
+                elif "(" in temp_text and ")" in temp_text:
+                    phone = temp_text
                 else:
                     add_list.append("".join(temp_text))
 

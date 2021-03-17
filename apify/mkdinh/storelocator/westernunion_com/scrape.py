@@ -2,15 +2,11 @@ import csv
 from sgrequests import SgRequests
 import threading
 from urllib.parse import urljoin
-from datetime import datetime as dt
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import requests_random_user_agent  # ignore_check # noqa F401
 from sgzip.static import static_zipcode_list, SearchableCountries
-from sglogging import sglog
-
 
 thread_local = threading.local()
-log = sglog.SgLogSetup().get_logger(logger_name="westernunion.com")
 
 FIELDS = [
     "locator_domain",
@@ -139,9 +135,8 @@ def fetch_pages(session, postal, country_code, locations, page=None):
 def scrape():
     session = SgRequests()
     tracker = []
-    completed = 0
-    us_search = static_zipcode_list(30, SearchableCountries.USA)
-    ca_search = static_zipcode_list(20, SearchableCountries.CANADA)
+    us_search = static_zipcode_list(40, SearchableCountries.USA)
+    ca_search = static_zipcode_list(30, SearchableCountries.CANADA)
 
     with ThreadPoolExecutor() as executor:
         futures = []
@@ -159,16 +154,9 @@ def scrape():
         )
 
         for future in as_completed(futures):
-            completed += 1
-            if completed % 100 == 0:
-                log.info(f"completed: {completed}/{len(futures)}")
-
             yield future.result()
 
 
 if __name__ == "__main__":
-    start = dt.now()
     data = scrape()
     write_output(data)
-
-    log.info(f"duration: {dt.now() - start}")

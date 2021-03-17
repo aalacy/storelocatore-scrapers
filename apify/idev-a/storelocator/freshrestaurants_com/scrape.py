@@ -34,7 +34,7 @@ def fetch_data():
                 for hour in bs(_["hours"], "lxml").select("tr"):
                     hours.append(f"{hour.td.text}: {hour.select('td')[1].text}")
             location_name = _["store"].split("&#8211;")[0].split("\u2013")[0]
-            if _["store"].split("&#8211;")[-1].strip() == "Coming Soon":
+            if _["store"].split("&#8211;")[-1].strip().lower() == "coming soon":
                 hours = ["Coming Soon"]
             yield SgRecord(
                 page_url="https://freshrestaurants.com/locations",
