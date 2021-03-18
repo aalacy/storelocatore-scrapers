@@ -140,6 +140,8 @@ def fetch_data():
             lat = "<MISSING>"
         if lng == "":
             lng = "<MISSING>"
+        if "," in name:
+            name = name.split(",")[0].strip()
         yield [
             website,
             loc,
