@@ -72,8 +72,8 @@ def fetch_data():
                     3
                 ][0][2][1]
                 break
-        street_address = geo_data.split(",")[1]
-        city = geo_data.split(",")[2]
+        street_address = geo_data.split(",")[1].strip()
+        city = geo_data.split(",")[2].strip()
         store_zip_split = re.findall(
             re.compile(r"\b[0-9]{5}(?:-[0-9]{4})?\b"), geo_data
         )
@@ -86,6 +86,10 @@ def fetch_data():
             state = state_split[-1]
         else:
             state = "<MISSING>"
+
+        if "Airside" in city:
+            street_address = street_address + "-" + city
+            city = "Tampa"
 
         try:
             phone = (

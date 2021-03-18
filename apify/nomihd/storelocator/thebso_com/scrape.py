@@ -82,7 +82,7 @@ def fetch_data():
                     hours_list.append("".join(hour.xpath("div/text()")).strip())
 
             hours_of_operation = "; ".join(hours_list).strip()
-            store_number = "<MISSING>"
+            store_number = page_url.split("-")[-1].strip().replace(".html", "").strip()
             latlng = store_sel.xpath('//div[@itemprop="geo"]')
             latitude = ""
             longitude = ""

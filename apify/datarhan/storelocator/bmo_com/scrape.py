@@ -50,7 +50,7 @@ def fetch_data():
     }
     all_codes = DynamicGeoSearch(
         country_codes=[SearchableCountries.CANADA],
-        max_radius_miles=200,
+        max_radius_miles=20,
         max_search_results=None,
     )
     for lat, lng in all_codes:

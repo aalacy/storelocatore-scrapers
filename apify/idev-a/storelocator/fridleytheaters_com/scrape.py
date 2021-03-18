@@ -21,13 +21,13 @@ def fetch_data():
             r1 = session.get(page_url)
             soup1 = bs(r1.text, "lxml")
             location_name = soup1.select_one("h1#theater-name").text
-            _addr = " ".join([_ for _ in link.stripped_strings][:-1])
+            _addr = " ".join([_ for _ in link.stripped_strings][1:-1])
             addr = parse_address_usa(_addr)
             _phone = [_ for _ in soup1.select_one("div#info-right").stripped_strings]
             hours_of_operation = "<MISSING>"
-            msg = soup1.select_one("div#fxp-message img")["alt"]
+            msg = soup1.select("div#fxp-message img")[-1]["alt"]
             if "temporarily closed" in msg:
-                hours_of_operation = "Closed"
+                hours_of_operation = "Temporarily Closed"
             yield SgRecord(
                 page_url=page_url,
                 location_name=location_name,
@@ -35,7 +35,7 @@ def fetch_data():
                 city=addr.city,
                 state=addr.state,
                 zip_postal=addr.postcode,
-                country_code=addr.country,
+                country_code=addr.country or "US",
                 phone=_phone[1],
                 locator_domain=locator_domain,
                 hours_of_operation=hours_of_operation,
