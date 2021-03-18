@@ -18,8 +18,6 @@ headers = {
 
 def fetch_data():
     # Your scraper here
-    loc_list = []
-
     search_url = "https://ctbconnect.com/wp-admin/admin-ajax.php?action=store_search&lat=0&lng=0&max_results=50000&search_radius=50000&autoload=1"
     stores_req = session.get(search_url, headers=headers)
     stores = json.loads(stores_req.text)
