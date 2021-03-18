@@ -40,7 +40,7 @@ def write_output(data):
 
 def fetch_data():
     locs = []
-    url = "https://www.thebodyshop.com/sitemap-gb.xml"
+    url = "https://www.thebodyshop.com/sitemap-uk.xml"
     r = session.get(url, headers=headers)
     website = "thebodyshop.co.uk"
     typ = "<MISSING>"
@@ -48,16 +48,21 @@ def fetch_data():
     logger.info("Pulling Stores")
     for line in r.iter_lines():
         line = str(line.decode("utf-8"))
-        if "<loc>https://www.thebodyshop.com/en-gb/store-finder/store/" in line:
-            items = line.split(
-                "<loc>https://www.thebodyshop.com/en-gb/store-finder/store/"
+        if "<loc>https://www.thebodyshop.com/commerce/rest/v2/medias/Store" in line:
+            smurl = (
+                "https://www.thebodyshop.com/commerce/rest/v2/medias/Store"
+                + line.split(
+                    "<loc>https://www.thebodyshop.com/commerce/rest/v2/medias/Store"
+                )[1].split("<")[0]
             )
-            for item in items:
-                if "<urlset" not in item:
-                    locs.append(
-                        "https://www.thebodyshop.com/en-gb/store-finder/store/"
-                        + item.split("<")[0]
-                    )
+            r2 = session.get(smurl, headers=headers)
+            for line2 in r2.iter_lines():
+                line2 = str(line2.decode("utf-8"))
+                if (
+                    "<loc>https://www.thebodyshop.com/en-gb/store-finder/store/"
+                    in line2
+                ):
+                    locs.append(line2.split("<loc>")[1].split("<")[0])
     for loc in locs:
         logger.info(loc)
         name = ""
