@@ -1,6 +1,5 @@
 import re
 import csv
-import json
 from lxml import etree
 from urllib.parse import urljoin
 
@@ -45,59 +44,89 @@ def fetch_data():
 
     start_url = "https://www.adventhealth.com/find-a-location"
     domain = re.findall("://(.+?)/", start_url)[0].replace("www.", "")
-    hdr = {
-        "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-        "accept-encoding": "gzip, deflate, br",
-        "upgrade-insecure-requests": "1",
-        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.192 Safari/537.36",
-    }
-    response = session.get(start_url, headers=hdr)
+
+    response = session.get(start_url)
     dom = etree.HTML(response.text)
 
-    all_locations = dom.xpath(
-        '//h3[@class="location-block__name h2 notranslate "]/a/@href'
-    )
+    all_locations = dom.xpath('//li[@class="facility-search-block__item"]')
     next_page = dom.xpath('//a[@rel="next"]/@href')
     while next_page:
-        response = session.get(urljoin(start_url, next_page[0]), headers=hdr)
+        response = session.get(urljoin(start_url, next_page[0]))
         dom = etree.HTML(response.text)
-        all_locations += dom.xpath(
-            '//h3[@class="location-block__name h2 notranslate "]/a/@href'
-        )
+        all_locations += dom.xpath('//li[@class="facility-search-block__item"]')
         next_page = dom.xpath('//a[@rel="next"]/@href')
 
-    for url in all_locations:
-        store_url = urljoin(start_url, url)
-        loc_response = session.get(store_url, headers=hdr)
-        loc_dom = etree.HTML(loc_response.text)
-        poi = loc_dom.xpath('//script[@type="application/ld+json"]/text()')[0]
-        poi = json.loads(poi)
-        if type(poi) == list:
-            poi = poi[1]
+    for poi_html in all_locations:
+        store_url = poi_html.xpath(".//h3/a/@href")
+        if not store_url:
+            store_url = poi_html.xpath('.//a[contains(text(), "View Website")]/@href')
+        store_url = urljoin(start_url, store_url[0]) if store_url else "<MISSING>"
+        if "adventhealth.com" in store_url:
+            loc_response = session.get(store_url)
+            loc_dom = etree.HTML(loc_response.text)
 
-        location_name = poi["name"]
-        location_name = location_name if location_name else "<MISSING>"
-        street_address = loc_dom.xpath('//span[@property="streetAddress"]/text()')
-        street_address = street_address[0].strip() if street_address else "<MISSING>"
-        if street_address.endswith(","):
-            street_address = street_address[:-1]
-        city = loc_dom.xpath('//span[@property="addressLocality"]/text()')
-        city = city[0] if city else "<MISSING>"
-        state = loc_dom.xpath('//span[@property="addressRegion"]/text()')
-        state = state[0] if state else "<MISSING>"
-        zip_code = loc_dom.xpath('//span[@property="postalCode"]/text()')
-        zip_code = zip_code[0] if zip_code else "<MISSING>"
-        country_code = re.findall('country":"(.+?)",', loc_response.text)
-        country_code = country_code[0] if country_code else "<MISSING>"
-        store_number = "<MISSING>"
-        phone = loc_dom.xpath('//a[@class="telephone"]/text()')
-        phone = phone[0] if phone else "<MISSING>"
-        location_type = "<MISSING>"
-        latitude = loc_dom.xpath("//@data-lat")[0]
-        longitude = loc_dom.xpath("//@data-lng")[0]
-        hoo = loc_dom.xpath('//div[@class="location-block__office-hours-hours"]/text()')
-        hoo = [e.strip() for e in hoo if e.strip()]
-        hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
+            location_name = loc_dom.xpath(
+                '//span[@class="location-bar__name-text notranslate"]/text()'
+            )
+            if not location_name:
+                location_name = loc_dom.xpath(
+                    '//h1[@class="image-hero__title"]//text()'
+                )
+            location_name = [e.strip() for e in location_name if e.strip()]
+            location_name = " ".join(location_name) if location_name else "<MISSING>"
+            if location_name.endswith(","):
+                location_name = location_name[:-1]
+            street_address = loc_dom.xpath('//span[@property="streetAddress"]/text()')
+            street_address = (
+                street_address[0].strip() if street_address else "<MISSING>"
+            )
+            if street_address.endswith(","):
+                street_address = street_address[:-1]
+            city = loc_dom.xpath('//span[@property="addressLocality"]/text()')
+            city = city[0] if city else "<MISSING>"
+            state = loc_dom.xpath('//span[@property="addressRegion"]/text()')
+            state = state[0] if state else "<MISSING>"
+            zip_code = loc_dom.xpath('//span[@property="postalCode"]/text()')
+            zip_code = zip_code[0] if zip_code else "<MISSING>"
+            country_code = re.findall('country":"(.+?)",', loc_response.text)
+            country_code = country_code[0] if country_code else "<MISSING>"
+            store_number = "<MISSING>"
+            phone = loc_dom.xpath('//a[@class="telephone"]/text()')
+            phone = phone[0].strip() if phone and phone[0].strip() else "<MISSING>"
+            location_type = "<MISSING>"
+            latitude = loc_dom.xpath("//@data-lat")
+            latitude = latitude[0] if latitude else "<MISSING>"
+            longitude = loc_dom.xpath("//@data-lng")
+            longitude = longitude[0] if longitude else "<MISSING>"
+            hoo = loc_dom.xpath(
+                '//div[@class="location-block__office-hours-hours"]/text()'
+            )
+            hoo = [e.strip() for e in hoo if e.strip()]
+            hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
+        else:
+            location_name = poi_html.xpath(".//h3/a/text()")
+            if not location_name:
+                location_name = poi_html.xpath(".//h3/text()")
+            location_name = location_name[0].strip() if location_name else "<MISSING>"
+            street_address = poi_html.xpath('.//span[@property="streetAddress"]/text()')
+            street_address = (
+                street_address[0].strip() if street_address else "<MISSING>"
+            )
+            city = poi_html.xpath('.//span[@property="addressLocality"]/text()')
+            city = city[0] if city else "<MISSING>"
+            state = poi_html.xpath('.//span[@property="addressRegion"]/text()')
+            state = state[0] if state else "<MISSING>"
+            zip_code = poi_html.xpath('.//span[@property="postalCode"]/text()')
+            zip_code = zip_code[0] if zip_code else "<MISSING>"
+            country_code = re.findall('country":"(.+?)",', loc_response.text)
+            country_code = country_code[0] if country_code else "<MISSING>"
+            store_number = "<MISSING>"
+            phone = poi_html.xpath('.//a[@class="telephone"]/text()')
+            phone = phone[0].strip() if phone and phone[0].strip() else "<MISSING>"
+            location_type = "<MISSING>"
+            latitude = "<MISSING>"
+            longitude = "<MISSING>"
+            hours_of_operation = "<MISSING>"
 
         item = [
             domain,

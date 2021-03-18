@@ -100,6 +100,7 @@ def fetch_data():
         postal = a.get("postal")
         if street_address.find("1915") != -1:
             postal = "L6H 0N1"
+            country_code = "CA"
         if phone == "<MISSING>" and street_address.find("2210") == -1:
             hours_of_operation = "Coming Soon"
 
