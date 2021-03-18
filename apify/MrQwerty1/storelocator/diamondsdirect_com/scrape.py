@@ -42,7 +42,7 @@ def fetch_data():
     r = session.get(api_url)
     text = r.text
     text = text.split(
-        't.ERROR_RED="#EB3533"},function(e,t){"use strict";Object.defineProperty(t,"__esModule",{value:!0});var n='
+        't.ERROR_RED="#EB3533"},function(e,t){"use strict";Object.defineProperty(t,"__esModule",{value:!0});var n'
     )[1].split(";t.ALL={")[0]
     for t in text.split("={")[1:]:
         if t.find('"store"') == -1:

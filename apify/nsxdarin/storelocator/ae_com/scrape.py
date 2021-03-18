@@ -105,7 +105,10 @@ def fetch_data():
                 city = line2.split('<span class="c-address-city">')[1].split("<")[0]
                 state = line2.split('itemprop="addressRegion">')[1].split("<")[0]
                 zc = line2.split('itemprop="postalCode">')[1].split("<")[0]
-                phone = line2.split('itemprop="telephone">')[1].split("<")[0]
+                try:
+                    phone = line2.split('itemprop="telephone">')[1].split("<")[0]
+                except:
+                    phone = "<MISSING>"
                 lat = line2.split('type="text/data">{"latitude":')[1].split(",")[0]
                 lng = line2.split(',"longitude":')[1].split("}")[0]
         if hours == "":

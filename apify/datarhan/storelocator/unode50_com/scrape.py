@@ -143,6 +143,9 @@ def fetch_data():
             street_address += ", " + zip_code.split(city)[0]
             zip_code = zip_code.split()[-1]
 
+        if location_name.lower() in street_address.lower():
+            street_address = ", ".join(street_address.split(", ")[1:])
+
         item = [
             DOMAIN,
             store_url,
@@ -160,9 +163,8 @@ def fetch_data():
             hours_of_operation,
         ]
 
-        check = f"{street_address} {location_name}"
-        if check not in scraped_items:
-            scraped_items.append(check)
+        if store_url not in scraped_items:
+            scraped_items.append(store_url)
             items.append(item)
 
     return items
