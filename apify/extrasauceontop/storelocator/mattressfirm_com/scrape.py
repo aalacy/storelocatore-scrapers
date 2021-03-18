@@ -158,7 +158,7 @@ for zipcode in search:
                 hours = hours[:-2]
                 hours_of_operations.append(hours)
 
-            except Exception as ex:
+            except Exception:
                 hours = "<MISSING>"
                 hours_of_operations.append(hours)
 
