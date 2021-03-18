@@ -54,7 +54,6 @@ def fetch_data():
     all_locations = dom.xpath('//a[@class="btn ghost-btn"]/@href')
     for store_url in all_locations:
         store_url = urljoin(start_url, store_url)
-        print(store_url)
         loc_response = session.get(store_url)
         loc_dom = etree.HTML(loc_response.text)
         poi = loc_dom.xpath('//script[@type="application/ld+json"]/text()')[0]
