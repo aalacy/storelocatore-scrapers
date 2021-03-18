@@ -95,7 +95,7 @@ def fetch_data():
             )
             final_data.append(
                 [
-                    "https://vallartasupermarkets.com/en/store-locations/",
+                    "https://www.moosejaw.com/",
                     link,
                     title,
                     street,
