@@ -69,9 +69,16 @@ def fetch_data():
             + "&lng="
             + str(lngnow)
         )
+
+        if "Columbia" in search:
+            url = "https://fitnesstogether.com/locator?q=District%20of%20Columbia%2C%20United%20States&lat=38.895&lng=-77.03667&limit=5"
         loclist = session.get(url, headers=headers, verify=False).json()["locations"]
+
         for loc in loclist:
+
             if loc["status"] == "soon":
+                link = "https://fitnesstogether.com/" + loc["slug"]
+                print(link)
                 continue
             title = loc["name"]
             store = loc["id"]
