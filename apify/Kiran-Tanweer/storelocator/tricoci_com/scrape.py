@@ -61,7 +61,6 @@ def fetch_data():
     search_url = "https://www.tricoci.com/a/locations"
     stores_req = session.get(search_url, headers=headers)
     soup = BeautifulSoup(stores_req.text, "html.parser")
-    links = soup.findAll("a", {"class": "Text--subdued Link Link--primary"})
     locs = soup.find("div", {"class": "addresses"}).findAll("a")
     i = 0
     while i < len(locs):
