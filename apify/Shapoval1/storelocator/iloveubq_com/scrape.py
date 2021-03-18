@@ -37,7 +37,6 @@ def get_urls():
     session = SgRequests()
     r = session.get("https://www.urbanbarbq.com/Locations.aspx")
     tree = html.fromstring(r.text)
-
     return tree.xpath('//a[@class="lnkStoreName"]/@href')
 
 
@@ -48,18 +47,24 @@ def get_data(url):
     r = session.get(page_url)
 
     tree = html.fromstring(r.text)
-
+    location_name = "".join(tree.xpath('//div[@class="store-name"]/span/text()'))
+    blink = "<MISSING>"
+    if location_name.find("BWI Airport") != -1:
+        blink = "".join(tree.xpath('//span[@class="blinkMe"]/text()')).strip()
     hours_of_operation = "<MISSING>"
+    if blink != "<MISSING>":
+        hours_of_operation = blink
     country_code = "US"
     line = "".join(tree.xpath('//div[@class="store-address-line2"]/text()')).replace(
         "-", " "
     )
+
     street_address = "".join(tree.xpath('//div[@class="store-address-line1"]/text()'))
     postal = line.split()[2]
     city = line.split()[0]
     state = line.split()[1]
     store_number = "<MISSING>"
-    location_name = "".join(tree.xpath('//div[@class="store-name"]/span/text()'))
+
     phone = "".join(tree.xpath('//span[@class="store-phone"]/text()'))
     latitude = "<MISSING>"
     longitude = "<MISSING>"
