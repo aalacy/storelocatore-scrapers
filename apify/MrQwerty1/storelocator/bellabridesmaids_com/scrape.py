@@ -87,7 +87,6 @@ def fetch_data():
         location_type = "<MISSING>"
         page_url = j.get("website") or "<MISSING>"
         hours_of_operation = get_hours(page_url)
-        print(page_url, ":", hours_of_operation)
 
         row = [
             locator_domain,
