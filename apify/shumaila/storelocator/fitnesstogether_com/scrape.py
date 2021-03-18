@@ -46,7 +46,6 @@ def fetch_data():
     r = session.get(url, headers=headers, verify=False)
     soup = BeautifulSoup(r.text, "html.parser")
     divlist = soup.findAll("li", {"class": "list-title"})
-    hourdict = {1: "mon", 2: "tue", 3: "wed", 4: "thu", 5: "fri", 6: "sat", 7: "sun"}
     for div in divlist:
         search = div.text
         gurl = (
@@ -77,8 +76,6 @@ def fetch_data():
         for loc in loclist:
 
             if loc["status"] == "soon":
-                link = "https://fitnesstogether.com/" + loc["slug"]
-                print(link)
                 continue
             title = loc["name"]
             store = loc["id"]
