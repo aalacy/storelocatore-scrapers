@@ -48,7 +48,7 @@ def fetch_data():
     with SgChrome() as driver:
         driver.get(locator_domain + ext)
 
-        cont = driver.find_element_by_css_selector("div.txt").text.split("\n")
+        cont = driver.find_element_by_css_selector("div.txt ").text.split("\n")
 
         all_store_data = []
         spin = 0
