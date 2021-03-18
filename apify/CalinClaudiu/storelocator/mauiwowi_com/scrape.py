@@ -1,9 +1,6 @@
 from sgscrape import simple_scraper_pipeline as sp
 from sglogging import sglog
 
-from sgscrape import simple_utils as utils
-
-
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as b4
 
@@ -14,6 +11,7 @@ def para(url):
     }
     session = SgRequests()
     goodStuff = session.get(url, headers=headers).text
+
     soup = b4(goodStuff, "lxml")
 
     k = {}
@@ -38,17 +36,38 @@ def para(url):
         k["lng"] = coords.split("lng", 1)[1].split('("', 1)[1].split('")', 1)[0]
     except Exception:
         k["lng"] = "<MISSING>"
+    check = 1
+    for i in k["lng"]:
+        if i.isdigit():
+            if i != 0:
+                check = 0
+    if check == 1:
+        k["lng"] = "<MISSING>"
+
+    check = 1
+    for i in k["lat"]:
+        if i.isdigit():
+            if i != 0:
+                check = 0
+    if check == 1:
+        k["lat"] = "<MISSING>"
 
     try:
         addressData = []
         for i in soup.find_all("span", {"class": "spnLDTCIAddress"}):
-            if "!!" not in i.text():
-                addressData.append(i.text())
+            if "!!" not in i.text:
+                addressData.append(i.text)
 
         k["address"] = ", ".join(addressData)
     except Exception:
+        pass
+    if not k["address"]:
+        try:
+            k["address"] = soup.find("span", {"itemprop": "streetAddress"})["content"]
+        except Exception:
+            k["address"] = "<MISSING>"
+    if "Call/Email" in k["address"]:
         k["address"] = "<MISSING>"
-
     try:
         k["city"] = soup.find("span", {"itemprop": "addressLocality"}).text.strip()
     except Exception:
@@ -103,13 +122,18 @@ def fetch_data():
     for i in links:
         pages.append(str("https://www.mauiwowi.com/" + i["href"]))
 
-    lize = utils.parallelize(
-        search_space=pages,
-        fetch_results_for_rec=para,
-        max_threads=10,
-        print_stats_interval=10,
-    )
-    for i in lize:
+    for j in pages:
+        counter = 0
+        i = para(j)
+        while (
+            all(
+                i[k] == "<MISSING>"
+                for k in ["name", "address", "city", "state", "zip", "phone", "hours"]
+            )
+            and counter < 10
+        ):
+            counter += 1
+            i = para(j)
         yield i
 
     logzilla.info(f"Finished grabbing data!!")  # noqa

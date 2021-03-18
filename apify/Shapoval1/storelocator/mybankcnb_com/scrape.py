@@ -80,9 +80,18 @@ def fetch_data():
         )
         hours_of_operation = hours or "<MISSING>"
         if street_address.find("2813") != -1:
-            hours_of_operation = "<MISSING>"
+            hours_of_operation = (
+                "".join(
+                    block.xpath(
+                        '//strong[contains(text(), "Lobby")]/following-sibling::text()[2]'
+                    )
+                )
+                .replace("\n", "")
+                .strip()
+            )
         if street_address.find("115") != -1:
             hours_of_operation = "<MISSING>"
+
         row = [
             locator_domain,
             page_url,

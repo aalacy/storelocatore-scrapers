@@ -1,139 +1,208 @@
-from sgrequests import SgRequests
-from bs4 import BeautifulSoup
 import csv
-import time
-from random import randint
-import re 
+
 from sglogging import SgLogSetup
 
-logger = SgLogSetup().get_logger('ashleyfurniture_com')
+from sgrequests import SgRequests
 
-
+logger = SgLogSetup().get_logger("ashleyfurniture_com")
 
 
 def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+    with open("data.csv", mode="w") as output_file:
+        writer = csv.writer(
+            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+        )
 
         # Header
-        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(
+            [
+                "locator_domain",
+                "page_url",
+                "location_name",
+                "street_address",
+                "city",
+                "state",
+                "zip",
+                "country_code",
+                "store_number",
+                "phone",
+                "location_type",
+                "latitude",
+                "longitude",
+                "hours_of_operation",
+            ]
+        )
         # Body
         for row in data:
             writer.writerow(row)
 
+
 def fetch_data():
 
-	user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36'
-	HEADERS = {'User-Agent' : user_agent}
+    us_state_abbrev = {
+        "Alabama": "AL",
+        "Alaska": "AK",
+        "American Samoa": "AS",
+        "Arizona": "AZ",
+        "Arkansas": "AR",
+        "California": "CA",
+        "Colorado": "CO",
+        "Connecticut": "CT",
+        "Delaware": "DE",
+        "District of Columbia": "DC",
+        "Florida": "FL",
+        "Georgia": "GA",
+        "Guam": "GU",
+        "Hawaii": "HI",
+        "Idaho": "ID",
+        "Illinois": "IL",
+        "Indiana": "IN",
+        "Iowa": "IA",
+        "Kansas": "KS",
+        "Kentucky": "KY",
+        "Louisiana": "LA",
+        "Maine": "ME",
+        "Maryland": "MD",
+        "Massachusetts": "MA",
+        "Michigan": "MI",
+        "Minnesota": "MN",
+        "Mississippi": "MS",
+        "Missouri": "MO",
+        "Montana": "MT",
+        "Nebraska": "NE",
+        "Nevada": "NV",
+        "New Hampshire": "NH",
+        "New Jersey": "NJ",
+        "New Mexico": "NM",
+        "New York": "NY",
+        "North Carolina": "NC",
+        "North Dakota": "ND",
+        "Northern Mariana Islands": "MP",
+        "Ohio": "OH",
+        "Oklahoma": "OK",
+        "Oregon": "OR",
+        "Pennsylvania": "PA",
+        "Puerto Rico": "PR",
+        "Rhode Island": "RI",
+        "South Carolina": "SC",
+        "South Dakota": "SD",
+        "Tennessee": "TN",
+        "Texas": "TX",
+        "Utah": "UT",
+        "Vermont": "VT",
+        "Virgin Islands": "VI",
+        "Virginia": "VA",
+        "Washington": "WA",
+        "West Virginia": "WV",
+        "Wisconsin": "WI",
+        "Wyoming": "WY",
+    }
 
-	session = SgRequests()
+    abbrev_us_state = dict(map(reversed, us_state_abbrev.items()))
+    session = SgRequests()
 
-	# Begin scraper
+    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
+    headers = {"User-Agent": user_agent}
 
-	base_url="https://www.ashleyfurniture.com"
-	location_url ="https://stores.ashleyfurniture.com/store"
-	page_urls = []
-	locs = []
-	streets = []
-	states=[]
-	cities = []
-	types=[]
-	phones = []
-	zips = []
-	longs = []
-	lats = []
-	timing = []
-	ids=[]
-	pages=[]
-	pages_url = []
+    locator_domain = "ashleyfurniture.com"
 
-	req = session.get(location_url, headers = HEADERS)
-	time.sleep(randint(1,2))
-	try:
-		item = BeautifulSoup(req.text,"lxml")
-	except (BaseException):
-		logger.info('[!] Error Occured. ')
-		logger.info('[?] Check whether system is Online.')
-	
-	link=item.find(class_="state-col")
-	links=link.find_all("a")
-	
-	for a in range(len(links)):
-		pages_url.append("https://stores.ashleyfurniture.com" + links[a]['href'])
-		
-	for u in pages_url:
-		req = session.get(u, headers = HEADERS)
-		time.sleep(randint(1,2))
-		try:
-			item = BeautifulSoup(req.text,"lxml")
-			logger.info(u)
-		except (BaseException):
-			logger.info('[!] Error Occured. ')
-			logger.info('[?] Check whether system is Online.')
+    all_store_data = []
 
-		stores=item.find_all(class_="storeName")
-		for s in stores:
-			pages.append("https://stores.ashleyfurniture.com" + s.find("a")['href'])
+    base_link = "https://stores.ashleyfurniture.com/umbraco/surface/location/GetDataByState?region="
 
-	for i, p in enumerate(pages):
-		logger.info("Link %s of %s" %(i+1,len(pages)))
-		req = session.get(p, headers = HEADERS)
-		time.sleep(randint(1,2))
-		try:
-			item = BeautifulSoup(req.text,"lxml")
-			logger.info(p)
-		except (BaseException):
-			logger.info('[!] Error Occured. ')
-			logger.info('[?] Check whether system is Online.')
+    for st in abbrev_us_state:
+        api_link = base_link + st
+        logger.info(api_link)
+        stores = session.get(api_link, headers=headers).json()["StoreLocations"]
 
-		loc = item.find('h1').text.strip().split(',')[0]
-		if "coming soon" in loc.lower():
-			continue
-		page_urls.append(p)
-		locs.append(loc)
-		streets.append(item.find(class_='address').text.strip())
-		cities.append(item.find(class_='city-postal-code').text.split(',')[0])
-		states.append(item.find(class_='city-postal-code').text.split(',')[1].strip()[:3].strip())
-		zips.append(item.find(class_='city-postal-code').text.split(',')[1].strip()[3:].strip())
-		ids.append(str(p).split('/')[-2])
-		try:
-			phones.append(item.find_all(class_='phone')[-1].text.strip())
-		except:
-			phones.append("<MISSING>")
-		try:
-			hours = item.find(id='storeHours').text.replace('\n',' ').replace('  ',' ').strip()
-		except:
-			hours = "<MISSING>"
-		timing.append(hours)
-		types.append("<MISSING>")
-		lats.append(item.find(id='location-details')['data-lat'])
-		longs.append(item.find(id='location-details')['data-lng'])
+        for store in stores:
 
-	return_main_object = []
-	for l in range(len(locs)):
-		row = []
-		row.append(base_url)
-		row.append(page_urls[l])
-		row.append(locs[l] if locs[l] else "<MISSING>")
-		row.append(streets[l] if streets[l] else "<MISSING>")
-		row.append(cities[l] if cities[l] else "<MISSING>")
-		row.append(states[l] if states[l] else "<MISSING>")
-		row.append(zips[l] if zips[l] else "<MISSING>")
-		row.append("US")
-		row.append(ids[l] if ids[l] else "<MISSING>")
-		row.append(phones[l] if phones[l] else "<MISSING>")
-		row.append(types[l])
-		row.append(lats[l] if lats[l] else "<MISSING>")
-		row.append(longs[l] if longs[l] else "<MISSING>")
-		row.append(timing[l] if timing[l] else "<MISSING>")
-		
-		return_main_object.append(row)
-	
-    # End scraper
-	return return_main_object
+            raw_address = store["ExtraData"]["Address"]
+            try:
+                street_address = (
+                    raw_address["AddressNonStruct_Line1"]
+                    + " "
+                    + raw_address["AddressNonStruct_Line2"]
+                ).strip()
+            except:
+                street_address = raw_address["AddressNonStruct_Line1"].strip()
+
+            city = raw_address["Locality"]
+            if city == "Guatemala":
+                continue
+            state = raw_address["Region"]
+            zip_code = raw_address["PostalCode"]
+            if len(zip_code) != 5:
+                continue
+            country_code = "US"
+
+            location_name = store["Name"] + " " + city
+            store_number = store["LocationNumber"]
+
+            link = (
+                "https://stores.ashleyfurniture.com/store/us/"
+                + abbrev_us_state[st].lower().replace(" ", "-")
+                + "/"
+                + city.lower().replace(" ", "-")
+                + "/"
+                + store_number
+            )
+            phone = store["ExtraData"]["Phone"]
+            location_type = "<MISSING>"
+
+            hours_of_operation = ""
+            try:
+                raw_hours = store["ExtraData"]["HoursOfOpStruct"]
+                for day in raw_hours:
+                    if day == "SpecialHours":
+                        continue
+
+                    try:
+                        day_hours = (
+                            raw_hours[day]["Ranges"][0]["StartTime"]
+                            + "-"
+                            + raw_hours[day]["Ranges"][0]["EndTime"]
+                        )
+                    except:
+                        day_hours = "Closed"
+
+                    hours_of_operation = (
+                        hours_of_operation + " " + day + " " + day_hours
+                    ).strip()
+            except:
+                hours_of_operation = "<MISSING>"
+
+            if not hours_of_operation:
+                hours_of_operation = "<MISSING>"
+
+            latitude = store["Location"]["coordinates"][1]
+            longitude = store["Location"]["coordinates"][0]
+
+            all_store_data.append(
+                [
+                    locator_domain,
+                    link,
+                    location_name,
+                    street_address,
+                    city,
+                    state,
+                    zip_code,
+                    country_code,
+                    store_number,
+                    phone,
+                    location_type,
+                    latitude,
+                    longitude,
+                    hours_of_operation,
+                ]
+            )
+
+    return all_store_data
+
 
 def scrape():
     data = fetch_data()
     write_output(data)
+
 
 scrape()

@@ -250,7 +250,7 @@ def get_location(loc, retry_count=0):
             hours = hours + "; Sat: Closed"
         if "Sun" not in hours:
             hours = hours + "; Sun: Closed"
-        ll = lat + "|" + lng
+        ll = str(lat) + "|" + str(lng)
         if ll not in latlng:
             latlng.append(ll)
             return [
