@@ -47,7 +47,6 @@ def get_data(url):
     session = SgRequests()
     r = session.get(page_url)
 
-
     tree = html.fromstring(r.text)
 
     hours_of_operation = "<MISSING>"
