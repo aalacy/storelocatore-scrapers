@@ -17,35 +17,31 @@ def fetch_data():
         soup = bs(session.get(base_url, headers=_headers).text, "lxml")
         locations = soup.select("div.locations-block div#us-accordion")
         for _ in locations:
-            try:
-                prev = _.find_previous_sibling("div", class_="cali-country")
-                if prev:
-                    if "cali-country" in prev.get("class", []):
-                        if prev.text != "United States":
-                            break
-                location_name = _.select_one("div.cali-store-name td").text.strip()
-                if re.search(r"coming soon", location_name, re.IGNORECASE):
-                    continue
-                page_url = (
-                    locator_domain + _.select_one("div.cali-store-name a")["href"]
-                )
-                addr = parse_address_intl(
-                    " ".join([dd.text for dd in _.select("div.cali-store-address")])
-                )
-                yield SgRecord(
-                    page_url=page_url,
-                    location_name=location_name,
-                    street_address=addr.street_address_1,
-                    city=addr.city,
-                    state=addr.state,
-                    zip_postal=addr.postcode,
-                    country_code="US",
-                    locator_domain=locator_domain,
-                )
-            except:
-                import pdb
-
-                pdb.set_trace()
+            prev = _.find_previous_sibling("div", class_="cali-country")
+            if prev:
+                if "cali-country" in prev.get("class", []):
+                    if prev.text != "United States":
+                        break
+            location_name = _.select_one("div.cali-store-name td").text.strip()
+            if re.search(r"coming soon", location_name, re.IGNORECASE):
+                continue
+            page_url = locator_domain + _.select_one("div.cali-store-name a")["href"]
+            addr = parse_address_intl(
+                " ".join([dd.text for dd in _.select("div.cali-store-address")])
+            )
+            coord = _.iframe["src"].split("!2d")[1].split("!2m")[0].split("!3d")
+            yield SgRecord(
+                page_url=page_url,
+                location_name=location_name,
+                street_address=addr.street_address_1,
+                city=addr.city,
+                state=addr.state,
+                latitude=coord[0],
+                longitude=coord[1],
+                zip_postal=addr.postcode,
+                country_code="US",
+                locator_domain=locator_domain,
+            )
 
 
 if __name__ == "__main__":
