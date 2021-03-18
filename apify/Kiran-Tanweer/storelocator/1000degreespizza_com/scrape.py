@@ -75,103 +75,92 @@ def fetch_data():
     url = "https://www.1000degreespizza.com/pizza-place-near-me-locations/"
     r = session.get(url, headers=headers, verify=False)
     soup = BeautifulSoup(r.text, "html.parser")
-    locations = soup.findAll("section", {"class": "av_toggle_section"})
-    for loc in locations:
-        info = loc.findAll("div", {"class": "location-1000d"})
-        for store in info:
-            atgs = store.findAll("a")
-            if len(atgs) > 0:
-                link = atgs[-1]["href"]
-                if link == "../best-pizza-place-coral-woodmore-maryland/":
-                    link = "https://www.1000degreespizza.com/best-pizza-place-coral-woodmore-maryland/"
-            if len(atgs) == 0:
-                link = "https://www.1000degreespizza.com/pizza-place-near-me-locations/#toggle-id-11"
-            title = store.find("h3").text
-            addr = store.find("p")
-            addr = str(addr)
-            addr = addr.lstrip("<p>")
-            addr = addr.rstrip("</p>")
-            addr = addr.split("<br/>")
-            if len(addr) == 3:
-                street = addr[0].strip()
-                locality = addr[1].strip()
-                locality = locality.split(",")
-                city = locality[0]
-                state = locality[1]
-                pcode = "<MISSING>"
-                phone = addr[2].strip()
-                hours = "<MISSING>"
-            if len(addr) == 2:
-                street = addr[0].strip()
-                locality = addr[1].strip()
-                locality = locality.split(",")
-                city = locality[0]
-                state = locality[1]
-                pcode = "<MISSING>"
-                phone = "<MISSING>"
-                hours = "Coming Soon"
-            if len(addr) == 4:
-                street = addr[0].strip()
-                locality = addr[1].strip()
-                locality = locality.split(",")
-                city = locality[0]
-                state = locality[1]
-                pcode = "<MISSING>"
-                phone = addr[2].strip()
-                phone = phone.split('"d3ph">')[1].split("</span>")[0].strip()
-                hours = "<MISSING>"
-            if len(addr) == 7:
-                street = addr[0].strip()
-                locality = addr[1].strip()
-                locality = locality.split(",")
-                city = locality[0]
-                state = locality[1]
-                pcode = "<MISSING>"
-                hours = "<MISSING>"
-                phone = addr[2].strip()
-                phone = phone.split('"d3ph">')[1].split("</span>")[0].strip()
-            state = state.strip()
+    locations = soup.findAll("div", {"class": "location-1000d"})
+    for info in locations:
+        atgs = info.findAll("a")
 
-            if state == "Delaware":
-                state = "DE"
-            if state == "Florida":
-                state = "FL"
-            if state == "Georgia":
-                state = "GA"
-            if state == "Iowa":
-                state = "IA"
-            if state == "Michigan":
-                state = "MI"
-            if state == "Minnesota":
-                state = "MN"
-            if state == "New Jersey":
-                state = "NJ"
-            if state == "South Dakota":
-                state = "SD"
-            if state == "Tennessee":
-                state = "TN"
-            if state == "Texas":
-                state = "TX"
-            if state == "Utah":
-                state = "UT"
-            data.append(
-                [
-                    "www.1000degreespizza.com/",
-                    link,
-                    title,
-                    street,
-                    city,
-                    state,
-                    pcode,
-                    "US",
-                    "<MISSING>",
-                    phone,
-                    "<MISSING>",
-                    "<INACCESSIBLE>",
-                    "<INACCESSIBLE>",
-                    hours,
-                ]
+        details = info.text.strip()
+        details = details.split("\n")
+        if len(details) == 4:
+            title = details[0].strip()
+            street = details[1].strip()
+            locality = details[2].strip()
+            phone = details[3].strip()
+        if len(details) == 5:
+            if details[-1].find("CLOSED TEMPORARILY") != -1:
+                title = details[0].strip()
+                street = details[1].strip()
+                locality = details[2].strip()
+                phone = details[3].strip()
+            else:
+                title = details[0].strip()
+                street = details[-3].strip()
+                locality = details[-2].strip()
+                phone = details[-1].strip()
+        if phone == "OPENING SOON!":
+            phone = "<MISSING>"
+            hours = "OPENING SOON!"
+        else:
+            hours = "<MISSING>"
+        try:
+            link = atgs[-1]
+            link = str(link)
+            link = link.split("<picture>")[0]
+            link = link.replace('<a href="', "")
+            link = link.replace('" style="margin-top: 20px;">', "")
+            link = link.replace("</a>", "")
+            link = link.replace(
+                '<img alt="" src="../wp-content/uploads/2020/01/view-store-btn.jpg"/>',
+                "",
             )
+            if link.find("..") != -1:
+                link = link.replace("..", "https://www.1000degreespizza.com")
+        except IndexError:
+            link = "<MISSING>"
+        locality = locality.split(",")
+        city = locality[0].strip()
+        state = locality[1].strip()
+
+        if state == "Delaware":
+            state = "DE"
+        if state == "Florida":
+            state = "FL"
+        if state == "Georgia":
+            state = "GA"
+        if state == "Iowa":
+            state = "IA"
+        if state == "Michigan":
+            state = "MI"
+        if state == "Minnesota":
+            state = "MN"
+        if state == "New Jersey":
+            state = "NJ"
+        if state == "South Dakota":
+            state = "SD"
+        if state == "Tennessee":
+            state = "TN"
+        if state == "Texas":
+            state = "TX"
+        if state == "Utah":
+            state = "UT"
+        data.append(
+            [
+                "www.1000degreespizza.com/",
+                link,
+                title,
+                street,
+                city,
+                state,
+                "<MISSING>",
+                "US",
+                "<MISSING>",
+                phone,
+                "<MISSING>",
+                "<INACCESSIBLE>",
+                "<INACCESSIBLE>",
+                hours,
+            ]
+        )
     return data
 
 
