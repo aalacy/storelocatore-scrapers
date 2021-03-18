@@ -14,6 +14,7 @@ def write_output(data):
         writer = csv.writer(
             output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
         )
+        # Header
         writer.writerow(
             [
                 "locator_domain",
@@ -32,6 +33,7 @@ def write_output(data):
                 "page_url",
             ]
         )
+        # Body
         for row in data:
             writer.writerow(row)
 
@@ -174,7 +176,7 @@ def fetch_data():
                 store.append(hours_of_operation)
                 store.append(page_url if page_url else "<MISSING>")
                 store = [
-                    x.strip().replace("\n", " ").replace("\t", "").replace("\r", "")
+                    x.replace("\n", " ").replace("\t", "").replace("\r", "")
                     if isinstance(x, str)
                     else x
                     for x in store
@@ -306,7 +308,7 @@ def fetch_data():
                 store.append(hours_of_operation)
                 store.append(page_url if page_url else "<MISSING>")
                 store = [
-                    x.strip().replace("\n", " ").replace("\t", "").replace("\r", "")
+                    x.replace("\n", " ").replace("\t", "").replace("\r", "")
                     if isinstance(x, str)
                     else x
                     for x in store

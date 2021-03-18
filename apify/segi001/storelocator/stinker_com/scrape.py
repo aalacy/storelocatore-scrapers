@@ -73,10 +73,7 @@ def fetch_data():
         def execute(self):
             batch = []
             b = []
-            with SgChrome(
-                executable_path="C:/Users/zivko/Downloads/chromedriver.exe",
-                is_headless=True,
-            ) as driver:
+            with SgChrome(is_headless=True) as driver:
                 driver.get("https://www.stinker.com/store-search/")
 
                 total = self.__get_intotal_len()
