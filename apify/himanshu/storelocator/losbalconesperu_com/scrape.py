@@ -43,7 +43,7 @@ def fetch_data():
 
     start_url = "https://www.losbalconesperu.com/"
     domain = re.findall("://(.+?)/", start_url)[0].replace("www.", "")
-    
+
     response = session.get(start_url)
     dom = etree.HTML(response.text)
 
