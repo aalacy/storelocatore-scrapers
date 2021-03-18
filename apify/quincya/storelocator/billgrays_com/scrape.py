@@ -88,7 +88,7 @@ def fetch_data():
             rows = list(base.find(class_="loc-col1 contentnorm").stripped_strings)
             for i, r in enumerate(rows):
                 if "hours" in r.lower():
-                    hours = " ".join(rows[i + 1:])
+                    hours = " ".join(rows[i + 1 :])
                     break
 
             hours_of_operation = hours.split("Inside")[0].split("Located")[0].strip()
