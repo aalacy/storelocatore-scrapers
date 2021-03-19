@@ -1,96 +1,148 @@
 import csv
-import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('dairyqueen_com')
-
-
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 
 session = SgRequests()
-headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
-           }
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+}
+
+logger = SgLogSetup().get_logger("dairyqueen_com")
+
+
+search = DynamicGeoSearch(
+    country_codes=[SearchableCountries.CANADA],
+    max_radius_miles=25,
+    max_search_results=None,
+)
+
 
 def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+    with open("data.csv", mode="w") as output_file:
+        writer = csv.writer(
+            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+        )
+        writer.writerow(
+            [
+                "locator_domain",
+                "page_url",
+                "location_name",
+                "street_address",
+                "city",
+                "state",
+                "zip",
+                "country_code",
+                "store_number",
+                "phone",
+                "location_type",
+                "latitude",
+                "longitude",
+                "hours_of_operation",
+            ]
+        )
         for row in data:
             writer.writerow(row)
 
+
 def fetch_data():
-    url = 'https://www.dairyqueen.com/us-en/Sitemap/'
     locs = []
-    country = 'US'
+    for lat, lng in search:
+        url = (
+            "https://www.dairyqueen.com/api/vtl/locations?country=ca&lat="
+            + str(lat)
+            + "&long="
+            + str(lng)
+        )
+        r = session.get(url, headers=headers)
+        logger.info(str(lat) + "-" + str(lng))
+        for line in r.iter_lines():
+            line = str(line.decode("utf-8"))
+            if '"address3":"' in line:
+                items = line.split('"address3":"')
+                for item in items:
+                    if '"url":"' in item:
+                        lurl = (
+                            "https://www.dairyqueen.com/en-ca"
+                            + item.split('"url":"')[1].split('"')[0]
+                        )
+                        if lurl not in locs:
+                            locs.append(lurl)
+    url = "https://www.dairyqueen.com/en-us/sitemap/sitemap-en-us.xml"
     r = session.get(url, headers=headers)
-    if r.encoding is None: r.encoding = 'utf-8'
-    for line in r.iter_lines(decode_unicode=True):
-        if '<h2>AB</h2>' in line:
-            country = 'CA'
-        if '<li><a href="/us-en/locator/Detail/' in line:
-            title = line.split('title="')[1].split('"')[0].replace('&amp;','&')
-            locs.append(title + '|' + country + '|' + 'https://www.dairyqueen.com' + line.split('href="')[1].split('"')[0])
-    logger.info(('Found %s Locations.' % str(len(locs))))
+    website = "dairyqueen.com"
+    typ = "<MISSING>"
+    logger.info("Pulling Stores")
+    for line in r.iter_lines():
+        line = str(line.decode("utf-8"))
+        if "<loc>https://www.dairyqueen.com/en-us/locations/" in line:
+            locs.append(line.split("<loc>")[1].split("<")[0])
     for loc in locs:
-        typ = loc.split('|')[0]
-        lurl = loc.split('|')[2]
-        country = loc.split('|')[1]
-        name = 'Dairy Queen'
-        add = ''
-        city = ''
-        state = ''
-        zc = ''
-        phone = ''
-        hours = ''
-        lat = ''
-        lng = ''
-        store = lurl.rsplit('/',1)[1]
-        website = 'dairyqueen.com'
+        logger.info(loc)
+        name = ""
+        add = ""
+        city = ""
+        state = ""
+        zc = ""
+        store = loc.rsplit("/", 1)[1]
+        phone = ""
+        lat = ""
+        lng = ""
+        hours = ""
+        lurl = (
+            "https://www.dairyqueen.com/api/vtl/location-detail-schema?storeId=" + store
+        )
         r2 = session.get(lurl, headers=headers)
-        if r2.encoding is None: r2.encoding = 'utf-8'
-        lines = r2.iter_lines(decode_unicode=True)
-        Found = False
-        for line2 in lines:
-            if '>Hours:</h4>' in line2:
-                Found = True
-            if Found and '</dl>' in line2:
-                Found = False
-            if Found and '<dt>' in line2:
-                day = line2.split('<dt>')[1].split('<')[0].strip()
-            if Found and '<dd>' in line2:
-                hrs = line2.split('<dd>')[1].split('<')[0].strip()
-                if hours == '':
-                    hours = day + ': ' + hrs
-                else:
-                    hours = hours + '; ' + day + ': ' + hrs
-            if '<a href="https://maps.google.com/maps?q=' in line2:
-                lat = line2.split('<a href="https://maps.google.com/maps?q=')[1].split(',')[0]
-                lng = line2.split('<a href="https://maps.google.com/maps?q=')[1].split(',')[1].split('&')[0]
-            if 'itemprop="address"' in line2:
-                g = next(lines)
-                if '>' in g:
-                    add = g.split('>')[1].split('<')[0]
-                else:
-                    add = next(lines).split('>')[1].split('<')[0]
-            if 'itemprop="addressLocality">' in line2:
-                city = line2.split('itemprop="addressLocality">')[1].split('<')[0]
-            if 'itemprop="addressRegion">' in line2:
-                state = line2.split('itemprop="addressRegion">')[1].split('<')[0]
-            if 'itemprop="postalCode">' in line2:
-                zc = line2.split('itemprop="postalCode">')[1].split('<')[0]
-            if 'itemprop="telephone">' in line2:
-                phone = line2.split('itemprop="telephone">')[1].split('<')[0]
-        if hours == '':
-            hours = '<MISSING>'
-        if phone == '':
-            phone = '<MISSING>'
-        if typ == '':
-            typ = 'DQ Grill & Chill Restaurant'
-        if add != '' and city != 'Nassau':
-            yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+        for line2 in r2.iter_lines():
+            line2 = str(line2.decode("utf-8"))
+            if '"amenities"' in line2:
+                name = line2.split('{"address1":"')[1].split('"')[0]
+                add = line2.split('"address3":"')[1].split('"')[0]
+                country = line2.split('"country":"')[1].split('"')[0]
+                lat = line2.split('"latlong":"')[1].split('"')[0].split(",")[0]
+                lng = line2.split('"latlong":"')[1].split('"')[0].split(",")[1]
+                city = line2.split('"city":"')[1].split('"')[0]
+                try:
+                    phone = line2.split('"phone":"')[1].split('"')[0]
+                except:
+                    phone = "<MISSING>"
+                state = line2.split('"stateProvince":"')[1].split('"')[0]
+                try:
+                    hours = line2.split('"storeHours":"1:')[1].split('"')[0]
+                    hours = "Sun: " + hours
+                    hours = hours.replace(",2:", "; Mon: ")
+                    hours = hours.replace(",3:", "; Tue: ")
+                    hours = hours.replace(",4:", "; Wed: ")
+                    hours = hours.replace(",5:", "; Thu: ")
+                    hours = hours.replace(",6:", "; Fri: ")
+                    hours = hours.replace(",7:", "; Sat: ")
+                except:
+                    hours = "<MISSING>"
+                zc = line2.split('"postalCode":"')[1].split('"')[0]
+                name = line2.split('"address1":"')[1].split('"')[0]
+        if phone == "":
+            phone = "<MISSING>"
+        yield [
+            website,
+            loc,
+            name,
+            add,
+            city,
+            state,
+            zc,
+            country,
+            store,
+            phone,
+            typ,
+            lat,
+            lng,
+            hours,
+        ]
+
 
 def scrape():
     data = fetch_data()
     write_output(data)
+
 
 scrape()

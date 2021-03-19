@@ -1,8 +1,8 @@
 import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
+import time
 
-session = SgRequests()
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36",
     "content-type": "application/json",
@@ -48,6 +48,7 @@ def write_output(data):
 
 def fetch_data():
     for x in range(3000, 4000):
+        session = SgRequests()
         url = "https://www.callitspring.com/api/stores/" + str(x)
         r = session.get(url, headers=headers2)
         website = "callitspring.com"
@@ -64,6 +65,7 @@ def fetch_data():
         lat = ""
         lng = ""
         hours = ""
+        time.sleep(2)
         logger.info("Pulling Store %s..." % str(x))
         for line in r.iter_lines():
             line = str(line.decode("utf-8"))
@@ -125,7 +127,8 @@ def fetch_data():
                 lng,
                 hours,
             ]
-    for x in range(3320, 4000):
+    for x in range(3000, 4000):
+        session = SgRequests()
         url = "https://www.callitspring.com/api/stores/" + str(x)
         r = session.get(url, headers=headers)
         website = "callitspring.com"
@@ -142,6 +145,7 @@ def fetch_data():
         lat = ""
         lng = ""
         hours = ""
+        time.sleep(2)
         logger.info("Pulling Store %s..." % str(x))
         for line in r.iter_lines():
             line = str(line.decode("utf-8"))
