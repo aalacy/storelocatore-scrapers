@@ -46,7 +46,6 @@ def fetch_data():
     street = []
     states = []
     cities = []
-    types = []
     phones = []
     zips = []
     long = []
