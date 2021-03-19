@@ -26,7 +26,9 @@ def fetch_data():
             store_number = loc.find("sortord").text
             raw_address = loc.find("address").text.replace(",", "")
             raw_address = html.unescape(raw_address)
-            raw_address = raw_address.replace(" NEW lunch program, different offerings, custom LTO panel","")
+            raw_address = raw_address.replace(
+                " NEW lunch program, different offerings, custom LTO panel", ""
+            )
             formatted_addr = parser.parse_address_intl(raw_address)
             street_address = formatted_addr.street_address_1
             street_address = (
