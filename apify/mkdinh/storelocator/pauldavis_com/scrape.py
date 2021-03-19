@@ -14,7 +14,7 @@ headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36",
 }
 thread_local = threading.local()
-log = sglog.SgLogSetup().get_logger(logger_name="pauldavis.com")
+logger = sglog.SgLogSetup().get_logger(logger_name="pauldavis.com")
 
 
 def get_session():
@@ -229,7 +229,7 @@ def fetch_location_data(location):
             hours_of_operation,
         ]
     except Exception as ex:
-        print(str(ex), page_url)
+        logger.error(str(ex), page_url)
 
 
 def enqueue_locations_data(locations):
@@ -245,13 +245,13 @@ def enqueue_locations_data(locations):
 
 def fetch_data():
     state_urls = fetch_state_urls()
-    log.info(f"states count: {len(state_urls)}")
+    logger.info(f"states count: {len(state_urls)}")
 
     city_urls = enqueue_cities(state_urls)
-    log.info(f"cities count: {len(city_urls)}")
+    logger.info(f"cities count: {len(city_urls)}")
 
     location_urls = enqueue_locations(city_urls)
-    log.info(f"locations count: {len(location_urls)}")
+    logger.info(f"locations count: {len(location_urls)}")
 
     yield from enqueue_locations_data(location_urls)
 
@@ -265,7 +265,7 @@ def scrape():
     end = time.time()
 
     elapsed = end - start
-    log.info(f"duration: {datetime.timedelta(seconds=elapsed)}")
+    logger.info(f"duration: {datetime.timedelta(seconds=elapsed)}")
 
 
 scrape()
