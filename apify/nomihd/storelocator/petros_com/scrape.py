@@ -5,6 +5,7 @@ from sgscrape import sgpostal as parser
 import lxml.html
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
+from bs4 import BeautifulSoup
 
 website = "petros.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -24,92 +25,144 @@ def fetch_data():
     stores = stores_sel.xpath(
         '//div[@class="entry"]/div[contains(@class,"one_fourth")]/p'
     )
-    for store in stores:
+    soup = BeautifulSoup(stores_req.text, "lxml")
+    for i in soup.find_all(
+        "div",
+        {
+            "class": "col sqs-col-4 span-4",
+            "class": "sqs-block code-block sqs-block-code",
+        },
+    ):
+        raw_info = list(i.stripped_strings)
+        if len(raw_info) > 1:
+            if "Coming Soon!" not in raw_info:
+                page_url = search_url
+                location_type = "<MISSING>"
+                location_name = raw_info[0].strip()
+                locator_domain = website
+                street_address = ""
+                city_state_zip = ""
+                hours_of_operation = ""
+                for index in range(1, len(raw_info)):
+                    if ", " in raw_info[index]:
+                        street_address = ", ".join(raw_info[1:index]).strip()
+                        if "," in street_address:
+                            street_address = street_address.split(",")[1].strip()
+
+                        city_state_zip = raw_info[index]
+                    if "Mondays" in raw_info[index] or "Open" in raw_info[index]:
+                        hours_of_operation = (
+                            "; ".join(raw_info[index:-1])
+                            .strip()
+                            .encode("ascii", "replace")
+                            .decode("utf-8")
+                            .replace("?", "-")
+                            .strip()
+                        )
+
+                city = city_state_zip.split(",")[0].strip()
+                state = city_state_zip.split(",")[1].strip().split(" ")[0].strip()
+                zip = city_state_zip.split(",")[1].strip().split(" ")[-1].strip()
+                country_code = "US"
+
+                if len(location_name) <= 0:
+                    location_name = city
+
+                phone = raw_info[-1].strip()
+
+                store_number = "<MISSING>"
+
+                latitude = "<MISSING>"
+                longitude = "<MISSING>"
+
+                yield SgRecord(
+                    locator_domain=locator_domain,
+                    page_url=page_url,
+                    location_name=location_name,
+                    street_address=street_address,
+                    city=city,
+                    state=state,
+                    zip_postal=zip,
+                    country_code=country_code,
+                    store_number=store_number,
+                    phone=phone,
+                    location_type=location_type,
+                    latitude=latitude,
+                    longitude=longitude,
+                    hours_of_operation=hours_of_operation,
+                )
+
+    loc_list = []
+    title_list = []
+    locations_temp = soup.find_all("p", {"style": "white-space:pre-wrap;"})
+    titles_temp = soup.find_all("h3", {"style": "white-space:pre-wrap;"})
+    for temp in locations_temp:
+        if len(list(temp.stripped_strings)) > 0:
+            loc_list.append(list(temp.stripped_strings))
+
+    for temp in titles_temp:
+        if len(list(temp.stripped_strings)) > 0:
+            title_list.append(list(temp.stripped_strings))
+
+    for index in range(0, len(title_list)):
         page_url = search_url
-        if len(store.xpath("a/@href")) > 0:
-            page_url = "".join(store.xpath("a/@href")).strip()
-
         location_type = "<MISSING>"
-        location_name = "".join(store.xpath("strong/text()")).strip()
-
+        raw_info = loc_list[index]
+        if "Open on Game and Special Event Days" in raw_info:
+            continue
+        location_name = "".join(title_list[index]).strip()
         locator_domain = website
+        street_address = ""
+        city_state_zip = ""
+        hours_of_operation = ""
+        for index in range(0, len(raw_info)):
+            if ", " in raw_info[index]:
+                street_address = ", ".join(raw_info[:index]).strip()
+                if "," in street_address:
+                    street_address = street_address.split(",")[1].strip()
 
-        address = store.xpath("text()")
-        add_list = []
-        temp_hours = []
-        for index in range(0, len(address)):
-            if len("".join(address[index]).strip()) > 0:
-                if (
-                    "(" not in "".join(address[index]).strip()
-                    and ")" not in "".join(address[index]).strip()
-                ):
-                    if "Mondays" in "".join(address[index]).strip():
-                        temp_hours = address[index:]
-                        break
-                    else:
-                        add_list.append("".join(address[index]).strip())
+                city_state_zip = raw_info[index]
+            if "Mondays" in raw_info[index] or "Open" in raw_info[index]:
+                hours_of_operation = (
+                    "; ".join(raw_info[index:-1])
+                    .strip()
+                    .encode("ascii", "replace")
+                    .decode("utf-8")
+                    .replace("?", "-")
+                    .strip()
+                )
 
-        raw_address = " ".join(add_list).strip()
-        formatted_addr = parser.parse_address_usa(raw_address)
-        street_address = formatted_addr.street_address_1
-        if street_address and formatted_addr.street_address_2:
-            street_address = street_address + ", " + formatted_addr.street_address_2
-
-        if street_address:
-            street_address = street_address.replace("Loves Travel Center", "").strip()
-
-        city = formatted_addr.city
-        state = formatted_addr.state
-        zip = formatted_addr.postcode
-        country_code = formatted_addr.country
+        city = city_state_zip.split(",")[0].strip()
+        state = city_state_zip.split(",")[1].strip().split(" ")[0].strip()
+        zip = city_state_zip.split(",")[1].strip().split(" ")[-1].strip()
+        country_code = "US"
 
         if len(location_name) <= 0:
             location_name = city
 
-        phone = "".join(store.xpath("span/text()")).strip()
+        phone = raw_info[-1].strip()
 
-        if len(temp_hours) <= 0:
-            temp_hours = store.xpath("em/text()")
-
-        hours_list = []
-        for hour in temp_hours:
-            if (
-                len("".join(hour).strip()) > 0
-                and "Open on Game and Special Event Days" not in "".join(hour).strip()
-            ):
-                hours_list.append("; ".join("".join(hour).strip().split("\n")))
-
-        hours_of_operation = (
-            "; ".join(hours_list)
-            .strip()
-            .encode("ascii", "replace")
-            .decode("utf-8")
-            .replace("?", "-")
-            .strip()
-        )
         store_number = "<MISSING>"
 
         latitude = "<MISSING>"
         longitude = "<MISSING>"
 
-        if "coming" not in location_name.lower():
-            yield SgRecord(
-                locator_domain=locator_domain,
-                page_url=page_url,
-                location_name=location_name,
-                street_address=street_address,
-                city=city,
-                state=state,
-                zip_postal=zip,
-                country_code=country_code,
-                store_number=store_number,
-                phone=phone,
-                location_type=location_type,
-                latitude=latitude,
-                longitude=longitude,
-                hours_of_operation=hours_of_operation,
-                raw_address=raw_address,
-            )
+        yield SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=zip,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=location_type,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+        )
 
 
 def scrape():
