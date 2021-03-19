@@ -71,10 +71,10 @@ def fetch_data():
             )
             for sub_url in all_sub_urls:
                 all_locations.append(sub_url)
-
+    print(len(list(set(all_locations))))
     for loc_url in list(set(all_locations)):
         store_url = "https://www.xfinity.com/local/" + loc_url.replace("../", "")
-        store_response = session.get(store_url)
+        store_response = session.get(store_url, headers=headers)
         store_dom = etree.HTML(store_response.text)
 
         location_name = store_dom.xpath('//meta[@itemprop="name"]/@content')
