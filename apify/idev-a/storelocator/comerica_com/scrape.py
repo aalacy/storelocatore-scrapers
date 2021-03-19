@@ -95,8 +95,13 @@ def fetch_data():
                                 nn
                                 for nn in store.get("name")
                                 .lower()
-                                .replace("-", "")
+                                .replace(" - ", "-")
+                                .replace(" & ", "-")
                                 .replace(",", "")
+                                .replace(".", "")
+                                .replace("/", "")
+                                .replace("(", "")
+                                .replace(")", "")
                                 .split(" ")
                                 if nn.strip()
                             ]
