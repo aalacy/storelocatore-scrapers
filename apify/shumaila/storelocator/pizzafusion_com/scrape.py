@@ -91,7 +91,6 @@ def fetch_data():
             )
         except:
             lat = longt = "<MISSING>"
-        p = n + 1
 
         if flag == 1:
             start = td.find("|", 3)
