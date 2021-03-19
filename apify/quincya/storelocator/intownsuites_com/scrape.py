@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import csv
-import json
 import re
 
 from bs4 import BeautifulSoup
@@ -83,53 +82,27 @@ def fetch_data():
         req = session.get(link, headers=headers)
         base = BeautifulSoup(req.text, "lxml")
 
-        all_scripts = base.find_all("script", attrs={"type": "application/ld+json"})
-        for script in all_scripts:
-            if "longitude" in str(script):
-                fin_script = (
-                    script.text.replace("\n", "")
-                    .replace("\r", "")
-                    .replace("Shipt Grocery Delivery}", 'Shipt Grocery Delivery"}')
-                    .strip()
-                )
-
-        store = json.loads(fin_script)
-        location_name = store["name"].replace("&#8211;", "-").replace("–", "-").strip()
-        if (
-            link
-            == "https://www.intownsuites.com/extended-stay-locations/south-carolina/charleston/savannah-highway/"
-        ):
-            location_name = "InTown Suites Extended Stay Charleston SC - Savannah Hwy"
-        street_address = (
-            store["address"]["streetAddress"].replace("&nbsp;", " ").strip()
-        )
-        street_address = (re.sub(" +", " ", street_address)).strip()
-        try:
-            city = store["address"]["addressLocality"]
-        except:
-            pass
-        state = store["address"]["addressRegion"]
-        try:
-            zip_code = store["address"]["postalCode"]
-        except:
-            zip_code = store["address"]["postOfficeBoxNumber"]
-        if street_address == "6451 Bandera Road":
-            city = "Leon Valley"
-            state = "TX"
-            zip_code = "78238"
+        location_name = base.h1.text.strip()
+        raw_address = list(base.find(class_="it-prop-details-group").p.stripped_strings)
+        street_address = raw_address[0].split(" , (")[0].strip()
+        if street_address[-1:] == ",":
+            street_address = street_address[:-1]
+        city_line = raw_address[-1].strip().split(",")
+        city = city_line[0].strip()
+        state = city_line[-1].strip().split()[0].strip()
+        zip_code = city_line[-1].strip().split()[1].strip()
         country_code = "US"
         store_number = "<MISSING>"
         location_type = "<MISSING>"
         phone = (
-            base.find(class_="css_table_cell address")
-            .p.text.replace("Reservations:", "")
+            base.find_all(class_="it-prop-details-group")[1]
+            .text.replace("Reservations", "")
             .replace("(Spanish or English)", "")
             .strip()
         )
         try:
             hours_of_operation = (
-                base.find(class_="css_table_cell office_hours")
-                .find_all("p")[-1]
+                base.find(class_="it-prop-details-group-hours-inner")
                 .text.replace("\n", " ")
                 .strip()
             )
@@ -140,16 +113,13 @@ def fetch_data():
         except:
             hours_of_operation = "<MISSING>"
 
-        latitude = store["geo"]["latitude"]
-        longitude = store["geo"]["longitude"].replace(",", "")
-        if latitude == longitude:
-            map_link = base.find(class_="container ft_map_and_directions").a["href"]
-            longitude = map_link[map_link.find("-") : map_link.find("&")].replace(
-                ",", ""
-            )
-        if location_name == "InTown Suites Extended Stay Atlanta GA - Sandy Springs":
-            latitude = "33.918987"
-            longitude = "-84.375590"
+        if not hours_of_operation:
+            hours_of_operation = "<MISSING>"
+
+        map_str = base.find(id="directions_box").a["href"]
+        geo = re.findall(r"[0-9]{2}\.[0-9]+,-[0-9]{2,3}\.[0-9]+", map_str)[0].split(",")
+        latitude = geo[0]
+        longitude = geo[1]
 
         if location_name not in found_poi:
             found_poi.append(location_name)

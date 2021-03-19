@@ -168,7 +168,7 @@ def fetch_data():
                 check = f"{str_ad} {loc_id}"
                 if check in searched:
                     continue
-                searched.append(loc_id)
+                searched.append(check)
 
                 poi = extract(location, loc_id, country)
                 if not poi:
