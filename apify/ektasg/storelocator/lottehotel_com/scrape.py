@@ -157,9 +157,6 @@ def fetch_data():
                 hours.strip(),
             ]
         )
-        # logger.info(p,data[p])
-        p += 1
-        # input("NEXT")
 
     return data
 
