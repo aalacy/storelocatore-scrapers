@@ -1,0 +1,8 @@
+requests==2.25.1
+sgrequests==0.1.8
+sgscrape==0.0.23
+sgzip==0.2.1
+sglogging==0.0.4
+urllib3==1.26.3
+sgvalidator==0.0.71
+beautifulsoup4==4.9.3

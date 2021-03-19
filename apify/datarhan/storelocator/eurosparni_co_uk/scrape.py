@@ -1,4 +1,6 @@
+import re
 import csv
+import demjson
 from lxml import etree
 
 from sgrequests import SgRequests
@@ -46,7 +48,6 @@ def fetch_data():
     DOMAIN = "eurosparni.co.uk"
     start_url = "https://www.eurosparni.co.uk/nearest-store?postcode={}"
 
-    all_locations = []
     all_codes = DynamicZipSearch(
         country_codes=[SearchableCountries.BRITAIN], max_radius_miles=50
     )
@@ -54,9 +55,12 @@ def fetch_data():
         store_url = start_url.format(code + "%201D0")
         response = session.get(store_url)
         dom = etree.HTML(response.text)
-        all_locations += dom.xpath('//div[@class="owl-item"]')
+        all_locations = dom.xpath(
+            '//div[@class="owl-item" and div[@class="large-7 large-offset-1 columns"]]'
+        )
 
-        for poi_html in all_locations:
+        for i, poi_html in enumerate(all_locations):
+            store_url = "https://www.eurosparni.co.uk/nearest-store"
             location_name = poi_html.xpath('.//h1[@id="storeName"]/text()')
             if not location_name:
                 continue
@@ -66,14 +70,11 @@ def fetch_data():
             )
             raw_address = " ".join([e.strip() for e in raw_address if e.strip()])
             addr = parse_address_intl(raw_address)
-            street_address = addr.street_address_1
-            if addr.street_address_2:
-                street_address += " " + addr.street_address_2
-            street_address = street_address if street_address else "<MISSING>"
+            street_address = raw_address.split(",")[0]
             city = addr.city
             city = city if city else "<MISSING>"
             state = "<MISSING>"
-            zip_code = addr.postcode
+            zip_code = " ".join(raw_address.split()[-2:])
             zip_code = zip_code if zip_code else "<MISSING>"
             country_code = addr.country
             country_code = country_code if country_code else "<MISSING>"
@@ -81,13 +82,18 @@ def fetch_data():
             phone = poi_html.xpath('.//a[contains(@href, "tel")]/@href')
             phone = phone[0].split(":")[-1] if phone else "<MISSING>"
             location_type = "<MISSING>"
-            latitude = "<MISSING>"
-            longitude = "<MISSING>"
+            geo = re.findall(r"location\d = (.+?);", response.text)[i]
+            geo = demjson.decode(geo)
+            latitude = geo["lat"]
+            longitude = geo["lng"]
             hoo = poi_html.xpath(
                 './/h5[contains(text(), "Opening Hours")]/following-sibling::table//text()'
             )
             hoo = [e.strip() for e in hoo if e.strip()][3:]
             hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
+
+            if zip_code == "2h L":
+                zip_code = "BT22 2hL"
 
             item = [
                 DOMAIN,

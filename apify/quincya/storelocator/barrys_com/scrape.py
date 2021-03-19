@@ -74,7 +74,6 @@ def fetch_data():
     for i in all_links:
         country_code = i[0]
         link = i[1]
-
         req = session.get(link, headers=headers)
         base = BeautifulSoup(req.text, "lxml")
 
@@ -86,6 +85,9 @@ def fetch_data():
 
         if "COMING SOON" in str(raw_address).upper():
             continue
+
+        if "Rooftop" in raw_address[0]:
+            raw_address.pop(0)
 
         location_name = base.h1.text.strip()
         street_address = raw_address[0].split("(")[0].replace("New York", "").strip()
@@ -112,8 +114,8 @@ def fetch_data():
             state = city_line[1].split()[0].strip()
             zip_code = city_line[1].split()[1].strip()
             if "2 Marina Blvd" in street_address:
-                state = "New York"
-                zip_code = "10023"
+                state = "CA"
+                zip_code = "94123"
         elif country_code == "CA":
             if "2306 4th Street" in street_address:
                 street_address = "2306 4th Street SW"
