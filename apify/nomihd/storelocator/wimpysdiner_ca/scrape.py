@@ -2,7 +2,6 @@
 from sgrequests import SgRequests
 from sglogging import sglog
 import json
-import lxml.html
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from bs4 import BeautifulSoup as BS
@@ -18,12 +17,9 @@ headers = {
 
 def fetch_data():
     # Your scraper here
-    loc_list = []
 
     search_url = "https://wimpysdiner.ca/our-locations/"
     stores_req = session.get(search_url, headers=headers)
-    stores_sel = lxml.html.fromstring(stores_req.text)
-
     json_text = (
         stores_req.text.split("var maplistScriptParamsKo =")[1]
         .strip()
@@ -41,16 +37,6 @@ def fetch_data():
         if location_name == "":
             location_name = "<MISSING>"
 
-        address = (
-            store["address"]
-            .replace("<p>", "")
-            .strip()
-            .replace("</p>", "")
-            .strip()
-            .replace("<br />", "")
-            .strip()
-            .replace("\n", " ")
-        )
         soup = BS(store["simpledescription"], "lxml")
         simpledescription = soup.find_all("p")
 
