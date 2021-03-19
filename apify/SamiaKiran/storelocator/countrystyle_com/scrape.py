@@ -2,6 +2,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from sglogging import sglog
+import html
 from sgscrape import sgpostal as parser
 from bs4 import BeautifulSoup
 
@@ -24,6 +25,8 @@ def fetch_data():
             location_name = loc.find("location").text
             store_number = loc.find("sortord").text
             raw_address = loc.find("address").text.replace(",", "")
+            raw_address = html.unescape(raw_address)
+            raw_address = raw_address.replace(" NEW lunch program, different offerings, custom LTO panel","")
             formatted_addr = parser.parse_address_intl(raw_address)
             street_address = formatted_addr.street_address_1
             street_address = (
