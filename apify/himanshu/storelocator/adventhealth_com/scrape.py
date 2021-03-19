@@ -41,7 +41,6 @@ def fetch_data():
     session = SgRequests()
 
     items = []
-    scraped_items = []
 
     start_url = "https://www.adventhealth.com/find-a-location"
     domain = re.findall("://(.+?)/", start_url)[0].replace("www.", "")
@@ -69,7 +68,12 @@ def fetch_data():
             location_name = loc_dom.xpath(
                 '//span[@class="location-bar__name-text notranslate"]/text()'
             )
-            location_name = location_name[0].strip() if location_name else "<MISSING>"
+            if not location_name:
+                location_name = loc_dom.xpath(
+                    '//h1[@class="image-hero__title"]//text()'
+                )
+            location_name = [e.strip() for e in location_name if e.strip()]
+            location_name = " ".join(location_name) if location_name else "<MISSING>"
             if location_name.endswith(","):
                 location_name = location_name[:-1]
             street_address = loc_dom.xpath('//span[@property="streetAddress"]/text()')
@@ -101,6 +105,8 @@ def fetch_data():
             hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
         else:
             location_name = poi_html.xpath(".//h3/a/text()")
+            if not location_name:
+                location_name = poi_html.xpath(".//h3/text()")
             location_name = location_name[0].strip() if location_name else "<MISSING>"
             street_address = poi_html.xpath('.//span[@property="streetAddress"]/text()')
             street_address = (
@@ -138,10 +144,8 @@ def fetch_data():
             longitude,
             hours_of_operation,
         ]
-        check = f"{location_name} {street_address}"
-        if check not in scraped_items:
-            scraped_items.append(check)
-            items.append(item)
+
+        items.append(item)
 
     return items
 
