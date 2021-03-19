@@ -55,7 +55,7 @@ def fetch_data():
 
     for poi in data:
         store_url = poi["siteUrl"]
-        store_url = store_url if store_url else '<MISSING>'
+        store_url = store_url if store_url else "<MISSING>"
         location_name = poi["storeName"]
         location_name = location_name if location_name else "<MISSING>"
         street_address = poi["storeAddress"]
@@ -70,14 +70,14 @@ def fetch_data():
         zip_code = zip_code if zip_code else "<MISSING>"
         country_code = "<MISSING>"
         store_number = poi["storeID"]
-        store_number = store_number if store_number else '<MISSING>'
+        store_number = store_number if store_number else "<MISSING>"
         phone = poi["storePhone"]
         phone = phone if phone else "<MISSING>"
         location_type = "<MISSING>"
         latitude = poi["storeLat"]
-        latitude = latitude if latitude else '<MISSING>'
+        latitude = latitude if latitude else "<MISSING>"
         longitude = poi["storeLong"]
-        longitude = longitude if longitude else '<MISSING>'
+        longitude = longitude if longitude else "<MISSING>"
         hours_of_operation = poi["storeHours"]
         hours_of_operation = hours_of_operation if hours_of_operation else "<MISSING>"
 
