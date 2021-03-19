@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 from sgrequests import SgRequests
 from sglogging import sglog
-from sgscrape import sgpostal as parser
-import lxml.html
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from bs4 import BeautifulSoup
@@ -21,15 +19,10 @@ def fetch_data():
     # Your scraper here
     search_url = "https://www.petros.com/locations/"
     stores_req = session.get(search_url, headers=headers)
-    stores_sel = lxml.html.fromstring(stores_req.text)
-    stores = stores_sel.xpath(
-        '//div[@class="entry"]/div[contains(@class,"one_fourth")]/p'
-    )
     soup = BeautifulSoup(stores_req.text, "lxml")
     for i in soup.find_all(
         "div",
         {
-            "class": "col sqs-col-4 span-4",
             "class": "sqs-block code-block sqs-block-code",
         },
     ):
