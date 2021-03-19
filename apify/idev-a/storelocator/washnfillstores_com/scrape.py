@@ -36,6 +36,7 @@ def fetch_data():
         locations = soup.select("div.locColumns")
         logger.info(f"{len(locations)} found")
         for _ in locations:
+            coord = _.iframe.a["href"].split("&ll=")[1].split("&s")[0].split(",")
             yield SgRecord(
                 page_url=base_url,
                 location_name=_.h4.text.strip(),
@@ -45,6 +46,8 @@ def fetch_data():
                 zip_postal=_.select("li")[3].text.split(",")[1].strip().split(" ")[-1],
                 country_code="US",
                 phone=_phone(_),
+                latitude=coord[0],
+                longitude=coord[1],
                 locator_domain=locator_domain,
             )
 
