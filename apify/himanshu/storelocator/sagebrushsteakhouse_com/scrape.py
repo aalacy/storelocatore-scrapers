@@ -41,12 +41,29 @@ def fetch_data():
 
     session = SgRequests()
 
+    all_links = []
+
     base_url = "https://www.sagebrushsteakhouse.com/"
+
     r = session.get(base_url, headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
 
     for i in soup.find("ul", {"class": "subnavigation"}).find_all("a"):
+        all_links.append(i["href"])
+
+    base_url2 = "https://www.sagebrushsteakhouse.com/bot.ashx?url=https://www.sagebrushsteakhouse.com/pgv2.aspx?id=eb3f9f12-d75e-433f-9e75-d7fbeaf6c754&_=1615872946452"
+
+    r = session.get(base_url2, headers=headers)
+    soup = BeautifulSoup(r.text, "lxml")
+
+    for i in soup.find_all("a"):
         link = i["href"]
+        if "http" not in link:
+            link = "http:" + link
+        if link not in all_links:
+            all_links.append(link)
+
+    for link in all_links:
         location_soup = BeautifulSoup(
             session.get(link, headers=headers).content, "lxml"
         )
@@ -84,7 +101,7 @@ def fetch_data():
         if "temporarily closed" in location_soup.h3.text.lower():
             hours = "Temporarily Closed"
 
-        location_name = "SAGEBRUSH OF " + city
+        location_name = location_soup.find_all("h3")[1].text.strip()
         store = []
         store.append(base_url)
         store.append(location_name)
