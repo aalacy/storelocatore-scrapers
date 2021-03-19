@@ -47,8 +47,6 @@ def write_output(data):
 def fetch_data():
     # Your scraper here
     data = []
-    p = 0
-
     url = "https://www.lottehotel.com/global/en/hotel-finder.html"
     r = session.get(url, headers=headers, verify=False)
     soup = BeautifulSoup(r.text, "html.parser")
