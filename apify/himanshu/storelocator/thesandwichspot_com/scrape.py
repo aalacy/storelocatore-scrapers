@@ -1,11 +1,12 @@
 import csv
-from sgrequests import SgRequests
+
 from bs4 import BeautifulSoup
 
 from sglogging import SgLogSetup
 
-logger = SgLogSetup().get_logger("thesandwichspot_com")
+from sgrequests import SgRequests
 
+logger = SgLogSetup().get_logger("thesandwichspot_com")
 
 session = SgRequests()
 
@@ -74,8 +75,8 @@ def fetch_data():
             "zip": zipcode,
         }
     lat_lng["Rocklin"] = {
-        "lat": "<MISSING>",
-        "lng": "<MISSING>",
+        "lat": "38.811185",
+        "lng": "-121.283424",
         "street": "<MISSING>",
         "city": "<MISSING>",
         "zip": "<MISSING>",
@@ -89,13 +90,12 @@ def fetch_data():
         links = loc.findAll("a")
         page_url = ""
         for l in links:
-            if "-menu" in l.get("href"):
-                page_url = "https://www.thesandwichspot.com" + l.get("href").replace(
-                    ".", ""
-                )
+            if "-menu" in l.get("href") or "kiefer-blvd" in l.get("href"):
+                page_url = l.get("href")
         if len(page_url) < 1:
             page_url = "<MISSING>"
         if page_url != "<MISSING>":
+            logger.info(page_url)
             hoolink = session.get(page_url)
             hoo_data = BeautifulSoup(hoolink.text, "html.parser")
             hoo_details = hoo_data.findAll("div", {"data-testid": "richTextElement"})
@@ -150,23 +150,29 @@ def fetch_data():
             city = details[1].text.split(",")[0]
             state = details[1].text.split(",")[1].split(" ")[1]
             zipcode = details[1].text.split(",")[1].split(" ")[2]
-            lat = "<MISSING>"
-            lng = "<MISSING>"
+            lat = "34.383331"
+            lng = "-118.571329"
         elif title == "Delta Shore":
             street = details[0].text.split("\n")[0]
             city = details[1].text.split(",")[0]
             state = details[1].text.split(",")[1].split(" ")[1]
             zipcode = details[1].text.split(",")[1].split(" ")[2]
-            lat = "<MISSING>"
-            lng = "<MISSING>"
+            lat = "38.460829"
+            lng = "-121.4896"
         elif title == "Reno":
-
             street = details[0].text.split("\n")[0]
             city = details[1].text.split(",")[1]
             state = "NV"
             zipcode = "89511"
-            lat = "<MISSING>"
-            lng = "<MISSING>"
+            lat = "39.466525"
+            lng = "-119.7811"
+        elif title == "South City":
+            street = details[0].text.split("\n")[0]
+            city = details[-1].text.split("\n")[1].split(",")[0]
+            state = details[-1].text.split("\n")[1].split(", ")[1].split(" ")[0]
+            zipcode = details[-1].text.split("\n")[1].split(", ")[1].split(" ")[1]
+            lat = "37.663677"
+            lng = "-122.3962"
         elif lat_lng[title]["street"] == "<MISSING>" or title == "Reno":
             street = details[0].text.split("\n")[0]
             city = details[0].text.split("\n")[1].split(",")[0]
@@ -179,6 +185,20 @@ def fetch_data():
             city = lat_lng[title]["city"]
             state = lat_lng[title]["state"]
             zipcode = lat_lng[title]["zip"]
+
+        if "245 E.11th" in street:
+            lat = "37.741331"
+            lng = "-121.421478"
+        if "2790 Loker Avenue" in street:
+            lat = "33.133534"
+            lng = "-117.254265"
+        if "2110 Sunset Blvd" in street:
+            lat = "38.811185"
+            lng = "-121.283424"
+        if "123 El Camino" in street:
+            lat = "37.379023"
+            lng = "-122.072629"
+
         data.append(
             [
                 "www.thesandwichspot.com",
