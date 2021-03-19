@@ -120,6 +120,15 @@ def get_data(url):
 
         _tmp.append(line)
 
+    holidays = j.get("hours", {}).get("holidayHours") or []
+    cnt = 0
+    for h in holidays:
+        if h.get("isClosed"):
+            cnt += 1
+
+    if cnt >= 6:
+        _tmp = ["Closed"]
+
     hours_of_operation = ";".join(_tmp) or "<MISSING>"
     if (
         hours_of_operation.count("Closed") == 7

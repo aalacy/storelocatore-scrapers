@@ -63,7 +63,8 @@ def fetch_data():
             temp = soup.findAll("p", {"class": "elementor-icon-box-description"})
             phone = temp[0].text
             hours = temp[1].get_text(separator="|", strip=True).replace("|", " ")
-            address = temp[2].text
+            address = temp[2].get_text(separator="|", strip=True).replace("|", " ")
+            log.info(link)
             address = address.replace(",", " ")
             address = usaddress.parse(address)
             i = 0
