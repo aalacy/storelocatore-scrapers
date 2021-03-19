@@ -50,7 +50,7 @@ def fetch_data():
     response = session.get(start_url, headers=hdr)
     dom = etree.HTML(response.text)
     data = dom.xpath('//script[contains(text(), "markers")]/text()')
-    data = re.findall("markers = (\[.+?\]);", data[0])
+    data = re.findall(r"markers = (\[.+?\]);", data[0])
     data = json.loads(data[0])
 
     for poi in data:
