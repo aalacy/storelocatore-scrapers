@@ -71,6 +71,7 @@ def fetch_data():
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=hours_of_operation,
+            raw_address=", ".join(raw_list[:-2]),
         )
 
 

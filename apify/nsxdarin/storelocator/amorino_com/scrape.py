@@ -47,7 +47,7 @@ def fetch_data():
     for line in r.iter_lines():
         line = str(line.decode("utf-8"))
         if ",stores:[{" in line:
-            items = line.split("{country:au")
+            items = line.split("{country:ay")
             for item in items:
                 if ">window.__AMORINO__=" not in item:
                     name = item.split('name:"')[1].split('"')[0]
@@ -111,6 +111,10 @@ def fetch_data():
                         phone = "972-943-8534"
                     if "414 Amsterdam Avenue" in add:
                         phone = "212-877-5700"
+                    if "721 Eight Avenue" in add:
+                        city = "New York"
+                        state = "NY"
+                        zc = "10036"
                     yield [
                         website,
                         loc,
