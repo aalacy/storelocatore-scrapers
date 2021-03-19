@@ -91,6 +91,7 @@ def fetch_data():
             )
         except:
             lat = longt = "<MISSING>"
+        p = n + 1
 
         if flag == 1:
             start = td.find("|", 3)
@@ -172,6 +173,9 @@ def fetch_data():
 
             phone = "703-302-7144"
             hours = "Monday - Friday: 10:30am - 3:00pm"
+        if "1013 N. Federal Hwy." in street:
+            street = street.replace(" Fort", "")
+            city = "Fort " + city
         data.append(
             [
                 url,
