@@ -84,9 +84,17 @@ def fetch_data():
             state = soup.find("span", {"itemprop": "addressRegion"}).text
             pcode = soup.find("span", {"itemprop": "postalCode"}).text
             try:
-                phone = soup.find("span", {"itemprop": "telephone"}).text
+                phone = (
+                    soup.find("span", {"itemprop": "telephone"})
+                    .text.replace("Phone:", "")
+                    .strip()
+                )
             except:
-                phone = soup.find("p", {"itemprop": "telephone"}).text
+                phone = (
+                    soup.find("p", {"itemprop": "telephone"})
+                    .text.replace("Phone:", "")
+                    .strip()
+                )
             hours = (
                 soup.find("div", {"class": "store-hours"})
                 .find("p")
