@@ -1,4 +1,5 @@
 import csv
+import re
 
 from bs4 import BeautifulSoup
 
@@ -95,6 +96,16 @@ def fetch_data():
 
             if "-" not in phone:
                 phone = base.find(title="click here to call this location").text
+
+            try:
+                map_str = base.find(class_="loc-col1 contentnorm").a["href"]
+                geo = re.findall(r"[0-9]{2}\.[0-9]+,-[0-9]{2,3}\.[0-9]+", map_str)[
+                    0
+                ].split(",")
+                latitude = geo[0]
+                longitude = geo[1]
+            except:
+                pass
 
         data.append(
             [
