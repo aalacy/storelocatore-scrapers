@@ -4,23 +4,42 @@ from bs4 import BeautifulSoup
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
 
-logger = SgLogSetup().get_logger('9round_com')
+logger = SgLogSetup().get_logger("9round_com")
 
 
 def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+    with open("data.csv", mode="w") as output_file:
+        writer = csv.writer(
+            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+        )
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation",
-                         "page_url"])
+        writer.writerow(
+            [
+                "locator_domain",
+                "location_name",
+                "street_address",
+                "city",
+                "state",
+                "zip",
+                "country_code",
+                "store_number",
+                "phone",
+                "location_type",
+                "latitude",
+                "longitude",
+                "hours_of_operation",
+                "page_url",
+            ]
+        )
         # Body
         for row in data:
             writer.writerow(row)
 
+
 session = SgRequests()
-            
+
+
 def fetch_data():
     # Your scraper here
     locs = []
@@ -37,96 +56,123 @@ def fetch_data():
     page_url = []
     countries = []
     res = session.get("https://www.9round.com/kickboxing-classes/directory")
-    soup = BeautifulSoup(res.text, 'html.parser')
-    divs = soup.find_all('div', {'class': 'col-md-12'})
+    soup = BeautifulSoup(res.text, "html.parser")
+    divs = soup.find_all("div", {"class": "col-md-12"})
 
-    sa = divs[0].find_all('a')
+    sa = divs[0].find_all("a")
     del sa[0]
-    s = divs[1].find_all('a')
+    s = divs[1].find_all("a")
     del s[0]
     sa += s
-    # logger.info(soup)
+
     for a in sa:
-        url = "https://www.9round.com/" + a.get('href')
+        url = "https://www.9round.com/" + a.get("href")
         try:
             res = session.get(url)
         except:
             res = session.get(url)
-        soup = BeautifulSoup(res.text, 'html.parser')
-        # logger.info(url)
+        soup = BeautifulSoup(res.text, "html.parser")
 
-        # soup = BeautifulSoup(driver.page_source, 'html.parser')
-
-        l = soup.find_all('div', {'class': 'd-block wow fadeIn city-list'})
+        l = soup.find_all("div", {"class": "d-block city-list"})
         if l == []:
             continue
+
         l = l[0]
-        lis = l.find_all('li')
+        lis = l.find_all("li")
+        print(len(lis))
         for li in lis:
-            ca = li.find_all('a')
+            ca = li.find_all("a")
             del ca[0]
             for aa in ca:
-                page_url.append(aa.get('href'))
-    # logger.info(page_url)
+                page_url.append(aa.get("href"))
+
     for url in page_url:
         logger.info(url)
         try:
             res = session.get(url)
         except:
             res = session.get(url)
-        soup = BeautifulSoup(res.text, 'html.parser')
-        data = str(soup.find('script', {'type': 'application/ld+json'}))
+        soup = BeautifulSoup(res.text, "html.parser")
+        data = str(soup.find("script", {"type": "application/ld+json"}))
 
-        # logger.info(data)
-        street.append(re.findall(r'"streetAddress": "([^"]*)"', data)[0].strip().replace('\u202a', ""))
-        cities.append(re.findall(r'"addressLocality": "([^"]*)"', data)[0].strip().replace('\u202a', ""))
-        states.append(re.findall(r'"addressRegion": "([^"]*)"', data)[0].strip().replace('\u202a', ""))
-        zips.append(re.findall(r'"postalCode": "([^"]*)"', data)[0].strip().replace('\u202a', ""))
-        tim = re.findall(r'"openingHours": "([^"]*)"', data)[0].strip().replace('\u202a', "").replace("Mo",
-                                                                                                      "Monday").replace(
-            "Tu", "Tuesday").replace("We", "Wednesday").replace("Th", "Thursday").replace("Fr", "Friday").replace("Sa",
-                                                                                                                  "Saturday").replace(
-            "Su", "Sunday")
-        if 'Sunday' not in tim:
-            tim += ', Sunday: CLOSED'
+        street.append(
+            re.findall(r'"streetAddress": "([^"]*)"', data)[0]
+            .strip()
+            .replace("\u202a", "")
+        )
+        cities.append(
+            re.findall(r'"addressLocality": "([^"]*)"', data)[0]
+            .strip()
+            .replace("\u202a", "")
+        )
+        states.append(
+            re.findall(r'"addressRegion": "([^"]*)"', data)[0]
+            .strip()
+            .replace("\u202a", "")
+        )
+        zips.append(
+            re.findall(r'"postalCode": "([^"]*)"', data)[0]
+            .strip()
+            .replace("\u202a", "")
+        )
+        tim = (
+            re.findall(r'"openingHours": "([^"]*)"', data)[0]
+            .strip()
+            .replace("\u202a", "")
+            .replace("Mo", "Monday")
+            .replace("Tu", "Tuesday")
+            .replace("We", "Wednesday")
+            .replace("Th", "Thursday")
+            .replace("Fr", "Friday")
+            .replace("Sa", "Saturday")
+            .replace("Su", "Sunday")
+        )
+        if "Sunday" not in tim:
+            tim += ", Sunday: CLOSED"
         timing.append(tim)
         if re.findall(r'"addressCountry": "([^"]*)"', data)[0] == "Canada":
-            countries.append('CA')
+            countries.append("CA")
         else:
-            countries.append('US')
-        locs.append(re.findall(r'"name": "([^"]*)"', data)[0].strip().replace('\u202a', ""))
-        lat.append(re.findall(r'"latitude": "([^"]*)"', data)[0].strip().replace('\u202a', ""))
-        long.append(re.findall(r'"longitude": "([^"]*)"', data)[0].strip().replace('\u202a', ""))
-        m = soup.find_all('div', {'class': 'd-flex justify-content-center flex-column flex-lg-row mb-3'})
+            countries.append("US")
+        locs.append(
+            re.findall(r'"name": "([^"]*)"', data)[0].strip().replace("\u202a", "")
+        )
+        lat.append(
+            re.findall(r'"latitude": "([^"]*)"', data)[0].strip().replace("\u202a", "")
+        )
+        long.append(
+            re.findall(r'"longitude": "([^"]*)"', data)[0].strip().replace("\u202a", "")
+        )
+        m = soup.find_all(
+            "div",
+            {"class": "d-flex justify-content-center flex-column flex-lg-row mb-3"},
+        )
         if m == []:
             ids.append("<MISSING>")
             phones.append("<MISSING>")
             continue
         m = m[0]
-        """but = m.find_all('button')
-        if but==[]:
-            but="<MISSING>"
-        else:
-            but=but[0].get('data-url')
-            but=re.findall(r'franchise_id=(.*)', but)[0].replace('\u202a',"")
-        ids.append(but)"""
-        ph = m.find_all('a')
+
+        ph = m.find_all("a")
         if ph != []:
-            ph = ph[0].text.strip().replace('\u202a', "")
+            ph = ph[0].text.strip().replace("\u202a", "")
             if "or" in ph:
                 ph = ph.split("or")[0].strip()
 
-        # logger.info(ph)
         if ph == "" or ph == []:
             ph = "<MISSING>"
-        phones.append(ph.replace('Call', '').replace('- Texting us is preferred!', '').replace('OR Text',''))
+        phones.append(
+            ph.replace("Call", "")
+            .replace("- Texting us is preferred!", "")
+            .replace("OR Text", "")
+        )
 
     all = []
     for i in range(0, len(locs)):
         row = []
         row.append("https://www.9round.com")
-        row.append(locs[i].replace('&amp;', '&'))
-        row.append(street[i].replace('&amp;', '&'))
+        row.append(locs[i].replace("&amp;", "&"))
+        row.append(street[i].replace("&amp;", "&"))
         row.append(cities[i])
         row.append(states[i])
         row.append(zips[i])
