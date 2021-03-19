@@ -41,42 +41,47 @@ def fetch_data():
     session = SgRequests()
     r = session.get(api_url)
     tree = html.fromstring(r.text)
-    block = ''.join(tree.xpath('//script[contains(text(), "jsonLocations")]/text()')).split('jsonLocations: ')[1].replace('\n','').split(',            imageLocations')[0].strip()
+    block = (
+        "".join(tree.xpath('//script[contains(text(), "jsonLocations")]/text()'))
+        .split("jsonLocations: ")[1]
+        .replace("\n", "")
+        .split(",            imageLocations")[0]
+        .strip()
+    )
     js = json.loads(block)
 
-    for j in js['items']:
-        street_address = j.get('address')
-        city = j.get('city')
-        postal = j.get('zip')
-        state = j.get('state')
-        phone = j.get('phone') or '<MISSING>'
-        if phone.find('COMING') != -1:
-            phone = '<MISSING>'
-        country_code = 'US'
-        store_number = '<MISSING>'
-        location_name = j.get('name')
-        latitude = j.get('lat')
-        longitude = j.get('lng')
+    for j in js["items"]:
+        street_address = j.get("address")
+        city = j.get("city")
+        postal = j.get("zip")
+        state = j.get("state")
+        phone = j.get("phone") or "<MISSING>"
+        if phone.find("COMING") != -1:
+            phone = "<MISSING>"
+        country_code = "US"
+        store_number = "<MISSING>"
+        location_name = j.get("name")
+        latitude = j.get("lat")
+        longitude = j.get("lng")
         location_type = "<MISSING>"
         page_url = f"https://www.spiceandtea.com/{j.get('website')}"
-        hours = j.get('schedule_array')
+        hours = j.get("schedule_array")
         tmp = []
         for h in hours:
-            days = ''.join(h)
-            start = ':'.join(hours.get(days).get('from'))
-            if start.count('0') == 4:
-                start = 'Closed'
-            close = ':'.join(hours.get(days).get('to'))
-            if close.count('0') == 4:
-                close = 'Closed'
+            days = "".join(h)
+            start = ":".join(hours.get(days).get("from"))
+            if start.count("0") == 4:
+                start = "Closed"
+            close = ":".join(hours.get(days).get("to"))
+            if close.count("0") == 4:
+                close = "Closed"
             line = f"{days} {start} - {close}"
             if start == close:
                 line = f"{days} Closed"
             tmp.append(line)
-        hours_of_operation = ' '.join(tmp) or '<MISSING>'
-        if hours_of_operation.count('Closed') == 7:
-            hours_of_operation = 'Closed'
-
+        hours_of_operation = " ".join(tmp) or "<MISSING>"
+        if hours_of_operation.count("Closed") == 7:
+            hours_of_operation = "Closed"
 
         row = [
             locator_domain,
