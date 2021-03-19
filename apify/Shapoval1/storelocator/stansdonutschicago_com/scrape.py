@@ -1,5 +1,5 @@
 import csv
-import json
+from lxml import html
 from sgrequests import SgRequests
 
 
@@ -35,26 +35,29 @@ def write_output(data):
 def fetch_data():
     out = []
     locator_domain = "https://stansdonuts.com"
-    api_url = "https://stansdonuts.com/locations/"
+    api_url = "https://stansdonuts.com/wp-admin/admin-ajax.php?action=store_search&lat=41.87811&lng=-87.6298&max_results=25&search_radius=50&autoload=1"
     session = SgRequests()
     r = session.get(api_url)
-    block = r.text.split('"@graph": ')[1].split("}</script>")[0]
-    js = json.loads(block)
+
+    js = r.json()
     for j in js:
-        a = j.get("address")
-        location_name = j.get("name")
-        street_address = a.get("streetAddress")
-        phone = a.get("telephone")
-        city = a.get("addressLocality")
-        state = a.get("addressRegion")
-        country_code = "US"
+        location_name = j.get("store")
+        street_address = f"{j.get('address')} {j.get('address2')}".strip()
+        phone = j.get("phone")
+        city = j.get("city")
+        state = j.get("state")
+        country_code = j.get("country")
         store_number = "<MISSING>"
-        latitude = j.get("geo").get("latitude")
-        longitude = j.get("geo").get("longitude")
-        location_type = j.get("@type")
-        hours_of_operation = "".join(j.get("openingHours"))
+        latitude = j.get("lat")
+        longitude = j.get("lng")
+        location_type = "<MISSING>"
+        hours = j.get("hours")
+        hours = html.fromstring(hours)
+        hours_of_operation = (
+            " ".join(hours.xpath("//tr//text()")).replace("\n", "").strip()
+        )
         page_url = "https://stansdonuts.com/locations/"
-        postal = a.get("postalCode")
+        postal = j.get("zip")
         row = [
             locator_domain,
             page_url,
