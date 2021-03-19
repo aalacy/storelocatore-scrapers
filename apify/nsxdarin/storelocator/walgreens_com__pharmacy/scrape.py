@@ -36,7 +36,7 @@ def write_output(data):
 
 search = DynamicZipSearch(
     country_codes=[SearchableCountries.USA],
-    max_radius_miles=20,
+    max_radius_miles=10,
     max_search_results=50,
 )
 
@@ -98,6 +98,8 @@ def fetch_data():
                                         hrs = (
                                             day.split(">")[1].split("<")[0] + ": Closed"
                                         )
+                                    elif "Open</strong> 24 hours" in day:
+                                        hrs = "Sun-Sat: 24 hours"
                                     else:
                                         hrs = (
                                             day.split(">")[1].split("<")[0]

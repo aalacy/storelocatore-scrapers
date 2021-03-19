@@ -87,9 +87,6 @@ def fetch_data():
                 city = addr.city
                 zc = addr.postcode
                 add = addr.street_address_1
-                add = ""
-                city = ""
-                zc = ""
                 state = "<MISSING>"
                 hours = "<MISSING>"
                 store = "<MISSING>"

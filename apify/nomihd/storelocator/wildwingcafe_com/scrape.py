@@ -86,7 +86,14 @@ def fetch_data():
                 "//section[2]/div[2]/div/div[2]/div/div[@class='_1Z_nJ'][2]/h2//text()"
             )
         ).strip()
-        street_address = ", ".join(address.split(",")[:-2]).strip()
+        street_address = (
+            ", ".join(address.split(",")[:-2])
+            .strip()
+            .replace("The Gardens at Westgreen,", "")
+            .strip()
+            .replace("The Shoppes at River Crossing,", "")
+            .strip()
+        )
         city = address.split(",")[-2]
         state = address.split(",")[-1].strip().split(" ")[0].strip()
         zip = address.split(",")[-1].strip().split(" ")[1].strip()
@@ -121,6 +128,19 @@ def fetch_data():
             .replace("Phone:", "")
             .strip()
         )
+
+        if "(" not in phone:
+            phone = (
+                "".join(
+                    store_sel.xpath(
+                        "//section[2]/div[2]/div/div[2]/div/div[@class='_1Z_nJ'][3]/h2//text()"
+                    )
+                )
+                .strip()
+                .replace("Phone:", "")
+                .strip()
+            )
+
         location_type = "<MISSING>"
         latitude = "<MISSING>"
         longitude = "<MISSING>"
@@ -152,7 +172,7 @@ def fetch_data():
                     "//section[3]/div[2]/div/div[2]/div/div[@class='_1Z_nJ'][3]/p//text()"
                 )
             ).strip()
-        if hours_of_operation == "":
+        if hours_of_operation == "" or "Opening" in hours_of_operation:
             hours_of_operation = "<MISSING>"
 
         if phone == "" or phone is None:

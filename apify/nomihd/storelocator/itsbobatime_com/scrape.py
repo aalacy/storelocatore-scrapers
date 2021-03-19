@@ -65,7 +65,11 @@ def fetch_data():
                 or "%h_sun%" == key
             ):
                 if len(store["location"]["extra_fields"][key]) > 0:
-                    hours_list.append(store["location"]["extra_fields"][key])
+                    hours_list.append(
+                        key.replace("h_", "").replace("%", "").strip()
+                        + ":"
+                        + store["location"]["extra_fields"][key]
+                    )
 
         hours_of_operation = "; ".join(hours_list).strip()
         if "TBD" == hours_of_operation:

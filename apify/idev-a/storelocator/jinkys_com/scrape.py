@@ -22,7 +22,7 @@ _headers = {
 
 
 def fetch_data():
-    with SgFirefox(executable_path=r"/mnt/g/work/mia/geckodriver.exe") as driver:
+    with SgFirefox() as driver:
         locator_domain = "https://www.jinkys.com/"
         base_url = "https://www.jinkys.com/"
         driver.get(base_url)
