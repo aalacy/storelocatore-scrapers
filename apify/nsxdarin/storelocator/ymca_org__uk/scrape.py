@@ -87,9 +87,6 @@ def fetch_data():
                 city = addr.city
                 zc = addr.postcode
                 add = addr.street_address_1
-                add = ""
-                city = ""
-                zc = ""
                 state = "<MISSING>"
                 hours = "<MISSING>"
                 store = "<MISSING>"
@@ -107,6 +104,10 @@ def fetch_data():
                     name = name.split(" - part")[0]
                 if "abervalley-ymca" in loc:
                     name = "Abervalley YMCA"
+                name = name.replace("\\/", "/")
+                add = add.replace("\\/", "/")
+                city = city.replace("\\/", "/")
+                zc = zc.replace("\\U00A0", " ").replace("\\u00a0", " ")
                 yield [
                     website,
                     loc,

@@ -1,5 +1,4 @@
 import csv
-import usaddress
 from lxml import html
 from sgrequests import SgRequests
 
@@ -40,63 +39,41 @@ def fetch_data():
 
     session = SgRequests()
     r = session.get(page_url)
-    tag = {
-        "Recipient": "recipient",
-        "AddressNumber": "address1",
-        "AddressNumberPrefix": "address1",
-        "AddressNumberSuffix": "address1",
-        "StreetName": "address1",
-        "StreetNamePreDirectional": "address1",
-        "StreetNamePreModifier": "address1",
-        "StreetNamePreType": "address1",
-        "StreetNamePostDirectional": "address1",
-        "StreetNamePostModifier": "address1",
-        "StreetNamePostType": "address1",
-        "CornerOf": "address1",
-        "IntersectionSeparator": "address1",
-        "LandmarkName": "address1",
-        "USPSBoxGroupID": "address1",
-        "USPSBoxGroupType": "address1",
-        "USPSBoxID": "address1",
-        "USPSBoxType": "address1",
-        "BuildingName": "address2",
-        "OccupancyType": "address2",
-        "OccupancyIdentifier": "address2",
-        "SubaddressIdentifier": "address2",
-        "SubaddressType": "address2",
-        "PlaceName": "city",
-        "StateName": "state",
-        "ZipCode": "postal",
-    }
+
     tree = html.fromstring(r.text)
 
     divs = tree.xpath(
         "//div[contains(@class,'et_pb_column et_pb_column_1_3')]//div[@class='et_pb_text_inner']"
     )
     for d in divs:
-        location_name = d.xpath("./h3/strong/text()|./p[1]/strong/text()")[0]
-        adr = d.xpath(".//p[contains(text(), 'Hours:')]/preceding-sibling::p[1]")
-        hours = d.xpath(".//p[contains(text(), 'Hours:')]")
+        location_name = "".join(d.xpath(".//h2/strong/text()"))
+        block = d.xpath(".//p[./a]")
+        for b in block:
 
-        for a, h in zip(adr, hours):
-            name = "".join(a.xpath("./strong/text()"))
-            hours_of_operation = (
-                "".join(h.xpath("./text()")).replace("\n", "").replace("Hours:", "")
-            ).replace("â€“", "-")
-            b = usaddress.tag(name, tag_mapping=tag)[0]
-            block = "".join(a.xpath("./text()[1]"))
-            x = usaddress.tag(block, tag_mapping=tag)[0]
-            street_address = b.get("address1")
-            city = x.get("city")
-            postal = x.get("postal")
-            state = x.get("state")
+            street_address = "".join(
+                b.xpath(
+                    ".//preceding-sibling::p[1]/strong/text() | .//preceding-sibling::p[2]/strong/text()"
+                )
+            )
+            ad = (
+                " ".join(b.xpath(".//preceding-sibling::p[1]/text()[1]"))
+                .replace("\n", "")
+                .strip()
+            )
+            city = ad.split(",")[0]
+            postal = ad.split(",")[1].strip().split()[-1]
+            state = ad.split(",")[1].strip().split()[0]
             country_code = "US"
             store_number = "<MISSING>"
-            phone = "".join(a.xpath(".//text()[2]")).replace("\n", "").strip()
+            phone = (
+                "".join(b.xpath(".//preceding-sibling::p[1]/text()[2]"))
+                .replace("\n", "")
+                .strip()
+            )
             latitude = "<MISSING>"
             longitude = "<MISSING>"
             location_type = "<MISSING>"
-
+            hours_of_operation = "<MISSING>"
             row = [
                 locator_domain,
                 page_url,
