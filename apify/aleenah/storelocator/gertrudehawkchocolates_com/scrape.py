@@ -50,7 +50,7 @@ def fetch_data():
     stores = soup.find_all("div", {"name": "leftLocation"})
     logger.info(len(stores))
 
-    jso = json.loads(re.findall('"items":(\[[^]]+\])', str(soup))[0])
+    jso = json.loads(re.findall('"items":(\[[^]]+])', str(soup))[0])
 
     for store in stores:
         id = store.get("data-amid")
