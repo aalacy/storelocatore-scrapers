@@ -85,6 +85,9 @@ def get_address(line):
     if street_address == "None":
         street_address = "<MISSING>"
     city = a.get("city") or "<MISSING>"
+    if "," in city:
+        street_address += f' {city.split(",")[0].strip()}'
+        city = city.split(",")[-1].strip()
     state = a.get("state") or "<MISSING>"
     postal = a.get("postal") or "<MISSING>"
 

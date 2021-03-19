@@ -32,11 +32,12 @@ def fetch_data():
     stores_req = session.post(
         "https://www.britishbeer.com/graphql", headers=headers, data=data
     )
-
     stores = json.loads(stores_req.text)["data"]["restaurant"]["locations"]
 
     for store in stores:
         page_url = "https://www.britishbeer.com/" + store["slug"]
+        if page_url == "https://www.britishbeer.com/cedarville":
+            continue
         location_type = "<MISSING>"
         if store["isLocationClosed"] is True:
             location_type = "Closed"
