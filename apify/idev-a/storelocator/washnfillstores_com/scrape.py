@@ -36,7 +36,7 @@ def fetch_data():
         locations = soup.select("div.locColumns")
         logger.info(f"{len(locations)} found")
         for _ in locations:
-            coord = _.iframe.a["href"].split("&ll=")[1].split("&s")[0].split(",")
+            coord = _.iframe["src"].split("&ll=")[1].split("&s")[0].split(",")
             yield SgRecord(
                 page_url=base_url,
                 location_name=_.h4.text.strip(),
