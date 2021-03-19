@@ -79,7 +79,6 @@ def fetch_data():
 
         l = l[0]
         lis = l.find_all("li")
-        print(len(lis))
         for li in lis:
             ca = li.find_all("a")
             del ca[0]
