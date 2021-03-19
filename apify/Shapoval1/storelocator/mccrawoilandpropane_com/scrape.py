@@ -93,13 +93,29 @@ def get_data(url):
     }
     r = session.get(page_url, headers=headers)
     tree = html.fromstring(r.text)
-
+    location_name = "".join(tree.xpath("//h1/text()"))
     line = (
         " ".join(tree.xpath("//p[./a[contains(text(), 'map')]]/text()"))
         .replace("\n", "")
         .replace("[ ]", "")
         .strip()
     )
+    if location_name.find("McCraw Oil & Propane – Clayton, Oklahoma") != -1:
+        line = (
+            " ".join(
+                tree.xpath('//div[@class="midcontent borderbold-right"]/p[3]/text()')
+            )
+            .replace("\n", "")
+            .strip()
+        )
+    if location_name.find("McCraw Oil & Propane – Paris, Texas") != -1:
+        line = (
+            " ".join(
+                tree.xpath('//div[@class="midcontent borderbold-right"]/p[2]/text()')
+            )
+            .replace("\n", "")
+            .strip()
+        )
     a = usaddress.tag(line, tag_mapping=tag)[0]
     street_address = f"{a.get('address1')} {a.get('address2')}".replace(
         "None", ""
@@ -109,7 +125,7 @@ def get_data(url):
     postal = a.get("postal")
     country_code = "US"
     store_number = "<MISSING>"
-    location_name = "".join(tree.xpath("//h1/text()"))
+
     phone = "".join(
         tree.xpath(
             "//strong[contains(text(), 'Tel')]/following-sibling::text() | //p[contains(text(), 'Tel')]/text() | //h6[contains(text(), 'Call Our Burleson, Texas Location:')]/text()"

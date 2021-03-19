@@ -35,40 +35,36 @@ def write_output(data):
 
 def get_urls():
     session = SgRequests()
-    r = session.get("https://www.urbanbarbq.com/Locations.aspx")
+    r = session.get("https://richardsfoodporium.com/locations/")
     tree = html.fromstring(r.text)
-    return tree.xpath('//a[@class="lnkStoreName"]/@href')
+    return tree.xpath("//a[@class='box-link']/@href")
 
 
 def get_data(url):
-    locator_domain = "https://iloveubq.com"
-    page_url = f"https://www.urbanbarbq.com{url}"
+    locator_domain = "https://richardsfoodporium.com"
+    page_url = url
     session = SgRequests()
+
     r = session.get(page_url)
-
     tree = html.fromstring(r.text)
-    location_name = "".join(tree.xpath('//div[@class="store-name"]/span/text()'))
-    blink = "<MISSING>"
-    if location_name.find("BWI Airport") != -1:
-        blink = "".join(tree.xpath('//span[@class="blinkMe"]/text()')).strip()
-    hours_of_operation = "<MISSING>"
-    if blink != "<MISSING>":
-        hours_of_operation = blink
+
+    street_address = "".join(tree.xpath('//div[@class="store-details"]/p[1]/text()'))
+    ad = "".join(tree.xpath('//div[@class="store-details"]/p[2]/text()'))
+    city = ad.split(",")[0]
+    state = ad.split(",")[1].split()[0]
+    postal = ad.split(",")[1].split()[-1]
     country_code = "US"
-    line = "".join(tree.xpath('//div[@class="store-address-line2"]/text()')).replace(
-        "-", " "
-    )
-
-    street_address = "".join(tree.xpath('//div[@class="store-address-line1"]/text()'))
-    postal = line.split()[2]
-    city = line.split()[0]
-    state = line.split()[1]
     store_number = "<MISSING>"
-
-    phone = "".join(tree.xpath('//span[@class="store-phone"]/text()'))
+    location_name = "".join(tree.xpath('//h1/span[@class="fl-heading-text"]/text()'))
+    phone = "".join(tree.xpath('//div[@class="store-details"]/p[3]/text()'))
     latitude = "<MISSING>"
     longitude = "<MISSING>"
     location_type = "<MISSING>"
+    hours_of_operation = (
+        " ".join(tree.xpath("//h4/following-sibling::p/text()"))
+        .replace("\n", "")
+        .strip()
+    )
 
     row = [
         locator_domain,
