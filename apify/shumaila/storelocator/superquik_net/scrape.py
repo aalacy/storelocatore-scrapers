@@ -1,7 +1,6 @@
 from bs4 import BeautifulSoup
 import csv
-import string
-import re, time
+
 
 from sgrequests import SgRequests
 
@@ -42,11 +41,7 @@ def write_output(data):
 
 
 def fetch_data():
-    # Your scraper here
-
     data = []
-    pattern = re.compile(r"\s\s+")
-    cleanr = re.compile(r"<[^>]+>")
     url = "http://www.superquik.net/locations(1).html"
     r = session.get(url, headers=headers, verify=False)
     soup = BeautifulSoup(r.text, "html.parser")
