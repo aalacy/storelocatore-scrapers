@@ -38,7 +38,6 @@ def get_hours(page_url):
     r = session.get(page_url)
     tree = html.fromstring(r.text)
 
-    _tmp = []
     line = tree.xpath("//div[@id='storeInfo']/text()")
     line = list(filter(None, [l.strip() for l in line]))
     line = line[line.index("Store Hours:") + 1 :]
