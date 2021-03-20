@@ -76,13 +76,13 @@ def fetch_data():
             state = address[0]
             pcode = address[-1]
             street = temp[-3]
-            hour_list = soup.findAll("tbody")[-1].findAll("td")
+            hour_list = soup.find("div", {"id": "rightSideBar"}).findAll("td")
+            log.info(link)
             hours = ""
-            for hour in hour_list[0:2]:
+            for hour in hour_list:
                 hour = hour.get_text(separator="|", strip=True).replace("|", " ")
                 hours = hours + " " + hour
-            if not hours:
-                hours = "<MISSING>"
+            hours = hours.split("General Manager", 1)[0]
             final_data.append(
                 [
                     "https://www.eddiemerlots.com/",

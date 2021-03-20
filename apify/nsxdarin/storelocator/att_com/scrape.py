@@ -80,78 +80,85 @@ def fetch_data():
                     if 'data-ya-track="businessname">' in item:
                         locs.append("https://www.att.com/stores/" + item.split('"')[0])
     for loc in locs:
-        logger.info("Pulling Location %s..." % loc)
-        website = "att.com"
-        typ = "Store"
-        hours = ""
-        lat = ""
-        name = ""
-        phone = ""
-        store = loc.rsplit("/", 1)[1]
-        r2 = session.get(loc, headers=headers)
-        for line2 in r2.iter_lines():
-            line2 = str(line2.decode("utf-8"))
-            if 'itemprop="streetAddress" content="' in line2:
-                add = line2.split('itemprop="streetAddress" content="')[1].split('"')[0]
-                city = line2.split('<meta itemprop="addressLocality" content="')[
-                    1
-                ].split('"')[0]
-                country = "US"
-                try:
-                    state = line2.split('itemprop="addressRegion">')[1].split("<")[0]
-                except:
-                    state = ""
-                zc = line2.split('itemprop="postalCode">')[1].split("<")[0]
-            if name == "" and '"LocationName-brand">' in line2:
-                name = (
-                    line2.split('"LocationName-brand">')[1]
-                    .split("<")[0]
-                    .replace("&amp;", "&")
-                )
-            if lat == "" and '<meta itemprop="latitude" content="' in line2:
-                lat = line2.split('<meta itemprop="latitude" content="')[1].split('"')[
-                    0
-                ]
-                lng = line2.split('<meta itemprop="longitude" content="')[1].split('"')[
-                    0
-                ]
-            if ' itemprop="telephone" id="phone-main">' in line2:
-                phone = line2.split(' itemprop="telephone" id="phone-main">')[1].split(
-                    "<"
-                )[0]
-            if 'itemprop="openingHours" content="' in line2:
-                days = line2.split('itemprop="openingHours" content="')
-                for day in days:
-                    if 'id="location-name">' not in day:
-                        hrs = day.split('"')[0]
-                        if hours == "":
-                            hours = hrs
-                        else:
-                            hours = hours + "; " + hrs
-        if hours == "":
-            hours = "<MISSING>"
-        if phone == "":
-            phone = "<MISSING>"
-        if "puerto-rico/" in loc:
-            state = "PR"
-        if "-" in store:
-            store = "<MISSING>"
-        yield [
-            website,
-            loc,
-            name,
-            add,
-            city,
-            state,
-            zc,
-            country,
-            store,
-            phone,
-            typ,
-            lat,
-            lng,
-            hours,
-        ]
+        LatFound = False
+        while LatFound is False:
+            logger.info("Pulling Location %s..." % loc)
+            website = "att.com"
+            typ = "Store"
+            hours = ""
+            lat = ""
+            name = ""
+            phone = ""
+            store = loc.rsplit("/", 1)[1]
+            r2 = session.get(loc, headers=headers)
+            for line2 in r2.iter_lines():
+                line2 = str(line2.decode("utf-8"))
+                if 'itemprop="streetAddress" content="' in line2:
+                    add = line2.split('itemprop="streetAddress" content="')[1].split(
+                        '"'
+                    )[0]
+                    city = line2.split('<meta itemprop="addressLocality" content="')[
+                        1
+                    ].split('"')[0]
+                    country = "US"
+                    try:
+                        state = line2.split('itemprop="addressRegion">')[1].split("<")[
+                            0
+                        ]
+                    except:
+                        state = ""
+                    zc = line2.split('itemprop="postalCode">')[1].split("<")[0]
+                if name == "" and '"LocationName-brand">' in line2:
+                    name = (
+                        line2.split('"LocationName-brand">')[1]
+                        .split("<")[0]
+                        .replace("&amp;", "&")
+                    )
+                if lat == "" and '<meta itemprop="latitude" content="' in line2:
+                    lat = line2.split('<meta itemprop="latitude" content="')[1].split(
+                        '"'
+                    )[0]
+                    lng = line2.split('<meta itemprop="longitude" content="')[1].split(
+                        '"'
+                    )[0]
+                    LatFound = True
+                if ' itemprop="telephone" id="phone-main">' in line2:
+                    phone = line2.split(' itemprop="telephone" id="phone-main">')[
+                        1
+                    ].split("<")[0]
+                if 'itemprop="openingHours" content="' in line2:
+                    days = line2.split('itemprop="openingHours" content="')
+                    for day in days:
+                        if 'id="location-name">' not in day:
+                            hrs = day.split('"')[0]
+                            if hours == "":
+                                hours = hrs
+                            else:
+                                hours = hours + "; " + hrs
+            if hours == "":
+                hours = "<MISSING>"
+            if phone == "":
+                phone = "<MISSING>"
+            if "puerto-rico/" in loc:
+                state = "PR"
+            if "-" in store:
+                store = "<MISSING>"
+            yield [
+                website,
+                loc,
+                name,
+                add,
+                city,
+                state,
+                zc,
+                country,
+                store,
+                phone,
+                typ,
+                lat,
+                lng,
+                hours,
+            ]
 
 
 def scrape():
