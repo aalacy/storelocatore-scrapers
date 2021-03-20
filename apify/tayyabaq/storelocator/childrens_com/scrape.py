@@ -1,9 +1,6 @@
-import json
-import re
 from sglogging import sglog
 from bs4 import BeautifulSoup
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 
@@ -24,7 +21,6 @@ def fetch_data():
     docs = res["docs"]
     lnk = []
     lnk.append("none")
-    p = 0
     for i in range(0, len(docs)):
         loc = docs[i]
         l = str(loc)
