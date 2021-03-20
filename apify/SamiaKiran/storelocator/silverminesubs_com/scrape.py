@@ -90,7 +90,7 @@ def fetch_data():
             coords = soup.find("iframe")["src"]
             try:
                 latitude, longitude = (
-                    coords.split("sll=")[1].split("&amp;", 1)[0].split(",") & sspn
+                    coords.split("sll=")[1].split("&amp;", 1)[0].split(",")
                 )
             except:
                 try:
