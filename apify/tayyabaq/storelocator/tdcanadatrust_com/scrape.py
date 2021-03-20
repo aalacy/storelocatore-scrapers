@@ -70,7 +70,9 @@ def fetch_data():
         store_number = poi["id"]
         phone = poi["phoneNo"]
         phone = phone if phone else "<MISSING>"
-        location_type = poi["type"]
+        location_type = "ATM"
+        if str(poi["type"]) == "3":
+            location_type = "Branch"
         latitude = poi["lat"]
         longitude = poi["lng"]
         hoo = []
