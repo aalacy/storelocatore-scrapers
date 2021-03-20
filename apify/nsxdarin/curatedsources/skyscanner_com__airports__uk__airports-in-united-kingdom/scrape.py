@@ -44,6 +44,17 @@ def write_output(data):
 
 def fetch_data():
     locs = []
+    url = "https://www.skyscanner.com/airports/uk/airports-in-united-kingdom"
+    r = session.get(url, headers=headers)
+    for line in r.iter_lines():
+        line = str(line.decode("utf-8"))
+        if "<h4>With non-stop flights" in line:
+            items = line.split('<a href="/airports/')
+            for item in items:
+                if '<span class="label">airport</span>' in item:
+                    locs.append(
+                        "https://www.skyscanner.com/airports/" + item.split('"')[0]
+                    )
     urls = [
         "https://www.skyscanner.com/airports/engla/airports-in-england.html",
         "https://www.skyscanner.com/airports/n_ire/airports-in-northern-ireland.html",
@@ -140,26 +151,27 @@ def fetch_data():
         if phone == "":
             phone = "<MISSING>"
         if zc == "":
-            zc = "<MISSING>"
+            zc = "<INACCESSIBLE>"
         if city == "":
-            city = "<MISSING>"
-        yield [
-            website,
-            loc,
-            name,
-            rawadd,
-            add,
-            city,
-            state,
-            zc,
-            country,
-            store,
-            phone,
-            typ,
-            lat,
-            lng,
-            hours,
-        ]
+            city = "<INACCESSIBLE>"
+        if "Skyscanner</title>" not in name and "Cheap Flights:" not in name:
+            yield [
+                website,
+                loc,
+                name,
+                rawadd,
+                add,
+                city,
+                state,
+                zc,
+                country,
+                store,
+                phone,
+                typ,
+                lat,
+                lng,
+                hours,
+            ]
 
 
 def scrape():
