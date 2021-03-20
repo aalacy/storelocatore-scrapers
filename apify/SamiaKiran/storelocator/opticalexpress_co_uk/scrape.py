@@ -17,8 +17,8 @@ headers = {
 def fetch_data():
     temp = []
     if True:
-        locator_domain = "https://www.opticalexpress.co.uk/clinic-finder"
-        r = session.get(locator_domain, headers=headers, verify=False)
+        url = "https://www.opticalexpress.co.uk/clinic-finder"
+        r = session.get(url, headers=headers, verify=False)
         soup = BeautifulSoup(r.text, "html.parser")
         loclist = soup.findAll("div", {"class": "clinics-grid__item inline-block"})
         for loc in loclist:
@@ -44,7 +44,7 @@ def fetch_data():
             country_code = "GB"
             location_name = soup.find("h1").text
             try:
-                phone = soup.findAll("div", {"class": "contact-information"})[1]
+                phone = soup.findAll("div", {"class": "contact-information"})[0]
                 phone = phone.find("a").text
             except:
                 phone = soup.findAll("div", {"class": "contact-information"})[0]
@@ -56,9 +56,10 @@ def fetch_data():
                 time = hour.find("div", {"class": "opening-times__hours"}).text.strip()
                 hours_of_operation = hours_of_operation + " " + day + " " + time
             log.info(page_url)
-
+            latitude = soup.find("div", {"id": "lat"}).text
+            longitude = soup.find("div", {"id": "lng"}).text
             yield SgRecord(
-                locator_domain=locator_domain,
+                locator_domain="https://www.opticalexpress.co.uk./",
                 page_url=page_url,
                 location_name=location_name,
                 street_address=street_address,
@@ -69,8 +70,8 @@ def fetch_data():
                 store_number="<MISSING>",
                 phone=phone,
                 location_type="<MISSING>",
-                latitude="<MISSING>",
-                longitude="<MISSING>",
+                latitude=latitude,
+                longitude=longitude,
                 hours_of_operation=hours_of_operation,
                 raw_address=raw_address,
             )
