@@ -33,7 +33,7 @@ headers2 = {
 
 
 def write_output(data):
-    with open("data.csv", mode="w", newline="", encoding="utf8") as output_file:
+    with open("data.csv", mode="w", newline="") as output_file:
         writer = csv.writer(
             output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
         )
@@ -147,6 +147,24 @@ def fetch_data():
                 state = statecode[0].strip()
                 pcode = statecode[1].strip()
 
+                req = session.get(link, headers=headers2)
+                bs = BeautifulSoup(req.text, "html.parser")
+
+                coords = bs.findAll("a")
+                count = 0
+                center = []
+                for c in coords:
+                    if c["href"].find("google.com/maps") != -1:
+                        coords = c["href"]
+                        center.append(coords)
+                    else:
+                        coords = "<MISSING>"
+                if center:
+                    coords = center[0]
+                    lat, lng = coords.split("/@")[1].split(",1")[0].split(",")
+                else:
+                    lat = "<MISSING>"
+                    lng = "<MISSING>"
                 data.append(
                     [
                         "https://www.standardoptical.net/",
