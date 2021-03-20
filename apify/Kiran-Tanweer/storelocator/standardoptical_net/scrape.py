@@ -151,7 +151,6 @@ def fetch_data():
                 bs = BeautifulSoup(req.text, "html.parser")
 
                 coords = bs.findAll("a")
-                count = 0
                 center = []
                 for c in coords:
                     if c["href"].find("google.com/maps") != -1:
@@ -178,8 +177,8 @@ def fetch_data():
                         "<MISSING>",
                         phone,
                         "<MISSING>",
-                        "<INACCESSIBLE>",
-                        "<INACCESSIBLE>",
+                        lat,
+                        lng,
                         hours,
                     ]
                 )
