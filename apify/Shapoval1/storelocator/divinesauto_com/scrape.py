@@ -48,16 +48,12 @@ def get_urls():
     r = session.get("https://divinesauto.com/convenience-stores/", headers=headers)
 
     tree = html.fromstring(r.text)
-    return tree.xpath("//h6/a[contains(@href, 'centers')]/@href")
+    return tree.xpath('//li[@id="menu-item-295"]/ul/li/a/@href')
 
 
 def get_data(url):
     locator_domain = "https://divinesauto.com"
     page_url = "".join(url)
-    if page_url.find("division") != -1:
-        return
-    if page_url.find("walnut") != -1:
-        return
     session = SgRequests()
     tag = {
         "Recipient": "recipient",
@@ -111,7 +107,11 @@ def get_data(url):
     country_code = "US"
     store_number = "<MISSING>"
     location_name = "".join(tree.xpath("//h1/text()"))
-    phone = "".join(tree.xpath("//strong/a[contains(@href, 'tel')]/text()"))
+    phone = "".join(tree.xpath("//strong/a[contains(@href, 'tel')]/text()")) or "".join(
+        tree.xpath(
+            "//h3[./strong[contains(text(), 'Telephone')]]/following-sibling::p[1]//text()"
+        )
+    )
     ll = "".join(tree.xpath("//iframe/@data-lazy-src"))
     latitude = ll.split("!3d")[1].strip().split("!")[0].strip()
     longitude = ll.split("!2d")[1].strip().split("!")[0].strip()
