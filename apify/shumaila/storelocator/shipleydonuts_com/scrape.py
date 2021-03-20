@@ -1,5 +1,6 @@
 from bs4 import BeautifulSoup
 import csv
+import json
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -41,107 +42,36 @@ def write_output(data):
 def fetch_data():
     p = 0
     data = []
-    streetlist = []
-    states = [
-        "AL",
-        "AK",
-        "AZ",
-        "AR",
-        "CA",
-        "CO",
-        "CT",
-        "DC",
-        "DE",
-        "FL",
-        "GA",
-        "HI",
-        "ID",
-        "IL",
-        "IN",
-        "IA",
-        "KS",
-        "KY",
-        "LA",
-        "ME",
-        "MD",
-        "MA",
-        "MI",
-        "MN",
-        "MS",
-        "MO",
-        "MT",
-        "NE",
-        "NV",
-        "NH",
-        "NJ",
-        "NM",
-        "NY",
-        "NC",
-        "ND",
-        "OH",
-        "OK",
-        "OR",
-        "PA",
-        "RI",
-        "SC",
-        "SD",
-        "TN",
-        "TX",
-        "UT",
-        "VT",
-        "VA",
-        "WA",
-        "WV",
-        "WI",
-        "WY",
-    ]
-    for statenow in states:
-        gurl = (
-            "https://maps.googleapis.com/maps/api/geocode/json?address="
-            + statenow
-            + "&key=AIzaSyCT4uvUVAv4U6-Lgeg94CIuxUg-iM2aA4s&components=country%3AUS"
-        )
-        r = session.get(gurl, headers=headers, verify=False).json()
-        if r["status"] == "REQUEST_DENIED":
-            pass
-        else:
-            coord = r["results"][0]["geometry"]["location"]
-            latnow = coord["lat"]
-            lngnow = coord["lng"]
-        url = (
-            "https://shipleydonuts.com/wp-admin/admin-ajax.php?action=store_search&lat="
-            + str(latnow)
-            + "&lng="
-            + str(lngnow)
-            + "&max_results=100&search_radius=500"
-        )
-        loclist = session.get(url, headers=headers, verify=False).json()
-        if len(loclist) == 0:
-            continue
-        for loc in loclist:
-            title = loc["store"]
-            street = loc["address"] + " " + loc["address2"]
-            street = street.strip()
-            city = loc["city"]
-            state = loc["state"]
-            pcode = loc["zip"]
-            phone = loc["phone"]
-            lat = loc["lat"]
-            longt = loc["lng"]
-            link = loc["permalink"]
+    url = "https://shipleydonuts.com/stores-html-sitemap/"
+    r = session.get(url, headers=headers, verify=False)
+    soup = BeautifulSoup(r.text, "html.parser")
+    linklist = soup.select("a[href*=stores]")
+    for link in linklist:
+        link = link["href"]
+        if "sitemap" not in link:
+            r = session.get(link, headers=headers, verify=False)
+            soup = BeautifulSoup(r.text, "html.parser")
+            content = r.text.split('"locations":', 1)[1].split("};", 1)[0]
+            content = json.loads(content)
+            content = content[0]
+            title = content["store"]
+            phone = soup.select_one("a[href*=tel]").text
+            street = content["address"] + " " + content["address2"]
+            city = content["city"]
+            state = content["state"]
+            pcode = content["zip"]
+            ccode = "US"
+            lat = content["lat"]
+            longt = content["lng"]
             try:
                 hours = (
-                    BeautifulSoup(loc["hours"], "html.parser")
+                    soup.find("table", {"class": "wpsl-opening-hours"})
                     .text.replace("day", "day ")
                     .replace("PM", "PM ")
                 )
             except:
                 hours = "<MISSING>"
-            store = str(loc["id"])
-            if store in streetlist:
-                continue
-            streetlist.append(store)
-
+            store = content["id"]
             data.append(
                 [
                     "https://shipleydonuts.com/",
@@ -151,7 +81,7 @@ def fetch_data():
                     city,
                     state,
                     pcode,
-                    "US",
+                    ccode,
                     store,
                     phone,
                     "<MISSING>",
@@ -160,6 +90,7 @@ def fetch_data():
                     hours,
                 ]
             )
+
             p += 1
     return data
 

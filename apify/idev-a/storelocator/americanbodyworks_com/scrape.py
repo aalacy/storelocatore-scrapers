@@ -45,12 +45,31 @@ def fetch_data():
         base_url = "https://americanbodyworks.com/"
         soup = bs(session.get(base_url, headers=_headers).text, "lxml")
         links = soup.select("div.second.bellow_header ul li")
+        logger.info(f"{len(links)} found")
         for link in links:
             page_url = link.a["href"]
             store_number = link["id"].split("-")[-1]
             soup1 = bs(session.get(page_url, headers=_headers).text, "lxml")
             _address = soup1.select_one("div.widget.widget_text h5").text
             addr = parse_address_intl(_address)
+            coord = ["", ""]
+            try:
+                coord = (
+                    soup1.find("iframe", src=re.compile(r"/maps/embed"))["src"]
+                    .split("!2d")[1]
+                    .split("!2m")[0]
+                    .split("!3d")
+                )
+            except:
+                try:
+                    coord = (
+                        soup1.find("iframe", src=re.compile(r"/maps\?f=q"))["src"]
+                        .split("ll=")[1]
+                        .split("&s")[0]
+                        .split(",")
+                    )
+                except:
+                    pass
             logger.info(page_url)
             yield SgRecord(
                 page_url=page_url,
@@ -61,6 +80,8 @@ def fetch_data():
                 state=addr.state,
                 zip_postal=addr.postcode,
                 country_code="US",
+                latitude=coord[0],
+                longitude=coord[1],
                 phone=_phone(soup1),
                 locator_domain=locator_domain,
             )
