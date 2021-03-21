@@ -47,7 +47,7 @@ def fetch_data():
     all_store_data = []
     for url in url_arr:
         xml_cont = session.get(url)
-        xml_tree = BeautifulSoup(xml_cont.content, features="lxml")
+        xml_tree = BeautifulSoup(xml_cont.text, features="lxml")
 
         locs = xml_tree.find_all("poi")
         for loc in locs:
@@ -151,4 +151,5 @@ def scrape():
     write_output(data)
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()
