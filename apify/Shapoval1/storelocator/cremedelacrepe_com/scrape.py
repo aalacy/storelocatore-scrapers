@@ -108,11 +108,7 @@ def get_data(url):
         .split('"')[0]
     )
     location_type = "<MISSING>"
-    hours_of_operation = (
-        "".join(tree.xpath("//div/p[contains(text(), 'Hour')]/text()"))
-        .split("Hour")[1]
-        .strip()
-    )
+    hours_of_operation = "<MISSING>"
     row = [
         locator_domain,
         page_url,
