@@ -58,7 +58,6 @@ def fetch_data():
         country_codes=[SearchableCountries.USA], max_radius_miles=50
     )
     for lat, lng in all_coords:
-        print(start_url.format(lng, lat))
         response = session.get(start_url.format(lng, lat), headers=hdr)
         if "No stores found" in response.text:
             continue
