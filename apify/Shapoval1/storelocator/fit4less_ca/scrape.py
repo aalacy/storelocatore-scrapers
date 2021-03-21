@@ -79,43 +79,8 @@ def get_data(url):
     ):
         return
     session = SgRequests()
-    tag = {
-        "Recipient": "recipient",
-        "AddressNumber": "address1",
-        "AddressNumberPrefix": "address1",
-        "AddressNumberSuffix": "address1",
-        "StreetName": "address1",
-        "StreetNamePreDirectional": "address1",
-        "StreetNamePreModifier": "address1",
-        "StreetNamePreType": "address1",
-        "StreetNamePostDirectional": "address1",
-        "StreetNamePostModifier": "address1",
-        "StreetNamePostType": "address1",
-        "CornerOf": "address1",
-        "IntersectionSeparator": "address1",
-        "LandmarkName": "address1",
-        "USPSBoxGroupID": "address1",
-        "USPSBoxGroupType": "address1",
-        "USPSBoxID": "address1",
-        "USPSBoxType": "address1",
-        "BuildingName": "address2",
-        "OccupancyType": "address2",
-        "OccupancyIdentifier": "address2",
-        "SubaddressIdentifier": "address2",
-        "SubaddressType": "address2",
-        "PlaceName": "city",
-        "StateName": "state",
-        "ZipCode": "postal",
-    }
     r = session.get(page_url)
     tree = html.fromstring(r.text)
-    line = (
-        " ".join(tree.xpath('//div[@class="gym-details-info__address"]//text()'))
-        .replace("\n", "")
-        .strip()
-    )
-    # a = usaddress.tag(line, tag_mapping=tag)[0]
-
     store_number = "<MISSING>"
     location_name = "".join(tree.xpath('//h1[@class="gym__details--h1"]//text()'))
     phone = (
