@@ -57,8 +57,6 @@ def write_output(data):
 
 def fetch_data():
     data = []
-    dedup = []
-    total = 0
     url = "https://ca.ecco.com/en/store-locator"
     stores_req = session.get(url, headers=headers)
     soup = BeautifulSoup(stores_req.text, "html.parser")
@@ -68,7 +66,6 @@ def fetch_data():
     scripts = scripts.replace('var storesJson = [{"storeID":"', "")
     scripts = scripts.strip()
     locations = scripts.split('},{"storeID":"')
-    c = 1
     for loc in locations:
         loc = loc + "}"
         store = loc.split('"isECCOStore":')[1].split("}")[0]
