@@ -60,9 +60,11 @@ def get_data():
         latitude = j.get("lat")
         longitude = j.get("lng")
         location_type = "<MISSING>"
-        hours = j.get("hours")
+        hours = str(j.get("hours"))
         hours = html.fromstring(hours)
-        hours_of_operation = " ".join(hours.xpath("//*//text()"))
+        hours_of_operation = " ".join(hours.xpath("//*//text()")).replace(
+            "None", "<MISSING>"
+        )
 
         row = [
             locator_domain,
