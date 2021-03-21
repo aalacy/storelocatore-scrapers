@@ -43,7 +43,7 @@ def fetch_data():
     items = []
 
     start_url = "https://api.prooil.ca/api/stores/states/"
-    domain = re.findall("://(.+?)/", start_url)[0].replace("www.", "")
+    domain = "take5oilchange.ca"
     hdr = {
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
     }
