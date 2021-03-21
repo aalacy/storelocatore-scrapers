@@ -38,7 +38,6 @@ def fetch_data():
                 temp = address[1].text.split(",")
                 city = temp[0]
                 state = temp[1]
-                zip_postal = "<MISSING>"
                 try:
                     phone = (
                         soup.find(
