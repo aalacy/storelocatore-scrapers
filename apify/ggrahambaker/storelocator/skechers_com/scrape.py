@@ -1,7 +1,7 @@
 import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
-from sgscrape import sgpostal as parser
+from sgscrape.sgpostal import parse_address, International_Parser, USA_Best_Parser
 
 session = SgRequests()
 
@@ -34,14 +34,6 @@ def write_output(data):
         # Body
         for row in data:
             writer.writerow(row)
-
-
-def parse_usa(x):
-    return parser.parse_address_usa(x)
-
-
-def parse_intl(x):
-    return parser.parse_address_intl(x)
 
 
 def fetch_data():
@@ -116,9 +108,9 @@ def fetch_data():
                         raw_addr.append(i)
                 raw_addr = " ".join(raw_addr)
                 if url == us_url:
-                    parsed = parse_usa(raw_addr)
+                    parsed = parse_address(USA_Best_Parser(), raw_addr)
                 else:
-                    parsed = parse_intl(raw_addr)
+                    parsed = parse_address(International_Parser(), raw_addr)
 
                 street_address = parsed.street_address_1
                 if parsed.street_address_2:
