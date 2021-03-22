@@ -38,7 +38,7 @@ def fetch_data():
             latitude, longitude = parse_geo(coords)
             phone = temp[6].text
             temp = temp[5].text.split()
-            city = temp[0]
+            city = temp[0].replace(",", "")
             state = temp[1]
             zip_postal = temp[2]
             yield SgRecord(
@@ -53,8 +53,8 @@ def fetch_data():
                 store_number="<MISSING>",
                 phone=phone,
                 location_type="<MISSING>",
-                latitude=latitude,
-                longitude=longitude,
+                latitude="<MISSING>",
+                longitude="<MISSING>",
                 hours_of_operation=hours_of_operation,
             )
 
