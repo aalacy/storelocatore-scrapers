@@ -75,7 +75,7 @@ def fetch_data():
 
         city = j.get("city") or "<MISSING>"
         state = j.get("state") or "<MISSING>"
-        postal = j.get("zip") or "<MISSING>"
+        postal = j.get("zip") or "<INACCESSIBLE>"
         country_code = "US"
         store_number = j.get("id") or "<MISSING>"
         location_name = j.get("name") or "<MISSING>"
