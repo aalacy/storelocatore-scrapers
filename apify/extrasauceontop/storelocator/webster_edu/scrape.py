@@ -173,12 +173,12 @@ for location in locations:
                     address = address + tag.text.strip() + " "
             address = address[:-1]
 
-    except IndexError as e:
+    except IndexError:
         address = "<MISSING>"
         zipp = "<MISSING>"
         phone = "<MISSING>"
 
-    except AttributeError as e:
+    except AttributeError:
 
         address_part_soups = soup.find_all("div", attrs={"class": "card-accordion"})
 
