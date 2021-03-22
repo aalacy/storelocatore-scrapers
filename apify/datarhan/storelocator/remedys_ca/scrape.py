@@ -57,10 +57,7 @@ def fetch_data():
         location_name = poi["title"]
         location_name = location_name if location_name else "<MISSING>"
         addr = parse_address_intl(poi["address"])
-        street_address = addr.street_address_1
-        if addr.street_address_2:
-            street_address += " " + addr.street_address_2
-        street_address = street_address if street_address else "<MISSING>"
+        street_address = poi["address"].split(",")[0]
         city = addr.city
         city = city if city else "<MISSING>"
         state = addr.state
