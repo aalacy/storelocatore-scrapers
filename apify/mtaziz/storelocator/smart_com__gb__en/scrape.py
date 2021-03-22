@@ -4,14 +4,13 @@ from sgselenium import SgChrome
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.common.keys import Keys
 import csv
 
 logzilla = sglog.SgLogSetup().get_logger("smart_com__gb__en")
 
 
 def write_output(data):
-    with open("data.csv", mode="w") as output_file:
+    with open("data.csv", mode="w", newline="", encoding="utf8") as output_file:
         writer = csv.writer(
             output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
         )
@@ -36,8 +35,22 @@ def write_output(data):
             ]
         )
         # Body
+        temp_list = []  # ignoring duplicates
         for row in data:
-            writer.writerow(row)
+            comp_list = [
+                row[1].strip(),
+                row[2].strip(),
+                row[3].strip(),
+                row[4].strip(),
+                row[5].strip(),
+                row[6].strip(),
+                row[8].strip(),
+                row[10].strip(),
+                row[11],
+            ]
+            if comp_list not in temp_list:
+                temp_list.append(comp_list)
+                writer.writerow(row)
 
 
 def para(tup):
@@ -255,9 +268,8 @@ def fetch_data():
 
     data_list = []
     items = []
-    for i in search_space[0:3]:
+    for i in search_space:
         data_from_para = para(i)
-        logzilla.info("Pulling Company ID from %s\n" % data_from_para)
         company_id = data_from_para["results"][0]["baseInfo"]["companyId"]
         company_id_based_search = (company_id, headers)
         data_details = get_data_using_company_id(company_id_based_search)
