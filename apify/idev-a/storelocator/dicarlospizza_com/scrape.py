@@ -4,19 +4,11 @@ from sgselenium import SgFirefox
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
-from lxml import html
+import json
 
 
-def _phone(val):
-    phone = (
-        "".join(val[2:])
-        .replace("(", "")
-        .replace(")", "")
-        .replace("-", "")
-        .replace(" ", "")
-        .strip()
-    )
-    return phone.isdigit() and len(phone) > 9
+def _valid(val):
+    return val.replace("\ufeff", "").strip()
 
 
 def fetch_data():
@@ -32,30 +24,72 @@ def fetch_data():
                 )
             )
         )
-        soup = html.fromstring(driver.page_source)
-        blocks = soup.xpath("//html/body/div/div[1]/div[1]/div/div[1]/div[2]//h6")
-        states = soup.xpath("//html/body/div/div[1]/div[1]/div/div[1]/div[2]//h3")
-        for x, block in enumerate(blocks[:-1]):
-            texts = block.xpath(".//text()")
-            _ = []
-            for text in texts:
-                text = text.replace("\ufeff", "")
-                if not text.strip():
+        locations = json.loads(
+            driver.page_source.split("window.siteData = ")[1]
+            .strip()
+            .split("window.__BOOTSTRAP_STATE__ =")[0]
+            .strip()[:-1]
+        )
+        for cell in locations["page"]["properties"]["contentAreas"]["userContent"][
+            "content"
+        ]["cells"]:
+            location_name = ""
+            street_address = ""
+            phone = ""
+            state = cell["content"]["elements"][1]["properties"]["title"]["quill"][
+                "ops"
+            ][0]["insert"].strip()
+            location = cell["content"]["elements"][2]["properties"]["title"]["quill"][
+                "ops"
+            ]
+            for x, _ in enumerate(location):
+                if (
+                    not _["insert"]
+                    or _valid(_["insert"]) == "ORDER PICKUP"
+                    or _valid(_["insert"]) == "ORDER DELIVERY"
+                ):
                     continue
-                if text.strip() in ["ORDER PICKUP", "|", "ORDER DELIVERY"]:
+
+                if "attributes" not in _:
                     continue
-                _.append(text)
-                if _phone(_):
+
+                if "color" not in _["attributes"]:
+                    continue
+
+                if _["insert"] == "(" or _valid(_["insert"]) == "|":
+                    continue
+
+                if not _valid(_["insert"]):
+                    continue
+
+                if (
+                    _["attributes"]["color"] == "var(--secondary-color)"
+                    and "wLink" not in _["attributes"]
+                    and not _["insert"][0].isdigit()
+                ):
+                    location_name += _valid(_["insert"])
+                elif _["attributes"].get("wLink", {}).get("type", "") == "phone":
+                    phone = _valid(_["insert"])
+                    if not phone.startswith("("):
+                        phone = "(" + phone
+                elif _["attributes"].get("wLink", {}).get("type", "") == "external" or (
+                    _["attributes"]["color"] == "var(--secondary-color)"
+                    and _["insert"][0].isdigit()
+                ):
+                    street_address = _valid(_["insert"])
+
+                if location_name and street_address and phone:
                     yield SgRecord(
                         page_url=base_url,
-                        location_name=_[0],
-                        street_address=_[1],
-                        state=states[x].xpath(".//text()")[0],
+                        location_name=location_name,
+                        street_address=street_address,
+                        city=location_name,
+                        state=state,
                         country_code="US",
-                        phone="".join(_[2:]),
+                        phone=phone,
                         locator_domain=locator_domain,
                     )
-                    _ = []
+                    location_name = street_address = phone = ""
 
 
 if __name__ == "__main__":

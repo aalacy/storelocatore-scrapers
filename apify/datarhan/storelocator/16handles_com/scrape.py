@@ -90,14 +90,15 @@ def fetch_data():
         longitude = poi["data"]["geocodedCoordinate"]["longitude"]
         longitude = longitude if longitude else "<MISSING>"
         hours_of_operation = []
-        for day, hours in poi["data"]["hours"].items():
-            if type(hours) not in [str, list]:
-                if hours.get("isClosed"):
-                    hours_of_operation.append(f"{day} closed")
-                else:
-                    opens = hours["openIntervals"][0]["start"]
-                    closes = hours["openIntervals"][0]["end"]
-                    hours_of_operation.append(f"{day} {opens} - {closes}")
+        if poi["data"].get("hours"):
+            for day, hours in poi["data"]["hours"].items():
+                if type(hours) not in [str, list]:
+                    if hours.get("isClosed"):
+                        hours_of_operation.append(f"{day} closed")
+                    else:
+                        opens = hours["openIntervals"][0]["start"]
+                        closes = hours["openIntervals"][0]["end"]
+                        hours_of_operation.append(f"{day} {opens} - {closes}")
         hours_of_operation = (
             " ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
         )
