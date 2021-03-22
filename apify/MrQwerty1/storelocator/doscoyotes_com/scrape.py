@@ -35,6 +35,20 @@ def write_output(data):
             writer.writerow(row)
 
 
+def get_coords_from_google_url(url):
+    try:
+        if url.find("ll=") != -1:
+            latitude = url.split("ll=")[1].split(",")[0]
+            longitude = url.split("ll=")[1].split(",")[1].split("&")[0]
+        else:
+            latitude = url.split("@")[1].split(",")[0]
+            longitude = url.split("@")[1].split(",")[1]
+    except IndexError:
+        latitude, longitude = "<MISSING>", "<MISSING>"
+
+    return latitude, longitude
+
+
 def get_address(line):
     tag = {
         "Recipient": "recipient",
@@ -109,7 +123,13 @@ def get_data(page_url):
         ).strip()
         or "<MISSING>"
     )
-    latitude, longitude = "<MISSING>", "<MISSING>"
+    if "natomas" in page_url:
+        text = "".join(
+            tree.xpath("//a[contains(@class, 'ee-button-wrapper ee-effect')]/@href")
+        )
+        latitude, longitude = get_coords_from_google_url(text)
+    else:
+        latitude, longitude = "<MISSING>", "<MISSING>"
     location_type = "<MISSING>"
     hours_of_operation = (
         ";".join(
