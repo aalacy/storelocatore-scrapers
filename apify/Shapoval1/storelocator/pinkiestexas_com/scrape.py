@@ -63,6 +63,8 @@ def fetch_data():
             city = ad.split(",")[0]
             postal = ad.split(",")[1].strip().split()[-1]
             state = ad.split(",")[1].strip().split()[0]
+            if state.find("Texas") != -1:
+                state = "TX"
             country_code = "US"
             store_number = "<MISSING>"
             phone = (
