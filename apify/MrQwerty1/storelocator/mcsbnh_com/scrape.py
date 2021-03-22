@@ -72,7 +72,7 @@ def fetch_data():
             location_type = "<MISSING>"
             hours = d.xpath(".//div[@class='grid-50 lobby']/p[last()]/text()")
             hours = list(filter(None, [h.strip() for h in hours]))
-            hours_of_operation = ";".join(hours) or "<MISSING>"
+            hours_of_operation = ";".join(hours) or "Temporarily Closed"
 
             row = [
                 locator_domain,
