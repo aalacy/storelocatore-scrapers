@@ -5,7 +5,6 @@ from sgrequests import SgRequests
 from sglogging import SgLogSetup
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from tenacity import retry, stop_after_attempt
-from tenacity import stop
 
 logger = SgLogSetup().get_logger("ihop_com")
 session = SgRequests()
