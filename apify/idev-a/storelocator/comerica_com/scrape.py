@@ -87,16 +87,26 @@ def fetch_data():
                     _["location"]["lng"],
                 )
                 for store in _["location"]["entities"]:
-                    if store.get("name"):
-                        store["state"] = _["location"]["province"]
-                        store["city"] = _["location"]["city"]
+                    store["state"] = _["location"]["province"]
+                    store["city"] = _["location"]["city"]
+                    store["street"] = _["location"]["street"]
+                    store["country"] = _["location"]["country"]
+                    store["lat"] = _["location"]["lat"]
+                    store["lng"] = _["location"]["lng"]
+                    store["postal_code"] = _["location"]["postal_code"]
+                    if "name" in store:
                         name = "-".join(
                             [
                                 nn
                                 for nn in store.get("name")
                                 .lower()
-                                .replace("-", "")
+                                .replace(" - ", "-")
+                                .replace(" & ", "-")
                                 .replace(",", "")
+                                .replace(".", "")
+                                .replace("/", "")
+                                .replace("(", "")
+                                .replace(")", "")
                                 .split(" ")
                                 if nn.strip()
                             ]
@@ -104,13 +114,14 @@ def fetch_data():
                         store[
                             "page_url"
                         ] = f"https://locations.comerica.com/location/{name}"
-                        store["street"] = _["location"]["street"]
-                        store["country"] = _["location"]["country"]
-                        store["lat"] = _["location"]["lat"]
-                        store["lng"] = _["location"]["lng"]
-                        store["postal_code"] = _["location"]["postal_code"]
-                        yield store
-                        found += 1
+                    elif store["type"] == "atm" and store["cma_id"]:
+                        store["name"] = store["type"] + store["street"]
+                        store[
+                            "page_url"
+                        ] = f"https://locations.comerica.com/location/{store['type'].lower()}-{store['cma_id'].lower()}"
+
+                    yield store
+                    found += 1
             total += found
             progress = (
                 str(round(100 - (search.items_remaining() / maxZ * 100), 2)) + "%"
@@ -130,6 +141,13 @@ def fetch_data():
             page += 1
             if page > cur_page:
                 break
+
+
+def human_phone(val):
+    if val:
+        return val.strip()
+    else:
+        return "<MISSING>"
 
 
 def human_hours(k):
@@ -181,6 +199,7 @@ def scrape():
         phone=sp.MappingField(
             mapping=["phone"],
             part_of_record_identity=True,
+            raw_value_transform=human_phone,
         ),
         store_number=sp.MappingField(
             mapping=["id"],

@@ -94,10 +94,16 @@ def fetch_data():
                             .replace("r&#039;", "'")
                             .replace("&amp;", "&")
                             .strip()
+                            .replace("&#039;", "'")
+                            .strip()
                         )
                         if street_address[-1:] == ",":
                             street_address = street_address[:-1]
-                        city = store_json["address"]["addressLocality"].strip()
+                        city = (
+                            store_json["address"]["addressLocality"]
+                            .strip()
+                            .replace("&#039;", "'")
+                        )
 
                         if street_address + city in found_poi:
                             continue

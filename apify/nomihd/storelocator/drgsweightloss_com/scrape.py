@@ -22,6 +22,7 @@ def fetch_data():
     stores_req = session.get(search_url, headers=headers)
     stores_sel = lxml.html.fromstring(stores_req.text)
     stores = stores_sel.xpath('//ul[@class="grid-block grid14"]/li/a/@href')
+    addresses = []
     for store_url in stores:
         page_url = store_url
         location_type = "<MISSING>"
@@ -40,6 +41,11 @@ def fetch_data():
         location_name = json_data["brand"]["name"][0]
 
         street_address = json_data["address"]["streetAddress"]
+        if street_address in addresses:
+            continue
+
+        addresses.append(street_address)
+
         city = json_data["address"]["addressLocality"]
         state = json_data["address"]["addressRegion"]
         zip = json_data["address"]["postalCode"]

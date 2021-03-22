@@ -50,6 +50,7 @@ def fetch_data():
     dom = etree.HTML(response.text)
 
     all_locations = dom.xpath('//div[@id="content1"]/table[2]//tr/td')
+    all_locations += dom.xpath('//td[h2[contains(text(), "Wildwood Crest")]]')
     for poi_html in all_locations:
         store_url = start_url
         location_name = poi_html.xpath(".//h2/text()")
