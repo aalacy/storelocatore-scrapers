@@ -82,9 +82,9 @@ def fetch_data():
             .split("!2m")[0]
             .split("!3d")
         )
-        latitude = geo[-1]
+        latitude = geo[-1].split("!")[0]
         longitude = geo[0]
-        hoo = loc_dom.xpath('//div[p[contains(text(), "Monday – Sunday")]]/p/text()')[
+        hoo = loc_dom.xpath('//div[p[contains(text(), "Monday – Sunday")]]/p//text()')[
             :2
         ]
         if not hoo:

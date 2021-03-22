@@ -71,7 +71,11 @@ def fetch_data():
     block = tree.xpath("//div[./a[contains(text(), 'Visit')]]/preceding-sibling::div")
     for i in block:
         location_name = "".join(i.xpath(".//p[1]/text()"))
-
+        closed = "".join(
+            i.xpath(
+                './/following-sibling::div[@class="x-column x-sm x-1-2 last"]/a[@class="sb-action-link"]/mark/text()'
+            )
+        )
         ad = " ".join(i.xpath(".//p[2]/text()"))
         a = usaddress.tag(ad, tag_mapping=tag)[0]
         phone = "".join(i.xpath(".//a/text()")) or "<MISSING>"
@@ -140,6 +144,8 @@ def fetch_data():
             " ".join(trees.xpath('//meta[@itemprop="openingHours"]/@content'))
             or "<MISSING>"
         )
+        if closed:
+            hours_of_operation = closed
 
         row = [
             locator_domain,
