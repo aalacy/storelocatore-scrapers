@@ -101,7 +101,10 @@ def fetch_data():
             phone = "<MISSING>"
             hours = "OPENING SOON!"
         else:
-            hours = "<MISSING>"
+            if details[-1].find("CLOSED TEMPORARILY") != -1:
+                hours = details[-1]
+            else:
+                hours = "<MISSING>"
         try:
             link = atgs[-1]
             link = str(link)

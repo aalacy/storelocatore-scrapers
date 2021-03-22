@@ -88,7 +88,7 @@ def fetch_data():
             city = ""
             state = ""
             zc = ""
-            store = "<MISSING>"
+            store = loc.rsplit("/", 1)[1]
             phone = "<MISSING>"
             rawadd = ""
             lat = "<MISSING>"

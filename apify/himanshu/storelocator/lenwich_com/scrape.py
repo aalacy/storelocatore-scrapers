@@ -53,18 +53,11 @@ def fetch_data():
         name = data[0].encode("ascii", "ignore").decode("ascii").strip()
         store_name.append(name.encode("ascii", "ignore").decode("ascii").strip())
         hours = ""
-        if len(data) == 7:
-            if "Mon – Fri : 6am – 8pm" in data[4]:
-                hours = data[4] + " " + data[5] + " " + data[6]
-            else:
-                hours = hours + data[5] + " " + data[6]
-        elif len(data) == 8:
-            hours = hours + data[5] + " " + data[6] + " " + data[7]
-        elif len(data) == 9:
-            hours = hours + data[5] + " " + data[6] + " " + data[7] + " " + data[8]
+        for index in range(0, len(data)):
+            if "Store Hours" in data[index]:
+                hours = "; ".join(data[index + 1 :])
+                break
 
-        elif len(data) == 6:
-            hours = hours + data[4] + " " + data[5]
         try:
             a = i.find("a", class_="restaurants-buttons")["href"].strip()
             store_number = "<MISSING>"
