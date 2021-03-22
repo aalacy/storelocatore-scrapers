@@ -154,11 +154,12 @@ def fetch_data():
         elif "Washington DC" in location_name:
             city = "Washington"
             state = "Washington DC"
+            zip_code = handle_missing(address[1].strip().replace("DC", ""))
         else:
             city = handle_missing(location_name.split("|")[0].strip())
             state = handle_missing(address[1].strip()[:2])
+            zip_code = handle_missing(address[1].strip().replace(state, ""))
         street_address = get_address(address[0], city)
-        zip_code = handle_missing(address[1].strip().replace(state, ""))
         country_code = "US" if len(zip_code) <= 5 else "CA"
         store_number = "<MISSING>"
         if len(address) > 2:
