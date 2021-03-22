@@ -1,6 +1,7 @@
 from bs4 import BeautifulSoup
 import csv
 import json
+import re
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -43,55 +44,67 @@ def fetch_data():
     data = []
     url = "https://www.extremepizza.com/store-locator/"
     p = 0
+    cleanr = re.compile(r"<[^>]+>")
     r = session.get(url, headers=headers, verify=False)
-    r = r.text.split('<script type="application/ld+json">')[1].split("</script")[0]
-    loclist = json.loads(r)
-    loclist = loclist["subOrganization"]
+    loclist = r.text.split('{"@type": "FoodEstablishment", ')
+    loclist = r.text.split('"hours"')[1:]
     for loc in loclist:
-        flag = 0
-        link = loc["url"]
-        title = loc["name"]
-        street = loc["address"]["streetAddress"]
-        city = loc["address"]["addressLocality"]
-        state = loc["address"]["addressRegion"]
-        pcode = loc["address"]["postalCode"]
-        ccode = "US"
-        phone = loc["telephone"]
+        try:
+            link = loc.split('"url": "', 1)[1].split(",", 1)[0]
+        except:
+            break
+        link = "https://www.extremepizza.com" + link.replace('"', "")
         r = session.get(link, headers=headers, verify=False)
         soup = BeautifulSoup(r.text, "html.parser")
-        ct = soup.find("section", {"id": "intro"}).findAll("p")
-        hours = ""
-        for t in ct:
-            if (
-                (("AM " in t.text and "PM" in t.text) or ("Closed on" in t.text))
-                or ("Am" in t.text and (":" in t.text or "-" in t.text))
-                or "Everyday" in t.text
-                or ("pm" in t.text and (":" in t.text or "-" in t.text))
-            ):
-                hours = hours + t.text + " "
-            elif "Soon" in t.text or "Opening" in t.text:
-                flag = 1
-                break
-        if flag == 1:
-            continue
+        address = r.text.split('"location": ', 1)[1].split("}", 1)[0]
+        address = soup.find("section", {"id": "intro"}).findAll("a")[0].text.strip()
         try:
-            lat = r.text.split('"latitude":', 1)[1].split(",", 1)[0]
-            longt = r.text.split('"longitude":', 1)[1].split("}", 1)[0]
+            phone = soup.find("section", {"id": "intro"}).findAll("a")[1].text
         except:
-            lat = r.text.split('data-gmaps-lat="', 1)[1].split('"', 1)[0]
-            longt = r.text.split(' data-gmaps-lng="', 1)[1].split('"', 1)[0]
+            if (
+                "Coming Soon!" in soup.find("section", {"id": "intro"}).text
+                or "soon!" in soup.find("section", {"id": "intro"}).text
+            ):
+                continue
+            else:
+                phone = "<MISSING>"
+        hourlist = soup.find("section", {"id": "intro"}).findAll("p")
+        hours = ""
+        for hr in hourlist:
+            if (
+                "AM" in hr.text
+                or "day" in hr.text
+                or "am -" in hr.text
+                or "pm -" in hr.text
+            ):
+                hrnow = re.sub(cleanr, " ", str(hr)).strip()
+                hours = hours + hrnow + " "
+        address = address.split(", ")
+        state = address[-1]
+        city = address[-2]
+        street = " ".join(address[0:-2])
+        state, pcode = state.strip().split(" ", 1)
+        title = soup.find("title").text.split(" |", 1)[0]
+        lat = r.text.split('data-gmaps-lat="', 1)[1].split('"', 1)[0]
+        longt = r.text.split('data-gmaps-lng="', 1)[1].split('"', 1)[0]
         if len(hours) < 3:
             hours = "<MISSING>"
+        else:
+            hours = hours.replace("&amp;", "&").replace(".", "")
         try:
-            hours = hours.split("Delivery", 1)[0]
+            hours = hours.split("Try", 1)[0]
         except:
             pass
         try:
-            if len(phone) < 3:
-                phone = "<MISSING>"
+            hours = hours.split("Thirst", 1)[0]
         except:
+            pass
+        try:
+            hours = hours.split("We", 1)[0]
+        except:
+            pass
+        if "Order Online" in phone:
             phone = "<MISSING>"
-        hours = hours.replace("1", " 1").replace("1 1", "11").strip()
         data.append(
             [
                 "https://www.extremepizza.com/",
@@ -101,7 +114,7 @@ def fetch_data():
                 city,
                 state,
                 pcode,
-                ccode,
+                "US",
                 "<MISSING>",
                 phone,
                 "<MISSING>",
