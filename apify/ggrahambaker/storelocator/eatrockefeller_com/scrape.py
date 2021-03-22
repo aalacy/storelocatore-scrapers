@@ -85,13 +85,8 @@ def fetch_data():
             hours += h + " "
 
         if "Hours" in hours:
-            hours = (
-                hours[hours.find("Hours") + 6 :]
-                .replace(": Mo", "Mo")
-                .split("Pickup")[0]
-                .strip()
-            )
-        hours = hours.strip()
+            hours = hours[hours.find("Hours") + 6 :].replace(": Mo", "Mo").strip()
+        hours = hours.split("Pickup")[0].strip()
 
         if "temporarily" in hours:
             hours = "Temporarily Closed"

@@ -1,96 +1,229 @@
-from sgscrape.sgrecord import SgRecord
-from sgscrape.sgwriter import SgWriter
+from sgscrape import simple_scraper_pipeline as sp
 from sgrequests import SgRequests
+from sgzip.dynamic import DynamicZipSearch, SearchableCountries
+from sglogging import SgLogSetup
+from requests import exceptions  # noqa
+from urllib3 import exceptions as urllibException
 from bs4 import BeautifulSoup as bs
-import us
+import json
 
-_headers = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.141 Safari/537.36",
+logger = SgLogSetup().get_logger("comerica_com")
+
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
 
+search = DynamicZipSearch(
+    country_codes=[SearchableCountries.USA],
+    max_radius_miles=None,
+    max_search_results=None,
+)
 
-def _valid(val):
-    return (
-        val.strip()
-        .replace("–", "-")
-        .encode("unicode-escape")
-        .decode("utf8")
-        .replace("\\xa0\\xa", " ")
-        .replace("\\xa0", " ")
-        .replace("\\xa", " ")
-        .replace("\\xae", "")
-    )
+
+def api_get(start_url, headers, timeout, attempts, maxRetries):
+    error = False
+    session = SgRequests()
+    try:
+        results = session.get(start_url, headers=headers, timeout=timeout)
+    except exceptions.RequestException as requestsException:
+        if "ProxyError" in str(requestsException):
+            attempts += 1
+            error = True
+        else:
+            raise requestsException
+
+    except urllibException.SSLError as urlException:
+        if "BAD_RECORD_MAC" in str(urlException):
+            attempts += 1
+            error = True
+        else:
+            raise urllibException
+
+    if error:
+        if attempts < maxRetries:
+            results = api_get(start_url, headers, timeout, attempts, maxRetries)
+        else:
+            TooManyRetries = (
+                "Retried "
+                + str(maxRetries)
+                + " times, got either SSLError or ProxyError"
+            )
+            raise TooManyRetries
+    else:
+        return results
 
 
 def fetch_data():
-    urls = []
-    with SgRequests() as session:
-        locator_domain = "https://www.comerica.com/"
-        for _state in us.states.STATES:
-            page = 1
-            while True:
-                base_url = f"https://locations.comerica.com/?q={_state.abbr.lower()}&filter=all&page={page}"
-                soup = bs(session.get(base_url, headers=_headers).text, "lxml")
-                if not soup.select_one("ul.pager li.pager-current span"):
-                    break
-                locations = soup.select("#results-list a")
-                for link in locations:
-                    if not link["href"].startswith("https"):
-                        continue
-                    if link["href"] in urls:
-                        continue
-                    urls.append(link["href"])
+    # Need to add dedupe. Added it in pipeline.
+    session = SgRequests(proxy_rotation_failure_threshold=20)
+    maxZ = search.items_remaining()
+    total = 0
+    for code in search:
+        if search.items_remaining() > maxZ:
+            maxZ = search.items_remaining()
+        found = 0
+        page = 1
+        logger.info(("Pulling Zip Code %s..." % code))
+        while True:
+            url = f"https://locations.comerica.com/?q={code}&filter=all&page={page}"
+            try:
+                res = session.get(url, headers=headers, timeout=15).text
+            except Exception:
+                res = api_get(url, headers, 15, 0, 15).text
 
-                    soup1 = bs(session.get(link["href"], headers=_headers).text, "lxml")
-                    hours = []
-                    for tr in soup1.select("div.open-hours-lobby tr"):
-                        hours.append(
-                            f"{tr.select('td')[0].text}: {tr.select('td')[1].text}"
+            if "Comerica Bank is not in your area." in res:
+                logger.info(f"not found {code} | page {page} ")
+                break
+            if "You have exceeded the maximum number of allowed searches." in res:
+                logger.info("Proxy not working")
+                break
+            soup = bs(res, "lxml")
+            r2 = json.loads(
+                res.split("var results = ")[1].strip().split("var map;")[0].strip()[:-1]
+            )
+            for _ in r2:
+                search.found_location_at(
+                    _["location"]["lat"],
+                    _["location"]["lng"],
+                )
+                for store in _["location"]["entities"]:
+                    store["state"] = _["location"]["province"]
+                    store["city"] = _["location"]["city"]
+                    store["street"] = _["location"]["street"]
+                    store["country"] = _["location"]["country"]
+                    store["lat"] = _["location"]["lat"]
+                    store["lng"] = _["location"]["lng"]
+                    store["postal_code"] = _["location"]["postal_code"]
+                    if "name" in store:
+                        name = "-".join(
+                            [
+                                nn
+                                for nn in store.get("name")
+                                .lower()
+                                .replace(" - ", "-")
+                                .replace(" & ", "-")
+                                .replace(",", "")
+                                .replace(".", "")
+                                .replace("/", "")
+                                .replace("(", "")
+                                .replace(")", "")
+                                .split(" ")
+                                if nn.strip()
+                            ]
                         )
-                    city = state = zip_postal = phone = ""
-                    country_code = "US"
-                    if soup1.select_one("div.adr span.locality"):
-                        city = soup1.select_one("div.adr span.locality").text
-                    if soup1.select_one("div.adr span.region"):
-                        state = soup1.select_one("div.adr span.region").text
-                    if soup1.select_one("div.adr span.postal-code"):
-                        zip_postal = soup1.select_one("div.adr span.postal-code").text
-                    if soup1.select_one("div.adr div.country-name"):
-                        country_code = soup1.select_one("div.adr div.country-name").text
-                    if soup1.select_one('div.tel span[property="telephone"]'):
-                        phone = soup1.select_one(
-                            'div.tel span[property="telephone"]'
-                        ).text
-                    yield SgRecord(
-                        store_number=link["data-location-id"],
-                        page_url=link["href"],
-                        location_name=link.select_one("div.result-title").text.strip(),
-                        street_address=soup1.select_one(
-                            "div.adr div.street-address"
-                        ).text,
-                        city=city,
-                        state=state,
-                        zip_postal=zip_postal,
-                        country_code=country_code,
-                        latitude=soup1.select_one("abbr.latitude")["content"],
-                        longitude=soup1.select_one("abbr.longitude")["content"],
-                        phone=phone,
-                        locator_domain=locator_domain,
-                        hours_of_operation=_valid("; ".join(hours)),
-                    )
+                        store[
+                            "page_url"
+                        ] = f"https://locations.comerica.com/location/{name}"
+                    elif store["type"] == "atm" and store["cma_id"]:
+                        store["name"] = store["type"] + store["street"]
+                        store[
+                            "page_url"
+                        ] = f"https://locations.comerica.com/location/{store['type'].lower()}-{store['cma_id'].lower()}"
 
+                    yield store
+                    found += 1
+            total += found
+            progress = (
+                str(round(100 - (search.items_remaining() / maxZ * 100), 2)) + "%"
+            )
+
+            cur_page = 0
+            if soup.select_one("ul.pager li.pager-current span"):
                 cur_page = int(
                     soup.select_one("ul.pager li.pager-current span")
                     .text.split("of")[-1]
                     .strip()
                 )
-                page += 1
-                if page > cur_page:
-                    break
+
+            logger.info(
+                f"{code} | page {page} | found: {found} | total: {total} | progress: {progress}"
+            )
+            page += 1
+            if page > cur_page:
+                break
+
+
+def human_phone(val):
+    if val:
+        return val.strip()
+    else:
+        return "<MISSING>"
+
+
+def human_hours(k):
+    days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
+    if k.get("lobby"):
+        hours = []
+        for x, _ in enumerate(k["lobby"]):
+            time = _
+            if not _:
+                time = "closed"
+            hours.append(f"{days[x]}: {time}")
+        return "; ".join(hours)
+    else:
+        return "<MISSING>"
+
+
+def scrape():
+    url = "https://www.comerica.com/"
+    field_defs = sp.SimpleScraperPipeline.field_definitions(
+        locator_domain=sp.ConstantField(url),
+        page_url=sp.MappingField(
+            mapping=["page_url"],
+            part_of_record_identity=True,
+        ),
+        location_name=sp.MappingField(
+            mapping=["name"],
+        ),
+        latitude=sp.MappingField(
+            mapping=["lat"],
+        ),
+        longitude=sp.MappingField(
+            mapping=["lng"],
+        ),
+        street_address=sp.MappingField(
+            mapping=["street"],
+        ),
+        city=sp.MappingField(
+            mapping=["city"],
+        ),
+        state=sp.MappingField(
+            mapping=["state"],
+        ),
+        zipcode=sp.MappingField(
+            mapping=["postal_code"],
+        ),
+        country_code=sp.MappingField(
+            mapping=["country"],
+        ),
+        phone=sp.MappingField(
+            mapping=["phone"],
+            part_of_record_identity=True,
+            raw_value_transform=human_phone,
+        ),
+        store_number=sp.MappingField(
+            mapping=["id"],
+            part_of_record_identity=True,
+        ),
+        hours_of_operation=sp.MappingField(
+            mapping=["open_hours_formatted"], raw_value_transform=human_hours
+        ),
+        location_type=sp.MappingField(
+            mapping=["type"],
+            part_of_record_identity=True,
+        ),
+        raw_address=sp.MissingField(),
+    )
+
+    pipeline = sp.SimpleScraperPipeline(
+        scraper_name="pipeline",
+        data_fetcher=fetch_data,
+        field_definitions=field_defs,
+        log_stats_interval=5,
+    )
+
+    pipeline.run()
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
-        results = fetch_data()
-        for rec in results:
-            writer.write_row(rec)
+    scrape()

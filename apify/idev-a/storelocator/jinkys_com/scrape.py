@@ -6,6 +6,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
 import json
+import re
 
 _headers = {
     "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
@@ -29,21 +30,43 @@ def fetch_data():
             EC.presence_of_element_located((By.XPATH, "//div[@class='locations']"))
         )
         soup = bs(driver.page_source, "lxml")
-        locations = soup.findAll("script", type="application/ld+json")
-        for location in locations:
-            _ = json.loads(location.string.strip())
+        locations = json.loads(
+            soup.select_one("script.js-react-on-rails-component").string.strip()
+        )
+        for _ in locations["preloadQueries"][0]["data"]["restaurant"]["homePage"][
+            "sections"
+        ][-1]["locations"]:
+            hours_of_operation = "; ".join(_["schemaHours"])
+            if _["openingRanges"][0]["additionalHoursContent"] is not None:
+                if re.search(
+                    r"closed temporarily",
+                    _["openingRanges"][0]["additionalHoursContent"],
+                    re.IGNORECASE,
+                ):
+                    hours_of_operation = "Temporarily Closed"
+                if re.search(
+                    r"temporary state shut down",
+                    _["openingRanges"][0]["additionalHoursContent"],
+                    re.IGNORECASE,
+                ):
+                    hours_of_operation = "Temporarily Closed"
+            page_url = ""
+            try:
+                page_url = _["socialHandles"][0]["url"]
+            except:
+                pass
             yield SgRecord(
-                page_url=_["url"],
-                location_name=_["address"]["addressLocality"],
-                location_type=_["@type"],
-                street_address=_["address"]["streetAddress"],
-                city=_["address"]["addressLocality"],
-                state=_["address"]["addressRegion"],
-                zip_postal=_["address"]["postalCode"],
-                country_code="US",
-                phone=_["telephone"],
+                page_url=page_url,
+                store_number=_["restaurantId"],
+                location_name=_["name"],
+                street_address=_["streetAddress"],
+                city=_["city"],
+                state=_["state"],
+                zip_postal=_["postalCode"],
+                country_code=_["country"],
+                phone=_["phone"],
                 locator_domain=locator_domain,
-                hours_of_operation="; ".join(_["openingHours"]),
+                hours_of_operation=hours_of_operation,
             )
 
 
