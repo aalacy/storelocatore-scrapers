@@ -50,6 +50,7 @@ def fetch_data():
     dom = etree.HTML(response.text)
 
     all_locations = dom.xpath('//div[@id="content1"]/table[2]//tr/td')
+    all_locations += dom.xpath('//td[h2[contains(text(), "Wildwood Crest")]]')
     for poi_html in all_locations:
         store_url = start_url
         location_name = poi_html.xpath(".//h2/text()")
@@ -74,6 +75,12 @@ def fetch_data():
         hours = dom.xpath('//table[@height="206"]//tr/td[3]/p/text()')[:4]
         hoo = list(map(lambda d, h: d + " " + h, days, hours))
         hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
+        if location_name == "Wildwood Crest":
+            hours_of_operation = " ".join(
+                dom.xpath(
+                    '//tr[td[h3[contains(text(), "Hours")]]]/following-sibling::tr/td//text()'
+                )
+            )
 
         item = [
             domain,
