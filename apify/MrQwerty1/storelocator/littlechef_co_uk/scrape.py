@@ -48,6 +48,7 @@ def get_row(page_url):
     r = session.get(page_url)
     tree = html.fromstring(r.text)
 
+    location_name = tree.xpath("//h1[@class='ribbon']/text()")[0].strip()
     line = (
         "".join(
             tree.xpath(
@@ -57,7 +58,17 @@ def get_row(page_url):
         .replace("Little Chef", "")
         .strip()
     )
-    adr = parse_address(International_Parser(), line)
+
+    if "." in line:
+        postal = line.split(".")[-1].strip()
+        line = line.split(".")[0].strip()
+    else:
+        postal = " ".join(line.split()[-2:])
+        line = line.replace(postal, "").strip()
+        if line.endswith(","):
+            line = line[:-1]
+
+    adr = parse_address(International_Parser(), line, postcode=postal)
 
     street_address = (
         f"{adr.street_address_1} {adr.street_address_2 or ''}".replace(
@@ -68,9 +79,12 @@ def get_row(page_url):
     city = adr.city or "<MISSING>"
     state = adr.state or "<MISSING>"
     postal = adr.postcode or "<MISSING>"
+    if city == "<MISSING>" and "Shrewsbury" in location_name:
+        city = "Bayston Hill"
+        street_address = street_address.replace(city, "").strip()
+
     country_code = "GB"
     store_number = "<MISSING>"
-    location_name = tree.xpath("//h1[@class='ribbon']/text()")[0].strip()
     phone = (
         "".join(
             tree.xpath("//p[./strong[contains(text(), 'Telephone')]]/strong/text()")
