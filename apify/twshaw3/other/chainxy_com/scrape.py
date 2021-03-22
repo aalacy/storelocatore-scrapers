@@ -3,7 +3,8 @@ from sgrequests import SgRequests
 import json
 from sglogging import SgLogSetup
 from lxml import etree
-
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from tenacity import retry, stop_after_attempt
 
 logger = SgLogSetup().get_logger("chainxy_com")
 
@@ -169,6 +170,7 @@ def parse_fields(dom):
     )
 
 
+@retry(stop=stop_after_attempt(7))
 def scrape_chain(chain_url):
     logger.info(f"Scraping chain {chain_url}")
     with SgRequests() as session:
@@ -227,11 +229,12 @@ def fetch_urls_for_country(country, limit=None):
 
 def fetch_data():
     logger.info("Starting scrape")
-    chain_urls = list(fetch_urls_for_country(UNITED_KINGDOM))
+    chain_urls = list(fetch_urls_for_country(UNITED_STATES))
     logger.info(f"Found {len(chain_urls)} chain URLs")
-    for chain_url in chain_urls:
-        record = scrape_chain(chain_url)
-        yield record
+    with ThreadPoolExecutor(max_workers=10) as executor:
+        futures = [executor.submit(scrape_chain, chain_url) for chain_url in chain_urls]
+        for result in as_completed(futures):
+            yield result.result()
 
 
 def scrape():

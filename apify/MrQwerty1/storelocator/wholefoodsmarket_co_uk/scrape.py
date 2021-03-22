@@ -34,7 +34,7 @@ def write_output(data):
 def fetch_data():
     out = []
     locator_domain = "https://www.wholefoodsmarket.co.uk/"
-    api_url = "https://www.wholefoodsmarket.co.uk/staticData/Z26G8nI.json"
+    api_url = "https://www.wholefoodsmarket.co.uk/staticData/Z2adP1V.json"
 
     session = SgRequests()
     r = session.get(api_url)
