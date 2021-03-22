@@ -54,7 +54,7 @@ def get_urls():
 
 
 def get_data(url):
-    locator_domain = "https://groundround.com"
+    locator_domain = "http://thepridestores.com"
     page_url = f"http://thepridestores.com/{url}"
     session = SgRequests()
     headers = {

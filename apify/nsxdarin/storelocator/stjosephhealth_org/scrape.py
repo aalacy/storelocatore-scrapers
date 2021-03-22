@@ -71,13 +71,27 @@ def fetch_data():
         lng = ""
         hours = ""
         hours2 = ""
+        hours3 = ""
         r2 = session.get(loc, headers=headers)
-        for line2 in r2.iter_lines():
+        lines = r2.iter_lines()
+        for line2 in lines:
             line2 = str(line2.decode("utf-8"))
+            if "<b>Clinic Hours:<br /></b>" in line2 and hours3 == "":
+                g = next(lines)
+                g = str(g.decode("utf-8"))
+                if "p.m.<" in g:
+                    hours3 = (
+                        g.split("</p></div>")[0]
+                        .replace("<strong>", "")
+                        .replace("</strong>", "")
+                    )
+            if '"telephone":"' in line2:
+                phone = line2.split('"telephone":"')[1].split('"')[0]
             if '<div class="hours-text text-muted">' in line2 and hours2 == "":
                 hours2 = line2.split('<div class="hours-text text-muted">')[1].split(
-                    "<"
+                    "</div"
                 )[0]
+                hours2 = hours2.replace("<p>", "").replace("</p>", "")
             if '"name":"' in line2:
                 name = line2.split('"name":"')[1].split('"')[0]
                 try:
@@ -133,6 +147,16 @@ def fetch_data():
             add = add.replace("\\u0027", "'")
             if hours2 != "":
                 hours = hours2
+            if "p.m." in hours3:
+                hours = hours3
+            if "locations/providence-medical-associates" in loc:
+                hours = "Mon - Fri: 8 a.m. - 5 p.m."
+            if hours.strip() == "&nbsp;":
+                hours = "<MISSING>"
+            if "<!--" in hours:
+                hours = "<MISSING>"
+            if "<h4>Family" in hours or "<b>Clinic" in hours:
+                hours = "<MISSING>"
             yield [
                 website,
                 loc,
