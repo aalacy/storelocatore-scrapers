@@ -1,4 +1,5 @@
 import csv
+
 from lxml import html
 from sgrequests import SgRequests
 
@@ -32,39 +33,45 @@ def write_output(data):
             writer.writerow(row)
 
 
-def get_data():
-    rows = []
-    locator_domain = "https://freshslice.com/"
-    api_url = "https://freshslice.com/wp-admin/admin-ajax.php?action=store_search&lat=49.26999&lng=-123.01829&max_results=25&search_radius=10&autoload=1"
+def get_coords_from_embed(text):
+    try:
+        latitude = text.split("!3d")[1].strip().split("!")[0].strip()
+        longitude = text.split("!2d")[1].strip().split("!")[0].strip()
+    except IndexError:
+        latitude, longitude = "<MISSING>", "<MISSING>"
+
+    return latitude, longitude
+
+
+def fetch_data():
+    out = []
+    locator_domain = "https://freshcitykitchen.com/"
+    page_url = "https://freshcitykitchen.com/pages/retail"
+
     session = SgRequests()
-    r = session.get(api_url)
-    js = r.json()
-    for j in js:
-        street_address = f"{j.get('address')} {j.get('address2')}".replace(
-            "None", ""
-        ).strip()
-        if street_address.find("110 – 435") != -1:
-            street_address = street_address.split(",")[0].strip()
-        city = "".join(j.get("city"))
-        if city.find("Rocky") != -1:
-            city = city.split()[0].strip()
-        state = j.get("state")
-        postal = j.get("zip")
-        country_code = j.get("country")
+    r = session.get(page_url)
+    tree = html.fromstring(r.text)
+    divs = tree.xpath("//div[@data-pf-type='Column' and .//iframe]")
+
+    for d in divs:
+        location_name = "".join(d.xpath(".//span/span[1]/text()")).strip()
+        line = d.xpath(".//span[./span]/text()")
+        line = list(filter(None, [l.strip() for l in line]))
+        phone = line.pop()
+        csz = line.pop()
+
+        street_address = ", ".join(line)
+        city = csz.split(",")[0].strip()
+        csz = csz.split(",")[1].strip()
+        state = csz.split()[0]
+        postal = csz.split()[1]
+        country_code = "US"
         store_number = "<MISSING>"
-        location_name = "".join(j.get("store")).replace("&#8211;", "-")
-        phone = j.get("phone") or "<MISSING>"
-        if phone.find("or") != -1:
-            phone = phone.split("or")[0].strip()
-        page_url = j.get("permalink")
-        latitude = j.get("lat")
-        longitude = j.get("lng")
+
+        text = "".join(d.xpath(".//iframe/@src"))
+        latitude, longitude = get_coords_from_embed(text)
         location_type = "<MISSING>"
-        hours = str(j.get("hours"))
-        hours = html.fromstring(hours)
-        hours_of_operation = " ".join(hours.xpath("//*//text()")).replace(
-            "None", "<MISSING>"
-        )
+        hours_of_operation = "<MISSING>"
 
         row = [
             locator_domain,
@@ -82,13 +89,13 @@ def get_data():
             longitude,
             hours_of_operation,
         ]
+        out.append(row)
 
-        rows.append(row)
-    return rows
+    return out
 
 
 def scrape():
-    data = get_data()
+    data = fetch_data()
     write_output(data)
 
 

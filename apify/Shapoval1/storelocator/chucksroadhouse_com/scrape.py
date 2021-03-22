@@ -32,40 +32,35 @@ def write_output(data):
             writer.writerow(row)
 
 
-def get_data():
-    rows = []
-    locator_domain = "https://freshslice.com/"
-    api_url = "https://freshslice.com/wp-admin/admin-ajax.php?action=store_search&lat=49.26999&lng=-123.01829&max_results=25&search_radius=10&autoload=1"
-    session = SgRequests()
-    r = session.get(api_url)
-    js = r.json()
-    for j in js:
-        street_address = f"{j.get('address')} {j.get('address2')}".replace(
-            "None", ""
-        ).strip()
-        if street_address.find("110 – 435") != -1:
-            street_address = street_address.split(",")[0].strip()
-        city = "".join(j.get("city"))
-        if city.find("Rocky") != -1:
-            city = city.split()[0].strip()
-        state = j.get("state")
-        postal = j.get("zip")
-        country_code = j.get("country")
-        store_number = "<MISSING>"
-        location_name = "".join(j.get("store")).replace("&#8211;", "-")
-        phone = j.get("phone") or "<MISSING>"
-        if phone.find("or") != -1:
-            phone = phone.split("or")[0].strip()
-        page_url = j.get("permalink")
-        latitude = j.get("lat")
-        longitude = j.get("lng")
-        location_type = "<MISSING>"
-        hours = str(j.get("hours"))
-        hours = html.fromstring(hours)
-        hours_of_operation = " ".join(hours.xpath("//*//text()")).replace(
-            "None", "<MISSING>"
-        )
+def fetch_data():
+    out = []
+    locator_domain = "https://www.chucksroadhouse.com"
+    page_url = "https://www.chucksroadhouse.com/locations/"
 
+    session = SgRequests()
+    r = session.get(page_url)
+    tree = html.fromstring(r.text)
+    div = tree.xpath('//div[./a[@class="cta-button "]]')
+
+    for d in div:
+        line = d.xpath(".//p[2]/text()")
+        street_address = "".join(line[0])
+        postal = "<MISSING>"
+        state = "<MISSING>"
+        country_code = "CA"
+        store_number = "<MISSING>"
+        location_name = "".join(d.xpath(".//h2/text()"))
+        city = location_name
+        phone = "".join(line[1])
+        location_type = "<MISSING>"
+        hours_of_operation = "<MISSING>"
+        if len(line) == 3:
+            hours_of_operation = "".join(line[2])
+        if phone.find("Location") != -1:
+            hours_of_operation = "Coming Soon"
+            phone = "<MISSING>"
+        latitude = "<MISSING>"
+        longitude = "<MISSING>"
         row = [
             locator_domain,
             page_url,
@@ -82,13 +77,13 @@ def get_data():
             longitude,
             hours_of_operation,
         ]
+        out.append(row)
 
-        rows.append(row)
-    return rows
+    return out
 
 
 def scrape():
-    data = get_data()
+    data = fetch_data()
     write_output(data)
 
 
