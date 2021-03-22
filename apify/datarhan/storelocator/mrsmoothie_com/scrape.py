@@ -1,8 +1,9 @@
+import re
 import csv
-import json
 from lxml import etree
 
 from sgrequests import SgRequests
+from sgscrape.sgpostal import parse_address_intl
 
 
 def write_output(data):
@@ -40,53 +41,46 @@ def fetch_data():
     session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
 
     items = []
+    scraped_items = []
 
-    start_url = "https://api.prooil.ca/api/stores/states/"
-    domain = "take5oilchange.ca"
+    start_url = "http://mrsmoothie.com/location.html"
+    domain = re.findall("://(.+?)/", start_url)[0].replace("www.", "")
     hdr = {
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
     }
-    all_locations = []
     response = session.get(start_url, headers=hdr)
-    data = json.loads(response.text)
-    for state in data["message"]:
-        for city in state["cities"]:
-            all_locations += city["stores"]
+    dom = etree.HTML(response.text)
 
-    for poi in all_locations:
-        store_url = poi["storeURL"]
-        if not store_url:
-            store_url = "https://www.take5oilchange.ca/locations/{}/{}-{}/".format(
-                poi["locationState"], poi["locationCity"], str(poi["storeId"])
-            )
+    all_locations = dom.xpath('//td[a[img[contains(@src, "location/images")]]]')
+    for poi_html in all_locations:
+        store_url = poi_html.xpath(".//a/@href")[0]
         loc_response = session.get(store_url)
         loc_dom = etree.HTML(loc_response.text)
 
-        location_name = "TAKE 5 OIL CHANGE #{}".format(str(poi["storeId"]))
-        location_name = location_name if location_name else "<MISSING>"
-        street_address = poi["streetAddress1"]
-        street_address = street_address if street_address else "<MISSING>"
-        city = poi["locationCity"]
+        location_name = "<MISSING>"
+        raw_data = loc_dom.xpath('//table//*[@class="bodycopy"]/text()')
+        raw_data = [e.strip() for e in raw_data if e.strip()]
+        if len(raw_data) > 2:
+            raw_data = raw_data[1:]
+        addr = parse_address_intl(" ".join(raw_data[:2]))
+        street_address = addr.street_address_1
+        if addr.street_address_2:
+            street_address += " " + addr.street_address_2
+        city = addr.city
         city = city if city else "<MISSING>"
-        state = poi["locationState"]
+        state = addr.state
         state = state if state else "<MISSING>"
-        zip_code = poi["locationPostalCode"]
+        zip_code = addr.postcode
         zip_code = zip_code if zip_code else "<MISSING>"
-        country_code = poi["locationCountry"]
-        country_code = country_code if country_code else "<MISSING>"
-        store_number = poi["storeId"]
-        phone = poi["phone"]
-        phone = phone if phone else "<MISSING>"
+        country_code = "<MISSING>"
+        store_number = "<MISSING>"
+        phone = raw_data[-1]
+        if city in phone:
+            phone = "<MISSING>"
         location_type = "<MISSING>"
-        latitude = poi["lat"]
-        longitude = poi["lng"]
-        hoo = []
-        if store_url != "<MISSING>":
-            hoo = loc_dom.xpath(
-                '//div[@class="store-hours font-opensans font-16"]/p/text()'
-            )
-            hoo = [" ".join([s for s in e.split()]) for e in hoo if e.strip()]
-        hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
+        latitude = "<MISSING>"
+        longitude = "<MISSING>"
+        hours_of_operation = "<MISSING>"
 
         item = [
             domain,
@@ -104,8 +98,9 @@ def fetch_data():
             longitude,
             hours_of_operation,
         ]
-
-        items.append(item)
+        if street_address not in scraped_items:
+            scraped_items.append(street_address)
+            items.append(item)
 
     return items
 
