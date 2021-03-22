@@ -1,18 +1,10 @@
 import csv
-import json
 from bs4 import BeautifulSoup
 from sgrequests import SgRequests
 import re
 
 MISSING = "<MISSING>"
 session = SgRequests()
-
-# options = Options()
-# options.add_argument("--headless")
-# options.add_argument("--no-sandbox")
-# options.add_argument("--disable-dev-shm-usage")
-# # driver = webdriver.Chrome("C:\chromedriver.exe", options=options)
-# driver = webdriver.Chrome("chromedriver", options=options)
 
 
 def get_locations():
@@ -87,6 +79,7 @@ def fetch_data():
     page_urls = get_locations()
 
     for page_url in page_urls:
+        print(page_url)
         response = session.get(page_url)
         bs4 = BeautifulSoup(response.text, features="lxml")
 
@@ -120,16 +113,22 @@ def fetch_data():
             else MISSING
         )
 
-        hours_title = bs4.select_one("p:contains(Hours)") or bs4.select_one(
-            "p:contains(Open)"
+        hours_title = bs4.select_one("p:-soup-contains(Hours)") or bs4.select_one(
+            "p:-soup-contains(Open)"
         )
 
-        weekday_tag, weekend_tag, *rest = hours_title.fetchNextSiblings()
+        if hours_title is None:
+            continue
 
-        weekday_hours = re.sub("\s\s*", " ", weekday_tag.text)
-        weekend_hours = re.sub("\s\s*", " ", weekend_tag.text)
+        if "Open" in hours_title.text:
+            hours_of_operation = hours_title.text
+        else:
+            weekday_tag, weekend_tag, *rest = hours_title.fetchNextSiblings()
 
-        hours_of_operation = f"{weekday_hours},{weekend_hours}"
+            weekday_hours = re.sub("\s\s*", " ", weekday_tag.text)
+            weekend_hours = re.sub("\s\s*", " ", weekend_tag.text)
+
+            hours_of_operation = f"{weekday_hours},{weekend_hours}"
 
         location_type = MISSING
         latitude = MISSING
@@ -160,4 +159,3 @@ def scrape():
 
 
 scrape()
-
