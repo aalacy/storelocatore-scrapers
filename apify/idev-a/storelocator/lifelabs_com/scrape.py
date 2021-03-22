@@ -101,33 +101,24 @@ def fetch_data():
         if not res or not res["entity"]:
             continue
 
-        try:
-            for _ in res["entity"]:
-                search.found_location_at(
-                    _["locationCoordinate"]["latitude"],
-                    _["locationCoordinate"]["longitude"],
-                )
-                _["state"] = _["locationAddress"]["province"]
-                _["city"] = _["locationAddress"]["city"]
-                _["postal_code"] = _["locationAddress"]["postalCode"]
-                _["street"] = _["locationAddress"]["street"].split("-")[-1]
-                _["country"] = "CA"
-                _["lat"] = _["locationCoordinate"]["latitude"]
-                _["lng"] = _["locationCoordinate"]["longitude"]
-                yield _
-                found += 1
-            total += found
-            progress = (
-                str(round(100 - (search.items_remaining() / maxZ * 100), 2)) + "%"
+        for _ in res["entity"]:
+            search.found_location_at(
+                _["locationCoordinate"]["latitude"],
+                _["locationCoordinate"]["longitude"],
             )
+            _["state"] = _["locationAddress"]["province"]
+            _["city"] = _["locationAddress"]["city"]
+            _["postal_code"] = _["locationAddress"]["postalCode"]
+            _["street"] = _["locationAddress"]["street"].split("-")[-1]
+            _["country"] = "CA"
+            _["lat"] = _["locationCoordinate"]["latitude"]
+            _["lng"] = _["locationCoordinate"]["longitude"]
+            yield _
+            found += 1
+        total += found
+        progress = str(round(100 - (search.items_remaining() / maxZ * 100), 2)) + "%"
 
-            logger.info(
-                f"{code} | found: {found} | total: {total} | progress: {progress}"
-            )
-        except:
-            import pdb
-
-            pdb.set_trace()
+        logger.info(f"{code} | found: {found} | total: {total} | progress: {progress}")
 
 
 def human_hours(k):
