@@ -33,12 +33,16 @@ def fetch_data():
         for link in links:
             page_url = locator_domain + link.xpath("./@href")[0]
             soup1 = html.fromstring(session.get(page_url, headers=_headers).text)
-            blocks = soup1.xpath("//table//table//table//tr[4]/td//text()")
+            blocks = [
+                _.strip()
+                for _ in soup1.xpath("//table//table//table//tr[4]/td//text()")
+                if _.strip()
+            ]
             log.info(page_url)
             yield SgRecord(
                 page_url=page_url,
                 location_name=soup1.xpath("//h3/text()")[0],
-                street_address=" ".join(blocks[:-3]),
+                street_address=" ".join(blocks[:-2]),
                 city=blocks[-2].split(",")[0].strip(),
                 state=blocks[-2].split(",")[1].strip().split(" ")[0],
                 zip_postal=blocks[-2].split(",")[1].strip().split(" ")[1],
