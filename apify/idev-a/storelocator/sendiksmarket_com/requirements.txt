@@ -1,5 +1,4 @@
-pandas==1.2.2
-sgvalidator==0.0.71
 us==1.0.0
+sgvalidator==0.0.71
 sgscrape==0.0.22
-sgrequests==0.1.7
+sgrequests==0.1.8
