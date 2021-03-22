@@ -4,6 +4,8 @@ import json
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from tenacity import retry, stop_after_attempt
+from tenacity import stop
 
 logger = SgLogSetup().get_logger("ihop_com")
 session = SgRequests()
@@ -64,72 +66,68 @@ def get(entity, key):
     return entity.get(key, MISSING) or MISSING
 
 
+@retry(stop=stop_after_attempt(3))
 def fetch_location(location, session):
     locator_domain = "ihop.com"
-    store_number = None
+    store_number = location["fid"]
 
-    try:
-        store_number = location["fid"]
+    page_url = f"https://restaurants.ihop.com/data/{store_number}/"
+    (data,) = session.get(page_url).json()
 
-        page_url = f"https://restaurants.ihop.com/data/{store_number}/"
-        (data,) = session.get(page_url).json()
+    if not us_ca_pr_only(data):
+        return None
 
-        if not us_ca_pr_only(data):
-            return None
+    location_name = get(data, "location_name")
+    location_type = "Restaurant"
 
-        location_name = get(data, "location_name")
-        location_type = "Restaurant"
+    street_address = get(data, "address_1")
+    sub_address = get(data, "address_2")
+    if sub_address != MISSING:
+        street_address += f", {sub_address}"
 
-        street_address = get(data, "address_1")
-        sub_address = get(data, "address_2")
-        if sub_address != MISSING:
-            street_address += f", {sub_address}"
+    city = get(data, "city")
+    state = get(data, "region")
+    postal = get(data, "post_code")
+    country_code = get(data, "country")
 
-        city = get(data, "city")
-        state = get(data, "region")
-        postal = get(data, "post_code")
-        country_code = get(data, "country")
+    lat = get(data, "lat")
+    lng = get(data, "lng")
 
-        lat = get(data, "lat")
-        lng = get(data, "lng")
+    phone = get(data, "local_phone")
 
-        phone = get(data, "local_phone")
+    hours = []
+    days = data["hours_sets"]["primary"].get("days")
 
-        hours = []
-        days = data["hours_sets"]["primary"].get("days")
+    if days:
+        for day in days:
+            if isinstance(days[day], list):
+                opening = days[day][0]["open"]
+                close = days[day][0]["close"]
+                hours.append(f"{day}: {opening}-{close}")
+            else:
+                hour = days[day]
+                hours.append(f"{day}: {hour}")
 
-        if days:
-            for day in days:
-                if isinstance(days[day], list):
-                    opening = days[day][0]["open"]
-                    close = days[day][0]["close"]
-                    hours.append(f"{day}: {opening}-{close}")
-                else:
-                    hour = days[day]
-                    hours.append(f"{day}: {hour}")
+        hours_of_operation = ",".join(hours)
+    else:
+        hours_of_operation = MISSING
 
-            hours_of_operation = ",".join(hours)
-        else:
-            hours_of_operation = MISSING
-
-        return {
-            "locator_domain": locator_domain,
-            "store_number": store_number,
-            "page_url": page_url,
-            "location_name": location_name,
-            "location_type": location_type,
-            "street_address": street_address,
-            "city": city,
-            "state": state,
-            "zip": postal,
-            "country_code": country_code,
-            "latitude": lat,
-            "longitude": lng,
-            "phone": phone,
-            "hours_of_operation": hours_of_operation,
-        }
-    except Exception as e:
-        logger.error(f"{e} >>> {store_number}")
+    return {
+        "locator_domain": locator_domain,
+        "store_number": store_number,
+        "page_url": page_url,
+        "location_name": location_name,
+        "location_type": location_type,
+        "street_address": street_address,
+        "city": city,
+        "state": state,
+        "zip": postal,
+        "country_code": country_code,
+        "latitude": lat,
+        "longitude": lng,
+        "phone": phone,
+        "hours_of_operation": hours_of_operation,
+    }
 
 
 def fetch_data():
@@ -141,9 +139,12 @@ def fetch_data():
         ]
 
         for future in as_completed(futures):
-            poi = future.result()
-            if poi:
-                yield [poi[field] for field in FIELDS]
+            try:
+                poi = future.result()
+                if poi:
+                    yield [poi[field] for field in FIELDS]
+            except Exception as e:
+                logger.error(e)
 
 
 def scrape():
