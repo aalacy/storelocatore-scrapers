@@ -52,7 +52,7 @@ def fetch_data():
     all_locations = dom.xpath('//div[@class="blog-post"]')
     for poi_html in all_locations:
         store_url = start_url
-        location_name = poi_html.xpath('.//div[contains(@class, "blog-name")]/text()')
+        location_name = poi_html.xpath('.//*[contains(@class, "blog-name")]/text()')
         location_name = location_name[0] if location_name else "<MISSING>"
         raw_data = poi_html.xpath(
             './/div[@class="text-medium text-white tz-text"]/text()'

@@ -62,6 +62,11 @@ def fetch_data():
                 if re.search(r"Store Hours", bb, re.IGNORECASE):
                     hours = block[x + 1 :]
                     break
+            coord = ["", ""]
+            try:
+                coord = _.a["href"].split("/@")[1].split("/data")[0].split(",")
+            except:
+                pass
             yield SgRecord(
                 page_url=base_url,
                 location_name=block[0],
@@ -71,6 +76,8 @@ def fetch_data():
                 zip_postal=state_zip[-1],
                 country_code="US",
                 phone=phone,
+                latitude=coord[0],
+                longitude=coord[1],
                 locator_domain=locator_domain,
                 hours_of_operation=_valid("; ".join(hours)),
             )
