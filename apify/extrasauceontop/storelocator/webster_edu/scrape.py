@@ -24,6 +24,7 @@ headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
 
+
 def getdata():
     response = session.get(
         "https://www.webster.edu/_resources/dmc/php/locations.php?datasource=locations&type=listing&returntype=json&xpath=items%2Fitem&items_per_page=100&page=1&search_phrase=&isinternational%5B%5D=United%20States",
@@ -301,6 +302,7 @@ def getdata():
     )
 
     return df
+
 
 df = getdata()
 
