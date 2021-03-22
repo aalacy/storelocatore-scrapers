@@ -84,7 +84,7 @@ def get_data(url):
                 line = f"{days} - Closed"
             tmp.append(line)
         hours_of_operation = ";".join(tmp) or "<MISSING>"
-        print(hours_of_operation)
+
         row = [
             locator_domain,
             page_url,
