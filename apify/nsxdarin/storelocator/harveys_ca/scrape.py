@@ -78,13 +78,6 @@ def fetch_data():
             r2.encoding = "utf-8"
         lines = r2.iter_lines(decode_unicode=True)
         for line2 in lines:
-            if '"name": "storeUrlSlug_EN",' in line2:
-                g = next(lines)
-                purl = (
-                    "https://www.harveys.ca/en/restaurants/"
-                    + g.split('"value": "')[1].split('"')[0]
-                    + ".html"
-                )
             if '"storeNumber": ' in line2:
                 store = line2.split('"storeNumber": ')[1].split(",")[0]
             if '"storeName": "' in line2:
@@ -119,6 +112,15 @@ def fetch_data():
                     hours = hrs
                 else:
                     hours = hours + "; " + hrs
+        purl = (
+            "https://www.harveys.ca/en/locations/"
+            + store
+            + "/"
+            + city.replace(" ", "-").lower().replace(".", "").replace("'", "")
+            + "-"
+            + add.replace(" ", "-").lower().replace(".", "").replace("'", "")
+            + ".html"
+        )
         if zc == "":
             zc = "<MISSING>"
         if city == "":
@@ -127,23 +129,22 @@ def fetch_data():
             purl = "https://www.harveys.ca/en/locations.html"
         if phone == "":
             phone = "<MISSING>"
-        if store != "9999":
-            yield [
-                website,
-                purl,
-                name,
-                add,
-                city,
-                state,
-                zc,
-                country,
-                store,
-                phone,
-                typ,
-                lat,
-                lng,
-                hours,
-            ]
+        yield [
+            website,
+            purl,
+            name,
+            add,
+            city,
+            state,
+            zc,
+            country,
+            store,
+            phone,
+            typ,
+            lat,
+            lng,
+            hours,
+        ]
 
 
 def scrape():

@@ -74,6 +74,8 @@ def fetch_data():
         hours = loc.find("div", {"class": "list-location"}).text
         hours = hours.replace("\n", " ").strip()
 
+        hours = hours.lstrip("BRIG-207-KETCH-BREWING_KM_MENU").strip()
+
         data.append(
             [
                 "http://www.brigantine.com/",

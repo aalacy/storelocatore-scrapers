@@ -1,8 +1,10 @@
 import csv
-from lxml import etree
+from lxml import html
 from urllib.parse import urljoin
+from sgrequests import SgRequests
+from sglogging import SgLogSetup
 
-from sgselenium import SgFirefox
+logger = SgLogSetup().get_logger("postalannex_com")
 
 
 def write_output(data):
@@ -35,30 +37,35 @@ def write_output(data):
             writer.writerow(row)
 
 
+headers = {
+    "Accept-Encoding": "gzip, deflate",
+    "Accept-Language": "en-US,en;q=0.9",
+    "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.90 Safari/537.36",
+}
+session = SgRequests()
+
+
 def fetch_data():
     # Your scraper here
     items = []
-
     DOMAIN = "postalannex.com"
     start_url = "https://www.postalannex.com/locations"
-
-    with SgFirefox() as driver:
-        driver.get(start_url)
-        dom = etree.HTML(driver.page_source)
-
+    r = session.get(start_url, headers=headers)
+    dom = html.fromstring(r.text)
     all_locations = dom.xpath('//a[div[contains(text(), "Visit Website")]]/@href')
-    for url in all_locations:
-        if "18001" in url:
-            continue
-        store_url = urljoin(start_url, url)
-        with SgFirefox() as driver:
-            driver.get(store_url)
-            loc_dom = etree.HTML(driver.page_source)
+    logger.info("Number of Stores to be crawled: %s" % len(all_locations))
 
+    for url in all_locations:
+        store_url = urljoin(start_url, url)
+        r_loc = session.get(store_url, headers=headers)
+        loc_dom = html.fromstring(r_loc.text, "lxml")
+        logger.info("Pulling the data from %s" % store_url)
+        if loc_dom.xpath('//div[contains(text(), "Coming Soon")]'):
+            continue
         location_name = loc_dom.xpath('//div[@id="views_title"]/h1/text()')
         location_name = location_name[0] if location_name else "<MISSING>"
         street_address = loc_dom.xpath('//span[@itemprop="streetAddress"]/text()')
-        street_address = street_address[0] if street_address else "<MISSING>"
+        street_address = " ".join(street_address) if street_address else "<MISSING>"
         city = loc_dom.xpath('//span[@itemprop="addressLocality"]/text()')
         city = city[0] if city else "<MISSING>"
         state = loc_dom.xpath('//span[@itemprop="addressRegion"]/text()')
