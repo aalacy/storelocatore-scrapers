@@ -217,9 +217,24 @@ def fetch_data():
                         .replace(state, "")
                         .replace(",", "")
                     )
-                    phone = "<INACCESSSIBLE>"
                     hours_of_operation = " ".join(list(loc_dat.stripped_strings)[8:22])
 
+                if location_type == "Branch":
+                    phone = list(loc_dat.stripped_strings)[4]
+                else:
+                    phone = "<MISSING>"
+
+                if location_name == "Important":
+                    location_name = "RBC On Campus Laurier University"
+                if city == "RBC On Campus Laurier University":
+                    city = "Waterloo"
+                if (
+                    street_address
+                    == "This branch is temporarily closed. Please consider using Online Banking or the Mobile app to meet your banking needs during this time, or search for the next closest branch in your area."
+                ):
+                    street_address = "75 University Ave W"
+                else:
+                    pass
                 store = []
                 result_coords.append((latitude, longitude))
                 store.append(locator_domain if locator_domain else "<MISSING>")
