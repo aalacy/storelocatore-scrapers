@@ -79,11 +79,10 @@ def fetch_data():
     page_urls = get_locations()
 
     for page_url in page_urls:
-        print(page_url)
         response = session.get(page_url)
         bs4 = BeautifulSoup(response.text, features="lxml")
 
-        matched = re.search("(\d+\s.+(?:,|\\n)?.*),\s(\w{2})\s(\d{5})", bs4.text)
+        matched = re.search(r"(\d+\s.+(?:,|\\n)?.*),\s(\w{2})\s(\d{5})", bs4.text)
 
         if not matched:
             yield None
@@ -91,7 +90,7 @@ def fetch_data():
 
         location_name = bs4.select_one("h2 span").text
         address = matched.group(1)
-        address_city = re.split("\(.*\)|\\n", address)
+        address_city = re.split(r"\(.*\)|\\n", address)
         if len(address_city) == 2:
             street_address, city = address_city
         else:
@@ -105,7 +104,7 @@ def fetch_data():
         country_code = "US"
 
         phone_match = re.search(
-            "Phone:\s*\((\d{3})\).*(\d{3})-(\d{4})", bs4.text, re.IGNORECASE
+            r"Phone:\s*\((\d{3})\).*(\d{3})-(\d{4})", bs4.text, re.IGNORECASE
         )
         phone = (
             f"{phone_match.group(1)}{phone_match.group(2)}{phone_match.group(3)}"
@@ -125,8 +124,8 @@ def fetch_data():
         else:
             weekday_tag, weekend_tag, *rest = hours_title.fetchNextSiblings()
 
-            weekday_hours = re.sub("\s\s*", " ", weekday_tag.text)
-            weekend_hours = re.sub("\s\s*", " ", weekend_tag.text)
+            weekday_hours = re.sub(r"\s\s*", " ", weekday_tag.text)
+            weekend_hours = re.sub(r"\s\s*", " ", weekend_tag.text)
 
             hours_of_operation = f"{weekday_hours},{weekend_hours}"
 
