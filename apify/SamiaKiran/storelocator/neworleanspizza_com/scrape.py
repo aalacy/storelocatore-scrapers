@@ -82,7 +82,7 @@ def fetch_data():
                 longitude = temp.split("lng: eval(")[1].split(")", 1)[0]
                 store_number = temp.split("storeNumber: '")[1].split("'", 1)[0]
                 yield SgRecord(
-                    locator_domain="https://www.opticalexpress.co.uk./",
+                    locator_domain="https://www.neworleanspizza.com/",
                     page_url=page_url,
                     location_name=location_name.strip(),
                     street_address=street_address,
