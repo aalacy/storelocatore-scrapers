@@ -1,175 +1,83 @@
-import csv
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
+from sgscrape.sgpostal import parse_address_intl
 from bs4 import BeautifulSoup as bs
-from urllib.parse import urljoin
-import usaddress
+import re
 
-from util import Util  # noqa: I900
-
-myutil = Util()
-
-
-session = SgRequests()
-
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+_headers = {
+    "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
+}
 
 
 def fetch_data():
-    data = []
-
     locator_domain = "https://www.loscucos.com/"
     base_url = "https://www.loscucos.com/locations.html"
-    rr = session.get(base_url)
-    soup = bs(rr.text, "lxml")
-    locations = soup.select(
-        "div#bp_infinity div.grpelem div.Location-Buttons---Background a.Location-Buttons--Text--Glow---Black-100----Blur-10-copy"
-    )
-    for location in locations:
-        page_url = urljoin("https://www.loscucos.com", location["href"])
-        print(page_url)
-        store_number = "<MISSING>"
-        location_name = location.span.text
-        country_code = "US"
-        r1 = session.get(page_url)
-        soup1 = bs(r1.text, "lxml")
-        _name = location_name.split("@")[0].strip()
-        name_tag = soup1.select_one("img.colelem", alt=_name)
-        siblings = [_ for _ in name_tag.next_siblings if _.name]
-        imgs = []
-        for _ in siblings:
-            if _.name == "img":
-                imgs.append(_)
+    with SgRequests() as session:
+        soup = bs(session.get(base_url, headers=_headers).text, "lxml")
+        locations = soup.select(
+            "div#bp_infinity div.Location-Buttons---Background a.nonblock"
+        )
+        for link in locations:
+            location_name = link.text.split("@")[0].strip()
+            page_url = locator_domain + link["href"]
+            soup1 = bs(session.get(page_url, headers=_headers).text, "lxml")
+            title_tag = soup1.find_all(
+                "img", alt=re.compile(f"^{location_name}", re.IGNORECASE)
+            )[-2]
+            hours_of_operation = (
+                soup1.find("img", alt=re.compile(r"Business Hours", re.IGNORECASE))[
+                    "alt"
+                ]
+                .replace("Business Hours", "")
+                .strip()
+            )
+            siblings = title_tag.find_next_siblings("img")
+            address = ""
+            if siblings and len(siblings) > 2:
+                address = title_tag.find_next_siblings("img")[0]["alt"]
             else:
-                imgs += _.find_all("img")
+                address = " ".join(
+                    [_.text for _ in soup1.select("div.colelem.shared_content p")[:2]]
+                )
 
-        street_address = ""
-        city = ""
-        state = ""
-        zip = ""
-        try:
-            _address = imgs[0]["alt"]
-            address = usaddress.tag(
-                _address,
-                tag_mapping={
-                    "Recipient": "recipient",
-                    "AddressNumber": "address1",
-                    "AddressNumberPrefix": "address1",
-                    "AddressNumberSuffix": "address1",
-                    "StreetName": "address1",
-                    "StreetNamePreDirectional": "address1",
-                    "StreetNamePreModifier": "address1",
-                    "StreetNamePreType": "address1",
-                    "StreetNamePostDirectional": "address1",
-                    "StreetNamePostModifier": "address1",
-                    "StreetNamePostType": "address1",
-                    "CornerOf": "address1",
-                    "IntersectionSeparator": "address1",
-                    "LandmarkName": "address1",
-                    "USPSBoxGroupID": "address1",
-                    "USPSBoxGroupType": "address1",
-                    "USPSBoxID": "address1",
-                    "USPSBoxType": "address1",
-                    "BuildingName": "address2",
-                    "OccupancyType": "address2",
-                    "OccupancyIdentifier": "address2",
-                    "SubaddressIdentifier": "address2",
-                    "SubaddressType": "address2",
-                    "PlaceName": "city",
-                    "StateName": "state",
-                    "ZipCode": "zip_code",
-                },
+            phone = ""
+            try:
+                phone = (
+                    soup1.find("img", alt=re.compile(r"Telephone:", re.IGNORECASE))[
+                        "alt"
+                    ]
+                    .split("Telephone:")[1]
+                    .strip()
+                    .split("Fax")[0]
+                    .strip()
+                )
+            except:
+                phone = (
+                    soup1.find("p", string=re.compile(r"Telephone:"))
+                    .text.split("Telephone:")[1]
+                    .strip()
+                    .split("Fax")[0]
+                    .strip()
+                )
+
+            addr = parse_address_intl(address)
+            yield SgRecord(
+                page_url=page_url,
+                location_name=location_name,
+                street_address=addr.street_address_1,
+                city=addr.city,
+                state=addr.state,
+                zip_postal=addr.postcode,
+                country_code="US",
+                phone=phone,
+                locator_domain=locator_domain,
+                hours_of_operation=hours_of_operation,
             )
-            street_address = (
-                address[0]["address1"]
-                + " "
-                + myutil._valid1(address[0].get("address2", ""))
-            )
-            city = myutil._valid(address[0]["city"])
-            zip = myutil._valid(address[0]["zip_code"])
-            state = (
-                myutil._valid(address[0].get("state", ""))
-                .replace("None", "")
-                .replace(",", "")
-            )
-        except:
-            import pdb
-
-            pdb.set_trace()
-        phone = imgs[1]["alt"].split("Fax")[0].replace("Telephone:", "").strip()
-        location_type = "<MISSING>"
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
-        hours_of_operation = "; "
-        try:
-            _hours = imgs[2]["alt"].replace("Business Hours", "").strip().split(" ")
-            hours = []
-            hour = ""
-            for _ in _hours:
-                hour += _ + " "
-                if _.endswith("PM"):
-                    hours.append(hour.strip())
-                    hour = ""
-
-            hours_of_operation = "; ".join(hours)
-        except:
-            import pdb
-
-            pdb.set_trace()
-
-        _item = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-
-        data.append(_item)
-
-    return data
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
 
 
 if __name__ == "__main__":
-    scrape()
+    with SgWriter() as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)

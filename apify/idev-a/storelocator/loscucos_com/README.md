@@ -1,5 +1,3 @@
 There are some potential issues when running the validate.py
 
-## --ignore StoreNumberColumnValidator
-
-## --ignore CountryCodeFillRateChecker
+# --ignore CountryCodeFillRateChecker
