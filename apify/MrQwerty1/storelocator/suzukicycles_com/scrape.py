@@ -7,12 +7,29 @@ from sgzip.static import static_coordinate_list, SearchableCountries
 
 
 def write_output(data):
-    with open('data.csv', mode='w', encoding='utf8', newline='') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
+        writer = csv.writer(
+            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+        )
 
         writer.writerow(
-            ["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code",
-             "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+            [
+                "locator_domain",
+                "page_url",
+                "location_name",
+                "street_address",
+                "city",
+                "state",
+                "zip",
+                "country_code",
+                "store_number",
+                "phone",
+                "location_type",
+                "latitude",
+                "longitude",
+                "hours_of_operation",
+            ]
+        )
 
         for row in data:
             writer.writerow(row)
@@ -62,56 +79,80 @@ def get_address(line):
 def get_hours(_id):
     _tmp = []
     session = SgRequests()
-    data = {'id': _id}
-    days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+    data = {"id": _id}
+    days = [
+        "Sunday",
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday",
+    ]
 
-    r = session.post('https://suzukicycles.com/api/dealer/GetLocationInfo', data=data)
-    js = r.json()['LocationHours']
+    r = session.post("https://suzukicycles.com/api/dealer/GetLocationInfo", data=data)
+    js = r.json()["LocationHours"]
     for j in js:
-        index = j.get('DayOfWeek')
-        if j.get('Closed'):
-            _tmp.append(f'{days[index]}: Closed')
+        index = j.get("DayOfWeek")
+        if j.get("Closed"):
+            _tmp.append(f"{days[index]}: Closed")
         else:
-            start = j.get('OpenTime')
-            end = j.get('CloseTime')
-            _tmp.append(f'{days[index]}: {start} - {end}')
+            start = j.get("OpenTime")
+            end = j.get("CloseTime")
+            _tmp.append(f"{days[index]}: {start} - {end}")
 
-    return ';'.join(_tmp) or '<MISSING>'
+    return ";".join(_tmp) or "<MISSING>"
 
 
 def get_data(coord):
     rows = []
-    locator_domain = 'https://suzukicycles.com/'
-    page_url = '<MISSING>'
+    locator_domain = "https://suzukicycles.com/"
+    page_url = "<MISSING>"
     lat, lng = coord
 
     data = {
-        'itemId': '{C33D4122-B62A-48CE-9402-B3A137850A49}',
-        'center': f'{lat},{lng}',
-        'radius': '200',
-        'parameters': '{"DealerTypes":"{DA1B1E9A-5E57-4B56-8D21-5CF7B214C028}|{47B7EC43-381A-4F4D-AE13-8CDB71515CB4}|{68BB96CA-C67C-4CE5-833C-223AAF66EA32}|{EBE0DAF5-225D-4A03-B075-52DFF1F8E0F5}","MapType":"roadmap","CenterLocation":' + f'"{lat}, {lng}"' + ',"ZoomLevel":"12","SearchRadius":"200","EnableCenterMapControl":"1","EnableZoomControl":"1","EnableMapTypeControl":"1","EnableScaleControl":"1","EnableStreetViewControl":"1","Dealer_Types":"{DA1B1E9A-5E57-4B56-8D21-5CF7B214C028}|{47B7EC43-381A-4F4D-AE13-8CDB71515CB4}|{68BB96CA-C67C-4CE5-833C-223AAF66EA32}|{EBE0DAF5-225D-4A03-B075-52DFF1F8E0F5}","EnableRotateControl":"0"}'
+        "itemId": "{C33D4122-B62A-48CE-9402-B3A137850A49}",
+        "center": f"{lat},{lng}",
+        "radius": "200",
+        "parameters": '{"DealerTypes":"{DA1B1E9A-5E57-4B56-8D21-5CF7B214C028}|{47B7EC43-381A-4F4D-AE13-8CDB71515CB4}|{68BB96CA-C67C-4CE5-833C-223AAF66EA32}|{EBE0DAF5-225D-4A03-B075-52DFF1F8E0F5}","MapType":"roadmap","CenterLocation":'
+        + f'"{lat}, {lng}"'
+        + ',"ZoomLevel":"12","SearchRadius":"200","EnableCenterMapControl":"1","EnableZoomControl":"1","EnableMapTypeControl":"1","EnableScaleControl":"1","EnableStreetViewControl":"1","Dealer_Types":"{DA1B1E9A-5E57-4B56-8D21-5CF7B214C028}|{47B7EC43-381A-4F4D-AE13-8CDB71515CB4}|{68BB96CA-C67C-4CE5-833C-223AAF66EA32}|{EBE0DAF5-225D-4A03-B075-52DFF1F8E0F5}","EnableRotateControl":"0"}',
     }
 
     session = SgRequests()
-    r = session.post('https://suzukicycles.com/api/dealer/DealerLookup', data=data)
+    r = session.post("https://suzukicycles.com/api/dealer/DealerLookup", data=data)
     js = r.json()
 
     for j in js:
-        location_name = j.get('Name')
-        line = j.get('Address')
-        street_address, city, state, postal = get_address(line.replace('\n', ' '))
-        country_code = 'US'
-        store_number = j.get('LocationID') or '<MISSING>'
-        phone = j.get('PhoneFormatted') or '<MISSING>'
+        location_name = j.get("Name")
+        line = j.get("Address")
+        street_address, city, state, postal = get_address(line.replace("\n", " "))
+        country_code = "US"
+        store_number = j.get("LocationID") or "<MISSING>"
+        phone = j.get("PhoneFormatted") or "<MISSING>"
         try:
-            latitude, longitude = j.get('Location').split(',')
+            latitude, longitude = j.get("Location").split(",")
         except:
-            latitude, longitude = '<MISSING>', '<MISSING>'
-        location_type = '<MISSING>'
-        hours_of_operation = '<MISSING>'
+            latitude, longitude = "<MISSING>", "<MISSING>"
+        location_type = "<MISSING>"
+        hours_of_operation = "<MISSING>"
 
-        row = [locator_domain, page_url, location_name, street_address, city, state, postal,
-               country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation]
+        row = [
+            locator_domain,
+            page_url,
+            location_name,
+            street_address,
+            city,
+            state,
+            postal,
+            country_code,
+            store_number,
+            phone,
+            location_type,
+            latitude,
+            longitude,
+            hours_of_operation,
+        ]
         rows.append(row)
 
     return rows
@@ -141,13 +182,13 @@ def fetch_data():
             try:
                 val = future.result()
             except:
-                val = '<MISSING>'
+                val = "<MISSING>"
             hours[_id] = val
 
     for t in _tmp:
         _id = t[8]
-        if _id != '<MISSING>':
-            t[-1] = hours.get(_id) or '<MISSING>'
+        if _id != "<MISSING>":
+            t[-1] = hours.get(_id) or "<MISSING>"
         out.append(t)
 
     return out
