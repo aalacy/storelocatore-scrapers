@@ -1,7 +1,7 @@
 import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
-from sgscrape import sgpostal as parser
+from sgscrape.sgpostal import parse_address, International_Parser, USA_Best_Parser
 
 session = SgRequests()
 
@@ -36,14 +36,6 @@ def write_output(data):
             writer.writerow(row)
 
 
-def parse_usa(x):
-    return parser.parse_address_usa(x)
-
-
-def parse_intl(x):
-    return parser.parse_address_intl(x)
-
-
 def fetch_data():
     us_url = "https://hosted.where2getit.com/skechers/ajax?&xml_request=%3Crequest%3E%3Cappkey%3E8C3F989C-6D95-11E1-9DE0-BB3690553863%3C%2Fappkey%3E%3Cformdata+id%3D%22getlist%22%3E%3Cobjectname%3EStoreLocator%3C%2Fobjectname%3E%3Corder%3Erank%3C%2Forder%3E%3Climit%3E1000%3C%2Flimit%3E%3Cwhere%3E%3Ccountry%3E%3Ceq%3EUS%3C%2Feq%3E%3C%2Fcountry%3E%3C%2Fwhere%3E%3C%2Fformdata%3E%3C%2Frequest%3E"
     can_url = "https://hosted.where2getit.com/skechers/ajax?&xml_request=%3Crequest%3E%3Cappkey%3E8C3F989C-6D95-11E1-9DE0-BB3690553863%3C%2Fappkey%3E%3Cformdata+id%3D%22getlist%22%3E%3Cobjectname%3EStoreLocator%3C%2Fobjectname%3E%3Corder%3Erank%3C%2Forder%3E%3Climit%3E200%3C%2Flimit%3E%3Cwhere%3E%3Ccountry%3E%3Ceq%3ECA%3C%2Feq%3E%3C%2Fcountry%3E%3C%2Fwhere%3E%3C%2Fformdata%3E%3C%2Frequest%3E"
@@ -55,7 +47,7 @@ def fetch_data():
     all_store_data = []
     for url in url_arr:
         xml_cont = session.get(url)
-        xml_tree = BeautifulSoup(xml_cont.content, features="lxml")
+        xml_tree = BeautifulSoup(xml_cont.text, "lxml")
 
         locs = xml_tree.find_all("poi")
         for loc in locs:
@@ -116,9 +108,9 @@ def fetch_data():
                         raw_addr.append(i)
                 raw_addr = " ".join(raw_addr)
                 if url == us_url:
-                    parsed = parse_usa(raw_addr)
+                    parsed = parse_address(USA_Best_Parser(), raw_addr)
                 else:
-                    parsed = parse_intl(raw_addr)
+                    parsed = parse_address(International_Parser(), raw_addr)
 
                 street_address = parsed.street_address_1
                 if parsed.street_address_2:
@@ -159,4 +151,5 @@ def scrape():
     write_output(data)
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()
