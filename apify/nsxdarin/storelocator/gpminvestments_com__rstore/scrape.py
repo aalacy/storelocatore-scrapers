@@ -58,32 +58,69 @@ def fetch_data():
             items = line.split('"marker_id":"')
             for item in items:
                 if '"title":"' in item:
+                    add = ""
+                    city = ""
+                    state = ""
+                    zc = ""
+                    rawadd = ""
                     store = item.split('"')[0]
-                    rawadd = (
-                        item.split(',"address":"')[1]
-                        .split('"')[0]
-                        .replace("  ", " ")
-                        .replace("  ", " ")
-                    )
-                    name = item.split('"title":"')[1].split('"')[0]
+                    rawadd = item.split(',"address":"')[1].split('"')[0]
+                    rawadd = rawadd.replace(",", "").replace("\\t", " ")
+                    name = item.split('"title":"')[1].split('"')[0].replace("\\t", "")
                     lat = item.split('"lat":"')[1].split('"')[0]
                     lng = item.split('"lng":"')[1].split('"')[0]
-                    try:
+                    if (
+                        "3016 North John B Dennis" not in rawadd
+                        and "5010 S Highway 69" not in rawadd
+                    ):
                         add = usaddress.tag(rawadd)
-                        address = (
-                            add[0]["AddressNumber"]
-                            + " "
-                            + add[0]["StreetName"]
-                            + " "
-                            + add[0]["StreetNamePostType"]
-                        )
-                        if add == "":
+                        try:
+                            address = (
+                                add[0]["AddressNumber"] + " " + add[0]["StreetName"]
+                            )
+                        except:
                             add = "<INACCESSIBLE>"
-                        city = add[0]["PlaceName"]
-                        state = add[0]["StateName"]
-                        zc = add[0]["ZipCode"]
-                    except:
-                        pass
+                        try:
+                            add = add + " " + add[0]["StreetNamePostType"]
+                        except:
+                            pass
+                        if add == "":
+                            address = "<INACCESSIBLE>"
+                        try:
+                            city = add[0]["PlaceName"]
+                        except:
+                            city = "<INACCESSIBLE>"
+                        try:
+                            state = add[0]["StateName"]
+                        except:
+                            state = "<INACCESSIBLE>"
+                        try:
+                            zc = add[0]["ZipCode"]
+                        except:
+                            zc = "<INACCESSIBLE>"
+                    if store == "3003":
+                        add = "832 North State of Franklin Road"
+                        city = "Johnson City"
+                        state = "TN"
+                        zc = "<INACCESSIBLE>"
+                    if store == "3004":
+                        add = "3016 North John B Dennis Highway"
+                        city = "Kingsport"
+                        state = "TN"
+                        zc = "<INACCESSIBLE>"
+                    if store == "3319":
+                        add = "5010 S Highway 69/5423 S Hwy 69"
+                        city = "McAlester"
+                        state = "OK"
+                        zc = "74501"
+                    state = state.replace(" USA", "").replace(" US", "")
+                    add2 = item.split(',"address":"')[1].split('"')[0]
+                    add2 = add2.replace(", USA", "").replace(", ", ",")
+                    if add2.count(",") == 2:
+                        address = add2.split(",")[0]
+                        city = add2.split(",")[1]
+                        state = add2.split(",")[2]
+                        zc = "<INACCESSIBLE>"
                     yield [
                         website,
                         loc,

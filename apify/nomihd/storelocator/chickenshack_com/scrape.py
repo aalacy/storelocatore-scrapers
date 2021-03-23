@@ -93,7 +93,6 @@ def fetch_data():
             .strip()
             .replace("<br />", "")
             .strip()
-            .replace("\n", " ")
         )
         try:
             address = address.split("United States")[0].strip()
@@ -105,39 +104,26 @@ def fetch_data():
         except:
             pass
 
-        if len(address.split(",")) == 2:
-            street_address = address.split(",")[0].strip()
-            city = location_name.split("-")[0].strip()
-            street_address = street_address.replace(city, "").strip()
-            state = address.split(",")[1].strip().split(" ")[0].strip()
-            zip = address.split(",")[1].strip().split(" ")[-1].strip()
-            if not zip.isdigit():
-                zip = "<MISSING>"
-
-        elif len(address.split(",")) == 3:
-            street_address = address.split(",")[0].strip()
-            city = address.split(",")[1].strip()
-            state = address.split(",")[2].strip().split(" ")[0].strip()
-            zip = address.split(",")[2].strip().split(" ")[-1].strip()
-
-        else:
-            street_address = address
-            city = location_name.split("-")[0].strip()
-            street_address = street_address.replace(city, "").strip()
-            state = address.rsplit(" ")[-2].strip()
-            zip = address.rsplit(" ")[-1].strip()
-            if not zip.isdigit():
-                zip = "<MISSING>"
-            street_address = (
-                street_address.replace(state, "").strip().replace(zip, "").strip()
-            )
-
-        if len(state) != 2:
-            state = "<MISSING>"
+        address = address.split("\n")
+        street_address = address[0].strip()
+        city = address[1].strip().split(",")[0].strip()
+        state = address[1].strip().split(",")[-1].strip()
+        zip = address[2].strip()
 
         country_code = "<MISSING>"
         if us.states.lookup(state):
             country_code = "US"
+        else:
+            add_from_desc = (
+                store["description"]
+                .split("<strong>Address:</strong>")[1]
+                .strip()
+                .split("<")[0]
+                .strip()
+            )
+            state = add_from_desc.split(",")[-1].strip().split(" ")[0].strip()
+            if us.states.lookup(state):
+                country_code = "US"
 
         if street_address == "" or street_address is None:
             street_address = "<MISSING>"

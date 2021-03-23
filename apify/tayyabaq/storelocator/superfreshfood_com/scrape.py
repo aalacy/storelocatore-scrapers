@@ -1,5 +1,7 @@
 import csv
 
+from bs4 import BeautifulSoup
+
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -40,6 +42,7 @@ def fetch_data():
         "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36"
     }
     page = 0
+
     while True:
         data = session.get(
             "https://www.keyfood.com/store/keyFood/en/store-locator?q=11756&page="
@@ -66,7 +69,18 @@ def fetch_data():
             store.append("US")
             store.append(store_data["name"])
             store.append(store_data["phone"] if store_data["phone"] else "<MISSING>")
-            store.append("<MISSING>")
+
+            page_url = store_data["siteUrl"] + store_data["url"].split("?")[0]
+
+            req = session.get(page_url, headers=headers)
+            base = BeautifulSoup(req.text, "lxml")
+            try:
+                loc_type = base.find(class_="banner__component simple-banner").img[
+                    "title"
+                ]
+            except:
+                loc_type = "<MISSING>"
+            store.append(loc_type)
             store.append(store_data["latitude"])
             store.append(store_data["longitude"])
             try:
@@ -76,7 +90,7 @@ def fetch_data():
             except:
                 hours = "<MISSING>"
             store.append(hours.strip() if hours else "<MISSING>")
-            store.append(store_data["siteUrl"] + store_data["url"].split("?")[0])
+            store.append(page_url)
             yield store
         if len(data) < 250:
             break

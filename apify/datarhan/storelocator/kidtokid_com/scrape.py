@@ -39,9 +39,10 @@ def fetch_data():
     session = SgRequests()
 
     items = []
+    scraped_items = []
 
     DOMAIN = "kidtokid.com"
-    start_url = "https://kidtokid.com/global/gen/model/search?include_classes=sitefile%2Caddress&take=6000&sort_columns=name%20ASC&location_group_ids=2&country=US&class_string=location&start_of_hour=2021-02-04%2014%3A00%3A00"
+    start_url = "https://kidtokid.com/global/gen/model/search?include_classes=sitefile,address&take=6000&class_string=location"
 
     response = session.get(start_url)
     data = json.loads(response.text)
@@ -70,6 +71,13 @@ def fetch_data():
         hours_of_operation = (
             poi["c_store-hours"].replace("\n", " ").replace("\t", " ").strip()
         )
+        if not hours_of_operation:
+            hours_of_operation = (
+                poi["hours_of_operation"].replace("\n", " ").replace("\t", " ")
+            )
+        if not hours_of_operation:
+            location_type = "coming soon"
+            hours_of_operation = "<MISSING>"
 
         item = [
             DOMAIN,
@@ -88,7 +96,9 @@ def fetch_data():
             hours_of_operation,
         ]
 
-        items.append(item)
+        if store_number not in scraped_items:
+            scraped_items.append(store_number)
+            items.append(item)
 
     return items
 

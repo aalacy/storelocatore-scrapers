@@ -40,6 +40,7 @@ def fetch_data():
     session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
 
     items = []
+    scraped_items = []
 
     DOMAIN = "flynnstire.com"
     start_url = "https://www.flynnstire.com/stores/"
@@ -47,8 +48,13 @@ def fetch_data():
     response = session.get(start_url)
     dom = etree.HTML(response.text)
 
-    all_locations = dom.xpath('//a[contains(text(), "View Details")]/@href')
-    for store_url in list(set(all_locations)):
+    all_locations = dom.xpath(
+        '//table[@class="table table-bordered table-striped table-location"]/tbody/tr'
+    )
+    for poi_html in all_locations:
+        store_url = poi_html.xpath('.//a[contains(text(), "View Details")]/@href')[0]
+        if store_url in scraped_items:
+            continue
         loc_response = session.get(store_url)
         loc_dom = etree.HTML(loc_response.text)
 
@@ -62,7 +68,7 @@ def fetch_data():
         state = loc_dom.xpath(
             '//span[@class="retailer-name"]/following-sibling::span//text()'
         )[0].split(", ")[-1]
-        zip_code = "<MISSING>"
+        zip_code = poi_html.xpath("td[2]/text()")[-1].split()[-1]
         geo = re.findall(r"latLng:\[(.+?)\],", loc_response.text)[0].split(",")
         latitude = geo[0]
         longitude = geo[1]
@@ -92,8 +98,9 @@ def fetch_data():
             longitude,
             hours_of_operation,
         ]
-
-        items.append(item)
+        if store_url not in scraped_items:
+            scraped_items.append(store_url)
+            items.append(item)
 
     return items
 

@@ -1,10 +1,7 @@
 import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
-from sgscrape.sgpostal import (
-    International_Parser,
-    parse_address,
-)
+from sgscrape.sgpostal import parse_address_intl
 
 session = SgRequests()
 headers = {
@@ -59,13 +56,14 @@ def fetch_data():
         name = ""
         add = ""
         city = ""
-        state = ""
+        state = "<MISSING>"
         zc = ""
         store = "<MISSING>"
         phone = "<MISSING>"
         lat = ""
         lng = ""
         hours = "<MISSING>"
+        rawadd = ""
         r2 = session.get(loc, headers=headers)
         for line2 in r2.iter_lines():
             line2 = str(line2.decode("utf-8"))
@@ -81,11 +79,16 @@ def fetch_data():
                 lng = line2.split('longitude" content="')[1].split('"')[0]
             if '<div class="r"><b>' in line2:
                 rawadd = line2.split('<div class="r"><b>')[1].split("<")[0]
-                addr = parse_address(rawadd, International_Parser())
+                addr = parse_address_intl(rawadd)
                 city = addr.city
                 zc = addr.postcode
                 add = addr.street_address_1
-                state = "<MISSING>"
+        if city == "" or city is None:
+            city = "<MISSING>"
+        if zc == "" or zc is None:
+            zc = "<MISSING>"
+        if add == "" or add is None:
+            add = "<MISSING>"
         yield [
             website,
             loc,

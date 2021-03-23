@@ -1,1 +1,1 @@
-sgrequests==0.0.16
+sgrequests==0.1.8

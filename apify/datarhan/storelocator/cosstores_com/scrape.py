@@ -2,7 +2,7 @@ import csv
 from lxml import etree
 
 from sgrequests import SgRequests
-from sgscrape.sgpostal import International_Parser, parse_address
+from sgscrape.sgpostal import parse_address, International_Parser
 
 
 def write_output(data):
@@ -61,8 +61,7 @@ def fetch_data():
             raw_address = " ".join(
                 [elem.strip() for elem in raw_address if elem.strip()]
             )
-            print(raw_address)
-            parsed_adr = parse_address(raw_address, International_Parser())
+            parsed_adr = parse_address(International_Parser(), raw_address)
             street_address = parsed_adr.street_address_1
             city = parsed_adr.city
             city = city if city else "<MISSING>"
@@ -77,7 +76,14 @@ def fetch_data():
             location_type = "<MISSING>"
             latitude = "<MISSING>"
             longitude = "<MISSING>"
-            hours_of_operation = "<MISSING>"
+            hours_of_operation = poi_html.xpath(
+                './/p[contains(text(), "Opening Hours")]/text()'
+            )
+            hours_of_operation = (
+                " ".join(hours_of_operation[1:]).split("Special")[0]
+                if hours_of_operation
+                else "<MISSING>"
+            )
 
             item = [
                 DOMAIN,

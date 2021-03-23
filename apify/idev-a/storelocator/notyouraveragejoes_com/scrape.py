@@ -84,8 +84,9 @@ def fetch_data():
             longitude = soup2.select_one("meta[property='place:location:longitude']")[
                 "content"
             ]
-            hours = soup2.select_one("span.location__hours").text[1:].strip().split("|")
-            hours_of_operation = [x for x in hours if "closed" not in x]
+            hours_of_operation = (
+                soup2.select_one("span.location__hours").text[1:].strip().split("|")
+            )
             if len(hours_of_operation) == 0:
                 hours_of_operation = "Temporarily closed"
             else:

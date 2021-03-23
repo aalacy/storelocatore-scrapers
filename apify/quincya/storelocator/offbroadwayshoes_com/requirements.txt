@@ -1,3 +1,6 @@
-lxml==4.3.3
-beautifulsoup4==4.7.1
-sgselenium
+lxml==4.6.2
+beautifulsoup4==4.9.3
+selenium==3.141.0
+sglogging==0.0.4
+sgselenium==0.0.15
+tenacity==6.3.1

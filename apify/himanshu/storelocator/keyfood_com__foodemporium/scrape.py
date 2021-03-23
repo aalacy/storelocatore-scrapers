@@ -1,8 +1,14 @@
 import csv
 
+from bs4 import BeautifulSoup
+
+from sglogging import SgLogSetup
+
 from sgrequests import SgRequests
 
 session = SgRequests()
+
+log = SgLogSetup().get_logger("keyfood.com")
 
 
 def write_output(data):
@@ -66,7 +72,22 @@ def fetch_data():
             store.append("US")
             store.append(store_data["name"])
             store.append(store_data["phone"] if store_data["phone"] else "<MISSING>")
-            store.append("<MISSING>")
+
+            page_url = store_data["siteUrl"] + store_data["url"].split("?")[0]
+
+            log.info(page_url)
+
+            req = session.get(page_url, headers=headers)
+            base = BeautifulSoup(req.text, "lxml")
+
+            try:
+                loc_type = base.find(class_="banner__component simple-banner").img[
+                    "title"
+                ]
+            except:
+                loc_type = "<MISSING>"
+
+            store.append(loc_type)
             store.append(store_data["latitude"])
             store.append(store_data["longitude"])
             try:
@@ -76,7 +97,7 @@ def fetch_data():
             except:
                 hours = "<MISSING>"
             store.append(hours.strip() if hours else "<MISSING>")
-            store.append(store_data["siteUrl"] + store_data["url"].split("?")[0])
+            store.append(page_url)
             yield store
         if len(data) < 250:
             break

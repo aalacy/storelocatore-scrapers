@@ -1,4 +1,3 @@
-import re
 import csv
 from lxml import etree
 
@@ -85,15 +84,18 @@ def fetch_data():
         phone = phone[0] if phone else "<MISSING>"
         location_type = "<MISSING>"
         location_type = location_type if location_type else "<MISSING>"
-        latitude = re.findall(r"google.maps.LatLng\((.+)\);", store_response.text)[
-            0
-        ].split(",")[0]
-        longitude = re.findall(r"google.maps.LatLng\((.+)\);", store_response.text)[
-            0
-        ].split(",")[1]
+        geo = store_dom.xpath('//img[@id="mapimage"]/@src')[0].split("=")[-1].split(",")
+        latitude = geo[0]
+        longitude = geo[1]
         hours_of_operation = store_dom.xpath('//span[@class="phoneandhours"]/p/text()')
         hours_of_operation = (
             ", ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
+        )
+        hours_of_operation = hours_of_operation.replace(
+            "Regular and after hours medical care, ", ""
+        )
+        hours_of_operation = hours_of_operation.replace(
+            ", including weekends and holidays", ""
         )
 
         item = [

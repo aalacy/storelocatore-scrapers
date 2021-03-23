@@ -3,10 +3,7 @@ from sgrequests import SgRequests
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 import json
 from sglogging import SgLogSetup
-from sgscrape.sgpostal import (
-    International_Parser,
-    parse_address,
-)
+from sgscrape.sgpostal import parse_address_intl
 
 logger = SgLogSetup().get_logger("costa_co_uk__business__costa-express")
 
@@ -71,7 +68,7 @@ def fetch_data():
                 + item["storeAddress"]["addressLine3"]
             )
             rawadd = rawadd.strip()
-            addr = parse_address(rawadd, International_Parser())
+            addr = parse_address_intl(rawadd)
             city = addr.city
             zc = addr.postcode
             add = addr.street_address_1
@@ -79,8 +76,11 @@ def fetch_data():
             name = item["storeNameExternal"]
             if name == "":
                 name = typ
-            if "London" in city:
-                city = "London"
+            try:
+                if "London" in city:
+                    city = "London"
+            except:
+                pass
             country = "GB"
             lng = item["longitude"]
             website = "costa.co.uk/business/costa-express"
@@ -164,9 +164,17 @@ def fetch_data():
                 city = "Hempstead Valley"
             if "Belfast" in add:
                 city = "Belfast"
+            if add is None:
+                add = "<MISSING>"
+            if city is None:
+                city = "<MISSING>"
+            if zc is None:
+                zc = "<MISSING>"
             addinfo = add + city + zc
             if "Mon: -; Tue: -; Wed: -; Thu: -; Fri: -; Sat: -; Sun: -" in hours:
                 hours = "<MISSING>"
+            if "Bideford" in name:
+                city = "Bideford"
             if store not in ids and addinfo not in adds:
                 adds.append(addinfo)
                 ids.append(store)
@@ -274,12 +282,14 @@ def fetch_data():
                     hours = "<MISSING>"
                 if phone == "":
                     phone = "<MISSING>"
-                if add == "":
+                if add == "" or add is None:
                     add = "<MISSING>"
                 if city == "":
                     city = item["storeAddress"]["addressLine3"]
-                if city == "":
+                if city == "" or city is None:
                     city = "<MISSING>"
+                if zc == "" or zc is None:
+                    zc = "<MISSING>"
                 loc = "<MISSING>"
                 if city == "<MISSING>":
                     city = name
@@ -303,6 +313,8 @@ def fetch_data():
                     city = "Hempstead Valley"
                 if "Belfast" in add:
                     city = "Belfast"
+                if "Bideford" in name:
+                    city = "Bideford"
                 addinfo = add + city + zc
                 if "Mon: -; Tue: -; Wed: -; Thu: -; Fri: -; Sat: -; Sun: -" in hours:
                     hours = "<MISSING>"

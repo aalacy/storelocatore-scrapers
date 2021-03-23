@@ -64,7 +64,7 @@ def fetch_data():
         zip_code = poi["address"]["postalCode"]
         country_code = poi["address"]["addressCountry"]
         store_number = "<MISSING>"
-        phone = poi["telephone"]
+        phone = poi.get("telephone")
         phone = phone if phone else "<MISSING>"
         latitude = "<MISSING>"
         longitude = "<MISSING>"

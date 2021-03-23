@@ -263,7 +263,7 @@ def fetch_data():
         ccity = loc.split(",")[0].strip()
         cprov = loc.split(",")[1].strip()
         url = (
-            "https://www.ford.ca/services/dealer/Dealers.json?make=Ford&radius=500&filter=&minDealers=1&maxDealers=100&city="
+            "https://www.lincolncanada.com/services/dealer/Dealers.json?make=Lincoln&radius=500&filter=&minDealers=1&maxDealers=100&city="
             + ccity
             + "&province="
             + cprov

@@ -1,6 +1,7 @@
 import csv
 from sgrequests import SgRequests
-import json
+from bs4 import BeautifulSoup as bs
+from urllib.parse import urljoin
 
 from util import Util  # noqa: I900
 
@@ -50,31 +51,38 @@ def _phone(phone):
 def fetch_data():
     data = []
 
-    locator_domain = "https://www.martinsgroceriestogo.com/"
-    base_url = "https://api.freshop.com/1/stores?app_key=martins&has_address=true&limit=-1&token=a37ebe52509f935976c8ed2d68cbf25d"
+    locator_domain = "https://martins-supermarkets.com/"
+    base_url = "https://martins-supermarkets.com/stores"
     rr = session.get(base_url)
-    locations = json.loads(rr.text)["items"]
+    soup = bs(rr.text, "lxml")
+    locations = soup.select("div.isotope a")
     for location in locations:
-        page_url = myutil._valid(location.get("url"))
-        store_number = location["store_number"].strip()
-        location_name = myutil._valid(location["name"])
-        country_code = location.get("country", "US")
-        street_address = "<MISSING>"
-        if "address_1" in location:
-            street_address = location.get("address_1")
-        elif "address_0" in location:
-            street_address = location.get("address_0")
-
-        city = location["city"]
-        state = location["state"]
-        zip = location["postal_code"]
-        phone = _phone(location["phone"])
-        if phone == "<MISSING>":
-            phone = _phone(location["phone_md"])
+        page_url = urljoin(locator_domain, location.get("href"))
+        store_number = "<MISSING>"
+        location_name = myutil._valid(location.h3.text)
+        country_code = "US"
+        block = [_ for _ in location.h4.stripped_strings]
+        street_address = " ".join(block[:-2])
+        city = block[-2].split(",")[0]
+        state = block[-2].split(",")[1].strip().split(" ")[0]
+        zip = block[-2].split(",")[1].strip().split(" ")[1]
+        phone = block[-1]
         location_type = "<MISSING>"
-        latitude = location["latitude"]
-        longitude = location["longitude"]
-        hours_of_operation = myutil._valid(location.get("hours"))
+        r1 = session.get(page_url)
+        soup1 = bs(r1.text, "lxml")
+        latitude = soup1.marker["lat"]
+        longitude = soup1.marker["lng"]
+        text1 = [
+            _
+            for _ in soup1.select_one(
+                "section.container div.text div.row div.col-sm-6"
+            ).stripped_strings
+        ]
+        hours_of_operation = "<MISSING>"
+        for _ in text1:
+            if _.startswith("Store Hours:"):
+                hours_of_operation = _.replace("Store Hours:", "").strip()
+                break
 
         _item = [
             locator_domain,

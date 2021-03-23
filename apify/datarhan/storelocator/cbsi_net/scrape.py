@@ -67,7 +67,10 @@ def fetch_data():
         location_type = "<MISSING>"
         latitude = "<MISSING>"
         longitude = "<MISSING>"
-        hours_of_operation = raw_data[-1].replace("Hours: ", "")
+        hoo = [
+            elem.replace("Hours: ", "") for elem in raw_data if "hours" in elem.lower()
+        ]
+        hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
 
         item = [
             DOMAIN,

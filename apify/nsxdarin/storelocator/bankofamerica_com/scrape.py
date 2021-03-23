@@ -69,7 +69,7 @@ def fetch_data():
                                 if lurl not in locs:
                                     locs.append(lurl)
             logger.info((str(len(locs)) + " Locations Found..."))
-        if len(locs) <= 7250:
+        if len(locs) <= 7150:
             Found = True
             logger.info("Retrying...")
     for loc in locs:
