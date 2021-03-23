@@ -72,7 +72,7 @@ def fetch_data():
         stores = session.get(location_url, headers=headers).json()["stores"]
         logger.info("Processing %s links.." % (len(stores)))
         for key in stores.keys():
-            if stores[key]["country"].upper() in ["US", "CA", "CANADA"]:
+            if stores[key]["country"].upper() != "GUAM":
                 if (
                     stores[key]["display_brand"] == "Circle K"
                     and stores[key]["op_status"] != "Planned"
@@ -124,9 +124,9 @@ def fetch_data():
                             store_number = stores[key]["cost_center"]
                             raw_address = store_json["name"]
 
-                            if street_address + city + phone + latitude in found_poi:
+                            if street_address + city + state + zipp in found_poi:
                                 continue
-                            found_poi.append(street_address + city + phone + latitude)
+                            found_poi.append(street_address + city + state + zipp)
 
                             try:
                                 state = (
