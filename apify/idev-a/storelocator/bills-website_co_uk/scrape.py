@@ -4,8 +4,7 @@ from sglogging import SgLogSetup
 from sgrequests import SgRequests
 import json
 import re
-from lxml import html
-from lxml import etree
+from lxml import html, etree
 from bs4 import BeautifulSoup as bs
 from sgscrape.sgpostal import parse_address_intl
 
