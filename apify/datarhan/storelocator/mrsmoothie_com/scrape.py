@@ -57,8 +57,7 @@ def fetch_data():
         loc_response = session.get(store_url)
         loc_dom = etree.HTML(loc_response.text)
 
-        location_name = loc_dom.xpath('//span[@class="headlines"]/a/text()')
-        location_name = location_name[0] if location_name else "<MISSING>"
+        location_name = "<MISSING>"
         raw_data = loc_dom.xpath('//table//*[@class="bodycopy"]/text()')
         raw_data = [e.strip() for e in raw_data if e.strip()]
         if len(raw_data) > 2:

@@ -46,15 +46,15 @@ def fetch_locations():
 
     locations = [parse(marker) for marker in data["markers"]]
 
-    return [location for location in locations if us_only(location)]
+    return [location for location in locations if us_ca_pr_only(location)]
 
 
 def parse(marker):
     return json.loads(re.search(r"\{.*\}", marker["info"]).group(0))
 
 
-def us_only(location):
-    return location["country"] == "US"
+def us_ca_pr_only(location):
+    return location["country"] in ("US", "CA", "PR")
 
 
 MISSING = "<MISSING>"
