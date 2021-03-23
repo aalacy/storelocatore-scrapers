@@ -40,14 +40,11 @@ def fetch_data():
             hours_of_operation = temp[2].find("strong").text
             r = session.get(page_url, headers=headers)
             soup = BeautifulSoup(r.text, "html.parser")
-            latitude, longitude = (
-                soup.find("div", {"class": "embed_container"})
-                .find("iframe")["src"]
-                .split("!1d", 1)[1]
-                .split("!3d", 1)[0]
-                .split("!2d")
-            )
-            latitude = latitude[2:]
+            coords = soup.find("iframe")["src"]
+            r = session.get(coords, headers=headers)
+            coords = r.text.split("],0],")[0].rsplit("[null,null,", 1)[1].split(",")
+            latitude = coords[0]
+            longitude = coords[1]
             yield SgRecord(
                 locator_domain="https://costlessfoods.com/",
                 page_url=page_url,
