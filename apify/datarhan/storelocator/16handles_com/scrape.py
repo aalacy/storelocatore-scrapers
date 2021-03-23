@@ -1,5 +1,6 @@
 import csv
 import json
+from lxml import etree
 
 from sgrequests import SgRequests
 
@@ -67,7 +68,9 @@ def fetch_data():
 
     for poi in data["response"]["results"]:
         store_url = poi["data"]["website"]
-        store_url = store_url if store_url else "<MISSING>"
+        loc_response = session.get(store_url)
+        loc_dom = etree.HTML(loc_response.text)
+
         location_name = poi["data"]["c_locationNickname"]
         location_name = location_name if location_name else "<MISSING>"
         street_address = poi["data"]["address"]["line1"]
@@ -89,19 +92,14 @@ def fetch_data():
         latitude = latitude if latitude else "<MISSING>"
         longitude = poi["data"]["geocodedCoordinate"]["longitude"]
         longitude = longitude if longitude else "<MISSING>"
-        hours_of_operation = []
-        if poi["data"].get("hours"):
-            for day, hours in poi["data"]["hours"].items():
-                if type(hours) not in [str, list]:
-                    if hours.get("isClosed"):
-                        hours_of_operation.append(f"{day} closed")
-                    else:
-                        opens = hours["openIntervals"][0]["start"]
-                        closes = hours["openIntervals"][0]["end"]
-                        hours_of_operation.append(f"{day} {opens} - {closes}")
-        hours_of_operation = (
-            " ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
-        )
+        hoo = loc_dom.xpath('//tbody[@class="hours-body"]//text()')
+        hoo = [e.strip() for e in hoo if e.strip()]
+        hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
+        if (
+            "monday closed tuesday closed wednesday closed thursday closed"
+            in hours_of_operation.lower()
+        ):
+            location_type = "closed"
 
         item = [
             DOMAIN,

@@ -90,7 +90,7 @@ def fetch_data():
         store_number = store_number if store_number else "<MISSING>"
         phone = poi["telephone"]
         phone = phone if phone else "<MISSING>"
-        location_type = poi["_type"]
+        location_type = poi["@type"]
         location_type = location_type if location_type else "<MISSING>"
         latitude = ""
         longitude = ""
