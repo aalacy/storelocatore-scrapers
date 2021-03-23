@@ -1,5 +1,5 @@
-us
-sgzip
-bs4
-pandas
-sgrequests
+us==1.0.0
+pandas==1.1.5
+sgzip==0.3.0
+sgrequests==0.1.8
+beautifulsoup4==4.9.3
