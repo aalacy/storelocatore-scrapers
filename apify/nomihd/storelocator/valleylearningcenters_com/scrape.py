@@ -54,7 +54,6 @@ def fetch_data():
 
             location_type = "<MISSING>"
 
-            hours_list = []
             hours_of_operation = (
                 ":".join(
                     store_sel.xpath(
