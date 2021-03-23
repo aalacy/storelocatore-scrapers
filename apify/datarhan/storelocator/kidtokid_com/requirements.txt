@@ -1,2 +1,2 @@
 sgvalidator==0.0.71
-sgrequests==0.1.3
+sgrequests==0.1.8
