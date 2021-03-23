@@ -25,7 +25,10 @@ def fetch_data():
             hours = list(soup1.select_one("div.location-hours p").stripped_strings)
             if hours[0].startswith("WE HAVE MERGED WITH"):
                 continue
-            del hours[0]
+            if hours[0] == "OPENING SOON!":
+                hours = ["OPENING SOON!"]
+            else:
+                del hours[0]
             phone = _.select_one("p.store-location-phone a").text
             street_address = soup1.select_one(
                 "div.location-details .street-address"
