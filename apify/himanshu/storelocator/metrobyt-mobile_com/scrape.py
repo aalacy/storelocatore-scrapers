@@ -55,7 +55,7 @@ def fetch_data():
         locator_domain = "https://www.metrobyt-mobile.com/"
         location_url = (
             "https://www.metrobyt-mobile.com/api/v1/commerce/store-locator?address="
-            + str(coords._search.current_zip())
+            + str(coords._current_zip())
             + "&store-type=All&min-latitude="
             + str(coord[0])
             + "&max-latitude=37.0902&min-longitude="
