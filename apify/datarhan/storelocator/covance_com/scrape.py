@@ -59,6 +59,8 @@ def fetch_data():
         location_name = (
             location_name[0].replace("<", "") if location_name else "<MISSING>"
         )
+        if "headquarters" in location_name.lower():
+            continue
         raw_address = poi_html.xpath('.//li[@class="address"]/text()')
         raw_address = [elem.strip() for elem in raw_address if elem.strip()]
         full_addr = " ".join(raw_address).replace("\n", " ").replace("\t", " ")
