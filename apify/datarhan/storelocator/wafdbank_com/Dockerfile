@@ -1,4 +1,4 @@
-FROM safegraph/apify-python3:label
+FROM safegraph/apify-python3:latest
 
 COPY . ./
 
