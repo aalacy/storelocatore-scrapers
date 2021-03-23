@@ -56,18 +56,21 @@ def get_data(url):
         .replace("Branch:", "")
         .strip()
     )
-    line = " ".join(
-        "".join(
-            tree.xpath("//h1[@class='branch-heading']/following-sibling::p/text()")
-        ).split()
-    )
-    adr = parse_address(International_Parser(), line)
+    line = tree.xpath("//h1[@class='branch-heading']/following-sibling::p/text()")
+    line = list(filter(None, [l.strip() for l in line]))
+    postal = line[-1]
+    line = ", ".join(line[:-1])
+
+    adr = parse_address(International_Parser(), line, postcode=postal)
     street_address = (
         f"{adr.street_address_1} {adr.street_address_2 or ''}".replace(
             "None", ""
         ).strip()
         or "<MISSING>"
     )
+
+    if len(street_address) < 5:
+        street_address = line.split(",")[0].strip()
 
     city = adr.city or "<MISSING>"
     state = adr.state or "<MISSING>"
