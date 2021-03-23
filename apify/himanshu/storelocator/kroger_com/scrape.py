@@ -1,11 +1,8 @@
 import csv
 import json
-
 from bs4 import BeautifulSoup
-
 from sgrequests import SgRequests
-
-session = SgRequests()
+from tenacity import retry, stop_after_attempt
 
 
 def write_output(data):
@@ -38,7 +35,22 @@ def write_output(data):
             writer.writerow(row)
 
 
+@retry(stop=stop_after_attempt(3))
+def fetch_location(url, headers):
+    session = SgRequests()
+    soup = BeautifulSoup(session.get(url, headers=headers).text, "lxml")
+
+    data = json.loads(
+        str(soup.find("script", {"type": "application/ld+json"}))
+        .split(">")[1]
+        .split("<")[0]
+    )
+
+    return data, soup
+
+
 def fetch_data():
+    session = SgRequests()
     base_url = "https://www.kroger.com/"
 
     headers = {
@@ -56,15 +68,7 @@ def fetch_data():
 
     for url in soup.find_all("loc")[:-1]:
         page_url = url.text
-        location_soup = BeautifulSoup(
-            session.get(page_url, headers=headers).text, "lxml"
-        )
-
-        data = json.loads(
-            str(location_soup.find("script", {"type": "application/ld+json"}))
-            .split(">")[1]
-            .split("<")[0]
-        )
+        data, location_soup = fetch_location(page_url, headers)
 
         location_name = location_soup.find(
             "h1", {"data-qa": "storeDetailsHeader"}

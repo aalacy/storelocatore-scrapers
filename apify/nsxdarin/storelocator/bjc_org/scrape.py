@@ -87,9 +87,14 @@ def fetch_data():
                 addinfo = (
                     h.strip().replace("\t", "").replace("\r", "").replace("\n", "")
                 )
-                city = addinfo.split(",")[0]
-                state = addinfo.split(",")[1].rsplit(" ", 1)[0]
-                zc = addinfo.rsplit(" ", 1)[1]
+                try:
+                    city = addinfo.split(",")[0]
+                    state = addinfo.split(",")[1].rsplit(" ", 1)[0]
+                    zc = addinfo.rsplit(" ", 1)[1]
+                except:
+                    city = ""
+                    state = ""
+                    zc = ""
             if "<a href=tel:" in line2:
                 phone = line2.split("<a href=tel:")[1].split(">")[1].split("<")[0]
             if '"closes": "' in line2:
@@ -124,22 +129,23 @@ def fetch_data():
         hours = hours.replace("<br><strong>", "; ")
         if phone == "":
             phone = "<MISSING>"
-        yield [
-            website,
-            lurl,
-            name,
-            add,
-            city,
-            state,
-            zc,
-            country,
-            store,
-            phone,
-            typ,
-            lat,
-            lng,
-            hours,
-        ]
+        if city != "":
+            yield [
+                website,
+                lurl,
+                name,
+                add,
+                city,
+                state,
+                zc,
+                country,
+                store,
+                phone,
+                typ,
+                lat,
+                lng,
+                hours,
+            ]
 
 
 def scrape():
