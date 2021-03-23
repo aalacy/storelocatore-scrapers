@@ -38,7 +38,6 @@ def fetch_data():
             city = formatted_addr.city
             state = formatted_addr.state if formatted_addr.state else "<MISSING>"
             zip_postal = formatted_addr.postcode
-            country_code = "GB"
             phone = temp[1].findAll("a")[1].text
             hour_list = soup.find("div", {"class": "single-restaurant__hours"}).findAll(
                 "tr"
@@ -61,7 +60,7 @@ def fetch_data():
                 city=city,
                 state=state,
                 zip_postal=zip_postal,
-                country_code="US",
+                country_code="CA",
                 store_number="<MISSING>",
                 phone=phone,
                 location_type="<MISSING>",
