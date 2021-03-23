@@ -53,7 +53,6 @@ def fetch_data():
     log.info("Found {} urls".format(len(k)))
 
     for i in k:
-        tem_var = []
         store_url = "https://www.westgateresorts.com/" + i["href"]
         soup = pull_content(store_url)
         info = soup.find("div", {"id": "footer-resort-info"})
