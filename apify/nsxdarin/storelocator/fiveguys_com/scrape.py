@@ -51,7 +51,7 @@ def fetch_data():
         if "https://restaurants.fiveguys.com/al" in line:
             Found = False
         if "<loc>https://restaurants.fiveguys.com/" in line and Found:
-            locs.append(line.split("<loc>")[1].split("<")[0])
+            locs.append(line.split("<loc>")[1].split("<")[0].replace("&#39;", "'"))
     for loc in locs:
         logger.info(loc)
         name = ""

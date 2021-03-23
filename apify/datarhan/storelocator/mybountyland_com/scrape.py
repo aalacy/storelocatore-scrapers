@@ -56,6 +56,8 @@ def fetch_data():
             poi_html.xpath(".//strong/text()")[0].split("–")[0].strip().split("- ")[0]
         )
         raw_address = poi_html.xpath("text()")[0].strip().split(", ")
+        if len(raw_address) == 4:
+            raw_address = [", ".join(raw_address[:2])] + raw_address[2:]
         street_address = raw_address[0]
         city = raw_address[1]
         state = raw_address[-1].split()[0]
