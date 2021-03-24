@@ -48,7 +48,7 @@ def fetch_data():
         state = j.get("state") or "<MISSING>"
         postal = j.get("zip_code") or "<MISSING>"
         country_code = "GB"
-        store_number = j.get("") or "<MISSING>"
+        store_number = "<MISSING>"
         page_url = f'https://www.wholefoodsmarket.co.uk/stores/{j.get("folder")}'
         location_name = j.get("name")
         phone = j.get("phone") or "<MISSING>"
