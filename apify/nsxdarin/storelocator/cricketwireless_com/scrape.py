@@ -11,9 +11,7 @@ headers = {
 }
 
 search = DynamicGeoSearch(
-    country_codes=[SearchableCountries.USA],
-    max_radius_miles=10,
-    max_search_results=50,
+    country_codes=[SearchableCountries.USA]
 )
 
 
@@ -46,15 +44,15 @@ def write_output(data):
 
 def fetch_data():
     ids = []
-    for lat, lng in search:
+    for search_lat, search_lng in search:
         try:
-            logger.info("Pulling %s-%s..." % (str(lat), str(lng)))
+            logger.info("Pulling %s-%s..." % (str(search_lat), str(search_lng)))
             url = (
                 "https://api.momentfeed.com/v1/analytics/api/llp/cricket.json?auth_token=IVNLPNUOBXFPALWE&center="
-                + str(lat)
+                + str(search_lat)
                 + ","
-                + str(lng)
-                + "&coordinates=40,-90,60,-110&multi_account=false&name=Cricket+Wireless+Authorized+Retailer,Cricket+Wireless+Store&page=1&pageSize=50&type=store"
+                + str(search_lng)
+                + "&coordinates=40,-90,60,-110&multi_account=false&name=Cricket+Wireless+Authorized+Retailer,Cricket+Wireless+Store&page=1&pageSize=500&type=store"
             )
             r = session.get(url, headers=headers)
             lines = r.iter_lines(decode_unicode=True)
@@ -87,6 +85,8 @@ def fetch_data():
                             phone = item.split('"phone":"')[1].split('"')[0]
                             lat = item.split('"latitude":"')[1].split('"')[0]
                             lng = item.split('"longitude":"')[1].split('"')[0]
+
+                            search.found_location_at(lat, lng)
                             purl = item.split('"website":"')[1].split('"')[0]
                             hours = line.split('"store_hours":"')[1].split('"')[0]
                             hours = hours.replace("1,", "Mon: ").replace(
