@@ -95,6 +95,8 @@ def fetch_data():
                 + hour.text.split("Less")[0]
                 .replace("\n", " ")
                 .replace("\r", " ")
+                .replace("pmS", "pm S")
+                .replace("pmF", "pm F")
                 .strip()
             ).strip()
 
