@@ -100,6 +100,8 @@ def fetch_data():
         if city == "Philadelphia":
             state = "PA"
         name = name.replace("\\u0027", "'")
+        if " - " in name:
+            name = name.split(" - ")[0]
         yield [
             website,
             loc,
