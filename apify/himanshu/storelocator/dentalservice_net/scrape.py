@@ -47,7 +47,7 @@ def fetch_data():
         "https://www.dentalservice.net/contact-us/find-your-office/", headers=headers
     )
     dom = etree.HTML(r.text)
-    data_id = dom.xpath('//script/@data-id')[0]
+    data_id = dom.xpath("//script/@data-id")[0]
 
     r = session.get(
         "https://locator-api.localsearchprofiles.com/api/LocationSearchResults/?configuration="
