@@ -1,5 +1,4 @@
 from sgrequests import SgRequests
-import json
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 import pandas as pd
 
