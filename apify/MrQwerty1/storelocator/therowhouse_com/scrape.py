@@ -1,4 +1,7 @@
 import csv
+import json
+
+from lxml import html
 from sgrequests import SgRequests
 
 
@@ -31,6 +34,35 @@ def write_output(data):
             writer.writerow(row)
 
 
+def get_hours(page_url):
+    session = SgRequests()
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:86.0) Gecko/20100101 Firefox/86.0"
+    }
+    if not page_url:
+        return "<MISSING>"
+
+    r = session.get(page_url, headers=headers)
+    tree = html.fromstring(r.text)
+
+    text = "".join(tree.xpath("//span[@data-hours]/@data-hours"))
+    if not text:
+        return "<MISSING>"
+
+    js = json.loads(text) or {}
+
+    _tmp = []
+    for k, v in js.items():
+        if v:
+            time = " - ".join(v[0])
+        else:
+            time = "Closed"
+
+        _tmp.append(f"{k}: {time}")
+
+    return ";".join(_tmp) or "<MISSING>"
+
+
 def fetch_data():
     out = []
     s = set()
@@ -59,7 +91,10 @@ def fetch_data():
         if j.get("coming_soon"):
             hours_of_operation = "Coming Soon"
         else:
-            hours_of_operation = "<MISSING>"
+            if page_url != "<MISSING>":
+                hours_of_operation = get_hours(page_url)
+            else:
+                hours_of_operation = "<MISSING>"
 
         row = [
             locator_domain,
