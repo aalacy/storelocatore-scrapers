@@ -1,18 +1,10 @@
 import csv
-import json
 from bs4 import BeautifulSoup
 from sgrequests import SgRequests
 import re
 
 MISSING = "<MISSING>"
 session = SgRequests()
-
-# options = Options()
-# options.add_argument("--headless")
-# options.add_argument("--no-sandbox")
-# options.add_argument("--disable-dev-shm-usage")
-# # driver = webdriver.Chrome("C:\chromedriver.exe", options=options)
-# driver = webdriver.Chrome("chromedriver", options=options)
 
 
 def get_locations():
@@ -90,7 +82,7 @@ def fetch_data():
         response = session.get(page_url)
         bs4 = BeautifulSoup(response.text, features="lxml")
 
-        matched = re.search("(\d+\s.+(?:,|\\n)?.*),\s(\w{2})\s(\d{5})", bs4.text)
+        matched = re.search(r"(\d+\s.+(?:,|\\n)?.*),\s(\w{2})\s(\d{5})", bs4.text)
 
         if not matched:
             yield None
@@ -98,7 +90,7 @@ def fetch_data():
 
         location_name = bs4.select_one("h2 span").text
         address = matched.group(1)
-        address_city = re.split("\(.*\)|\\n", address)
+        address_city = re.split(r"\(.*\)|\\n", address)
         if len(address_city) == 2:
             street_address, city = address_city
         else:
@@ -112,7 +104,7 @@ def fetch_data():
         country_code = "US"
 
         phone_match = re.search(
-            "Phone:\s*\((\d{3})\).*(\d{3})-(\d{4})", bs4.text, re.IGNORECASE
+            r"Phone:\s*\((\d{3})\).*(\d{3})-(\d{4})", bs4.text, re.IGNORECASE
         )
         phone = (
             f"{phone_match.group(1)}{phone_match.group(2)}{phone_match.group(3)}"
@@ -120,16 +112,22 @@ def fetch_data():
             else MISSING
         )
 
-        hours_title = bs4.select_one("p:contains(Hours)") or bs4.select_one(
-            "p:contains(Open)"
+        hours_title = bs4.select_one("p:-soup-contains(Hours)") or bs4.select_one(
+            "p:-soup-contains(Open)"
         )
 
-        weekday_tag, weekend_tag, *rest = hours_title.fetchNextSiblings()
+        if hours_title is None:
+            continue
 
-        weekday_hours = re.sub("\s\s*", " ", weekday_tag.text)
-        weekend_hours = re.sub("\s\s*", " ", weekend_tag.text)
+        if "Open" in hours_title.text:
+            hours_of_operation = hours_title.text
+        else:
+            weekday_tag, weekend_tag, *rest = hours_title.fetchNextSiblings()
 
-        hours_of_operation = f"{weekday_hours},{weekend_hours}"
+            weekday_hours = re.sub(r"\s\s*", " ", weekday_tag.text)
+            weekend_hours = re.sub(r"\s\s*", " ", weekend_tag.text)
+
+            hours_of_operation = f"{weekday_hours},{weekend_hours}"
 
         location_type = MISSING
         latitude = MISSING
@@ -160,4 +158,3 @@ def scrape():
 
 
 scrape()
-

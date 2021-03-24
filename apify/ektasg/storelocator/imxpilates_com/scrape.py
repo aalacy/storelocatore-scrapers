@@ -46,11 +46,12 @@ def fetch_data():
     url = "https://imxpilates.com/studios.php"
     r = session.get(url, headers=headers, verify=False)
     soup = BeautifulSoup(r.text, "html.parser")
-    divlist = soup.select('a:contains("IM=X®")')
+    divlist = soup.find("div", {"class": "et_pb_section_1_tb_body"}).select(
+        'a:contains("IM=X®")'
+    )
     p = 0
     for div in divlist:
         link = div["href"]
-
         if "#" in link or "http" in link:
             continue
         link = "https://www.imxpilates.com" + link
@@ -77,8 +78,11 @@ def fetch_data():
             state, pcode = state.strip().split(" ", 1)
         except:
             pass
-        lat = r.text.split('"map_start_lat":"', 1)[1].split('"', 1)[0]
-        longt = r.text.split('"map_start_lng":"', 1)[1].split('"', 1)[0]
+        try:
+            lat = r.text.split('"map_start_lat":"', 1)[1].split('"', 1)[0]
+            longt = r.text.split('"map_start_lng":"', 1)[1].split('"', 1)[0]
+        except:
+            continue
         store = r.text.split("data-map-id='", 1)[1].split("'", 1)[0]
         data.append(
             [

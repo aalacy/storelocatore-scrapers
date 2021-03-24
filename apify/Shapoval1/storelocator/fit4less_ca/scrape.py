@@ -107,7 +107,9 @@ def get_data(url):
     except IndexError:
         latitude, longitude = "<MISSING>", "<MISSING>"
     location_type = "<MISSING>"
-    hours_of_operation = tree.xpath('//span[@class="hours-hours"]/div//text()')
+    hours_of_operation = tree.xpath(
+        '//span[contains(text(), "Hours of Operation")]/following-sibling::span[@class="hours-hours"]//text()'
+    )
     hours_of_operation = list(filter(None, [a.strip() for a in hours_of_operation]))
     hours_of_operation = ";".join(hours_of_operation).replace(":;", ":")
     block = (
