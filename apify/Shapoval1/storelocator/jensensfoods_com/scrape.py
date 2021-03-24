@@ -83,6 +83,9 @@ def fetch_data():
         ).strip()
         phone = line.split("/")[1].strip()
         city = a.get("city")
+        if location_name.find("Palm Springs") != -1:
+            street_address = " ".join(ad.split()[:4])
+            city = " ".join(ad.split()[4:]).split(",")[0]
         state = a.get("state")
         country_code = "US"
         store_number = "<MISSING>"

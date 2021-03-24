@@ -1,130 +1,135 @@
-import csv
 import re
-import requests
+import csv
 import json
-from sglogging import SgLogSetup
+from lxml import etree
+from urllib.parse import urljoin
 
-logger = SgLogSetup().get_logger('tdbank_com')
+from sgrequests import SgRequests
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 
-
-
-headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.79 Safari/537.36'}
-
-r = requests.get('https://www.tdbank.com/net/get11.ashx?longitude=-94.57868&latitude=43.0997&searchradius=14000&searchunit=mi&locationtypes=3&numresults=1900&json=y&country=us',headers=headers)
-cont = json.loads(r.content,strict=False)
-l = cont['markers']['marker']
-
-y=['https://www.tdbank.com/net/get11.ashx?longitude=-94.57868&latitude=43.0997&searchradius=14000&searchunit=mi&locationtypes=3&numresults=1900&json=y&country=us']
-
-addresses=[]
-data_list=[]
 
 def write_output(data):
-    with open('data.csv', mode='w',newline='') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+    with open("data.csv", mode="w", encoding="utf-8") as output_file:
+        writer = csv.writer(
+            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+        )
 
         # Header
         writer.writerow(
-            ["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code",
-             "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+            [
+                "locator_domain",
+                "page_url",
+                "location_name",
+                "street_address",
+                "city",
+                "state",
+                "zip",
+                "country_code",
+                "store_number",
+                "phone",
+                "location_type",
+                "latitude",
+                "longitude",
+                "hours_of_operation",
+            ]
+        )
+        # Body
         for row in data:
             writer.writerow(row)
 
-key_set =set()
+
 def fetch_data():
-    try:    
-        for i in l:
-            key = i['address']+ i['branchN']+  i['type']       
-                     
-            if key in key_set:
-                continue
-            key_set.add(key)
-            addresses.append(i.get('address'))
-            lat = i.get('lat', "<MISSING>")
-            lng = i.get('lng', "<MISSING>")
-            phn = i.get('phoneNo', "<MISSING>")
-            if len(phn) < 3:
-                phn = "<MISSING>"
-            try: 
-                new = i['hours']
-                if new=={}:
-                    new = "<MISSING>"
-                    hour=new
-                else:
-                    hr=[]
-                    for key, value in new.items():
-                        n = key + " " + value
-                        hr.append(n)
-                        hour = " ".join(hr)
+    # Your scraper here
+    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
 
-            except Exception as e:
-                hour = "<MISSING>"    
+    items = []
+    scraped_items = []
 
-            try:
-                new = i['address']
-                st=new.replace("(", "").replace(")", "")
-                street=st.split(',')[0]
+    start_url = "https://locations.td.com/index.html?q={},{}&qp=&locType=stores&l=en"
+    domain = re.findall("://(.+?)/", start_url)[0].replace("www.", "")
+    hdr = {
+        "accept": "application/json",
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36",
+    }
 
-            except Exception as e:
-                street = "<MISSING>"
+    all_locations = []
+    all_coords = DynamicGeoSearch(
+        country_codes=[SearchableCountries.USA], max_radius_miles=50
+    )
+    for lat, lng in all_coords:
+        response = session.get(start_url.format(lat, lng), headers=hdr)
+        data = json.loads(response.text)
+        all_locations += data["response"]["entities"]
 
-            c = i['address']
-            try:
-                cc = re.findall(r'.*\D+\d{5}', c)
-                ct = cc[0].replace(")", "").replace("(", "")
-                city=ct.split(',')[-3].strip()
+    for poi in all_locations:
+        store_url = urljoin(start_url, poi["url"])
+        location_name = poi["profile"]["name"]
+        location_name = location_name if location_name else "<MISSING>"
+        street_address = poi["profile"]["address"]["line1"]
+        if poi["profile"]["address"]["line2"]:
+            street_address += " " + poi["profile"]["address"]["line2"]
+        if poi["profile"]["address"]["line3"]:
+            street_address += " " + poi["profile"]["address"]["line3"]
+        street_address = street_address if street_address else "<MISSING>"
+        city = poi["profile"]["address"]["city"]
+        city = city if city else "<MISSING>"
+        state = poi["profile"]["address"]["region"]
+        state = state if state else "<MISSING>"
+        zip_code = poi["profile"]["address"]["postalCode"]
+        zip_code = zip_code if zip_code else "<MISSING>"
+        country_code = poi["profile"]["address"]["countryCode"]
+        country_code = country_code if country_code else "<MISSING>"
+        store_number = poi["profile"].get("c_basicStoreID")
+        store_number = store_number if store_number else "<MISSING>"
+        phone = poi["profile"]["mainPhone"]["display"]
+        phone = phone if phone else "<MISSING>"
+        location_type = "<MISSING>"
+        latitude = "<MISSING>"
+        longitude = "<MISSING>"
+        if poi["profile"].get("geocodedCoordinate"):
+            latitude = poi["profile"]["geocodedCoordinate"]["lat"]
+            longitude = poi["profile"]["geocodedCoordinate"]["long"]
 
-            except Exception as e:
-                city = "<MISSING>"
+        check = f"{location_name} {street_address}"
+        if check in scraped_items:
+            continue
+        loc_response = session.get(store_url)
+        loc_dom = etree.HTML(loc_response.text)
 
-            try:
-                s = re.findall(r'.*\D+\d{5}', c)
-                st = s[0].replace(")", "").replace("(", "")
-                state=st.split(',')[-2].strip()
+        hoo = loc_dom.xpath(
+            '//div[@class="c-hours-details-wrapper js-hours-table"]//text()'
+        )[1:]
+        hoo = [e.strip() for e in hoo if e.strip()]
+        hours_of_operation = " ".join(hoo).split("{")[0].strip() if hoo else "<MISSING>"
 
-            except Exception as e:
-                state = "<MISSING>"
+        item = [
+            domain,
+            store_url,
+            location_name,
+            street_address,
+            city,
+            state,
+            zip_code,
+            country_code,
+            store_number,
+            phone,
+            location_type,
+            latitude,
+            longitude,
+            hours_of_operation,
+        ]
 
-            try:
-                zp = i['address']
-                p=zp.split(",",1)[1]
-                zp_code = re.findall(r"\d{5}", p)
-                zip_code=zp_code[0]
+        if check not in scraped_items:
+            scraped_items.append(check)
+            items.append(item)
 
-            except Exception as e:
-                zip_code = "<MISSING>"
-                
-            try: 
-                store_numbr = i['branchN']
-                if store_numbr == '':
-                    store_numbr = "<MISSING>"
-                else:
-                    store_numbr = i['branchN']
-            
-            
-            except Exception as e:
-                store_numbr = "<MISSING>"
-                
-            page_url = y[0]
-            location_name = "<MISSING>"
-            if i['type']=="1":
-                loc_type = "ATM only"
-            else:
-                loc_type = "<MISSING>"
-            country_code = "USA"
-            locator_domain = "https://www.td.com"
+    return items
 
-            new = [locator_domain, page_url,location_name, street, city, state, zip_code, country_code,store_numbr, phn,
-                 loc_type, lat, lng, hour]
-            data_list.append(new)
-        return data_list
-
-    except Exception as e:
-        logger.info(str(e))
 
 def scrape():
-    data=fetch_data()
+    data = fetch_data()
     write_output(data)
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()
