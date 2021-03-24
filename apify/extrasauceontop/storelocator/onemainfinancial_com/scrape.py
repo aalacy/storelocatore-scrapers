@@ -4,50 +4,6 @@ from sgrequests import SgRequests
 import pandas as pd
 import json
 
-
-def parsedata(response_json, data_url):
-
-    for location in response_json:
-        try:
-            location_name = location["name"]
-        except Exception:
-            continue
-
-        locator_domain = "onemainfinancial.com"
-        page_url = data_url
-        location_name = location["name"]
-        address = location["address"]["streetAddress"]
-        city = location["address"]["addressLocality"]
-        state = location["address"]["addressRegion"]
-        zipp = location["address"]["postalCode"]
-        country_code = "US"
-        store_number = "<MISSING>"
-        phone = location["telephone"]
-        location_type = location["@type"]
-        latitude = location["geo"]["latitude"]
-        longitude = location["geo"]["longitude"]
-
-        hours = ""
-        for item in location["openingHours"]:
-            hours = hours + item + ", "
-        hours = hours[:-2]
-
-        locator_domains.append(locator_domain)
-        page_urls.append(page_url)
-        location_names.append(location_name)
-        street_addresses.append(address)
-        citys.append(city)
-        states.append(state)
-        zips.append(zipp)
-        country_codes.append(country_code)
-        store_numbers.append(store_number)
-        phones.append(phone)
-        location_types.append(location_type)
-        latitudes.append(latitude)
-        longitudes.append(longitude)
-        hours_of_operations.append(hours)
-
-
 def extract_json(html_string):
     json_objects = []
     count = 0
@@ -171,8 +127,47 @@ for loc_url in location_urls:
         headers = new_sess[2]
         response_text = new_sess[3]
 
-    json_objects = extract_json(response_text)
-    parsedata(json_objects, loc_url)
+    response_json = extract_json(response_text)
+    
+    for location in response_json:
+        try:
+            location_name = location["name"]
+        except Exception:
+            continue
+
+        locator_domain = "onemainfinancial.com"
+        page_url = loc_url
+        location_name = location["name"]
+        address = location["address"]["streetAddress"]
+        city = location["address"]["addressLocality"]
+        state = location["address"]["addressRegion"]
+        zipp = location["address"]["postalCode"]
+        country_code = "US"
+        store_number = "<MISSING>"
+        phone = location["telephone"]
+        location_type = location["@type"]
+        latitude = location["geo"]["latitude"]
+        longitude = location["geo"]["longitude"]
+
+        hours = ""
+        for item in location["openingHours"]:
+            hours = hours + item + ", "
+        hours = hours[:-2]
+
+        locator_domains.append(locator_domain)
+        page_urls.append(page_url)
+        location_names.append(location_name)
+        street_addresses.append(address)
+        citys.append(city)
+        states.append(state)
+        zips.append(zipp)
+        country_codes.append(country_code)
+        store_numbers.append(store_number)
+        phones.append(phone)
+        location_types.append(location_type)
+        latitudes.append(latitude)
+        longitudes.append(longitude)
+        hours_of_operations.append(hours)
 
 df = pd.DataFrame(
     {
