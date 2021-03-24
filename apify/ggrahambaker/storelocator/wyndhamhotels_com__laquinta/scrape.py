@@ -56,7 +56,6 @@ def fetch_data():
     for url in all_locations:
         store_url = urljoin(start_url, url)
         loc_response = session.get(store_url, headers=hdr)
-        print(store_url, loc_response.status_code)
         loc_dom = etree.HTML(loc_response.text)
         poi = loc_dom.xpath('//script[contains(text(), "streetAddress")]/text()')[0]
         poi = json.loads(poi)
