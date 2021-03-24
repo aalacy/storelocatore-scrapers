@@ -72,7 +72,9 @@ def fetch_data():
         rows = list(raw_data.stripped_strings)
         for i, row in enumerate(rows):
             if "hours" in row.lower():
-                hours_of_operation = " ".join(rows[i:]).replace("ATM", "").strip().split("Drive")[0]
+                hours_of_operation = (
+                    " ".join(rows[i:]).replace("ATM", "").strip().split("Drive")[0]
+                )
                 break
 
         latitude = store["lat"]
