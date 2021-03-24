@@ -71,7 +71,6 @@ def fetch_data():
                 poi = json.loads(data)
                 poi = [e for e in poi["@graph"] if e["@type"] == "LocalBusiness"]
                 if not poi:
-                    print("Warning!!!", store_url)
                     continue
                 poi = poi[0]
                 location_name = poi["name"]
