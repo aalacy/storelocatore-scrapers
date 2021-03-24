@@ -96,7 +96,6 @@ def reset_sessions(data_url):
             if len(test_html) < 2:
                 continue
             else:
-                print("SUCCESS")
                 return [s, driver, headers, response_text]
 
         except Exception:
