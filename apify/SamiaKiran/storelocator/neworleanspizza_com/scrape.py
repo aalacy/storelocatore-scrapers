@@ -71,9 +71,10 @@ def fetch_data():
                 )
                 hours_of_operation = (
                     soup.find("div", {"class": "hours"})
-                    .findAll("p")[1]
-                    .get_text(separator="|", strip=True)
-                    .replace("|", " ")
+                    .text.split("DELIVERY HOURS:")[0]
+                    .replace("PICK UP HOURS:", "")
+                    .replace("\n", " ")
+                    .strip()
                 )
                 temp = r.text.split("var locations = [",)[1].split(
                     "}", 1
