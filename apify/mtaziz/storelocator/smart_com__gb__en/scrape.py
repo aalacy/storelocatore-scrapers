@@ -58,9 +58,7 @@ def para(tup):
     session = SgRequests()
     k = tup[0]
     url = "https://api.corpinter.net/dlc/dms/v2/dealers/search?marketCode=GB&fields=*&whiteList="
-    #     url = "https://api.corpinter.net/dlc/cms/v2/configuration/externalId/OneDLC_Dlp?market=GB&language=en_GB"
     son = session.get(url + k["baseInfo"]["externalId"], headers=headers).json()
-    #     son = session.get(url + k, headers=headers).json()
     k = son
     return k
 
