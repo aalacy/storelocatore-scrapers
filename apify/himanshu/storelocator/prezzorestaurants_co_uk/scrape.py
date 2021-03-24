@@ -1,136 +1,131 @@
-import csv
-from sgrequests import SgRequests
-from bs4 import BeautifulSoup as bs
 import re
-import json
-import sgzip
-from sglogging import SgLogSetup
+import csv
+from lxml import etree
+from urllib.parse import urljoin
 
-logger = SgLogSetup().get_logger('prezzorestaurants_co_uk')
-
-
-
-session = SgRequests()
+from sgrequests import SgRequests
+from sgscrape.sgpostal import parse_address_intl
 
 
 def write_output(data):
-    with open('data.csv', mode='w', newline='') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+    with open("data.csv", mode="w", encoding="utf-8") as output_file:
+        writer = csv.writer(
+            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+        )
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
+        writer.writerow(
+            [
+                "locator_domain",
+                "page_url",
+                "location_name",
+                "street_address",
+                "city",
+                "state",
+                "zip",
+                "country_code",
+                "store_number",
+                "phone",
+                "location_type",
+                "latitude",
+                "longitude",
+                "hours_of_operation",
+            ]
+        )
         # Body
         for row in data:
             writer.writerow(row)
 
 
 def fetch_data():
-    return_main_object = []
-    addressess = []
-    search = sgzip.ClosestNSearch() # TODO: OLD VERSION [sgzip==0.0.55]. UPGRADE IF WORKING ON SCRAPER!
-    search.initialize(country_codes = ["UK"])
-    MAX_RESULTS = 50
-    MAX_DISTANCE = 10
-    current_results_len = 0     # need to update with no of count.
-    zip_code = search.next_zip()
-    location_name = ""
-    street_address = ""
-    city = ""
-    state = ""
-    zipp = ""
-    country_code = "UK"
-    store_number = ""
-    phone = ""
-    location_type = ""
-    latitude = ""
-    longitude = ""
-    raw_address = ""
-    hours_of_operation = ""
-    name=''
-   
-    while zip_code:
-        result_coords = []
-        # logger.info("remaining zipcodes: " + str(search.zipcodes_remaining()))
-        url = "https://www.prezzorestaurants.co.uk/find-and-book/search/?lat=0&lng=0&f=&s="+str(zip_code)+"&dist=Dist500"
-        headers = {
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
-        'Host': 'www.prezzorestaurants.co.uk',
-        'Referer': 'https://www.prezzorestaurants.co.uk/find-and-book/search/?lat=0&lng=0&f=&s='+str(zip_code)+'&dist=Dist500',
-        'Sec-Fetch-Dest': 'document',
-        'Sec-Fetch-Mode': 'navigate',
-        'Upgrade-Insecure-Requests': '1',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.105 Safari/537.36',
+    # Your scraper here
+    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
 
-        }
-        response = session.get(url, headers=headers)
-        soup = bs(response.text,'lxml')
-        current_results_len = len(soup.find_all("a",text=re.compile("Restaurant info")))
-        for link in  soup.find_all("a",text=re.compile("Restaurant info")):
-            page_url = "https://www.prezzorestaurants.co.uk"+link['href']
-            # logger.info(page_url)
-            
-            responsees = session.get(page_url, headers=headers)
-            soup1 = bs(responsees.text,'lxml')
-            addr = list(soup1.find("div",{"class":"restaurant-information__address"}).stripped_strings)
-            street_address = " ".join(addr[:-2]).replace("Address","").strip()
-            city = addr[-2].split(",")[-1].strip()
-            zipp = addr[-1]
-            phone = soup1.find("span",{'itemprop':"telephone"}).text.strip()
-    
-            try:
-                hours_of_operation = " ".join(list(soup1.find("div",{'class':"restaurant-information__opening-times"}).stripped_strings)).replace("Temporarily Closed","<MISSING>")
-            except:
-                pass
-           
-            try:
-                phone =soup1.find("span",{'itemprop':"telephone"}).text.strip()
-            except:
-                pass
-            try:
-                name = soup1.find("h1",{'itemprop':"name"}).text.strip()
-            except:
-                pass
-            try:
-                if "@" in soup1.find("a",text=re.compile("Get Directions"))['href']:
-                    latitude = soup1.find("a",text=re.compile("Get Directions"))['href'].split("@")[-1].split(",")[0]
-                else:
-                    latitude = soup1.find("a",text=re.compile("Get Directions"))['href'].split("ll=")[1].split(",")[0]
-            except:
-                pass
-            try:
-                if "@" in soup1.find("a",text=re.compile("Get Directions"))['href']:
-                    longitude = soup1.find("a",text=re.compile("Get Directions"))['href'].split("@")[-1].split(",")[1].split("&")[0]
-                else:
-                    longitude = soup1.find("a",text=re.compile("Get Directions"))['href'].split("ll=")[1].split(",")[1].split("&")[0]
+    items = []
 
-            except:
-                pass
+    start_url = "https://www.prezzorestaurants.co.uk/find-and-book/search/?s=london&lng=-0.1277583&lat=51.5073509&f=&of=0&command=book&dist=5000&p=1&X-Requested-With=XMLHttpRequest"
+    domain = re.findall("://(.+?)/", start_url)[0].replace("www.", "")
+    hdr = {
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
+    }
+    response = session.get(start_url, headers=hdr)
+    dom = etree.HTML(response.text)
+    all_locations = dom.xpath('//a[contains(text(), "View restaurant")]/@href')
+    next_page = dom.xpath("//a/@data-load")
+    while next_page:
+        response = session.get(next_page[0], headers=hdr)
+        dom = etree.HTML(response.text)
+        all_locations += dom.xpath('//a[contains(text(), "View restaurant")]/@href')
+        next_page = dom.xpath("//a/@data-load")
 
+    for url in all_locations:
+        store_url = urljoin(start_url, url)
+        print(store_url)
+        loc_response = session.get(store_url)
+        loc_dom = etree.HTML(loc_response.text)
 
+        location_name = loc_dom.xpath(
+            '//h2[@class="title mb-2 has-text-weight-bold"]/text()'
+        )
+        location_name = location_name[0].strip() if location_name else "<MISSING>"
+        raw_address = loc_dom.xpath(
+            '//h4[a[contains(@href, "tel")]]/following-sibling::div[1]/p[1]/text()'
+        )
+        raw_address = [" ".join(e.split()) for e in raw_address][0]
+        addr = parse_address_intl(raw_address)
+        street_address = ", ".join(raw_address.split(", ")[:-2])
+        city = addr.city
+        city = city if city else "<MISSING>"
+        if city in street_address:
+            street_address = street_address.split(f", {city}")[0]
+        state = addr.state
+        state = state if state else "<MISSING>"
+        zip_code = addr.postcode
+        zip_code = zip_code if zip_code else "<MISSING>"
+        country_code = addr.country
+        country_code = country_code if country_code else "<MISSING>"
+        store_number = "<MISSING>"
+        phone = loc_dom.xpath('//a[contains(@href, "tel")]/text()')
+        phone = phone[0] if phone else "<MISSING>"
+        location_type = "<MISSING>"
+        latitude = "<MISSING>"
+        longitude = "<MISSING>"
+        if "/@" in loc_dom.xpath('//a[contains(@href, "maps")]/@href')[0]:
+            geo = (
+                loc_dom.xpath('//a[contains(@href, "maps")]/@href')[0]
+                .split("/@")[-1]
+                .split(",")[:2]
+            )
+            latitude = geo[0]
+            longitude = geo[1]
 
-            store_number=''
-            result_coords.append((latitude,longitude))
-            store = ["https://www.prezzorestaurants.co.uk/", name, street_address, city, state, zipp, "UK",
-                    store_number, phone, "<MISSING>", str(latitude), str(longitude), hours_of_operation.replace("Opening times",'').strip(),page_url]
-            store = [str(x).strip() if x else "<MISSING>" for x in store]
-            if store[2]  in addressess:
-                continue
-            addressess.append(store[2])
-            store = [x.strip() if x else "<MISSING>" for x in  store]
-            # logger.info("data = " + str(store))
-            # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-            yield store
-        if current_results_len < MAX_RESULTS:
-            # logger.info("max distance update")
-            search.max_distance_update(MAX_DISTANCE)
-        elif current_results_len == MAX_RESULTS:
-            # logger.info("max count update")
-            search.max_count_update(result_coords)
-        else:
-            raise Exception("expected at most " + str(MAX_RESULTS) + " results")
-        zip_code = search.next_zip()
- 
+        loc_response = session.get(store_url + "?X-Requested-With=XMLHttpRequest")
+        hoo = loc_dom.xpath(
+            '//div[h4[contains(text(), "Opening times")]]/following-sibling::div//text()'
+        )
+        hoo = [e.strip() for e in hoo if e.strip()]
+        hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
+
+        item = [
+            domain,
+            store_url,
+            location_name,
+            street_address,
+            city,
+            state,
+            zip_code,
+            country_code,
+            store_number,
+            phone,
+            location_type,
+            latitude,
+            longitude,
+            hours_of_operation,
+        ]
+
+        items.append(item)
+
+    return items
 
 
 def scrape():
@@ -138,4 +133,5 @@ def scrape():
     write_output(data)
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()
