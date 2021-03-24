@@ -39,7 +39,6 @@ def write_output(data):
 
 
 def fetch_data():
-    locs = []
     addarray = []
     dayarray = []
     stores = []
@@ -180,6 +179,7 @@ def fetch_data():
                 )
                 if store not in stores:
                     stores.append(store)
+                    purl = ""
                     if "/wd" in lurl or "/WD" in lurl or "/wc" in lurl or "/WC" in lurl:
                         purl = lurl
                     else:
@@ -187,7 +187,7 @@ def fetch_data():
                     if add != "":
                         yield [
                             website,
-                            lurl,
+                            purl,
                             name,
                             add,
                             city,
