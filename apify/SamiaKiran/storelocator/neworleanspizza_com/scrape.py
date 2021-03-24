@@ -2,7 +2,6 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from sglogging import sglog
-import html
 from bs4 import BeautifulSoup
 from sgscrape import sgpostal as parser
 
