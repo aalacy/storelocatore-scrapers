@@ -40,7 +40,11 @@ def fetch_data():
         try:
             store_number = loc["c_websiteID"]
         except:
-            store_number = "<MISSING>"
+            if "<MISSING>" not in page_url:
+                r = session.get(page_url, headers=headers)
+                store_number = r.text.split("'websiteId': '")[1].split("'", 1)[0]
+            else:
+                store_number = "<MISSING>"
         mon = loc["hours"]["monday"]["openIntervals"][0]
         mon_s = mon["start"]
         mon_e = mon["end"]
