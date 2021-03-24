@@ -1,2 +1,1 @@
 sgrequests==0.1.8
-lxml==4.6.2
