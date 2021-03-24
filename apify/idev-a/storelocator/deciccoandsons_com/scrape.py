@@ -38,7 +38,7 @@ def fetch_data():
             street_address = visit.find_next_siblings("p")[0].text
             city = visit.find_next_siblings("p")[1].text.split(",")[0].strip()
             state_zip = (
-                visit.find_next_siblings("p")[1].text.split(",")[0].strip().split(" ")
+                visit.find_next_siblings("p")[1].text.split(",")[1].strip().split(" ")
             )
             coord = soup1.iframe["src"].split("!2d")[1].split("!2m")[0].split("!3d")
             phone_block = soup1.find("h2", string=re.compile(r"^phone", re.IGNORECASE))
