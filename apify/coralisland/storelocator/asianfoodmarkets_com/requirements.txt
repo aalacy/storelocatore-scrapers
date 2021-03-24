@@ -1,6 +1,4 @@
-lxml==4.3.4
-requests==2.11.1
-beautifulsoup4==4.7.1
-selenium==3.141.0
-usaddress==0.5.10
-sglogging
+sgvalidator==0.0.71
+requests==2.25.1
+lxml==4.6.2
+sgscrape==0.0.23
