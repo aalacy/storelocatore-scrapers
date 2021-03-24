@@ -70,7 +70,6 @@ def fetch_data():
             add = g.split(">")[1].split("<")[0].replace(",", "").strip()
             g = next(lines)
             g = str(g.decode("utf-8"))
-            csz = g.split("<")[0].strip()
             city = g.split(",")[0]
             state = g.split(",")[1].strip().split(" ")[0]
             zc = g.rsplit(" ", 1)[1].split("<")[0]
