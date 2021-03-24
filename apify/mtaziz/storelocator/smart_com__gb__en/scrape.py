@@ -265,7 +265,6 @@ def fetch_data():
 
     for dl in data_list:
         for d in dl:
-            ceid = d["baseInfo"]["externalId"]
             locator_domain = "https://www.mercedes-benz.co.uk/"
             page_url = "<MISSING>"
             if "website" in d["contact"]:
