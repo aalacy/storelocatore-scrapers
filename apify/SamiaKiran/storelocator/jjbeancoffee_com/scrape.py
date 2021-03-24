@@ -15,7 +15,6 @@ headers = {
 
 
 def fetch_data():
-    temp = []
     if True:
         url = "https://jjbeancoffee.com/pages/locations"
         r = session.get(url, headers=headers).json()["page"]["body_html"]
