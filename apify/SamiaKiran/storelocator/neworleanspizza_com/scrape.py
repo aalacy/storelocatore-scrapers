@@ -2,6 +2,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from sglogging import sglog
+import html
 from bs4 import BeautifulSoup
 from sgscrape import sgpostal as parser
 
@@ -69,12 +70,7 @@ def fetch_data():
                 location_name = (
                     soup.find("div", {"class": "location-detail"}).find("h1").text
                 )
-                hours_of_operation = (
-                    soup.find("div", {"class": "hours"})
-                    .findAll("p")[1]
-                    .get_text(separator="|", strip=True)
-                    .replace("|", " ")
-                )
+                hours_of_operation = soup.find("div", {"class": "hours"}).text.split("DELIVERY HOURS:")[0].replace("PICK UP HOURS:","").replace("\n"," ").strip()
                 temp = r.text.split("var locations = [",)[1].split(
                     "}", 1
                 )[0]
