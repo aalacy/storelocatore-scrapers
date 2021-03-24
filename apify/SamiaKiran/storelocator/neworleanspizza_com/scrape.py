@@ -69,7 +69,13 @@ def fetch_data():
                 location_name = (
                     soup.find("div", {"class": "location-detail"}).find("h1").text
                 )
-                hours_of_operation = soup.find("div", {"class": "hours"}).text.split("DELIVERY HOURS:")[0].replace("PICK UP HOURS:","").replace("\n"," ").strip()
+                hours_of_operation = (
+                    soup.find("div", {"class": "hours"})
+                    .text.split("DELIVERY HOURS:")[0]
+                    .replace("PICK UP HOURS:", "")
+                    .replace("\n", " ")
+                    .strip()
+                )
                 temp = r.text.split("var locations = [",)[1].split(
                     "}", 1
                 )[0]
