@@ -1,110 +1,154 @@
-import requests
-from bs4 import BeautifulSoup
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.common.action_chains import ActionChains
 import csv
-import re
-import time
-from sglogging import SgLogSetup
+import json
 
-logger = SgLogSetup().get_logger('subzeroicecream_com')
+from bs4 import BeautifulSoup
 
+from sgrequests import SgRequests
 
-
-
-
-def get_driver():
-    options = Options() 
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    #return webdriver.Chrome(executable_path='driver/chromedriver', chrome_options=options)
-    return webdriver.Chrome('chromedriver', chrome_options=options)
+import usaddress
 
 
 def write_output(data):
-	with open('data.csv', mode='w') as output_file:
-		writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+    with open("data.csv", mode="w") as output_file:
+        writer = csv.writer(
+            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+        )
 
-		# Header
-		writer.writerow(["locator_domain", "location_name", "raw_address", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-		# Body
-		for row in data:
-			writer.writerow(row)
+        # Header
+        writer.writerow(
+            [
+                "locator_domain",
+                "location_name",
+                "street_address",
+                "city",
+                "state",
+                "zip",
+                "country_code",
+                "store_number",
+                "phone",
+                "location_type",
+                "latitude",
+                "longitude",
+                "hours_of_operation",
+                "page_url",
+            ]
+        )
+        # Body
+        for row in data:
+            writer.writerow(row)
+
 
 def fetch_data():
 
-	base_link = "https://www.subzeroicecream.com/find-location/c/0"
+    base_link = "https://www.subzeroicecream.com/find-location/c/0"
 
-	driver = get_driver()
-	driver.get(base_link)
+    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
+    headers = {"User-Agent": user_agent}
 
-	items = driver.find_elements_by_tag_name("gb-map-item-cell")
-	actions = ActionChains(driver)
-	actions.move_to_element(items[-1]).perform()
-	time.sleep(5)
-	items = driver.find_elements_by_tag_name("gb-map-item-cell")
-	if len(items) < 50:
-		items = driver.find_elements_by_tag_name("gb-map-item-cell")
-		actions = ActionChains(driver)
-		actions.move_to_element(items[-1]).perform()
-	time.sleep(5)
-	items = driver.find_elements_by_tag_name("gb-map-item-cell")
+    session = SgRequests()
+    req = session.get(base_link, headers=headers)
+    base = BeautifulSoup(req.text, "lxml")
 
-	logger.info(str(len(items)) + " links loaded..processing")
+    js = str(base.find(id="gb-app-state").contents[0]).replace("&q;", '"')
+    stores = json.loads(js)[
+        "https://api.goodbarber.net/front/get_items/1829070/27785536/?category_index=0&a;geoloc=1&a;per_page=48"
+    ]["body"]["items"]
 
-	user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36'
-	headers = {'User-Agent' : user_agent}
+    data = []
 
-	links = []
-	for item in items:
-		raw_link = item.find_element_by_tag_name("a").get_attribute("href")
-		links.append(raw_link)
+    locator_domain = "subzeroicecream.com"
 
-	driver.close()
+    for store in stores:
+        location_name = store["title"]
+        if "Coming Soon" in location_name:
+            continue
+        street_address = (
+            store["address"].replace("a;", "").replace(", TX, USA", "").strip()
+        )
 
-	data = []
-	for link in links:
-		req = requests.get(link, headers=headers)
-		try:
-			base = BeautifulSoup(req.text,"lxml")
-			time.sleep(3)
-		except (BaseException):
-			logger.info('[!] Error Occured. ')
-			logger.info('[?] Check whether system is Online.')
+        if "-" in location_name:
+            raw_address = (
+                location_name.replace("Square Worc", "Square, Worc")
+                .replace("UT, Tra", "UT - Trav")
+                .replace("Caney TX", "Caney, TX")
+                .replace("(Henderson)", "Henderson")
+                .split("-")[-2]
+            )
+        else:
+            raw_address = (
+                location_name.replace("Square Worc", "Square, Worc")
+                .replace("UT, Tra", "UT - Trav")
+                .replace("Caney TX", "Caney, TX")
+            )
 
-		section = base.find('div', attrs={'class': 'content-container'})
-					
-		locator_domain = "subzeroicecream.com"
-		try:
-			location_name = section.find('h1').text.strip()
-		except:
-			location_name = base.title.text
-		logger.info(location_name)
+        address = usaddress.parse(raw_address)
+        city = ""
+        state = ""
+        for addr in address:
+            if addr[1] == "PlaceName":
+                city += addr[0].replace(",", "") + " "
+            elif addr[1] == "StateName":
+                state = addr[0]
 
-		raw_address = section.find('h3', attrs={'class': 'address ng-star-inserted'}).text.strip()
-		street_address = "<INACCESSIBLE>"
-		city = "<INACCESSIBLE>"
-		state = location_name[location_name.rfind(",")+1:location_name.rfind("-")].strip()
-		zip_code = "<MISSING>"
-		country_code = "US"
-		store_number = "<MISSING>"
-		phone = base.find('ul', attrs={'class': 'buttons'}).a['href']
-		phone = phone[phone.find(":")+1:]
-		if len(phone) > 18:
-			phone = "<MISSING>"
-		location_type = "<MISSING>"
-		latitude = base.find('meta', attrs={'property': 'place:location:latitude'})['content']
-		longitude = base.find('meta', attrs={'property': 'place:location:longitude'})['content']
-		hours_of_operation = "<MISSING>"
+        if "Sarasota" in location_name:
+            city = "Sarasota"
+            state = "FL"
+        if not city:
+            city = location_name.split(",")[0].strip()
+        if not state:
+            state = location_name.split(",")[1].strip()
 
-		data.append([locator_domain, location_name, raw_address, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
+        city = (
+            city.replace("Atlanta Park", "Atlanta")
+            .replace("Rimrock Mall", "Billings")
+            .replace("(Flagler)", "")
+            .replace("Square", "")
+            .replace("Mass", "")
+            .replace("(Shadyside)", "")
+            .strip()
+        )
+        street_address = (
+            street_address.replace(city, "").replace("Shadyside", "").strip()
+        )
+        state = state.split("-")[0]
+        zip_code = "<MISSING>"
+        country_code = "US"
+        store_number = store["id"]
+        location_type = "<MISSING>"
+        phone = store["phoneNumber"]
+        if not phone:
+            phone = "<MISSING>"
+        hours_of_operation = "<MISSING>"
+        latitude = store["latitude"]
+        longitude = store["longitude"]
+        link = store["url"]
 
-	return data
+        # Store data
+        data.append(
+            [
+                locator_domain,
+                location_name,
+                street_address,
+                city,
+                state,
+                zip_code,
+                country_code,
+                store_number,
+                phone,
+                location_type,
+                latitude,
+                longitude,
+                hours_of_operation,
+                link,
+            ]
+        )
+
+    return data
+
 
 def scrape():
-	data = fetch_data()
-	write_output(data)
+    data = fetch_data()
+    write_output(data)
+
 
 scrape()

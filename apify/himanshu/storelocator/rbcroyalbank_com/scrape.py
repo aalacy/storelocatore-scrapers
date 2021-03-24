@@ -3,21 +3,22 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import time
-import sgzip
+from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 from sglogging import SgLogSetup
 
 logger = SgLogSetup().get_logger("rbcroyalbank_com")
-
-
 session = SgRequests()
 
 
 def write_output(data):
     with open("data.csv", mode="w") as output_file:
         writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+            output_file,
+            delimiter=",",
+            quotechar='"',
+            quoting=csv.QUOTE_ALL,
+            lineterminator="\n",
         )
-
         writer.writerow(
             [
                 "locator_domain",
@@ -76,11 +77,11 @@ def request_wrapper(url, method, headers, data=None):
 def fetch_data():
 
     addressess = []
-    search = sgzip.ClosestNSearch()
-    search.initialize(include_canadian_fsas=True)
-
-    MAX_RESULTS = 25
-    current_results_len = 0
+    search = DynamicZipSearch(
+        country_codes=[SearchableCountries.CANADA],
+        max_radius_miles=50,
+        max_search_results=200,
+    )
 
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36",
@@ -88,8 +89,7 @@ def fetch_data():
         "referer": "https://www.thetinfishrestaurants.com/locations-menus/find-a-tin-fish-location-near-you/",
         "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
     }
-    coord = search.next_zip()
-    while coord:
+    for coord in search:
         result_coords = []
         locator_domain = "https://www.rbcroyalbank.com"
         location_name = ""
@@ -105,25 +105,22 @@ def fetch_data():
         longitude = ""
         hours_of_operation = ""
         page_url = ""
-        data = (
-            "useCookies=1&lang=&q="
-            + str(search.current_zip)
-            + "&searchBranch=1&searchATM=1"
-        )
+        data = "useCookies=1&lang=&q=" + str(coord) + "&searchBranch=1&searchATM=1"
+
         try:
             r = session.post(
                 "https://maps.rbcroyalbank.com/index.php", headers=headers, data=data
             )
         except:
             continue
-        soup = BeautifulSoup(r.text, "lxml")
-        if "markerData[1]" in soup.text:
+
+        soup = str(BeautifulSoup(r.text, "lxml"))
+        if "markerData[1]" in soup:
             script = (
-                soup.text.split("markerData[1]=")[1]
+                soup.split("markerData[1]=")[1]
                 .split("=true;for(var")[0]
                 .split("{label:")
             )
-            current_results_len = len(script) - 1
             for i in range(len(script))[1:]:
                 latitude = script[i].split("lat:")[1].split(",")[0]
                 longitude = script[i].split("lat:")[1].split(",")[1].split("lng:")[1]
@@ -220,9 +217,24 @@ def fetch_data():
                         .replace(state, "")
                         .replace(",", "")
                     )
-                    phone = "<MISSING>"
                     hours_of_operation = " ".join(list(loc_dat.stripped_strings)[8:22])
 
+                if location_type == "Branch":
+                    phone = list(loc_dat.stripped_strings)[4]
+                else:
+                    phone = "<MISSING>"
+
+                if location_name == "Important":
+                    location_name = "RBC On Campus Laurier University"
+                if city == "RBC On Campus Laurier University":
+                    city = "Waterloo"
+                if (
+                    street_address
+                    == "This branch is temporarily closed. Please consider using Online Banking or the Mobile app to meet your banking needs during this time, or search for the next closest branch in your area."
+                ):
+                    street_address = "75 University Ave W"
+                else:
+                    pass
                 store = []
                 result_coords.append((latitude, longitude))
                 store.append(locator_domain if locator_domain else "<MISSING>")
@@ -243,13 +255,8 @@ def fetch_data():
                 if store[2] in addressess:
                     continue
                 addressess.append(store[2])
-                yield store
 
-        if current_results_len < MAX_RESULTS:
-            search.max_count_update(result_coords)
-        else:
-            raise Exception("expected at most " + str(MAX_RESULTS) + " results")
-        coord = search.next_zip()
+                yield store
 
 
 def scrape():

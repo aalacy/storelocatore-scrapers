@@ -52,8 +52,6 @@ def fetch_data():
     endpoint("London", 4, data)
     endpoint("Paris", 2, data)
     endpoint("Dublin", 1, data)
-    endpoint("UK", 1, data)
-    endpoint("France", 2, data)
     endpoint("all", 24, data)
 
     result = []
@@ -92,9 +90,9 @@ def fetch_data():
             typ = "Temporary Closed"
         if city == "":
             city = missingString
-        if lat == "0" or lat == 0:
+        if float(lat) == 0:
             lat = missingString
-        if lng == "0" or lng == 0:
+        if float(lng) == 0:
             lng = missingString
         result.append(
             [

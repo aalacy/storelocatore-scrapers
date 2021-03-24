@@ -19,41 +19,31 @@ def _headers():
 
 
 def fetch_data():
-    data = []
-
     with SgRequests() as session:
         res = session.get(base_url, headers=_headers())
         locations = json.loads(res.text)
         for _ in locations:
-            try:
-                hours = []
-                for hour in bs(_["hours"], "lxml").select("tr"):
-                    hours.append(
-                        f"{hour.select_one('td').text}: {hour.select('td')[1].text}"
-                    )
-                hours_of_operation = "; ".join(hours)
-                record = SgRecord(
-                    page_url=_.get("url", "<MISSING>"),
-                    store_number=_["id"],
-                    location_name=_["store"],
-                    street_address=_["address"],
-                    city=_["city"],
-                    state=_["state"],
-                    zip_postal=_["zip"],
-                    country_code=_["country"],
-                    phone=_["phone"],
-                    latitude=_["lat"],
-                    longitude=_["lng"],
-                    locator_domain=locator_domain,
-                    hours_of_operation=hours_of_operation,
+            hours = []
+            for hour in bs(_["hours"], "lxml").select("tr"):
+                hours.append(
+                    f"{hour.select_one('td').text}: {hour.select('td')[1].text}"
                 )
-                data.append(record)
-            except:
-                import pdb
-
-                pdb.set_trace()
-
-    return data
+            hours_of_operation = "; ".join(hours)
+            yield SgRecord(
+                page_url=_.get("url", "<MISSING>"),
+                store_number=_["id"],
+                location_name=_["store"].replace("&#038;", ""),
+                street_address=_["address"],
+                city=_["city"],
+                state=_["state"],
+                zip_postal=_["zip"],
+                country_code=_["country"],
+                phone=_["phone"],
+                latitude=_["lat"],
+                longitude=_["lng"],
+                locator_domain=locator_domain,
+                hours_of_operation=hours_of_operation,
+            )
 
 
 if __name__ == "__main__":

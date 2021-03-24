@@ -1,4 +1,3 @@
-import re
 import csv
 from lxml import etree
 
@@ -62,31 +61,69 @@ def fetch_data():
         street_address = poi_html.xpath('.//div[@class="wpb_wrapper"]/*[1]/text()')
         if not street_address:
             street_address = poi_html.xpath('.//div[@class="wpb_wrapper"]/p[2]/text()')
-        street_address = street_address[0] if street_address else "<MISSING>"
+        street_address = (
+            street_address[0]
+            if street_address and street_address[0].strip()
+            else "<MISSING>"
+        )
+        if street_address == "<MISSING>":
+            if "3rd and Bell Street" in location_name:
+                street_address = "310 E Bell Rd"
+            elif "Thunderbird & 101" in location_name:
+                street_address = "8877 W Thunderbird Rd"
         raw_address = poi_html.xpath('.//div[@class="wpb_wrapper"]//text()')
         if not raw_address:
             raw_address = poi_html.xpath('.//div[@class="wpb_wrapper"]/*[2]/text()')
-
         raw = " ".join([elem.strip() for elem in raw_address[:4] if elem.strip()])
         parsed_addr = parse_address_usa(raw)
         city = parsed_addr.city
+        if not city:
+            city = poi_html.xpath('.//div[@style="text-align: center;"]/strong/text()')
+            city = city[-1].split(",")[0] if city else ""
+        if not city:
+            city = (
+                poi_html.xpath('.//p[@style="text-align: center;"]/text()')[-1]
+                .split(", ")[0]
+                .strip()
+            )
+        city = city if city else "<MISSING>"
         state = parsed_addr.state
+        if not state:
+            state = poi_html.xpath('.//div[@style="text-align: center;"]/strong/text()')
+            state = state[-1].split(",")[-1].split()[0] if state else ""
+        if not state:
+            state = (
+                poi_html.xpath('.//p[@style="text-align: center;"]/text()')[-1]
+                .split(", ")[-1]
+                .split()[0]
+            )
+        state = state if state else "<MISSING>"
         zip_code = parsed_addr.postcode
-        country_code = parsed_addr.county
+        if not zip_code:
+            zip_code = poi_html.xpath(
+                './/div[@style="text-align: center;"]/strong/text()'
+            )
+            zip_code = zip_code[-1].split(",")[-1].split()[-1] if zip_code else ""
+        if not zip_code:
+            zip_code = (
+                poi_html.xpath('.//p[@style="text-align: center;"]/text()')[-1]
+                .split(", ")[-1]
+                .split()[-1]
+            )
+        zip_code = zip_code if zip_code else "<MISSING>"
+        country_code = "US"
         store_number = "<MISSING>"
-        phone = poi_html.xpath('//*[strong[contains(text(), "Phone:")]]/text()')
+        phone = poi_html.xpath('//strong[contains(text(), "Phone:")]/following::text()')
         phone = phone[0].strip() if phone else "<MISSING>"
         location_type = "<MISSING>"
         geo = poi_html.xpath(".//iframe/@src")[0]
-        latitude = re.findall(r"\d\d.\d\d\d\d\d\d\d\d\d\d\d\d", geo)
-        latitude = latitude[-1] if latitude else ""
-        if not latitude:
-            latitude = re.findall(r"\d\d.\d\d\d\d\d\d", geo)[-1]
-        longitude = re.findall(r"-\d\d\d.\d\d\d\d\d\d\d\d\d\d\d\d", geo)
-        if not longitude:
-            longitude = re.findall(r"-\d\d\d.\d\d\d\d\d\d", geo)
-        longitude = longitude[0] if longitude else "<MISSING>"
+        geo = geo.split("!2d")[-1].split("!3m")[0].split("!3d")
+        latitude = geo[-1]
+        longitude = geo[0]
         hours_of_operation = "<MISSING>"
+
+        if "Happy Valley" in street_address:
+            street_address = street_address.split(", Happy Valley")[0]
 
         item = [
             DOMAIN,
