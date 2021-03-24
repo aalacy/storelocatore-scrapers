@@ -1,21 +1,23 @@
 import csv
-from sgrequests import SgRequests
-from bs4 import BeautifulSoup
-import re
 import json
+from lxml import etree
+from urllib.parse import urljoin
 
-session = SgRequests()
+from sgrequests import SgRequests
+from sgscrape.sgpostal import parse_address_intl
 
 
 def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8", newline="") as output_file:
+    with open("data.csv", mode="w", encoding="utf-8") as output_file:
         writer = csv.writer(
             output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
         )
+
         # Header
         writer.writerow(
             [
                 "locator_domain",
+                "page_url",
                 "location_name",
                 "street_address",
                 "city",
@@ -28,7 +30,6 @@ def write_output(data):
                 "latitude",
                 "longitude",
                 "hours_of_operation",
-                "page_url",
             ]
         )
         # Body
@@ -37,72 +38,84 @@ def write_output(data):
 
 
 def fetch_data():
+    session = SgRequests()
+
+    items = []
+
     headers = {
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36"
     }
-    base_url = "https://www.wework.com/locations"
-    r = session.get(base_url, headers=headers)
-    soup = BeautifulSoup(r.text, "lxml")
+    start_url = "https://www.wework.com/locations"
+    domain = "wework.com"
+
+    r = session.get(start_url, headers=headers)
+    dom = etree.HTML(r.text)
     for country in ["US", "CA"]:
-        for city in soup.find(
-            "div",
-            {"class": "markets-list__country markets-list__country--" + str(country)},
-        ).find_all("a"):
-
-            city_request = session.get(
-                "https://www.wework.com" + city["href"], headers=headers
+        cities = dom.xpath(
+            '//div[@class="markets-list__country markets-list__country--{}"]//a/@href'.format(
+                country
             )
-            city_soup = BeautifulSoup(city_request.text, "lxml")
-            for locaion in city_soup.find_all("a", {"class": "ray-card"}):
-                page_url = "https://www.wework.com" + locaion["href"]
-                try:
-                    location_request = session.get(page_url, headers=headers)
-                    location_soup = BeautifulSoup(location_request.text, "lxml")
-                    json_data = json.loads(
-                        str(
-                            location_soup.find(
-                                "script", {"type": "application/ld+json"}
-                            )
-                        )
-                        .split(">")[1]
-                        .split("<")[0]
-                    )["@graph"][-1]
-                    addr = list(location_soup.find("address").stripped_strings)[
-                        0
-                    ].split("\n")
+        )
+        for url in cities:
+            city_url = urljoin(start_url, url)
+            city_res = session.get(city_url, headers=headers)
+            city_dom = etree.HTML(city_res.text)
+            locations = city_dom.xpath('//a[contains(@class, "ray-card")]/@href')
+            for url in locations:
+                store_url = urljoin(start_url, url)
+                location_res = session.get(store_url, headers=headers)
+                loc_dom = etree.HTML(location_res.text)
+                data = loc_dom.xpath('//script[@type="application/ld+json"]/text()')[
+                    0
+                ].split("/*")[0]
+                poi = json.loads(data)
+                poi = [e for e in poi["@graph"] if e["@type"] == "LocalBusiness"]
+                if not poi:
+                    continue
+                poi = poi[0]
+                location_name = poi["name"]
+                location_name = location_name if location_name else "<MISSING>"
+                addr = parse_address_intl(poi["address"]["streetAddress"])
+                street_address = addr.street_address_1
+                if addr.street_address_2:
+                    street_address += " " + addr.street_address_2
+                street_address = street_address if street_address else "<MISSING>"
+                city = poi["address"]["addressLocality"]
+                city = city if city else "<MISSING>"
+                state = addr.state
+                state = state if state else "<MISSING>"
+                zip_code = addr.postcode
+                zip_code = zip_code if zip_code else "<MISSING>"
+                country_code = addr.postcode
+                country_code = country_code if country_code else "<MISSING>"
+                store_number = "<MISSING>"
+                phone = poi["telephone"]
+                phone = phone if phone else "<MISSING>"
+                location_type = poi["@type"]
+                latitude = poi["geo"]["latitude"]
+                longitude = poi["geo"]["longitude"]
+                hours_of_operation = "<MISSING>"
 
-                    street_address = re.sub(r"\s+", " ", " ".join(addr[:-1]))
-                    city = addr[-1].split(",")[0].strip()
-                    state = addr[-1].split(",")[1].split()[0].strip()
-                    try:
-                        zipp = " ".join(addr[-1].split(",")[1].split()[1:])
-                    except:
-                        zipp = "<MISSING>"
+                item = [
+                    domain,
+                    store_url,
+                    location_name,
+                    street_address,
+                    city,
+                    state,
+                    zip_code,
+                    country_code,
+                    store_number,
+                    phone,
+                    location_type,
+                    latitude,
+                    longitude,
+                    hours_of_operation,
+                ]
 
-                    store = []
-                    store.append("https://www.wework.com")
-                    store.append(
-                        location_soup.find("h1", {"id": "heading"}).text.strip()
-                    )
-                    store.append(street_address)
-                    store.append(city)
-                    store.append(state)
-                    store.append(zipp.replace("AB T2P 3H9", "T2P 3H9"))
-                    store.append(json_data["address"]["addressCountry"])
-                    store.append("<MISSING>")
-                    store.append(json_data["telephone"])
-                    store.append(json_data["brand"])
-                    store.append(json_data["geo"]["latitude"])
-                    store.append(json_data["geo"]["longitude"])
-                    store.append("<MISSING>")
-                    store.append(page_url)
-                    store = [
-                        str(x).replace("–", "-").strip() if x else "<MISSING>"
-                        for x in store
-                    ]
-                    yield store
-                except:
-                    pass
+                items.append(item)
+
+    return items
 
 
 def scrape():
@@ -110,4 +123,5 @@ def scrape():
     write_output(data)
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()

@@ -49,9 +49,7 @@ def get_data(coord):
         if "koodo" not in location_name.lower():
             continue
 
-        street_address = (
-            f"{j.get('address')} {j.get('unit') or ''}".strip() or "<MISSING>"
-        )
+        street_address = j.get("address") or "<MISSING>"
         city = j.get("city") or "<MISSING>"
         state = j.get("province") or "<MISSING>"
         postal = j.get("postal_code") or "<MISSING>"
