@@ -4,8 +4,6 @@ from sglogging import sglog
 
 from sgrequests import SgRequests
 
-import json
-
 
 def decimate(bboxes):
     # making one big bbox into smaller quadrants until I no longer get 1000 results per query.
@@ -37,30 +35,6 @@ def decimate(bboxes):
             "lat1": centLat,
             "lat2": i["lat2"],
         }  # centLng, maxLon, centLat, maxLat
-        bottom_left = {
-            "lat1": i["lat1"],
-            "lng1": i["lng1"],
-            "lat2": (i["lat1"] + i["lat2"]) / 2,
-            "lng2": (i["lng1"] + i["lng2"]) / 2,
-        }
-        top_right = {
-            "lat1": (i["lat1"] + i["lat2"]) / 2,
-            "lng1": (i["lng1"] + i["lng2"]) / 2,
-            "lat2": i["lat2"],
-            "lng2": i["lng2"],
-        }
-        top_left = {
-            "lat1": (i["lat1"] + i["lat2"]) / 2,
-            "lng1": i["lng1"],
-            "lat2": (i["lat1"] + i["lat2"]) / 2,
-            "lng2": i["lng2"],
-        }
-        bottom_right = {
-            "lat1": i["lat1"],
-            "lng1": (i["lng1"] + i["lng2"]) / 2,
-            "lat2": i["lat2"],
-            "lng2": (i["lng1"] + i["lng2"]) / 2,
-        }
         new_bboxes.append(bbox0)
         new_bboxes.append(bbox1)
         new_bboxes.append(bbox2)
