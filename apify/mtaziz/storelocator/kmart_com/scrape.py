@@ -48,7 +48,6 @@ def fetch_data():
     # Your scraper here
     data = []
     pattern = re.compile(r"\s\s+")
-    cleanr = re.compile(r"<[^>]+>")
     url = "https://www.kmart.com/stores.html/"
     r_base = session.get(url, headers=headers)
     r_base_data = html.fromstring(r_base.text, "lxml")
