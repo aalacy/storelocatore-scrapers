@@ -42,7 +42,6 @@ def fetch_data():
     }
 
     base_url = "https://www.dentalservice.net"
-    addresses = []
     scraped_items = []
 
     r = session.get(
@@ -85,7 +84,6 @@ def fetch_data():
         location_type = ""
         latitude = ""
         longitude = ""
-        raw_address = ""
         hours_of_operation = ""
         page_url = ""
 
