@@ -40,7 +40,7 @@ def decimate(bboxes):
         new_bboxes.append(bbox2)
         new_bboxes.append(bbox3)
     bboxes = new_bboxes
-    ### decimate above tests below
+    # decimate above tests below
     url = "https://stores.shoppersdrugmart.ca/umbraco/api/location/GetNearestLocations?lat1={lat1}&lng1={lng1}&lat2={lat2}&lng2={lng2}"
     headers = {
         "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
