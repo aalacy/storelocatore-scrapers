@@ -42,7 +42,6 @@ def fetch_data():
     r = session.get(api_url)
     r = r.text.replace('{"stores": ', "").replace("}}", "}")
     js = json.loads(r)
-    print(js)
     for j in js.values():
 
         street_address = f"{j.get('address1')} {j.get('address2')}".strip()
