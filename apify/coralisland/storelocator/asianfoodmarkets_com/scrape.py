@@ -1,5 +1,5 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from lxml import etree
 
 from sgscrape.sgpostal import parse_address_usa
@@ -76,7 +76,7 @@ def write_output(data):
 
 
 def fetch_data():
-    session = requests.Session()
+    session = SgRequests()
 
     items = []
 
