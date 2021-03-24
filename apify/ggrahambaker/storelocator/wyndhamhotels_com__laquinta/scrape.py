@@ -1,84 +1,112 @@
+import re
 import csv
-import os
-from sgrequests import SgRequests
-from bs4 import BeautifulSoup
 import json
+from lxml import etree
+from urllib.parse import urljoin
+
+from sgrequests import SgRequests
+
 
 def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+    with open("data.csv", mode="w", encoding="utf-8") as output_file:
+        writer = csv.writer(
+            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+        )
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation",
-                         "page_url"])
+        writer.writerow(
+            [
+                "locator_domain",
+                "page_url",
+                "location_name",
+                "street_address",
+                "city",
+                "state",
+                "zip",
+                "country_code",
+                "store_number",
+                "phone",
+                "location_type",
+                "latitude",
+                "longitude",
+                "hours_of_operation",
+            ]
+        )
         # Body
         for row in data:
             writer.writerow(row)
 
+
 def fetch_data():
-    session = SgRequests()
-    HEADERS = { 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36' }
-    locator_domain = 'https://www.wyndhamhotels.com/laquinta/'
-    ext = 'locations'
-    r = session.get(locator_domain + ext, headers = HEADERS)
+    # Your scraper here
+    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
 
-    soup = BeautifulSoup(r.content, 'html.parser')
+    items = []
 
-    main = soup.find('div', {'class': 'aem-rendered-content'})
-    hrefs = main.find_all("a")
-    link_list = []
-    base_url = 'https://www.wyndhamhotels.com'
-    for h in hrefs:
-        if 'overview' in h['href']:
-            link_list.append(base_url + h['href'])
+    start_url = "https://www.wyndhamhotels.com/laquinta/locations"
+    domain = re.findall("://(.+?)/", start_url)[0].replace("www.", "")
+    hdr = {
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
+    }
+    response = session.get(start_url, headers=hdr)
+    dom = etree.HTML(response.text)
 
-    all_store_data = []
-    for link in link_list:
-        r = session.get(link, headers = HEADERS)
-        soup = BeautifulSoup(r.content, 'html.parser')
-        try:
-            loc_j = soup.find('script', {'type': "application/ld+json"}).text
-        except:
-            continue
-        loc_json = json.loads(loc_j)
+    all_locations = dom.xpath('//li[@class="property"]/a/@href')
+    all_locations = [e for e in all_locations if "overview" in e]
+    for url in all_locations:
+        store_url = urljoin(start_url, url)
+        loc_response = session.get(store_url, headers=hdr)
+        print(store_url, loc_response.status_code)
+        loc_dom = etree.HTML(loc_response.text)
+        poi = loc_dom.xpath('//script[contains(text(), "streetAddress")]/text()')[0]
+        poi = json.loads(poi)
 
-        lat = loc_json['geo']['latitude']
-        longit = loc_json['geo']['longitude']
-        country_name = loc_json['address']['addressCountry']
-        if 'Mexico' in country_name:
-            break
+        location_name = poi["name"]
+        location_name = location_name if location_name else "<MISSING>"
+        street_address = poi["address"].get("streetAddress")
+        street_address = street_address if street_address else "<MISSING>"
+        city = poi["address"].get("addressLocality")
+        city = city if city else "<MISSING>"
+        state = poi["address"].get("addressRegion")
+        state = state if state else "<MISSING>"
+        zip_code = poi["address"].get("postalCode")
+        zip_code = zip_code if zip_code else "<MISSING>"
+        country_code = poi["address"].get("addressCountry")
+        country_code = country_code if country_code else "<MISSING>"
+        store_number = "<MISSING>"
+        phone = poi.get("telephone")
+        phone = phone if phone else "<MISSING>"
+        location_type = poi["@type"]
+        latitude = poi["geo"]["latitude"]
+        longitude = poi["geo"]["longitude"]
+        hours_of_operation = "<MISSING>"
 
-        if 'United States' in country_name:
-            country_code = 'US'
-        else:
-            country_code = 'CA'
+        item = [
+            domain,
+            store_url,
+            location_name,
+            street_address,
+            city,
+            state,
+            zip_code,
+            country_code,
+            store_number,
+            phone,
+            location_type,
+            latitude,
+            longitude,
+            hours_of_operation,
+        ]
 
-        location_name = loc_json['name']
-        zip_code = loc_json['address']['postalCode']
+        items.append(item)
 
-        city = loc_json['address']['addressLocality']
+    return items
 
-        street_address = loc_json['address']['streetAddress']
-
-        state = loc_json['address']['addressRegion']
-
-        phone_number = loc_json['telephone']
-
-        page_url = link
-        location_type = '<MISSING>'
-        store_number = '<MISSING>'
-        hours = '<MISSING>'
-
-        store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
-                    store_number, phone_number, location_type, lat, longit, hours, page_url]
-
-        all_store_data.append(store_data)
-
-    return all_store_data
 
 def scrape():
     data = fetch_data()
     write_output(data)
 
-scrape()
+
+if __name__ == "__main__":
+    scrape()
