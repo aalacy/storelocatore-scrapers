@@ -59,7 +59,8 @@ def fetch_data():
         )
         next_page = dom.xpath('//a[@class="sign" and contains(text(), ">")]/@href')
         while next_page:
-            response = session.get(urljoin(start_url, next_page[0]))
+            next_url = urljoin(start_url, next_page[0])
+            response = session.get(next_url)
             dom = etree.HTML(response.text)
             all_locations += dom.xpath('//div[@class="hotelPic"]/a/@href')
             all_locations += dom.xpath(
