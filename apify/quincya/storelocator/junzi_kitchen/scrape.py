@@ -78,27 +78,30 @@ def fetch_data():
         except:
             phone = "<MISSING>"
         next_line = ""
-        try:
-            hours_of_operation = str(item.p).split("<br/>")[-3]
-            try:
-                next_line = item.find_all("p")[1].text.strip()
-            except:
-                pass
-        except:
-            hours_of_operation = item.find_all("p")[2].text.strip()
-        if "am" not in hours_of_operation and "pm" not in hours_of_operation:
-            hours_of_operation = str(item.p).split("<br/>")[-1].replace("</p>", "")
-        if " pm" in next_line:
-            hours_of_operation = (
-                hours_of_operation + " " + next_line.split("Store")[0].strip()
-            )
         if "temporarily closed" in item.text:
             hours_of_operation = "temporarily closed"
-        hours_of_operation = (
-            hours_of_operation.replace(" –", "-").replace("–", "-").replace(" - ", "-")
-        )
-        if "am" not in hours_of_operation and "pm" not in hours_of_operation:
-            hours_of_operation = "<MISSING>"
+        else:
+            try:
+                hours_of_operation = str(item.p).split("<br/>")[-3]
+                try:
+                    next_line = item.find_all("p")[1].text.strip()
+                except:
+                    pass
+            except:
+                hours_of_operation = item.find_all("p")[2].text.strip()
+            if "am" not in hours_of_operation and "pm" not in hours_of_operation:
+                hours_of_operation = str(item.p).split("<br/>")[-1].replace("</p>", "")
+            if " pm" in next_line:
+                hours_of_operation = (
+                    hours_of_operation + " " + next_line.split("Store")[0].strip()
+                )
+            hours_of_operation = (
+                hours_of_operation.replace(" –", "-")
+                .replace("–", "-")
+                .replace(" - ", "-")
+            )
+            if "am" not in hours_of_operation and "pm" not in hours_of_operation:
+                hours_of_operation = "<MISSING>"
         latitude = raw_address["mapLat"]
         longitude = raw_address["mapLng"]
 
