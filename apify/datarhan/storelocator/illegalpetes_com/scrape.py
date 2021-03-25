@@ -74,7 +74,9 @@ def fetch_data():
         location_type = poi["@type"]
         latitude = loc_dom.xpath("//@data-gmaps-lat")[0]
         longitude = loc_dom.xpath("//@data-gmaps-lng")[0]
-        hoo = loc_dom.xpath('//div[h2[contains(text(), "Hours & Location")]]/h3/text()')
+        hoo = loc_dom.xpath(
+            '//div[h2[contains(text(), "Hours & Location")]]/h3//text()'
+        )
         hoo = [e.strip() for e in hoo if e.strip()]
         if not hoo:
             location_type = "temporarily closed"

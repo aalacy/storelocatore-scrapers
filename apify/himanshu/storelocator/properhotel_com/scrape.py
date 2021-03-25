@@ -82,7 +82,14 @@ def fetch_data():
             store.append(country if country else "<MISSING>")
             store.append(storeno if storeno else "<MISSING>")
             store.append(phone if phone else "<MISSING>")
-            store.append("<MISSING>")
+            if (
+                "Accepting Reservations – Starting"
+                in soup1.find(class_="mainwelcome-content").text
+            ):
+                loc_type = "Coming Soon"
+            else:
+                loc_type = "Open"
+            store.append(loc_type)
             store.append(lat if lat else "<MISSING>")
             store.append(lng if lng else "<MISSING>")
             store.append("<MISSING>")
