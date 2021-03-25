@@ -1,5 +1,4 @@
 import csv
-import json
 from lxml import etree
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 
@@ -68,41 +67,62 @@ def fetch_data():
                 + "/"
                 + store_url.split("/")[-1].replace(".", "").replace("html", ".html")
             )
-        if "www.alphagraphics.com" not in store_url:
+        if "alphagraphics.com" not in store_url:
             continue
-        store_response = session.get(store_url)
-        store_dom = etree.HTML(store_response.text)
-        poi_data = store_dom.xpath('//script[@type="application/ld+json"]/text()')
-        poi_data = json.loads(poi_data[0])
-        if type(poi_data) != list:
+        loc_response = session.get(store_url)
+        if loc_response.status_code != 200:
             continue
+        if "alphagraphics.com" not in loc_response.url:
+            continue
+        loc_dom = etree.HTML(loc_response.text)
 
-        location_name = poi_data[0].get("name")
-        location_name = location_name if location_name else "<MISSING>"
-        street_address = poi_data[0]["address"]["streetAddress"]
-        street_address = street_address if street_address else "<MISSING>"
-        city = poi_data[0]["address"]["addressLocality"]
-        city = city if city else "<MISSING>"
-        state = poi_data[0]["address"]["addressRegion"]
-        state = state if state else "<MISSING>"
-        zip_code = poi_data[0]["address"]["postalCode"]
-        zip_code = zip_code if zip_code else "<MISSING>"
-        country_code = poi_data[0]["address"]["addressCountry"]
-        country_code = country_code if country_code else "<MISSING>"
+        location_name = loc_dom.xpath('//h2[@class="location-heading"]/text()')
+        if not location_name:
+            location_name = loc_dom.xpath(
+                '//div[@class="wpb_content_element"]/h2/text()'
+            )
+        location_name = location_name[0].strip() if location_name else "<MISSING>"
+        street_address = loc_dom.xpath('//span[@itemprop="streetAddress"]/text()')
+        if not street_address:
+            street_address = loc_dom.xpath(
+                '//div[@class="wpb_content_element"]/p[1]/text()'
+            )
+        street_address = street_address[0] if street_address else "<MISSING>"
+        city = loc_dom.xpath('//span[@itemprop="addressLocality"]/text()')
+        if not city:
+            city = loc_dom.xpath('//div[@class="wpb_content_element"]/p[1]/text()')[
+                -1
+            ].split(", ")
+        city = city[0] if city else "<MISSING>"
+        state = loc_dom.xpath('//span[@itemprop="addressRegion"]/text()')
+        if not state:
+            state = [
+                loc_dom.xpath('//div[@class="wpb_content_element"]/p[1]/text()')[-1]
+                .split(", ")[-1]
+                .split()[0]
+            ]
+        state = state[0] if state else "<MISSING>"
+        zip_code = loc_dom.xpath('//span[@itemprop="postalCode"]/text()')
+        if not zip_code:
+            zip_code = [
+                loc_dom.xpath('//div[@class="wpb_content_element"]/p[1]/text()')[-1]
+                .split(", ")[-1]
+                .split()[-1]
+            ]
+        zip_code = zip_code[0] if zip_code else "<MISSING>"
+        country_code = loc_dom.xpath('//span[@itemprop="addressCountry"]/text()')
+        country_code = country_code[0] if country_code else "<MISSING>"
         store_number = "<MISSING>"
-        store_number = store_number if store_number else "<MISSING>"
-        phone = poi_data[0]["telephone"]
-        phone = phone if phone else "<MISSING>"
-        location_type = poi_data[0]["@type"]
-        location_type = location_type if location_type else "<MISSING>"
+        phone = loc_dom.xpath('//a[contains(@href, "tel")]/text()')
+        phone = phone[0] if phone else "<MISSING>"
+        location_type = "<MISSING>"
         latitude = "<MISSING>"
         longitude = "<MISSING>"
-        if poi_data[0].get("hasMap"):
-            latitude = poi_data[0]["hasMap"].split("/")[-1].split(",")[0]
-            longitude = poi_data[0]["hasMap"].split("/")[-1].split(",")[-1]
-        hours_of_operation = "<MISSING>"
-        if poi_data[0].get("openingHours"):
-            hours_of_operation = poi_data[0]["openingHours"]
+        hoo = loc_dom.xpath('//div[@class="location-content--hours"]//text()')
+        if not hoo:
+            hoo = loc_dom.xpath('//div[@class="wpb_content_element"]/p[2]/text()')
+        hoo = [e.strip() for e in hoo if e.strip()]
+        hours_of_operation = " ".join(hoo[1:]) if hoo else "<MISSING>"
 
         item = [
             DOMAIN,
