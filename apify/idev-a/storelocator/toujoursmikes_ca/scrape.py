@@ -24,7 +24,7 @@ days = {
 
 
 def fetch_data():
-    locator_domain = "https://caliburger.com"
+    locator_domain = "https://toujoursmikes.ca"
     json_url = "https://toujoursmikes.ca/service/search/branch?page=all&lang=fr"
     base_url = "https://toujoursmikes.ca/trouver-un-restaurant"
     with SgChrome() as driver:
