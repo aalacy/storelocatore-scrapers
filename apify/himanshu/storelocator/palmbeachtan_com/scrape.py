@@ -62,7 +62,6 @@ def fetch_data():
 
     for poi in all_locations:
         store_url = f'https://palmbeachtan.com/locations/{poi["salon_state"]}/{poi["salon_url"]}'
-        print(store_url)
         if store_url in scraped_items:
             continue
         loc_response = session.get(store_url, headers=hdr)
