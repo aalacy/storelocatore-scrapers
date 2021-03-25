@@ -94,6 +94,10 @@ def fetch_data():
                 city = handle_missing(address[1])
                 state = handle_missing(address[2])
                 zip_code = handle_missing(address[3])
+            elif "St. Catharines" in address:
+                street_address = handle_missing(address[0])
+                city = handle_missing(address[1])
+                state = handle_missing(address[3])
             else:
                 street_address = ", ".join(address[:2])
                 city = handle_missing(address[2])
@@ -108,7 +112,13 @@ def fetch_data():
         location_type = "<MISSING>"
         hours_of_operation = row.find(
             "strong", {"class": "location-working-days"}
-        ).text.strip()
+        ).text.strip(" ")
+        hours_of_operation = re.sub(r"\*.*", "", hours_of_operation).replace(
+            "pm", "pm "
+        )
+        if "RE-OPENING" in hours_of_operation:
+            hours_of_operation = "TEMPORARILY CLOSED"
+            location_type = "TEMP_CLOSED"
         geo = row.find("div", {"class": "location-address"}).find("a")
         latitude = "<MISSING>"
         longitude = "<MISSING>"

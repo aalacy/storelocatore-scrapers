@@ -9,7 +9,6 @@ def write_output(data):
         writer = csv.writer(
             output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
         )
-
         writer.writerow(
             [
                 "locator_domain",
@@ -28,7 +27,6 @@ def write_output(data):
                 "page_url",
             ]
         )
-
         for row in data:
             writer.writerow(row)
 
@@ -40,7 +38,7 @@ def fetch_data():
         "Accept": "application/json, text/plain, */*",
     }
     base_url = "https://www.rosesdiscountstores.com/"
-    link = "https://api.zenlocator.com/v1/apps/app_vfde3mfb/locations/search?countryCode=IN&name=roses&query=roses&radius=500000"
+    link = "https://api.zenlocator.com/v1/apps/app_vfde3mfb/locations/search?countryCode=IN&name=roses&query=roses&radius=150"
     json_data = session.get(link, headers=headers).json()["locations"]
     for data in json_data:
         location_name = data["name"]
@@ -50,7 +48,7 @@ def fetch_data():
         city = data["city"]
         state = data["region"]
         zipp = data["postcode"]
-        if zipp == "28657":
+        if zipp == "28657" or "36867":
             street_address = data["address"].split(",")[0].strip()
         country_code = data["countryCode"]
         try:

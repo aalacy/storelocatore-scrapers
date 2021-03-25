@@ -43,14 +43,6 @@ def get_hours(page_url):
         "//h2[contains(text(),'Lobby Hours')]/following-sibling::p[1]/text()|.//p[contains(text(), 'Lobby Hours')]/text()"
     )
 
-    isclosed = "".join(
-        tree.xpath(
-            "//h2[contains(text(),'Lobby Hours')]/preceding-sibling::h2[1]/text()"
-        )
-    )
-    if isclosed.lower().find("closed") != -1:
-        return "Closed"
-
     pp = list(filter(None, [p.strip() for p in pp]))
     if not pp:
         pp = tree.xpath("//div[@id='hours']/p[1]/text()")

@@ -74,6 +74,9 @@ def get_data(url):
 
     state = adr.state or "<MISSING>"
     postal = adr.postcode or "<MISSING>"
+    if street_address == "<MISSING>" and city == "London":
+        street_address = line.split("London")[0].strip()
+
     country_code = "GB"
     store_number = "<MISSING>"
     phone = (

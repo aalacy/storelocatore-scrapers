@@ -19,6 +19,7 @@ def write_output(data):
         writer.writerow(
             [
                 "locator_domain",
+                "page_url",
                 "location_name",
                 "street_address",
                 "city",
@@ -47,14 +48,11 @@ def pull_content(url):
 def fetch_data():
     base_url = "https://www.westgateresorts.com/explore-destinations/"
     main_soup = pull_content(base_url)
-    return_main_object = []
-    store_detail = []
-    store_name = []
+    locations = []
     k = main_soup.find_all("a", {"class": "button resort"})
     log.info("Found {} urls".format(len(k)))
 
     for i in k:
-        tem_var = []
         store_url = "https://www.westgateresorts.com/" + i["href"]
         soup = pull_content(store_url)
         info = soup.find("div", {"id": "footer-resort-info"})
@@ -73,36 +71,39 @@ def fetch_data():
                 continue
         else:
             data = list(info.stripped_strings)
-        name = data[0]
-        store_name.append(name)
+        location_name = data[0]
         street_address = data[1]
         city_zip = data[2]
         city = city_zip.split(",")[0]
         state = city_zip.split(",")[1].split()[0]
-        zipcode = city_zip.split(",")[1].split()[1]
+        zip_code = city_zip.split(",")[1].split()[1]
         phone = data[3].split("Resort Phone:")[1]
-
-        tem_var.append(street_address)
-        tem_var.append(city)
-        tem_var.append(state)
-        tem_var.append(zipcode)
-        tem_var.append("US")
-        tem_var.append("<MISSING>")
-        tem_var.append(phone)
-        tem_var.append("westgateresorts")
-        tem_var.append("<MISSING>")
-        tem_var.append("<MISSING>")
-        tem_var.append("<MISSING>")
-        store_detail.append(tem_var)
-
-    for i in range(len(store_name)):
-        store = list()
-        store.append("https://www.westgateresorts.com")
-        store.append(store_name[i])
-        store.extend(store_detail[i])
-        log.info("Append {} => {}".format(store_name[i], street_address))
-        return_main_object.append(store)
-    return return_main_object
+        country_code = "US"
+        store_number = "<MISSING>"
+        location_type = "westgateresorts"
+        latitude = "<MISSING>"
+        longitude = "<MISSING>"
+        hours_of_operation = "<MISSING>"
+        log.info("Append {} => {}".format(location_name, street_address))
+        locations.append(
+            [
+                DOMAIN,
+                store_url,
+                location_name,
+                street_address,
+                city,
+                state,
+                zip_code,
+                country_code,
+                store_number,
+                phone,
+                location_type,
+                latitude,
+                longitude,
+                hours_of_operation,
+            ]
+        )
+    return locations
 
 
 def scrape():

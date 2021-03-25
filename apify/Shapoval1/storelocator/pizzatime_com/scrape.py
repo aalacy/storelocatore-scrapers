@@ -97,7 +97,7 @@ def fetch_data():
         phone = "".join(
             l.xpath('.//div[@class="list_item lists_2 clearfix"][2]//h5/text()')
         ).strip()
-        text = "".join(l.xpath('.//div[@class="column_attr"]/iframe/@src'))
+        text = "".join(l.xpath('.//div[contains(@class, "column_attr")]/iframe/@src'))
         text = text.split("!2d")[1].split("!2m")[0].replace("!3d", ",")
         latitude = text.split(",")[1]
         longitude = text.split(",")[0]

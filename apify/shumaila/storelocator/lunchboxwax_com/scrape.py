@@ -66,7 +66,7 @@ def fetch_data():
         postalCode = add[3].text
         output_list.append(
             [
-                url,
+                base_url,
                 sublink,
                 title,
                 str_add,
@@ -79,7 +79,7 @@ def fetch_data():
                 "Salon",
                 latitude,
                 longitude,
-                hours_of_operation,
+                hours_of_operation.replace("\n", " "),
             ]
         )
     return output_list

@@ -50,8 +50,21 @@ def fetch_data():
     titlelist = []
     for link in linklist:
         link = link["href"]
+        check = 1
+        if "showroom" not in link and "design" not in link:
+            check = 1
         r = session.get(link, headers=headers, verify=False)
         soup = BeautifulSoup(r.text, "html.parser")
+        if check == 1:
+            templist = soup.findAll("a", {"class": "Teaser-titleLink"})
+            for temp in templist:
+                if temp["href"] in titlelist:
+                    pass
+                else:
+                    link = temp["href"]
+                    r = session.get(link, headers=headers, verify=False)
+                    check = 0
+                    break
         try:
             content = r.text.split('<script type="application/ld+json">')[1].split(
                 "</script>"
@@ -62,6 +75,7 @@ def fetch_data():
             state = content["address"]["addressRegion"]
             city = content["address"]["addressLocality"]
             phone = content["telephone"]
+            link = content["url"]
             try:
                 lat = content["geo"]["latitude"]
                 longt = content["geo"]["longitude"]
@@ -139,7 +153,7 @@ def fetch_data():
                 )
             except:
 
-                continue
+                lat = longt = "<MISSING>"
         if hours.find("call") > -1:
             hours = "<MISSING>"
         if len(pcode) < 2:
@@ -151,9 +165,10 @@ def fetch_data():
         if state == "Boise" and city == "Idaho":
             state = "ID"
             city = "Boise"
-        if len(state) > 3 or street in titlelist:
+        link = r.url
+        if len(state) > 3 or link in titlelist:
             continue
-        titlelist.append(street)
+        titlelist.append(link)
         data.append(
             [
                 "https://www.californiaclosets.com/",
@@ -174,6 +189,24 @@ def fetch_data():
         )
 
         p += 1
+    data.append(
+        [
+            "https://www.californiaclosets.com/",
+            "<MISSING>",
+            "CHANTILLY",
+            "4262 Entre Court",
+            "Chantilly",
+            "VA",
+            "20151",
+            "US",
+            "<MISSING>",
+            "703.214.6514",
+            "<MISSING>",
+            "<MISSING>",
+            "<MISSING>",
+            "<MISSING>",
+        ]
+    )
     return data
 
 

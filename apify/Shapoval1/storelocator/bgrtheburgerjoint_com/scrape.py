@@ -76,7 +76,7 @@ def get_data(url):
     r = session.get(page_url)
     tree = html.fromstring(r.text)
     line = (
-        "".join(
+        " ".join(
             tree.xpath(
                 "//div[1][@class='x-text']/p/span/text() | //div[1][@class='x-text']/p/text()"
             )

@@ -1,21 +1,11 @@
 import csv
 import json
-import re
-import time
-
-from random import randint
 
 from bs4 import BeautifulSoup
-
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support import expected_conditions as ec
-from selenium.webdriver.support.ui import WebDriverWait
 
 from sglogging import SgLogSetup
 
 from sgrequests import SgRequests
-
-from sgselenium import SgChrome
 
 logger = SgLogSetup().get_logger("iguanas_co_uk")
 
@@ -52,10 +42,7 @@ def write_output(data):
 
 def fetch_data():
 
-    driver = SgChrome().chrome()
-    time.sleep(2)
-
-    base_link = "https://api.casualdininggroup.uk/pagedata?brandKey=lasiguanas&path=/spaces/6qprbsfbbvrl/entries?access_token=30ad3e38f991a61b137301a74d5a4346f29fa442979b226cbca1a85acc37fc1c%26select=fields.title,fields.slug,fields.addressLocation,fields.storeId,fields.storeCodeFishBowl,fields.eeRestaurantId,fields.hours,fields.alternativeHours,fields.services,fields.amenities,fields.addressLine1,fields.addressLine2,fields.addressCity,fields.county,fields.postCode,fields.takeawayDeliveryServices,fields.takeawayCollectionService,fields.collectionMessage%26content_type=location%26include=10%26limit=1000"
+    base_link = "https://api.bigtablegroup.com/pagedata?brandKey=lasiguanas&path=/spaces/6qprbsfbbvrl/entries?access_token=30ad3e38f991a61b137301a74d5a4346f29fa442979b226cbca1a85acc37fc1c%26select=fields.title,fields.slug,fields.addressLocation,fields.storeId,fields.showOffers,fields.hours,fields.alternativeHours,fields.services,fields.amenities,fields.addressLine1,fields.addressLine2,fields.addressCity,fields.county,fields.postCode,fields.takeawayDeliveryServices,fields.takeawayCollectionService,fields.collectionMessage,fields.bookATableWidgetId,fields.bookingEngineType,fields.bookingProviderUrl%26content_type=location%26include=10%26limit=1000"
 
     user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
     headers = {"User-Agent": user_agent}
@@ -76,7 +63,7 @@ def fetch_data():
         logger.info(link)
 
         api_link = (
-            "https://api.casualdininggroup.uk/pagedata?brandKey=lasiguanas&path=/spaces/6qprbsfbbvrl/entries?access_token=30ad3e38f991a61b137301a74d5a4346f29fa442979b226cbca1a85acc37fc1c%26select=fields%26content_type=location%26fields.slug="
+            "https://api.bigtablegroup.com/pagedata?brandKey=lasiguanas&path=/spaces/6qprbsfbbvrl/entries?access_token=30ad3e38f991a61b137301a74d5a4346f29fa442979b226cbca1a85acc37fc1c%26select=fields%26content_type=location%26fields.slug="
             + slug
             + "%26include=10"
         )
@@ -84,6 +71,7 @@ def fetch_data():
         req = session.get(api_link, headers=headers)
         base = BeautifulSoup(req.text, "lxml")
 
+        main_store = json.loads(base.text)
         store = json.loads(base.text)["items"][0]["fields"]
 
         location_name = "Las Iguanas " + store["title"]
@@ -105,37 +93,34 @@ def fetch_data():
         latitude = store["addressLocation"]["lat"]
         longitude = store["addressLocation"]["lon"]
 
-        try:
-            hours_of_operation = store["openingHours"].replace("\n", " ")
-            hours_of_operation = (re.sub(" +", " ", hours_of_operation)).strip()
-        except:
-            driver.get(link)
-            time.sleep(randint(2, 3))
-            WebDriverWait(driver, 50).until(
-                ec.presence_of_element_located(
-                    (By.CLASS_NAME, "location-tabbed__description")
-                )
-            )
-            time.sleep(randint(2, 4))
-
-            base = BeautifulSoup(driver.page_source, "lxml")
-
-            try:
+        hours = ""
+        hours_of_operation = ""
+        days = [
+            "monday",
+            "tuesday",
+            "wednesday",
+            "thursday",
+            "friday",
+            "saturday",
+            "sunday",
+        ]
+        rows = main_store["includes"]["Entry"]
+        for row in rows:
+            if "mondayOpen" in str(row):
+                hours = row["fields"]
+                break
+        if hours:
+            for day in days:
                 hours_of_operation = (
-                    " ".join(
-                        list(
-                            base.find(
-                                class_="column large-6 small-12 location-tabbed__openinghours"
-                            ).stripped_strings
-                        )
-                    )
-                    .replace("Opening hours", "")
-                    .strip()
-                )
-            except:
-                hours_of_operation = "<MISSING>"
-
-        if "0 " not in hours_of_operation and hours_of_operation != "<MISSING>":
+                    hours_of_operation
+                    + " "
+                    + day
+                    + " "
+                    + hours[day + "Open"]
+                    + "-"
+                    + hours[day + "Close"]
+                ).strip()
+        else:
             hours_of_operation = "Temporarily Closed"
 
         data.append(
@@ -156,10 +141,6 @@ def fetch_data():
                 hours_of_operation,
             ]
         )
-    try:
-        driver.close()
-    except:
-        pass
     return data
 
 

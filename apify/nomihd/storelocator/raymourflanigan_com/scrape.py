@@ -7,7 +7,6 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgzip.dynamic import SearchableCountries
 from sgzip.static import static_zipcode_list
-import datetime
 
 website = "raymourflanigan.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -25,18 +24,20 @@ def fetch_records_for(zipcode):
     log.info(f"pulling records for zipcode: {zipcode}")
     search_url = (
         "https://www.raymourflanigan.com/api/custom/location-search"
-        "?postalCode={}&distance=100000&includeShowroom"
+        "?postalCode={}&distance=100&includeShowroom"
         "Locations=true&includeOutletLocations=true&include"
         "ClearanceLocations=true&includeAppointments=true"
     )
 
     stores_req = session.get(search_url.format(zipcode), headers=headers)
-    stores = json.loads(stores_req.text)["locations"]
-    yield stores
+    try:
+        stores = json.loads(stores_req.text)["locations"]
+        yield stores
+    except:
+        pass
 
 
 def process_record(raw_results_from_one_zipcode):
-    loc_list = []
     for stores in raw_results_from_one_zipcode:
         for store_json in stores:
             if store_json["url"] not in url_list:
@@ -55,7 +56,12 @@ def process_record(raw_results_from_one_zipcode):
                 store_number = store_json["businessUnitCode"]
                 phone = store_json["phoneNumber"]
 
-                location_type = "<MISSING>"
+                location_type = "Showroom"
+                if store_json["clearanceCenter"] is True:
+                    location_type = "clearanceCenter"
+                if store_json["outlet"] is True:
+                    location_type = "outlet"
+
                 hours_of_operation = ""
                 hours = store_json["hours"]
                 hours_list = []
@@ -66,36 +72,35 @@ def process_record(raw_results_from_one_zipcode):
                         and hours[key]["close"] is not None
                     ):
                         day = key
-                        if day == "today":
-                            day = datetime.datetime.now().strftime("%A")
-                        hours_of_operation = hours_list.append(
-                            day + ":" + hours[key]["open"] + "-" + hours[key]["close"]
-                        )
+                        if day != "today":
+                            hours_list.append(
+                                day
+                                + ":"
+                                + hours[key]["open"]
+                                + "-"
+                                + hours[key]["close"]
+                            )
                 hours_of_operation = "; ".join(hours_list).strip()
 
                 latitude = store_json["latitude"]
                 longitude = store_json["longitude"]
 
-                loc_list.append(
-                    SgRecord(
-                        locator_domain=locator_domain,
-                        page_url=page_url,
-                        location_name=location_name,
-                        street_address=street_address,
-                        city=city,
-                        state=state,
-                        zip_postal=zip,
-                        country_code=country_code,
-                        store_number=store_number,
-                        phone=phone,
-                        location_type=location_type,
-                        latitude=latitude,
-                        longitude=longitude,
-                        hours_of_operation=hours_of_operation,
-                    )
+                yield SgRecord(
+                    locator_domain=locator_domain,
+                    page_url=page_url,
+                    location_name=location_name,
+                    street_address=street_address,
+                    city=city,
+                    state=state,
+                    zip_postal=zip,
+                    country_code=country_code,
+                    store_number=store_number,
+                    phone=phone,
+                    location_type=location_type,
+                    latitude=latitude,
+                    longitude=longitude,
+                    hours_of_operation=hours_of_operation,
                 )
-        # break
-    return loc_list
 
 
 def scrape():
@@ -103,7 +108,7 @@ def scrape():
     with SgWriter() as writer:
         results = parallelize(
             search_space=static_zipcode_list(
-                radius=30, country_code=SearchableCountries.USA
+                radius=10, country_code=SearchableCountries.USA
             ),
             fetch_results_for_rec=fetch_records_for,
             processing_function=process_record,
