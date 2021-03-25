@@ -111,11 +111,7 @@ def fetch_data():
                             )
                             if street_address[-1:] == ",":
                                 street_address = street_address[:-1]
-                            city = (
-                                stores[key]["city"]
-                                .replace("&#039;", "'")
-                                .strip()
-                            )
+                            city = stores[key]["city"].replace("&#039;", "'").strip()
                             state = ""
                             zipp = store_json["address"]["postalCode"].strip()
                             country_code = stores[key]["country"]
