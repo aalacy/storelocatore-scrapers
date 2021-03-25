@@ -69,8 +69,10 @@ def parse_hours(table):
 
 
 def parse_json(soup):
-    info = soup.find("script", type="application/ld+json").string
-    data = json.loads(info)
+    info = soup.find("script", type="application/ld+json")
+    if not info:
+        return False
+    data = json.loads(info.string)
     return data
 
 
@@ -78,11 +80,15 @@ def fetch_store_urls():
     log.info("Fetching store URL")
     soup = pull_content(LOCATION_URL)
     store_urls = []
+    excluded = [
+        "https://www.medivet.co.uk/vet-practices/hyde-park/hyde-park",
+        "https://www.medivet.co.uk/vet-practices/hornsey/cattery/",
+        "https://www.medivet.co.uk/vet-practices/south-harrow/thank-you---south-harrow/",
+        "https://www.medivet.co.uk/vet-practices/hyde-park/hyde-park-pet-boutique/",
+        "https://www.medivet.co.uk/vet-practices/hyde-park/hyde-park-grooming-service/",
+    ]
     for val in soup.find_all("loc", text=re.compile(r"\/vet-practices\/\D+")):
-        if (
-            "https://www.medivet.co.uk/vet-practices/hyde-park/hyde-park"
-            not in val.text
-        ):
+        if val.text not in excluded:
             store_urls.append(val.text)
     log.info("Found {} URL ".format(len(store_urls)))
     return store_urls
@@ -95,6 +101,8 @@ def fetch_data():
     for page_url in store_urls:
         soup = pull_content(page_url)
         info = parse_json(soup)
+        if not info:
+            continue
         locator_domain = DOMAIN
         location_name = handle_missing(info["name"].strip())
         address = info["address"][0]
