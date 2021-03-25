@@ -53,9 +53,6 @@ def fetch_data():
 
     for poi in data:
         store_url = poi["permalink"]
-        loc_response = session.get(store_url)
-        loc_dom = etree.HTML(loc_response.text)
-
         location_name = poi["store"]
         location_name = location_name if location_name else "<MISSING>"
         street_address = poi["address"]
