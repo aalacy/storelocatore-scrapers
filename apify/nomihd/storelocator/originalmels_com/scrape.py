@@ -19,79 +19,53 @@ headers = {
 def fetch_data():
     # Your scraper here
 
-    search_url = "https://originalmels.com/wp-admin/admin-ajax.php"
+    search_url = "https://originalmels.com/wp-admin/admin-ajax.php?action=store_search&lat=38.58157&lng=-121.4944&max_results=25&search_radius=50&autoload=1"
 
-    data = {
-        "action": "get_all_stores",
-        "lat": "",
-        "lng": "",
-    }
-
-    stores_req = session.post(search_url, data=data, headers=headers)
+    stores_req = session.get(search_url, headers=headers)
     stores = json.loads(stores_req.text)
 
-    for key in stores.keys():
-        latitude = stores[key]["lat"]
-        longitude = stores[key]["lng"]
-        page_url = stores[key]["gu"]
-        log.info(page_url)
+    for store in stores:
+        page_url = store["url"]
+        if "nam11.safelinks.protection" in page_url:
+            page_url = "<MISSING>"
         locator_domain = website
-        location_name = stores[key]["na"]
-        if location_name == "":
-            location_name = "<MISSING>"
+        location_name = store["store"]
+        street_address = store["address"]
+        if store["address2"] is not None and len(store["address2"]) > 0:
+            street_address = street_address + ", " + store["address2"]
 
-        street_address = stores[key]["st"]
-        city = stores[key]["ct"]
-        state = stores[key]["rg"]
-        zip = ""
-        store_req = session.get(page_url, headers=headers)
-        store_sel = lxml.html.fromstring(store_req.text)
-        address = store_sel.xpath('//div[@class="store_locator_single_address"]/text()')
-        zip = address[-1].split(",")[1].strip().split(" ")[-1].strip()
+        if ",," in street_address:
+            street_address = street_address.replace(",,", ",").strip()
+        else:
+            street_address = street_address.replace(",", "").strip()
 
-        country_code = "<MISSING>"
-        if us.states.lookup(state):
-            country_code = "US"
+        city = store["city"].replace(",", "").strip()
+        state = store["state"]
+        zip = store["zip"]
 
-        store_number = str(stores[key]["ID"])
+        country_code = store["country"]
+
+        store_number = str(store["id"])
+        phone = store["phone"]
+
         location_type = "<MISSING>"
+        if "(Temporarily Closed)" in location_name:
+            location_type = "Temporarily Closed"
 
-        phone = "<MISSING>"
-        hours = stores[key]["op"]
-        hours_of_operation = ""
-        if len(hours["0"].strip()) > 0:
-            hours_of_operation = (
-                hours_of_operation + "Monday:" + hours["0"] + "-" + hours["1"] + ";"
-            )
+        hours_list = []
+        if store["hours"] is not None and len(store["hours"]) > 0:
+            hours = lxml.html.fromstring(store["hours"]).xpath("//tr")
+            hours_list = []
+            hours_of_operation = ""
+            for hour in hours:
+                day = "".join(hour.xpath("td[1]/text()")).strip()
+                time = "".join(hour.xpath("td[2]//text()")).strip()
+                hours_list.append(day + ":" + time)
 
-        if len(hours["2"].strip()) > 0:
-            hours_of_operation = (
-                hours_of_operation + "Tuesday:" + hours["2"] + "-" + hours["3"] + ";"
-            )
+        hours_of_operation = "; ".join(hours_list).strip()
 
-        if len(hours["4"].strip()) > 0:
-            hours_of_operation = (
-                hours_of_operation + "Wednesday:" + hours["4"] + "-" + hours["5"] + ";"
-            )
-
-        if len(hours["6"].strip()) > 0:
-            hours_of_operation = (
-                hours_of_operation + "Thursday:" + hours["6"] + "-" + hours["7"] + ";"
-            )
-        if len(hours["8"].strip()) > 0:
-            hours_of_operation = (
-                hours_of_operation + "Friday:" + hours["8"] + "-" + hours["9"] + ";"
-            )
-
-        if len(hours["10"].strip()) > 0:
-            hours_of_operation = (
-                hours_of_operation + "Saturday:" + hours["10"] + "-" + hours["11"] + ";"
-            )
-
-        if len(hours["12"].strip()) > 0:
-            hours_of_operation = (
-                hours_of_operation + "Sunday:" + hours["12"] + "-" + hours["13"]
-            )
+        latitude = store["lat"]
+        longitude = store["lng"]
 
         yield SgRecord(
             locator_domain=locator_domain,
