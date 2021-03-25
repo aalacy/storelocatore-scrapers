@@ -33,7 +33,7 @@ def fetch_data():
                 street_address=addr[-3].replace("\n", "").replace("\t", ""),
                 city=addr[-2].split(",")[0].strip(),
                 state=addr[-2].split(",")[1].strip().split(" ")[0].strip(),
-                zip_postal=addr[-2].split(",")[1].strip().split(" ")[1].strip(),
+                zip_postal=addr[-2].split(",")[1].strip().split(" ")[-1].strip(),
                 phone=phone,
                 country_code="US",
                 locator_domain=locator_domain,
