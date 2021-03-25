@@ -4,7 +4,6 @@ from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import json
-import us
 import lxml.html
 
 website = "originalmels.com"
