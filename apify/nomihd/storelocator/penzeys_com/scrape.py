@@ -112,13 +112,15 @@ def fetch_data():
         if store_number == "" or store_number is None:
             store_number = "<MISSING>"
 
-        phone = (
-            store["Phone"]
-            .encode("ascii", "replace")
-            .decode("utf-8")
-            .replace("?", "")
-            .strip()
-        )
+        phone = ""
+        if "Phone" in store:
+            phone = (
+                store["Phone"]
+                .encode("ascii", "replace")
+                .decode("utf-8")
+                .replace("?", "")
+                .strip()
+            )
 
         location_type = "<MISSING>"
         if store["IsActive"] is False:
@@ -129,9 +131,9 @@ def fetch_data():
         latitude = store["Lat"]
         longitude = store["Long"]
 
-        if latitude == "" or latitude is None:
+        if latitude == "" or latitude is None or latitude == 0:
             latitude = "<MISSING>"
-        if longitude == "" or longitude is None:
+        if longitude == "" or longitude is None or longitude == 0:
             longitude = "<MISSING>"
 
         if phone == "" or phone is None:
@@ -154,10 +156,7 @@ def fetch_data():
             hours_of_operation,
         ]
 
-        loc_list.append(curr_list)
-
-        # break
-    return loc_list
+        yield curr_list
 
 
 def scrape():
