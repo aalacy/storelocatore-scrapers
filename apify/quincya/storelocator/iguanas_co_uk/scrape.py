@@ -55,7 +55,7 @@ def fetch_data():
     driver = SgChrome().chrome()
     time.sleep(2)
 
-    base_link = "https://api.casualdininggroup.uk/pagedata?brandKey=lasiguanas&path=/spaces/6qprbsfbbvrl/entries?access_token=30ad3e38f991a61b137301a74d5a4346f29fa442979b226cbca1a85acc37fc1c%26select=fields.title,fields.slug,fields.addressLocation,fields.storeId,fields.storeCodeFishBowl,fields.eeRestaurantId,fields.hours,fields.alternativeHours,fields.services,fields.amenities,fields.addressLine1,fields.addressLine2,fields.addressCity,fields.county,fields.postCode,fields.takeawayDeliveryServices,fields.takeawayCollectionService,fields.collectionMessage%26content_type=location%26include=10%26limit=1000"
+    base_link = "https://api.bigtablegroup.com/pagedata?brandKey=lasiguanas&path=/spaces/6qprbsfbbvrl/entries?access_token=30ad3e38f991a61b137301a74d5a4346f29fa442979b226cbca1a85acc37fc1c%26select=fields.title,fields.slug,fields.addressLocation,fields.storeId,fields.showOffers,fields.hours,fields.alternativeHours,fields.services,fields.amenities,fields.addressLine1,fields.addressLine2,fields.addressCity,fields.county,fields.postCode,fields.takeawayDeliveryServices,fields.takeawayCollectionService,fields.collectionMessage,fields.bookATableWidgetId,fields.bookingEngineType,fields.bookingProviderUrl%26content_type=location%26include=10%26limit=1000"
 
     user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
     headers = {"User-Agent": user_agent}
@@ -76,7 +76,7 @@ def fetch_data():
         logger.info(link)
 
         api_link = (
-            "https://api.casualdininggroup.uk/pagedata?brandKey=lasiguanas&path=/spaces/6qprbsfbbvrl/entries?access_token=30ad3e38f991a61b137301a74d5a4346f29fa442979b226cbca1a85acc37fc1c%26select=fields%26content_type=location%26fields.slug="
+            "https://api.bigtablegroup.com/pagedata?brandKey=lasiguanas&path=/spaces/6qprbsfbbvrl/entries?access_token=30ad3e38f991a61b137301a74d5a4346f29fa442979b226cbca1a85acc37fc1c%26select=fields%26content_type=location%26fields.slug="
             + slug
             + "%26include=10"
         )
