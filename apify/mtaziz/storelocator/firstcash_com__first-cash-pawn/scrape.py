@@ -1,17 +1,10 @@
 import csv
 from sgrequests import SgRequests
-from bs4 import BeautifulSoup
-from bs4 import BeautifulSoup as bs
-import re
-import json
-import datetime
 import unicodedata
 import pgeocode
 from sglogging import SgLogSetup
 
 logger = SgLogSetup().get_logger("firstcash_com__first-cash-pawn")
-
-
 session = SgRequests()
 
 
