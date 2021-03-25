@@ -106,6 +106,18 @@ def fetch_store_urls():
     return store_urls
 
 
+def parse_hoo(address, phone):
+    unused = ["Opening", "Temporarily", "ANNOUNCEMENT", "NOW OPEN"]
+    hoo = ", ".join(address[3:])
+    hoo = hoo.replace("/, ", "").replace(phone, "")
+    hoo = re.sub(r"\d{3}\-\d{3}\-\d{4},", "", hoo).strip()
+    for x in unused:
+        if x in hoo:
+            hoo = re.sub(x + ".*", "", hoo)
+    hoo = re.sub(r", $", "", hoo).strip()
+    return hoo
+
+
 def get_address(address, city):
     street_address = handle_missing(
         re.sub(
@@ -138,19 +150,22 @@ def fetch_data():
             location_name = location_name.replace("(Coming Soon)", "")
             location_type = "COMING_SOON"
         if "Downtown LA" in location_name:
-            street_address = get_address(address[0], "Los Angeles")
             city = "Los Angeles"
+        elif "Washington DC" in location_name:
+            city = "Washington"
+            state = "Washington DC"
+            zip_code = handle_missing(address[1].strip().replace("DC", ""))
         else:
             city = handle_missing(location_name.split("|")[0].strip())
-            street_address = get_address(address[0], city)
-        state = handle_missing(address[1].strip()[:2])
-        zip_code = handle_missing(address[1].strip().replace(state, ""))
+            state = handle_missing(address[1].strip()[:2])
+            zip_code = handle_missing(address[1].strip().replace(state, ""))
+        street_address = get_address(address[0], city)
         country_code = "US" if len(zip_code) <= 5 else "CA"
         store_number = "<MISSING>"
         if len(address) > 2:
             phone = handle_missing(address[2])
             if len(address) >= 4:
-                hours_of_operation = ", ".join(address[3:])
+                hours_of_operation = parse_hoo(address, phone)
             else:
                 hours_of_operation = "<MISSING>"
         else:
