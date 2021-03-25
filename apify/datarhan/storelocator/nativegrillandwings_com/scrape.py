@@ -1,4 +1,3 @@
-import re
 import csv
 import json
 from lxml import etree
