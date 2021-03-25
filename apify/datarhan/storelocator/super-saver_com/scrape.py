@@ -53,7 +53,6 @@ def fetch_data():
         '//div[@class="entry-content"]/div[@class="vc_row wpb_row vc_row-fluid"]'
     )[1:]
     for poi_html in all_locations:
-        print(etree.tostring(poi_html))
         store_url = poi_html.xpath(".//h3/a/@href")
         store_url = store_url[0] if store_url else "<MISSING>"
         location_name = poi_html.xpath(".//h3/a/text()")
