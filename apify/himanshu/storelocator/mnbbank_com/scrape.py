@@ -40,7 +40,7 @@ def fetch_data():
         "User-agent": "Mozilla/5.0 (Windows; U; Windows NT 5.1; de; rv:1.9.1.5) Gecko/20091102 Firefox/3.5.5"
     }
     return_main_object = []
-    base_url = "https://mnbbank.com/"
+
     locator_domain = "https://mnbbank.com/"
     r = session.get(
         "https://mnbbank.com/api/locationfilter?zipcode=&city=", headers=header
