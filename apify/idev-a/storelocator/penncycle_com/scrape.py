@@ -3,7 +3,6 @@ from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 import re
-import json
 
 _headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
@@ -26,19 +25,8 @@ def fetch_data():
                 re.IGNORECASE,
             ):
                 location_type = "Temporarily Closed"
-            latitude = longitude = ""
-            try:
-                _ = json.loads(
-                    soup1.find("script", type="application/ld+json")
-                    .string.replace("\n", "")
-                    .replace('"geo"', ',"geo"')
-                    .replace('"latitude"', ',"latitude"')
-                    .strip()
-                )
-                latitude = _["geo"]["latitude"]
-                longitude = _["geo"]["longitude"]
-            except:
-                pass
+            latitude = soup1.select_one("div.seSingleStoreMap")["data-lat"]
+            longitude = soup1.select_one("div.seSingleStoreMap")["data-long"]
 
             hours = []
             for tr in soup1.select("div.seStoreHours tbody tr"):
