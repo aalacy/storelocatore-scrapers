@@ -48,6 +48,8 @@ def fetch_data():
     for d in divs:
         street_address = "".join(d.xpath(".//span[@class='street']/text()")).strip()
         line = "".join(d.xpath(".//span[@class='city state zip']/text()")).strip()
+        if not line:
+            continue
         city = line.split(",")[0].strip()
         line = line.split(",")[1].strip()
         state = line.split()[0]

@@ -5,3 +5,4 @@ zipcodes==1.0.5
 sgrequests
 sglogging
 sgzip==0.0.55
+tenacity

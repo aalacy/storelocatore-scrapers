@@ -1,5 +1,4 @@
-lxml
-sgrequests
-bs4
-sglogging
-
+sgrequests==0.1.8
+geopy==2.1.0
+beautifulsoup4==4.9.3
+lxml==4.6.2

@@ -22,54 +22,62 @@ def fetch_data():
         for store in store_list:
             page_url = "https://planetwings.com/locations2"
             location_name = store.select_one("span.vc_tta-title-text").string
-            try:
-                address_detail = (
-                    store.select_one("span.wpsl-city").text.strip().split(" ")
-                )
-                zip = address_detail.pop()
-                state = address_detail.pop()
-                street_address = store.select_one("span.wpsl-street").text.strip()
-                country_code = store.select_one("span.wpsl-country").text.strip()
-            except:
-                address = store.select_one("div.wpb_wrapper h2").text
-                address = address.split(", ")
-                address_detail = address.pop().split(" ")
-                country_code = address_detail.pop()
-                zip = address_detail.pop()
-                street_address = " ".join(address)
-            state = location_name.split(", ").pop()
-            city = location_name.split(", ")[0]
-            try:
-                phone = store.select_one(".wpsl-contact-details").text.replace(
-                    "T: ", ""
-                )
-            except:
+            index = 0
+            while True:
+                address_count = store.text.count("T:")
+                if index == address_count:
+                    break
                 try:
-                    phone = (
-                        store.select_one("div.wpb_wrapper")
-                        .select("h3")
-                        .pop()
-                        .text.replace("T: ", "")
+                    address_detail = (
+                        store.select("span.wpsl-city")[index].text.strip().split(" ")
+                    )
+                    zip = address_detail.pop()
+                    state = address_detail.pop()
+                    street_address = store.select("span.wpsl-street")[
+                        index
+                    ].text.strip()
+                    country_code = store.select("span.wpsl-country")[index].text.strip()
+                except:
+                    address = store.select("div.wpb_wrapper h2")[index].text
+                    address = address.split(", ")
+                    address_detail = address.pop().split(" ")
+                    country_code = address_detail.pop()
+                    zip = address_detail.pop()
+                    street_address = " ".join(address)
+                state = location_name.split(", ").pop()
+                city = location_name.split(", ")[0]
+                try:
+                    phone = store.select(".wpsl-contact-details")[index].text.replace(
+                        "T: ", ""
                     )
                 except:
-                    phone = (
-                        store.select_one("div.wpb_wrapper")
-                        .select("h1")
-                        .pop()
-                        .text.replace("T: ", "")
-                    )
-            record = SgRecord(
-                page_url=page_url,
-                location_name=location_name,
-                street_address=street_address,
-                city=city,
-                zip_postal=zip,
-                state=state,
-                phone=phone.replace("WING", ""),
-                locator_domain=locator_domain,
-                country_code=country_code,
-            )
-            yield record
+                    try:
+                        phone = (
+                            store.select("div.wpb_wrapper")[index]
+                            .select("h3")
+                            .pop()
+                            .text.replace("T: ", "")
+                        )
+                    except:
+                        phone = (
+                            store.select("div.wpb_wrapper")[index]
+                            .select("h1")
+                            .pop()
+                            .text.replace("T: ", "")
+                        )
+                index += 1
+                record = SgRecord(
+                    page_url=page_url,
+                    location_name=location_name,
+                    street_address=street_address.split(")").pop().strip(),
+                    city=city,
+                    zip_postal=zip,
+                    state=state,
+                    phone=phone.replace("WING", ""),
+                    locator_domain=locator_domain,
+                    country_code=country_code,
+                )
+                yield record
 
 
 if __name__ == "__main__":

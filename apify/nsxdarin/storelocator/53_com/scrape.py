@@ -91,6 +91,14 @@ def fetch_data():
                 days = (
                     line2.split("data-days='")[1].split("}]' data")[0].split('"day":"')
                 )
+                if '"intervals"' not in line2.split("data-days='")[1].split("}]' data")[
+                    0
+                ].split('"day":"'):
+                    days = (
+                        line2.split("data-days='")[2]
+                        .split("}]' data")[0]
+                        .split('"day":"')
+                    )
                 for day in days:
                     if '"intervals"' in day:
                         if '"intervals":[]' in day:

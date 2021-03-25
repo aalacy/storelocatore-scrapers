@@ -66,14 +66,19 @@ def get_data(store_number):
     line = list(filter(None, [l.strip() for l in line]))
     phone = line[1].replace("|", "").strip() or "<MISSING>"
     line = line[0].upper()
+    postal = line.split(",")[-1].strip()
+    line = ",".join(line.split(",")[:-1]).strip()
 
-    adr = parse_address(International_Parser(), line)
+    adr = parse_address(International_Parser(), line, postcode=postal)
     street_address = (
         f"{adr.street_address_1} {adr.street_address_2 or ''}".replace(
             "None", ""
         ).strip()
         or "<MISSING>"
     )
+
+    if len(street_address) < 5:
+        street_address = line.split(",")[0].strip()
 
     city = adr.city or "<MISSING>"
     state = adr.state or "<MISSING>"

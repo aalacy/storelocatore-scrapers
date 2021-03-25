@@ -48,7 +48,7 @@ def fetch_data():
     all_codes = []
     ca_zips = DynamicZipSearch(
         country_codes=[SearchableCountries.CANADA],
-        max_radius_miles=100,
+        max_radius_miles=25,
         max_search_results=None,
     )
     for zip_code in ca_zips:
@@ -57,6 +57,8 @@ def fetch_data():
     start_url = "https://api.marks.com/hy/v1/marks/storelocators/bopis/nearLocation/filtered?location={}&pageSize=500"
     for code in all_codes:
         response = session.get(start_url.format(code.replace(" ", "+")))
+        if response.status_code != 200:
+            continue
         data = json.loads(response.text)
 
         all_poi = data["pointsOfService"]
@@ -93,10 +95,9 @@ def fetch_data():
             latitude = latitude if latitude else "<MISSING>"
             longitude = poi["geoPoint"]["longitude"]
             longitude = longitude if longitude else "<MISSING>"
-            hours_of_operation = poi.get("workingHours")
-            hours_of_operation = (
-                hours_of_operation if hours_of_operation else "<MISSING>"
-            )
+            hoo = poi.get("workingHours")
+            hoo = [e.strip() for e in hoo.split()]
+            hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
 
             item = [
                 DOMAIN,
