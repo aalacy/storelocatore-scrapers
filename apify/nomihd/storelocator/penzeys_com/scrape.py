@@ -67,7 +67,6 @@ def write_output(data):
 
 def fetch_data():
     # Your scraper here
-    loc_list = []
 
     search_url = "https://www.penzeys.com/api/GetLocations"
     stores = session.get(search_url, headers=headers).json()["Locations"]
