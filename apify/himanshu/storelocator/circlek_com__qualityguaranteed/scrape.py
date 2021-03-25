@@ -112,7 +112,7 @@ def fetch_data():
                             if street_address[-1:] == ",":
                                 street_address = street_address[:-1]
                             city = (
-                                store_json["address"]["addressLocality"]
+                                stores[key]["city"]
                                 .replace("&#039;", "'")
                                 .strip()
                             )
@@ -124,10 +124,6 @@ def fetch_data():
                             store_number = stores[key]["cost_center"]
                             raw_address = store_json["name"]
 
-                            if street_address + city + state + zipp in found_poi:
-                                continue
-                            found_poi.append(street_address + city + state + zipp)
-
                             try:
                                 state = (
                                     raw_address.split(",")[-2]
@@ -138,6 +134,7 @@ def fetch_data():
                                     state = "<MISSING>"
                             except:
                                 state = "<MISSING>"
+
                             hours = store_sel.xpath(
                                 '//div[@class="columns large-12 middle hours-wrapper"]/div[contains(@class,"hours-item")]'
                             )
@@ -152,6 +149,8 @@ def fetch_data():
                                 hours_of_operation = "Coming Soon/Limitation COVID-19"
 
                             if street_address == "" or street_address is None:
+                                street_address = stores[key]["address"]
+                            if not street_address:
                                 street_address = "<MISSING>"
 
                             if city == "" or city is None:
@@ -162,6 +161,10 @@ def fetch_data():
 
                             if zipp == "" or zipp is None:
                                 zipp = "<MISSING>"
+
+                            if street_address + city + state + zipp in found_poi:
+                                continue
+                            found_poi.append(street_address + city + state + zipp)
 
                             if latitude == "" or latitude is None:
                                 latitude = "<MISSING>"
