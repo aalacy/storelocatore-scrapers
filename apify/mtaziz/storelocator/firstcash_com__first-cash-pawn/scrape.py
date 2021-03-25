@@ -83,7 +83,7 @@ def fetch_data():
             store.append(store_data["brand"] if store_data["brand"] else "<MISSING>")
             store.append(
                 store_data["address"]["address1"] + store_data["address"]["address2"]
-                if store_data["address"]["address2"] != None
+                if store_data["address"]["address2"] is not None
                 else store_data["address"]["address1"]
             )
             store.append(
