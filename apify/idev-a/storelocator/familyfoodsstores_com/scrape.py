@@ -27,7 +27,7 @@ def fetch_data():
         locator_domain = "http://www.familyfoodsstores.com/"
         base_url = "http://www.familyfoodsstores.com/locations.html"
         soup = bs(session.get(base_url, headers=_headers).text, "lxml")
-        locations = soup.select("ul li.townlinks a")
+        locations = soup.select("ul li a")
         for link in locations:
             page_url = locator_domain + link["href"]
             if link["href"].startswith("http"):
