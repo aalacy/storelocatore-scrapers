@@ -1,4 +1,3 @@
-import re
 import csv
 import json
 from lxml import etree
@@ -43,47 +42,38 @@ def fetch_data():
     items = []
 
     DOMAIN = "nativegrillandwings.com"
-    start_url = "https://nativegrillandwings.com/locations/"
+    start_url = "https://nativegrillandwings.com/wp-admin/admin-ajax.php?action=store_search&lat=33.44838&lng=-112.07404&max_results=50&search_radius=50000&autoload=1"
     headers = {
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.193 Safari/537.36",
     }
 
     response = session.get(start_url, headers=headers)
-    dom = etree.HTML(response.text)
+    data = json.loads(response.text)
 
-    all_locations = dom.xpath('//h3/a[contains(@href, "/location/")]/@href')
-    for store_url in all_locations:
-        loc_response = session.get(store_url)
-        loc_dom = etree.HTML(loc_response.text)
-        poi = loc_dom.xpath('//script[contains(text(), "wpslMap_0=")]/text()')[0]
-        poi = re.findall("wpslMap_0=(.+?);", poi.replace("&#8211;", ""))[0]
-        poi = json.loads(poi)
-
-        location_name = poi["locations"][0]["store"]
+    for poi in data:
+        store_url = poi["permalink"]
+        location_name = poi["store"]
         location_name = location_name if location_name else "<MISSING>"
-        street_address = poi["locations"][0]["address"]
+        street_address = poi["address"]
         street_address = street_address if street_address else "<MISSING>"
-        city = poi["locations"][0]["city"]
+        city = poi["city"]
         city = city if city else "<MISSING>"
-        state = poi["locations"][0]["state"]
+        state = poi["state"]
         state = state if state else "<MISSING>"
-        zip_code = poi["locations"][0]["zip"]
+        zip_code = poi["zip"]
         zip_code = zip_code if zip_code else "<MISSING>"
-        country_code = poi["locations"][0]["country"]
-        store_number = poi["locations"][0]["id"]
-        phone = loc_dom.xpath('//a[contains(@href, "tel")]/text()')
-        phone = phone[0] if phone else "<MISSING>"
+        country_code = poi["country"]
+        store_number = poi["id"]
+        phone = poi["phone"]
+        phone = phone if phone else "<MISSING>"
         location_type = "<MISSING>"
-        latitude = poi["locations"][0]["lat"]
+        latitude = poi["lat"]
         latitude = latitude if latitude else "<MISSING>"
-        longitude = poi["locations"][0]["lng"]
+        longitude = poi["lng"]
         longitude = longitude if longitude else "<MISSING>"
-        hours_of_operation = loc_dom.xpath(
-            '//table[@class="wpsl-opening-hours"]//text()'
-        )
-        hours_of_operation = (
-            " ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
-        )
+        hoo = etree.HTML(poi["hours"]).xpath(".//text()")
+        hoo = [e.strip() for e in hoo if e.strip()]
+        hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
 
         item = [
             DOMAIN,
