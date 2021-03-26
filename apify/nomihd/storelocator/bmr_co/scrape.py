@@ -7,7 +7,7 @@ from sgscrape.sgwriter import SgWriter
 import us
 import lxml.html
 
-website = "bmr.com"
+website = "bmr.co"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 session = SgRequests()
 headers = {
@@ -37,6 +37,8 @@ def fetch_data():
 
         store_number = store["StorelocatorId"]
         phone = store["phone"]
+        if "," in phone:
+            phone = phone.split(",")[0].strip()
 
         location_type = "<MISSING>"
         if store["is_warehouse"] is True:
@@ -51,7 +53,7 @@ def fetch_data():
         for hour in hours:
             day = "".join(hour.xpath('div[@class="content1"]/text()')).strip()
             time = "".join(hour.xpath('div[@class="content2"]//text()')).strip()
-            hours_list.append(day + "" + time)
+            hours_list.append(day + ":" + time)
 
         hours_of_operation = "; ".join(hours_list).strip()
 

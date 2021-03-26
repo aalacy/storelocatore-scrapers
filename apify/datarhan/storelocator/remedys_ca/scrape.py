@@ -71,7 +71,10 @@ def fetch_data():
         phone = phone if phone else "<MISSING>"
         location_type = "<MISSING>"
         latitude = poi["location"]["latitude"]
+        latitude = latitude if latitude and len(str(latitude)) > 2 else "<MISSING>"
         longitude = poi["location"]["longitude"]
+        longitude = longitude if longitude and len(str(longitude)) > 2 else "<MISSING>"
+
         hoo = []
         for elem in poi["storeOpeningHours"]:
             day = elem["day"]

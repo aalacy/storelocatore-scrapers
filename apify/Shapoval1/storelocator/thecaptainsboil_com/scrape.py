@@ -71,7 +71,7 @@ def fetch_data():
         hours = html.fromstring(hours)
         hours_of_operation = " ".join(hours.xpath('//*[contains(text(), ":")]/text()'))
         phone = "".join(hours.xpath('//*[contains(text(), "+")]/text()'))
-        postal = "<MISSING>"
+        postal = a.postcode or "<MISSING>"
         row = [
             locator_domain,
             page_url,
