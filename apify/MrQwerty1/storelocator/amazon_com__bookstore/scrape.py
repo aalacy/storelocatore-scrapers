@@ -124,7 +124,7 @@ def fetch_data():
                 "//div[@class='bxc-grid__column  bxc-grid__column--6-of-12   bxc-grid__column--light']//h2//text()"
             )
         ).strip()
-        print(page_url, ":", location_name)
+
         if not location_name:
             urls.append(url)
             continue
