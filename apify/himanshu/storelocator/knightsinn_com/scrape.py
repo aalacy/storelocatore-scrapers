@@ -1,116 +1,128 @@
-import csv
-import time
-
-from sgrequests import SgRequests
-from bs4 import BeautifulSoup
 import re
+import csv
 import json
-from sglogging import SgLogSetup
+from lxml import etree
+from time import sleep
+from urllib.parse import urljoin
 
-logger = SgLogSetup().get_logger('knightsinn_com')
+from sgselenium import SgFirefox
 
-
-
-
-
-
-session = SgRequests()
 
 def write_output(data):
-    with open('data.csv', mode='w', encoding="utf-8") as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+    with open("data.csv", mode="w", encoding="utf-8") as output_file:
+        writer = csv.writer(
+            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+        )
+
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation",
-                         "page_url"])
+        writer.writerow(
+            [
+                "locator_domain",
+                "page_url",
+                "location_name",
+                "street_address",
+                "city",
+                "state",
+                "zip",
+                "country_code",
+                "store_number",
+                "phone",
+                "location_type",
+                "latitude",
+                "longitude",
+                "hours_of_operation",
+            ]
+        )
         # Body
         for row in data:
             writer.writerow(row)
 
 
 def fetch_data():
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
-        'accept': 'application/json, text/javascript, */*; q=0.01'
-    }
+    # Your scraper here
+    items = []
 
-    base_url = "https://www.knightsinn.com"
-    addresses = []
+    start_url = "https://www.redlion.com/locations"
+    domain = re.findall("://(.+?)/", start_url)[0].replace("www.", "")
 
-    r = session.get("https://www.redlion.com/api/properties/all.js", headers=headers)
-    soup_state = BeautifulSoup(r.text, "lxml")
-    json_str_ids = r.text.replace("var hotelsData = ", "").replace(";", "")
-    json_hotel_data = json.loads(json_str_ids)
-    # logger.info("var hotelsData =  === " + str(json_hotel_data))
+    all_locations = []
+    with SgFirefox() as driver:
+        driver.get(start_url)
+        sleep(10)
+        dom = etree.HTML(driver.page_source)
+        all_states = dom.xpath('//ul[contains(@class, "locations__List")]//a/@href')
+        for url in all_states:
+            state_url = urljoin(start_url, url)
+            driver.get(state_url)
+            sleep(4)
+            state_dom = etree.HTML(driver.page_source)
+            all_cities = state_dom.xpath(
+                '//ul[contains(@class, "region__List")]//a/@href'
+            )
+            for url in all_cities:
+                city_url = urljoin(start_url, url)
+                driver.get(city_url)
+                sleep(4)
+                city_dom = etree.HTML(driver.page_source)
+                all_locations += city_dom.xpath('//h4[@itemprop="name"]/a/@href')
 
-    str_id_arry = ""
-    # id[1]=6596&id[2]=6111&id[0]=186
-    list_str_id_data = []
-    index = 1
-    for num, name in enumerate(json_hotel_data, start=1):
-        str_id_arry += "&id[" + str(index) + "]=" + name.split(",")[2]
-        if num % 15 == 0:
-            list_str_id_data.append(str_id_arry)
-            str_id_arry = ""
-            index = 0
-        index += 1
+    for url in list(set(all_locations)):
+        store_url = urljoin(start_url, url)
+        with SgFirefox() as driver:
+            driver.get(store_url)
+            sleep(4)
+            loc_dom = etree.HTML(driver.page_source)
+            poi = loc_dom.xpath('//script[@data-react-helmet="true"]/text()')
+            if not poi:
+                sleep(10)
+                loc_dom = etree.HTML(driver.page_source)
+                poi = loc_dom.xpath('//script[@data-react-helmet="true"]/text()')
 
-    for param in list_str_id_data:
-        location_url = "https://www.redlion.com/api/hotels?_format=json" + param
-        # logger.info("location_url === " + location_url)
-        r_locations = session.get(location_url, headers=headers)
-        json_locations = r_locations.json()
+        poi = poi[-1]
+        if "streetAddress" not in poi:
+            continue
+        poi = json.loads(poi)
 
-        for location in json_locations:
-            # logger.info("json data === " + str(location))
+        location_name = poi["name"]
+        location_name = location_name if location_name else "<MISSING>"
+        street_address = poi["address"]["streetAddress"]
+        street_address = street_address if street_address else "<MISSING>"
+        city = poi["address"]["addressLocality"]
+        city = city if city else "<MISSING>"
+        state = poi["address"]["addressRegion"]
+        state = state if state else "<MISSING>"
+        zip_code = poi["address"]["postalCode"]
+        zip_code = zip_code if zip_code else "<MISSING>"
+        country_code = poi["address"]["addressCountry"]
+        country_code = country_code if country_code else "<MISSING>"
+        store_number = "<MISSING>"
+        phone = poi["telephone"]
+        phone = phone if phone else "<MISSING>"
+        location_type = poi["@type"]
+        latitude = poi["geo"]["latitude"]
+        longitude = poi["geo"]["longitude"]
+        hours_of_operation = "<MISSING>"
 
-            locator_domain = base_url
-            location_name = ""
-            street_address = ""
-            city = ""
-            state = ""
-            zipp = ""
-            country_code = "US"
-            store_number = ""
-            phone = ""
-            location_type = ""
-            latitude = ""
-            longitude = ""
-            raw_address = ""
-            hours_of_operation = ""
-            page_url = ""
+        item = [
+            domain,
+            store_url,
+            location_name,
+            street_address,
+            city,
+            state,
+            zip_code,
+            country_code,
+            store_number,
+            phone,
+            location_type,
+            latitude,
+            longitude,
+            hours_of_operation,
+        ]
 
-            # do your logic here.
-            page_url = location["Path"]
-            store_number = location["Id"]
-            location_name = location["Name"]
-            longitude = location["LatLng"].split("(")[1].split(" ")[0]
-            latitude = location["LatLng"].split("(")[1].split(" ")[1].split(")")[0]
-            phone = location["Phone"]
-            street_address = location["AddressLine1"]
-            if location["AddressLine2"]:
-                street_address += " "+ location["AddressLine2"]
-            state = location["StateProvince"]
-            if location["Country"] == "Canada":
-                country_code = "CA"
-            elif location["Country"] == "United States":
-                country_code = "US"
-            else:
-                continue
-            city = location["City"]
-            zipp = location["PostalCode"]
+        items.append(item)
 
-            store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
-                     store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
-
-            if str(store[2]) not in addresses:
-                addresses.append(str(store[2]))
-
-                store = [str(x).strip() if x else "<MISSING>" for x in store]
-
-                # logger.info("data = " + str(store))
-                # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-                yield store
+    return items
 
 
 def scrape():
@@ -118,4 +130,5 @@ def scrape():
     write_output(data)
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()
