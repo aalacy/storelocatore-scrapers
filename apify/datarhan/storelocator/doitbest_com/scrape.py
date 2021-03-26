@@ -2,7 +2,6 @@ import csv
 import json
 from lxml import etree
 from urllib.parse import urljoin
-from tqdm import tqdm
 
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 from sgrequests import SgRequests
@@ -85,7 +84,7 @@ def fetch_data():
             continue
         all_locations += data["Response"]["Stores"]
 
-    for poi in tqdm(all_locations):
+    for poi in all_locations:
         store_url = poi["WebsiteURL"]
         store_url = urljoin(start_url, store_url) if store_url else "<MISSING>"
         try:

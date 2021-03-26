@@ -34,7 +34,7 @@ def write_output(data):
 def fetch_data():
     out = []
     locator_domain = "https://www.wholefoodsmarket.co.uk/"
-    api_url = "https://www.wholefoodsmarket.co.uk/staticData/Z26G8nI.json"
+    api_url = "https://www.wholefoodsmarket.co.uk/staticData/Z2adP1V.json"
 
     session = SgRequests()
     r = session.get(api_url)
@@ -45,10 +45,10 @@ def fetch_data():
             f"{j.get('address')} {j.get('address2') or ''}".strip() or "<MISSING>"
         )
         city = j.get("city") or "<MISSING>"
-        state = j.get("metro_area") or "<MISSING>"
+        state = j.get("state") or "<MISSING>"
         postal = j.get("zip_code") or "<MISSING>"
         country_code = "GB"
-        store_number = j.get("") or "<MISSING>"
+        store_number = "<MISSING>"
         page_url = f'https://www.wholefoodsmarket.co.uk/stores/{j.get("folder")}'
         location_name = j.get("name")
         phone = j.get("phone") or "<MISSING>"

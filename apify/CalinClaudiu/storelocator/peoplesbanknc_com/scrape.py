@@ -20,7 +20,8 @@ def fetch_data():
     son = session.post(url, headers=headers, data=data).json()
     son = json.loads(son)
     for i in son:
-        yield i
+        if "permanently closed" not in i["Lobby"]:
+            yield i
 
     logzilla.info(f"Finished grabbing data!!")  # noqa
 
