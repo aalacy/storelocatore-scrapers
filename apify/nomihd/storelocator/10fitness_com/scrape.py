@@ -3,7 +3,8 @@ from sgrequests import SgRequests
 from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
-import json
+import lxml.html
+from sgscrape import sgpostal as parser
 
 website = "10fitness.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -17,46 +18,113 @@ headers = {
 def fetch_data():
     # Your scraper here
 
-    search_url = "https://www.juicegeneration.com/locations/"
+    search_url = "https://10fitness.com/"
     stores_req = session.get(search_url, headers=headers)
-    stores = json.loads(
-        stores_req.text.split("locationsJSON = ")[1].strip().split("}};")[0].strip()
-        + "}}"
+    stores_sel = lxml.html.fromstring(stores_req.text)
+    stores = stores_sel.xpath(
+        '//li[contains(@id,"menu")]/a[contains(@href,"/locations/")]/@href'
     )
+    for store_url in stores:
+        if store_url == "https://10fitness.com/locations/":
+            continue
+        page_url = store_url
+        store_req = session.get(page_url, headers=headers)
+        store_sel = lxml.html.fromstring(store_req.text)
 
-    for store_id in stores.keys():
-        page_url = (
-            "https://www.juicegeneration.com/locations/" + stores[store_id]["url_path"]
-        )
         location_type = "<MISSING>"
         locator_domain = website
-        location_name = stores[store_id]["name"]
+        location_name = "".join(
+            store_sel.xpath(
+                '//div[@class="et_pb_module et_pb_text et_pb_text_3  et_pb_text_align_left et_pb_bg_layout_light"]/div/h4/text()'
+            )
+        ).strip()
+        if len(location_name) <= 0:
+            location_name = "".join(
+                store_sel.xpath(
+                    '//div[@class="et_pb_module et_pb_text et_pb_text_4  et_pb_text_align_left et_pb_bg_layout_light"]/div/h4/text()'
+                )
+            ).strip()
 
-        street_address = stores[store_id]["address1"]
-        if (
-            stores[store_id]["address2"] is not None
-            and len(stores[store_id]["address2"]) > 0
-        ):
-            street_address = street_address + ", " + stores[store_id]["address2"]
+        location_name = (
+            location_name.encode("ascii", "replace")
+            .decode("utf-8")
+            .replace("?", "-")
+            .strip()
+        )
+        address = ",".join(
+            store_sel.xpath(
+                '//div[@class="et_pb_module et_pb_text et_pb_text_3  et_pb_text_align_left et_pb_bg_layout_light"]/div/p//text()'
+            )
+        ).strip()
+        if len(address) <= 0:
+            address = ",".join(
+                store_sel.xpath(
+                    '//div[@class="et_pb_module et_pb_text et_pb_text_4  et_pb_text_align_left et_pb_bg_layout_light"]/div/p//text()'
+                )
+            ).strip()
+        temp_address = address.split(",")
+        add_list = []
+        for temp in temp_address:
+            if len("".join(temp).strip()) > 0:
+                add_list.append("".join(temp).strip())
 
-        city = stores[store_id]["map_location"]
-        state = "<MISSING>"
-        zip = stores[store_id]["zipcode"]
+        raw_address = ", ".join(add_list)
+        formatted_addr = parser.parse_address_usa(raw_address)
+        street_address = formatted_addr.street_address_1
+        if formatted_addr.street_address_2:
+            street_address = street_address + ", " + formatted_addr.street_address_2
+
+        city = formatted_addr.city
+        state = formatted_addr.state
+        zip = formatted_addr.postcode
+
         country_code = "US"
-        phone = stores[store_id]["phone"]
-        hours_of_operation = "<MISSING>"
-        hours = stores[store_id]["work_hours"]
-        hours_list = []
-        for key in hours.keys():
-            day = hours[key]["day_name"]
-            time = hours[key]["start"] + "-" + hours[key]["end"]
-            hours_list.append(day + ":" + time)
+        phone = "".join(
+            store_sel.xpath('//div[@class="et_pb_blurb_description"]/p/a/text()')
+        ).strip()
+        if len(phone) <= 0:
+            phone = "".join(
+                store_sel.xpath('//div[@class="et_pb_blurb_description"]//text()')
+            ).strip()
 
-        hours_of_operation = "; ".join(hours_list).strip()
-        store_number = stores[store_id]["location_id"]
+        hours_of_operation = "".join(
+            store_sel.xpath(
+                '//div[@class="et_pb_module et_pb_text et_pb_text_4  et_pb_text_align_left et_pb_bg_layout_light"]/div/p[1]/text()'
+            )
+        ).strip()
+        if len(hours_of_operation) <= 0:
+            hours_of_operation = "".join(
+                store_sel.xpath(
+                    '//div[@class="et_pb_module et_pb_text et_pb_text_5  et_pb_text_align_left et_pb_bg_layout_light"]/div/p[1]/text()'
+                )
+            ).strip()
 
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
+        hours_of_operation = (
+            hours_of_operation.encode("ascii", "replace")
+            .decode("utf-8")
+            .replace("?", "-")
+            .strip()
+        )
+        if "Open with" in hours_of_operation:
+            hours_of_operation = "<MISSING>"
+
+        store_number = "<MISSING>"
+
+        latitude = "".join(
+            store_sel.xpath('//div[@class="et_pb_map_pin"]/@data-lat')
+        ).strip()
+        longitude = "".join(
+            store_sel.xpath('//div[@class="et_pb_map_pin"]/@data-lng')
+        ).strip()
+
+        if len(latitude) <= 0:
+            map_link = "".join(
+                store_sel.xpath('//iframe[contains(@src,"maps/embed?")]/@src')
+            ).strip()
+
+            if len(map_link) > 0:
+                latitude = map_link.split("!3d")[1].strip().split("!")[0].strip()
+                longitude = map_link.split("!2d")[1].strip().split("!")[0].strip()
 
         yield SgRecord(
             locator_domain=locator_domain,
@@ -73,6 +141,7 @@ def fetch_data():
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=hours_of_operation,
+            raw_address=raw_address,
         )
 
 

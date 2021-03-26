@@ -73,7 +73,7 @@ def fetch_data():
         for line2 in r2.iter_lines(decode_unicode=True):
             if '"postalCode":"' in line2 and '"displayName":"Fuel Center"' in line2:
                 Fuel = True
-                name = line2.split('"name":"')[1].split('"')[0]
+                name = line2.split('"isActive":')[1].split('"name":"')[1].split('"')[0]
                 zc = line2.split('"postalCode":"')[1].split('"')[0]
                 try:
                     add = line2.split('"address1":"')[1].split('"')[0]

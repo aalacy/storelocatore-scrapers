@@ -1,6 +1,7 @@
 import csv
 import sgrequests
 import bs4
+import re
 
 
 def write_output(data):
@@ -64,25 +65,26 @@ def fetch_data():
 
     def addressParser(a):
         addr = list(filter(None, a.split(" ")))
+        country = missingString
         if len(addr) == 3:
             return {
                 "city": addr[0],
                 "state": addr[1],
                 "zip": addr[2],
-                "country": missingString,
+                "country": country,
             }
         if len(addr) == 4:
             return {
                 "city": addr[0] + " " + addr[1],
                 "state": addr[2],
                 "zip": addr[3],
-                "country": missingString,
+                "country": country,
             }
         if len(addr) == 5:
             return {
                 "city": addr[0],
                 "state": addr[1],
-                "country": addr[2],
+                "country": "United Kingdom",
                 "zip": addr[3] + " " + addr[4],
             }
 
@@ -93,8 +95,14 @@ def fetch_data():
         addr = list(
             filter(None, obj.find("p").text.replace("Map", "").strip().split("\n"))
         )
-        street = addr[0].strip()
+        if "ONLINE ORDERS ONLY" in addr[0].strip() or "James Perse" in addr[0].strip():
+            street = addr[1].strip()
+        else:
+            street = addr[0].strip()
         city = addressParser(addr[-1].strip())
+        c = city["country"]
+        if "Canada" in " ".join(addr):
+            c = "Canada"
         phone = (
             obj.findAll("p")[1]
             .text.replace("Tel", "")
@@ -118,11 +126,33 @@ def fetch_data():
             pass
         h = []
         for ho in hours:
-            if "ONLINE ONLY | NO WALK-INS" in ho:
+            if "ONLINE ORDERS ONLY | NO WALK-INS" in ho:
                 h.append(missingString)
             else:
                 h.append(ho.replace(u"\r", ""))
         hou = ", ".join(h)
+        lat = missingString
+        lng = missingString
+        if not obj.find("a", {"target": "_blank"}):
+            pass
+        else:
+            latlng = re.search(r"@(.*?)/", obj.find("a", {"target": "_blank"})["href"])
+            if latlng:
+                grouped = list(
+                    filter(
+                        None,
+                        latlng.group(1)
+                        .replace("17z", "")
+                        .replace("@", "")
+                        .replace("3a,90y,318.67h,82.51t", "")
+                        .split(","),
+                    )
+                )
+                lat = grouped[0]
+                lng = grouped[1]
+        state = city["state"]
+        if "United" in state:
+            state = missingString
         result.append(
             [
                 locator_domain,
@@ -130,14 +160,14 @@ def fetch_data():
                 name,
                 street,
                 city["city"],
-                city["state"],
+                state,
                 city["zip"],
-                missingString,
+                c,
                 missingString,
                 phone,
                 missingString,
-                missingString,
-                missingString,
+                lat,
+                lng,
                 hou,
             ]
         )

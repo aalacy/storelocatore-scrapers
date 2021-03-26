@@ -151,6 +151,12 @@ def fetch_data():
                 hours = hours3
             if "locations/providence-medical-associates" in loc:
                 hours = "Mon - Fri: 8 a.m. - 5 p.m."
+            if hours.strip() == "&nbsp;":
+                hours = "<MISSING>"
+            if "<!--" in hours:
+                hours = "<MISSING>"
+            if "<h4>Family" in hours or "<b>Clinic" in hours:
+                hours = "<MISSING>"
             yield [
                 website,
                 loc,

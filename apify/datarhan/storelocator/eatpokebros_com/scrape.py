@@ -41,6 +41,7 @@ def fetch_data():
     session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
 
     items = []
+    scraped_items = []
 
     start_url = "https://eatpokebros.com/locations/"
     domain = re.findall("://(.+?)/", start_url)[0].replace("www.", "")
@@ -70,7 +71,7 @@ def fetch_data():
         country_code = "US"
         store_number = "<MISSING>"
         phone = poi_html.xpath('.//p[@class="phone"]/a/text()')
-        phone = phone[0] if phone else "<MISSING>"
+        phone = phone[-1] if phone else "<MISSING>"
         location_type = "<MISSING>"
         latitude = "<MISSING>"
         longitude = "<MISSING>"
@@ -94,8 +95,10 @@ def fetch_data():
             longitude,
             hours_of_operation,
         ]
-
-        items.append(item)
+        check = f"{location_name} {street_address}"
+        if check not in scraped_items:
+            scraped_items.append(check)
+            items.append(item)
 
     return items
 

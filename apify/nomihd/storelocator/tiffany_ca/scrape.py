@@ -5,7 +5,7 @@ from sglogging import sglog
 import lxml.html
 import json
 
-website = "tiffany.co.uk"
+website = "tiffany.ca"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 session = SgRequests()
 headers = {
@@ -91,7 +91,13 @@ def fetch_data():
             if "Store" == json.loads(js)["@type"]:
                 json_data = json.loads(js)
                 location_name = json_data["name"]
-                street_address = json_data["address"]["streetAddress"]
+                street_address = (
+                    json_data["address"]["streetAddress"]
+                    .replace("Chinook Centre ,", "")
+                    .strip()
+                    .replace("West Edmonton Mall,", "")
+                    .strip()
+                )
                 city = json_data["address"]["addressLocality"]
                 state = json_data["address"]["addressRegion"]
                 zip = json_data["address"]["postalCode"]
@@ -158,7 +164,36 @@ def fetch_data():
                     hours_of_operation = "permanently closed"
                 elif "temporarily closed" in json_data["openingHours"]:
                     hours_of_operation = "temporarily closed"
+                else:
+                    temp_hours = json_data["openingHours"]
+                    try:
+                        if len(temp_hours.split("<br><br>")) == 3:
+                            hours_of_operation = (
+                                temp_hours.split("<br><br>")[-1]
+                                .replace("<br>", "; ")
+                                .strip()
+                            )
+                        else:
+                            hours_of_operation = json_data[
+                                "specialOpeningHoursSpecification"
+                            ].strip()
+                            try:
+                                hours_of_operation = (
+                                    hours_of_operation.split("<br><br>")[1]
+                                    .replace("<br>", "; ")
+                                    .strip()
+                                )
+                            except:
+                                pass
+                    except:
+                        pass
 
+                try:
+                    hours_of_operation = hours_of_operation.split("; Holidays: ")[
+                        0
+                    ].strip()
+                except:
+                    pass
                 if hours_of_operation == "":
                     hours_of_operation = "<MISSING>"
 

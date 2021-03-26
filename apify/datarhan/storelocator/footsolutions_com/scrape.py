@@ -1,8 +1,10 @@
 import csv
 from lxml import etree
+from time import sleep
 from urllib.parse import urljoin
 
 from sgrequests import SgRequests
+from sgselenium import SgFirefox
 
 
 def write_output(data):
@@ -45,14 +47,24 @@ def fetch_data():
     DOMAIN = "footsolutions.com"
     start_url = "https://footsolutions.com/map"
 
-    response = session.get(start_url)
+    hdr = {
+        "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.82 Safari/537.36",
+    }
+    response = session.get(start_url, headers=hdr)
     dom = etree.HTML(response.text)
     all_locations = dom.xpath('//a[contains(@class, "Map__StoreLink")]/@href')
 
-    for url in all_locations:
+    for url in list(set(all_locations)):
         store_url = urljoin(start_url, url)
-        loc_response = session.get(store_url)
-        loc_dom = etree.HTML(loc_response.text)
+        loc_response = session.get(store_url, headers=hdr)
+        if loc_response.status_code == 404:
+            with SgFirefox() as driver:
+                driver.get(store_url)
+                sleep(5)
+                loc_dom = etree.HTML(driver.page_source)
+        else:
+            loc_dom = etree.HTML(loc_response.text)
 
         location_name = loc_dom.xpath('//h3[contains(@class, "StoreDetails")]/text()')[
             0
