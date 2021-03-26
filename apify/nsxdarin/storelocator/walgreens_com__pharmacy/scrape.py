@@ -36,8 +36,8 @@ def write_output(data):
 
 search = DynamicZipSearch(
     country_codes=[SearchableCountries.USA],
-    max_radius_miles=50,
-    max_search_results=250,
+    max_radius_miles=10,
+    max_search_results=50,
 )
 
 session = SgRequests()
@@ -54,9 +54,9 @@ def fetch_data():
             logger.info(("Pulling Postal Code %s..." % code))
             url = "https://www.walgreens.com/locator/v1/stores/search?requestor=search"
             payload = {
-                "r": "250",
+                "r": "50",
                 "requestType": "dotcom",
-                "s": "100",
+                "s": "20",
                 "p": 1,
                 "q": code,
                 "lat": "",
@@ -98,20 +98,20 @@ def fetch_data():
                                         hrs = (
                                             day.split(">")[1].split("<")[0] + ": Closed"
                                         )
+                                    elif "Open</strong> 24 hours" in day:
+                                        hrs = "Sun-Sat: 24 hours"
                                     else:
                                         hrs = (
                                             day.split(">")[1].split("<")[0]
                                             + ": "
-                                            + day.split("react-text:")[1]
-                                            .split(">")[1]
-                                            .split("<")[0]
+                                            + day.split('<li class="time">')[1].split(
+                                                "<"
+                                            )[0]
                                         )
                                         hrs = (
                                             hrs
                                             + "-"
-                                            + day.split("react-text:")[3]
-                                            .split(">")[1]
-                                            .split("<")[0]
+                                            + day.split("<!-- -->")[2].split("<")[0]
                                         )
                                     if hours == "":
                                         hours = hrs
@@ -136,28 +136,25 @@ def fetch_data():
                                         hrs = (
                                             day.split(">")[1].split("<")[0]
                                             + ": "
-                                            + day.split("react-text:")[1]
-                                            .split(">")[1]
-                                            .split("<")[0]
+                                            + day.split('<li class="time">')[1].split(
+                                                "<"
+                                            )[0]
                                         )
                                         hrs = (
                                             hrs
                                             + "-"
-                                            + day.split("react-text:")[3]
-                                            .split(">")[1]
-                                            .split("<")[0]
+                                            + day.split("<!-- -->")[2].split("<")[0]
                                         )
                                     if hours == "":
                                         hours = hrs
                                     else:
                                         hours = hours + "; " + hrs
-                phone = (
-                    item["store"]["phone"]["areaCode"]
-                    + item["store"]["phone"]["number"]
-                )
-                if Closed:
-                    hours = "Temporarily Closed"
-                if store not in ids:
+                    phone = (
+                        item["store"]["phone"]["areaCode"]
+                        + item["store"]["phone"]["number"]
+                    )
+                    if Closed:
+                        hours = "Temporarily Closed"
                     ids.append(store)
                     yield [
                         website,

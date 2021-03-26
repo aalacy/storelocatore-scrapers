@@ -88,7 +88,7 @@ def fetch_data():
                 "{}{}".format(locator_domain + "locations/", store_page),
                 el["name"],
                 el["address"],
-                el["city"],
+                el["city"].replace(" IL", ""),
                 el["state"],
                 el["zipcode"],
                 missingString,

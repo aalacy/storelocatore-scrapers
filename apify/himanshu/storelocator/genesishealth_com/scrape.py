@@ -3,6 +3,7 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 from sglogging import SgLogSetup
+import lxml.html
 
 logger = SgLogSetup().get_logger("genesishealth_com")
 
@@ -92,39 +93,38 @@ def fetch_data():
             else:
                 store_number = "<MISSING>"
 
-            if "genesishealth.com" not in page_url:
-                continue
-            logger.info(page_url)
-            location_soup = BeautifulSoup(session.get(page_url).text, "lxml")
-            coords = location_soup.find("script", {"type": "application/ld+json"})
-            if coords:
-                try:
-                    lat = str(coords).split('"latitude": "')[1].split('"')[0]
-                    lng = str(coords).split('"longitude": "')[1].split('"')[0]
-                except:
+            lat = "<MISSING>"
+            lng = "<MISSING>"
+            hours = "<MISSING>"
+            if "genesishealth.com" in page_url:
+
+                logger.info(page_url)
+                store_req = session.get(page_url)
+                store_sel = lxml.html.fromstring(store_req.text)
+                location_soup = BeautifulSoup(store_req.text, "lxml")
+                coords = location_soup.find("script", {"type": "application/ld+json"})
+                if coords:
+                    try:
+                        lat = str(coords).split('"latitude": "')[1].split('"')[0]
+                        lng = str(coords).split('"longitude": "')[1].split('"')[0]
+                    except:
+                        lat = "<MISSING>"
+                        lng = "<MISSING>"
+                    location_type = str(coords).split('"@type": "')[1].split('"')[0]
+                else:
                     lat = "<MISSING>"
                     lng = "<MISSING>"
-                location_type = str(coords).split('"@type": "')[1].split('"')[0]
-            else:
-                lat = "<MISSING>"
-                lng = "<MISSING>"
-                location_type = "<MISSING>"
+                    location_type = "<MISSING>"
 
-            try:
-                hours = (
-                    " ".join(
-                        list(
-                            location_soup.find(
-                                "div", {"class": "OfficeHoursContainer"}
-                            ).stripped_strings
-                        )
-                    )
-                    .replace("Hours of Operation:", "")
-                    .strip()
-                )
-            except:
-                hours = "<MISSING>"
+                temp_hours = store_sel.xpath("//div[@class='DaySchedule ClearFix']")
+                hours_list = []
+                hours = ""
+                for hour in temp_hours:
+                    day = "".join(hour.xpath('div[@class="Day"]/text()')).strip()
+                    time = "".join(hour.xpath('div[@class="Times"]/text()')).strip()
+                    hours_list.append(day + time)
 
+                hours = "; ".join(hours_list).strip()
             store = []
             store.append(base_url)
             store.append(location_name)

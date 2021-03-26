@@ -38,6 +38,9 @@ def write_output(data):
 
 def fetch_data():
 
+    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
+    headers = {"User-Agent": user_agent}
+
     session = SgRequests()
 
     zip_codes = DynamicZipSearch(
@@ -46,55 +49,61 @@ def fetch_data():
         max_radius_miles=200,
     )
     adressess = []
-    headers = {
-        "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36",
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3",
-    }
+
     for i, zip_code in enumerate(zip_codes):
+
         log.info(
             "Searching: %s | Items remaining: %s"
             % (zip_code, zip_codes.items_remaining())
         )
 
-        if i % 30 == 0:
-            if i > 0:
-                session = SgRequests()
-
+        link = (
+            "https://www.thelittleclinic.com/appointment-management/v1/clinics?filter.businessName=tlc&filter.freeFormAddress=%s&filter.maxResults=100&page.size=500"
+            % zip_code
+        )
         r = session.get(
-            "https://www.thelittleclinic.com/tlc/api/clinic/search?freeFormAddress="
-            + str(zip_code)
-            + "&maxResults=100&pageSize=500",
+            link,
             headers=headers,
         )
         json_data = r.json()
-        j = json_data["results"]
+        j = json_data["data"]["clinics"]
 
         for i in j:
             store = []
             store.append("https://www.thelittleclinic.com/")
-            store.append(i["legalName"])
-            store.append(i["address"]["addressLine1"])
+            store.append(i["name"])
+            store.append(" ".join(i["address"]["addressLines"]))
             if store[2] in adressess:
                 continue
             adressess.append(store[2])
-            store.append(i["address"]["city"])
-            store.append(i["address"]["stateCode"])
-            store.append(i["address"]["zip"])
-            store.append(i["address"]["countryCode"])
-            store.append(i["clinicId"])
-            store.append(i["phoneNumber"])
-            store.append(i["banner"])
-            lat = i["latitude"]
-            lng = i["longitude"]
+            store.append(i["address"]["cityTown"])
+            store.append(i["address"]["stateProvince"])
+            store.append(i["address"]["postalCode"])
+            store.append("US")
+            store.append(i["id"])
+            try:
+                phone = i["phone"]
+            except:
+                phone = "<MISSING>"
+            store.append(phone)
+            if i["isSchedulerEnabled"]:
+                loc_type = "Scheduling Appointments Available"
+            else:
+                loc_type = "Scheduling Appointments Currently Unavailable"
+            store.append(loc_type)
+            lat = i["location"]["lat"]
+            lng = i["location"]["lng"]
             store.append(lat)
             store.append(lng)
             zip_codes.found_location_at(lat, lng)
-            hours = " ".join(i["weekHours"])
-            store.append(hours)
-            store.append(
-                "https://www.thelittleclinic.com/scheduler/tlc/location/"
-                + str(i["clinicId"])
+            store.append("<INACCESSIBLE>")
+
+            id_num = str(i["id"])
+            url = "https://www.thelittleclinic.com/clinic-details/%s/%s" % (
+                id_num[:3],
+                id_num[3:],
             )
+            store.append(url)
             store = [str(x).strip() if x else "<MISSING>" for x in store]
             yield store
 

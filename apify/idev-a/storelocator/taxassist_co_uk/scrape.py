@@ -44,7 +44,7 @@ def parse_detail(soup2, link):
         location_type=location["@type"],
         location_name=location["name"],
         street_address=addr.street_address_1,
-        city=addr.city,
+        city=location["address"]["addressLocality"] or addr.city,
         zip_postal=location["address"]["postalCode"],
         country_code="uk",
         latitude=location["geo"]["latitude"],

@@ -19,6 +19,7 @@ def toggle(driver):
         )
     )
     driver.execute_script("arguments[0].click();", toggle_btn)
+    time.sleep(1)
 
 
 def _close(driver, close_btn):
@@ -26,6 +27,7 @@ def _close(driver, close_btn):
         "//html/body/div[1]/div/div/div/div/div[3]/div/div/div/aside/div[1]/div/button"
     ):
         driver.execute_script("arguments[0].click();", close_btn)
+        time.sleep(1)
 
 
 def fetch_data():
@@ -44,7 +46,6 @@ def fetch_data():
             )
         )
         _close(driver, close_btn)
-        time.sleep(1)
         toggle(driver)
         soup = html.fromstring(driver.page_source)
         total = len(
@@ -54,11 +55,16 @@ def fetch_data():
         )
         while True:
             _close(driver, close_btn)
-            button = driver.find_element_by_xpath(
-                f"//html/body/div[1]/div/div/div/div/div[1]/div[2]/div[2]/div/div/div[1]/div/div/div[2]/div[2]/div[{idx}]//button"
+            button = WebDriverWait(driver, 5).until(
+                EC.presence_of_element_located(
+                    (
+                        By.XPATH,
+                        f"//html/body/div[1]/div/div/div/div/div[1]/div[2]/div[2]/div/div/div[1]/div/div/div[2]/div[2]/div[{idx}]//button",
+                    )
+                )
             )
             driver.execute_script("arguments[0].click();", button)
-            block = WebDriverWait(driver, 10).until(
+            block = WebDriverWait(driver, 5).until(
                 EC.presence_of_element_located(
                     (
                         By.XPATH,
@@ -83,11 +89,10 @@ def fetch_data():
                 locator_domain=locator_domain,
             )
             toggle(driver)
-            time.sleep(1)
 
-            idx += 1
             if idx > total:
                 break
+            idx += 1
 
 
 if __name__ == "__main__":
