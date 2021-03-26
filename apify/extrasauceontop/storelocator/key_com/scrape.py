@@ -88,10 +88,27 @@ def getdata():
                     longitude = loc_property["value"]
 
                 if loc_property["name"] == "HoursOfOperation":
-                    hours = loc_property["value"]
+                    hours_list = loc_property["value"].replace(" - ", "-").split(" ")
+                    x = 0
+                    hour_values = []
+                    days = []
+                    for item in hours_list:
+                        if x % 2 == 0:
+                            hour_values.append(item)
+                        else:
+                            days.append(item)
+
+                        x = x + 1
+
+                    hours = ""
+                    for index in range(len(days)):
+                        hours = hours + days[index] + " " + hour_values[index] + ", "
 
             if zipp == "99999":
                 zipp = "<MISSING>"
+
+            if address == "Tbd":
+                continue
 
             locator_domains.append(locator_domain)
             page_urls.append(page_url)
@@ -151,7 +168,7 @@ def writedata(df):
     df = df.replace(r"^\s*$", "<MISSING>", regex=True)
     df = df.fillna("<MISSING>")
 
-    df.to_csv("data.csv", index=True)
+    df.to_csv("data.csv", index=False)
 
 
 getdata()

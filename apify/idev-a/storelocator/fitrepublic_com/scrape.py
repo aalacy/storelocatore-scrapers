@@ -34,7 +34,7 @@ def _valid(val):
 def fetch_data():
     with SgRequests() as session:
         locator_domain = "https://fitrepublic.com/"
-        base_url = "https://api2.storepoint.co/v1/15c06d849dfcc8/locations?lat=34.0485&long=-118.2529&radius=500"
+        base_url = "https://api2.storepoint.co/v1/15c06d849dfcc8/locations?lat=34.0485&long=-118.2529&radius=5000"
         locations = session.get(base_url, headers=_headers).json()
         for _ in locations["results"]["locations"]:
             addr = parse_address_intl(_["streetaddress"])

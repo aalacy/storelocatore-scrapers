@@ -84,22 +84,23 @@ def fetch_data():
         if " - " in name:
             store = name.split(" - ")[0]
         if state != "BH" and "Bahamas" not in name and "Bahamas" not in add:
-            yield [
-                website,
-                loc,
-                name,
-                add,
-                city,
-                state,
-                zc,
-                country,
-                store,
-                phone,
-                typ,
-                lat,
-                lng,
-                hours,
-            ]
+            if "555-5555" not in phone:
+                yield [
+                    website,
+                    loc,
+                    name,
+                    add,
+                    city,
+                    state,
+                    zc,
+                    country,
+                    store,
+                    phone,
+                    typ,
+                    lat,
+                    lng,
+                    hours,
+                ]
 
 
 def scrape():

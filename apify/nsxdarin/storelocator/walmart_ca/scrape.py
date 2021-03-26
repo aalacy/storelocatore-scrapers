@@ -79,13 +79,13 @@ def fetch_data():
                         lng = item.split('"longitude":')[1].split("}")[0]
                         zc = item.split('"postalCode":"')[1].split('"')[0]
                         days = (
-                            item.split('"regularHours":[')[1]
-                            .split("]},")[0]
+                            item.split('"currentHours":[')[1]
+                            .split("}],")[0]
                             .split('"start":"')
                         )
                         for day in days:
                             if '"day":"' in day:
-                                if '"closed":true' in day:
+                                if '"isClosed":true' in day:
                                     hrs = (
                                         day.split('"day":"')[1].split('"')[0]
                                         + ": Closed"

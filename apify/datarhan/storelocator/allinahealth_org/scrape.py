@@ -66,7 +66,11 @@ def fetch_data():
         if len(address_raw) == 3:
             address_raw = [", ".join(address_raw[:2])] + address_raw[2:]
         location_name = poi_html.xpath(".//h5/text()")
-        location_name = location_name[0] if location_name else "<MISSING>"
+        location_name = (
+            location_name[0].split("-")[0].strip().split("–")[0].strip()
+            if location_name
+            else "<MISSING>"
+        )
         street_address = address_raw[0]
         city = address_raw[1].split(",")[0]
         state = address_raw[1].split(",")[-1].split()[0]
@@ -76,7 +80,7 @@ def fetch_data():
         if loc_url.split("/")[-1].isdigit():
             store_number = loc_url.split("/")[-1]
         store_number = store_number if store_number else "<MISSING>"
-        phone = poi_html.xpath('.//a[@class="ahn-link visible-xs-block"]/text()')
+        phone = poi_html.xpath('.//a[contains(@href, "tel")]/text()')
         phone = phone[0] if phone else "<MISSING>"
         latitude = "<MISSING>"
         longitude = "<MISSING>"

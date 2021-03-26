@@ -67,7 +67,11 @@ def fetch_data():
         location_type = "<MISSING>"
         latitude = "<MISSING>"
         longitude = "<MISSING>"
-        hours_of_operation = "<MISSING>"
+        hoo = dom.xpath(
+            '//div[@data-mesh-id="SITE_FOOTERinlineContent-gridContainer"]/div[@id="WRchTxtm"]/p//text()'
+        )[2:]
+        hoo = [e.strip() for e in hoo if e.strip()]
+        hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
 
         item = [
             domain,
