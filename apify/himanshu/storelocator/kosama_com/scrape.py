@@ -48,7 +48,6 @@ def fetch_data():
     location_type = "<MISSING>"
     latitude = "<MISSING>"
     longitude = "<MISSING>"
-    raw_address = ""
     hours_of_operation = "<MISSING>"
     page_url = "<MISSING>"
 
@@ -65,7 +64,6 @@ def fetch_data():
                         "https://www.kosama.com" + li.find("a", class_="panel")["href"]
                     )
                     location_name = li.find("div", class_="name").text.strip()
-                    address = li.find("div", class_="address")
                     list_address = list(li.stripped_strings)
                     if len(list_address) > 4:
                         street_address = list_address[1] + " " + list_address[2]
