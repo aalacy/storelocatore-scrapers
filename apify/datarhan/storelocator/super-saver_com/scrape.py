@@ -54,7 +54,12 @@ def fetch_data():
     )[1:]
     for poi_html in all_locations:
         store_url = poi_html.xpath(".//h3/a/@href")
-        store_url = store_url[0] if store_url else "<MISSING>"
+        if not store_url:
+            continue
+        store_url = store_url[0]
+        loc_response = session.get(store_url)
+        loc_dom = etree.HTML(loc_response.text)
+
         location_name = poi_html.xpath(".//h3/a/text()")
         location_name = location_name[0].strip() if location_name else "<MISSING>"
         raw_address = poi_html.xpath('.//p[contains(text(), "Store Director")]/text()')[
@@ -74,16 +79,27 @@ def fetch_data():
         country_code = "<MISSING>"
         store_number = "<MISSING>"
         try:
-            phone = poi_html.xpath('.//p[contains(text(), "Store Director")]/text()')[
-                3
-            ].strip()
+            phone = (
+                poi_html.xpath('.//p[contains(text(), "Store Director")]/text()')[3]
+                .split(":")[-1]
+                .strip()
+            )
         except:
-            phone = poi_html.xpath(
-                './/*[contains(text(), "Store Director")]/following-sibling::*//text()'
-            )[2].strip()
+            phone = (
+                poi_html.xpath(
+                    './/*[contains(text(), "Store Director")]/following-sibling::*//text()'
+                )[2]
+                .split(":")[-1]
+                .strip()
+            )
         location_type = "<MISSING>"
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
+        geo = (
+            loc_dom.xpath('//a[contains(@href, "/maps/")]/@href')[0]
+            .split("/@")[-1]
+            .split(",")[:2]
+        )
+        latitude = geo[0]
+        longitude = geo[1]
         hours_of_operation = poi_html.xpath(".//text()")
         hours_of_operation = [e for e in hours_of_operation if "Open 24" in e]
         hours_of_operation = (
