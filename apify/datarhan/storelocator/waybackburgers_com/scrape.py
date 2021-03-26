@@ -81,9 +81,13 @@ def fetch_data():
         phone = urllib.parse.unquote(phone[0]) if phone else "<MISSING>"
         location_type = "<MISSING>"
         latitude = poi.xpath("@data-geo_latitude")
-        latitude = latitude[0] if latitude else "<MISSING>"
+        latitude = (
+            latitude[0] if latitude and latitude[0] != "0.000000" else "<MISSING>"
+        )
         longitude = poi.xpath("@data-geo_longitude")
-        longitude = longitude[0] if longitude else "<MISSING>"
+        longitude = (
+            longitude[0] if longitude and longitude[0] != "0.000000" else "<MISSING>"
+        )
         hours_of_operation = urllib.parse.unquote(poi.xpath("@data-hours")[0])
         hours_html = etree.HTML(hours_of_operation)
         hours_of_operation = " ".join(hours_html.xpath(".//text()"))
