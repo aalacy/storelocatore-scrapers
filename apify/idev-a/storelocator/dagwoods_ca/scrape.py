@@ -3,6 +3,7 @@ from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 from sgscrape.sgpostal import parse_address_intl
+import re
 
 _headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
@@ -22,6 +23,10 @@ def fetch_data():
         locations = soup.select("locator store item")
         for _ in locations:
             addr = parse_address_intl(_.address.text)
+            hours = list(bs(_.description.text, "lxml").stripped_strings)
+            hours_of_operation = "; ".join(hours)
+            if not re.search(r"Monday", hours_of_operation, re.IGNORECASE):
+                hours_of_operation = ""
             yield SgRecord(
                 page_url=page_url,
                 store_number=_.sortord.text,
@@ -35,6 +40,7 @@ def fetch_data():
                 latitude=_.latitude.text,
                 longitude=_.longitude.text,
                 locator_domain=locator_domain,
+                hours_of_operation=hours_of_operation,
             )
 
 
