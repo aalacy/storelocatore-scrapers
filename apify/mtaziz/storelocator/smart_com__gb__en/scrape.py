@@ -95,7 +95,7 @@ def specialheaders():
             headers["x-apikey"] = ""
 
         logzilla.info("Banner clicked with SUCCESS")
-        driver.switch_to.frame("dlc-cont")
+        driver.switch_to.frame("dlc-onedlc-cont")
         logzilla.info("switch_to frame with SUCCESS")
 
         byname_xpath = '//button[text()="Search by name"]'
@@ -105,28 +105,6 @@ def specialheaders():
 
         driver.execute_script("arguments[0].click();", byname)
         logzilla.info("By Name search clicked with SUCCESS")
-        sbar = WebDriverWait(driver, 50).until(
-            EC.visibility_of_element_located(
-                (By.XPATH, '//*[@id="mb-dl-spa"]/div/section[2]/div/form/div/input')
-            )
-        )
-
-        logzilla.info("Before sending Benz Key with SUCCESS")
-        sbar.send_keys("Benz")
-        logzilla.info("After sending Benz Key with SUCCESS")
-
-        dealer_xpath = '//span[@class="dl-dealers-search__submit--label"]'
-        dealer = WebDriverWait(driver, 50).until(
-            EC.visibility_of_element_located((By.XPATH, dealer_xpath))
-        )
-
-        dealer = WebDriverWait(driver, 50).until(
-            EC.visibility_of_element_located((By.XPATH, dealer_xpath))
-        )
-
-        driver.execute_script("arguments[0].click();", dealer)
-        logzilla.info("dealer clicked with SUCCESS")
-
         for r in driver.requests:
             if "/dlc/dms/v2/dealers/search" in r.path:
                 logzilla.info("[/dlc/dms/v2/dealers/search] found in %s" % r.path)
@@ -265,93 +243,114 @@ def fetch_data():
     session = SgRequests()
     results = session.get(resultsList, headers=headers).json()
     search_space = [[i, headers] for i in results["results"]]
-
+    company_id_list = []
     data_list = []
     items = []
     for i in search_space:
         data_from_para = para(i)
         company_id = data_from_para["results"][0]["baseInfo"]["companyId"]
-        company_id_based_search = (company_id, headers)
-        data_details = get_data_using_company_id(company_id_based_search)
+        company_id_list.append(company_id)
+
+    logzilla.info("Number of company ID:%s\n" % len(company_id_list))
+    company_id_list = list(set(company_id_list))
+    logzilla.info("Number of unique company ID:%s\n" % len((company_id_list)))
+    company_id_based_search = [[j, headers] for j in company_id_list]
+    logzilla.info("company id based search: %s" % company_id_based_search)
+    for cidbs in company_id_based_search:
+        data_details = get_data_using_company_id(cidbs)
         data = data_details["results"]
         data_list.append(data)
 
-    for d in data_list:
-        locator_domain = "https://www.mercedes-benz.co.uk/"
-        page_url = "<MISSING>"
-        if "website" in d[0]["contact"]:
-            page_url = d[0]["contact"]["website"]
-        else:
+    for dl in data_list:
+        for d in dl:
+            locator_domain = "https://www.mercedes-benz.co.uk/"
             page_url = "<MISSING>"
-        location_name = d[0]["baseInfo"]["name1"] or "<MISSING>"
-        sa = d[0]["address"]
-        if "line1" in sa:
-            l1 = sa["line1"]
-        else:
-            l1 = ""
-        if "line2" in sa:
-            l2 = sa["line2"]
-        else:
-            l2 = ""
-        l = l1 + ", " + l2
-        l = fix_comma(l)
-        street_address = l or "<MISSING>"
-        city = d[0]["address"]["city"] or "<MISSING>"
-        if "region" in d[0]["address"]["region"]:
-            state1 = d[0]["address"]["region"]["region"]
-        else:
-            state1 = ""
+            if "website" in d["contact"]:
+                page_url = d["contact"]["website"]
+            else:
+                page_url = "<MISSING>"
+            location_name = d["baseInfo"]["name1"] or "<MISSING>"
+            sa = d["address"]
+            if "line1" in sa:
+                l1 = sa["line1"]
+            else:
+                l1 = ""
+            if "line2" in sa:
+                l2 = sa["line2"]
+            else:
+                l2 = ""
+            l = l1 + ", " + l2
+            l = fix_comma(l)
+            street_address = l or "<MISSING>"
+            city = d["address"]["city"] or "<MISSING>"
+            if "region" in d["address"]["region"]:
+                state1 = d["address"]["region"]["region"]
+            else:
+                state1 = ""
 
-        if "subRegion" in d[0]["address"]["region"]:
-            state2 = d[0]["address"]["region"]["subRegion"]
-        else:
-            state2 = ""
+            if "subRegion" in d["address"]["region"]:
+                state2 = d["address"]["region"]["subRegion"]
+            else:
+                state2 = ""
 
-        if state1 and state2:
-            state = state1 + ": " + state2
-        elif state1 and not state2:
-            state = state1
-        elif state2 and not state1:
-            state = state2
-        else:
-            state = "<MISSING>"
+            if state1 and state2:
+                state = state1 + ": " + state2
+            elif state1 and not state2:
+                state = state1
+            elif state2 and not state1:
+                state = state2
+            else:
+                state = "<MISSING>"
 
-        zip = d[0]["address"]["zipcode"] or "<MISSING>"
-        country_code = d[0]["address"]["country"] or "<MISSING>"
-        store_number = d[0]["baseInfo"]["externalId"] or "<MISSING>"
-        if "phone" in d[0]["contact"]:
-            phone = d[0]["contact"]["phone"] or "<MISSING>"
-        else:
-            phone = "<MISSING>"
-        location_type = determine_brand(d[0])
-        if "latitude" in d[0]["address"]:
-            latitude = d[0]["address"]["latitude"]
-        else:
-            latitude = "<MISSING>"
+            zip = d["address"]["zipcode"] or "<MISSING>"
 
-        if "longitude" in d[0]["address"]:
-            longitude = d[0]["address"]["longitude"]
-        else:
-            longitude = "<MISSING>"
+            country_code = d["address"]["country"] or "<MISSING>"
+            store_number = d["baseInfo"]["externalId"] or "<MISSING>"
+            if "phone" in d["contact"]:
+                phone = d["contact"]["phone"]
+                if phone:
+                    if "+44" == phone:
+                        phone = "<MISSING>"
+                    else:
+                        phone = phone
+                else:
+                    phone = "<MISSING>"
+            else:
+                phone = "<MISSING>"
 
-        hours_of_operation = determine_hours(d[0], "SMT", "SALES")
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        items.append(row)
+            if "brands" in d:
+                location_type = determine_brand(d)
+            else:
+                location_type = "<MISSING>"
+            if "latitude" in d["address"]:
+                latitude = d["address"]["latitude"]
+            else:
+                latitude = "<MISSING>"
+
+            if "longitude" in d["address"]:
+                longitude = d["address"]["longitude"]
+            else:
+                longitude = "<MISSING>"
+
+            hours_of_operation = determine_hours(d, "SMT", "SALES")
+
+            row = [
+                locator_domain,
+                page_url,
+                location_name,
+                street_address,
+                city,
+                state,
+                zip,
+                country_code,
+                store_number,
+                phone,
+                location_type,
+                latitude,
+                longitude,
+                hours_of_operation,
+            ]
+            items.append(row)
     return items
 
 

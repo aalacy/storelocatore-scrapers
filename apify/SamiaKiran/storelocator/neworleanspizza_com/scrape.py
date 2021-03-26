@@ -71,9 +71,10 @@ def fetch_data():
                 )
                 hours_of_operation = (
                     soup.find("div", {"class": "hours"})
-                    .findAll("p")[1]
-                    .get_text(separator="|", strip=True)
-                    .replace("|", " ")
+                    .text.split("DELIVERY HOURS:")[0]
+                    .replace("PICK UP HOURS:", "")
+                    .replace("\n", " ")
+                    .strip()
                 )
                 temp = r.text.split("var locations = [",)[1].split(
                     "}", 1
@@ -82,7 +83,7 @@ def fetch_data():
                 longitude = temp.split("lng: eval(")[1].split(")", 1)[0]
                 store_number = temp.split("storeNumber: '")[1].split("'", 1)[0]
                 yield SgRecord(
-                    locator_domain="https://www.opticalexpress.co.uk./",
+                    locator_domain="https://www.neworleanspizza.com/",
                     page_url=page_url,
                     location_name=location_name.strip(),
                     street_address=street_address,
