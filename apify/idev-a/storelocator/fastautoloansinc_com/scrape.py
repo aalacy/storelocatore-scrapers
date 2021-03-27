@@ -33,13 +33,15 @@ def fetch_data():
             page_url = locator_domain + _["store_url"]
             soup = bs(session.get(page_url, headers=_headers).text, "lxml")
             hours = []
-            if soup.select("#demo p"):
-                hours = list(soup.select("#demo p")[-2].stripped_strings)[1:]
+            for block in soup.select("#leftcontent .twofive p"):
+                if block.text.startswith("Monday"):
+                    hours = list(block.stripped_strings)
+                    break
             yield SgRecord(
                 page_url=page_url,
                 store_number=_["store_code"],
                 location_name=_["business_name"],
-                street_address=f"{_['address_line_1']} {_.get('address_line_2', '')}",
+                street_address=f"{_['address_line_1']}",
                 city=_["locality"],
                 state=_["administrative_area"],
                 zip_postal=_["postal_code"],
