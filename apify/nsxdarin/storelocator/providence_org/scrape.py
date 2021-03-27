@@ -347,7 +347,6 @@ def fetch_data():
                     aklocs.append(lurl)
         logger.info(("%s AK Locations Found" % str(len(aklocs))))
     for loc in aklocs:
-        # logger.info('Pulling AK Location %s...' % loc)
         website = "providence.org"
         typ = "<MISSING>"
         hours = ""
