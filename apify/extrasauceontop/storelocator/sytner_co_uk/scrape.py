@@ -30,7 +30,7 @@ soup = bs(html, "html.parser")
 grids = soup.find_all("div", attrs={"class": "row-fluid row-t2crq"})
 for grid in grids:
     locator_domain = "sytner.co.uk"
-    page_url = initial_url
+    page_url = grid.find("a", attrs={"title": "Full Details"})["href"]
     location_name = grid.find("h3").text.strip()
     address = grid.find("span", attrs={"class": "address-line1"}).text.strip()[:-1]
     city = grid.find("span", attrs={"class": "address-city"}).text.strip()[:-1]
@@ -96,4 +96,4 @@ df = df.drop(columns=["dupecheck"])
 df = df.replace(r"^\s*$", "<MISSING>", regex=True)
 df = df.fillna("<MISSING>")
 
-df.to_csv("data.csv", index=True)
+df.to_csv("data.csv", index=False)

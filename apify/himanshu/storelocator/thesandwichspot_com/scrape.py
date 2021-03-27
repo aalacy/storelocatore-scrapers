@@ -122,7 +122,8 @@ def fetch_data():
         else:
             hours_of_operation = "<MISSING>"
         details = loc.find_all("p", {"class": "font_7"})
-        for d in details:
+        p_details = loc.find_all("p")
+        for d in p_details:
             if "Phone" in d.text:
                 phone = d.text.replace("Phone:", "")
         phone = phone.replace("COMING SOON", "<MISSING>")
@@ -181,10 +182,16 @@ def fetch_data():
             lat = "<MISSING>"
             lng = "<MISSING>"
         else:
-            street = lat_lng[title]["street"]
+            street = list(hoo_data.find(class_="_3Mgpu").p.stripped_strings)[0]
             city = lat_lng[title]["city"]
             state = lat_lng[title]["state"]
             zipcode = lat_lng[title]["zip"]
+
+            if city.lower() in street.lower() and title != "Elk Grove East":
+                end = street.lower().find(city.lower())
+                street = street[:end].strip()
+                if street[-1:] == ",":
+                    street = street[:-1]
 
         if "245 E.11th" in street:
             lat = "37.741331"

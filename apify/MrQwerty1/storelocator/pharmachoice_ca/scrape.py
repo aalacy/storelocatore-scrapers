@@ -78,10 +78,13 @@ def fetch_data():
         )
         page_url = j.get("permalink") or "<MISSING>"
         street_address = (
-            f"{j.get('address')} {j.get('address2') or ''}".strip() or "<MISSING>"
+            f"{j.get('address')} {j.get('address2') or ''}".replace(
+                "&#39;", "'"
+            ).strip()
+            or "<MISSING>"
         )
-        city = j.get("city") or "<MISSING>"
-        state = j.get("state") or "<MISSING>"
+        city = j.get("city").replace("&#39;", "'") or "<MISSING>"
+        state = j.get("state").replace("&#39;", "'") or "<MISSING>"
         postal = j.get("postal") or "<MISSING>"
         country_code = j.get("country") or "<MISSING>"
         store_number = j.get("store_number") or "<MISSING>"
