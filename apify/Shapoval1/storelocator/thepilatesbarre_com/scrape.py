@@ -1,5 +1,4 @@
 import csv
-import json
 from lxml import html
 from sgrequests import SgRequests
 
@@ -35,35 +34,39 @@ def write_output(data):
 
 def fetch_data():
     out = []
-    locator_domain = "https://www.renspets.com"
-    page_url = "https://www.renspets.com/store_locations"
+    locator_domain = "https://thepilatesbarre.com"
+    api_url = "https://thepilatesbarre.com/contact/"
     session = SgRequests()
-
-    r = session.get(page_url)
-
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
+    }
+    r = session.get(api_url, headers=headers)
     tree = html.fromstring(r.text)
-    block = "".join(tree.xpath('//div[@class="store-results-map"]/@data-google-map'))
+    block = tree.xpath("//section[contains(@class, 'page-link-item')]")
+    for b in block:
 
-    js = json.loads(block)
-    for j in js["locations"]:
-        a = j.get("address")
-        location_name = j.get("name")
-        street_address = f"{a.get('street')} {a.get('street_2')}"
-        city = a.get("city")
-        state = a.get("region")
-        country_code = a.get("country")
-        postal = a.get("postal_code")
-        store_number = "<MISSING>"
-        latitude = j.get("coordinates")[1]
-        longitude = j.get("coordinates")[0]
-        location_type = "<MISSING>"
-        hours_of_operation = j.get("description")
-        hours_of_operation = html.fromstring(hours_of_operation)
-        hours_of_operation = (
-            " ".join(hours_of_operation.xpath("//*/text()")).replace("\n", "").strip()
+        page_url = "".join(b.xpath(".//@onclick")).split("'")[1].split("'")[0]
+
+        location_name = "".join(b.xpath(".//h4/text()"))
+        ad = (
+            " ".join(b.xpath('.//section[@class="locatioAddress"]/p/text()'))
+            .replace("\n", "")
+            .strip()
         )
-
-        phone = a.get("phone_number")
+        street_address = ad.split(",")[0]
+        city = ad.split(",")[0].split()[-1]
+        if ad.find("6915") != -1:
+            city = " ".join(ad.split(",")[0].split()[-2:])
+            street_address = " ".join(ad.split(",")[0].split()[:-2])
+        state = ad.split(",")[1].split()[0].strip()
+        country_code = "US"
+        postal = ad.split(",")[1].split()[-1].strip()
+        store_number = "<MISSING>"
+        latitude = "<MISSING>"
+        longitude = "<MISSING>"
+        location_type = "<MISSING>"
+        hours_of_operation = "<MISSING>"
+        phone = "".join(b.xpath('.//a[contains(@href, "tel")]/text()'))
 
         row = [
             locator_domain,
