@@ -42,7 +42,6 @@ def fetch_data():
     mtlocs = []
     aklocs = []
     orlocs = []
-    walocs = []
     Found = False
     for x in range(1, 10):
         logger.info(("Pulling MT Page %s..." % str(x)))
