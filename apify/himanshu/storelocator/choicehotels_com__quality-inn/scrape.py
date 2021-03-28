@@ -3,6 +3,7 @@ import sgzip
 import datetime
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
+import sgzip
 
 logger = SgLogSetup().get_logger("choicehotels_com__quality-inn")
 
@@ -45,9 +46,7 @@ def fetch_data():
     today = datetime.date.today().strftime("%Y-%m-%d")
     tomorrow = (datetime.date.today() + datetime.timedelta(days=1)).strftime("%Y-%m-%d")
     addresses = []
-    search = (
-        sgzip.ClosestNSearch()
-    )
+    search = sgzip.ClosestNSearch()
     search.initialize(include_canadian_fsas=True)
     MAX_DISTANCE = 100
     coord = search.next_coord()
