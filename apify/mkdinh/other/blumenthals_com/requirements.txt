@@ -1,0 +1,6 @@
+sgrequests
+sglogging
+sgzip
+bs4
+lxml
+tenacity
