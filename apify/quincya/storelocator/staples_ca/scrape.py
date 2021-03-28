@@ -3,11 +3,7 @@ import json
 
 from bs4 import BeautifulSoup
 
-from sglogging import SgLogSetup
-
 from sgrequests import SgRequests
-
-logger = SgLogSetup().get_logger("staples_ca")
 
 
 def write_output(data):
