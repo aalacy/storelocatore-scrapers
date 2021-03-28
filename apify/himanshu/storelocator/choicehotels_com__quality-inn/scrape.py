@@ -1,8 +1,4 @@
 import csv
-import requests
-from bs4 import BeautifulSoup
-import re
-import unicodedata
 import sgzip
 import datetime
 from sgrequests import SgRequests
@@ -20,7 +16,6 @@ def write_output(data):
             output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
         )
 
-        # Header
         writer.writerow(
             [
                 "locator_domain",
@@ -39,7 +34,6 @@ def write_output(data):
                 "page_url",
             ]
         )
-        # Body
         for row in data:
             writer.writerow(row)
 
@@ -50,21 +44,17 @@ def fetch_data():
 
     today = datetime.date.today().strftime("%Y-%m-%d")
     tomorrow = (datetime.date.today() + datetime.timedelta(days=1)).strftime("%Y-%m-%d")
-    return_main_object = []
     addresses = []
     search = (
         sgzip.ClosestNSearch()
-    )  # TODO: OLD VERSION [sgzip==0.0.55]. UPGRADE IF WORKING ON SCRAPER!
+    )
     search.initialize(include_canadian_fsas=True)
-    # MAX_RESULTS = 32
     MAX_DISTANCE = 100
     coord = search.next_coord()
     while coord:
         result_coords = []
-        # logger.info("remaining zipcodes: " + str(search.zipcodes_remaining()))
         x = coord[0]
         y = coord[1]
-        # logger.info('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
         headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:70.0) Gecko/20100101 Firefox/70.0",
             "Origin": "https://www.choicehotels.com",
@@ -147,7 +137,6 @@ def fetch_data():
             store.append("<MISSING>")
             store.append("https://www.choicehotels.com/" + str(store_data["id"]))
             yield store
-        # logger.info(len(data))
         search.max_distance_update(MAX_DISTANCE)
         coord = search.next_coord()
 
