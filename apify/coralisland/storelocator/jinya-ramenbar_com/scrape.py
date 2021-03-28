@@ -153,7 +153,7 @@ def fetch_data():
             city = "Los Angeles"
         elif "Washington DC" in location_name:
             city = "Washington"
-            state = "Washington DC"
+            state = "DC"
             zip_code = handle_missing(address[1].strip().replace("DC", ""))
         else:
             city = handle_missing(location_name.split("|")[0].strip())

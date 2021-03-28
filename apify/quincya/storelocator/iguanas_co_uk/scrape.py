@@ -93,35 +93,41 @@ def fetch_data():
         latitude = store["addressLocation"]["lat"]
         longitude = store["addressLocation"]["lon"]
 
-        hours = ""
-        hours_of_operation = ""
-        days = [
-            "monday",
-            "tuesday",
-            "wednesday",
-            "thursday",
-            "friday",
-            "saturday",
-            "sunday",
-        ]
-        rows = main_store["includes"]["Entry"]
-        for row in rows:
-            if "mondayOpen" in str(row):
-                hours = row["fields"]
-                break
-        if hours:
-            for day in days:
-                hours_of_operation = (
-                    hours_of_operation
-                    + " "
-                    + day
-                    + " "
-                    + hours[day + "Open"]
-                    + "-"
-                    + hours[day + "Close"]
-                ).strip()
-        else:
+        if (
+            "will open on" in store["description"]
+            or "currently closed" in store["description"]
+        ):
             hours_of_operation = "Temporarily Closed"
+        else:
+            hours = ""
+            hours_of_operation = ""
+            days = [
+                "monday",
+                "tuesday",
+                "wednesday",
+                "thursday",
+                "friday",
+                "saturday",
+                "sunday",
+            ]
+            rows = main_store["includes"]["Entry"]
+            for row in rows:
+                if "mondayOpen" in str(row):
+                    hours = row["fields"]
+                    break
+            if hours:
+                for day in days:
+                    hours_of_operation = (
+                        hours_of_operation
+                        + " "
+                        + day
+                        + " "
+                        + hours[day + "Open"]
+                        + "-"
+                        + hours[day + "Close"]
+                    ).strip()
+            else:
+                hours_of_operation = "Temporarily Closed"
 
         data.append(
             [

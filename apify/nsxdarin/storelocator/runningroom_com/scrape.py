@@ -38,6 +38,7 @@ def write_output(data):
 
 
 def fetch_data():
+    adds = []
     locs = []
     cities = []
     url = "https://www.runningroom.com/ca/inside.php?id=3033"
@@ -169,6 +170,8 @@ def fetch_data():
             hours = "<MISSING>"
         if state == "MN" or state == "HI":
             country = "US"
+        else:
+            country = "CA"
         if "2449" in loc:
             add = "300 Main Street"
             city = "Moncton"
@@ -206,22 +209,24 @@ def fetch_data():
         if lng == "":
             lng = "<MISSING>"
         if add != "":
-            yield [
-                website,
-                loc,
-                name,
-                add,
-                city,
-                state,
-                zc,
-                country,
-                store,
-                phone,
-                typ,
-                lat,
-                lng,
-                hours,
-            ]
+            if add not in adds:
+                adds.append(add)
+                yield [
+                    website,
+                    loc,
+                    name,
+                    add,
+                    city,
+                    state,
+                    zc,
+                    country,
+                    store,
+                    phone,
+                    typ,
+                    lat,
+                    lng,
+                    hours,
+                ]
 
 
 def scrape():
