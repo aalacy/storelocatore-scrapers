@@ -1,10 +1,8 @@
 # -*- coding: utf-8 -*-
-from sgrequests import SgRequests
 from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgselenium import SgChrome
-from bs4 import BeautifulSoup
 import re
 import time
 import json
@@ -31,7 +29,6 @@ def fetch_data():
         "User-Agent"
     ] = "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.66 Safari/537.36"
     found_in_path = "/wp-json/wpgmza/v1/marker-listing/base64eJyrVirIKHDOSSwuVrJSCg9w941yjInxTSzKTi3yySwuycxLj4lxTizKLy1OzVHSUcpNLIjPTAEqNVKqBQBtfBRD"
-    url_web = "https://lgstoreswv.com"
     url_base = "https://lgstoreswv.com/locations/"
     url_data = "https://lgstoreswv.com/wp-json/wpgmza/v1/marker-listing/base64eJyrVirIKHDOSSwuVrJSCg9w941yjInxTSzKTi3yySwuycxLj4lxTizKLy1OzVHSUcpNLIjPTAEqNVKqBQBtfBRD"
     with SgChrome() as driver:
