@@ -45,8 +45,8 @@ def fetch_data():
     DOMAIN = "accor.com"
     start_urls = [
         "https://ibis.accor.com/gb/city/hotels-london-v2352.shtml",
-        "https://all.accor.com/ssr/app/ibis/hotels/united-states/index.en.shtml?dateIn=2021-01-15&nights=31&compositions=1&stayplus=false",
-        "https://all.accor.com/ssr/app/ibis/hotels/canada/index.en.shtml?dateIn=2021-01-15&nights=31&compositions=1&stayplus=false&destination=Canada",
+        "https://all.accor.com/ssr/app/ibis/hotels/united-states/index.en.shtml",
+        "https://all.accor.com/ssr/app/ibis/hotels/canada/index.en.shtml",
     ]
 
     all_locations = []
