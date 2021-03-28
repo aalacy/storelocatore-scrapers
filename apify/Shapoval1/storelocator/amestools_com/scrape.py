@@ -57,7 +57,6 @@ def fetch_data():
         location_name = j.get("title")
         ad = j.get("address")
         ad = html.fromstring(ad)
-        adr = " ".join(ad.xpath("//*//text()")).replace("\n", "").strip()
         line = ad.xpath("//*//text()")
         line = list(filter(None, [a.strip() for a in line]))
         line = " ".join(line)
