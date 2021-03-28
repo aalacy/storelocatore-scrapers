@@ -2,7 +2,7 @@ import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
 
-logger = SgLogSetup().get_logger("redlion_com")
+logger = SgLogSetup().get_logger("redlion_com__americas-best-value-inns-suites")
 
 session = SgRequests()
 headers = {
@@ -43,7 +43,7 @@ def fetch_data():
     r = session.get(url, headers=headers)
     for line in r.iter_lines():
         line = str(line.decode("utf-8"))
-        if "<loc>https://www.redlion.com/red-lion-hotels/" in line:
+        if "<loc>https://www.redlion.com/americas-best-value-inn/" in line:
             locs.append(line.split("<loc>")[1].split("<")[0])
     for loc in locs:
         logger.info(("Pulling Location %s..." % loc))
@@ -52,7 +52,7 @@ def fetch_data():
             + "/page-data.json"
         )
         r2 = session.get(loc2, headers=headers)
-        website = "redlion.com"
+        website = "redlion.com/americas-best-value-inns-suites"
         for line2 in r2.iter_lines():
             line2 = str(line2.decode("utf-8"))
             if '{"hotel":{"name":"' in line2:
@@ -67,7 +67,7 @@ def fetch_data():
                 lat = line2.split('{"lat":')[1].split(",")[0]
                 lng = line2.split('"lon":')[1].split("}")[0]
                 hours = "<MISSING>"
-                typ = "Red Lion Hotels"
+                typ = "Red Lion America's Best Value Inn"
                 yield [
                     website,
                     loc,
