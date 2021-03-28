@@ -84,6 +84,8 @@ def fetch_data():
                             country = "CA"
                         if country == "United Kingdom":
                             country = "GB"
+                        if country == "GB":
+                            state = "<MISSING>"
                         yield [
                             website,
                             loc,
