@@ -30,49 +30,43 @@ def write_output(data):
 
 
 def load_category_tags():
-    with open('categories.csv') as csvfile:
+    with open("categories.csv") as csvfile:
         reader = csv.reader(csvfile)
-        headers = next(reader)
+        next(reader)
         return [row[0] for row in reader]
 
 
 def load_sources():
     return [
-        {'slug': 'en-APL', 'name': 'Apple (APL)'},
-        {'slug': 'en-US(PfB)', 'name': 'Google English (US)(PfB)'}
+        {"slug": "en-APL", "name": "Apple (APL)"},
+        {"slug": "en-US(PfB)", "name": "Google English (US)(PfB)"},
     ]
 
 
 def get_by_tag_source(tag, source):
-    url = 'https://blumenthals.com/google-lbc-categories/search.php'
-    params = {
-        'q': tag,
-        'hl-gl': source,
-        'ottype': 1,
-        'val': None
-
-    }
+    url = "https://blumenthals.com/google-lbc-categories/search.php"
+    params = {"q": tag, "hl-gl": source, "ottype": 1, "val": None}
     return session.get(url, params=params, headers=headers)
 
 
 def fetch_categories(tag, source):
-    response = get_by_tag_source(tag, source['slug'])
-    soup = BeautifulSoup(response.text, 'html.parser')
+    response = get_by_tag_source(tag, source["slug"])
+    soup = BeautifulSoup(response.text, "html.parser")
 
     categories = []
-    nodes = soup.find_all('tr')
+    nodes = soup.find_all("tr")
     if len(nodes):
-        headers, *rows = soup.find_all('tr')
+        headers, *rows = soup.find_all("tr")
 
         for row in rows:
-            category = row.find('td').getText()
+            category = row.find("td").getText()
             categories.append(category)
 
     return {
-        'page_url': response.url,
-        'category_tag': tag,
-        'places_categories_source': source['name'],
-        'category_result': ','.join(categories) or MISSING,
+        "page_url": response.url,
+        "category_tag": tag,
+        "places_categories_source": source["name"],
+        "category_result": ",".join(categories) or MISSING,
     }
 
 
