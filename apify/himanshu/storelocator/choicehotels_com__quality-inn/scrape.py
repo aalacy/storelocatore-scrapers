@@ -3,7 +3,6 @@ import sgzip
 import datetime
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
-import sgzip
 
 logger = SgLogSetup().get_logger("choicehotels_com__quality-inn")
 
