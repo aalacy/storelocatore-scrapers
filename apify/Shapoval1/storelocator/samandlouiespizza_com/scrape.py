@@ -1,5 +1,4 @@
 import csv
-import json
 from lxml import html
 from sgrequests import SgRequests
 
@@ -35,35 +34,41 @@ def write_output(data):
 
 def fetch_data():
     out = []
-    locator_domain = "https://www.renspets.com"
-    page_url = "https://www.renspets.com/store_locations"
+    locator_domain = "https://samandlouiespizza.com"
+    api_url = "https://samandlouiespizza.com/locations/"
     session = SgRequests()
 
-    r = session.get(page_url)
-
+    r = session.get(api_url)
     tree = html.fromstring(r.text)
-    block = "".join(tree.xpath('//div[@class="store-results-map"]/@data-google-map'))
+    block = tree.xpath("//div[./h3]")
+    for b in block:
+        slug = "".join(b.xpath('.//a[contains(text(), "View")]/@href'))
+        page_url = f"{locator_domain}{slug}"
 
-    js = json.loads(block)
-    for j in js["locations"]:
-        a = j.get("address")
-        location_name = j.get("name")
-        street_address = f"{a.get('street')} {a.get('street_2')}"
-        city = a.get("city")
-        state = a.get("region")
-        country_code = a.get("country")
-        postal = a.get("postal_code")
+        session = SgRequests()
+        r = session.get(page_url)
+        tree = html.fromstring(r.text)
+
+        location_name = "".join(tree.xpath("//div[contains(@class, 'cta')]/h1/text()"))
+        line = tree.xpath('//p[@class="info-address"]/text()')
+        street_address = "".join(line[0])
+        a = "".join(line[1])
+        city = a.split(",")[0].strip()
+        state = a.split(",")[1].split()[0].strip()
+        country_code = "US"
+        postal = a.split(",")[1].split()[-1].strip()
         store_number = "<MISSING>"
-        latitude = j.get("coordinates")[1]
-        longitude = j.get("coordinates")[0]
+        text = "".join(tree.xpath('//a[@class="button info-directions"]/@href'))
+        try:
+            latitude = text.split("/@")[1].split(",")[0]
+            longitude = text.split("/@")[1].split(",")[1]
+        except IndexError:
+            latitude, longitude = "<MISSING>", "<MISSING>"
         location_type = "<MISSING>"
-        hours_of_operation = j.get("description")
-        hours_of_operation = html.fromstring(hours_of_operation)
-        hours_of_operation = (
-            " ".join(hours_of_operation.xpath("//*/text()")).replace("\n", "").strip()
-        )
-
-        phone = a.get("phone_number")
+        hours_of_operation = tree.xpath('//p[@class="info-hours"]/text()')
+        hours_of_operation = list(filter(None, [a.strip() for a in hours_of_operation]))
+        hours_of_operation = " ".join(hours_of_operation)
+        phone = "".join(tree.xpath('//p[@class="info-phone"]/text()'))
 
         row = [
             locator_domain,
