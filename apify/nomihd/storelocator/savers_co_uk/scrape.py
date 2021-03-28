@@ -115,8 +115,6 @@ def fetch_data():
         )
 
         store_text = stores_req.text
-        with open("file.txt", "w", encoding="utf-8") as output:
-            print(store_text, file=output)
 
         stores = json.loads(stores_req.text)["results"]
         for store in stores:
