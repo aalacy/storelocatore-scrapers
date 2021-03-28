@@ -114,8 +114,6 @@ def fetch_data():
             headers=headers,
         )
 
-        store_text = stores_req.text
-
         stores = json.loads(stores_req.text)["results"]
         for store in stores:
             page_url = "https://savers.co.uk" + store["url"]
