@@ -123,7 +123,7 @@ def fetch_data():
         if "Aerie" in name and "American Eagle" not in name:
             typ = "Aerie"
         store = "<MISSING>"
-        if city != "" and hours != "CLOSED":
+        if city != "":
             yield [
                 website,
                 loc,
