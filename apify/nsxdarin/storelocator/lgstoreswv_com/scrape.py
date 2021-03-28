@@ -73,7 +73,9 @@ def fetch_data():
         address_data = address_data.replace("Avenue, SW", "Avenue SW").replace(
             "Rd - Hunting", "Rd, Hunting"
         )
-        street_address = address_data.split(",")[0].strip() if address_data else "<MISSING>"
+        street_address = (
+            address_data.split(",")[0].strip() if address_data else "<MISSING>"
+        )
         try:
             city = address_data.split(",")[1].strip()
         except:
