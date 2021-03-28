@@ -57,11 +57,9 @@ def fetch_data():
         location_name = j.get("title")
         ad = j.get("address")
         ad = html.fromstring(ad)
-        adr = " ".join(ad.xpath("//*//text()")).replace("\n", "").strip()
         line = ad.xpath("//*//text()")
         line = list(filter(None, [a.strip() for a in line]))
         line = " ".join(line)
-
         if line.find("Phone:") != -1:
             line = line.split("Phone:")[0].strip()
         a = parse_address(International_Parser(), line)
@@ -72,6 +70,8 @@ def fetch_data():
         city = a.city or "<MISSING>"
         state = a.state or "<MISSING>"
         country_code = "US"
+        if state == "AB" or state == "BC" or state == "MB":
+            country_code = "CA"
         postal = a.postcode or "<MISSING>"
         store_number = "<MISSING>"
         latitude = j.get("latitude")
@@ -80,12 +80,16 @@ def fetch_data():
         hours = j.get("description")
         hours = html.fromstring(hours)
         hoo = " ".join(hours.xpath("//*//text()")).replace("\n", "").strip()
+        phone = hoo.split("Phone:")[1].strip()
+        if phone.find("Email") != -1:
+            phone = hoo.split("Email")[0].strip()
+        if phone.find("Fax") != -1:
+            phone = hoo.split("Fax")[0].strip()
         hours_of_operation = "<MISSING>"
         if hoo.find("Store Hours:") != -1:
             hours_of_operation = hoo.split("Store Hours:")[1]
-        phone = "<MISSING>"
-        if adr.find("Phone:") != -1:
-            phone = adr.split("Phone:")[1].strip()
+        if phone.find("Phone:") != -1:
+            phone = phone.split("Phone:")[1].strip()
 
         row = [
             locator_domain,
