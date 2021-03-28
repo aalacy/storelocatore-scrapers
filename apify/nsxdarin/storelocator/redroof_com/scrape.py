@@ -47,11 +47,18 @@ def fetch_data():
     logger.info("Pulling Stores")
     for line in r.iter_lines():
         line = str(line.decode("utf-8"))
-        if '<p xmlns="http://www.w3.org/1999/xhtml"><a href="https://www.redroof.com/property/' in line:
-            items = line.split('<p xmlns="http://www.w3.org/1999/xhtml"><a href="https://www.redroof.com/property/')
+        if (
+            '<p xmlns="http://www.w3.org/1999/xhtml"><a href="https://www.redroof.com/property/'
+            in line
+        ):
+            items = line.split(
+                '<p xmlns="http://www.w3.org/1999/xhtml"><a href="https://www.redroof.com/property/'
+            )
             for item in items:
                 if '<div id="react-newhome"><div class="header-wrapper ">' not in item:
-                    locs.append('https://www.redroof.com/property/' + item.split('"')[0])
+                    locs.append(
+                        "https://www.redroof.com/property/" + item.split('"')[0]
+                    )
     for loc in locs:
         logger.info(loc)
         name = ""
