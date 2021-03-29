@@ -58,7 +58,7 @@ def fetch_data():
                 store_request = session.get(
                     "https://www.wyndhamhotels.com" + semi_parts.find("a")["href"]
                 )
-            except Exception as e:
+            except:
                 continue
 
             store_soup = BeautifulSoup(store_request.text, "lxml")
