@@ -49,7 +49,9 @@ def get_data(coord):
         if "koodo" not in location_name.lower():
             continue
 
-        street_address = j.get("address") or "<MISSING>"
+        street_address = (
+            f"{j.get('address')} {j.get('unit') or ''}".strip() or "<MISSING>"
+        )
         city = j.get("city") or "<MISSING>"
         state = j.get("province") or "<MISSING>"
         postal = j.get("postal_code") or "<MISSING>"
@@ -69,6 +71,8 @@ def get_data(coord):
         latitude = j.get("latitude") or "<MISSING>"
         longitude = j.get("longitude") or "<MISSING>"
         location_type = "<MISSING>"
+        if store_number == "11111577":
+            city = "Orleans"
 
         _tmp = []
         days = [

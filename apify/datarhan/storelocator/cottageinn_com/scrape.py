@@ -83,6 +83,8 @@ def fetch_data():
         longitude = longitude if longitude else "<MISSING>"
         hours_of_operation = []
         for day, hours in poi["hours"].items():
+            if "holiday" in day:
+                continue
             if hours.get("openIntervals"):
                 opens = hours["openIntervals"][0]["start"]
                 closes = hours["openIntervals"][0]["end"]
