@@ -4,6 +4,7 @@ import json
 from bs4 import BeautifulSoup as bs
 from sgrequests import SgRequests
 from sglogging import sglog
+import usaddress
 
 
 DOMAIN = "jinya-ramenbar.com"
@@ -151,15 +152,33 @@ def fetch_data():
             location_type = "COMING_SOON"
         if "Downtown LA" in location_name:
             city = "Los Angeles"
+            street_address = get_address(address[0], city)
         elif "Washington DC" in location_name:
             city = "Washington"
+            street_address = get_address(address[0], city)
             state = "DC"
             zip_code = handle_missing(address[1].strip().replace("DC", ""))
         else:
-            city = handle_missing(location_name.split("|")[0].strip())
             state = handle_missing(address[1].strip()[:2])
             zip_code = handle_missing(address[1].strip().replace(state, ""))
-        street_address = get_address(address[0], city)
+            check_addr = address[0].split(".")
+            if len(check_addr) == 2:
+                city = handle_missing(check_addr[1]).strip()
+                if "Katy" in city:
+                    street_address = address[0].replace("Freeway Katy", "Freeway")
+                else:
+                    street_address = handle_missing(check_addr[0].strip())
+            else:
+                if len(zip_code) <= 5:
+                    parse_addr = usaddress.tag(", ".join(address))
+                    city = handle_missing(parse_addr[0]["PlaceName"])
+                    if "Katy" in city:
+                        street_address = address[0].replace("Freeway Katy", "Freeway")
+                    else:
+                        street_address = get_address(address[0], city)
+                else:
+                    city = handle_missing(location_name.split("|")[0].strip())
+                    street_address = get_address(address[0], city)
         country_code = "US" if len(zip_code) <= 5 else "CA"
         store_number = "<MISSING>"
         if len(address) > 2:
