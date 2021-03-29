@@ -14,8 +14,8 @@ MISSING = "<MISSING>"
 FIELDS = [
     "category_tag",
     "places_categories_source",
+    "category_results",
     "page_url",
-    "category_result",
 ]
 
 
@@ -59,15 +59,25 @@ def fetch_categories(tag, source):
         headers, *rows = soup.find_all("tr")
 
         for row in rows:
-            category = row.find("td").getText()
+            category_name = row.find("td").getText()
+            category = {
+                "page_url": response.url,
+                "category_tag": tag,
+                "places_categories_source": source["name"],
+                "category_result": category_name,
+            }
             categories.append(category)
 
-    return {
-        "page_url": response.url,
-        "category_tag": tag,
-        "places_categories_source": source["name"],
-        "category_result": ",".join(categories) or MISSING,
-    }
+    else:
+        category = {
+            "page_url": response.url,
+            "category_tag": tag,
+            "places_categories_source": source["name"],
+            "category_result": MISSING,
+        }
+        categories.append(category)
+
+    return categories
 
 
 def fetch_data():
@@ -83,8 +93,9 @@ def fetch_data():
                 futures.append(future)
 
         for future in as_completed(futures):
-            result = future.result()
-            yield [result[field] for field in FIELDS]
+            categories = future.result()
+            for category in categories:
+                yield [category[field] for field in FIELDS]
 
 
 def scrape():
