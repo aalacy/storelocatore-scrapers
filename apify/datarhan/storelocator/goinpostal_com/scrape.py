@@ -87,7 +87,7 @@ def fetch_data():
         longitude = poi["longitude"]
         longitude = longitude if longitude else "<MISSING>"
 
-        mon = "Monday {}".format(poi["fromMon"], poi["toMon"]).strip()
+        mon = "Monday {} {}".format(poi["fromMon"], poi["toMon"]).strip()
         tue = "Tuesday {} {}".format(poi["fromTue"], poi["toTue"]).strip()
         wen = "Wednesday {} {}".format(poi["fromWed"], poi["toWed"]).strip()
         thu = "Thursday {} {}".format(poi["fromThu"], poi["toThu"]).strip()
