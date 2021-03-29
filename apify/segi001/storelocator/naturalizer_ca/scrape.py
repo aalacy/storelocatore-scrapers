@@ -147,6 +147,15 @@ def fetch_data():
             if "Bramalea CCity Center" in name:
                 city = "Brampton"
                 zipc = "L6T 3R5"
+            if "Mcarthurglen Vancouver" in name:
+                state = "BC"
+                zipc = "V7B 0B7"
+            if "Outlet Collection Winnipeg" in name:
+                city = "Winnipeg"
+                zipc = "R3P 2T3"
+                state = "MB"
+            if "Metropolis At Metrotown" in name:
+                city = "Burnaby"
             result.append(
                 [
                     locator_domain,

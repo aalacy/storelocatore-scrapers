@@ -222,7 +222,14 @@ def fetch_data():
                 full_address = list(
                     soup1.find("div", class_="clinics").find("p").stripped_strings
                 )
-                if "(" in full_address[1]:
+                if not full_address:
+                    full_address = list(
+                        soup1.find("div", class_="col-2").stripped_strings
+                    )
+                if (
+                    "(" in full_address[1]
+                    or "Springdale Center for Health" in full_address[1]
+                ):
                     del full_address[1]
                 if len(full_address) >= 14:
                     split_address = "|".join(full_address).split("Map and Directions")

@@ -24,7 +24,12 @@ def fetch_data():
         stores_req.text.split("var locations = ")[1].strip().split("}];")[0].strip()
         + "}]"
     )
+    stores_sel = lxml.html.fromstring(stores_req.text)
+    stores_html = stores_sel.xpath(
+        '//div[@class="locations"]/div[contains(@class,"location")]'
+    )
 
+    done_locations = []
     for store in stores:
         page_url = search_url
         location_type = "<MISSING>"
@@ -40,7 +45,14 @@ def fetch_data():
 
         street_address = ", ".join(add_list[:-2]).strip()
         city_state = add_list[-2].strip()
-        city = city_state.split(",")[0].strip()
+        city = (
+            city_state.split(",")[0]
+            .strip()
+            .replace("- Quickstop", "")
+            .strip()
+            .replace("(Burger King)", "")
+            .strip()
+        )
         state = city_state.split(",")[-1].strip()
         zip = add_list[-1].strip()
         country_code = "CA"
@@ -54,7 +66,7 @@ def fetch_data():
 
         hours_of_operation = "<MISSING>"
         store_number = store["pid"]
-
+        done_locations.append(store_number)
         latitude = store["lat"]
         longitude = store["lng"]
 
@@ -74,6 +86,68 @@ def fetch_data():
             longitude=longitude,
             hours_of_operation=hours_of_operation,
         )
+
+    for store in stores_html:
+        store_number = "".join(store.xpath("@data-id")).strip()
+        if store_number not in done_locations:
+            page_url = search_url
+            location_type = "<MISSING>"
+            locator_domain = website
+            location_name = "".join(
+                store.xpath('div[@class="location-contact"]/h4/span/text()')
+            ).strip()
+
+            address = store.xpath(
+                'div[@class="location-contact"]/p[@class="address"]/strong/text()'
+            )
+            add_list = []
+            for add in address:
+                if len("".join(add).strip()) > 0:
+                    add_list.append("".join(add).strip())
+
+            street_address = ", ".join(add_list[:-2]).strip()
+            city_state = add_list[-2].strip()
+            city = (
+                city_state.split(",")[0]
+                .strip()
+                .replace("- Quickstop", "")
+                .strip()
+                .replace("(Burger King)", "")
+                .strip()
+            )
+            state = city_state.split(",")[-1].strip()
+            zip = add_list[-1].strip()
+            country_code = "CA"
+            phone = ""
+            raw_text = store.xpath(
+                'div[@class="location-contact"]/p[@class="address"]/text()'
+            )
+            for temp in raw_text:
+                if "phone" in "".join(temp).strip().lower():
+                    phone = "".join(temp).strip().lower().replace("phone:", "").strip()
+                    if " " in phone and "(" not in phone:
+                        phone = phone.split(" ")[0].strip()
+
+            hours_of_operation = "<MISSING>"
+            latitude = "<MISSING>"
+            longitude = "<MISSING>"
+
+            yield SgRecord(
+                locator_domain=locator_domain,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
 
 
 def scrape():

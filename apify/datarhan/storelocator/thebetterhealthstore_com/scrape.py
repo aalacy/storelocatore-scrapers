@@ -86,6 +86,14 @@ def fetch_data():
         if len(geo) == 2:
             latitude = geo[0]
             longitude = geo[1]
+        else:
+            geo = (
+                loc_dom.xpath('//a[contains(@href, "/maps/")]/@href')[0]
+                .split("/@")[-1]
+                .split(",")[:2]
+            )
+            latitude = geo[0]
+            longitude = geo[1]
         hoo = [e for e in loc_dom.xpath("//p/text()") if "Hours:" in e]
         hoo = [e.strip() for e in hoo if e.strip()]
         hours_of_operation = hoo[0].split("Hours:")[-1].strip() if hoo else "<MISSING>"

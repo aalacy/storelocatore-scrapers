@@ -50,7 +50,7 @@ def fetch_data():
     r = session.get(
         "https://www.augustahealth.com/primary-care/locations", headers=headers
     )
-    soup = BeautifulSoup(r.text, "lxml")
+    soup = BeautifulSoup(r.text, "html.parser")
     for link in soup.find_all("div", class_="view-content")[1:]:
         location_type = "primary-care"
         page_url = "https://www.augustahealth.com" + link.find("a")["href"]
@@ -64,7 +64,7 @@ def fetch_data():
         country_code = "US"
         store_number = "<MISSING>"
         r1 = session.get(page_url, headers=headers)
-        soup_loc = BeautifulSoup(r1.text, "lxml")
+        soup_loc = BeautifulSoup(r1.text, "html.parser")
         info = soup_loc.find("div", class_="basic-info")
         phone = info.find("p", class_="phone").text.strip()
         hours_of_operation = " ".join(
@@ -99,15 +99,15 @@ def fetch_data():
         store = [str(x).strip() if x else "<MISSING>" for x in store]
         yield store
     r = session.get("https://www.augustahealth.com/urgent-care", headers=headers)
-    soup = BeautifulSoup(r.text, "lxml")
-    for loc in soup.find_all("div", class_="location"):
-        location_name = loc.h4.text.strip()
+    soup = BeautifulSoup(r.text, "html.parser")
+    for locs in soup.find_all("div", class_="location"):
+        location_name = locs.h4.text.strip()
         if location_name == "Telehealth Urgent Care":
-            add = " ".join(list(loc.find("p", {"class": "address"}))).split("\n")
+            add = " ".join(list(locs.find("p", {"class": "address"}))).split("\n")
         elif location_name == "Crozet Convenient Care":
             add = " ".join(list("<MISSING>")).split("\n")
         else:
-            add = " ".join(list(loc.find("p", {"class": "address"}).find("a"))).split(
+            add = " ".join(list(locs.find("p", {"class": "address"}).find("a"))).split(
                 "\n"
             )
         if len(add) == 1:
@@ -133,18 +133,18 @@ def fetch_data():
 
         try:
             latitude = (
-                loc.find("p", class_="address")
+                locs.find("p", class_="address")
                 .find("a")["href"]
                 .split("@")[1]
                 .split(",")[0]
             )
             longitude = (
-                loc.find("p", class_="address")
+                locs.find("p", class_="address")
                 .find("a")["href"]
                 .split("@")[1]
                 .split(",")[1]
             )
-            phone = loc.find("p", class_="phone").text.strip()
+            phone = locs.find("p", class_="phone").text.strip()
         except:
             latitude = "<MISSING>"
             longitude = "<MISSING>"
@@ -152,7 +152,7 @@ def fetch_data():
         if location_name == "Crozet Convenient Care":
             hours_of_operation = "Temporarily Closed"
         else:
-            hours_of_operation = loc.find("div", class_="hours").text.strip()
+            hours_of_operation = locs.find("div", class_="hours").text.strip()
         location_type = "urgent-care"
         store_number = "<MISSING>"
         page_url = "https://www.augustahealth.com/urgent-care"
@@ -177,7 +177,7 @@ def fetch_data():
     r = session.get(
         "https://www.augustahealth.com/laboratory/locations", headers=headers
     )
-    soup = BeautifulSoup(r.text, "lxml")
+    soup = BeautifulSoup(r.text, "html.parser")
     div_yellow = soup.find("div", class_="box-rounded-yellow")
     address = list(div_yellow.find("p", class_="location").stripped_strings)
     location_name = address[0]
@@ -226,7 +226,7 @@ def fetch_data():
     r = session.get(
         "https://www.augustahealth.com/laboratory/locations", headers=headers
     )
-    soup = BeautifulSoup(r.text, "lxml")
+    soup = BeautifulSoup(r.text, "html.parser")
     for div_blue in soup.find_all("h3"):
         location_name = div_blue.text
         address = list(

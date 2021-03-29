@@ -62,15 +62,52 @@ def fetch_data():
 
         location_name = poi["name"]
         street_address = poi["address"]["streetAddress"]
-        city = poi["address"]["addressLocality"]
+        city = poi["address"]["addressLocality"].replace("</", "").replace(">", "")
         state = poi["address"]["addressRegion"]
-        zip_code = poi["address"]["postalCode"]
+        zip_code = poi["address"]["postalCode"].replace("</", "").replace(">", "")
         country_code = poi["address"]["addressCountry"]
         store_number = "<MISSING>"
         phone = poi["telephone"]
         location_type = poi["@type"]
         latitude = poi["geo"]["latitude"]
         longitude = poi["geo"]["longitude"]
+        hours_of_operation = "<MISSING>"
+
+        item = [
+            domain,
+            store_url,
+            location_name,
+            street_address,
+            city,
+            state,
+            zip_code,
+            country_code,
+            store_number,
+            phone,
+            location_type,
+            latitude,
+            longitude,
+            hours_of_operation,
+        ]
+
+        items.append(item)
+
+    more_locations = dom.xpath('//li[contains(text(), "Image360")]')
+    for poi_html in more_locations:
+        store_url = start_url
+        location_name = poi_html.xpath("text()")[0].strip()
+        raw_data = poi_html.xpath('.//div[@class="addressli"]/text()')
+        raw_data = [e.strip() for e in raw_data if e.strip()]
+        street_address = raw_data[0]
+        city = raw_data[1].split(", ")[0]
+        state = raw_data[1].split(", ")[-1].split()[0]
+        zip_code = raw_data[1].split(", ")[-1].split()[-1]
+        country_code = "US"
+        store_number = "<MISSING>"
+        phone = raw_data[-1]
+        location_type = "<MISSING>"
+        latitude = "<MISSING>"
+        longitude = "<MISSING>"
         hours_of_operation = "<MISSING>"
 
         item = [
