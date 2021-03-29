@@ -18,8 +18,6 @@ headers = {
 
 def fetch_data():
     # Your scraper here
-    loc_list = []
-
     search_url = "https://www.homebase.co.uk/stores.list"
     stores_req = session.get(search_url, headers=headers)
     stores_sel = lxml.html.fromstring(stores_req.text)
