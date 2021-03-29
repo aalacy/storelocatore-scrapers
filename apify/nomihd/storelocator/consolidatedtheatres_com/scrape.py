@@ -36,7 +36,6 @@ def fetch_data():
             if len(location_name) <= 0:
                 continue
             raw_list = store_sel.xpath('//div[@class="address"]/ul/li/text()')
-            add_list = ""
 
             street_address = ", ".join(raw_list[1:-3]).strip()
             city_state_zip = raw_list[-3]
