@@ -67,7 +67,7 @@ def fetch_data():
             address = address if address else "<MISSING>"
             phone = location.find("p").text.strip()
             phone = phone if phone else "<MISSING>"
-            if location.find("td", {"class": "hours"}) == None:
+            if location.find("td", {"class": "hours"}) is None:
                 continue
             hours = " ".join(
                 list(location.find("td", {"class": "hours"}).stripped_strings)
