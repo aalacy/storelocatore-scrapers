@@ -49,6 +49,9 @@ def fetch_data():
     response = session.get(start_url, headers=hdr)
     dom = etree.HTML(response.text)
 
+    coming_soon = dom.xpath(
+        '//h2[contains(text(), "Coming Soon")]/following-sibling::div[1]//a/@href'
+    )
     all_locations = dom.xpath('//div[@class="location-item"]')
     for poi_html in all_locations:
         store_url = poi_html.xpath(".//a/@href")[0]
@@ -69,6 +72,8 @@ def fetch_data():
         store_number = "<MISSING>"
         phone = raw_data[3]
         location_type = "<MISSING>"
+        if store_url in coming_soon:
+            location_type = "coming soon"
         latitude = loc_dom.xpath("//@data-lat")
         latitude = latitude[0] if latitude else "<MISSING>"
         longitude = loc_dom.xpath("//@data-lng")
