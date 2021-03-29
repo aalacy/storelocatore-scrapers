@@ -66,7 +66,12 @@ def fetch_data():
         try:
             phone = re.findall(r"[(\d)]{3}-[\d]{3}-[\d]{4}", store["description"])[0]
         except:
-            phone = "<MISSING>"
+            try:
+                phone = re.findall(r"[(\d)]{5} [\d]{3}-[\d]{4}", store["description"])[
+                    0
+                ]
+            except:
+                phone = "<MISSING>"
 
         hours_of_operation = "<MISSING>"
         rows = list(raw_data.stripped_strings)

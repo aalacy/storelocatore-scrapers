@@ -146,6 +146,60 @@ def fetch_data():
                 lng,
                 hours,
             ]
+    typ = "Convenient Care"
+    name = "Boone Medical Group Convenient Care at Nifong"
+    lat = "<MISSING>"
+    lng = "<MISSING>"
+    add = "900 W. Nifong Boulevard, Suite 101"
+    city = "Columbia"
+    state = "MO"
+    zc = "65203"
+    phone = "573.815.6631"
+    store = "<MISSING>"
+    hours = "<MISSING>"
+    yield [
+        website,
+        lurl,
+        name,
+        add,
+        city,
+        state,
+        zc,
+        country,
+        store,
+        phone,
+        typ,
+        lat,
+        lng,
+        hours,
+    ]
+    typ = "Hospital"
+    name = "Boone Hospital Center"
+    lat = "<MISSING>"
+    lng = "<MISSING>"
+    add = "1600 East Broadway"
+    city = "Columbia"
+    state = "MO"
+    zc = "65201"
+    phone = "573.815.8000"
+    store = "<MISSING>"
+    hours = "<MISSING>"
+    yield [
+        website,
+        lurl,
+        name,
+        add,
+        city,
+        state,
+        zc,
+        country,
+        store,
+        phone,
+        typ,
+        lat,
+        lng,
+        hours,
+    ]
 
 
 def scrape():
