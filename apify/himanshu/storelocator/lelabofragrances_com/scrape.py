@@ -42,13 +42,15 @@ def fetch_data():
     items = []
 
     start_url = "https://www.lelabofragrances.com/"
-    domain = re.findall("://(.+?)/", start_url)[0].replace('www.', '')
-    
+    domain = re.findall("://(.+?)/", start_url)[0].replace("www.", "")
+
     with SgFirefox() as driver:
         driver.get(start_url)
         driver.find_element_by_xpath('//button[@data-category="Landing Page"]').click()
         sleep(3)
-        driver.find_element_by_xpath('//button[@class="optanon-allow-all accept-cookies-button"]').click()
+        driver.find_element_by_xpath(
+            '//button[@class="optanon-allow-all accept-cookies-button"]'
+        ).click()
         sleep(3)
         driver.find_element_by_xpath('//a[@data-label="Store Locator"]').click()
         dom = etree.HTML(driver.page_source)
@@ -56,37 +58,39 @@ def fetch_data():
     all_locations = dom.xpath('//ul[@class="list-locations"]/li')
     for poi_html in all_locations:
         store_url = start_url
-        location_name = poi_html.xpath('.//a/h4/text()')
+        location_name = poi_html.xpath(".//a/h4/text()")
         location_name = location_name[0] if location_name else "<MISSING>"
         raw_address = poi_html.xpath('.//div[@class="store-address"]/text()')
         raw_address = [e.strip() for e in raw_address if e.strip()]
-        addr = parse_address_intl(' '.join(raw_address))
+        addr = parse_address_intl(" ".join(raw_address))
         street_address = addr.street_address_1
         if addr.street_address_2:
-            street_address += ' ' + addr.street_address_2
+            street_address += " " + addr.street_address_2
         street_address = street_address if street_address else "<MISSING>"
         city = addr.city
         city = city if city else "<MISSING>"
         state = addr.state
-        state = state if state else '<MISSING>'
+        state = state if state else "<MISSING>"
         zip_code = addr.postcode
         zip_code = zip_code if zip_code else "<MISSING>"
         country_code = addr.country
-        country_code = country_code if country_code else '<MISSING>'
-        if country_code != 'United Kingdom':
+        country_code = country_code if country_code else "<MISSING>"
+        if country_code != "United Kingdom":
             continue
         store_number = poi_html.xpath('.//div[@class="store-name"]/a/@id')[0]
         phone = poi_html.xpath('.//div[@class="store-number"]/a/text()')
-        phone = phone[0].split(':')[-1].strip() if phone else '<MISSING>'
-        location_type = '<MISSING>'
-        latitude = '<MISSING>'
-        longitude = '<MISSING>'
+        phone = phone[0].split(":")[-1].strip() if phone else "<MISSING>"
+        location_type = "<MISSING>"
+        latitude = "<MISSING>"
+        longitude = "<MISSING>"
         hoo = poi_html.xpath('.//div[@class="store-hours"]//text()')
         hoo = [e.strip() for e in hoo if e.strip()]
         if hoo:
-            if 'Temporarily closed' in hoo[0]:
-                location_type = 'temporarily closed'
-        hours_of_operation = " ".join(hoo).split('Available')[-1] if hoo else "<MISSING>"
+            if "Temporarily closed" in hoo[0]:
+                location_type = "temporarily closed"
+        hours_of_operation = (
+            " ".join(hoo).split("Available")[-1] if hoo else "<MISSING>"
+        )
 
         item = [
             domain,
@@ -102,7 +106,7 @@ def fetch_data():
             location_type,
             latitude,
             longitude,
-            hours_of_operation
+            hours_of_operation,
         ]
 
         items.append(item)
