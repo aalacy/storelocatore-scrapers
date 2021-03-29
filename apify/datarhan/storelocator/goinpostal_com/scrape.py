@@ -87,12 +87,12 @@ def fetch_data():
         longitude = poi["longitude"]
         longitude = longitude if longitude else "<MISSING>"
 
-        mon = "Monday {} {}".format(poi["fromMon"], poi["toMon"]).strip()
-        tue = "Tuesday {}".format(poi["fromTue"], poi["toTue"]).strip()
-        wen = "Wednesday {}".format(poi["fromWed"], poi["toWed"]).strip()
-        thu = "Thursday {}".format(poi["fromThu"], poi["toThu"]).strip()
-        fri = "Friday {}".format(poi["fromFri"], poi["toFri"]).strip()
-        sat = "Saturday {}".format(poi["fromSat"], poi["toSat"]).strip()
+        mon = "Monday {}".format(poi["fromMon"], poi["toMon"]).strip()
+        tue = "Tuesday {} {}".format(poi["fromTue"], poi["toTue"]).strip()
+        wen = "Wednesday {} {}".format(poi["fromWed"], poi["toWed"]).strip()
+        thu = "Thursday {} {}".format(poi["fromThu"], poi["toThu"]).strip()
+        fri = "Friday {} {}".format(poi["fromFri"], poi["toFri"]).strip()
+        sat = "Saturday {} {}".format(poi["fromSat"], poi["toSat"]).strip()
         sun = "Sunday {}".format(poi["fromSun"]).strip()
         hours_of_operation = [mon, tue, wen, thu, fri, sat, sun]
         hours_of_operation = (
