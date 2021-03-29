@@ -96,6 +96,19 @@ def fetch_data():
         "West Virginia": "WV",
         "Wisconsin": "WI",
         "Wyoming": "WY",
+        "Alberta": "AB",
+        "British Columbia": "BC",
+        "Manitoba": "MB",
+        "New Brunswick": "NB",
+        "Nova Scotia": "NS",
+        "Nunavut": "NU",
+        "Newfoundland and Labrador": "NL",
+        "Ontario": "ON",
+        "Northwest Territories": "NT",
+        "Prince Edward Island": "PE",
+        "Quebec": "QC",
+        "Saskatchewan": "SK",
+        "Yukon": "YT",
     }
 
     abbrev_us_state = dict(map(reversed, us_state_abbrev.items()))
@@ -132,15 +145,17 @@ def fetch_data():
                 continue
             state = raw_address["Region"]
             zip_code = raw_address["PostalCode"]
-            if len(zip_code) != 5:
+            country_code = raw_address["CountryCode"]
+            if country_code not in ["US", "CA"]:
                 continue
-            country_code = "US"
 
             location_name = store["Name"] + " " + city
             store_number = store["LocationNumber"]
 
             link = (
-                "https://stores.ashleyfurniture.com/store/us/"
+                "https://stores.ashleyfurniture.com/store/"
+                + country_code.lower()
+                + "/"
                 + abbrev_us_state[st].lower().replace(" ", "-")
                 + "/"
                 + city.lower().replace(" ", "-")
@@ -170,7 +185,16 @@ def fetch_data():
                         hours_of_operation + " " + day + " " + day_hours
                     ).strip()
             except:
-                hours_of_operation = "<MISSING>"
+                try:
+                    hours_of_operation = ""
+                    days = ["Su ", "Mo ", "Tu ", "We ", "Th ", "Fr ", "Sa "]
+                    raw_hours = store["ExtraData"]["CustomerServiceHours"].split(",")
+                    for i, day in enumerate(days):
+                        hours_of_operation = (
+                            hours_of_operation + " " + day + raw_hours[i]
+                        ).strip()
+                except:
+                    hours_of_operation = "<MISSING>"
 
             if not hours_of_operation:
                 hours_of_operation = "<MISSING>"

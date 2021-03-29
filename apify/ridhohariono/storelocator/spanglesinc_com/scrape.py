@@ -1,5 +1,4 @@
 import csv
-import re
 from bs4 import BeautifulSoup as bs
 from sgrequests import SgRequests
 from sglogging import sglog
@@ -7,7 +6,7 @@ from sglogging import sglog
 
 DOMAIN = "spanglesinc.com"
 BASE_URL = "https://www.spanglesinc.com"
-LOCATION_URL = "https://www.spanglesinc.com/locations"
+LOCATION_URL = "https://spanglesinc.com/wp-admin/admin-ajax.php?action=store_search&lat=37.68718&lng=-97.33005&max_results=25&search_radius=50&autoload=1"
 HEADERS = {
     "Accept": "application/json, text/plain, */*",
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
@@ -61,39 +60,26 @@ def handle_missing(field):
 
 def fetch_data():
     log.info("Fetching store_locator data")
-    soup = pull_content(LOCATION_URL)
-    store_content = soup.find("ul", {"id": "location-results"}).find_all("li")
+    store_info = session.get(LOCATION_URL, headers=HEADERS).json()
     locations = []
-    for row in store_content:
-        page_url = LOCATION_URL
+    for row in store_info:
+        page_url = "https://spanglesinc.com/locations/"
         locator_domain = DOMAIN
-        location_name = handle_missing(
-            row.find("p", {"class": "result-name"}).text.strip()
-        )
-        street_address = handle_missing(
-            row.find("p", {"class": "result-address"}).text.strip()
-        )
-        state_contact = row.find_all("p", {"class": "result-contact"})
-        if len(state_contact) < 2:
-            addr_detail = state_contact[0].text.split(",")
-            city = addr_detail[0]
-            state = re.sub(r"\d+", "", addr_detail[1]).strip()
-            zip_code = re.sub(r"\D", "", addr_detail[1]).strip()
-            phone = "<MISSING>"
-        else:
-            addr_detail = state_contact[0].text.split(",")
-            city = addr_detail[0]
-            state = re.sub(r"\d+", "", addr_detail[1]).strip()
-            zip_code = re.sub(r"\D", "", addr_detail[1]).strip()
-            phone = handle_missing(state_contact[1].text.strip())
+        location_name = handle_missing(row["store"])
+        street_address = handle_missing(row["address"] + " " + row["address2"])
+        city = handle_missing(row["city"])
+        state = handle_missing(row["state"])
+        zip_code = handle_missing(row["zip"])
+        phone = handle_missing(row["phone"])
         country_code = "US"
-        store_number = "<MISSING>"
+        store_number = row["id"]
         location_type = "<MISSING>"
-        hours_of_operation = row.find("div", {"id": "hoursTable"}).get_text(
-            strip=True, separator=" "
+        hoo = bs(row["hours"], "lxml")
+        hours_of_operation = hoo.get_text(strip=True, separator=", ").replace(
+            "day,", "day:"
         )
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
+        latitude = handle_missing(row["lat"])
+        longitude = handle_missing(row["lng"])
         log.info("Append {} => {}".format(location_name, street_address))
         locations.append(
             [

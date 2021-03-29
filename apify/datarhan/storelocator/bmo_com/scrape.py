@@ -89,6 +89,7 @@ def fetch_data():
             latitude = latitude if latitude else "<MISSING>"
             longitude = poi["longitude"]
             longitude = longitude if longitude else "<MISSING>"
+            store_url = f"https://branches.bmo.com/{state}/{city.lower().replace(' ', '-')}/{poi['clientkey']}/"
             hours_of_operation = []
             hours = {}
             for key, value in poi.items():
