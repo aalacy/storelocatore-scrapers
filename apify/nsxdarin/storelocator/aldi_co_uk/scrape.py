@@ -49,6 +49,7 @@ def fetch_data():
         logger.info(loc)
         website = "aldi.co.uk"
         typ = "<MISSING>"
+        store = loc.split("https://www.aldi.co.uk/store/s-uk-")[1]
         country = "GB"
         hours = ""
         phone = "<MISSING>"
@@ -73,8 +74,7 @@ def fetch_data():
             if '"latlng":{"lat":' in line2:
                 lat = line2.split('"latlng":{"lat":')[1].split(",")[0]
                 lng = line2.split(',"lng":')[1].split("}")[0]
-            if '{"code":"s-uk-' in line2:
-                store = line2.split('"code":"s-uk-')[1].split('"')[0]
+            if "</html>" in line2:
                 yield [
                     website,
                     loc,
