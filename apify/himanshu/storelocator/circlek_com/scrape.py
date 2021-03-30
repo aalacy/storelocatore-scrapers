@@ -1,73 +1,52 @@
 import csv
-import sys
-from sgrequests import SgRequests
-from bs4 import BeautifulSoup
-import re
 import json
-from shapely.prepared import prep
-from shapely.geometry import Point
-from shapely.geometry import mapping, shape
-import phonenumbers
+import lxml.html
 from sglogging import SgLogSetup
+from sgrequests import SgRequests
+from sgscrape import sgpostal as parser
 
-logger = SgLogSetup().get_logger('circlek_com')
-
-
-                    
-
+logger = SgLogSetup().get_logger("circlek_com")
 
 session = SgRequests()
 
-countries = {}
-   
-
-def getcountrygeo():
-    data = session.get("https://raw.githubusercontent.com/datasets/geo-countries/master/data/countries.geojson").json()
-
-    for feature in data["features"]:
-        geom = feature["geometry"]
-        country = feature["properties"]["ADMIN"]
-        countries[country] = prep(shape(geom))
-
-
-def getplace(lat, lon):
-    if lon != "" and lat != "":
-        point = Point(float(lon), float(lat))
-    else:
-        point = Point(0, 0)
-        # logger.info("lat == ",lat,"lng == ",lon)
-        # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
-    
-    for country, geom in countries.items():
-        if geom.contains(point):
-            return country
-
-    return "unknown"
-
-
 
 def write_output(data):
-    with open('data.csv', mode='w',newline="") as output_file:
-        writer = csv.writer(output_file, delimiter=',',
-                            quotechar='"', quoting=csv.QUOTE_ALL)
+    with open("data.csv", mode="w", newline="") as output_file:
+        writer = csv.writer(
+            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+        )
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
+        writer.writerow(
+            [
+                "locator_domain",
+                "location_name",
+                "street_address",
+                "city",
+                "state",
+                "zip",
+                "country_code",
+                "store_number",
+                "phone",
+                "location_type",
+                "latitude",
+                "longitude",
+                "hours_of_operation",
+                "page_url",
+            ]
+        )
         # Body
         for row in data:
             writer.writerow(row)
 
 
 def fetch_data():
-    getcountrygeo()
     headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36",
     }
     base_url = "https://www.circlek.com"
 
-    addresses = []
-    result_coords = []
+    found_poi = []
     locator_domain = base_url
     location_name = ""
     street_address = ""
@@ -80,102 +59,118 @@ def fetch_data():
     location_type = ""
     latitude = ""
     longitude = ""
-    raw_address = ""
     hours_of_operation = ""
-    # logger.info("start")
-    location_url = "https://www.circlek.com/stores_new.php?lat=40.8&lng=-73.65&distance=100000&services=&region=global"
-    r = session.get(location_url, headers=headers).json()
-    for key, value in r["stores"].items():
-        latitude = value["latitude"]
-        longitude = value["longitude"]
-        country_name = getplace(latitude, longitude)
+    location_urls = [
+        "https://www.circlek.com/stores_new.php?lat=40.75&lng=-73.99&distance=9999999999&services=&region=global",
+        "https://www.circlek.com/stores_new.php?lat=51.0531&lng=-114.0626&distance=80.467&services=&region=global",
+        "https://www.circlek.com/stores_new.php?lat=43.3236&lng=-79.8012&distance=500&services=&region=global",
+    ]
+    for location_url in location_urls:
+        stores = session.get(location_url, headers=headers).json()["stores"]
+        logger.info("Processing %s links.." % (len(stores)))
+        for key in stores.keys():
+            if stores[key]["country"].upper() in ["US", "CA", "CANADA"]:
+                if (
+                    stores[key]["display_brand"] == "Circle K"
+                    and stores[key]["op_status"] != "Planned"
+                    and stores[key]["op_status"] != "Future"
+                ):
+                    page_url = "https://www.circlek.com" + stores[key]["url"]
+                    if page_url in found_poi:
+                        continue
+                    found_poi.append(page_url)
 
-        # logger.info("lat == ",latitude,"lng == ", longitude,"country =======  ",country_name)
-        # logger.info(type(latitude),type(longitude))
-        if country_name in ["unknown", "United States of America","Canada"]:
-            if "unknown" == country_name and str(value["country"]) not in ["US","CA","Canada"]:
-                continue
-            
-        
-            street_address = value["address"]
-            store_number = value["cost_center"]
-            city = value["city"]
-            location_name = city
-            location_type = value["display_brand"]
-            page_url = "https://www.circlek.com" + value["url"]
-            # logger.info(page_url)
-            # logger.info(value["country"])
-            r_loc = session.get(page_url, headers=headers)
-            soup_loc = BeautifulSoup(r_loc.text, "lxml")
-            try:
-                csz = list(soup_loc.find(
-                    "h2", class_="heading-small").stripped_strings)
-                csz = [el.replace('\n', '') for el in csz]
-                # logger.info(csz)
-                if len(csz) < 4:
-                    state = "<MISSING>"
-                else:
-                    state = csz[-3].strip()
-                zipp = csz[-1].strip()
-                # logger.info(zipp)
-                # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~")
-                # if len(zipp) == 6 or len(zipp) ==7:
+                    logger.info(page_url)
+                    try:
+                        store_req = session.get(page_url, headers=headers)
+                    except:
+                        continue
+                    store_sel = lxml.html.fromstring(store_req.text)
+                    json_list = store_sel.xpath(
+                        '//script[@type="application/ld+json"]/text()'
+                    )
+                    for js in json_list:
+                        if "LocalBusiness" in js:
+                            store_json = json.loads(js)
+                            location_name = stores[key]["display_brand"].replace(
+                                "&#039;", "'"
+                            )
+                            if stores[key]["franchise"] == "1":
+                                location_type = "Brand Store"
+                            else:
+                                location_type = "Dealer/Distributor/Retail Partner"
 
+                            phone = store_json["telephone"]
+                            street_address = (
+                                store_json["address"]["streetAddress"]
+                                .replace("  ", " ")
+                                .replace("r&#039;", "'")
+                                .replace("&amp;", "&")
+                                .strip()
+                            )
+                            if street_address[-1:] == ",":
+                                street_address = street_address[:-1]
+                            city = store_json["address"]["addressLocality"].strip()
 
+                            state = ""
+                            zipp = store_json["address"]["postalCode"].strip()
+                            country_code = stores[key]["country"]
+                            latitude = store_json["geo"]["latitude"]
+                            longitude = store_json["geo"]["longitude"]
+                            store_number = stores[key]["cost_center"]
+                            raw_address = store_json["name"]
+                            formatted_addr = parser.parse_address_intl(raw_address)
+                            state = formatted_addr.state
+                            hours = store_sel.xpath(
+                                '//div[@class="columns large-12 middle hours-wrapper"]/div[contains(@class,"hours-item")]'
+                            )
+                            hours_list = []
+                            for hour in hours:
+                                day = "".join(hour.xpath("span[1]/text()")).strip()
+                                time = "".join(hour.xpath("span[2]/text()")).strip()
+                                hours_list.append(day + ":" + time)
 
-                ca_zip_list = re.findall(
-                    r'[A-Z]{1}[0-9]{1}[A-Z]{1}\s*[0-9]{1}[A-Z]{1}[0-9]{1}', str(zipp))
-                us_zip_list = re.findall(re.compile(
-                    r"\b[0-9]{5}(?:-[0-9]{4})?\b"), str(zipp))
+                            hours_of_operation = "; ".join(hours_list).strip()
+                            if street_address == "" or street_address is None:
+                                street_address = "<MISSING>"
 
-                # logger.info("~us_zip_list~~~~~~~~~~~~~~~~~~~~~~",us_zip_list,"~~~~~~~~~~~~~~~ca_zip_list~~~~~~~",ca_zip_list)
-                if ca_zip_list:
-                    zipp = ca_zip_list[-1]
-                    country_code = "CA"
-                
+                            if city == "" or city is None:
+                                city = "<MISSING>"
 
-                elif us_zip_list:
-                    zipp = us_zip_list[-1]
-                    country_code = "US"
-                else:
-                    zipp = "<MISSING>"
-                    if "Canada" in country_name:
-                        country_code = "CA"
-                    else:
-                        country_code = "US"
-                # logger.info(zipp,country_code)
-            
-                phone_tag = soup_loc.find(
-                    "a", {"itemprop": "telephone"}).text.strip()
-                phone_list = re.findall(re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str(phone_tag))
-                if phone_list:
-                    phone = phone_list[0]
-                    phone = phonenumbers.format_number(phonenumbers.parse(phone, 'US'), phonenumbers.PhoneNumberFormat.NATIONAL)
-                    # logger.info(phone)
-                else:
-                    phone = "<MISSING>"
-               
-                hours_of_operation = " ".join(list(soup_loc.find(
-                    "div", class_="columns large-12 middle hours-wrapper").stripped_strings)).replace("hours", "").strip()
-            except:
-                zipp = "<MISSING>"
-                state = "<MISSING>"
-                hours_of_operation = "<MISSING>"
-                phone = "<MISSING>"
-            # logger.info(phone)
-            if "."==street_address.strip():
-                street_address = "<MISSING>"
-            if "PEI" in state:
-                state= "Prince Edward Island"
-            store = [locator_domain, location_name.strip(), street_address.strip(), city.strip(), state.strip(), zipp.strip(), country_code,
-                        store_number, phone.strip(), location_type, latitude, longitude, hours_of_operation.replace("hours", "").strip(), page_url]
+                            if state == "" or state is None:
+                                state = "<MISSING>"
 
-            if str(store[2]) not in addresses:
-                addresses.append(str(store[2]))
-                store = [x if x else "<MISSING>" for x in store]
-                # logger.info("data = " + str(store))
-                # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-                yield store
+                            if zipp == "" or zipp is None:
+                                zipp = "<MISSING>"
+
+                            if latitude == "" or latitude is None:
+                                latitude = "<MISSING>"
+                            if longitude == "" or longitude is None:
+                                longitude = "<MISSING>"
+
+                            if hours_of_operation == "":
+                                hours_of_operation = "<MISSING>"
+
+                            if phone == "" or phone is None:
+                                phone = "<MISSING>"
+
+                            curr_list = [
+                                locator_domain,
+                                location_name,
+                                street_address,
+                                city,
+                                state,
+                                zipp,
+                                country_code,
+                                store_number,
+                                phone,
+                                location_type,
+                                latitude,
+                                longitude,
+                                hours_of_operation,
+                                page_url,
+                            ]
+                            yield curr_list
 
 
 def scrape():

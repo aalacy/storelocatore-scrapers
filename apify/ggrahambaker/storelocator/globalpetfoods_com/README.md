@@ -1,1 +1,2 @@
---ignore CountValidator (Validation says file has 0 POI but it is scraped correctly with 188 POI)
+rewritten to same directory
+

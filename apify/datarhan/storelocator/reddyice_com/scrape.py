@@ -60,22 +60,18 @@ def fetch_data():
 
         location_name = loc_dom.xpath('//div[@class="row top"]/h1/text()')
         location_name = location_name[0] if location_name else "<MISSING>"
-        raw_address = loc_dom.xpath(
-            '//div[@class="row detail-list boxs"]/ul/li/text()'
-        )[1].split("\t")
+        raw_address = re.findall("contentString = '(.+)';", loc_response.text)[0].split(
+            "</br>"
+        )
         raw_address = [elem.strip() for elem in raw_address if elem.strip()]
         street_address = raw_address[0]
-        street_address = street_address if street_address else "<MISSING>"
-        city = raw_address[1]
-        city = city if city else "<MISSING>"
-        state = raw_address[-1].split()[0]
-        state = state if state else "<MISSING>"
-        zip_code = raw_address[-1].split()[-1]
-        zip_code = zip_code if zip_code else "<MISSING>"
+        city = raw_address[1].split(">")[-1]
+        state = raw_address[2].split()[0]
+        zip_code = raw_address[2].split()[-1]
         country_code = "<MISSING>"
         store_number = re.findall(r"\d+", store_url)[0]
         store_number = store_number if store_number else "<MISSING>"
-        phone = "<MISSING>"
+        phone = raw_address[-2]
         location_type = "<MISSING>"
         geo = (
             re.findall(r'LatLng\((.+)"\);', loc_response.text)[0]

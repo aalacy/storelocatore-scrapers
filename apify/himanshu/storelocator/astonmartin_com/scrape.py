@@ -111,6 +111,13 @@ def fetch_data():
                 page_url = "https://www.astonmartin.com" + loc["DealerPageUrl"]
             except:
                 page_url = "<MISSING>"
+            if "Aston Martin Long Island" in location_name:
+                city = "ROSLYN"
+                state = "New York"
+                zipp = "11576"
+            if "Aston Martin Denver" in location_name:
+                state = "Colorado"
+                zipp = "80129"
             store = []
             store.append("https://www.astonmartin.com")
             store.append(location_name if location_name else "<MISSING>")

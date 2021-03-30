@@ -158,10 +158,11 @@ def fetch_data():
                             + line.split('"day":"SUNDAY"')[1]
                             .split('"start":')[1]
                             .split("}")[0]
-                            + "-"
+                            + "AM-"
                             + line.split('"day":"SUNDAY"')[1]
                             .split('"end":')[1]
                             .split(",")[0]
+                            + "PM"
                         )
                     hours = (
                         hours
@@ -170,10 +171,11 @@ def fetch_data():
                         + line.split('{"day":"MONDAY"')[1]
                         .split('"start":')[1]
                         .split("}")[0]
-                        + "-"
+                        + "AM-"
                         + line.split('{"day":"MONDAY"')[1]
                         .split('{"end":')[1]
                         .split(",")[0]
+                        + "PM"
                     )
                     hours = (
                         hours
@@ -182,10 +184,11 @@ def fetch_data():
                         + line.split('{"day":"TUESDAY"')[1]
                         .split('"start":')[1]
                         .split("}")[0]
-                        + "-"
+                        + "AM-"
                         + line.split('{"day":"TUESDAY"')[1]
                         .split('{"end":')[1]
                         .split(",")[0]
+                        + "PM"
                     )
                     hours = (
                         hours
@@ -194,10 +197,11 @@ def fetch_data():
                         + line.split('{"day":"WEDNESDAY"')[1]
                         .split('"start":')[1]
                         .split("}")[0]
-                        + "-"
+                        + "AM-"
                         + line.split('{"day":"WEDNESDAY"')[1]
                         .split('{"end":')[1]
                         .split(",")[0]
+                        + "PM"
                     )
                     hours = (
                         hours
@@ -206,10 +210,11 @@ def fetch_data():
                         + line.split('{"day":"THURSDAY"')[1]
                         .split('"start":')[1]
                         .split("}")[0]
-                        + "-"
+                        + "AM-"
                         + line.split('{"day":"THURSDAY"')[1]
                         .split('{"end":')[1]
                         .split(",")[0]
+                        + "PM"
                     )
                     hours = (
                         hours
@@ -218,10 +223,11 @@ def fetch_data():
                         + line.split('{"day":"FRIDAY"')[1]
                         .split('"start":')[1]
                         .split("}")[0]
-                        + "-"
+                        + "AM-"
                         + line.split('{"day":"FRIDAY"')[1]
                         .split('{"end":')[1]
                         .split(",")[0]
+                        + "PM"
                     )
                     hours = (
                         hours
@@ -230,10 +236,11 @@ def fetch_data():
                         + line.split('{"day":"SATURDAY"')[1]
                         .split('"start":')[1]
                         .split("}")[0]
-                        + "-"
+                        + "AM-"
                         + line.split('{"day":"SATURDAY"')[1]
                         .split('{"end":')[1]
                         .split(",")[0]
+                        + "PM"
                     )
                 except:
                     hours = "Sun-Sat: Closed"
@@ -241,6 +248,13 @@ def fetch_data():
             allstores.append(store)
             if state == "":
                 state = "PR"
+            name = name.replace("\\u0026#39;", "'")
+            hours = (
+                hours.replace("00", ":00")
+                .replace("30", ":30")
+                .replace("1:000AM", "10:00AM")
+                .replace("2:000PM", "20:00PM")
+            )
             yield [
                 website,
                 loc,

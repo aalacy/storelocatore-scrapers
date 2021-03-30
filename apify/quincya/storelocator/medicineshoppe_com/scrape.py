@@ -80,6 +80,7 @@ def fetch_data():
         res_json = session.post(base_link, headers=headers, json=json).json()[
             "locations"
         ]
+
         for loc in res_json:
 
             location_name = loc["name"].strip()
@@ -92,7 +93,7 @@ def fetch_data():
 
             lat = loc["latitude"]
             longit = loc["longitude"]
-            search.mark_found([lat, longit])
+            search.found_location_at(lat, longit)
 
             raw_address = loc["addr"]["Main"]
             try:

@@ -61,13 +61,15 @@ def fetch_data():
             .find("table")
             .text.replace("day", "day ")
             .replace("PM", "PM ")
+            .replace(":00", ":00 ")
+            .strip()
         )
 
         data.append(
             [
                 "https://xtramart.com/",
                 link,
-                title,
+                title.replace(" &#038;", " & "),
                 street.strip(),
                 city,
                 state,

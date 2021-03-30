@@ -2,7 +2,7 @@ import csv
 import datetime
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
-from sgzip.dynamic import DynamicZipSearch, SearchableCountries
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 
 logger = SgLogSetup().get_logger("choicehotels_com__comfort-inn")
 
@@ -44,15 +44,12 @@ def fetch_data():
     today = datetime.date.today().strftime("%Y-%m-%d")
     tomorrow = (datetime.date.today() + datetime.timedelta(days=1)).strftime("%Y-%m-%d")
     addresses = []
-    coords = DynamicZipSearch(
+    search = DynamicGeoSearch(
         country_codes=[SearchableCountries.USA],
         max_radius_miles=50,
         max_search_results=100,
     )
-    for coord in coords:
-        result_coords = []
-        x = coord[0]
-        y = coord[1]
+    for x, y in search:
         headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:70.0) Gecko/20100101 Firefox/70.0",
             "Origin": "https://www.choicehotels.com",
@@ -80,7 +77,7 @@ def fetch_data():
                 continue
             data = r.json()["hotels"]
             for store_data in data:
-                result_coords.append((store_data["lat"], store_data["lon"]))
+                search.found_location_at(store_data["lat"], store_data["lon"])
                 if (
                     store_data["address"]["country"] != "US"
                     and store_data["address"]["country"] != "CA"
@@ -144,6 +141,7 @@ def fetch_data():
                 store.append("<MISSING>")
                 store.append("https://www.choicehotels.com/" + str(store_data["id"]))
                 yield store
+
         except:
             continue
 

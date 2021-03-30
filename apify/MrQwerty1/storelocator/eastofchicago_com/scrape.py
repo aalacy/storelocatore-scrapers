@@ -3,7 +3,7 @@ import csv
 from concurrent import futures
 from lxml import html
 from sgrequests import SgRequests
-from sgzip import sgzip
+from sgzip.static import static_zipcode_list, SearchableCountries
 
 
 def write_output(data):
@@ -119,7 +119,7 @@ def get_data(z):
 def fetch_data():
     out = []
     s = set()
-    zips = sgzip.for_radius(radius=100, country_code="US")
+    zips = static_zipcode_list(radius=100, country_code=SearchableCountries.USA)
 
     with futures.ThreadPoolExecutor(max_workers=10) as executor:
         future_to_url = {executor.submit(get_data, z): z for z in zips}

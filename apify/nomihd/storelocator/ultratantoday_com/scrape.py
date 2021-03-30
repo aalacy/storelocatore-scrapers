@@ -68,7 +68,7 @@ def fetch_data():
     json_text = "".join(
         stores_sel.xpath('//script[@id="__NEXT_DATA__"]/text()')
     ).strip()
-    stores = json.loads(json_text)["props"]["pageProps"]["data"]["allLocations"][
+    stores = json.loads(json_text)["props"]["pageProps"]["data"]["filterLocations"][
         "edges"
     ]
 
@@ -81,90 +81,98 @@ def fetch_data():
 
         if len(page_url) > 0:
             page_url = "https://ultratantoday.com/stores/" + page_url[0]
-
+            log.info(page_url)
             store_req = session.get(page_url, headers=headers)
             store_sel = lxml.html.fromstring(store_req.text)
-            json_text = "".join(
-                store_sel.xpath('//script[@id="__NEXT_DATA__"]/text()')
-            ).strip()
-            store_json = json.loads(json_text)["props"]["pageProps"]["data"][
-                "getLocationsByIds"
-            ][0]
+            if "This page could not be found" not in store_req.text:
+                json_text = "".join(
+                    store_sel.xpath('//script[@id="__NEXT_DATA__"]/text()')
+                ).strip()
+                store_json = json.loads(json_text)["props"]["pageProps"]["data"][
+                    "getLocationsByIds"
+                ][0]
 
-            locator_domain = website
-            location_name = store_json["name"]
-            if location_name == "":
-                location_name = "<MISSING>"
+                locator_domain = website
+                location_name = "".join(store_sel.xpath("//div/h1/text()")).strip()
+                if location_name == "":
+                    location_name = "<MISSING>"
 
-            street_address = store_json["street"]
-            city = store_json["city"]
-            state = store_json["stateIso"]
-            zip = store_json["postalCode"]
+                street_address = store_json["street"]
+                city = store_json["city"]
+                state = store_json["stateIso"]
+                zip = store_json["postalCode"]
 
-            country_code = store_json["countryIso"]
-            if country_code == "" or country_code is None:
-                country_code = "<MISSING>"
+                street_address = (
+                    street_address.replace(city + ",", "")
+                    .replace(state, "")
+                    .replace(zip, "")
+                    .strip()
+                )
+                country_code = store_json["countryIso"]
+                if country_code == "" or country_code is None:
+                    country_code = "<MISSING>"
 
-            if street_address == "" or street_address is None:
-                street_address = "<MISSING>"
+                if street_address == "" or street_address is None:
+                    street_address = "<MISSING>"
 
-            if city == "" or city is None:
-                city = "<MISSING>"
+                if city == "" or city is None:
+                    city = "<MISSING>"
 
-            if state == "" or state is None:
-                state = "<MISSING>"
+                if state == "" or state is None:
+                    state = "<MISSING>"
 
-            if zip == "" or zip is None:
-                zip = "<MISSING>"
+                if zip == "" or zip is None:
+                    zip = "<MISSING>"
 
-            store_number = "<MISSING>"
+                store_number = "<MISSING>"
 
-            phone = store_json["phone"]
+                phone = store_json["phone"]
 
-            location_type = "<MISSING>"
-            hours = store_json["businessHours"]
-            hours_list = []
-            for hour in hours:
-                day = hour["day"]
-                if hour["slots"] is not None:
-                    start = hour["slots"][0]["start"]
-                    end = hour["slots"][0]["end"]
-                    hours_list.append(day + ":" + start + "-" + end)
+                location_type = "<MISSING>"
+                location_type = store_json["name"]
+                hours = store_json["businessHours"]
+                hours_list = []
+                for hour in hours:
+                    day = hour["day"]
+                    if hour["slots"] is not None and day != "SPECIAL":
+                        start = hour["slots"][0]["start"]
+                        end = hour["slots"][0]["end"]
+                        hours_list.append(day + ":" + start + "-" + end)
 
-            hours_of_operation = ";".join(hours_list).strip()
+                hours_of_operation = ";".join(hours_list).strip()
 
-            latitude = store_json["latitude"]
-            longitude = store_json["longitude"]
+                latitude = store_json["latitude"]
+                longitude = store_json["longitude"]
 
-            if latitude == "" or latitude is None:
-                latitude = "<MISSING>"
-            if longitude == "" or longitude is None:
-                longitude = "<MISSING>"
+                if latitude == "" or latitude is None:
+                    latitude = "<MISSING>"
+                if longitude == "" or longitude is None:
+                    longitude = "<MISSING>"
 
-            if hours_of_operation == "":
-                hours_of_operation = "<MISSING>"
+                if hours_of_operation == "":
+                    hours_of_operation = "<MISSING>"
 
-            if phone == "" or phone is None:
-                phone = "<MISSING>"
+                if phone == "" or phone is None:
+                    phone = "<MISSING>"
 
-            curr_list = [
-                locator_domain,
-                page_url,
-                location_name,
-                street_address,
-                city,
-                state,
-                zip,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
+                curr_list = [
+                    locator_domain,
+                    page_url,
+                    location_name,
+                    street_address,
+                    city,
+                    state,
+                    zip,
+                    country_code,
+                    store_number,
+                    phone,
+                    location_type,
+                    latitude,
+                    longitude,
+                    hours_of_operation,
+                ]
 
-            loc_list.append(curr_list)
+                loc_list.append(curr_list)
 
     return loc_list
 

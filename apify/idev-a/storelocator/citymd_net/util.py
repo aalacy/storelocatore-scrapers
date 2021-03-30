@@ -38,6 +38,7 @@ class Util:
         else:
             return "<MISSING>"
 
+    # ex: 904 Bayonne Crossing Way, Bayonne, NJ 07002
     def parse_address_simple(self, address):
         address = address.split(",")
         street_address = self._valid("".join(address[:-2]))

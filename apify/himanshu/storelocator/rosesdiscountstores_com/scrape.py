@@ -9,7 +9,7 @@ def write_output(data):
         writer = csv.writer(
             output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
         )
-
+        # Header
         writer.writerow(
             [
                 "locator_domain",
@@ -28,7 +28,7 @@ def write_output(data):
                 "page_url",
             ]
         )
-
+        # Body
         for row in data:
             writer.writerow(row)
 
@@ -40,7 +40,7 @@ def fetch_data():
         "Accept": "application/json, text/plain, */*",
     }
     base_url = "https://www.rosesdiscountstores.com/"
-    link = "https://api.zenlocator.com/v1/apps/app_vfde3mfb/locations/search?countryCode=IN&name=roses&query=roses&radius=500000"
+    link = "https://api.zenlocator.com/v1/apps/app_vfde3mfb/locations/search?countryCode=IN&name=roses&query=roses&radius=150"
     json_data = session.get(link, headers=headers).json()["locations"]
     for data in json_data:
         location_name = data["name"]
@@ -50,7 +50,7 @@ def fetch_data():
         city = data["city"]
         state = data["region"]
         zipp = data["postcode"]
-        if zipp == "28657":
+        if zipp == "28657" or "36867":
             street_address = data["address"].split(",")[0].strip()
         country_code = data["countryCode"]
         try:
@@ -66,6 +66,9 @@ def fetch_data():
         longitude = data["lng"]
         hours_of_operation = ""
         hours_of_operation = "Monday:9am-8pm, Tuesday:9am-8pm, Wednesday:9am-8pm, Thursday:9am-8pm, Friday:9am-8pm, Saturday:9am-8pm, Sunday:10am-8pm"
+        page_url = "https://www.rosesdiscountstores.com/store-locator/"
+        if "368 Town Center" in street_address:
+            zipp = "27962"
         store = []
         store.append(base_url if base_url else "<MISSING>")
         store.append(location_name if location_name else "<MISSING>")
@@ -80,7 +83,7 @@ def fetch_data():
         store.append(latitude if latitude else "<MISSING>")
         store.append(longitude if longitude else "<MISSING>")
         store.append(hours_of_operation if hours_of_operation else "<MISSING>")
-        store.append("<MISSING>")
+        store.append(page_url)
         if store[2] in addressess:
             continue
         addressess.append(store[2])

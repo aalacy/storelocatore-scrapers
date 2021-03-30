@@ -145,9 +145,12 @@ def fetch_data():
                     lng = line2.split('<meta itemprop="longitude" content="')[1].split(
                         '"'
                     )[0]
-                if hours == "" and "data-days='[{" in line2:
+                if hours == "" and "Restaurant Hours</h4>" in line2:
                     days = (
-                        line2.split("data-days='[{")[1].split("}]'")[0].split('"day":"')
+                        line2.split("Restaurant Hours</h4>")[1]
+                        .split("data-days='[{")[1]
+                        .split("}]'")[0]
+                        .split('"day":"')
                     )
                     for day in days:
                         if '"intervals"' in day:
