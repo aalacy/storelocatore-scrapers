@@ -6,8 +6,6 @@ from bs4 import BeautifulSoup as bs
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 
 
-
-
 def extract_json(html_string):
     html_string = (
         html_string.replace("\n", "")
@@ -38,11 +36,12 @@ def extract_json(html_string):
 
     return json_objects
 
+
 def get_data():
 
     session = SgRequests()
     search = DynamicZipSearch(
-    country_codes=[SearchableCountries.USA], max_search_results=25
+        country_codes=[SearchableCountries.USA], max_search_results=25
     )
 
     locator_domains = []
@@ -82,7 +81,9 @@ def get_data():
 
             city = location["address"].split("<br />")[1].split(",")[0]
 
-            state_parts = location["address"].split("<br />")[1].split(",")[1].split(" ")
+            state_parts = (
+                location["address"].split("<br />")[1].split(",")[1].split(" ")
+            )
             state = ""
             for item in range(len(state_parts) - 1):
                 state = state + state_parts[item] + " "
@@ -182,12 +183,12 @@ def get_data():
 
         hours_of_operations.append(hours)
         phones.append(phone)
-    
 
     df["phone"] = phones
     df["hours_of_operation"] = hours_of_operations
 
     return df
+
 
 def write_data(df):
     df = df.fillna("<MISSING>")
@@ -207,6 +208,7 @@ def write_data(df):
     df = df.fillna("<MISSING>")
 
     df.to_csv("data.csv", index=False)
+
 
 df = get_data()
 write_data(df)
