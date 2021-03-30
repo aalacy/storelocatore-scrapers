@@ -13,9 +13,6 @@ import time
 logger = SgLogSetup().get_logger("kmart_com")
 
 session = SgRequests()
-# headers = {
-#     "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.90 Safari/537.36"
-# }
 DOMAIN = "https://www.kmart.com/"
 
 
@@ -73,7 +70,6 @@ def special_cookie():
         for r in driver.requests:
             if "/stores.html" in r.path:
                 logger.info("Found Path URL: /stores.html")
-                # headers["cookie"] = r.headers["cookie"]
                 try:
                     headers["cookie"] = r.headers["cookie"]
                 except Exception:
