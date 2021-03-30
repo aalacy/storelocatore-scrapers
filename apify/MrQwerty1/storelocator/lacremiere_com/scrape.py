@@ -61,7 +61,7 @@ def fetch_data():
         )
         city = adr.city or "<MISSING>"
         if city == "Chambly":
-            street_address += f" Périgny"
+            street_address += " Périgny"
         state = adr.state or "<MISSING>"
         postal = adr.postcode or "<MISSING>"
         country_code = "CA"
