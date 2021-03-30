@@ -97,7 +97,7 @@ def fetch_data():
             location_url = base_url + k
             try:
                 r1 = session.get(location_url, headers=headers, allow_redirects=False)
-            except Exception as e:
+            except:
                 pass
             soup1 = BeautifulSoup(r1.text, "lxml")
             b1 = soup1.find("script", {"type": "application/ld+json"})
