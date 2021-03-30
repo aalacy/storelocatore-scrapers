@@ -1,7 +1,7 @@
 from sgscrape import simple_scraper_pipeline as sp
 from sglogging import SgLogSetup
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
-from sgselenium import SgChrome, SgFirefox
+from sgselenium import SgChrome
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
@@ -12,7 +12,6 @@ import json
 def fetch_data():
     logzilla = SgLogSetup().get_logger(logger_name="chanel_com__en___gb")
     url = "https://services.chanel.com/en_GB/storelocator/crp/@{lat},{lng},10z/?"
-
     search = DynamicGeoSearch(
         country_codes=[SearchableCountries.BRITAIN],
         max_radius_miles=15,
@@ -21,7 +20,6 @@ def fetch_data():
     identities = set()
     maxZ = search.items_remaining()
     total = 0
-    SgFirefox
     with SgChrome() as driver:
         for lat, lng in search:
             if search.items_remaining() > maxZ:
