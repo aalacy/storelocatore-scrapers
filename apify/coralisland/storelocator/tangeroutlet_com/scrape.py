@@ -99,7 +99,6 @@ def fetch_data():
         output.append(base_url)  # url
         output.append(validate(store.xpath(".//h3//text()")))  # location name
         address = eliminate_space(store.xpath('.//span[@class="address"]//text()'))
-        # address = parse_address(address)
         output.append(address[0])  # address
         output.append(address[1].replace("ton, DC", "ton DC").split(",")[0])  # city
         statezip = eliminate_space(
