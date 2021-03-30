@@ -45,7 +45,7 @@ def get_data(url):
     locator_domain = "https://www.moesoriginalbbq.com"
     page_url = "".join(url)
     if page_url.find("st-george") != -1:
-        page_url = f"https://www.moesoriginalbbq.com/st-george"
+        page_url = "https://www.moesoriginalbbq.com/st-george"
     if page_url.find("http://www.moesbbqtahoe.com/") != -1:
         return
     if page_url.find("https://moesbbqcharlotte.com/") != -1:
