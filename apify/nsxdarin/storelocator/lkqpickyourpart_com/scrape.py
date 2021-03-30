@@ -38,7 +38,7 @@ def write_output(data):
 
 
 def fetch_data():
-    locs = []
+    locs = ["https://locations.lkqpickyourpart.com/ca/stanton/8188-1/2-katella-avenue"]
     url = "https://locations.lkqpickyourpart.com/sitemap.xml"
     r = session.get(url, headers=headers)
     website = "lkqpickyourpart.com"
@@ -71,7 +71,12 @@ def fetch_data():
         for line2 in r2.iter_lines():
             line2 = str(line2.decode("utf-8"))
             if '<span class="LocationName-geo">' in line2:
-                name = line2.split('<span class="LocationName-geo">')[1].split("<")[0]
+                name = (
+                    line2.split('<span class="LocationName-geo">')[1]
+                    .split("<")[0]
+                    .strip()
+                    .replace("  ", " ")
+                )
             if '"streetAddress" content="' in line2:
                 add = line2.split('"streetAddress" content="')[1].split('"')[0]
             if 'itemprop="addressLocality" content="' in line2:
