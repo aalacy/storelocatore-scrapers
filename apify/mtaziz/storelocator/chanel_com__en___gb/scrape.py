@@ -21,7 +21,6 @@ def fetch_data():
     identities = set()
     maxZ = search.items_remaining()
     total = 0
-    SgFirefox
     with SgChrome() as driver:
         for lat, lng in search:
             if search.items_remaining() > maxZ:
