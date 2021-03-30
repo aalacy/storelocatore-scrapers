@@ -37,7 +37,6 @@ def fetch_data():
 
             json_data = session.post(url, data=payload, headers=headers).json()
             logger.info(f"[Crawling the data for the town:{town_name}]")
-            found = 0
             for _ in json_data["Stores"]["PhysicalStore"]:
                 hours = ""
                 for attr in _["Attribute"]:
