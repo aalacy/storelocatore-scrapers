@@ -37,6 +37,7 @@ def write_output(data):
 def fetch_data():
     out = []
     s = set()
+    phones = set()
     locator_domain = "https://www.rexelusa.com/"
     api_url = "https://www.rexelusa.com/usr/store-finder"
 
@@ -97,8 +98,9 @@ def fetch_data():
         ]
 
         check = tuple(row[3:6])
-        if check not in s:
+        if check not in s and phone not in phones:
             s.add(check)
+            phones.add(phone)
             out.append(row)
 
     return out

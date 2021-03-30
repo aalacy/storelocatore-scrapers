@@ -1,6 +1,6 @@
 import csv
 import re
-from scourgify import normalize_address_record
+import usaddress
 
 from concurrent import futures
 from lxml import html
@@ -38,8 +38,38 @@ def write_output(data):
 
 def clean_adr(text):
     try:
-        a = normalize_address_record(text)
-        return f"{a.get('address_line_1')} {a.get('address_line_2') or ''}".strip()
+        tag = {
+            "Recipient": "recipient",
+            "AddressNumber": "address1",
+            "AddressNumberPrefix": "address1",
+            "AddressNumberSuffix": "address1",
+            "StreetName": "address1",
+            "StreetNamePreDirectional": "address1",
+            "StreetNamePreModifier": "address1",
+            "StreetNamePreType": "address1",
+            "StreetNamePostDirectional": "address1",
+            "StreetNamePostModifier": "address1",
+            "StreetNamePostType": "address1",
+            "CornerOf": "address1",
+            "IntersectionSeparator": "address1",
+            "LandmarkName": "address1",
+            "USPSBoxGroupID": "address1",
+            "USPSBoxGroupType": "address1",
+            "USPSBoxID": "address1",
+            "USPSBoxType": "address1",
+            "BuildingName": "address2",
+            "OccupancyType": "address2",
+            "OccupancyIdentifier": "address2",
+            "SubaddressIdentifier": "address2",
+            "SubaddressType": "address2",
+            "PlaceName": "city",
+            "StateName": "state",
+            "ZipCode": "postal",
+        }
+        a = usaddress.tag(text, tag_mapping=tag)[0]
+        return f"{a.get('address1')} {a.get('address2') or ''}".replace(
+            "None", ""
+        ).strip()
     except:
         return text
 
@@ -55,13 +85,14 @@ def get_hours(url):
     session = SgRequests()
     r = session.get(url)
     tree = html.fromstring(r.text)
-    tt = tree.xpath("//div[@class='table-responsive']//tr")
-    for t in tt:
+    tr = tree.xpath("//div[@class='table-responsive']//tr")
+    for t in tr:
         day = "".join(t.xpath("./td[1]/text()"))
         time = "".join(t.xpath("./td[3]/text()"))
         _tmp.append(f"{day} {time}")
 
     hoo = ";".join(_tmp) or "<MISSING>"
+
     return {_id: hoo}
 
 
@@ -122,7 +153,7 @@ def fetch_data():
                 hours_of_operation,
             ]
 
-            if store_number not in s:
+            if store_number not in s and hours_of_operation.count("Closed") != 7:
                 s.add(store_number)
                 out.append(row)
 

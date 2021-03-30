@@ -67,6 +67,8 @@ def fetch_data():
         city = poi["GasStation"]["City"]
         city = city if city else "<MISSING>"
         state = poi["GasStation"]["Address"].split(",")[-2]
+        if len(state.strip()) > 2:
+            state = poi["GasStation"]["Address"].split(",")[-1].split()[0]
         state = state.strip() if state else "<MISSING>"
         zip_code = poi["GasStation"]["PostCode"]
         zip_code = zip_code if zip_code else "<MISSING>"

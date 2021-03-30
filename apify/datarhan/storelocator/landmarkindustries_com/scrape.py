@@ -53,7 +53,6 @@ def fetch_data():
     all_locations_raw = "".join(all_locations).split("\r\n")
 
     for elem in all_locations_raw:
-        print(elem)
         all_poi += elem.strip().split("\n")
 
     for loc in all_poi:
@@ -63,7 +62,9 @@ def fetch_data():
         store_url = "<MISSING>"
         location_name = re.findall("(.+ Exxon)", loc)
         if not location_name:
-            location_name = re.findall("(.+ Shell)", loc)
+            location_name = re.findall("(.+ Shell)", loc.strip())
+        if not location_name:
+            location_name = re.findall("(.+ Mobil)", loc.strip())
         location_name = location_name[0] if location_name else "<MISSING>"
         if location_name == "<MISSING>":
             continue
@@ -94,6 +95,31 @@ def fetch_data():
         latitude = "<MISSING>"
         longitude = "<MISSING>"
         hours_of_operation = "<MISSING>"
+
+        # exceptions
+        if len(zip_code) == 17:
+            phone = zip_code[5:]
+            zip_code = zip_code[:5]
+
+        if "Opening Soon" in state:
+            raw_data = state
+            state = raw_data.split()[0]
+            zip_code = raw_data.split()[-1].split("Opening")[0]
+
+        if len(zip_code) == 12:
+            phone = zip_code
+            zip_code = "<MISSING>"
+
+        check = ["Rd", "Freeway", "Fwy", "Dr", "Road"]
+        for elem in check:
+            if city.startswith(elem):
+                street_address += " " + elem
+                city = city.replace(elem, "")
+                break
+
+        if city.startswith("SR"):
+            city = city.replace("SR", "R")
+            street_address += " S"
 
         item = [
             DOMAIN,

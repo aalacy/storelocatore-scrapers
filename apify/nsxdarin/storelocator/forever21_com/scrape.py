@@ -68,7 +68,7 @@ def fetch_data():
                         lat = item["lat"]
                         lng = item["lon"]
                         state = item["state"]
-                        loc = "<MISSING>"
+                        loc = item["location_url"]
                         name = item["location_name"]
                         zc = item["postal_code"]
                         phone = item["phonemap"]["phone"]
