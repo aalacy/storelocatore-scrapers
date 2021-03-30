@@ -1,7 +1,7 @@
 from sgscrape import simple_scraper_pipeline as sp
 from sglogging import SgLogSetup
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
-from sgselenium import SgChrome
+from sgselenium import SgChrome, SgFirefox
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
@@ -21,7 +21,9 @@ def fetch_data():
     identities = set()
     maxZ = search.items_remaining()
     total = 0
-    with SgChrome(is_headless=False) as driver:
+    SgFirefox
+    with SgChrome() as driver:
+        # with SgFirefox() as driver:
         for lat, lng in search:
             if search.items_remaining() > maxZ:
                 maxZ = search.items_remaining()
@@ -41,7 +43,6 @@ def fetch_data():
             while waited < timeout and not found:
                 logzilla.info("Waited Zero seconds: True & Found is True")
                 for r in driver.requests:
-                    logzilla.info(f"Response Headers Path:{r.path}")
                     if "getStoreList" in r.path:
                         logzilla.info(f"getStoreList found in {r.path}")
                         timeout2 = 5
