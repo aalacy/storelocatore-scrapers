@@ -5,7 +5,7 @@ from lxml import etree
 from urllib.parse import urljoin
 
 from sgrequests import SgRequests
-from sgscrape.sgpostal import parse_address_intl, parse_address_usa
+from sgscrape.sgpostal import parse_address_intl
 
 
 def write_output(data):
