@@ -79,16 +79,19 @@ def fetch_data():
     for store in stores:
         page_url = search_url
         locator_domain = website
-        location_name = store["AddressLine2"]
+        location_name = store["DisplayName"]
         if location_name == "":
             location_name = "<MISSING>"
 
-        street_address = store["AddressLine1"]
-        city = store["City"]
-        state = store["State"]
-        zip = store["PostalCode"]
+        street_address = store["Address"]["Line1"]
+        if store["Address"]["Line2"] is not None and len(store["Address"]["Line2"]) > 0:
+            street_address = street_address + store["Address"]["Line2"]
 
-        country_code = store["CountryCode"]
+        city = store["Address"]["City"]
+        state = store["Address"]["State"]["Short"]
+        zip = store["Address"]["PostalCode"]
+
+        country_code = store["Address"]["Country"]
 
         if street_address == "":
             street_address = "<MISSING>"
@@ -103,16 +106,13 @@ def fetch_data():
             zip = "<MISSING>"
 
         store_number = str(store["StoreCode"])
-        phone = store["MainPhone"]
+        phone = store["Contact"]["Phone"]
 
         location_type = "<MISSING>"
-        hours_of_operation = store["Hours"].replace(",", " ").strip()
-        try:
-            hours_of_operation = " ".join(hours_of_operation.split("\n")).strip()
-        except:
-            pass
-        latitude = store["Latitude"]
-        longitude = store["Longitude"]
+        hours_of_operation = "; ".join(store["Hours"]["Display"])
+
+        latitude = store["Address"]["LngLat"][1]
+        longitude = store["Address"]["LngLat"][0]
 
         if latitude == "":
             latitude = "<MISSING>"
