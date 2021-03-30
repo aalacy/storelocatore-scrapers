@@ -2,7 +2,9 @@ from bs4 import BeautifulSoup
 from sglogging import SgLogSetup
 from sgrequests import SgRequests
 from sgselenium import SgChrome
-from sgselenium import SgChrome
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as EC
 from lxml import html
 import csv
 import re
