@@ -1,7 +1,7 @@
 from sgscrape import simple_scraper_pipeline as sp
 from sglogging import SgLogSetup
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
-from sgselenium import SgChrome, SgFirefox
+from sgselenium import SgChrome
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
