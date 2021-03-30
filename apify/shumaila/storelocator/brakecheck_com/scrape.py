@@ -1,6 +1,9 @@
 import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger("brakecheck_com")
 
 
 session = SgRequests()
@@ -41,6 +44,7 @@ def fetch_data():
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36"
     }
     data = []
+    titlelist = []
     addr = [
         "lat=29.5330493&lng=-98.78116449999999",
         "lat=30.2228447&lng=-97.74735720000001",
@@ -78,6 +82,10 @@ def fetch_data():
             )
             if "San Antonio Store 438" in title:
                 hours_of_operation = "Mon - Sat: 7:30am - 6pm, Sun: 9am - 5pm"
+            if pageurl in titlelist:
+                continue
+            else:
+                titlelist.append(pageurl)
             data.append(
                 [
                     "www.brakecheck.com",
