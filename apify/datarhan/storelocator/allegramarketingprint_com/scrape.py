@@ -82,6 +82,9 @@ def fetch_data():
         hoo = store_dom.xpath('//div[@class="oprationalHours"]//text()')
         hoo = [elem.strip() for elem in hoo if elem.strip()]
         hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
+        hours_of_operation = hours_of_operation.replace(
+            "Hours of Operation Days Hours ", ""
+        )
 
         item = [
             DOMAIN,

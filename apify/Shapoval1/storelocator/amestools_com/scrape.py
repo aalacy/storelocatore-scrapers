@@ -70,7 +70,7 @@ def fetch_data():
         city = a.city or "<MISSING>"
         state = a.state or "<MISSING>"
         country_code = "US"
-        if state == "AB" or state == "BC" or state == "MB":
+        if state == "AB" or state == "BC" or state == "MB" or state == "ON":
             country_code = "CA"
         postal = a.postcode or "<MISSING>"
         store_number = "<MISSING>"
