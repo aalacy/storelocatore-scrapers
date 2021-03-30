@@ -1,9 +1,6 @@
 import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger("brakecheck_com")
 
 
 session = SgRequests()
