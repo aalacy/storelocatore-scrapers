@@ -47,6 +47,7 @@ def fetch_data():
                 _.find_next_sibling("iframe")["src"]
                 .split("!2d")[1]
                 .split("!3m")[0]
+                .split("!2m")[0]
                 .split("!3d")
             )
             street_address, city, state, zip_postal = _addr(addr)
@@ -57,8 +58,8 @@ def fetch_data():
                 city=city,
                 state=state,
                 zip_postal=zip_postal,
-                latitude=coord[0],
-                longitude=coord[1],
+                latitude=coord[1],
+                longitude=coord[0],
                 country_code="US",
                 phone=_phone(soup, street_address, state),
                 hours_of_operation=siblings[1].text.replace("Hours", "").strip(),
