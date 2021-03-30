@@ -12,7 +12,6 @@ import json
 def fetch_data():
     logzilla = SgLogSetup().get_logger(logger_name="chanel_com__en___gb")
     url = "https://services.chanel.com/en_GB/storelocator/crp/@{lat},{lng},10z/?"
-
     search = DynamicGeoSearch(
         country_codes=[SearchableCountries.BRITAIN],
         max_radius_miles=15,
