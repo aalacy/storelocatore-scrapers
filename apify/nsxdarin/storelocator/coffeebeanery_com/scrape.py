@@ -71,8 +71,11 @@ def fetch_data():
         except:
             zc = "<MISSING>"
         store = item["id"]
-        if item["country"] == "Guam":
-            state = "Guam"
+        try:
+            if item["country"] == "Guam":
+                state = "Guam"
+        except:
+            pass
         hours = hours.replace("\r", "").replace(" :", ":")
         yield [
             website,
