@@ -2,14 +2,9 @@ import csv
 
 from bs4 import BeautifulSoup
 
-from selenium.common.exceptions import TimeoutException
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support import expected_conditions as ec
-from selenium.webdriver.support.ui import WebDriverWait
-
 from sglogging import sglog
 
-from sgselenium import SgChrome
+from sgrequests import SgRequests
 
 log = sglog.SgLogSetup().get_logger(logger_name="landrover.co.uk")
 
@@ -46,130 +41,90 @@ def write_output(data):
 
 def fetch_data():
 
-    driver = SgChrome().chrome()
+    base_link = (
+        "https://www.landrover.co.uk/retailers/retailer-opening-information.html"
+    )
+
+    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
+    headers = {"User-Agent": user_agent}
+
+    session = SgRequests()
+    req = session.get(base_link, headers=headers)
+    base = BeautifulSoup(req.text, "lxml")
 
     data = []
     found_poi = []
-    restart_driver = False
 
     locator_domain = "landrover.co.uk"
 
-    cities = ["london", "plymouth", "swansea", "manchester", "carlisle", "inverness"]
-    for num, i in enumerate(cities):
-        base_link = (
-            "https://www.landrover.co.uk/national-dealer-locator.html?placeName=%s&radius=100&filter=All"
-            % i
-        )
+    items = base.find_all(class_="tg-yseo")
 
-        if not restart_driver and num > 2:
-            restart_driver = True
-            driver.close()
-            driver = SgChrome().chrome()
+    for item in items:
+        link = item.a["href"]
+        log.info(link)
 
-        log.info(base_link)
-        driver.get(base_link)
+        req = session.get(link, headers=headers)
+        base = BeautifulSoup(req.text, "lxml")
 
-        base = BeautifulSoup(driver.page_source, "lxml")
+        location_name = base.h1.text.strip()
+        if "page not found" in location_name.lower():
+            continue
+        try:
+            base.find(class_="retailerContact__address1").text
+        except:
+            continue
+
+        street_address = (
+            base.find(class_="retailerContact__address1").text
+            + " "
+            + base.find(class_="retailerContact__address2").text
+        ).strip()
+        city = base.find(class_="retailerContact__locality").text.strip()
+        state = "<MISSING>"
+        zip_code = base.find(class_="retailerContact__postcode").text.strip()
+        country_code = "GB"
 
         try:
-            WebDriverWait(driver, 50).until(
-                ec.presence_of_element_located((By.CLASS_NAME, "cardTitle"))
-            )
-        except TimeoutException:
-            driver.close()
-            driver = SgChrome().chrome()
+            store_number = base.find(class_="primaryLinkWithStyle TargetLinks")[
+                "href"
+            ].split("dealerci=")[1]
+        except:
+            store_number = "<MISSING>"
+        location_type = "<MISSING>"
 
-            driver.get(base_link)
-
-            base = BeautifulSoup(driver.page_source, "lxml")
-
-            WebDriverWait(driver, 50).until(
-                ec.presence_of_element_located((By.CLASS_NAME, "cardTitle"))
-            )
-
-        items = base.find_all(class_="infoCardDealer infoCard")
-
-        for item in items:
-            location_name = item.find(
-                class_="dealerNameText fontBodyCopyLarge"
-            ).text.strip()
-
-            try:
-                link = item.find(class_="primaryLinkWithStyle")["href"]
-
-                if link in found_poi:
-                    continue
-                found_poi.append(link)
-            except:
-                link = "<MISSING>"
-
-            raw_address = item.find(class_="addressText").text.split(",")
-            zip_code = raw_address[-1].strip()
-
-            if len(raw_address[:-1]) == 3:
-                street_address = raw_address[0].strip()
-                city = raw_address[1].strip()
-                state = raw_address[2].strip()
-
-            elif len(raw_address[:-1]) == 2:
-                street_address = raw_address[0].strip()
-                city = "<MISSING>"
-                state = raw_address[1].strip()
-
-            elif len(raw_address[:-1]) == 1:
-                street_address = raw_address[0].strip()
-                city = "<MISSING>"
-                state = "<MISSING>"
-
-            elif len(raw_address[:-1]) > 3:
-                street_address = " ".join(raw_address[:-3]).strip().replace("  ", " ")
-                city = raw_address[-3].strip()
-                state = raw_address[-2].strip()
-
-            if location_name + street_address in found_poi:
-                continue
-            found_poi.append(location_name + street_address)
-
-            country_code = "GB"
-            store_number = item["data-ci-code"]
-
-            try:
-                location_type = ", ".join(
-                    list(item.find(class_="services").stripped_strings)
-                ).replace(
-                    "LAND ROVER TO YOU, Too busy to come to us?, Try Land Rover to You",
-                    "LAND ROVER TO YOU",
-                )
-            except:
-                location_type = "<MISSING>"
-
-            try:
-                phone = item.find(class_="phoneNumber").text.strip()
-            except:
+        try:
+            phone = base.find(class_="tel").text.strip()
+            if not phone:
                 phone = "<MISSING>"
-            hours_of_operation = "INACCESSIBLE"
-            latitude = item["data-lat"]
-            longitude = item["data-lng"]
+        except:
+            phone = "<MISSING>"
 
-            data.append(
-                [
-                    locator_domain,
-                    link,
-                    location_name,
-                    street_address,
-                    city,
-                    state,
-                    zip_code,
-                    country_code,
-                    store_number,
-                    phone,
-                    location_type,
-                    latitude,
-                    longitude,
-                    hours_of_operation,
-                ]
-            )
-    driver.close()
+        if location_name + street_address in found_poi:
+            continue
+        found_poi.append(location_name + street_address)
+
+        hours_of_operation = " ".join(list(base.table.stripped_strings))
+        latitude = base.find(class_="retailerContact")["data-lat"]
+        longitude = base.find(class_="retailerContact")["data-long"]
+
+        data.append(
+            [
+                locator_domain,
+                link,
+                location_name,
+                street_address,
+                city,
+                state,
+                zip_code,
+                country_code,
+                store_number,
+                phone,
+                location_type,
+                latitude,
+                longitude,
+                hours_of_operation,
+            ]
+        )
     return data
 
 

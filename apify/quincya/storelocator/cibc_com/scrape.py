@@ -120,6 +120,9 @@ def fetch_data():
                         except:
                             hours_of_operation = "<MISSING>"
 
+                    if "closed branch" in hours_of_operation.lower():
+                        hours_of_operation = "<MISSING>"
+
                     latitude = lats[i].split(":")[-1]
                     longitude = lons[i].split(":")[-1]
 
@@ -225,6 +228,9 @@ def fetch_data():
                 .replace("Lobby Hours", "")
                 .strip()
             )
+
+            if "closed branch" in hours_of_operation.lower():
+                hours_of_operation = "<MISSING>"
 
             latitude = "<MISSING>"
             longitude = "<MISSING>"

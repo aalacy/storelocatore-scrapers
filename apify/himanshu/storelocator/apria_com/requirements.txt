@@ -1,6 +1,3 @@
-lxml==4.3.4
-beautifulsoup4==4.7.1
 sgrequests
+sgzip
 sglogging
-phonenumbers
-sgzip==0.0.55

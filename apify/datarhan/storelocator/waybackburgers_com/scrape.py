@@ -50,6 +50,11 @@ def fetch_data():
     for poi in all_locations:
         store_url = poi.xpath("@data-order_online_url")
         store_url = store_url[0] if store_url[0].strip() else "<MISSING>"
+        if store_url == "<MISSING>":
+            store_url = (
+                "https://waybackburgers.com/locations/#location_"
+                + poi.xpath("@data-id")[0]
+            )
         location_name = poi.xpath("@data-name")
         location_name = (
             urllib.parse.unquote(location_name[0]) if location_name else "<MISSING>"
@@ -76,9 +81,13 @@ def fetch_data():
         phone = urllib.parse.unquote(phone[0]) if phone else "<MISSING>"
         location_type = "<MISSING>"
         latitude = poi.xpath("@data-geo_latitude")
-        latitude = latitude[0] if latitude else "<MISSING>"
+        latitude = (
+            latitude[0] if latitude and latitude[0] != "0.000000" else "<MISSING>"
+        )
         longitude = poi.xpath("@data-geo_longitude")
-        longitude = longitude[0] if longitude else "<MISSING>"
+        longitude = (
+            longitude[0] if longitude and longitude[0] != "0.000000" else "<MISSING>"
+        )
         hours_of_operation = urllib.parse.unquote(poi.xpath("@data-hours")[0])
         hours_html = etree.HTML(hours_of_operation)
         hours_of_operation = " ".join(hours_html.xpath(".//text()"))

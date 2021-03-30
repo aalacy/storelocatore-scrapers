@@ -1,4 +1,7 @@
 import csv
+import json
+
+from lxml import html
 from sgrequests import SgRequests
 
 
@@ -33,36 +36,52 @@ def write_output(data):
 
 def fetch_data():
     out = []
-    url = "https://www.affordabledentures.com/"
-    api_url = "https://www.affordabledentures.com/locations.json"
+    locator_domain = "https://www.affordabledentures.com/"
+    api_url = "https://www.affordabledentures.com/locations"
 
     session = SgRequests()
     r = session.get(api_url)
-    js = r.json()["serviceAreas"]["serviceArea"]
+    tree = html.fromstring(r.text)
+    text = "".join(
+        tree.xpath(
+            "//script[contains(text(), 'window.Launchpad.Map.Locations =')]/text()"
+        )
+    )
+    text = text.split("window.Launchpad.Map.Locations =")[-1].strip()[:-1]
+    js = json.loads(text)
 
     for j in js:
-        locator_domain = url
-        street_address = j.get("_address") or "<MISSING>"
-        city = j.get("_city") or "<MISSING>"
-        state = j.get("_state") or "<MISSING>"
-        postal = j.get("_zip") or "<MISSING>"
+        a = j.get("Address")
+        street_address = (
+            f'{a.get("Address1")} {a.get("Address2") or ""}'.strip() or "<MISSING>"
+        )
+        city = a.get("City") or "<MISSING>"
+        state = a.get("State", {}).get("Abbreviation") or "<MISSING>"
+        postal = a.get("Zipcode") or "<MISSING>"
+        if len(postal) == 4:
+            postal = f"0{postal}"
         country_code = "US"
-        store_number = j.get("_externalId") or "<MISSING>"
-        page_url = f'https://www.affordabledentures.com{j.get("_url")}'
-        location_name = j.get("_name") or "<MISSING>"
-        phone = j.get("_phone") or "<MISSING>"
-        latitude = j.get("_lat") or "<MISSING>"
-        longitude = j.get("_lng") or "<MISSING>"
+        store_number = j.get("PracticeId") or "<MISSING>"
+        page_url = f'https://www.affordabledentures.com{j.get("Url")}'
+        location_name = j.get("Title") or "<MISSING>"
+        phone = j.get("Phone") or "<MISSING>"
+        latitude = a.get("Latitude") or "<MISSING>"
+        longitude = a.get("Longitude") or "<MISSING>"
         location_type = "<MISSING>"
 
         _tmp = []
-        hours = j.get("_hours", {}) or {}
+        hours = j.get("Hours", {}) or {}
         for k, v in hours.items():
-            _tmp.append(f"{k.capitalize()}: {v}")
+            start = v.get("From")
+            close = v.get("To")
+            if start:
+                _tmp.append(f"{k.capitalize()}: {start} - {close}")
+            else:
+                _tmp.append(f"{k.capitalize()}: Closed")
 
         hours_of_operation = ";".join(_tmp) or "<MISSING>"
         if hours_of_operation.count("Closed") == 7:
-            continue
+            hours_of_operation = "Closed"
 
         row = [
             locator_domain,

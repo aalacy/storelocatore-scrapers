@@ -11,6 +11,7 @@ def write_output(data):
             output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
         )
 
+        # Header
         writer.writerow(
             [
                 "locator_domain",
@@ -29,7 +30,7 @@ def write_output(data):
                 "page_url",
             ]
         )
-
+        # Body
         for row in data:
             writer.writerow(row)
 
@@ -151,10 +152,6 @@ def fetch_data():
         if store[2] in addressess:
             continue
         addressess.append(store[2])
-        store = [
-            x.encode("ascii", "ignore").decode("ascii").strip() if type(x) == str else x
-            for x in store
-        ]
         yield store
 
 

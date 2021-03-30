@@ -182,7 +182,7 @@ def fetch_data():
                     "https://www.medicap.com/",
                     link,
                     title,
-                    street,
+                    street.replace(" None", ""),
                     city,
                     state,
                     pcode,

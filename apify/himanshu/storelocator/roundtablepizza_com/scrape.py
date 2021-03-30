@@ -11,7 +11,6 @@ def write_output(data):
             output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
         )
 
-        # Header
         writer.writerow(
             [
                 "locator_domain",
@@ -30,7 +29,7 @@ def write_output(data):
                 "page_url",
             ]
         )
-        # Body
+
         for row in data:
             writer.writerow(row)
 
@@ -52,11 +51,12 @@ def fetch_data():
     ):
         name = dt["data-name"]
         address = dt["data-address1"]
-        city = dt["data-address2"].split(",")[0].strip().split("  ")[0]
-        state = dt["data-address2"].split(",")[0].strip().split("  ")[1]
-        temp_zip = dt["data-address2"].split(",")[1]
+        address2 = dt["data-address2"].replace(", CA   CA", "  CA")
+        city = address2.split(",")[0].strip().split("  ")[0]
+        state = address2.split(",")[0].strip().split("  ")[1]
+        temp_zip = address2.split(",")[1]
         if len(temp_zip) > 1:
-            zip = dt["data-address2"].split(",")[1]
+            zip = address2.split(",")[1]
         else:
             zip = "<MISSING>"
         if dt["data-phone"] == "":
@@ -75,6 +75,7 @@ def fetch_data():
             page_url = dt["data-url"]
         else:
             page_url = "<MISSING>"
+        hours_of_operation = "<INACCESIBLE>"
 
         store = []
         store.append(base_url)
@@ -89,7 +90,7 @@ def fetch_data():
         store.append("Restaurant")
         store.append(latitude)
         store.append(longitude)
-        store.append("<MISSING>")
+        store.append(hours_of_operation)
         store.append(page_url)
         if store[2] in addresses:
             continue

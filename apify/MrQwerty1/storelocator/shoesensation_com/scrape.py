@@ -153,8 +153,9 @@ def fetch_data():
                 hours_of_operation,
             ]
 
-            if store_number not in s and hours_of_operation.count("Closed") != 7:
-                s.add(store_number)
+            _id = (store_number, page_url)
+            if _id not in s:
+                s.add(_id)
                 out.append(row)
 
         if len(js) < 35:

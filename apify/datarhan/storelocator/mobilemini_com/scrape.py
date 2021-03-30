@@ -77,17 +77,13 @@ def fetch_data():
             '//a[@class="paragraph_link" and contains(@href, "tel")]/text()'
         )
         phone = phone[0].strip() if phone else "<MISSING>"
-        print(store_url)
         with SgFirefox() as driver:
             driver.get(store_url)
             driver_r = etree.HTML(driver.page_source)
-        geo_data = driver_r.xpath('//a[contains(@href, "maps.google")]/@href')
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
-        if geo_data:
-            geo_data = geo_data[0].split("=")[1].split("&")[0]
-            latitude = geo_data.split(",")[0]
-            longitude = geo_data.split(",")[-1]
+        latitude = driver_r.xpath("//@data-lat")
+        latitude = latitude[0] if latitude else "<MISSING>"
+        longitude = driver_r.xpath("//@data-lng")
+        longitude = longitude[0] if longitude else "<MISSING>"
         location_type = "<MISSING>"
         hours_of_operation = loc_dom.xpath('//div[@class="office-hours"]//text()')
         hours_of_operation = [

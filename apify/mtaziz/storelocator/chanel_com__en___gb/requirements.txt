@@ -1,0 +1,5 @@
+sglogging==0.0.4
+sgscrape==0.0.23
+sgselenium==0.0.15
+sgvalidator==0.0.71
+sgzip==0.3.1

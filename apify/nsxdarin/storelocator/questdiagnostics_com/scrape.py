@@ -1,223 +1,200 @@
-import string
 import csv
-from sgrequests import SgRequests
-import json
-import sgzip
-import time
+import string
 import random
-from requests_toolbelt.utils import dump
+import threading
+from http import HTTPStatus
 from sglogging import SgLogSetup
+from sgrequests import SgRequests
+from tenacity import retry, stop_after_attempt
+from sgzip.dynamic import SearchableCountries
+from sgzip.static import static_coordinate_list
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
-logger = SgLogSetup().get_logger('questdiagnostics_com')
+logger = SgLogSetup().get_logger("questdiagnostics_com")
+local = threading.local()
 
-
-
-session = SgRequests()
-
-get_headers = {
-    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
-    'Accept-Encoding': 'gzip, deflate, br',
-    'Accept-Language': 'en-US,en;q=0.9,la;q=0.8',
-    'Connection': 'keep-alive',
-    'Sec-Fetch-Dest': 'document',
-    'Sec-Fetch-Mode': 'navigate',
-    'Sec-Fetch-Site': 'none',
-    'Upgrade-Insecure-Requests': '1',
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
+headers = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36",
 }
 
-post_headers = {
-    'Accept': 'application/json, text/plain, */*',
-    'Accept-Encoding': 'gzip, deflate, br',
-    'Accept-Language': 'en-US,en;q=0.9,la;q=0.8',
-    'Connection': 'keep-alive',
-    'Content-Type': 'application/json',
-    'Host': 'appointment.questdiagnostics.com',
-    'Origin': 'https://appointment.questdiagnostics.com',
-    'Referer': 'https://appointment.questdiagnostics.com/patient/findlocation',
-    'Sec-Fetch-Dest': 'empty',
-    'Sec-Fetch-Mode': 'cors',
-    'Sec-Fetch-Site': 'same-origin',
-    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.61 Safari/537.36'
-}
+FIELDS = [
+    "locator_domain",
+    "page_url",
+    "location_name",
+    "street_address",
+    "city",
+    "state",
+    "zip",
+    "country_code",
+    "store_number",
+    "phone",
+    "location_type",
+    "latitude",
+    "longitude",
+    "hours_of_operation",
+]
 
 
-def debug(response):
-    data = dump.dump_all(response)
-    logger.info(data.decode('utf-8'))
+def get_session():
+    if not hasattr(local, "session") or local.request_count == 10:
+        local.session = SgRequests()
+        local.request_count = 0
+        set_session_cookies(local.session)
 
-
-def sleep(min=1, max=3):
-    duration = random.randint(min, max)
-    time.sleep(duration)
+    return local.session
 
 
 def get_random_string(stringLength=34):
     lettersAndDigits = string.ascii_lowercase + string.digits
-    return ''.join((random.choice(lettersAndDigits) for i in range(stringLength)))
+    return "".join((random.choice(lettersAndDigits) for i in range(stringLength)))
 
 
-def setCookie(session, domain, name, value):
-  if domain is None:
-    cookie_obj = session.cookies.set(name=name, value=value)
-  else:
-    cookie_obj = session.cookies.set(domain=domain, name=name, value=value)
-  session.cookies.set_cookie(cookie_obj)
+def setCookie(current_session, domain, name, value):
+    cookie = current_session.cookies.set(domain=domain, name=name, value=value)
+    current_session.cookies.set_cookie(cookie)
 
 
-def get_f5_cookie(response):
-    # this cookie isn't persisted between requests for some reason
-    #   maybe because it's marked HttpOnly?
-    f5_cookie = None
-    for cookie in response.cookies:
-        # logger.info(cookie)
-        if cookie.name.startswith('f5'):
-            f5_cookie = (cookie.name, response.cookies.get(cookie.name))
-            # logger.info('f5_cookie found: ', f5_cookie)
-    return f5_cookie
-
-
-def visit_search_page():
-    # start with search page to populate cookies
-    url_home = 'https://appointment.questdiagnostics.com/patient/findlocation'
-    r = session.get(url_home, headers=get_headers)
-    r.raise_for_status()
-    return r
-
-
-def populate_demyq_cookie(previous_response):
+def set_session_cookies(session):
     # this request is required in order to get the "demyq" cookie, otherwise 401 unauthorized
-
     csrf_token = get_random_string()
-    setCookie(session.session, 'appointment.questdiagnostics.com',
-              'CSRF-TOKEN', csrf_token)
+    current_session = session.get_session()
+    setCookie(
+        current_session, "appointment.questdiagnostics.com", "CSRF-TOKEN", csrf_token
+    )
 
-    f5_cookie = get_f5_cookie(previous_response)
-    if f5_cookie:
-        setCookie(session.session, 'appointment.questdiagnostics.com',
-                  f5_cookie[0], f5_cookie[1])
+    headers["X-CSRF-TOKEN"] = csrf_token
+    headers["Content-Length"] = "125"
+    url_encounter = (
+        "https://appointment.questdiagnostics.com/mq-service/asone/encounter"
+    )
 
-    post_headers['X-CSRF-TOKEN'] = csrf_token
-    post_headers['Content-Length'] = '2'
-    url_encounter = 'https://appointment.questdiagnostics.com/mq-service/asone/encounter'
-    r = session.session.put(url_encounter, data='{}', headers=post_headers)
-    r.raise_for_status()
-
-
-def init_session():
-    r = visit_search_page()
-    sleep()
-    populate_demyq_cookie(r)
+    session.put(url_encounter, data="{}", headers=headers)
+    session.get(
+        "https://appointment.questdiagnostics.com/as-service/services/redirectBeta"
+    )
+    session.get(
+        "https://appointment.questdiagnostics.com/as-service/services/maintenance"
+    )
+    session.get("https://appointment.questdiagnostics.com/mq-service/session/user")
 
 
 def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',',
-                            quotechar='"', quoting=csv.QUOTE_ALL)
-        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip",
-                         "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+    with open("data.csv", mode="w") as output_file:
+        writer = csv.writer(
+            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+        )
+        writer.writerow(FIELDS)
         for row in data:
             writer.writerow(row)
 
 
+def extract(loc):
+    name = loc["name"]
+    address = loc["address"]
+    if loc["address2"]:
+        address = f"{address}, {loc['address2']}"
+    city = loc["city"]
+    state = loc["state"]
+    postal = loc["zip"]
+    phone = loc["phone"]
+    store_num = loc["siteCode"]
+    hours = loc["hoursOfOperations"]
+    if "; Drug" in hours:
+        hours = hours.split("; Drug")[0]
+    if "Sa" not in hours:
+        hours = hours + "; Sa: Closed"
+    if "Sun" not in hours:
+        hours = hours + "; Su: Closed"
+    lat = loc["latitude"]
+    lng = loc["longitude"]
+
+    typ = loc["locationType"]
+    if typ == " ":
+        typ = "<MISSING>"
+    country = "US"
+
+    return {
+        "locator_domain": "questdiagnostics.com",
+        "store_number": store_num,
+        "location_name": name,
+        "street_address": address,
+        "city": city,
+        "state": state,
+        "zip": postal,
+        "country_code": country,
+        "latitude": lat,
+        "longitude": lng,
+        "phone": phone,
+        "hours_of_operation": hours,
+        "location_type": "<MISSING>",
+        "page_url": "<MISSING>",
+    }
+
+
+MAX_COUNT = 1500
+MAX_DISTANCE = 100
+
+
+@retry(stop=stop_after_attempt(3))
+def fetch(lat, lng):
+    payload = {
+        "miles": MAX_DISTANCE,
+        "address": {},
+        "latitude": lat,
+        "longitude": lng,
+        "maxReturn": MAX_COUNT,
+        "onlyScheduled": "false",
+        "accessType": [],
+    }
+
+    url = (
+        "https://appointment.questdiagnostics.com/as-service/services/getQuestLocations"
+    )
+
+    response = get_session().post(
+        url, json=payload, headers=headers, stream=True, timeout=15
+    )
+    local.request_count += 1
+
+    if response.status_code == HTTPStatus.NO_CONTENT:
+        return None
+
+    return response.json()
+
+
 def fetch_data():
-    ids = []
+    completed = 0
+    dedup_tracker = []
 
-    search = sgzip.ClosestNSearch() # TODO: OLD VERSION [sgzip==0.0.55]. UPGRADE IF WORKING ON SCRAPER!
-    search.initialize()
-    coord = search.next_coord()
+    search = static_coordinate_list(100, SearchableCountries.USA)
+    search += static_coordinate_list(30, SearchableCountries.CANADA)
 
-    MAX_COUNT = 100
-    MAX_DISTANCE = 100
+    with ThreadPoolExecutor() as executor:
+        futures = [executor.submit(fetch, lat, lng) for lat, lng in search]
 
-    url = 'https://appointment.questdiagnostics.com/as-service/services/getQuestLocations'
+        for future in as_completed(futures):
+            completed += 1
+            try:
+                locations = future.result()
 
-    while coord:
-        x = float(coord[0])
-        y = float(coord[1])
-        x = str(round(x, 2))
-        y = str(round(y, 2))
-        # logger.info('searching coords: %s - %s ...' % (str(x), str(y)))
+                if not locations:
+                    continue
 
-        locations = []
-        result_coords = []
-        search_request_count = 0
+                for loc in locations:
+                    poi = extract(loc)
+                    id = poi.get("store_number")
 
-        # switch IPs every 7 requests
-        if search_request_count % 7 == 0:
-            init_session()
+                    if id not in dedup_tracker:
+                        dedup_tracker.append(id)
+                        yield [poi[field] for field in FIELDS]
 
-        sleep()
-        f5_cookie = None
-        payload = '{"miles":100,"address":{},"latitude":' + str(x) + ',"longitude":' + str(
-            y) + ',"serviceType":["all"],"maxReturn":100,"onlyScheduled":"false","accessType":[],"questDirect":false}'
-        payload = json.loads(payload)
-        payload_string = json.dumps(payload)
+                logger.info(
+                    f"locations found: {len(dedup_tracker)} | currently pulling: {len(locations)} | remaining postals: {completed}/{len(search)}"
+                )
+            except:
+                pass
 
-        csrf_token = get_random_string()
-        setCookie(session.session, 'appointment.questdiagnostics.com',
-                  'CSRF-TOKEN', csrf_token)
-        post_headers['X-CSRF-TOKEN'] = csrf_token
-
-        if f5_cookie:
-            setCookie(session.session, 'appointment.questdiagnostics.com',
-                      f5_cookie[0], f5_cookie[1])
-
-        post_headers['Content-Length'] = str(len(payload_string))
-        r = session.post(url, data=payload_string, headers=post_headers)
-        r.raise_for_status()
-        f5_cookie = get_f5_cookie(r)
-        search_request_count = search_request_count + 1
-        try:
-            locations = r.json()
-        except json.decoder.JSONDecodeError as err:
-            if r.status_code == 204:
-                # logger.info(f'no locations found')
-                search.max_distance_update(MAX_DISTANCE)
-                coord = search.next_coord()
-                continue
-            else:
-                raise
-        except Exception:
-            raise
-
-        # logger.info(f'found {len(locations)} locations')
-        # logger.info("remaining zipcodes: " + str(search.zipcodes_remaining()))
-
-        for loc in locations:
-            domain = 'questdiagnostics.com'
-            name = loc['name']
-            address = loc['address']
-            if loc['address2']:
-                address = f"{address}, {loc['address2']}"
-            city = loc['city']
-            state = loc['state']
-            zc = loc['zip']
-            phone = loc['phone']
-            store_num = loc['siteCode']
-            hours = loc['hoursOfOperations']
-
-            lat = loc['latitude']
-            lng = loc['longitude']
-            result_coords.append((lat, lng))
-
-            typ = loc['locationType']
-            if typ == " ":
-                typ = '<MISSING>'
-            country = 'US'
-            lurl = '<MISSING>'
-
-            if store_num not in ids:
-                ids.append(store_num)
-                # logger.info(f'Pulling Location: {store_num} ...')
-                poi = [domain, lurl, name, address, city, state, zc,
-                       country, store_num, phone, typ, lat, lng, hours]
-                poi = [str(x).encode('ascii', 'ignore').decode(
-                    'ascii').strip() if x else "<MISSING>" for x in poi]
-                yield poi
-
-        search.max_count_update(result_coords)
-        coord = search.next_coord()
+    logger.info(f"total locations: {len(dedup_tracker)}")
 
 
 def scrape():

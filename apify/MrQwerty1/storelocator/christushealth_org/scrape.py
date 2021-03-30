@@ -33,7 +33,6 @@ def write_output(data):
 
 def fetch_data():
     out = []
-    s = set()
     url = "https://christushealth.org/"
     api_url = "https://christushealth.org/~/locations/%7BFA392008-735A-4839-B72D-2E06304BCB4C%7D.ashx"
 
@@ -58,6 +57,8 @@ def fetch_data():
             store_number = "<MISSING>"
             page_url = f'https://christushealth.org{l.get("detailLink")}'
             location_name = l.get("name") or "<MISSING>"
+            if "-" in location_name:
+                location_name = location_name.split("-")[0].strip()
             phone = l.get("phone") or "<MISSING>"
             latitude = j.get("lat") or "<MISSING>"
             longitude = j.get("lng") or "<MISSING>"
@@ -81,10 +82,7 @@ def fetch_data():
                 hours_of_operation,
             ]
 
-            check = tuple(row[2:6])
-            if check not in s:
-                s.add(check)
-                out.append(row)
+            out.append(row)
 
     return out
 

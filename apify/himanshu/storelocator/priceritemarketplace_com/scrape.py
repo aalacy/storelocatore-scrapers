@@ -46,6 +46,8 @@ def fetch_data():
     for val in json_data["items"]:
         if "(Coming soon)" in val["name"] or "(Coming Soon)" in val["name"]:
             continue
+        if "Dublin" in val["city"]:
+            continue
         store = []
         store.append(base_url if base_url else "<MISSING>")
         store.append(val["name"] if val["name"] else "<MISSING>")

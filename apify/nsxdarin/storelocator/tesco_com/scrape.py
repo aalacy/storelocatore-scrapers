@@ -1,11 +1,10 @@
 import csv
 import os
 from sgrequests import SgRequests
-import sgzip
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 from sglogging import SgLogSetup
 
 logger = SgLogSetup().get_logger('tesco_com')
-
 
 
 def write_output(data):
@@ -19,9 +18,6 @@ def write_output(data):
             writer.writerow(row)
 
 URL_TEMPLATE = 'https://api.tesco.com/tescolocation/v3/locations/search?offset=0&limit=100&sort=near:%22{},{}%22&filter=category:Store%20AND%20isoCountryCode:x-uk&fields=name,geo,openingHours,altIds.branchNumber,contact'
-
-search = sgzip.ClosestNSearch() # TODO: OLD VERSION [sgzip==0.0.55]. UPGRADE IF WORKING ON SCRAPER!
-search.initialize(country_codes = ['gb'])
 
 MAX_RESULTS = 100
 
@@ -76,13 +72,12 @@ def parse_hours(json_hours):
         parts.append(text)
     return ', '.join(parts)
 
+
 def fetch_data():
     keys = set()
-    locations = []
-    coord = search.next_coord()
-    while coord:
-        result_coords = []
-        logger.info("remaining zipcodes: " + str(search.zipcodes_remaining()))
+    search = DynamicGeoSearch(country_codes=[SearchableCountries.BRITAIN], max_search_results=MAX_RESULTS)
+    for coord in search:
+        logger.info("remaining zipcodes: " + str(search.items_remaining()))
         lat, lng = coord[0], coord[1]
         url = URL_TEMPLATE.format(lat, lng)
         response = session.get(url, headers=HEADERS).json()
@@ -90,7 +85,7 @@ def fetch_data():
         for store in stores:
             latitude = handle_missing(store['geo']['coordinates']['latitude'])
             longitude = handle_missing(store['geo']['coordinates']['longitude'])
-            result_coords.append((latitude, longitude))
+            search.found_location_at(latitude, longitude)
             store_number = handle_missing(store['altIds']['branchNumber'])
             key = store['id']
             if key in keys:
@@ -115,17 +110,12 @@ def fetch_data():
             hours_of_operation = '<MISSING>'
             if 'openingHours' in store:
                 hours_of_operation = parse_hours(store['openingHours'])
-            locations.append([locator_domain, page_url, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
-        if len(stores) <= MAX_RESULTS:
-            logger.info("max count update")
-            search.max_count_update(result_coords)
-        else:
-            raise Exception("expected at most " + MAX_RESULTS + " results")
-        coord = search.next_coord()
-    return locations
+            yield [locator_domain, page_url, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation]
 
 def scrape():
     data = fetch_data()
     write_output(data)
 
-scrape()
+
+if __name__ == "__main__":
+    scrape()

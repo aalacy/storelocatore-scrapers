@@ -1,90 +1,120 @@
 import csv
 from sgrequests import SgRequests
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup as bs
 import re
 import json
-import sgzip
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('ems_com')
-
-
 
 session = SgRequests()
 
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
-        # Body
+def write_output(data):
+    with open("data.csv", mode="w", newline="") as output_file:
+        writer = csv.writer(
+            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+        )
+        writer.writerow(
+            [
+                "locator_domain",
+                "location_name",
+                "street_address",
+                "city",
+                "state",
+                "zip",
+                "country_code",
+                "store_number",
+                "phone",
+                "location_type",
+                "latitude",
+                "longitude",
+                "hours_of_operation",
+                "page_url",
+            ]
+        )
         for row in data:
             writer.writerow(row)
 
+
 def fetch_data():
-    base_url ="https://www.ems.com"
-    return_main_object=[]
-    output=[]
-    addressess =[]
-    zps=sgzip.for_radius(100)
-    for zp in zps:
-        try:
-            r = session.get(base_url+"/on/demandware.store/Sites-EMS-Site/default/Stores-GetNearestStores?lat=&long=&countryCode=US&distanceUnit=mi&maxdistance=100&zipCode="+zp).json()
-        except:
+    base_url = "https://www.ems.com/find-a-store"
+    r = session.get(base_url)
+    soup = bs(r.text, "lxml")
+    soup_ = soup.find_all("script")[2]
+    for x in soup_:
+        soup_ = str(soup_)
+    soup_ = soup_.split('window.App["stores"]=')[1]
+    soup_ = soup_.replace("];</script>", "]")
+    for i in json.loads(soup_):
+        location_name = i["title"]
+
+        city = i["slug"].replace("-climbing-school", "")
+        state = i["addressRegion"]
+        street_address = (
+            re.sub(r"\s+", " ", i["address"])
+            .replace(", Hadley MA 01035", "")
+            .replace(", North Conway, NH 03860", "")
+            .replace(", North Conway, NH 03860", "")
+            .replace("Peterborough NH 03458", "")
+            .replace(" NY 12946", "")
+            .replace(", Warwick RI 02889", "")
+            .replace(
+                " ".join(
+                    [word.capitalize() for word in " ".join(city.split("-")).split(" ")]
+                ),
+                "",
+            )
+            .replace(" , MA, 01752", "")
+            .replace(state, "")
+        )
+
+        zipp = i["addressPostalCode"]
+        country_code = i["country"].replace("Un", "US")
+        store_number = i["legacyId"]
+        phone = i["telephone"]
+        location_type = "Eastern Mountain Sports"
+        latitude = i["coordinates"]["lat"]
+        longitude = i["coordinates"]["lng"]
+        page_url = "https://www.ems.com/stores/" + i["slug"].lower()
+        if i["communication"] == "Coming Soon!":
             continue
+        hours_of_operation = ""
+        hour = i["hoursOfOperation"]
+        for h in hour:
+            hours_of_operation = (
+                hours_of_operation
+                + " "
+                + h["day"]
+                + " "
+                + h["open"]
+                + " - "
+                + h["closed"]
+            )
+        store = []
+        if "753 Donald J. Lynch Boulevard Marlborough, MA, 01752" in street_address:
+            street_address = "753 Donald J. Lynch Boulevard Marlborough"
+        store.append("https://www.ems.com")
+        store.append(location_name if location_name else "<Missing>")
+        store.append(
+            street_address.replace(" , MA, 01752", "").replace(", Freeport ME", "")
+            if street_address
+            else "<Missing>"
+        )
+        store.append(city if city else "<Missing>")
+        store.append(state if state else "<Missing>")
+        store.append(zipp if zipp else "<Missing>")
+        store.append(country_code)
+        store.append(store_number if store_number else "<MISSING>")
+        store.append(phone if phone else "<Missing>")
+        store.append(location_type)
+        store.append(latitude)
+        store.append(longitude)
+        store.append(hours_of_operation if hours_of_operation else "<MISSING>")
+        store.append(page_url)
+        yield store
 
-        for i in r['stores']:
-            address=r['stores'][i]['address1'].strip()
-            if r['stores'][i]['address2']:
-                address+=' '+r['stores'][i]['address2'].strip()
-            page_url = "https://www.ems.com/store-details?StoreID="+str([i][-1])
-            # logger.info(page_url)
-            r1 = session.get(page_url)
-            soup1 = BeautifulSoup(r1.text, "lxml")
-            h1 = soup1.find("div",{"class":"store-info clearfix"}).find("div",{"class":"right"})
-            hours_of_operation = re.sub(r"\s+", " ", h1.text)
 
-            # logger.info(hours_of_operation)
-
-            # logger.info(r['stores'][i])
-            name=r['stores'][i]['name'].strip()
-            city=r['stores'][i]['city'].strip()
-            state=r['stores'][i]['stateCode'].strip()
-            zip=r['stores'][i]['postalCode'].strip()
-            phone=r['stores'][i]['phone'].strip()
-            country=r['stores'][i]['countryCode'].strip()
-            lat=r['stores'][i]['latitude'].strip()
-            lng=r['stores'][i]['longitude'].strip()
-            hour=r['stores'][i]['storeHours'].replace('<br />',' ').replace('<br>',' ').replace('<!--',' ').replace('-->',' ').strip()
-            hour=re.sub(r'\s+',' ',hour)
-            if "Hours" not in hour:
-                hour=''
-            storeno=i
-            store=[]
-            store.append(base_url)
-            store.append(name if name else "<MISSING>")
-            store.append(address if address else "<MISSING>")
-            store.append(city if city else "<MISSING>")
-            store.append(state if state else "<MISSING>")
-            store.append(zip if zip else "<MISSING>")
-            store.append(country if country else "<MISSING>")
-            store.append(storeno if storeno else "<MISSING>")
-            store.append(phone if phone else "<MISSING>")
-            store.append("<MISSING>")
-            store.append(lat if lat else "<MISSING>")
-            store.append(lng if lng else "<MISSING>")
-            store.append(hours_of_operation if hours_of_operation.strip() else "<MISSING>")
-            if store[2] in addressess:
-                continue
-            addressess.append(store[2])
-            store.append(page_url)
-            # adrr =name+' '+address + ' ' + city + ' ' + state + ' ' + zip
-            # if adrr not in output:
-            #     output.append(adrr)
-            yield store
-      
 def scrape():
     data = fetch_data()
     write_output(data)
+
+
 scrape()

@@ -1,5 +1,4 @@
 import csv
-import re
 
 from concurrent import futures
 from lxml import html
@@ -36,15 +35,25 @@ def write_output(data):
 
 
 def get_urls():
-    regex = r'js_site_path = "(\/.+\/.+\/.+)";'
+    urls = []
     session = SgRequests()
-    r = session.get("https://novusglass.com/ca/en/locations/")
-    return re.findall(regex, r.text)
+    start = [
+        "https://novusglass.com/us/en/all-locations/?us=yes",
+        "https://novusglass.com/us/en/all-locations/?canada=yes",
+    ]
+
+    for s in start:
+        r = session.get(s)
+        tree = html.fromstring(r.text)
+        urls += tree.xpath(
+            "//div[contains(@class,'letter letter')]/following-sibling::a/@href"
+        )
+
+    return urls
 
 
-def get_data(url):
+def get_data(page_url):
     locator_domain = "https://novusglass.com/"
-    page_url = f"https://novusglass.com{url}"
     session = SgRequests()
     r = session.get(page_url)
     tree = html.fromstring(r.text)
@@ -73,6 +82,10 @@ def get_data(url):
             country_code = "US"
         else:
             country_code = "CA"
+
+        if state == "Sorel":
+            city = state
+            state = "<MISSING>"
     else:
         street_address = "<MISSING>"
         city = "<MISSING>"

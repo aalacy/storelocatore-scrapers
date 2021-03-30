@@ -1,79 +1,193 @@
 import csv
-from sgrequests import SgRequests
-import json
-from sgzip import sgzip
+import time
+import random
+import threading
 from sglogging import SgLogSetup
+from sgrequests import SgRequests
+from sgzip.static import static_coordinate_list, SearchableCountries
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
-session = SgRequests()
-headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36',
-           'locale': 'en_US'
-           }
+local = threading.local()
+logger = SgLogSetup().get_logger("buick_com")
 
-logger = SgLogSetup().get_logger('buick_com')
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36",
+    "locale": "en_US",
+}
+
+MISSING = "<MISSING>"
+FIELDS = [
+    "locator_domain",
+    "page_url",
+    "location_name",
+    "street_address",
+    "city",
+    "state",
+    "zip",
+    "country_code",
+    "store_number",
+    "phone",
+    "location_type",
+    "latitude",
+    "longitude",
+    "hours_of_operation",
+]
+
+
+def sleep():
+    duration = random.randint(2, 5)
+    time.sleep(duration)
+
+
+def get_session(reset=False):
+    global local
+    if not hasattr(local, "session") or reset:
+        local.request_count = 0
+        local.session = SgRequests().requests_retry_session(retries=0)
+
+    return local.session
+
 
 def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+    with open("data.csv", mode="w") as output_file:
+        writer = csv.writer(
+            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+        )
+        writer.writerow(FIELDS)
         for row in data:
             writer.writerow(row)
 
+
+def get_hours(location):
+    hours = {}
+    days = [None, "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+    week_days = days[1:]
+
+    opening_hours = (
+        location.get("generalOpeningHour")
+        or location.get("serviceOpeningHour")
+        or location.get("partsOpeningHour")
+    )
+
+    if not opening_hours or not len(opening_hours):
+        return MISSING
+
+    for timeframe in opening_hours:
+        open_from = timeframe["openFrom"]
+        open_to = timeframe["openTo"]
+        for day in timeframe["dayOfWeek"]:
+            day_name = days[day]
+            hours[day_name] = f"{open_from}-{open_to}"
+
+    for day in week_days:
+        if day not in hours:
+            hours[day] = "Closed"
+
+    return ",".join(f"{day}: {hours[day]}" for day in week_days)
+
+
+def fetch_locations(coord, tracker, retry_count=0):
+    global local
+    lat, lng = coord
+
+    url = f"https://www.buick.com/OCRestServices/dealer/latlong/v1/buick/{lat}/{lng}"
+    params = {"distance": 500, "maxResults": 50}
+
+    try:
+        sleep()
+        result = (
+            get_session(retry_count > 0).get(url, params=params, headers=headers).json()
+        )
+        local.request_count += 1
+        if not result["payload"] or not result["payload"]["dealers"]:
+            return []
+
+        locations = result["payload"]["dealers"]
+        data = []
+        for location in locations:
+            store_number = location["id"]
+            if store_number in tracker:
+                continue
+
+            tracker.append(store_number)
+            locator_domain = "buick.com"
+            location_type = "Dealer"
+            location_name = location.get("dealerName", MISSING)
+            page_url = location.get("dealerUrl", MISSING)
+
+            address = location["address"]
+            street_address = address.get("addressLine1", MISSING)
+            city = address.get("cityName", MISSING)
+            state = address.get("countrySubdivisionCode", MISSING)
+            postal = address.get("postalCode", MISSING)
+            country_code = address.get("countryIso", MISSING)
+
+            geolocation = location["geolocation"]
+            latitude = geolocation.get("latitude", MISSING)
+            longitude = geolocation.get("longitude", MISSING)
+
+            contact = location["generalContact"]
+            phone = contact.get("phone1") or contact.get("phone2") or MISSING
+
+            hours_of_operation = get_hours(location)
+
+            data.append(
+                {
+                    "store_number": store_number,
+                    "locator_domain": locator_domain,
+                    "location_type": location_type,
+                    "location_name": location_name,
+                    "page_url": page_url,
+                    "street_address": street_address,
+                    "city": city,
+                    "state": state,
+                    "zip": postal,
+                    "country_code": country_code,
+                    "latitude": latitude,
+                    "longitude": longitude,
+                    "phone": phone,
+                    "hours_of_operation": hours_of_operation,
+                }
+            )
+        return data
+
+    except Exception as e:
+        if retry_count < 3:
+            return fetch_locations(coord, tracker, retry_count + 1)
+        logger.error(f"unable to fetch locations for {lat}, {lng} >>>> {e}")
+        return []
+
+
+def log(locations, completed, total):
+    if completed % 25 == 0 or completed == total:
+        logger.info(
+            f"locations found {locations} | items remaining: {completed}/{total}"
+        )
+
+
 def fetch_data():
-    ids = []
-    for coord in sgzip.coords_for_radius(50):
-        try:
-            x = coord[0]
-            y = coord[1]
-            url = 'https://www.buick.com/OCRestServices/dealer/latlong/v1/buick/' + x + '/' + y + '/?distance=500&filterByType=services&maxResults=50'
-            logger.info('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
-            r = session.get(url, headers=headers)
-            for line in r.iter_lines():
-                line = str(line.decode('utf-8'))
-                if '"id":' in line:
-                    items = line.split('"id":')
-                    for item in items:
-                        if '"dealerName":"' in item:
-                            name = item.split('"dealerName":"')[1].split('"')[0]
-                            store = item.split(',')[0]
-                            lat = item.split('"latitude":')[1].split(',')[0]
-                            lng = item.split('"longitude":')[1].split('}')[0]
-                            add = item.split('"addressLine1":"')[1].split('"')[0]
-                            if 'addressLine2' in item:
-                                add = add + ' ' + item.split('"addressLine2":"')[1].split('"')[0]
-                            city = item.split('"cityName":"')[1].split('"')[0]
-                            zc = item.split('"postalCode":"')[1].split('"')[0]
-                            state = item.split('"countrySubdivisionCode":"')[1].split('"')[0]
-                            country = item.split('"countryIso":"')[1].split('"')[0]
-                            phone = item.split('{"phone1":"')[1].split('"')[0]
-                            typ = 'Dealer'
-                            try:
-                                purl = item.split('"dealerUrl":"')[1].split('"')[0]
-                            except:
-                                purl = '<MISSING>'
-                            website = 'buick.com'
-                            hours = ''
-                            if '"generalOpeningHour":[' in item:
-                                hrs = item.split('"generalOpeningHour":[')[1].split('}],"serviceOpeningHour"')[0]
-                                days = hrs.split('"openFrom":"')
-                                for day in days:
-                                    if '"openTo":"' in day:
-                                        if hours == '':
-                                            hours = day.split('"dayOfWeek":[')[1].split(']')[0].replace('1','Mon').replace('2','Tue').replace('3','Wed').replace('4','Thu').replace('5','Fri').replace('6','Sat').replace('7','Sun') + ': ' + day.split('"')[0] + '-' + day.split('"openTo":"')[1].split('"')[0]
-                                        else:
-                                            hours = hours + '; ' + day.split('"dayOfWeek":[')[1].split(']')[0].replace('1','Mon').replace('2','Tue').replace('3','Wed').replace('4','Thu').replace('5','Fri').replace('6','Sat').replace('7','Sun') + ': ' + day.split('"')[0] + '-' + day.split('"openTo":"')[1].split('"')[0]
-                            else:
-                                hours = '<MISSING>'
-                            if len(zc) == 9:
-                                zc = zc[:5] + '-' + zc[-4:]
-                            if store not in ids:
-                                ids.append(store)
-                                logger.info('Pulling Store ID #%s...' % store)
-                                yield [website, purl, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
-        except:
-            pass
+    completed = 0
+    dedup_tracker = []
+    search = static_coordinate_list(radius=50, country_code=SearchableCountries.USA)
+
+    with ThreadPoolExecutor() as executor:
+        logger.info(f"starting {executor._max_workers} workers")
+        futures = [
+            executor.submit(fetch_locations, coord, dedup_tracker) for coord in search
+        ]
+
+        for future in as_completed(futures):
+            completed += 1
+            for location in future.result():
+                yield [location[field] for field in FIELDS]
+
+            log(len(dedup_tracker), completed, len(search))
+
 
 def scrape():
     data = fetch_data()
     write_output(data)
 
-scrape()
+
+if __name__ == "__main__":
+    scrape()

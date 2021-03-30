@@ -50,7 +50,6 @@ def get_data(_id):
     r = session.get(api_url)
     j = r.json()
 
-    page_url = f'https://www.laborfinders.com/locations/tx/alamo-ranch/{_id.replace(", ", "-")}/'
     location_name = j.get("Name").strip()
     street_address = (
         f"{j.get('Address1')} {j.get('Address2') or ''}".strip() or "<MISSING>"
@@ -59,6 +58,7 @@ def get_data(_id):
     state = j.get("State") or "<MISSING>"
     postal = j.get("PostalCode") or "<MISSING>"
     country_code = "US"
+    page_url = f'https://www.laborfinders.com/locations/{state}/{city}/{_id.replace(", ", "-")}/'
     store_number = "<MISSING>"
     phone = j.get("Phone") or "<MISSING>"
     geo = j.get("Coordinates", {}) or {}

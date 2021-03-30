@@ -62,7 +62,7 @@ def fetch_data():
                 '//a[@data-gaact="Click_to_Store_Details"]/@href'
             )
 
-    for url in all_locations:
+    for url in list(set(all_locations)):
         loc_response = session.get(url)
         loc_dom = etree.HTML(loc_response.text)
         store_data = loc_dom.xpath(
