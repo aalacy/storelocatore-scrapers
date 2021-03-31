@@ -45,8 +45,14 @@ def fetch_data():
     domain = "stlukescarenow.org"
     response = session.get(start_url)
     dom = etree.HTML(response.text)
-
     all_locations = dom.xpath('//div[@class="provider-name"]/a/@href')
+    next_page = dom.xpath('//a[@class="pagination-btn-next pagination-btn"]/@href')
+    while next_page:
+        response = session.get(urljoin(start_url, next_page[0]))
+        dom = etree.HTML(response.text)
+        all_locations += dom.xpath('//div[@class="provider-name"]/a/@href')
+        next_page = dom.xpath('//a[@class="pagination-btn-next pagination-btn"]/@href')
+
     for url in all_locations:
         store_url = urljoin(start_url, url)
         loc_response = session.get(store_url)

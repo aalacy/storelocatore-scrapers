@@ -1,6 +1,7 @@
 import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
+from lxml import etree
 import json
 
 
@@ -47,8 +48,8 @@ def fetch_data():
         headers=headers,
     )
     return_main_object = []
-    soup = BeautifulSoup(r.text, "lxml")
-    number_page = int(soup.find("span", {"class": "maxNumberOfPages"}).text)
+    dom = etree.HTML(r.text)
+    number_page = int(dom.xpath('//span[@class="maxNumberOfPages"]/text()')[0])
     for i in range(number_page):
         page_request = session.get(
             "https://www.thesource.ca/en-ca/store-finder?latitude=43.0&longitude=-79.0&q=&popupMode=false&page="

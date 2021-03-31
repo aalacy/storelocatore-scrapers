@@ -103,6 +103,13 @@ def fetch_data():
 
         if "Coming Soon" in hours_of_operation:
             continue
+        if "Monday  -, Tuesday  -, Wednesday  -" in hours_of_operation:
+            continue
+        if hours_of_operation.endswith("Sunday"):
+            hours_of_operation = hours_of_operation + " closed"
+        hours_of_operation = hours_of_operation.replace(
+            "Saturday  -,", "Saturday closed,"
+        )
 
         item = [
             DOMAIN,
