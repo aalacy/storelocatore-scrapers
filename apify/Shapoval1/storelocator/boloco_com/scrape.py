@@ -1,5 +1,4 @@
 import csv
-import re
 from lxml import html
 from sgrequests import SgRequests
 
