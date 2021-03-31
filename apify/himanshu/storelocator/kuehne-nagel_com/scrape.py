@@ -1,7 +1,6 @@
 import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as BS
-from geopy.geocoders import Nominatim
 import re
 
 session = SgRequests()
@@ -85,16 +84,8 @@ def fetch_data():
                         street_address = adr[0]
                         if "Water St 354" in street_address:
                             city = "St. John's"
-                        geolocator = Nominatim(user_agent="myGeocoder")
-                        location = geolocator.geocode(street_address)
-                        try:
-                            latitude = location.latitude
-                        except:
-                            latitude = "<MISSING>"
-                        try:
-                            longitude = location.longitude
-                        except:
-                            longitude = "<MISSING>"
+                        latitude = "<MISSING>"
+                        longitude = "<MISSING>"
 
                         phone = (
                             list(
@@ -193,16 +184,8 @@ def fetch_data():
                         street_address = adr[0]
                         if "Hall Wood Avenue" in street_address:
                             city = "St. Helens"
-                        geolocator = Nominatim(user_agent="myGeocoder")
-                        location = geolocator.geocode(street_address)
-                        try:
-                            latitude = location.latitude
-                        except:
-                            latitude = "<MISSING>"
-                        try:
-                            longitude = location.longitude
-                        except:
-                            longitude = "<MISSING>"
+                        latitude = "<MISSING>"
+                        longitude = "<MISSING>"
 
                         phone = (
                             list(
@@ -304,16 +287,8 @@ def fetch_data():
                         city = " ".join(adr[1].split()[1:])
                         street_address = adr[0]
 
-                        geolocator = Nominatim(user_agent="myGeocoder")
-                        location = geolocator.geocode(street_address + "," + city)
-                        try:
-                            latitude = location.latitude
-                        except:
-                            latitude = "<MISSING>"
-                        try:
-                            longitude = location.longitude
-                        except:
-                            longitude = "<MISSING>"
+                        latitude = "<MISSING>"
+                        longitude = "<MISSING>"
 
                         phone = (
                             list(
