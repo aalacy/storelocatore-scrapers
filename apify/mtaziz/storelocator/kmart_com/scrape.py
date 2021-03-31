@@ -1,16 +1,18 @@
 from bs4 import BeautifulSoup
 from sglogging import SgLogSetup
 from sgrequests import SgRequests
+from sgselenium import SgChrome
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as EC
 from lxml import html
 import csv
 import re
+import time
 
 logger = SgLogSetup().get_logger("kmart_com")
 
 session = SgRequests()
-headers = {
-    "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.90 Safari/537.36"
-}
 DOMAIN = "https://www.kmart.com/"
 
 
@@ -44,9 +46,46 @@ def write_output(data):
             writer.writerow(row)
 
 
+def special_cookie():
+    with SgChrome() as driver:
+        url_cookie = "https://www.kmart.com/stores.html"
+        headers = {}
+        headers["cookie"] = ""
+        headers[
+            "user-agent"
+        ] = "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.66 Safari/537.36"
+        driver.get(url_cookie)
+        xapth_cookie_acceptance = '//*[@id="onetrust-accept-btn-handler"]'
+        try:
+            accept = WebDriverWait(driver, 50).until(
+                EC.visibility_of_element_located((By.XPATH, xapth_cookie_acceptance))
+            )
+            driver.execute_script("arguments[0].click();", accept)
+            logger.info("cookie accepted")
+
+        except Exception:
+            headers["cookie"] = ""
+        time.sleep(20)
+        logger.info("First webdriverwait:%s" % headers["cookie"])
+        for r in driver.requests:
+            if "/stores.html" in r.path:
+                logger.info("Found Path URL: /stores.html")
+                try:
+                    headers["cookie"] = r.headers["cookie"]
+                except Exception:
+                    try:
+                        headers["cookie"] = r.response.headers["cookie"]
+                    except Exception:
+                        headers["cookie"] = headers["cookie"]
+        logger.info("Headers: %s\n" % headers)
+        return headers
+
+
 def fetch_data():
     # Your scraper here
     data = []
+    headers = special_cookie()
+    logger.info(f"Headers:{headers}")
     pattern = re.compile(r"\s\s+")
     url = "https://www.kmart.com/stores.html/"
     r_base = session.get(url, headers=headers)
