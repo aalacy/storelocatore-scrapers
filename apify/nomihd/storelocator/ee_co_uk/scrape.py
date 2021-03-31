@@ -4,7 +4,6 @@ from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from sglogging import sglog
 import json
-import lxml.html
 
 website = "ee.co.uk"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -33,12 +32,6 @@ def fetch_data():
             headers=headers,
         )
         if store_req.status_code == 200:
-            # store_sel = lxml.html.fromstring(store_req.text)
-            # store_json = json.loads(
-            #     "".join(
-            #         store_sel.xpath('//script[@type="application/ld+json"]/text()')
-            #     ).strip()
-            # )
             store_json = json.loads(store_req.text)["locations"]
             if len(store_json) > 0:
                 store_json = store_json[0]["retailshop"]
