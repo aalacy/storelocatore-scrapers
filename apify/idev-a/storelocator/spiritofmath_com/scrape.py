@@ -70,7 +70,7 @@ def fetch_data():
                 country_code="CA",
                 phone=phone,
                 latitude=coord[0],
-                longitude=coord[1],
+                longitude=coord[-1],
                 locator_domain=locator_domain,
                 hours_of_operation=hours_of_operation,
             )
