@@ -7,7 +7,6 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from lxml import html
 import csv
-import re
 import time
 
 logger = SgLogSetup().get_logger("kmart_com")
