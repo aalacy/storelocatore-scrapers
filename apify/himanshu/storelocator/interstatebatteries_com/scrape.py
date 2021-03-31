@@ -3,7 +3,6 @@ from bs4 import BeautifulSoup
 import re
 import json
 from sglogging import sglog
-import lxml.html
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 
