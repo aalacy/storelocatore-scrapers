@@ -13,7 +13,7 @@ def fetch_data():
     with SgRequests() as session:
         locations = session.get(base_url, headers=_headers).json()
         for _ in locations["results"]["locations"]:
-            street_address = f"{_['address_line_1']} {_.get('address_line_2', '')}"
+            street_address = " ".join(_["display_address"].split(",")[:-3])
             hours = []
             for day, hh in _["hours"].items():
                 hours.append(f"{day}: {hh}")
