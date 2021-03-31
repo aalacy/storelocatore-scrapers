@@ -100,7 +100,6 @@ def fetch_data():
 
     headers = special_cookie()
     logger.info(f"Headers:{headers}")
-    pattern = re.compile(r"\s\s+")
     url = "https://www.kmart.com/stores.html/"
     r_base = session.get(url, headers=headers)
     r_base_data = html.fromstring(r_base.text, "lxml")
@@ -144,15 +143,6 @@ def fetch_data():
             latitude = r.text.split("lat = ", 1)[1].split(",", 1)[0]
             longitude = r.text.split("lon = ", 1)[1].split(",", 1)[0]
             hours_of_operation = get_hoo(r)
-            try:
-                hours_of_operation = hoo.split("In-Store", 1)[0]
-            except:
-                pass
-            try:
-                hours_of_operation = hoo.split("Nearby", 1)[0]
-            except:
-                pass
-
             data.append(
                 [
                     locator_domain,
