@@ -39,9 +39,9 @@ def fetch_data():
                         if not hh:
                             continue
                         start = hh.split(",")[1]
-                        start = start[:1] + ":" + start[1:]
+                        start = start[:2] + ":" + start[2:]
                         end = hh.split(",")[2]
-                        end = end[:1] + ":" + end[1:]
+                        end = end[:2] + ":" + end[2:]
                         hours.append(f"{days[x]}: {start}-{end}")
                 else:
                     soup = bs(res, "lxml")
@@ -57,7 +57,7 @@ def fetch_data():
                 yield SgRecord(
                     page_url=_["link"],
                     store_number=_["post_id"],
-                    location_name=_["title"],
+                    location_name=_["title"].split("(")[0],
                     street_address=_["street"],
                     city=_["city"],
                     state=_["state"],
