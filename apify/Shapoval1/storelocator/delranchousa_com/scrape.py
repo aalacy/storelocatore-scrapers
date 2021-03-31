@@ -1,5 +1,6 @@
 import csv
 import usaddress
+from lxml import html
 from sgrequests import SgRequests
 
 
@@ -77,7 +78,7 @@ def fetch_data():
         street_address = f"{a.get('address1')} {a.get('address2')}".replace(
             "None", ""
         ).strip()
-        city = a.get("city")
+        city = a.get("city") or "<MISSING>"
         postal = a.get("postal")
         if street_address.find("462") != -1:
             postal = "73064"
@@ -91,7 +92,18 @@ def fetch_data():
         location_type = "<MISSING>"
         hours_of_operation = "<MISSING>"
         page_url = "https://www.delranchousa.com/locations/"
-
+        if city == "<MISSING>":
+            session = SgRequests()
+            r = session.get(
+                "https://delranchousa.com/locations/oklahoma-city-2741-ne-23rd/"
+            )
+            tree = html.fromstring(r.text)
+            line = "".join(tree.xpath('//div[@class="fusion-text"]/p[1]/text()[2]'))
+            a = usaddress.tag(line, tag_mapping=tag)[0]
+            city = a.get("city")
+            state = a.get("state")
+            postal = a.get("postal")
+            phone = "".join(tree.xpath("//p[./b]/text()"))
         row = [
             locator_domain,
             page_url,
