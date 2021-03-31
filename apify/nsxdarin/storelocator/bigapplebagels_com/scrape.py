@@ -106,7 +106,11 @@ def fetch_data():
                         hours = "<MISSING>"
                         if phone == "":
                             phone = "<MISSING>"
-                        if add not in locs:
+                        if lat == "0":
+                            lat = "<MISSING>"
+                        if lng == "0":
+                            lng = "<MISSING>"
+                        if add not in locs and add != "Test":
                             locs.append(add)
                             yield [
                                 website,
