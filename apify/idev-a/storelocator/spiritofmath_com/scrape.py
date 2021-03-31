@@ -13,6 +13,13 @@ def _close(driver):
     time.sleep(1)
 
 
+def _street(addr):
+    street_address = addr.street_address_1
+    if addr.street_address_2:
+        street_address += " " + addr.street_address_2
+    return street_address
+
+
 def fetch_data():
     locator_domain = "https://spiritofmath.com/"
     base_url = "https://spiritofmath.com/#locations"
@@ -56,14 +63,14 @@ def fetch_data():
                 store_number=_["id"].replace("store", ""),
                 page_url=page_url,
                 location_name=location_name,
-                street_address=addr.street_address_1,
+                street_address=_street(addr),
                 city=addr.city,
                 state=addr.state,
                 zip_postal=addr.postcode,
                 country_code="CA",
                 phone=phone,
                 latitude=coord[0],
-                longitude=coord[1],
+                longitude=coord[-1],
                 locator_domain=locator_domain,
                 hours_of_operation=hours_of_operation,
             )
