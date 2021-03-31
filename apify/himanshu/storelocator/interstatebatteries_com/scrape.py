@@ -18,7 +18,6 @@ def fetch_data():
     for slug in slug_list:
         r = session.get(base_url + slug)
         soup = BeautifulSoup(r.text, "lxml")
-        return_main_object = []
         main = (
             soup.find("div", {"class": "store-directory"})
             .find("ul", {"class": "list"})
