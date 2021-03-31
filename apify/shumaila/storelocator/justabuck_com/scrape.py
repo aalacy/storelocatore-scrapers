@@ -72,6 +72,23 @@ def fetch_data():
         hours = soup.text.split("Hours: ", 1)[1].split("\n", 1)[0].strip()
         if "OPENING SOON" in hours:
             continue
+        try:
+            longt, lat = (
+                soup.find("iframe")["src"]
+                .split("!2d", 1)[1]
+                .split("!2m", 1)[0]
+                .split("!3d", 1)
+            )
+        except:
+            try:
+                longt, lat = (
+                    soup.find("iframe")["src"]
+                    .split("sll=", 1)[1]
+                    .split("&", 1)[0]
+                    .split(",", 1)
+                )
+            except:
+                longt = lat = "<MISSING>"
         data.append(
             [
                 "https://www.justabuck.com/",
@@ -85,8 +102,8 @@ def fetch_data():
                 store,
                 phone,
                 "<MISSING>",
-                "<MISSING>",
-                "<MISSING>",
+                lat,
+                longt,
                 hours.replace("\r", " ").replace("\x96", "").strip(),
             ]
         )
