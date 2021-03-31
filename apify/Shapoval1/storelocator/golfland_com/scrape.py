@@ -91,7 +91,6 @@ def fetch_data():
             page_url = "https://www.golfland.com/locations/"
             hours_of_operation = "<INACCESSIBLE>"
 
-
         row = [
             locator_domain,
             page_url,
