@@ -101,7 +101,12 @@ for search_lat, search_lng in search:
                 location_type = location["service_type"]
                 latitude = location["lat"]
                 longitude = location["lng"]
-                hours = location["details"].replace(" \r\n", ", ").replace("\n", ", ").replace("\r", "")
+                hours = (
+                    location["details"]
+                    .replace(" \r\n", ", ")
+                    .replace("\n", ", ")
+                    .replace("\r", "")
+                )
                 hours = hours.split(", ,")[0]
 
                 locator_domains.append(locator_domain)
