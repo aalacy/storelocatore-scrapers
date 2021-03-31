@@ -81,9 +81,23 @@ def special_cookie():
         return headers
 
 
+def get_hoo(res):
+    data_raw = html.fromstring(res.text, "lxml")
+    hoo_obj = data_raw.xpath(
+        '//table[contains(@itemprop, "department")=False]//tr[@itemprop="openingHoursSpecification"]'
+    )
+    hoo_data = [" ".join(th.xpath("./td/text()")) for th in hoo_obj]
+    hoo_clean = "; ".join(hoo_data)
+    if hoo_clean:
+        return hoo_clean
+    else:
+        return "<MISSING>"
+
+
 def fetch_data():
     # Your scraper here
     data = []
+
     headers = special_cookie()
     logger.info(f"Headers:{headers}")
     pattern = re.compile(r"\s\s+")
@@ -129,9 +143,7 @@ def fetch_data():
             location_type = "<MISSING>"
             latitude = r.text.split("lat = ", 1)[1].split(",", 1)[0]
             longitude = r.text.split("lon = ", 1)[1].split(",", 1)[0]
-            hoo = soup.text.split("Hours")[1].split("Holiday", 1)[0]
-            hoo = re.sub(pattern, "", hoo).replace("pm", "pm ").replace("\n", " ")
-            hoo = hoo.replace("day", "day ").replace("  ", " ")
+            hours_of_operation = get_hoo(r)
             try:
                 hours_of_operation = hoo.split("In-Store", 1)[0]
             except:
@@ -164,7 +176,11 @@ def fetch_data():
 
 
 def scrape():
+    logger.info("Scraping Started")
     data = fetch_data()
+    logger.info(
+        f"[Scraping Finished | Total Stores Count:{len(data)}| Writing it in CSV]"
+    )
     write_output(data)
 
 
