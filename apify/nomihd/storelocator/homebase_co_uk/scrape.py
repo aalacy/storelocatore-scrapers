@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
-import csv
 from sgrequests import SgRequests
 from sglogging import sglog
-import json
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
 import lxml.html
+from sgscrape import sgpostal as parser
 
 website = "homebase_co.uk"
 domain = "https://www.homebase.co.uk"
@@ -15,153 +16,120 @@ headers = {
 }
 
 
-def write_output(data):
-    with open("data.csv", mode="w", newline="", encoding="utf8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        temp_list = []  # ignoring duplicates
-        for row in data:
-            comp_list = [
-                row[2].strip(),
-                row[3].strip(),
-                row[4].strip(),
-                row[5].strip(),
-                row[6].strip(),
-                row[8].strip(),
-                row[10].strip(),
-            ]
-            if comp_list not in temp_list:
-                temp_list.append(comp_list)
-                writer.writerow(row)
-
-        log.info(f"No of records being processed: {len(temp_list)}")
-
-
 def fetch_data():
     # Your scraper here
-    loc_list = []
-
-    search_url = "https://www.homebase.co.uk/stores"
+    search_url = "https://www.homebase.co.uk/stores.list"
     stores_req = session.get(search_url, headers=headers)
-    stores_json_text = (
-        stores_req.text.split("var com_bunnings_locations_mapLocations =")[1]
-        .strip()
-        .split("</script>")[0]
-        .strip()
-        .split("];")[0]
-        .strip()
-        + "]"
-    )
+    stores_sel = lxml.html.fromstring(stores_req.text)
+    stores = stores_sel.xpath('//li[@class="storesList_locations"]/a/@href')
 
-    stores = json.loads(stores_json_text)
-
-    for store in stores:
-        page_url = domain + store["Store"]["StoreUrl"]
-
+    for store_url in stores:
+        page_url = domain + store_url
+        log.info(page_url)
         locator_domain = website
-        location_name = store["Store"]["StoreName"]
-        if location_name == "":
-            location_name = "<MISSING>"
-
-        street_address = store["Store"]["Address"]["Address"]
-        if store["Store"]["Address"]["AddressLineTwo"] is not None:
-            street_address = (
-                street_address + ", " + store["Store"]["Address"]["AddressLineTwo"]
-            )
-        city = store["Store"]["Address"]["Suburb"]
-        state = store["Store"]["Address"]["State"]
-        zip = store["Store"]["Address"]["Postcode"]
-
-        country_code = store["Store"]["Address"]["Country"]
-
-        if street_address == "" or street_address is None:
-            street_address = "<MISSING>"
-
-        if city == "" or city is None:
-            city = "<MISSING>"
-
-        if state == "" or state is None:
-            state = "<MISSING>"
-
-        if zip == "" or zip is None:
-            zip = "<MISSING>"
-
-        if country_code == "" or country_code is None:
-            country_code = "<MISSING>"
-
-        store_number = str(store["Store"]["StoreID"])
-        phone = store["Store"]["Phone"]
-
-        location_type = store["Store"]["StoreType"]
-
-        latitude = store["Store"]["Location"]["Latitude"]
-        longitude = store["Store"]["Location"]["Longitude"]
-
-        if latitude == "" or latitude is None:
-            latitude = "<MISSING>"
-        if longitude == "" or longitude is None:
-            longitude = "<MISSING>"
-
         store_req = session.get(page_url, headers=headers)
         store_sel = lxml.html.fromstring(store_req.text)
 
-        hours_of_operation = "; ".join(
-            store_sel.xpath('//time[@itemprop="openingHours"]/@datetime')
+        location_name = "".join(
+            store_sel.xpath('//h3[@class="storeDetailMap_locationName_title"]/text()')
+        ).strip()
+        raw_address = (
+            "".join(
+                store_sel.xpath(
+                    '//div[@class="storeDetailMap_address"]/p[@class="storeDetailMap_paragraph"][1]/text()'
+                )
+            ).strip()
+            + "".join(
+                store_sel.xpath(
+                    '//div[@class="storeDetailMap_address"]/p[@class="storeDetailMap_paragraph"][2]/text()'
+                )
+            ).strip()
+        )
+
+        formatted_addr = parser.parse_address_intl(raw_address)
+        street_address = formatted_addr.street_address_1
+        if formatted_addr.street_address_2:
+            street_address = street_address + ", " + formatted_addr.street_address_2
+
+        city = formatted_addr.city
+        state = formatted_addr.state
+
+        zip = "".join(
+            store_sel.xpath(
+                '//div[@class="storeDetailMap_address"]/p[@class="storeDetailMap_paragraph"][3]/text()'
+            )
         ).strip()
 
-        if hours_of_operation == "":
-            hours_of_operation = "<MISSING>"
+        country_code = "GB"
 
-        if phone == "" or phone is None:
-            phone = "<MISSING>"
+        store_number = "<MISSING>"
+        phone = "".join(
+            store_sel.xpath(
+                '//div[@class="storeDetailMap_address"]//a[@class="storeDetailMap_link_text"]/text()'
+            )
+        ).strip()
 
-        curr_list = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        loc_list.append(curr_list)
+        location_type = "<MISSING>"
 
-    return loc_list
+        latitude = (
+            "".join(
+                store_sel.xpath(
+                    '//h3[@class="storeDetailMap_locationName_title"]/@data-latlong'
+                )
+            )
+            .strip()
+            .split(",")[0]
+            .strip()
+        )
+        longitude = (
+            "".join(
+                store_sel.xpath(
+                    '//h3[@class="storeDetailMap_locationName_title"]/@data-latlong'
+                )
+            )
+            .strip()
+            .split(",")[1]
+            .strip()
+        )
+
+        hours = store_sel.xpath('//li[@class="storeDetailMap_openingTime_item"]')
+        hours_list = []
+        for hour in hours:
+            day = "".join(hour.xpath("span[1]/text()")).strip()
+            time = "".join(hour.xpath("span[2]/text()")).strip()
+            hours_list.append(day + ":" + time)
+
+        hours_of_operation = "; ".join(hours_list).strip()
+
+        yield SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=zip,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=location_type,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+            raw_address=raw_address,
+        )
 
 
 def scrape():
     log.info("Started")
-    data = fetch_data()
-    write_output(data)
+    count = 0
+    with SgWriter() as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+
+    log.info(f"No of records being processed: {count}")
     log.info("Finished")
 
 
