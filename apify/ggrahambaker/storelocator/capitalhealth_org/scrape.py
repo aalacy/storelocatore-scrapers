@@ -13,8 +13,6 @@ headers = {
 
 
 def fetch_data():
-    link_list = []
-
     locator_domain = "https://www.capitalhealth.org"
     search_url = "https://www.capitalhealth.org/our-locations/result?field_services_target_id=All&field_search_city_target_id=All&field_location_type_target_id=All&field_location_name_value=&page=0"
     while True:
