@@ -97,7 +97,7 @@ def fetch_data():
                 lat = line2.split('itemprop="latitude" content="')[1].split('"')[0]
             if 'itemprop="longitude" content="' in line2:
                 lng = line2.split('itemprop="longitude" content="')[1].split('"')[0]
-            if "data-days='[" in line2:
+            if "data-days='[" in line2 and hours == "":
                 days = (
                     line2.split("data-days='[")[1]
                     .split("]' data-utc")[0]
@@ -121,6 +121,7 @@ def fetch_data():
                             hours = hours + "; " + hrs
         if "(Parts)" in add:
             add = add.split("(Parts)")[0].strip()
+        add = add.replace("&#39;", "'")
         yield [
             website,
             loc,
