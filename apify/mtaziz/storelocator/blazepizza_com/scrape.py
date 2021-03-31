@@ -1,18 +1,15 @@
-import csv
-import threading
 from sgrequests import SgRequests
-from sgzip.static import static_coordinate_list, SearchableCountries
 from sglogging import SgLogSetup
 from datetime import datetime
 from datetime import timedelta
-from concurrent.futures import ThreadPoolExecutor, as_completed
+import csv
 
-local = threading.local()
 logger = SgLogSetup().get_logger("blazepizza_com")
+session = SgRequests()
 
 MISSING = "<MISSING>"
 headers = {
-    "user-agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0",
+    "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.90 Safari/537.36",
 }
 
 FIELDS = [
@@ -31,18 +28,6 @@ FIELDS = [
     "longitude",
     "hours_of_operation",
 ]
-
-
-def get_session():
-    if not hasattr(local, "session"):
-        local.request_count = 0
-        local.session = SgRequests()
-
-    if local.request_count >= 10:
-        local.request_count = 0
-        local.session = SgRequests()
-
-    return local.session
 
 
 def write_output(data):
@@ -75,12 +60,26 @@ def get_hours(location):
         else:
             hours.append("Closed")
 
-        return ",".join(hours) or MISSING
+        return "; ".join(hours) or MISSING
     except:
         pass
 
 
 def extract(location, store_number):
+    start = (datetime.now() + timedelta(days=-1)).strftime("%Y%m%d")
+    end = (datetime.now() + timedelta(days=14)).strftime("%Y%m%d")
+    params = {
+        "nomnom": "calendars",
+        "nomnom_calendars_from": start,
+        "nomnom_calendars_to": end,
+    }
+    url_hours_store_number = (
+        f"https://nomnom-prod-api.blazepizza.com/restaurants/{store_number}"
+    )
+    hoo_data = session.get(
+        url_hours_store_number, headers=headers, params=params
+    ).json()
+    logger.info(f"[Pulling the data from {url_hours_store_number}]")
     try:
         locator_domain = "blazepizza.com"
         page_url = f"https://nomnom-prod-api.blazepizza.com/restaurants/{store_number}"
@@ -94,8 +93,8 @@ def extract(location, store_number):
         country_code = location.get("country", MISSING)
         lat = location.get("latitude", MISSING)
         lng = location.get("longitude", MISSING)
-        phone = location.get("phone", MISSING)
-        hours_of_operation = get_hours(location)
+        phone = location.get("telephone", MISSING)
+        hours_of_operation = get_hours(hoo_data)
         if ":" not in hours_of_operation:
             hours_of_operation = "<MISSING>"
         return {
@@ -118,63 +117,42 @@ def extract(location, store_number):
         logger.error(e)
 
 
-def log_status_every_n_coords(n, locations, completed, total):
-    if completed % n == 0:
-        logger.info(
-            f"locations found {locations} | remaining coords: {completed}/{total}"
-        )
-
-
-def fetch_locations(coord, dedup_tracker):
-    lat = coord[0]
-    lng = coord[1]
-    start = (datetime.now() + timedelta(days=-1)).strftime("%Y%m%d")
-    end = (datetime.now() + timedelta(days=14)).strftime("%Y%m%d")
-
-    url = "https://nomnom-prod-api.blazepizza.com/restaurants/near"
-    params = {
-        "lat": lat,
-        "long": lng,
-        "radius": 500,
-        "limit": 20,
-        "nomnom": "calendars",
-        "nomnom_calendars_from": start,
-        "nomnom_calendars_to": end,
-        "nomnom_exclude_extref": 999,
-    }
-
-    data = get_session().get(url, headers=headers, params=params, timeout=0.5).json()
-    local.request_count += 1
-
-    for location in data.get("restaurants", []):
-        store_number = location.get("id")
-        if store_number in dedup_tracker:
-            continue
-
-        dedup_tracker.append(store_number)
-        poi = extract(location, store_number)
-        yield [poi[field] for field in FIELDS]
+def get_state_city_based_urls():
+    url_containing_state_city_based_data_uri = (
+        "https://nomnom-prod-api.blazepizza.com/extras/restaurant/summary/state"
+    )
+    url_api_base = "https://nomnom-prod-api.blazepizza.com"
+    data_uri = session.get(url_containing_state_city_based_data_uri).json()
+    url_all_states = []
+    for duri in data_uri["data"]:
+        uri = duri["cities"][0]["datauri"]
+        url_full = f"{url_api_base}{uri}"
+        url_all_states.append(url_full)
+    return url_all_states
 
 
 def fetch_data():
-    dedup_tracker = []
-    completed = 0
-    coords = static_coordinate_list(40, SearchableCountries.USA)
-    coords.extend(static_coordinate_list(25, SearchableCountries.CANADA))
-
-    with ThreadPoolExecutor() as executor:
-        futures = [
-            executor.submit(fetch_locations, coord, dedup_tracker) for coord in coords
-        ]
-        for future in as_completed(futures):
-            completed += 1
-            log_status_every_n_coords(50, len(dedup_tracker), completed, len(coords))
-            yield from future.result()
+    list_of_state_urls = get_state_city_based_urls()
+    total = 0
+    for url in list_of_state_urls:
+        logger.info(f"[ Pulling the store URL from {url} ]")
+        data = session.get(url, headers=headers).json()
+        found = 0
+        for location in data["data"][0]["restaurants"]:
+            store_number = location.get("id")
+            logger.info(f"[ Store Number: {store_number} ]")
+            poi = extract(location, store_number)
+            yield [poi[field] for field in FIELDS]
+            found += 1
+        total += found
+    logger.info(f"[Scraping Finished] | Total Store Count:{total}]")
 
 
 def scrape():
+    logger.info("Scraping Started...")
     data = fetch_data()
     write_output(data)
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()
