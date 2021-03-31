@@ -12,7 +12,6 @@ import json
 def fetch_data():
     logzilla = SgLogSetup().get_logger(logger_name="chanel_com__en___gb")
     url = "https://services.chanel.com/en_GB/storelocator/crp/@{lat},{lng},10z/?"
-
     search = DynamicGeoSearch(
         country_codes=[SearchableCountries.BRITAIN],
         max_radius_miles=15,
@@ -21,7 +20,7 @@ def fetch_data():
     identities = set()
     maxZ = search.items_remaining()
     total = 0
-    with SgChrome(is_headless=False) as driver:
+    with SgChrome() as driver:
         for lat, lng in search:
             if search.items_remaining() > maxZ:
                 maxZ = search.items_remaining()
@@ -41,7 +40,6 @@ def fetch_data():
             while waited < timeout and not found:
                 logzilla.info("Waited Zero seconds: True & Found is True")
                 for r in driver.requests:
-                    logzilla.info(f"Response Headers Path:{r.path}")
                     if "getStoreList" in r.path:
                         logzilla.info(f"getStoreList found in {r.path}")
                         timeout2 = 5

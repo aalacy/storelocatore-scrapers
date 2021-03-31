@@ -44,7 +44,7 @@ def fetch_data():
     session = SgRequests()
 
     DOMAIN = "tommybahama.com"
-    start_url = "https://www.tommybahama.com/en/store-finder?q=&searchStores=true&searchRestaurants=false&searchOutlets=false&searchInternational=true&CSRFToken=b6ba6d9c-9bc3-48f3-952d-2f59a53a4656"
+    start_url = "https://www.tommybahama.com/en/store-finder?q=&searchStores=true&searchRestaurants=true&searchOutlets=true&searchInternational=true&CSRFToken=b6ba6d9c-9bc3-48f3-952d-2f59a53a4656"
     response = session.get(start_url)
     dom = etree.HTML(response.text)
     all_locations = dom.xpath('//div[@id="store-search-results-state"]//a/@href')
@@ -68,9 +68,7 @@ def fetch_data():
         store_url = "https://www.tommybahama.com" + url
         store_response = session.get(store_url)
         store_dom = etree.HTML(store_response.text)
-        if not store_dom.xpath(
-            '//script[contains(text(), "storeaddressline1")]/text()'
-        ):
+        if not store_dom.xpath('//script[contains(text(), "storeaddressline")]/text()'):
             continue
 
         raw_data = (
