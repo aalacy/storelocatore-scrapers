@@ -56,7 +56,7 @@ def get_data(url):
     line = line.split(",")[1].strip()
     state = line.split()[0]
     postal = line.split()[1]
-    country_code = "CA"
+    country_code = "US"
     store_number = "<MISSING>"
     location_name = f"The Great Escape - {city}"
     phone = "".join(tree.xpath("//address/following-sibling::p[1]/text()")).strip()

@@ -79,8 +79,8 @@ def fetch_data():
     addressess = []
     search = DynamicZipSearch(
         country_codes=[SearchableCountries.CANADA],
-        max_radius_miles=50,
-        max_search_results=200,
+        max_radius_miles=25,
+        max_search_results=100,
     )
 
     headers = {
@@ -217,8 +217,12 @@ def fetch_data():
                         .replace(state, "")
                         .replace(",", "")
                     )
-                    phone = "<MISSING>"
                     hours_of_operation = " ".join(list(loc_dat.stripped_strings)[8:22])
+
+                if location_type == "Branch":
+                    phone = list(loc_dat.stripped_strings)[4]
+                else:
+                    phone = "<MISSING>"
 
                 if location_name == "Important":
                     location_name = "RBC On Campus Laurier University"

@@ -4,6 +4,7 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 import json
 from sgscrape.sgpostal import parse_address_intl
+import re
 
 _headers = {
     "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
@@ -34,23 +35,6 @@ def _valid(val):
     )
 
 
-def _h(val):
-    if val:
-        return val
-    else:
-        return "closed"
-
-
-def _phone(val):
-    return (
-        val.replace("(", "")
-        .replace(")", "")
-        .replace("-", "")
-        .replace(" ", "")
-        .isdigit()
-    )
-
-
 def fetch_data():
     with SgRequests() as session:
         locator_domain = "https://www.chickncone.com/"
@@ -77,6 +61,8 @@ def fetch_data():
             hours_of_operation = "; ".join(hours)
             if "See" in hours_of_operation:
                 hours_of_operation = ""
+            if re.search(r"coming soon", _["infoDescription"], re.IGNORECASE):
+                hours_of_operation = "Coming Soon"
             yield SgRecord(
                 page_url=base_url,
                 location_name=_["infoTitle"],

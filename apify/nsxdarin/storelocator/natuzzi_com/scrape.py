@@ -43,7 +43,6 @@ def fetch_data():
     website = "natuzzi.com"
     typ = "<MISSING>"
     loc = "<MISSING>"
-    hours = "<MISSING>"
     logger.info("Pulling Stores")
     for line in r.iter_lines():
         line = str(line.decode("utf-8"))
@@ -51,12 +50,22 @@ def fetch_data():
             items = line.split('id_store":"')
             for item in items:
                 if '"title":"' in item:
+                    hours = "<MISSING>"
+                    typ = item.split('"type":"')[1].split('"')[0]
                     store = item.split('"')[0]
                     name = item.split('"title":"')[1].split('"')[0]
                     add = item.split('"address":"')[1].split('"')[0]
                     city = item.split('"city":"')[1].split('"')[0]
                     country = item.split('country":"')[1].split('"')[0]
                     if country == "CA" or country == "US":
+                        if country == "CA":
+                            loc = "https://www.natuzzi.ca/store" + item.split(
+                                '<a target=\\"_blank\\" href=\\"\\/store'
+                            )[1].split('\\"')[0].replace("\\", "")
+                        else:
+                            loc = "https://www.natuzzi.us/store" + item.split(
+                                '<a target=\\"_blank\\" href=\\"\\/store'
+                            )[1].split('\\"')[0].replace("\\", "")
                         try:
                             state = (
                                 item.split('"geoloc_address":"')[1]
@@ -122,6 +131,25 @@ def fetch_data():
                         if "." not in lat:
                             lat = "<MISSING>"
                             lng = "<MISSING>"
+                        if " - " in phone:
+                            phone = phone.split(" - ")[0]
+                        logger.info(loc)
+                        r2 = session.get(loc, headers=headers)
+                        for line2 in r2.iter_lines():
+                            line2 = str(line2.decode("utf-8"))
+                            if ":00" in line2 and "PM" in line2:
+                                hours = (
+                                    line2.split("<p>")[1]
+                                    .split("</p>")[0]
+                                    .replace("<br />", "; ")
+                                )
+                        if "<" in hours and hours != "<MISSING>":
+                            hours = hours.split("<")[0]
+                        hours = hours.strip()
+                        if "Burlington" in city and "Ontario" in city:
+                            city = "Burlington"
+                        if "Stati" in state:
+                            state = "MO"
                         yield [
                             website,
                             loc,

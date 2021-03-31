@@ -6,6 +6,7 @@
     * ...
 
 ### Remember to update `requirements.txt` with all dependencies needed to run your scraper. 
+* Generate like so: https://github.com/SafeGraphCrawl/crawl-service/blob/master/docs/cookbook/reqfile.md
 
 ### Make sure to run your scraper in Docker and validate the results:
 * Your scraper can be run successfully by executing https://github.com/SafeGraphInc/crawl-service/blob/master/scripts/run_scraper.sh 

@@ -1,6 +1,7 @@
 from sgrequests import SgRequests
 import pandas as pd
 from bs4 import BeautifulSoup as bs
+from tenacity import retry, stop_after_attempt
 import re
 
 locator_domains = []
@@ -30,6 +31,12 @@ response = session.get(sitemap_url, headers=headers, timeout=10).text
 soup = bs(response, "html.parser")
 urls = soup.find_all("loc")
 
+
+@retry(stop=stop_after_attempt(3))
+def get_location(url, session):
+    return session.get(url, headers=headers, timeout=10).json()
+
+
 base_url = "https://www.adidas.co.uk/api/storefront/stores/"
 
 for url in urls:
@@ -40,10 +47,7 @@ for url in urls:
     else:
         api_code = url_text.split("storefront/")[1].split("-")[0]
 
-        store_data = session.get(
-            base_url + api_code, headers=headers, timeout=10
-        ).json()
-
+        store_data = get_location(base_url + api_code, session)
         city = store_data["city"]
 
         if city.lower() == "online":

@@ -82,7 +82,7 @@ def fetch_data():
             phone = "450-681-5181"
             lat = "45.5563679"
             lng = "-73.7223512"
-        if "montreal" in loc:
+        if "mtl" in loc:
             lat = "45.4960349"
             lng = "-73.5728809"
             phone = "514-416-9809"

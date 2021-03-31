@@ -65,65 +65,71 @@ def fetch_data():
             loc_response = session.get(store_url)
             loc_dom = etree.HTML(loc_response.text)
 
-            location_name = loc_dom.xpath('//h1[@class="Heading u-h1"]/text()')
-            location_name = location_name[0] if location_name else "<MISSING>"
-            raw_address = loc_dom.xpath(
-                '//div[p[contains(text(), "Address")]]/following-sibling::div[1]/text()'
+            locations = loc_dom.xpath(
+                '//div[@class="Faq locations"]/div[div[@class="Grid__Cell  1/2--tablet-and-up"]]'
             )
-            raw_address = [e.strip() for e in raw_address if e.strip()]
-            addr = parse_address_intl(" ".join(raw_address))
-            street_address = addr.street_address_1
-            if addr.street_address_2:
-                street_address += " " + addr.street_address_2
-            street_address = street_address if street_address else "<MISSING>"
-            street_address = street_address.split("(")[0].strip().replace("*", "")
-            city = addr.city
-            city = city.strip() if city else "<MISSING>"
-            state = addr.state
-            state = state if state else "<MISSING>"
-            zip_code = addr.postcode
-            zip_code = zip_code if zip_code else "<MISSING>"
-            if city == "M9":
-                zip_code += " M9"
-                city = location_name
-            if "united-states" in start_url:
-                country_code = "US"
-            else:
-                country_code = "CA"
-            country_code = country_code if country_code else "<MISSING>"
-            store_number = "<MISSING>"
-            phone = loc_dom.xpath(
-                '//div[@class="store-hours"]/div[@class="paragraf"]/text()'
-            )[-2].strip()
-            if "," in phone:
-                phone = "<MISSING>"
-            location_type = "<MISSING>"
-            latitude = "<MISSING>"
-            longitude = "<MISSING>"
-            hoo = loc_dom.xpath(
-                '//div[@class="store-hours"]/div[@class="paragraf"][1]/text()'
-            )
-            hoo = [e.strip() for e in hoo if e.strip()]
-            hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
+            for loc in locations:
+                location_name = loc.xpath('.//h1[@class="Heading u-h1"]/text()')
+                location_name = location_name[0] if location_name else "<MISSING>"
+                raw_address = loc.xpath(
+                    './/div[p[contains(text(), "Address")]]/following-sibling::div[1]/text()'
+                )
+                raw_address = [e.strip() for e in raw_address if e.strip()]
+                addr = parse_address_intl(" ".join(raw_address))
+                street_address = addr.street_address_1
+                if addr.street_address_2:
+                    street_address += " " + addr.street_address_2
+                street_address = street_address if street_address else "<MISSING>"
+                street_address = street_address.split("(")[0].strip().replace("*", "")
+                city = addr.city
+                city = city.strip() if city else "<MISSING>"
+                state = addr.state
+                state = state if state else "<MISSING>"
+                zip_code = addr.postcode
+                zip_code = zip_code if zip_code else "<MISSING>"
+                if city == "M9":
+                    zip_code += " M9"
+                    city = location_name
+                if "united-states" in start_url:
+                    country_code = "US"
+                else:
+                    country_code = "CA"
+                country_code = country_code if country_code else "<MISSING>"
+                store_number = "<MISSING>"
+                phone = loc.xpath(
+                    './/div[@class="store-hours"]/div[@class="paragraf"]/text()'
+                )[-2].strip()
+                if "," in phone:
+                    phone = "<MISSING>"
+                location_type = "<MISSING>"
+                latitude = "<MISSING>"
+                longitude = "<MISSING>"
+                hoo = loc.xpath(
+                    './/div[@class="store-hours"]/div[@class="paragraf"][1]/text()'
+                )
+                hoo = [e.strip() for e in hoo if e.strip()]
+                hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
+                if "Pickup and delivery only " in hours_of_operation:
+                    hours_of_operation = "<MISSING>"
 
-            item = [
-                domain,
-                store_url,
-                location_name,
-                street_address,
-                city,
-                state,
-                zip_code,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
+                item = [
+                    domain,
+                    store_url,
+                    location_name,
+                    street_address,
+                    city,
+                    state,
+                    zip_code,
+                    country_code,
+                    store_number,
+                    phone,
+                    location_type,
+                    latitude,
+                    longitude,
+                    hours_of_operation,
+                ]
 
-            items.append(item)
+                items.append(item)
 
     return items
 

@@ -4,6 +4,7 @@ from lxml import etree
 from urllib.parse import urljoin
 
 from sgselenium import SgFirefox
+from sgscrape.sgpostal import parse_address_usa
 
 
 def write_output(data):
@@ -58,14 +59,27 @@ def fetch_data():
         location_name = poi_html.xpath('.//a[@class="loc-centre-name"]/text()')
         location_name = location_name[0] if location_name else "<MISSING>"
         raw_address = poi_html.xpath('.//div[@class="loc-centre-address"]/text()')
-        street_address = raw_address[0]
-        city = raw_address[1].split(", ")[0]
-        state = raw_address[1].split(", ")[-1].split()[0]
-        zip_code = raw_address[1].split(", ")[-1].split()[-1]
+        raw_address = [e.strip() for e in raw_address if e.strip()]
+        phone = "<MISSING>"
+        if "-" in raw_address[-1]:
+            phone = raw_address[-1]
+            raw_address = raw_address[:-1]
+        addr = parse_address_usa(" ".join(raw_address))
+        street_address = addr.street_address_1
+        if addr.street_address_2:
+            street_address += " " + addr.street_address_2
+        city = addr.city
+        city = city if city else "<MISSING>"
+        if "-" in city:
+            phone = city
+            city = "<MISSING>"
+        state = addr.state
+        state = state if state else "<MISSING>"
+        zip_code = addr.postcode
+        zip_code = zip_code if zip_code else "<MISSING>"
         country_code = "USA"
         country_code = country_code if country_code else "<MISSING>"
         store_number = "<MISSING>"
-        phone = raw_address[-1]
         location_type = "<MISSING>"
         latitude = "<MISSING>"
         longitude = "<MISSING>"

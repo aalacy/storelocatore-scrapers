@@ -41,8 +41,10 @@ def fetch_data():
         token = session.post(session_url, data=data, headers=_headers).json()["token"]
         base_url = f"https://api.freshop.com/1/stores?app_key=sendiks&has_address=true&limit=-1&token={token}"
         locations = session.get(base_url).json()["items"]
-        data = []
         for location in locations:
+            if not location.get("url"):
+                continue
+
             street_address = location.get("address_0")
             if "address_1" in location:
                 street_address = location["address_1"]

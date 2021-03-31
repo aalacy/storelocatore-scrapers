@@ -57,6 +57,8 @@ def fetch_data():
     for poi in data["places"]:
         poi_html = poi_html = etree.HTML(poi["content"])
         store_url = poi_html.xpath("//a[contains(@href, 'thecasualpint.com')]/@href")[0]
+        if "@" in store_url:
+            store_url = "https://centralphoenix.thecasualpint.com/beer-selection/"
         location_name = poi["title"]
         location_name = location_name if location_name else "<MISSING>"
         addr = parse_address_usa(poi["address"])

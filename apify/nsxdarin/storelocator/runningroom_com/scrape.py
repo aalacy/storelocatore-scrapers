@@ -38,6 +38,7 @@ def write_output(data):
 
 
 def fetch_data():
+    adds = []
     locs = []
     cities = []
     url = "https://www.runningroom.com/ca/inside.php?id=3033"
@@ -51,9 +52,9 @@ def fetch_data():
         line = str(line.decode("utf-8"))
         if "Canada</h3>" in line:
             Found = True
-        if Found and "Grand Openings</h2>" in line:
+        if Found and "Store Openings</h3>" in line:
             Found = False
-        if Found and '<p><a href="https://www.runningroom.com/hm/' in line:
+        if Found and "inside.php" in line:
             cities.append(line.split('href="')[1].split('"')[0])
     for city in cities:
         logger.info(city)
@@ -65,8 +66,21 @@ def fetch_data():
                 and "Find<" not in line2
             ):
                 locs.append(line2.split('href="')[1].split('"')[0])
-            if "<h3>Address</h3>" in line2:
-                locs.append(city)
+            if (
+                '<p><a href="https://www.runningroom.com/ca/' in line2
+                and "Find<" not in line2
+            ):
+                locs.append(line2.split('href="')[1].split('"')[0])
+            if (
+                '<p> <a href="https://www.runningroom.com/ca/' in line2
+                and "Find<" not in line2
+            ):
+                locs.append(line2.split('href="')[1].split('"')[0])
+            if (
+                '<p> <a href="https://www.runningroom.com/hm/' in line2
+                and "Find<" not in line2
+            ):
+                locs.append(line2.split('href="')[1].split('"')[0])
     for loc in locs:
         logger.info(loc)
         name = ""
@@ -140,7 +154,7 @@ def fetch_data():
                         zc = addinfo.split(",")[1].strip().split(" ", 1)[1]
                     AFound = False
             if AFound and "<br>" in line2:
-                ainfo = line2.split("<")[0].strip()
+                ainfo = line2.replace("<p>", "").split("<")[0].strip()
                 if add == "":
                     add = ainfo
                 else:
@@ -156,6 +170,8 @@ def fetch_data():
             hours = "<MISSING>"
         if state == "MN" or state == "HI":
             country = "US"
+        else:
+            country = "CA"
         if "2449" in loc:
             add = "300 Main Street"
             city = "Moncton"
@@ -188,23 +204,29 @@ def fetch_data():
             phone = "(763) 425-0610"
         if phone == "":
             phone = "<MISSING>"
+        if lat == "":
+            lat = "<MISSING>"
+        if lng == "":
+            lng = "<MISSING>"
         if add != "":
-            yield [
-                website,
-                loc,
-                name,
-                add,
-                city,
-                state,
-                zc,
-                country,
-                store,
-                phone,
-                typ,
-                lat,
-                lng,
-                hours,
-            ]
+            if add not in adds:
+                adds.append(add)
+                yield [
+                    website,
+                    loc,
+                    name,
+                    add,
+                    city,
+                    state,
+                    zc,
+                    country,
+                    store,
+                    phone,
+                    typ,
+                    lat,
+                    lng,
+                    hours,
+                ]
 
 
 def scrape():

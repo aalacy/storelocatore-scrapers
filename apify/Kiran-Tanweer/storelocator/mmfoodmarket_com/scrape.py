@@ -172,7 +172,7 @@ def fetch_data():
 
             data.append(
                 [
-                    "https://mmfoodmarket.com/en/store-locator",
+                    "https://mmfoodmarket.com/",
                     store,
                     title,
                     street,
