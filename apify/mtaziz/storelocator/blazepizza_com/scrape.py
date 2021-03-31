@@ -68,7 +68,6 @@ def get_hours(location):
 def extract(location, store_number):
     start = (datetime.now() + timedelta(days=-1)).strftime("%Y%m%d")
     end = (datetime.now() + timedelta(days=14)).strftime("%Y%m%d")
-    url_hours = "https://nomnom-prod-api.blazepizza.com/restaurants/"
     params = {
         "nomnom": "calendars",
         "nomnom_calendars_from": start,
@@ -94,7 +93,7 @@ def extract(location, store_number):
         country_code = location.get("country", MISSING)
         lat = location.get("latitude", MISSING)
         lng = location.get("longitude", MISSING)
-        phone = location.get("phone", MISSING)
+        phone = location.get("telephone", MISSING)
         hours_of_operation = get_hours(hoo_data)
         if ":" not in hours_of_operation:
             hours_of_operation = "<MISSING>"
@@ -133,7 +132,6 @@ def get_state_city_based_urls():
 
 
 def fetch_data():
-    dedup_tracker = []
     list_of_state_urls = get_state_city_based_urls()
     total = 0
     for url in list_of_state_urls:
