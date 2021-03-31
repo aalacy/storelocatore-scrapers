@@ -36,7 +36,7 @@ def fetch_data():
             city_state = soup1.select_one("div.location-details .mailing").text
             city = city_state.split(",")[0]
             state = city_state.split(",")[1].strip().split(" ")[0]
-            zip_postal = city_state.split(",")[1].strip().split(" ")[1]
+            zip_postal = " ".join(city_state.split(",")[1].strip().split(" ")[1:])
 
             logger.info(page_url)
             coord = ["", ""]
