@@ -130,7 +130,8 @@ def fetch_data():
                         store.append(latitude)
                         store.append(longitude)
                         store.append(
-                            hours_of_operation.replace("\r", "")
+                            hours_of_operation.replace("\r\n", ":")
+                            .replace("\r", "")
                             .replace("\n", "")
                             .replace("\t", "")
                             .replace("Opening Hours", "")
@@ -240,7 +241,8 @@ def fetch_data():
                         store.append(latitude)
                         store.append(longitude)
                         store.append(
-                            hours_of_operation.replace("\r", "")
+                            hours_of_operation.replace("\r\n", ":")
+                            .replace("\r", "")
                             .replace("\n", "")
                             .replace("\t", "")
                             .replace("Opening Hours", "")
@@ -346,7 +348,8 @@ def fetch_data():
                         store.append(latitude)
                         store.append(longitude)
                         store.append(
-                            hours_of_operation.replace("\r", "")
+                            hours_of_operation.replace("\r\n", ":")
+                            .replace("\r", "")
                             .replace("\n", "")
                             .replace("\t", "")
                             .replace("Mo  Fr:", "Mo-Fr")
