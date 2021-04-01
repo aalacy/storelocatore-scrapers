@@ -14,7 +14,7 @@ def fetch_data():
     output = []
     for row in locations:
         currentrow = []
-        currentrow.append(loocator_domain)
+        currentrow.append(locator_domain)
         currentrow.append(url)
         currentrow.append(row[0])
         currentrow.append(row[4])
