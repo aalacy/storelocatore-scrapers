@@ -5,12 +5,12 @@ import re
 
 def fetch_data():
     output = []
-    locator_url = "https://www.c21.ca/directory"
+    locator_url = "https://www.c21.ca"
     url = "https://svc.moxiworks.com/service/profile/v2_insecure/offices/search?company_uuid=3341197&order_by=random&site_owner_uuid=0d4b737d-ba75-4fef-96db-11c81c493067&site_type=Brokerage%20Website"
     headers = {
         "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
     }
-    response = SgRequests().get(url, headers=headers, verify=False)
+    response = SgRequests().get(url, headers=headers)
     data = response.json()["data"]["result_list"]
     for row in data:
         currentrow = []
