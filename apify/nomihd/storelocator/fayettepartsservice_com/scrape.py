@@ -40,10 +40,22 @@ def fetch_data():
             street_address = street_address + ", " + formatted_addr.street_address_2
 
         city = formatted_addr.city
+        raw_city = formatted_addr.city
+        if "," in city:
+            city = city.split(",")[0].strip()
+
         state = formatted_addr.state
+        if state is None:
+            if "," in raw_city:
+                state = raw_city.split(",")[1].strip()
+        else:
+            if "," in state:
+                state = state.split(",")[0].strip()
+
         zip = formatted_addr.postcode
         country_code = formatted_addr.country
-
+        if country_code == "United States":
+            country_code = "US"
         store_number = "<MISSING>"
         location_type = "<MISSING>"
 
