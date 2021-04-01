@@ -79,24 +79,25 @@ def fetch_data():
                 .strip()
             )
             status = item["status"]
-            if store not in ids and status == "OPEN":
-                ids.append(store)
-                yield [
-                    website,
-                    loc,
-                    name,
-                    add,
-                    city,
-                    state,
-                    zc,
-                    country,
-                    store,
-                    phone,
-                    typ,
-                    lat,
-                    lng,
-                    hours,
-                ]
+            if store not in ids:
+                if status == "NEW" or status == "OPEN":
+                    ids.append(store)
+                    yield [
+                        website,
+                        loc,
+                        name,
+                        add,
+                        city,
+                        state,
+                        zc,
+                        country,
+                        store,
+                        phone,
+                        typ,
+                        lat,
+                        lng,
+                        hours,
+                    ]
 
 
 def scrape():

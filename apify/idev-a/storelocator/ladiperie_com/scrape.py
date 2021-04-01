@@ -28,10 +28,12 @@ def fetch_data():
         res = session.get(base_url, headers=_headers())
         cleaned = (
             res.text.replace("//", "")
-            .replace('\\"', '"')
+            .replace("\\t", " ")
+            .replace("\t", " ")
             .replace("\\n]", "]")
             .replace("\\n,", ",")
             .replace("\\n", "#")
+            .replace('\\"', '"')
             .replace("\\", "")
         )
         block = re.search(
@@ -50,24 +52,33 @@ def fetch_data():
             sharp = _[5][1][1][0].split("#")
             hours = []
             for x, ss in enumerate(sharp):
+                if not ss.strip():
+                    continue
                 if _phone(ss):
                     phone = ss.replace(u"\xa0", " ").strip()
-                    address = " ".join(sharp[:x])
+                    address = " ".join(sharp[:x]).replace("#", " ")
                     for hh in sharp[x + 1 :]:
                         if not hh.replace(u"\xa0", " ").strip():
                             continue
                         hours.append(hh.replace(u"\xa0", " ").strip())
                     break
             addr = parse_address_intl(address)
-            if addr.street_address_1 in streets:
+            street_address = addr.street_address_1
+            if street_address in streets:
                 continue
-            streets.append(addr.street_address_1)
+            streets.append(street_address)
+            city = addr.city
+            state = addr.state
+            if not city:
+                city = address.split(",")[-2].strip()
+            if not state:
+                state = address.split(",")[-1].strip().split(" ")[0]
             yield SgRecord(
                 location_name=location_name,
                 store_number=_[7],
-                street_address=addr.street_address_1,
-                city=addr.city,
-                state=addr.state,
+                street_address=street_address,
+                city=city,
+                state=state,
                 zip_postal=addr.postcode,
                 country_code="CA",
                 phone=phone,
