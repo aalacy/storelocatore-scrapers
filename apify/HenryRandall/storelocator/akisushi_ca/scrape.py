@@ -4,9 +4,7 @@ import csv
 
 def fetch_data():
     url = "https://akisushi.ca/nos-succursales/?lat=46.8157795&long=-71.21788149999999"
-    with SgChrome(
-        executable_path="C:/Users/Henry Randall/Documents/Software and Code/Code/chromedriver"
-    ) as driver:
+    with SgChrome() as driver:
         driver.get(url)
         locations = driver.execute_script("return locations")
 
