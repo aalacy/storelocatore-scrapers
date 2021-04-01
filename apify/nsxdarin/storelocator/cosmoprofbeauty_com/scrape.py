@@ -2,7 +2,6 @@ import csv
 import urllib.request
 from sgrequests import SgRequests
 import gzip
-import os
 from sglogging import SgLogSetup
 
 logger = SgLogSetup().get_logger("cosmoprofbeauty_com")
