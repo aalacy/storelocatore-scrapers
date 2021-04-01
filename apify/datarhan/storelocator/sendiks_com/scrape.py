@@ -47,7 +47,9 @@ def fetch_data():
     data = json.loads(response.text)
 
     for poi in data["items"]:
-        store_url = poi["url"]
+        store_url = poi.get("url")
+        if not store_url:
+            continue
         location_name = poi["name"]
         location_name = location_name if location_name else "<MISSING>"
         street_address = poi.get("address_1")
@@ -62,14 +64,15 @@ def fetch_data():
         zip_code = zip_code if zip_code else "<MISSING>"
         country_code = "<MISSING>"
         store_number = poi["id"]
-        phone = poi["phone_md"]
+        phone = poi.get("phone_md")
         phone = phone if phone else "<MISSING>"
         location_type = "<MISSING>"
         latitude = poi["latitude"]
         latitude = latitude if latitude else "<MISSING>"
         longitude = poi["longitude"]
         longitude = longitude if longitude else "<MISSING>"
-        hours_of_operation = poi["hours_md"]
+        hours_of_operation = poi.get("hours_md")
+        hours_of_operation = hours_of_operation if hours_of_operation else "<MISSING>"
 
         item = [
             DOMAIN,

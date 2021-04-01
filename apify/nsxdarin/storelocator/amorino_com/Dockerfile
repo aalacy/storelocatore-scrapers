@@ -1,4 +1,4 @@
-FROM safegraph/apify-python3:latest
+FROM safegraph/apify-python3:3.7.0
 COPY . ./
 USER root
 RUN pip3 install --upgrade pip

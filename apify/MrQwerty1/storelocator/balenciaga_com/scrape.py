@@ -67,6 +67,9 @@ def fetch_data():
                 ).strip()
                 or "<MISSING>"
             )
+            if street_address.startswith("313 "):
+                street_address = line.split("Centre")[-1].strip()
+
             city = adr.city or "<MISSING>"
             state = adr.state or "<MISSING>"
             postal = adr.postcode or "<MISSING>"

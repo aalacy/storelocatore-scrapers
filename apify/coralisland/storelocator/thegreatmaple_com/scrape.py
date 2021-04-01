@@ -84,18 +84,22 @@ def fetch_data():
         latitude = loc_dom.xpath("//div/@data-latitude")[0]
         longitude = loc_dom.xpath("//div/@data-longitude")[0]
         hoo = loc_dom.xpath(
-            '//h3[strong[span[contains(text(), "HOURS")]]]/following-sibling::*[1]//text()'
+            '//h3[strong[span[contains(text(), "HOURS")]]]/following-sibling::*//text()'
         )
         if not hoo:
             hoo = loc_dom.xpath(
-                '//h4[span[strong[span[contains(text(), "HOURS")]]]]/following-sibling::*[1]//text()'
+                '//h4[span[strong[span[contains(text(), "HOURS")]]]]/following-sibling::*//text()'
             )
         if not hoo:
             hoo = loc_dom.xpath(
-                '//h4[span[strong[contains(text(), "HOURS")]]]/following-sibling::*[1]//text()'
+                '//h4[span[strong[contains(text(), "HOURS")]]]/following-sibling::*//text()'
             )
         hoo = [e.strip() for e in hoo if e.strip()]
-        hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
+        hours_of_operation = (
+            " ".join(hoo).split(" Hours subject")[0].split("Pickup: ")[-1]
+            if hoo
+            else "<MISSING>"
+        )
 
         item = [
             domain,

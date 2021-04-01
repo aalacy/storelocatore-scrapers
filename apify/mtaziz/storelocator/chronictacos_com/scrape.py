@@ -219,15 +219,15 @@ def fetch_data():
         else:
             zip = "<MISSING>"
         if country_code == "CA":
-            raw_address = "{} {} {} {}".format(
-                street_address, city, state, zip
-            ).replace("<MISSING>", "")
+            raw_address = "{} {} {}".format(
+                json_data["address"]["addressLocality"].strip(),
+                json_data["address"]["addressRegion"].strip(),
+                json_data["address"]["postalCode"].strip(),
+            )
             parsed_raw_address = parse_address_intl(raw_address)
-            street_address = parsed_raw_address.street_address_1 or "<MISSING>"
             city = parsed_raw_address.city or "<MISSING>"
             state = parsed_raw_address.state or "<MISSING>"
             zip = parsed_raw_address.postcode or "<MISSING>"
-
         else:
             pass
 

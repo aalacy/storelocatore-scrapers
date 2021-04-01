@@ -1,8 +1,11 @@
 import csv
-from sgrequests import SgRequests
-from bs4 import BeautifulSoup
 import re
+
+from bs4 import BeautifulSoup
+
 from sglogging import SgLogSetup
+
+from sgrequests import SgRequests
 
 logger = SgLogSetup().get_logger("ripleys_com")
 session = SgRequests()
@@ -48,9 +51,7 @@ def fetch_data():
     r = session.get("https://www.ripleys.com/attractions/", headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
 
-    for location_img_tag in soup.find_all("div", {"class": "row vwpc-row"})[1].find_all(
-        "li"
-    ):
+    for location_img_tag in soup.find(id="tabpanel1").find_all("li"):
 
         location_tag = location_img_tag.find("a")
         locator_domain = base_url
@@ -77,6 +78,7 @@ def fetch_data():
                 "https://www.ripleys.com/williamsburg/",
             )
         )
+        logger.info(page_url)
         location_name = location_tag.text
         r_location = session.get(page_url, headers=headers)
         if r_location is None:
@@ -161,10 +163,25 @@ def fetch_data():
                 ).stripped_strings
             )
             addr = full_address_list[-4].replace("\xa0", " ").split(",")
-            street_address = addr[0]
+            if len(addr[0]) < 5:
+                addr = (
+                    soup_location.find(id="address-1")
+                    .text.replace("Click here to view location", "")
+                    .split(",")
+                )
+                map_str = soup_location.find(class_="contact-info-row address").a[
+                    "href"
+                ]
+                geo = re.findall(r"[0-9]{2}\.[0-9]+,-[0-9]{2,3}\.[0-9]+", map_str)[
+                    0
+                ].split(",")
+                latitude = geo[0]
+                longitude = geo[1]
+
+            street_address = addr[0].strip()
             city = addr[1].strip()
-            state = addr[2].strip().split(" ")[0]
-            zipp = addr[2].strip().split(" ")[1]
+            state = addr[2].strip().split()[0]
+            zipp = addr[2].strip().split()[1]
 
             hours_tag = soup_location.find(
                 lambda tag: (tag.name == "strong")
@@ -175,6 +192,13 @@ def fetch_data():
             except:
                 hours_list = ""
             hours_of_operation = " ".join(hours_list)
+
+            if not hours_of_operation:
+                hours_of_operation = " ".join(
+                    list(
+                        soup_location.find(class_="hours-of-operation").stripped_strings
+                    )
+                )
         elif soup_location.find("div", {"id": "text-2"}):
 
             full_address_list = list(
@@ -257,6 +281,16 @@ def fetch_data():
                 .find_all("p")[6]
                 .stripped_strings
             )[0]
+        elif soup_location.find(id="custom_html-3"):
+            full_address_list = list(
+                soup_location.find(id="custom_html-3").stripped_strings
+            )[1:]
+            full_address_list[0] = full_address_list[0].replace(" Blvd.", " Blvd,")
+            street_address = full_address_list[0].split(",")[0]
+            if "," not in full_address_list[1]:
+                city = full_address_list[0].split(",")[1].strip()
+            else:
+                city = full_address_list[1].split(",")[0].strip()
         else:
             continue
 
@@ -388,21 +422,14 @@ def fetch_data():
                     "",
                 )
             )
-
-        if "Mon - Sun" in street_address:
-            street_address = "115 Broadway"
-            zipp = "53965"
-            hours_of_operation = "Mon - Sun	Closed"
         if "Niagara Falls" in city:
             state = "ON"
         if "1735 Richmond Road" in street_address:
             hours_of_operation = "Sundays - Thursdays: 10:00 am to 7:00 pm, Fridays and Saturdays: 10:00 am to 10:00 pm"
-        if "TEMPORARILY CLOSED" in hours_of_operation:
-            hours_of_operation = "<MISSING>"
         hours_of_operation = (
             hours_of_operation.replace(
                 "CLOSED FOR THE SEASON We cannot wait to welcome you back next year!",
-                "<MISSING>",
+                "CLOSED FOR THE SEASON",
             )
             .replace("Hours Ripley’s Believe It or Not!", "")
             .replace(
@@ -421,7 +448,9 @@ def fetch_data():
         store = [
             locator_domain,
             location_name,
-            street_address.replace("•", "").strip(","),
+            street_address.replace("•", "")
+            .replace("Pier Building on the Boardwalk,", "")
+            .strip(","),
             city,
             state,
             zipp,

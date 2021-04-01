@@ -114,8 +114,8 @@ def fetch_data():
             state = city_line[1].split()[0].strip()
             zip_code = city_line[1].split()[1].strip()
             if "2 Marina Blvd" in street_address:
-                state = "New York"
-                zip_code = "10023"
+                state = "CA"
+                zip_code = "94123"
         elif country_code == "CA":
             if "2306 4th Street" in street_address:
                 street_address = "2306 4th Street SW"
