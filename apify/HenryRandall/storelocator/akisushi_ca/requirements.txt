@@ -1,1 +1,1 @@
-sgselenium
+sgselenium==0.0.15 
