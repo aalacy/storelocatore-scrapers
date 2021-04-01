@@ -73,10 +73,13 @@ def fetch_data():
         zip = soup.find("span", {"itemprop": "postalCode"}).text
         if re.findall(r"[A-Z][0-9][A-Z] [0-9][A-Z][0-9]", zip) != []:
             con = "CA"
-        tim = ""
-        tims = soup.find_all("span", {"itemprop": "openingHours"})
-        for t in tims:
-            tim += t.text.strip() + " "
+
+        tim = (
+            soup.find_all("div", {"class": "store__address__details"})[1]
+            .text.strip()
+            .replace("\n", ", ")
+        )
+
         if tim == "":
             tim = "<MISSING>"
         try:

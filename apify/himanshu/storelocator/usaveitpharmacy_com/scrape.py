@@ -1,4 +1,3 @@
-import re
 import csv
 import json
 
@@ -42,7 +41,7 @@ def fetch_data():
     items = []
 
     start_url = "https://storerocket.global.ssl.fastly.net/api/user/VyJzm2D46M/locations?radius=50&units=miles"
-    domain = re.findall("://(.+?)/", start_url)[0].replace("www.", "")
+    domain = "usaveitpharmacy.com"
     response = session.get(start_url)
     data = json.loads(response.text)
 
@@ -52,7 +51,12 @@ def fetch_data():
         )
         location_name = poi["name"]
         location_name = location_name if location_name else "<MISSING>"
-        street_address = poi["address_line_1"]
+        if poi["address"]:
+            street_address = poi["address"].split(",")[0]
+        else:
+            street_address = poi["address_line_1"]
+            if poi["address_line_2"]:
+                street_address += " " + poi["address_line_2"]
         street_address = street_address if street_address else "<MISSING>"
         city = poi["city"]
         city = city if city else "<MISSING>"

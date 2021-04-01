@@ -85,7 +85,20 @@ def fetch_data():
 
             city = store_json["city"]
             state = "<MISSING>"
-            zip = store_json["zip"]
+            if " - " in city:
+                state = city.split(" - ")[1].strip()
+                city = city.split(" - ")[0].strip()
+            elif "," in city:
+                state = city.split(",")[1].strip()
+                city = city.split(",")[0].strip()
+
+            zip = (
+                store_json["zip"]
+                .encode("ascii", "replace")
+                .decode("utf8")
+                .replace("?", "")
+                .strip()
+            )
             country_code = store_json["country"]
             phone = store_json["phone"]
             hours_of_operation = store_json["schedule_string"]
@@ -115,9 +128,9 @@ def fetch_data():
             if phone == "" or phone is None:
                 phone = "<MISSING>"
 
-            if latitude == "" or latitude is None:
+            if latitude == "" or latitude is None or latitude == "0.00000000":
                 latitude = "<MISSING>"
-            if longitude == "" or longitude is None:
+            if longitude == "" or longitude is None or longitude == "0.00000000":
                 longitude = "<MISSING>"
 
             if hours_of_operation == "" or hours_of_operation is None:

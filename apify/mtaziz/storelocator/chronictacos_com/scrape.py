@@ -3,6 +3,7 @@ from sglogging import SgLogSetup
 from lxml import html
 import csv
 import json
+from sgscrape.sgpostal import parse_address_intl
 
 logger = SgLogSetup().get_logger("chronictacos_com")
 
@@ -44,8 +45,7 @@ locator_domain_url = "https://www.chronictacos.com"
 def get_urls_from_page_src():
     us_locations_url = "https://www.chronictacos.com/us-locations"
     ca_locations_url = "https://www.chronictacos.com/canada-locations"
-    jp_locations_url = "https://www.chronictacos.com/japan-locations"
-    list_of_countries_urls = [us_locations_url, ca_locations_url, jp_locations_url]
+    list_of_countries_urls = [us_locations_url, ca_locations_url]
     all_location_urls = []
     for url in list_of_countries_urls:
         if "us" in url:
@@ -63,17 +63,6 @@ def get_urls_from_page_src():
                 '//section[contains(@class, "menu-section")]//a/@href'
             )
             for url_location in ca_location_detail_url:
-                full_url = locator_domain_url + "/" + url_location
-                all_location_urls.append(full_url)
-
-        elif "japan" in url:
-            jp_r = session.get(url)
-            jp_tree = html.fromstring(jp_r.text)
-            jp_location_detail_url = jp_tree.xpath(
-                '//section[contains(@class, "menu-section")]//li[1]/a/@href'
-            )
-
-            for url_location in jp_location_detail_url:
                 full_url = locator_domain_url + "/" + url_location
                 all_location_urls.append(full_url)
         else:
@@ -178,18 +167,16 @@ def get_urls_from_api_res():
     url_api_endpoint = "https://www.chronictacos.com/locations/storelist"
     json_data_api = session.post(url_api_endpoint, data=payload).json()
     page_urls = []
-    for json_data in json_data_api["data"]:
+    for json_data in json_data_api["data"][0:51]:
         page_url = json_data["catering_url"].strip()
         page_urls.append(page_url)
     return page_urls
 
 
 def fetch_data():
-
     # Your scraper here
     page_urls_from_api_res = get_urls_from_api_res()
     supporting_data = get_data_from_page_src()
-
     items = []
     for page_url_from_api_res in page_urls_from_api_res:
         r_location = session.get(page_url_from_api_res)
@@ -202,6 +189,7 @@ def fetch_data():
         location_name = json_data["name"]
 
         street_address_data = json_data["address"]["streetAddress"].strip()
+
         if street_address_data:
             street_address = street_address_data
         else:
@@ -230,6 +218,18 @@ def fetch_data():
             zip = zip_data
         else:
             zip = "<MISSING>"
+        if country_code == "CA":
+            raw_address = "{} {} {}".format(
+                json_data["address"]["addressLocality"].strip(),
+                json_data["address"]["addressRegion"].strip(),
+                json_data["address"]["postalCode"].strip(),
+            )
+            parsed_raw_address = parse_address_intl(raw_address)
+            city = parsed_raw_address.city or "<MISSING>"
+            state = parsed_raw_address.state or "<MISSING>"
+            zip = parsed_raw_address.postcode or "<MISSING>"
+        else:
+            pass
 
         store_number = "<MISSING>"
         phone_data = json_data["telephone"]

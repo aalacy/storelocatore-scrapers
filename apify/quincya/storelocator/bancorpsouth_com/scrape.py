@@ -142,8 +142,10 @@ def fetch_data():
             store_number = "<MISSING>"
             phone = store["phone"].split("or")[0].strip()
 
-            hours_of_operation = " ".join(
-                list(BeautifulSoup(store["hours"], "lxml").stripped_strings)
+            hours_of_operation = (
+                " ".join(list(BeautifulSoup(store["hours"], "lxml").stripped_strings))
+                .split("AT THIS TIME")[0]
+                .strip()
             )
             if not hours_of_operation:
                 hours_of_operation = "<MISSING>"

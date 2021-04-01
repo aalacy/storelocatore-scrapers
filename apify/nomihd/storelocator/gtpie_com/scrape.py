@@ -43,7 +43,7 @@ def fetch_data():
 
         phone = "".join(
             store.xpath(
-                './/li[@class="contact-field field_phone"]/span[@class="contact-field-data"]/a/text()'
+                './/li[@class="contact-field field_phone"]/span[@class="contact-field-data"]//text()'
             )
         ).strip()
 

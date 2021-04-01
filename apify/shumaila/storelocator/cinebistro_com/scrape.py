@@ -86,19 +86,20 @@ def fetch_data():
                     except:
                         lat = "<MISSING>"
                         longt = "<MISSING>"
+                    phone = r.text.split("Contact Us: ")[1].split("</p>")[0]
                     data.append(
                         [
                             "https://www.cmxcinemas.com",
                             link,
                             title,
                             street,
-                            cityn,
+                            cityn.rstrip(" " + state),
                             state,
                             pcode,
                             "US",
                             "<MISSING>",
                             "<MISSING>",
-                            "<MISSING>",
+                            phone,
                             lat,
                             longt,
                             "<MISSING>",

@@ -1,5 +1,6 @@
 import csv
 import json
+from datetime import datetime, timezone
 from w3lib.url import add_or_replace_parameter
 
 from sgrequests import SgRequests
@@ -68,7 +69,6 @@ def fetch_data():
         country_code = poi["countryId"]
         if country_code not in ["US", "CA", "GB"]:
             continue
-
         location_name = poi["name"]
         location_name = location_name if location_name else "<MISSING>"
         street_address = poi["addressLine1"]
@@ -84,6 +84,9 @@ def fetch_data():
         phone = poi.get("phone")
         phone = phone if phone else "<MISSING>"
         location_type = "<MISSING>"
+        time = str(poi["openingDate"])
+        if datetime.fromisoformat(time) > datetime.now(timezone.utc):
+            location_type = "coming soon"
         latitude = poi["latitude"]
         latitude = latitude if latitude else "<MISSING>"
         longitude = poi["longitude"]

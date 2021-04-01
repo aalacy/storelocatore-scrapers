@@ -139,7 +139,7 @@ def fetch_data():
     session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
     locations = fetch_locations(session)
 
-    with ThreadPoolExecutor() as executor:
+    with ThreadPoolExecutor(max_workers=10) as executor:
         futures = [executor.submit(fetch_location, url, session) for url in locations]
         for future in as_completed(futures):
             yield future.result()

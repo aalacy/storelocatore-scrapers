@@ -93,6 +93,8 @@ def fetch_data():
             zip_code = zip_code[0].replace(",", "") if zip_code else "<MISSING>"
             country_code = loc_dom.xpath('//span[@itemprop="addressCountry"]/text()')
             country_code = country_code[0] if country_code else "<MISSING>"
+            if country_code == "United States":
+                zip_code = zip_code.split()[-1]
             store_number = "<MISSING>"
             phone = loc_dom.xpath('//span[@itemprop="telephone"]/a/text()')
             phone = phone[0] if phone else "<MISSING>"

@@ -190,7 +190,7 @@ def fetch_data():
             store.append(hours if hours != "" else "<MISSING>")
             store.append("<MISSING>")
             for i in range(len(store)):
-                if type(store[i]) == str:
+                if isinstance(store[i], str):
                     store[i] = "".join(
                         (
                             c
@@ -198,7 +198,7 @@ def fetch_data():
                             if unicodedata.category(c) != "Mn"
                         )
                     )
-            store = [x.replace("–", "-") if type(x) == str else x for x in store]
+            store = [x.replace("–", "-") if isinstance(x, str) else x for x in store]
             if store[2] in addressess:
                 continue
             addressess.append(store[2])

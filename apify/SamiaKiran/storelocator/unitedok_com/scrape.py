@@ -64,11 +64,7 @@ def fetch_data():
             temp = BeautifulSoup(r.text, "html.parser")
             address = temp.find("p", {"class": "Address"}).text.strip()
             address = re.sub(pattern, "\n", str(address)).split("\n")
-            phone = (
-                temp.find("p", {"class": "PhoneNumber"})
-                .find("a")["href"]
-                .split("tel:")[1]
-            )
+            phone = temp.find("p", {"class": "PhoneNumber"}).find("a").text
             hours = temp.find("table", {"id": "hours_info-BS"}).find("dd").text
             street = address[1]
             try:

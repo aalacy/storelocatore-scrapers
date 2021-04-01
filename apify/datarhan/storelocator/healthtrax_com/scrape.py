@@ -2,6 +2,7 @@ import re
 import csv
 import json
 from lxml import etree
+from urllib.parse import urljoin
 
 from sgrequests import SgRequests
 
@@ -51,32 +52,58 @@ def fetch_data():
     dom = etree.HTML(response.text)
 
     all_locations = dom.xpath(
-        '//a[contains(@href, "https://www.healthtrax.com/locations")]/@href'
+        '//div[@data-type="page"]/div[3]//p[@style="white-space:pre-wrap;"]/a[strong]/@href'
     )
     for store_url in all_locations:
+        store_url = urljoin(start_url, store_url)
         loc_response = session.get(store_url, headers=hdr)
         loc_dom = etree.HTML(loc_response.text)
-        geo = loc_dom.xpath("//div/@data-block-json")[1]
-        geo = json.loads(geo)
+        geo = loc_dom.xpath("//div/@data-block-json")
+        if geo:
+            geo = json.loads(geo[1])
 
         location_name = loc_dom.xpath("//h1/strong/text()")
+        if not location_name:
+            location_name = loc_dom.xpath('//h1[@class="text-align-center"]/text()')
+        if not location_name:
+            location_name = loc_dom.xpath('//div[@class="cmsPageContent"]/h1/text()')
+        if not location_name:
+            location_name = loc_dom.xpath("//div/h1/text()")
         location_name = location_name[0] if location_name else "<MISSING>"
         raw_address = loc_dom.xpath('//p[strong[contains(text(), "Location:")]]/text()')
+        if not raw_address:
+            raw_address = loc_dom.xpath(
+                '//div[h3[contains(text(), "WE ARE OPEN")]]/p[1]/text()'
+            )
         raw_address = [e.strip() for e in raw_address if e.strip()]
         street_address = raw_address[0]
         city = raw_address[1].split(", ")[0]
         state = raw_address[1].split(", ")[-1].split()[0]
         zip_code = raw_address[1].split(", ")[-1].split()[-1]
-        country_code = geo["location"]["addressCountry"]
+        country_code = "<MISSING>"
+        if geo:
+            country_code = geo["location"]["addressCountry"]
         store_number = "<MISSING>"
         phone = loc_dom.xpath('//a[contains(@href, "tel")]/text()')
         phone = phone[0] if phone else "<MISSING>"
         location_type = "<MISSING>"
-        latitude = geo["location"]["mapLat"]
-        longitude = geo["location"]["mapLng"]
+        latitude = "<MISSING>"
+        longitude = "<MISSING>"
+        if geo:
+            latitude = geo["location"]["mapLat"]
+            longitude = geo["location"]["mapLng"]
         hoo = loc_dom.xpath(
             '//p[strong[contains(text(), "Hours of Operation: ")]]/text()'
         )
+        if not hoo:
+            hoo = loc_dom.xpath(
+                '//div[@class="sqs-block-content"]/p[contains(text(), "am -")]/text()'
+            )
+        if not hoo:
+            hoo = loc_dom.xpath('//div[@class="ClearFix cmsPanelContent"]/p/text()')[
+                2:10
+            ]
+        hoo = [e.strip() for e in hoo if e.strip()]
         hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
 
         item = [

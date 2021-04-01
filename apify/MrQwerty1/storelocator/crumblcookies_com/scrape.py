@@ -64,7 +64,7 @@ def fetch_data():
         longitude = j.get("longitude") or "<MISSING>"
         location_type = "<MISSING>"
         hours = j.get("storeHours") or {}
-        hours_of_operation = hours.get("description") or "<MISSING>"
+        hours_of_operation = hours.get("description") or "<INACCESSIBLE>"
 
         row = [
             locator_domain,

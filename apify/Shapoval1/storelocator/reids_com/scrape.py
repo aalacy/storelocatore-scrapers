@@ -113,6 +113,17 @@ def fetch_data():
         )
         hours_of_operation = list(filter(None, [a.strip() for a in hours_of_operation]))
         hours_of_operation = " ".join(hours_of_operation)
+        if street_address.find("Trade") != -1:
+            hours_of_operation = (
+                " ".join(
+                    j.xpath(
+                        ".//p[contains(text(), 'Store Phone')]/following-sibling::p[contains(text(), 'day')]/text()"
+                    )
+                )
+                .replace("\n", "")
+                .replace("\t", "")
+                .strip()
+            )
 
         row = [
             locator_domain,

@@ -51,6 +51,10 @@ def fetch_data():
             items = line.split('id_store":"')
             for item in items:
                 if '"title":"' in item:
+                    typ = item.split('"type":"')[1].split('"')[0]
+                    loc = "https://www.natuzzi.co.uk/store" + item.split(
+                        '<a target=\\"_blank\\" href=\\"\\/store'
+                    )[1].split('\\"')[0].replace("\\", "")
                     store = item.split('"')[0]
                     name = item.split('"title":"')[1].split('"')[0]
                     add = item.split('"address":"')[1].split('"')[0]

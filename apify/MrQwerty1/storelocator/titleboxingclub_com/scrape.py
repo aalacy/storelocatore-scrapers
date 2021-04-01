@@ -1,7 +1,6 @@
 import csv
 import json
 
-from concurrent import futures
 from lxml import html
 from sgrequests import SgRequests
 
@@ -35,42 +34,17 @@ def write_output(data):
             writer.writerow(row)
 
 
-def get_urls():
-    session = SgRequests()
-    r = session.get("https://titleboxingclub.com/locations/")
-    tree = html.fromstring(r.text)
-
-    return tree.xpath("//a[@class='location-bottom-link']/@href")
-
-
-def get_data(page_url):
-    locator_domain = "https://titleboxingclub.com/"
-
+def get_hours(page_url):
     session = SgRequests()
     r = session.get(page_url)
     if r.status_code == 410:
-        return
+        return "<MISSING>"
+
     tree = html.fromstring(r.text)
     text = "".join(
         tree.xpath("//script[contains(text(), 'ExerciseGym')]/text()")
     ).replace("[ , ", "[")
     j = json.loads(text)
-
-    location_name = j.get("name")
-    a = j.get("address")
-    street_address = a.get("streetAddress") or "<MISSING>"
-    city = a.get("addressLocality") or "<MISSING>"
-    state = a.get("addressRegion") or "<MISSING>"
-    postal = a.get("postalCode") or "<MISSING>"
-    country_code = a.get("addressCountry") or "<MISSING>"
-    store_number = "<MISSING>"
-    phone = j.get("telephone") or "<MISSING>"
-    if phone.lower().find("text") != -1:
-        phone = phone.lower().split("text")[-1].replace(":", "").strip()
-    g = j.get("geo")
-    latitude = g.get("latitude") or "<MISSING>"
-    longitude = g.get("longitude") or "<MISSING>"
-    location_type = "<MISSING>"
 
     _tmp = []
     hours = j.get("openingHours") or []
@@ -87,39 +61,65 @@ def get_data(page_url):
     if iscoming:
         hours_of_operation = "Coming Soon"
 
-    row = [
-        locator_domain,
-        page_url,
-        location_name,
-        street_address,
-        city,
-        state,
-        postal,
-        country_code,
-        store_number,
-        phone,
-        location_type,
-        latitude,
-        longitude,
-        hours_of_operation,
-    ]
-
-    return row
+    return hours_of_operation
 
 
 def fetch_data():
     out = []
-    urls = get_urls()
+    locator_domain = "https://titleboxingclub.com/"
+    api_url = "https://titleboxingclub.com/locations/"
 
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
-        future_to_url = {executor.submit(get_data, url): url for url in urls}
-        for future in futures.as_completed(future_to_url):
-            try:
-                row = future.result()
-            except:
-                row = []
-            if row:
-                out.append(row)
+    session = SgRequests()
+    r = session.get(api_url)
+    tree = html.fromstring(r.text)
+    li = tree.xpath("//ul[@class='maplocationsectionbottom']/li")
+
+    for l in li:
+        location_name = "".join(l.xpath(".//h2/text()")).strip()
+        street_address = (
+            "".join(l.xpath(".//span[@itemprop='streetAddress']/text()")) or "<MISSING>"
+        )
+        city = (
+            "".join(l.xpath(".//span[@itemprop='addressLocality']/text()"))
+            or "<MISSING>"
+        )
+        state = (
+            "".join(l.xpath(".//span[@itemprop='addressRegion']/text()")) or "<MISSING>"
+        )
+        postal = (
+            "".join(l.xpath(".//span[@itemprop='postalCode']/text()")) or "<MISSING>"
+        )
+        country_code = "US"
+        store_number = "<MISSING>"
+        page_url = "".join(l.xpath("./a/@href")) or "<MISSING>"
+        phone = "".join(l.xpath(".//span[@itemprop='telephone']/text()")) or "<MISSING>"
+        if phone.lower().find("text") != -1:
+            phone = phone.lower().split("text")[-1].replace(":", "").strip()
+        latitude = "".join(l.xpath("./@data-lat")) or "<MISSING>"
+        longitude = "".join(l.xpath("./@data-lon")) or "<MISSING>"
+        location_type = "<MISSING>"
+        try:
+            hours_of_operation = get_hours(page_url)
+        except:
+            hours_of_operation = "<MISSING>"
+
+        row = [
+            locator_domain,
+            page_url,
+            location_name,
+            street_address,
+            city,
+            state,
+            postal,
+            country_code,
+            store_number,
+            phone,
+            location_type,
+            latitude,
+            longitude,
+            hours_of_operation,
+        ]
+        out.append(row)
 
     return out
 

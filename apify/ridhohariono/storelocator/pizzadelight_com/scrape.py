@@ -72,7 +72,7 @@ def fetch_data():
         location_name = handle_missing(row["title"])
         city = handle_missing(row["address"]["city"])
         street_address = handle_missing(row["address"]["address"])
-        if "Marystown" not in street_address:
+        if "Marystown" not in street_address and "Cavendish" not in street_address:
             street_address = re.sub(city + ".*", "", street_address)
         street_address = re.sub(r"Hawke's Bay.*", "", street_address).strip()
         street_address = re.sub(r",$", "", street_address)

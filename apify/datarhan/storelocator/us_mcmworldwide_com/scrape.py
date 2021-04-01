@@ -2,7 +2,7 @@ import csv
 from lxml import etree
 
 from sgrequests import SgRequests
-from sgscrape.sgpostal import parse_address_usa
+from sgscrape.sgpostal import parse_address_intl
 from sgzip.dynamic import SearchableCountries, DynamicGeoSearch
 
 
@@ -44,7 +44,7 @@ def fetch_data():
     scraped_items = []
 
     DOMAIN = "mcmworldwide.com"
-    start_url = "https://us.mcmworldwide.com/on/demandware.store/Sites-MCM-US-Site/en_US/Stores-FindbyNumberOfStores?format=ajax&noOfStores=10.00&searchType=findbyGeoLocation&searchKey=toronto&showOnlyMcmBoutiquesFlag=false&lat={}&lng={}&source=undefined"
+    start_url = "https://us.mcmworldwide.com/on/demandware.store/Sites-MCM-US-Site/en_US/Stores-FindbyNumberOfStores?format=ajax&noOfStores=10.00&searchType=findbyGeoLocation&searchKey=toronto&showOnlyMcmBoutiquesFlag=true&lat={}&lng={}&source=undefined"
 
     hdr = {
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.192 Safari/537.36",
@@ -66,7 +66,7 @@ def fetch_data():
         location_name = poi_html.xpath('.//span[@class="store-name txt-mono"]/text()')
         location_name = location_name[0].strip() if location_name else "<MISSING>"
         raw_address = poi_html.xpath('.//p[@class="store-address"]/span/text()')
-        addr = parse_address_usa(" ".join(raw_address))
+        addr = parse_address_intl(" ".join(raw_address))
         street_address = addr.street_address_1
         if addr.street_address_2:
             street_address += " " + addr.street_address_2
@@ -90,10 +90,10 @@ def fetch_data():
         location_type = "<MISSING>"
         latitude = poi_html.xpath("@data-lat")
         latitude = latitude[0] if latitude else "<MISSING>"
-        longitude = poi_html.xpath("@data-lng")
-        longitude = longitude if longitude else "<MISSING>"
+        longitude = poi_html.xpath("@data-long")
+        longitude = longitude[0] if longitude else "<MISSING>"
         hoo = poi_html.xpath('.//div[@class="store-hours"]//text()')
-        hoo = [e.strip() for e in hoo if e.strip()]
+        hoo = [e.strip() for e in hoo if e.strip()][:2]
         hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
         store_url = "https://us.mcmworldwide.com/en_US/stores/{}/{}".format(
             location_name.lower().replace(" ", "-"), store_number

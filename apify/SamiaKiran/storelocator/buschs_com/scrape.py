@@ -79,7 +79,7 @@ def fetch_data():
                 "<MISSING>",
                 latitude,
                 longitude,
-                hours,
+                hours.strip("Hours: "),
             ]
         )
     return data

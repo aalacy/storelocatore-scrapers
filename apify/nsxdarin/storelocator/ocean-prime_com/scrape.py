@@ -44,6 +44,7 @@ def fetch_data():
     website = "ocean-prime.com"
     typ = "<MISSING>"
     country = "US"
+    coord = []
     logger.info("Pulling Stores")
     for line in r.iter_lines():
         line = str(line.decode("utf-8"))
@@ -54,6 +55,11 @@ def fetch_data():
             locs.append(
                 "https://www.ocean-prime.com" + line.split('href="')[1].split('"')[0]
             )
+        if "/@" in line:
+            llat = line.split("/@")[1].split(",")[0]
+            llng = line.split("/@")[1].split(",")[1]
+            title = line.split('target="_blank">')[1].split("<")[0].strip()
+            coord.append(title + "|" + llat + "|" + llng)
     for loc in locs:
         logger.info(loc)
         name = ""
@@ -122,6 +128,23 @@ def fetch_data():
             hours = "MONDAY-SUNDAY: 5PM - 9PM"
         if "Naples" in loc:
             hours = "SUNDAY - THURSDAY: 4PM - 9PM; FRIDAY & SATURDAY: 4PM - 10PM"
+        lname = city + ", " + state
+        for item in coord:
+            if item.split("|")[0] == lname:
+                lat = item.split("|")[1]
+                lng = item.split("|")[2]
+        if "Detroit" in name:
+            lat = "42.55915"
+            lng = "-83.192967"
+        if "Larimer Square" in name:
+            lat = "39.7482802"
+            lng = "-104.9990006"
+        if "Tampa" in name:
+            lat = "27.953844"
+            lng = "-82.539328"
+        if "New York City" in name:
+            lat = "40.76173"
+            lng = "-73.98063"
         yield [
             website,
             loc,

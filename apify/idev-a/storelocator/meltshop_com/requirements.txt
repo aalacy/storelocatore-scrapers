@@ -1,5 +1,5 @@
+sgvalidator==0.0.71
 sgscrape==0.0.22
 pandas==1.2.2
-sgvalidator==0.0.71
 sgrequests==0.1.7
 beautifulsoup4==4.9.3

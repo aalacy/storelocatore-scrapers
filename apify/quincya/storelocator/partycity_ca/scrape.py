@@ -103,15 +103,13 @@ def fetch_data():
                 day = raw_hour.find(
                     class_="store-locator__store-info__hours-table__day"
                 ).text
-                hours_js = json.loads(raw_hour["data-working-hours"])
+                try:
+                    hours_js = json.loads(raw_hour["data-working-hours"])
+                    day_hr = hours_js["open"] + "-" + hours_js["close"]
+                except:
+                    day_hr = raw_hour["data-working-hours"]
                 hours_of_operation = (
-                    hours_of_operation
-                    + " "
-                    + day
-                    + " "
-                    + hours_js["open"]
-                    + "-"
-                    + hours_js["close"]
+                    hours_of_operation + " " + day + " " + day_hr
                 ).strip()
 
             # Store data

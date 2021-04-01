@@ -60,11 +60,10 @@ def fetch_data():
         link = "https://www.andalemexican.com" + title["href"]
         title = title.text
         content = repo.find("div", {"class": "summary-excerpt"}).findAll("p")
-        for ct in content:
-            if ct.text.find("Fax") > -1:
-                address = ct
-            elif ct.text.find("Hours") > -1:
+        for index, ct in enumerate(content):
+            if ct.text.find("Hours") > -1:
                 hours = ct.text
+                address = content[index - 1]
         address = re.sub(cleanr, "\n", str(address))
         address = re.sub(pattern, "\n", address.lstrip()).split("\n")
         if len(address) > 1:
@@ -76,10 +75,13 @@ def fetch_data():
                 state, pcode = state.lstrip().split(" ", 1)
             except:
                 pcode = "<MISSING>"
-            phone = address[2]
+            if address[2]:
+                phone = address[2]
+            else:
+                phone = "<MISSING>"
         data.append(
             [
-                "https://www.andalemexican.com/locations",
+                "https://www.andalemexican.com",
                 link,
                 title,
                 street,

@@ -69,6 +69,8 @@ for search_lat, search_lon in search:
             zipp = "0" + str(zipp)
         store_number = location["id"]
         phone = location["phone"]
+        if len(phone) < 5:
+            phone = "<MISSING>"
         location_type = "<MISSING>"
         latitude = location["lat"]
         longitude = location["lon"]
@@ -141,4 +143,4 @@ df = df.drop(columns=["dupecheck"])
 df = df.replace(r"^\s*$", "<MISSING>", regex=True)
 df = df.fillna("<MISSING>")
 
-df.to_csv("data.csv", index=True)
+df.to_csv("data.csv", index=False)
