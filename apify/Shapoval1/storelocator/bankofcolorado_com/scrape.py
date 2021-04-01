@@ -41,7 +41,7 @@ def fetch_data():
 
     js = r.json()
     for j in js["branches"]:
-        location_name = j.get("name")
+        location_name = "<MISSING>"
         street_address = j.get("address1")
         city = j.get("city")
         state = "".join(j.get("address3")).split(",")[1].split()[0]
