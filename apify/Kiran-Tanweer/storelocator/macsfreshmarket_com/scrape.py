@@ -94,7 +94,6 @@ def fetch_data():
         if hoo.find("Mon") == -1:
             hoo = "Mon-Sun: " + hoo
         parsed = parser.parse_address_intl(address)
-        country = parsed.country if parsed.country else "<MISSING>"
         street1 = parsed.street_address_1 if parsed.street_address_1 else "<MISSING>"
         street = (
             (street1 + ", " + parsed.street_address_2)
