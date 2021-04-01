@@ -49,7 +49,6 @@ def fetch_data():
 
     session = SgRequests()
 
-    data = []
     found_poi = []
 
     max_results = None
@@ -81,7 +80,6 @@ def fetch_data():
         req = session.get(base_link, headers=headers)
         base = BeautifulSoup(req.text, "lxml")
 
-        new_coordinates = []
         items = json.loads(base.text)["BranchCollection"]
         for item in items:
 
@@ -112,11 +110,12 @@ def fetch_data():
             )
             latitude = item["Address"]["Coordinates"]["Latitude"]
             longitude = item["Address"]["Coordinates"]["Longitude"]
-            new_coordinates.append([latitude, longitude])
+
+            search.found_location_at(latitude, longitude)
+
             link = "https://www.citizensbank.com/customer-service/branch-locator.aspx"
 
-            data.append(
-                [
+            yield [
                     locator_domain,
                     link,
                     location_name,
@@ -132,12 +131,6 @@ def fetch_data():
                     longitude,
                     hours_of_operation,
                 ]
-            )
-
-        if len(new_coordinates) > 0:
-            search.mark_found(new_coordinates)
-    return data
-
 
 def scrape():
     data = fetch_data()

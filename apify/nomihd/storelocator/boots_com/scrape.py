@@ -73,8 +73,8 @@ def fetch_data():
     stores = stores_sel.xpath('//div[@class="brand_list_viewer"]//ul/li/a/@href')
 
     for store_url in stores:
-        log.info(store_url)
         page_url = "https://www.boots.com" + store_url
+        log.info(page_url)
         locator_domain = website
 
         store_req = get_page(page_url)
@@ -84,6 +84,7 @@ def fetch_data():
         ).strip()
         if location_name == "":
             location_name = "<MISSING>"
+            continue
 
         sections = store_sel.xpath('//dl[@class="store_info_list"]')
         for sec in sections:
@@ -168,23 +169,24 @@ def fetch_data():
         if phone == "":
             phone = "<MISSING>"
 
-        curr_list = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        loc_list.append(curr_list)
+        if store_number != "":
+            curr_list = [
+                locator_domain,
+                page_url,
+                location_name,
+                street_address,
+                city,
+                state,
+                zip,
+                country_code,
+                store_number,
+                phone,
+                location_type,
+                latitude,
+                longitude,
+                hours_of_operation,
+            ]
+            loc_list.append(curr_list)
         # break
 
     return loc_list

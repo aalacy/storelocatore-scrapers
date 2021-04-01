@@ -144,6 +144,8 @@ def fetch_data():
         state = api["address"]["region"]
         if y["country"]:
             state = y["country"]
+        if api["address"]["countryCode"] == "GB":
+            state = "United Kingdom"
         zp = api["address"]["postalCode"]
         loc_type = y["type"]
         phone = api["mainPhone"]
@@ -188,7 +190,7 @@ def fetch_data():
                 city,
                 state,
                 zp,
-                api["address"]["region"],
+                api["address"]["countryCode"],
                 api["meta"]["id"],
                 phone,
                 y["type"],

@@ -40,7 +40,7 @@ def get_urls():
     tree = html.fromstring(r.text)
 
     return tree.xpath(
-        "//div[./div[contains(text(),'United States') or contains(text(), 'Canada')]]/a/@href"
+        "//div[./div[contains(text(),'United States') or contains(text(), 'Canada') or contains(text(), 'United Kingdom')]]/a/@href"
     )
 
 
@@ -75,10 +75,20 @@ def get_data(page_url):
             city = "<MISSING>"
             state = line.split(",")[-1].strip()
 
-        if len(postal) == 5:
-            country_code = "US"
-        else:
+        if street_address == "23765 SE 264th St.":
+            city = "Maple Valley"
+            state = "Washington"
+            postal = "98038"
+
+        country = "".join(
+            tree.xpath("//font[@style=' text-transform:uppercase;']/text()")
+        ).strip()
+        if country == "canada":
             country_code = "CA"
+        elif country == "uk":
+            country_code = "GB"
+        else:
+            country_code = "US"
 
     else:
         street_address = "<MISSING>"
@@ -87,7 +97,10 @@ def get_data(page_url):
         postal = "<MISSING>"
         country_code = "<MISSING>"
     store_number = "<MISSING>"
-    phone = "".join(tree.xpath("//div[@class='address-col2']/text()")).strip()
+    phone = (
+        "".join(tree.xpath("//div[@class='address-col2']/text()")).strip()
+        or "<MISSING>"
+    )
 
     script = "".join(
         tree.xpath("//script[contains(text(), 'new google.maps.LatLng')]/text()")
@@ -95,12 +108,22 @@ def get_data(page_url):
     try:
         latitude = script.split("LatLng(")[1].split(",")[0]
         longitude = script.split("LatLng(")[1].split(",")[1].split(")")[0]
-    except:
+    except IndexError:
         latitude = "<MISSING>"
         longitude = "<MISSING>"
 
     location_type = "<MISSING>"
-    hours_of_operation = "<MISSING>"
+
+    _tmp = []
+    divs = tree.xpath(
+        "//div[@style='display: flex; padding: 8px 0; border-bottom: 1px solid #888;']"
+    )
+    for d in divs:
+        day = "".join(d.xpath("./div[1]//text()")).strip()
+        time = " ".join("".join(d.xpath("./div[2]//text()")).split())
+        _tmp.append(f"{day} {time}")
+
+    hours_of_operation = ";".join(_tmp) or "<MISSING>"
 
     row = [
         locator_domain,

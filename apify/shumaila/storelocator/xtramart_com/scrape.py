@@ -69,7 +69,7 @@ def fetch_data():
             [
                 "https://xtramart.com/",
                 link,
-                title,
+                title.replace(" &#038;", " & "),
                 street.strip(),
                 city,
                 state,

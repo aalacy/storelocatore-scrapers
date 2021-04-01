@@ -109,6 +109,10 @@ def get_data(url):
     state = a.get("state") or "<INACCESSIBLE>"
     postal = a.get("postal") or "<INACCESSIBLE>"
     country_code = "US"
+    if street_address.find(", Mt.") != -1:
+        street_address = street_address.replace(", Mt.", "")
+        city = f"Mt. {city}"
+
     store_number = "<MISSING>"
     phone = (
         "".join(

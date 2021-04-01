@@ -69,12 +69,7 @@ def fetch_data():
         store_number = link.split("=")[1].split("&")[0]
         phone = "<MISSING>"
 
-        try:
-            hours_of_operation = " ".join(
-                list(base.find(class_="rightsection").find("table").stripped_strings)
-            ).strip()
-        except:
-            hours_of_operation = "<MISSING>"
+        hours_of_operation = "<INACCESSIBLE>"
 
         latitude = (
             re.findall(r"lat: Number\([0-9]{2}\.[0-9]+\)", str(base))[0]

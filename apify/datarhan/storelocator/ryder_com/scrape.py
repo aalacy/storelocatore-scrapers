@@ -58,10 +58,10 @@ def fetch_data():
             locations_html = city_dom.xpath('//div[@class="location__item"]')
             for l_html in locations_html:
                 store_url = "https://ryder.com" + l_html.xpath(".//a/@href")[0]
-                location_name = l_html.xpath('.//h2[@itemprop="name"]/text()')[
-                    -1
-                ].strip()
-                location_name = location_name if location_name else "<MISSING>"
+                location_name = l_html.xpath('.//span[@itemprop="addressName"]/text()')
+                location_name = (
+                    location_name[0].strip() if location_name else "<MISSING>"
+                )
                 street_address = l_html.xpath(
                     './/span[@itemprop="streetAddress"]/text()'
                 )
@@ -78,8 +78,7 @@ def fetch_data():
                     './/span[@itemprop="addressCountry"]/text()'
                 )
                 country_code = country_code[0].strip() if country_code else "<MISSING>"
-                store_number = store_url.split("/")[-1].strip()
-                store_number = store_number if store_number else "<MISSING>"
+                store_number = location_name.split("#")[-1].strip()
                 phone = l_html.xpath('.//span[@itemprop="telephone"]/text()')
                 phone = phone[0].strip() if phone else ""
                 phone = phone if phone else "<MISSING>"

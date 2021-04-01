@@ -5,7 +5,7 @@ from sglogging import sglog
 import lxml.html
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 
-website = "krispykreme_co.uk"
+website = "krispykreme.co.uk"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 session = SgRequests()
 headers = {
@@ -60,7 +60,6 @@ def write_output(data):
 
 def fetch_data():
     # Your scraper here
-    loc_list = []
 
     search_url = (
         "https://www.krispykreme.co.uk/find-store?store-search={}&store-search-type="
@@ -146,9 +145,7 @@ def fetch_data():
                     direction_link.split("&query=")[1].strip().split(",")[1].strip()
                 )
 
-                latlng_tuple = (latitude, longitude)
-                latlng_list = [latlng_tuple]
-                search.mark_found(latlng_list)
+                search.found_location_at(latitude, longitude)
 
             if latitude == "":
                 latitude = "<MISSING>"
@@ -176,9 +173,7 @@ def fetch_data():
                 longitude,
                 hours_of_operation,
             ]
-            loc_list.append(curr_list)
-
-    return loc_list
+            yield curr_list
 
 
 def scrape():

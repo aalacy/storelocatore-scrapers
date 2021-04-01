@@ -60,10 +60,13 @@ def fetch_data():
         zip_code = raw_address[1].split(", ")[-1].split()[-1]
         country_code = "<MISSING>"
         store_number = location_name.split("#")[-1]
-        phone = raw_address[-2]
+        if len(raw_address) == 5:
+            phone = raw_address[-2]
+        else:
+            phone = raw_address[-1]
         latitude = poi_html.xpath("@data-lat")[0]
         longitude = poi_html.xpath("@data-lon")[0]
-        hours_of_operation = poi_html.xpath("@data-lon")[0]
+        hours_of_operation = "<MISSING>"
 
         item = [
             DOMAIN,

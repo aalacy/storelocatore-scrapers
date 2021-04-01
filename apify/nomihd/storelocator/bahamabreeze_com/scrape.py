@@ -78,7 +78,7 @@ def fetch_data():
     stores_sel = lxml.html.fromstring(stores_req.text)
     stores = stores_sel.xpath('//div[@class="cal_col"]/ul//li/a/@href')
     for store_url in stores:
-        page_url = "https://www.bahamabreeze.com" + store_url
+        page_url = "https://www.bahamabreeze.com" + store_url.strip()
         locator_domain = website
         log.info(page_url)
         headers = {
@@ -177,6 +177,93 @@ def fetch_data():
                         hours_of_operation,
                     ]
                     loc_list.append(curr_list)
+
+            else:
+                location_name = "".join(
+                    store_sel.xpath('//h1[@class="style_h1"]/text()')
+                ).strip()
+                if location_name == "":
+                    location_name = "<MISSING>"
+
+                street_address = "".join(
+                    store_sel.xpath('//p[@id="info-link-webhead"]/text()[1]')
+                ).strip()
+                city_state_Zip = "".join(
+                    store_sel.xpath('//p[@id="info-link-webhead"]/text()[2]')
+                ).strip()
+                city = city_state_Zip.split(",")[0].strip()
+                state = city_state_Zip.split(",")[1].strip().split(" ")[0].strip()
+                zip = city_state_Zip.split(",")[1].strip().split(" ")[1].strip()
+                country_code = "US"
+
+                if country_code == "" or country_code is None:
+                    country_code = "<MISSING>"
+                if street_address == "":
+                    street_address = "<MISSING>"
+
+                if city == "":
+                    city = "<MISSING>"
+
+                if state == "":
+                    state = "<MISSING>"
+
+                if zip == "":
+                    zip = "<MISSING>"
+
+                store_number = "<MISSING>"
+                if store_number == "":
+                    store_number = "<MISSING>"
+                phone = "".join(
+                    store_sel.xpath('//p[@id="info-link-webhead"]/text()[3]')
+                ).strip()
+
+                location_type = "<MISSING>"
+                if location_type == "":
+                    location_type = "<MISSING>"
+
+                hours_of_operation = ""
+                hours_list = []
+                hours = store_sel.xpath('//div[@class="hours-section"]/span')
+                total = int((len(hours) / 2))
+                for index in range(0, total):
+                    hours_list.append(
+                        "".join(hours[index].xpath("text()")).strip()
+                        + ":"
+                        + "".join(hours[index + 1].xpath("text()")).strip()
+                    )
+
+                hours_of_operation = "; ".join(hours_list).strip()
+
+                latitude = "<MISSING>"
+                longitude = "<MISSING>"
+
+                if latitude == "":
+                    latitude = "<MISSING>"
+                if longitude == "":
+                    longitude = "<MISSING>"
+
+                if hours_of_operation == "":
+                    hours_of_operation = "<MISSING>"
+                if phone == "":
+                    phone = "<MISSING>"
+
+                curr_list = [
+                    locator_domain,
+                    page_url,
+                    location_name,
+                    street_address,
+                    city,
+                    state,
+                    zip,
+                    country_code,
+                    store_number,
+                    phone,
+                    location_type,
+                    latitude,
+                    longitude,
+                    hours_of_operation,
+                ]
+                loc_list.append(curr_list)
 
     return loc_list
 

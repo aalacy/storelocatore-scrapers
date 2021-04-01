@@ -1,9 +1,11 @@
-import csv
 import json
+import csv
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
+from sglogging import sglog
 
-logger = SgLogSetup().get_logger("tonysfreshmarket_com")
+website = "tonysfreshmarket_com"
+log = sglog.SgLogSetup().get_logger(logger_name=website)
+session = SgRequests()
 
 session = SgRequests()
 headers = {
@@ -12,7 +14,7 @@ headers = {
 
 
 def write_output(data):
-    with open("data.csv", mode="w") as output_file:
+    with open("data.csv", mode="w", newline="", encoding="utf8") as output_file:
         writer = csv.writer(
             output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
         )
@@ -36,26 +38,29 @@ def write_output(data):
                 "hours_of_operation",
             ]
         )
-        # Body
         for row in data:
             writer.writerow(row)
+        log.info(f"No of records being processed: {len(data)}")
 
 
 def fetch_data():
     # Your scraper here
     final_data = []
-    url = "https://api.freshop.com/1/stores?app_key=tony_s_fresh_market&fields=id%2Cname&has_address=true&token=63d13ad03d4393eadec47baecda1e382"
+    myobj = {"app_key": "tony_s_fresh_market"}
+    url = "https://api.freshop.com/2/sessions/create"
+    token = session.post(url, data=myobj, headers=headers).json()["token"]
+    r = session.post(url, headers=headers, verify=False)
+    url = (
+        "https://api.freshop.com/1/stores?app_key=tony_s_fresh_market&has_address=true&is_selectable=true&limit=100&token="
+        + token
+    )
     r = session.get(url, headers=headers, verify=False)
-    name_list = r.text.split('"items":')[1].split("]", 1)[0]
-    name_list = name_list + "]"
-    name_list = json.loads(name_list)
-
+    name_list = json.loads(r.text)["items"]
     url1 = "https://api.freshop.com/1/stores?app_key=tony_s_fresh_market&fields"
     r1 = session.get(url1, headers=headers, verify=False)
     linklist = r1.text.split('"items":')[1].split("]}", 1)[0]
     linklist = linklist + "]"
     linklist = json.loads(linklist)
-
     for name in name_list:
         for link in linklist:
             if name["name"] == link["name"]:
@@ -77,8 +82,8 @@ def fetch_data():
                     street = link["address_1"]
         final_data.append(
             [
-                "https://www.tonysfreshmarket.com/",
-                "https://www.tonysfreshmarket.com/my-store/store-locator",
+                "tonysfreshmarket.com",
+                "https://www.foodmaxx.com/stores",
                 title,
                 street,
                 city,
@@ -97,8 +102,11 @@ def fetch_data():
 
 
 def scrape():
+    log.info("Started")
     data = fetch_data()
     write_output(data)
+    log.info("Finished")
 
 
+scrape()
 scrape()

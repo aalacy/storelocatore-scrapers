@@ -36,108 +36,51 @@ def write_output(data):
 def fetch_data():
     # Your scraper here
     locator_domain = "https://www.rentawheel.com/"
-    api = "https://www.rentawheel.com/retailers.php"
+    api = "https://api.ridestyler.net/Location/List"
     missingString = "<MISSING>"
+    h = {
+        "Content-Type": "application/json",
+        "Authorization": "ApiKey 3764acce-4d8c-42cb-bca0-bae367430492",
+    }
 
     s = SgRequests()
-    api = s.get(api).text
+    api = s.post(api, headers=h).text
 
-    apiJSON = json.loads(api)
+    apiJSON = json.loads(api)["Locations"]
 
     result = []
 
     for el in apiJSON:
-        if not el["hours"]:
-            result.append(
-                [
-                    locator_domain,
-                    missingString,
-                    el["title"],
-                    missingString,
-                    el["city"],
-                    el["state"],
-                    el["zip"],
-                    missingString,
-                    el["storenumber"],
-                    el["phone"],
-                    el["phone"],
-                    el["lat"],
-                    el["lng"],
-                    missingString,
-                ]
-            )
-        elif not el["address"]:
-            result.append(
-                [
-                    locator_domain,
-                    missingString,
-                    el["title"],
-                    missingString,
-                    el["city"],
-                    el["state"],
-                    el["zip"],
-                    missingString,
-                    el["storenumber"],
-                    el["phone"],
-                    el["phone"],
-                    el["lat"],
-                    el["lng"],
-                    el["hours"]
-                    .replace("M", "Monday")
-                    .replace("F", "Friday")
-                    .replace("/", ",")
-                    .replace("SAT", "Saturday")
-                    .strip(),
-                ]
-            )
-        elif el["phone"] == "Coming Soon!":
-            result.append(
-                [
-                    locator_domain,
-                    missingString,
-                    el["title"],
-                    missingString,
-                    el["city"],
-                    el["state"],
-                    el["zip"],
-                    missingString,
-                    el["storenumber"],
-                    el["phone"],
-                    el["phone"],
-                    el["lat"],
-                    el["lng"],
-                    el["hours"]
-                    .replace("M", "Monday")
-                    .replace("F", "Friday")
-                    .replace("/", ",")
-                    .replace("SAT", "Saturday")
-                    .strip(),
-                ]
-            )
-        else:
-            result.append(
-                [
-                    locator_domain,
-                    missingString,
-                    el["title"],
-                    el["address"],
-                    el["city"],
-                    el["state"],
-                    el["zip"],
-                    missingString,
-                    el["storenumber"],
-                    el["phone"],
-                    missingString,
-                    el["lat"],
-                    el["lng"],
-                    el["hours"]
-                    .replace("M", "Monday")
-                    .replace("F", "Friday")
-                    .replace("/", ",")
-                    .replace("SAT", "Saturday")
-                    .strip(),
-                ]
-            )
+        timeArray = []
+        lochours = el["LocationHours"]
+        for e in el["LocationHours"]:
+            o = lochours[e]["Open"]
+            c = lochours[e]["Close"]
+            if lochours[e]["Operational"] == "true":
+                timeArray.append("{} - {}".format(o, c))
+            else:
+                pass
+        hours = ", ".join(timeArray)
+        if hours == "":
+            hours = missingString
+        result.append(
+            [
+                locator_domain,
+                missingString,
+                el["LocationName"],
+                el["LocationAddress1"],
+                el["LocationCity"],
+                el["LocationState"],
+                el["LocationPostalCode"],
+                el["LocationCountry"],
+                el["LocationID"],
+                el["LocationSalesPhone"],
+                missingString,
+                el["LocationLatitude"],
+                el["LocationLongitude"],
+                hours,
+            ]
+        )
 
     return result
 

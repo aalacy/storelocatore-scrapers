@@ -1,5 +1,6 @@
 import csv
 import json
+from bs4 import BeautifulSoup as bs
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -65,6 +66,20 @@ def fetch_data():
         location_type = "<MISSING>"
         latitude = store["lat"]
         longitude = store["lng"]
+        if hours_of_operation == "<MISSING>" and page_url != "<MISSING>":
+            res1 = session.get(page_url)
+            soup = bs(res1.text, "lxml")
+            try:
+                hours_of_operation = (
+                    soup.select_one("div.bounceInLeft div.rte")
+                    .text.split("Hours")
+                    .pop()
+                    .replace("\n", " ")
+                    .replace("–", "-")
+                    .strip()
+                )
+            except:
+                hours_of_operation = "<MISSING>"
 
         data.append(
             [
