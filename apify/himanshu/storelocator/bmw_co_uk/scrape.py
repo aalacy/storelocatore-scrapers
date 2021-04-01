@@ -37,7 +37,6 @@ def fetch_data():
     for coord in search:
         # logger.info("remaining zipcodes: " + str(search.zipcodes_remaining()))
         
-        result_coords = []
         json_data = session.get("https://discover.bmw.co.uk/proxy/api/dealers?q="+str(coord[0])+","+str(coord[1])+"&type=new").json()
         
         
@@ -77,7 +76,8 @@ def fetch_data():
             else:
                 hours = "<MISSING>"
             
-            result_coords.append((lat,lng))
+            search.found_location_at(lat,lng)
+
             store = []
             store.append(base_url)
             store.append(location_name)
@@ -100,8 +100,6 @@ def fetch_data():
             addresses.append(store[2])
             yield store
 
-        search.mark_found(result_coords)
-    
     
 def scrape():
     data = fetch_data()

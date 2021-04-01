@@ -12,6 +12,7 @@ def write_output(data):
         writer = csv.writer(
             output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
         )
+        # Header
         writer.writerow(
             [
                 "locator_domain",
@@ -30,6 +31,7 @@ def write_output(data):
                 "page_url",
             ]
         )
+        # Body
         for row in data:
             writer.writerow(row)
 
@@ -51,16 +53,15 @@ def fetch_data():
             city = mp[2].split(",")[0]
             state = mp[2].split(",")[1].split(" ")[1]
             store_zip = mp[2].split(",")[1].split(" ")[-1]
-            store_number = mp[0].split(" ")[-1]
             return_object = []
             return_object.append("https://www.xscapetheatres.com/")
             return_object.append(location_name)
-            return_object.append(street_address)
+            return_object.append(street_address.replace(",", ""))
             return_object.append(city)
             return_object.append(state)
             return_object.append(store_zip)
             return_object.append("US")
-            return_object.append(store_number.replace("Fulshear", "<MISSING>"))
+            return_object.append("<MISSING>")
             return_object.append("<MISSING>")
             return_object.append("xscape theatres")
             return_object.append("<MISSING>")

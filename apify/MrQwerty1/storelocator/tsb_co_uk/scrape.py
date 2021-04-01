@@ -37,21 +37,23 @@ def write_output(data):
 
 def get_urls():
     session = SgRequests()
-    r = session.get("https://www.tsb.co.uk/branch-locator/")
-    tree = html.fromstring(r.text)
+    r = session.get("https://www.tsb.co.uk/branch-locator/sitemap.xml")
+    tree = html.fromstring(r.content)
 
-    return tree.xpath("//p/a[contains(@href, 'branch-locator/')]/@href")
+    return tree.xpath("//loc/text()")
 
 
 def get_data(page_url):
     locator_domain = "https://www.tsb.co.uk/"
-
     session = SgRequests()
     r = session.get(page_url)
     tree = html.fromstring(r.text)
     text = "".join(
         tree.xpath("//script[contains(text(),'BankOrCreditUnion')]/text()")
     ).strip()
+
+    if not text:
+        return
     j = json.loads(text)
 
     location_name = j.get("name")
@@ -61,7 +63,7 @@ def get_data(page_url):
     a = j.get("address") or {}
     street_address = a.get("streetAddress") or "<MISSING>"
     city = a.get("addressRegion") or "<MISSING>"
-    state = "<MISSING>"
+    state = a.get("addressLocality") or "<MISSING>"
     postal = a.get("postalCode") or "<MISSING>"
     country_code = "GB"
     store_number = "<MISSING>"

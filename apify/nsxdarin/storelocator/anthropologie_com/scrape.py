@@ -133,22 +133,25 @@ def fetch_data():
         if "Closed" in name and "Temp" not in name:
             Closed = True
         if Closed is False:
-            yield [
-                website,
-                loc,
-                name,
-                add,
-                city,
-                state,
-                zc,
-                country,
-                store,
-                phone,
-                typ,
-                lat,
-                lng,
-                hours,
-            ]
+            if "Leeds" in name or "Belfast" in name:
+                country = "GB"
+            if "FN-ES" not in state and "FN-DE" not in state:
+                yield [
+                    website,
+                    loc,
+                    name,
+                    add,
+                    city,
+                    state,
+                    zc,
+                    country,
+                    store,
+                    phone,
+                    typ,
+                    lat,
+                    lng,
+                    hours,
+                ]
 
 
 def scrape():

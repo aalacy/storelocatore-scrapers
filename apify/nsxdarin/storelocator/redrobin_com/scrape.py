@@ -88,54 +88,75 @@ def fetch_data():
                     .split('"days":{"')[1]
                     .split('{"open":"')
                 )
-                hours = (
-                    "Sun: "
-                    + days[1].split('"')[0]
-                    + "-"
-                    + days[1].split('"close":"')[1].split('"')[0]
-                )
-                hours = (
-                    hours
-                    + "; Mon: "
-                    + days[2].split('"')[0]
-                    + "-"
-                    + days[2].split('"close":"')[1].split('"')[0]
-                )
-                hours = (
-                    hours
-                    + "; Tue: "
-                    + days[3].split('"')[0]
-                    + "-"
-                    + days[3].split('"close":"')[1].split('"')[0]
-                )
-                hours = (
-                    hours
-                    + "; Wed: "
-                    + days[4].split('"')[0]
-                    + "-"
-                    + days[4].split('"close":"')[1].split('"')[0]
-                )
-                hours = (
-                    hours
-                    + "; Thu: "
-                    + days[5].split('"')[0]
-                    + "-"
-                    + days[5].split('"close":"')[1].split('"')[0]
-                )
-                hours = (
-                    hours
-                    + "; Fri: "
-                    + days[6].split('"')[0]
-                    + "-"
-                    + days[6].split('"close":"')[1].split('"')[0]
-                )
-                hours = (
-                    hours
-                    + "; Sat: "
-                    + days[7].split('"')[0]
-                    + "-"
-                    + days[7].split('"close":"')[1].split('"')[0]
-                )
+                try:
+                    hours = (
+                        "Sun: "
+                        + days[1].split('"')[0]
+                        + "-"
+                        + days[1].split('"close":"')[1].split('"')[0]
+                    )
+                except:
+                    hours = "Sun: Closed"
+                try:
+                    hours = (
+                        hours
+                        + "; Mon: "
+                        + days[2].split('"')[0]
+                        + "-"
+                        + days[2].split('"close":"')[1].split('"')[0]
+                    )
+                except:
+                    hours = hours + "; Mon: Closed"
+                try:
+                    hours = (
+                        hours
+                        + "; Tue: "
+                        + days[3].split('"')[0]
+                        + "-"
+                        + days[3].split('"close":"')[1].split('"')[0]
+                    )
+                except:
+                    hours = hours + "; Tue: Closed"
+                try:
+                    hours = (
+                        hours
+                        + "; Wed: "
+                        + days[4].split('"')[0]
+                        + "-"
+                        + days[4].split('"close":"')[1].split('"')[0]
+                    )
+                except:
+                    hours = hours + "; Wed: Closed"
+                try:
+                    hours = (
+                        hours
+                        + "; Thu: "
+                        + days[5].split('"')[0]
+                        + "-"
+                        + days[5].split('"close":"')[1].split('"')[0]
+                    )
+                except:
+                    hours = hours + "; Thu: Closed"
+                try:
+                    hours = (
+                        hours
+                        + "; Fri: "
+                        + days[6].split('"')[0]
+                        + "-"
+                        + days[6].split('"close":"')[1].split('"')[0]
+                    )
+                except:
+                    hours = hours + "; Fri: Closed"
+                try:
+                    hours = (
+                        hours
+                        + "; Sat: "
+                        + days[7].split('"')[0]
+                        + "-"
+                        + days[7].split('"close":"')[1].split('"')[0]
+                    )
+                except:
+                    hours = hours + "; Sat: Closed"
         if add != "":
             yield [
                 website,

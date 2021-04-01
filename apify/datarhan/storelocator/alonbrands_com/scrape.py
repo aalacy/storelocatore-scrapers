@@ -94,7 +94,7 @@ def fetch_data():
         all_locations += data["response"]
 
     for poi in all_locations:
-        store_url = poi["url_link"]
+        store_url = poi["sl_pages_url"]
         store_url = store_url if store_url else "<MISSING>"
         location_name = poi["name"]
         location_name = location_name if location_name else "<MISSING>"

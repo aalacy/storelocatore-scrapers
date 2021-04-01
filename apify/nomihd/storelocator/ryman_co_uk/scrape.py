@@ -4,7 +4,7 @@ from sgrequests import SgRequests
 from sglogging import sglog
 import json
 
-website = "ryman_co.uk"
+website = "ryman.co.uk"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 session = SgRequests()
 headers = {

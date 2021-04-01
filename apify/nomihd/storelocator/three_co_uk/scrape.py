@@ -4,7 +4,7 @@ from sgrequests import SgRequests
 from sglogging import sglog
 import lxml.html
 
-website = "three_co.uk"
+website = "three.co.uk"
 domain = "https://locator.three.co.uk/"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 session = SgRequests()

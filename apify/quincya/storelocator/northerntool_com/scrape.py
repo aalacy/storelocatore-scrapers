@@ -1,8 +1,6 @@
 import csv
-
 from bs4 import BeautifulSoup
-
-from sgselenium import SgChrome
+from undetected_chromedriver import Chrome, ChromeOptions
 
 
 def write_output(data):
@@ -35,16 +33,32 @@ def write_output(data):
             writer.writerow(row)
 
 
-def fetch_data():
+# encounter CloudFlare captcha due to sslProxy issue with seleniumwire
+# workaround until a solution is found
+def get_driver():
+    options = ChromeOptions()
+    options.headless = True
+    options.add_argument("--headless")
+    options.add_argument("--disable-gpu")
+    options.add_argument("--no-sandbox")
+    options.add_argument("--disable-dev-shm-usage")
+    options.add_argument("--ignore-certificate-errors")
+    options.add_argument(
+        "--user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.121 Safari/537.36"
+    )
 
+    return Chrome(options=options, executable_path="/bin/chromedriver")
+
+
+def fetch_data():
+    store_link = "https://www.northerntool.com/stores"
     base_link = "https://www.northerntool.com/stores/stores.xml"
 
-    driver = SgChrome().chrome()
-
+    driver = get_driver()
+    driver.get(store_link)
     driver.get(base_link)
 
-    base = BeautifulSoup(driver.page_source, "lxml")
-
+    base = BeautifulSoup(driver.page_source, "html.parser")
     store_data = base.find_all("row")
 
     data = []
@@ -84,7 +98,6 @@ def fetch_data():
             ]
         )
 
-    driver.close()
     return data
 
 
@@ -93,4 +106,5 @@ def scrape():
     write_output(data)
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()

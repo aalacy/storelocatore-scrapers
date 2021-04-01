@@ -86,14 +86,10 @@ def fetch_data():
         if phone == "":
             phone = "<MISSING>"
         if add != "":
-            if (
-                state == "QC"
-                or state == "AB"
-                or state == "SK"
-                or state == "BC"
-                or state == "ON"
-            ):
+            if " " in zc:
                 country = "CA"
+            else:
+                country = "US"
             yield [
                 website,
                 loc,

@@ -107,6 +107,8 @@ def fetch_data():
 
             store_number = str(store["id"])
             phone = store["phone"]
+            if "(" not in phone:
+                phone = "<MISSING>"
 
             location_type = store["description"]
             if location_type == "" or location_type is None:
@@ -116,18 +118,32 @@ def fetch_data():
             hours_list = []
             if len(store["monday"]) > 0:
                 hours_list.append("monday:" + store["monday"])
+            else:
+                hours_list.append("monday:" + "Closed")
             if len(store["tuesday"]) > 0:
                 hours_list.append("tuesday:" + store["tuesday"])
+            else:
+                hours_list.append("tuesday:" + "Closed")
             if len(store["wednesday"]) > 0:
                 hours_list.append("wednesday:" + store["wednesday"])
+            else:
+                hours_list.append("wednesday:" + "Closed")
             if len(store["thursday"]) > 0:
                 hours_list.append("thursday:" + store["thursday"])
+            else:
+                hours_list.append("thursday:" + "Closed")
             if len(store["friday"]) > 0:
                 hours_list.append("friday:" + store["friday"])
+            else:
+                hours_list.append("friday:" + "Closed")
             if len(store["saturday"]) > 0:
                 hours_list.append("saturday:" + store["saturday"])
+            else:
+                hours_list.append("saturday:" + "Closed")
             if len(store["sunday"]) > 0:
                 hours_list.append("sunday:" + store["sunday"])
+            else:
+                hours_list.append("sunday:" + "Closed")
 
             hours_of_operation = "; ".join(hours_list).strip()
             latitude = store["loc_lat"]

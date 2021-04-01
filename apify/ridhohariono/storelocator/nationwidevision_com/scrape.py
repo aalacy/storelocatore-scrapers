@@ -120,6 +120,9 @@ def fetch_data():
     for row in store_info:
         page_url = row["link"]
         data = pull_content(page_url)
+        subtitle = data.find("h2", {"class": "location--subtitle"})
+        if subtitle and "Permanently Closed" in subtitle.text.strip():
+            continue
         geo_content = data.find("div", {"class": re.compile(".*-map")})
         store_content = data.find("div", {"class": re.compile(".*-detail")})
         lat_long = geo_content.find("h2", {"class": "location-title"}).text.split(",")
@@ -137,9 +140,11 @@ def fetch_data():
         zip_code = handle_missing(row["zip_code"])
         country_code = "US"
         store_number = handle_missing(row["store_number"])
-        phone = handle_missing(
-            store_content.find("p", {"class": "tel"}).get_text(strip=True)
-        )
+        phone = store_content.find("p", {"class": "tel"})
+        if phone:
+            phone = handle_missing(phone.get_text(strip=True))
+        else:
+            phone = "<MISSING>"
         location_type = "<MISSING>"
         log.info("Append info to locations")
         locations.append(
