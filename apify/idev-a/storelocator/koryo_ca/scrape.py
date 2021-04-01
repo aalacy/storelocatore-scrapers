@@ -29,6 +29,9 @@ def fetch_data():
                 hours = list(bs(_.operatinghours.text, "lxml").stripped_strings)
             if _.operatingHours:
                 hours = list(bs(_.operatingHours.text, "lxml").stripped_strings)
+            temp = []
+            for hh in hours:
+                temp.append(hh.split("/")[-1])
             location_name = _.location.text
             location_type = ""
             if "FERMÉ / CLOSED" in location_name:
@@ -48,7 +51,7 @@ def fetch_data():
                 longitude=_.longitude.text,
                 locator_domain=locator_domain,
                 location_type=location_type,
-                hours_of_operation="; ".join(hours),
+                hours_of_operation="; ".join(temp),
             )
 
 
