@@ -9,7 +9,10 @@ option = webdriver.ChromeOptions()
 option.add_argument("--disable-blink-features=AutomationControlled")
 option.add_argument("--headless")
 option.add_argument("window-size=1280,800")
-option.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36")
+option.add_argument(
+    "user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36"
+)
+
 
 def write_output(data):
     with open("data.csv", mode="w", encoding="utf-8") as output_file:
