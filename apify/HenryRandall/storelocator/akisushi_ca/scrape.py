@@ -3,7 +3,7 @@ import csv
 
 
 def fetch_data():
-    locator_domain='akisushi.ca'
+    locator_domain = "akisushi.ca"
     url = "https://akisushi.ca/nos-succursales/?lat=46.8157795&long=-71.21788149999999"
     with SgChrome(
         executable_path="C:/Users/Henry Randall/Documents/Software and Code/Code/chromedriver"
@@ -14,7 +14,7 @@ def fetch_data():
     output = []
     for row in locations:
         currentrow = []
-        currentrow.append(loocator_domain)
+        currentrow.append(locator_domain)
         currentrow.append(url)
         currentrow.append(row[0])
         currentrow.append(row[4])
