@@ -1,7 +1,6 @@
-import re
 import csv
+import json
 from lxml import etree
-from urllib.parse import urljoin
 
 from sgrequests import SgRequests
 
@@ -42,67 +41,43 @@ def fetch_data():
 
     items = []
 
-    DOMAIN = "bigboy.com"
-    start_url = "https://www.bigboy.com/big-boy-restaurant-locations/"
+    domain = "bigboy.com"
+    start_url = "https://www.bigboy.com/wp-admin/admin-ajax.php?action=asl_load_stores&nonce=b5ed863fc5&load_all=1&layout=1"
 
     response = session.post(start_url)
-    dom = etree.HTML(response.text)
-    all_locations = dom.xpath('//a[contains(text(), "location details")]/@href')
+    data = json.loads(response.text)
 
-    for url in all_locations:
-        store_url = urljoin(start_url, url)
+    for poi in data:
+        store_url = poi["website"]
         loc_response = session.get(store_url)
         loc_dom = etree.HTML(loc_response.text)
 
-        location_name = loc_dom.xpath('//div[@class="et_pb_text_inner"]/h1/text()')
-        location_name = " ".join(location_name) if location_name else "<MISSING>"
-        raw_data = loc_dom.xpath('//div[@class="et_pb_blurb_description"]/text()')
-        if len(raw_data) == 1:
-            raw_data_new = loc_dom.xpath(
-                '//div[@class="et_pb_blurb_description"]/p/text()'
-            )
-            raw_data = raw_data_new[:-1] + raw_data + [raw_data_new[-1]]
-        if not raw_data:
-            raw_data = loc_dom.xpath('//div[@class="et_pb_blurb_description"]/p/text()')
-        if len(raw_data) == 2:
-            raw_data = loc_dom.xpath('//div[@class="et_pb_blurb_description"]/p/text()')
-            raw_data += loc_dom.xpath('//div[@class="et_pb_blurb_description"]/text()')
-        raw_data = [
-            elem.strip() for elem in raw_data if elem.strip() and elem.strip() != "@"
-        ]
-        street_address = raw_data[1]
-        city = raw_data[2].split(", ")[0]
-        state = raw_data[2].split(", ")[-1].split()[0]
-        zip_code = raw_data[2].split(", ")[-1].split()[-1]
-        country_code = "<MISSING>"
-        store_number = "<MISSING>"
-        phone = loc_dom.xpath(
-            '//h4[span[contains(text(), "phone")]]/following-sibling::div/text()'
-        )
-        if not phone:
-            phone = loc_dom.xpath(
-                '//h4[span[contains(text(), "phone")]]/following-sibling::div/p/text()'
-            )
-        phone = phone[0] if phone else "<MISSING>"
+        location_name = poi["title"]
+        location_name = location_name if location_name else "<MISSING>"
+        street_address = poi["street"]
+        street_address = street_address if street_address else "<MISSING>"
+        city = poi["city"]
+        city = city if city else "<MISSING>"
+        state = poi["state"]
+        state = state if state else "<MISSING>"
+        zip_code = poi["postal_code"]
+        zip_code = zip_code if zip_code else "<MISSING>"
+        country_code = poi["country"]
+        country_code = country_code if country_code else "<MISSING>"
+        store_number = poi["id"]
+        phone = poi["phone"]
+        phone = phone if phone else "<MISSING>"
         location_type = "<MISSING>"
-        geo = re.findall(r"center: \[(.+?)\]", loc_response.text)[0].split(",")
-        latitude = geo[0]
-        latitude = latitude if latitude else "<MISSING>"
-        longitude = geo[-1]
-        longitude = longitude if longitude else "<MISSING>"
-        hours_of_operation = loc_dom.xpath(
+        latitude = poi["lat"]
+        longitude = poi["lng"]
+        hoo = loc_dom.xpath(
             '//h4[span[contains(text(), "hours")]]/following-sibling::div[1]//text()'
         )
-        if not hours_of_operation:
-            hours_of_operation = loc_dom.xpath(
-                '//h4[span[contains(text(), "hours")]]/following-sibling::div/p/text()'
-            )
-        hours_of_operation = (
-            " ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
-        )
+        hoo = [e.strip() for e in hoo if e.strip()]
+        hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
 
         item = [
-            DOMAIN,
+            domain,
             store_url,
             location_name,
             street_address,

@@ -56,14 +56,19 @@ def fetch_data():
             street_address = "<MISSING>"
             city = "<MISSING>"
             zip_postal = "<MISSING>"
+            phone = _["tel"]
             try:
                 addr = _["address"].split("<br />")
                 street_address = " ".join(addr[:-2])
                 city = addr[-2]
+                if city.replace(" ", "").isdigit():
+                    phone = city
+                    city = addr[-3]
                 zip_postal = addr[-1]
             except:
                 pass
             record = SgRecord(
+                page_url="https://www.qdstores.co.uk/static/store-finder.html",
                 store_number=_["number"],
                 location_name=_["name"],
                 street_address=street_address,
@@ -72,7 +77,7 @@ def fetch_data():
                 country_code="uk",
                 latitude=_["lat"],
                 longitude=_["lng"],
-                phone=_["tel"],
+                phone=phone,
                 locator_domain=locator_domain,
                 hours_of_operation=_hoo(soup, _["number"]),
             )

@@ -34,7 +34,7 @@ def write_output(data):
 def fetch_data():
     out = []
     locator_domain = "https://www.pricecutteronline.com/"
-    api_url = "https://api.freshop.com/1/stores?app_key=price_cutter&has_address=true&is_selectable=true&token=6b975e96d9a726cfe13f8d4a15d76505"
+    api_url = "https://api.freshop.com/1/stores?app_key=price_cutter&has_address=true&is_selectable=true"
 
     session = SgRequests()
     r = session.get(api_url)
