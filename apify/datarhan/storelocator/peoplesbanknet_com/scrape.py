@@ -57,7 +57,6 @@ def fetch_data():
         )
         if len(json.loads(response.text)) != 0:
             all_locations += json.loads(response.text)
-            print(len(all_locations))
             next_page += 1
         else:
             next_page = None
