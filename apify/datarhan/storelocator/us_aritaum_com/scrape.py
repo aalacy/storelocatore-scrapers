@@ -49,7 +49,7 @@ def fetch_data():
     }
     response = session.get(start_url, headers=hdr)
     dom = etree.HTML(response.text)
-    all_locations = re.findall("Coords.push\((.+?)\);", response.text)
+    all_locations = re.findall(r"Coords.push\((.+?)\);", response.text)
 
     for poi in all_locations:
         try:
