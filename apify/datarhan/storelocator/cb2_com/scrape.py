@@ -54,7 +54,6 @@ def fetch_data():
     with webdriver.Chrome(options=option) as driver:
         driver.get(start_url)
         sleep(10)
-        page_sour = driver.page_source
         dom = etree.HTML(driver.page_source)
 
     all_locations = dom.xpath('//script[@type="application/ld+json"]/text()')
