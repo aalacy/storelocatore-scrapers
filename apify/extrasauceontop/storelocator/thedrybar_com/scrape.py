@@ -60,7 +60,7 @@ for location in response["data"]["storeCollection"]["items"]:
 
     hours = ""
     for item in location["settings"]["operatingHours"]:
-        if bool(re.search(r"\d", item[0])) == True:
+        if bool(re.search(r"\d", item[0])) is True:
             continue
 
         day = item[0]
