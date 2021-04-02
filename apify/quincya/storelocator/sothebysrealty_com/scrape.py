@@ -114,7 +114,6 @@ def fetch_data():
         )
 
         while page_next:
-            print(base_link)
             req = session.get(base_link, headers=headers)
             base = BeautifulSoup(req.text, "lxml")
 
@@ -132,7 +131,6 @@ def fetch_data():
                 location_name = item.find(
                     class_="Entities-card__entity-name"
                 ).text.strip()
-                print(location_name)
                 street_address = (
                     item.find(
                         class_="Entities-card__address Entities-card__address--main"
