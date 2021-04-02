@@ -56,7 +56,6 @@ def fetch_data():
             if not link:
                 continue
             r = session.get(link, headers=headers, verify=False)
-            print(link)
             soup = BeautifulSoup(r.text, "html.parser")
             title = soup.find("h1").text
             coords = (
