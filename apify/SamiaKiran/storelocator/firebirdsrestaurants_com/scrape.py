@@ -56,6 +56,7 @@ def fetch_data():
             if not link:
                 continue
             r = session.get(link, headers=headers, verify=False)
+            print(link)
             soup = BeautifulSoup(r.text, "html.parser")
             title = soup.find("h1").text
             coords = (
@@ -104,7 +105,10 @@ def fetch_data():
                         pcode = temp[1]
                     except:
                         pcode = "<MISSING>"
-            phone = soup.find("a", {"class": "body-tel gtm_phone_click"}).text
+            try:
+                phone = soup.find("a", {"class": "body-tel gtm_phone_click"}).text
+            except:
+                phone = "<MISSING>"
             hourlist = soup.find("div", {"class": "hours-wrap"}).findAll("div")
             hours = ""
             for hour in hourlist:
