@@ -1,10 +1,8 @@
 import csv
-import json
 
 from concurrent import futures
 from lxml import html
 from sgrequests import SgRequests
-from sgscrape.sgpostal import parse_address, International_Parser
 
 
 def write_output(data):
@@ -38,76 +36,66 @@ def write_output(data):
 
 def get_urls():
     session = SgRequests()
-    r = session.get("https://www.johnlewis.com/our-shops")
+    r = session.get("https://www.mattisonsalonsuites.com/locations/")
     tree = html.fromstring(r.text)
 
-    return tree.xpath("//a[@class='store-locator-list__store-link']/@href")
+    return tree.xpath(
+        "//a[contains(@id,'button-id-') and contains(@href, '/location/')]/@href"
+    )
 
 
-def get_data(url):
-    locator_domain = "https://www.johnlewis.com/"
-    page_url = f"https://www.johnlewis.com{url}"
+def get_data(page_url):
+    locator_domain = "https://www.mattisonsalonsuites.com/"
 
     session = SgRequests()
     r = session.get(page_url)
     tree = html.fromstring(r.text)
 
-    location_name = " ".join(
-        "".join(tree.xpath("//h1[@class='shop-title']//text()")).split()
-    )
-    line = "".join(tree.xpath("//p[@class='shop-details-address']/text()")).strip()
-    postal = " ".join(line.split()[-2:])
-    if postal.find("London") != -1:
-        postal = postal.split()[-1].strip()
-    line = line.replace(postal, "").strip()
-    adr = parse_address(International_Parser(), line, postcode=postal)
+    location_name = "".join(
+        tree.xpath("//h1[@class='page-header-title inherit']/text()")
+    ).strip()
     street_address = (
-        f"{adr.street_address_1} {adr.street_address_2 or ''}".replace(
-            "None", ""
-        ).strip()
-        or "<MISSING>"
+        "".join(tree.xpath("//*[@class='company-info-address']/span/span[1]/text()"))
+        .replace("\n", ", ")
+        .strip()
     )
-
-    city = adr.city or "<MISSING>"
-    if city == "<MISSING>":
-        city = location_name.split(",")[-1].strip()
-
-    state = adr.state or "<MISSING>"
-    postal = adr.postcode or "<MISSING>"
-    if street_address == "<MISSING>" and city == "London":
-        street_address = line.split("London")[0].strip()
-
-    country_code = "GB"
+    if "We" in street_address:
+        street_address = street_address.split("We")[0].strip()
+    if "Summerfield Crossing North" in street_address:
+        street_address = street_address.replace(
+            "Summerfield Crossing North", ""
+        ).strip()
+    city = "".join(
+        tree.xpath("//*[@class='company-info-address']/span/span[2]/text()")
+    ).strip()
+    state = "".join(
+        tree.xpath("//*[@class='company-info-address']/span/span[3]/text()")
+    ).strip()
+    postal = "".join(
+        tree.xpath("//*[@class='company-info-address']/span/span[4]/text()")
+    ).strip()
+    country_code = "US"
     store_number = "<MISSING>"
     phone = (
-        "".join(
-            tree.xpath("//span[@class='shop-details-telephone-number']/text()")
-        ).strip()
+        "".join(tree.xpath("//*[@class='company-info-phone']/span/a/text()")).strip()
         or "<MISSING>"
     )
-    text = "".join(tree.xpath("//script[@id='jsonPageData']/text()")) or "{}"
-    js = json.loads(text)
-    latitude = js.get("latitude") or "<MISSING>"
-    longitude = js.get("longitude") or "<MISSING>"
+    latitude = "<MISSING>"
+    longitude = "<MISSING>"
     location_type = "<MISSING>"
 
     _tmp = []
-    days = tree.xpath("//dt[@class='opening-day']/text()")
-    times = tree.xpath("//dd[@class='opening-time']/text()")
+    days = tree.xpath(
+        "//div[@class='locations-single-address']//span[@class='company-info-hours-day']/text()"
+    )
+    times = tree.xpath(
+        "//div[@class='locations-single-address']//li[@class='company-info-hours-openclose']/text()"
+    )
 
     for d, t in zip(days, times):
         _tmp.append(f"{d.strip()}: {t.strip()}")
 
-    hours_of_operation = ";".join(_tmp).replace("*", "") or "<MISSING>"
-    if hours_of_operation.count("Temporarily Closed") == 7:
-        hours_of_operation = "Temporarily Closed"
-
-    if (
-        street_address == "<MISSING>"
-        and phone == "<MISSING>"
-        and hours_of_operation == "<MISSING>"
-    ):
-        return
+    hours_of_operation = ";".join(_tmp) or "<MISSING>"
 
     row = [
         locator_domain,
