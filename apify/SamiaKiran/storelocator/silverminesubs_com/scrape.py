@@ -88,20 +88,16 @@ def fetch_data():
                 state = address[0].strip()
                 zip_postal = address[1]
             coords = soup.find("iframe")["src"]
-            try:
-                latitude, longitude = (
-                    coords.split("sll=")[1].split("&amp;", 1)[0].split(",")
+            r = session.get(coords, headers=headers)
+            coords = r.text.split("],0],")[0].rsplit("[null,null,", 1)[1].split(",")
+            latitude = coords[0]
+            longitude = coords[1]
+            if latitude == "null":
+                coords = (
+                    r.text.split("],0,1]")[0].rsplit("[null,null,", 1)[1].split(",")
                 )
-            except:
-                try:
-                    latitude, longitude = (
-                        coords.split("!1d", 1)[1].split("!3d", 1)[0].split("!2d")
-                    )
-                    latitude = latitude[2:]
-                except:
-                    latitude, longitude = (
-                        coords.split("sll=")[1].split("&sspn", 1)[0].split(",")
-                    )
+                latitude = coords[0]
+                longitude = coords[1]
             yield SgRecord(
                 locator_domain="https://www.silverminesubs.com/",
                 page_url=page_url,

@@ -104,11 +104,6 @@ def getdata():
                     for index in range(len(days)):
                         hours = hours + days[index] + " " + hour_values[index] + ", "
 
-                    hours = hours + "Sun CLOSED"
-
-                    if hours == "Sun CLOSED":
-                        hours = "<MISSING>"
-
             if zipp == "99999":
                 zipp = "<MISSING>"
 

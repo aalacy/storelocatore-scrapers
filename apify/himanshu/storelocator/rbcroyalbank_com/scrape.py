@@ -79,8 +79,8 @@ def fetch_data():
     addressess = []
     search = DynamicZipSearch(
         country_codes=[SearchableCountries.CANADA],
-        max_radius_miles=50,
-        max_search_results=200,
+        max_radius_miles=25,
+        max_search_results=100,
     )
 
     headers = {

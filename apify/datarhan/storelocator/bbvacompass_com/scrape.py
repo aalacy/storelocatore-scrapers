@@ -1,8 +1,8 @@
 import csv
 import json
-import sgzip
+
 from sgrequests import SgRequests
-from sgzip import SearchableCountries
+from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 
 
 def write_output(data):
@@ -44,12 +44,10 @@ def fetch_data():
 
     DOMAIN = "bbvausa.com"
 
-    all_codes = []
-    us_zips = sgzip.for_radius(radius=100, country_code=SearchableCountries.USA)
-    for zip_code in us_zips:
-        all_codes.append(zip_code)
-
-    for code in all_codes:
+    us_zips = DynamicZipSearch(
+        country_codes=[SearchableCountries.USA], max_radius_miles=50
+    )
+    for code in us_zips:
         start_url = (
             "https://liveapi.yext.com/v2/accounts/me/answers/vertical/query?v=20190101&api_key=7d3f010c5d39e1427b1ef79803fb493e&jsLibVersion=v0.9.2&input="
             + code

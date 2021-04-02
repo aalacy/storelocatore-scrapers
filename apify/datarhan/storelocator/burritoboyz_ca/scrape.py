@@ -68,11 +68,19 @@ def fetch_data():
         all_locations += dom.xpath(
             '//div[div[div[h3[strong[contains(text(), "LOCATION")]]]]]'
         )
+        if "etobicoke" in response.url:
+            all_locations += dom.xpath(
+                '//div[@data-block-type="2" and div[h3[contains(text(), "LOCATION")]]]'
+            )[-1]
 
         for poi_html in all_locations:
-            raw_data = poi_html.xpath(".//div[h3]/p/text()")
-            addr = parse_address_intl(" ".join(raw_data[:2]))
-            location_name = raw_data[0]
+            raw_data = poi_html.xpath(".//p/text()")
+            if len(raw_data) > 20:
+                continue
+            addr = parse_address_intl(
+                " ".join([e for e in raw_data[:2] if "am -" not in e])
+            )
+            location_name = raw_data[0].split(",")[0]
             street_address = addr.street_address_1
             if addr.street_address_2:
                 street_address += " " + addr.street_address_2
@@ -84,18 +92,53 @@ def fetch_data():
             zip_code = zip_code if zip_code else "<MISSING>"
             country_code = "CA"
             store_number = "<MISSING>"
+            location_type = "<MISSING>"
             phone = poi_html.xpath(
-                './/following-sibling::div[1]//h3[contains(text(), "PHONE")]/following-sibling::p[1]/text()'
+                './/following-sibling::div//h3[contains(text(), "PHONE")]/following-sibling::p[1]/text()'
             )
+            if not phone:
+                phone = poi_html.xpath(
+                    './/following-sibling::div//h3[contains(text(), "Phone")]/following-sibling::p[1]/text()'
+                )
+            if not phone:
+                phone = poi_html.xpath(
+                    './/following-sibling::div//h3[contains(text(), "PHONE")]/following-sibling::p[1]/text()'
+                )
+            if not phone:
+                phone = poi_html.xpath(
+                    './/preceding-sibling::div//h3[contains(text(), "PHONE")]/following-sibling::p[1]/text()'
+                )
             phone = phone[0] if phone else "<MISSING>"
             if phone == "TBD":
                 phone = "<MISSING>"
-            location_type = "<MISSING>"
+                location_type = "coming soon"
+            if phone == "<MISSING>" and street_address == "3355 Bloor St W":
+                phone = "(416) 763-2699"
             latitude = "<MISSING>"
             longitude = "<MISSING>"
             hoo = poi_html.xpath(
-                './/following-sibling::div[1]//h3[contains(text(), "HOURS")]/following-sibling::p//text()'
+                './/following-sibling::div//h3[contains(text(), "HOURS")]/following-sibling::p//text()'
             )
+            if not hoo:
+                hoo = poi_html.xpath(
+                    './/following-sibling::div//h3[contains(text(), "Hours")]/following-sibling::p//text()'
+                )
+            if not hoo:
+                hoo = poi_html.xpath(
+                    './/h3[contains(text(), "HOURS")]/following-sibling::p//text()'
+                )
+            if not hoo:
+                hoo = poi_html.xpath(
+                    './/h3[strong[contains(text(), "HOURS")]]/following-sibling::p//text()'
+                )
+            if not hoo:
+                hoo = poi_html.xpath(
+                    './/preceding-sibling::div//h3[strong[contains(text(), "HOURS")]]/following-sibling::p//text()'
+                )
+            if not hoo:
+                hoo = poi_html.xpath(
+                    './/following-sibling::div//h3[strong[contains(text(), "HOURS")]]/following-sibling::p//text()'
+                )
             hoo = [e.strip() for e in hoo if e.strip()]
             hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
 

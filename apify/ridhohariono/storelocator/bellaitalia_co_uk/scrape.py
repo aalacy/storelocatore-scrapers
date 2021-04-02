@@ -96,7 +96,9 @@ def fetch_data():
     locations = []
     for row in store_details["items"]:
         locator_domain = DOMAIN
-        page_url = BASE_URL
+        page_url = "{}/italian-restaurant/{}/{}".format(
+            BASE_URL, row["fields"]["city"], row["fields"]["slug"]
+        )
         location_name = row["fields"]["title"]
         if "addressLine2" in row["fields"] and len(row["fields"]["addressLine2"]) > 0:
             street_address = "{}, {}".format(
