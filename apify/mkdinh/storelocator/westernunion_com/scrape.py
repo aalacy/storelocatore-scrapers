@@ -2,11 +2,14 @@ import csv
 import threading
 from datetime import datetime as dt
 from sgrequests import SgRequests
+from sglogging import SgLogSetup
 from urllib.parse import urljoin
 import requests_random_user_agent  # ignore_check # noqa F401
 from tenacity import retry, stop_after_attempt
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from sgzip.static import static_zipcode_list, SearchableCountries
+
+logger = SgLogSetup().get_logger("westernunion_com")
 
 thread_local = threading.local()
 
@@ -176,4 +179,4 @@ if __name__ == "__main__":
     start = dt.now()
     data = scrape()
     write_output(data)
-    print(f"duration: {dt.now() - start}")
+    logger.info(f"duration: {dt.now() - start}")
