@@ -1,5 +1,6 @@
 import csv
 from sgrequests import SgRequests
+import re
 
 session = SgRequests()
 headers = {
@@ -39,6 +40,7 @@ def write_output(data):
 
 def fetch_data():
     data = []
+    pattern = re.compile(r"\s\s+")
     url = "https://cdn.shopify.com/s/files/1/0267/9232/9325/t/73/assets/sca.storelocatordata.json?v=1614794318&formattedAddress=&boundsNorthEast=&boundsSouthWest="
     p = 0
     loclist = session.get(url, headers=headers, verify=False).json()
