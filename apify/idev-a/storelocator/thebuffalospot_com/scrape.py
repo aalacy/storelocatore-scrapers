@@ -34,11 +34,11 @@ def _valid(val):
 def _url(blocks, name):
     url = phone = ""
     for block in blocks:
-        if block.h3 and block.h3.text.strip() == name:
+        if block.h3 and block.h3.text.strip() == name.strip():
             url = (
                 locator_domain + block.find("a", href=re.compile(r"/locations"))["href"]
             )
-            _phone = block.find("a", href=re.compile(r"tel:"))
+            _phone = block.find("a", href=re.compile(r"tel"))
             if _phone:
                 phone = _phone.text
             break

@@ -57,7 +57,7 @@ def fetch_data():
     country_code = "US"
     store_number = "<MISSING>"
     phone = "<MISSING>"
-    location_type = "sofiscrepes"
+    location_type = "<MISSING>"
     latitude = "<MISSING>"
     longitude = "<MISSING>"
     hours_of_operation = "<MISSING>"
@@ -91,6 +91,12 @@ def fetch_data():
             location_name = "Sofi's " + city
             phone = phone.split("(n")[0].strip()
             hours_of_operation = list_hours[len(return_main_object)]
+
+            if "1627 Thames" in street_address:
+                hours_of_operation = list_hours[-1]
+
+            if "560 Baltimore" in street_address:
+                hours_of_operation = list_hours[-2]
 
             store = [
                 locator_domain,

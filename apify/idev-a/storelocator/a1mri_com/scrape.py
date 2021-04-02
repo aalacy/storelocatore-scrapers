@@ -2,7 +2,6 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
-import re
 
 _headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.182 Safari/537.36",
@@ -43,12 +42,6 @@ def fetch_data():
             state_zip = block[1].split(",")[1].strip().split(" ")
             soup1 = bs(session.get(page_url, headers=_headers).text, "lxml")
             coord = soup1.select_one('div[data-type="inlineMap"]')
-            hour_label = soup1.find(
-                "font", string=re.compile(r"Business Hours", re.IGNORECASE)
-            )
-            hours_of_operation = (
-                hour_label.find_parent("h3").find_next_sibling("div").text
-            )
             yield SgRecord(
                 page_url=page_url,
                 location_name=_.a.text,
@@ -61,7 +54,6 @@ def fetch_data():
                 latitude=coord["lat"],
                 longitude=coord["lon"],
                 locator_domain=locator_domain,
-                hours_of_operation=_valid(hours_of_operation),
             )
 
 

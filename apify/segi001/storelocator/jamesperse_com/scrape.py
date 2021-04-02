@@ -150,6 +150,9 @@ def fetch_data():
                 )
                 lat = grouped[0]
                 lng = grouped[1]
+        state = city["state"]
+        if "United" in state:
+            state = missingString
         result.append(
             [
                 locator_domain,
@@ -157,7 +160,7 @@ def fetch_data():
                 name,
                 street,
                 city["city"],
-                city["state"],
+                state,
                 city["zip"],
                 c,
                 missingString,

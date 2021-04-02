@@ -86,7 +86,9 @@ def fetch_data():
             country_code = addr.country
             country_code = country_code if country_code else "<MISSING>"
             store_number = "<MISSING>"
-            phone = poi_html.xpath(".//text()")[-1].split(":")[-1].strip()
+            phone = poi_html.xpath(".//text()")
+            phone = [e.strip() for e in phone if "Ph:" in e]
+            phone = phone[0].split(":")[-1].strip() if phone else "<MISSING>"
             location_type = "<MISSING>"
             latitude = "<MISSING>"
             longitude = "<MISSING>"
@@ -111,8 +113,11 @@ def fetch_data():
                 longitude = geo[1]
             hoo = [e.strip() for e in hoo if e.strip()]
             hours_of_operation = (
-                " ".join(hoo).split(" hours. ")[-1] if hoo else "<MISSING>"
+                " ".join(hoo[:14]).split(" hours. ")[-1] if hoo else "<MISSING>"
             )
+
+            if street_address.startswith(phone.split("-")[0]):
+                street_address = " ".join(street_address.split()[1:])
 
             item = [
                 domain,

@@ -80,14 +80,14 @@ def fetch_data():
                             add = usaddress.tag(rawadd)
                             try:
                                 address = (
-                                    add[0]["AddressNumber"] + " " + add[0]["StreetName"]
+                                    add[0]["AddressNumber"]
+                                    + " "
+                                    + add[0]["StreetName"]
+                                    + " "
+                                    + add[0]["StreetNamePostType"]
                                 )
                             except:
                                 add = "<INACCESSIBLE>"
-                            try:
-                                add = add + " " + add[0]["StreetNamePostType"]
-                            except:
-                                pass
                             if add == "":
                                 address = "<INACCESSIBLE>"
                             try:

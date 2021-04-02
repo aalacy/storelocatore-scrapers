@@ -4,6 +4,7 @@ from bs4 import BeautifulSoup
 import re
 from sglogging import SgLogSetup
 from geopy.geocoders import Nominatim
+import usaddress
 
 logger = SgLogSetup().get_logger("f45training_com")
 session = SgRequests()
@@ -14,6 +15,7 @@ def write_output(data):
         writer = csv.writer(
             output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
         )
+        # Header
         writer.writerow(
             [
                 "locator_domain",
@@ -32,6 +34,7 @@ def write_output(data):
                 "page_url",
             ]
         )
+        # Body
         for row in data:
             writer.writerow(row)
 
@@ -64,9 +67,15 @@ def fetch_data():
                 r1 = session.get(page_url, headers=headers)
                 soup1 = BeautifulSoup(r1.text, "lxml")
                 try:
-                    all_data = (
-                        soup1.find("div", {"class": "sm-ptb"}).find("p").text.split(",")
-                    )
+                    all_data = soup1.find("div", {"class": "sm-ptb"}).find("p").text
+                    a = usaddress.parse(all_data)
+                    old_dict = dict(a)
+                    new_dict = {}
+                    for key, value in old_dict.items():
+                        if value in new_dict:
+                            new_dict[value].append(key)
+                        else:
+                            new_dict[value] = [key]
                 except:
                     pass
                 try:
@@ -90,53 +99,30 @@ def fetch_data():
                 except:
                     longitude = "<MISSING>"
                 try:
-                    street_address = all_data[0]
+                    street_address = (
+                        soup1.find("div", {"class": "sm-ptb"})
+                        .find("p")
+                        .text.replace("USA", "")
+                        .replace("United States", "")
+                        .replace(",", "")
+                        .strip()
+                    )
                 except:
                     street_address = "<MISSING>"
                 try:
-                    temp_data = (
-                        soup1.find("div", {"class": "sm-ptb"})
-                        .find("a")["href"]
-                        .split("=")[1]
-                        .split(",")
-                    )
-                    geolocator = Nominatim(user_agent="myApp")
-                    location = geolocator.reverse(temp_data)
-                    i = location.raw["address"]
-                except:
-                    continue
-                try:
-                    city = i["city"]
+                    city = " ".join(new_dict["PlaceName"]).replace(",", "")
                 except:
                     city = "<MISSING>"
                 try:
-                    try:
-                        all_data = soup1.find("div", {"class": "sm-ptb"}).find("p").text
-                        a = re.findall("[A-Z]{2}", all_data)
-                        state = a[0]
-                        if "US" in state:
-                            state = "<MISSING>"
-                        else:
-                            state = a[0]
-                    except:
-                        state = "<MISSING>"
+                    state = new_dict["StateName"][0].replace(",", "")
                 except:
                     state = "<MISSING>"
                 try:
-                    all_data = soup1.find("div", {"class": "sm-ptb"}).find("p").text
-                    post_code = re.findall(r"\d{5}(?:[-\s]\d{4})?", all_data)
-                    try:
-                        c = post_code[0]
-                        if len(c) == 5:
-                            zipp = c
-                    except:
-                        zipp = "<MISSING>"
+                    zipp = new_dict["ZipCode"][0].replace(",", "")
                 except:
                     zipp = "<MISSING>"
-
                 country_code = "US"
                 store_number = "<MISSING>"
-
                 try:
                     phone = (
                         soup1.find("a", {"href": re.compile("tel:")})
@@ -174,7 +160,7 @@ def fetch_data():
                 store.append(hours_of_operation)
                 store.append(page_url if page_url else "<MISSING>")
                 store = [
-                    x.strip().replace("\n", " ").replace("\t", "").replace("\r", "")
+                    x.replace("\n", " ").replace("\t", "").replace("\r", "")
                     if isinstance(x, str)
                     else x
                     for x in store
@@ -306,7 +292,7 @@ def fetch_data():
                 store.append(hours_of_operation)
                 store.append(page_url if page_url else "<MISSING>")
                 store = [
-                    x.strip().replace("\n", " ").replace("\t", "").replace("\r", "")
+                    x.replace("\n", " ").replace("\t", "").replace("\r", "")
                     if isinstance(x, str)
                     else x
                     for x in store
