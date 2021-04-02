@@ -59,8 +59,7 @@ def fetch_data():
     else:
         logger.info(f"Unable to find the Key, please check the {url_key}")
     start = 1
-    # total_page_number = 2750  # As of now the last item returned by the page number 2711 while returning 1 item at a time
-    total_page_number = 20
+    total_page_number = 2750  # As of now the last item returned by the page number 2711 while returning 1 item at a time
     items_num_per_page = 1
     total = 0
     for page in range(start, total_page_number):
