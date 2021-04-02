@@ -81,7 +81,7 @@ def fetch_data():
             )
         except:
             try:
-                longt, lat = (
+                lat, longt = (
                     soup.find("iframe")["src"]
                     .split("sll=", 1)[1]
                     .split("&", 1)[0]
