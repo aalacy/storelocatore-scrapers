@@ -54,6 +54,8 @@ def fetch_data():
         raw_address = poi_html.xpath(".//a/p/text()")
         store_url = start_url
         location_name = raw_address[0]
+        if "Brooklyn Bedding" not in location_name:
+            continue
         location_name = location_name if location_name else "<MISSING>"
         street_address = raw_address[1]
         city = raw_address[-1].split(", ")[0]
