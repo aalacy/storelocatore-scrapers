@@ -1,2 +1,2 @@
-sglogging==0.0.4
+pandas==1.1.5
 sgrequests==0.1.8
