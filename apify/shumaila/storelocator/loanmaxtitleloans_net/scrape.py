@@ -56,7 +56,6 @@ def fetch_data():
             continue
         statelist.append(states)
         r = session.get(states, headers=headers, verify=False)
-        ccode = "US"
         soup = BeautifulSoup(r.text, "html.parser")
         city_list = soup.find(
             "div", {"class": "location_list_container second"}
