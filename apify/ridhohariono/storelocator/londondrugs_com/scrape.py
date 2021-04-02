@@ -62,13 +62,63 @@ def get_hours(hoo):
     return re.sub(", $", "", hours)
 
 
+def fetch_store_urls():
+    driver = pull_content(LOCATION_URL)
+    main = driver.find_elements_by_css_selector("div.all-stores")
+    store_info = []
+    for row in main:
+        lists = row.find_elements_by_css_selector("li")
+        for li in lists:
+            link = li.find_element_by_css_selector(
+                "a.ld-sg-link[itemprop='name']"
+            ).get_attribute("href")
+            name = li.find_element_by_css_selector(
+                "a.ld-sg-link[itemprop='name']"
+            ).text.strip()
+            street_address = li.find_element_by_css_selector(
+                "span[itemprop='streetAddress']"
+            ).text.strip()
+            city = li.find_element_by_css_selector(
+                "span[itemprop='addressLocality']"
+            ).text.strip()
+            state = li.find_element_by_css_selector(
+                "span[itemprop='addressRegion']"
+            ).text.strip()
+            zip_code = li.find_element_by_css_selector(
+                "span[itemprop='postalCode']"
+            ).text.strip()
+            phone = li.find_element_by_css_selector(
+                "a.ld-sg-link[itemprop='telephone']"
+            ).text.strip()
+            info = {
+                "url": link,
+                "name": name,
+                "address": street_address,
+                "city": city,
+                "state": state,
+                "zip_code": zip_code,
+                "phone": phone,
+            }
+            store_info.append(info)
+    return store_info
+
+
+def get_page_url(location_name, urls):
+    for row in urls:
+        for url, name in row.items():
+            if name == location_name:
+                return url
+    return LOCATION_URL
+
+
 def fetch_data():
+    urls = fetch_store_urls()
     driver = pull_content(API_URL)
     store_info = json.loads(driver.find_element_by_css_selector("pre").text)
     locations = []
     for row in store_info:
-        page_url = LOCATION_URL
         location_name = handle_missing(row["name"])
+        page_url = get_page_url(location_name, urls)
         street_address = handle_missing(row["address1"])
         city = handle_missing(row["city"])
         state = handle_missing(row["stateCode"])
