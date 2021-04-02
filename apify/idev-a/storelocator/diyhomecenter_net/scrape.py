@@ -34,7 +34,7 @@ def fetch_data():
             if _phone(block[0]):
                 phone = block[0]
             yield SgRecord(
-                page_url=base_url,
+                page_url=link["href"],
                 location_name=addr[0],
                 street_address=addr[1],
                 city=addr[2].split(",")[0].strip(),
