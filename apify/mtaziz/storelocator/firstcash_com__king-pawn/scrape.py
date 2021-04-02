@@ -42,7 +42,7 @@ def write_output(data):
 def fetch_data():
     url_store = "http://find.cashamerica.us/api/stores?p="
     url_key = "http://find.cashamerica.us/js/controllers/StoreMapController.js"
-    logger.info(f"Extract key from {url_key}")
+    logger.info(f"Extract key from: {url_key}")
     r = session.get(url_key)
     key = r.text.split("&key=")[1].split('");')[0]
     if key:
@@ -72,7 +72,7 @@ def fetch_data():
             store.append(store_data["brand"] if store_data["brand"] else "<MISSING>")
             store.append(
                 store_data["address"]["address1"] + store_data["address"]["address2"]
-                if store_data["address"]["address2"] != None
+                if store_data["address"]["address2"] is not None
                 else store_data["address"]["address1"]
             )
             store.append(
@@ -215,8 +215,8 @@ def fetch_data():
             yield store
             found += 1
         total += found
-        logger.info(f"Total Store Count:{total}")
-    logger.info(f"Scraping Finished | Total Store Count:{total}")
+        logger.info(f"Total Store Count: {total}")
+    logger.info(f"Scraping Finished | Total Store Count: {total}")
 
 
 def scrape():
