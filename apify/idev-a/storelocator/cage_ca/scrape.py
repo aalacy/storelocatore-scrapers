@@ -43,7 +43,7 @@ def fetch_data():
             yield SgRecord(
                 page_url=page_url,
                 location_name=link.text,
-                street_address=" ".join(addr[:-3]).strip(),
+                street_address=" ".join(addr[:-2]).strip(),
                 city=addr[-2].strip(),
                 zip_postal=addr[-1].replace("-", "").strip(),
                 latitude=coord[0],
