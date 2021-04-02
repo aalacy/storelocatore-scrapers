@@ -54,7 +54,7 @@ def fetch_data():
         title = link.text
         link = link["href"]
         r = session.get(link, headers=headers, verify=False)
-        if 'coming-soon' in link:
+        if "coming-soon" in link:
             continue
         try:
             soup = BeautifulSoup(r.text, "html.parser")
@@ -123,12 +123,10 @@ def fetch_data():
             if "Georgia" in state:
                 state = "GA"
         except:
-            if 'https://mistercarwash.com/location/walla-walla__trashed' in link:
-                addr = '1110 Dalles Military Rd, Walla Walla, WA 99362'
-                street,city,state = addr.split(', ')
-                state,pcode = state.lstrip().split(' ',1)
-            
-                
+            if "https://mistercarwash.com/location/walla-walla__trashed" in link:
+                addr = "1110 Dalles Military Rd, Walla Walla, WA 99362"
+                street, city, state = addr.split(", ")
+                state, pcode = state.lstrip().split(" ", 1)
         data.append(
             [
                 "https://mistercarwash.com",
