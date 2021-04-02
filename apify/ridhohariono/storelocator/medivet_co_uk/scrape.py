@@ -107,17 +107,22 @@ def fetch_data():
         location_name = handle_missing(info["name"].strip())
         address = info["address"][0]
         street_address = handle_missing(address["streetAddress"].strip())
-        city = handle_missing(address["addressLocality"].strip())
-        zip_code = (
-            "<MISSING>"
-            if "postalCode" not in address
-            else address["postalCode"].strip()
-        )
-        state = (
-            "<MISSING>"
-            if "addressRegion" not in address
-            else address["addressRegion"].strip()
-        )
+        if "https://www.medivet.co.uk/vet-practices/basildon/" in page_url:
+            city = handle_missing(address["addressLocality"].strip())
+            zip_code = address["addressRegion"].strip()
+            state = "<MISSING>"
+        else:
+            city = handle_missing(address["addressLocality"].strip())
+            zip_code = (
+                "<MISSING>"
+                if "postalCode" not in address
+                else address["postalCode"].strip()
+            )
+            state = (
+                "<MISSING>"
+                if "addressRegion" not in address
+                else address["addressRegion"].strip()
+            )
         country_code = address["addressCountry"]
         store_number = "<MISSING>"
         phone = handle_missing(info["telephone"])

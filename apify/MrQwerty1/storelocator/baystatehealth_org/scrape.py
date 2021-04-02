@@ -127,6 +127,9 @@ def get_data(url, _types, coords):
     tree = html.fromstring(r.text)
 
     location_name = "".join(tree.xpath("//h1/span/text()")).strip()
+    if "-" in location_name:
+        location_name = location_name.split("-")[0].strip()
+
     street_address = (
         ", ".join(
             tree.xpath("//span[contains(@class, 'location-address')]/text()")

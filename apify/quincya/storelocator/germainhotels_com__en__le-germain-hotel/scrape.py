@@ -61,7 +61,7 @@ def fetch_data():
                 j_data.append([link, geo["lat"], geo["lng"]])
 
     data = []
-    items = base.find_all(class_="css-xu82ny e1sxw9lz0")
+    items = base.find_all(class_="css-trxm7q e43cxw10")
 
     locator_domain = "germainhotels.com"
 
