@@ -55,6 +55,7 @@ def fetch_data():
         location_name = store["OrgUnitName"]
         street_address = store["Street"]
         city = store["City"]
+        location_name = city
         state = store["State"]
         zip = store["Zip"]
 
