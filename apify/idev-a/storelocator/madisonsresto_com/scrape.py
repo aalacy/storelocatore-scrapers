@@ -42,11 +42,14 @@ def fetch_data():
                 hours_of_operation = "CLOSED TEMPORARILY"
             elif _.location.text.startswith("CLOSED"):
                 continue
+            street_address = addr.street_address_1
+            if "Auotroute Chomedey" in _.address.text:
+                street_address = _.address.text.split("(13)")[0] + "(13)"
             yield SgRecord(
                 page_url=page_url,
                 store_number=_.sortord.text,
                 location_name=location_name,
-                street_address=addr.street_address_1,
+                street_address=street_address,
                 city=addr.city,
                 state=addr.state,
                 zip_postal=addr.postcode,

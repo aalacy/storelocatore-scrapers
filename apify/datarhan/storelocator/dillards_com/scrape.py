@@ -53,7 +53,7 @@ def fetch_data():
 
     all_poi_urls = dom.xpath('//div[@id="storeListing"]//a[@class="underline"]/@href')
     for url in all_poi_urls:
-        store_url = "https://www.dillards.com/" + url
+        store_url = "https://www.dillards.com" + url
         store_response = session.get(store_url)
         store_dom = etree.HTML(store_response.text)
         store_data = store_dom.xpath('//div[@id="storeDetails"]/script/text()')[0]
@@ -87,15 +87,13 @@ def fetch_data():
         latitude = latitude if latitude else "<MISSING>"
         longitude = geo_data["contentData"]["store"]["longitude"]
         longitude = longitude if longitude else "<MISSING>"
-        hours_of_operation = []
-        hours_html = store_dom.xpath('//div[@class="row storeHours"]//table/tbody/tr')
-        for elem in hours_html:
-            day = elem.xpath("td/text()")[0]
-            hours = elem.xpath("td/text()")[-1]
-            hours_of_operation.append("{} {}".format(day, hours))
-        hours_of_operation = (
-            ", ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
-        )
+        hoo = []
+        for elem in store_data["openingHoursSpecification"]:
+            day = elem["dayOfWeek"]["name"]
+            opens = elem["opens"]
+            closes = elem["closes"]
+            hoo.append(f"{day} {opens} - {closes}")
+        hours_of_operation = ", ".join(hoo) if hoo else "<MISSING>"
 
         item = [
             DOMAIN,

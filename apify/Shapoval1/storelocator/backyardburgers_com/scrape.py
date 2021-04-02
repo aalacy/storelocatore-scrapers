@@ -86,7 +86,8 @@ def fetch_data():
             hours_of_operation = hours_of_operation.split("*")[0].strip()
         hours_of_operation = hours_of_operation.replace("  ", " ")
         phone = j.get("phone_number") or "<MISSING>"
-
+        if phone.find("TBD") != -1:
+            phone = "<MISSING>"
         row = [
             locator_domain,
             page_url,

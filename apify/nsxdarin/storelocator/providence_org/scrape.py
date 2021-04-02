@@ -108,6 +108,8 @@ def fetch_data():
                     newadd = add
                 if "," in phone:
                     phone = phone.split(",")[0].strip()
+                if " Option" in phone:
+                    phone = phone.split(" Option")[0].strip()
                 yield [
                     website,
                     mloc,
@@ -210,6 +212,8 @@ def fetch_data():
                                 newadd = add
                             if "," in phone:
                                 phone = phone.split(",")[0].strip()
+                            if " Option" in phone:
+                                phone = phone.split(" Option")[0].strip()
                             yield [
                                 website,
                                 mloc,
@@ -310,6 +314,8 @@ def fetch_data():
                     newadd = add
                 if "," in phone:
                     phone = phone.split(",")[0].strip()
+                if " Option" in phone:
+                    phone = phone.split(" Option")[0].strip()
                 yield [
                     website,
                     mloc,
@@ -471,6 +477,8 @@ def fetch_data():
                 newadd = add
             if "," in phone:
                 phone = phone.split(",")[0].strip()
+            if " Option" in phone:
+                phone = phone.split(" Option")[0].strip()
             yield [
                 website,
                 loc,
@@ -556,6 +564,8 @@ def fetch_data():
                 newadd = add
             if "," in phone:
                 phone = phone.split(",")[0].strip()
+            if " Option" in phone:
+                phone = phone.split(" Option")[0].strip()
             yield [
                 website,
                 loc,
@@ -634,6 +644,8 @@ def fetch_data():
                 newadd = add
             if "," in phone:
                 phone = phone.split(",")[0].strip()
+            if " Option" in phone:
+                phone = phone.split(" Option")[0].strip()
             yield [
                 website,
                 loc,
