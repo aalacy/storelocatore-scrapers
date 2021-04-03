@@ -76,13 +76,14 @@ def fetch_data():
         hours, phone = soup.text.split("Monday", 1)[1].split("\n", 1)[0].split("(")
         hours = "Monday " + hours.replace("PM", "PM ")
         phone = "(" + phone
-
+        if "1335 E Whitestone" in street:
+            street = street + "  Suite 100"
         data.append(
             [
                 "https://www.mightyfineburgers.com/",
                 link,
                 title,
-                street,
+                street.strip(),
                 city.replace(",", ""),
                 state.replace(",", ""),
                 pcode.replace(",", ""),
