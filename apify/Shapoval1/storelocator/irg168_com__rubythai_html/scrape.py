@@ -35,7 +35,7 @@ def write_output(data):
 def fetch_data():
     out = []
 
-    locator_domain = "https://www.irg168.com/norijapan.html"
+    locator_domain = "https://www.irg168.com/rubythai.html"
 
     page_url = "https://www.irg168.com/locations.aspx"
     session = SgRequests()
@@ -49,7 +49,7 @@ def fetch_data():
     for d in div:
         location_name = "".join(d.xpath("./text()")).strip()
         location_type = "".join(d.xpath("./preceding-sibling::li[./b][1]//text()"))
-        if location_type != "Nori Japan":
+        if location_type != "Ruby Thai Kitchen":
             continue
         street_address = "".join(d.xpath(".//following-sibling::li[1]//text()"))
         ad = "".join(d.xpath(".//following-sibling::li[2]//text()"))
@@ -64,6 +64,8 @@ def fetch_data():
                 phone = text.replace("tel", "").replace(":", "").strip()
                 break
         state = ad.split(",")[1].split()[0] or "<MISSING>"
+        if state.find("NJ") != -1:
+            country_code = "US"
         postal = " ".join(ad.split(",")[1].split()[1:]) or "<MISSING>"
         country_code = "CA"
         try:
@@ -72,7 +74,8 @@ def fetch_data():
         except ValueError:
             country_code = "CA"
         city = ad.split(",")[0] or "<MISSING>"
-
+        if state.find("NJ") != -1:
+            country_code = "US"
         store_number = "<MISSING>"
         latitude = "<MISSING>"
         longitude = "<MISSING>"
