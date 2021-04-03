@@ -54,7 +54,12 @@ for location in response["data"]["storeCollection"]["items"]:
         phone = location["contact"]["phoneNumber"]
     except Exception:
         phone = "<MISSING>"
-    location_type = location["type"]
+
+    if location["settings"]["operatingStatus"] == "CLOSED_TEMPORARILY":
+        location_type = location["settings"]["operatingStatus"]
+    else:
+        location_type = location["type"]
+
     latitude = location["contact"]["coordinates"][0]
     longitude = location["contact"]["coordinates"][1]
 

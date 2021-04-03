@@ -1,8 +1,7 @@
 import re
 import csv
-import json
-from lxml import etree
-from w3lib.url import add_or_replace_parameter
+import demjson
+from urllib.parse import urljoin
 
 from sgrequests import SgRequests
 
@@ -43,56 +42,43 @@ def fetch_data():
 
     items = []
 
-    start_url = "https://www.peoplesbanknet.com/wp-json/wpcm-locations/v1/view/states?imahuman=16749697&zipcode=&distance=50000&service_type=ALL_SERVICES_TYPES&service_type_text=All%20Service%20Types&page=1"
+    start_url = "https://www.supplementking.ca/storelocator"
     domain = re.findall(r"://(.+?)/", start_url)[0].replace("www.", "")
     hdr = {
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
     }
     response = session.get(start_url, headers=hdr)
-    all_locations = json.loads(response.text)
-    next_page = 2
-    while next_page:
-        response = session.get(
-            add_or_replace_parameter(start_url, "page", str(next_page)), headers=hdr
-        )
-        if len(json.loads(response.text)) != 0:
-            all_locations += json.loads(response.text)
-            next_page += 1
-        else:
-            next_page = None
+    data = re.findall(r"amLocator\((.+?)\);", response.text.replace("\n", ""))[0]
+    data = demjson.decode(data)
+    all_locations = data["jsonLocations"]["items"]
 
     for poi in all_locations:
-        store_url = poi["url"]
-        location_name = poi["title"]
+        store_url = urljoin(start_url, poi["url_key"])
+        location_name = poi["name"]
         location_name = location_name if location_name else "<MISSING>"
-        street_address = poi["address_unformatted"].split("\r\n")[0]
-        city = location_name
+        street_address = poi["address"]
+        street_address = street_address if street_address else "<MISSING>"
+        city = poi["city"]
         city = city if city else "<MISSING>"
-        state = poi["state"]
-        state = state if state else "<MISSING>"
-        zip_code = poi["postal_code"]
+        state = "<MISSING>"
+        zip_code = poi["zip"]
         zip_code = zip_code if zip_code else "<MISSING>"
-        country_code = "<MISSING>"
+        country_code = poi["country"]
+        country_code = country_code if country_code else "<MISSING>"
         store_number = poi["id"]
         phone = poi["phone"]
         phone = phone if phone else "<MISSING>"
         location_type = "<MISSING>"
-        if poi["is_atm_only"] == "1":
-            location_type = "atm only"
         latitude = poi["lat"]
         longitude = poi["lng"]
-        hoo_html = etree.HTML(poi["hours"])
-        hoo = hoo_html.xpath("//text()")
+        hoo = []
+        hoo_data = demjson.decode(poi["schedule_string"])
+        for day, hours in hoo_data.items():
+            opens = "{}:{}".format(hours["from"]["hours"], hours["from"]["minutes"])
+            closes = "{}:{}".format(hours["to"]["hours"], hours["to"]["minutes"])
+            hoo.append(f"{day} {opens} - {closes}")
         hoo = [e.strip() for e in hoo if e.strip()]
-        hours_of_operation = " ".join(hoo[1:]) if hoo else "<MISSING>"
-        if hours_of_operation == "No Drive-Thru":
-            hours_of_operation = "<MISSING>"
-            location_type = "temporary closed"
-        hours_of_operation = (
-            hours_of_operation.replace("No Drive-Thru", "")
-            .replace("Transactions", "")
-            .strip()
-        )
+        hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
 
         item = [
             domain,
