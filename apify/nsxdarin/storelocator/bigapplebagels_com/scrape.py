@@ -106,9 +106,9 @@ def fetch_data():
                         hours = "<MISSING>"
                         if phone == "":
                             phone = "<MISSING>"
-                        if lat == "0":
+                        if lat == "0" or lat is None or lat == "0.0":
                             lat = "<MISSING>"
-                        if lng == "0":
+                        if lng == "0" or lng is None or lng == "0.0":
                             lng = "<MISSING>"
                         if add not in locs and add != "Test":
                             locs.append(add)
