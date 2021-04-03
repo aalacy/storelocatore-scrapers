@@ -47,31 +47,31 @@ def fetch_data():
 
     div = tree.xpath('//li[@class="campus"]')
     for d in div:
-        location_name = ''.join(d.xpath('./text()')).strip()
-        location_type = ''.join(d.xpath('./preceding-sibling::li[./b][1]//text()'))
-        if location_type != 'Bourbon St. Grill':
+        location_name = "".join(d.xpath("./text()")).strip()
+        location_type = "".join(d.xpath("./preceding-sibling::li[./b][1]//text()"))
+        if location_type != "Bourbon St. Grill":
             continue
-        street_address = ''.join(d.xpath('.//following-sibling::li[1]//text()'))
-        ad = ''.join(d.xpath('.//following-sibling::li[2]//text()'))
-        divs = d.xpath('./following-sibling::li')
-        phone = '<MISSING>'
+        street_address = "".join(d.xpath(".//following-sibling::li[1]//text()"))
+        ad = "".join(d.xpath(".//following-sibling::li[2]//text()"))
+        divs = d.xpath("./following-sibling::li")
+        phone = "<MISSING>"
         for d in divs:
-            if d.xpath('./@class') == 'campus':
+            if d.xpath("./@class") == "campus":
                 break
 
-            text = ''.join(d.xpath('./text()')).lower()
-            if 'tel' in text:
-                phone = text.replace('tel', '').replace(':', '').strip()
+            text = "".join(d.xpath("./text()")).lower()
+            if "tel" in text:
+                phone = text.replace("tel", "").replace(":", "").strip()
                 break
-        state = ad.split(',')[1].split()[0] or '<MISSING>'
-        postal = ' '.join(ad.split(',')[1].split()[1:]) or '<MISSING>'
+        state = ad.split(",")[1].split()[0] or "<MISSING>"
+        postal = " ".join(ad.split(",")[1].split()[1:]) or "<MISSING>"
         country_code = "CA"
         try:
             if int(postal):
-                country_code = 'US'
+                country_code = "US"
         except ValueError:
             country_code = "CA"
-        city = ad.split(',')[0] or '<MISSING>'
+        city = ad.split(",")[0] or "<MISSING>"
 
         store_number = "<MISSING>"
         latitude = "<MISSING>"
@@ -79,21 +79,21 @@ def fetch_data():
         hours_of_operation = "<MISSING>"
 
         row = [
-                locator_domain,
-                page_url,
-                location_name,
-                street_address,
-                city,
-                state,
-                postal,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
+            locator_domain,
+            page_url,
+            location_name,
+            street_address,
+            city,
+            state,
+            postal,
+            country_code,
+            store_number,
+            phone,
+            location_type,
+            latitude,
+            longitude,
+            hours_of_operation,
+        ]
         out.append(row)
 
     return out
