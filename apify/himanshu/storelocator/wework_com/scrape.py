@@ -65,9 +65,10 @@ def fetch_data():
                 store_url = urljoin(start_url, url)
                 location_res = session.get(store_url, headers=headers)
                 loc_dom = etree.HTML(location_res.text)
-                data = loc_dom.xpath('//script[@type="application/ld+json"]/text()')[
-                    0
-                ].split("/*")[0]
+                data = loc_dom.xpath('//script[@type="application/ld+json"]/text()')
+                if not data:
+                    continue
+                data = data[0].split("/*")[0]
                 poi = json.loads(data)
                 poi = [e for e in poi["@graph"] if e["@type"] == "LocalBusiness"]
                 if not poi:

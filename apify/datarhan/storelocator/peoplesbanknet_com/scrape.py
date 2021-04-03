@@ -88,6 +88,11 @@ def fetch_data():
         if hours_of_operation == "No Drive-Thru":
             hours_of_operation = "<MISSING>"
             location_type = "temporary closed"
+        hours_of_operation = (
+            hours_of_operation.replace("No Drive-Thru", "")
+            .replace("Transactions", "")
+            .strip()
+        )
 
         item = [
             domain,
