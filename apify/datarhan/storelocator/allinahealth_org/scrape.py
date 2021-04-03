@@ -84,7 +84,6 @@ def fetch_data():
         phone = phone[0] if phone else "<MISSING>"
         latitude = "<MISSING>"
         longitude = "<MISSING>"
-
         store_response = session.get(loc_url)
         store_dom = etree.HTML(store_response.text)
         hours_of_operation = store_dom.xpath(

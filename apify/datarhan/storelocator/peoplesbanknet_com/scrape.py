@@ -85,6 +85,9 @@ def fetch_data():
         hoo = hoo_html.xpath("//text()")
         hoo = [e.strip() for e in hoo if e.strip()]
         hours_of_operation = " ".join(hoo[1:]) if hoo else "<MISSING>"
+        if hours_of_operation == "No Drive-Thru":
+            hours_of_operation = "<MISSING>"
+            location_type = "temporary closed"
 
         item = [
             domain,
