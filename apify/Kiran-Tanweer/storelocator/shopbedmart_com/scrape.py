@@ -169,7 +169,7 @@ def fetch_data():
             soup = BeautifulSoup(p.text, "html.parser")
 
             scripts = soup.findAll("script")
-            script = str(scripts[29])
+            script = str(scripts[30])
             coords = script.split("center: {")[1].split("},")[0]
             coords = coords.split(",")
             lat = coords[0].strip()
