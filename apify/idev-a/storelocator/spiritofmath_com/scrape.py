@@ -23,7 +23,7 @@ def _street(addr):
 def fetch_data():
     locator_domain = "https://spiritofmath.com/"
     base_url = "https://spiritofmath.com/#locations"
-    with SgChrome() as driver:
+    with SgChrome(executable_path=r"/mnt/g/work/mia/chromedriver.exe") as driver:
         driver.set_window_size(930, 660)
         driver.get(base_url)
         _close(driver)
@@ -49,7 +49,7 @@ def fetch_data():
             "div.ssf-column div.store-locator__infobox"
         )
         for _ in locations[:-1]:
-            phone = _.select_one("div.store-tel").text
+            phone = _.select_one("div.store-tel").text.split("x")[0].split("or")[0]
             page_url = _.select_one("div.store-website a")["href"]
             location_name = _.select_one("div.store-location").text
             hours_of_operation = _.select_one("div.store-operating-hours").text
