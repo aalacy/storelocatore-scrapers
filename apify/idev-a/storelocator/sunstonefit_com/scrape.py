@@ -19,16 +19,12 @@ def fetch_data():
             .strip()[:-1]
         )
         for store in stores:
-            detail = bs(res.text, "lxml").select("#LiveAccordionWrapper5349 > div")[
-                store["accordion"] - 1
-            ]
+            detail = bs(res.text, "lxml").select(
+                "div#LiveAccordionWrapper5349 div.row"
+            )[store["accordion"] - 2]
             page_url = locator_domain + detail.select_one("a")["href"]
-            location_name = store["title"]
             address = store["html"].split("</h5>").pop().replace("<br>", ", ")
             address = parse_address_intl(address)
-            zip = address.postcode
-            state = address.state
-            city = address.city
             street_address = (
                 address.street_address_1
                 + " "
@@ -38,22 +34,25 @@ def fetch_data():
                     else ""
                 )
             )
-            phone = " ".join(detail.select_one("span.phone").string.split(" ")[:-1])
-            latitude = store["lat"]
-            longitude = store["lon"]
-            record = SgRecord(
+            phone = ""
+            if detail.select_one("span.phone"):
+                phone = " ".join(detail.select_one("span.phone").text.split(" ")[:-1])
+            hours_of_operation = ""
+            if "[Location Closed]" in detail.select_one('span[itemprop="name"]').text:
+                hours_of_operation = "Closed"
+            yield SgRecord(
                 page_url=page_url,
-                location_name=location_name,
+                location_name=store["title"],
                 street_address=street_address,
-                city=city,
-                zip_postal=zip,
-                state=state,
+                city=address.city,
+                zip_postal=address.postcode,
+                state=address.state,
                 phone=phone,
                 locator_domain=locator_domain,
-                latitude=latitude,
-                longitude=longitude,
+                latitude=store["lat"],
+                longitude=store["lon"],
+                hours_of_operation=hours_of_operation,
             )
-            yield record
 
 
 if __name__ == "__main__":
