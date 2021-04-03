@@ -1,4 +1,3 @@
-import itertools
 from sglogging import sglog
 from bs4 import BeautifulSoup
 from sgrequests import SgRequests
@@ -15,7 +14,6 @@ headers = {
 
 
 def fetch_data():
-    temp = []
     if True:
         url = "https://www.henrys.com/api/stores/getStoreList"
         loclist = session.get(url, headers=headers).json()
