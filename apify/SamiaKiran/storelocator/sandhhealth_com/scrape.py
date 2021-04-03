@@ -19,7 +19,6 @@ headers = {
 
 
 def fetch_data():
-    temp = []
     if True:
         url = "https://sandhhealth.com/pages/store-locator"
         r = session.get(url, headers=headers)
