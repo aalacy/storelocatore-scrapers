@@ -51,6 +51,7 @@ def fetch_data():
                 locator_domain=locator_domain,
                 latitude=store["lat"],
                 longitude=store["lon"],
+                country_code="US",
                 hours_of_operation=hours_of_operation,
             )
 
