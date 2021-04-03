@@ -26,7 +26,7 @@ def fetch_data():
         loclist = soup.findAll("div", {"class": "card"})
         for loc in loclist:
             location_name = loc.find("h5").text.replace("\n", "").strip()
-            print(location_name)
+            log.info(location_name)
             try:
                 temp = loc.find("div", {"class": "container"}).findAll(
                     "div", {"class": "col-sm"}
