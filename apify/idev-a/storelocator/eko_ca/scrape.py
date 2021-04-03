@@ -29,7 +29,7 @@ def fetch_data():
                 zip_postal=_["station_zip"],
                 latitude=_["station_lat"],
                 longitude=_["station_lng"],
-                country_code="US",
+                country_code="CA",
                 phone=_["station_phone"],
                 locator_domain=locator_domain,
                 hours_of_operation="; ".join(hours),
