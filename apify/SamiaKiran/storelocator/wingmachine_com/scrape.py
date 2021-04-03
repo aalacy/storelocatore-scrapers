@@ -15,7 +15,6 @@ headers = {
 
 
 def fetch_data():
-    temp = []
     if True:
         url = "https://wingmachine.com/location.php"
         r = session.get(url, headers=headers)
