@@ -53,7 +53,7 @@ def fetch_data():
             continue
         street_address = "".join(d.xpath(".//following-sibling::li[1]//text()"))
         ad = "".join(d.xpath(".//following-sibling::li[2]//text()"))
-        divs = d.xpath("./following-sibling::li")
+        divs = d.xpath("./following-sibling::li[3]")
         phone = "<MISSING>"
         for d in divs:
             if d.xpath("./@class") == "campus":
