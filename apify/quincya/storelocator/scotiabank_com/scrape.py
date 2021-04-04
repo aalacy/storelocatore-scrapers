@@ -67,7 +67,7 @@ def fetch_data():
             ]
         except:
             continue
-
+        logger.info(f"Pulling the data from: {base_link}")
         found = 0
         for store in stores:
             store_number = store["@attributes"]["id"]
@@ -126,7 +126,7 @@ def fetch_data():
                 ]
             )
             found += 1
-    total += found
+        total += found
     logger.info(f"Scraping Finished | Total Store Count:{total}")
     return data
 
