@@ -10,15 +10,7 @@ _headers = {
 
 
 def _phone(val):
-    return (
-        val.replace("(", "")
-        .replace(")", "")
-        .replace("-", "")
-        .replace(".", "")
-        .replace(" ", "")
-        .strip()
-        .isdigit()
-    )
+    return val.replace("-", "").replace(".", "").strip()
 
 
 def fetch_data():
