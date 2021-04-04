@@ -77,7 +77,7 @@ def write_output(data):
 
 def fetch_data():
     data = []
-
+    url = "https://api.petfood.express/store/map/"
     response = session.get(url, headers=headers1).json()
     for r in response:
         lat = r["latitude"]
