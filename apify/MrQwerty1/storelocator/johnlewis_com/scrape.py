@@ -74,6 +74,9 @@ def get_data(url):
 
     state = adr.state or "<MISSING>"
     postal = adr.postcode or "<MISSING>"
+    if street_address == "<MISSING>" and city == "London":
+        street_address = line.split("London")[0].strip()
+
     country_code = "GB"
     store_number = "<MISSING>"
     phone = (
@@ -98,6 +101,13 @@ def get_data(url):
     hours_of_operation = ";".join(_tmp).replace("*", "") or "<MISSING>"
     if hours_of_operation.count("Temporarily Closed") == 7:
         hours_of_operation = "Temporarily Closed"
+
+    if (
+        street_address == "<MISSING>"
+        and phone == "<MISSING>"
+        and hours_of_operation == "<MISSING>"
+    ):
+        return
 
     row = [
         locator_domain,

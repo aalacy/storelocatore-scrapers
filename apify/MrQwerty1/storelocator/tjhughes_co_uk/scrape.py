@@ -60,7 +60,7 @@ def fetch_data():
         city = "".join(
             root.xpath("//span[contains(@class, 'branch-city')]/text()")
         ).strip()
-        state = "<MISSING>"
+        state = "<INACCESSIBLE>"
         postal = "".join(
             root.xpath("//span[contains(@class, 'branch-postcode')]/text()")
         ).strip()

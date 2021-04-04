@@ -65,67 +65,73 @@ def fetch_data():
                 if lurl not in locs:
                     locs.append(lurl)
     for loc in locs:
-        logger.info("Pulling Location %s..." % loc)
-        url = loc
-        add = ""
-        city = ""
-        state = ""
-        zc = ""
-        country = "US"
-        phone = ""
-        hours = ""
-        lat = ""
-        lng = ""
-        store = ""
-        name = "Sonic Drive-In"
-        website = "sonicdrivein.com"
-        typ = "Restaurant"
-        r2 = session.get(loc, headers=headers)
-        if r2.encoding is None:
-            r2.encoding = "utf-8"
-        for line2 in r2.iter_lines(decode_unicode=True):
-            if '<div class="map-list-item-wrap" data-fid="' in line2:
-                store = line2.split('<div class="map-list-item-wrap" data-fid="')[
-                    1
-                ].split('"')[0]
-            # if '<span class="stores-nearby-text">' in line2:
-            # name = line2.split('<span class="stores-nearby-text">')[1].split('<')[0]
-            if '"latitude": "' in line2:
-                lat = line2.split('"latitude": "')[1].split('"')[0]
-            if '"longitude": "' in line2:
-                lng = line2.split('"longitude": "')[1].split('"')[0]
-            if '"streetAddress": "' in line2:
-                add = line2.split('"streetAddress": "')[1].split('"')[0].strip()
-            if '"addressLocality": "' in line2:
-                city = line2.split('"addressLocality": "')[1].split('"')[0]
-            if '"addressRegion": "' in line2:
-                state = line2.split('"addressRegion": "')[1].split('"')[0]
-            if '"postalCode": "' in line2:
-                zc = line2.split('"postalCode": "')[1].split('"')[0]
-            if '"telephone": "' in line2:
-                phone = line2.split('"telephone": "')[1].split('"')[0].strip()
-            if '"openingHours": "' in line2:
-                hours = line2.split('"openingHours": "')[1].split('"')[0].strip()
-        if hours == "":
-            hours = "<MISSING>"
-        if phone == "":
-            phone = "<MISSING>"
-        yield [
-            website,
-            url,
-            name,
-            add,
-            city,
-            state,
-            zc,
-            country,
-            store,
-            phone,
-            typ,
-            lat,
-            lng,
-            hours,
-        ]
+        Found = True
+        while Found:
+            try:
+                logger.info("Pulling Location %s..." % loc)
+                url = loc
+                add = ""
+                city = ""
+                state = ""
+                zc = ""
+                country = "US"
+                phone = ""
+                hours = ""
+                lat = ""
+                lng = ""
+                store = ""
+                name = "Sonic Drive-In"
+                website = "sonicdrivein.com"
+                typ = "Restaurant"
+                r2 = session.get(loc, headers=headers)
+                if r2.encoding is None:
+                    r2.encoding = "utf-8"
+                for line2 in r2.iter_lines(decode_unicode=True):
+                    if '<div class="map-list-item-wrap" data-fid="' in line2:
+                        store = line2.split(
+                            '<div class="map-list-item-wrap" data-fid="'
+                        )[1].split('"')[0]
+                    if '"latitude": "' in line2:
+                        lat = line2.split('"latitude": "')[1].split('"')[0]
+                    if '"longitude": "' in line2:
+                        lng = line2.split('"longitude": "')[1].split('"')[0]
+                    if '"streetAddress": "' in line2:
+                        add = line2.split('"streetAddress": "')[1].split('"')[0].strip()
+                    if '"addressLocality": "' in line2:
+                        city = line2.split('"addressLocality": "')[1].split('"')[0]
+                    if '"addressRegion": "' in line2:
+                        state = line2.split('"addressRegion": "')[1].split('"')[0]
+                    if '"postalCode": "' in line2:
+                        zc = line2.split('"postalCode": "')[1].split('"')[0]
+                    if '"telephone": "' in line2:
+                        phone = line2.split('"telephone": "')[1].split('"')[0].strip()
+                    if '"openingHours": "' in line2:
+                        hours = (
+                            line2.split('"openingHours": "')[1].split('"')[0].strip()
+                        )
+                if hours == "":
+                    hours = "<MISSING>"
+                if phone == "":
+                    phone = "<MISSING>"
+                Found = False
+                yield [
+                    website,
+                    url,
+                    name,
+                    add,
+                    city,
+                    state,
+                    zc,
+                    country,
+                    store,
+                    phone,
+                    typ,
+                    lat,
+                    lng,
+                    hours,
+                ]
+            except:
+                Found = True
 
 
 def scrape():

@@ -41,7 +41,7 @@ def fetch_data():
     items = []
 
     DOMAIN = "carliecs.com"
-    start_url = "https://api.freshop.com/1/stores?app_key=carlie_c_s&has_address=true&is_selectable=true&limit=100&token=0afb14f1dbfdb5fc2c6c96195e399ebd"
+    start_url = "https://api.freshop.com/1/stores?app_key=carlie_c_s&has_address=true&limit=-1&token=9c9540059bb21c601480bb087a51ff4b"
 
     response = session.get(start_url)
     data = json.loads(response.text)

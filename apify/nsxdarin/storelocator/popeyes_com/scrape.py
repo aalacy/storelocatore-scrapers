@@ -139,6 +139,10 @@ def fetch_data():
             pass
         if phone == "":
             phone = "<MISSING>"
+        if "Required)" in add:
+            add = add.split("Required)")[1].strip()
+        if "Required)" in name:
+            name = add.split("Required)")[1].strip()
         yield [
             website,
             purl,

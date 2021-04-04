@@ -18,10 +18,10 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.keys import Keys
 
 from fuzzywuzzy import process
+
 # no need for python-Levenshtein, we're processing only 30 records
 
 import json  # noqa
-
 
 def return_last4(fullId):
     last4 = list(fullId[-4:])
@@ -615,6 +615,7 @@ def fix_domain(x):
         return x.replace("('None',)", "<MISSING>")
 
 
+
 def scrape():
     field_defs = sp.SimpleScraperPipeline.field_definitions(
         locator_domain=sp.MappingField(
@@ -670,6 +671,7 @@ def scrape():
         ),
         store_number=sp.MappingField(
             mapping=["ThirdPartyId"],
+
             is_required=False,
         ),
         hours_of_operation=sp.MappingField(
