@@ -18,7 +18,6 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.keys import Keys
 
 from fuzzywuzzy import process
-
 # no need for python-Levenshtein, we're processing only 30 records
 
 import json  # noqa
@@ -382,7 +381,7 @@ def determine_verification_link(rec, typ, fullId, last4, typIter):
                         if test.status_code != 404:
                             return True
                     return False
-                except Exception as e:  # noqa
+                except Exception as e: # noqa
                     return False
 
         try:
@@ -391,7 +390,7 @@ def determine_verification_link(rec, typ, fullId, last4, typIter):
             result.update(determinationStation[result["type"]])
             result.update({"passed": passed()})
             return result
-        except Exception as e:  # noqa
+        except Exception as e: # noqa
             return None
 
     result = determined_possible()
@@ -463,7 +462,7 @@ def get_api_call(url):
         input_field.send_keys("B3L 4T2")
         input_field.send_keys(Keys.RETURN)
 
-        wait_for_loc = WebDriverWait(driver, 30).until(  # noqa
+        wait_for_loc = WebDriverWait(driver, 30).until( # noqa
             EC.visibility_of_element_located(
                 (
                     By.XPATH,
@@ -594,7 +593,7 @@ def fetch_data():
     # with open('megafails.txt', mode='w', encoding = 'utf-8') as file: # noqa
     #    file.write(json.dumps(megafails)) # noqa
 
-    logzilla.info(f"Finished grabbing data!!☺ ")  # noqa
+    logzilla.info(f"Finished grabbing data!!☺ ") # noqa
 
 
 def fix_comma(x):
@@ -681,10 +680,7 @@ def scrape():
             mapping=["type"],
             is_required=False,
         ),
-        raw_address=sp.MappingField(
-            mapping=["passed"],
-            is_required=False,
-        ),
+        raw_address=sp.MissingField(),
     )
 
     pipeline = sp.SimpleScraperPipeline(
