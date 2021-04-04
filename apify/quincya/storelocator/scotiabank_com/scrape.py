@@ -1,10 +1,9 @@
 import csv
-
 from sgrequests import SgRequests
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
+from sglogging import SgLogSetup
 
-import sgzip
-
-from sgzip import SearchableCountries
+logger = SgLogSetup().get_logger("scotiabank_com")
 
 
 def write_output(data):
@@ -43,40 +42,34 @@ def fetch_data():
 
     max_results = 50
     max_distance = 15
-
     dup_tracker = []
-
     data = []
+    total = 0
     locator_domain = "scotiabank.com"
 
-    search = sgzip.DynamicGeoSearch(
+    search = DynamicGeoSearch(
         country_codes=[SearchableCountries.CANADA],
         max_radius_miles=max_distance,
         max_search_results=max_results,
     )
+    all_coordinates = []
+    for lat, lng in search:
+        all_coordinates.append((lat, lng))
 
-    search.initialize()
-
-    coord = search.next()
-
-    while coord:
-        x = coord[0]
-        y = coord[1]
-
+    for ll in all_coordinates:
+        url_test = "https://mapsms.scotiabank.com/branches?1=1&latitude=34.0522342&longitude=-118.2436849&recordlimit=20&locationtypes=1,3&options=&languagespoken=any&language=en&address=Los%20Angeles%2C%20CA%2C%20USA&province=California&city=Los%20Angeles"
         base_link = (
             "https://mapsms.scotiabank.com/branches?1=1&latitude=%s&longitude=%s&recordlimit=%s&locationtypes=1"
-            % (x, y, max_results)
+            % (ll[0], ll[1], max_results)
         )
         try:
             stores = session.get(base_link, headers=headers).json()["branchInfo"][
                 "marker"
             ]
         except:
-            coord = search.next()
             continue
 
-        result_coords = []
-
+        found = 0
         for store in stores:
             store_number = store["@attributes"]["id"]
             if store_number in dup_tracker:
@@ -133,15 +126,14 @@ def fetch_data():
                     hours_of_operation,
                 ]
             )
-
-        if len(stores) > 0:
-            search.update_with(result_coords)
-        coord = search.next()
-
+            found += 1
+    total += found
+    logger.info(f"Scraping Finished | Total Store Count:{total}")
     return data
 
 
 def scrape():
+    logger.info("Scraping Started!")
     data = fetch_data()
     write_output(data)
 
