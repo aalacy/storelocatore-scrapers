@@ -9,10 +9,8 @@ logger = SgLogSetup().get_logger("jenniferfurniture_com")
 session = SgRequests()
 
 headers = {
-
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.141 Safari/537.36',
-
-    }
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.141 Safari/537.36",
+}
 
 
 def write_output(data):
@@ -40,7 +38,7 @@ def write_output(data):
             ]
         )
 
-        temp_list = []  
+        temp_list = []
         for row in data:
             comp_list = [
                 row[2].strip(),
@@ -55,8 +53,6 @@ def write_output(data):
                 temp_list.append(comp_list)
                 writer.writerow(row)
         logger.info(f"No of records being processed: {len(temp_list)}")
-
-        
 
 
 def fetch_data():
@@ -73,7 +69,7 @@ def fetch_data():
         loc = loc.lstrip('\\":\\"')
         lat = loc.split('\\"')[0]
         lng = loc.split('"lng\\":\\"')[1].split('\\"')[0]
-        storeid = loc.split('\\"id\\":')[1].split(',\\')[0]
+        storeid = loc.split('\\"id\\":')[1].split(",\\")[0]
         title = loc.split('"name\\":\\"')[1].split('\\",')[0]
         phone = loc.split('"phone\\":\\"')[1].split('\\"')[0]
         link = loc.split('"web\\":\\"')[1].split('",\\')[0]
@@ -83,40 +79,39 @@ def fetch_data():
         state = loc.split('"state\\":\\"')[1].split('\\"')[0]
         pcode = loc.split('"postal\\":\\"')[1].split('\\"')[0]
         country = loc.split('"country\\":\\"')[1].split('\\"')[0]
-        link = link.replace('\\\\\\', '').strip()
-        hours = hours.replace('\\\\r<br/>', '').strip()
-        hours = hours.replace('\\', '').strip()
-        hours = hours.replace('PM', 'PM.').strip()
-        hours = hours.replace('PM.', 'PM. ').strip()
-        hours = hours.replace('  ', ' ').strip()
-        hours = hours.replace('. .', '. ').strip()
-        hours = hours.replace('  ', ' ').strip()
+        link = link.replace("\\\\\\", "").strip()
+        hours = hours.replace("\\\\r<br/>", "").strip()
+        hours = hours.replace("\\", "").strip()
+        hours = hours.replace("PM", "PM.").strip()
+        hours = hours.replace("PM.", "PM. ").strip()
+        hours = hours.replace("  ", " ").strip()
+        hours = hours.replace(". .", ". ").strip()
+        hours = hours.replace("  ", " ").strip()
         street.pop(0)
         street.pop(0)
         street.pop(0)
         street.pop(0)
-        street = ' '.join([str(elem) for elem in street])
-        street = street.lstrip('Place, ')
-
+        street = " ".join([str(elem) for elem in street])
+        street = street.lstrip("Place, ")
 
         data.append(
-                    [
-                        "https://www.jenniferfurniture.com/",
-                        link,
-                        title,
-                        street,
-                        city,
-                        state,
-                        pcode,
-                        country,
-                        storeid,
-                        phone,
-                        "<MISSING>",
-                        lat,
-                        lng,
-                        hours,
-                    ]
-                )
+            [
+                "https://www.jenniferfurniture.com/",
+                link,
+                title,
+                street,
+                city,
+                state,
+                pcode,
+                country,
+                storeid,
+                phone,
+                "<MISSING>",
+                lat,
+                lng,
+                hours,
+            ]
+        )
     return data
 
 
