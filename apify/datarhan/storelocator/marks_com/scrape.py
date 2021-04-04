@@ -67,8 +67,6 @@ def fetch_data():
 
     start_url = "https://api.marks.com/hy/v1/marks/storelocators/bopis/nearLocation/filtered?location={}&pageSize=50"
     for code in all_codes:
-        # sub_codes = [' 1A0', ' 1Z0', ' 1G6', ' 1R5', ]
-        # for sub_code in sub_codes:
         code = code + " 1A0"
         try:
             response = session.get(
