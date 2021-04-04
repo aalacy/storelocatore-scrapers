@@ -42,7 +42,6 @@ def write_output(data):
 def fetch_data():
     data = []
     cleanr = re.compile(r"<[^>]+>")
-    pattern = re.compile(r"\s\s+")
     url = "https://nicknwillys.com/locations/"
     p = 0
     r = session.get(url, headers=headers, verify=False)
@@ -56,8 +55,7 @@ def fetch_data():
             longt = longt.split(",", 1)[0]
         except:
             lat = longt = "<MISSING>"
-        det = re.sub(cleanr, " ", str(div))
-        det = re.sub(cleanr, "", str(det)).strip()
+        det = re.sub(cleanr, " ", str(div)).strip()
         title = det.split("\n", 1)[0]
         address = det.split("\n", 1)[1].split("MAP", 1)[0].replace("\n", " ").strip()
         street, state = address.split(", ", 1)
