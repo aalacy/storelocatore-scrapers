@@ -43,29 +43,27 @@ def fetch_data():
 
     DOMAIN = "tommybahama.com"
     start_url = "https://www.tommybahama.com/en/store-finder?q=&searchStores=false&searchRestaurants=true&searchOutlets=false&searchInternational=true&CSRFToken=b6ba6d9c-9bc3-48f3-952d-2f59a53a4656"
+
     response = session.get(start_url)
     dom = etree.HTML(response.text)
-    all_locations = dom.xpath('//span[@class="store-restaurant-header"]/a/@href')
+    all_locations = dom.xpath('//div[@id="store-search-results-state"]')
     next_page = dom.xpath('//a[contains(text(), "Next")]/@href')
     while next_page:
         page_url = "https://www.tommybahama.com" + next_page[0]
         page_response = session.get(page_url)
         page_dom = etree.HTML(page_response.text)
-        all_locations += page_dom.xpath(
-            '//div[@id="store-search-results-state"]//a/@href'
-        )
+        all_locations += dom.xpath('//div[@id="store-search-results-state"]')
         next_page = page_dom.xpath('//a[contains(text(), "Next")]/@href')
 
-    for url in list(set(all_locations)):
-        if url == "#":
-            continue
-        if "/store/" in url:
-            continue
+    for poi_html in all_locations:
+        url = poi_html.xpath('.//span[@class="store-restaurant-header"]/a/@href')[0]
         store_url = urljoin(start_url, url)
         loc_response = session.get(store_url)
         loc_dom = etree.HTML(loc_response.text)
 
-        location_name = loc_dom.xpath('//h3[@class="cmp-title__text"]/text()')
+        location_name = poi_html.xpath(
+            './/span[@class="store-restaurant-header"]/a/text()'
+        )
         location_name = (
             location_name[0].strip() if location_name[0].strip() else "<MISSING>"
         )
@@ -106,8 +104,13 @@ def fetch_data():
             )
             phone = phone[0] if phone else "<MISSING>"
         location_type = "<MISSING>"
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
+        geo = (
+            poi_html.xpath('.//a[contains(text(), "View Map")]/@href')[0]
+            .split("lat=")[-1]
+            .split("&long=")
+        )
+        latitude = geo[0]
+        longitude = geo[1]
         hours_of_operation = (
             loc_dom.xpath('//p[contains(text(), "Open:")]/text()')[-1]
             .replace("Open:", "")
@@ -119,9 +122,14 @@ def fetch_data():
                 .replace("Open:", "")
                 .replace("|", ",")
             )
-        hours_of_operation = (
-            hours_of_operation if hours_of_operation else "<INACCESSIBLE>"
-        )
+        if not hours_of_operation:
+            hoo = poi_html.xpath(
+                './/div[span[@class="store-restaurant-header"]]/text()'
+            )
+            hoo = [e.strip() for e in hoo if e.strip()]
+            hours_of_operation = " ".join(hoo[1:3]) if hoo else "<MISSING>"
+        hours_of_operation = hours_of_operation if hours_of_operation else "<MISSING>"
+        hours_of_operation = hours_of_operation.split("Happy")[0].strip()
 
         if "COCONUT" in location_name:
             phone = "239.947.2203"
