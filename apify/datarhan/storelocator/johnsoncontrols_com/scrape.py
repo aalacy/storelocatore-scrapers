@@ -1,9 +1,7 @@
 import csv
 import json
-import sgzip
-from sgzip import SearchableCountries
 
-
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 from sgrequests import SgRequests
 
 
@@ -58,18 +56,11 @@ def fetch_data():
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.67 Safari/537.36",
     }
 
-    all_coordinates = []
-    us_coords = sgzip.coords_for_radius(
-        radius=100, country_code=SearchableCountries.USA
+    all_coordinates = DynamicGeoSearch(
+        country_codes=[SearchableCountries.USA, SearchableCountries.CANADA],
+        max_radius_miles=50,
+        max_search_results=None,
     )
-    for coord in us_coords:
-        all_coordinates.append(coord)
-    ca_coords = sgzip.coords_for_radius(
-        radius=100, country_code=SearchableCountries.CANADA
-    )
-    for coord in ca_coords:
-        all_coordinates.append(coord)
-
     for coord in all_coordinates:
         lat, lng = coord
         response = session.get(start_url.format(lat, lng), headers=headers)

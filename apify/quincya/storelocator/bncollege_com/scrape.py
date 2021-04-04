@@ -1,134 +1,164 @@
-from sgrequests import SgRequests
-from bs4 import BeautifulSoup
 import csv
-import time
-from random import randint
-import re
+import json
 
-from sgselenium import SgSelenium
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import TimeoutException
-from sglogging import SgLogSetup
+from bs4 import BeautifulSoup
 
-logger = SgLogSetup().get_logger('bncollege_com')
-
+from sgrequests import SgRequests
 
 
 def write_output(data):
-	with open('data.csv', mode='w', encoding="utf-8") as output_file:
-		writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+    with open("data.csv", mode="w", encoding="utf-8") as output_file:
+        writer = csv.writer(
+            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+        )
 
-		# Header
-		writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-		# Body
-		for row in data:
-			writer.writerow(row)
+        # Header
+        writer.writerow(
+            [
+                "locator_domain",
+                "page_url",
+                "location_name",
+                "street_address",
+                "city",
+                "state",
+                "zip",
+                "country_code",
+                "store_number",
+                "phone",
+                "location_type",
+                "latitude",
+                "longitude",
+                "hours_of_operation",
+            ]
+        )
+        # Body
+        for row in data:
+            writer.writerow(row)
+
 
 def fetch_data():
-	
-	base_link = "https://www.bncollege.com/campus-stores/"
 
-	user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36'
-	HEADERS = {'User-Agent' : user_agent}
+    base_link = "https://www.bncollege.com/campus-stores/"
 
-	session = SgRequests()
-	req = session.get(base_link, headers = HEADERS)
-	time.sleep(randint(1,2))
-	try:
-		base = BeautifulSoup(req.text,"lxml")
-	except (BaseException):
-		logger.info('[!] Error Occured. ')
-		logger.info('[?] Check whether system is Online.')
+    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36"
+    headers = {"User-Agent": user_agent}
 
-	driver = SgSelenium().chrome()
-	time.sleep(2)
+    session = SgRequests()
+    req = session.get(base_link, headers=headers)
+    base = BeautifulSoup(req.text, "lxml")
 
-	data = []
+    data = []
 
-	items = base.find(id="schools").find_all("li")
-	locator_domain = "bncollege.com"
+    script = (
+        base.find(id="bnc-map-js-extra")
+        .text.split("bncLocationsByState = ")[1]
+        .split("]};")[0]
+        + "]}"
+    )
 
-	poi_found = []
-	for i, item in enumerate(items):
-		link = item.a['href'].replace(".com%20",".com")
-		if link == "https://depaul.bncollege.com/":
-			link = "http://depaul-lincolnpark.bncollege.com/"
-		if link in poi_found or link == "https://www.cpcc-harriscampusbookstore.com":
-			continue
-		else:
-			poi_found.append(link)
-		logger.info("Link %s of %s" %(i+1,len(items)))
-		logger.info(link)
-		
-		try:
-			req = session.get(link, headers = HEADERS)
-			base = BeautifulSoup(req.text,"lxml")
-		except:
-			logger.info("No results found..skipping")
-			continue
+    states = json.loads(script)
+    locator_domain = "bncollege.com"
 
-		try:
-			final_link = base.find(class_="mapInnerUl campusHours right wid44p").a['href']
-		except:
-			try:
-				final_link = (req.url.split(".com/")[0] + ".com/" + base.find_all(class_="primaryBtn")[-1]['href']).replace(".com//",".com/")
-			except:
-				logger.info("No results found..skipping")
-				continue
+    for i in states:
+        stores = states[i]
+        for store in stores:
+            location_name = store["title"]
+            country_code = "US"
+            raw_address = store["address"].replace(",", "\n").split("\n")
+            city = raw_address[-2].strip()
+            if "Bahamas" in city:
+                continue
+            street_address = (
+                (
+                    store["address"][: store["address"].rfind(city)]
+                    .replace("\n", " ")
+                    .strip()
+                )
+                .replace("  ", " ")
+                .replace("Ivy Tech Community College - Illinois Fall Creek Center", "")
+                .strip()
+            )
+            if street_address[-1:] == ",":
+                street_address = street_address[:-1].strip()
 
-		if final_link in poi_found:
-			continue
-		else:
-			poi_found.append(final_link)
+            if location_name == "Hanover College":
+                street_address = "One Campus Dr"
 
-		store_number = final_link.split("=")[-1]
+            if location_name == "Hartwick College":
+                street_address = "1 Hartwick Drive Dewar Hall, 3rd Flr"
 
-		driver.get(final_link)
-		time.sleep(randint(2,4))
+            if location_name == "Cuesta College San Luis Obispo Campus":
+                street_address = "-1"
+                city = "San Luis Obispo"
 
-		try:
-			element = WebDriverWait(driver, 20).until(EC.presence_of_element_located(
-				(By.CLASS_NAME, "storeInfo")))
-			time.sleep(randint(1,2))
-		except:
-			logger.info("Timeout..no results found")
-			continue
+            if "530 S. State Street" in city:
+                street_address = "530 S. State Street"
+                city = "Ann Arbor"
 
-		final_link = driver.current_url
-		base = BeautifulSoup(driver.page_source,"lxml")
-		raw_data = base.find(class_="storeInfo").dl.text.strip().replace("\xa0"," ").split("\n")
+            if "1300 nevada state drive" in city:
+                street_address = "1300 nevada state drive"
+                city = "Henderson"
 
-		location_name = base.h3.text
+            if "1 Saxton Drive" in city:
+                street_address = "1 Saxton Drive"
+                city = "Alfred"
 
-		try:
-			street_address = raw_data[-4].strip() + " " + raw_data[-3].strip()
-		except:
-			street_address = raw_data[-3].strip()
+            if "Liverpool L69 3BX" in city:
+                city = "Liverpool"
+                zip_code = "L69 3BX"
+                country_code = "UK"
 
-		if "PLEASE" in street_address:
-			street_address = street_address[:street_address.find("PLEASE")].strip()
+            if "210 Cowan Blvd" in street_address:
+                country_code = "CA"
+                zip_code = "N1T 1V4"
 
-		raw_address = raw_data[-2].split(",")
-		city = raw_address[0].strip()
-		state = raw_address[-1].split()[0]
-		zip_code = raw_address[1].split()[1]
+            if "versity of St Francis Fort" in street_address:
+                street_address = street_address.split("Fort")[0].strip()
 
-		country_code = "US"
-		location_type = "<MISSING>"
-		phone = raw_data[-1]
-		hours = base.find(class_="storeInfo").find_all("dl")[1].text.strip().replace("\t","").replace("\n"," ")
-		hours_of_operation = (re.sub(' +', ' ', hours)).strip()
-		latitude = "<MISSING>"
-		longitude = "<MISSING>"
+            if not street_address:
+                street_address = "<MISSING>"
 
-		data.append([locator_domain, final_link, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
-	driver.close()
-	return data
+            state = store["state_code"].upper()
+            zip_code = store["address"][store["address"].rfind(state) + 2 :].strip()
+            if not zip_code.isdigit() and country_code == "US":
+                zip_code = "<MISSING>"
+            store_number = store["id"]
+            location_type = ", ".join(store["types"])
+
+            if not location_type:
+                location_type = "<MISSING>"
+
+            phone = store["phone"]
+            hours_of_operation = "<INACCESSIBLE>"
+            latitude = store["lat"]
+            longitude = store["lng"]
+            page_url = store["url"]
+
+            data.append(
+                [
+                    locator_domain,
+                    page_url,
+                    location_name,
+                    street_address,
+                    city,
+                    state,
+                    zip_code,
+                    country_code,
+                    store_number,
+                    phone,
+                    location_type,
+                    latitude,
+                    longitude,
+                    hours_of_operation,
+                ]
+            )
+
+    return data
+
 
 def scrape():
-	data = fetch_data()
-	write_output(data)
+    data = fetch_data()
+    write_output(data)
+
 
 scrape()

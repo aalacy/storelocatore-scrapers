@@ -104,7 +104,7 @@ def get_data(url):
         hours_of_operation = ";".join(_tmp) or "<MISSING>"
 
         if hours_of_operation.count("Closed") >= 3:
-            continue
+            hours_of_operation = "Closed"
 
         row = [
             locator_domain,

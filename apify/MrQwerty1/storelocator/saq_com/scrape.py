@@ -47,9 +47,7 @@ def fetch_data():
 
         for j in js:
             location_name = j.get("name") or "<MISSING>"
-            street_address = (
-                f"{j.get('address1')} {j.get('address2') or ''}".strip() or "<MISSING>"
-            )
+            street_address = f"{j.get('address1')}".strip() or "<MISSING>"
             city = j.get("city") or "<MISSING>"
             state = j.get("region") or "<MISSING>"
             postal = j.get("postcode") or "<MISSING>"

@@ -1,3 +1,3 @@
 --ignore StreetAddressHasStateName --ignore StreetAddressHasNumber (Confirmed correct)
 --ignore LatLngDuplicationValidator (Different Suites Locations)
---ignore StateLevelCountValidator (API results in more locations than validation expected)
+--ignore StateLevelCountValidator --ignore CountValidato (API results in less locations than validation expected)

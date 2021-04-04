@@ -1,6 +1,12 @@
 import csv
-from sgzip import ClosestNSearch
+
+from sglogging import sglog
+
 from sgrequests import SgRequests
+
+from sgzip.dynamic import DynamicZipSearch, SearchableCountries
+
+log = sglog.SgLogSetup().get_logger(logger_name="ctownsupermarkets.com")
 
 session = SgRequests()
 MISSING = "<MISSING>"
@@ -43,42 +49,55 @@ def format_hours(hours_of_operations):
             continue
 
         day_hours = hours.get("openIntervals", [])[0]
-        days.append(f"{day} {day_hours['start']}-{day_hours['end']}")
+        days.append(day + " " + day_hours["start"] + "-" + day_hours["end"])
 
     return ",".join(days) or MISSING
 
 
 def fetch_data():
-    MAX_COUNT = 50
-    MAX_DISTANCE = 1000
-    search = ClosestNSearch() # TODO: OLD VERSION [sgzip==0.0.55]. UPGRADE IF WORKING ON SCRAPER!
-    search.initialize()
-    zip_code = search.next_zip()
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36",
-    }
-    locator_domain = "ctownsupermarkets.com"
-    location_map = {}
+    max_count = 50
+    max_distance = 50
+    found_poi = []
 
-    while zip_code:
+    log.info("Running sgzip..")
+
+    search = DynamicZipSearch(
+        country_codes=[SearchableCountries.USA],
+        max_radius_miles=max_distance,
+        max_search_results=max_count,
+    )
+
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36",
+    }
+
+    for zip_code in search:
+
+        locator_domain = "ctownsupermarkets.com"
+        location_map = {}
+
         params = {
             "location": zip_code,
-            "limit": MAX_COUNT,
-            "radius": MAX_DISTANCE,
+            "limit": max_count,
+            "radius": max_distance,
             "v": 20181201,
             "entityTypes": "location",
             "resolvePlaceholders": True,
             "api_key": "ae29ff051811d0bf52d721ab2cadccb8",
+            "savedFilterIds": "29721495",
         }
 
-        location_url = f"https://liveapi.yext.com/v2/accounts/me/entities/geosearch"
+        location_url = "https://liveapi.yext.com/v2/accounts/me/entities/geosearch"
         data = session.get(location_url, headers=headers, params=params).json()
         locations = data["response"]["entities"]
-        coordinates = []
         for location in locations:
-            store_number = location.get("c_internalStoreNumber", MISSING)
+            store_number = location["meta"]["id"]
 
-            if store_number in location_map:
+            phone = location.get("mainPhone", MISSING)
+
+            if phone not in found_poi:
+                found_poi.append(phone)
+            else:
                 continue
 
             page_url = location["c_baseWebsiteURL"]
@@ -95,10 +114,10 @@ def fetch_data():
             longitude = coordinate.get("longitude", MISSING)
 
             if latitude != MISSING and longitude != MISSING:
-                coordinates.append([latitude, longitude])
+                search.found_location_at(latitude, longitude)
 
             page_url = location.get("websiteUrl", {}).get("url", MISSING)
-            phone = location.get("mainPhone", MISSING)
+
             location_type = location.get("services", [MISSING])[0]
             location_name = location.get("name")
             hours_of_operation = format_hours(location.get("hours"))
@@ -122,13 +141,6 @@ def fetch_data():
             location_map[store_number] = True
 
             yield store
-
-        if len(locations) >= MAX_COUNT:
-            search.max_count_update(coordinates)
-        else:
-            search.max_distance_update(MAX_DISTANCE)
-
-        zip_code = search.next_zip()
 
 
 def scrape():

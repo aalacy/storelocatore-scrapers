@@ -1,6 +1,2 @@
-lxml==4.3.4
-sgrequests==0.0.6
-beautifulsoup4==4.7.1
-# uncomment if you use selenium
-# selenium==3.141.0
-sglogging
+sgrequests
+bs4==0.0.1

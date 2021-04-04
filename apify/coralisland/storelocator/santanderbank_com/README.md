@@ -1,0 +1,2 @@
+--ignore StreetAddressHasNumber (Confrimed on website)
+--ignore CountValidator --ignore StateLevelCountValidator (Filtered out ATMs)

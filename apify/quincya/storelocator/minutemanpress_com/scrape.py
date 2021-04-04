@@ -105,19 +105,120 @@ def fetch_data():
                     location_type = "<MISSING>"
                     phone = final_item.find(class_="mmp-store__phone").text.strip()
 
+                    zip_orig = zip_code
+                    street_orig = street_address
+
                     try:
                         link = final_item.find(class_="visit-website button")["href"]
-                        # logger.info(link)
                         if link in found:
                             continue
                         found.append(link)
                         req = session.get(link, headers=headers)
                         base = BeautifulSoup(req.text, "lxml")
 
+                        try:
+                            street_address = base.find(
+                                class_="location-address location-address--1"
+                            ).text.strip()
+                        except:
+                            pass
+
+                        try:
+                            city_line = base.find(
+                                class_="location-address location-address--2"
+                            ).text.strip()
+                            if "," in city_line:
+                                if country_code == "US":
+                                    zip_code = city_line.strip().split()[-1].strip()
+                                else:
+                                    zip_code = city_line.strip()[-7:].strip()
+                            else:
+                                if "(" not in city_line:
+                                    street_address = (
+                                        street_address + " " + city_line
+                                    ).strip()
+                                city_line = base.find(
+                                    class_="location-address location-address--3"
+                                ).text.strip()
+                                if "," in city_line:
+                                    if country_code == "US":
+                                        zip_code = city_line.strip().split()[-1].strip()
+                                    else:
+                                        zip_code = city_line.strip()[-7:].strip()
+                                else:
+                                    street_address = street_orig
+                                    zip_code = zip_orig
+                        except:
+                            pass
+
+                        if country_code == "US":
+                            if not zip_code[-4:].isdigit() or len(zip_code) < 5:
+                                street_address = street_orig
+                                zip_code = zip_orig
+                        else:
+                            if (
+                                " " not in zip_code
+                                or "," in zip_code
+                                or len(zip_code.replace(" ", "").strip()) < 6
+                            ):
+                                street_address = street_orig
+                                zip_code = zip_orig
+
+                        if city in street_address:
+                            street_address = street_orig
+
+                        street_address = (
+                            street_address.replace("See Below", "")
+                            .replace("Tech Mart Commerce Center", "")
+                            .replace("Minuteman Press", "")
+                            .split("(")[0]
+                            .split(", Philadelphia")[0]
+                            .split(", North Arlington")[0]
+                            .split(", HICKSVILLE")[0]
+                            .split("Between")[0]
+                            .split("(at Wood")[0]
+                            .strip()
+                        )
+
+                        if "18 Technology Dr" in street_address:
+                            zip_code = "92618"
+                        if (
+                            link == "http://www.mmpressfitchburg.com"
+                            or "day -" in street_address
+                            or "minuteman" in street_address.lower()
+                        ):
+                            street_address = street_orig
+                        if (
+                            link == "http://www.seekonk.minutemanpress.com"
+                            or link == "http://www.minutemanbutler.com"
+                            or link == "https://www.arlington.minutemanpress.com"
+                        ):
+                            street_address = street_orig
+                            zip_code = zip_orig
+                        if "3706 Mercer University" in street_address:
+                            street_address = (
+                                "3706 Mercer University Drive Mission Square, Suite 14"
+                            )
+                            zip_code = "31204"
+                        if street_address == "123 South Main Street":
+                            street_address = (
+                                "123 South Main Street Highland Plaza, Unit 110"
+                            )
+                            zip_code = "06470"
+                        if "After hours" in street_address:
+                            street_address = street_orig
+                            zip_code = zip_orig
+
+                        street_address = (re.sub(" +", " ", street_address)).strip()
+
                         if not phone:
                             phone = base.find(
                                 "span", attrs={"itemprop": "telephone"}
                             ).text.strip()
+
+                        if location_name + street_address in found:
+                            continue
+                        found.append(location_name + street_address)
 
                         try:
                             hours_of_operation = (
@@ -152,6 +253,7 @@ def fetch_data():
                                 .replace("Minuteman Press Fort Worth ~ ", "")
                                 .replace(" 24/7 Online", "")
                                 .replace("Locally Owned and Operated Since 2009", "")
+                                .replace("Free pick-up and delivery", "")
                                 .replace("Free Parking Available", "")
                                 .replace(
                                     "Renee Braund - Account Specialist - Where we appreciate your business!",
@@ -161,10 +263,27 @@ def fetch_data():
                                 .replace(
                                     "We will make every effort to accommodate!", ""
                                 )
+                                .replace("Like us on Facebook:", "")
+                                .replace("(Other times available by appointment)", "")
+                                .replace("Corner of 114th and Halsey Hours:", "")
+                                .replace(". :", "")
                                 .replace("->Hours & Information:", "")
                                 .replace('"Next to Wings Plus"', "")
+                                .replace("CURRENT HOURS:", "")
+                                .replace("Our hours of operation are", "")
+                                .replace("Over 30 years of experience •", "")
+                                .replace("We open", "")
+                                .replace("Our Hours are:", "")
+                                .replace("Operation Hours:", "")
+                                .replace("Business Hours:", "")
+                                .replace("Office Hours -", "")
+                                .replace("The Store is typically open:", "")
+                                .replace(" Business Hours:", "")
+                                .replace("Hours of Operation:", "")
+                                .replace("Hours of Operation", "")
                                 .replace("Thank You!", "")
                                 .replace(". :", "")
+                                .strip()
                                 .split("www")[0]
                                 .split("| Like")[0]
                                 .split("_visit our")[0]
@@ -179,11 +298,14 @@ def fetch_data():
                                 .split("Our web")[0]
                                 .split("· Click here")[0]
                                 .split("Other hours")[0]
+                                .split("Check us")[0]
+                                .split("| Please stop")[0]
                             ).strip()
 
                             if (
                                 "301 East Montgomery Ave" in hours_of_operation
                                 or "87th Avenue to SW" in hours_of_operation
+                                or "Browse all" in hours_of_operation
                             ):
                                 hours_of_operation = "<MISSING>"
                         except:

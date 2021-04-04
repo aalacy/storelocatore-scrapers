@@ -1,97 +1,115 @@
-from selenium import webdriver
-from time import sleep
-import pandas as pd
+from bs4 import BeautifulSoup
+import csv
 import json
 
+from sgrequests import SgRequests
 
-from selenium.webdriver.chrome.options import Options
-options = Options()
-options.add_argument('--headless')
-options.add_argument('--no-sandbox')
-options.add_argument('--disable-dev-shm-usage')
-#driver=webdriver.Chrome('C:\chromedriver.exe', options=options)
-driver = webdriver.Chrome("chromedriver", options=options)
+session = SgRequests()
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+}
 
 
 def write_output(data):
-    df=pd.DataFrame(data)
-    df.to_csv('data.csv', index=False)
+    with open("data.csv", mode="w") as output_file:
+        writer = csv.writer(
+            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+        )
+
+        # Header
+        writer.writerow(
+            [
+                "locator_domain",
+                "page_url",
+                "location_name",
+                "street_address",
+                "city",
+                "state",
+                "zip",
+                "country_code",
+                "store_number",
+                "phone",
+                "location_type",
+                "latitude",
+                "longitude",
+                "hours_of_operation",
+            ]
+        )
+        # Body
+        for row in data:
+            writer.writerow(row)
 
 
 def fetch_data():
-    data={'locator_domain':[],'location_name':[],'street_address':[],'city':[], 'state':[], 'zip':[], 'country_code':[], 'store_number':[],'phone':[], 'location_type':[], 'latitude':[], 'longitude':[], 'hours_of_operation':[],'page_url':[]}
+    data = []
+    url = "https://www.barresoul.com/"
+    r = session.get(url, headers=headers, verify=False)
+    soup = BeautifulSoup(r.text, "html.parser")
+    linklist = soup.find("div", {"class": "folder"}).findAll(
+        "div", {"class": "collection"}
+    )
+    p = 0
+    for link in linklist:
+        flag = 0
+        title = link.text
+        link = "https://www.barresoul.com" + link.find("a")["href"]
+        r = session.get(link, headers=headers, verify=False)
+        soup = BeautifulSoup(r.text, "html.parser")
+        divlist = soup.findAll("div", {"class": "map-block"})
+        phonelist = soup.findAll("strong")
+        phone = "<MISSING>"
+        for ph in phonelist:
 
-    driver.get('https://www.barresoul.com')
+            if "(" in ph.text and ")" in ph.text and "-" in ph.text:
+                phone = ph.text.replace("|", "").strip()
+                break
+        for div in divlist:
+            content = div["data-block-json"]
+            content = json.loads(content)["location"]
+            if flag == 0:
+                ttnow = title
+                title = title.split("&")[0]
+                flag = 1
+            else:
+                title = ttnow.split("&")[1]
+            lat = content["mapLat"]
+            longt = content["mapLng"]
+            street = content["addressLine1"]
+            city, state = content["addressLine2"].split(", ", 1)
+            state, pcode = state.lstrip().split(" ", 1)
+            state = state.replace(",", "")
 
-    location_data_urls=[i.get_attribute('href') for i in driver.find_elements_by_xpath('//div[@id="headerNav"]//nav[@id="mainNavigation"]/div[@class="folder"][1]//div[@class="collection"]/a')]
+            data.append(
+                [
+                    "https://www.barresoul.com/",
+                    link,
+                    title.strip()
+                    .replace(",\n", "")
+                    .replace(")", "")
+                    .replace("(", "")
+                    .strip(),
+                    street,
+                    city,
+                    state,
+                    pcode,
+                    "US",
+                    "<MISSING>",
+                    phone,
+                    "<MISSING>",
+                    lat,
+                    longt,
+                    "<MISSING>",
+                ]
+            )
 
-    data={'locator_domain':[],'location_name':[],'street_address':[],'city':[], 'state':[], 'zip':[], 'country_code':[], 'store_number':[],'phone':[], 'location_type':[], 'latitude':[], 'longitude':[], 'hours_of_operation':[],'page_url':[]}
-    loc=[]
-    for i in location_data_urls:
-        driver.get(i)
-        #sleep(3)
-        loc.append(driver.find_element_by_xpath('//div[@class="col sqs-col-6 span-6"]/div[contains(@class,"sqs-block")][@data-block-type="2"][contains(@id,"block")][2]').text.split('\n'))
-        data['longitude'].append(json.loads(driver.find_element_by_xpath('//div[contains(@class,"sqs-block map-block sqs-block-map")]').get_attribute('data-block-json'))['location']['mapLat'])
-        data['latitude'].append(json.loads(driver.find_element_by_xpath('//div[contains(@class,"sqs-block map-block sqs-block-map")]').get_attribute('data-block-json'))['location']['mapLng'])
-        try:
-            if "TWO LOCATIONS:" in driver.find_element_by_xpath('//div[@class="col sqs-col-6 span-6"]/div[contains(@class,"sqs-block")][@data-block-type="2"][contains(@id,"block")][2]').text:
-                data['longitude'].append(json.loads(driver.find_element_by_xpath('//div[contains(@class,"sqs-block map-block sqs-block-map")]').get_attribute('data-block-json'))['location']['mapLat'])
-                data['latitude'].append(json.loads(driver.find_element_by_xpath('//div[contains(@class,"sqs-block map-block sqs-block-map")]').get_attribute('data-block-json'))['location']['mapLng'])
-        except:
-            pass
-    
-    for ind,i in enumerate(loc):
-        if len(i)==3:
-            data['street_address'].append(i[0])
-            data['city'].append(i[1].split(',')[0])
-            data['state'].append(i[1].split(',')[1].split()[0])
-            data['zip'].append(i[1].split(',')[1].split()[1])
-            data['phone'].append(i[2].split('|')[0])
-
-            data['locator_domain'].append('https://www.barresoul.com')
-            data['country_code'].append('US')
-            data['hours_of_operation'].append('<MISSING>')
-            data['store_number'].append('<MISSING>')
-            data['location_type'].append('<MISSING>')
-            data['page_url'].append(location_data_urls[ind])
-            data['location_name'].append(location_data_urls[ind].split('/')[-1])
-
-
-        else:
-            data['street_address'].append(i[1])
-            data['city'].append(i[2].split(',')[0])
-            data['state'].append(i[2].split(',')[1].split()[0])
-            data['zip'].append(i[2].split(',')[1].split()[1])
-            data['phone'].append(i[-1].split('|')[0])
-            data['locator_domain'].append('https://www.barresoul.com')
-            data['country_code'].append('US')
-            data['hours_of_operation'].append('<MISSING>')
-            data['store_number'].append('<MISSING>')
-            data['location_type'].append('<MISSING>')
-            data['page_url'].append(location_data_urls[ind])
-            data['location_name'].append(location_data_urls[ind].split('/')[-1])
-
-
-            data['street_address'].append(i[3])
-            data['city'].append(i[4].split(',')[0])
-            data['state'].append(i[4].split(',')[1].split()[0])
-            data['zip'].append(i[4].split(',')[1].split()[1])
-            data['phone'].append(i[-1].split('|')[0])
-            data['locator_domain'].append('https://www.barresoul.com')
-            data['country_code'].append('US')
-            data['hours_of_operation'].append('<MISSING>')
-            data['store_number'].append('<MISSING>')
-            data['location_type'].append('<MISSING>')
-            data['page_url'].append(location_data_urls[ind])
-            data['location_name'].append(location_data_urls[ind].split('/')[-1])
-
-
-
-    driver.close()
+            p += 1
     return data
 
 
 def scrape():
+
     data = fetch_data()
     write_output(data)
+
+
 scrape()

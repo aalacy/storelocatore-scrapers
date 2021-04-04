@@ -17,7 +17,10 @@ def fetch_data():
         logzilla.info(f"Getting page")  # noqa
         driver.get(url)
         logzilla.info(f"Waiting for page to load")  # noqa
-        driver.implicitly_wait(30)
+        req = driver.wait_for_request(  # noqa
+            "https://maps.gstatic.com/mapfiles/api-3/images/spotlight-poi2.png",
+            timeout=60,
+        )
         logzilla.info(f"Looking for the right request.")  # noqa
         for r in driver.requests:
             if "/wp-admin/admin-ajax.php" in r.path:

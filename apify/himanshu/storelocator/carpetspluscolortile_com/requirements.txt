@@ -1,0 +1,4 @@
+sgrequests
+lxml
+bs4
+sgzip
