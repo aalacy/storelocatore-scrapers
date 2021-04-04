@@ -23,6 +23,7 @@ from fuzzywuzzy import process
 
 import json  # noqa
 
+
 def return_last4(fullId):
     last4 = list(fullId[-4:])
     while last4[0] == "0":
@@ -381,7 +382,7 @@ def determine_verification_link(rec, typ, fullId, last4, typIter):
                         if test.status_code != 404:
                             return True
                     return False
-                except Exception as e: # noqa
+                except Exception as e:  # noqa
                     return False
 
         try:
@@ -390,7 +391,7 @@ def determine_verification_link(rec, typ, fullId, last4, typIter):
             result.update(determinationStation[result["type"]])
             result.update({"passed": passed()})
             return result
-        except Exception as e: # noqa
+        except Exception as e:  # noqa
             return None
 
     result = determined_possible()
@@ -462,7 +463,7 @@ def get_api_call(url):
         input_field.send_keys("B3L 4T2")
         input_field.send_keys(Keys.RETURN)
 
-        wait_for_loc = WebDriverWait(driver, 30).until( # noqa
+        wait_for_loc = WebDriverWait(driver, 30).until(  # noqa
             EC.visibility_of_element_located(
                 (
                     By.XPATH,
@@ -593,7 +594,7 @@ def fetch_data():
     # with open('megafails.txt', mode='w', encoding = 'utf-8') as file: # noqa
     #    file.write(json.dumps(megafails)) # noqa
 
-    logzilla.info(f"Finished grabbing data!!☺ ") # noqa
+    logzilla.info(f"Finished grabbing data!!☺ ")  # noqa
 
 
 def fix_comma(x):
@@ -613,7 +614,6 @@ def fix_domain(x):
         return ("/".join(x.split("/")[:3]),)
     except Exception:
         return x.replace("('None',)", "<MISSING>")
-
 
 
 def scrape():
@@ -671,7 +671,6 @@ def scrape():
         ),
         store_number=sp.MappingField(
             mapping=["ThirdPartyId"],
-
             is_required=False,
         ),
         hours_of_operation=sp.MappingField(
