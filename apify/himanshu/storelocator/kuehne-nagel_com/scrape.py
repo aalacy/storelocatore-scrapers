@@ -1,17 +1,14 @@
 import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as BS
-from sglogging import SgLogSetup
-from geopy.geocoders import Nominatim
 import re
 
-logger = SgLogSetup().get_logger("kuehne-nagel_com")
 session = SgRequests()
 base_url = "http://kuehne-nagel.com"
 
 
 def write_output(data):
-    with open("data.csv", mode="w", newline="") as output_file:
+    with open("data.csv", mode="w", newline="", encoding="utf-8") as output_file:
         writer = csv.writer(
             output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
         )
@@ -42,7 +39,7 @@ def fetch_data():
         [
             "https://ca.kuehne-nagel.com/locations?query=canada",
             "https://uk.kuehne-nagel.com/locations?query=%22United%20Kingdom%22",
-            "https://us.kuehne-nagel.com/search?query=united%20states",
+            "https://us.kuehne-nagel.com/locations?query=united%20states",
         ]
     ):
         if index == 0:
@@ -58,7 +55,7 @@ def fetch_data():
                             "p", {"class": "location__address text-14 mb-0"}
                         ).text
                     ):
-                        page_url = "https://home.kuehne-nagel.com/locations"
+                        page_url = url
                         adr = list(
                             dt.find(
                                 "p", {"class": "location__address text-14 mb-0"}
@@ -87,16 +84,8 @@ def fetch_data():
                         street_address = adr[0]
                         if "Water St 354" in street_address:
                             city = "St. John's"
-                        geolocator = Nominatim(user_agent="myGeocoder")
-                        location = geolocator.geocode(street_address)
-                        try:
-                            latitude = location.latitude
-                        except:
-                            latitude = "<MISSING>"
-                        try:
-                            longitude = location.longitude
-                        except:
-                            longitude = "<MISSING>"
+                        latitude = "<MISSING>"
+                        longitude = "<MISSING>"
 
                         phone = (
                             list(
@@ -132,7 +121,8 @@ def fetch_data():
                         store.append(latitude)
                         store.append(longitude)
                         store.append(
-                            hours_of_operation.replace("\r", "")
+                            hours_of_operation.replace("\r\n", ":")
+                            .replace("\r", "")
                             .replace("\n", "")
                             .replace("\t", "")
                             .replace("Opening Hours", "")
@@ -158,7 +148,7 @@ def fetch_data():
                         yield store
 
         elif index == 1:
-            page_url = "https://home.kuehne-nagel.com/locations"
+            page_url = url
             soup = BS(session.get(url).text, "lxml")
             for dt in soup.find_all("div", {"class": "bg-white component"}):
                 if (
@@ -194,16 +184,8 @@ def fetch_data():
                         street_address = adr[0]
                         if "Hall Wood Avenue" in street_address:
                             city = "St. Helens"
-                        geolocator = Nominatim(user_agent="myGeocoder")
-                        location = geolocator.geocode(street_address)
-                        try:
-                            latitude = location.latitude
-                        except:
-                            latitude = "<MISSING>"
-                        try:
-                            longitude = location.longitude
-                        except:
-                            longitude = "<MISSING>"
+                        latitude = "<MISSING>"
+                        longitude = "<MISSING>"
 
                         phone = (
                             list(
@@ -242,7 +224,8 @@ def fetch_data():
                         store.append(latitude)
                         store.append(longitude)
                         store.append(
-                            hours_of_operation.replace("\r", "")
+                            hours_of_operation.replace("\r\n", ":")
+                            .replace("\r", "")
                             .replace("\n", "")
                             .replace("\t", "")
                             .replace("Opening Hours", "")
@@ -268,7 +251,7 @@ def fetch_data():
                         yield store
 
         elif index == 2:
-            page_url = "https://home.kuehne-nagel.com/locations"
+            page_url = url
             soup = BS(session.get(url).text, "lxml")
             for dt in soup.find_all("div", {"class": "bg-white component"}):
                 if (
@@ -304,16 +287,8 @@ def fetch_data():
                         city = " ".join(adr[1].split()[1:])
                         street_address = adr[0]
 
-                        geolocator = Nominatim(user_agent="myGeocoder")
-                        location = geolocator.geocode(street_address + "," + city)
-                        try:
-                            latitude = location.latitude
-                        except:
-                            latitude = "<MISSING>"
-                        try:
-                            longitude = location.longitude
-                        except:
-                            longitude = "<MISSING>"
+                        latitude = "<MISSING>"
+                        longitude = "<MISSING>"
 
                         phone = (
                             list(
@@ -348,7 +323,8 @@ def fetch_data():
                         store.append(latitude)
                         store.append(longitude)
                         store.append(
-                            hours_of_operation.replace("\r", "")
+                            hours_of_operation.replace("\r\n", ":")
+                            .replace("\r", "")
                             .replace("\n", "")
                             .replace("\t", "")
                             .replace("Mo  Fr:", "Mo-Fr")
