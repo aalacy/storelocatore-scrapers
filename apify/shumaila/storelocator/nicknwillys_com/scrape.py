@@ -1,7 +1,6 @@
 from bs4 import BeautifulSoup
 import csv
 import re
-import usaddress
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -43,13 +42,13 @@ def write_output(data):
 def fetch_data():
     data = []
     cleanr = re.compile(r"<[^>]+>")
+    pattern = re.compile(r"\s\s+")
     url = "https://nicknwillys.com/locations/"
     p = 0
     r = session.get(url, headers=headers, verify=False)
     soup = BeautifulSoup(r.text, "html.parser")
     divlist = soup.findAll("div", {"class": "et_pb_text_inner"})
     for div in divlist:
-        det = re.sub(cleanr, " ", str(div)).splitlines()
         coord = div.find("a")["href"]
         try:
             coord = coord.split("@")[1].split("/data")[0]
@@ -57,37 +56,16 @@ def fetch_data():
             longt = longt.split(",", 1)[0]
         except:
             lat = longt = "<MISSING>"
-        title = det[0].lstrip()
-        address = det[1].lstrip()
-        if address.find("MAP") > -1:
-            address = address.split(" MAP")[0]
-            phone = det[2].lstrip().split(" ", 1)[1].rstrip()
-        else:
-            phone = det[3].lstrip().split(" ", 1)[1].rstrip()
-        address = usaddress.parse(address.strip())
-        i = 0
-        street = ""
-        city = ""
-        state = ""
-        pcode = ""
-        while i < len(address):
-            temp = address[i]
-            if (
-                temp[1].find("Address") != -1
-                or temp[1].find("Street") != -1
-                or temp[1].find("Recipient") != -1
-                or temp[1].find("BuildingName") != -1
-                or temp[1].find("USPSBoxType") != -1
-                or temp[1].find("USPSBoxID") != -1
-            ):
-                street = street + " " + temp[0]
-            if temp[1].find("PlaceName") != -1:
-                city = city + " " + temp[0]
-            if temp[1].find("StateName") != -1:
-                state = state + " " + temp[0]
-            if temp[1].find("ZipCode") != -1:
-                pcode = pcode + " " + temp[0]
-            i += 1
+        det = re.sub(cleanr, " ", str(div))
+        det = re.sub(cleanr, "", str(det)).strip()
+        title = det.split("\n", 1)[0]
+        address = det.split("\n", 1)[1].split("MAP", 1)[0].replace("\n", " ").strip()
+        street, state = address.split(", ", 1)
+        state, pcode = state.lstrip().split(" ", 1)
+        city = street.strip().split(" ")[-1]
+        street = street.replace(city, "")
+        phone = det.split("Phone", 1)[1].split("(", 1)[1].strip()
+        phone = "(" + phone
         data.append(
             [
                 "https://nicknwillys.com/",
