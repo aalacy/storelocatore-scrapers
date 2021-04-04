@@ -28,10 +28,8 @@ def determine(banner, ide):
 
 def para(k):
     session = SgRequests()
-    GoodRecord = True
     ban = k["storeBannerId"]
     ide = k["id"]
-    k["domain"], k["page_url"] = determine(ban, ide)
     backup = k
     backupPhone = k["contactNumber"]
     headers = {
@@ -39,30 +37,21 @@ def para(k):
         "Site-Banner": ban,
     }
     try:
-        req = session.get(
-            k["domain"] + "api/pickup-locations/" + k["id"],
+        k = session.get(
+            "https://www.loblaws.ca/api/pickup-locations/" + k["StoreId"],
             headers=headers,
-        )
-        if req.status_code == 404:
-            GoodRecord = False
-        else:
-            k = req.json()
+        ).json()
     except Exception:
         try:
-            req = session.get(
-                k["domain"] + "api/pickup-locations/" + k["id"],
+            k = session.get(
+                "https://www.loblaws.ca/api/pickup-locations/" + k["id"],
                 headers=headers,
-            )
-            if req.status_code == 404:
-                GoodRecord = False
-            else:
-                k = req.json()
+            ).json()
         except Exception:
             k = backup
             k["hours"] = k["openNowResponseData"]["hours"]
             k["storeDetails"] = {}
             k["storeDetails"]["phoneNumber"] = backupPhone
-            GoodRecord = False
 
     try:
         k["hours"] = "; ".join(
@@ -79,7 +68,6 @@ def para(k):
     if not k["storeDetails"]["phoneNumber"]:
         k["storeDetails"]["phoneNumber"] = backupPhone
     k["backupPhone"] = backupPhone
-    k["GoodRecord"] = GoodRecord
     return k
 
 
@@ -108,9 +96,7 @@ def fetch_data():
             i["storeDetails"]["phoneNumber"] = i["backupPhone"]
         if len(i["storeDetails"]["phoneNumber"]) < 3:
             i["storeDetails"]["phoneNumber"] = "<MISSING>"
-        if i["GoodRecord"]:
-            if "Shoppers Drug Mart" not in i["name"]:
-                yield i
+        yield i
 
 
 def fix_comma(x):
