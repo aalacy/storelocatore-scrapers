@@ -1,13 +1,11 @@
 # -*- coding: utf-8 -*-
+from datetime import datetime as dt
 from sgrequests import SgRequests
 from sglogging import sglog
-import json
 from sgscrape.simple_utils import parallelize
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
-from sgzip.dynamic import SearchableCountries
-from sgzip.static import static_zipcode_list
-import datetime
+from sgzip.static import static_zipcode_list, SearchableCountries
 
 website = "raymourflanigan.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -22,98 +20,99 @@ url_list = []
 
 
 def fetch_records_for(zipcode):
-    log.info(f"pulling records for zipcode: {zipcode}")
-    search_url = (
-        "https://www.raymourflanigan.com/api/custom/location-search"
-        "?postalCode={}&distance=100000&includeShowroom"
-        "Locations=true&includeOutletLocations=true&include"
-        "ClearanceLocations=true&includeAppointments=true"
-    )
+    url = "https://www.raymourflanigan.com/api/custom/location-search"
+    params = {
+        "postalCode": zipcode,
+        "distance": 100,
+        "includeShowroomLocations": True,
+        "includeOutletLocations": True,
+        "includeClearanceLocations": True,
+        "includeAppointments": True,
+    }
 
-    stores_req = session.get(search_url.format(zipcode), headers=headers)
-    stores = json.loads(stores_req.text)["locations"]
-    yield stores
+    try:
+        stores = session.get(url, params=params, headers=headers).json()
+        return stores["locations"]
+    except Exception as e:
+        log.error(f"{zipcode} >>> {e}")
+        return []
 
 
 def process_record(raw_results_from_one_zipcode):
-    loc_list = []
-    for stores in raw_results_from_one_zipcode:
-        for store_json in stores:
-            if store_json["url"] not in url_list:
-                url_list.append(store_json["url"])
+    for store in raw_results_from_one_zipcode:
+        if store["url"] not in url_list:
+            url_list.append(store["url"])
 
-                page_url = "https://www.raymourflanigan.com" + store_json["url"]
-                log.info(page_url)
-                locator_domain = website
-                location_name = store_json["displayName"]
-                street_address = store_json["addressLine1"]
-                city = store_json["city"]
-                state = store_json["stateProvince"]
-                zip = store_json["postalCode"]
-                country_code = "US"
+            page_url = "https://www.raymourflanigan.com" + store["url"]
+            locator_domain = website
+            location_name = store["displayName"]
+            street_address = store["addressLine1"]
+            city = store["city"]
+            state = store["stateProvince"]
+            zip = store["postalCode"]
+            country_code = "US"
 
-                store_number = store_json["businessUnitCode"]
-                phone = store_json["phoneNumber"]
+            store_number = store["businessUnitCode"]
+            phone = store["phoneNumber"]
 
-                location_type = "<MISSING>"
-                hours_of_operation = ""
-                hours = store_json["hours"]
-                hours_list = []
-                for key, hour in hours.items():
-                    if (
-                        hours[key] is not None
-                        and hours[key]["open"] is not None
-                        and hours[key]["close"] is not None
-                    ):
-                        day = key
-                        if day == "today":
-                            day = datetime.datetime.now().strftime("%A")
-                        hours_of_operation = hours_list.append(
+            location_type = "Showroom"
+            if store["clearanceCenter"] is True:
+                location_type = "clearanceCenter"
+            if store["outlet"] is True:
+                location_type = "outlet"
+
+            hours_of_operation = ""
+            hours = store["hours"]
+            hours_list = []
+            for key, hour in hours.items():
+                if (
+                    hours[key] is not None
+                    and hours[key]["open"] is not None
+                    and hours[key]["close"] is not None
+                ):
+                    day = key
+                    if day != "today":
+                        hours_list.append(
                             day + ":" + hours[key]["open"] + "-" + hours[key]["close"]
                         )
-                hours_of_operation = "; ".join(hours_list).strip()
+            hours_of_operation = "; ".join(hours_list).strip()
 
-                latitude = store_json["latitude"]
-                longitude = store_json["longitude"]
+            latitude = store["latitude"]
+            longitude = store["longitude"]
 
-                loc_list.append(
-                    SgRecord(
-                        locator_domain=locator_domain,
-                        page_url=page_url,
-                        location_name=location_name,
-                        street_address=street_address,
-                        city=city,
-                        state=state,
-                        zip_postal=zip,
-                        country_code=country_code,
-                        store_number=store_number,
-                        phone=phone,
-                        location_type=location_type,
-                        latitude=latitude,
-                        longitude=longitude,
-                        hours_of_operation=hours_of_operation,
-                    )
-                )
-        # break
-    return loc_list
+            yield SgRecord(
+                locator_domain=locator_domain,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
 
 
 def scrape():
-    log.info("Started")
     with SgWriter() as writer:
         results = parallelize(
             search_space=static_zipcode_list(
-                radius=30, country_code=SearchableCountries.USA
+                radius=10, country_code=SearchableCountries.USA
             ),
             fetch_results_for_rec=fetch_records_for,
             processing_function=process_record,
-            max_threads=32,  # tweak to see what's fastest
+            max_threads=20,  # tweak to see what's fastest
         )
         for rec in results:
             writer.write_row(rec)
 
-    log.info("Finished")
-
 
 if __name__ == "__main__":
+    start = dt.now()
     scrape()
+    log.info(f"duration: {dt.now() - start}")

@@ -104,7 +104,10 @@ def fetch_data():
                         pcode = temp[1]
                     except:
                         pcode = "<MISSING>"
-            phone = soup.find("a", {"class": "body-tel gtm_phone_click"}).text
+            try:
+                phone = soup.find("a", {"class": "body-tel gtm_phone_click"}).text
+            except:
+                phone = "<MISSING>"
             hourlist = soup.find("div", {"class": "hours-wrap"}).findAll("div")
             hours = ""
             for hour in hourlist:

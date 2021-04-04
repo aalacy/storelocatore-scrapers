@@ -1,4 +1,5 @@
 import csv
+import json
 
 from concurrent import futures
 from lxml import html
@@ -34,49 +35,11 @@ def write_output(data):
             writer.writerow(row)
 
 
-def get_urls():
-    urls = []
-    session = SgRequests()
-    for i in range(1, 5000):
-        r = session.get(
-            f"https://pizzaranch.com/all-locations/search-results/p{i}?state=*"
-        )
-        tree = html.fromstring(r.text)
-        links = tree.xpath("//location-info-panel")
-        for l in links:
-            lines = l.get(":location", "").split("\n")
-            for line in lines:
-                if line.find("url:") != -1:
-                    u = line.split("'")[1]
-                    if u:
-                        urls.append(u)
-        if len(links) < 12:
-            break
-    return urls
-
-
-def get_data(page_url):
-    locator_domain = "https://pizzaranch.com"
-
-    session = SgRequests()
-    r = session.get(page_url)
-    tree = html.fromstring(r.text)
-
-    location_name = "".join(tree.xpath("//h1[@itemprop='name']//text()")).strip()
-    street_address = "".join(
-        tree.xpath("//span[@itemprop='streetAddress']//text()")
-    ).strip()
-    city = "".join(tree.xpath("//span[@itemprop='addressLocality']//text()")).strip()
-    state = "".join(tree.xpath("//abbr[@itemprop='addressRegion']//text()")).strip()
-    postal = "".join(tree.xpath("//span[@itemprop='postalCode']//text()")).strip()
-    country_code = "US"
-    store_number = "<MISSING>"
-    phone = "".join(tree.xpath("//span[@itemprop='telephone']//text()")).strip()
-    location_type = "<MISSING>"
-    latitude = tree.xpath("//meta[@itemprop='latitude']/@content")[0]
-    longitude = tree.xpath("//meta[@itemprop='longitude']/@content")[0]
-
+def get_hours(url):
     _tmp = []
+    session = SgRequests()
+    r = session.get(url)
+    tree = html.fromstring(r.text)
 
     hours = tree.xpath(
         "//div[@class='location-info-right-wrapper']//table[@class='c-location-hours-details']"
@@ -99,35 +62,81 @@ def get_data(page_url):
     if hours_of_operation.count("Closed") == 7:
         hours_of_operation = "Closed"
 
-    row = [
-        locator_domain,
-        page_url,
-        location_name,
-        street_address,
-        city,
-        state,
-        postal,
-        country_code,
-        store_number,
-        phone,
-        location_type,
-        latitude,
-        longitude,
-        hours_of_operation,
-    ]
-    return row
+    return hours_of_operation
 
 
 def fetch_data():
     out = []
-    urls = get_urls()
+    locator_domain = "https://pizzaranch.com"
+    session = SgRequests()
 
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
-        future_to_url = {executor.submit(get_data, url): url for url in urls}
-        for future in futures.as_completed(future_to_url):
-            row = future.result()
-            if row:
-                out.append(row)
+    for i in range(1, 5000):
+        urls = set()
+        hours = dict()
+
+        r = session.get(
+            f"https://pizzaranch.com/all-locations/search-results/p{i}?state=*"
+        )
+        tree = html.fromstring(r.text)
+        size = tree.xpath("//location-info-panel")
+        text = "".join(
+            tree.xpath("//script[contains(text(), 'var locations = ')]/text()")
+        )
+        text = text.split("var locations = ")[1].replace(";", "")
+        js = json.loads(text)
+
+        for j in js:
+            url = j.get("website")
+            if url:
+                urls.add(url)
+
+        with futures.ThreadPoolExecutor(max_workers=12) as executor:
+            future_to_url = {executor.submit(get_hours, url): url for url in urls}
+            for future in futures.as_completed(future_to_url):
+                k = future_to_url[future].split("/")[-1]
+                hours[k] = future.result()
+
+        for j in js:
+            location_name = j.get("title")
+            street_address = j.get("address1")
+            city = j.get("city")
+            state = j.get("state")
+            postal = j.get("zipCode")
+            country_code = "US"
+            store_number = j.get("id")
+            phone = j.get("phone")
+            location_type = "<MISSING>"
+            latitude = j.get("lat")
+            longitude = j.get("lng")
+            page_url = j.get("website") or "<MISSING>"
+
+            try:
+                key = page_url.split("/")[-1]
+                hours_of_operation = hours[key]
+            except:
+                hours_of_operation = "<MISSING>"
+
+            row = [
+                locator_domain,
+                page_url,
+                location_name,
+                street_address,
+                city,
+                state,
+                postal,
+                country_code,
+                store_number,
+                phone,
+                location_type,
+                latitude,
+                longitude,
+                hours_of_operation,
+            ]
+
+            out.append(row)
+
+        if len(size) < 12:
+            break
 
     return out
 

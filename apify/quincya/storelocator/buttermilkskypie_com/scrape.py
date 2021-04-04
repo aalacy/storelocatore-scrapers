@@ -59,7 +59,10 @@ def fetch_data():
 
     for item in items:
 
-        link = "https://www.buttermilkskypie.com/locations" + item["href"]
+        if "http" not in item["href"]:
+            link = "https://www.buttermilkskypie.com/locations" + item["href"]
+        else:
+            link = item["href"]
         logger.info(link)
 
         req = session.get(link, headers=headers)
@@ -76,6 +79,9 @@ def fetch_data():
         location_name = base.h1.text.upper().strip()
 
         raw_address = list(base.p.stripped_strings)
+        if "SERVING" in raw_address[0].upper():
+            raw_address.pop(0)
+
         street_address = raw_address[0].strip()
 
         if "," not in raw_address[1]:
@@ -90,6 +96,9 @@ def fetch_data():
         if not zip_code.isdigit():
             state = zip_code
             zip_code = "<MISSING>"
+
+        if "6120 Camp Bowie" in street_address:
+            zip_code = "76116"
 
         country_code = "US"
         store_number = "<MISSING>"
