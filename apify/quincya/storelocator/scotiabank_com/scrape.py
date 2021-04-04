@@ -57,7 +57,6 @@ def fetch_data():
         all_coordinates.append((lat, lng))
 
     for ll in all_coordinates:
-        url_test = "https://mapsms.scotiabank.com/branches?1=1&latitude=34.0522342&longitude=-118.2436849&recordlimit=20&locationtypes=1,3&options=&languagespoken=any&language=en&address=Los%20Angeles%2C%20CA%2C%20USA&province=California&city=Los%20Angeles"
         base_link = (
             "https://mapsms.scotiabank.com/branches?1=1&latitude=%s&longitude=%s&recordlimit=%s&locationtypes=1"
             % (ll[0], ll[1], max_results)
