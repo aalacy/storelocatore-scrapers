@@ -127,7 +127,7 @@ def determine_verification_link(rec, typ, fullId, last4, typIter):
             "api": None,
         },
         # https://www.marchepalumbo.com/en/store/519785/intermarche-palumbo
-        # "ThirdPartyId": "LCL0068498",
+        # "ThirdPartyId": "LCL0068498", # noqa
         # Can't reconstruct URL from this, will have to blanket with
         # https://www.marchepalumbo.com/en/locations
         "PHARMAPRIX": {
@@ -530,21 +530,21 @@ def defuzz(record):
 
 def fetch_data():
     logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
-    # https://ws2.bullseyelocations.com/RestSearch.svc/
-    # DoSearch2?
-    # ClientId=4664
-    # ApiKey=27ab1bab-2901-4156-aec2-bfb51a7ce538
-    # Latitude=47.545417
-    # Longitude=-52.74302770000001
-    # Radius=20000
-    # SearchTypeOverride=1
-    # MaxResults=10000
-    # PageSize=10000
-    # StartIndex=0
+    # https://ws2.bullseyelocations.com/RestSearch.svc/ # noqa
+    # DoSearch2? # noqa
+    # ClientId=4664 # noqa
+    # ApiKey=27ab1bab-2901-4156-aec2-bfb51a7ce538 # noqa
+    # Latitude=47.545417 # noqa
+    # Longitude=-52.74302770000001 # noqa
+    # Radius=20000 # noqa
+    # SearchTypeOverride=1 # noqa
+    # MaxResults=10000 # noqa
+    # PageSize=10000 # noqa
+    # StartIndex=0 # noqa
 
-    # TESTING AREA:
+    # TESTING AREA: # noqa
     # (for records that megafailed) # noqa
-    # rename megafails.txt to tofix.txt
+    # rename megafails.txt to tofix.txt # noqa
     # ======== # noqa
     # with open('tofix.txt', mode='r', encoding = 'utf-8') as file: # noqa
     #    son = json.loads(file.read()) # noqa
@@ -576,12 +576,12 @@ def fetch_data():
         print_stats_interval=10,
     )
     megafails = []
-    # for i in bullsEyeData["ResultList"]:
-    #    print('\n\n\nNew record:\n')
-    #    res = do_everything(i)
-    #    if res["megaFailed"]:
-    #        print('definitely megafailed')
-    #        megafails.append(res)
+    # for i in bullsEyeData["ResultList"]: # noqa
+    #    print('\n\n\nNew record:\n') # noqa
+    #    res = do_everything(i) # noqa
+    #    if res["megaFailed"]: # noqa
+    #        print('definitely megafailed') # noqa
+    #        megafails.append(res) # noqa
     for i in lize:
         if i["megaFailed"]:
             megafails.append(i)
@@ -589,7 +589,7 @@ def fetch_data():
         else:
             yield i
 
-    # for debugging megafails:
+    # for debugging megafails: # noqa
     # print(len(megafails)) # noqa
     # with open('megafails.txt', mode='w', encoding = 'utf-8') as file: # noqa
     #    file.write(json.dumps(megafails)) # noqa
