@@ -36,12 +36,13 @@ def fetch_data():
                     .split("var ")[0]
                     .strip()[:-1]
                     .replace("\\n", "##")
+                    .replace("\\r", "")
                     .replace("\\", "")
                 )[0]
                 yield SgRecord(
                     page_url=page_url,
                     store_number=_["id"],
-                    location_name=_["loc_value"],
+                    location_name=_["loc_value"].replace("NOW OPEN", ""),
                     street_address=_["address"].replace("##", ""),
                     city=_["city"],
                     state=state,
