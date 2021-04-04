@@ -64,7 +64,6 @@ def fetch_data():
         adr = "".join(ad.get("address"))
         if adr.find("(") != -1:
             adr = adr.split("(")[0].strip()
-        print(adr)
         location_name = ad.get("name")
         slug = "".join(ad.get("uniqId"))
         page_url = f"https://lonestartexasgrill.com/locations/{slug}"
