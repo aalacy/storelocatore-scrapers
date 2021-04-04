@@ -64,7 +64,7 @@ def fetch_data():
                 page_url=page_url,
                 location_name=location_name.strip(),
                 street_address=street_address.strip(),
-                city=location_name,
+                city=city,
                 state=state,
                 zip_postal=zip_postal,
                 country_code="CA",
