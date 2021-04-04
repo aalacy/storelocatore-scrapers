@@ -75,7 +75,7 @@ def fetch_data():
         phone = poi_html.xpath(".//p/strong/text()")
         phone = phone[0] if phone else "<MISSING>"
         location_type = "<MISSING>"
-        if poi_html.xpath(".//h3/strong/text()") == "*currently closed*":
+        if poi_html.xpath('.//h3/strong[contains(text(), "currently closed")]'):
             location_type = "currently closed"
         latitude = "<MISSING>"
         longitude = "<MISSING>"

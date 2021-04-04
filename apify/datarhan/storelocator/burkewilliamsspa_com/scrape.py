@@ -85,7 +85,9 @@ def fetch_data():
         if not hoo:
             hoo = loc_dom.xpath('//p[contains(text(), "Thursday")]/text()')
         hoo = [e.strip() for e in hoo if e.strip()]
-        hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
+        hours_of_operation = (
+            " ".join(hoo).split("First")[0].strip() if hoo else "<MISSING>"
+        )
 
         item = [
             domain,

@@ -140,7 +140,7 @@ def getdata(start_num, search_code):
     return x
 
 
-search = ["33122", "98109"]
+search = ["33122", "98109", "78701"]
 for zipcode in search:
     failed_num = 0
     while failed_num < 99:
@@ -184,4 +184,4 @@ df = df.drop(columns=["dupecheck"])
 df = df.replace(r"^\s*$", "<MISSING>", regex=True)
 df = df.fillna("<MISSING>")
 
-df.to_csv("data.csv", index=True)
+df.to_csv("data.csv", index=False)
