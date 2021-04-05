@@ -83,11 +83,13 @@ def fetch_data():
                 street_address = street_address if street_address else "<MISSING>"
                 city = poi["address"]["addressLocality"]
                 city = city if city else "<MISSING>"
+                if "801" in street_address:
+                    street_address = location_name
                 state = addr.state
                 state = state if state else "<MISSING>"
                 zip_code = addr.postcode
                 zip_code = zip_code if zip_code else "<MISSING>"
-                country_code = addr.postcode
+                country_code = addr.country
                 country_code = country_code if country_code else "<MISSING>"
                 store_number = "<MISSING>"
                 phone = poi["telephone"]
