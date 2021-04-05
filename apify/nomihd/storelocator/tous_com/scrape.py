@@ -25,7 +25,6 @@ headers = {
 
 def fetch_data():
     # Your scraper here
-    url = "https://www.tous.com/us-en/stores"
     country_list = ["US", "CA"]
 
     for country in country_list:
