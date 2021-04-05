@@ -41,8 +41,6 @@ def fetch_data():
             street_address = street_address + ", " + formatted_addr.street_address_2
 
         raw_street1 = raw_address.split(",", 2)[0]
-        raw_street2 = raw_address.split(",", 2)[1]
-
         city = restaurant["city"].strip()
 
         location_name = "".join(
