@@ -67,9 +67,7 @@ def fetch_data():
 
     for d in divs:
         _id = d.split("Id :")[1].split('"')[1]
-        location_name = "".join(
-            tree.xpath(f"//div[@data-id='{_id}']//h4/text()")
-        ).strip()
+        location_name = d.split("Name:")[1].split('"')[1]
         slug = "".join(
             tree.xpath(f"//div[@data-id='{_id}']//a[@class='location-link']/@href")
         )
@@ -80,10 +78,11 @@ def fetch_data():
         state = d.split("State:")[1].split('"')[1]
         postal = d.split("ZipCode:")[1].split('"')[1]
         country_code = "US"
-        store_number = "<MISSING>"
+        store_number = _id
         phone = d.split("Telephone:")[1].split('"')[1]
-        latitude = d.split("Longitude:")[1].split(",")[0].strip()
-        longitude = d.split("Latitude:")[1].split("}")[0].strip()
+        latitude = d.split("Latitude:")[1].split("}")[0].strip()
+        longitude = d.split("Longitude:")[1].split(",")[0].strip()
+
         location_type = (
             "".join(tree.xpath(f"//div[@data-id='{_id}']//div[@class='types']/text()"))
             .replace(" + ", ", ")
