@@ -1,13 +1,9 @@
 from bs4 import BeautifulSoup
 import csv
-import re
-
+import usaddress
 from sgrequests import SgRequests
 
 session = SgRequests()
-headers = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
-}
 
 
 def write_output(data):
@@ -42,51 +38,51 @@ def write_output(data):
 
 def fetch_data():
     data = []
-    pattern = re.compile(r"\s\s+")
-    cleanr = re.compile(r"<[^>]+>")
-    url = "https://www.stopandgostores.com/locations"
-    r = session.get(url, headers=headers, verify=False)
-    soup = BeautifulSoup(r.text, "html.parser")
-    linklist = soup.find_all("a", string="Store Profile ") + soup.find_all(
-        "a", string="Store Profile"
-    )
-    p = 0
-    for link in linklist:
-        link = link["href"]
-        r = session.get(link, headers=headers, verify=False)
-        soup = BeautifulSoup(r.text, "html.parser")
-        div = soup.find("div", {"class": "c3"})
-        div = re.sub(cleanr, " ", str(div)).split("}")[-1].replace("\xa0", " ").strip()
-        div = re.sub(pattern, "\n", str(div)).lstrip().splitlines()
-        i = 0
-        street = div[i]
-        if len(street) < 3:
-            i += 1
-            street = div[i]
-        i += 1
-        city, state = div[i].split(", ", 1)
-        i += 1
-        state, pcode = state.lstrip().split(" ", 1)
-        phone = div[i].replace("Phone", "").lstrip()
-        title = soup.find("h6").text.strip()
 
-        store = title.split("#", 1)[1].split("(")[0].strip()
-        if street == "":
-            street = city
-        street = street.replace("( In& Out)", "")
-        if phone.find("--") > -1 or "X" in phone or len(phone) < 10:
+    url = "https://www.stopandgostores.com/locations"
+    r = session.get(url)
+    soup = BeautifulSoup(r.text, "html.parser")
+    stores = soup.find_all("div", {"role": "gridcell"})
+    for store in stores:
+        loc = store.find("h2").text
+        ps = store.find_all("p")
+
+        if len(ps) >= 3:
+            if "phone" not in ps[1].text.lower():
+                street = ps[0].text.strip()
+                csz = ps[1].text.strip()
+                phone = ps[2].text.lower().replace("phone", "").replace("x", "").strip()
+            else:
+                phone = ps[1].text.lower().replace("phone", "").replace("x", "").strip()
+                ps = ps[0].text.split("\n")
+                street = ps[0]
+                csz = ps[1].strip()
+
+        else:
+            ps = ps[0].text.split("\n")
+            street = ps[0]
+            csz = ps[1].strip()
+            phone = ps[2].lower().replace("phone", "").replace("x", "").strip()
+
+        csz = usaddress.tag(csz.replace("\xa0", " "))[0]
+        city = csz["PlaceName"]
+        state = csz["StateName"]
+        zip = csz["ZipCode"]
+
+        if len(phone) < 10:
             phone = "<MISSING>"
+
         data.append(
             [
                 "https://www.stopandgostores.com/",
-                link,
-                title,
+                "https://www.stopandgostores.com/locations",
+                loc,
                 street.replace("\xa0", "").replace("S t", "St"),
                 city,
                 state,
-                pcode,
+                zip,
                 "US",
-                store,
+                loc.split("#")[-1],
                 phone,
                 "<MISSING>",
                 "<MISSING>",
@@ -94,8 +90,6 @@ def fetch_data():
                 "<MISSING>",
             ]
         )
-
-        p += 1
 
     return data
 

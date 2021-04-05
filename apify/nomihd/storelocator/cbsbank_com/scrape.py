@@ -122,7 +122,7 @@ def fetch_data():
             if zip == "" or zip is None:
                 zip = "<MISSING>"
 
-            store_number = store["data"]["id"]
+            store_number = "<MISSING>"
             phone = store["data"]["mainPhone"]
 
             location_type = "<MISSING>"

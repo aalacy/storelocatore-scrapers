@@ -1,6 +1,3 @@
-bs4==0.0.1
-requests==2.11.1
-w3lib
-sgvalidator==0.0.19
-lxml
-sglogging
+lxml==4.6.2
+sgselenium==0.0.15
+sglogging==0.0.4

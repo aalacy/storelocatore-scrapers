@@ -8,7 +8,7 @@ headers = {
     "host": "www.svsvision.com",
     "cache-control": "max-age=0",
     "connection": "keep-alive",
-    "cookie": "wc_wishlists_user[key]=069824ba681b8b882cd2d3597b1690895ffe23085e8a3; wc_wishlists_user[key]=069824ba681b8b882cd2d3597b1690895ffe2309ec367; __utmz=36930018.1610490646.1.1.utmcsr=(direct)|utmccn=(direct)|utmcmd=(none); _fbp=fb.1.1610490647432.153315600; __utma=36930018.65482460.1610490646.1610490646.1610659828.2; __utmc=36930018; __utmt=1; poppup1313=1; MCPopupClosed=yes; __utmb=36930018.13.10.1610659828; _uetsid=b92304e056af11ebb6f94f8dd6d4a424; _uetvid=d1026430552511eb83e657dd4a997723",
+    "cookie": "wc_wishlists_user[key]=069824ba681b8b882cd2d3597b1690895ffe23085e8a3; wc_wishlists_user[key]=069824ba681b8b882cd2d3597b1690895ffe2309ec367; __utmz=36930018.1610490646.1.1.utmcsr=(direct)|utmccn=(direct)|utmcmd=(none); _fbp=fb.1.1610490647432.153315600; poppup1313=1; MCPopupClosed=yes; __utma=36930018.65482460.1610490646.1610659828.1612830606.3; __utmc=36930018; __utmt=1; __utmb=36930018.1.10.1612830606; _uetsid=f54381106a6d11eb9fbf354ce3f7991f; _uetvid=f543ea706a6d11ebbe0c317b8022e2ad",
 }
 
 logger = SgLogSetup().get_logger("svsvision_com")
@@ -53,11 +53,11 @@ def fetch_data():
     lines = r.iter_lines()
     for line in lines:
         line = str(line.decode("utf-8"))
-        if "<address><strong>" in line:
-            items = line.split("<address><strong>")
+        if "<address id=addr" in line:
+            items = line.split("<address id=addr")
             for item in items:
                 if '<div class="span6">' in item:
-                    name = item.split("<")[0]
+                    name = item.split("<strong>")[1].split("<")[0]
                     add = item.split("</strong><br>")[1].split("<")[0]
                     city = name
                     state = item.split("<br>")[2].split(" ")[0]
@@ -160,6 +160,31 @@ def fetch_data():
                         lng,
                         hours,
                     ]
+    name = "Troy"
+    add = "6828 Rochester Rd."
+    city = "Troy"
+    state = "MI"
+    zc = "48085"
+    phone = "248-710-1100"
+    lat = "<MISSING>"
+    lng = "<MISSING>"
+    hours = "Monday: 9:00-8:00; Tuesday: 9:00-6:00; Wednesday: 9:00-6:00; Thursday: 9:00-6:00; Friday: 9:00-6:00; Saturday: 9:00-6:00"
+    yield [
+        website,
+        loc,
+        name,
+        add,
+        city,
+        state,
+        zc,
+        country,
+        store,
+        phone,
+        typ,
+        lat,
+        lng,
+        hours,
+    ]
 
 
 def scrape():

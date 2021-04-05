@@ -5,7 +5,7 @@ from sglogging import sglog
 import json
 import datetime
 
-website = "toppstiles_co.uk"
+website = "toppstiles.co.uk"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 session = SgRequests()
 headers = {
@@ -107,6 +107,10 @@ def fetch_data():
             country_code = store["country_id"]
         except:
             pass
+
+        if "," in city:
+            street_address = street_address + " " + city.split(",")[0].strip()
+            city = city.split(",")[-1].strip()
 
         if country_code == "":
             country_code = "<MISSING>"

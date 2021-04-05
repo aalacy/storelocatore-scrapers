@@ -44,7 +44,7 @@ def fetch_data():
     locs = tree.xpath("//div[@class='locations']/div[@class='loc']")
 
     for l in locs:
-        location_name = "".join(l.xpath(".//h2/a/text()")).strip()
+        location_name = "".join(l.xpath(".//h2/a//text()")).strip()
         slug = "".join(l.xpath(".//h2/a/@href"))
         line = l.xpath(".//div[@class='info']/p[1]//text()")
         line = list(filter(None, [l.strip() for l in line]))

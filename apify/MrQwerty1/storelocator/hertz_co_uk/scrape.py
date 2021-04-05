@@ -63,7 +63,8 @@ def get_data(url):
         state = j.get("state") or "<MISSING>"
         postal = j.get("zip") or "<MISSING>"
         country_code = j.get("countryCode") or "<MISSING>"
-        page_url = "https://www.hertz.co.uk/rentacar/location"
+        slug = j.get("extendedOAGCode")
+        page_url = f"https://www.hertz.co.uk/rentacar/location/united%20kingdom/{city.lower()}/{slug}?origin=Homepage"
         store_number = "<MISSING>"
         phone = j.get("phoneNumber").replace("*", "").strip() or "<MISSING>"
         latitude = j.get("latitude") or "<MISSING>"

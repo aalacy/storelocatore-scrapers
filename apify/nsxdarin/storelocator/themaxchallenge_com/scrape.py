@@ -145,6 +145,26 @@ def fetch_data():
                 zc = "10309"
             if "seminole-fl" in loc:
                 zc = "33772"
+            if "flemington-nj" in loc:
+                add = "148 NJ-31 #3"
+                city = "Flemington"
+                state = "NJ"
+                zc = "08822"
+            if "hazlet-nj" in loc:
+                add = "3043 NJ-35"
+                city = "Hazlet"
+                state = "NJ"
+                zc = "07730"
+            if "ocean-nj" in loc:
+                add = "1710 NJ-35"
+                city = "Ocean"
+                state = "NJ"
+                zc = "07755"
+            if "lawrencevillepennington-nj" in loc:
+                add = "25 NJ-31 #9"
+                city = "Pennington"
+                state = "NJ"
+                zc = "08534"
             yield [
                 website,
                 loc,

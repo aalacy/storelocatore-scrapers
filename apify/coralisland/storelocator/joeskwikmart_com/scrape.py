@@ -62,10 +62,10 @@ def fetch_data():
 
     loclist = session.post(url, data=mydata, headers=headers).json()["features"]
     for loc in loclist:
-        lat = loc["geometry"]["coordinates"][0]
-        longt = loc["geometry"]["coordinates"][1]
+        longt = loc["geometry"]["coordinates"][0]
+        lat = loc["geometry"]["coordinates"][1]
         title = loc["properties"]["name"]
-        link = "https://uni-mart.com" + loc["properties"]["url"]
+        link = "https://joeskwikmart.com/" + loc["properties"]["url"]
         content = loc["properties"]["fulladdress"]
         content = re.sub(cleanr, "\n", str(content)).strip().splitlines()
         street = content[0]
@@ -77,7 +77,7 @@ def fetch_data():
             [
                 "https://joeskwikmart.com/",
                 link,
-                title,
+                title.replace("&apos;", "'"),
                 street,
                 city,
                 state,

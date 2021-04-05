@@ -1,0 +1,4 @@
+lxml==4.5.2
+sgvalidator==0.0.71
+demjson==2.2.4
+sgselenium==0.0.15

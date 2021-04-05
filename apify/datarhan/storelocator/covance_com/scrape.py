@@ -2,6 +2,10 @@ import csv
 from lxml import etree
 
 from sgrequests import SgRequests
+from sglogging import SgLogSetup
+from sgscrape.sgpostal import parse_address, International_Parser
+
+logger = SgLogSetup().get_logger("covance_com")
 
 
 def write_output(data):
@@ -38,8 +42,14 @@ def fetch_data():
     # Your scraper here
     session = SgRequests()
 
-    items = []
     scraped_items = []
+    cities_to_filter = [
+        "Buenos Aires",
+        "Rueil Malmaison",
+        "Seoul",
+        "Singapore",
+        "Zurich",
+    ]
 
     DOMAIN = "covance.com"
     start_url = "https://www.covance.com/locations.html"
@@ -51,31 +61,31 @@ def fetch_data():
     for poi_html in all_locations[1:]:
         store_url = "<MISSING>"
         location_name = poi_html.xpath('.//li[@class="name"]/text()')
-        location_name = location_name[0] if location_name else "<MISSING>"
+        if not location_name:
+            continue
+        location_name = (
+            location_name[0].replace("<", "") if location_name else "<MISSING>"
+        )
+        if "headquarters" in location_name.lower():
+            continue
         raw_address = poi_html.xpath('.//li[@class="address"]/text()')
         raw_address = [elem.strip() for elem in raw_address if elem.strip()]
-        if (
-            "," not in poi_html.xpath('.//li[@class="title"]/text()')[0]
-            and " United Kingdom" not in raw_address[-1]
-        ):
+        full_addr = " ".join(raw_address).replace("\n", " ").replace("\t", " ")
+        addr = parse_address(International_Parser(), full_addr)
+        country_code = addr.country
+        country_code = country_code if country_code else "<MISSING>"
+        if country_code not in ["Usa", "<MISSING>", "UK", "United Kingdom"]:
             continue
-        raw_address = [" ".join(raw_address[:2])] + raw_address[2:]
-        country_code = "<MISSING>"
-        if "USA" in raw_address[-1]:
-            country_code = "USA"
-            raw_address = raw_address[:-1] + [" ".join(raw_address[-1].split()[:-1])]
-        country_code = (
-            "United Kingdom" if "United Kingdom" in raw_address[-1] else "<MISSING>"
-        )
-        city = poi_html.xpath('.//li[@class="title"]/text()')[0].split(", ")[0]
-        city = city if city else "<MISSING>"
-        street_address = raw_address[0].replace(city, "")
-        state = poi_html.xpath('.//li[@class="title"]/text()')[0].split(", ")[-1]
+        city = addr.city
+        city = city.strip() if city else "<MISSING>"
+        if city in cities_to_filter:
+            continue
+        street_address = addr.street_address_1
+        if addr.street_address_2:
+            street_address = addr.street_address_2 + addr.street_address_1
+        state = addr.state
         state = state if state else "<MISSING>"
-        street_address = street_address.split(", {}".format(state))[0]
-        zip_code = raw_address[-1].split()[-1]
-        if country_code == "United Kingdom":
-            zip_code = " ".join(raw_address[-1].split()[-2:])
+        zip_code = addr.postcode
         zip_code = zip_code if zip_code else "<MISSING>"
         store_number = "<MISSING>"
         phone = poi_html.xpath('.//li[@class="phone"]/a/text()')
@@ -84,19 +94,6 @@ def fetch_data():
         latitude = "<MISSING>"
         longitude = "<MISSING>"
         hours_of_operation = "<MISSING>"
-
-        if country_code == "United Kingdom":
-            [
-                "Osprey House Westacott Way",
-                "Littlewick Green",
-                "Maidenhead",
-                "SL6 3QH, United Kingdom",
-            ]
-            country_code = "United Kingdom"
-            city = raw_address[2]
-            street_address = " ".join(raw_address[:2])
-            state = "<MISSING>"
-            zip_code = raw_address[-1].split(", ")[0]
 
         item = [
             DOMAIN,
@@ -114,18 +111,17 @@ def fetch_data():
             longitude,
             hours_of_operation,
         ]
-
         check = f"{street_address} {city}"
         if check not in scraped_items:
             scraped_items.append(check)
-            items.append(item)
-
-    return items
+            yield item
 
 
 def scrape():
+    logger.info("start scraping")
     data = fetch_data()
     write_output(data)
+    logger.info("end scraping")
 
 
 if __name__ == "__main__":
