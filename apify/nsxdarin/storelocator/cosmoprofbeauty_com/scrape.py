@@ -3,6 +3,11 @@ import urllib.request
 from sgrequests import SgRequests
 import gzip
 from sglogging import SgLogSetup
+import ssl
+
+ctx = ssl.create_default_context()
+ctx.check_hostname = False
+ctx.verify_mode = ssl.CERT_NONE
 
 logger = SgLogSetup().get_logger("cosmoprofbeauty_com")
 
@@ -48,7 +53,7 @@ def fetch_data():
             "https://stores.cosmoprofbeauty.com/sitemap/sitemap" + str(x) + ".xml.gz"
         )
         with open("branches.xml.gz", "wb") as f:
-            f.write(urllib.request.urlopen(smurl).read())
+            f.write(urllib.request.urlopen(smurl, context=ctx).read())
             f.close()
             with gzip.open("branches.xml.gz", "rt") as f:
                 for line in f:
@@ -72,7 +77,7 @@ def fetch_data():
         hours = ""
         lat = ""
         lng = ""
-        r = session.get(loc, headers=headers)
+        r = session.get(loc, headers=headers, verify=False)
         if r.encoding is None:
             r.encoding = "utf-8"
         lines = r.iter_lines(decode_unicode=True)
