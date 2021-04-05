@@ -10,7 +10,6 @@ log = sglog.SgLogSetup().get_logger(logger_name="petvalu.com")
 
 session = SgRequests()
 
-
 def write_output(data):
     with open("data.csv", mode="w") as output_file:
         writer = csv.writer(
@@ -87,7 +86,6 @@ def fetch_data():
             .json()
             .values()
         )
-        result_coords = []
         for store in stores:
             location_name = store["na"]
             if "bosley" not in location_name.lower():
@@ -111,7 +109,7 @@ def fetch_data():
             location_type = "<MISSING>"
             latitude = store["lat"]
             longitude = store["lng"]
-            result_coords.append((latitude, longitude))
+            search.found_location_at(latitude, longitude)
             page_url = store["gu"]
             hours = parse_hours(store)
             res = [base_url]
@@ -133,9 +131,6 @@ def fetch_data():
                 else "<MISSING>"
             )
             yield res
-
-        if len(result_coords) > 0:
-            search.mark_found(result_coords)
 
 
 def scrape():

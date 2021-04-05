@@ -70,6 +70,7 @@ def fetch_data():
         lat = "<MISSING>"
         lng = "<MISSING>"
         hours = ""
+        hours2 = ""
         r2 = session.get(lurl, headers=headers)
         lines = r2.iter_lines()
         for line2 in lines:
@@ -86,9 +87,14 @@ def fetch_data():
                 addinfo = (
                     h.strip().replace("\t", "").replace("\r", "").replace("\n", "")
                 )
-                city = addinfo.split(",")[0]
-                state = addinfo.split(",")[1].rsplit(" ", 1)[0]
-                zc = addinfo.rsplit(" ", 1)[1]
+                try:
+                    city = addinfo.split(",")[0]
+                    state = addinfo.split(",")[1].rsplit(" ", 1)[0]
+                    zc = addinfo.rsplit(" ", 1)[1]
+                except:
+                    city = ""
+                    state = ""
+                    zc = ""
             if "<a href=tel:" in line2:
                 phone = line2.split("<a href=tel:")[1].split(">")[1].split("<")[0]
             if '"closes": "' in line2:
@@ -103,8 +109,16 @@ def fetch_data():
                     hours = hrs
                 else:
                     hours = hours + "; " + hrs
+            if "Operating Hours:</strong><br><strong>" in line2:
+                hours2 = line2.split("Operating Hours:</strong><br><strong>")[1].split(
+                    "</p><"
+                )[0]
         if hours == "":
             hours = "<MISSING>"
+        if hours2 != "":
+            hours = hours2
+        hours = hours.replace("</strong>", "")
+        hours = hours.replace("</strong><br><strong>", "; ")
         hours = hours.replace(":00;", ";").replace(":00-", "-")
         city = city.replace("&#39;", "'")
         add = add.replace("&#39;", "'")
@@ -112,24 +126,80 @@ def fetch_data():
         city = city.replace("&amp;", "&")
         add = add.replace("&amp;", "&")
         name = name.replace("&amp;", "&")
+        hours = hours.replace("<br><strong>", "; ")
         if phone == "":
             phone = "<MISSING>"
-        yield [
-            website,
-            lurl,
-            name,
-            add,
-            city,
-            state,
-            zc,
-            country,
-            store,
-            phone,
-            typ,
-            lat,
-            lng,
-            hours,
-        ]
+        if city != "":
+            yield [
+                website,
+                lurl,
+                name,
+                add,
+                city,
+                state,
+                zc,
+                country,
+                store,
+                phone,
+                typ,
+                lat,
+                lng,
+                hours,
+            ]
+    typ = "Convenient Care"
+    name = "Boone Medical Group Convenient Care at Nifong"
+    lat = "<MISSING>"
+    lng = "<MISSING>"
+    add = "900 W. Nifong Boulevard, Suite 101"
+    city = "Columbia"
+    state = "MO"
+    zc = "65203"
+    phone = "573.815.6631"
+    store = "<MISSING>"
+    hours = "<MISSING>"
+    yield [
+        website,
+        lurl,
+        name,
+        add,
+        city,
+        state,
+        zc,
+        country,
+        store,
+        phone,
+        typ,
+        lat,
+        lng,
+        hours,
+    ]
+    typ = "Hospital"
+    name = "Boone Hospital Center"
+    lat = "<MISSING>"
+    lng = "<MISSING>"
+    add = "1600 East Broadway"
+    city = "Columbia"
+    state = "MO"
+    zc = "65201"
+    phone = "573.815.8000"
+    store = "<MISSING>"
+    hours = "<MISSING>"
+    yield [
+        website,
+        lurl,
+        name,
+        add,
+        city,
+        state,
+        zc,
+        country,
+        store,
+        phone,
+        typ,
+        lat,
+        lng,
+        hours,
+    ]
 
 
 def scrape():

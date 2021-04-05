@@ -115,7 +115,7 @@ def fetch_data():
             if len(store["address2"]) > 0:
                 street_address = street_address + ", " + store["address2"]
 
-        city = store["city"]
+        city = store["city"].replace("&#039;", "'").strip()
         state = store["state"]
         zip = store["zip"]
 

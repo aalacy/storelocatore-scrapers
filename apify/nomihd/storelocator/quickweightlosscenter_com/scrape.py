@@ -73,8 +73,8 @@ def fetch_data():
         stores_sel = lxml.html.fromstring(states[index])
         stores = stores_sel.xpath("//p")
         for store in stores:
-            if len("".join(store.xpath("span/text()")).strip()) > 0:
-                location_name = "".join(store.xpath("span/text()")).strip()
+            if len("".join(store.xpath("span[1]/text()")).strip()) > 0:
+                location_name = "".join(store.xpath("span[1]/text()")).strip()
                 page_url = search_url
                 locator_domain = website
 
@@ -87,9 +87,12 @@ def fetch_data():
                     if len("".join(add).strip()) > 0:
                         add_list.append("".join(add).strip())
 
-                add_list = ",".join(add_list).strip()
-                street_address = add_list.split(",")[0].strip()
-                city = location_name
+                add_list = "#".join(add_list).strip()
+                street_address = ", ".join(add_list.split(",")[:-1]).strip()
+                city = add_list.split(",")[-1].strip()
+                if "#(" in city:
+                    city = city.split("#(")[0].strip()
+
                 state = state_name
                 zip = "<MISSING>"
                 country_code = "<MISSING>"
@@ -115,6 +118,7 @@ def fetch_data():
                 except:
                     pass
 
+                city = city.replace(phone, "").strip()
                 location_type = "<MISSING>"
                 hours_of_operation = "<MISSING>"
                 latitude = "<MISSING>"
@@ -122,6 +126,11 @@ def fetch_data():
                 if phone == "":
                     phone = "<MISSING>"
 
+                if phone == "<MISSING>":
+                    phone = " ".join(city.rsplit(" ")[-2:])
+                    city = city.replace(phone, "").strip()
+
+                city = city.replace(" l", "").replace(" 1", "").strip()
                 curr_list = [
                     locator_domain,
                     page_url,

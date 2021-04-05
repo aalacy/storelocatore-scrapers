@@ -60,13 +60,13 @@ def fetch_data():
         longitude = "".join(j.xpath('.//div[@class="marker"]/@data-lng')) or "<MISSING>"
         location_type = "<MISSING>"
 
-        tmp = []
-        hours = j.xpath('.//div[@class="hours card-header"]/p[2]/text()')
+        hours = j.xpath('.//div[@class="hours card-header"]/p[1]/strong/text()')
         hours = list(filter(None, [a.strip() for a in hours]))
-        for h in hours:
-            tmp.append(h)
+        hours = "".join(hours)
 
-        hours_of_operation = "; ".join(tmp) or "Closed"
+        hours_of_operation = "Closed"
+        if hours == "Lobby Closed":
+            hours_of_operation = "Closed"
         row = [
             locator_domain,
             page_url,

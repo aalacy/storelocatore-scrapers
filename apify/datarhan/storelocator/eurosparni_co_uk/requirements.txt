@@ -1,0 +1,6 @@
+demjson==2.2.4
+lxml==4.5.2
+sgscrape==0.0.22
+sgzip==0.2.1
+sgvalidator==0.0.71
+sgrequests==0.1.8

@@ -103,26 +103,55 @@ def fetch_data():
                     hours = hrs
                 else:
                     hours = hours + "; " + hrs
-        if CS is False:
-            if lat == "":
-                lat = "<MISSING>"
-                lng = "<MISSING>"
-            yield [
-                website,
-                loc,
-                name,
-                add,
-                city,
-                state,
-                zc,
-                country,
-                store,
-                phone,
-                typ,
-                lat,
-                lng,
-                hours,
-            ]
+        if lat == "":
+            lat = "<MISSING>"
+            lng = "<MISSING>"
+        if CS is True:
+            hours = "Coming Soon"
+        if add == "":
+            add = "<INACCESSIBLE>"
+        if city == "":
+            city = "<INACCESSIBLE>"
+        if state == "":
+            state = "<INACCESSIBLE>"
+        if zc == "":
+            zc = "<INACCESSIBLE>"
+        if "locations/marin" in loc:
+            add = "220 Corte Madera Town Center"
+            city = "Corte Madera"
+            state = "CA"
+            zc = "94925"
+        if "locations/financialdistrict" in loc:
+            add = "555 California Street"
+            city = "San Francisco"
+            state = "CA"
+            zc = "94104"
+        if "locations/southsanfrancisco" in loc:
+            add = "501 Carter Street"
+            city = "Daly City"
+            state = "CA"
+            zc = "94014"
+        if "locations/broadwaytennis" in loc:
+            add = "60 Edwards Court"
+            city = "Burlingame"
+            state = "CA"
+            zc = "94010"
+        yield [
+            website,
+            loc,
+            name,
+            add,
+            city,
+            state,
+            zc,
+            country,
+            store,
+            phone,
+            typ,
+            lat,
+            lng,
+            hours,
+        ]
 
 
 def scrape():

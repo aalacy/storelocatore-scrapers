@@ -51,7 +51,7 @@ def fetch_data():
     }
 
     body = '{"dto":{"Latitude":"34.1030032","Longitude":"-118.4104684","MaxResults":"1000","Radius":"50000","Industry":"ALL","RadiusUnits":"MILES"}}'
-    response = session.get(start_url, data=body, headers=headers)
+    response = session.post(start_url, data=body, headers=headers)
     data = json.loads(response.text)
 
     for poi in data["Items"]:

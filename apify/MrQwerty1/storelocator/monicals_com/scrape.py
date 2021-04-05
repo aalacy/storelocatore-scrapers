@@ -76,7 +76,11 @@ def get_data(page_url):
     location_type = "<MISSING>"
     hours = tree.xpath(
         "//div[./h4[contains(text(), 'Location Hours')]]/p[.//*[contains(text(), '–')] or contains(text(), '–')]"
-    )[-1]
+    )
+    if hours:
+        hours = hours[-1]
+    else:
+        hours = "<html></html>"
     hours_of_operation = (
         "".join(hours.xpath(".//text()"))
         .replace("\n", ";")

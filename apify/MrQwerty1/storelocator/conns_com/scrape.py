@@ -38,7 +38,7 @@ def get_key():
     session = SgRequests()
     r = session.get("https://www.conns.com/store-locator")
     tree = html.fromstring(r.text)
-    cookies = session.session.cookies.get_dict()
+    cookies = session.get_session().cookies.get_dict()
     return cookies, tree.xpath("//input[@name='form_key']/@value")[0]
 
 

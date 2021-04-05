@@ -50,7 +50,6 @@ def fetch_data():
     session = SgRequests()
 
     found_poi = []
-    data = []
 
     max_results = 50
     max_distance = 200
@@ -73,7 +72,6 @@ def fetch_data():
         req = session.get(link, headers=headers)
         base = BeautifulSoup(req.text, "lxml")
 
-        new_coordinates = []
         store_data = json.loads(base.text)["response"]["entities"]
         locator_domain = "cfsc.com"
 
@@ -81,10 +79,16 @@ def fetch_data():
 
             try:
                 page_url = store["landingPageUrl"]
+                store_number = page_url.split("-")[-1]
             except:
-                page_url = "<MISSING>"
+                page_url = "https://locations.cfsc.com/"
+                try:
+                    store_number = store["c_alternateLanguageLandingPage"].split("-")[
+                        -1
+                    ]
+                except:
+                    store_number = "<MISSING>"
 
-            store_number = page_url.split("-")[-1]
             phone = store["mainPhone"]
 
             if phone not in found_poi:
@@ -135,31 +139,24 @@ def fetch_data():
                 geo = store["yextDisplayCoordinate"]
             latitude = geo["latitude"]
             longitude = geo["longitude"]
-            new_coordinates.append([latitude, longitude])
+            search.found_location_at(latitude, longitude)
 
-            data.append(
-                [
-                    locator_domain,
-                    page_url,
-                    location_name,
-                    street_address,
-                    city,
-                    state,
-                    zip_code,
-                    country_code,
-                    store_number,
-                    phone,
-                    location_type,
-                    latitude,
-                    longitude,
-                    hours_of_operation,
-                ]
-            )
-
-        if len(new_coordinates) > 0:
-            search.mark_found(new_coordinates)
-
-    return data
+            yield [
+                locator_domain,
+                page_url,
+                location_name,
+                street_address,
+                city,
+                state,
+                zip_code,
+                country_code,
+                store_number,
+                phone,
+                location_type,
+                latitude,
+                longitude,
+                hours_of_operation,
+            ]
 
 
 def scrape():

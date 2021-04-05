@@ -52,7 +52,7 @@ def fetch_data():
     r = session.get(base_url, headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
 
-    semi_part = soup.find_all(id="north-america")[1].find_all(
+    semi_part = soup.find(id="region-north-america-236agu").find_all(
         class_="LinksList-linkContainer"
     )
 

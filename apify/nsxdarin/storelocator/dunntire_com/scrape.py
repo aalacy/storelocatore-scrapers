@@ -62,7 +62,8 @@ def fetch_data():
         lng = ""
         hours = ""
         r2 = session.get(loc, headers=headers)
-        for line2 in r2.iter_lines():
+        lines = r2.iter_lines()
+        for line2 in lines:
             line2 = str(line2.decode("utf-8"))
             if '"name":"' in line2:
                 store = line2.split('"@id":"')[1].split('"')[0]
@@ -75,21 +76,20 @@ def fetch_data():
             if '<a href="//www.google.com/maps/search/' in line2:
                 lat = line2.split("query=")[1].split(",")[0]
                 lng = line2.split("query=")[1].split(",")[1].split("+")[0]
-            if '"dayOfWeek","name":"' in line2:
-                days = line2.split('"dayOfWeek","name":"')
-                for day in days:
-                    if '"opens":"' in day:
-                        hrs = (
-                            day.split('"')[0]
-                            + ": "
-                            + day.split('"opens":"')[1].split('"')[0]
-                            + "-"
-                            + day.split('"closes":"')[1].split('"')[0]
-                        )
-                        if hours == "":
-                            hours = hrs
-                        else:
-                            hours = hours + "; " + hrs
+            if "day</td>" in line2:
+                day = line2.split(">")[1].split("<")[0]
+                next(lines)
+                g = next(lines)
+                g = str(g.decode("utf-8"))
+                hrs = (
+                    day
+                    + ": "
+                    + g.strip().replace("\t", "").replace("\r", "").replace("\n", "")
+                )
+                if hours == "":
+                    hours = hrs
+                else:
+                    hours = hours + "; " + hrs
         yield [
             website,
             loc,

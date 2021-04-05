@@ -58,7 +58,6 @@ def fetch_data():
         store_number = "<MISSING>"
         street_address = location_name
         city = raw_address[0].split(", ")[0]
-
         state = raw_address[0].split(", ")[-1].split()[0]
         zip_code = raw_address[0].split(", ")[-1].split()[-1]
         country_code = "<MISSING>"
@@ -67,13 +66,18 @@ def fetch_data():
             phone = poi_html.xpath('.//div/strong[contains(text(), "-")]/text()')
         phone = phone[0] if phone else "<MISSING>"
         location_type = "<MISSING>"
+        temp_closed = poi_html.xpath('.//*[contains(text(), "TEMPORARILY CLOSED")]')
+        if temp_closed:
+            location_type = "Temp_closed"
         latitude = "<MISSING>"
         longitude = "<MISSING>"
-        hoo = poi_html.xpath(
+        hoo = poi_html.xpath('.//p[contains(text(), "Hours:")]/text()')
+        hoo_2 = poi_html.xpath(
             './/p[contains(text(), "Hours:")]/following-sibling::p/text()'
         )
-        if not hoo:
-            hoo = poi_html.xpath('.//p[contains(text(), "Hours:")]/text()')
+        if hoo_2:
+            hoo += hoo_2
+
         hoo = [elem.strip() for elem in hoo if elem.strip()]
         hours_of_operation = (
             " ".join(hoo).replace("Hours:", "").strip() if hoo else "<MISSING>"

@@ -3,6 +3,7 @@ from sgrequests import SgRequests
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 import json
 from sglogging import SgLogSetup
+from sgscrape.sgpostal import parse_address_intl
 
 logger = SgLogSetup().get_logger("costa_co_uk__business__costa-express")
 
@@ -40,7 +41,6 @@ search = DynamicGeoSearch(
     max_search_results=250,
 )
 
-session = SgRequests()
 headers = {
     "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.108 Safari/537.36"
 }
@@ -53,26 +53,34 @@ def fetch_data():
     if BFound:
         BFound = False
         url = "https://www.costa.co.uk/api/locations/stores?latitude=51.016&longitude=-4.209&maxrec=500"
-        r = session.get(url, headers=headers, verify=False)
+        session = SgRequests()
+        r = session.get(url, headers=headers, verify=False, timeout=30)
         for item in json.loads(r.content)["stores"]:
             store = item["storeNo8Digit"]
             typ = item["storeType"]
             phone = item["telephone"]
-            add = item["storeAddress"]["addressLine1"]
-            add = (
-                add
+            rawadd = item["storeAddress"]["addressLine1"]
+            rawadd = (
+                rawadd
                 + " "
                 + item["storeAddress"]["addressLine2"]
                 + " "
                 + item["storeAddress"]["addressLine3"]
             )
-            add = add.strip()
+            rawadd = rawadd.strip()
+            addr = parse_address_intl(rawadd)
+            city = addr.city
+            zc = addr.postcode
+            add = addr.street_address_1
+            state = "<MISSING>"
             name = item["storeNameExternal"]
             if name == "":
                 name = typ
-            city = item["storeAddress"]["city"]
-            state = "<MISSING>"
-            zc = item["storeAddress"]["postCode"]
+            try:
+                if "London" in city:
+                    city = "London"
+            except:
+                pass
             country = "GB"
             lng = item["longitude"]
             website = "costa.co.uk/business/costa-express"
@@ -132,35 +140,41 @@ def fetch_data():
             if add == "":
                 add = "<MISSING>"
             if city == "":
-                city = item["storeAddress"]["addressLine3"]
-            if city == "":
                 city = "<MISSING>"
             loc = "<MISSING>"
             if city == "<MISSING>":
                 city = name
-                if "Belfast" in name:
-                    city = "Belfast"
-                if "Knightswick" in name:
-                    city = "Knightswick"
-                if "Lewes" in name:
-                    city = "Lewes"
-                if "Belper" in name:
-                    city = "Belper"
-                if "Barrow in Furness" in name:
-                    city = "Barrow in Furness"
-                if "Washington" in name:
-                    city = "Washington"
-                if "Purfleet" in add:
-                    city = "Purfleet"
-                if "Taunton" in name:
-                    city = "Taunton"
-                if "Hempstead Valley" in name:
-                    city = "Hempstead Valley"
-                if "Belfast" in add:
-                    city = "Belfast"
+            if "Belfast" in name:
+                city = "Belfast"
+            if "Knightswick" in name:
+                city = "Knightswick"
+            if "Lewes" in name:
+                city = "Lewes"
+            if "Belper" in name:
+                city = "Belper"
+            if "Barrow in Furness" in name:
+                city = "Barrow in Furness"
+            if "Washington" in name:
+                city = "Washington"
+            if "Purfleet" in add:
+                city = "Purfleet"
+            if "Taunton" in name:
+                city = "Taunton"
+            if "Hempstead Valley" in name:
+                city = "Hempstead Valley"
+            if "Belfast" in add:
+                city = "Belfast"
+            if add is None:
+                add = "<MISSING>"
+            if city is None:
+                city = "<MISSING>"
+            if zc is None:
+                zc = "<MISSING>"
             addinfo = add + city + zc
             if "Mon: -; Tue: -; Wed: -; Thu: -; Fri: -; Sat: -; Sun: -" in hours:
                 hours = "<MISSING>"
+            if "Bideford" in name:
+                city = "Bideford"
             if store not in ids and addinfo not in adds:
                 adds.append(addinfo)
                 ids.append(store)
@@ -183,7 +197,6 @@ def fetch_data():
     for lat, lng in search:
         x = lat
         y = lng
-        logger.info("%s - %s..." % (str(x), str(y)))
         url = (
             "https://www.costa.co.uk/api/locations/stores?latitude="
             + str(x)
@@ -192,6 +205,7 @@ def fetch_data():
             + "&maxrec=500"
         )
         try:
+            session = SgRequests()
             r = session.get(url, headers=headers, verify=False, timeout=30)
             for item in json.loads(r.content)["stores"]:
                 store = item["storeNo8Digit"]
@@ -268,35 +282,39 @@ def fetch_data():
                     hours = "<MISSING>"
                 if phone == "":
                     phone = "<MISSING>"
-                if add == "":
+                if add == "" or add is None:
                     add = "<MISSING>"
                 if city == "":
                     city = item["storeAddress"]["addressLine3"]
-                if city == "":
+                if city == "" or city is None:
                     city = "<MISSING>"
+                if zc == "" or zc is None:
+                    zc = "<MISSING>"
                 loc = "<MISSING>"
                 if city == "<MISSING>":
                     city = name
-                    if "Belfast" in name:
-                        city = "Belfast"
-                    if "Knightswick" in name:
-                        city = "Knightswick"
-                    if "Lewes" in name:
-                        city = "Lewes"
-                    if "Belper" in name:
-                        city = "Belper"
-                    if "Barrow in Furness" in name:
-                        city = "Barrow in Furness"
-                    if "Washington" in name:
-                        city = "Washington"
-                    if "Purfleet" in add:
-                        city = "Purfleet"
-                    if "Taunton" in name:
-                        city = "Taunton"
-                    if "Hempstead Valley" in name:
-                        city = "Hempstead Valley"
-                    if "Belfast" in add:
-                        city = "Belfast"
+                if "Belfast" in name:
+                    city = "Belfast"
+                if "Knightswick" in name:
+                    city = "Knightswick"
+                if "Lewes" in name:
+                    city = "Lewes"
+                if "Belper" in name:
+                    city = "Belper"
+                if "Barrow in Furness" in name:
+                    city = "Barrow in Furness"
+                if "Washington" in name:
+                    city = "Washington"
+                if "Purfleet" in add:
+                    city = "Purfleet"
+                if "Taunton" in name:
+                    city = "Taunton"
+                if "Hempstead Valley" in name:
+                    city = "Hempstead Valley"
+                if "Belfast" in add:
+                    city = "Belfast"
+                if "Bideford" in name:
+                    city = "Bideford"
                 addinfo = add + city + zc
                 if "Mon: -; Tue: -; Wed: -; Thu: -; Fri: -; Sat: -; Sun: -" in hours:
                     hours = "<MISSING>"

@@ -94,12 +94,14 @@ def fetch_data():
         state = ""
         zip = ""
         if len(add_list) == 2:
-            street_address = add_list[0]
+            street_address = " ".join(add_list[0].split("\n")).strip()
             city = add_list[1].split(",")[0].strip()
             state = add_list[1].split(",")[1].strip().split(" ")[0].strip()
             zip = add_list[1].split(",")[1].strip().split(" ")[1].strip()
         elif len(add_list) == 1:
-            street_address = add_list[0].split(",")[0].strip()
+            street_address = " ".join(
+                add_list[0].split(",")[0].strip().split("\n")
+            ).strip()
             city = "<MISSING>"
             state = add_list[0].split(",")[1].strip().split(" ")[0].strip()
             zip = add_list[0].split(",")[1].strip().split(" ")[1].strip()
@@ -119,6 +121,10 @@ def fetch_data():
         if zip == "":
             zip = "<MISSING>"
 
+        if city == "<MISSING>":
+            city = street_address.split(" ")[-1].strip()
+            street_address = " ".join(street_address.split(" ")[:-1]).strip()
+
         store_number = store["field_id_79"].replace("#", "").strip()
         phone = "".join(store_sel.xpath('//a[@class="tel"]/text()')).strip()
         try:
@@ -133,25 +139,35 @@ def fetch_data():
         for index in range(0, len(temp_hours)):
             if "Store Hours:" in "".join(temp_hours[index].xpath("text()")).strip():
                 try:
-                    hours = (
-                        "".join(temp_hours[index + 1].xpath("text()"))
-                        .strip()
-                        .split("\n")
-                    )
-                    for hour in hours:
-                        if len("".join(hour).strip()) > 0:
-                            hours_list.append(
-                                "".join(hour)
-                                .strip()
-                                .replace("\xa0", " ")
-                                .strip()
-                                .replace("Clipper -", "")
-                                .strip()
-                            )
+                    for counter in range(index + 1, len(temp_hours)):
+                        hours = (
+                            "".join(temp_hours[counter].xpath("text()"))
+                            .strip()
+                            .split("\n")
+                        )
+                        for hour in hours:
+                            if "," not in hour:
+                                if len("".join(hour).strip()) > 0:
+                                    hours_list.append(
+                                        "".join(hour)
+                                        .strip()
+                                        .replace("\xa0", " ")
+                                        .strip()
+                                        .replace("Clipper -", "")
+                                        .strip()
+                                    )
                 except:
                     pass
 
-        hours_of_operation = " ".join(hours_list).strip()
+                break
+
+        hours_of_operation = (
+            " ".join(hours_list).strip().replace("Open 7 days", "").strip()
+        )
+        try:
+            hours_of_operation = hours_of_operation.split("Bojangles")[0].strip()
+        except:
+            pass
 
         latitude = store["field_id_82"]
         longitude = store["field_id_83"]

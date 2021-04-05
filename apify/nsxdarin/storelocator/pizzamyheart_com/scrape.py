@@ -67,6 +67,8 @@ def fetch_data():
                     lng = item.split('"lng": "')[1].split('"')[0]
                     phone = item.split('"phone_number": "')[1].split('"')[0]
                     store = "<MISSING>"
+                    hours = hours.replace("\\u0026amp;", "&")
+                    hours = hours.replace("\\u0026nbsp;", "")
                     yield [
                         website,
                         loc,

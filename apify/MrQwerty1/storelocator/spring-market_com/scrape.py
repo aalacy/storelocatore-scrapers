@@ -48,7 +48,7 @@ def generate_headers():
 
 def fetch_data():
     out = []
-    url = "https://www.spring-market.com/stores"
+    url = "https://www.spring-market.com/"
 
     session = SgRequests()
     headers, cookies = generate_headers()
@@ -91,7 +91,7 @@ def fetch_data():
             close = h.get("close")
             _tmp.append(f"{d} {start} - {close}")
 
-        hours_of_operation = ";".join(_tmp)
+        hours_of_operation = ";".join(_tmp) or "<MISSING>"
 
         row = [
             locator_domain,

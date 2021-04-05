@@ -84,6 +84,14 @@ def fetch_data():
                 link_list.append(link)
                 r = session.get(link, headers=headers, verify=False)
                 soup = BeautifulSoup(r.text, "html.parser")
+                longt, lat = (
+                    soup.select_one("iframe[src*=maps]")["src"]
+                    .split("!2d", 1)[1]
+                    .split("!2m", 1)[0]
+                    .split("!3d")
+                )
+                if "!3m" in lat:
+                    lat = lat.split("!3m", 1)[0]
                 temp_address = soup.findAll("div", {"class": "x-text"})
                 if len(temp_address) == 7:
                     hours = temp_address[6].text.split("\n")
@@ -125,8 +133,8 @@ def fetch_data():
                         "<MISSING>",
                         phone,
                         "<MISSING>",
-                        "<MISSING>",
-                        "<MISSING>",
+                        lat,
+                        longt,
                         hours,
                     ]
                 )
