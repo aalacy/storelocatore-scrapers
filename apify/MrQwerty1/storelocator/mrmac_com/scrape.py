@@ -102,7 +102,7 @@ def get_coords_from_embed(text):
 def fetch_data():
     out = []
     locator_domain = "https://m.mrmac.com"
-    page_url = "https://m.mrmac.com/pages/locations"
+    page_url = "https://www.mrmac.com/pages/locations"
     location_type = "<MISSING>"
 
     session = SgRequests()
@@ -128,7 +128,7 @@ def fetch_data():
                     './/div[@class="phone"]/text()[1]|.//div[@class="address"]/text()'
                 )
             )
-            .replace('"Phone:"', "")
+            .replace("Phone:", "")
             .strip()
         )
         if "Fax" in phone:
