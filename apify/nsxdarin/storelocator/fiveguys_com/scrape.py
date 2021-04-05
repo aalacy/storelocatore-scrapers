@@ -108,6 +108,8 @@ def fetch_data():
                             hours = hrs
                         else:
                             hours = hours + "; " + hrs
+        if hours == "":
+            hours = "<MISSING>"
         yield [
             website,
             loc,
