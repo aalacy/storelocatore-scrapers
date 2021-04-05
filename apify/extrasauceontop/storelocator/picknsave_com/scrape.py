@@ -157,7 +157,7 @@ for zipcode in search:
     for item in coords:
         if item not in deduped_coords:
             deduped_coords.append(item)
-            search.found_location_at(latitude, longitude)
+            search.found_location_at(item[0], item[1])
 
     x = x + 1
 
