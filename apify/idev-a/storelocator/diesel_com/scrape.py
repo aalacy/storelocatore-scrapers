@@ -20,9 +20,11 @@ def parse_detail(data, base_url, locator_domain, country):
             )
             if not address:
                 continue
-            address = soup1.select_one(
-                "div.store-details a.store-address address.address"
-            ).text
+            address = (
+                soup1.select_one("div.store-details a.store-address address.address")
+                .text.replace("\n", " ")
+                .strip()
+            )
             addr = parse_address_intl(address)
             _phone = soup1.select_one("div.store-details a.phone")
             phone = "<MISSING>"
@@ -36,6 +38,9 @@ def parse_detail(data, base_url, locator_domain, country):
             latitude = soup1.select_one(".map-canvas")["data-latitude"]
             longitude = soup1.select_one(".map-canvas")["data-longitude"]
 
+            zip_postal = addr.postcode
+            if not zip_postal:
+                zip_postal = address.split(",")[-1]
             data.append(
                 SgRecord(
                     page_url=page_url,
@@ -46,7 +51,7 @@ def parse_detail(data, base_url, locator_domain, country):
                     state=addr.state,
                     latitude=latitude,
                     longitude=longitude,
-                    zip_postal=addr.postcode,
+                    zip_postal=zip_postal,
                     phone=phone,
                     country_code=country,
                     locator_domain=locator_domain,

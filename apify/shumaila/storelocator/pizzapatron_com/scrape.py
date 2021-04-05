@@ -60,6 +60,8 @@ def fetch_data():
         phone = loc["phone"]
         if len(state) < 3:
             state = "TX"
+        if "Texas" in state:
+            state = "TX"
         data.append(
             [
                 "https://www.pizzapatron.com/",
