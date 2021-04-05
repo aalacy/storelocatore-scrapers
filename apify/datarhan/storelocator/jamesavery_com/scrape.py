@@ -43,7 +43,7 @@ def fetch_data():
     items = []
 
     DOMAIN = "jamesavery.com"
-    start_url = "https://www.jamesavery.com/store_locations?utf8=%E2%9C%93&distance=any&address=&store_type%5B%5D=retail&store_type%5B%5D=dillards&authenticity_token=vz2xpftolQGiScBsgF45%2FJzf0ZicSAQvqTFZ4WRX116lmSE%2FLH9DpO9SStHbU9GlbMUTZOnLC%2FHThlTaTI6RtA%3D%3D"
+    start_url = "https://www.jamesavery.com/store_locations?utf8=%E2%9C%93&distance=any&address=&store_type%5B%5D=retail&authenticity_token=UjDYdaoCiXPHNUKZDBWFyvVJMyjMoFdYjnuCcUj1cRpPz0K8wtZmc9NiZ6pNqYqYKOWmhcoMkRdhOnLn6MZl1w%3D%3D"
 
     response = session.get(start_url)
     dom = etree.HTML(response.text)

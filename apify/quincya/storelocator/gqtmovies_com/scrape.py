@@ -64,11 +64,19 @@ def fetch_data():
         req = session.get(link, headers=headers)
         item = BeautifulSoup(req.text, "lxml")
 
+        if (
+            "coming soon"
+            in item.find(class_="gridRow section-box cinemaInfo").text.lower()
+        ):
+            continue
+
         location_name = page.text.strip()
         raw_address = (
             item.find(class_="cinAdress")
             .text.split("|")[1]
             .strip()
+            .replace("Tarentum ", "Tarentum,")
+            .replace("Mills Cir ", "Mills Cir,")
             .replace("\n", "")
             .split(",")
         )
