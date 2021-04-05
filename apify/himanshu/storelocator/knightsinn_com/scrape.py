@@ -70,11 +70,11 @@ def fetch_data():
         store_url = urljoin(start_url, url)
         with SgFirefox() as driver:
             driver.get(store_url)
-            sleep(4)
+            sleep(5)
             loc_dom = etree.HTML(driver.page_source)
             poi = loc_dom.xpath('//script[@data-react-helmet="true"]/text()')
             if not poi:
-                sleep(10)
+                sleep(15)
                 loc_dom = etree.HTML(driver.page_source)
                 poi = loc_dom.xpath('//script[@data-react-helmet="true"]/text()')
 
