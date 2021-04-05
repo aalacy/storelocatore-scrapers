@@ -36,7 +36,6 @@ def fetch_data():
     out = []
 
     locator_domain = "https://www.irg168.com/shanghai.html"
-
     page_url = "https://www.irg168.com/locations.aspx"
     session = SgRequests()
     headers = {
