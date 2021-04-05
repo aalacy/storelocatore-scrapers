@@ -1,5 +1,4 @@
 import csv
-from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 from sgrequests import SgRequests
 from sgzip.dynamic import SearchableCountries
