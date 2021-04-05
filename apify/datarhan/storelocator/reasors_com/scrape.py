@@ -1,5 +1,6 @@
 import csv
 import json
+import time
 
 from sgrequests import SgRequests
 
@@ -41,9 +42,20 @@ def fetch_data():
     items = []
 
     DOMAIN = "reasors.com"
-    start_url = "https://api.freshop.com/1/stores?app_key=reasors&has_address=true&limit=-1&token=3c9013a41859d883f6ed4025d950cce8"
+    start_url = "https://api.freshop.com/1/stores?app_key=reasors&has_address=true&is_selectable=true&token={}"
 
-    response = session.get(start_url)
+    utc = int(time.time())
+    post_url = "https://api.freshop.com/2/sessions/create"
+    hdr = {
+        "accept": "application/json, text/javascript, */*; q=0.01",
+        "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.114 Safari/537.36",
+    }
+    frm = {"app_key": "reasors", "referrer": "https://www.reasors.com/", "utc": utc}
+    response = session.post(post_url, headers=hdr, data=frm)
+    data = json.loads(response.text)
+
+    response = session.get(start_url.format(data["token"]))
     data = json.loads(response.text)
 
     for poi in data["items"]:
@@ -67,7 +79,7 @@ def fetch_data():
         latitude = latitude if latitude else "<MISSING>"
         longitude = poi["longitude"]
         longitude = longitude if longitude else "<MISSING>"
-        hours_of_operation = poi["hours_md"].replace("\n", "").split("**")[2]
+        hours_of_operation = poi["hours_md"].replace("\n", "").split("**")[2].strip()
 
         item = [
             DOMAIN,
