@@ -198,7 +198,6 @@ def fetch_data():
             .replace("Open", "")
             .strip()
         )
-        print(hours_of_operation, page_url)
 
         row = [
             locator_domain,
