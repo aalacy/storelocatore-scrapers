@@ -76,7 +76,7 @@ def fetch_data():
                 phone = details[-4]
         hoo = hoo.lstrip("Hours: Open Daily ").strip()
         hoo = hoo.replace("PEN DAILY ", "").strip()
-        hoo = "Mon - Sat: " + hoo
+        hoo = "Mon - Sun: " + hoo
         phone = phone.lstrip("Store Phone:").strip()
         title = div.findAll("div", {"class": "_3Mgpu"})[2]
         for t in title:
