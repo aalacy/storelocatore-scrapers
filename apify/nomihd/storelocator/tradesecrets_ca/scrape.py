@@ -75,7 +75,24 @@ def fetch_data():
         city = formatted_addr.city
         state = formatted_addr.state
         zip = formatted_addr.postcode
+        if "75 Centennial Parkway North On" == street_address:
+            street_address = "75 Centennial Parkway North"
+            state = "ON"
+
         country_code = "CA"
+
+        if zip is None:
+            try:
+                address = (
+                    store_req.text.split('addresses: [{"address":"')[1]
+                    .strip()
+                    .split('",')[0]
+                    .strip()
+                )
+                formatted_addr = parser.parse_address_intl(address)
+                zip = formatted_addr.postcode
+            except:
+                pass
 
         store_number = "<MISSING>"
         location_type = "<MISSING>"
