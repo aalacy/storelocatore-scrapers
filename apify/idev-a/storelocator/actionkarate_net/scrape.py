@@ -1,8 +1,7 @@
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
-from sgselenium import SgFirefox
+from sgselenium import SgChrome
 from lxml import html
-from sgscrape.sgpostal import parse_address_intl
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
@@ -27,7 +26,7 @@ def _close(driver, close_btn):
         "//html/body/div[1]/div/div/div/div/div[3]/div/div/div/aside/div[1]/div/button"
     ):
         driver.execute_script("arguments[0].click();", close_btn)
-        time.sleep(1)
+    time.sleep(1)
 
 
 def fetch_data():
@@ -35,7 +34,7 @@ def fetch_data():
     base_url = "https://actionkarate.net/"
     total = 0
     idx = 1
-    with SgFirefox() as driver:
+    with SgChrome() as driver:
         driver.get(base_url)
         close_btn = WebDriverWait(driver, 10).until(
             EC.presence_of_element_located(
@@ -54,6 +53,8 @@ def fetch_data():
             )
         )
         while True:
+            if idx > total:
+                break
             _close(driver, close_btn)
             button = WebDriverWait(driver, 5).until(
                 EC.presence_of_element_located(
@@ -64,26 +65,26 @@ def fetch_data():
                 )
             )
             driver.execute_script("arguments[0].click();", button)
-            block = WebDriverWait(driver, 5).until(
-                EC.presence_of_element_located(
-                    (
-                        By.XPATH,
-                        "//html/body/div[1]/div/div/div/div/div[2]/div[2]/div[1]/div/div/div",
-                    )
-                )
-            )
+            time.sleep(1)
             location_name = driver.find_element_by_xpath("//h1[1]").text
-            addr = parse_address_intl(block.text.split("\n")[0])
-            phone = block.text.split("\n")[1]
+            addr = [
+                _.text
+                for _ in driver.find_elements_by_xpath(
+                    "//div[@class='contact-detail']/p[2]/span"
+                )
+            ]
+            phone = driver.find_element_by_xpath(
+                "//div[@class='contact-detail']/p[1]"
+            ).text
 
             yield SgRecord(
                 store_number=driver.current_url.split("-")[-1],
                 page_url=driver.current_url,
                 location_name=location_name,
-                street_address=addr.street_address_1,
-                city=addr.city,
-                state=addr.state,
-                zip_postal=addr.postcode,
+                street_address=addr[0].replace(",", ""),
+                city=addr[1].split(",")[0].strip(),
+                state=addr[1].split(",")[1].strip().split(" ")[0].strip(),
+                zip_postal=addr[1].split(",")[1].strip().split(" ")[-1].strip(),
                 country_code="us",
                 phone=phone,
                 locator_domain=locator_domain,
