@@ -35,7 +35,6 @@ def fetch_data():
     out = []
 
     locator_domain = "https://www.instacheques.ca/"
-
     api_url = "https://www.instacheques.ca/storeLocatorService/stores/all/cities"
     session = SgRequests()
     headers = {
@@ -44,10 +43,13 @@ def fetch_data():
     r = session.get(api_url, headers=headers)
     js = r.json()
     for j in js:
-        slug1 = j.get("city")
+        slug1 = "".join(j.get("city"))
+        if slug1 == "St. Laurent":
+            slug1 = "St%20Laurent"
         slug2 = "".join(j.get("province"))
         if slug2 != "QC":
             continue
+
         api_url1 = f"https://www.instacheques.ca/storeLocatorService/stores/{slug2}/cities?cityName={slug1}"
         session = SgRequests()
         headers = {
@@ -57,8 +59,7 @@ def fetch_data():
         js = r.json()
         for j in js:
             location_name = "".join(j.get("businessName"))
-            if location_name != "Insta-Chèques":
-                continue
+
             street_address = (
                 f"{j.get('streetAddress1')} {j.get('streetAddress2')}".replace(
                     "None", ""

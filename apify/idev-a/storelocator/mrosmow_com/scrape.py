@@ -8,6 +8,16 @@ _headers = {
 }
 
 
+def _valid(val):
+    return (
+        val.replace("&#8211;", "-")
+        .replace("&#038;", "")
+        .replace("–", "-")
+        .replace("&#8217;", "'")
+        .strip()
+    )
+
+
 def fetch_data():
     locator_domain = "https://mrosmow.com"
     base_url = "https://mrosmow.com/wp-admin/admin-ajax.php?action=store_search&lat=43.653226&lng=-79.3831843&max_results=750&search_radius=500&autoload=1"
@@ -33,7 +43,7 @@ def fetch_data():
             yield SgRecord(
                 page_url=_["url"],
                 store_number=_["id"],
-                location_name=_["store"],
+                location_name=_valid(_["store"]),
                 street_address=street_address,
                 city=_["city"],
                 state=state,
@@ -43,7 +53,7 @@ def fetch_data():
                 zip_postal=zip_postal,
                 country_code=_["country"],
                 locator_domain=locator_domain,
-                hours_of_operation="; ".join(hours),
+                hours_of_operation=_valid("; ".join(hours)),
             )
 
 

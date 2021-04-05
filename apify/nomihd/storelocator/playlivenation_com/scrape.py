@@ -74,17 +74,24 @@ def fetch_data():
         )
         hours_list = []
         for hour in hours:
-            if "00:00-00:00" not in "".join(hour.xpath("@datetime")).strip():
+            label = "".join(hour.xpath("@datetime")).strip().split(" ")[0].strip()
+            if (
+                "Mo" in label
+                or "Tu" in label
+                or "We" in label
+                or "Th" in label
+                or "Fr" in label
+                or "Sa" in label
+                or "Su" in label
+            ):
                 hours_list.append("".join(hour.xpath("text()")).strip())
 
-        hours_of_operation = "; ".join(hours_list).strip()
-
-        hours_list = []
-        for hour in hours:
-            if "00:00-00:00" not in "".join(hour.xpath("@datetime")).strip():
-                hours_list.append("".join(hour.xpath("text()")).strip())
-
-        hours_of_operation = "; ".join(hours_list).strip()
+        hours_of_operation = (
+            "; ".join(hours_list)
+            .strip()
+            .replace("Thus location has reopened!; ", "")
+            .strip()
+        )
 
         lat_lng = (
             store_res.text.split("initMap() ")[1]
