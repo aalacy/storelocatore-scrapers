@@ -72,10 +72,13 @@ for search_lat, search_lng in search:
         "lat": search_lat,
         "lng": search_lng,
         "current_location": "N",
-        "nonce": "fb62d78aa4",
+        "nonce": nonce,
     }
 
     data = s.post(base_url, data=params, headers=headers).json()
+
+    with open("file.txt", "w", encoding="utf-8") as output:
+        json.dump(data, output, indent=4)
 
     data_states = data["locations"].keys()
     for data_state in data_states:
@@ -98,7 +101,13 @@ for search_lat, search_lng in search:
                 location_type = location["service_type"]
                 latitude = location["lat"]
                 longitude = location["lng"]
-                hours = location["details"].replace(" \r\n", ", ")
+                hours = (
+                    location["details"]
+                    .replace(" \r\n", ", ")
+                    .replace("\n", ", ")
+                    .replace("\r", "")
+                )
+                hours = hours.split(", ,")[0]
 
                 locator_domains.append(locator_domain)
                 page_urls.append(page_url)

@@ -29,7 +29,8 @@ def fetch_data():
         locator_domain = website
         store_req = session.get(page_url, headers=headers)
         store_sel = lxml.html.fromstring(store_req.text)
-
+        if "This page can't be found" in store_req.text:
+            continue
         location_name = "".join(
             store_sel.xpath('//h3[@class="storeDetailMap_locationName_title"]/text()')
         ).strip()

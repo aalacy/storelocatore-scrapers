@@ -68,9 +68,7 @@ def fetch_data():
         store_url = urljoin(start_url, url.split("?")[0])
         store_response = session.get(store_url)
         store_dom = etree.HTML(store_response.text)
-        if not store_dom.xpath(
-            '//script[contains(text(), "storeaddressline1")]/text()'
-        ):
+        if not store_dom.xpath('//script[contains(text(), "storeaddressline")]/text()'):
             continue
 
         raw_data = (
