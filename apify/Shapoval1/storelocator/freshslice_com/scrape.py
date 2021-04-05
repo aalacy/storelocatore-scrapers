@@ -45,6 +45,7 @@ def get_data():
         ).strip()
         if street_address.find("110 – 435") != -1:
             street_address = street_address.split(",")[0].strip()
+
         city = "".join(j.get("city"))
         if city.find("Rocky") != -1:
             city = city.split()[0].strip()
@@ -65,6 +66,8 @@ def get_data():
         hours_of_operation = " ".join(hours.xpath("//*//text()")).replace(
             "None", "<MISSING>"
         )
+        if street_address.find("4140") != -1:
+            hours_of_operation = "Coming Soon"
 
         row = [
             locator_domain,

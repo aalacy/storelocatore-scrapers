@@ -52,32 +52,33 @@ def fetch_data():
     for url in all_locations:
         store_url = urljoin(start_url, url)
         loc_response = session.get(store_url)
+        if loc_response.url == "https://www.seacoastbank.com/locations":
+            continue
         loc_dom = etree.HTML(loc_response.text)
         poi = loc_dom.xpath('//script[@type="application/ld+json"]/text()')[0]
         poi = json.loads(
             poi.replace("/winter-park", '/winter-park",').replace(',",', ",")
-        )
-
+        )[0]
         location_name = loc_dom.xpath(
             '//h1[@class="c-location_name u-headline-gradient"]/text()'
         )
         location_name = location_name[0].strip() if location_name else "<MISSING>"
-        street_address = poi[0]["address"]["streetAddress"]
+        street_address = poi["address"]["streetAddress"]
         street_address = street_address if street_address else "<MISSING>"
-        city = poi[0]["address"]["addressLocality"]
+        city = poi["address"]["addressLocality"]
         city = city if city else "<MISSING>"
-        state = poi[0]["address"]["addressRegion"]
+        state = poi["address"]["addressRegion"]
         state = state if state else "<MISSING>"
-        zip_code = poi[0]["address"]["postalCode"]
+        zip_code = poi["address"]["postalCode"]
         zip_code = zip_code if zip_code else "<MISSING>"
-        country_code = poi[0]["address"]["addressCountry"]["name"]
+        country_code = poi["address"]["addressCountry"]["name"]
         store_number = "<MISSING>"
-        phone = poi[0]["telephone"]
+        phone = poi["telephone"]
         phone = phone if phone else "<MISSING>"
-        location_type = poi[0]["@type"]
-        latitude = poi[0]["geo"]["latitude"]
+        location_type = poi["@type"]
+        latitude = poi["geo"]["latitude"]
         latitude = latitude if latitude else "<MISSING>"
-        longitude = poi[0]["geo"]["longitude"]
+        longitude = poi["geo"]["longitude"]
         longitude = longitude.replace("--", "-") if longitude else "<MISSING>"
         hours_of_operation = loc_dom.xpath('//table[@class="c-info-table"]//text()')
         hours_of_operation = [
