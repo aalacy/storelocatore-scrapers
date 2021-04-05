@@ -1,68 +1,116 @@
+import re
 import csv
-import os
-from sgselenium import SgSelenium
+import json
+from lxml import etree
+from urllib.parse import urljoin
+
+from sgrequests import SgRequests
+
 
 def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+    with open("data.csv", mode="w", encoding="utf-8") as output_file:
+        writer = csv.writer(
+            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+        )
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(
+            [
+                "locator_domain",
+                "page_url",
+                "location_name",
+                "street_address",
+                "city",
+                "state",
+                "zip",
+                "country_code",
+                "store_number",
+                "phone",
+                "location_type",
+                "latitude",
+                "longitude",
+                "hours_of_operation",
+            ]
+        )
         # Body
         for row in data:
             writer.writerow(row)
 
+
 def fetch_data():
-    locator_domain = 'https://www.sonesta.com/'
-    ext = 'destinations'
+    # Your scraper here
+    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
 
-    driver = SgSelenium().chrome()
-    driver.get(locator_domain + ext)
+    items = []
 
-    main = driver.find_element_by_css_selector('main#main-content')
-    us_locs = main.find_element_by_css_selector('div.location-listing__column--left')
-    hrefs = us_locs.find_elements_by_css_selector('a')
+    start_url = "https://www.sonesta.com/sonestahotel"
+    domain = re.findall("://(.+?)/", start_url)[0].replace("www.", "")
+    hdr = {
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
+    }
+    response = session.get(start_url, headers=hdr)
+    dom = etree.HTML(response.text)
 
-    link_list = []
-    for href in hrefs:
-        link_list.append(href.get_attribute('href'))
+    all_locations = dom.xpath('//a[@class="layout-listing__title-linked"]/@href')
+    for url in all_locations:
+        store_url = urljoin(start_url, url)
+        loc_response = session.get(store_url)
+        loc_dom = etree.HTML(loc_response.text)
+        poi = loc_dom.xpath('//script[@data-react-helmet="true"]/text()')[0]
+        poi = json.loads(poi)
 
-    all_store_data = []
-    for link in link_list:
-        driver.get(link)
-        driver.implicitly_wait(10)
+        location_name = poi["@graph"][0]["name"]
+        location_name = location_name if location_name else "<MISSING>"
+        street_address = poi["@graph"][0]["address"]["streetAddress"]
+        street_address = street_address if street_address else "<MISSING>"
+        city = poi["@graph"][0]["address"]["addressLocality"]
+        city = city if city else "<MISSING>"
+        state = poi["@graph"][0]["address"]["addressRegion"]
+        state = state if state else "<MISSING>"
+        zip_code = poi["@graph"][0]["address"]["postalCode"]
+        zip_code = zip_code if zip_code else "<MISSING>"
+        country_code = poi["@graph"][0]["address"]["addressCountry"]
+        country_code = country_code if country_code else "<MISSING>"
+        if country_code != "US":
+            continue
+        store_number = "<MISSING>"
+        phone = poi["@graph"][0].get("telephone")
+        phone = phone if phone else "<MISSING>"
+        location_type = poi["@graph"][0].get("@type")
+        location_type = location_type if location_type else "<MISSING>"
+        latitude = "<MISSING>"
+        longitude = "<MISSING>"
+        if poi["@graph"][0].get("geo"):
+            latitude = poi["@graph"][0]["geo"]["latitude"]
+            longitude = poi["@graph"][0]["geo"]["longitude"]
+        hours_of_operation = "<MISSING>"
 
-        location_name = driver.find_element_by_css_selector('div.footer-primary__name').text
-        phone_number = driver.find_element_by_css_selector('div.footer-primary__number').text
-        street_address = driver.find_element_by_css_selector('span.thoroughfare').text
-        city = driver.find_element_by_css_selector('span.locality').text
-        state = driver.find_element_by_css_selector('span.state').text
-        zip_code = driver.find_element_by_css_selector('span.postal-code').text
+        item = [
+            domain,
+            store_url,
+            location_name,
+            street_address,
+            city,
+            state,
+            zip_code,
+            country_code,
+            store_number,
+            phone,
+            location_type,
+            latitude,
+            longitude,
+            hours_of_operation,
+        ]
 
-        country_code = 'US'
-        store_number = '<MISSING>'
-        location_type = '<MISSING>'
+        items.append(item)
 
-        map_div = driver.find_elements_by_css_selector('div.property-teaser-map')
-        if len(map_div) == 1:
-            lat = map_div[0].get_attribute('data-lat')
-            longit = map_div[0].get_attribute('data-lng')
-        else:
-            lat = '<MISSING>'
-            longit = '<MISSING>'
+    return items
 
-        hours = '<MISSING>'
-
-        store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
-                      store_number, phone_number, location_type, lat, longit, hours]
-
-        all_store_data.append(store_data)
-
-    driver.quit()
-    return all_store_data
 
 def scrape():
     data = fetch_data()
     write_output(data)
 
-scrape()
+
+if __name__ == "__main__":
+    scrape()

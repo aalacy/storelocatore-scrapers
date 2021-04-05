@@ -1,5 +1,6 @@
 import csv
 import json
+from lxml import etree
 
 from sgrequests import SgRequests
 
@@ -73,7 +74,22 @@ def fetch_data():
         latitude = latitude if latitude else "<MISSING>"
         longitude = poi["_geoloc"]["lng"]
         longitude = longitude if longitude else "<MISSING>"
-        hours_of_operation = "<MISSING>"
+
+        store_response = session.get(store_url)
+        store_dom = etree.HTML(store_response.text)
+        hours_of_operation = store_dom.xpath(
+            '//table[@class="LocationCardText__hours"]//text()'
+        )
+        hours_of_operation = [
+            elem.strip() for elem in hours_of_operation if elem.strip()
+        ]
+        if not hours_of_operation:
+            hours_of_operation = store_dom.xpath(
+                '//p[@class="LocationCardText__todays-hours"]//text()'
+            )
+        hours_of_operation = (
+            " ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
+        )
 
         item = [
             DOMAIN,

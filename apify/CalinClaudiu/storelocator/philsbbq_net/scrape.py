@@ -137,7 +137,7 @@ def scrape():
                                      data_fetcher=fetch_data,
                                      field_definitions=field_defs,
                                      log_stats_interval=25,
-                                     post_process_filter=lambda rec: rec['location_name'] != 'Corporate Office')
+                                     post_process_filter=lambda rec: rec.location_name() != 'Corporate Office')
 
     pipeline.run()
 

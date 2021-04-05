@@ -2,81 +2,307 @@ import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
-import json
 from sglogging import SgLogSetup
+from geopy.geocoders import Nominatim
+import usaddress
 
-logger = SgLogSetup().get_logger('f45training_com')
-
-
-
-
+logger = SgLogSetup().get_logger("f45training_com")
 session = SgRequests()
 
-def write_output(data):
-    with open('data.csv', mode='w',encoding="utf-8") as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
+def write_output(data):
+    with open("data.csv", mode="w", newline="", encoding="utf-8") as output_file:
+        writer = csv.writer(
+            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+        )
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","raw_address"])
+        writer.writerow(
+            [
+                "locator_domain",
+                "location_name",
+                "street_address",
+                "city",
+                "state",
+                "zip",
+                "country_code",
+                "store_number",
+                "phone",
+                "location_type",
+                "latitude",
+                "longitude",
+                "hours_of_operation",
+                "page_url",
+            ]
+        )
         # Body
         for row in data:
             writer.writerow(row)
 
-def fetch_data():
-    headers = {
-    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
-    }
-    base_url = "https://f45training.com"
-    r = session.get("https://f45training.com/find-a-studio/",headers=headers)
-    soup = BeautifulSoup(r.text,"lxml")
-    return_main_object = []
 
-    scripts = soup.find_all("script")
-    return_main_object = []
-    for script in scripts:
-        if "window.domains" in script.text:
-            location_list = json.loads(script.text.split("window.studios = ")[1].split("}]};")[0] + "}]}")["hits"]
-            for i in range(len(location_list)):
-                current_store = location_list[i]
-                store = []
-                store.append("https://f45training.com")
-                store.append(current_store["name"])
-                logger.info(current_store["slug"])
-                if current_store["location"] == "":
-                    continue
-                if current_store["country"] == "United States":
-                    store.append("<INACCESSIBLE>")
-                    store.append("<INACCESSIBLE>")
-                    store.append("<INACCESSIBLE>")
-                    store.append("<INACCESSIBLE>")
-                    store.append("US")
-                elif current_store["country"] == "Canada":
-                    store.append("<INACCESSIBLE>")
-                    store.append("<INACCESSIBLE>")
-                    store.append("<INACCESSIBLE>")
-                    store.append("<INACCESSIBLE>")
-                    store.append("CA")
-                else:
-                    continue
-                store.append(current_store["id"])
-                location_request = session.get("https://f45training.com/" + current_store["slug"],headers=headers)
-                location_soup = BeautifulSoup(location_request.text,"lxml")
-                if location_soup.find("a",{"href":re.compile('tel:')}) == None:
+def fetch_data():
+    base_url = "https://f45training.com/"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.72 Safari/537.36"
+    }
+    for index, url in enumerate(
+        [
+            "https://f45training.com/find-a-studio/",
+            "https://f45training.ca/find-a-studio/",
+        ]
+    ):
+        if index == 0:
+            r = session.get(url, headers=headers)
+            soup = BeautifulSoup(r.text, "lxml")
+            data = soup.find("div", {"class": "clear-fix"}).find_all("li")
+
+            for dt in data:
+                page_url = dt.find("a")["href"]
+                location_name = (
+                    dt.find("span", {"class": "text-wrapper"})
+                    .text.strip()
+                    .replace("F45", "")
+                    .replace("  – Opening Soon", " – Opening Soon")
+                )
+
+                r1 = session.get(page_url, headers=headers)
+                soup1 = BeautifulSoup(r1.text, "lxml")
+                try:
+                    all_data = soup1.find("div", {"class": "sm-ptb"}).find("p").text
+                    a = usaddress.parse(all_data)
+                    old_dict = dict(a)
+                    new_dict = {}
+                    for key, value in old_dict.items():
+                        if value in new_dict:
+                            new_dict[value].append(key)
+                        else:
+                            new_dict[value] = [key]
+                except:
+                    pass
+                try:
+                    temp_latitude = (
+                        soup1.find("div", {"class": "sm-ptb"})
+                        .find("a")["href"]
+                        .split("=")[1]
+                        .split(",")
+                    )
+                    latitude = temp_latitude[0]
+                except:
+                    latitude = "<MISSING>"
+                try:
+                    temp_longitude = (
+                        soup1.find("div", {"class": "sm-ptb"})
+                        .find("a")["href"]
+                        .split("=")[1]
+                        .split(",")
+                    )
+                    longitude = temp_longitude[1]
+                except:
+                    longitude = "<MISSING>"
+                try:
+                    street_address = (
+                        soup1.find("div", {"class": "sm-ptb"})
+                        .find("p")
+                        .text.replace("USA", "")
+                        .replace("United States", "")
+                        .replace(",", "")
+                        .strip()
+                    )
+                except:
+                    street_address = "<MISSING>"
+                try:
+                    city = " ".join(new_dict["PlaceName"]).replace(",", "")
+                except:
+                    city = "<MISSING>"
+                try:
+                    state = new_dict["StateName"][0].replace(",", "")
+                except:
+                    state = "<MISSING>"
+                try:
+                    zipp = new_dict["ZipCode"][0].replace(",", "")
+                except:
+                    zipp = "<MISSING>"
+                country_code = "US"
+                store_number = "<MISSING>"
+                try:
+                    phone = (
+                        soup1.find("a", {"href": re.compile("tel:")})
+                        .text.split("/")[0]
+                        .split(",")[0]
+                        .replace("(JF45)", "")
+                    )
+                except:
                     phone = "<MISSING>"
-                else:
-                    phone = location_soup.find("a",{"href":re.compile('tel:')}).text
-                logger.info(phone)
-                store.append(phone.split("/")[0].split(",")[0].replace("(JF45)","") if phone != "" else "<MISSING>")
-                store.append("f45")
-                store.append(current_store["_geoloc"]["lat"])
-                store.append(current_store["_geoloc"]["lng"])
-                store.append("<MISSING>")
-                store.append(current_store["location"])
-                return_main_object.append(store)
-    return return_main_object
+                try:
+                    location_type = "F45 Training"
+                except:
+                    location_type = "<MISSING>"
+
+                hours_of_operation = "<MISSING>"
+                street_address = (
+                    street_address.replace(city, "")
+                    .replace(state, "")
+                    .replace(zipp, "")
+                    .strip()
+                )
+                store = []
+                store.append(base_url)
+                store.append(location_name if location_name else "<MISSING>")
+                store.append(street_address if street_address else "<MISSING>")
+                store.append(city if city else "<MISSING>")
+                store.append(state if state else "<MISSING>")
+                store.append(zipp if zipp else "<MISSING>")
+                store.append(country_code if country_code else "<MISSING>")
+                store.append(store_number if store_number else "<MISSING>")
+                store.append(phone if phone else "<MISSING>")
+                store.append(location_type)
+                store.append(latitude if latitude else "<MISSING>")
+                store.append(longitude if longitude else "<MISSING>")
+                store.append(hours_of_operation)
+                store.append(page_url if page_url else "<MISSING>")
+                store = [
+                    x.replace("\n", " ").replace("\t", "").replace("\r", "")
+                    if isinstance(x, str)
+                    else x
+                    for x in store
+                ]
+                yield store
+
+        elif index == 1:
+            r2 = session.get(url, headers=headers)
+            soup2 = BeautifulSoup(r2.text, "lxml")
+            data1 = soup2.find("div", {"class": "clear-fix"}).find_all("li")
+
+            for dt1 in data1:
+                page_url = dt1.find("a")["href"]
+                location_name = (
+                    dt1.find("span", {"class": "text-wrapper"})
+                    .text.strip()
+                    .replace("F45", "")
+                    .replace(
+                        "                                                                 – Opening Soon",
+                        " – Opening Soon",
+                    )
+                )
+                r3 = session.get(page_url, headers=headers)
+                soup3 = BeautifulSoup(r3.text, "lxml")
+                try:
+                    all_data = (
+                        soup3.find("div", {"class": "sm-ptb"}).find("p").text.split(",")
+                    )
+                except:
+                    pass
+                try:
+                    street_address = all_data[0]
+                except:
+                    street_address = "<MISSING>"
+                try:
+                    temp_latitude1 = (
+                        soup3.find("div", {"class": "sm-ptb"})
+                        .find("a")["href"]
+                        .split("=")[1]
+                        .split(",")
+                    )
+                    latitude = temp_latitude1[0]
+                except:
+                    latitude = "<MISSING>"
+                try:
+                    temp_longitude1 = (
+                        soup3.find("div", {"class": "sm-ptb"})
+                        .find("a")["href"]
+                        .split("=")[1]
+                        .split(",")
+                    )
+                    longitude = temp_longitude1[1]
+                except:
+                    longitude = "<MISSING>"
+                try:
+                    temp_data1 = (
+                        soup3.find("div", {"class": "sm-ptb"})
+                        .find("a")["href"]
+                        .split("=")[1]
+                        .split(",")
+                    )
+                    geolocator = Nominatim(user_agent="myApp")
+                    location1 = geolocator.reverse(temp_data1)
+                    j = location1.raw["address"]
+                except:
+                    continue
+                try:
+                    city = j["city"]
+                except:
+                    city = "<MISSING>"
+                try:
+                    try:
+                        all_data = soup1.find("div", {"class": "sm-ptb"}).find("p").text
+                        b = re.findall("[A-Z]{2}", all_data)
+                        state = b[0]
+                    except:
+                        state = "<MISSING>"
+                except:
+                    state = "<MISSING>"
+                try:
+                    all_data = soup3.find("div", {"class": "sm-ptb"}).find("p").text
+                    post = re.findall(
+                        r"[A-Z]{1}[0-9]{1}[A-Z]{1}\s*[0-9]{1}[A-Z]{1}[0-9]{1}", all_data
+                    )
+                    try:
+                        d = post[0]
+                        if len(d) == 7:
+                            zipp = d
+                    except:
+                        zipp = "<MISSING>"
+                except:
+                    zipp = "<MISSING>"
+                country_code = "CA"
+                store_number = "<MISSING>"
+                try:
+                    phone = (
+                        soup3.find("a", {"href": re.compile("tel:")})
+                        .text.split("/")[0]
+                        .split(",")[0]
+                        .replace("(JF45)", "")
+                    )
+                except:
+                    phone = "<MISSING>"
+                try:
+                    location_type = "F45 Training"
+                except:
+                    location_type = "<MISSING>"
+                hours_of_operation = "<MISSING>"
+
+                street_address = (
+                    street_address.replace(city, "")
+                    .replace(state, "")
+                    .replace(zipp, "")
+                    .strip()
+                )
+                store = []
+                store.append(base_url)
+                store.append(location_name if location_name else "<MISSING>")
+                store.append(street_address if street_address else "<MISSING>")
+                store.append(city if city else "<MISSING>")
+                store.append(state if state else "<MISSING>")
+                store.append(zipp if zipp else "<MISSING>")
+                store.append(country_code if country_code else "<MISSING>")
+                store.append(store_number if store_number else "<MISSING>")
+                store.append(phone if phone else "<MISSING>")
+                store.append(location_type)
+                store.append(latitude if latitude else "<MISSING>")
+                store.append(longitude if longitude else "<MISSING>")
+                store.append(hours_of_operation)
+                store.append(page_url if page_url else "<MISSING>")
+                store = [
+                    x.replace("\n", " ").replace("\t", "").replace("\r", "")
+                    if isinstance(x, str)
+                    else x
+                    for x in store
+                ]
+                yield store
+
 
 def scrape():
     data = fetch_data()
     write_output(data)
+
 
 scrape()

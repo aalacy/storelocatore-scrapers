@@ -95,7 +95,7 @@ def fetch_data():
                     .split("!3d", 1)
                 )
                 ccode = "US"
-                print("here")
+
         try:
             hourslink = soup.find("div", {"class": "hero-content"}).select_one(
                 'a:contains("Club Hours")'

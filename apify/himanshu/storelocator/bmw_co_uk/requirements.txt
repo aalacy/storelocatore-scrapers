@@ -3,4 +3,4 @@ requests==2.11.1
 beautifulsoup4==4.7.1
 sgrequests
 sglogging
-sgzip==0.0.55
+sgzip

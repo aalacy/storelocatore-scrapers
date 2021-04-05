@@ -1,105 +1,147 @@
-# -*- coding: utf-8 -*-
 import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
-import re
-
+import json
 
 session = SgRequests()
 
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-        # Body
+def write_output(data):
+    with open("data.csv", mode="w", newline="") as output_file:
+        writer = csv.writer(
+            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+        )
+
+        writer.writerow(
+            [
+                "locator_domain",
+                "location_name",
+                "street_address",
+                "city",
+                "state",
+                "zip",
+                "country_code",
+                "store_number",
+                "phone",
+                "location_type",
+                "latitude",
+                "longitude",
+                "hours_of_operation",
+                "page_url",
+            ]
+        )
+
         for row in data:
             writer.writerow(row)
 
+
 def fetch_data():
-    base_url = "https://donsandbens.com"
-
+    addressess = []
+    match_dict = {}
+    base_url = "https://donsandbens.com/locations/"
     r = session.get(base_url)
+    soup = BeautifulSoup(r.text, "lxml")
+    for link in soup.find_all("div", {"class": "elementor-post__card"}):
+        url = link.find("a")["href"]
+        r1 = session.get(url)
+        soup1 = BeautifulSoup(r1.text, "lxml")
+        check_phone = list(
+            soup1.find(
+                "div", {"class": "elementor-text-editor elementor-clearfix"}
+            ).stripped_strings
+        )[-2]
+        match_dict[check_phone] = url
+    json_data = json.loads(
+        str(soup)
+        .split("['web_data/donsandben.json'] = JSON.parse(")[1]
+        .split('");')[0]
+        .strip('"')
+        .replace("\\", "")
+    )
+    for val in json_data["merchant_configs"]:
+        location_name = val["merchant"]["name"]
+        street_address = val["merchant"]["address"]["address_properties"][
+            "street_address"
+        ].replace("Address:", "")
+        city = val["merchant"]["address"]["address_properties"]["city"]
+        state = val["merchant"]["address"]["address_properties"]["state"]
+        zipp = val["merchant"]["address"]["address_properties"]["zip"]
+        country_code = val["merchant"]["address"]["country_code"]
+        temp_phone = val["merchant"]["phone_number"]
+        phone = "(" + temp_phone[:3] + ")" + temp_phone[3:6] + "-" + temp_phone[6:]
+        phone = phone.replace("(210)399-1283", "(210)339-1283")
+        latitude = val["merchant"]["address"]["address_properties"]["lat"]
+        longitude = val["merchant"]["address"]["address_properties"]["lng"]
+        hours_of_operation = "Mon to Sat 11:00AM-8:00PM, Sun-Closed"
+        if phone in match_dict:
+            page_url = match_dict[phone]
+            match_dict.pop(phone)
 
-    soup = BeautifulSoup(r.text,"lxml")
+        store = []
+        store.append("https://donsandbens.com/")
+        store.append(location_name)
+        store.append(street_address)
+        store.append(city)
+        store.append(state)
+        store.append(zipp)
+        store.append(country_code)
+        store.append("<MISSING>")
+        store.append(phone)
+        store.append("Dons and Bens")
+        store.append(latitude)
+        store.append(longitude)
+        store.append(hours_of_operation)
+        store.append(page_url)
+        if store[2] in addressess:
+            continue
+        addressess.append(store[2])
+        yield store
 
-    count = 0
+    for val in match_dict.values():
+        page_url = val
+        soup2 = BeautifulSoup(session.get(page_url).text, "lxml")
+        location_name = (
+            "Don's and Ben's Liquor "
+            + soup2.find(
+                "h4", {"class": "elementor-heading-title elementor-size-default"}
+            ).text
+        )
+        addr = list(
+            soup2.find(
+                "div", {"class": "elementor-text-editor elementor-clearfix"}
+            ).stripped_strings
+        )
+        street_address = addr[0].split("•")[0].replace("Address:", "").strip()
+        city = addr[0].split("•")[1].strip().split(",")[0]
+        state = addr[0].split("•")[1].strip().split(",")[1].strip().split(" ")[0]
+        zipp = addr[0].split("•")[1].strip().split(",")[1].strip().split(" ")[1]
+        phone = addr[2]
+        hours_of_operation = "Mon to Sat 11:00AM-8:00PM, Sun-Closed"
 
-    return_main_object = []
+        store = []
+        store.append("https://donsandbens.com/")
+        store.append(location_name)
+        store.append(street_address)
+        store.append(city)
+        store.append(state)
+        store.append(zipp)
+        store.append("US")
+        store.append("<MISSING>")
+        store.append(phone)
+        store.append("Dons and Bens")
+        store.append("<MISSING>")
+        store.append("<MISSING>")
+        store.append(hours_of_operation)
+        store.append(page_url)
+        if store[2] in addressess:
+            continue
+        addressess.append(store[2])
+        yield store
 
-    k = soup.find_all('div',{'class':'team-member'})
-    store_name= []
-    store_detail =[]
-
-    for i in k:
-        for j in i.h4:
-            store_name.append(j)
-            
-
-    for i in k:
-        temp_var = []
-        link = i.find_all('div',{'class':'share-social'})
-
-        for j in link:
-            data = j.a['href'].split('@')
-            
-            if len(data) != 1 :
-                latitude1  = data[1].split(',')[0]
-                longitude1 = data[1].split(',')[1]
-            else:
-                latitude1 = "<MISSING>"
-                longitude1 = "<MISSING>"
-
-        
-        for j in i.h6:
-            temp = j.replace('•',',').split(',')
-
-            if len(temp)== 4:
-                temp[0] = temp[0] + temp[1]
-                del temp[1]
-
-        
-            street_address = temp[0]
-            
-            city = temp[1]
-            state = temp[2].split( )[0]
-            zipcode =  temp[2].split( )[1]
-            country_code = "US"
-            store_number = "<MISSING>"
-            phone = "<MISSING>"
-            location_type = "DON'S and BEN'S"
-            latitude = latitude1
-            longitude = longitude1
-            hours_of_operation = "<MISSING>"
-        
-        
-            temp_var.append(street_address.strip())
-            temp_var.append(city.strip())
-            temp_var.append(state)
-            temp_var.append(zipcode)
-            temp_var.append(country_code)
-            temp_var.append(store_number)
-            temp_var.append(phone)
-            temp_var.append(location_type)
-            temp_var.append(latitude)
-            temp_var.append(longitude)
-            temp_var.append(hours_of_operation)
-            store_detail.append(temp_var)
-
-    main_object = []
-
-    for i  in range(len(store_name)):
-        store = list()
-        store.append('https://donsandbens.com')
-        store.append(store_name[i])
-        store.extend(store_detail[i])
-        main_object.append(store)
-
-    return main_object
 
 def scrape():
     data = fetch_data()
     write_output(data)
+
 
 scrape()

@@ -1,0 +1,5 @@
+sgvalidator
+sgrequests
+sglogging
+sgzip
+lxml==4.5.2

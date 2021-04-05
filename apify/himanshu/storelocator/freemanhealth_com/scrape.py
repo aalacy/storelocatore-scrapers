@@ -1,93 +1,184 @@
 import csv
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
-import re
-import json
-import requests
-from sglogging import SgLogSetup
+import time
+import random
 
-logger = SgLogSetup().get_logger('freemanhealth_com')
-
-
+session = SgRequests()
 
 
 def write_output(data):
-    with open('data.csv', mode='w',newline='', encoding="utf-8") as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
-        
+    with open("data.csv", mode="w", encoding="utf-8", newline="") as output_file:
+        writer = csv.writer(
+            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+        )
+        # Header
+        writer.writerow(
+            [
+                "locator_domain",
+                "location_name",
+                "street_address",
+                "city",
+                "state",
+                "zip",
+                "country_code",
+                "location_number",
+                "phone",
+                "location_type",
+                "latitude",
+                "longitude",
+                "hours_of_operation",
+                "page_url",
+            ]
+        )
+        # Body
         for row in data:
             writer.writerow(row)
 
-def fetch_data():
-    return_main_object = []
-    addresses = []
-    addressesess=[]
+
+def url_list():
     headers = {
-    'accept': "application/json, text/javascript, */*; q=0.01",
-    'user-agent': "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.163 Safari/537.36",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36",
     }
-    result_coords = []
-    link={33:"https://www.freemanhealth.com/locations/location-search-results?PostalCode=85029&LocationDescendants=true&page=1&count=5",18:"https://www.freemanhealth.com/locations/location-search-results?PostalCode=85029&LocationDescendants=true&page=1&count=10",8:"https://www.freemanhealth.com/locations/location-search-results?PostalCode=85029&LocationDescendants=true&page=1&count=25",5:"https://www.freemanhealth.com/locations/location-search-results?PostalCode=85029&LocationDescendants=true&page=1&count=50"}
-    
-    for q in link:
-        for i in range(0,q):
-            url123 = str(link[q].split("page=")[0].replace("1",'')+"page="+str(i)+"&"+link[q].split("page=")[1].split("&")[1])
-            response = requests.get(url123, headers=headers)
-            soup=BeautifulSoup(response.text,'lxml')
-            data = soup.find(lambda tag: (tag.name == "script") and "var g_ihApplicationPath" in tag.text.strip())
-            data1=json.loads(data.text.split("moduleInstanceData_IH_Public")[-1].split(" = ")[1].split(" if (!window.controllerNames)")[0].replace("};","}"))
-            page_url1=[]
-            for d in json.loads(data1['SettingsData'])['Records']:
-                for d1 in d['StaticPageZones']:
-                    for d2 in d1['Value']['FieldColumns']:
-                        for d3 in d2['Fields']:
-                            if "URL" in d3 and "location" in d3['URL']:
-                                if str(d3['URL']) not in addresses :
-                                    addresses.append(str(d3['URL']))
-                                    if "/location/" in d3['URL']:
-                                        page_url1.append("https://www.freemanhealth.com"+d3['URL'])
-            # logger.info(page_url1)
-            for urls in page_url1:
-                response1 = requests.get(urls, headers=headers)
-                soup1 = BeautifulSoup(response1.text, "lxml")
-                # latitude = str(soup1).split("center: {")[1].split("},")[0].split("lat: ")[1].split(",")[0]
-                # longitude = str(soup1).split("center: {")[1].split("},")[0].split("lng: ")[1].split(",")[0]
-                street_address=(soup1.find("meta",{"itemprop":"streetAddress"})['content'])
-                name=soup1.find_all("meta",{"itemprop":'name'})[-1]['content']
-                # logger.info(name)
-                city = soup1.find("meta",{"itemprop":"addressLocality"})['content']
-                state = soup1.find("meta",{"itemprop":"addressRegion"})['content']
-                zipp = soup1.find("meta",{"itemprop":"postalCode"})['content']
-                phone = soup1.find("meta",{"itemprop":"telephone"})['content']    
-                loctype = "<MISSING>"
-                store_number = "<MISSING>"
-                store = []
-                store.append("https://www.freemanhealth.com")
-                store.append(name) 
-                store.append(street_address if street_address else "<MISSING>")
-                store.append(city if city else "<MISSING>")
-                store.append(state if state else "<MISSING>")
-                store.append(zipp if zipp else "<MISSING>")
-                store.append("US")
-                store.append(store_number if store_number else "<MISSING>") 
-                store.append(phone if phone else "<MISSING>")
-                store.append("<MISSING>")
-                store.append("<MISSING>")
-                store.append("<MISSING>")
-                store.append("<MISSING>")
-                store.append(urls)
-                if store[2] in addressesess:
-                    continue
-                addressesess.append(store[2])
-                # logger.info("data ==="+str(store))
-                # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
-                yield store
-                        
-        
-                  
-def scrape():
-    data = fetch_data()
+    url_list = []
+    loc_url = "https://freemanhealth.com/all-locations"
+    while True:
+        try:
+            res = session.get(loc_url, headers=headers)
+            soup = BeautifulSoup(res.text, "html5lib")
+            curr_url = soup.find(class_="pager__item is-active").find("a").get("href")
+            url_list.append(curr_url)
+            next_url = (
+                soup.find(class_="pager__item pager__item--next").find("a").get("href")
+            )
+            loc_url = loc_url + next_url
+        except AttributeError:
+            break
+    return url_list
+
+
+def location_type():
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36",
+    }
+    filter_url = ""
+    filter_name = ""
+    location_type_dict = {}
+    base_url = "https://freemanhealth.com/all-locations"
+    res = session.get(base_url, headers=headers)
+    soup = BeautifulSoup(res.text, "html5lib")
+    filters = soup.find_all(class_="facet-item")
+    for filter in filters:
+        location_list = []
+        filter_name = filter.find(class_="facet-item__value").text
+        anchor = filter.find("a")
+        url = anchor.get("href")
+        if "specialty" in url:
+            filter_url = url
+            filter_res = session.get("https://freemanhealth.com" + filter_url)
+            filter_soup = BeautifulSoup(filter_res.text, "html5lib")
+            records = filter_soup.find_all("article", {"role": "article"})
+            for record in records:
+                location_name = record.find(
+                    "h2",
+                    {"class": "coh-heading coh-style-heading-3-size coh-ce-4da6d1f4"},
+                ).text.strip()
+                location_list.append(location_name)
+            location_type_dict.update({filter_name: location_list})
+    return location_type_dict
+
+
+def fetch_data(list1, loc_dict):
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36",
+    }
+    locator_domain = "https://freemanhealth.com"
+    base_url = "https://freemanhealth.com/all-locations"
+    for url in list1:
+        base_gap = random.randint(1, 5)
+        time.sleep(base_gap)
+        page = base_url + url
+        res = session.get(page, headers=headers)
+        soup = BeautifulSoup(res.text, "html5lib")
+        records = soup.find_all("article", {"role": "article"})
+        for record in records:
+            location_name = record.find(
+                "h2", {"class": "coh-heading coh-style-heading-3-size coh-ce-4da6d1f4"}
+            ).text.strip()
+            street_address = record.find(
+                "p", {"class": "coh-paragraph coh-ce-e013c31a"}
+            ).text.strip()
+            city = record.find(
+                "p", {"class": "coh-paragraph coh-ce-6ae15eb3"}
+            ).text.split(",")[0]
+            state = (
+                record.find("p", {"class": "coh-paragraph coh-ce-6ae15eb3"})
+                .text.split(",")[1]
+                .split()[0]
+            )
+            zip_code = (
+                record.find("p", {"class": "coh-paragraph coh-ce-6ae15eb3"})
+                .text.split(",")[1]
+                .split()[1]
+            )
+            phone_no = record.find(
+                "a", {"class": "coh-link coh-ce-ee7ae836"}
+            ).text.strip()
+            country_code = "US"
+            location_no = "<MISSING>"
+            location_type = "<MISSING>"
+            hours_of_operation = "<MISSING>"
+            latitude = "<MISSING>"
+            longitude = "<MISSING>"
+            page_url = "<MISSING>"
+
+            jump_gap = random.randint(1, 3)
+            time.sleep(jump_gap)
+            jump_url = (
+                str(
+                    record.find(
+                        "a", {"class": "coh-link coh-style-link-with-icon-long"}
+                    )
+                )
+                .split()[3]
+                .split('"')[1]
+            )
+            res2 = session.get(jump_url)
+            soup2 = BeautifulSoup(res2.text, "html5lib")
+            timing = soup2.find_all("p", {"class": "coh-paragraph"})[-2].text
+            if "day" in timing:
+                hours_of_operation = timing.replace("\n", ",")
+
+            page_url = jump_url
+
+            for filter, locations in loc_dict.items():
+                if location_name in locations:
+                    location_type = filter
+                    break
+
+            location = []
+            location.append(locator_domain if locator_domain else "<MISSING>")
+            location.append(location_name if location_name else "<MISSING>")
+            location.append(street_address if street_address else "<MISSING>")
+            location.append(city if city else "<MISSING>")
+            location.append(state if state else "<MISSING>")
+            location.append(zip_code if zip_code else "<MISSING>")
+            location.append(country_code if country_code else "<MISSING>")
+            location.append(location_no if location_no else "<MISSING>")
+            location.append(phone_no if phone_no else "<MISSING>")
+            location.append(location_type if location_type else "<MISSING>")
+            location.append(latitude if latitude else "<MISSING>")
+            location.append(longitude if longitude else "<MISSING>")
+            location.append(hours_of_operation if hours_of_operation else "<MISSING>")
+            location.append(page_url if page_url else "<MISSING>")
+            yield location
+
+
+def myscrape():
+    list1 = url_list()
+    loc_dict = location_type()
+    data = fetch_data(list1, loc_dict)
     write_output(data)
-scrape()
+
+
+myscrape()

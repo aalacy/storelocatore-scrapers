@@ -1,8 +1,4 @@
-lxml
-beautifulsoup4
-sgrequests
-certifi
-urllib3
-pyopenssl
-sglogging
-sgzip==0.0.55
+beautifulsoup4==4.9.3
+sgselenium==0.0.15
+sglogging==0.0.4
+sgzip==0.2.1

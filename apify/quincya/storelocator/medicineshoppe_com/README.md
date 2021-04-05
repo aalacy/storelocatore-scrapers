@@ -1,0 +1,2 @@
+--ignore StateLevelCountValidator (Need to confirm scrape complete..tested with max radius set to 100)
+--ignore StreetAddressHasNumber --ignore --ignore GeoConsistencyValidator --ignore CountryValidator --ignore LatLngDuplicationValidator (Confirmed on website)

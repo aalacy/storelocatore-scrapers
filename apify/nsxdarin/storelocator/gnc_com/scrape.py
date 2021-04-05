@@ -1,40 +1,44 @@
 import csv
-from sgrequests import SgRequests
-import requests_random_user_agent  # noqa
 import json
 import re
 import time
 import random
 import threading
-from concurrent.futures import ThreadPoolExecutor, wait, ALL_COMPLETED
+from bs4 import BeautifulSoup
 from sglogging import SgLogSetup
+from sgrequests import SgRequests
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from sgzip.static import static_zipcode_list, SearchableCountries
 
 logger = SgLogSetup().get_logger("gnc_com")
-
-show_logs = False
 thread_local = threading.local()
 
 headers = {
-    "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36",
+    "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0",
 }
 
-re_get_json = re.compile(
-    r"map\.data\.addGeoJson\(\s*JSON\.parse\(\s*eqfeed_callback\((.+?)\)\s*\)\s*\);"
-)
-re_get_phone = re.compile(r'<a href="tel:(.+?)" class="store-phone">')
-re_get_hours_section = re.compile(r'<div class="storeLocatorHours">([\s\S]+?)<\/div>')
-re_get_hours_days = re.compile(r"<span><span>([\s\S]+?)<\/span>([\s\S]+?)<\/span>")
+MISSING = "<MISSING>"
+FIELDS = [
+    "locator_domain",
+    "page_url",
+    "location_name",
+    "street_address",
+    "city",
+    "state",
+    "zip",
+    "country_code",
+    "store_number",
+    "phone",
+    "location_type",
+    "latitude",
+    "longitude",
+    "hours_of_operation",
+]
 
 
-def sleep(min=2, max=10):
+def sleep(min=0, max=2):
     duration = random.randint(min, max)
     time.sleep(duration)
-
-
-def log(*args, **kwargs):
-    if show_logs:
-        logger.info(" ".join(map(str, args)), **kwargs)
 
 
 def write_output(data):
@@ -42,210 +46,173 @@ def write_output(data):
         writer = csv.writer(
             output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
         )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
+        writer.writerow(FIELDS)
+        for rows in data:
+            writer.writerows(rows)
 
 
-def get_session(reset=False):
+def get_session():
     # give each thread its own session object.
-    # when using proxy, each thread's session will have a unique IP, and we'll switch IPs every 10 requests
-    if (
-        (not hasattr(thread_local, "session"))
-        or (hasattr(thread_local, "request_count") and thread_local.request_count == 10)
-        or reset
-    ):
-        thread_local.session = SgRequests()
-        # print out what the new IP is ...
-        if show_logs:
-            r = thread_local.session.get("https://jsonip.com/")
-            log(
-                f"new IP for thread id {threading.current_thread().ident}: {r.json()['ip']}"
-            )
-
-    if hasattr(thread_local, "request_count") and thread_local.request_count == 10:
-        reset_request_count()
+    # when using proxy, each thread's session will have a unique IP, and we'll switch IPs every 6 requests
+    if not hasattr(thread_local, "session") or thread_local.request_count > 3:
+        thread_local.session = SgRequests(
+            retry_behavior=None, proxy_rotation_failure_threshold=3
+        )
+        thread_local.request_count = 0
 
     return thread_local.session
 
 
-def reset_request_count():
-    if hasattr(thread_local, "request_count"):
-        thread_local.request_count = 0
-
-
 def increment_request_count():
-    if not hasattr(thread_local, "request_count"):
-        thread_local.request_count = 1
-    else:
-        thread_local.request_count += 1
+    thread_local.request_count += 1
 
 
 def get_json_data(html):
-    match = re.search(re_get_json, html)
+    match = re.search(r"eqfeed_callback\((.+?)\)\s*\)\s*\)", html)
+    if not match:
+        return None
     json_text = match.group(1)
     return json.loads(json_text)
 
 
-def get_phone(html):
-    match = re.search(re_get_phone, html)
-    if match is None:
-        return "<MISSING>"
-    else:
-        return match.group(1)
+def get_phone(soup):
+    phone = soup.find("a", class_="store-phone")
+    return re.sub("(|)", "", phone.getText()) or MISSING if phone else MISSING
 
 
-def get_hours(html):
-    match_section = re.search(re_get_hours_section, html)
-    if match_section is None:
-        return "<MISSING>"
-
-    hours = ""
-    match_days = re.findall(re_get_hours_days, match_section.group(1))
-    if len(match_days) == 0:
-        return "<MISSING>"
-
-    for m in match_days:
-        if len(hours) > 0:
-            hours = hours + ", "
-        hours = f"{hours}{m[0].strip()}: {m[1].strip()}"
-
-    hours = hours.replace("\n", "")
-    return hours
+def extract_hours(node):
+    return node.getText().strip().replace("\n", " ").replace("null", MISSING)
 
 
-def search_zip(postal, reset=False, attempts=1):
-    log("searching: ", postal)
+def get_hours(soup):
+    storeHours = soup.find("div", class_="storeLocatorHours")
+    if not storeHours:
+        return MISSING
+
+    openingHours = storeHours.find_all("span", recursive=False)
+    hours_of_operation = [extract_hours(day) for day in openingHours]
+    for hours in hours_of_operation:
+        if MISSING not in hours:
+            return ",".join(hours_of_operation)
+
+    return MISSING
+
+
+def find_node(entityNum, soup):
+    link = soup.find("a", id=entityNum)
+    node = link.find_parent("td")
+    return node
+
+
+def search_zip(postal, tracker):
     url = "https://www.gnc.com/on/demandware.store/Sites-GNC2-Site/default/Stores-FindStores"
     payload = {
         "dwfrm_storelocator_countryCode": "US",
         "dwfrm_storelocator_distanceUnit": "mi",
         "dwfrm_storelocator_postalCode": postal,
-        "dwfrm_storelocator_maxdistance": "15",
+        "dwfrm_storelocator_maxdistance": "10",
         "dwfrm_storelocator_findbyzip": "Search",
     }
-    session = get_session(reset=reset)
-    # get the home page before each search to avoid captcha
-    session.get("https://www.gnc.com/", headers=headers)
-    sleep()
     try:
-        r = session.post(url, headers=headers, data=payload)
-        r.raise_for_status()
-        increment_request_count()
-        return get_json_data(r.text)["features"]
-    except Exception as ex:
-        logger.info(f">>> exception searching zip {postal} >>> {ex}")
+        with get_session() as session:
+            # get the home page before each search to avoid captcha
+            session.get("https://www.gnc.com/stores", headers=headers)
+            sleep()
+            res = session.post(url, data=payload, headers=headers)
+            res.raise_for_status()
+
+        data = get_json_data(res.text)
+        locations = data.get("features", []) if data else []
+        soup = BeautifulSoup(res.text, "html.parser")
+
+        pois = []
+        for location in locations:
+            store_id = location["properties"]["storenumber"]
+            if store_id in tracker:
+                continue
+            tracker.append(store_id)
+
+            node = find_node(store_id, soup)
+            location["properties"]["phone"] = get_phone(node)
+            location["properties"]["hours"] = get_hours(node)
+            pois.append(extract(location))
+
+        return pois
+
+    except Exception as e:
+        logger.error(f"error fetching {postal} >>> {e}")
+        return []
 
 
-def get_location(loc, reset_session=False, attempts=1):
+def get(obj, key):
+    return obj.get(key, MISSING) or MISSING
+
+
+def extract(loc):
     props = loc["properties"]
-    store_id = props["storenumber"]
-    website = "gnc.com"
-    typ = "<MISSING>"
-    name = props["title"]
-    url = "https://www.gnc.com/store-details?StoreID=" + store_id
-    addr = props["address1"]
-    if props["address2"] is not None:
-        addr = addr + ", " + props["address2"]
-    addr = addr.strip() if addr else "<MISSING>"
-    city = props["city"].strip()
-    state = props["state"]
-    zc = props["postalCode"]
-    lat = loc["geometry"]["coordinates"][1]
-    lng = loc["geometry"]["coordinates"][0]
-    country = "US"
-    session = get_session(reset=reset_session)
-    sleep()
-    try:
-        r = session.get(url, headers=headers)
-        r.raise_for_status()
-        increment_request_count()
-        phone = get_phone(r.text)
-        hours = get_hours(r.text)
+    locator_domain = "gnc.com"
+    store_number = props["storenumber"]
+    location_type = "<MISSING>"
+    location_name = get(props, "title")
+    page_url = f"https://www.gnc.com/store-details?StoreID={store_number}"
 
-        location = [
-            website,
-            url,
-            name,
-            addr,
-            city,
-            state,
-            zc,
-            country,
-            store_id,
-            phone,
-            typ,
-            lat,
-            lng,
-            hours,
-        ]
-        return [x if x else "<MISSING>" for x in location]
+    street_address = get(props, "address1")
+    if props["address2"]:
+        street_address += f", {props['address2']}"
+    street_address = street_address.strip() if street_address else MISSING
 
-    except Exception as ex:
-        logger.info(f">>> exception getting location {loc} >>> {ex}")
+    city = get(props, "city").strip()
+    state = get(props, "state")
+    postal = get(props, "postalCode")
+    country_code = "US"
+
+    geometry = loc["geometry"]
+    latitude = geometry["coordinates"][1]
+    longitude = geometry["coordinates"][0]
+
+    hours_of_operation = get(props, "hours")
+    phone = get(props, "phone")
+
+    location = {
+        "locator_domain": locator_domain,
+        "store_number": store_number,
+        "location_type": location_type,
+        "location_name": location_name,
+        "page_url": page_url,
+        "street_address": street_address,
+        "city": city,
+        "state": state,
+        "zip": postal,
+        "country_code": country_code,
+        "latitude": latitude,
+        "longitude": longitude,
+        "phone": phone,
+        "hours_of_operation": hours_of_operation,
+    }
+
+    return [location[field] for field in FIELDS]
 
 
 def fetch_data():
-    store_ids = []
-    zips = [
-        "60007",
-        "10002",
-        "90210",
-        "96795",
-        "99515",
-        "98115",
-        "88901",
-        "87101",
-        "59715",
-        "80014",
-        "75001",
-        "32034",
-        "70032",
-        "37011",
-        "63101",
-        "58102",
-        "55408",
-    ]
-    search_results = []
+    dedup_tracker = []
+    zip_searched = 0
+    zips = static_zipcode_list(10, SearchableCountries.USA)
 
-    with ThreadPoolExecutor(max_workers=5) as executor:
-        futures = [executor.submit(search_zip, zipcode) for zipcode in zips]
-        done, not_done = wait(futures, return_when=ALL_COMPLETED)
-        log(f"Done futures: {len(done)}")
-        log(f"Not Done futures: {len(not_done)}")
-        for result in futures:
-            locations = result.result()
-            for loc in locations:
-                store_id = loc["properties"]["storenumber"]
-                if store_id not in store_ids:
-                    log(f"queuing store id: {store_id}")
-                    search_results.append(loc)
-                    store_ids.append(store_id)
+    logger.info(f"total zips: {len(zips)}")
 
-    with ThreadPoolExecutor(max_workers=10) as executor:
-        futures = [executor.submit(get_location, result) for result in search_results]
-        wait(futures, return_when=ALL_COMPLETED)
-        for result in futures:
-            loc = result.result()
-            if loc is not None:
-                yield loc
+    with ThreadPoolExecutor() as executor:
+        logger.info(f"initialize executor with {executor._max_workers} workers")
+        futures = as_completed(
+            [executor.submit(search_zip, zipcode, dedup_tracker) for zipcode in zips]
+        )
+
+        for future in futures:
+            yield future.result()
+            zip_searched += 1
+
+            logger.info(
+                f"found: {len(dedup_tracker)} | zipcodes: {zip_searched}/{len(zips)}"
+            )
 
 
 def scrape():
@@ -253,4 +220,5 @@ def scrape():
     write_output(data)
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()
