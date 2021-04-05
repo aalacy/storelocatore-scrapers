@@ -81,7 +81,7 @@ def fetch_data():
                 name = line2.split('vendorName: "')[1].split('"')[0]
             if 'itemprop="streetAddress">' in line2:
                 add = line2.split('itemprop="streetAddress">')[1].split("<")[0]
-                add = add.replace(",", " ").strip()
+                add = add[:-1]
             if '<span itemprop="addressRegion" style="display:none">' in line2:
                 city = line2.split(
                     '<span itemprop="addressRegion" style="display:none">'

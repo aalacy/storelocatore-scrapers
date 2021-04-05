@@ -4,6 +4,7 @@ import json
 from bs4 import BeautifulSoup as bs
 from sgrequests import SgRequests
 from sglogging import sglog
+import usaddress
 
 
 DOMAIN = "jinya-ramenbar.com"
@@ -24,7 +25,6 @@ def write_output(data):
         writer = csv.writer(
             output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
         )
-        # Header
         writer.writerow(
             [
                 "locator_domain",
@@ -43,7 +43,6 @@ def write_output(data):
                 "hours_of_operation",
             ]
         )
-        # Body
         for row in data:
             writer.writerow(row)
 
@@ -106,6 +105,18 @@ def fetch_store_urls():
     return store_urls
 
 
+def parse_hoo(address, phone):
+    unused = ["Opening", "Temporarily", "ANNOUNCEMENT", "NOW OPEN"]
+    hoo = ", ".join(address[3:])
+    hoo = hoo.replace("/, ", "").replace(phone, "")
+    hoo = re.sub(r"\d{3}\-\d{3}\-\d{4},", "", hoo).strip()
+    for x in unused:
+        if x in hoo:
+            hoo = re.sub(x + ".*", "", hoo)
+    hoo = re.sub(r", $", "", hoo).strip()
+    return hoo
+
+
 def get_address(address, city):
     street_address = handle_missing(
         re.sub(
@@ -138,19 +149,40 @@ def fetch_data():
             location_name = location_name.replace("(Coming Soon)", "")
             location_type = "COMING_SOON"
         if "Downtown LA" in location_name:
-            street_address = get_address(address[0], "Los Angeles")
             city = "Los Angeles"
-        else:
-            city = handle_missing(location_name.split("|")[0].strip())
             street_address = get_address(address[0], city)
-        state = handle_missing(address[1].strip()[:2])
-        zip_code = handle_missing(address[1].strip().replace(state, ""))
+        elif "Washington DC" in location_name:
+            city = "Washington"
+            street_address = get_address(address[0], city)
+            state = "DC"
+            zip_code = handle_missing(address[1].strip().replace("DC", ""))
+        else:
+            state = handle_missing(address[1].strip()[:2])
+            zip_code = handle_missing(address[1].strip().replace(state, ""))
+            check_addr = address[0].split(".")
+            if len(check_addr) == 2:
+                city = handle_missing(check_addr[1]).strip()
+                if "Katy" in city:
+                    street_address = address[0].replace("Freeway Katy", "Freeway")
+                else:
+                    street_address = handle_missing(check_addr[0].strip())
+            else:
+                if len(zip_code) <= 5:
+                    parse_addr = usaddress.tag(", ".join(address))
+                    city = handle_missing(parse_addr[0]["PlaceName"])
+                    if "Katy" in city:
+                        street_address = address[0].replace("Freeway Katy", "Freeway")
+                    else:
+                        street_address = get_address(address[0], city)
+                else:
+                    city = handle_missing(location_name.split("|")[0].strip())
+                    street_address = get_address(address[0], city)
         country_code = "US" if len(zip_code) <= 5 else "CA"
         store_number = "<MISSING>"
         if len(address) > 2:
             phone = handle_missing(address[2])
             if len(address) >= 4:
-                hours_of_operation = ", ".join(address[3:])
+                hours_of_operation = parse_hoo(address, phone)
             else:
                 hours_of_operation = "<MISSING>"
         else:

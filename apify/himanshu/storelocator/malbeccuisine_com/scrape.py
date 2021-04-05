@@ -53,12 +53,17 @@ def fetch_data():
     for poi in all_locations:
         poi = json.loads(poi)
         store_url = start_url
-        location_name = poi["name"]
-        location_name = location_name if location_name else "<MISSING>"
         street_address = poi["address"]["streetAddress"]
         street_address = street_address if street_address else "<MISSING>"
         city = poi["address"]["addressLocality"]
         city = city if city else "<MISSING>"
+        location_name = dom.xpath(
+            '//p[a[span[contains(text(), "%s")]]]/preceding-sibling::h4/text()'
+            % street_address
+        )
+        if not location_name:
+            location_name = [f"malbec restaurant at {city}".capitalize()]
+        location_name = location_name[0] if location_name else "<MISSING>"
         state = poi["address"]["addressRegion"]
         state = state if state else "<MISSING>"
         zip_code = poi["address"]["postalCode"]

@@ -44,7 +44,7 @@ def fetch_data():
     website = "themattressfactoryinc.com"
     typ = "<MISSING>"
     country = "US"
-    loc = "<MISSING>"
+    loc = "https://www.themattressfactoryinc.com/assistance/store-locator/"
     logger.info("Pulling Stores")
     for item in json.loads(r.content):
         store = item["mattressStoreID"]
@@ -56,19 +56,13 @@ def fetch_data():
         phone = item["phone"]
         lat = item["latitude"]
         lng = item["longitude"]
-        try:
-            hours = (
-                "Mon-Fri: "
-                + item["regHours"]
-                + "; Sat: "
-                + item["satHours"]
-                + "; Sun: "
-                + item["sunHours"]
-            )
-        except:
-            hours = "<MISSING>"
+        hours = item["StoreTimings"].replace("<br/>", "; ")
         if "Tues, Wed, Thurs" in hours:
             hours = hours.replace("Mon-Fri", "Mon, Fri")
+        if "Next To" in add:
+            add = add.split("Next To")[0].strip()
+        if "Next to" in add:
+            add = add.split("Next to")[0].strip()
         yield [
             website,
             loc,

@@ -59,9 +59,9 @@ def fetch_data():
             hours_of_operation = "<MISSING>"
             store_number = "<MISSING>"
 
-            latitude = "<MISSING>"
+            longitude = "<MISSING>"
             try:
-                latitude = (
+                longitude = (
                     store_req.text.split('"coordinates":[')[1]
                     .strip()
                     .split(",")[0]
@@ -70,9 +70,9 @@ def fetch_data():
             except:
                 pass
 
-            longitude = "<MISSING>"
+            latitude = "<MISSING>"
             try:
-                longitude = (
+                latitude = (
                     store_req.text.split('"coordinates":[')[1]
                     .strip()
                     .split(",")[1]

@@ -54,8 +54,13 @@ def fetch_data():
         name = item["name"]
         addinfo = item["streetaddress"]
         add = "<MISSING>"
-        city = addinfo.split(",")[0]
-        state = addinfo.split(",")[1].strip()
+        if addinfo.count(",") == 1:
+            city = addinfo.split(",")[0]
+            state = addinfo.split(",")[1].strip()
+        else:
+            add = addinfo.split(",")[0]
+            city = addinfo.split(",")[1].strip()
+            state = addinfo.split(",")[2].strip()
         zc = "<MISSING>"
         phone = "<MISSING>"
         yield [

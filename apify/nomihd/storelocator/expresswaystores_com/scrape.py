@@ -30,12 +30,19 @@ def fetch_data():
         store_req = session.get(page_url, headers=headers)
         store_sel = lxml.html.fromstring(store_req.text)
 
-        location_name = "".join(
-            store_sel.xpath('//h1[@class="main-title entry-title"]/text()')
-        ).strip()
+        location_name = (
+            "".join(store_sel.xpath('//h1[@class="main-title entry-title "]//text()'))
+            .strip()
+            .encode("ascii", "replace")
+            .decode("utf-8")
+            .replace("?", "-")
+            .strip()
+        )
 
         address = store_sel.xpath('//div[@class="avia_textblock  "]/p[1]/text()')[1:]
         street_address = ", ".join(address[:-1]).strip().replace("\n", "").strip()
+        if "," in street_address:
+            street_address = street_address.split(",")[0].strip()
         city = address[-1].strip().split(",")[0].strip()
         state = address[-1].strip().split(",")[1].strip().split(" ")[0].strip()
         zip = address[-1].strip().split(",")[1].strip().split(" ")[-1].strip()

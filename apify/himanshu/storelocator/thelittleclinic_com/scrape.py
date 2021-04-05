@@ -96,10 +96,14 @@ def fetch_data():
             store.append(lat)
             store.append(lng)
             zip_codes.found_location_at(lat, lng)
-            store.append("<MISSING>")
-            store.append(
-                "https://www.thelittleclinic.com/scheduler/tlc/location/" + str(i["id"])
+            store.append("<INACCESSIBLE>")
+
+            id_num = str(i["id"])
+            url = "https://www.thelittleclinic.com/clinic-details/%s/%s" % (
+                id_num[:3],
+                id_num[3:],
             )
+            store.append(url)
             store = [str(x).strip() if x else "<MISSING>" for x in store]
             yield store
 
