@@ -43,13 +43,11 @@ def fetch_data():
     search = DynamicGeoSearch(
         country_codes=[SearchableCountries.CANADA],
         max_radius_miles=None,
-        max_search_results=20,
+        max_search_results=None,
     )
     for lat, lng in search:
         session = SgRequests()
         logger.info(str(lat) + "-" + str(lng) + "...")
-        lat = "45.4215296"
-        lng = "-75.69719309999999"
         url = (
             "https://virgin.know-where.com/virginmobile/cgi/selection?lang=en&ll="
             + str(lat)
@@ -120,6 +118,10 @@ def fetch_data():
                     ids.append(store)
                     lat = "<MISSING>"
                     lng = "<MISSING>"
+                    if hours == "":
+                        hours = "<MISSING>"
+                    if phone == "":
+                        phone = "<MISSING>"
                     yield [
                         website,
                         loc,
@@ -136,7 +138,7 @@ def fetch_data():
                         lng,
                         hours,
                     ]
-        time.sleep(3)
+        time.sleep(7)
 
 
 def scrape():

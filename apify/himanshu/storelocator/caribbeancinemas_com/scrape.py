@@ -51,7 +51,7 @@ def fetch_data():
     city = "<MISSING>"
     state = "<MISSING>"
     zipp = "<MISSING>"
-    country_code = "US"
+    country_code = "<MISSING>"
     store_number = "<MISSING>"
     phone = "<MISSING>"
     location_type = "<MISSING>"
@@ -81,7 +81,13 @@ def fetch_data():
         else:
             page_url = loc_url["href"]
 
-        if "caribbeancinemas.com" not in page_url:
+        if (
+            "caribbeancinemas.com" not in page_url
+            or "/?aruba" in page_url
+            or "/?trinidad" in page_url
+            or "penonome-cinemas" in page_url
+            or "santiago-cinemas" in page_url
+        ):
             continue
         logger.info(page_url)
         rr = session.get(page_url, headers=headers)

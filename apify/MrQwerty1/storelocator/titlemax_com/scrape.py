@@ -58,14 +58,22 @@ def get_data(page_url):
 
     r = session.get(page_url, headers=headers)
     tree = html.fromstring(r.text)
-    sect = tree.xpath("//section[@id='storeCopy']")[0]
+    try:
+        sect = tree.xpath("//section[@id='store-info']")[0]
+    except IndexError:
+        return
     location_name = "".join(tree.xpath("//h1[@itemprop='name']/text()")).strip()
     street_address = "".join(
         sect.xpath(".//div[@itemprop='streetAddress']/text()")
     ).strip()
     city = "".join(sect.xpath(".//span[@itemprop='addressLocality']/text()")).strip()
     state = "".join(sect.xpath(".//span[@itemprop='addressRegion']/text()")).strip()
-    postal = sect.xpath(".//div[@class='store-address-2']/text()")[-1].strip()
+    postal = (
+        "".join(sect.xpath(".//div[@itemprop='address']/text()"))
+        .replace(",", "")
+        .strip()
+        or "<MISSING>"
+    )
     country_code = "US"
     store_number = "<MISSING>"
     phone = "".join(sect.xpath(".//span[@itemprop='telephone']/text()")).strip()
@@ -88,16 +96,13 @@ def get_data(page_url):
     latitude, longitude = latlon
 
     _tmp = []
-    hours_keys = tree.xpath("//div[contains(@class, 'storeHours')]/strong/text()")
-    hours_values = tree.xpath("//div[contains(@class, 'storeHours')]/text()")
-    hours_values = list(filter(None, [h.strip() for h in hours_values]))
-    for k, v in zip(hours_keys, hours_values):
-        _tmp.append(f"{k.strip()} {v.strip()}")
+    dl = sect.xpath(".//*[text()='Hours']/following-sibling::dl/div")
+    for d in dl:
+        day = "".join(d.xpath("./dt//text()")).strip()
+        time = "".join(d.xpath("./dd//text()")).strip()
+        _tmp.append(f"{day} {time}")
 
-    hours_of_operation = ";".join(_tmp)
-
-    if not hours_of_operation:
-        return
+    hours_of_operation = ";".join(_tmp) or "<MISSING>"
 
     row = [
         locator_domain,
@@ -122,7 +127,7 @@ def fetch_data():
     out = []
     urls = get_urls()
 
-    with futures.ThreadPoolExecutor(max_workers=2) as executor:
+    with futures.ThreadPoolExecutor(max_workers=3) as executor:
         future_to_url = {executor.submit(get_data, url): url for url in urls}
         for future in futures.as_completed(future_to_url):
             row = future.result()

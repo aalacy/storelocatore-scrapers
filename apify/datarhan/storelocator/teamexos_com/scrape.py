@@ -60,6 +60,7 @@ def fetch_data():
         location_name = location_name[0] if location_name else "<MISSING>"
         raw_address = poi_html.xpath('.//div[@class="loc-centre-address"]/text()')
         raw_address = [e.strip() for e in raw_address if e.strip()]
+        phone = "<MISSING>"
         if "-" in raw_address[-1]:
             phone = raw_address[-1]
             raw_address = raw_address[:-1]

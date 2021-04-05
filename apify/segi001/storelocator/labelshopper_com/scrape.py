@@ -84,10 +84,10 @@ def fetch_data():
         address = ""
         if "Unit" in string.split(",")[-2] or "Suite" in string.split(",")[-2]:
             state = string.split(",")[-2].split(" ")[-1]
-            address = string.replace(state, "").replace(",", "")[:-1]
+            address = string.replace(",", "")[:-1]
         else:
             state = string.split(",")[-2].replace(" ", "", 1)
-            address = string.replace(state, "").replace(",", "")[:-1]
+            address = string.replace(",", "")[:-1]
         return [state, address]
 
     for store in storeSource:

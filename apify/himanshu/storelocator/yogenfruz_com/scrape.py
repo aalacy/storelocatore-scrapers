@@ -50,6 +50,7 @@ def fetch_data():
     r = session.get("https://yogenfruz.com/find-a-store/", headers=headers)
     soup = BeautifulSoup(r.text, "html5lib")
     addresses = []
+
     location_name = "<MISSING>"
     street_address = "<MISSING>"
     city = "<MISSING>"
@@ -83,7 +84,6 @@ def fetch_data():
         for data in page_url:
             data = session.get(page_url, headers=headers)
             soup1 = BeautifulSoup(data.text, "html5lib")
-
             store_data = soup1.find("div", {"class": "vc_col-sm-4 location-details"})
             location_name = store_data.find("h3", {"class": "location-name"}).text
             street_address = store_data.find("div", {"class": "location_address"}).text
@@ -127,6 +127,9 @@ def fetch_data():
                     .strip()
                 )
         except:
+            hours_of_operation = "<MISSING>"
+
+        if hours_of_operation == "Hours vary. Contact store location for more details.":
             hours_of_operation = "<MISSING>"
 
         store = []

@@ -72,7 +72,9 @@ def fetch_data():
             '//th[i[@class="fas fa-clock"]]/following-sibling::td/text()'
         )
         hoo = [e.strip() for e in hoo if e.strip()]
-        hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
+        hours_of_operation = (
+            " ".join(hoo).split("Dec 19 ")[-1].split(" XF")[0] if hoo else "<MISSING>"
+        )
 
         item = [
             domain,

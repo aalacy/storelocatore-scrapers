@@ -162,6 +162,22 @@ def fetch_data():
             hours = "<MISSING>"
         if phone == "":
             phone = "<MISSING>"
+        if "; X-ray" in hours:
+            hours = hours.split("; X-ray")[0].strip()
+        if "; Mon-Fri 8:00" in hours and city == "Alexandria":
+            hours = hours.split("; Mon-Fri 8:00")[0].strip()
+        if "https://stelizabeth.com/location/details/mt-zion-diagnostic-center" in loc:
+            hours = "Mon-Thu: 7:30am-4:30pm; Fri: 7:30am-12:30pm"
+        if (
+            "https://stelizabeth.com/location/details/drive-thru-covid-19-testing"
+            in loc
+        ):
+            hours = "Mon-Fri: 8:00 AM - 2:30 PM"
+        if (
+            "https://stelizabeth.com/location/details/imaging-florence" in loc
+            or "/location/details/imaging-ft-thomas" in loc
+        ):
+            hours = "X-ray (appointments not necessary): 24/7"
         if add != "":
             yield [
                 website,

@@ -135,6 +135,12 @@ def fetch_data():
                     and "8" not in zc
                 ):
                     zc = "<MISSING>"
+                if "#" in zc:
+                    zc = "<MISSING>"
+                if "Evarts St" in add:
+                    zc = "20018"
+                if "30 Hill St" in add:
+                    zc = "94014"
                 yield [
                     website,
                     lurl,

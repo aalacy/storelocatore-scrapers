@@ -143,6 +143,17 @@ def fetch_data():
                     hours = hours + ": " + line2.split("<")[0]
         if hours == "":
             hours = "<MISSING>"
+        if "huron-church" in loc:
+            phone = "519-972-3000"
+            name = "Applebee's Huron Church"
+            add = "2187 Huron Church Road, Unit 240"
+            city = "Windsor"
+            state = "ON"
+            zc = "<MISSING>"
+            lat = "<MISSING>"
+            lng = "<MISSING>"
+        if "applebees-crossroads" in loc:
+            hours = "Sun-Sat: 11:30 PM to 9:00 PM"
         hours = hours.replace(": :", ":")
         yield [
             website,

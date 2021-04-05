@@ -72,7 +72,7 @@ def fetch_data():
         store_number = item["attributes"]["agDealerCode"].split(",")[0].strip()
         location_type = "<MISSING>"
         phone = item["attributes"]["phone"].strip()
-        hours_of_operation = "<MISSING>"
+        hours_of_operation = "<INACCESSIBLE>"
         latitude = item["lat"]
         longitude = item["lng"]
         link = item["attributes"]["homepage"].strip()
@@ -138,6 +138,7 @@ def fetch_data():
                     longitude = row[-2]
                     break
             link = "https://www.bmw-motorrad.ca" + store["dealerHomePage"]
+
             if link:
                 req = session.get(link, headers=headers)
                 base = BeautifulSoup(req.text, "lxml")
@@ -228,6 +229,16 @@ def fetch_data():
                 lat_found = True
 
         if not lat_found:
+            location_name = row[2]
+            if location_name == "High Road Langley":
+                link = "https://www.bmw-motorrad.ca/highroad-langley/en/home.html"
+                row[1] = link
+                req = session.get(link, headers=headers)
+                base = BeautifulSoup(req.text, "lxml")
+                hours_of_operation = " ".join(
+                    list(base.find(class_="dealerheader__items").stripped_strings)
+                )
+                row[-1] = hours_of_operation
             data.append(row)
 
     return data

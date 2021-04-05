@@ -88,6 +88,32 @@ def fetch_data():
             longitude = addr["lon"]
             hours_of_operation = "<MISSING>"
             page_url = "https://www.choicehotels.com/" + addr["id"]
+            if "Rodeway Inn Fairgrounds-Casino" in location_name:
+                location_name = "<MISSING>"
+                street_address = "<MISSING>"
+                city = "<MISSING>"
+                state = "<MISSING>"
+                zipp = "<MISSING>"
+                country_code = "<MISSING>"
+                store_number = "<MISSING>"
+                phone = "<MISSING>"
+                location_type = "<MISSING>"
+                latitude = "<MISSING>"
+                longitude = "<MISSING>"
+                hours_of_operation = "<MISSING>"
+            if "Rodeway Inn Near Ybor City - Casino" in location_name:
+                location_name = "<MISSING>"
+                street_address = "<MISSING>"
+                city = "<MISSING>"
+                state = "<MISSING>"
+                zipp = "<MISSING>"
+                country_code = "<MISSING>"
+                store_number = "<MISSING>"
+                phone = "<MISSING>"
+                location_type = "<MISSING>"
+                latitude = "<MISSING>"
+                longitude = "<MISSING>"
+                hours_of_operation = "<MISSING>"
             if latitude + longitude in addressesess:
                 continue
             addressesess.append(latitude + longitude)
@@ -138,6 +164,32 @@ def fetch_data():
         longitude = value["lon"]
         hours_of_operation = "<MISSING>"
         page_url = "https://www.choicehotels.com/" + str(value["id"])
+        if "Rodeway Inn Fairgrounds-Casino" in location_name:
+            location_name = "<MISSING>"
+            street_address = "<MISSING>"
+            city = "<MISSING>"
+            state = "<MISSING>"
+            zipp = "<MISSING>"
+            country_code = "<MISSING>"
+            store_number = "<MISSING>"
+            phone = "<MISSING>"
+            location_type = "<MISSING>"
+            latitude = "<MISSING>"
+            longitude = "<MISSING>"
+            hours_of_operation = "<MISSING>"
+        if "Rodeway Inn Near Ybor City - Casino" in location_name:
+            location_name = "<MISSING>"
+            street_address = "<MISSING>"
+            city = "<MISSING>"
+            state = "<MISSING>"
+            zipp = "<MISSING>"
+            country_code = "<MISSING>"
+            store_number = "<MISSING>"
+            phone = "<MISSING>"
+            location_type = "<MISSING>"
+            latitude = "<MISSING>"
+            longitude = "<MISSING>"
+            hours_of_operation = "<MISSING>"
         if latitude + longitude in addressesess:
             continue
         addressesess.append(latitude + longitude)

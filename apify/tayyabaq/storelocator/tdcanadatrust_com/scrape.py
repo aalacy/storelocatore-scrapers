@@ -3,7 +3,6 @@ import csv
 import json
 
 from sgrequests import SgRequests
-from sgscrape.sgpostal import parse_address_intl
 
 
 def write_output(data):
@@ -55,22 +54,18 @@ def fetch_data():
         store_url = "<MISSING>"
         location_name = poi["name"]
         location_name = location_name if location_name else "<MISSING>"
-        addr = parse_address_intl(poi["address"])
-        street_address = addr.street_address_1
-        if addr.street_address_2:
-            street_address += " " + addr.street_address_2
-        street_address = street_address if street_address else "<MISSING>"
-        city = addr.city
-        city = city if city else "<MISSING>"
-        state = addr.state
-        state = state if state else "<MISSING>"
-        zip_code = addr.postcode
-        zip_code = zip_code if zip_code else "<MISSING>"
+        raw_address = poi["address"].split(", ")
+        street_address = raw_address[0]
+        city = raw_address[1]
+        state = raw_address[2]
+        zip_code = raw_address[-1]
         country_code = "CA"
         store_number = poi["id"]
         phone = poi["phoneNo"]
         phone = phone if phone else "<MISSING>"
-        location_type = poi["type"]
+        location_type = "ATM"
+        if str(poi["type"]) == "3":
+            location_type = "Branch"
         latitude = poi["lat"]
         longitude = poi["lng"]
         hoo = []
@@ -94,8 +89,9 @@ def fetch_data():
             longitude,
             hours_of_operation,
         ]
-        if store_number not in scraped_items:
-            scraped_items.append(store_number)
+        check = f"{location_name} {street_address}"
+        if check not in scraped_items:
+            scraped_items.append(check)
             items.append(item)
 
     return items

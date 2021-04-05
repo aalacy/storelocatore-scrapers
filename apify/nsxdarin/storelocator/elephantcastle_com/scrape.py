@@ -92,6 +92,8 @@ def fetch_data():
         if '"holidayHours":' in line and city != "" and city != "undefined":
             if state == "Ontario" or state == "Manitoba":
                 country = "CA"
+            if "wabash" in loc:
+                hours = "SUN-WED: 11AM-12AM; THURS-SAT: 11AM-1AM"
             yield [
                 website,
                 loc,
