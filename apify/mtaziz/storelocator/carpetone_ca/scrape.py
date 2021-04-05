@@ -67,7 +67,7 @@ def get_data_using_skip_num_latlng():
                 data_all.append(data_json_raw)
                 for da in data_json_raw:
                     data_list.append(da)
-                    if not "Message" in da:
+                    if "Message" not in da:
                         data_list_message_remvd.append(da)
                         if da not in data_list_without_duplicates:
                             data_list_without_duplicates.append(da)
