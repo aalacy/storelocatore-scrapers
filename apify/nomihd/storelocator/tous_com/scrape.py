@@ -38,11 +38,10 @@ def fetch_data():
         stores_list = json_res["shops"]
         for store in stores_list:
             if store["idShopType"] == "1":
-                page_url = url
+                page_url = "https://www.tous.com/us-en/stores/view/" + store["id"]
                 locator_domain = website
                 location_name = store["name"].strip()
                 street_address = store["address"].strip()
-
                 city = store["city"].strip()
                 if country == "CA":
                     state = "<MISSING>"
@@ -57,6 +56,20 @@ def fetch_data():
                         state = "<MISSING>"
 
                 country_code = country
+
+                street_address = street_address.replace("Merrick Park,", "").strip()
+                if (
+                    street_address
+                    == "5757 Wayne Newton Blvd, Las Vegas, NV 89119, EE. UU."
+                ):
+                    street_address = street_address.replace(
+                        ", Las Vegas, NV 89119, EE. UU.", ""
+                    ).strip()
+                    state = "NV"
+
+                if "Richmond BC" == city:
+                    city = "Richmond"
+                    state = "BC"
 
                 store_number = store["id"]
                 phone = store["phone"].strip()
