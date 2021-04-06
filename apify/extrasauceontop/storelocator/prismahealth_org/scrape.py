@@ -72,7 +72,6 @@ def parsedata(response_json, data_url):
         search.found_location_at(latitude, longitude)
 
 
-
 base_url = "https://prismahealth.org"
 
 s = SgRequests()
