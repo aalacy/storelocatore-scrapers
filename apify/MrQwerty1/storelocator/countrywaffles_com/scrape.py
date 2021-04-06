@@ -1,5 +1,7 @@
-import cloudscraper
 import csv
+
+from lxml import html
+from sgrequests import SgRequests
 
 
 def write_output(data):
@@ -33,35 +35,30 @@ def write_output(data):
 
 def fetch_data():
     out = []
-    locator_domain = "https://www.car-mart.com/"
-    api_url = "https://www.car-mart.com/wp-admin/admin-ajax.php"
+    locator_domain = "http://countrywaffles.com/"
+    page_url = "http://countrywaffles.com/_findus.php"
+    api_url = "https://www.google.com/maps/d/u/0/kml?mid=1V6dTd81GPRozVEkURD4uvaG8MW1Yb91y&forcekml=1"
 
-    data = {"action": "nearbylots", "lot": "048", "distance": "5000"}
+    session = SgRequests()
+    r = session.get(api_url)
+    tree = html.fromstring(r.content)
+    divs = tree.xpath("//placemark")
 
-    scraper = cloudscraper.create_scraper()
-    r = scraper.post(api_url, data=data)
-    js = r.json()
-
-    for j in js:
-        location_name = j.get("Name")
-        street_address = j.get("Street") or "<MISSING>"
-        city = j.get("City") or "<MISSING>"
-        state = j.get("State") or "<MISSING>"
-        postal = j.get("Zip") or "<MISSING>"
+    for d in divs:
+        line = "".join(d.xpath("./name/text()")).strip()
+        location_name = line.split("-")[0].strip()
+        street_address = line.split("-")[-1].strip()
+        city = "<INACCESSIBLE>"
+        state = "<INACCESSIBLE>"
+        postal = "<INACCESSIBLE>"
         country_code = "US"
-        store_number = j.get("Id")
-        page_url = f'https://www.car-mart.com/locations/{store_number}/{city.replace(" ", "-").lower()}'
-        phone = j.get("Phone") or "<MISSING>"
-        latitude = j.get("Latitude") or "<MISSING>"
-        longitude = j.get("Longitude") or "<MISSING>"
-        location_type = "<MISSING>"
-        hours = j.get("Hours") or "<MISSING>"
-        hours_of_operation = " ".join(
-            hours.replace("<span>", " ")
-            .replace("</span>", "")
-            .replace("PM", "PM;")
-            .split()
+        store_number = location_name.split("#")[-1]
+        phone = "".join(d.xpath("./description/text()"))
+        longitude, latitude = (
+            "".join(d.xpath(".//coordinates/text()")).strip().split(",")[:2]
         )
+        location_type = "<MISSING>"
+        hours_of_operation = "<MISSING>"
 
         row = [
             locator_domain,
@@ -79,7 +76,6 @@ def fetch_data():
             longitude,
             hours_of_operation,
         ]
-
         out.append(row)
 
     return out
