@@ -62,7 +62,7 @@ def fetch_data():
         street_address = poi["address"]
         location_type = "<MISSING>"
         if "Coming Soon" in street_address:
-            location_type = "Coming Soon"
+            continue
         street_address = (
             street_address.replace("Coming Soon", "") if street_address else "<MISSING>"
         )
@@ -76,7 +76,7 @@ def fetch_data():
         zip_code = poi["zip"]
         zip_code = zip_code.strip() if zip_code else "<MISSING>"
         country_code = "<MISSING>"
-        store_number = poi["id"]
+        store_number = poi["storeIdOld"]
         store_number = store_number if store_number else "<MISSING>"
         phone = poi["phone"]
         if "Coming Soon" in phone:
@@ -87,23 +87,29 @@ def fetch_data():
         longitude = poi["longitude"]
         longitude = longitude if longitude else "<MISSING>"
 
-        mon = "Monday {} {}".format(poi["fromMon"], poi["toMon"]).strip()
-        tue = "Tuesday {} {}".format(poi["fromTue"], poi["toTue"]).strip()
-        wen = "Wednesday {} {}".format(poi["fromWed"], poi["toWed"]).strip()
-        thu = "Thursday {} {}".format(poi["fromThu"], poi["toThu"]).strip()
-        fri = "Friday {} {}".format(poi["fromFri"], poi["toFri"]).strip()
-        sat = "Saturday {} {}".format(poi["fromSat"], poi["toSat"]).strip()
+        mon = "Monday {} - {}".format(poi["fromMon"], poi["toMon"]).strip()
+        tue = "Tuesday {} - {}".format(poi["fromTue"], poi["toTue"]).strip()
+        wen = "Wednesday {} - {}".format(poi["fromWed"], poi["toWed"]).strip()
+        thu = "Thursday {} - {}".format(poi["fromThu"], poi["toThu"]).strip()
+        fri = "Friday {} - {}".format(poi["fromFri"], poi["toFri"]).strip()
+        sat = "Saturday {} - {}".format(poi["fromSat"], poi["toSat"]).strip()
         sun = "Sunday {}".format(poi["fromSun"]).strip()
         hours_of_operation = [mon, tue, wen, thu, fri, sat, sun]
         hours_of_operation = (
-            ", ".join(hours_of_operation).replace("None", "")
+            ", ".join(hours_of_operation).replace("None", "closed")
             if hours_of_operation
             else "<MISSING>"
         )
-        if "soon" in hours_of_operation.lower():
-            location_type = "Coming Soon"
-        if poi["coding"] == "N":
-            location_type = "Coming Soon"
+
+        if "Coming Soon" in hours_of_operation:
+            continue
+        if "Monday  -, Tuesday  -, Wednesday  -" in hours_of_operation:
+            continue
+        if hours_of_operation.endswith("Sunday"):
+            hours_of_operation = hours_of_operation + " closed"
+        hours_of_operation = hours_of_operation.replace(
+            "Saturday  -,", "Saturday closed,"
+        )
 
         item = [
             DOMAIN,

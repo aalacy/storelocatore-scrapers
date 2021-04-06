@@ -38,7 +38,7 @@ def write_output(data):
 
 
 def fetch_data():
-    locs = []
+    locs = ["https://locations.lkqpickyourpart.com/ca/stanton/8188-1/2-katella-avenue"]
     url = "https://locations.lkqpickyourpart.com/sitemap.xml"
     r = session.get(url, headers=headers)
     website = "lkqpickyourpart.com"
@@ -71,7 +71,12 @@ def fetch_data():
         for line2 in r2.iter_lines():
             line2 = str(line2.decode("utf-8"))
             if '<span class="LocationName-geo">' in line2:
-                name = line2.split('<span class="LocationName-geo">')[1].split("<")[0]
+                name = (
+                    line2.split('<span class="LocationName-geo">')[1]
+                    .split("<")[0]
+                    .strip()
+                    .replace("  ", " ")
+                )
             if '"streetAddress" content="' in line2:
                 add = line2.split('"streetAddress" content="')[1].split('"')[0]
             if 'itemprop="addressLocality" content="' in line2:
@@ -92,7 +97,7 @@ def fetch_data():
                 lat = line2.split('itemprop="latitude" content="')[1].split('"')[0]
             if 'itemprop="longitude" content="' in line2:
                 lng = line2.split('itemprop="longitude" content="')[1].split('"')[0]
-            if "data-days='[" in line2:
+            if "data-days='[" in line2 and hours == "":
                 days = (
                     line2.split("data-days='[")[1]
                     .split("]' data-utc")[0]
@@ -116,6 +121,7 @@ def fetch_data():
                             hours = hours + "; " + hrs
         if "(Parts)" in add:
             add = add.split("(Parts)")[0].strip()
+        add = add.replace("&#39;", "'")
         yield [
             website,
             loc,
