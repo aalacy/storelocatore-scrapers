@@ -87,6 +87,7 @@ def fetch_data():
                         lat = "<MISSING>"
                         longt = "<MISSING>"
                     phone = r.text.split("Contact Us: ")[1].split("</p>")[0]
+
                     data.append(
                         [
                             "https://www.cmxcinemas.com",
@@ -98,8 +99,8 @@ def fetch_data():
                             pcode,
                             "US",
                             "<MISSING>",
-                            "<MISSING>",
                             phone,
+                            "<MISSING>",
                             lat,
                             longt,
                             "<MISSING>",

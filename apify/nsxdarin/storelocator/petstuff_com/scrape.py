@@ -75,8 +75,10 @@ def fetch_data():
         r2 = session.get(loc, headers=headers)
         for line2 in r2.iter_lines():
             line2 = str(line2.decode("utf-8"))
-            if "| Petstuff.com|" in line2:
-                name = line2.split("| Petstuff.com|")[1].split("<")[0]
+            if "<title>" in line2:
+                name = line2.split("<title>")[1].split("</title>")[0]
+                if " |" in name:
+                    name = name.split(" |")[0]
             if "ADDRESS:</strong></span><p><span style=font-size:12pt>" in line2:
                 add = line2.split(
                     "ADDRESS:</strong></span><p><span style=font-size:12pt>"
