@@ -209,12 +209,6 @@ def fetch_data():
     logger.info(f"number of cities: {len(city_urls)}")
     scrape_city_urls(city_urls, loc_urls)
 
-    with open("locations.json", "w") as file:
-        json.dump(loc_urls, file)
-
-    with open("locations.json") as file:
-        loc_urls = json.load(file)
-
     logger.info(f"number of locations: {len(loc_urls)}")
     return scrape_loc_urls(loc_urls)
 
