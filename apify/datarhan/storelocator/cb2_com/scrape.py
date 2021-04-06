@@ -59,8 +59,6 @@ def fetch_data():
         sleep(10)
         page_sour = driver.page_source
         dom = etree.HTML(driver.page_source)
-        with open("file.txt", "w", encoding="utf-8") as output:
-            print(page_sour, file=output)
 
     all_locations = dom.xpath('//script[@type="application/ld+json"]/text()')
     for elem in all_locations:
