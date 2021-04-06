@@ -75,27 +75,57 @@ def fetch_data():
     block = tree.xpath('//div[./p[@class="webpage"]]')
     for b in block:
 
-        slug = ''.join(b.xpath('.//a[contains(text(), "Webpage")]/@href'))
-        page_url = f'{locator_domain}{slug}'
+        slug = "".join(b.xpath('.//a[contains(text(), "Webpage")]/@href'))
+        page_url = f"{locator_domain}{slug}"
         session = SgRequests()
-        r = session.get(page_url,headers=headers)
+        r = session.get(page_url, headers=headers)
         tree = html.fromstring(r.text)
-        location_name = ''.join(tree.xpath('//h1/text()')) + ''.join(tree.xpath('//h3[@class="alt slider"]/text()')).replace('  ',' ').replace('\n','').strip()
-        adr = ' '.join(tree.xpath('//h3[contains(text(), "Address")]/following-sibling::p[1]/text()')).replace('\n','').strip()
+        location_name = (
+            "".join(tree.xpath("//h1/text()"))
+            + "".join(tree.xpath('//h3[@class="alt slider"]/text()'))
+            .replace("  ", " ")
+            .replace("\n", "")
+            .strip()
+        )
+        adr = (
+            " ".join(
+                tree.xpath(
+                    '//h3[contains(text(), "Address")]/following-sibling::p[1]/text()'
+                )
+            )
+            .replace("\n", "")
+            .strip()
+        )
         a = usaddress.tag(adr, tag_mapping=tag)[0]
         location_type = "<MISSING>"
-        street_address = f"{a.get('address1')} {a.get('address2')}".replace('None','').strip()
-        text = ''.join(tree.xpath('//iframe[@loading="lazy"]/@data-lazy-src'))
+        street_address = f"{a.get('address1')} {a.get('address2')}".replace(
+            "None", ""
+        ).strip()
+        text = "".join(tree.xpath('//iframe[@loading="lazy"]/@data-lazy-src'))
         latitude = text.split("!3d")[1].strip().split("!")[0].strip()
         longitude = text.split("!2d")[1].strip().split("!")[0].strip()
         country_code = "US"
-        state = a.get('state')
-        postal = a.get('ZipCode')
-        city = a.get('city')
+        state = a.get("state")
+        postal = a.get("ZipCode")
+        city = a.get("city")
         store_number = "<MISSING>"
-        hours_of_operation = ' '.join(tree.xpath('//h3[contains(text(), "Hours")]/following-sibling::p/text()')).replace('\n','').strip()
-        phone = ' '.join(tree.xpath('//h3[contains(text(), "Address")]/following-sibling::p/a/text()')) or '<MISSING>'
-
+        hours_of_operation = (
+            " ".join(
+                tree.xpath(
+                    '//h3[contains(text(), "Hours")]/following-sibling::p/text()'
+                )
+            )
+            .replace("\n", "")
+            .strip()
+        )
+        phone = (
+            " ".join(
+                tree.xpath(
+                    '//h3[contains(text(), "Address")]/following-sibling::p/a/text()'
+                )
+            )
+            or "<MISSING>"
+        )
 
         row = [
             locator_domain,
