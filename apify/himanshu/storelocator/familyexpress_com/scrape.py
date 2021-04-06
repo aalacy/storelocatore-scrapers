@@ -149,6 +149,10 @@ def fetch_data():
                     hours += " saturday : Closed"
             except:
                 hours = "<MISSING>"
+            try:
+                phone = location["yextData"]["mainPhone"]
+            except KeyError:
+                phone = "<MISSING>"
             store.append("https://familyexpress.com")
             store.append(location["yextData"]["c_subName"])
             store.append(location["yextData"]["address"]["line1"])
@@ -157,7 +161,7 @@ def fetch_data():
             store.append(location["yextData"]["address"]["postalCode"])
             store.append(location["yextData"]["address"]["countryCode"])
             store.append(location["storeId"])
-            store.append(location["yextData"]["mainPhone"])
+            store.append(phone)
             store.append("<MISSING>")
             store.append(location["yextData"]["yextDisplayCoordinate"]["latitude"])
             store.append(location["yextData"]["yextDisplayCoordinate"]["longitude"])
