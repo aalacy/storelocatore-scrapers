@@ -78,7 +78,7 @@ def get_data(page_url):
 
     hours_of_operation = ";".join(_tmp) or "<MISSING>"
     if hours_of_operation.count("Closed") == 7:
-        hours_of_operation = 'Closed'
+        hours_of_operation = "Closed"
 
     row = [
         locator_domain,
