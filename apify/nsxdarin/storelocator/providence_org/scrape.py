@@ -80,6 +80,14 @@ def fetch_data():
                     .replace("\t", "")
                     .replace("\n", "")
                 )
+                if (
+                    "Professional Plaza" in g
+                    or "Medical Center" in g
+                    or " Hospital" in g
+                    or "Child Center" in g
+                    or "Services at " in g
+                ):
+                    g = next(lines)
                 add = g.split("<")[0].strip().replace("\t", "")
                 if " Suite" in add:
                     add = add.split(" Suite")[0]
