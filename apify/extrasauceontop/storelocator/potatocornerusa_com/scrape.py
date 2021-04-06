@@ -3,6 +3,7 @@ import pandas as pd
 from sgrequests import SgRequests
 import json
 
+
 def extract_json(html_string):
     json_objects = []
     count = 0
@@ -53,8 +54,6 @@ response = session.get(url, headers=headers).text
 response = response.split("routes")[1]
 
 json_objects = extract_json(response)
-with open("file.txt", "w", encoding="utf-8") as output:
-    json.dump(json_objects, output, indent=4)
 data = json_objects[0]
 
 for key in data:
@@ -88,7 +87,6 @@ for key in data:
                     .split(" ")
                 )
                 zipp = full_address[-1]
-                print(full_address)
                 if len(zipp) > 5:
                     zipp = zipp[1:]
 
