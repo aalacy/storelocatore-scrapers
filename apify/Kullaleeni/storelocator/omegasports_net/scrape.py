@@ -9,7 +9,7 @@ website = "omegasports_net"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 session = SgRequests()
 headers = {
-"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.90 Safari/537.36",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.90 Safari/537.36",
 }
 
 
@@ -20,11 +20,26 @@ def fetch_data():
         soup = BeautifulSoup(r.text, "html.parser")
         loclist = soup.findAll("div", {"class": "storeContainer"})
         for loc in loclist:
-            store_number = loc.find("div", {"class": "mapAddress"})['id']
-            latitude,longitude = loc.find("h4")["onclick"].replace("changeMap(","").replace(");","").split(",")[1:]
-            city,state =  loc.find("h4").text.replace("\n","").replace("\t","").strip().split(",")
+            store_number = loc.find("div", {"class": "mapAddress"})["id"]
+            latitude, longitude = (
+                loc.find("h4")["onclick"]
+                .replace("changeMap(", "")
+                .replace(");", "")
+                .split(",")[1:]
+            )
+            city, state = (
+                loc.find("h4")
+                .text.replace("\n", "")
+                .replace("\t", "")
+                .strip()
+                .split(",")
+            )
             zip_postal = loc.find("p").text.split(" ")[-1]
-            street_address = (loc.find("p").text.replace(zip_postal,"").strip()+" "+loc.find_all("p")[1].text).strip()
+            street_address = (
+                loc.find("p").text.replace(zip_postal, "").strip()
+                + " "
+                + loc.find_all("p")[1].text
+            ).strip()
             location_name = loc.find("h5").text
             log.info(location_name)
             street_address = street_address
