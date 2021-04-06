@@ -62,7 +62,7 @@ def fetch_data():
         street_address = raw_address[0]
         city = raw_address[-1].split(", ")[0]
         state = raw_address[-1].split(", ")[-1].split()[0]
-        zip_code = raw_address[-1].split(", ")[0].split()[-1]
+        zip_code = raw_address[-1].split(", ")[-1].split()[-1]
         country_code = "<MISSING>"
         store_number = "<MISSING>"
         phone = loc_dom.xpath("//address/following-sibling::h4[1]/text()")
@@ -74,6 +74,8 @@ def fetch_data():
             '//h2[contains(text(), "Store Hours")]/following-sibling::h4[1]/text()'
         )
         hoo = [e.strip() for e in hoo if e.strip()]
+        if not hoo:
+            location_type = "Coming Soon"
         hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
 
         item = [
