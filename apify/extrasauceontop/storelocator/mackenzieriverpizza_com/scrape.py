@@ -3,6 +3,7 @@ from bs4 import BeautifulSoup as bs
 import re
 import pandas as pd
 
+
 def getdata():
     locator_domains = []
     page_urls = []
@@ -46,10 +47,11 @@ def getdata():
                     break
             break
 
-
     x = y = 0
     while True:
-        location_grid = soup.find("div", attrs={"class": "et_pb_row et_pb_row_" + str(x)})
+        location_grid = soup.find(
+            "div", attrs={"class": "et_pb_row et_pb_row_" + str(x)}
+        )
 
         if x < len(state_grids) + 1:
             if x == 7:
@@ -77,7 +79,9 @@ def getdata():
                 ][:10][::-1]
             )
 
-            address = str(grid.find("p")).replace("\n", "").split("<br/>")[0].split(">")[-1]
+            address = (
+                str(grid.find("p")).replace("\n", "").split("<br/>")[0].split(">")[-1]
+            )
             city = location_name.split("(")[0].strip()
             hours = (
                 grid.find("p")
@@ -177,4 +181,6 @@ def getdata():
     df = df.fillna("<MISSING>")
 
     df.to_csv("data.csv", index=False)
+
+
 getdata()
