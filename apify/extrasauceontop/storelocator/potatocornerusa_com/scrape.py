@@ -3,6 +3,30 @@ import pandas as pd
 from sgrequests import SgRequests
 import json
 
+def extract_json(html_string):
+    json_objects = []
+    count = 0
+
+    brace_count = 0
+    for element in html_string:
+
+        if element == "{":
+            brace_count = brace_count + 1
+            if brace_count == 1:
+                start = count
+
+        elif element == "}":
+            brace_count = brace_count - 1
+            if brace_count == 0:
+                end = count
+                try:
+                    json_objects.append(json.loads(html_string[start : end + 1]))
+                except Exception:
+                    pass
+        count = count + 1
+    return json_objects
+
+
 locator_domains = []
 page_urls = []
 location_names = []
@@ -25,12 +49,15 @@ headers = {
 
 url = "https://www.potatocornerusa.com"
 response = session.get(url, headers=headers).text
-soup = bs(response, "html.parser")
 
-script = soup.find("script", attrs={"id": "wix-viewer-model"}).text.strip()
-data = json.loads(script)
+response = response.split("routes")[1]
 
-for key in data["siteFeaturesConfigs"]["router"]["routes"]:
+json_objects = extract_json(response)
+with open("file.txt", "w", encoding="utf-8") as output:
+    json.dump(json_objects, output, indent=4)
+data = json_objects[0]
+
+for key in data:
     route = key[1:]
     location_url = url + route
     location_data = session.get(location_url).text
@@ -61,6 +88,7 @@ for key in data["siteFeaturesConfigs"]["router"]["routes"]:
                     .split(" ")
                 )
                 zipp = full_address[-1]
+                print(full_address)
                 if len(zipp) > 5:
                     zipp = zipp[1:]
 
