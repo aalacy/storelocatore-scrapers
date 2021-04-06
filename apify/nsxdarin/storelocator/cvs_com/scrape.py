@@ -11,7 +11,7 @@ from datetime import datetime
 from sglogging import SgLogSetup
 from tenacity import retry, stop_after_attempt
 
-logger = SgLogSetup().get_logger('cvs_com')
+logger = SgLogSetup().get_logger("cvs_com")
 
 
 start_time = datetime.now()
@@ -22,7 +22,7 @@ base_url = "https://www.cvs.com"
 session = SgRequests()
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36",
-    "connection": "Keep-Alive"
+    "connection": "Keep-Alive",
 }
 
 
@@ -32,29 +32,45 @@ def sleep(min=3, max=3):
 
 
 def clean_hours(hour):
-    cleaned = hour.text.strip().replace('\n', ' ').replace('\t', '')
-    return re.sub('\s\s+', ' ', cleaned)
+    cleaned = hour.text.strip().replace("\n", " ").replace("\t", "")
+    return re.sub(r"\s\s+", " ", cleaned)
 
 
 def write_output(data):
     with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(output_file, delimiter=",",
-                            quotechar='"', quoting=csv.QUOTE_ALL)
-        writer.writerow(["locator_domain", "page_url", "location_name",
-                         "location_type", "store_number", "street_address", "city", "state", "zip", "country_code", "latitude", "longitude", "phone", "hours_of_operation"])
+        writer = csv.writer(
+            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+        )
+        writer.writerow(
+            [
+                "locator_domain",
+                "page_url",
+                "location_name",
+                "location_type",
+                "store_number",
+                "street_address",
+                "city",
+                "state",
+                "zip",
+                "country_code",
+                "latitude",
+                "longitude",
+                "phone",
+                "hours_of_operation",
+            ]
+        )
         for row in data:
             writer.writerow(row)
 
     end_time = datetime.now()
     timedelta = end_time - start_time
-    logger.info('--------------------')
-    duration = time.strftime(
-        '%H:%M:%S', time.gmtime(timedelta.total_seconds()))
+    logger.info("--------------------")
+    duration = time.strftime("%H:%M:%S", time.gmtime(timedelta.total_seconds()))
     logger.info(f"duration: {duration}")
 
 
 def get_session(reset=False):
-    if not hasattr(thread_local, "session") or (reset == True):
+    if not hasattr(thread_local, "session") or reset:
         thread_local.session = SgRequests()
     return thread_local.session
 
@@ -84,17 +100,14 @@ def enqueue_links(url, selector):
         else:
             raise Exception(f"invalid link: {lurl}")
 
-    return {
-        "locs": locs,
-        "cities": cities,
-        "states": states
-    }
+    return {"locs": locs, "cities": cities, "states": states}
 
 
 def scrape_state_urls(state_urls, city_urls):
     with ThreadPoolExecutor() as executor:
-        futures = [executor.submit(enqueue_links, url, ".states a")
-                   for url in state_urls]
+        futures = [
+            executor.submit(enqueue_links, url, ".states a") for url in state_urls
+        ]
         for result in as_completed(futures):
             urls = result.result()
             city_urls.extend(urls["cities"])
@@ -103,8 +116,10 @@ def scrape_state_urls(state_urls, city_urls):
 def scrape_city_urls(city_urls, loc_urls):
     # scrape each city url and populate loc_urls with the results
     with ThreadPoolExecutor() as executor:
-        futures = [executor.submit(
-            enqueue_links, url, ".directions-link a") for url in city_urls]
+        futures = [
+            executor.submit(enqueue_links, url, ".directions-link a")
+            for url in city_urls
+        ]
         for result in as_completed(futures):
             d = result.result()
             loc_urls.extend(d["locs"])
@@ -136,16 +151,38 @@ def get_location(loc):
     state = info["address"]["addressRegion"]
     zipcode = info["address"]["postalCode"]
     country_code = info["address"]["addressCountry"]
-    latitude = info["geo"]["latitude"] if info["geo"]["latitude"] != '0.0' else '<MISSING>'
-    longitude = info["geo"]["longitude"] if info["geo"]["longitude"] != '0.0' else '<MISSING>'
+    latitude = (
+        info["geo"]["latitude"] if info["geo"]["latitude"] != "0.0" else "<MISSING>"
+    )
+    longitude = (
+        info["geo"]["longitude"] if info["geo"]["longitude"] != "0.0" else "<MISSING>"
+    )
     phone = info["address"]["telephone"]
 
-    hours = location.select('.phHours li') if len(
-        location.select('.phHours li')) else location.select('.srHours li')
+    hours = (
+        location.select(".phHours li")
+        if len(location.select(".phHours li"))
+        else location.select(".srHours li")
+    )
 
-    hours_of_operation = ','.join([clean_hours(hour) for hour in hours])
+    hours_of_operation = ",".join([clean_hours(hour) for hour in hours])
 
-    return [locator_domain, page_url, location_name, location_type, store_number, street_address, city, state, zipcode, country_code, latitude, longitude, phone, hours_of_operation]
+    return [
+        locator_domain,
+        page_url,
+        location_name,
+        location_type,
+        store_number,
+        street_address,
+        city,
+        state,
+        zipcode,
+        country_code,
+        latitude,
+        longitude,
+        phone,
+        hours_of_operation,
+    ]
 
 
 def scrape_loc_urls(loc_urls):
@@ -159,7 +196,8 @@ def scrape_loc_urls(loc_urls):
 
 def fetch_data():
     urls = enqueue_links(
-        f"{base_url}/store-locator/cvs-pharmacy-locations", ".states a")
+        f"{base_url}/store-locator/cvs-pharmacy-locations", ".states a"
+    )
 
     state_urls = urls["states"]
     city_urls = urls["cities"]
@@ -171,10 +209,10 @@ def fetch_data():
     logger.info(f"number of cities: {len(city_urls)}")
     scrape_city_urls(city_urls, loc_urls)
 
-    with open('locations.json', 'w') as file:
+    with open("locations.json", "w") as file:
         json.dump(loc_urls, file)
 
-    with open('locations.json') as file:
+    with open("locations.json") as file:
         loc_urls = json.load(file)
 
     logger.info(f"number of locations: {len(loc_urls)}")
