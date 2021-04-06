@@ -1,6 +1,7 @@
 import re
 import csv
 from lxml import etree
+from urllib.parse import urljoin
 
 from sgrequests import SgRequests
 
@@ -41,7 +42,7 @@ def fetch_data():
 
     items = []
 
-    start_url = "http://greatcanadianbagel.com/store-locations/"
+    start_url = "https://www.eldoradofurniture.com/stores/"
     domain = re.findall(r"://(.+?)/", start_url)[0].replace("www.", "")
     hdr = {
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
@@ -49,33 +50,31 @@ def fetch_data():
     response = session.get(start_url, headers=hdr)
     dom = etree.HTML(response.text)
 
-    all_locations = dom.xpath('//table[@class="data"]/tbody/tr')[1:]
-    for poi_html in all_locations:
-        store_url = start_url
-        location_name = "<MISSING>"
-        street_address = poi_html.xpath(".//td/text()")
-        street_address = street_address[0].strip() if street_address else "<MISSING>"
-        city = poi_html.xpath(".//*/strong/text()")
-        city = city[0].split(", ")[0]
-        state = poi_html.xpath(".//*/strong/text()")[0].split(", ")[-1]
-        zip_code = "<MISSING>"
+    all_locations = dom.xpath('//div[@class="tiles clear stores"]//a/@href')
+    for url in all_locations:
+        store_url = urljoin(start_url, url)
+        loc_response = session.get(store_url, headers=hdr)
+        loc_dom = etree.HTML(loc_response.text)
+
+        location_name = loc_dom.xpath('//div[@class="margin-bottom"]/h2/text()')
+        location_name = location_name[0] if location_name else "<MISSING>"
+        raw_address = loc_dom.xpath("//address//text()")
+        street_address = raw_address[0]
+        city = raw_address[-1].split(", ")[0]
+        state = raw_address[-1].split(", ")[-1].split()[0]
+        zip_code = raw_address[-1].split(", ")[0].split()[-1]
         country_code = "<MISSING>"
         store_number = "<MISSING>"
-        phone = poi_html.xpath(".//td/text()")[-1]
+        phone = loc_dom.xpath("//address/following-sibling::h4[1]/text()")
+        phone = phone[0] if phone else "<MISSING>"
         location_type = "<MISSING>"
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
-        if poi_html.xpath('.//a[contains(@href, "maps")]/@href'):
-            geo = (
-                poi_html.xpath('.//a[contains(@href, "maps")]/@href')[0]
-                .split("/@")[-1]
-                .split(",")[:2]
-            )
-            if len(geo) == 2:
-                if "http" not in geo[0]:
-                    latitude = geo[0]
-                    longitude = geo[1]
-        hours_of_operation = "<MISSING>"
+        latitude = loc_dom.xpath("//@data-map-lat")[0]
+        longitude = loc_dom.xpath("//@data-map-lng")[0]
+        hoo = loc_dom.xpath(
+            '//h2[contains(text(), "Store Hours")]/following-sibling::h4[1]/text()'
+        )
+        hoo = [e.strip() for e in hoo if e.strip()]
+        hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
 
         item = [
             domain,
