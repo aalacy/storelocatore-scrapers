@@ -44,10 +44,18 @@ def write_output(data):
 
 
 def get_hoo(hours):
-    dates_map = {"1": "Sunday", "2": "Monday", "3": "Tuesday", "4": "Wednesday", "5": "Thursday", "6": "Friday", "7": "Saturday"}
+    dates_map = {
+        "1": "Sunday",
+        "2": "Monday",
+        "3": "Tuesday",
+        "4": "Wednesday",
+        "5": "Thursday",
+        "6": "Friday",
+        "7": "Saturday",
+    }
     hoo = []
     for key, value in hours.items():
-        v = dates_map[key] + " " + value['open'] + " - " + value['close']
+        v = dates_map[key] + " " + value["open"] + " - " + value["close"]
         hoo.append(v)
     hoo = "; ".join(hoo)
     if hoo:
@@ -72,7 +80,9 @@ def fetch_data():
         if country_code == country_code_UK or country_code == country_code_CA:
             locator_domain = locator_domain_url
             location_name = d["addresses"]["marketing"]["name"]
-            url_store = locations.xpath('//a[contains(., "%s")]/@href' % location_name)[0]
+            url_store = locations.xpath('//a[contains(., "%s")]/@href' % location_name)[
+                0
+            ]
             if url_store:
                 page_url = "https://www.anthropologie.com/" + url_store
             else:
