@@ -1,3 +1,4 @@
+import re
 from sglogging import sglog
 from bs4 import BeautifulSoup
 from sgrequests import SgRequests
@@ -27,7 +28,7 @@ def fetch_data():
         location_name = i.find("h4", {"class": "et_pb_module_header"}).find("span").text
         temp = i.find("div", {"class": "et_pb_blurb_description"})
         addr = temp.find("p").text.split(",")
-        phone = temp.find("a").text
+        phone = temp.select_one("a[href*=tel]").text
         street_address = addr[0]
         city = addr[1]
         state = addr[2]
