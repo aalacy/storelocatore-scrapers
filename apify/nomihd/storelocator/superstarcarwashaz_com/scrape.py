@@ -24,7 +24,7 @@ def fetch_data():
 
     stores_list = json_res["results"]["locations"]
     for store in stores_list:
-        if not "coming soon" in store["tags"].strip():
+        if "coming soon" not in store["tags"].strip():
             page_url = store["website"].strip()
 
             if re.search(".com/$", page_url) or re.search(".com$", page_url):
