@@ -41,7 +41,7 @@ def fetch_data():
 
     items = []
 
-    start_url = "http://greatcanadianbagel.com/store-locations/"
+    start_url = "https://foxandfiddle.com/locations"
     domain = re.findall(r"://(.+?)/", start_url)[0].replace("www.", "")
     hdr = {
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
@@ -49,33 +49,39 @@ def fetch_data():
     response = session.get(start_url, headers=hdr)
     dom = etree.HTML(response.text)
 
-    all_locations = dom.xpath('//table[@class="data"]/tbody/tr')[1:]
-    for poi_html in all_locations:
-        store_url = start_url
-        location_name = "<MISSING>"
-        street_address = poi_html.xpath(".//td/text()")
+    all_locations = dom.xpath('//div[contains(@class, "location__gps")]/@data-href')
+    for store_url in all_locations:
+        loc_response = session.get(store_url)
+        loc_dom = etree.HTML(loc_response.text)
+
+        location_name = loc_dom.xpath("//h1//text()")
+        location_name = " ".join(location_name) if location_name else "<MISSING>"
+        street_address = loc_dom.xpath(
+            '//div[@class="location__address text--upper"]/text()'
+        )
         street_address = street_address[0].strip() if street_address else "<MISSING>"
-        city = poi_html.xpath(".//*/strong/text()")
-        city = city[0].split(", ")[0]
-        state = poi_html.xpath(".//*/strong/text()")[0].split(", ")[-1]
-        zip_code = "<MISSING>"
+        raw_data = (
+            loc_dom.xpath('//div[@class="location__city text--transport"]/text()')[0]
+            .strip()
+            .split(", ")
+        )
+        city = " ".join(raw_data[0].split()[:-1])
+        state = raw_data[0].split()[-1]
+        zip_code = raw_data[-1].strip()
         country_code = "<MISSING>"
         store_number = "<MISSING>"
-        phone = poi_html.xpath(".//td/text()")[-1]
+        phone = loc_dom.xpath('//div[@class="location__phone"]/text()')
+        phone = phone[-1] if phone else "<MISSING>"
         location_type = "<MISSING>"
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
-        if poi_html.xpath('.//a[contains(@href, "maps")]/@href'):
-            geo = (
-                poi_html.xpath('.//a[contains(@href, "maps")]/@href')[0]
-                .split("/@")[-1]
-                .split(",")[:2]
-            )
-            if len(geo) == 2:
-                if "http" not in geo[0]:
-                    latitude = geo[0]
-                    longitude = geo[1]
-        hours_of_operation = "<MISSING>"
+        latitude = loc_dom.xpath("//@data-lat")[0]
+        longitude = loc_dom.xpath("//@data-lng")[0]
+        days = loc_dom.xpath('//ul[@class="days text--upper"]/li/text()')
+        hours = loc_dom.xpath(
+            '//div[@class="col-md-4 col-xs-6 text--transport"]/li/text()'
+        )
+        hoo = list(map(lambda d, h: d + " " + h, days, hours))
+        hoo = [e.strip() for e in hoo if e.strip()]
+        hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
 
         item = [
             domain,

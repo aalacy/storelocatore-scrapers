@@ -1,5 +1,6 @@
 import re
 import csv
+import json
 from lxml import etree
 
 from sgrequests import SgRequests
@@ -41,7 +42,7 @@ def fetch_data():
 
     items = []
 
-    start_url = "http://greatcanadianbagel.com/store-locations/"
+    start_url = "https://www.dicanns.com/restaurants-1"
     domain = re.findall(r"://(.+?)/", start_url)[0].replace("www.", "")
     hdr = {
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
@@ -49,33 +50,47 @@ def fetch_data():
     response = session.get(start_url, headers=hdr)
     dom = etree.HTML(response.text)
 
-    all_locations = dom.xpath('//table[@class="data"]/tbody/tr')[1:]
-    for poi_html in all_locations:
+    all_locations = dom.xpath(
+        '//div[contains(@data-block-json, "location")]/@data-block-json'
+    )
+    for poi in all_locations:
+        poi = json.loads(poi)
         store_url = start_url
-        location_name = "<MISSING>"
-        street_address = poi_html.xpath(".//td/text()")
-        street_address = street_address[0].strip() if street_address else "<MISSING>"
-        city = poi_html.xpath(".//*/strong/text()")
-        city = city[0].split(", ")[0]
-        state = poi_html.xpath(".//*/strong/text()")[0].split(", ")[-1]
-        zip_code = "<MISSING>"
-        country_code = "<MISSING>"
+        location_name = poi["location"]["addressTitle"]
+        location_name = location_name if location_name else "<MISSING>"
+        street_address = poi["location"]["addressLine1"]
+        if not street_address:
+            continue
+        raw_data = poi["location"]["addressLine2"].split(", ")
+        city = raw_data[0]
+        state = raw_data[1]
+        zip_code = raw_data[-1]
+        country_code = poi["location"]["addressCountry"]
+        country_code = country_code if country_code else "<MISSING>"
         store_number = "<MISSING>"
-        phone = poi_html.xpath(".//td/text()")[-1]
-        location_type = "<MISSING>"
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
-        if poi_html.xpath('.//a[contains(@href, "maps")]/@href'):
-            geo = (
-                poi_html.xpath('.//a[contains(@href, "maps")]/@href')[0]
-                .split("/@")[-1]
-                .split(",")[:2]
+        phone = dom.xpath(
+            '//div[div[contains(@data-block-json, "{}")]]/following-sibling::div//*[contains(text(), "Tel")]/text()'.format(
+                location_name
             )
-            if len(geo) == 2:
-                if "http" not in geo[0]:
-                    latitude = geo[0]
-                    longitude = geo[1]
-        hours_of_operation = "<MISSING>"
+        )
+        if not phone:
+            phone = dom.xpath(
+                '//div[contains(@data-block-json, "{}")]/following-sibling::div//*[contains(text(), "Tel")]/text()'.format(
+                    location_name
+                )
+            )
+        phone = phone[0].split(":")[-1].strip() if phone else "<MISSING>"
+        location_type = "<MISSING>"
+        latitude = poi["location"]["mapLat"]
+        longitude = poi["location"]["mapLng"]
+        hoo = dom.xpath(
+            '//div[div[contains(@data-block-json, "{}")]]/preceding-sibling::div//p/text()'.format(
+                location_name
+            )
+        )[4:]
+        hoo = [e.strip() for e in hoo if e.strip()]
+        hours_of_operation = " ".join(hoo).split("HOURS ")[-1] if hoo else "<MISSING>"
+        hours_of_operation = hours_of_operation.split("Hours ")[-1]
 
         item = [
             domain,
