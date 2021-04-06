@@ -47,10 +47,8 @@ def fetch_data():
     logger.info("Pulling Stores")
     for line in r.iter_lines():
         line = str(line.decode("utf-8"))
-        if 'locationcols"><a target="_blank" href="' in line:
-            locs.append(
-                line.split('locationcols"><a target="_blank" href="')[1].split('"')[0]
-            )
+        if '<a target="_blank" href="https://www.spaviadayspa.com/' in line:
+            locs.append(line.split('href="')[1].split('"')[0])
     for loc in locs:
         logger.info(loc)
         name = ""
