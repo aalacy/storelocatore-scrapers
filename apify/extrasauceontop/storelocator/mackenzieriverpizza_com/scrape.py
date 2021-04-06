@@ -34,6 +34,7 @@ def getdata():
         soup = bs(html, "html.parser")
         try:
             timer = int(soup.find("div", attrs={"id": "timer"}).text)
+            timer = timer + timer
         except Exception:
             while True:
                 html = driver.page_source
