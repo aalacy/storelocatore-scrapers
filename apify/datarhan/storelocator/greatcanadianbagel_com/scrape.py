@@ -53,8 +53,9 @@ def fetch_data():
     for poi_html in all_locations:
         store_url = start_url
         location_name = "<MISSING>"
-        street_address = poi_html.xpath(".//td/text()")
-        street_address = street_address[0].strip() if street_address else "<MISSING>"
+        street_address = poi_html.xpath("./td[2]/text()")
+        street_address = [e.strip() for e in street_address if e.strip()]
+        street_address = " ".join(street_address) if street_address else "<MISSING>"
         city = poi_html.xpath(".//*/strong/text()")
         city = city[0].split(", ")[0]
         state = poi_html.xpath(".//*/strong/text()")[0].split(", ")[-1]
@@ -76,6 +77,15 @@ def fetch_data():
                     latitude = geo[0]
                     longitude = geo[1]
         hours_of_operation = "<MISSING>"
+        if "First Canadian Place" in street_address:
+            geo = (
+                poi_html.xpath('.//a[contains(@href, "maps")]/@href')[0]
+                .split("sll=")[-1]
+                .split("&")[0]
+                .split(",")
+            )
+            latitude = geo[0]
+            longitude = geo[1]
 
         item = [
             domain,
