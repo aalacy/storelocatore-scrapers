@@ -47,30 +47,33 @@ def fetch_data():
     logger.info("Pulling Stores")
     for line in r.iter_lines():
         line = str(line.decode("utf-8"))
-        if '<loc>https://www.accessstorage.ca/en/self-storage/' in line:
-            items = line.split('<loc>https://www.accessstorage.ca/en/self-storage/')
+        if "<loc>https://www.accessstorage.ca/en/self-storage/" in line:
+            items = line.split("<loc>https://www.accessstorage.ca/en/self-storage/")
             for item in items:
-                if '<!DOCTYPE' not in item:
-                    lurl = 'https://www.accessstorage.ca/en/self-storage/' + item.split('<')[0]
-                    if lurl.count('/') == 7 and '/business/' not in lurl:
+                if "<!DOCTYPE" not in item:
+                    lurl = (
+                        "https://www.accessstorage.ca/en/self-storage/"
+                        + item.split("<")[0]
+                    )
+                    if lurl.count("/") == 7 and "/business/" not in lurl:
                         locs.append(lurl)
     for loc in locs:
         logger.info(loc)
-        name = ''
-        add = ''
-        city = ''
-        state = ''
-        zc = ''
-        store = '<MISSING>'
-        phone = ''
-        lat = ''
-        lng = ''
-        hours = ''
+        name = ""
+        add = ""
+        city = ""
+        state = ""
+        zc = ""
+        store = "<MISSING>"
+        phone = ""
+        lat = ""
+        lng = ""
+        hours = ""
         r2 = session.get(loc, headers=headers)
         for line2 in r2.iter_lines():
-            line2 = str(line2.decode('utf-8'))
+            line2 = str(line2.decode("utf-8"))
             if '<h1 class="locationName">' in line2:
-                name = line2.split('<h1 class="locationName">')[1].split('<')[0]
+                name = line2.split('<h1 class="locationName">')[1].split("<")[0]
             if '"streetAddress": "' in line2:
                 add = line2.split('"streetAddress": "')[1].split('"')[0]
             if '"addressLocality": "' in line2:
@@ -81,20 +84,32 @@ def fetch_data():
                 zc = line2.split('"postalCode": "')[1].split('"')[0]
             if '"telephone": "' in line2:
                 phone = line2.split('"telephone": "')[1].split('"')[0]
-            if '"@type": "OpeningHoursSpecification"' in line2 and hours == '':
+            if '"@type": "OpeningHoursSpecification"' in line2 and hours == "":
                 days = line2.split('"@type": "OpeningHoursSpecification"')
                 for day in days:
                     if '"opens"' in day:
-                        hrs = day.split('http://schema.org/')[1].split('"')[0] + ': ' + day.split('"opens": "')[1].split('"')[0] + '-' + day.split('"closes": "')[1].split('"')[0]
-                        if hours == '':
+                        hrs = (
+                            day.split("http://schema.org/")[1].split('"')[0]
+                            + ": "
+                            + day.split('"opens": "')[1].split('"')[0]
+                            + "-"
+                            + day.split('"closes": "')[1].split('"')[0]
+                        )
+                        if hours == "":
                             hours = hrs
                         else:
-                            hours = hours + '; ' + hrs
+                            hours = hours + "; " + hrs
             if '"latitude": ' in line2:
-                lat = line2.split('"latitude": ')[1].split(',')[0]
+                lat = line2.split('"latitude": ')[1].split(",")[0]
             if '"longitude": ' in line2:
-                lng = line2.split('"longitude": ')[1].strip().replace('\r','').replace('\n','').replace('\t','')
-        if add != '':
+                lng = (
+                    line2.split('"longitude": ')[1]
+                    .strip()
+                    .replace("\r", "")
+                    .replace("\n", "")
+                    .replace("\t", "")
+                )
+        if add != "":
             yield [
                 website,
                 loc,
