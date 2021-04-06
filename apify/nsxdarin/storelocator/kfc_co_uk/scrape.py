@@ -1,6 +1,5 @@
 import csv
 from sgrequests import SgRequests
-import json
 
 session = SgRequests()
 headers = {
@@ -65,7 +64,6 @@ def get_hours(hours, status):
 
 
 def fetch_data():
-    locs = []
     url = 'https://www.kfc.co.uk/cms/api/data/restaurants_all'
     r = session.get(url, headers=headers)
 
