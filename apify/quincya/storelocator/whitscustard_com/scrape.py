@@ -66,7 +66,7 @@ def fetch_data():
             req = session.get(main_link, headers=headers)
             base = BeautifulSoup(req.text, "lxml")
         else:
-            driver = SgChrome().chrome()
+            driver = SgChrome().driver()
             driver.get(main_link)
             base = BeautifulSoup(driver.page_source, "lxml")
             driver.close()
@@ -83,16 +83,9 @@ def fetch_data():
         req = session.get(link, headers=headers)
         base = BeautifulSoup(req.text, "lxml")
 
-        if "Opening%2Bsoon" in str(base):
+        if "Opening%2Bsoon" in str(base) or "Coming Soon Website Little" in str(base):
             continue
-        location_name = (
-            base.find(class_="entry-title")
-            .text.encode("ascii", "replace")
-            .decode()
-            .replace("?", "-")
-            .replace("  ", "")
-            .strip()
-        )
+        location_name = base.find(class_="entry-title").text.strip()
 
         raw_address = (
             str(base.address)
@@ -101,18 +94,23 @@ def fetch_data():
             .replace("SUITE 101,", "SUITE 101<br/>")
             .replace("HWY HENDER", "HWY<br/>HENDER")
             .replace("\nSUITE", " SUITE")
+            .replace("\nSuite", " SUITE")
             .replace("RD.\n", "RD. ")
             .replace("WEST, \n", "WEST, ")
             .split("<br/>")
         )
 
         street_address = raw_address[0].strip()
-        if street_address == "None":
+        if street_address == "None" or not street_address:
             try:
                 raw_address = list(base.find(id="address").stripped_strings)
             except:
                 try:
                     raw_address = list(base.find(class_="pslAddress").stripped_strings)
+                    if "\n" in raw_address[0]:
+                        raw_address = (
+                            raw_address[0].replace("\n", "<br/>").split("<br/>")
+                        )
                 except:
                     raw_address = base.h3.text.replace("NUE ZAN", "NUE<br/>ZAN").split(
                         "<br/>"
@@ -143,6 +141,9 @@ def fetch_data():
         else:
             raise
 
+        if street_address[-1:] == ",":
+            street_address = street_address[:-1]
+
         country_code = "US"
         store_number = "<MISSING>"
         location_type = "<MISSING>"
@@ -151,6 +152,7 @@ def fetch_data():
             phone = (
                 base.find("a", {"href": re.compile(r"tel")})["href"]
                 .replace("tel:", "")
+                .replace("telto:", "")
                 .strip()
             )
         except:
@@ -206,7 +208,10 @@ def fetch_data():
         if "11362 SAN JOSE BLVD" in street_address.upper():
             latitude = "30.1677275"
             longitude = "-81.6349426"
-        if not longitude:
+        if "200 NE 2nd Avenue" in street_address:
+            latitude = "26.4661678"
+            longitude = "-80.0735354"
+        if not longitude or not latitude[:2].isdigit():
             latitude = "<MISSING>"
             longitude = "<MISSING>"
 

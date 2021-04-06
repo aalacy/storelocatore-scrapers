@@ -101,10 +101,10 @@ def fetch_data():
         if tim is None or len(tim) == 0:
             tim = "<MISSING>"
         parsed_address = parse_address(address)
-        city = parsed_address["city"]
+        city = loc.replace("Kent's ", "")
         state = parsed_address["state"]
         zipcode = parsed_address["zipcode"]
-        street = parsed_address["street"]
+        street = parsed_address["street"] + parsed_address["city"].replace(city, "")
         all.append(
             [
                 "https://kentsgrocery.com",

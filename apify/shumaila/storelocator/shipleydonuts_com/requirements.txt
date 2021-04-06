@@ -1,3 +1,2 @@
 bs4==0.0.1
-sgrequests
-sgvalidator
+sgrequests==0.1.8

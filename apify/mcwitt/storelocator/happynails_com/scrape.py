@@ -102,8 +102,8 @@ def fetch_data():
         rows = [_parse_row(r) for r in response.json()]
         all_rows.update(rows)
 
-        new_coordinates = [(r.latitude, r.longitude) for r in rows]
-        search.mark_found(new_coordinates)
+        for r in rows:
+            search.found_location_at(r.latitude, r.longitude)
 
     return all_rows
 

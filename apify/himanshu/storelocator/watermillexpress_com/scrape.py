@@ -107,7 +107,7 @@ def fetch_data():
             page_url = "<MISSING>"
             hours_of_operation = "Open 24/7"
 
-            coords.mark_found((latitude, longitude))
+            coords.found_location_at(latitude, longitude)
             store = [
                 locator_domain,
                 location_name,

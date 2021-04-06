@@ -52,15 +52,16 @@ def fetch_data():
     data = json.loads(data)
 
     for poi in data:
-        store_url = poi["urlDetailPage"]
+        country_code = poi["location"]["country"]
+        if country_code != "UK":
+            continue
+        store_url = poi.get("urlDetailPage")
+        store_url = store_url if store_url else "<MISSING>"
         location_name = poi["name"]
         city = poi["location"]["city"]
         street_address = poi["location"]["address"].rsplit(city, 1)[0][:-2]
         state = poi["location"]["address"].split(", ")[-2]
         zip_code = poi["location"]["zipcode"]
-        country_code = poi["location"]["country"]
-        if country_code != "UK":
-            continue
         store_number = poi["poicode"]
         phone = "<MISSING>"
         location_type = poi["objectType"]["code"]

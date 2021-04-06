@@ -1,4 +1,5 @@
-sgrequests
-sglogging
+tenacity==6.3.1
 lxml==4.5.2
-tenacity
+sgrequests==0.1.4
+sgvalidator==0.0.71
+sglogging==0.0.4

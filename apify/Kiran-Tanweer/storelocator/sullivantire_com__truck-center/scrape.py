@@ -108,9 +108,6 @@ def fetch_data():
         phone = phone.replace("\n", "")
         phone = phone.lstrip("Tel")
         phone = phone.strip()
-        hours = loc.findAll("div", {"class": "half"})[1].text
-        hours = hours.replace("Hours Today", "")
-        hours = hours.strip()
 
         data.append(
             [
@@ -127,7 +124,7 @@ def fetch_data():
                 "<MISSING>",
                 "<MISSING>",
                 "<MISSING>",
-                hours,
+                "<INACCESSIBLE>",
             ]
         )
     return data
