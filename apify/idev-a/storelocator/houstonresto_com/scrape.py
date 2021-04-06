@@ -42,12 +42,22 @@ def fetch_data():
                     "|", ""
                 )
             )
-            phone = (
+            phone_block = list(
                 soup1.find("h3", string=re.compile(r"Nos coordonnées", re.IGNORECASE))
                 .find_next_sibling("p")
-                .text.split(":")[-1]
+                .stripped_strings
+            )
+            if (
+                phone_block
+                and not phone_block[0].replace("TEL:", "").replace("TÉL:", "").strip()
+            ):
+                del phone_block[0]
+            phone = (
+                phone_block[0]
+                .split(":")[-1]
                 .split("#")[0]
                 .replace("TEL:", "")
+                .replace("TÉL:", "")
                 .strip()
             )
             yield SgRecord(

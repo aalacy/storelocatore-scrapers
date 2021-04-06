@@ -5,7 +5,7 @@ from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 
 search = DynamicZipSearch(
     country_codes=[SearchableCountries.USA],
-    max_radius_miles=1000,
+    max_radius_miles=100,
     max_search_results=100,
 )
 
@@ -30,7 +30,6 @@ unique_names = []
 
 def parsedata(response_json, data_url):
     locations = response_json["Items"]
-    coords = []
     for location in locations:
         locator_domain = "prismahealth.org"
         page_url = data_url
@@ -40,7 +39,7 @@ def parsedata(response_json, data_url):
 
         city = location["Address"][2].split(",")[0]
         state = location["Address"][2].split(" ")[-2]
-        zipp = city = location["Address"][2].split(" ")[-1]
+        zipp = location["Address"][2].split(" ")[-1]
 
         country_code = "US"
         store_number = location["Id"].split(";")[0]
@@ -70,9 +69,7 @@ def parsedata(response_json, data_url):
         longitudes.append(longitude)
         hours_of_operations.append(hours)
 
-        current_coords = [latitude, longitude]
-        coords.append(current_coords)
-    search.mark_found(coords)
+        search.found_location_at(latitude, longitude)
 
 
 base_url = "https://prismahealth.org"
