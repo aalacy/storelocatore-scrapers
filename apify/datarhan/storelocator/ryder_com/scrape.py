@@ -88,7 +88,7 @@ def fetch_data():
                 longitude = l_html.xpath(".//a/@data-lng")
                 longitude = longitude[0] if longitude else "<MISSING>"
                 hours_of_operation = l_html.xpath(
-                    './/ul[@class="location__services location__services--hours location__format--hours"]/li/text()'
+                    './/ul[contains(@class, "services--hours")]/li/text()'
                 )
                 hours_of_operation = (
                     " ".join(hours_of_operation) if hours_of_operation else "<MISSING>"

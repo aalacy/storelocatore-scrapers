@@ -3,6 +3,7 @@ import csv
 import json
 
 from sgrequests import SgRequests
+from sgscrape.sgpostal import parse_address_intl
 
 
 def write_output(data):
@@ -53,12 +54,18 @@ def fetch_data():
         store_url = "https://sperohealth.com/locations-near-you/"
         location_name = poi["title"]
         location_name = location_name if location_name else "<MISSING>"
-        raw_address = poi["address"].split()
-        street_address = raw_address[0]
-        city = raw_address[1]
-        state = raw_address[-1].split()[0]
-        zip_code = raw_address[-1].split()[-1]
-        country_code = "<MISSING>"
+        addr = parse_address_intl(poi["address"])
+        street_address = addr.street_address_1
+        if addr.street_address_2:
+            street_address += " " + addr.street_address_2
+        city = addr.city
+        city = city if city else "<MISSING>"
+        state = addr.state
+        state = state if state else "<MISSING>"
+        zip_code = addr.postcode
+        zip_code = zip_code if zip_code else "<MISSING>"
+        country_code = addr.country
+        country_code = country_code if country_code else "<MISSING>"
         store_number = poi["id"]
         phone = poi["phone"]
         phone = phone if phone else "<MISSING>"
@@ -66,6 +73,10 @@ def fetch_data():
         latitude = poi["lat"]
         longitude = poi["lng"]
         hours_of_operation = "<MISSING>"
+
+        if "Coming Soon" in location_name:
+            location_name = location_name.split("(C")[0].strip()
+            location_type = "Coming Soon"
 
         item = [
             domain,
