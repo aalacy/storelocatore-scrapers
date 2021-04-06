@@ -12,6 +12,8 @@ option.add_argument("window-size=1280,800")
 option.add_argument(
     "user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36"
 )
+option.add_argument("--no-sandbox")
+option.add_argument("--disable-dev-shm-usage")
 
 
 def write_output(data):
@@ -52,9 +54,13 @@ def fetch_data():
     start_url = "https://www.cb2.com/stores/"
 
     with webdriver.Chrome(options=option) as driver:
+
         driver.get(start_url)
         sleep(10)
+        page_sour = driver.page_source
         dom = etree.HTML(driver.page_source)
+        with open("file.txt", "w", encoding="utf-8") as output:
+            print(page_sour, file=output)
 
     all_locations = dom.xpath('//script[@type="application/ld+json"]/text()')
     for elem in all_locations:
