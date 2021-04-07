@@ -1,4 +1,5 @@
 import csv
+import usaddress
 from lxml import html
 from sgrequests import SgRequests
 
@@ -47,7 +48,7 @@ def fetch_data():
     for j in js:
 
         page_url = j.get("permalink")
-        location_name = j.get("store")
+        location_name = "".join(j.get("store")).replace("&#8211;", "-")
         location_type = "<MISSING>"
         street_address = f"{j.get('address')} {j.get('address2')}".strip()
         phone = j.get("phone")
@@ -61,10 +62,19 @@ def fetch_data():
         hours = j.get("description")
         hours = html.fromstring(hours)
         hours_of_operation = (
-            " ".join(hours.xpath("//p/text()")).replace("\n", "").strip()
+            " ".join(hours.xpath("//*/text()")).replace("\n", "").strip()
         )
+
         if hours_of_operation.find("Visit us") != -1:
             hours_of_operation = hours_of_operation.split("Visit us")[0].strip()
+        hours_of_operation = (
+            hours_of_operation.replace("Hours:", "")
+            .replace("Hours", "")
+            .replace("View Menu", "")
+            .replace("Order On-line!", "")
+            .replace("Website", "")
+            .strip()
+        )
 
         row = [
             locator_domain,
