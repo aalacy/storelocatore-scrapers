@@ -29,7 +29,7 @@ def getdata():
 
         x = x + 1
 
-        url = f"https://www.key.com/loc/DirectorServlet?action=getEntities&entity=BRCH&entity=MCD&lat={search_lat}&lng={search_lon}&distance=1000&callback=myJsonpCallback"
+        url = f"https://www.key.com/loc/DirectorServlet?action=getEntities&entity=ATM&lat={search_lat}&lng={search_lon}&distance=1000&callback=myJsonpCallback"
 
         response = session.get(url).text
         response = response.replace("myJsonpCallback(", "")[:-1]

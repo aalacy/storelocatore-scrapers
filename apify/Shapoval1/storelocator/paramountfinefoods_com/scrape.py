@@ -96,6 +96,7 @@ def fetch_data():
         if location_name.find("UK") != -1:
             country_code = "UK"
         if state == "UK":
+            state = "<MISSING>"
             country_code = "UK"
         city = adr.split()[0].strip()
         store_number = "<MISSING>"
