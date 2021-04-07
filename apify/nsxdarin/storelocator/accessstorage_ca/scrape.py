@@ -39,7 +39,7 @@ def write_output(data):
 
 def fetch_data():
     locs = []
-    url = "https://www.accessstorage.ca/sitemap.xml"
+    url = "https://www.accessstorage.ca/en/self-storage/"
     r = session.get(url, headers=headers)
     website = "accessstorage.ca"
     typ = "<MISSING>"
@@ -47,16 +47,11 @@ def fetch_data():
     logger.info("Pulling Stores")
     for line in r.iter_lines():
         line = str(line.decode("utf-8"))
-        if "<loc>https://www.accessstorage.ca/en/self-storage/" in line:
-            items = line.split("<loc>https://www.accessstorage.ca/en/self-storage/")
+        if '"full_url": "' in line:
+            items = line.split('"full_url": "')
             for item in items:
-                if "<!DOCTYPE" not in item:
-                    lurl = (
-                        "https://www.accessstorage.ca/en/self-storage/"
-                        + item.split("<")[0]
-                    )
-                    if lurl.count("/") == 7 and "/business/" not in lurl:
-                        locs.append(lurl)
+                if '"display_image":' in item:
+                    locs.append(item.split('"')[0])
     for loc in locs:
         logger.info(loc)
         name = ""
