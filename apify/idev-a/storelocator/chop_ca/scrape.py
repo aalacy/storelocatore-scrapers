@@ -3,7 +3,7 @@ from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 import re
-
+import json
 
 _headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
@@ -16,13 +16,14 @@ def fetch_data():
     with SgRequests() as session:
         soup = bs(session.get(base_url, headers=_headers).text, "lxml")
         links = soup.select(
-            "div.location-block div.location-block__all__container li.location-block__location a"
+            "div.location-block div.location-block__all__container li.location-block__location div.location-block__icons a"
         )
         for link in links:
             if not link["href"].startswith("/"):
                 continue
             page_url = locator_domain + link["href"]
-            soup1 = bs(session.get(page_url, headers=_headers).text, "lxml")
+            res = session.get(page_url, headers=_headers).text
+            soup1 = bs(res, "lxml")
             location_name = soup1.select_one("h1.title").text
             street_address = soup1.select_one(
                 'div.location-wrap span[itemprop="streetAddress"]'
@@ -42,15 +43,23 @@ def fetch_data():
             for x in range(0, len(temp), 2):
                 hours.append(f"{temp[x]} {temp[x+1]}")
 
+            script = json.loads(
+                res.split("jQuery.extend(Drupal.settings,")[1]
+                .split("</script>")[0]
+                .strip()[:-2]
+            )
             yield SgRecord(
                 page_url=page_url,
                 location_name=location_name,
+                store_number=link["data-location-id"],
                 street_address=street_address,
                 city=city,
                 state=state,
                 zip_postal=zip_postal,
                 country_code="CA",
                 phone=phone,
+                latitude=script["ss_menu_location"]["lat"],
+                longitude=script["ss_menu_location"]["lng"],
                 locator_domain=locator_domain,
                 hours_of_operation="; ".join(hours),
             )
