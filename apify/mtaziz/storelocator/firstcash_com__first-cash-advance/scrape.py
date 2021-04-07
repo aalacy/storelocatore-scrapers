@@ -59,7 +59,8 @@ def fetch_data():
     else:
         logger.info(f"Unable to find the Key, please check the {url_key}")
     start = 1
-    total_page_number = 2750  # As of now the last item returned by the page number 2711 while returning 1 item at a time
+    total_page_number = 10
+    # total_page_number = 2750  # As of now the last item returned by the page number 2711 while returning 1 item at a time
     items_num_per_page = 1
     total = 0
     for page in range(start, total_page_number):
@@ -189,26 +190,26 @@ def fetch_data():
             store.append(
                 store_data["longitude"] if store_data["longitude"] else "<MISSING>"
             )
-            hours_request = session.get(
+            url_hoo = (
                 "http://find.cashamerica.us/api/stores/"
                 + str(store_data["storeNumber"])
                 + "?key="
                 + key
             )
+            logger.info(f"Hours Data scraping from: {url_hoo}")
+            hours_request = session.get(url_hoo)
             hours_details = hours_request.json()["weeklyHours"]
-            hours = ""
+            hoo_list = []
             for k in range(len(hours_details)):
-                if hours_details[k]["openTime"] != "Closed":
-                    hours = (
-                        hours
-                        + " "
-                        + hours_details[k]["weekDay"]
-                        + " "
-                        + hours_details[k]["openTime"]
-                        + " "
-                        + hours_details[k]["closeTime"]
-                        + " "
-                    )
+                hool = (
+                    hours_details[k]["weekDay"]
+                    + " "
+                    + hours_details[k]["openTime"]
+                    + " - "
+                    + hours_details[k]["closeTime"]
+                )
+                hoo_list.append(hool)
+            hours = "; ".join(hoo_list)
             store.append(hours.strip() if hours != "" else "<MISSING>")
             store.append("<INACCESSIBLE>")
             for i in range(len(store)):
