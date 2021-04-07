@@ -39,6 +39,7 @@ def write_output(data):
 
 def fetch_data():
     locs = []
+    infos = []
     url = "https://www.hoag.org/locations/"
     r = session.get(url, headers=headers)
     website = "hoag.org"
@@ -106,22 +107,25 @@ def fetch_data():
                                 name = name.split(" - ")[0]
                             if phone == "":
                                 phone = "<MISSING>"
-                            yield [
-                                website,
-                                lurl,
-                                name,
-                                add,
-                                city,
-                                state,
-                                zc,
-                                country,
-                                store,
-                                phone,
-                                typ,
-                                lat,
-                                lng,
-                                hours,
-                            ]
+                            addinfo = add + "|" + city + "|" + zc
+                            if addinfo not in infos:
+                                infos.append(addinfo)
+                                yield [
+                                    website,
+                                    lurl,
+                                    name,
+                                    add,
+                                    city,
+                                    state,
+                                    zc,
+                                    country,
+                                    store,
+                                    phone,
+                                    typ,
+                                    lat,
+                                    lng,
+                                    hours,
+                                ]
                 if "HOURS:" in line2 and "HOLIDAY" not in line2:
                     g = next(lines2)
                     h = next(lines2)
@@ -155,22 +159,25 @@ def fetch_data():
             if add != "":
                 if phone == "":
                     phone = "<MISSING>"
-                yield [
-                    website,
-                    lurl,
-                    name,
-                    add,
-                    city,
-                    state,
-                    zc,
-                    country,
-                    store,
-                    phone,
-                    typ,
-                    lat,
-                    lng,
-                    hours,
-                ]
+                addinfo = add + "|" + city + "|" + zc
+                if addinfo not in infos:
+                    infos.append(addinfo)
+                    yield [
+                        website,
+                        lurl,
+                        name,
+                        add,
+                        city,
+                        state,
+                        zc,
+                        country,
+                        store,
+                        phone,
+                        typ,
+                        lat,
+                        lng,
+                        hours,
+                    ]
     url = "https://www.hoagorthopedicinstitute.com/locations/"
     r = session.get(url, headers=headers)
     locs = []
@@ -205,22 +212,25 @@ def fetch_data():
             phone = line.split('<a href="tel:')[1].split('"')[0]
         if '<meta itemprop="url" content="' in line:
             lurl = line.split('<meta itemprop="url" content="')[1].split('"')[0]
-            yield [
-                website,
-                lurl,
-                name,
-                add,
-                city,
-                state,
-                zc,
-                country,
-                store,
-                phone,
-                typ,
-                lat,
-                lng,
-                hours,
-            ]
+            addinfo = add + "|" + city + "|" + zc
+            if addinfo not in infos:
+                infos.append(addinfo)
+                yield [
+                    website,
+                    lurl,
+                    name,
+                    add,
+                    city,
+                    state,
+                    zc,
+                    country,
+                    store,
+                    phone,
+                    typ,
+                    lat,
+                    lng,
+                    hours,
+                ]
 
 
 def scrape():

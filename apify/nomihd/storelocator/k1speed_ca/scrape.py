@@ -95,6 +95,7 @@ def fetch_data():
         street_address = "".join(
             store_sel.xpath('//span[@itemprop="streetAddress"]/text()')
         ).strip()
+        street_address = street_address[:-1]
         city = "".join(
             store_sel.xpath('//span[@itemprop="addressLocality"]/text()')
         ).strip()
@@ -131,7 +132,7 @@ def fetch_data():
             location_type = "<MISSING>"
 
         hours_of_operation = "; ".join(
-            store_sel.xpath('//time[@itemprop="openingHours"]/@datetime')
+            list(set(store_sel.xpath('//time[@itemprop="openingHours"]/@datetime')))
         ).strip()
 
         map_link = "".join(store_sel.xpath('//a[@itemprop="address"]/@href')).strip()

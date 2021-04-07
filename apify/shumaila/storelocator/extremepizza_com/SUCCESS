@@ -1,0 +1,3 @@
+VALIDATOR_VERSION: 0.0.71
+COMMAND: D:\PycharmProjects\Odetta\extremepizza\validate.py data.csv --ignore GeoConsistencyValidator
+PYTHON_VERSION: sys.version_info(major=3, minor=8, micro=3, releaselevel='final', serial=0)

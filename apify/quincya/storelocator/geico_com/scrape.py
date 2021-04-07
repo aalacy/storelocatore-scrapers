@@ -47,9 +47,7 @@ def fetch_data():
     max_results = 10
     max_distance = 50
 
-    all_store_data = []
-
-    dup_tracker = []
+    dup_tracker = set()
 
     search = DynamicZipSearch(
         country_codes=[SearchableCountries.USA],
@@ -76,13 +74,13 @@ def fetch_data():
             page_url = "https://www.geico.com" + loc["url"]
 
             if page_url not in dup_tracker:
-                dup_tracker.append(page_url)
+                dup_tracker.add(page_url)
             else:
                 continue
 
             lat = loc["latitude"]
             longit = loc["longitude"]
-            search.mark_found([lat, longit])
+            search.found_location_at(lat, longit)
 
             raw_address = loc["formattedAddress"]
             city = loc["city"]
@@ -120,9 +118,7 @@ def fetch_data():
                 page_url,
             ]
 
-            all_store_data.append(store_data)
-
-    return all_store_data
+            yield store_data
 
 
 def scrape():

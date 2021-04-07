@@ -51,24 +51,31 @@ def fetch_data():
                 phone = missingString
             if hours == "null":
                 hours = missingString
-            res.append(
-                {
-                    "locator_domain": locator_domain,
-                    "page_url": missingString,
-                    "location_name": m["name"],
-                    "street_address": m["address"],
-                    "city": m["city"],
-                    "state": m["state"],
-                    "zip": m["zip"],
-                    "country_code": missingString,
-                    "store_number": m["storenumber"],
-                    "phone": phone,
-                    "location_type": m["storetype"],
-                    "latitude": m["lat"],
-                    "longitude": m["lng"],
-                    "hours": hours,
-                }
-            )
+            if "Germany" in m["state"]:
+                pass
+            elif "Japan" in m["state"]:
+                pass
+            elif "Rutland" in m["state"]:
+                pass
+            else:
+                res.append(
+                    {
+                        "locator_domain": locator_domain,
+                        "page_url": missingString,
+                        "location_name": m["name"],
+                        "street_address": m["address"],
+                        "city": m["city"],
+                        "state": m["state"],
+                        "zip": m["zip"],
+                        "country_code": missingString,
+                        "store_number": m["storenumber"],
+                        "phone": phone,
+                        "location_type": m["storetype"],
+                        "latitude": m["lat"],
+                        "longitude": m["lng"],
+                        "hours": hours,
+                    }
+                )
         return res
 
     result = []

@@ -67,13 +67,14 @@ def fetch_data():
     stores_sel = lxml.html.fromstring(stores_req.text)
     stores = stores_sel.xpath(
         '//li[@class="menu-item menu-item-type-post_type menu-item-object-page "]/a[contains(@href,"-location.html")]/@href'
-    )
+    ) + ["https://www.k1speed.com/canovanas-location.html"]
+
     for store_url in list(set(stores)):
         page_url = store_url
         log.info(page_url)
         store_req = session.get(page_url, headers=headers)
         store_sel = lxml.html.fromstring(store_req.text)
-        if "COMING SOON" not in store_req.text:
+        if "OPENING SOON" not in store_req.text:
             locator_domain = website
             location_name = "".join(
                 store_sel.xpath('//h1[@itemprop="name"]/text()')

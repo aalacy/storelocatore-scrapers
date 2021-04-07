@@ -63,8 +63,18 @@ def fetch_data():
         country_code = "US"
         store_number = "<MISSING>"
         location_type = "<MISSING>"
-        phone = raw_data[4].strip()
-        hours_of_operation = raw_data[5].strip()
+        try:
+            phone = raw_data[3].strip()
+        except:
+            phone = "<MISSING>"
+        try:
+            hours_of_operation = raw_data[4].strip()
+        except:
+            hours_of_operation = "<MISSING>"
+        if "closed" in phone.lower():
+            hours_of_operation = phone
+            phone = "<MISSING>"
+
         latitude = "<MISSING>"
         longitude = "<MISSING>"
 

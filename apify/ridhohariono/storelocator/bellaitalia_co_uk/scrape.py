@@ -5,7 +5,7 @@ from sglogging import sglog
 
 DOMAIN = "bellaitalia.co.uk"
 BASE_URL = "https://www.bellaitalia.co.uk"
-API_STORES = "https://api.casualdininggroup.uk/pagedata/?brandKey=bellaitalia&path=/spaces/com0r9vws8o2/entries?access_token=f99c643342fea1841fda74418f0263d3af7b096dc78413cb9747c6bf5221beaf%26select=fields.storeId,fields.title,fields.slug,fields.city,fields.description,fields.addressLocation,fields.addressLine1,fields.addressLine2,fields.addressCity,fields.county,fields.postCode,fields.phoneNumber,fields.email,fields.hours,fields.alternativeHours%26content_type=restaurant%26include=1"
+API_STORES = "https://api.bigtablegroup.com/pagedata/?brandKey=bellaitalia&path=/spaces/com0r9vws8o2/entries?access_token=f99c643342fea1841fda74418f0263d3af7b096dc78413cb9747c6bf5221beaf%26select=fields.storeId,fields.title,fields.slug,fields.city,fields.description,fields.addressLocation,fields.addressLine1,fields.addressLine2,fields.addressCity,fields.county,fields.postCode,fields.phoneNumber,fields.email,fields.hours,fields.alternativeHours%26content_type=restaurant%26include=1"
 HEADERS = {
     "Accept": "application/json, text/plain, */*",
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
@@ -96,7 +96,9 @@ def fetch_data():
     locations = []
     for row in store_details["items"]:
         locator_domain = DOMAIN
-        page_url = BASE_URL
+        page_url = "{}/italian-restaurant/{}/{}".format(
+            BASE_URL, row["fields"]["city"], row["fields"]["slug"]
+        )
         location_name = row["fields"]["title"]
         if "addressLine2" in row["fields"] and len(row["fields"]["addressLine2"]) > 0:
             street_address = "{}, {}".format(

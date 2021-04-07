@@ -2,6 +2,7 @@ import csv
 import json
 
 from sgrequests import SgRequests
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 
 
 def write_output(data):
@@ -37,24 +38,22 @@ def write_output(data):
 def fetch_data():
     # Your scraper here
     items = []
+    scraped_items = []
 
     session = SgRequests()
 
     DOMAIN = "zara.com"
 
-    cities = [
-        ("51.5073509", "-0.1277583"),
-        ("53.4083714", "-2.9915726"),
-        ("51.48158100000001", "-3.17909"),
-        ("50.90970040000001", "-1.4043509"),
-        ("50.82253000000001", "-0.137163"),
-        ("51.7520209", "-1.2577263"),
-        ("52.205337", "0.121817"),
-    ]
+    hdr = {
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.182 Safari/537.36"
+    }
     all_locations = []
-    for lat, lng in cities:
-        url = "https://www.zara.com/uk/en/stores-locator/search?lat={}&lng={}&isGlobalSearch=true&showOnlyPickup=false&isDonationOnly=false&ajax=true"
-        response = session.get(url.format(lat, lng))
+    all_coordinates = DynamicGeoSearch(
+        country_codes=[SearchableCountries.BRITAIN], max_radius_miles=30
+    )
+    for lat, lng in all_coordinates:
+        url = f"https://www.zara.com/uk/en/stores-locator/search?lat={lat}&lng={lng}&isGlobalSearch=true&showOnlyPickup=false&isDonationOnly=false&ajax=true"
+        response = session.get(url, headers=hdr)
         data = json.loads(response.text)
         all_locations += data
 
@@ -94,8 +93,9 @@ def fetch_data():
             longitude,
             hours_of_operation,
         ]
-
-        items.append(item)
+        if store_number not in scraped_items:
+            scraped_items.append(store_number)
+            items.append(item)
 
     return items
 

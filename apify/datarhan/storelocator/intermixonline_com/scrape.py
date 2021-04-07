@@ -77,7 +77,13 @@ def fetch_data():
             for elem in poi["openingHoursSpecification"]:
                 for day in elem["dayOfWeek"]:
                     hoo.append(f'{day} {elem["opens"]} - {elem["closes"]}')
+        if not hoo:
+            hoo = loc_dom.xpath(
+                '//div[@class="details-header"]/following-sibling::div//li//span/text()'
+            )
         hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
+        if hours_of_operation == "<MISSING>":
+            location_type = "closed"
 
         item = [
             DOMAIN,
