@@ -21,14 +21,12 @@ def fetch_data():
     states_req = session.get(search_url, headers=headers)
     states_sel = lxml.html.fromstring(states_req.text)
     states = states_sel.xpath('//li/a[@class="stateListItemLink"]/@href')
+    url_list = []
     for state_url in states:
-        # log.info(base_url+state_url)
-
         cities_req = session.get(base_url + state_url, headers=headers)
         cities_sel = lxml.html.fromstring(cities_req.text)
         cities = cities_sel.xpath('//li/a[@class="cityListItemLink"]/@href')
         for city_url in cities:
-            # log.info(base_url+city_url)
             stores_req = session.get(base_url + city_url, headers=headers)
             stores_sel = lxml.html.fromstring(stores_req.text)
             stores = stores_sel.xpath('//div[@class="locationsList"]/ul/li')
@@ -52,6 +50,10 @@ def fetch_data():
                             )
                         ).strip()
                     )
+                    if page_url in url_list:
+                        continue
+
+                    url_list.append(page_url)
 
                     log.info(page_url)
                     store_req = session.get(page_url)
