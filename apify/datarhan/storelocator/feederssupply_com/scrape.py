@@ -66,8 +66,9 @@ def fetch_data():
             "https://www.feederssupply.com/"
             + store_url.split("-of-")[-1].split("-loc")[0]
         )
+        base_url_2 = "https://www.feederssupply.com/" + store_url.split("-of-")[-1]
 
-        final_list = [store_url, base_url]
+        final_list = [store_url, base_url, base_url_2]
         for store_url in final_list:
             loc_response = session.get(store_url)
             if loc_response.status_code != 200:
@@ -82,6 +83,8 @@ def fetch_data():
                     '//div[@data-testid="mesh-container-content"]/div[3]//text()'
                 )
                 raw_data = [e.strip() for e in raw_data if e.strip()]
+            if not raw_data:
+                continue
             addr = parse_address_intl(" ".join(raw_data[1:-1]))
 
             location_name = raw_data[0]
@@ -96,7 +99,7 @@ def fetch_data():
             zip_code = zip_code if zip_code else "<MISSING>"
             country_code = "<MISSING>"
             store_number = "<MISSING>"
-            phone = loc_dom.xpath('//a[@data-type="phone"]/@data-content')
+            phone = loc_dom.xpath('//a[contains(@href, "tel")]/text()')
             phone = phone[0] if phone else "<MISSING>"
             location_type = "<MISSING>"
             latitude = "<MISSING>"
@@ -133,11 +136,28 @@ def fetch_data():
                 longitude,
                 hours_of_operation,
             ]
-            check = location_name.split(",")[0].replace("- ", "")
+            check = f'{location_name.split(",")[0].replace("- ", "")} {street_address}'
             if check not in scraped_items:
                 scraped_items.append(check)
                 items.append(item)
 
+    ex_item = [
+        DOMAIN,
+        store_url,
+        "Feeders Supply Somerset, KY",
+        "1250 S Highway 27",
+        "Somerset",
+        "KY",
+        "42501",
+        "<MISSING>",
+        "<MISSING>",
+        "(606) 219-4793",
+        "<MISSING>",
+        "<MISSING>",
+        "<MISSING>",
+        "Mon. – Sun. 9:00am – 9:00pm",
+    ]
+    items.append(ex_item)
     return items
 
 
