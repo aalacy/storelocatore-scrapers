@@ -126,7 +126,6 @@ def getdata():
 
             search.found_location_at(latitude, longitude)
 
-
     df = pd.DataFrame(
         {
             "locator_domain": locator_domains,
