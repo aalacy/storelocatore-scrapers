@@ -14,8 +14,8 @@ locator_domain = "https://www.colormemine.com/"
 
 search = DynamicGeoSearch(
     country_codes=[SearchableCountries.USA],
-    max_radius_miles=100,
-    max_search_results=100,
+    maximum_search_radius=None,
+    max_search_results=None,
 )
 
 
@@ -32,6 +32,8 @@ def fetch_data():
         locations = session.get(url, headers=headers, timeout=15).json()
         total += len(locations)
         for loc in locations:
+            if loc["country"].lower() == "korea":
+                continue
             search.found_location_at(
                 loc["lat"],
                 loc["lng"],
@@ -61,10 +63,10 @@ def scrape():
             part_of_record_identity=True,
         ),
         location_name=sp.MappingField(
-            mapping=["id"],
+            mapping=["store"],
         ),
         store_number=sp.MappingField(
-            mapping=["store"],
+            mapping=["id"],
         ),
         latitude=sp.MappingField(
             mapping=["lat"],
