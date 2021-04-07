@@ -35,71 +35,43 @@ def fetch_data():
         if "errors" in locations:
             continue
         for loc in locations:
+            search.found_location_at(
+                loc["storeLatitude"],
+                loc["storeLongitude"],
+            )
             try:
-                search.found_location_at(
-                    loc["storeLatitude"],
-                    loc["storeLongitude"],
+                hours_obj = loc["workingHours"]["general"]
+                mon = (
+                    "Mon " + hours_obj["monOpenTime"] + "-" + hours_obj["monCloseTime"]
                 )
-                try:
-                    hours_obj = loc["workingHours"]["general"]
-                    mon = (
-                        "Mon "
-                        + hours_obj["monOpenTime"]
-                        + "-"
-                        + hours_obj["monCloseTime"]
-                    )
-                    tue = (
-                        " Tue "
-                        + hours_obj["tueOpenTime"]
-                        + "-"
-                        + hours_obj["tueCloseTime"]
-                    )
-                    wed = (
-                        " Wed "
-                        + hours_obj["wedOpenTime"]
-                        + "-"
-                        + hours_obj["wedCloseTime"]
-                    )
-                    thu = (
-                        " Thu "
-                        + hours_obj["thuOpenTime"]
-                        + "-"
-                        + hours_obj["thuCloseTime"]
-                    )
-                    fri = (
-                        " Fri "
-                        + hours_obj["friOpenTime"]
-                        + "-"
-                        + hours_obj["friCloseTime"]
-                    )
-                    sat = (
-                        " Sat "
-                        + hours_obj["satOpenTime"]
-                        + "-"
-                        + hours_obj["satCloseTime"]
-                    )
-                    sun = (
-                        " Sun "
-                        + hours_obj["sunOpenTime"]
-                        + "-"
-                        + hours_obj["sunCloseTime"]
-                    )
-                    hours_of_operation = mon + tue + wed + thu + fri + sat + sun
-                except:
-                    hours_of_operation = ""
-
-                loc[
-                    "page_url"
-                ] = f"https://www.canadiantire.ca/en/store-details/{loc['storeProvince']}/{loc['storeCrxNodeName']}.html"
-                loc["hours_of_operation"] = hours_of_operation
-                loc["street_address"] = (
-                    loc["storeAddress1"] + " " + loc["storeAddress2"]
+                tue = (
+                    " Tue " + hours_obj["tueOpenTime"] + "-" + hours_obj["tueCloseTime"]
                 )
-                yield loc
+                wed = (
+                    " Wed " + hours_obj["wedOpenTime"] + "-" + hours_obj["wedCloseTime"]
+                )
+                thu = (
+                    " Thu " + hours_obj["thuOpenTime"] + "-" + hours_obj["thuCloseTime"]
+                )
+                fri = (
+                    " Fri " + hours_obj["friOpenTime"] + "-" + hours_obj["friCloseTime"]
+                )
+                sat = (
+                    " Sat " + hours_obj["satOpenTime"] + "-" + hours_obj["satCloseTime"]
+                )
+                sun = (
+                    " Sun " + hours_obj["sunOpenTime"] + "-" + hours_obj["sunCloseTime"]
+                )
+                hours_of_operation = mon + tue + wed + thu + fri + sat + sun
             except:
-                import pdb
+                hours_of_operation = ""
 
-                pdb.set_trace()
+            loc[
+                "page_url"
+            ] = f"https://www.canadiantire.ca/en/store-details/{loc['storeProvince']}/{loc['storeCrxNodeName']}.store.html"
+            loc["hours_of_operation"] = hours_of_operation
+            loc["street_address"] = loc["storeAddress1"] + " " + loc["storeAddress2"]
+            yield loc
         progress = str(round(100 - (search.items_remaining() / maxZ * 100), 2)) + "%"
 
         if locations:
