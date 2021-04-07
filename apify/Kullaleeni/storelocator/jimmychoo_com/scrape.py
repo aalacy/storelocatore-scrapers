@@ -90,7 +90,16 @@ def fetch_data():
                 raw_address = [" ".join(raw_address[:2])] + raw_address[2:]
             addr = parse_address_intl(" ".join(raw_address))
             addr_poi = parse_address_intl(poi["address"])
-            street_address = raw_address[0]
+            street_address = addr.street_address_1
+            if addr.street_address_2:
+                street_address += " " + addr.street_address_2
+            if not street_address:
+                street_address = addr_poi.street_address_1
+                if addr_poi.street_address_2:
+                    street_address += " " + addr_poi.street_address_2
+            if not street_address:
+                street_address = raw_address[0]
+            print(location_name, street_address)
             city = addr.city
             if not city:
                 city = addr_poi.city
@@ -100,6 +109,8 @@ def fetch_data():
                 city = "Aventura"
             if not city and "SAN MARCOS" in location_name:
                 city = "San Marcos"
+            if not city:
+                city = "Chicago"
             if city.lower() in street_address.lower():
                 street_address = " ".join(street_address.split()[:-1])
             state = addr.state
