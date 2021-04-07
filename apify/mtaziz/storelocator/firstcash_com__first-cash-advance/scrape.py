@@ -189,26 +189,26 @@ def fetch_data():
             store.append(
                 store_data["longitude"] if store_data["longitude"] else "<MISSING>"
             )
-            hours_request = session.get(
+            url_hoo = (
                 "http://find.cashamerica.us/api/stores/"
                 + str(store_data["storeNumber"])
                 + "?key="
                 + key
             )
+            logger.info(f"Hours Data scraping from: {url_hoo}")
+            hours_request = session.get(url_hoo)
             hours_details = hours_request.json()["weeklyHours"]
-            hours = ""
+            hoo_list = []
             for k in range(len(hours_details)):
-                if hours_details[k]["openTime"] != "Closed":
-                    hours = (
-                        hours
-                        + " "
-                        + hours_details[k]["weekDay"]
-                        + " "
-                        + hours_details[k]["openTime"]
-                        + " "
-                        + hours_details[k]["closeTime"]
-                        + " "
-                    )
+                hool = (
+                    hours_details[k]["weekDay"]
+                    + " "
+                    + hours_details[k]["openTime"]
+                    + " - "
+                    + hours_details[k]["closeTime"]
+                )
+                hoo_list.append(hool)
+            hours = "; ".join(hoo_list)
             store.append(hours.strip() if hours != "" else "<MISSING>")
             store.append("<INACCESSIBLE>")
             for i in range(len(store)):
