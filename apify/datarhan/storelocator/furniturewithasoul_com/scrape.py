@@ -1,6 +1,7 @@
 import re
 import csv
 from lxml import etree
+from urllib.parse import urljoin
 
 from sgrequests import SgRequests
 
@@ -41,7 +42,7 @@ def fetch_data():
 
     items = []
 
-    start_url = "https://flatbreadcompany.com/locations/"
+    start_url = "https://www.furniturewithasoul.com/stores/"
     domain = re.findall(r"://(.+?)/", start_url)[0].replace("www.", "")
     hdr = {
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
@@ -49,43 +50,28 @@ def fetch_data():
     response = session.get(start_url, headers=hdr)
     dom = etree.HTML(response.text)
 
-    all_locations = dom.xpath(
-        '//div[@class="location col-sm-6 col-md-4 align_center"]/a/@href'
-    )
-    for store_url in all_locations:
-        loc_response = session.get(store_url, headers=hdr)
+    all_locations = dom.xpath('//div[@class="storeListItem"]/a[1]/@href')
+    for url in all_locations:
+        store_url = urljoin(start_url, url)
+        loc_response = session.get(store_url)
         loc_dom = etree.HTML(loc_response.text)
 
-        location_name = loc_dom.xpath('//div[@class="title-wrapper"]/div[1]/text()')
-        if not location_name:
-            location_name = re.findall("The (.+?) Story", loc_response.text)
-        location_name = location_name[0].strip() if location_name else "<MISSING>"
-        raw_address = loc_dom.xpath('//span[@class="media-body"]/span/text()')[:2]
-        raw_address = [e.strip() for e in raw_address]
+        location_name = loc_dom.xpath("//h1/a/text()")
+        location_name = location_name[0] if location_name else "<MISSING>"
+        raw_address = loc_dom.xpath('//a[contains(@href, "maps")]/text()')
+        raw_address = [e.strip() for e in raw_address if e.strip()]
         street_address = raw_address[0]
         city = raw_address[-1].split(", ")[0]
         state = raw_address[-1].split(", ")[-1].split()[0]
-        zip_code = " ".join(raw_address[-1].split(", ")[-1].split()[1:])
+        zip_code = raw_address[-1].split(", ")[-1].split()[-1]
         country_code = "<MISSING>"
         store_number = "<MISSING>"
-        phone = loc_dom.xpath('//p[@class="res-number"]/a/text()')
-        phone = phone[0] if phone else "<MISSING>"
-        if "Please use email" in phone:
-            phone = "<MISSING>"
+        phone = loc_dom.xpath('//div[contains(@class, "headerStoreInfo")]/p/text()')
+        phone = phone[0].strip() if phone else "<MISSING>"
         location_type = "<MISSING>"
-        geo = loc_dom.xpath('//div[@class="media item"]/a/@href')[0]
-        if "/@" in geo:
-            geo = geo.split("/@")[-1].split(",")[:2]
-        else:
-            geo = (
-                loc_dom.xpath('//div[@class="media item"]/a/@href')[0]
-                .split("ll=")[-1]
-                .split("&")[0]
-                .split(",")
-            )
-        latitude = geo[0]
-        longitude = geo[1]
-        hoo = hoo = loc_dom.xpath('//ul[@class="res-date-time"]//text()')
+        latitude = "<MISSING>"
+        longitude = "<MISSING>"
+        hoo = loc_dom.xpath('//div[contains(@class, "headerStoreInfo")]/p/text()')[2:]
         hoo = [e.strip() for e in hoo if e.strip()]
         hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
 
