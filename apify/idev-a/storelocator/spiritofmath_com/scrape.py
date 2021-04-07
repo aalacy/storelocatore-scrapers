@@ -27,28 +27,15 @@ def fetch_data():
         driver.set_window_size(930, 660)
         driver.get(base_url)
         _close(driver)
-        toggle_btn = driver.find_element_by_xpath(
-            "//td[@id='storeLocatorFilterToggler']"
-        )
-        driver.execute_script("arguments[0].click();", toggle_btn)
-        ca_selector = driver.find_element_by_xpath(
-            "//input[@id='storesCountry' and @value='CA']"
-        )
-        driver.execute_script("arguments[0].click();", ca_selector)
-        approval_btn = driver.find_element_by_xpath('//a[@id="applyFilterOptions"]')
-        driver.execute_script("arguments[0].click();", approval_btn)
-        apply_btn = driver.find_element_by_xpath('//a[@id="applyFilterOptionss"]')
-        if apply_btn:
-            driver.execute_script("arguments[0].click();", apply_btn)
-        el = driver.find_element_by_xpath(
-            '//div[contains(@class, "ssf-column")]/div[@class="store-locator__infobox"]'
-        )
-        driver.execute_script("arguments[0].click();", el)
         time.sleep(1)
+        filterShowAll = driver.find_element_by_xpath('//a[@id="filterShowAll"]')
+        driver.execute_script("arguments[0].click();", filterShowAll)
         locations = bs(driver.page_source, "lxml").select(
             "div.ssf-column div.store-locator__infobox"
         )
-        for _ in locations[:-1]:
+        for _ in locations:
+            if not _.select_one("div.store-website a"):
+                continue
             phone = _.select_one("div.store-tel").text.split("x")[0].split("or")[0]
             page_url = _.select_one("div.store-website a")["href"]
             location_name = _.select_one("div.store-location").text
