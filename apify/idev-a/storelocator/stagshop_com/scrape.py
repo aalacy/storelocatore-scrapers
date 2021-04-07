@@ -25,7 +25,16 @@ def fetch_data():
                     .split(",")
                 )
             except:
-                coord = ["", ""]
+                try:
+                    coord = (
+                        _.select_one("div.storeGoogleMapsLink a")["href"]
+                        .split("/@")[1]
+                        .split("z/data")[0]
+                        .split(",")
+                    )
+                except:
+                    coord = ["", ""]
+
             hours = []
             temp = list(_.select_one("div.storeHoursRight").stripped_strings)
             for x in range(0, len(temp), 2):
