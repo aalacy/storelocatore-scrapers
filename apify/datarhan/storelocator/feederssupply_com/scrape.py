@@ -84,7 +84,6 @@ def fetch_data():
                 )
                 raw_data = [e.strip() for e in raw_data if e.strip()]
             if not raw_data:
-                print(loc_response.url, loc_response.status_code)
                 continue
             addr = parse_address_intl(" ".join(raw_data[1:-1]))
 
