@@ -35,8 +35,8 @@ def write_output(data):
 def fetch_data():
     out = []
 
-    locator_domain = "https://ribcity.com"
-    api_url = "https://ribcity.com/wp-admin/admin-ajax.php?action=store_search&lat=26.52735&lng=-81.83337&max_results=25&search_radius=50&autoload=1"
+    locator_domain = "https://www.crepedelicious.com/locations/"
+    api_url = "https://www.crepedelicious.com/wp-admin/admin-ajax.php?action=store_search&lat=43.823884&lng=-79.48568&max_results=25&search_radius=50&autoload=1"
     session = SgRequests()
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
@@ -46,35 +46,46 @@ def fetch_data():
 
     for j in js:
 
-        page_url = j.get("permalink")
-        location_name = "".join(j.get("store")).replace("&#8211;", "-")
+        page_url = j.get("url") or "https://www.crepedelicious.com/locations/"
+        if page_url.find("#test") != -1:
+            page_url = "https://www.crepedelicious.com/locations/"
+        location_name = (
+            "".join(j.get("store")).replace("&#8217;", "`").replace("&#8211;", "-")
+        )
         location_type = "<MISSING>"
         street_address = f"{j.get('address')} {j.get('address2')}".strip()
-        phone = j.get("phone")
-        state = j.get("state")
+        phone = j.get("phone") or "<MISSING>"
+        state = "".join(j.get("state")).strip()
         postal = j.get("zip")
         country_code = j.get("country")
+        if country_code != "Canada" and country_code != "USA":
+            continue
         city = j.get("city")
         store_number = "<MISSING>"
         latitude = j.get("lat")
         longitude = j.get("lng")
-        hours = j.get("description")
-        hours = html.fromstring(hours)
-        hours_of_operation = (
-            " ".join(hours.xpath("//*/text()")).replace("\n", "").strip()
-        )
+        hours_of_operation = "<MISSING>"
+        hours = j.get("hours")
 
-        if hours_of_operation.find("Visit us") != -1:
-            hours_of_operation = hours_of_operation.split("Visit us")[0].strip()
-        hours_of_operation = (
-            hours_of_operation.replace("Hours:", "")
-            .replace("Hours", "")
-            .replace("View Menu", "")
-            .replace("Order On-line!", "")
-            .replace("Website", "")
-            .strip()
-        )
-
+        if hours != "":
+            hours = html.fromstring(hours)
+            hours_of_operation = (
+                " ".join(hours.xpath("//*/text()")).replace("\n", "").strip()
+            )
+        if hours == "":
+            hours_of_operation = "<MISSING>"
+        if (
+            hours_of_operation == "<MISSING>"
+            and page_url != "http://www.crepedelicious.com/locations/"
+        ):
+            session = SgRequests()
+            r = session.get(page_url, headers=headers)
+            tree = html.fromstring(r.text)
+            hours_of_operation = (
+                " ".join(tree.xpath('//div[@class="operation p"]//text()'))
+                .replace("\n", "")
+                .strip()
+            )
         row = [
             locator_domain,
             page_url,
