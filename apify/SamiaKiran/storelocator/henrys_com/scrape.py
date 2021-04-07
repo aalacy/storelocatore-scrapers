@@ -20,7 +20,7 @@ def fetch_data():
         for loc in loclist:
             store_number = loc["StoreId"]
             location_name = loc["StoreName"]
-            street_address = loc["Address"].replace("\n", "")
+            street_address = loc["Address"].replace("\n", " ")
             city = loc["City"]
             state = loc["Province"]
             zip_postal = loc["PostalCode"]
@@ -35,7 +35,9 @@ def fetch_data():
             for d, t in zip(day_list, time_list):
                 day = d.text
                 time = t.text
-                hours_of_operation = hours_of_operation + day + " " + time + " ".strip()
+                hours_of_operation = (
+                    hours_of_operation + " " + day + " " + time + " ".strip()
+                )
             page_url = loc["Url"]
             page_url = "https://www.henrys.com/" + page_url
             log.info(page_url)
