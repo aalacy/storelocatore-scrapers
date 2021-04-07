@@ -4,7 +4,6 @@ from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import lxml.html
-import json
 
 website = "usbank.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -57,9 +56,6 @@ def fetch_data():
                     log.info(page_url)
                     store_req = session.get(page_url)
                     store_sel = lxml.html.fromstring(store_req.text)
-                    json_text = "".join(
-                        store_sel.xpath('//script[@type="application/ld+json"]/text()')
-                    ).strip()
 
                     locator_domain = website
 
