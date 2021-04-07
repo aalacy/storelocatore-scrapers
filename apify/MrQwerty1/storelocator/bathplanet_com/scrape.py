@@ -1,7 +1,6 @@
 import csv
 
 from concurrent import futures
-from datetime import datetime
 from lxml import html
 from sgrequests import SgRequests
 
@@ -35,72 +34,62 @@ def write_output(data):
             writer.writerow(row)
 
 
+def get_coords(text):
+    try:
+        if text.find("ll=") != -1:
+            latitude = text.split("ll=")[1].split(",")[0]
+            longitude = text.split("ll=")[1].split(",")[1].split("&")[0]
+        else:
+            latitude = text.split("@")[1].split(",")[0]
+            longitude = text.split("@")[1].split(",")[1]
+    except IndexError:
+        latitude, longitude = "<MISSING>", "<MISSING>"
+
+    return latitude, longitude
+
+
 def get_urls():
     session = SgRequests()
-    r = session.get("https://www.beatone.co.uk/sitemap")
-    tree = html.fromstring(r.text)
+    r = session.get("https://www.bathplanet.com/sitemap.xml")
+    tree = html.fromstring(r.content)
 
-    return tree.xpath("//ul[@class='venue-list']/li/a/@href")
+    return tree.xpath(
+        "//loc[contains(text(), '/locator/') and not(contains(text(), '/r-')) and not(text()='https://www.bathplanet.com/locator/')]/text()"
+    )
 
 
-def get_data(url):
-    locator_domain = "https://www.beatone.co.uk/"
-    page_url = f"https://www.beatone.co.uk{url}"
+def get_data(page_url):
+    locator_domain = "https://www.bathplanet.com/"
 
     session = SgRequests()
     r = session.get(page_url)
     tree = html.fromstring(r.text)
 
-    location_name = tree.xpath("//h1/text()")[1].strip()
-    line = tree.xpath("//ul[@class='menu vertical address']/li/text()")
-    street_address = line[0]
-    if line[1][0].isdigit():
-        street_address += f", {line[1]}"
-        line.remove(line[1])
-
-    city = line[1]
-    if len(line) == 3:
-        state = "<MISSING>"
-    else:
-        state = line[-2]
-
-    if city.find(",") != -1:
-        state = city.split(",")[-1].strip()
-        city = city.split(",")[0].strip()
-    postal = line[-1]
-    country_code = "GB"
+    location_name = "".join(tree.xpath("//div[@itemprop='address']/h1/text()")).strip()
+    street_address = (
+        "".join(tree.xpath("//span[@itemprop='streetAddress']/text()"))
+        .replace("...", "<MISSING>")
+        .strip()
+    )
+    city = "".join(tree.xpath("//span[@itemprop='addressLocality']/text()")).strip()
+    state = "".join(tree.xpath("//span[@itemprop='addressRegion']/text()")).strip()
+    postal = "".join(tree.xpath("//span[@itemprop='postalCode']/text()")).strip()
+    country_code = "US"
+    if len(postal) > 5:
+        country_code = "CA"
     store_number = "<MISSING>"
-    phone = (
-        "".join(
-            tree.xpath("//ul[@class='menu vertical']//a[contains(@href, 'tel')]/text()")
-        ).strip()
+    phone = "".join(tree.xpath("//p[@class='phone']//text()")).strip() or "<MISSING>"
+    text = "".join(tree.xpath("//div[@itemprop='address']//a/@href"))
+    latitude, longitude = get_coords(text)
+    location_type = "<MISSING>"
+    hours_of_operation = (
+        " ".join(
+            "".join(
+                tree.xpath("//h5[text()='Hours']/following-sibling::p[1]//text()")
+            ).split()
+        )
         or "<MISSING>"
     )
-
-    try:
-        text = "".join(tree.xpath("//script[contains(text(), 'new H.Map(')]/text()"))
-        text = text.split("center: ")[1].split("});")[0].strip()
-        lat, lng = "lat", "lng"
-        a = eval(text)
-        latitude = a.get(lat) or "<MISSING>"
-        longitude = a.get(lng) or "<MISSING>"
-    except:
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
-    location_type = "<MISSING>"
-
-    _tmp = []
-    divs = tree.xpath("//div[@class='opening-times']/div[./span]")
-    for d in divs:
-        day = "".join(d.xpath("./span/text()")).strip()
-        time = "".join(d.xpath("./text()")).strip()
-        _tmp.append(f"{day} {time}")
-
-    hours_of_operation = (
-        ";".join(_tmp).replace("Today", datetime.today().strftime("%A")) or "<MISSING>"
-    )
-    if hours_of_operation.lower().count("closed") == 7:
-        hours_of_operation = "Closed"
 
     row = [
         locator_domain,
