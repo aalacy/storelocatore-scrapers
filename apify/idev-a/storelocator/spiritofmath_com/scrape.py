@@ -34,6 +34,8 @@ def fetch_data():
             "div.ssf-column div.store-locator__infobox"
         )
         for _ in locations:
+            if not _.select_one("div.store-website a"):
+                continue
             phone = _.select_one("div.store-tel").text.split("x")[0].split("or")[0]
             page_url = _.select_one("div.store-website a")["href"]
             location_name = _.select_one("div.store-location").text
