@@ -8,7 +8,11 @@ from sglogging import SgLogSetup
 logger = SgLogSetup().get_logger("petfoodexpress_com")
 
 session = SgRequests()
-headers = {
+headers1 = {
+    "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.90 Safari/537.36",
+}
+
+headers2 = {
     "authority": "api.petfood.express",
     "method": "GET",
     "path": "/store/pickup",
@@ -23,8 +27,8 @@ headers = {
     "sec-fetch-dest": "empty",
     "sec-fetch-mode": "cors",
     "sec-fetch-site": "same-site",
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
-    "x-api-key": '{"key":"ZmQ5OWU4NGMtYTY5YS00MWExLTg1NzktNGMzYWVlMDMzYjRk","fibonacciKey":"931295","jwt":null}',
+    "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.90 Safari/537.36",
+    "x-api-key": '{"key":"NTgxYjFlODQtMGMxZS00NjM5LWI2ZGItMmVjODI0NTRlOTU1","fibonacciKey":"931295","jwt":null}',
 }
 
 
@@ -74,7 +78,7 @@ def write_output(data):
 def fetch_data():
     data = []
     url = "https://api.petfood.express/store/map/"
-    response = session.get(url, headers=headers, verify=False).json()
+    response = session.get(url, headers=headers1).json()
     for r in response:
         lat = r["latitude"]
         lng = r["longitude"]
@@ -86,7 +90,7 @@ def fetch_data():
         state = "CA"
         pcode = r["storeZip"]
         url2 = "https://api.petfood.express/store/details/" + storeid
-        p = session.post(url2, headers=headers, verify=False)
+        p = session.post(url2, headers=headers2, verify=False)
         soup = BeautifulSoup(p.text, "html.parser")
         timelist = soup.findAll("p")
         HOO = timelist[1].text.strip()

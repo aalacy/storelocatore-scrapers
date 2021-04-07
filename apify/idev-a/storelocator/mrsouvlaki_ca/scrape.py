@@ -33,6 +33,9 @@ def fetch_data():
                 hours = list(bs(_.operatinghours.text, "lxml").stripped_strings)
             if _.operatingHours:
                 hours = list(bs(_.operatingHours.text, "lxml").stripped_strings)
+            _phone = list(bs(_.telephone.text, "lxml").stripped_strings)
+            if len(_phone) > 1:
+                hours = _phone[1].split(",")
             yield SgRecord(
                 page_url=page_url,
                 store_number=_.sortord.text,
@@ -42,7 +45,7 @@ def fetch_data():
                 state=addr.state,
                 zip_postal=addr.postcode,
                 country_code="Canada",
-                phone=_.telephone.text,
+                phone=_phone[0],
                 latitude=_.latitude.text,
                 longitude=_.longitude.text,
                 locator_domain=locator_domain,

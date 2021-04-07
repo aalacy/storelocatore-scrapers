@@ -49,7 +49,7 @@ def fetch_data():
             "div.ssf-column div.store-locator__infobox"
         )
         for _ in locations[:-1]:
-            phone = _.select_one("div.store-tel").text
+            phone = _.select_one("div.store-tel").text.split("x")[0].split("or")[0]
             page_url = _.select_one("div.store-website a")["href"]
             location_name = _.select_one("div.store-location").text
             hours_of_operation = _.select_one("div.store-operating-hours").text
@@ -70,7 +70,7 @@ def fetch_data():
                 country_code="CA",
                 phone=phone,
                 latitude=coord[0],
-                longitude=coord[1],
+                longitude=coord[-1],
                 locator_domain=locator_domain,
                 hours_of_operation=hours_of_operation,
             )
