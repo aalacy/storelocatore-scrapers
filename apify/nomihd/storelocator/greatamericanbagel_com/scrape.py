@@ -26,7 +26,6 @@ headers = {
 
 def fetch_data():
     # Your scraper here
-    base = "https://greatamericanbagel.com"
     api_url = "https://www.greatamericanbagel.com/wp-admin/admin-ajax.php?action=asl_load_stores&nonce=012e797e95&load_all=1&layout=1"
     api_res = session.get(api_url, headers=headers)
     json_res = json.loads(api_res.text)
