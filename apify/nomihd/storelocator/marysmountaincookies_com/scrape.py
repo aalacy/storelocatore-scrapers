@@ -79,7 +79,7 @@ def fetch_data():
         hours_list = []
         is_found = False
         for index in range(0, len(hours)):
-            if is_found == False:
+            if is_found is False:
                 if "icon-hours" == "".join(hours[index].xpath("@class")).strip():
                     is_found = True
                     hours_list.append("".join(hours[index].xpath(".//text()")).strip())
