@@ -99,7 +99,6 @@ def fetch_data():
                     street_address += " " + addr_poi.street_address_2
             if not street_address:
                 street_address = raw_address[0]
-            print(location_name, street_address)
             city = addr.city
             if not city:
                 city = addr_poi.city
