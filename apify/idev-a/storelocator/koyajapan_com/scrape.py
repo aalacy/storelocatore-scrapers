@@ -24,8 +24,6 @@ def fetch_data():
         for _ in locations:
             if not "".join(_.xpath(".//text()")).strip():
                 continue
-            if re.search(r"coming soon", "".join(_.xpath(".//text()")), re.IGNORECASE):
-                continue
             addr = _.xpath(".//p/text()")
             location_type = ""
             if re.search(r"TEMPORARILY CLOSED", addr[0], re.IGNORECASE):
