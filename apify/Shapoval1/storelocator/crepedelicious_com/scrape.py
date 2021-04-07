@@ -54,11 +54,16 @@ def fetch_data():
         )
         location_type = "<MISSING>"
         street_address = f"{j.get('address')} {j.get('address2')}".strip()
+
         phone = j.get("phone") or "<MISSING>"
-        state = "".join(j.get("state")).strip()
-        postal = j.get("zip")
+        state = "".join(j.get("state")).strip() or "<MISSING>"
+        postal = j.get("zip") or "<MISSING>"
         country_code = j.get("country")
-        if country_code != "Canada" and country_code != "USA":
+        if (
+            country_code != "Canada"
+            and country_code != "USA"
+            and country_code != "United States"
+        ):
             continue
         city = j.get("city")
         store_number = "<MISSING>"
@@ -74,18 +79,19 @@ def fetch_data():
             )
         if hours == "":
             hours_of_operation = "<MISSING>"
-        if (
-            hours_of_operation == "<MISSING>"
-            and page_url != "http://www.crepedelicious.com/locations/"
-        ):
-            session = SgRequests()
-            r = session.get(page_url, headers=headers)
-            tree = html.fromstring(r.text)
-            hours_of_operation = (
-                " ".join(tree.xpath('//div[@class="operation p"]//text()'))
-                .replace("\n", "")
-                .strip()
-            )
+        if street_address.find("COMING SOON") != -1:
+            street_address = street_address.replace("COMING SOON", "").strip()
+            hours_of_operation = "COMING SOON"
+        if street_address.find("(Pending event calendar)") != -1:
+            street_address = street_address.replace(
+                "(Pending event calendar)", ""
+            ).strip()
+            location_type = "(Pending event calendar)"
+        if street_address.find("NOW OPEN") != -1:
+            street_address = street_address.replace("NOW OPEN", "").strip()
+        if street_address.find("6200") != -1:
+            street_address = street_address.split(",")[0]
+
         row = [
             locator_domain,
             page_url,
