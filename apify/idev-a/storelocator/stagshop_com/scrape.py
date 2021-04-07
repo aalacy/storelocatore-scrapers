@@ -26,6 +26,10 @@ def fetch_data():
                 )
             except:
                 coord = ["", ""]
+            hours = []
+            temp = list(_.select_one("div.storeHoursRight").stripped_strings)
+            for x in range(0, len(temp), 2):
+                hours.append(f"{temp[x]} {temp[x+1]}")
             yield SgRecord(
                 page_url=_.select_one("div.storeImageWrap a")["href"],
                 store_number=_["id"],
@@ -37,6 +41,7 @@ def fetch_data():
                 country_code="CA",
                 phone=_.find("a", href=re.compile(r"tel:")).text,
                 locator_domain=locator_domain,
+                hours_of_operation="; ".join(hours),
             )
 
 
