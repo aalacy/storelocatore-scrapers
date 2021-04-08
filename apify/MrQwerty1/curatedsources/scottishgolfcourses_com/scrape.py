@@ -7,12 +7,29 @@ from sgscrape.sgpostal import parse_address, International_Parser
 
 
 def write_output(data):
-    with open('data.csv', mode='w', encoding='utf8', newline='') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
+        writer = csv.writer(
+            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+        )
 
         writer.writerow(
-            ["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code",
-             "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+            [
+                "locator_domain",
+                "page_url",
+                "location_name",
+                "street_address",
+                "city",
+                "state",
+                "zip",
+                "country_code",
+                "store_number",
+                "phone",
+                "location_type",
+                "latitude",
+                "longitude",
+                "hours_of_operation",
+            ]
+        )
 
         for row in data:
             writer.writerow(row)
@@ -20,57 +37,80 @@ def write_output(data):
 
 def get_urls():
     session = SgRequests()
-    r = session.get('https://www.scottishgolfcourses.com/atoz.html')
+    r = session.get("https://www.scottishgolfcourses.com/atoz.html")
     tree = html.fromstring(r.text)
 
     return tree.xpath("//div[@class='col-sm-4']/a/@href")
 
 
 def get_data(url):
-    locator_domain = 'hhttps://www.scottishgolfcourses.com/'
-    page_url = f'https://www.scottishgolfcourses.com{url}'
+    locator_domain = "hhttps://www.scottishgolfcourses.com/"
+    page_url = f"https://www.scottishgolfcourses.com{url}"
 
     session = SgRequests()
     r = session.get(page_url)
     tree = html.fromstring(r.text)
 
-    location_name = ''.join(tree.xpath("//h1/text()")).strip()
-    text = ''.join(tree.xpath("//h1/following-sibling::*/text()")).strip()
-    line = text.split('Address:')[-1].strip()
-    if line.endswith(','):
+    location_name = "".join(tree.xpath("//h1/text()")).strip()
+    text = "".join(tree.xpath("//h1/following-sibling::*/text()")).strip()
+    line = text.split("Address:")[-1].strip()
+    if line.endswith(","):
         line = line[:-1].strip()
-    postal = ' '.join(line.split()[-2:])
-    if ',' not in postal:
-        line = line.replace(postal, '')
+    postal = " ".join(line.split()[-2:])
+    if "," not in postal:
+        line = line.replace(postal, "")
         adr = parse_address(International_Parser(), line, postcode=postal)
     else:
         adr = parse_address(International_Parser(), line)
 
     street_address = (
-            f"{adr.street_address_1} {adr.street_address_2 or ''}".replace(
-                "None", ""
-            ).strip()
-            or "<MISSING>"
+        f"{adr.street_address_1} {adr.street_address_2 or ''}".replace(
+            "None", ""
+        ).strip()
+        or "<MISSING>"
     )
 
     city = adr.city or "<MISSING>"
     state = adr.state or "<MISSING>"
     postal = adr.postcode or "<MISSING>"
     country_code = "GB"
-    store_number = '<MISSING>'
-    phone = ''.join(tree.xpath("//strong[contains(text(), 'Telephone')]/following-sibling::text()")).replace('N/A', '').strip() or '<MISSING>'
-    if '/' in phone:
-        phone = phone.split('/')[0].strip()
-    if 'ext' in phone:
-        phone = phone.split('ext')[0].strip()
+    store_number = "<MISSING>"
+    phone = (
+        "".join(
+            tree.xpath(
+                "//strong[contains(text(), 'Telephone')]/following-sibling::text()"
+            )
+        )
+        .replace("N/A", "")
+        .strip()
+        or "<MISSING>"
+    )
+    if "/" in phone:
+        phone = phone.split("/")[0].strip()
+    if "ext" in phone:
+        phone = phone.split("ext")[0].strip()
 
-    latitude = '<MISSING>'
-    longitude = '<MISSING>'
-    location_type = '<MISSING>'
-    hours_of_operation = '<MISSING>'
+    latitude = "<MISSING>"
+    longitude = "<MISSING>"
+    location_type = "<MISSING>"
+    hours_of_operation = "<MISSING>"
 
-    row = [locator_domain, page_url, location_name, street_address, city, state, postal,
-           country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation]
+    row = [
+        locator_domain,
+        page_url,
+        location_name,
+        street_address,
+        city,
+        state,
+        postal,
+        country_code,
+        store_number,
+        phone,
+        location_type,
+        latitude,
+        longitude,
+        hours_of_operation,
+    ]
 
     return row
 
