@@ -52,24 +52,7 @@ def fetch_data():
     post_url = "https://mycellularone.com/wp-admin/admin-ajax.php"
     for poi_html in all_locations:
         store_number = poi_html.xpath("@data-post-id")[0]
-        frm = {
-            "action": "locations_location_detail",
-            "location_id": str(store_number),
-            "neighbors[]": "997",
-            "neighbors[]": "424",
-            "neighbors[]": "1090",
-            "neighbors[]": "1091",
-            "neighbors[]": "1092",
-            "neighbors[]": "462",
-            "neighbors[]": "1094",
-            "neighbors[]": "1095",
-            "neighbors[]": "1096",
-            "neighbors[]": "464",
-            "neighbors[]": "463",
-            "neighbors[]": "1097",
-            "neighbors[]": "1098",
-            "neighbors[]": "1099",
-        }
+        frm = {"action": "locations_location_detail", "location_id": str(store_number)}
 
         hdr = {
             "accept-encoding": "gzip, deflate, br",
