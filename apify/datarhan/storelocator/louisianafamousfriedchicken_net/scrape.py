@@ -42,7 +42,7 @@ def fetch_data():
     scraped_items = []
 
     DOMAIN = "louisianafamousfriedchicken.net"
-    start_url = "https://louisianafriedchickenhq.com/wp-admin/admin-ajax.php?action=store_search&lat=32.77666&lng=-96.79699&max_results=50&search_radius=10&autoload=1"
+    start_url = "https://louisianafriedchickenhq.com/wp-admin/admin-ajax.php?action=store_search&lat=32.77666&lng=-96.79699&max_results=100&search_radius=10&autoload=1"
 
     response = session.get(start_url)
     data = json.loads(response.text)
