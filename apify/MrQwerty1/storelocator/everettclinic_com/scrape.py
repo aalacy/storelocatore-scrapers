@@ -49,7 +49,7 @@ def get_data(coord):
         j = j["provider"]
         a = j.get("locations")[0].get("addressInfo")
         store_number = j.get("individualProviderId")
-        page_url = f"https://www.everettclinic.com/provider-lookup/location.html?groupReferenceId={store_number}"
+        page_url = f"https://www.everettclinic.com/locations-nav/locations/-/-/{store_number}.html"
         location_name = j["providerInfo"]["businessName"]
 
         street_address = a.get("line1") or "<MISSING>"
