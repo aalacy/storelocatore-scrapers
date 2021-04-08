@@ -54,7 +54,7 @@ def fetch_data():
     session = SgRequests()
     r = session.get(page_url)
     tree = html.fromstring(r.text)
-    divs = tree.xpath("//div[@class='sfContentBlock']")[:-1]
+    divs = tree.xpath("//div[@class='sfContentBlock' and .//a[text()='Map']]")
 
     for d in divs:
         location_name = " ".join("".join(d.xpath("./h1/text()|./h2/text()")).split())
@@ -87,7 +87,7 @@ def fetch_data():
             latitude, longitude = "<MISSING>", "<MISSING>"
         location_type = "<MISSING>"
         hours_of_operation = d.xpath(
-            ".//strong[contains(text(), 'Store Hours')]/following-sibling::div[1]/text()|.//strong[contains(text(), 'Store Hours')]/following-sibling::text()"
+            ".//strong[contains(text(), 'Store Hours')]/following-sibling::div[1]/text()|.//strong[contains(text(), 'Store Hours')]/following-sibling::text()|.//div[./strong[contains(text(), 'Store Hours')]]/following-sibling::text()"
         )
         hours_of_operation = list(
             filter(None, [h.replace("-", " ").strip() for h in hours_of_operation])

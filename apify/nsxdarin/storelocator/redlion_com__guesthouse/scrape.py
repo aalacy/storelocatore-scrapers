@@ -44,7 +44,9 @@ def fetch_data():
     for line in r.iter_lines():
         line = str(line.decode("utf-8"))
         if "<loc>https://www.redlion.com/guesthouse" in line:
-            locs.append(line.split("<loc>")[1].split("<")[0])
+            lurl = line.split("<loc>")[1].split("<")[0]
+            if lurl.count("/") > 3:
+                locs.append(lurl)
     for loc in locs:
         logger.info(("Pulling Location %s..." % loc))
         loc2 = (
