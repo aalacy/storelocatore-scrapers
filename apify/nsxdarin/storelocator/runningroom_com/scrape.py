@@ -38,6 +38,7 @@ def write_output(data):
 
 
 def fetch_data():
+    adds = []
     locs = []
     cities = []
     url = "https://www.runningroom.com/ca/inside.php?id=3033"
@@ -169,6 +170,8 @@ def fetch_data():
             hours = "<MISSING>"
         if state == "MN" or state == "HI":
             country = "US"
+        else:
+            country = "CA"
         if "2449" in loc:
             add = "300 Main Street"
             city = "Moncton"
@@ -205,23 +208,57 @@ def fetch_data():
             lat = "<MISSING>"
         if lng == "":
             lng = "<MISSING>"
+        if "2410" in loc:
+            phone = "(519) 747-4800"
+        if "2372" in loc:
+            phone = "(705) 523-4664"
+        if "3645" in loc:
+            phone = "(905) 726-1600"
+        if "5102" in loc:
+            add = "582 chemin de Touraine suite 502"
+            city = "Boucherville"
+            state = "QC"
+            country = "CA"
+            zc = "J4B 5E4"
+            phone = "(450) 641-8223"
+        if "3177" in loc:
+            country = "US"
+        if "6655-" in add:
+            add = "6655-178 Street"
+        add = add.replace("Cedar Pointe Plaza ", "")
+        add = add.replace("Country Club Centre ", "")
+        add = add.replace("Faubourg Boisbriand ", "")
+        add = add.replace("Glenmore Landing Shopping Centre ", "")
+        add = add.replace("Grant Crossing Running Room 5 - ", "")
+        add = add.replace("Kenaston Village Mall ", "")
+        add = add.replace("Murano South Tower Condominium ", "")
+        add = add.replace("Quartiers Dix 30 ", "")
+        add = add.replace("Rocky View, Alberta ", "")
+        add = add.replace("Southpointe Common ", "")
+        add = add.replace("Thickson Place ", "")
+        add = add.replace("Toronto-Dominion Centre ", "")
+        add = add.replace("Tsawwassen Mills ", "")
+        add = add.replace("Uptown Running Room ", "")
+        add = add.replace("Westwood Centre #202 - ", "")
         if add != "":
-            yield [
-                website,
-                loc,
-                name,
-                add,
-                city,
-                state,
-                zc,
-                country,
-                store,
-                phone,
-                typ,
-                lat,
-                lng,
-                hours,
-            ]
+            if add not in adds:
+                adds.append(add)
+                yield [
+                    website,
+                    loc,
+                    name,
+                    add,
+                    city,
+                    state,
+                    zc,
+                    country,
+                    store,
+                    phone,
+                    typ,
+                    lat,
+                    lng,
+                    hours,
+                ]
 
 
 def scrape():
