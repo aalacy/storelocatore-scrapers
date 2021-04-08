@@ -75,14 +75,15 @@ def fetch_data():
                 location_name = j.get("name") or "<MISSING>"
                 if location_name.find("not real") != -1:
                     continue
-                if 'outlet' in location_name.lower():
-                    location_name = 'Eddie Bauer Outlet'
+                if "outlet" in location_name.lower():
+                    location_name = "Eddie Bauer Outlet"
                 else:
-                    location_name = 'Eddie Bauer'
+                    location_name = "Eddie Bauer"
 
                 a = j.get("address", {}) or {}
                 street_address = (
-                    f'{a.get("address1")} {a.get("address2") or ""}'.strip() or "<MISSING>"
+                    f'{a.get("address1")} {a.get("address2") or ""}'.strip()
+                    or "<MISSING>"
                 )
                 city = a.get("city") or "<MISSING>"
                 state = a.get("state") or "<MISSING>"
