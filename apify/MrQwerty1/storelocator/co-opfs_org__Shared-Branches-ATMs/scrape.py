@@ -59,7 +59,6 @@ def get_data(url):
     r = session.get(url)
     text = r.iter_lines()
     js = csv.DictReader(codecs.iterdecode(text, "utf-8"))
-    print(url)
 
     for j in js:
         location_name = j.get("Name")
