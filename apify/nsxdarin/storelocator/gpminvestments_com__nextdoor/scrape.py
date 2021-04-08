@@ -21,6 +21,7 @@ def write_output(data):
                 "locator_domain",
                 "page_url",
                 "location_name",
+                "raw_address",
                 "street_address",
                 "city",
                 "state",
@@ -59,6 +60,7 @@ def fetch_data():
             for item in items:
                 if '"title":"' in item:
                     add = ""
+                    address = ""
                     city = ""
                     state = ""
                     zc = ""
@@ -87,7 +89,7 @@ def fetch_data():
                                     + add[0]["StreetNamePostType"]
                                 )
                             except:
-                                add = "<INACCESSIBLE>"
+                                address = "<INACCESSIBLE>"
                             if add == "":
                                 address = "<INACCESSIBLE>"
                             try:
@@ -145,10 +147,13 @@ def fetch_data():
                         city = "Banner Elk"
                         state = "NC"
                         zc = "28604"
+                    if address == "":
+                        address = "<INACCESSIBLE>"
                     yield [
                         website,
                         loc,
                         name,
+                        rawadd,
                         address,
                         city,
                         state,
