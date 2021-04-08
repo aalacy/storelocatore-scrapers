@@ -594,11 +594,13 @@ def fetch_data():
         xpath_address_data = '//address/span[@class="station__coordinates-line"]/text()'
         address_data = data_store.xpath(xpath_address_data)
         street_address = address_data[0] if address_data[0] else "<MISSING>"
+
         city_state_postalcode = address_data[1] if address_data[1] else ""
         logger.info(f"city state postal code data: {city_state_postalcode}")
         city = city_state_postalcode.split(",")[0] or "<MISSING>"
         state = city_state_postalcode.split(",")[1].strip().split(" ")[0] or "<MISSING>"
         zip = city_state_postalcode.split(",")[1].strip().split(" ")[1] or "<MISSING>"
+
         country_code = "CA"
         store_number = "<MISSING>"
 
@@ -608,11 +610,9 @@ def fetch_data():
 
         location_type = "Convenience Store"
 
-        # xpath_lat_lng ='//div[@class="language_selector"]/a[contains(text(), "EN")]/@href'
-        # lat_lng =  data_store.xpath(xpath_lat_lng)[0].strip()
-        # logger.info(f"Longitude and Latitude: {lat_lng}")
         latitude = store_url_lat_lng[1]
         longitude = store_url_lat_lng[2]
+
         xpath_hoo = '//div[img[@alt="24h clock"]]/text()'
         hoo = data_store.xpath(xpath_hoo)
         hoo = "".join(hoo).strip()
