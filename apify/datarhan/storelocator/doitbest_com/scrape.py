@@ -65,7 +65,7 @@ def fetch_data():
     all_locations = []
     all_codes = DynamicZipSearch(
         country_codes=[SearchableCountries.USA],
-        max_radius_miles=200,
+        max_radius_miles=100,
         max_search_results=None,
     )
     for code in all_codes:
@@ -73,7 +73,7 @@ def fetch_data():
             "StoreLocatorForm": {
                 "Location": code,
                 "Filter": "All Locations",
-                "Range": "250",
+                "Range": "100",
                 "CSRFID": csrfid,
                 "CSRFToken": token,
             }
@@ -90,10 +90,9 @@ def fetch_data():
         try:
             location_name = poi["Name"]
         except TypeError:
+            print(poi)
             continue
         location_name = location_name if location_name else "<MISSING>"
-        if "do it best" not in location_name.lower():
-            continue
         street_address = poi["Address1"]
         if poi["Address2"]:
             street_address += ", " + poi["Address2"]
