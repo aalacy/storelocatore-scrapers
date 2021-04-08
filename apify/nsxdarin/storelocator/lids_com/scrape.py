@@ -3,9 +3,12 @@ from sgrequests import SgRequests
 import json
 
 headers = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.88 Safari/537.36", "accept": "application/json", "referer": "lids.com"
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.88 Safari/537.36",
+    "accept": "application/json",
+    "referer": "lids.com",
 }
 session = SgRequests()
+
 
 def write_output(data):
     with open("data.csv", mode="w") as output_file:
@@ -54,10 +57,10 @@ def fetch_data():
                 break
             except Exception:
                 pass
-            x = x+1
+            x = x + 1
             if x == 100:
                 break
-        
+
         for item in items:
             store = item["storeId"]
             name = item["name"]
