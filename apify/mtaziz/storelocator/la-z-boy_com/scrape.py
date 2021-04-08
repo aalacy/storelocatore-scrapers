@@ -77,10 +77,9 @@ def fetch_data():
     country_code_ca = "CA"
     country_code_us = "US"
 
-    for idx, d in enumerate(data_main[0]["map"][0:5]):
+    for idx, d in enumerate(data_main[0]["map"]):
         country_code = d["country"]
         if country_code == country_code_ca or country_code == country_code_us:
-            found = 0
             locator_domain = locator_domain_url
             location_name = d["storename"] if d["storename"] else MISSING
             street_address = d["address1"] if d["address1"] else MISSING
@@ -132,7 +131,7 @@ def fetch_data():
 
 
 def scrape():
-    logger.info(f"Scraping Started....")
+    logger.info("Scraping Started....")
     data = fetch_data()
     write_output(data)
 
