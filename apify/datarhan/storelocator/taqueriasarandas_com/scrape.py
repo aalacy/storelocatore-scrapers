@@ -58,7 +58,7 @@ def fetch_data():
         addr = parse_address_intl(poi_html.xpath(".//p[img]/text()")[0])
         street_address = addr.street_address_1
         if addr.street_address_2:
-            street_address += " " + addr.street_address_2
+            street_address += ", " + addr.street_address_2
         city = addr.city
         city = city if city else "<MISSING>"
         state = addr.state
@@ -70,9 +70,33 @@ def fetch_data():
         store_number = location_name.split("#")[-1].strip()
         phone = poi_html.xpath('.//p[img[contains(@src, "telephone")]]/text()')
         phone = phone[0].strip() if phone else "<MISSING>"
+        if "Taqueria" in phone:
+            phone = phone.split("/")[0].split()[-1]
         location_type = "<MISSING>"
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
+        latitude = dom.xpath(
+            '//div[contains(@data-mapinfo, "{}")]/@data-lat'.format(
+                " ".join(street_address.split()[:2])
+            )
+        )
+        if not latitude:
+            latitude = dom.xpath(
+                '//div[contains(@data-mapinfo, "{}")]/@data-lat'.format(
+                    street_address.split()[0]
+                )
+            )
+        latitude = latitude[0] if latitude else "<MISSING>"
+        longitude = dom.xpath(
+            '//div[contains(@data-mapinfo, "{}")]/@data-lng'.format(
+                " ".join(street_address.split()[:2])
+            )
+        )
+        if not longitude:
+            longitude = dom.xpath(
+                '//div[contains(@data-mapinfo, "{}")]/@data-lng'.format(
+                    street_address.split()[0]
+                )
+            )
+        longitude = longitude[0] if longitude else "<MISSING>"
         hoo = poi_html.xpath('.//p[img[contains(@src, "time")]]/text()')
         hoo = [e.strip() for e in hoo if e.strip()]
         hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
