@@ -2,9 +2,11 @@ from sgselenium import SgChrome
 from bs4 import BeautifulSoup as bs
 import re
 import pandas as pd
+from sgrequests import SgRequests
 
 
 def getdata():
+    session = SgRequests()
     locator_domains = []
     page_urls = []
     location_names = []
@@ -114,29 +116,33 @@ def getdata():
     for url in page_urls:
         address = street_addresses[x]
         driver.get(url)
-
         while True:
             html = driver.page_source
             soup = bs(html, "html.parser")
             try:
                 timer = int(soup.find("div", attrs={"id": "timer"}).text)
             except Exception:
+                while True:
+                    try:
+                        html = driver.page_source
+                        soup = bs(html, "html.parser")
+                        iframe = soup.find("iframe", attrs={"loading": "lazy"})
+                        zipp_url = iframe["src"]
+                        break
+                    except Exception:
+                        pass
                 break
 
-        try:
-            zipp = re.search(r"\d{% s}" % 5, html.split(address.split(" ")[0])[1])[0]
-        except Exception:
-            html = driver.page_source
-            soup = bs(html, "html.parser")
-            zipp = re.search(r"\d{% s}" % 5, html.split(address.split(" ")[0])[1])[0]
+        zipp_response = session.get(zipp_url).text
 
-        zipp_check = html.index(zipp)
+        zipp_text = (
+            zipp_response.split("initEmbed")[1]
+            .split("function onApiLoad")[0]
+            .replace("\n", "")
+        )
+        zipp_text = re.search(r" \d\d\d\d\d", zipp_text).group(0).strip()
 
-        if html[zipp_check - 1] != " ":
-            zipp = "<MISSING>"
-        zips.append(zipp)
-
-        iframe = soup.find("iframe", attrs={"loading": "lazy"})
+        zips.append(zipp_text)
 
         longitude = iframe["src"].split("!2d")[1].split("!3d")[0]
         latitude = iframe["src"].split("!3d")[1].split("!2m")[0]

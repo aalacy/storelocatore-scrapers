@@ -1,9 +1,8 @@
 import csv
-import json
 from lxml import etree
-from urllib.parse import urljoin
 
 from sgrequests import SgRequests
+from sgselenium import SgFirefox
 
 
 def write_output(data):
@@ -41,39 +40,49 @@ def fetch_data():
     session = SgRequests()
 
     items = []
-    scraped_items = []
 
     DOMAIN = "cellularoneonline.com"
-    start_url = "https://cellularoneonline.com/find-a-store"
+    start_url = "https://mycellularone.com/locations/"
 
-    response = session.get(start_url)
-    dom = etree.HTML(response.text)
-    all_locations = dom.xpath('//li[@class="result"]')
+    with SgFirefox() as driver:
+        driver.get(start_url)
+        dom = etree.HTML(driver.page_source)
+    all_locations = dom.xpath('//article[contains(@class, "locations")]')
 
+    post_url = "https://mycellularone.com/wp-admin/admin-ajax.php"
     for poi_html in all_locations:
-        poi = poi_html.xpath("@data-map-marker-geocode")[0]
-        poi = json.loads(poi)
-        store_url = urljoin(start_url, poi["slug"])
-        location_name = poi["name"]
-        location_name = location_name if location_name else "<MISSING>"
-        street_address = poi["address"]
-        street_address = street_address if street_address else "<MISSING>"
-        city = poi["city"]
-        city = city if city else "<MISSING>"
-        state = poi["state"]
-        state = state if state else "<MISSING>"
-        zip_code = poi["zip"]
+        store_number = poi_html.xpath("@data-post-id")[0]
+        frm = {"action": "locations_location_detail", "location_id": str(store_number)}
+
+        hdr = {
+            "accept-encoding": "gzip, deflate, br",
+            "accept-language": "ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7,pt;q=0.6",
+            "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
+            "origin": "https://mycellularone.com",
+            "referer": "https://mycellularone.com/locations/",
+            "sec-ch-ua": '"Google Chrome";v="89", "Chromium";v="89", ";Not A Brand";v="99"',
+            "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.114 Safari/537.36",
+            "x-requested-with": "XMLHttpRequest",
+        }
+        loc_response = session.post(post_url, data=frm, headers=hdr)
+        loc_dom = etree.HTML(loc_response.text)
+
+        store_url = start_url
+        location_name = poi_html.xpath('.//div[@class="location-name"]/text()')
+        location_name = location_name[0] if location_name else "<MISSING>"
+        raw_data = poi_html.xpath(".//address/text()")[0].split(":")[-1].split("\n")
+        street_address = raw_data[0].strip()
+        city = raw_data[-1].split(", ")[0]
+        state = raw_data[-1].split(", ")[-1].split()[0]
+        zip_code = raw_data[-1].split(", ")[-1].split()[-1]
         country_code = "<MISSING>"
-        store_number = poi["id"]
-        phone = poi["phone"]
-        phone = phone if phone else "<MISSING>"
+        phone = "<MISSING>"
         location_type = "<MISSING>"
-        latitude = poi["lat"]
-        latitude = latitude if latitude else "<MISSING>"
-        longitude = poi["lng"]
-        longitude = longitude if longitude else "<MISSING>"
-        hoo = etree.HTML(poi["hours_description"])
-        hoo = hoo.xpath("//text()")
+        latitude = poi_html.xpath("@data-lat")
+        latitude = latitude[0] if latitude else "<MISSING>"
+        longitude = poi_html.xpath("@data-lng")
+        longitude = longitude[0] if longitude else "<MISSING>"
+        hoo = loc_dom.xpath('//div[@class="nmld-detail-item for-hours"]/text()')
         hoo = [elem.strip() for elem in hoo]
         hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
 
@@ -93,9 +102,7 @@ def fetch_data():
             longitude,
             hours_of_operation,
         ]
-        if store_number not in scraped_items:
-            scraped_items.append(store_number)
-            items.append(item)
+        items.append(item)
 
     return items
 
