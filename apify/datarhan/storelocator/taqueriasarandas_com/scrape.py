@@ -80,7 +80,9 @@ def fetch_data():
         )
         if not latitude:
             latitude = dom.xpath(
-                '//div[contains(@data-mapinfo, "{}")]/@data-lat'.format(street_address.split()[0])
+                '//div[contains(@data-mapinfo, "{}")]/@data-lat'.format(
+                    street_address.split()[0]
+                )
             )
         latitude = latitude[0] if latitude else "<MISSING>"
         longitude = dom.xpath(
@@ -90,7 +92,9 @@ def fetch_data():
         )
         if not longitude:
             longitude = dom.xpath(
-                '//div[contains(@data-mapinfo, "{}")]/@data-lng'.format(street_address.split()[0])
+                '//div[contains(@data-mapinfo, "{}")]/@data-lng'.format(
+                    street_address.split()[0]
+                )
             )
         longitude = longitude[0] if longitude else "<MISSING>"
         hoo = poi_html.xpath('.//p[img[contains(@src, "time")]]/text()')
