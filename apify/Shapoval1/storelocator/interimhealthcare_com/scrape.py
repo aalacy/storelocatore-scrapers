@@ -37,7 +37,10 @@ def fetch_data():
 
     session = SgRequests()
     for i in range(0, 100000, 50):
-        url = 'https://liveapi.yext.com/v2/accounts/me/answers/vertical/query?v=20190101&api_key=065811ac8bd1a14ee22070be8bce22e4&jsLibVersion=v1.6.4&sessionTrackingEnabled=true&input=location%20list&experienceKey=interimhealthcare&version=PRODUCTION&verticalKey=Locations&limit=50&' + f'offset={i}&retrieveFacets=false&locale=en&referrerPageUrl=https%3A%2F%2Fwww.interimhealthcare.com%2Falllocations%2F'
+        url = (
+            "https://liveapi.yext.com/v2/accounts/me/answers/vertical/query?v=20190101&api_key=065811ac8bd1a14ee22070be8bce22e4&jsLibVersion=v1.6.4&sessionTrackingEnabled=true&input=location%20list&experienceKey=interimhealthcare&version=PRODUCTION&verticalKey=Locations&limit=50&"
+            + f"offset={i}&retrieveFacets=false&locale=en&referrerPageUrl=https%3A%2F%2Fwww.interimhealthcare.com%2Falllocations%2F"
+        )
 
         r = session.get(url)
         js = r.json()["response"]["results"]
