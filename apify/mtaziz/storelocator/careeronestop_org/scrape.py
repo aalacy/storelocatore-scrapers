@@ -81,7 +81,6 @@ def get_hoo(raw_data):
         .replace("By appointment  at this time due to COVID", "")
     )
 
-    # logger.info(f"1:>>>>>>>hoo data:{hoo}")
     hoo = (
         hoo.replace("(limited services after 5:00 pm)", "")
         .replace("(except State of Oklahoma holidays)", "")
