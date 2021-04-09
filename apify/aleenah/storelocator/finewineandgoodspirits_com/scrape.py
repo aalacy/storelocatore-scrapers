@@ -53,8 +53,6 @@ def fetch_data():
     lat = []
     timing = []
     ids = []
-    page_url = []
-
     headers = {
         "Connection": "keep-alive",
         "Cache-Control": "max-age=0",
