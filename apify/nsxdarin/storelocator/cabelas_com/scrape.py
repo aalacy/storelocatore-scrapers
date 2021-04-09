@@ -142,6 +142,8 @@ def fetch_data():
             lng = "<MISSING>"
         if "," in name:
             name = name.split(",")[0].strip()
+        if len(state) == 2:
+            country = "US"
         yield [
             website,
             loc,
