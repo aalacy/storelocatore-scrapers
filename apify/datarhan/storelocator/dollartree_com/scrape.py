@@ -103,6 +103,8 @@ def fetch_data():
                     break
             city = poi["city"]
             city = city if city else "<MISSING>"
+            if city in street_address:
+                street_address = street_address.split(city)[0].strip()
             state = poi["state"]
             if not state:
                 state = poi["province"]
