@@ -4,6 +4,9 @@ from sgselenium import SgChrome
 from bs4 import BeautifulSoup as bs
 from sgscrape.sgpostal import parse_address_intl
 import time
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger("spiritofmath")
 
 
 def _close(driver):
@@ -30,9 +33,11 @@ def fetch_data():
         time.sleep(1)
         filterShowAll = driver.find_element_by_xpath('//a[@id="filterShowAll"]')
         driver.execute_script("arguments[0].click();", filterShowAll)
+        time.sleep(2)
         locations = bs(driver.page_source, "lxml").select(
             "div.ssf-column div.store-locator__infobox"
         )
+        logger.info(f"{len(locations)} found")
         for _ in locations:
             if not _.select_one("div.store-website a"):
                 continue
@@ -41,6 +46,8 @@ def fetch_data():
             location_name = _.select_one("div.store-location").text
             hours_of_operation = _.select_one("div.store-operating-hours").text
             addr = parse_address_intl(_.select_one("div.store-address").text)
+            if not addr.postcode:
+                continue
             coord = (
                 _.select_one("a.infobox__cta.ssflinks")["href"]
                 .split("daddr=")[1][1:-1]
