@@ -52,7 +52,7 @@ def fetch_data():
     dom = etree.HTML(response.text)
 
     all_locations = re.findall(
-        "location_data.push\((.+?)\);", response.text.replace("\n", "")
+        r"location_data.push\((.+?)\);", response.text.replace("\n", "")
     )
     for poi in all_locations:
         poi = demjson.decode(poi)
