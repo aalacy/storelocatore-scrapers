@@ -58,8 +58,8 @@ def fetch_data():
         state = loc["State"]
         zip_code = loc["ZipCode"]
 
-        phone_number = loc["Phone"]  # .strip()
-        if phone_number == None:
+        phone_number = loc["Phone"]
+        if phone_number is None:
             phone_number = "<MISSING>"
         lat = loc["Latitude"]
         longit = loc["Longitude"]
