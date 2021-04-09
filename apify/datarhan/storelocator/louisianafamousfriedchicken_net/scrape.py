@@ -39,18 +39,15 @@ def fetch_data():
     session = SgRequests().requests_retry_session(retries=0, backoff_factor=0.3)
 
     items = []
-    scraped_items = []
 
     DOMAIN = "louisianafamousfriedchicken.net"
-    start_url = "https://louisianafriedchickenhq.com/wp-admin/admin-ajax.php?action=store_search&lat=32.77666&lng=-96.79699&max_results=50&search_radius=10&autoload=1"
+    start_url = "https://louisianafriedchickenhq.com/wp-admin/admin-ajax.php?action=store_search&lat=32.77666&lng=-96.79699&max_results=100&search_radius=10&autoload=1"
 
     response = session.get(start_url)
     data = json.loads(response.text)
 
     for poi in data:
         store_url = poi["permalink"]
-        if "6150-ramey-ave/" in store_url:
-            continue
         location_type = "<MISSING>"
         hours_of_operation = poi["hours"]
         hours_of_operation = hours_of_operation if hours_of_operation else "<MISSING>"
@@ -60,6 +57,8 @@ def fetch_data():
         city = poi["city"]
         state = poi["state"]
         zip_code = poi["zip"]
+        if len(zip_code) > 5:
+            zip_code = "<MISSING>"
         country_code = poi["country"]
         store_number = poi["id"]
         phone = poi["phone"]
@@ -83,10 +82,8 @@ def fetch_data():
             longitude,
             hours_of_operation,
         ]
-        check = "{} {}".format(location_name, street_address)
-        if check not in scraped_items:
-            scraped_items.append(check)
-            items.append(item)
+
+        items.append(item)
 
     return items
 
