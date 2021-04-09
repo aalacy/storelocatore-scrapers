@@ -123,13 +123,6 @@ def fetch_data():
                 hours_list.append(raw_text[index])
 
         hours_of_operation = "; ".join(hours_list).strip()
-        # hours_of_operation = "".join(
-        #     store.xpath('p[@class="info"]/span[@class="caps"]/b/text()[2]')
-        # ).strip()
-        # if "SPRING BRK" in hours_of_operation:
-        #     hours_of_operation = "".join(
-        #         store.xpath('p[@class="info"]/span[@class="caps"]/b/text()[3]')
-        #     ).strip()
         if hours_of_operation == "":
             hours_of_operation = "<MISSING>"
 
