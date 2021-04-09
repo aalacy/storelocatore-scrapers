@@ -4,6 +4,7 @@ from sglogging import SgLogSetup
 from sgscrape.sgpostal import parse_address_intl
 from lxml import etree
 from tenacity import retry, stop_after_attempt
+import re
 
 import urllib3
 
@@ -29,6 +30,11 @@ XPATHS = [
     "//div[@id='airports_in_city_frame']//div[@class='lhs_info']//a[contains(@href, '/airports')]/@href",
     "//div[@id='sm_airports_in_country' or @id='sm_airports_in_region' or @id='airports_in_city_frame']//div[@id='airports_in_frame']//a[contains(@href, '/airports')]/@href",
 ]
+
+
+POSTAL_CODE_REGEX = r"([A-Z]{1,2}\d[A-Z\d]? ?\d[A-Z]{2})"
+
+KNOWN_CITIES = ["London", "Donegal"]
 
 
 def write_output(data):
@@ -79,11 +85,20 @@ def fetch_links(urls):
 
 
 def or_missing(x):
+    if x is None:
+        return "<MISSING>"
     assert len(x) <= 1
     if len(x) == 0:
         return "<MISSING>"
     else:
         return str(x[0])
+
+
+def or_else(x, y):
+    if len(x) > 0:
+        return x
+    else:
+        return y
 
 
 @retry(stop=stop_after_attempt(7))
@@ -92,29 +107,35 @@ def get_loc(loc):
     session = SgRequests()
     response = session.get(loc, headers=headers)
     parsed = etree.HTML(response.text)
-    name = or_missing(parsed.xpath("//div[@id='detailsbox']//h6/text()"))
-    address_lines = parsed.xpath(
-        "//div[@id='detailsbox']//div[@class='content']/p/text()"
-    )
-    raw_address = ""
-    for line in address_lines:
-        if "UNITED KINGDOM" in line:
-            break
-        raw_address += line
-    raw_address = raw_address.strip(",")
-    addr = parse_address_intl(raw_address)
-    city = addr.city
-    state = "<MISSING>"
-    zc = addr.postcode
-    add = addr.street_address_1
-    if add is None:
-        add = name
     store = or_missing(
         parsed.xpath("//tr[th[contains(text(), 'IATA code:')]]/td/text()")
     )
+    name = or_missing(
+        or_else(
+            parsed.xpath("//div[@id='detailsbox']//h6/text()"),
+            parsed.xpath("//div[@id='blurbbox']//h1[@class='t']//text()")[1:],
+        )
+    )
+    logger.info(name)
+    address_lines = parsed.xpath(
+        "//div[@id='detailsbox']//div[@class='content']/p/text()"
+    )
+    raw_address = " ".join(address_lines).split("UNITED KINGDOM")[0].strip(",").strip()
+    addr = parse_address_intl(raw_address)
+    regex_zc = re.search(POSTAL_CODE_REGEX, raw_address)
+    zc = or_missing(or_else(regex_zc.groups() if regex_zc else [], addr.postcode))
+    city_from_name = name.split("Airport")[0].strip()
+    for major_city in KNOWN_CITIES:
+        if major_city in name:
+            city_from_name = major_city
+    city = addr.city if addr.city else city_from_name
+    state = "<MISSING>"
+    add = addr.street_address_1
+    if add is None:
+        add = name
     phone = or_missing(parsed.xpath("//td[@itemprop='telephone']/text()"))
-    lat = or_missing(parsed.xpath("//meta[@itemprop='latitude']/text()"))
-    lng = or_missing(parsed.xpath("//meta[@itemprop='longitude']/text()"))
+    lat = or_missing(parsed.xpath("//meta[@itemprop='latitude']/@content"))
+    lng = or_missing(parsed.xpath("//meta[@itemprop='longitude']/@content"))
     hours = "<MISSING>"
     website = "https://www.skyscanner.com/airports/uk/airports-in-united-kingdom.html"
     country = "GB"

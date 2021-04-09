@@ -1,6 +1,7 @@
 import re
 import csv
 from lxml import etree
+from urllib.parse import urljoin
 
 from sgrequests import SgRequests
 
@@ -48,10 +49,11 @@ def fetch_data():
     dom = etree.HTML(response.text)
 
     all_locations = dom.xpath('//table[@dropzone="copy"]//ul/li/a/@href')
+    all_locations += dom.xpath(
+        '//li[a[contains(text(), "HOSPITALS & LOCATIONS")]]/ul//a/@href'
+    )
     for url in all_locations:
-        store_url = url
-        if "http" not in url:
-            store_url = "https://www.trihealth.com" + url
+        store_url = urljoin(start_url, url)
         if "cgha.com" in url:
             continue
         store_response = session.get(store_url)

@@ -46,6 +46,8 @@ def fetch_data():
                 zip_postal=_["address"]["postalCode"],
                 country_code="US",
                 phone=_["telephone"],
+                latitude=soup1.select_one("div.gmaps")["data-gmaps-lat"],
+                longitude=soup1.select_one("div.gmaps")["data-gmaps-lng"],
                 locator_domain=locator_domain,
                 hours_of_operation="; ".join(hours),
             )
