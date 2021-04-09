@@ -49,7 +49,9 @@ def fetch_data():
             j = j["data"]
 
             a = j.get("address")
-            street_address = f"{a.get('line1')}".strip() or "<MISSING>"
+            street_address = f"{a.get('line1')} {a.get('line2')}".replace(
+                "None", ""
+            ).strip()
             city = a.get("city") or "<MISSING>"
             location_name = f"{j.get('name')} {city}"
             page_url = j.get("website") or "<MISSING>"

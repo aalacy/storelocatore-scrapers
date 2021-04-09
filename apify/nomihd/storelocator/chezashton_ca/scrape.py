@@ -68,7 +68,7 @@ def fetch_data():
             .strip()
         )
 
-        hours_of_operation = "; ".join(hours_of_operation.split("\n")[:-1]).strip()
+        hours_of_operation = "; ".join(hours_of_operation.split("\n")).strip()
         latitude = "".join(restaurant.xpath("./@data-restaurant-lat")).strip()
         longitude = "".join(restaurant.xpath("./@data-restaurant-lat")).strip()
 
