@@ -29,7 +29,10 @@ def fetch_data():
                 temp_list = loc.get_text(separator="|", strip=True).split("DIRECTIONS")[
                     :-1
                 ]
-                for temp in temp_list:
+                for temp, coord in zip(temp_list, coords):
+                    latitude, longitude = re.findall(
+                        r"/@(-?[\d\.]+),(-?[\d\.]+)", coord.find("a")["href"]
+                    )[0]
                     temp = temp.strip("|").split("|")
                     if re.match(
                         r"^(\([0-9]{3}\) |[0-9]{3}-)[0-9]{3}-[0-9]{4}$",
@@ -69,12 +72,15 @@ def fetch_data():
                         store_number="<MISSING>",
                         phone=phone,
                         location_type="<MISSING>",
-                        latitude="<MISSING>",
-                        longitude="<MISSING>",
+                        latitude=latitude,
+                        longitude=longitude,
                         hours_of_operation=hours_of_operation,
                     )
 
             else:
+                latitude, longitude = re.findall(
+                    r"/@(-?[\d\.]+),(-?[\d\.]+)", coords[0].find("a")["href"]
+                )[0]
                 temp = loc.get_text(separator="|", strip=True).split("|")[:-1]
                 temp_phone = temp[-2].replace(" (Catering)", "").replace(" X 1", "")
                 if re.match(
@@ -113,8 +119,8 @@ def fetch_data():
                     store_number="<MISSING>",
                     phone=phone,
                     location_type="<MISSING>",
-                    latitude="<MISSING>",
-                    longitude="<MISSING>",
+                    latitude=latitude,
+                    longitude=longitude,
                     hours_of_operation=hours_of_operation,
                 )
 
