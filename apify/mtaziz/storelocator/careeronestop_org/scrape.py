@@ -4,6 +4,8 @@ from bs4 import BeautifulSoup
 import json
 import csv
 import unicodedata
+from time import sleep
+import lxml
 
 logger = SgLogSetup().get_logger(logger_name="careeronestop_org")
 session = SgRequests()
@@ -359,21 +361,21 @@ def fetch_data():
         location_url = f"https://www.careeronestop.org//Localhelp/AmericanJobCenters/find-american-job-centers.aspx?location={search_by_state1}&radius=100&ct=0&y=0&w=0&e=0&sortcolumns=Location&sortdirections=ASC&curPage=1&pagesize=500"
         logger.info(f"Pulling the Data From: {location_url} \n")
         logger.info(f"Pulling the Data for the State: {search_by_state}")
-        try:
-            r = session.get(location_url, headers=headers)
-            soup = BeautifulSoup(r.text, "lxml")
-            table = (
-                soup.find("table", {"class": "cos-table cos-table-mobile"})
-                .find("tbody")
-                .find_all("tr")
-            )
-        except:
-            pass
-        found = 0
+
+        r = session.get(location_url, headers=headers)
+        sleep(2)
+
+        soup = BeautifulSoup(r.text, "lxml")
+        table = (
+            soup.find("table", {"class": "cos-table cos-table-mobile"})
+            .find("tbody")
+            .find_all("tr")
+        )
         ajc_found_in_the_sate = soup.find("strong", {"id": "recordNumber"}).getText()
         logger.info(
             f"We found ({ajc_found_in_the_sate}) American Job Centers in {search_by_state}"
         )
+        found = 0
         for tr in table:
             location_name = tr.find("a", {"class": "notranslate"}).text
             page_url = tr.find("a", {"class": "notranslate"})["href"]
@@ -381,8 +383,9 @@ def fetch_data():
             try:
                 data_link = "https://www.careeronestop.org/" + page_url
                 r1 = session.get(data_link, headers=headers)
-                soup = BeautifulSoup(r1.text, "lxml")
-                addr = soup.find_all("script", {"type": "text/javascript"})[8]
+                sleep(1)
+                soup1 = BeautifulSoup(r1.text, "lxml")
+                addr = soup1.find_all("script", {"type": "text/javascript"})[8]
                 data_main = (
                     str(addr)
                     .split("locinfo =")[1]
