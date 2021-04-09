@@ -48,7 +48,7 @@ def write_output(data):
 
 
 def fetch_data():
-    locs = []
+    ids = []
     for lat, lng in search:
         x = lat
         y = lng
@@ -65,67 +65,31 @@ def fetch_data():
         logger.info("%s - %s..." % (str(x), str(y)))
         session = SgRequests()
         r = session.post(url, headers=headers, data=payload)
-        for line in r.iter_lines():
-            line = str(line.decode("utf-8"))
-            if '"LocID":"bko' in line:
-                items = line.split('"LocID":"bko')
-                for item in items:
-                    if '"type":"FeatureCollection"' not in item:
-                        lurl = (
-                            "https://www.huntington.com/Community/branch-info?locationId="
-                            + item.split('"')[0]
-                        )
-                        if lurl not in locs:
-                            locs.append(lurl)
-        for loc in locs:
-            session = SgRequests()
-            logger.info(loc)
-            r2 = session.get(loc, headers=headers)
-            if r2.encoding is None:
-                r2.encoding = "utf-8"
-            lines = r2.iter_lines(decode_unicode=True)
-            hours = ""
-            typ = "Branch"
+        for item in json.loads(r.content)["features"]:
+            store = item["properties"]["LocID"]
+            name = item["properties"]["LocName"]
+            add = item["properties"]["LocStreet"]
+            phone = item["properties"]["LocPhone"]
+            city = item["properties"]["LocCity"]
+            state = item["properties"]["LocState"]
+            zc = item["properties"]["LocZip"]
+            typ = "<MISSING>"
             website = "huntington.com"
-            Found = False
-            for line2 in lines:
-                if '"streetAddress":"' in line2:
-                    data = json.loads(line2)
-                    name = data["name"]
-                    store = data["@id"].rsplit("=")[1]
-                    add = data["address"]["streetAddress"]
-                    city = data["address"]["addressLocality"]
-                    state = data["address"]["addressRegion"]
-                    country = data["address"]["addressCountry"]
-                    zc = data["address"]["postalCode"]
-                    phone = data["telephone"]
-                    lat = data["geo"]["latitude"]
-                    lng = data["geo"]["longitude"]
-                    items = line2.split('"dayOfWeek":"http://schema.org/')
-                if "<!-- Lobby section-->" in line2:
-                    Found = True
-                if Found and "</div>" in line2:
-                    Found = False
-                if Found and "<br" in line2 and ": " in line2:
-                    if hours == "":
-                        hours = (
-                            line2.split(">")[1]
-                            .replace("\r", "")
-                            .replace("\n", "")
-                            .replace("\t", "")
-                            .strip()
-                        )
-                    else:
-                        hours = (
-                            hours
-                            + "; "
-                            + line2.split(">")[1]
-                            .replace("\r", "")
-                            .replace("\n", "")
-                            .replace("\t", "")
-                            .strip()
-                        )
-            if hours != "":
+            country = "US"
+            lat = item["geometry"]["coordinates"][0]
+            lng = item["geometry"]["coordinates"][1]
+            try:
+                hours = "Sun: " + item["properties"]["SundayLobbyHours"]
+                hours = hours + "; Mon: " + item["properties"]["MondayLobbyHours"]
+                hours = hours + "; Tue: " + item["properties"]["TuesdayLobbyHours"]
+                hours = hours + "; Wed: " + item["properties"]["WednesdayLobbyHours"]
+                hours = hours + "; Thu: " + item["properties"]["ThursdayLobbyHours"]
+                hours = hours + "; Fri: " + item["properties"]["FridayLobbyHours"]
+                hours = hours + "; Sat: " + item["properties"]["SaturdayLobbyHours"]
+            except:
+                hours = "<MISSING>"
+            if store not in ids:
+                ids.append(store)
                 yield [
                     website,
                     name,

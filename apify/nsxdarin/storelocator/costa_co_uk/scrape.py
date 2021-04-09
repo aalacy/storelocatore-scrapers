@@ -176,6 +176,8 @@ def fetch_data():
             if store not in ids and addinfo not in adds:
                 adds.append(addinfo)
                 ids.append(store)
+                if "," in city:
+                    city = city.split(",")[0].strip()
                 yield [
                     website,
                     loc,
@@ -331,6 +333,8 @@ def fetch_data():
                 if store not in ids and addinfo not in adds:
                     adds.append(addinfo)
                     ids.append(store)
+                    if "," in city:
+                        city = city.split(",")[0].strip()
                     yield [
                         website,
                         loc,

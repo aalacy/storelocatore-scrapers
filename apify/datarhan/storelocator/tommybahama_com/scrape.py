@@ -102,7 +102,7 @@ def fetch_data():
         phone = store_dom.xpath(
             '//div[contains(text(), "Phone #")]/following-sibling::div/text()'
         )
-        phone = phone[0] if phone else "<MISSING>"
+        phone = phone[0].split(":")[-1] if phone else "<MISSING>"
         location_type = "<MISSING>"
         latitude = re.findall("storelatitude = '(.+?)';", raw_data)
         latitude = latitude[0] if latitude else "<MISSING>"
@@ -111,9 +111,11 @@ def fetch_data():
         hoo = store_dom.xpath(
             '//div[contains(text(), "Store Hours")]/following-sibling::div/text()'
         )
-        hours_of_operation = " ".join(hoo[1:3]) if hoo else "<MISSING>"
-        if not hours_of_operation:
-            hours_of_operation = "<MISSING>"
+        hoo = [e.strip() for e in hoo if e.strip()]
+        hoo = " ".join(hoo).split("Hours: ")[-1].split("This location")[0].strip()
+        hours_of_operation = (
+            hoo.split("Open to a limited")[0].strip() if hoo else "<MISSING>"
+        )
 
         item = [
             DOMAIN,
