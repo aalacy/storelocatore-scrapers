@@ -1,6 +1,5 @@
 from sglogging import SgLogSetup
 from sgrequests import SgRequests
-import time
 from lxml import html
 import csv
 import json
