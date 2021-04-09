@@ -24,8 +24,6 @@ def fetch_data():
         for _ in locations:
             if not "".join(_.xpath(".//text()")).strip():
                 continue
-            if re.search(r"coming soon", "".join(_.xpath(".//text()")), re.IGNORECASE):
-                continue
             addr = _.xpath(".//p/text()")
             location_type = ""
             if re.search(r"TEMPORARILY CLOSED", addr[0], re.IGNORECASE):
@@ -57,7 +55,7 @@ def fetch_data():
                     latitude=coord[0],
                     longitude=coord[1],
                     zip_postal=zip_postal,
-                    country_code="US",
+                    country_code="CA",
                     location_type=location_type,
                     locator_domain=locator_domain,
                     hours_of_operation=_valid(hours_of_operation),
