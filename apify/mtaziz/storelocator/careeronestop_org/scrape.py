@@ -349,7 +349,7 @@ state_list_ela = [
 def fetch_data():
     address = []
     total = 0
-    for search_by_state in state_list_ela[0:2]:
+    for search_by_state in state_list_ela:
         search_by_state1 = search_by_state.replace(" ", "%20")
         headers = {
             "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.90 Safari/537.36"
