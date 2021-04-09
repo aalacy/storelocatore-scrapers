@@ -49,8 +49,6 @@ def fetch_data():
 
     for poi in data:
         store_url = poi["permalink"]
-        if "6150-ramey-ave/" in store_url:
-            continue
         location_type = "<MISSING>"
         hours_of_operation = poi["hours"]
         hours_of_operation = hours_of_operation if hours_of_operation else "<MISSING>"
@@ -60,8 +58,11 @@ def fetch_data():
         city = poi["city"]
         state = poi["state"]
         zip_code = poi["zip"]
+        if len(zip_code) > 5:
+            zip_code = "<MISSING>"
         country_code = poi["country"]
         store_number = poi["id"]
+        print(store_number)
         phone = poi["phone"]
         phone = phone if phone else "<MISSING>"
         latitude = poi["lat"]
@@ -83,10 +84,8 @@ def fetch_data():
             longitude,
             hours_of_operation,
         ]
-        check = "{} {}".format(location_name, street_address)
-        if check not in scraped_items:
-            scraped_items.append(check)
-            items.append(item)
+
+        items.append(item)
 
     return items
 
