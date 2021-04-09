@@ -18,6 +18,7 @@ def write_output(data):
         writer.writerow(
             [
                 "locator_domain",
+                "page_url",
                 "location_name",
                 "street_address",
                 "city",
@@ -80,6 +81,7 @@ def fetch_data():
                             if lurl not in locs:
                                 locs.append(lurl)
         for loc in locs:
+            loc = loc.replace("&amp;", "&")
             r3 = session.get(loc, headers=headers)
             if r3.encoding is None:
                 r3.encoding = "utf-8"
@@ -140,8 +142,11 @@ def fetch_data():
                                         + ": "
                                         + day.split('"start":')[1].split("}")[0]
                                         + "-"
-                                        + day.split('"end":')[1].split(",")[0]
                                     )
+                                    eh = day.split('"end":')[1].split(",")[0]
+                                    if eh == "0":
+                                        eh = "0000"
+                                    hours = hours + eh
                                 else:
                                     hours = (
                                         hours
@@ -150,15 +155,45 @@ def fetch_data():
                                         + ": "
                                         + day.split('"start":')[1].split("}")[0]
                                         + "-"
-                                        + day.split('"end":')[1].split(",")[0]
                                     )
+                                    eh = day.split('"end":')[1].split(",")[0]
+                                    if eh == "0":
+                                        eh = "0000"
+                                    hours = hours + eh
                     except:
                         hours = "<MISSING>"
             if hours == "":
                 hours = "<MISSING>"
             if add != "":
+                hours = hours.replace("0000", "00:00")
+                hours = hours.replace("1030", "10:30")
+                hours = hours.replace("1130", "11:30")
+                hours = hours.replace("1230", "12:30")
+                hours = hours.replace("130", "1:30")
+                hours = hours.replace("230", "2:30")
+                hours = hours.replace("330", "3:30")
+                hours = hours.replace("430", "4:30")
+                hours = hours.replace("530", "5:30")
+                hours = hours.replace("630", "6:30")
+                hours = hours.replace("730", "7:30")
+                hours = hours.replace("830", "8:30")
+                hours = hours.replace("930", "9:30")
+                hours = hours.replace("1000", "10:00")
+                hours = hours.replace("1100", "11:00")
+                hours = hours.replace("1200", "12:00")
+                hours = hours.replace("100", "1:00")
+                hours = hours.replace("200", "2:00")
+                hours = hours.replace("300", "3:00")
+                hours = hours.replace("400", "4:00")
+                hours = hours.replace("500", "5:00")
+                hours = hours.replace("600", "6:00")
+                hours = hours.replace("700", "7:00")
+                hours = hours.replace("800", "8:00")
+                hours = hours.replace("900", "9:00")
+                hours = hours.replace(":3:", "3:")
                 yield [
                     website,
+                    loc,
                     name,
                     add,
                     city,

@@ -64,7 +64,8 @@ def fetch_data():
         )
         response = session.post(start_url, data=body, headers=headers)
         data = json.loads(response.text)
-        all_locations += data["data"]["offices"]["results"]
+        if data.get("data"):
+            all_locations += data["data"]["offices"]["results"]
 
     for poi in all_locations:
         location_name = poi["officeName"]
@@ -110,8 +111,9 @@ def fetch_data():
             longitude,
             hours_of_operation,
         ]
-        if store_number not in scraped_items:
-            scraped_items.append(store_number)
+        check = f"{location_name} {street_address}"
+        if check not in scraped_items:
+            scraped_items.append(check)
             items.append(item)
 
     return items

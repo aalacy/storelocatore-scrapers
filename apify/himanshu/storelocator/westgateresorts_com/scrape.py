@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import csv
+import json
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 from sglogging import sglog
@@ -45,6 +46,12 @@ def pull_content(url):
     return soup
 
 
+def parse_json(soup):
+    info = soup.find("script", type="application/ld+json").string
+    data = json.loads(info)
+    return data
+
+
 def fetch_data():
     base_url = "https://www.westgateresorts.com/explore-destinations/"
     main_soup = pull_content(base_url)
@@ -55,34 +62,18 @@ def fetch_data():
     for i in k:
         store_url = "https://www.westgateresorts.com/" + i["href"]
         soup = pull_content(store_url)
-        info = soup.find("div", {"id": "footer-resort-info"})
-        if not info:
-            if "westgate-new-york-grand-central" in store_url:
-                info = soup.find(
-                    "div", {"class": "footer__connect__address"}
-                ).stripped_strings
-                data = list(info)
-                data.remove("Address:")
-                resort_phone = soup.find(
-                    "div", {"class": "footer__connect__resort-phone"}
-                ).get_text(strip=True, separator="")
-                data.append(resort_phone)
-            else:
-                continue
-        else:
-            data = list(info.stripped_strings)
-        location_name = data[0]
-        street_address = data[1]
-        city_zip = data[2]
-        city = city_zip.split(",")[0]
-        state = city_zip.split(",")[1].split()[0]
-        zip_code = city_zip.split(",")[1].split()[1]
-        phone = data[3].split("Resort Phone:")[1]
+        data = parse_json(soup)[0]
+        location_name = data["name"]
+        street_address = data["address"]["streetAddress"]
+        city = data["address"]["addressLocality"]
+        state = data["address"]["addressRegion"]
+        zip_code = data["address"]["postalCode"]
+        phone = data["telephone"]
         country_code = "US"
         store_number = "<MISSING>"
         location_type = "westgateresorts"
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
+        latitude = data["geo"]["latitude"]
+        longitude = data["geo"]["longitude"]
         hours_of_operation = "<MISSING>"
         log.info("Append {} => {}".format(location_name, street_address))
         locations.append(
