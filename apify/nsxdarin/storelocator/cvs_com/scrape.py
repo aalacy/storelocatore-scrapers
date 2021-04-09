@@ -129,7 +129,7 @@ def get_location(loc):
     r = session.get(loc, headers=headers)
     location = BeautifulSoup(r.text, "html.parser")
 
-    if location.select_one('pharmacy-logo'):
+    if location.select_one("pharmacy-logo"):
         return None
 
     script = location.select_one("#structured-data-block")
