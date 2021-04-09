@@ -56,6 +56,13 @@ def fetch_data():
         if formatted_addr.street_address_2:
             street_address = street_address + ", " + formatted_addr.street_address_2
 
+        street_address = (
+            street_address.replace("Rockbrook Village", "")
+            .strip()
+            .replace("Fashion Square Mall", "")
+            .replace(", 912.05 Mi", "")
+            .strip()
+        )
         if " Local Store," in street_address:
             street_address = street_address.split(" Local Store,")[1].strip()
         if " Local Store" in street_address:
@@ -107,6 +114,7 @@ def fetch_data():
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=hours_of_operation,
+            raw_address=raw_address,
         )
 
 
