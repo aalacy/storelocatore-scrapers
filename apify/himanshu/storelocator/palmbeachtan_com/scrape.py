@@ -91,7 +91,9 @@ def fetch_data():
         longitude = loc_dom.xpath("//@data-lng")[0]
         hoo = hoo = loc_dom.xpath('//aside[@class="hours"]//text()')
         hoo = [e.strip() for e in hoo if e.strip()]
-        hours_of_operation = " ".join(hoo[1:]) if hoo else "<MISSING>"
+        hours_of_operation = (
+            " ".join(hoo[1:]).replace("Careers»", "").strip() if hoo else "<MISSING>"
+        )
 
         item = [
             domain,

@@ -29,6 +29,7 @@ FIELDS = [
     "store_number",
     "phone",
     "location_type",
+    "location_type_raw",
     "latitude",
     "longitude",
     "hours_of_operation",
@@ -579,6 +580,20 @@ def get_store_urls_and_lat_lng():
     return store_urls_latlng
 
 
+def get_station_location_type(data_r_location_type, url):
+    loctype_dict = {}
+    loctype_list = []
+    xpath_emart = '//div[h2[contains(text(), "Products and services")]]/ul[@class="station__icons-list"]/li//text()'
+    data_icon_list = data_r_location_type.xpath(xpath_emart)
+    data_icon_list = [" ".join(i.split()) for i in data_icon_list]
+    data_icon_list = [i.replace("Open 24h", "") for i in data_icon_list]
+    data_icon_list = [i for i in data_icon_list if i]
+    data_icon_list = "; ".join(data_icon_list)
+    loctype_dict = {"page_url": url, "location_type": data_icon_list}
+    loctype_list.append(loctype_dict)
+    return loctype_dict
+
+
 def fetch_data():
     items = []
     list_of_store_urls_latlng = get_store_urls_and_lat_lng()
@@ -624,8 +639,12 @@ def fetch_data():
         phone_data = data_store.xpath(xpath_phone)[0].strip()
         phone = phone_data if phone_data else "<MISSING>"
 
-        location_type = "Convenience Store"
-
+        location_type_data = get_station_location_type(data_store, store_url)
+        if "Express Mart" in location_type_data["location_type"]:
+            location_type = "Express Mart"
+        else:
+            location_type = "<MISSING>"
+        location_type_raw = location_type_data["location_type"]
         latitude = store_url_lat_lng[1]
         longitude = store_url_lat_lng[2]
 
@@ -664,6 +683,7 @@ def fetch_data():
             store_number,
             phone,
             location_type,
+            location_type_raw,
             latitude,
             longitude,
             hours_of_operation,
