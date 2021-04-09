@@ -78,23 +78,14 @@ def fetch_data():
         phone = phone if phone else "<MISSING>"
         location_type = poi["@type"]
 
-        geo_response = session.get(
-            store_url + "/hotel-overview/directions", headers=hdr
-        )
-        if geo_response.status_code != 200:
-            continue
+        geo_response = session.get(store_url, headers=hdr)
         geo_dom = etree.HTML(geo_response.text)
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
-        geo = (
-            geo_dom.xpath("//iframe/@src")[-1]
-            .split("1d")[-1]
-            .split("!3d")[0]
-            .split("!2d")
-        )
-        if len(geo) == 2:
-            latitude = geo[0][2:]
-            longitude = geo[1]
+        geo = geo_dom.xpath("//@data-map-settings")
+        if not geo:
+            continue
+        geo = json.loads(geo[0])
+        latitude = geo["mapCenter"]["latitude"]
+        longitude = geo["mapCenter"]["longitude"]
         hours_of_operation = "<MISSING>"
 
         item = [
