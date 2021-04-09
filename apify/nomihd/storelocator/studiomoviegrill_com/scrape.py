@@ -107,11 +107,29 @@ def fetch_data():
         phone = "".join(
             store.xpath('p[@class="info"]/a[contains(@href,"tel:")]/text()')
         ).strip()
+        raw_text = store.xpath('p[@class="info"]/span[@class="caps"]/b/text()')
         location_type = "<MISSING>"
-        hours_of_operation = "".join(
-            store.xpath('p[@class="info"]/span[@class="caps"]/b/text()[2]')
-        ).strip()
+        if "RE-OPENING" not in ", ".join(raw_text).strip():
+            if "OPENING" in ", ".join(raw_text).strip():
+                location_type = "Coming Soon"
+            if "TEMPORARILY CLOSED" in ", ".join(raw_text).strip():
+                location_type = "TEMPORARILY CLOSED"
 
+        hours_list = []
+        for index in range(1, len(raw_text)):
+            if "SPRING BRK" in raw_text[index]:
+                continue
+            else:
+                hours_list.append(raw_text[index])
+
+        hours_of_operation = "; ".join(hours_list).strip()
+        # hours_of_operation = "".join(
+        #     store.xpath('p[@class="info"]/span[@class="caps"]/b/text()[2]')
+        # ).strip()
+        # if "SPRING BRK" in hours_of_operation:
+        #     hours_of_operation = "".join(
+        #         store.xpath('p[@class="info"]/span[@class="caps"]/b/text()[3]')
+        #     ).strip()
         if hours_of_operation == "":
             hours_of_operation = "<MISSING>"
 
