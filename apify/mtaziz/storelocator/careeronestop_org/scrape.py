@@ -1,9 +1,10 @@
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
-from bs4 import BeautifulSoup
 import json
 import csv
 import unicodedata
+from time import sleep
+from lxml import html
 
 logger = SgLogSetup().get_logger(logger_name="careeronestop_org")
 session = SgRequests()
@@ -195,12 +196,9 @@ def get_hoo(raw_data):
     return hoo
 
 
-def get_street_address(soup, street_address1, city):
-    st_data = (
-        soup.find_all("span", {"class": "notranslate"})[2]
-        .text.split(",")[0]
-        .replace(street_address1, "")
-    )
+def get_street_address(st_data_r2, street_address1, city):
+    st_data = st_data_r2.xpath('//span[@class="notranslate"]/text()')[2]
+    st_data = st_data.split(",")[0].replace(street_address1, "")
     street_address = (
         street_address1
         + " "
@@ -266,6 +264,7 @@ def get_street_address(soup, street_address1, city):
     street_address = (
         street_address.replace("      ", " ").replace("7161  Gateway Drive", "").strip()
     )
+    street_address = street_address.replace("(", "").strip()
     if street_address:
         return street_address
     else:
@@ -350,7 +349,7 @@ state_list_ela = [
 def fetch_data():
     address = []
     total = 0
-    for search_by_state in state_list_ela:
+    for search_by_state in state_list_ela[0:2]:
         search_by_state1 = search_by_state.replace(" ", "%20")
         headers = {
             "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.90 Safari/537.36"
@@ -359,35 +358,45 @@ def fetch_data():
         location_url = f"https://www.careeronestop.org//Localhelp/AmericanJobCenters/find-american-job-centers.aspx?location={search_by_state1}&radius=100&ct=0&y=0&w=0&e=0&sortcolumns=Location&sortdirections=ASC&curPage=1&pagesize=500"
         logger.info(f"Pulling the Data From: {location_url} \n")
         logger.info(f"Pulling the Data for the State: {search_by_state}")
-        try:
-            r = session.get(location_url, headers=headers)
-            soup = BeautifulSoup(r.text, "lxml")
-            table = (
-                soup.find("table", {"class": "cos-table cos-table-mobile"})
-                .find("tbody")
-                .find_all("tr")
-            )
-        except:
-            pass
-        found = 0
-        ajc_found_in_the_sate = soup.find("strong", {"id": "recordNumber"}).getText()
+        r = session.get(location_url, headers=headers)
+        sleep(2)
+        data_r = html.fromstring(r.text, "lxml")
+        ajc_found_in_the_sate = "".join(
+            data_r.xpath('//strong[@id="recordNumber"]/text()')
+        )
+        xpath_tr_data = '//table[@class="cos-table cos-table-mobile"]/tbody/tr'
+        data1 = data_r.xpath(xpath_tr_data)
         logger.info(
             f"We found ({ajc_found_in_the_sate}) American Job Centers in {search_by_state}"
         )
-        for tr in table:
-            location_name = tr.find("a", {"class": "notranslate"}).text
-            page_url = tr.find("a", {"class": "notranslate"})["href"]
-            raw_data = list(tr.find_all("td")[2].stripped_strings)
+
+        found = 0
+        for tr in data1:
+            location_name = tr.xpath(
+                './td/a[@class="notranslate" and @target="_self"]/text()'
+            )
+            location_name = "".join(location_name).strip()
+
+            page_url = tr.xpath(
+                './td/a[@class="notranslate" and @target="_self"]/@href'
+            )
+            page_url = "".join(page_url)
+            raw_data = tr.xpath("./td[3]//text()")
+            logger.info(f"\n Phone and HOO RAW Data: {raw_data}\n")
             try:
-                data_link = "https://www.careeronestop.org/" + page_url
-                r1 = session.get(data_link, headers=headers)
-                soup = BeautifulSoup(r1.text, "lxml")
-                addr = soup.find_all("script", {"type": "text/javascript"})[8]
+                data_link = "https://www.careeronestop.org" + page_url
+                logger.info(f"\nPulling the data from: {data_link}\n")
+                r2 = session.get(data_link, headers=headers)
+
+                sleep(1)
+
+                data_r2 = html.fromstring(r2.text, "lxml")
+                addr = data_r2.xpath('//script[@type="text/javascript"]/text()')
+                addr = "".join(addr)
                 data_main = (
-                    str(addr)
-                    .split("locinfo =")[1]
+                    addr.split("locinfo =")[1]
                     .split("var mapapi")[0]
-                    .replace(";", "")
+                    .split(";")[0]
                     .strip()
                 )
             except:
@@ -396,12 +405,14 @@ def fetch_data():
             locator_domain = locator_domain_url
             page_url = data_link
             try:
-                location_name = soup.find("div", {"id": "detailsheading"}).text
+                location_name = data_r2.xpath('//div[@id="detailsheading"]/text()')
+                location_name = "".join(location_name)
             except:
                 location_name = "<MISSING>"
+            logger.info(f"Location Name: {location_name}")
             street_address1 = json_data["ADDRESS1"]
             city = json_data["CITY"]
-            street_address = get_street_address(soup, street_address1, city)
+            street_address = get_street_address(data_r2, street_address1, city)
             city = city if city else "<MISSING>"
             state = json_data["STATE"] if json_data["STATE"] else "<MISSING>"
             zip = json_data["ZIP"] if json_data["ZIP"] else "<MISSING>"
@@ -456,7 +467,9 @@ def fetch_data():
 def scrape():
     logger.info("Scraping Started...Please wait until it's finished!!!")
     data = fetch_data()
-    logger.info(f"Scraping Finished | Total AJC Found without Duplicates: {len(data)}")
+    logger.info(
+        f"\nScraping Finished | Total AJC Found without Duplicates: {len(data)}"
+    )
     write_output(data)
 
 
