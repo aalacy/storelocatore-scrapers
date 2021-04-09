@@ -55,7 +55,6 @@ def fetch_data():
         loc_response = session.get(store_url + ".headeronly.html", headers=hdr)
         if loc_response.status_code != 200:
             continue
-        print(store_url, loc_response.status_code)
         loc_dom = etree.HTML(loc_response.text)
         poi = loc_dom.xpath('//script[contains(text(), "address")]/text()')
         if not poi:
