@@ -1,7 +1,9 @@
 import csv
+
+from concurrent import futures
 from lxml import html
 from sgrequests import SgRequests
-from concurrent import futures
+from sgscrape.sgpostal import parse_address, International_Parser
 
 
 def write_output(data):
@@ -35,44 +37,63 @@ def write_output(data):
 
 def get_urls():
     session = SgRequests()
-
-    r = session.get("https://www.shopthegreatescape.com/store-locator")
+    r = session.get("https://www.scottishgolfcourses.com/atoz.html")
     tree = html.fromstring(r.text)
 
-    return tree.xpath("//a[@class='store_link']/@href")
+    return tree.xpath("//div[@class='col-sm-4']/a/@href")
 
 
 def get_data(url):
-    locator_domain = "https://www.shopthegreatescape.com"
-    page_url = f"https://www.shopthegreatescape.com{url}"
+    locator_domain = "hhttps://www.scottishgolfcourses.com/"
+    page_url = f"https://www.scottishgolfcourses.com{url}"
+
     session = SgRequests()
     r = session.get(page_url)
     tree = html.fromstring(r.text)
 
-    ad = tree.xpath("//address/text()")
-    street_address = "".join(ad[0])
-    line = "".join(ad[1])
-    city = line.split(",")[0]
-    line = line.split(",")[1].strip()
-    state = line.split()[0]
-    postal = line.split()[1]
-    country_code = "US"
-    store_number = "<MISSING>"
-    location_name = f"The Great Escape - {city}"
-    phone = "".join(tree.xpath("//address/following-sibling::p[1]/text()")).strip()
-    map_link = "".join(tree.xpath('//div[@class="span6"]/iframe/@src'))
-    try:
-        latitude = map_link.split("!3d")[1].strip().split("!")[0].strip()
-        longitude = map_link.split("!2d")[1].strip().split("!")[0].strip()
-    except IndexError:
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
-    location_type = "<MISSING>"
-    hours_of_operation = tree.xpath(
-        "//h3[contains(text(), 'Store Hours')]/following-sibling::table//tr//text()"
+    location_name = "".join(tree.xpath("//h1/text()")).strip()
+    text = "".join(tree.xpath("//h1/following-sibling::*/text()")).strip()
+    line = text.split("Address:")[-1].strip()
+    if line.endswith(","):
+        line = line[:-1].strip()
+    postal = " ".join(line.split()[-2:])
+    if "," not in postal:
+        line = line.replace(postal, "")
+        adr = parse_address(International_Parser(), line, postcode=postal)
+    else:
+        adr = parse_address(International_Parser(), line)
+
+    street_address = (
+        f"{adr.street_address_1} {adr.street_address_2 or ''}".replace(
+            "None", ""
+        ).strip()
+        or "<MISSING>"
     )
-    hours_of_operation = list(filter(None, [a.strip() for a in hours_of_operation]))
-    hours_of_operation = " ".join(hours_of_operation)
+
+    city = adr.city or "<MISSING>"
+    state = adr.state or "<MISSING>"
+    postal = adr.postcode or "<MISSING>"
+    country_code = "GB"
+    store_number = "<MISSING>"
+    phone = (
+        "".join(
+            tree.xpath(
+                "//strong[contains(text(), 'Telephone')]/following-sibling::text()"
+            )
+        )
+        .replace("N/A", "")
+        .strip()
+        or "<MISSING>"
+    )
+    if "/" in phone:
+        phone = phone.split("/")[0].strip()
+    if "ext" in phone:
+        phone = phone.split("ext")[0].strip()
+
+    latitude = "<MISSING>"
+    longitude = "<MISSING>"
+    location_type = "<MISSING>"
+    hours_of_operation = "<MISSING>"
 
     row = [
         locator_domain,
@@ -97,6 +118,7 @@ def get_data(url):
 def fetch_data():
     out = []
     urls = get_urls()
+
     with futures.ThreadPoolExecutor(max_workers=10) as executor:
         future_to_url = {executor.submit(get_data, url): url for url in urls}
         for future in futures.as_completed(future_to_url):

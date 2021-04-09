@@ -612,8 +612,10 @@ def fetch_data():
         city_state_postalcode = address_data[1] if address_data[1] else ""
         logger.info(f"\nCity,State,Zip data: {city_state_postalcode}\n")
         city = city_state_postalcode.split(",")[0] or "<MISSING>"
-        state = city_state_postalcode.split(",")[1].strip().split(" ")[0] or "<MISSING>"
-        zip = city_state_postalcode.split(",")[1].strip().split(" ")[1] or "<MISSING>"
+        state = (
+            city_state_postalcode.split(",")[-1].strip().split(" ")[0] or "<MISSING>"
+        )
+        zip = city_state_postalcode.split(",")[-1].strip().split(" ")[1] or "<MISSING>"
 
         country_code = "CA"
         store_number = "<MISSING>"
