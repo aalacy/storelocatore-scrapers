@@ -49,7 +49,6 @@ def fetch_data():
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
     }
     response = session.get(start_url, headers=hdr)
-    dom = etree.HTML(response.text)
 
     all_locations = re.findall(
         r"location_data.push\((.+?)\);", response.text.replace("\n", "")
