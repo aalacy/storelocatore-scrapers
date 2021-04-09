@@ -24,7 +24,7 @@ hours_of_operations = []
 
 x = 0
 for search_lat, search_lon in search:
-    print(x)
+
     x = x + 1
     response = session.get(
         "https://locations.whataburger.com/search.html?q="
@@ -36,7 +36,7 @@ for search_lat, search_lon in search:
     ).text
     response = json.loads(response)
     locations = response["response"]["entities"]
-    print("number of locations: " + str(len(locations)))
+
     with open("file.txt", "w", encoding="utf-8") as output:
         json.dump(locations, output, indent=4)
 
