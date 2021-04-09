@@ -71,7 +71,7 @@ def write_output(data):
 
 
 def get_session():
-    if not hasattr(thread_local, "session"):
+    if not hasattr(thread_local, "session") or thread_local.request_count > 5:
         thread_local.session = SgRequests()
         thread_local.request_count = 0
 
