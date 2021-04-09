@@ -47,7 +47,6 @@ def fetch_data():
                         hours_of_operation = " ".join(x for x in temp[-2:])
                     location_name = temp[0]
                     log.info(location_name)
-                    ccords = loc.find("u")
                     formatted_addr = parser.parse_address_intl(raw_address)
                     street_address = formatted_addr.street_address_1
                     if street_address is None:
