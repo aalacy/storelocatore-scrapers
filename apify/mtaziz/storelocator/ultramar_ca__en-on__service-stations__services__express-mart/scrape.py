@@ -29,7 +29,6 @@ FIELDS = [
     "store_number",
     "phone",
     "location_type",
-    "location_type_raw",
     "latitude",
     "longitude",
     "hours_of_operation",
@@ -644,7 +643,6 @@ def fetch_data():
             location_type = "Express Mart"
         else:
             location_type = "<MISSING>"
-        location_type_raw = location_type_data["location_type"]
         latitude = store_url_lat_lng[1]
         longitude = store_url_lat_lng[2]
 
@@ -683,15 +681,16 @@ def fetch_data():
             store_number,
             phone,
             location_type,
-            location_type_raw,
             latitude,
             longitude,
             hours_of_operation,
         ]
-        if row not in items:
+        if "Express Mart" in location_type:
+            logger.info(f"\nExpress Mart found: {location_type}")
             items.append(row)
         else:
             continue
+
     return items
 
 
