@@ -39,7 +39,6 @@ def fetch_data():
     session = SgRequests().requests_retry_session(retries=0, backoff_factor=0.3)
 
     items = []
-    scraped_items = []
 
     DOMAIN = "louisianafamousfriedchicken.net"
     start_url = "https://louisianafriedchickenhq.com/wp-admin/admin-ajax.php?action=store_search&lat=32.77666&lng=-96.79699&max_results=100&search_radius=10&autoload=1"
@@ -62,7 +61,6 @@ def fetch_data():
             zip_code = "<MISSING>"
         country_code = poi["country"]
         store_number = poi["id"]
-        print(store_number)
         phone = poi["phone"]
         phone = phone if phone else "<MISSING>"
         latitude = poi["lat"]
