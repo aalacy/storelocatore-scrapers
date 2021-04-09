@@ -40,6 +40,18 @@ def fetch_data():
                     )
 
                     location_name = store_json["Name"]
+                    if "Of" in location_name:
+                        location_name = location_name.split("Of")[0].strip()
+
+                    elif "of" in location_name:
+                        location_name = location_name.split("of")[0].strip()
+
+                    if "Distributor" in location_name:
+                        location_name = "Interstate Batteries Distributor"
+
+                    if "All Battery Center" in location_name:
+                        location_name = "Interstate All Battery Center"
+
                     street_address = store_json["Address1"]
                     if (
                         store_json["Address2"] is not None
@@ -52,6 +64,10 @@ def fetch_data():
                     country_code = store_json["Country"]
                     phone = store_json["Phone"]
                     location_type = slug.replace("/", "").strip()
+                    if location_type == "distributor-locations":
+                        location_name = location_name + " Distributor"
+                    elif location_type == "distributor-locations":
+                        location_name = location_name + " Distributor"
                     latitude = store_json["PinLatitude"]
                     longitude = store_json["PinLongitude"]
                     store_number = store_json["id"]
