@@ -52,7 +52,7 @@ def fetch_data():
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36",
         "x-requested-with": "XMLHttpRequest",
     }
-    formdata = {"curPage": "1", "countryId": "US"}
+    formdata = {"agIds[]": "1"}
     response = session.post(start_url, data=formdata, headers=headers)
     data = json.loads(response.text)
 
@@ -73,6 +73,8 @@ def fetch_data():
         zip_code = zip_code if zip_code else "<MISSING>"
         country_code = poi["country_id"]
         country_code = country_code if country_code else "<MISSING>"
+        if country_code not in ["US", "CA", "GB"]:
+            continue
         store_number = poi["storelocation_id"]
         phone = poi["phone"]
         phone = phone if phone else "<MISSING>"

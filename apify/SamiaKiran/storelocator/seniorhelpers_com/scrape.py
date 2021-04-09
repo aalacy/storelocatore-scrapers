@@ -38,11 +38,12 @@ def fetch_data():
             )
             address = " ".join(x.text for x in temp_list[2].findAll("p")).strip()
             if "License" in address:
-                address = address.split("License #")[0]
+                address = address.split("License")[0]
             elif "Certificate#" in address:
                 address = address.split("Certificate#")[0]
-            address = address.replace(",", " ")
-            address = usaddress.parse(address)
+            address = address.strip()
+            raw_address = address.replace(",", " ")
+            address = usaddress.parse(raw_address)
             i = 0
             street_address = ""
             city = ""
@@ -82,6 +83,7 @@ def fetch_data():
                 latitude="<MISSING>",
                 longitude="<MISSING>",
                 hours_of_operation=hours_of_operation.strip(),
+                raw_address=raw_address,
             )
 
 
