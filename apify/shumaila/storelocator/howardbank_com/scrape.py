@@ -7,7 +7,6 @@ from sgrequests import SgRequests
 session = SgRequests()
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36",
-    "Cookie": "ASP.NET_SessionId=0fatu3nw4xplego1n55y20wr; TS01f976b6=01e8de0f2ce1d4a7eacb314166a283ffd2d9dd80dfef3fa7265f86a067cf45e28f9d7743f2c71b3dc5e9fef534e5c6a84d5e7493cf06e3efae3794580534d9c5b50008dbf7",
 }
 
 
@@ -92,6 +91,10 @@ def fetch_data():
                 .replace("\n", " ")
                 .strip()
             )
+        if len(state.strip()) > 3:
+            city = city + " " + state
+            city = city.replace(",", "").strip()
+            state, pcode = pcode.split(" ", 1)
         data.append(
             [
                 "https://www.howardbank.com",
