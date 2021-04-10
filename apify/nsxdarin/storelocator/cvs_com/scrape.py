@@ -79,11 +79,13 @@ def get_session():
     return thread_local.session
 
 
-@retry(stop=stop_after_attempt(5))
+@retry(reraise=True, stop=stop_after_attempt(5))
 def enqueue_links(url, selector):
     urls = []
     get_session()
     r = session.get(url, headers=headers)
+    if r.status_code != 200:
+        logger.error(url)
 
     soup = BeautifulSoup(r.text, "html.parser")
     links = soup.select(selector)
@@ -129,7 +131,7 @@ def get_location(loc):
     r = session.get(loc, headers=headers)
     location = BeautifulSoup(r.text, "html.parser")
 
-    if location.select_one("pharmacy-logo"):
+    if not location.select_one(".pharmacy-logo"):
         return None
 
     script = location.select_one("#structured-data-block")
