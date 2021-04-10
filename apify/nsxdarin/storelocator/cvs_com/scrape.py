@@ -4,6 +4,7 @@ import json
 import time
 import random
 import threading
+from urllib.parse import urljoin
 from bs4 import BeautifulSoup
 from sgrequests import SgRequests
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -69,18 +70,18 @@ def write_output(data):
     logger.info(f"duration: {duration}")
 
 
-def get_session(reset=False):
-    if not hasattr(thread_local, "session") or reset:
+def get_session():
+    if not hasattr(thread_local, "session") or thread_local.request_count > 5:
         thread_local.session = SgRequests()
+        thread_local.request_count = 0
+
+    thread_local.request_count += 1
     return thread_local.session
 
 
-@retry(stop=stop_after_attempt(3))
+@retry(stop=stop_after_attempt(5))
 def enqueue_links(url, selector):
-    locs = []
-    cities = []
-    states = []
-
+    urls = []
     get_session()
     r = session.get(url, headers=headers)
 
@@ -88,54 +89,52 @@ def enqueue_links(url, selector):
     links = soup.select(selector)
 
     for link in links:
-        lurl = f"{base_url}{link['href']}"
-        path_count = lurl.count("/")
-        if path_count == 5:
-            states.append(lurl)
-        elif path_count == 6:
-            if "cvs-pharmacy-address" in lurl:
-                locs.append(lurl)
-            else:
-                cities.append(lurl)
-        else:
-            raise Exception(f"invalid link: {lurl}")
+        lurl = urljoin(base_url, link["href"])
+        urls.append(lurl)
 
-    return {"locs": locs, "cities": cities, "states": states}
+    return urls
 
 
-def scrape_state_urls(state_urls, city_urls):
+def scrape_state_urls(state_urls):
+    city_urls = []
     with ThreadPoolExecutor() as executor:
         futures = [
             executor.submit(enqueue_links, url, ".states a") for url in state_urls
         ]
-        for result in as_completed(futures):
-            urls = result.result()
-            city_urls.extend(urls["cities"])
+        for future in as_completed(futures):
+            urls = future.result()
+            city_urls.extend(urls)
+
+    return city_urls
 
 
-def scrape_city_urls(city_urls, loc_urls):
+def scrape_city_urls(city_urls):
     # scrape each city url and populate loc_urls with the results
+    loc_urls = []
     with ThreadPoolExecutor() as executor:
         futures = [
             executor.submit(enqueue_links, url, ".directions-link a")
             for url in city_urls
         ]
-        for result in as_completed(futures):
-            d = result.result()
-            loc_urls.extend(d["locs"])
+        for future in as_completed(futures):
+            urls = future.result()
+            loc_urls.extend(urls)
+
+    return loc_urls
 
 
-@retry(stop=stop_after_attempt(3))
+@retry(reraise=True, stop=stop_after_attempt(5))
 def get_location(loc):
-    logger.info(f"Pulling Location: {loc}")
-
     session = get_session()
     r = session.get(loc, headers=headers)
     location = BeautifulSoup(r.text, "html.parser")
+
+    if location.select_one("pharmacy-logo"):
+        return None
+
     script = location.select_one("#structured-data-block")
     if not script:
-        logger.info(f"Unable to fetch location: {loc}")
-        return None
+        raise Exception(f"Unable to extract data from {loc}")
 
     structured_data = script.string
 
@@ -188,32 +187,22 @@ def get_location(loc):
 def scrape_loc_urls(loc_urls):
     with ThreadPoolExecutor() as executor:
         futures = [executor.submit(get_location, loc) for loc in loc_urls]
-        for result in as_completed(futures):
-            record = result.result()
-            if record is not None:
+        for future in as_completed(futures):
+            record = future.result()
+            if record:
                 yield record
 
 
 def fetch_data():
-    urls = enqueue_links(
-        f"{base_url}/store-locator/cvs-pharmacy-locations", ".states a"
+    state_urls = enqueue_links(
+        urljoin(base_url, "/store-locator/cvs-pharmacy-locations"), ".states a"
     )
 
-    state_urls = urls["states"]
-    city_urls = urls["cities"]
-    loc_urls = urls["locs"]
-
     logger.info(f"number of states: {len(state_urls)}")
-    scrape_state_urls(state_urls, city_urls)
+    city_urls = scrape_state_urls(state_urls)
 
     logger.info(f"number of cities: {len(city_urls)}")
-    scrape_city_urls(city_urls, loc_urls)
-
-    with open("locations.json", "w") as file:
-        json.dump(loc_urls, file)
-
-    with open("locations.json") as file:
-        loc_urls = json.load(file)
+    loc_urls = scrape_city_urls(city_urls)
 
     logger.info(f"number of locations: {len(loc_urls)}")
     return scrape_loc_urls(loc_urls)
@@ -224,4 +213,5 @@ def scrape():
     write_output(data)
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()
