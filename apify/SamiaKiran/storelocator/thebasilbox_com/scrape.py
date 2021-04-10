@@ -22,7 +22,6 @@ def fetch_data():
         soup = BeautifulSoup(r.text, "html.parser")
         loclist = soup.findAll("div", {"class": "locationsContainer clearfix"})
         for loc in loclist:
-            page_url = "https://www.thebasilbox.com/locations/"
             temp = loc.find("div", {"class": "one-half first"})
             location_name = temp.find("h2").text
             log.info(location_name)
@@ -33,19 +32,20 @@ def fetch_data():
             state = address[0]
             zip_postal = address[1]
             hours_of_operation = (
-                soup.find("div", {"class": "one-fourth locationHours"})
+                loc.find("div", {"class": "one-fourth locationHours"})
                 .find("p")
                 .get_text(separator="|", strip=True)
                 .replace("|", " ")
             )
             phone = (
-                soup.find("div", {"class": "one-fourth locationContact"})
+                loc.find("div", {"class": "one-fourth locationContact"})
                 .text.replace("Call Us", "")
                 .replace("T", "")
+                .replace("ext. 5618", "")
             )
             yield SgRecord(
                 locator_domain="https://www.thebasilbox.com/",
-                page_url=page_url,
+                page_url="https://www.thebasilbox.com/locations/",
                 location_name=location_name.strip(),
                 street_address=street_address.strip(),
                 city=city.strip(),
