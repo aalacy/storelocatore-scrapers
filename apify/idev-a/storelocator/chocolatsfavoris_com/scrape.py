@@ -15,7 +15,7 @@ def fetch_data():
     json_url = (
         "https://maps.googleapis.com/maps/api/place/js/PlaceService.GetPlaceDetails"
     )
-    with SgChrome(executable_path=r"/mnt/g/work/mia/chromedriver.exe") as driver:
+    with SgChrome() as driver:
         driver.get(base_url)
         WebDriverWait(driver, 20).until(
             EC.presence_of_element_located(
