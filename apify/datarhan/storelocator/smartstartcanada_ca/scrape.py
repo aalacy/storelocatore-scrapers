@@ -62,6 +62,8 @@ def fetch_data():
             raw_data = loc_dom.xpath('//ul[@id="locationInfo"]/li/text()')
             if len(raw_data) == 5:
                 raw_data = [" ".join(raw_data[:2])] + raw_data[2:]
+            if "Bay C" in raw_data[1]:
+                raw_data = [" ".join(raw_data[:2])] + raw_data[2:]
             location_name = loc_dom.xpath('//div[@id="panel3_list"]/h3/text()')
             location_name = location_name[0] if location_name else "<MISSING>"
             street_address = raw_data[0]
