@@ -639,8 +639,8 @@ def fetch_data():
         phone = phone_data if phone_data else "<MISSING>"
 
         location_type_data = get_station_location_type(data_store, store_url)
-        if "Express Mart" in location_type_data["location_type"]:
-            location_type = "Express Mart"
+        if location_type_data["location_type"]:
+            location_type = location_type_data["location_type"]
         else:
             location_type = "<MISSING>"
         latitude = store_url_lat_lng[1]
@@ -685,12 +685,10 @@ def fetch_data():
             longitude,
             hours_of_operation,
         ]
-        if "Express Mart" in location_type:
-            logger.info(f"\nExpress Mart found: {location_type}")
+        if row not in items:
             items.append(row)
         else:
             continue
-
     return items
 
 
