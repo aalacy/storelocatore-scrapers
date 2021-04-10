@@ -71,7 +71,11 @@ def write_output(data):
 
 
 def get_session():
-    if not hasattr(thread_local, "session") or thread_local.request_count > 5 or thread_local.session_failed:
+    if (
+        not hasattr(thread_local, "session")
+        or thread_local.request_count > 5
+        or thread_local.session_failed
+    ):
         thread_local.session = SgRequests()
         thread_local.request_count = 0
         thread_local.session_failed = False
@@ -85,7 +89,7 @@ def mark_session_failed():
 
 
 def is_valid(soup):
-    is_valid = soup.select_one("#header") or soup.select_one('.pharmacy-logo')
+    is_valid = soup.select_one("#header") or soup.select_one(".pharmacy-logo")
     if not is_valid:
         mark_session_failed()
 
@@ -97,7 +101,7 @@ def enqueue_links(url, selector):
     urls = []
     get_session()
     r = session.get(url, headers=headers)
-    if r.status_code != 200 :
+    if r.status_code != 200:
         r.raise_for_status()
 
     soup = BeautifulSoup(r.text, "html.parser")
