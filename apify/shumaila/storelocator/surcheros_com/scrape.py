@@ -50,7 +50,7 @@ def fetch_data():
     for loc in loclist["subOrganization"]:
         link = loc["url"]
         title = loc["name"]
-        hours = loc["description"].replace("pm", "pm ")
+        hours = loc["description"].replace("pm", "pm ").replace("day", "day ")
         street = loc["address"]["streetAddress"]
         city = loc["address"]["addressLocality"]
         state = loc["address"]["addressRegion"]
@@ -58,12 +58,14 @@ def fetch_data():
         phone = loc["telephone"]
         r = session.get(link, headers=headers, verify=False)
         try:
-            longt = r.text.split('data-gmaps-lng="', 1)[1].split('"', 1)[0]
-            lat = r.text.split('data-gmaps-lat="', 1)[1].split('"', 1)[0]
+            longt = str(r.text.split('data-gmaps-lng="', 1)[1].split('"', 1)[0])
+            lat = str(r.text.split('data-gmaps-lat="', 1)[1].split('"', 1)[0])
         except:
             continue
         if "COMING SOON" in hours:
             continue
+        if "0.0" in lat:
+            lat = longt = "<MISSING>"
         data.append(
             [
                 "https://www.surcheros.com/",
