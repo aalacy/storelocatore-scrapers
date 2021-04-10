@@ -1,6 +1,5 @@
-from bs4 import BeautifulSoup
 import csv
-import re
+import json
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -41,49 +40,47 @@ def write_output(data):
 
 def fetch_data():
     data = []
-    cleanr = re.compile(r"<[^>]+>")
-    pattern = re.compile(r"\s\s+")
-    url = "https://waxon.ca/pages/waxing-near-me"
-    p = 0
+    url = "https://www.surcheros.com/locations/"
     r = session.get(url, headers=headers, verify=False)
-    soup = BeautifulSoup(r.text, "html.parser")
-    divlist = soup.findAll("div", {"class": "location-container"})
-    for div in divlist:
-        title = div.find("h3").text.strip()
-        address = re.sub(cleanr, "\n", str(div.find("address")))
-        address = re.sub(pattern, "\n", str(address)).strip().splitlines()
-        street = address[0].replace(" · ", " ").strip()
+    loclist = r.text.split('<script type="application/ld+json">', 1)[1].split(
+        "</script", 1
+    )[0]
+    loclist = json.loads(loclist)
+    p = 0
+    for loc in loclist["subOrganization"]:
+        link = loc["url"]
+        title = loc["name"]
+        hours = loc["description"].replace("pm", "pm ").replace("day", "day ")
+        street = loc["address"]["streetAddress"]
+        city = loc["address"]["addressLocality"]
+        state = loc["address"]["addressRegion"]
+        pcode = loc["address"]["postalCode"]
+        phone = loc["telephone"]
+        r = session.get(link, headers=headers, verify=False)
         try:
-            city, state, pcode = address[1].split(", ")
+            longt = str(r.text.split('data-gmaps-lng="', 1)[1].split('"', 1)[0])
+            lat = str(r.text.split('data-gmaps-lat="', 1)[1].split('"', 1)[0])
         except:
-            street = street + " " + address[1]
-            city, state, pcode = address[2].split(", ")
-        phone = div.find("a").text
-        hours = (
-            div.find("div", {"class": "location-hours"}).text.replace("\n", " ").strip()
-        )
-        if "SEE YOU SUMMER 2021" in hours or "Bar Tabs" in hours or "CLOSED" in phone:
-            hours = "Temporarily closed"
-            phone = "<MISSING>"
-        try:
-            street = street.split("(", 1)[0]
-        except:
-            pass
+            continue
+        if "COMING SOON" in hours:
+            continue
+        if "0.0" in lat:
+            lat = longt = "<MISSING>"
         data.append(
             [
-                "https://waxon.ca",
-                "https://waxon.ca/pages/waxing-near-me",
+                "https://www.surcheros.com/",
+                link,
                 title,
                 street,
                 city,
                 state,
                 pcode,
-                "CA",
+                "US",
                 "<MISSING>",
                 phone,
                 "<MISSING>",
-                "<MISSING>",
-                "<MISSING>",
+                lat,
+                longt,
                 hours,
             ]
         )
