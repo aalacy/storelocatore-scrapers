@@ -1,10 +1,7 @@
-import usaddress
 from sglogging import sglog
-from bs4 import BeautifulSoup
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
-import json
 
 
 session = SgRequests()
@@ -16,32 +13,22 @@ headers = {
     "Accept": "application/json",
 }
 
-
 def fetch_data():
     page_result = 0
     current_offset = 0
     isFinish = False
     while isFinish is False:
-        r = session.get(
-            "https://stores.iwc.com/search?country=US&offset=" + str(current_offset),
-            headers=headers,
-        )
+        r = session.get("https://stores.iwc.com/search?country=US&offset=" + str(current_offset), headers=headers)
         json_data = r.json()
         page_result = len(json_data["response"]["entities"])
         current_offset += page_result
         for location in json_data["response"]["entities"]:
-            street_address = (
-                str(location["profile"]["address"]["line1"])
-                + " "
-                + str(location["profile"]["address"]["line2"])
-                + " "
-                + str(location["profile"]["address"]["line3"])
-            )
-            street_address = street_address.replace(" None", "")
-            location_name = location["profile"]["name"].replace("&", "and")
+            street_address = str(location["profile"]["address"]["line1"]) +" "+ str(location["profile"]["address"]["line2"]) +" "+ str(location["profile"]["address"]["line3"])
+            street_address =  street_address.replace(" None","")
+            location_name = location["profile"]["name"].replace('&','and')
             log.info(location_name)
             try:
-                page_url = location["profile"]["c_pagesURL"].replace('"', "")
+                page_url = location["profile"]["c_pagesURL"].replace('"',"")
             except:
                 page_url = "<MISSING>"
             state = location["profile"]["address"]["region"]
@@ -56,27 +43,16 @@ def fetch_data():
                 latitude = location["profile"]["displayCoordinate"]["lat"]
                 longitude = location["profile"]["displayCoordinate"]["long"]
             except:
-                latitude = location["profile"]["yextDisplayCoordinate"]["lat"]
-                longitude = location["profile"]["yextDisplayCoordinate"]["long"]
+                latitude = location['profile']['yextDisplayCoordinate']['lat']
+                longitude = location['profile']['yextDisplayCoordinate']['long']
 
             hours_of_operation = ""
             if "hours" in location["profile"]:
                 for days_hours in location["profile"]["hours"]["normalHours"]:
                     if days_hours["isClosed"] is False:
-                        hours_of_operation += (
-                            days_hours["day"]
-                            + " "
-                            + str(days_hours["intervals"][0]["start"] / 100).replace(
-                                ".", ":"
-                            )
-                            + "0 - "
-                            + str(days_hours["intervals"][0]["end"] / 100).replace(
-                                ".", ":"
-                            )
-                            + "0"
-                        )
+                        hours_of_operation += days_hours["day"] +" " +  str(days_hours["intervals"][0]["start"]/100).replace(".",":") + "0 - "+ str(days_hours["intervals"][0]["end"]/100).replace(".",":")+"0"
                     else:
-                        hours_of_operation += days_hours["day"] + " Closed"
+                        hours_of_operation += days_hours["day"] +" Closed"
 
                     hours_of_operation += " "
             hours_of_operation = hours_of_operation.capitalize()
