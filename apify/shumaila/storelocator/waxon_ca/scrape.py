@@ -52,7 +52,7 @@ def fetch_data():
         title = div.find("h3").text.strip()
         address = re.sub(cleanr, "\n", str(div.find("address")))
         address = re.sub(pattern, "\n", str(address)).strip().splitlines()
-        street = address[0]
+        street = address[0].replace(" · ", " ").strip()
         try:
             city, state, pcode = address[1].split(", ")
         except:
@@ -62,8 +62,13 @@ def fetch_data():
         hours = (
             div.find("div", {"class": "location-hours"}).text.replace("\n", " ").strip()
         )
-        if "SEE YOU SUMMER 2021" in hours or "Bar Tabs" in hours:
-            hours = "<MISSING>"
+        if "SEE YOU SUMMER 2021" in hours or "Bar Tabs" in hours or "CLOSED" in phone:
+            hours = "Temporarily closed"
+            phone = "<MISSING>"
+        try:
+            street = street.split("(", 1)[0]
+        except:
+            pass
         data.append(
             [
                 "https://waxon.ca",
@@ -73,7 +78,7 @@ def fetch_data():
                 city,
                 state,
                 pcode,
-                "US",
+                "CA",
                 "<MISSING>",
                 phone,
                 "<MISSING>",
