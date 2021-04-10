@@ -1,4 +1,6 @@
 import csv
+from lxml import etree
+
 from sgrequests import SgRequests
 
 
@@ -48,6 +50,7 @@ def fetch_data():
     ).json()
 
     for idx, val in enumerate(r["response"]):
+        page_url = val["url"]
         locator_domain = base_url
         location_name = val["name"].strip().replace("&#039;s", " ")
         street_address = val["address"].strip()
@@ -56,12 +59,15 @@ def fetch_data():
         zip = val["zip"].strip()
         store_number = "<MISSING>"
         country_code = val["country"].strip()
-        phone = val["phone"].strip().replace("(KICK)", "")
+        phone = val["phone"].replace("(KICK)", "").strip()
+        if not phone:
+            loc_response = session.get(page_url)
+            loc_dom = etree.HTML(loc_response.text)
+            phone = loc_dom.xpath('//button[@class="call"]/text()')[0]
         location_type = "promartialarts"
         latitude = val["lat"].strip()
         longitude = val["lng"].strip()
         hours_of_operation = val["hours"].strip()
-        page_url = val["url"]
 
         store = []
         store.append(locator_domain if locator_domain else "<MISSING>")
