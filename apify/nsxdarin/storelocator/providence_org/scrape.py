@@ -80,6 +80,14 @@ def fetch_data():
                     .replace("\t", "")
                     .replace("\n", "")
                 )
+                if (
+                    "Professional Plaza" in g
+                    or "Medical Center" in g
+                    or " Hospital" in g
+                    or "Child Center" in g
+                    or "Services at " in g
+                ):
+                    g = next(lines)
                 add = g.split("<")[0].strip().replace("\t", "")
                 if " Suite" in add:
                     add = add.split(" Suite")[0]
@@ -165,7 +173,19 @@ def fetch_data():
                     if "pnlAddress_" in line:
                         next(lines)
                         g = next(lines)
-                        if g.count("<br/>") == 1:
+                        if g.count("<br/>") == 2:
+                            add = g.split("<br/>")[1].strip().replace("\t", "")
+                            csz = (
+                                g.split("<br/>")[2]
+                                .strip()
+                                .replace("\t", "")
+                                .replace("\r", "")
+                                .replace("\n", "")
+                            )
+                            city = csz.split(",")[0]
+                            state = csz.split(",")[1].strip().split(" ")[0]
+                            zc = csz.rsplit(" ", 1)[1]
+                        elif g.count("<br/>") == 1:
                             add = g.split("<br/>")[0].strip().replace("\t", "")
                             csz = (
                                 g.split("<br/>")[1]
@@ -401,7 +421,14 @@ def fetch_data():
                 addinfo = (
                     g.strip().replace("\r", "").replace("\t", "").replace("\n", "")
                 )
-                if addinfo.count("<br/>") == 1:
+                if addinfo.count("<br/>") == 2:
+                    add = addinfo.split("<br/>")[1]
+                    city = addinfo.split("<br/>")[2].split(",")[0]
+                    state = (
+                        addinfo.split("<br/>")[2].split(",")[1].strip().split(" ")[0]
+                    )
+                    zc = addinfo.split("<br/>")[2].rsplit(" ", 1)[1]
+                elif addinfo.count("<br/>") == 1:
                     add = addinfo.split("<br/>")[0]
                     city = addinfo.split("<br/>")[1].split(",")[0]
                     state = (

@@ -47,7 +47,8 @@ def fetch_data():
 
     response = session.get(start_url)
     dom = etree.HTML(response.text)
-    all_locations = dom.xpath('//h2[@class="c-person-callout_name"]/center/a/@href')
+    all_locations = dom.xpath("//h2/center/a/@href")
+    all_locations += ["https://www.seacoastbank.com/locations/pga-blvd"]
 
     for url in all_locations:
         store_url = urljoin(start_url, url)

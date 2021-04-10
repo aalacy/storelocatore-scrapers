@@ -77,7 +77,11 @@ def fetch_data():
             for key in location_list:
                 if name == location_list[key]["name"]:
                     lat = location_list[key]["latitude"]
+                    if lat == "0.0":
+                        lat = "<MISSING>"
                     lng = location_list[key]["longitude"]
+                    if lng == "0.0":
+                        lng = "<MISSING>"
                     store_id = location_list[key]["id"]
                     del location_list[key]
                     break

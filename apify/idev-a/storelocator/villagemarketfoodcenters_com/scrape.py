@@ -23,13 +23,24 @@ def fetch_data():
         locations = soup.find_all("div", id=re.compile(r"^element"))[2:]
         temp = []
         for x, location in enumerate(locations):
-            if not location.img and location.text.strip():
+            if not location.img and location.text.strip() or location.iframe:
                 temp.append(location)
-        for x in range(0, len(temp), 3):
+        for x in range(0, len(temp), 4):
             block = list(temp[x + 1].stripped_strings)
             hours_of_operation = "; ".join(
-                [_.text for _ in temp[x + 2].select("div") if _.text.strip()]
+                [_.text for _ in temp[x + 3].select("div") if _.text.strip()]
             ).replace("Hours:", "")
+            iframe = session.get(temp[x + 2].iframe["src"]).text
+            latitude = (
+                iframe.split("var latitude =")[1]
+                .split("var longitude =")[0]
+                .strip()[1:-2]
+            )
+            longitude = (
+                iframe.split("var longitude =")[1]
+                .split("var mapWidth =")[0]
+                .strip()[1:-2]
+            )
             yield SgRecord(
                 page_url=base_url,
                 location_name=_valid(temp[x].text.strip().split("(")[0]),
@@ -40,6 +51,8 @@ def fetch_data():
                 country_code="US",
                 phone=_valid(block[-1]),
                 locator_domain=locator_domain,
+                latitude=latitude,
+                longitude=longitude,
                 hours_of_operation=_valid(hours_of_operation),
             )
 
