@@ -14,7 +14,7 @@ _headers = {
 
 
 def fetch_data():
-    locator_domain = "https://tobykeithsbar.com/locations/"
+    locator_domain = "https://tobykeithsbar.com/"
     base_url = "https://tobykeithsbar.com/locations/"
     with SgRequests() as session:
         soup = bs(session.get(base_url, headers=_headers).text, "lxml")
