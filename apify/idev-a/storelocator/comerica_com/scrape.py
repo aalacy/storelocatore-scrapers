@@ -65,7 +65,7 @@ def fetch_data():
         page = 1
         logger.info(("Pulling Zip Code %s..." % code))
         while True:
-            url = f"https://locations.comerica.com/?q={code}&filter=all&page={page}"
+            url = f"https://locations.comerica.com/?q={code}&filter=bc&filter=atm&filter=itm&filter=drive&page={page}"
             try:
                 res = session.get(url, headers=headers, timeout=15).text
             except Exception:
