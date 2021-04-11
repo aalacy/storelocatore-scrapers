@@ -80,6 +80,14 @@ def fetch_data():
                     .replace("\t", "")
                     .replace("\n", "")
                 )
+                if (
+                    "Professional Plaza" in g
+                    or "Medical Center" in g
+                    or " Hospital" in g
+                    or "Child Center" in g
+                    or "Services at " in g
+                ):
+                    g = next(lines)
                 add = g.split("<")[0].strip().replace("\t", "")
                 if " Suite" in add:
                     add = add.split(" Suite")[0]
@@ -108,6 +116,8 @@ def fetch_data():
                     newadd = add
                 if "," in phone:
                     phone = phone.split(",")[0].strip()
+                if " Option" in phone:
+                    phone = phone.split(" Option")[0].strip()
                 yield [
                     website,
                     mloc,
@@ -210,6 +220,8 @@ def fetch_data():
                                 newadd = add
                             if "," in phone:
                                 phone = phone.split(",")[0].strip()
+                            if " Option" in phone:
+                                phone = phone.split(" Option")[0].strip()
                             yield [
                                 website,
                                 mloc,
@@ -310,6 +322,8 @@ def fetch_data():
                     newadd = add
                 if "," in phone:
                     phone = phone.split(",")[0].strip()
+                if " Option" in phone:
+                    phone = phone.split(" Option")[0].strip()
                 yield [
                     website,
                     mloc,
@@ -471,6 +485,8 @@ def fetch_data():
                 newadd = add
             if "," in phone:
                 phone = phone.split(",")[0].strip()
+            if " Option" in phone:
+                phone = phone.split(" Option")[0].strip()
             yield [
                 website,
                 loc,
@@ -556,6 +572,8 @@ def fetch_data():
                 newadd = add
             if "," in phone:
                 phone = phone.split(",")[0].strip()
+            if " Option" in phone:
+                phone = phone.split(" Option")[0].strip()
             yield [
                 website,
                 loc,
@@ -634,6 +652,8 @@ def fetch_data():
                 newadd = add
             if "," in phone:
                 phone = phone.split(",")[0].strip()
+            if " Option" in phone:
+                phone = phone.split(" Option")[0].strip()
             yield [
                 website,
                 loc,
