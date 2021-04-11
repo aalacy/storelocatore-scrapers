@@ -35,7 +35,7 @@ def fetch_data():
     out = []
 
     locator_domain = "https://crab-station.com/"
-    tmp = ["1", "2", "3", "4", "5", "6", "8", "9", "10"]
+    tmp = ["1", "2", "3", "4", "5", "6", "8", "9", "10", "43"]
     for i in tmp:
         api_url = f"https://crabstation.revelup.com/weborders/get_initial_data/?establishment={i}"
 
