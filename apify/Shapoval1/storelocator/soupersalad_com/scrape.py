@@ -76,8 +76,6 @@ def fetch_data():
             .replace(",", "-")
         )
 
-        print(hours_of_operation)
-
         row = [
             locator_domain,
             page_url,
