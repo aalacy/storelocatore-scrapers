@@ -15,8 +15,8 @@ headers = {
 
 search = DynamicZipSearch(
     country_codes=[SearchableCountries.USA],
-    max_radius_miles=None,
-    max_search_results=None,
+    max_radius_miles=100,
+    max_search_results=10,
 )
 
 
@@ -65,7 +65,7 @@ def fetch_data():
         page = 1
         logger.info(("Pulling Zip Code %s..." % code))
         while True:
-            url = f"https://locations.comerica.com/?q={code}&filter=all&page={page}"
+            url = f"https://locations.comerica.com/?q={code}&filter=bc&filter=atm&filter=itm&filter=drive&page={page}"
             try:
                 res = session.get(url, headers=headers, timeout=15).text
             except Exception:
@@ -78,9 +78,15 @@ def fetch_data():
                 logger.info("Proxy not working")
                 break
             soup = bs(res, "lxml")
-            r2 = json.loads(
-                res.split("var results = ")[1].strip().split("var map;")[0].strip()[:-1]
-            )
+            try:
+                r2 = json.loads(
+                    res.split("var results = ")[1]
+                    .strip()
+                    .split("var map;")[0]
+                    .strip()[:-1]
+                )
+            except:
+                break
             for _ in r2:
                 search.found_location_at(
                     _["location"]["lat"],
