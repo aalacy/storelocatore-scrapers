@@ -38,8 +38,8 @@ def fetch_data():
         for hour in hour_list:
             hour = hour.findAll("td")
             day = hour[0].text
-            time = hour[1].text+ "-"+hour[2].text
-            hours_of_operation =  hours_of_operation +day+ " " +time+ " "   
+            time = hour[1].text + "-" + hour[2].text
+            hours_of_operation = hours_of_operation + day + " " + time + " "
         yield SgRecord(
             locator_domain="https://www.gretchenscottdesigns.com/",
             page_url=page_url,
