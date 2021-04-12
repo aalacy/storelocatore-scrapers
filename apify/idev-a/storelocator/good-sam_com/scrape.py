@@ -43,10 +43,6 @@ def fetch_data():
                             f"[{url}]{len(locations['results'])} locations found"
                         )
                         for _ in locations["results"]:
-                            # if _["clickUri"] in urls:
-                            #     continue
-                            # urls.append(_["clickUri"])
-
                             sufix = "46747"
                             for key, val in _["raw"].items():
                                 if key.startswith("fcity"):
