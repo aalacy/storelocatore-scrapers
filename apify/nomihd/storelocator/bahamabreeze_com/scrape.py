@@ -91,7 +91,10 @@ def fetch_data():
         zip = city_state_Zip.split(",")[1].strip().split(" ")[1].strip()
         country_code = "US"
 
-        store_number = "<MISSING>"
+        store_number = page_url.split("/")[-1].strip()
+        if store_number.isdigit() is False:
+            store_number = "<MISSING>"
+
         phone = "".join(
             store_sel.xpath('//p[@id="info-link-webhead"]/text()[3]')
         ).strip()
