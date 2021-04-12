@@ -1,4 +1,5 @@
 from sglogging import sglog
+from bs4 import BeautifulSoup
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
@@ -30,71 +31,15 @@ def fetch_data():
         location_type = store_data["store_type"]
         latitude = store_data["store_lat"]
         longitude = store_data["store_long"]
-        hours = ""
-        if store_data["time_mon_start"] and store_data["time_mon_start"] != "":
-            hours = (
-                hours
-                + "Monday  "
-                + store_data["time_mon_start"]
-                + " - "
-                + store_data["time_mon_end"]
-                + ", "
-            )
-        if store_data["time_tue_start"] and store_data["time_tue_start"] != "":
-            hours = (
-                hours
-                + " tuesday  "
-                + store_data["time_tue_start"]
-                + " - "
-                + store_data["time_tue_end"]
-                + ", "
-            )
-        if store_data["time_wed_start"] and store_data["time_wed_start"] != "":
-            hours = (
-                hours
-                + " wednesday  "
-                + store_data["time_wed_start"]
-                + " - "
-                + store_data["time_wed_end"]
-                + ", "
-            )
-        if store_data["time_thu_start"] and store_data["time_thu_start"] != "":
-            hours = (
-                hours
-                + " thursday  "
-                + store_data["time_thu_start"]
-                + " - "
-                + store_data["time_thu_end"]
-                + ", "
-            )
-        if store_data["time_fri_start"] and store_data["time_fri_start"] != "":
-            hours = (
-                hours
-                + " friday  "
-                + store_data["time_fri_start"]
-                + " - "
-                + store_data["time_fri_end"]
-                + ", "
-            )
-        if store_data["time_sat_start"] and store_data["time_sat_start"] != "":
-            hours = (
-                hours
-                + " saturday "
-                + store_data["time_sat_start"]
-                + " - "
-                + store_data["time_sat_end"]
-                + ", "
-            )
-        if store_data["time_sun_start"] and store_data["time_sun_start"] != "":
-            hours = (
-                hours
-                + " sunday "
-                + store_data["time_sun_start"]
-                + " - "
-                + store_data["time_sun_end"]
-            )
-        if hours == "":
-            hours = "<MISSING>"
+        r = session.get(page_url, headers=headers)
+        soup = BeautifulSoup(r.text, "html.parser")
+        hour_list = soup.findAll("div", {"class": "address hours"}).findAll("tr")
+        hours_of_operation = ""
+        for hour in hour_list:
+            hour = hour.findAll("td")
+            day = hour[0].text
+            time = hour[1].text+ "-"+hour[2].text
+            hours_of_operation =  hours_of_operation +day+ " " +time   
         yield SgRecord(
             locator_domain="https://www.gretchenscottdesigns.com/",
             page_url=page_url,
@@ -109,7 +54,7 @@ def fetch_data():
             location_type=location_type,
             latitude=latitude,
             longitude=longitude,
-            hours_of_operation=hours,
+            hours_of_operation=hours_of_operation.strip(),
         )
 
 
