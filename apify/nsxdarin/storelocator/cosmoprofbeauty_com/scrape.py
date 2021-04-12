@@ -89,11 +89,11 @@ def fetch_data():
                 name = "CosmoProf #" + store
             if '"address_1\\": \\"' in line:
                 add = (
-                    line.split('"address_1\\": \\"')[1].split("\\")[0]
+                    line.split('"address_1\\": \\"')[1].split('\\"')[0]
                     + " "
-                    + line.split('"address_2\\": \\"')[1].split("\\")[0]
+                    + line.split('"address_2\\": \\"')[1].split('\\"')[0]
                 )
-                add = add.strip()
+                add = add.strip().replace("\\", "")
                 city = line.split('"city\\": \\"')[1].split("\\")[0]
                 state = line.split('"region\\": \\"')[1].split("\\")[0]
                 zc = line.split('"post_code\\": \\"')[1].split("\\")[0]
