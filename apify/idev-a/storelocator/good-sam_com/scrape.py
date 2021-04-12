@@ -27,7 +27,6 @@ def _valid(val):
 
 
 def fetch_data():
-    urls = []
     with SgRequests() as session:
         locator_domain = "https://www.good-sam.com/"
         base_url = "https://www.good-sam.com/locations"
