@@ -1,10 +1,8 @@
 import csv
-import json
 import usaddress
-
-from concurrent import futures
 from lxml import html
 from sgrequests import SgRequests
+from concurrent import futures
 
 
 def write_output(data):
@@ -36,7 +34,17 @@ def write_output(data):
             writer.writerow(row)
 
 
-def get_address(line):
+def get_urls():
+    session = SgRequests()
+    r = session.get("https://www.rajbhog.com/locations/")
+    tree = html.fromstring(r.text)
+    return tree.xpath("//div/h4/a/@href")
+
+
+def get_data(url):
+    locator_domain = "https://www.rajbhog.com"
+    page_url = url
+    session = SgRequests()
     tag = {
         "Recipient": "recipient",
         "AddressNumber": "address1",
@@ -65,59 +73,55 @@ def get_address(line):
         "StateName": "state",
         "ZipCode": "postal",
     }
-
-    a = usaddress.tag(line, tag_mapping=tag)[0]
-    street_address = f"{a.get('address1')} {a.get('address2') or ''}".strip()
-    if street_address == "None":
-        street_address = "<MISSING>"
-    city = a.get("city") or "<MISSING>"
-    state = a.get("state") or "<MISSING>"
-    postal = a.get("postal") or "<MISSING>"
-
-    return street_address, city, state, postal
-
-
-def get_urls():
-    session = SgRequests()
-    r = session.get("https://rioranchmarket.com/locations/")
-    tree = html.fromstring(r.text)
-
-    return tree.xpath("//a[contains(@href,'rioranchmarket.com/rio-ranch-')]/@href")
-
-
-def get_data(page_url):
-    locator_domain = "https://rioranchmarket.com/"
-
-    session = SgRequests()
     r = session.get(page_url)
     tree = html.fromstring(r.text)
 
-    location_name = "".join(tree.xpath("//title/text()")).split("-")[0].strip()
-    if "#" not in location_name:
-        return
-    text = "".join(tree.xpath("//div[@data-et-multi-view]/@data-et-multi-view"))
-    source = json.loads(text)["schema"]["content"]["desktop"]
-    root = html.fromstring(source)
-    lines = root.xpath("//text()")
-    lines = list(filter(None, [l.replace(",", "").strip() for l in lines]))
-
-    if "Phone" in ", ".join(lines):
-        adr = ", ".join(lines).split(", Phone")[0]
-        phone = (
-            ",".join(lines).split("Phone:")[1].split(",Fax")[0].replace(",", "").strip()
+    line = " ".join(
+        tree.xpath(
+            '//div[./strong[contains(text(), "Address")]]/text() | //div[./strong[contains(text(), "Addess")]]/text()'
         )
-    else:
-        adr = ", ".join(lines)
-        phone = "<MISSING>"
+    ).strip()
 
-    street_address, city, state, postal = get_address(adr)
+    a = usaddress.tag(line, tag_mapping=tag)[0]
+    street_address = f"{a.get('address1')} {a.get('address2')}".replace(
+        "None", ""
+    ).strip()
+    city = a.get("city")
+    if city.find("Fabrics") != -1:
+        city = city.split("Fabrics")[1].strip()
+    state = a.get("state")
+    postal = a.get("postal")
     country_code = "US"
-    store_number = location_name.split("#")[-1]
+    store_number = "<MISSING>"
+    location_name = "".join(tree.xpath("//title/text()"))
+    phone = "".join(
+        tree.xpath('//a[./strong[contains(text(), "Phone")]]/text()')
+    ).strip()
     map_link = "".join(tree.xpath("//iframe/@src"))
     latitude = map_link.split("!3d")[1].strip().split("!")[0].strip()
     longitude = map_link.split("!2d")[1].strip().split("!")[0].strip()
     location_type = "<MISSING>"
-    hours_of_operation = "<MISSING>"
+    slug = "".join(
+        tree.xpath('//a[./span[contains(text(), "Working Hours")]]/@href')
+    ).strip()
+    hours_url = f"{page_url}{slug}"
+    hours_of_operation = (
+        " ".join(
+            tree.xpath(
+                '//h2[contains(text(), "Working")]/following-sibling::div[1]//span/text()'
+            )
+        )
+        .replace("\n", "")
+        .strip()
+        or "<MISSING>"
+    )
+    if hours_of_operation == "<MISSING>":
+        session = SgRequests()
+        r = session.get(hours_url)
+        tree = html.fromstring(r.text)
+        hours_of_operation = (
+            " ".join(tree.xpath("//table//span/text()")).replace("\n", "").strip()
+        )
 
     row = [
         locator_domain,
@@ -142,7 +146,6 @@ def get_data(page_url):
 def fetch_data():
     out = []
     urls = get_urls()
-
     with futures.ThreadPoolExecutor(max_workers=10) as executor:
         future_to_url = {executor.submit(get_data, url): url for url in urls}
         for future in futures.as_completed(future_to_url):
