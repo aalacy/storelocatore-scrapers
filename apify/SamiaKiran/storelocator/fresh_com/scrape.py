@@ -42,7 +42,7 @@ def fetch_data():
                 location_name= loc.find("p", {"class": "subheader1 privacy-info-question"})
                 page_url = location_name.find("a")["href"]
                 log.info(page_url)
-                title = location_name.text
+                location_name = location_name.text
                 address = (
                     loc.findAll("div")[1].get_text(separator="|", strip=True).split("|")
                 )
