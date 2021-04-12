@@ -86,9 +86,8 @@ for url in page_urls_to_iterate:
         .replace(city + " " + state + " " + zipp, "")
         .strip()
     )
-
-    if "blvdTerminal" in address:
-        address = address.replace("blvdTerminal", "blvd Terminal")
+    
+    address = address.replace("BlvdTerminal", "Blvd Terminal")
     store_number = "<MISSING>"
 
     try:
@@ -108,15 +107,16 @@ for url in page_urls_to_iterate:
     hours = location["openingHours"][0]
     if hours == "":
         check = response.split("Hours")[1].split("div")[0]
-
+        
         if "Temporarily Closed" in response:
             hours = "Temporarily Closed"
-
+            
+        
         elif "Coming Soon" in response:
             hours = "Opening Soon"
-
+        
         elif "Dining Room & Drive-Thru" in response:
-            check = check.split("<br>")
+            check =  check.split("<br>")
             check = check[:-1]
             x = 0
             for section in check:
@@ -124,9 +124,9 @@ for url in page_urls_to_iterate:
                     x = 1
                     continue
                 hours = hours + section + ", "
-
+        
         elif "Dining Room" in check:
-            check = check.split("<br>")
+            check =  check.split("<br>")
             check = check[:-1]
             x = 0
             for section in check:
@@ -136,13 +136,13 @@ for url in page_urls_to_iterate:
                 if "h2" in section:
                     break
                 hours = hours + section + ", "
-
+        
         elif len(check.split("\n")) == 2:
             check = check.split("\n")[1].split("<br>")
-
+            
             for item in check:
                 hours = hours + item.rstrip() + " "
-
+            
             hours = hours.replace("</", "").strip()
             hours = hours.strip()
 
@@ -150,21 +150,13 @@ for url in page_urls_to_iterate:
             check = check.split("\n")[1:]
             for item in check:
                 item = item.replace("\r", "")
-                item = (
-                    item.replace('<h2 class="hdr">', "")
-                    .replace('</h2 class="hdr"><br>', "")
-                    .replace("<br>", "")
-                    .replace("                        </", "")
-                )
+                item = item.replace('<h2 class="hdr">', "").replace('</h2 class="hdr"><br>', "").replace('<br>', "").replace("                        </", "")
                 hours = hours + item + " "
-
+            
             hours = hours.strip()
 
         elif location_name == "Phoenix":
             hours = check.split("\n")[1].replace("<br>", "").strip()
-
-        else:
-            hours = "<MISSING>"
 
     locator_domains.append(locator_domain)
     page_urls.append(url)
