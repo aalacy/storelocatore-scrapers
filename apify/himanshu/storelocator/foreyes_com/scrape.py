@@ -33,7 +33,7 @@ def fetch_data():
         longitude = store_data["store_long"]
         r = session.get(page_url, headers=headers)
         soup = BeautifulSoup(r.text, "html.parser")
-        hour_list = soup.findAll("div", {"class": "address hours"}).findAll("tr")
+        hour_list = soup.find("div", {"class": "address hours"}).findAll("tr")
         hours_of_operation = ""
         for hour in hour_list:
             hour = hour.findAll("td")
