@@ -1,11 +1,11 @@
 from sgrequests import SgRequests
 import json
 import pandas as pd
-from sgzip.dynamic import DynamicZipSearch, SearchableCountries
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 
 session = SgRequests()
 headers = {"accept": "application/json"}
-search = DynamicZipSearch(country_codes=[SearchableCountries.USA], max_radius_miles=10)
+search = DynamicGeoSearch(country_codes=[SearchableCountries.USA])
 
 locator_domains = []
 page_urls = []
@@ -22,17 +22,21 @@ latitudes = []
 longitudes = []
 hours_of_operations = []
 
-for search_code in search:
+x = 0
+for search_lat, search_lon in search:
+
+    x = x + 1
     response = session.get(
         "https://locations.whataburger.com/search.html?q="
-        + search_code
-        + "&qp="
-        + search_code
+        + str(search_lat)
+        + "%2C"
+        + str(search_lon)
         + "&l=en",
         headers=headers,
     ).text
     response = json.loads(response)
     locations = response["response"]["entities"]
+
     with open("file.txt", "w", encoding="utf-8") as output:
         json.dump(locations, output, indent=4)
 
@@ -98,8 +102,6 @@ for search_code in search:
         longitudes.append(longitude)
         store_numbers.append(store_number)
         hours_of_operations.append(hours)
-
-        search.found_location_at(latitude, longitude)
 
 df = pd.DataFrame(
     {
