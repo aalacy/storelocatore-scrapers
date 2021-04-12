@@ -49,7 +49,7 @@ def get_data(page_url):
         f"/root/responsivegrid/header.GetClubsWithDetails.{_id}.false.true.20201022.json"
     )
 
-    # non-exist pages return status code 204
+    # non-exist pages return 204 status code
     if r.status_code != 200:
         return
 
@@ -89,6 +89,8 @@ def get_data(page_url):
             _tmp.append(f"{day.capitalize()}: Closed")
 
     hours_of_operation = ";".join(_tmp) or "<MISSING>"
+    if not j.get("IsOpen"):
+        hours_of_operation = "Closed"
 
     row = [
         locator_domain,

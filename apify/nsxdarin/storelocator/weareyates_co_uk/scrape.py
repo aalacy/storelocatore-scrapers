@@ -39,7 +39,7 @@ def write_output(data):
 
 def fetch_data():
     locs = []
-    url = "https://www.weareyates.co.uk/find-a-pub"
+    url = "https://weareyates.co.uk/find-a-pub"
     r = session.get(url, headers=headers)
     website = "weareyates.co.uk"
     typ = "<MISSING>"
@@ -49,7 +49,7 @@ def fetch_data():
         line = str(line.decode("utf-8"))
         if 'class="inner-item">' in line:
             locs.append(
-                "https://www.weareyates.co.uk" + line.split('href="')[1].split('"')[0]
+                "https://weareyates.co.uk/" + line.split("href=")[1].split(" ")[0]
             )
     for loc in locs:
         logger.info(loc)
