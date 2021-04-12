@@ -35,7 +35,8 @@ def fetch_data():
             hours_of_operation = (
                 loc.find("div", {"class": "one-fourth locationHours"})
                 .get_text(separator="|", strip=True)
-                .replace("|", " ").replace("Hours","")
+                .replace("|", " ")
+                .replace("Hours", "")
             )
             phone = (
                 soup.find("div", {"class": "one-fourth locationContact"})
