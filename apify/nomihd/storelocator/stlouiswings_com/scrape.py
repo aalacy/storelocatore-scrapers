@@ -5,7 +5,6 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import json
 
-
 website = "stlouiswings.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 session = SgRequests()
@@ -40,7 +39,6 @@ def fetch_data():
     api_url = f"https://sls-api-service.sweetiq-sls-production-east.sweetiq.com/o8gc3jHgHQREe31VPdMNRnA9xMehpN/locations-details?locale=en_CA&ids={ids}&clientId=5a0361d5ec45394373a0b643&cname=locations.stlouiswings.com"
 
     api_res = session.get(api_url, headers=headers)
-
     json_res = json.loads(api_res.text)
 
     stores_list = json_res["features"]
@@ -66,8 +64,6 @@ def fetch_data():
         phone = store["properties"]["phoneLabel"].strip()
 
         location_type = "<MISSING>"
-        if "temporarily closed" in store["properties"]["longDescription"]:
-            location_type = "temporarily closed"
 
         hours_info = store["properties"]["hoursOfOperation"]
         hours_list = []
@@ -79,6 +75,12 @@ def fetch_data():
                 hours_list.append(f"{day}: {opening} - {closing}")
 
         hours_of_operation = "; ".join(hours_list)
+        if "temporarily closed" in store["properties"]["longDescription"]:
+            location_type = "temporarily closed"
+            hours_of_operation = "<MISSING>"
+
+        if "Coming Soon" in store["properties"]["longDescription"]:
+            location_type = "Coming Soon"
 
         latitude = store["geometry"]["coordinates"][1]
         longitude = store["geometry"]["coordinates"][0]
