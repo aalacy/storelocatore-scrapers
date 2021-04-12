@@ -1,6 +1,5 @@
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
-import json
 import csv
 from lxml import html
 import re
@@ -104,7 +103,7 @@ def fetch_data():
     items = []
     all_store_urls = get_filtered_urls()
     logger.info(f"Store URLs count: {len(all_store_urls)}")
-    for idx, url in enumerate(all_store_urls[0:2]):
+    for idx, url in enumerate(all_store_urls):
         r = session.get(url, headers=headers, timeout=10)
         data_raw = html.fromstring(r.text, "lxml")
         logger.info(f"Pulling the Data from: {idx} <<:>> {url}")
