@@ -91,6 +91,7 @@ def fetch_data():
                         )[0]
                         if store not in ids and '"group":"ATM Services' in item:
                             ids.append(store)
+                            search.found_location_at(lng, lat)
                             yield [
                                 website,
                                 loc,
