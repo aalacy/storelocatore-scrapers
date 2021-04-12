@@ -95,11 +95,13 @@ def fetch_data():
             city = city + " " + state
             city = city.replace(",", "").strip()
             state, pcode = pcode.split(" ", 1)
+        if "TEMPORARY CLOSURE" in soup.text:
+            title = title + "- " + "TEMPORARY CLOSED "
         data.append(
             [
                 "https://www.howardbank.com",
                 link,
-                title.replace("\xa0", ""),
+                title.replace("\xa0", "").strip(),
                 street.replace("\xa0", ""),
                 city,
                 state,
