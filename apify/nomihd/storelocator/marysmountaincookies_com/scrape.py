@@ -95,6 +95,10 @@ def fetch_data():
                     hours_list.append("".join(hours[index].xpath(".//text()")).strip())
 
         hours_of_operation = "; ".join(hours_list).strip()
+        if "; We are open for delivery" in hours_of_operation:
+            hours_of_operation = hours_of_operation.split("; We are open for delivery")[
+                0
+            ].strip()
 
         latitude = "<MISSING>"
         longitude = "<MISSING>"
