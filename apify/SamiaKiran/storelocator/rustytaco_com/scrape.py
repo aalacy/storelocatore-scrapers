@@ -1,6 +1,5 @@
 import json
 from sglogging import sglog
-from bs4 import BeautifulSoup
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
@@ -45,25 +44,23 @@ def fetch_data():
                 open_time = hour["open_time"]
                 close_time = hour["close_time"]
                 day = hour["day"]
-                hours_of_operation = (
-                    hours_of_operation + day + " " + open_time + " " + close_time + " "
-                )
+                hours_of_operation = hours_of_operation + day + " " + open_time + " " + close_time + " "
         yield SgRecord(
-            locator_domain="https://rustytaco.com/",
-            page_url="https://rustytaco.com/locations-search/",
-            location_name=location_name,
-            street_address=street_address.strip(),
-            city=city.strip(),
-            state=state.strip(),
-            zip_postal=zip_postal.strip(),
-            country_code="US",
-            store_number=store_number,
-            phone=phone.strip(),
-            location_type="<MISSING>",
-            latitude=latitude,
-            longitude=longitude,
-            hours_of_operation=hours_of_operation.strip(),
-        )
+                locator_domain="https://rustytaco.com/",
+                page_url="https://rustytaco.com/locations-search/",
+                location_name=location_name,
+                street_address=street_address.strip(),
+                city=city.strip(),
+                state=state.strip(),
+                zip_postal=zip_postal.strip(),
+                country_code="US",
+                store_number=store_number,
+                phone=phone.strip(),
+                location_type="<MISSING>",
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation.strip(),
+            )
 
 
 def scrape():
