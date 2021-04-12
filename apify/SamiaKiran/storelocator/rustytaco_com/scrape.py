@@ -36,7 +36,7 @@ def fetch_data():
         if not phone:
             phone = "<MISSING>"
         hour_list = loc["custom_fields"]["hours"]
-        if hour_list == False:
+        if hour_list is False:
             hours_of_operation = "<MISSING>"
         else:
             hours_of_operation = " "
