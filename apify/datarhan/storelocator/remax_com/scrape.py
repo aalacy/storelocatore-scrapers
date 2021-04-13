@@ -52,7 +52,8 @@ def fetch_data():
         "timeout": "10000",
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.192 Safari/537.36",
     }
-    body = '{"offset":0,"count":24,"include":["offices"],"filters":{"officeStatus":"OPEN","officeClass":"OFFICE","countryCode":"USA"},"sorts":[],"custom":{"filters":{}},"options":{}}'
+    # body = '{"offset":0,"count":24,"include":["offices"],"filters":{"officeStatus":"OPEN","officeClass":"OFFICE","countryCode":"USA"},"sorts":[],"custom":{"filters":{}},"options":{}}'
+    body = '{"offset":0,"count":24,"include":["offices"],"filters":{"officeStatus":"OPEN","officeClass":"OFFICE","countryCode":"USA"},"sorts":[],"custom":{"filters":{"serviceAreaOrLocation":{"city":"","state":""}}},"options":{}}'
     response = session.post(start_url, data=body, headers=headers)
     data = json.loads(response.text)
     all_locations = data["data"]["offices"]["results"]
