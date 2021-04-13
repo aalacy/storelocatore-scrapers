@@ -171,7 +171,6 @@ def fetch_data():
                 hours_of_operation=hours_of_operation,
                 raw_address=raw_address,
             )
-            # time.sleep(1)
 
 
 def scrape():
