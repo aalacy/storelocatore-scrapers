@@ -77,13 +77,10 @@ def get_data(page_url):
     country_code = "US"
     store_number = "<MISSING>"
     phone = (
-        "".join(
-            tree.xpath(
-                "//div[./h1]/following-sibling::div[.//a[contains(@href, 'tel')]]//text()"
-            )
-        ).strip()
+        "".join(tree.xpath("//div[./h1]/following-sibling::div[2]//text()")).strip()
         or "<MISSING>"
     )
+
     try:
         text = tree.xpath("//a[contains(@href, 'google')]/@href")[0]
         latitude, longitude = get_coords_from_google_url(text)
