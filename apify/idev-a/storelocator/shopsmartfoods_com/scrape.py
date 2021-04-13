@@ -26,7 +26,6 @@ def fetch_data():
                 phone = sp1.find("a", href=re.compile(r"tel:")).text
             else:
                 continue
-
             yield SgRecord(
                 page_url=page_url,
                 location_name=addr[0],
@@ -37,6 +36,9 @@ def fetch_data():
                 country_code="US",
                 phone=phone,
                 locator_domain=locator_domain,
+                hours_of_operation=sp1.select_one(
+                    "table#hours_info-BS tr td dl dd"
+                ).text,
             )
 
 
