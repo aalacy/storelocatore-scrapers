@@ -38,7 +38,7 @@ def write_output(data):
 
 
 def fetch_data():
-    locs = []
+    locs = ["https://petstuff.com/ca-anaheim-hills-protein-for-pets"]
     alllocs = []
     url = "https://petstuff.com/store-locator"
     r = session.get(url, headers=headers)
@@ -55,7 +55,7 @@ def fetch_data():
                 if "<html>" not in item:
                     lurl = item.split(" ")[0]
                     if "-" in lurl:
-                        if "shipping" in lurl:
+                        if "stella-chewys" in lurl:
                             Found = True
                         if lurl not in alllocs and Found is False:
                             alllocs.append(lurl)
@@ -93,6 +93,13 @@ def fetch_data():
                 city = addinfo.split(",")[0]
                 zc = addinfo.rsplit(" ", 1)[1]
                 state = addinfo.split(",")[1].strip().split(" ")[0]
+            if "ADDRESS:</strong><p><span class=location_addr>" in line2:
+                addinfo = line2.split("ADDRESS:</strong><p><span class=location_addr>")[
+                    1
+                ].split("<")[0]
+                add = addinfo.split(",")[0]
+                state = addinfo.split(",")[1].strip()
+                zc = addinfo.split(",")[2].strip()
             if "PHONE:</strong>" in line2:
                 phone = line2.split("PHONE:</strong>")[1].split("<")[0].strip()
             if "data-shoplatitude" in line2:
@@ -111,6 +118,43 @@ def fetch_data():
             hours = (
                 "Monday - Friday: 10am - 8pm; Saturday: 10am - 6pm; Sunday: 10am - 6pm"
             )
+        name = name.replace("&#x27;", "'")
+        if "Thousand Oaks" in add:
+            add = add.replace("Thousand Oaks", "").strip()
+            city = "Thousand Oaks"
+        if "/co-broomfield" in loc:
+            zc = "80023"
+            state = "CO"
+            city = "Broomfield"
+            add = "3800 W 144th Ave"
+            phone = "(303)466-1180"
+            hours = "Monday-Friday: 10:00am-6:00pm; Saturday-Sunday: 10:00am-4:00pm"
+        if "ca-thousand-oaks-protein-for-pets" in loc:
+            phone = "805-552-7892"
+            hours = "Monday-Friday: 10:00am-6:00pm; Saturday-Sunday: 10:00a-4:00pm"
+        if "ga-poochnpaws-peachtree" in loc:
+            add = "5185 Peachtree Pkwy #102"
+            city = "Peachtree Corners"
+            state = "GA"
+            zc = "30092"
+            phone = "(770)446-6672"
+            hours = "Sunday-Saturday: 10:00am-6:00pm"
+        if "il-schaum" in loc:
+            add = "1249 E. Higgins Rd."
+            city = "Schaumburg"
+            state = "IL"
+            zc = "60173"
+            phone = "(630) 635-2344"
+        if "ca-anaheim-hills-protein-for-pets" in loc:
+            add = "701 S. Weir Canyon Rd."
+            city = "Anaheim"
+            state = "CA"
+            zc = "92808"
+            phone = "(714) 395-4158"
+            hours = (
+                "Monday - Friday: 9am - 7pm; Saturday: 10am - 5pm; Sunday: 10am - 5pm"
+            )
+        hours = hours.replace("&amp;", "&").replace("amp;", "&")
         yield [
             website,
             loc,
