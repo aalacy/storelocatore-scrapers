@@ -78,6 +78,7 @@ def fetch_data():
             country = "US"
             lat = item["geometry"]["coordinates"][0]
             lng = item["geometry"]["coordinates"][1]
+            search.found_location_at(lng, lat)
             try:
                 hours = "Sun: " + item["properties"]["SundayLobbyHours"]
                 hours = hours + "; Mon: " + item["properties"]["MondayLobbyHours"]
