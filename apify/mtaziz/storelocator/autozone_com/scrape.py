@@ -53,7 +53,7 @@ def get_all_raw_store_urls():
     for url_part in url_sub_sitemap:
         r0 = session.get(url_part, headers=headers, timeout=120)
         datar0 = html.fromstring(bytes(r0.text, encoding="utf8"))
-        logger.info("Scraping the URLs from: {url_part} ")
+        logger.info(f"Scraping All Store URLs from: {url_part} ")
         urls_0 = datar0.xpath("//url/loc/text()")
         urls_part1_and_part2.extend(urls_0)
     return urls_part1_and_part2
