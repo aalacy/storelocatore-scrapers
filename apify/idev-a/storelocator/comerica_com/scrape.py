@@ -120,6 +120,22 @@ def fetch_data():
                             "page_url"
                         ] = f"https://locations.comerica.com/location/{store['type'].lower()}-{store['cma_id'].lower()}"
 
+                    else:
+                        continue
+                    store["hours"] = human_hours(store["open_hours_formatted"])
+                    if "page_url" in store:
+                        soup1 = bs(
+                            session.get(
+                                store["page_url"], headers=headers, timeout=15
+                            ).text,
+                            "lxml",
+                        )
+                        h3_tag = soup1.select_one('h3[property="name"]')
+                        try:
+                            if h3_tag.find_next_sibling("p"):
+                                store["hours"] = "Temporarily closed"
+                        except:
+                            pass
                     yield store
                     found += 1
             total += found

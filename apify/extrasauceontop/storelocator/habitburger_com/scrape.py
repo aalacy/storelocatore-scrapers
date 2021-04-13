@@ -87,8 +87,7 @@ for url in page_urls_to_iterate:
         .strip()
     )
 
-    if "blvdTerminal" in address:
-        address = address.replace("blvdTerminal", "blvd Terminal")
+    address = address.replace("BlvdTerminal", "Blvd Terminal")
     store_number = "<MISSING>"
 
     try:
@@ -162,9 +161,6 @@ for url in page_urls_to_iterate:
 
         elif location_name == "Phoenix":
             hours = check.split("\n")[1].replace("<br>", "").strip()
-
-        else:
-            hours = "<MISSING>"
 
     locator_domains.append(locator_domain)
     page_urls.append(url)
