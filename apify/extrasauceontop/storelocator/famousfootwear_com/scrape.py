@@ -1,7 +1,6 @@
 from sgrequests import SgRequests
 import pandas as pd
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
-import json
 
 search = DynamicGeoSearch(country_codes=[SearchableCountries.USA])
 
