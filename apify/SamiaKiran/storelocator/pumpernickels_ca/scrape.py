@@ -29,7 +29,10 @@ def fetch_data():
                 temp_list = loc.get_text(separator="|", strip=True).split("DIRECTIONS")[
                     :-1
                 ]
-                for temp in temp_list:
+                for temp, coord in zip(temp_list, coords):
+                    latitude, longitude = re.findall(
+                        r"/@(-?[\d\.]+),(-?[\d\.]+)", coord.find("a")["href"]
+                    )[0]
                     temp = temp.strip("|").split("|")
                     if re.match(
                         r"^(\([0-9]{3}\) |[0-9]{3}-)[0-9]{3}-[0-9]{4}$",
@@ -43,7 +46,6 @@ def fetch_data():
                         raw_address = " ".join(x for x in temp[1:-3])
                         hours_of_operation = " ".join(x for x in temp[-2:])
                     location_name = temp[0]
-                    log.info(location_name)
                     formatted_addr = parser.parse_address_intl(raw_address)
                     street_address = formatted_addr.street_address_1
                     if street_address is None:
@@ -57,6 +59,7 @@ def fetch_data():
                         formatted_addr.state if formatted_addr.state else "<MISSING>"
                     )
                     zip_postal = formatted_addr.postcode
+                    log.info(location_name)
                     yield SgRecord(
                         locator_domain="https://www.pumpernickels.ca/",
                         page_url="https://www.pumpernickels.ca/location",
@@ -69,12 +72,16 @@ def fetch_data():
                         store_number="<MISSING>",
                         phone=phone,
                         location_type="<MISSING>",
-                        latitude="<MISSING>",
-                        longitude="<MISSING>",
+                        latitude=latitude,
+                        longitude=longitude,
                         hours_of_operation=hours_of_operation,
+                        raw_address=raw_address,
                     )
 
             else:
+                latitude, longitude = re.findall(
+                    r"/@(-?[\d\.]+),(-?[\d\.]+)", coords[0].find("a")["href"]
+                )[0]
                 temp = loc.get_text(separator="|", strip=True).split("|")[:-1]
                 temp_phone = temp[-2].replace(" (Catering)", "").replace(" X 1", "")
                 if re.match(
@@ -113,9 +120,10 @@ def fetch_data():
                     store_number="<MISSING>",
                     phone=phone,
                     location_type="<MISSING>",
-                    latitude="<MISSING>",
-                    longitude="<MISSING>",
+                    latitude=latitude,
+                    longitude=longitude,
                     hours_of_operation=hours_of_operation,
+                    raw_address=raw_address,
                 )
 
 
