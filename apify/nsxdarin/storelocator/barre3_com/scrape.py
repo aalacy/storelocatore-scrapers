@@ -39,14 +39,12 @@ def write_output(data):
 
 
 def fetch_data():
-    locs = []
     url = "https://storerocket.global.ssl.fastly.net/api/user/jN49m3n4Gy/locations"
     r = session.get(url, headers=headers)
     website = "barre3.com"
     typ = "<MISSING>"
     hours = "<MISSING>"
     country = "US"
-    Found = True
     logger.info("Pulling Stores")
     for item in json.loads(r.content)["results"]["locations"]:
         store = item["id"]
