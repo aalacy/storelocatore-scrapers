@@ -38,7 +38,6 @@ def write_output(data):
 
 
 def fetch_data():
-    locs = []
     allstores = []
     urls = [
         "https://www.cat.com/content/catdotcom/en_US/support/dealer-locator/jcr:content/CATSectionArea/Copy%20of%20dealerlocator_1797052033.dealer-locator.html?searchType=location&maxResults=500&searchDistance=700&productDivId=1%2C6%2C3%2C5%2C4%2C8%2C7%2C2&serviceId=1%2C2%2C3%2C4%2C8%2C9%2C10%2C5%2C6%2C7%2C12&searchValue=-157.4352207%2C21.9951298",
