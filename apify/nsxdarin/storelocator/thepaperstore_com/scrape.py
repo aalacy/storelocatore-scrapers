@@ -1,6 +1,7 @@
 import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
+import time
 
 session = SgRequests()
 headers = {
@@ -55,6 +56,7 @@ def fetch_data():
                         "https://locations.thepaperstore.com/" + item.split('"')[0]
                     )
     for loc in locs:
+        time.sleep(5)
         logger.info(loc)
         name = "The Paper Store"
         add = ""
