@@ -115,16 +115,14 @@ def get_data(url):
     latitude = "<MISSING>"
     longitude = "<MISSING>"
     location_type = location_name.split()[-1]
+    if location_type != "Store":
+        return
 
     hours = tree.xpath(
         "//h2[contains(text(), ' Hours')]/following-sibling::p[1]//text()"
     )
     hours = list(filter(None, [h.strip() for h in hours]))
     hours_of_operation = " ".join(hours) or "<MISSING>"
-    if "The Corporate" in hours_of_operation:
-        hours_of_operation = (
-            hours_of_operation.split("The Corporate")[0].strip() + " Closed"
-        )
 
     row = [
         locator_domain,

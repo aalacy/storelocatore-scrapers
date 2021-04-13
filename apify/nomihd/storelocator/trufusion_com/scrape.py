@@ -50,9 +50,7 @@ def fetch_data():
             store.xpath('div/p/strong/a[contains(@href,"tel:")]/text()')
         ).strip()
 
-        hours = store_sel.xpath(
-            '//div[@class="section__content"]/div[@class="section__entry"]/ul/li'
-        )
+        hours = store_sel.xpath('//div[@class="studio__hours"]//ul/li')
         raw_text = "".join(
             store_sel.xpath(
                 '//div[@class="section__content"]/div[@class="section__entry"]//text()'

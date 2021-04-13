@@ -101,6 +101,22 @@ def fetch_data():
             city = city.split(",")[0].strip()
         city = city.replace(" area", "")
         if state not in intl and "troy/11191" not in loc:
+            if city == "":
+                city = "<MISSING>"
+            if zc == "":
+                zc = "<MISSING>"
+            if state == "":
+                state = "<MISSING>"
+            if phone == "":
+                phone = "<MISSING>"
+            if lat == "":
+                lat = "<MISSING>"
+            if lng == "":
+                lng = "<MISSING>"
+            if name == "":
+                name = "<MISSING>"
+            if add == "":
+                add = "<MISSING>"
             yield [
                 website,
                 loc,
