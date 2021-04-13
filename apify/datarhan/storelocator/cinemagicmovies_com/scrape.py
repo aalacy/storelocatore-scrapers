@@ -2,7 +2,6 @@ import re
 import csv
 from lxml import etree
 
-from sgrequests import SgRequests
 from sgselenium import SgFirefox
 
 
@@ -38,8 +37,6 @@ def write_output(data):
 
 def fetch_data():
     # Your scraper here
-    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
-
     items = []
 
     start_url = "https://company.boxoffice.com/contact/"
