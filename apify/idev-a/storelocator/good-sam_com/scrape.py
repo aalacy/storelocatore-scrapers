@@ -34,7 +34,7 @@ def fetch_data():
         map_data = soup.select('map[name="image-map"] area')
         for _map in map_data:
             url = f"{base_url}#radius=100&address={_map['title']}"
-            with SgChrome(executable_path="/home/ec2-user/mia/chromedriver") as driver:
+            with SgChrome() as driver:
                 driver.get(url)
                 for rr in driver.requests:
                     if "coveo/rest/search/v2" in rr.path and rr.response:
