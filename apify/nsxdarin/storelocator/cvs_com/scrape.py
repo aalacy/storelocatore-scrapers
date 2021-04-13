@@ -71,21 +71,43 @@ def write_output(data):
 
 
 def get_session():
-    if not hasattr(thread_local, "session") or thread_local.request_count > 5:
+    if (
+        not hasattr(thread_local, "session")
+        or thread_local.request_count > 5
+        or thread_local.session_failed
+    ):
         thread_local.session = SgRequests()
         thread_local.request_count = 0
+        thread_local.session_failed = False
 
     thread_local.request_count += 1
     return thread_local.session
 
 
-@retry(stop=stop_after_attempt(5))
+def mark_session_failed():
+    thread_local.session_failed = True
+
+
+def is_valid(soup):
+    is_valid = soup.select_one("#header") or soup.select_one(".pharmacy-logo")
+    if not is_valid:
+        mark_session_failed()
+
+    return is_valid
+
+
+@retry(reraise=True, stop=stop_after_attempt(5))
 def enqueue_links(url, selector):
     urls = []
     get_session()
     r = session.get(url, headers=headers)
+    if r.status_code != 200:
+        r.raise_for_status()
 
     soup = BeautifulSoup(r.text, "html.parser")
+    if not is_valid(soup):
+        raise Exception(f"Unable to extract data from {url}")
+
     links = soup.select(selector)
 
     for link in links:
@@ -129,8 +151,8 @@ def get_location(loc):
     r = session.get(loc, headers=headers)
     location = BeautifulSoup(r.text, "html.parser")
 
-    if location.select_one("pharmacy-logo"):
-        return None
+    if not is_valid(location):
+        raise Exception(f"Unable to extract data from {loc}")
 
     script = location.select_one("#structured-data-block")
     if not script:
@@ -188,9 +210,12 @@ def scrape_loc_urls(loc_urls):
     with ThreadPoolExecutor() as executor:
         futures = [executor.submit(get_location, loc) for loc in loc_urls]
         for future in as_completed(futures):
-            record = future.result()
-            if record:
-                yield record
+            try:
+                record = future.result()
+                if record:
+                    yield record
+            except Exception as e:
+                logger.error(str(e))
 
 
 def fetch_data():

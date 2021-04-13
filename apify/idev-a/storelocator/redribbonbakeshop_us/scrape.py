@@ -68,7 +68,7 @@ def fetch_data():
                 country_code="US",
                 phone=_["phone"],
                 locator_domain=locator_domain,
-                hours_of_operation=_["hours"],
+                hours_of_operation=_["hours"].strip(),
             )
 
 
