@@ -85,6 +85,9 @@ def fetch_data():
             )
             if hours_of_operation.find("Opening") != -1:
                 hours_of_operation = "Coming Soon"
+            phone = (
+                "".join(tree.xpath('//a[contains(@href, "tel")]/text()')) or "<MISSING>"
+            )
 
         row = [
             locator_domain,
