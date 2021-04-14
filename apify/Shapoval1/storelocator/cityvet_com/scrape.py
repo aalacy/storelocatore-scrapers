@@ -139,6 +139,8 @@ def get_data(url):
     cms = "".join(tree.xpath('//h3[contains(text(), "Coming")]/text()'))
     if cms:
         hours_of_operation = "Coming Soon"
+    if hours_of_operation == "Coming Soon":
+        latitude, longitude = "<MISSING>", "<MISSING>"
     row = [
         locator_domain,
         page_url,
