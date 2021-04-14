@@ -73,7 +73,12 @@ def fetch_data():
                 .strip()
                 .split(",")
             )
-            if "United States" in address[-1] or "Canada" in address[-1]:
+
+            if (
+                "United States" in address[-1]
+                or "Canada" in address[-1]
+                or "United Kingdom" in address[-1]
+            ):
 
                 location_name = detail_soup.select(".name")[0].get_text().strip()
                 phone = detail_soup.select(".phone-number")[0].get_text().strip()[8:]
@@ -91,10 +96,20 @@ def fetch_data():
                     r"[A-Z]{1}[0-9]{1}[A-Z]{1}\s*[0-9]{1}[A-Z]{1}[0-9]{1}",
                     str(" ".join(address[-2].split(" "))),
                 )
+
                 us_zip_list = re.findall(
                     re.compile(r"\b[0-9]{5}(?:-[0-9]{4})?\b"),
                     str(" ".join(address[-2].split(" "))),
                 )
+                if "United Kingdom" in address[-1]:
+                    street_address = "".join(address[0])
+                    ad = "".join(address[1])
+                    if len(address) == 4:
+                        ad = "".join(address[2])
+                    city = ad.split()[0].strip()
+                    zip = " ".join(ad.split()[1:]).strip()
+                    country_code = "UK"
+
                 if us_zip_list:
                     zip = us_zip_list[0].strip()
                     country_code = "US"
@@ -110,6 +125,7 @@ def fetch_data():
             else:
 
                 continue
+
             store = []
             store.append("https://www.kimptonhotels.com/")
             store.append(location_name)
