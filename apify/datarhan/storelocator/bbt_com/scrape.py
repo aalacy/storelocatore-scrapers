@@ -63,9 +63,7 @@ def fetch_data():
         passed = False
         while not passed:
             response = session.get(start_url.format(code), headers=hdr)
-            print("try")
             if "Access Denied" not in response.text:
-                print("SUCCESS")
                 passed = True
 
         if response.text.endswith("}}"):
@@ -103,7 +101,6 @@ def fetch_data():
             longitude = poi["longitude"]
             longitude = longitude if longitude else "<MISSING>"
             if latitude != "<MISSING>" and longitude != "<MISSING>":
-                print("found location: " + location_name)
                 all_codes.found_location_at(latitude, longitude)
             hours_of_operation = poi["lobbyHours"]
             hours_of_operation = (
