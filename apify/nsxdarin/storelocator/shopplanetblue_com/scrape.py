@@ -136,6 +136,7 @@ def fetch_data():
                 phone = phone.replace('<span itemprop="streetAddress">', "")
                 add = add.replace("Scottsdale Quarter", "").strip()
                 add = add.replace("West Village", "").strip()
+                loc = "https://shopplanetblue.com/pages/find-a-store"
                 yield [
                     website,
                     loc,

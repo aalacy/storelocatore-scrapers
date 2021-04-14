@@ -59,8 +59,29 @@ def fetch_data():
             hours_of_operation = "<MISSING>"
             store_number = "<MISSING>"
 
-            latitude = "<MISSING>"
             longitude = "<MISSING>"
+            try:
+                longitude = (
+                    store_req.text.split('"coordinates":[')[1]
+                    .strip()
+                    .split(",")[0]
+                    .strip()
+                )
+            except:
+                pass
+
+            latitude = "<MISSING>"
+            try:
+                latitude = (
+                    store_req.text.split('"coordinates":[')[1]
+                    .strip()
+                    .split(",")[1]
+                    .strip()
+                    .split("]")[0]
+                    .strip()
+                )
+            except:
+                pass
 
             yield SgRecord(
                 locator_domain=locator_domain,

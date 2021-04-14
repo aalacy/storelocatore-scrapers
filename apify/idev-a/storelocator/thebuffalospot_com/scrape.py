@@ -34,11 +34,11 @@ def _valid(val):
 def _url(blocks, name):
     url = phone = ""
     for block in blocks:
-        if block.h3 and block.h3.text.strip() == name:
+        if block.h3 and block.h3.text.strip() == name.strip():
             url = (
                 locator_domain + block.find("a", href=re.compile(r"/locations"))["href"]
             )
-            _phone = block.find("a", href=re.compile(r"tel:"))
+            _phone = block.find("a", href=re.compile(r"tel"))
             if _phone:
                 phone = _phone.text
             break
@@ -60,6 +60,7 @@ def fetch_data():
             page_url, phone = _url(blocks, _["title"])
             hours_of_operation = ""
             try:
+                street_address = _["address"]
                 res1 = session.get(page_url, headers=_headers)
                 if res1.status_code == 200:
                     soup1 = bs(res1.text, "lxml")
@@ -69,12 +70,13 @@ def fetch_data():
                         ].string.strip()
                     )
                     hours_of_operation = _valid(loc.get("openingHours", []))
+                    street_address = loc["address"]["streetAddress"]
             except:
                 pass
             yield SgRecord(
                 page_url=page_url,
                 location_name=_["title"],
-                street_address=_["address"],
+                street_address=street_address,
                 city=_["location"]["city"],
                 state=_["location"]["state"],
                 zip_postal=_["location"]["postal_code"],

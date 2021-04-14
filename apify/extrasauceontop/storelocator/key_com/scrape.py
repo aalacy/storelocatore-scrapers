@@ -28,7 +28,7 @@ def getdata():
     for search_lat, search_lon in search:
 
         x = x + 1
-        coords = []
+
         url = f"https://www.key.com/loc/DirectorServlet?action=getEntities&entity=BRCH&entity=MCD&lat={search_lat}&lng={search_lon}&distance=1000&callback=myJsonpCallback"
 
         response = session.get(url).text
@@ -37,7 +37,6 @@ def getdata():
         try:
             response = json.loads(response)
         except Exception:
-            search.mark_found(coords)
             continue
 
         for location in response:
@@ -88,10 +87,27 @@ def getdata():
                     longitude = loc_property["value"]
 
                 if loc_property["name"] == "HoursOfOperation":
-                    hours = loc_property["value"]
+                    hours_list = loc_property["value"].replace(" - ", "-").split(" ")
+                    x = 0
+                    hour_values = []
+                    days = []
+                    for item in hours_list:
+                        if x % 2 == 0:
+                            hour_values.append(item)
+                        else:
+                            days.append(item)
+
+                        x = x + 1
+
+                    hours = ""
+                    for index in range(len(days)):
+                        hours = hours + days[index] + " " + hour_values[index] + ", "
 
             if zipp == "99999":
                 zipp = "<MISSING>"
+
+            if address == "Tbd":
+                continue
 
             locator_domains.append(locator_domain)
             page_urls.append(page_url)
@@ -108,9 +124,7 @@ def getdata():
             longitudes.append(longitude)
             hours_of_operations.append(hours)
 
-            current_coords = [latitude, longitude]
-            coords.append(current_coords)
-        search.mark_found(coords)
+            search.found_location_at(latitude, longitude)
 
     df = pd.DataFrame(
         {
@@ -151,7 +165,7 @@ def writedata(df):
     df = df.replace(r"^\s*$", "<MISSING>", regex=True)
     df = df.fillna("<MISSING>")
 
-    df.to_csv("data.csv", index=True)
+    df.to_csv("data.csv", index=False)
 
 
 getdata()

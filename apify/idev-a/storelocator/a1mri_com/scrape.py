@@ -38,17 +38,10 @@ def fetch_data():
 
             page_url = locator_domain + _.a["href"]
             block = list(_.stripped_strings)
-            if len(block) == 5:
-                del block[0]
+            del block[0]
             state_zip = block[1].split(",")[1].strip().split(" ")
             soup1 = bs(session.get(page_url, headers=_headers).text, "lxml")
             coord = soup1.select_one('div[data-type="inlineMap"]')
-            hour_label = soup1.find(
-                "font", string=re.compile(r"Business Hours", re.IGNORECASE)
-            )
-            hours_of_operation = (
-                hour_label.find_parent("h3").find_next_sibling("div").text
-            )
             yield SgRecord(
                 page_url=page_url,
                 location_name=_.a.text,
@@ -57,11 +50,10 @@ def fetch_data():
                 state=state_zip[0],
                 zip_postal=state_zip[-1],
                 country_code="US",
-                phone=block[2].replace("ph:", "").strip(),
+                phone=soup1.find("a", href=re.compile(r"tel:")).text,
                 latitude=coord["lat"],
                 longitude=coord["lon"],
                 locator_domain=locator_domain,
-                hours_of_operation=_valid(hours_of_operation),
             )
 
 

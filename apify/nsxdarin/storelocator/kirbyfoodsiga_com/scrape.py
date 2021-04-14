@@ -38,7 +38,11 @@ def write_output(data):
 
 
 def fetch_data():
-    locs = []
+    locs = [
+        "https://www.kirbyfoodsiga.com/stores/view-store.1002871.html",
+        "https://www.kirbyfoodsiga.com/stores/view-store.1002873.html",
+        "https://www.kirbyfoodsiga.com/stores/view-store.1002869.html",
+    ]
     states = []
     url = "https://www.kirbyfoodsiga.com/stores/search-stores.html"
     r = session.get(url, headers=headers)

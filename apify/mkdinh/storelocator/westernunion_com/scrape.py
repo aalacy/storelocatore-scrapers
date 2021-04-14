@@ -1,10 +1,15 @@
 import csv
-from sgrequests import SgRequests
 import threading
+from datetime import datetime as dt
+from sgrequests import SgRequests
+from sglogging import SgLogSetup
 from urllib.parse import urljoin
-from concurrent.futures import ThreadPoolExecutor, as_completed
 import requests_random_user_agent  # ignore_check # noqa F401
+from tenacity import retry, stop_after_attempt
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from sgzip.static import static_zipcode_list, SearchableCountries
+
+logger = SgLogSetup().get_logger("westernunion_com")
 
 thread_local = threading.local()
 
@@ -115,7 +120,8 @@ def extract(location):
     }
 
 
-def fetch_pages(session, postal, country_code, locations, page=None):
+@retry(stop=stop_after_attempt(3))
+def fetch_page(session, country_code, postal, page):
     res = session.get(
         f"https://location.westernunion.com/api/locations?country={country_code}&q={postal}&page={page}"
     ).json()
@@ -123,6 +129,11 @@ def fetch_pages(session, postal, country_code, locations, page=None):
     results = res.get("results")
     count = res.get("resultCount")
 
+    return count, results
+
+
+def fetch_pages(session, postal, country_code, locations, page=None):
+    count, results = fetch_page(session, country_code, postal, page)
     locations.extend(results)
 
     if len(locations) < count:
@@ -135,8 +146,9 @@ def fetch_pages(session, postal, country_code, locations, page=None):
 def scrape():
     session = SgRequests()
     tracker = []
-    us_search = static_zipcode_list(40, SearchableCountries.USA)
+    us_search = static_zipcode_list(30, SearchableCountries.USA)
     ca_search = static_zipcode_list(30, SearchableCountries.CANADA)
+    gb_search = static_zipcode_list(30, SearchableCountries.BRITAIN)
 
     with ThreadPoolExecutor() as executor:
         futures = []
@@ -152,11 +164,19 @@ def scrape():
                 for postal in ca_search
             ]
         )
+        futures.extend(
+            [
+                executor.submit(fetch, session, postal, "GB", tracker)
+                for postal in gb_search
+            ]
+        )
 
         for future in as_completed(futures):
             yield future.result()
 
 
 if __name__ == "__main__":
+    start = dt.now()
     data = scrape()
     write_output(data)
+    logger.info(f"duration: {dt.now() - start}")

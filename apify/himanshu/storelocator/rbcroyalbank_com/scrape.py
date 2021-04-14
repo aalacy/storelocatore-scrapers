@@ -79,14 +79,12 @@ def fetch_data():
     addressess = []
     search = DynamicZipSearch(
         country_codes=[SearchableCountries.CANADA],
-        max_radius_miles=50,
-        max_search_results=200,
+        max_search_results=100,
     )
 
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36",
         "x-requested-with": "XMLHttpRequest",
-        "referer": "https://www.thetinfishrestaurants.com/locations-menus/find-a-tin-fish-location-near-you/",
         "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
     }
     for coord in search:
@@ -105,7 +103,7 @@ def fetch_data():
         longitude = ""
         hours_of_operation = ""
         page_url = ""
-        data = "useCookies=1&lang=&q=" + str(coord) + "&searchBranch=1&searchATM=1"
+        data = "useCookies=1&lang=&q=" + str(coord) + "&searchBranch=1"
 
         try:
             r = session.post(
@@ -125,11 +123,16 @@ def fetch_data():
                 latitude = script[i].split("lat:")[1].split(",")[0]
                 longitude = script[i].split("lat:")[1].split(",")[1].split("lng:")[1]
                 id1 = script[i].split("locationId:'")[1].split("',t")[0]
-                http = (
+                page_url = (
                     "https://maps.rbcroyalbank.com/locator/locationDetails.php?l="
                     + str(id1)
                 )
-                r1 = request_wrapper(http, "post", headers=headers, data=data)
+                if page_url in addressess:
+                    continue
+                addressess.append(page_url)
+
+                logger.info(page_url)
+                r1 = request_wrapper(page_url, "get", headers=headers)
                 if r1 is None:
                     continue
                 soup1 = BeautifulSoup(r1.text, "lxml")
@@ -251,10 +254,6 @@ def fetch_data():
                 store.append(longitude if longitude else "<MISSING>")
                 store.append(hours_of_operation if hours_of_operation else "<MISSING>")
                 store.append(page_url if page_url else "<MISSING>")
-
-                if store[2] in addressess:
-                    continue
-                addressess.append(store[2])
 
                 yield store
 

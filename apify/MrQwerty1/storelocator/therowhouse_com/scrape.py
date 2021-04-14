@@ -91,7 +91,10 @@ def fetch_data():
         if j.get("coming_soon"):
             hours_of_operation = "Coming Soon"
         else:
-            hours_of_operation = get_hours(page_url)
+            if page_url != "<MISSING>":
+                hours_of_operation = get_hours(page_url)
+            else:
+                hours_of_operation = "<MISSING>"
 
         row = [
             locator_domain,

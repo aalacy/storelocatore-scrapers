@@ -1,5 +1,4 @@
-sgselenium==0.0.15
 sgscrape==0.0.23
+sgselenium==0.0.15
 sgvalidator==0.0.71
-selenium==3.141.0
 beautifulsoup4==4.9.3

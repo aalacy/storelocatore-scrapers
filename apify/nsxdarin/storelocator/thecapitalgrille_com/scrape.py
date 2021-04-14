@@ -2,6 +2,7 @@ import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
 from sgselenium import SgChrome
+import time
 
 session = SgRequests()
 headers = {
@@ -48,10 +49,14 @@ def fetch_data():
     logger.info("Pulling Stores")
     for line in r.iter_lines():
         line = str(line.decode("utf-8"))
-        if "<loc>https://www.thecapitalgrille.com/locations/" in line:
+        if (
+            "<loc>https://www.thecapitalgrille.com/locations/" in line
+            and "/mexico/" not in line
+        ):
             locs.append(line.split("<loc>")[1].split("<")[0])
     for loc in locs:
         logger.info(loc)
+        time.sleep(10)
         name = ""
         add = ""
         city = ""

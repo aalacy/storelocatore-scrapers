@@ -79,6 +79,8 @@ def fetch_data():
         street_address = poi["_source"]["address_line1"][0]
         if poi["_source"]["address_line2"]:
             street_address += ", " + poi["_source"]["address_line2"][0]
+        if "virtual office" in street_address:
+            continue
         city = poi["_source"]["locality_1"]
         city = city[0] if city else "<MISSING>"
         state = poi["_source"]["administrative_area"]
