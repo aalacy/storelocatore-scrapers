@@ -144,7 +144,7 @@ def fetch_data():
             if st2 is not None:
                 street_address = st1 + st2
             elif st1:
-                street_addresss = street_address
+                street_address = street_address
             else:
                 street_address = MISSING
 
