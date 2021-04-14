@@ -14,7 +14,7 @@ _headers = {
 def fetch_data():
     locator_domain = "https://bricktops.com"
     base_url = "https://bricktops.com/locations"
-    with SgChrome() as driver:
+    with SgChrome(executable_path=r"/home/ec2-user/mia/chromedriver") as driver:
         driver.get(base_url)
         soup = bs(driver.page_source, "lxml")
         links = soup.select("div.sqs-gallery a")
@@ -28,6 +28,7 @@ def fetch_data():
             addr = None
             hours_of_operation = ""
             phone = ""
+            coord = ["", ""]
             if not link["href"].startswith("https"):
                 location_name = sp1.select_one(".sqs-block-content h1").text
                 phone = sp1.select("div.sqs-block-html div.sqs-block-content")[
@@ -46,6 +47,16 @@ def fetch_data():
                     .select("p")[-1]
                     .stripped_strings
                 )
+                try:
+                    coord = (
+                        sp1.select("div.sqs-block-html div.sqs-block-content")[-1]
+                        .select("a")[-1]["href"]
+                        .split("/@")[1]
+                        .split("z/data")[0]
+                        .split(",")
+                    )
+                except:
+                    logger.info("no coord")
             else:
                 addr = list(
                     sp1.select("div.sqs-block-html div.sqs-block-content")[0]
@@ -56,7 +67,7 @@ def fetch_data():
             city = state = zip_postal = ""
             try:
                 city = addr[1].split(",")[0].strip()
-                state = addr[1].split(",")[1].strip().split(" ")[0].strip()
+                state = " ".join(addr[1].split(",")[1].strip().split(" ")[:-1])
                 zip_postal = addr[1].split(",")[1].strip().split(" ")[-1].strip()
             except:
                 city = ""
@@ -70,6 +81,8 @@ def fetch_data():
                 zip_postal=zip_postal,
                 phone=phone,
                 country_code="US",
+                latitude=coord[0],
+                longitude=coord[1],
                 locator_domain=locator_domain,
                 hours_of_operation=hours_of_operation,
             )
