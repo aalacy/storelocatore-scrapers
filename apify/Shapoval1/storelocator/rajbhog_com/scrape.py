@@ -115,6 +115,7 @@ def get_data(url):
         .strip()
         or "<MISSING>"
     )
+
     if hours_of_operation == "<MISSING>":
         session = SgRequests()
         r = session.get(hours_url)
@@ -122,7 +123,7 @@ def get_data(url):
         hours_of_operation = (
             " ".join(tree.xpath("//table//span/text()")).replace("\n", "").strip()
         )
-
+    hours_of_operation = hours_of_operation.replace("Â", "").strip()
     row = [
         locator_domain,
         page_url,
