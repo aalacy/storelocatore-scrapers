@@ -48,6 +48,7 @@ def fetch_data():
                 hours_of_operation = "; ".join(
                     [hh.text for hh in _.select("address div")[1:]]
                 )
+            hours_of_operation = hours_of_operation.replace("101am", "10am")
             yield SgRecord(
                 page_url=base_url,
                 location_name=location_name,
