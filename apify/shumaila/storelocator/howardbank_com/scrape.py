@@ -7,7 +7,6 @@ from sgrequests import SgRequests
 session = SgRequests()
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36",
-    "Cookie": "ASP.NET_SessionId=0fatu3nw4xplego1n55y20wr; TS01f976b6=01e8de0f2ce1d4a7eacb314166a283ffd2d9dd80dfef3fa7265f86a067cf45e28f9d7743f2c71b3dc5e9fef534e5c6a84d5e7493cf06e3efae3794580534d9c5b50008dbf7",
 }
 
 
@@ -43,6 +42,7 @@ def write_output(data):
 
 def fetch_data():
     data = []
+    streetlist = []
     pattern = re.compile(r"\s\s+")
     cleanr = re.compile(r"<[^>]+>")
     url = "https://www.howardbank.com/branch-locations"
@@ -59,6 +59,9 @@ def fetch_data():
             pass
         else:
             link = "https://www.howardbank.com" + link
+        if link in streetlist:
+            continue
+        streetlist.append(link)
         r = session.get(link, headers=headers, verify=False)
         soup = BeautifulSoup(r.text, "html.parser")
         if "commerical-loan-office" in link:
@@ -92,11 +95,17 @@ def fetch_data():
                 .replace("\n", " ")
                 .strip()
             )
+        if len(state.strip()) > 3:
+            city = city + " " + state
+            city = city.replace(",", "").strip()
+            state, pcode = pcode.split(" ", 1)
+        if "TEMPORARY CLOSURE" in soup.text:
+            title = title + "- " + "TEMPORARY CLOSED "
         data.append(
             [
                 "https://www.howardbank.com",
                 link,
-                title.replace("\xa0", ""),
+                title.replace("\xa0", "").strip(),
                 street.replace("\xa0", ""),
                 city,
                 state,

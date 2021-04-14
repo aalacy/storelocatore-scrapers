@@ -50,61 +50,69 @@ def write_output(data):
 def fetch_data():
     ids = []
     for lat, lng in search:
-        x = lat
-        y = lng
-        url = "https://www.huntington.com/post/GetLocations/GetLocationsList"
-        payload = {
-            "longitude": lng,
-            "latitude": lat,
-            "typeFilter": "1",
-            "envelopeFreeDepositsFilter": False,
-            "timeZoneOffset": "420",
-            "scController": "GetLocations",
-            "scAction": "GetLocationsList",
-        }
-        logger.info("%s - %s..." % (str(x), str(y)))
-        session = SgRequests()
-        r = session.post(url, headers=headers, data=payload)
-        for item in json.loads(r.content)["features"]:
-            store = item["properties"]["LocID"]
-            name = item["properties"]["LocName"]
-            add = item["properties"]["LocStreet"]
-            phone = item["properties"]["LocPhone"]
-            city = item["properties"]["LocCity"]
-            state = item["properties"]["LocState"]
-            zc = item["properties"]["LocZip"]
-            typ = "<MISSING>"
-            website = "huntington.com"
-            country = "US"
-            lat = item["geometry"]["coordinates"][0]
-            lng = item["geometry"]["coordinates"][1]
-            try:
-                hours = "Sun: " + item["properties"]["SundayLobbyHours"]
-                hours = hours + "; Mon: " + item["properties"]["MondayLobbyHours"]
-                hours = hours + "; Tue: " + item["properties"]["TuesdayLobbyHours"]
-                hours = hours + "; Wed: " + item["properties"]["WednesdayLobbyHours"]
-                hours = hours + "; Thu: " + item["properties"]["ThursdayLobbyHours"]
-                hours = hours + "; Fri: " + item["properties"]["FridayLobbyHours"]
-                hours = hours + "; Sat: " + item["properties"]["SaturdayLobbyHours"]
-            except:
-                hours = "<MISSING>"
-            if store not in ids:
-                ids.append(store)
-                yield [
-                    website,
-                    name,
-                    add,
-                    city,
-                    state,
-                    zc,
-                    country,
-                    store,
-                    phone,
-                    typ,
-                    lat,
-                    lng,
-                    hours,
-                ]
+        try:
+            x = lat
+            y = lng
+            url = "https://www.huntington.com/post/GetLocations/GetLocationsList"
+            payload = {
+                "longitude": lng,
+                "latitude": lat,
+                "typeFilter": "1",
+                "envelopeFreeDepositsFilter": False,
+                "timeZoneOffset": "420",
+                "scController": "GetLocations",
+                "scAction": "GetLocationsList",
+            }
+            logger.info("%s - %s..." % (str(x), str(y)))
+            session = SgRequests()
+            r = session.post(url, headers=headers, data=payload)
+            for item in json.loads(r.content)["features"]:
+                store = item["properties"]["LocID"]
+                name = item["properties"]["LocName"]
+                add = item["properties"]["LocStreet"]
+                phone = item["properties"]["LocPhone"]
+                city = item["properties"]["LocCity"]
+                state = item["properties"]["LocState"]
+                zc = item["properties"]["LocZip"]
+                typ = "<MISSING>"
+                website = "huntington.com"
+                country = "US"
+                lat = item["geometry"]["coordinates"][0]
+                lng = item["geometry"]["coordinates"][1]
+                search.found_location_at(lng, lat)
+                try:
+                    hours = "Sun: " + item["properties"]["SundayLobbyHours"]
+                    hours = hours + "; Mon: " + item["properties"]["MondayLobbyHours"]
+                    hours = hours + "; Tue: " + item["properties"]["TuesdayLobbyHours"]
+                    hours = (
+                        hours + "; Wed: " + item["properties"]["WednesdayLobbyHours"]
+                    )
+                    hours = hours + "; Thu: " + item["properties"]["ThursdayLobbyHours"]
+                    hours = hours + "; Fri: " + item["properties"]["FridayLobbyHours"]
+                    hours = hours + "; Sat: " + item["properties"]["SaturdayLobbyHours"]
+                except:
+                    hours = "<MISSING>"
+                if store not in ids:
+                    ids.append(store)
+                    loc = "<MISSING>"
+                    yield [
+                        website,
+                        loc,
+                        name,
+                        add,
+                        city,
+                        state,
+                        zc,
+                        country,
+                        store,
+                        phone,
+                        typ,
+                        lat,
+                        lng,
+                        hours,
+                    ]
+        except:
+            pass
 
 
 def scrape():
