@@ -32,6 +32,7 @@ def fetch_data():
         base_url = "https://www.good-sam.com/locations"
         soup = bs(session.get(base_url).text, "lxml")
         map_data = soup.select('map[name="image-map"] area')
+        total = 0
         for _map in map_data:
             url = f"{base_url}#radius=100&address={_map['title']}"
             with SgChrome() as driver:
@@ -39,10 +40,11 @@ def fetch_data():
                 for rr in driver.requests:
                     if "coveo/rest/search/v2" in rr.path and rr.response:
                         locations = json.loads(rr.response.body)
+                        total += len(locations)
                         logger.info(
-                            f"[{url}]{len(locations['results'])} locations found"
+                            f"[total {total}][{url}]{len(locations['results'])} locations found"
                         )
-                        for _ in locations["results"]:
+                        for _ in locations["resulhttps://safegraph-crawl.atlassian.net/browse/SLC-11946ts"]:
                             sufix = "46747"
                             for key, val in _["raw"].items():
                                 if key.startswith("fcity"):
