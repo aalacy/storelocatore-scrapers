@@ -17,23 +17,6 @@ _headers = {
 }
 
 
-def _header1(referer, cookies):
-    data = []
-    for key, value in cookies[0].items():
-        data.append(f"{key}={value}")
-    return {
-        "Accept": "application/json, text/javascript, */*; q=0.01",
-        "Accept-Encoding": "gzip, deflate, br",
-        "Origin": "https://www.wellsfargo.com",
-        "Content-Type": "application/json; charset=UTF-8",
-        "Referer": referer,
-        "Origin": "https://www.wellsfargo.com",
-        "Host": " www.wellsfargo.com",
-        "Cookie": "; ".join(data),
-        "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
-    }
-
-
 def fetch_data():
     locator_domain = "https://www.wellsfargo.com/"
     base_url = "https://www.wellsfargo.com/locator/"
