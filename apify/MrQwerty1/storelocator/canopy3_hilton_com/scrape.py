@@ -110,6 +110,10 @@ def get_data(zone):
         location_type = "<MISSING>"
         hours_of_operation = "<MISSING>"
 
+        isopen = j.get("open")
+        if not isopen:
+            continue
+
         row = [
             locator_domain,
             page_url,
