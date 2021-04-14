@@ -25,6 +25,11 @@ def fetch_data():
             .find("p")
             .text.replace("Store hours: ", "")
         )
+        coords_list = {}
+        coords = r.text.split("var marker")[1:]
+        for coord in coords:
+            name = coord.split(':bold;">')[1].split("</div>", 1)[0].strip()
+            coords_list[name] = coord.split("L.marker([")[1].split("])", 1)[0].strip()
         loclist = loclist.findAll("div", {"class": "g-infolist-item"})
         for loc in loclist:
             location_name = (
@@ -32,6 +37,8 @@ def fetch_data():
                 .text.replace("\n", "")
                 .strip()
             )
+            latitude, longitude = coords_list[location_name].split(",")
+
             log.info(location_name)
             address = (
                 loc.find("div", {"class": "g-infolist-item-desc"})
@@ -57,8 +64,8 @@ def fetch_data():
                 store_number="<MISSING>",
                 phone=phone.strip(),
                 location_type="<MISSING>",
-                latitude="<MISSING>",
-                longitude="<MISSING>",
+                latitude=latitude.strip(),
+                longitude=longitude.strip(),
                 hours_of_operation=hours_of_operation.strip(),
             )
 
