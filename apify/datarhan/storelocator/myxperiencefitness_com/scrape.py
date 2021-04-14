@@ -45,7 +45,7 @@ def fetch_data():
         driver.get(start_url)
         dom = etree.HTML(driver.page_source)
 
-    all_locations = dom.xpath("//h4/a/@href")
+    all_locations = dom.xpath("//h4/a[contains(@href, '/gyms/')]/@href")
     for store_url in all_locations:
         with SgFirefox() as driver:
             driver.get(store_url)
