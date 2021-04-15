@@ -53,17 +53,17 @@ def fetch_data():
             location_name = _[5][0][1][0]
             sharp = [
                 ss.strip()
-                for ss in _[5][1][1][0].replace("     ", "#").split("#")
+                for ss in _[5][1][1][0].replace("  ", "#").split("#")
                 if ss.strip()
             ]
             hours = []
-            address = " ".join(sharp[:2])
             idx = 2
             for x, ss in enumerate(sharp):
                 if _phone(ss):
                     phone = ss.split(":")[-1]
                     idx = x + 1
                     break
+            address = " ".join(sharp[: idx - 1])
             for hh in sharp[idx:]:
                 hours.append(hh)
             addr = parse_address_intl(address)
