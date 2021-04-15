@@ -44,7 +44,7 @@ def fetch_data():
             .replace("\\u003d", "=")
             .replace("\\u0026", "&")
             .replace("\\", "")
-            .replace("\xa0", "")
+            .replace("\xa0", " ")
         )
         locations = json.loads(
             cleaned.split('var _pageData = "')[1].split('";</script>')[0][:-1]
@@ -59,7 +59,7 @@ def fetch_data():
             hours = []
             idx = 2
             for x, ss in enumerate(sharp):
-                if _phone(ss):
+                if x >= idx and _phone(ss):
                     phone = ss.split(":")[-1]
                     idx = x + 1
                     break
