@@ -1,5 +1,4 @@
 from sgrequests import SgRequests
-import json
 import pandas as pd
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 
