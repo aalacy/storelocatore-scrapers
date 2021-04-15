@@ -10,12 +10,16 @@ _headers = {
 
 
 def addr_check(backups, addr):
+    is_exist = False
     for bb in backups:
-        if addr.street_address_1.split(" ")[0].strip() in bb or (
-            addr.city and addr.city.lower() in bb.lower()
-        ):
+        if addr.street_address_1.split(" ")[0].strip() in bb:
+            is_exist = True
             addr = parse_address_intl(bb)
             break
+    if not is_exist:
+        for bb in backups:
+            if addr.city and addr.city.lower() in bb.lower():
+                addr = parse_address_intl(bb)
 
     return addr
 

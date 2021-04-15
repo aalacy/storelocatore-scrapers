@@ -59,9 +59,13 @@ def fetch_data():
         location_name = poi["title"]
         location_name = location_name.split(" - ")[0] if location_name else "<MISSING>"
         street_address = poi["street"]
-        street_address = street_address if street_address else "<MISSING>"
+        street_address = (
+            street_address.replace("Rd. Northfield", "Rd.")
+            if street_address
+            else "<MISSING>"
+        )
         city = poi["city"]
-        city = city if city else "<MISSING>"
+        city = city.split("Rd.")[-1].strip() if city else "<MISSING>"
         state = poi["state"]
         state = state if state else "<MISSING>"
         zip_code = poi["postal_code"]
