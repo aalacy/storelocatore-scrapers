@@ -52,14 +52,14 @@ def fetch_data():
         "timeout": "10000",
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.192 Safari/537.36",
     }
-    body = '{"offset":0,"count":24,"include":["offices"],"filters":{"officeClass":"OFFICE","countryCode":"USA"},"sorts":[],"custom":{"filters":{"serviceAreaOrLocation":{"city":"","state":""}}},"options":{}}'
+    body = '{"offset":0,"count":24,"include":["offices"],"filters":{"officeStatus":"OPEN","officeClass":"OFFICE","countryCode":"USA","officeGeoLocation.geoPoint":{"boundingBox":{"top_left":{"lat":57.28952570425056,"lon":-162.8558901924884},"bottom_right":{"lat":22.401028627615535,"lon":-36.29339019248841}}}},"sorts":[{"officeGeoLocation.geoPoint":{"geo":{"lat":40.70668199998021,"lon":-73.97795499996471}}}],"custom":{"filters":{}},"options":{}}'
     response = session.post(start_url, data=body, headers=headers)
     data = json.loads(response.text)
     all_locations = data["data"]["offices"]["results"]
 
     for i in range(24, data["data"]["offices"]["total"] + 24, 24):
         body = (
-            '{"offset":%s,"count":24,"include":["offices"],"filters":{"officeClass":"OFFICE","countryCode":"USA"},"sorts":[],"custom":{"filters":{}},"options":{}}'
+            '{"offset":%s,"count":24,"include":["offices"],"filters":{"officeStatus":"OPEN","officeClass":"OFFICE","countryCode":"USA","officeGeoLocation.geoPoint":{"boundingBox":{"top_left":{"lat":57.28952570425056,"lon":-162.8558901924884},"bottom_right":{"lat":22.401028627615535,"lon":-36.29339019248841}}}},"sorts":[{"officeGeoLocation.geoPoint":{"geo":{"lat":40.70668199998021,"lon":-73.97795499996471}}}],"custom":{"filters":{}},"options":{}}'
             % i
         )
         response = session.post(start_url, data=body, headers=headers)
