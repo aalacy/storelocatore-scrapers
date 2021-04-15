@@ -44,7 +44,6 @@ def fetch_data():
     typ = "<MISSING>"
     loc = "<MISSING>"
     country = "US"
-    Found = False
     name = ""
     logger.info("Pulling Stores")
     for line in r.iter_lines():
