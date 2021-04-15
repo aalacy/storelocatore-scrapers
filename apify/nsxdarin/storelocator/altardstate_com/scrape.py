@@ -49,60 +49,78 @@ def fetch_data():
     logger.info("Pulling Stores")
     for line in r.iter_lines():
         line = str(line.decode("utf-8"))
-        if '"locale": "' in line or '"inventoryListId":' in line:
-            Found = True
-        if Found and '"ID": "' in line:
-            store = line.split('"ID": "')[1].split('"')[0]
-            Found = False
-        if '"name": "' in line:
-            name = line.split('"name": "')[1].split('"')[0]
-        if '"address1": "' in line:
-            add = line.split('"address1": "')[1].split('"')[0]
-        if '"city": "' in line:
-            city = line.split('"city": "')[1].split('"')[0]
-        if '"postalCode": "' in line:
-            zc = line.split('"postalCode": "')[1].split('"')[0]
-        if '"latitude": ' in line:
-            lat = line.split('"latitude": ')[1].split(",")[0]
-        if '"longitude": ' in line:
-            lng = line.split('"longitude": ')[1].split(",")[0]
-        if '"stateCode": "' in line:
-            state = line.split('"stateCode": "')[1].split('"')[0]
-        if '"countryCode": "' in line:
-            country = line.split('"countryCode": "')[1].split('"')[0]
-        if '"phone": "' in line:
-            phone = line.split('"phone": "')[1].split('"')[0]
-        if '"storeHours": "' in line:
-            hours = line.split('"storeHours": "')[1].split('"')[0]
-            hours = (
-                hours.replace("<br />", "; ").replace("\\n", "").replace("&nbsp;", " ")
-            )
-            hours = hours.replace("<p>", "").replace("</p>", "")
-            if "details. " in hours:
-                hours = hours.split("details. ")[1]
-        if "BRIDGE STREET" in name:
-            hours = "Sun: Noon-6PM; Mon-Sat: 11AM-7PM"
-        if "WEST TOWN MALL" in name:
-            hours = "Sun-Thu: 11AM-7PM; Fri-Sat: 11AM-8PM"
-        if "THE PINNACLE AT TURKEY CREEK" in name:
-            hours = "Sun: Noon-6PM; Mon-Sat: 11AM-7PM"
-        if '"storebrands": ' in line:
-            yield [
-                website,
-                loc,
-                name,
-                add,
-                city,
-                state,
-                zc,
-                country,
-                store,
-                phone,
-                typ,
-                lat,
-                lng,
-                hours,
-            ]
+        if '\\"isABSStore\\":' in line:
+            items = line.split('\\"isABSStore\\":')
+            for item in items:
+                if '\\"name\\":\\"' in item:
+                    name = item.split('\\"name\\":\\"')[1].split('\\",')[0]
+                    lat = item.split('"latitude\\":')[1].split(",")[0]
+                    lng = item.split('"longitude\\":')[1].split(",")[0]
+                    store = item.split('data-store-id=\\\\\\"')[1].split("\\")[0]
+                    add = (
+                        item.split(
+                            '<div class=\\\\\\"store-name store-locator-store-addr\\\\\\">\\\\n'
+                        )[1]
+                        .split("\\\\n")[0]
+                        .strip()
+                        .replace("\t", "")
+                    )
+                    city = item.split(
+                        '<div class=\\\\\\"store-name store-locator-store-addr\\\\\\">\\\\n'
+                    )[2].split(",")[0]
+                    state = (
+                        item.split(
+                            '<div class=\\\\\\"store-name store-locator-store-addr\\\\\\">\\\\n'
+                        )[2]
+                        .split("\\\\n                        \\\\n")[1]
+                        .split("<")[0]
+                        .strip()
+                        .replace("\t", "")
+                    )
+                    zc = item.split("<span> </span>")[1].split("\\")[0]
+                    phone = item.split('storelocator-phone\\\\\\" href=\\\\\\"tel:')[
+                        1
+                    ].split("\\")[0]
+                    hours = (
+                        item.split('=\\\\\\"store-locator-hours-text\\\\\\">')[1]
+                        .split("</span>")[0]
+                        .replace("<br />\\\\n", "; ")
+                    )
+                    hours = hours.rsplit("</p>\\\\n\\\\n<p>", 1)[1]
+                    city = city.strip().replace("\t", "")
+                    if '\\"">' in hours:
+                        hours = hours.rsplit('\\\\\\"">', 1)[1]
+                    hours = (
+                        hours.replace("\\\\n", "")
+                        .replace("<p>", "")
+                        .replace("</p>", "")
+                    )
+                    if '"">' in hours:
+                        hours = hours.rsplit('"">', 1)[1]
+                    if "margin" in hours:
+                        hours = "<MISSING>"
+                    if "BRIDGE STREET" in name:
+                        hours = "Sun: Noon-6PM; Mon-Sat: 11AM-7PM"
+                    if "WEST TOWN MALL" in name:
+                        hours = "Sun-Thu: 11AM-7PM; Fri-Sat: 11AM-8PM"
+                    if "THE PINNACLE AT TURKEY CREEK" in name:
+                        hours = "Sun: Noon-6PM; Mon-Sat: 11AM-7PM"
+                    yield [
+                        website,
+                        loc,
+                        name,
+                        add,
+                        city,
+                        state,
+                        zc,
+                        country,
+                        store,
+                        phone,
+                        typ,
+                        lat,
+                        lng,
+                        hours,
+                    ]
 
 
 def scrape():
