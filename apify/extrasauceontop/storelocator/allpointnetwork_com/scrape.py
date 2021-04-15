@@ -3,7 +3,14 @@ import json
 import pandas as pd
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 
-search = DynamicGeoSearch(country_codes=[SearchableCountries.USA, SearchableCountries.CANADA, SearchableCountries.BRITAIN], max_radius_miles=100)
+search = DynamicGeoSearch(
+    country_codes=[
+        SearchableCountries.USA,
+        SearchableCountries.CANADA,
+        SearchableCountries.BRITAIN,
+    ],
+    max_radius_miles=100,
+)
 
 session = SgRequests()
 
@@ -27,13 +34,21 @@ url = "https://clsws.locatorsearch.net/Rest/LocatorSearchAPI.svc/GetLocations"
 x = 0
 for search_lat, search_lon in search:
 
-    params = {"Latitude": str(search_lat), "Longitude": str(search_lon), "Miles": "100", "NetworkId": "10029", "SearchByOptions": ""}
+    params = {
+        "Latitude": str(search_lat),
+        "Longitude": str(search_lon),
+        "Miles": "100",
+        "NetworkId": "10029",
+        "SearchByOptions": "",
+    }
 
     response = session.post(url, json=params).json()
 
     for location in response["data"]:
         locator_domain = "allpointnetwork.com"
-        page_url = "https://clsws.locatorsearch.net/Rest/LocatorSearchAPI.svc/GetLocations"
+        page_url = (
+            "https://clsws.locatorsearch.net/Rest/LocatorSearchAPI.svc/GetLocations"
+        )
         location_name = "Allpoint " + location["RetailOutlet"]
         address = location["Street"]
         city = location["City"]
@@ -65,27 +80,27 @@ for search_lat, search_lon in search:
         longitudes.append(longitude)
         hours_of_operations.append(hours)
 
-    x = x+1
+    x = x + 1
     # if x == 10:
     #     break
 
 df = pd.DataFrame(
-{
-    "locator_domain": locator_domains,
-    "page_url": page_urls,
-    "location_name": location_names,
-    "street_address": street_addresses,
-    "city": citys,
-    "state": states,
-    "zip": zips,
-    "store_number": store_numbers,
-    "phone": phones,
-    "latitude": latitudes,
-    "longitude": longitudes,
-    "hours_of_operation": hours_of_operations,
-    "country_code": country_codes,
-    "location_type": location_types,
-}
+    {
+        "locator_domain": locator_domains,
+        "page_url": page_urls,
+        "location_name": location_names,
+        "street_address": street_addresses,
+        "city": citys,
+        "state": states,
+        "zip": zips,
+        "store_number": store_numbers,
+        "phone": phones,
+        "latitude": latitudes,
+        "longitude": longitudes,
+        "hours_of_operation": hours_of_operations,
+        "country_code": country_codes,
+        "location_type": location_types,
+    }
 )
 
 df = df.fillna("<MISSING>")
