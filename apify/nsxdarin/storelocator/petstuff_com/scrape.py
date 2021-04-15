@@ -81,8 +81,6 @@ def fetch_data():
             line2 = str(line2.decode("utf-8"))
             if "<title>" in line2:
                 name = line2.split("<title>")[1].split("</title>")[0]
-                if " |" in name:
-                    name = name.split(" |")[0]
             if "ADDRESS:</strong></span><p><span style=font-size:12pt>" in line2:
                 add = line2.split(
                     "ADDRESS:</strong></span><p><span style=font-size:12pt>"
@@ -159,6 +157,12 @@ def fetch_data():
                 "Monday - Friday: 9am - 7pm; Saturday: 10am - 5pm; Sunday: 10am - 5pm"
             )
         hours = hours.replace("&amp;", "&").replace("amp;", "&")
+        if "(Groom" in name:
+            name = name.split("(Groom")[0].strip()
+        if "| Bentley's Pet Stuff" in name:
+            name = name.split("| Bentley's Pet Stuff")[0].strip()
+        if "(" in name:
+            name = name.split("(")[0].strip()
         yield [
             website,
             loc,
