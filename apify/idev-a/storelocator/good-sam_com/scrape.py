@@ -30,7 +30,7 @@ def fetch_data():
     with SgRequests() as session:
         locator_domain = "https://www.good-sam.com/"
         base_url = "https://www.good-sam.com/locations"
-        soup = bs(session.get(base_url).text, "lxml")
+        soup = bs(session.get(base_url, headers=_headers).text, "lxml")
         map_data = soup.select('map[name="image-map"] area')
         for _map in map_data:
             url = f"{base_url}#radius=100&address={_map['title']}"
@@ -40,18 +40,23 @@ def fetch_data():
                     if "coveo/rest/search/v2" in rr.path and rr.response:
                         locations = json.loads(rr.response.body)
                         logger.info(
-                            f"[{url}]{len(locations['results'])} locations found"
+                            f"[{_map['title']}][{url}]{len(locations['results'])} locations found"
                         )
                         for _ in locations["results"]:
+                            logger.info(_["clickUri"])
+                            res = session.get(_["clickUri"], headers=_headers)
+                            if res.status_code != 200:
+                                continue
+                            sp1 = bs(res.text, "lxml")
                             sufix = "46747"
                             for key, val in _["raw"].items():
                                 if key.startswith("fcity"):
                                     sufix = key.replace("fcity", "")
-                            street_address = ""
-                            if f"faddress{sufix}" in _["raw"]:
-                                street_address = _["raw"][f"faddress{sufix}"]
-                            elif f"fstreetaddress{sufix}" in _["raw"]:
-                                street_address = _["raw"][f"fstreetaddress{sufix}"]
+                            addr = list(
+                                sp1.select_one(
+                                    "div.location-info__info-col p"
+                                ).stripped_strings
+                            )
                             latitude = longitude = ""
                             if f"freflatitude{sufix}" in _["raw"]:
                                 latitude = _["raw"][f"freflatitude{sufix}"]
@@ -62,9 +67,10 @@ def fetch_data():
                             yield SgRecord(
                                 page_url=_["clickUri"],
                                 location_name=_["Title"],
-                                street_address=street_address,
-                                city=_["raw"][f"fcity{sufix}"][0],
-                                state=_["raw"][f"fstate{sufix}"][0],
+                                street_address=addr[0],
+                                city=addr[1].split(",")[0].strip(),
+                                state=addr[1].split(",")[1].strip(),
+                                zip_postal=addr[1].split(",")[2].strip(),
                                 country_code="US",
                                 latitude=latitude,
                                 longitude=longitude,
