@@ -53,8 +53,13 @@ def fetch_data():
         ).strip()
         if location_name.find("Kitchen") != -1:
             street_address = street_address.split("!")[1].strip()
-        if location_name.find("Urbanspace") != -1:
-            street_address = street_address.split("Our")[1].split("location")[0].strip()
+        if (
+            street_address.find(
+                "Our East 53rd location is still open for pickup & delivery!"
+            )
+            != -1
+        ):
+            street_address = "<MISSING>"
         phone = "".join(j.get("phone"))
         state = j.get("state")
         postal = "".join(j.get("zip"))

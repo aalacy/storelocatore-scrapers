@@ -67,6 +67,9 @@ def fetch_data():
             if "var markerstore = [" in line2:
                 g = next(lines)
                 g = str(g.decode("utf-8"))
+                if '", "' not in g:
+                    g = next(lines)
+                    g = str(g.decode("utf-8"))
                 lat = g.split('", "')[1]
                 lng = g.split('", "')[2]
                 add = g.split('", "')[3]
