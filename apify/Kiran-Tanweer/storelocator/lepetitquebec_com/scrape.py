@@ -33,7 +33,7 @@ headers = {
 
 
 def write_output(data):
-    with open("data.csv", mode="w", newline="", encoding="utf8") as output_file:
+    with open("data.csv", mode="w", newline="") as output_file:
         writer = csv.writer(
             output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
         )
@@ -98,14 +98,15 @@ def fetch_data():
         title = div.find("h2").text
         address = div.find("p")
         address = str(address)
-        address = address.lstrip("<p>")
-        address = address.rstrip("</p>")
+        address = address.replace("<p>", "")
+        address = address.replace("</p>", "")
         address = address.replace("\n", "")
         address = address.replace("<br/>", " ")
         address = address.strip()
         phone = address.split(" ")[-1].strip()
-        address = address.strip(phone)
+        address = address.split(phone)[0]
         address = address.strip()
+
         parsed = parser.parse_address_intl(address)
         street1 = parsed.street_address_1 if parsed.street_address_1 else "<MISSING>"
         street = (
