@@ -30,7 +30,7 @@ def fetch_data():
         for _ in locations["items"]:
             hours = []
             for hh in _["hours_md"].split("\n\n"):
-                if "**" not in hh:
+                if "**" not in hh and "Senior" not in hh:
                     hours.append(hh)
             yield SgRecord(
                 store_number=_["store_number"],
