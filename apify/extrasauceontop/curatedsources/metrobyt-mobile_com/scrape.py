@@ -29,7 +29,7 @@ hours_of_operations = []
 for location in response:
     locator_domain = "metrobyt-mobile.com"
     page_url = url
-    location_name = location["name"]
+    location_name = "Metro by T-Mobile Authorized Dealer"
     address = location["location"]["address"]["streetAddress"]
     city = location["location"]["address"]["addressLocality"]
     state = location["location"]["address"]["addressRegion"]
