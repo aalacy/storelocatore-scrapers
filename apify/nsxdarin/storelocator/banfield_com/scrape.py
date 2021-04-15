@@ -97,16 +97,13 @@ def fetch_data():
                     hours = hrs
                 else:
                     hours = hours + "; " + hrs
-            if '<link rel="canonical" href="' in line2:
-                store = (
-                    line2.split('<link rel="canonical" href="')[1]
-                    .split('"')[0]
-                    .rsplit("/", 1)[1]
-                )
+            if 'class="hospital-id">(#' in line2:
+                store = line2.split('class="hospital-id">(#')[1].split(")")[0]
         if hours == "":
             hours = "<MISSING>"
         if phone == "":
             phone = "<MISSING>"
+        add = add.replace("&amp;", "&").replace("amp;", "&")
         yield [
             website,
             loc,
