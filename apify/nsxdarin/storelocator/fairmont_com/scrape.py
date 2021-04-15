@@ -109,10 +109,12 @@ def fetch_data():
                 g = g.replace("Strand, London", "Strand, London - London")
                 g = g.replace("Scotland", "Scotland - Scotland")
                 add = g.split(",")[0]
+                g = g.replace(",Massac","- Massac")
                 city = g.split(",")[1].strip().split(" - ")[0]
                 state = g.split(",")[1].strip().split(" - ")[1]
                 if "United States" in g:
-                    zc = g.rsplit(" ", 1)[1]
+                    zc = g.rsplit(',',1)[0].rsplit(' ',1)[1]
+                    state = state.rsplit(' ',1)[0]
                 if "Canada" in g:
                     zc = g.split("Canada ")[1].strip()
                 if "United Kingdom" in g:
