@@ -54,10 +54,14 @@ def fetch_data():
             for item in items:
                 if "<html>" not in item:
                     lurl = item.split(" ")[0]
+                    if ">Contact" in lurl:
+                        Found = True
                     if "-" in lurl:
-                        if "stella-chewys" in lurl:
-                            Found = True
-                        if lurl not in alllocs and Found is False:
+                        if (
+                            lurl not in alllocs
+                            and Found is False
+                            and "stella-chewys" not in lurl
+                        ):
                             alllocs.append(lurl)
                             locs.append("https://petstuff.com/" + lurl)
     for loc in locs:
