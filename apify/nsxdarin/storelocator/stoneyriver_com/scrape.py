@@ -60,16 +60,20 @@ def fetch_data():
                     lat = "<MISSING>"
                     lng = "<MISSING>"
         if "<address>" in line:
-            add = line.split("<address>")[1].split("</a><br />")[0].split("<")[0]
+            add = (
+                line.split("<address>")[1]
+                .split("</a></address><br />")[0]
+                .split("<")[0]
+            )
             city = (
                 line.split("<address>")[1]
-                .split("</a><br />")[0]
+                .split("</a></address><br />")[0]
                 .rsplit("<br />", 1)[1]
                 .split(",")[0]
             )
             state = (
                 line.split("<address>")[1]
-                .split("</a><br />")[0]
+                .split("</a></address><br />")[0]
                 .rsplit("<br />", 1)[1]
                 .split(",")[1]
                 .rsplit(" ", 1)[0]
@@ -77,7 +81,7 @@ def fetch_data():
             )
             zc = (
                 line.split("<address>")[1]
-                .split("</a><br />")[0]
+                .split("</a></address><br />")[0]
                 .rsplit("<br />", 1)[1]
                 .split(",")[1]
                 .rsplit(" ", 1)[1]
