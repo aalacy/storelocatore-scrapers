@@ -5,6 +5,7 @@ from bs4 import BeautifulSoup as bs
 from sgselenium import SgChrome
 from sglogging import SgLogSetup
 import json
+import time
 
 logger = SgLogSetup().get_logger("good-sam")
 
@@ -35,16 +36,16 @@ def fetch_data():
         total = 0
         for _map in map_data:
             url = f"{base_url}#radius=100&address={_map['title']}"
-            with SgChrome() as driver:
+            with SgChrome(executable_path=r"/home/ec2-user/mia/chromedriver") as driver:
                 driver.get(url)
                 for rr in driver.requests:
                     if "coveo/rest/search/v2" in rr.path and rr.response:
                         locations = json.loads(rr.response.body)
-                        total += len(locations)
+                        total += len(locations['results'])
                         logger.info(
                             f"[total {total}][{url}]{len(locations['results'])} locations found"
                         )
-                        for _ in locations["resulhttps://safegraph-crawl.atlassian.net/browse/SLC-11946ts"]:
+                        for _ in locations['results']:
                             sufix = "46747"
                             for key, val in _["raw"].items():
                                 if key.startswith("fcity"):
@@ -75,6 +76,7 @@ def fetch_data():
                             )
 
                         break
+                        time.sleep(1)
 
 
 if __name__ == "__main__":
