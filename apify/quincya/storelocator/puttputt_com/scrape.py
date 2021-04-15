@@ -86,6 +86,9 @@ def fetch_data():
         store_number = "<MISSING>"
         location_type = "<MISSING>"
 
+        if "www.puttputtfunhouse.com" in final_link[0]:
+            continue
+
         if "funworks" in final_link[0]:
             link = "https://funworksfuncompany.com/directions-hours"
             req = session.get(link, headers=headers)
