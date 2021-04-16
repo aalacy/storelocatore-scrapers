@@ -125,7 +125,6 @@ def fetch_data():
             found += 1
         total += found
     logger.info(f"Scraping Finished | Total Store Count:{total}")
-    # return data
 
 
 def scrape():
