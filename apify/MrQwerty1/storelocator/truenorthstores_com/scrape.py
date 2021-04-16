@@ -33,40 +33,66 @@ def write_output(data):
             writer.writerow(row)
 
 
-def fetch_data():
-    out = []
-    locator_domain = "http://www.sweetfin.com/"
-    page_url = "http://www.sweetfin.com/locations/"
-
+def get_nonce():
     session = SgRequests()
-    r = session.get(page_url)
-    tree = html.fromstring(r.text)
-    divs = tree.xpath(
-        "//div[@class='elementor-section-wrap']/section[.//i[@class='fas fa-mobile-alt' or @class='far fa-clock']]"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0"
+    }
+    data = {"action": "locatornonce"}
+
+    r = session.post(
+        "https://truenorthstores.com/wp-admin/admin-ajax.php",
+        headers=headers,
+        data=data,
     )
 
-    for d in divs:
-        location_name = "".join(d.xpath(".//h2/text()")).strip()
-        line = d.xpath(".//p/text()")
+    return r.json()["nonce"]
 
-        street_address = line[0].strip()
-        if street_address.endswith(","):
-            street_address = street_address[:-1]
-        line = line[1].strip()
+
+def fetch_data():
+    out = []
+    locator_domain = "https://truenorthstores.com/"
+    api_url = "https://truenorthstores.com/wp-admin/admin-ajax.php"
+    data = {
+        "action": "locate",
+        "locatorNonce": get_nonce(),
+        "distance": "5000",
+        "latitude": "42.2687314",
+        "longitude": "-82.95822129999999",
+        "unit": "miles",
+    }
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0"
+    }
+
+    session = SgRequests()
+    r = session.post(api_url, data=data, headers=headers)
+    js = r.json()["results"]
+
+    for j in js:
+        source = j.get("output")
+        tree = html.fromstring(source)
+        line = tree.xpath("./text()")
+        line = list(filter(None, [l.strip() for l in line]))
+
+        phone = "<MISSING>"
+        if line[-1][0].isdigit() or line[-1][0] == "(":
+            phone = line.pop()
+
+        street_address = ", ".join(line[:-1])
+        line = line[-1]
         city = line.split(",")[0].strip()
         line = line.split(",")[1].strip()
         state = line.split()[0]
         postal = line.split()[1]
         country_code = "US"
-        store_number = "<MISSING>"
-
-        text = d.xpath(".//div[./p/i]//text()|.//div[./i]//text()")
-        text = list(filter(None, [t.strip() for t in text]))
-        phone = text.pop(0)
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
+        store_number = j.get("id") or "<MISSING>"
+        page_url = j.get("permalink") or "<MISSING>"
+        location_name = j.get("title")
+        latitude = j.get("latitude") or "<MISSING>"
+        longitude = j.get("longitude") or "<MISSING>"
         location_type = "<MISSING>"
-        hours_of_operation = ";".join(text) or "<MISSING>"
+        hours_of_operation = "<MISSING>"
 
         row = [
             locator_domain,
