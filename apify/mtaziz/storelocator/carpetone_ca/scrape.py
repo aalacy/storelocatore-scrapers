@@ -256,7 +256,7 @@ def get_data_from_website(data_raw):
 
 def fetch_data():
     items = []
-    for idx1, url_store in enumerate(url_all_stores[0:5]):
+    for idx1, url_store in enumerate(url_all_stores):
         try:
             url_store = f"http://www.{url_store}"
             logger.info(f"Pulling the data from: {idx1}: {url_store} ")
