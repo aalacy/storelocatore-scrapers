@@ -60,7 +60,7 @@ def fetch_data():
     for i in range(1, 60):
 
         driver.get(base_link)
-        WebDriverWait(driver, 20).until(
+        WebDriverWait(driver, 100).until(
             ec.presence_of_element_located((By.ID, "dwfrm_storelocator_state"))
         )
         time.sleep(2)
