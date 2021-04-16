@@ -116,7 +116,7 @@ def fetch_data():
                     zc = g.rsplit(",", 1)[0].rsplit(" ", 1)[1]
                     state = state.rsplit(" ", 1)[0]
                 if "Canada" in g:
-                    zc = g.split("Canada ")[1].strip()
+                    zc = g.split("Canada")[0].rsplit(" ", 1)[1].replace(",", "")
                 if "United Kingdom" in g:
                     zc = g.split("United Kingdom")[1].strip()
             if 'aria-label="Phone number"' in line2:
