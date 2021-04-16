@@ -48,10 +48,12 @@ def fetch_data():
     for line in r.iter_lines():
         line = str(line.decode("utf-8"))
         if '<A href="store_detail.php?id=' in line:
-            locs.append(
+            lurl = (
                 "http://coltonssteakhouse.com/store_detail.php?id="
                 + line.split('<A href="store_detail.php?id=')[1].split('"')[0]
             )
+            if lurl not in locs:
+                locs.append(lurl)
     for loc in locs:
         logger.info(loc)
         name = ""
