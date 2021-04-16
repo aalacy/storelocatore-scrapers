@@ -49,9 +49,10 @@ def write_output(data):
 
 def fetch_data():
 
+    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
     base_link = "https://www.pacsun.com/stores"
 
-    driver = SgChrome().chrome()
+    driver = SgChrome(user_agent=user_agent).driver()
     time.sleep(2)
 
     data = []
@@ -59,7 +60,7 @@ def fetch_data():
     for i in range(1, 60):
 
         driver.get(base_link)
-        WebDriverWait(driver, 30).until(
+        WebDriverWait(driver, 20).until(
             ec.presence_of_element_located((By.ID, "dwfrm_storelocator_state"))
         )
         time.sleep(2)
@@ -74,7 +75,13 @@ def fetch_data():
         time.sleep(1)
         search = driver.find_element_by_name("dwfrm_storelocator_findbystate")
         driver.execute_script("arguments[0].click();", search)
-
+        time.sleep(1)
+        try:
+            WebDriverWait(driver, 20).until(
+                ec.presence_of_element_located((By.CLASS_NAME, "sl-store"))
+            )
+        except:
+            pass
         time.sleep(1)
         base = BeautifulSoup(driver.page_source, "lxml")
         stores = base.find_all(class_="sl-store")
@@ -97,7 +104,7 @@ def fetch_data():
             if "CLOSED" in location_name.upper():
                 continue
 
-            link = "<MISSING>"
+            link = "https://www.pacsun.com/stores"
 
             phone = store.find(class_="phone-number").text.strip()
 
