@@ -23,7 +23,9 @@ def fetch_data():
                 f"https://www.runnings.com/storelocator/storedetails/post?id={option['value']}",
                 headers=_headers,
             ).json()
-            page_url = f"https://www.runnings.com/storelocator/storedetails?id={option['value']}"
+            page_url = (
+                f"https://www.runnings.com/storelocator/storedetails?id={_['item_id']}"
+            )
             logger.info(page_url)
             hours = list(bs(_["operation_hours"], "lxml").stripped_strings)
             yield SgRecord(
