@@ -66,13 +66,15 @@ def write_output(data):
 
 # Get all worldwide tore URLs from Google Tag manager URL
 url_google_tag_manager = "https://www.googletagmanager.com/gtm.js?id=GTM-M6N43L"
-r_gt = session.get(url_google_tag_manager, headers=headers)
-pattern2 = r'{var a=\\\"(.*)\\".split'
-url_all_stores_952 = re.findall(pattern2, r_gt.text)
-url_all_stores_952 = "".join(url_all_stores_952)
-url_all_stores_952 = url_all_stores_952.split(" ")
-url_all_stores_951 = list(set(url_all_stores_952))
-url_all_stores_951.extend(["http://www.irvinecarpetone.com"])
+r_gtm = session.get(url_google_tag_manager, headers=headers)
+pattern = r'{var a=\\\"(.*)\\".split'
+url_all_stores_raw = re.findall(pattern, r_gtm.text)
+url_all_stores_str = "".join(url_all_stores_raw)
+url_all_stores_list = url_all_stores_str.split(" ")
+url_all_stores_951 = list(set(url_all_stores_list))  # Deduped
+url_all_stores_951.extend(
+    ["http://www.irvinecarpetone.com"]
+)  # irvinecarpetone was missing from Google Tag Manager
 url_all_stores = url_all_stores_951
 logger.info(f"Worldwide Number of Store URLs: {len(url_all_stores)}")
 for url_cone in url_all_stores[0:10]:
