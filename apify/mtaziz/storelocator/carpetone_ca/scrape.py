@@ -107,6 +107,8 @@ def get_data_from_multi_locations(data_list):
         else:
             country_code = MISSING
 
+        logger.info(f"Country Code: {country_code}")
+
         zip = data["StoreLocationSingle"]["Zip"] or MISSING
         store_number = data["StoreId"] if data["StoreId"] else MISSING
         phone = data["StorePhone"] if data["StorePhone"] else MISSING
@@ -149,7 +151,6 @@ def get_hours_raw_html(data_hours):
     xpath_col_store_hours = '//div[@class="col store-hours"]/dl/dd/ul'
     store_hours = data_hours.xpath(xpath_col_store_hours)
     store_hours_clean = []
-    print(store_hours)
     for sh in store_hours:
         week_day = sh.xpath("./li/span/text()")
         logger.info(f" Week Day: {week_day}")
@@ -197,6 +198,7 @@ def get_data_from_website(data_raw):
                 country_code = country_code
         else:
             country_code = MISSING
+        logger.info(f"Country Code: {country_code} ")
         zip = data_address["postalCode"] or MISSING
         xpath_store_num = "//script/@data-cca-location-number"
         store_num = data_raw.xpath(xpath_store_num)
