@@ -1,7 +1,6 @@
 import csv
 import json
 from lxml import etree
-from urllib.parse import urljoin
 
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 from sgrequests import SgRequests
