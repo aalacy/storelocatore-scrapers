@@ -83,10 +83,8 @@ def fetch_store_urls():
         "div", {"class": "destination-quick-links"}
     )
     links = content.find_all("a", {"class": "clean"})
-    print(len(links))
     for link in links:
         store_urls.append(BASE_URL + link["href"])
-    print(store_urls)
     log.info("Found {} URL ".format(len(store_urls)))
     return store_urls
 
@@ -105,7 +103,6 @@ def fetch_data():
         for row in accept_country:
             for key, value in row.items():
                 if country in value:
-                    # print("{} => {}".format(country, key))
                     location_name = handle_missing(
                         content.find("h3", {"class": "heading-h"}).text.strip()
                     )
