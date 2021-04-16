@@ -40,10 +40,9 @@ def fetch_data():
 
     session = SgRequests()
 
-    max_results = 50
-    max_distance = 15
+    max_results = 20
+    max_distance = None
     dup_tracker = []
-    data = []
     total = 0
     locator_domain = "scotiabank.com"
 
@@ -52,14 +51,11 @@ def fetch_data():
         max_radius_miles=max_distance,
         max_search_results=max_results,
     )
-    all_coordinates = []
-    for lat, lng in search:
-        all_coordinates.append((lat, lng))
 
-    for ll in all_coordinates:
+    for lat, lng in search:
         base_link = (
             "https://mapsms.scotiabank.com/branches?1=1&latitude=%s&longitude=%s&recordlimit=%s&locationtypes=3"
-            % (ll[0], ll[1], max_results)
+            % (lat, lng, max_results)
         )
         try:
             stores = session.get(base_link, headers=headers).json()["branchInfo"][
@@ -107,29 +103,29 @@ def fetch_data():
             latitude = store["@attributes"]["lat"]
             longitude = store["@attributes"]["lng"]
 
+            search.found_location_at(latitude, longitude)
+
             # Store data
-            data.append(
-                [
-                    locator_domain,
-                    "<MISSING>",
-                    location_name,
-                    street_address,
-                    city,
-                    state,
-                    zip_code,
-                    country_code,
-                    store_number,
-                    phone,
-                    location_type,
-                    latitude,
-                    longitude,
-                    hours_of_operation,
-                ]
-            )
+            yield [
+                locator_domain,
+                "<MISSING>",
+                location_name,
+                street_address,
+                city,
+                state,
+                zip_code,
+                country_code,
+                store_number,
+                phone,
+                location_type,
+                latitude,
+                longitude,
+                hours_of_operation,
+            ]
             found += 1
         total += found
     logger.info(f"Scraping Finished | Total Store Count:{total}")
-    return data
+    # return data
 
 
 def scrape():
