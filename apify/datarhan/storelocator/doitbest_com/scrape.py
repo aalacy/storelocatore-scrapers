@@ -39,7 +39,13 @@ def write_output(data):
 
 def fetch_data():
     # Your scraper here
-    session = SgRequests().requests_retry_session(retries=1, backoff_factor=0.3)
+    session = SgRequests(proxy_rotation_failure_threshold=0).requests_retry_session(
+        retries=1,
+        backoff_factor=0.3,
+        status_forcelist=[
+            418,
+        ],
+    )
 
     items = []
     scraped_items = []
@@ -47,10 +53,11 @@ def fetch_data():
     DOMAIN = "doitbest.com"
     start_url = "https://doitbest.com/StoreLocator/Submit"
 
-    headers = {
+    hdr = {
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
     }
-    response = session.get("https://doitbest.com/store-locator", headers=headers)
+
+    response = session.get("https://doitbest.com/store-locator", headers=hdr)
     dom = etree.HTML(response.text)
     csrfid = dom.xpath('//input[@id="StoreLocatorForm_CSRFID"]/@value')[0]
     token = dom.xpath('//input[@id="StoreLocatorForm_CSRFToken"]/@value')[0]
@@ -65,7 +72,7 @@ def fetch_data():
     all_locations = []
     all_codes = DynamicZipSearch(
         country_codes=[SearchableCountries.USA],
-        max_radius_miles=100,
+        max_radius_miles=50,
         max_search_results=None,
     )
     for code in all_codes:
@@ -73,12 +80,27 @@ def fetch_data():
             "StoreLocatorForm": {
                 "Location": code,
                 "Filter": "All Locations",
-                "Range": "100",
+                "Range": "50",
                 "CSRFID": csrfid,
                 "CSRFToken": token,
             }
         }
         response = session.post(start_url, headers=headers, json=body, verify=False)
+        if response.status_code != 200:
+            response = session.get("https://doitbest.com/store-locator", headers=hdr)
+            dom = etree.HTML(response.text)
+            csrfid = dom.xpath('//input[@id="StoreLocatorForm_CSRFID"]/@value')[0]
+            token = dom.xpath('//input[@id="StoreLocatorForm_CSRFToken"]/@value')[0]
+            body = {
+                "StoreLocatorForm": {
+                    "Location": code,
+                    "Filter": "All Locations",
+                    "Range": "200",
+                    "CSRFID": csrfid,
+                    "CSRFToken": token,
+                }
+            }
+            response = session.post(start_url, headers=headers, json=body, verify=False)
         data = json.loads(response.text)
         if not data["Response"].get("Stores"):
             continue
@@ -86,12 +108,17 @@ def fetch_data():
 
     for poi in all_locations:
         store_url = poi["WebsiteURL"]
-        store_url = urljoin(start_url, store_url) if store_url else "<MISSING>"
+        store_url = "https://" + store_url if store_url else "<MISSING>"
         try:
             location_name = poi["Name"]
         except TypeError:
             continue
         location_name = location_name if location_name else "<MISSING>"
+        passed = False
+        if "do it best" in location_name.lower():
+            passed = True
+        if "doitbest" not in store_url.lower() and not passed:
+            continue
         street_address = poi["Address1"]
         if poi["Address2"]:
             street_address += ", " + poi["Address2"]
