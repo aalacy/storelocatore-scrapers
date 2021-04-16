@@ -60,16 +60,20 @@ def fetch_data():
                     lat = "<MISSING>"
                     lng = "<MISSING>"
         if "<address>" in line:
-            add = line.split("<address>")[1].split("</a><br />")[0].split("<")[0]
+            add = (
+                line.split("<address>")[1]
+                .split("</a></address><br />")[0]
+                .split("<")[0]
+            )
             city = (
                 line.split("<address>")[1]
-                .split("</a><br />")[0]
+                .split("</a></address><br />")[0]
                 .rsplit("<br />", 1)[1]
                 .split(",")[0]
             )
             state = (
                 line.split("<address>")[1]
-                .split("</a><br />")[0]
+                .split("</a></address><br />")[0]
                 .rsplit("<br />", 1)[1]
                 .split(",")[1]
                 .rsplit(" ", 1)[0]
@@ -77,7 +81,7 @@ def fetch_data():
             )
             zc = (
                 line.split("<address>")[1]
-                .split("</a><br />")[0]
+                .split("</a></address><br />")[0]
                 .rsplit("<br />", 1)[1]
                 .split(",")[1]
                 .rsplit(" ", 1)[1]
@@ -110,6 +114,14 @@ def fetch_data():
                 lng = "-76.546898"
             if hours == "":
                 hours = "<MISSING>"
+            if "Oak Brook" in city:
+                hours = "Sun-Thurs: 11:30am-9pm; Fri-Sat: 11:30am-10pm"
+            if "; Outdoor" in hours:
+                hours = hours.split("; Outdoor")[0].strip()
+            if "; Patio" in hours:
+                hours = hours.split("; Patio")[0].strip()
+            if "; Dine" in hours:
+                hours = hours.split("; Dine")[0].strip()
             yield [
                 website,
                 purl,
