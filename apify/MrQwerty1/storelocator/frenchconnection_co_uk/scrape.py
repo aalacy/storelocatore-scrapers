@@ -66,7 +66,7 @@ def get_data(_id):
     latitude = "".join(tree.xpath("//latitude/text()")) or "<MISSING>"
     longitude = "".join(tree.xpath("//longitude/text()")) or "<MISSING>"
     location_type = "".join(tree.xpath("//addressline1/text()")) or "<MISSING>"
-    page_url = "<MISSING>"
+    page_url = "https://www.frenchconnection.com/store-locator.htm"
     hours_of_operation = "<MISSING>"
 
     row = [

@@ -1,62 +1,97 @@
+import re
 import csv
-from sgrequests import SgRequests
-from bs4 import BeautifulSoup
+from lxml import etree
 
-session = SgRequests()
+from sgrequests import SgRequests
+
 
 def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+    with open("data.csv", mode="w", encoding="utf-8") as output_file:
+        writer = csv.writer(
+            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+        )
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(
+            [
+                "locator_domain",
+                "page_url",
+                "location_name",
+                "street_address",
+                "city",
+                "state",
+                "zip",
+                "country_code",
+                "store_number",
+                "phone",
+                "location_type",
+                "latitude",
+                "longitude",
+                "hours_of_operation",
+            ]
+        )
         # Body
         for row in data:
             writer.writerow(row)
 
+
 def fetch_data():
-    locator_domain = 'https://www.parknshop.net/' 
-    ext = 'park-n-shop-locations/'
+    # Your scraper here
+    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
 
-    to_scrape = locator_domain + ext
+    items = []
 
-    page = session.get(to_scrape)
-    assert page.status_code == 200
+    start_url = "https://www.parknshop.net/park-n-shop-locations/"
+    domain = re.findall("://(.+?)/", start_url)[0].replace("www.", "")
+    hdr = {
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
+    }
+    response = session.get(start_url, headers=hdr)
+    dom = etree.HTML(response.text)
 
-    soup = BeautifulSoup(page.content, 'html.parser')
+    all_locations = dom.xpath('//div[p[strong[contains(text(), "Store Address")]]]')
+    for poi_html in all_locations:
+        store_url = start_url
+        raw_data = poi_html.xpath("./p/text()")
+        location_name = raw_data[0]
+        street_address = raw_data[1]
+        city = raw_data[2].split(", ")[0]
+        state = raw_data[2].split(", ")[-1].split()[0]
+        zip_code = raw_data[2].split(", ")[-1].split()[-1]
+        country_code = "<MISSING>"
+        store_number = "<MISSING>"
+        phone = raw_data[4]
+        location_type = "<MISSING>"
+        latitude = "<MISSING>"
+        longitude = "<MISSING>"
+        hours_of_operation = raw_data[3]
 
-    panel = soup.find_all('div', {'class':'panel-grid'})
+        item = [
+            domain,
+            store_url,
+            location_name,
+            street_address,
+            city,
+            state,
+            zip_code,
+            country_code,
+            store_number,
+            phone,
+            location_type,
+            latitude,
+            longitude,
+            hours_of_operation,
+        ]
 
-    all_store_data = []
+        items.append(item)
 
-    cycle = [1, 3, 5] 
-    for i in cycle:
-        ps = panel[i].find_all('p')
-        location_name = ps[1].text
-        street_address = ps[2].text
-        addy_info = ps[3].text.split(',')
-        city = addy_info[0]
-        addy_info2 = addy_info[1].split(' ')
-        state = addy_info2[1]
-        zip_code = addy_info2[2]
-        
-        hours = ps[5].text + ' ' + ps[6].text
-        phone_number = ps[7].text.replace('Phone Number:', '').strip()
-        
-        country_code = 'US'
-        store_number = '<MISSING>'
-        lat = '<MISSING>'
-        longit = '<MISSING>'
-        location_type = '<MISSING>'
-        
-        store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
-                         store_number, phone_number, location_type, lat, longit, hours ]
-        all_store_data.append(store_data)
+    return items
 
-    return all_store_data
 
 def scrape():
     data = fetch_data()
     write_output(data)
 
-scrape()
+
+if __name__ == "__main__":
+    scrape()

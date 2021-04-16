@@ -2,7 +2,6 @@ import csv
 import json
 from lxml import etree
 from urllib.parse import urljoin
-from tqdm import tqdm
 
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 from sgrequests import SgRequests
@@ -66,7 +65,7 @@ def fetch_data():
     all_locations = []
     all_codes = DynamicZipSearch(
         country_codes=[SearchableCountries.USA],
-        max_radius_miles=200,
+        max_radius_miles=100,
         max_search_results=None,
     )
     for code in all_codes:
@@ -74,7 +73,7 @@ def fetch_data():
             "StoreLocatorForm": {
                 "Location": code,
                 "Filter": "All Locations",
-                "Range": "250",
+                "Range": "100",
                 "CSRFID": csrfid,
                 "CSRFToken": token,
             }
@@ -85,7 +84,7 @@ def fetch_data():
             continue
         all_locations += data["Response"]["Stores"]
 
-    for poi in tqdm(all_locations):
+    for poi in all_locations:
         store_url = poi["WebsiteURL"]
         store_url = urljoin(start_url, store_url) if store_url else "<MISSING>"
         try:
@@ -93,8 +92,6 @@ def fetch_data():
         except TypeError:
             continue
         location_name = location_name if location_name else "<MISSING>"
-        if "do it best" not in location_name.lower():
-            continue
         street_address = poi["Address1"]
         if poi["Address2"]:
             street_address += ", " + poi["Address2"]

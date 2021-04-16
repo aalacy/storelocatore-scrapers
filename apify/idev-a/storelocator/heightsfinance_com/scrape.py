@@ -49,18 +49,17 @@ def fetch_data():
         store_list = json.loads(r.text)
 
         for store in store_list:
-            if "close" in store["acf"]["branch_special_hours"]:
-                continue
-            page_url = "https://www.heightsfinance.com/find-a-branch/"
+
             location_name = store["slug"]
+            page_url = (
+                "https://www.heightsfinance.com/loan-office-location/" + location_name
+            )
             street_address = (
                 store["acf"]["branch_address_1"] + store["acf"]["branch_address_2"]
             )
             store_number = store["acf"]["branch_id"]
-            hours_of_operation = (
-                store["acf"]["branch_normal_hours"].replace("<br />\r\n", " ")
-                + " "
-                + store["acf"]["branch_special_hours"]
+            hours_of_operation = store["acf"]["branch_normal_hours"].replace(
+                "<br />\r\n", " "
             )
 
             hours_of_operation = hours_of_operation.replace("<br />", "")
@@ -72,6 +71,8 @@ def fetch_data():
             location_type = "<MISSING>"
             latitude = store["acf"]["branch_latitude"]
             longitude = store["acf"]["branch_longitude"]
+            if "close" in store["acf"]["branch_special_hours"]:
+                hours_of_operation += " (Temporarily closed)"
 
             data.append(
                 [

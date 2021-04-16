@@ -38,7 +38,7 @@ def getdata():
         zip_code = place.find(attrs={"name": "ZIP"}).text.strip()
         phone = place.find(attrs={"name": "Phone"}).text.strip()
         hour = place.find(attrs={"name": "Store Hrs."}).text.strip()
-        page_url = place.find(attrs={"name": "URL"}).text.strip()
+        page_url = "https://www.google.com/maps/d/viewer?mid=1k_5K2ikpmcAyElx_ND0io5MT-3w&ll=35.64271937457243%2C-88.47843979999999&z=4"
 
         # for some reason the 0 is trimmed off of zip codes beginning with 0. Add that back here
         if len(zip_code) == 4:

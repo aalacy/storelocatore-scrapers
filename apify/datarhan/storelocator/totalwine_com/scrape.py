@@ -122,7 +122,7 @@ def fetch_data():
         street_address = poi.get("address1")
         if street_address:
             if poi["address2"]:
-                street_address += ", " + poi["address2"]
+                street_address = poi["address2"]
         else:
             street_address = poi.get("address2")
         street_address = street_address if street_address else "<MISSING>"
@@ -147,7 +147,10 @@ def fetch_data():
             day = elem["dayOfWeek"]
             opens = elem["openingTime"]
             closes = elem["closingTime"]
-            hours_of_operation.append(f"{day} {opens} - {closes}")
+            if opens == closes:
+                hours_of_operation.append(f"{day} closed")
+            else:
+                hours_of_operation.append(f"{day} {opens} - {closes}")
         hours_of_operation = (
             " ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
         )

@@ -37,10 +37,10 @@ def write_output(data):
 
 def get_urls():
     session = SgRequests()
-    r = session.get("https://www.beatone.co.uk/bars")
+    r = session.get("https://www.beatone.co.uk/sitemap")
     tree = html.fromstring(r.text)
 
-    return tree.xpath("//a[@class='inner-item']/@href")
+    return tree.xpath("//ul[@class='venue-list']/li/a/@href")
 
 
 def get_data(url):

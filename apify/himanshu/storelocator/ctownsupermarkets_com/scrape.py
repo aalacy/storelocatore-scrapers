@@ -90,7 +90,6 @@ def fetch_data():
         location_url = "https://liveapi.yext.com/v2/accounts/me/entities/geosearch"
         data = session.get(location_url, headers=headers, params=params).json()
         locations = data["response"]["entities"]
-        coordinates = []
         for location in locations:
             store_number = location["meta"]["id"]
 
@@ -115,7 +114,7 @@ def fetch_data():
             longitude = coordinate.get("longitude", MISSING)
 
             if latitude != MISSING and longitude != MISSING:
-                coordinates.append([latitude, longitude])
+                search.found_location_at(latitude, longitude)
 
             page_url = location.get("websiteUrl", {}).get("url", MISSING)
 
@@ -142,9 +141,6 @@ def fetch_data():
             location_map[store_number] = True
 
             yield store
-
-        if len(coordinates) > 0:
-            search.mark_found(coordinates)
 
 
 def scrape():

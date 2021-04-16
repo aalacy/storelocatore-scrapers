@@ -1,8 +1,9 @@
-import re
 import csv
 import json
+from lxml import etree
 
 from sgrequests import SgRequests
+from sgscrape.sgpostal import parse_address_intl
 
 
 def write_output(data):
@@ -44,130 +45,97 @@ def fetch_data():
 
     DOMAIN = "myeyelevel.com"
     start_url = "https://www.myeyelevel.com/US/customer/getCenterList.do"
-    formdata = {
-        "pageName": "findCenter",
-        "centerLati": "",
-        "searchType": "",
-        "centerLongi": "",
-        "surDistance": "",
-        "myLocLati": "0",
-        "myLocLongi": "0",
-        "countryCd": "0015",
-        "cityCd": "",
-        "centerName": "",
-        "listSort": "D",
-    }
+    country_codes = ["0015", "0014"]
+    for code in country_codes:
+        formdata = {
+            "pageName": "findCenter",
+            "centerLati": "",
+            "searchType": "",
+            "centerLongi": "",
+            "surDistance": "",
+            "myLocLati": "0",
+            "myLocLongi": "0",
+            "countryCd": code,
+            "cityCd": "",
+            "centerName": "",
+            "listSort": "D",
+        }
 
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.193 Safari/537.36",
-        "X-Requested-With": "XMLHttpRequest",
-    }
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.193 Safari/537.36",
+            "X-Requested-With": "XMLHttpRequest",
+        }
 
-    response = session.post(start_url, data=formdata, headers=headers)
-    data = json.loads(response.text)
+        response = session.post(start_url, data=formdata, headers=headers)
+        data = json.loads(response.text)
 
-    for poi in data:
-        if poi.get("homeurl"):
-            store_url = "https://" + poi["homeurl"]
-        else:
-            store_url = "<MISSING>"
-        location_name = poi["centerName"]
-        location_name = location_name if location_name else "<MISSING>"
-        street_address = poi["address"]
-        if len(street_address.split(",")) > 1:
-            if "Unit" in street_address.split(",")[1]:
-                street_address = ", ".join(street_address.split(",")[:2])
-            elif "Suit" in street_address.split(",")[1]:
-                street_address = ", ".join(street_address.split(",")[:2])
+        for poi in data:
+            if poi.get("homeurl"):
+                store_url = "https://" + poi["homeurl"]
             else:
-                street_address = street_address.split(",")[0]
-        street_address = street_address if street_address else "<MISSING>"
-        if poi.get("pCity"):
-            if len(poi["pCity"].split(",")) > 1:
-                city = poi["pCity"].split(",")[0]
-                state = poi["pCity"].split(",")[-1]
-            else:
-                city = poi["pCity"]
-                if len(city.split()) > 1:
-                    if len(city.split()[-1].strip()) == 2:
-                        city = city.split()[0]
-                        state = poi["pCity"].split()[-1]
-                else:
-                    state = "<MISSING>"
-        else:
-            if len(poi["address"].split(",")) > 1:
-                city = poi["address"].split(",")[-2].strip()
-                if "#" in city:
-                    if len(city) > 7:
-                        city = re.findall(r"#\d+ (.+)", city)
-                        city = city[0] if city else poi["address"].split()[-3]
-                    else:
-                        city = poi["address"].split(",")[-1].strip().split()[0]
-                if len(city.split()) > 2:
-                    city = "<MISSING>"
-                if "Unit" in city:
-                    city = " ".join(poi["address"].split(",")[-1].split()[:-2])
-                state = " ".join(poi["address"].split(",")[-1].split()[1:])
-                if not state:
-                    state = poi["address"].split(",")[-1]
-                if len(state) > 2:
-                    if len(poi["address"].split(",")[-1].split()) > 1:
-                        state = poi["address"].split(",")[-1].split()[-2]
-                        if len(state) > 2:
-                            state = "<MISSING>"
-                    else:
-                        state = "<MISSING>"
-            else:
-                city = poi["address"].split()[-3]
-                if city == "Jose":
-                    city = "San Jose"
-                state = poi["address"].split()[-2]
-        zip_code = poi.get("zipcode")
-        if not zip_code:
-            zip_code = poi["address"].split()[-1]
-        zip_code = zip_code if zip_code else "<MISSING>"
-        country_code = ""
-        country_code = country_code if country_code else "<MISSING>"
-        store_number = poi["centerNo"]
-        store_number = store_number if store_number else "<MISSING>"
-        phone = poi.get("phone")
-        phone = phone if phone else "<MISSING>"
-        location_type = ""
-        location_type = location_type if location_type else "<MISSING>"
-        latitude = poi["locLati"]
-        latitude = latitude if latitude else "<MISSING>"
-        longitude = poi["locLongi"]
-        longitude = longitude if longitude else "<MISSING>"
-        hours_of_operation = poi["centerOpenTime"]
-        hours_of_operation = hours_of_operation if hours_of_operation else "<MISSING>"
+                store_url = "<MISSING>"
+            if "www.myeyelevel.com" not in store_url:
+                continue
+            loc_response = session.get(store_url)
+            loc_dom = etree.HTML(loc_response.text)
+            raw_address = loc_dom.xpath(
+                '//ul[@class="copyUl"]//span[@class="link"]/text()'
+            )[0]
+            structured_adr = parse_address_intl(raw_address)
+            location_name = poi["centerName"]
+            location_name = location_name if location_name else "<MISSING>"
+            street_address = structured_adr.street_address_1
+            city = structured_adr.city
+            if not city and len(raw_address.split(", ")) == 3:
+                city = raw_address.split(", ")[1]
+            if not city:
+                city = loc_dom.xpath('//meta[@name="description"]/@content')[0].replace(
+                    "Eye Level ", ""
+                )
+                if city:
+                    street_address = raw_address.split(city)[0].strip()
+            city = city if city else "<MISSING>"
+            state = structured_adr.state
+            state = state if state else "<MISSING>"
+            zip_code = structured_adr.postcode
+            zip_code = zip_code if zip_code else "<MISSING>"
+            country_code = "<MISSING>"
+            store_number = poi["centerNo"]
+            store_number = store_number if store_number else "<MISSING>"
+            phone = poi.get("phone")
+            phone = phone if phone else "<MISSING>"
+            location_type = "<MISSING>"
+            latitude = poi["locLati"]
+            latitude = latitude if latitude else "<MISSING>"
+            longitude = poi["locLongi"]
+            longitude = longitude if longitude else "<MISSING>"
+            hours_of_operation = poi["centerOpenTime"]
+            hours_of_operation = (
+                hours_of_operation.replace(",", " ").strip()
+                if hours_of_operation
+                else "<MISSING>"
+            )
 
-        if len(city.split()) == 2:
-            if len(city.split()[-1]) == 2:
-                city = city.split()[0]
-                state = city.split()[-1]
+            item = [
+                DOMAIN,
+                store_url,
+                location_name,
+                street_address,
+                city,
+                state,
+                zip_code,
+                country_code,
+                store_number,
+                phone,
+                location_type,
+                latitude,
+                longitude,
+                hours_of_operation,
+            ]
 
-        street_address = street_address.replace(city, "")
-
-        item = [
-            DOMAIN,
-            store_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip_code,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-
-        if store_number not in scraped_items:
-            scraped_items.append(store_number)
-            items.append(item)
+            if store_number not in scraped_items:
+                scraped_items.append(store_number)
+                items.append(item)
 
     return items
 
