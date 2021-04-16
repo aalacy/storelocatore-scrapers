@@ -64,10 +64,9 @@ def write_output(data):
                 writer.writerow(row)
 
 
-# Get all store URLs from Google Tag manager URL
+# Get all worldwide tore URLs from Google Tag manager URL
 url_google_tag_manager = "https://www.googletagmanager.com/gtm.js?id=GTM-M6N43L"
 r_gt = session.get(url_google_tag_manager, headers=headers)
-pattern = r'vtp_javascript(.*)\\".split'
 pattern2 = r'{var a=\\\"(.*)\\".split'
 url_all_stores_952 = re.findall(pattern2, r_gt.text)
 url_all_stores_952 = "".join(url_all_stores_952)
