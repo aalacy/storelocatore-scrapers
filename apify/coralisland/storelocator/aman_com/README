@@ -1,0 +1,2 @@
+--ignore StreetAddressHasNumber (CONFIRMED SCRAPE CORRECTLY)
+--ignore GeoConsistencyValidator (CONFIRMED SCRAPE CORRECTLY)
