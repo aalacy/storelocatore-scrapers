@@ -7,7 +7,6 @@ import threading
 from datetime import datetime
 from urllib.parse import urljoin
 from concurrent.futures import ThreadPoolExecutor, as_completed
-
 from bs4 import BeautifulSoup
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
@@ -364,9 +363,6 @@ def fetch_data():
 
     logger.info(f"number of cities: {len(city_urls)}")
     loc_urls = scrape_city_urls(city_urls)
-
-    with open('locations.json', 'w') as file:
-        json.dump(loc_urls, file)
 
     logger.info(f"number of locations: {len(loc_urls)}")
     return scrape_loc_urls(loc_urls)
