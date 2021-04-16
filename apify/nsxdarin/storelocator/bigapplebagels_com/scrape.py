@@ -118,6 +118,10 @@ def fetch_data():
                             lng = "<MISSING>"
                         if add not in locs and add != "Test" and add != "":
                             locs.append(add)
+                            if "*" in add:
+                                add = add.split("*")[0].strip()
+                            if "2616 Ogden" in add:
+                                phone = "630-375-9822"
                             yield [
                                 website,
                                 loc,
