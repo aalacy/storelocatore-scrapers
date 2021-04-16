@@ -42,6 +42,7 @@ def write_output(data):
 
 def fetch_data():
     data = []
+    streetlist = []
     pattern = re.compile(r"\s\s+")
     cleanr = re.compile(r"<[^>]+>")
     url = "https://www.howardbank.com/branch-locations"
@@ -58,6 +59,9 @@ def fetch_data():
             pass
         else:
             link = "https://www.howardbank.com" + link
+        if link in streetlist:
+            continue
+        streetlist.append(link)
         r = session.get(link, headers=headers, verify=False)
         soup = BeautifulSoup(r.text, "html.parser")
         if "commerical-loan-office" in link:
@@ -95,11 +99,13 @@ def fetch_data():
             city = city + " " + state
             city = city.replace(",", "").strip()
             state, pcode = pcode.split(" ", 1)
+        if "TEMPORARY CLOSURE" in soup.text:
+            title = title + "- " + "TEMPORARY CLOSED "
         data.append(
             [
                 "https://www.howardbank.com",
                 link,
-                title.replace("\xa0", ""),
+                title.replace("\xa0", "").strip(),
                 street.replace("\xa0", ""),
                 city,
                 state,
