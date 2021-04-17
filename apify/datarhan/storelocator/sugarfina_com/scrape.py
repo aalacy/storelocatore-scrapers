@@ -52,7 +52,7 @@ def fetch_data():
 
     all_locations = []
     all_codes = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA], max_radius_miles=200
+        country_codes=[SearchableCountries.USA], max_radius_miles=50
     )
     for code in all_codes:
         params = {
@@ -99,7 +99,7 @@ def fetch_data():
         location_name = location_name.strip() if location_name else "<MISSING>"
         street_address = poi["street"]
         street_address = street_address if street_address else "<MISSING>"
-        city = poi["city"]
+        city = poi["city"].strip()
         city = city if city else "<MISSING>"
         state = poi.get("region")
         state = state if state else "<MISSING>"

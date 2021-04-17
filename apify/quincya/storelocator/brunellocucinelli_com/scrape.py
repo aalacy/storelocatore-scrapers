@@ -61,23 +61,34 @@ def fetch_data():
             link = "https://shop.brunellocucinelli.com" + store["url"]
             if "SingleBoutique" in link:
                 continue
-            street_address = store["address1"].replace(", Boston, MA", "").strip()
-            if street_address in found_poi:
-                continue
-            found_poi.append(street_address)
+            street_address = (
+                store["address1"]
+                .replace(", Boston, MA", "")
+                .replace("135 - 137", "135-137")
+                .split(" - ")[0]
+                .split("Montr")[0]
+                .strip()
+            )
             city = store["city"]
             state = store["stateCode"]
             zip_code = store["postalCode"]
             store_number = store["ID"]
             location_type = "<MISSING>"
-            phone = store["phone"]
+            phone = store["phone"].replace("01 514", "+1 514")
+            if phone in found_poi:
+                continue
+            found_poi.append(phone)
+
             latitude = store["markers"]["lat"]
             longitude = store["markers"]["long"]
             req = session.get(link, headers=headers)
             base = BeautifulSoup(req.text, "lxml")
-            hours_of_operation = " ".join(
-                list(base.find(class_="cc-container-day-info").stripped_strings)
-            )
+            try:
+                hours_of_operation = " ".join(
+                    list(base.find(class_="cc-container-day-info").stripped_strings)
+                )
+            except:
+                hours_of_operation = store["storeHours"].replace("<br>\n", " ")
 
             data.append(
                 [
