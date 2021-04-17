@@ -1,5 +1,4 @@
 import csv
-import json
 from lxml import etree
 from urllib.parse import urljoin
 
