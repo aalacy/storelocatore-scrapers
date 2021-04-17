@@ -44,7 +44,7 @@ def fetch_data():
     items = []
     scraped_items = []
 
-    start_url = "https://locator.chase.com/search?q={}&l=en&type=ATM&r=100"
+    start_url = "https://locator.chase.com/search?q={}&l=en&r=100"
     domain = "chase.com"
     hdr = {
         "accept": "application/json",
@@ -63,6 +63,8 @@ def fetch_data():
         for p in range(10, total + 10, 10):
             page_url = add_or_replace_parameter(response.url, "offset", str(p))
             response = session.get(page_url, headers=hdr)
+            if response.status_code != 200:
+                continue
             data = json.loads(response.text)
             all_locations += data["response"]["entities"]
 
