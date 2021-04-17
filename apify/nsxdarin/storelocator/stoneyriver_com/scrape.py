@@ -122,6 +122,8 @@ def fetch_data():
                 hours = hours.split("; Patio")[0].strip()
             if "; Dine" in hours:
                 hours = hours.split("; Dine")[0].strip()
+            if "3900 Sum" in add:
+                hours = hours.replace("; Mon", "Mon")
             yield [
                 website,
                 purl,
