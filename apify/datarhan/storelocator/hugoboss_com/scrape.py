@@ -114,7 +114,7 @@ def fetch_data():
             longitude,
             hoo,
         ]
-        check = f'{poi_name} {street}'
+        check = f"{poi_name} {street}"
         if check not in scraped_items:
             scraped_items.append(check)
             items.append(item)
