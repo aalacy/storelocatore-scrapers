@@ -83,13 +83,19 @@ for url_cone in url_all_stores[0:10]:
     )
 
 
-def get_data_from_multi_locations(data_list):
+def get_data_from_multi_locations(data_list, url_store_domain_check):
     items_multiloc = []
     data_list = data_list["Results"]
     logger.info(f"\nMulti locations data JSON: {data_list} \n")
     for data in data_list:
         locator_domain = locator_domain_url
-        page_url = data["StoreAboutUrl"] or MISSING
+        page_url_data = data["StoreAboutUrl"]
+        if url_store_domain_check not in page_url_data:
+            page_url_data = f"http://www.{url_store_domain_check}/{page_url_data}"
+        else:
+            page_url_data = page_url_data
+
+        page_url = page_url_data or MISSING
         location_name = data["StoreName"] or MISSING
         sa = data["StoreLocationSingle"]["Address"]
         street_address = sa if sa else MISSING
@@ -128,23 +134,24 @@ def get_data_from_multi_locations(data_list):
             hours_of_operation = "; ".join(hoo)
         else:
             hours_of_operation = MISSING
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        items_multiloc.append(row)
+        if country_code == "CA":
+            row = [
+                locator_domain,
+                page_url,
+                location_name,
+                street_address,
+                city,
+                state,
+                zip,
+                country_code,
+                store_number,
+                phone,
+                location_type,
+                latitude,
+                longitude,
+                hours_of_operation,
+            ]
+            items_multiloc.append(row)
     return items_multiloc
 
 
@@ -232,23 +239,24 @@ def get_data_from_website(data_raw):
             hours_of_operation = hoo
         else:
             hours_of_operation = get_hours_raw_html(data_raw)
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        items_from_web.append(row)
+        if country_code == "CA":
+            row = [
+                locator_domain,
+                page_url,
+                location_name,
+                street_address,
+                city,
+                state,
+                zip,
+                country_code,
+                store_number,
+                phone,
+                location_type,
+                latitude,
+                longitude,
+                hours_of_operation,
+            ]
+            items_from_web.append(row)
     except Exception:
         pass
     return items_from_web
@@ -256,9 +264,9 @@ def get_data_from_website(data_raw):
 
 def fetch_data():
     items = []
-    for idx1, url_store in enumerate(url_all_stores):
+    for idx1, url_store_domain in enumerate(url_all_stores):
         try:
-            url_store = f"http://www.{url_store}"
+            url_store = f"http://www.{url_store_domain}"
             logger.info(f"Pulling the data from: {idx1}: {url_store} ")
             r = session.get(url_store)
             time.sleep(randint(3, 5))
@@ -278,7 +286,9 @@ def fetch_data():
                 data_from_api_call = session.get(
                     url_multiloc_api_full, headers=headers
                 ).json()
-                items_from_api_list = get_data_from_multi_locations(data_from_api_call)
+                items_from_api_list = get_data_from_multi_locations(
+                    data_from_api_call, url_store_domain
+                )
                 for ifal in items_from_api_list:
                     items.append(ifal)
             else:
