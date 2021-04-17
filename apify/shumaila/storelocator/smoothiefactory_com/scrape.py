@@ -1,119 +1,132 @@
-from bs4 import BeautifulSoup
 import csv
-import string
-import re, time
-
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('smoothiefactory_com')
-
-
 
 session = SgRequests()
-headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
-           }
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+}
+
 
 def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+    with open("data.csv", mode="w") as output_file:
+        writer = csv.writer(
+            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+        )
 
         # Header
-        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(
+            [
+                "locator_domain",
+                "page_url",
+                "location_name",
+                "street_address",
+                "city",
+                "state",
+                "zip",
+                "country_code",
+                "store_number",
+                "phone",
+                "location_type",
+                "latitude",
+                "longitude",
+                "hours_of_operation",
+            ]
+        )
         # Body
         for row in data:
             writer.writerow(row)
 
 
-def fetch_data(): 
+def fetch_data():
     data = []
     p = 0
-    
-    url = 'https://momentfeed-prod.apigee.net/api/llp.json?auth_token=ZLHQWBGKROQFVIUG&pageSize=30'
-    sitemap = 'https://momentfeed-prod.apigee.net/api/v2/llp/sitemap?auth_token=ZLHQWBGKROQFVIUG&country=US'
-    maplist = session.get(sitemap, headers=headers, verify=False).json()['locations']
+    url = "https://api.momentfeed.com/v1/analytics/api/llp.json?auth_token=ZLHQWBGKROQFVIUG&page=1&pageSize=100"
     loclist = session.get(url, headers=headers, verify=False).json()
-    #logger.info(maplist)
-    hourd = {"1":"Mon","2":"Tues","3":"Wed","4":"Thurs","5":"Fri","6":"Sat","7":"Sun"}
-    for loc in loclist:
-        loc = loc['store_info']
-        title = loc['name']
-        store = loc['corporate_id']
-        street = loc['address']
+    hourd = {
+        "1": "Mon",
+        "2": "Tues",
+        "3": "Wed",
+        "4": "Thurs",
+        "5": "Fri",
+        "6": "Sat",
+        "7": "Sun",
+    }
+    for loc1 in loclist:
+        loc = loc1["store_info"]
+        title = loc["name"]
+        store = loc["corporate_id"]
+        street = loc["address"]
         try:
-            street = street+' '+ loc['address_extended']
+            street = street + " " + loc["address_extended"]
         except:
             pass
-        city = loc['locality']
-        state = loc['region']
-        pcode = loc['postcode']
-        ccode = loc['country']
-        phone = loc['phone']
-        lat = loc['latitude']
-        longt = loc['longitude']
-        link = loc['website']
-        hourlist =loc['store_hours'].split(';')
-        hours =''
+        city = loc["locality"]
+        state = loc["region"]
+        pcode = loc["postcode"]
+        phone = loc["phone"]
+        if "(" not in phone:
+            phone = phone[0:3] + "-" + phone[3:6] + "-" + phone[6:10]
+        lat = loc["latitude"]
+        longt = loc["longitude"]
+        hourlist = loc["store_hours"].split(";")
+        hours = ""
         for hr in hourlist:
             try:
-                day,start,end= hr.split(',')
+                day, start, end = hr.split(",")
                 day = hourd[str(day)]
-                start = str(start).replace('00',':00 AM ')
-                end = (int)(str(end).replace("00",''))
-                if end > 12 :
-                    end = end -12
-                hours = hours + day +' '+ start + '- '+ str(end) +":00 PM "
+                start1 = str(start)[0:2]
+                start2 = str(start)[2:]
+                end1 = (int)(str(end)[0:2])
+                end2 = str(end)[2:]
+                if end1 > 12:
+                    end1 = end1 - 12
+                hours = (
+                    hours
+                    + day
+                    + " "
+                    + start1
+                    + ":"
+                    + start2
+                    + " AM - "
+                    + str(end1)
+                    + ":"
+                    + str(end2)
+                    + " PM "
+                )
             except:
                 pass
-
-        status = 0
-        #logger.info(street)
-        #logger.info(len(maplist))
-        for t in maplist:
-            #logger.info(t['store_info']['address'])
-            #input()
-            if street.find(t['store_info']['address']) > -1:
-                #logger.info("YES")
-                link = 'https://locations.smoothiefactory.com' +t["llp_url"]
-                if t['open_or_closed'].find('coming soon') > -1:
-                    status = 1
-                if t['open_or_closed'].find('temp closed') > -1:
-                    hours = t['open_or_closed']
-                break
-                    
-        if status == 1:
+        link = "https://locations.smoothiefactory.com" + loc1["llp_url"]
+        if "coming soon" in loc1["open_or_closed"]:
             continue
-        data.append([
-                        'https://smoothiefactory.com/',
-                        link,                   
-                        title,
-                        street,
-                        city,
-                        state,
-                        pcode,
-                        'US',
-                        store,
-                        phone,
-                        '<MISSING>',
-                        lat,
-                        longt,
-                        hours
-                    ])
-        #logger.info(p,data[p])
-        p += 1
-                
+        if len(hours) < 3:
+            hours = "Temporarily Closed"
+        data.append(
+            [
+                "https://smoothiefactory.com/",
+                link,
+                title,
+                street,
+                city,
+                state,
+                pcode,
+                "US",
+                store,
+                phone,
+                "<MISSING>",
+                lat,
+                longt,
+                hours,
+            ]
+        )
 
-                
-                
-            
-        
+        p += 1
     return data
 
 
 def scrape():
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
+
     data = fetch_data()
     write_output(data)
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
+
 
 scrape()

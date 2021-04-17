@@ -39,7 +39,9 @@ def fetch_data():
     # Your scraper here
 
     locator_domain = "https://www.bi-lo.com/"
-    backendPOST = "https://www.bi-lo.com/Locator?search=29607&MilesSelectedValue=5"
+    backendPOST = (
+        "https://www.bi-lo.com/Locator?search=29607&MilesSelectedValue=1000000"
+    )
 
     headers = {
         "content-type": "application/x-www-form-urlencoded",
@@ -61,7 +63,7 @@ def fetch_data():
         "currentzipcode": "29607",
         "CurrentState": "StrTab",
         "StoreZipCode": "29607",
-        "MilesSelectedValue": "1000",
+        "MilesSelectedValue": "20000",
         "strCommand": "Search",
         "ATM": "false",
         "Floral": "false",

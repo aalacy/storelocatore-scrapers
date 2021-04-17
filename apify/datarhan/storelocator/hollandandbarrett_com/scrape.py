@@ -74,8 +74,11 @@ def fetch_data():
         store_url = urljoin(base_url, poi["properties"]["user_properties"]["storePath"])
         location_name = poi["properties"]["name"]
         location_name = location_name if location_name else "<MISSING>"
-        street_address = " ".join(poi["properties"]["address"]["lines"])
+        street_address = " ".join(poi["properties"]["address"]["lines"]).lower()
         city = poi["properties"]["address"]["city"]
+        if street_address.endswith(city.lower()):
+            street_address = " ".join(street_address.split(city.lower())[:-1])
+        street_address = street_address.upper()
         state = "<MISSING>"
         zip_code = poi["properties"]["address"]["zipcode"]
         country_code = poi["properties"]["address"]["country_code"]

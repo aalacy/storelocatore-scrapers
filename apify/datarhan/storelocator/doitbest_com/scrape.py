@@ -1,8 +1,6 @@
 import csv
 import json
 from lxml import etree
-from urllib.parse import urljoin
-from tqdm import tqdm
 
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 from sgrequests import SgRequests
@@ -40,7 +38,13 @@ def write_output(data):
 
 def fetch_data():
     # Your scraper here
-    session = SgRequests().requests_retry_session(retries=1, backoff_factor=0.3)
+    session = SgRequests(proxy_rotation_failure_threshold=0).requests_retry_session(
+        retries=1,
+        backoff_factor=0.3,
+        status_forcelist=[
+            418,
+        ],
+    )
 
     items = []
     scraped_items = []
@@ -48,10 +52,11 @@ def fetch_data():
     DOMAIN = "doitbest.com"
     start_url = "https://doitbest.com/StoreLocator/Submit"
 
-    headers = {
+    hdr = {
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
     }
-    response = session.get("https://doitbest.com/store-locator", headers=headers)
+
+    response = session.get("https://doitbest.com/store-locator", headers=hdr)
     dom = etree.HTML(response.text)
     csrfid = dom.xpath('//input[@id="StoreLocatorForm_CSRFID"]/@value')[0]
     token = dom.xpath('//input[@id="StoreLocatorForm_CSRFToken"]/@value')[0]
@@ -66,7 +71,7 @@ def fetch_data():
     all_locations = []
     all_codes = DynamicZipSearch(
         country_codes=[SearchableCountries.USA],
-        max_radius_miles=200,
+        max_radius_miles=50,
         max_search_results=None,
     )
     for code in all_codes:
@@ -74,26 +79,46 @@ def fetch_data():
             "StoreLocatorForm": {
                 "Location": code,
                 "Filter": "All Locations",
-                "Range": "250",
+                "Range": "50",
                 "CSRFID": csrfid,
                 "CSRFToken": token,
             }
         }
         response = session.post(start_url, headers=headers, json=body, verify=False)
+        if response.status_code != 200:
+            response = session.get("https://doitbest.com/store-locator", headers=hdr)
+            dom = etree.HTML(response.text)
+            csrfid = dom.xpath('//input[@id="StoreLocatorForm_CSRFID"]/@value')[0]
+            token = dom.xpath('//input[@id="StoreLocatorForm_CSRFToken"]/@value')[0]
+            body = {
+                "StoreLocatorForm": {
+                    "Location": code,
+                    "Filter": "All Locations",
+                    "Range": "50",
+                    "CSRFID": csrfid,
+                    "CSRFToken": token,
+                }
+            }
+            response = session.post(start_url, headers=headers, json=body, verify=False)
+            if not response.text:
+                continue
         data = json.loads(response.text)
         if not data["Response"].get("Stores"):
             continue
         all_locations += data["Response"]["Stores"]
 
-    for poi in tqdm(all_locations):
+    for poi in all_locations:
         store_url = poi["WebsiteURL"]
-        store_url = urljoin(start_url, store_url) if store_url else "<MISSING>"
+        store_url = "https://" + store_url if store_url else "<MISSING>"
         try:
             location_name = poi["Name"]
         except TypeError:
             continue
         location_name = location_name if location_name else "<MISSING>"
-        if "do it best" not in location_name.lower():
+        passed = False
+        if "do it best" in location_name.lower():
+            passed = True
+        if "doitbest" not in store_url.lower() and not passed:
             continue
         street_address = poi["Address1"]
         if poi["Address2"]:
@@ -104,7 +129,8 @@ def fetch_data():
         state = poi["State"]
         state = state if state else "<MISSING>"
         zip_code = poi["ZipCode"]
-        zip_code = zip_code if zip_code else "<MISSING>"
+        if not zip_code:
+            continue
         country_code = "<MISSING>"
         store_number = poi["ID"]
         store_number = store_number if store_number else "<MISSING>"

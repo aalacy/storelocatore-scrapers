@@ -43,20 +43,42 @@ def fetch_data():
     locs = []
     url = "https://locations.valero.com/en-us/Home/SearchForLocations"
     coords = [
-        "-60,-70",
-        "-70,-80",
-        "-80,-90",
-        "-90,-100",
-        "-100,-110",
-        "-110,-120",
-        "-120,-130",
-        "-130,-140",
-        "-140,-150",
-        "-150,-160",
-        "-160,-170",
+        "-60,-65",
+        "-65,-70",
+        "-70,-75",
+        "-75,-80",
+        "-80,-85",
+        "-85,-90",
+        "-90,-95",
+        "-95,-100",
+        "-100,-105",
+        "-105,-110",
+        "-110,-115",
+        "-115,-120",
+        "-120,-125",
+        "-125,-130",
+        "-130,-135",
+        "-135,-140",
+        "-140,-145",
+        "-150,-155",
+        "-160,-165",
+        "-165,-170",
     ]
 
-    latcoords = ["70,60", "60,50", "50,45", "45,40", "40,35", "35,30", "30,20", "20,10"]
+    latcoords = [
+        "70,65",
+        "65,60",
+        "60,55",
+        "55,50",
+        "50,45",
+        "45,40",
+        "40,35",
+        "35,30",
+        "30,25",
+        "25,20",
+        "20,15",
+        "15,10",
+    ]
 
     for coord in coords:
         for latcoord in latcoords:
@@ -119,6 +141,20 @@ def fetch_data():
                             state = item.split('"State":"')[1].split('"')[0]
                             hours = "<MISSING>"
                             if phone == "":
+                                phone = "<MISSING>"
+                            if phone == "0":
+                                phone = "<MISSING>"
+                            if (
+                                "1" not in phone
+                                and "2" not in phone
+                                and "3" not in phone
+                                and "4" not in phone
+                                and "5" not in phone
+                                and "6" not in phone
+                                and "7" not in phone
+                                and "8" not in phone
+                                and "9" not in phone
+                            ):
                                 phone = "<MISSING>"
                             if store not in locs:
                                 locs.append(store)

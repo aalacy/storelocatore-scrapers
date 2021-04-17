@@ -99,10 +99,11 @@ def fetch_data():
             if len("".join(add).strip()) > 0:
                 add_list.append("".join(add).strip())
 
-        street_address = add_list[0].strip()
+        street_address = " ".join(add_list[0:-2]).strip()
         city = ""
         if "," in add_list[-2]:
             city = add_list[-2].split(",")[1].strip()
+            street_address = street_address + " " + address[-2].split(",")[0].strip()
         else:
             city = add_list[-2]
 

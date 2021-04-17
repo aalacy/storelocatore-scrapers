@@ -39,6 +39,7 @@ def write_output(data):
 
 def fetch_data():
     locs = []
+    infos = []
     url = "https://www.hoag.org/locations/"
     r = session.get(url, headers=headers)
     website = "hoag.org"
@@ -104,22 +105,27 @@ def fetch_data():
                             allinfo.append(info)
                             if " - " in name:
                                 name = name.split(" - ")[0]
-                            yield [
-                                website,
-                                lurl,
-                                name,
-                                add,
-                                city,
-                                state,
-                                zc,
-                                country,
-                                store,
-                                phone,
-                                typ,
-                                lat,
-                                lng,
-                                hours,
-                            ]
+                            if phone == "":
+                                phone = "<MISSING>"
+                            addinfo = add + "|" + city + "|" + zc
+                            if addinfo not in infos:
+                                infos.append(addinfo)
+                                yield [
+                                    website,
+                                    lurl,
+                                    name,
+                                    add,
+                                    city,
+                                    state,
+                                    zc,
+                                    country,
+                                    store,
+                                    phone,
+                                    typ,
+                                    lat,
+                                    lng,
+                                    hours,
+                                ]
                 if "HOURS:" in line2 and "HOLIDAY" not in line2:
                     g = next(lines2)
                     h = next(lines2)
@@ -150,22 +156,81 @@ def fetch_data():
             hours = "<MISSING>"
             if " - " in name:
                 name = name.split(" - ")[0]
-            yield [
-                website,
-                lurl,
-                name,
-                add,
-                city,
-                state,
-                zc,
-                country,
-                store,
-                phone,
-                typ,
-                lat,
-                lng,
-                hours,
+            if add != "":
+                if phone == "":
+                    phone = "<MISSING>"
+                addinfo = add + "|" + city + "|" + zc
+                if addinfo not in infos:
+                    infos.append(addinfo)
+                    yield [
+                        website,
+                        lurl,
+                        name,
+                        add,
+                        city,
+                        state,
+                        zc,
+                        country,
+                        store,
+                        phone,
+                        typ,
+                        lat,
+                        lng,
+                        hours,
+                    ]
+    url = "https://www.hoagorthopedicinstitute.com/locations/"
+    r = session.get(url, headers=headers)
+    locs = []
+    typ = "Orthopedic"
+    hours = "<MISSING>"
+    store = "<MISSING>"
+    country = "US"
+    for line in r.iter_lines():
+        line = str(line.decode("utf-8"))
+        if '<meta itemprop="name" content="' in line:
+            name = line.split('<meta itemprop="name" content="')[1].split('"')[0]
+        if '<meta itemprop="telephone" content="' in line:
+            phone = line.split('<meta itemprop="telephone" content="')[1].split('"')[0]
+        if '<meta itemprop="streetAddress" content="' in line:
+            add = line.split('<meta itemprop="streetAddress" content="')[1].split('"')[
+                0
             ]
+        if '<meta itemprop="addressLocality" content="' in line:
+            city = line.split('<meta itemprop="addressLocality" content="')[1].split(
+                '"'
+            )[0]
+        if '<meta itemprop="addressRegion" content="' in line:
+            state = line.split('<meta itemprop="addressRegion" content="')[1].split(
+                '"'
+            )[0]
+        if '<meta itemprop="postalCode" content="' in line:
+            zc = line.split('<meta itemprop="postalCode" content="')[1].split('"')[0]
+        if 'data-latitude="' in line:
+            lat = line.split('data-latitude="')[1].split('"')[0]
+            lng = line.split('data-longitude="')[1].split('"')[0]
+        if '<a href="tel:' in line:
+            phone = line.split('<a href="tel:')[1].split('"')[0]
+        if '<meta itemprop="url" content="' in line:
+            lurl = line.split('<meta itemprop="url" content="')[1].split('"')[0]
+            addinfo = add + "|" + city + "|" + zc
+            if addinfo not in infos:
+                infos.append(addinfo)
+                yield [
+                    website,
+                    lurl,
+                    name,
+                    add,
+                    city,
+                    state,
+                    zc,
+                    country,
+                    store,
+                    phone,
+                    typ,
+                    lat,
+                    lng,
+                    hours,
+                ]
 
 
 def scrape():

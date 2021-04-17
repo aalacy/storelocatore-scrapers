@@ -97,6 +97,11 @@ def fetch_data():
                     )
                 ).strip()
 
+                city_to_remove = ", " + city
+                street_address = street_address.replace(city_to_remove, "").strip()
+                if "," == street_address[-1]:
+                    street_address = street_address[:-1]
+
                 if country_code == "" or country_code is None:
                     country_code = "<MISSING>"
                 if street_address == "":
@@ -144,23 +149,24 @@ def fetch_data():
                 if phone == "":
                     phone = "<MISSING>"
 
-                curr_list = [
-                    locator_domain,
-                    page_url,
-                    location_name,
-                    street_address,
-                    city,
-                    state,
-                    zip,
-                    country_code,
-                    store_number,
-                    phone,
-                    location_type,
-                    latitude,
-                    longitude,
-                    hours_of_operation,
-                ]
-                loc_list.append(curr_list)
+                if country_code != "Republic of Ireland":
+                    curr_list = [
+                        locator_domain,
+                        page_url,
+                        location_name,
+                        street_address,
+                        city,
+                        state,
+                        zip,
+                        country_code,
+                        store_number,
+                        phone,
+                        location_type,
+                        latitude,
+                        longitude,
+                        hours_of_operation,
+                    ]
+                    loc_list.append(curr_list)
         # break
 
     return loc_list
