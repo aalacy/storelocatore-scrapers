@@ -71,10 +71,8 @@ def fetch_data():
         r2 = session.get(loc, headers=headers)
         for line2 in r2.iter_lines():
             line2 = str(line2.decode("utf-8"))
-            if '<span class="name" itemProp="brand">' in line2:
-                name = line2.split('<span class="name" itemProp="brand">')[1].split(
-                    "<"
-                )[0]
+            if '"ShortName\\":\\"' in line2:
+                name = line2.split('"ShortName\\":\\"')[1].split("\\")[0]
             if 'Street1\\":\\"' in line2:
                 add = line2.split('Street1\\":\\"')[1].split("\\")[0]
                 zc = line2.split('"PostalCode\\":\\"')[1].split("\\")[0]
@@ -94,6 +92,8 @@ def fetch_data():
             city = city.split(",")[0].strip()
         city = city.replace(" area", "")
         if state not in intl and "troy/11191" not in loc:
+            if "3440 W" in add:
+                name = "HomeTowne Studios Dallas - Irving"
             yield [
                 website,
                 loc,
