@@ -125,11 +125,15 @@ def get_data_from_multi_locations(data_list, url_store_domain_check):
         location_type = loctype if loctype else MISSING
 
         # Get hours of operation data
-        hoo_raw = data["StoreOpenHours"]
         hoo = []
+        hoo_raw = data["StoreOpenHours"]
         for sort_order, h in enumerate(hoo_raw):
-            day_hours = f'{h["day"]} {h["hours"]}'
-            hoo.append(day_hours)
+            h_hours = h["hours"].replace("-", "").strip()
+            if h_hours:
+                day_hours = f'{h["day"]} {h["hours"]}'
+                hoo.append(day_hours)
+            else:
+                hours_of_operation = MISSING
         if hoo:
             hours_of_operation = "; ".join(hoo)
         else:
@@ -264,7 +268,7 @@ def get_data_from_website(data_raw):
 
 def fetch_data():
     items = []
-    for idx1, url_store_domain in enumerate(url_all_stores):
+    for idx1, url_store_domain in enumerate(url_all_stores[0:5]):
         try:
             url_store = f"http://www.{url_store_domain}"
             logger.info(f"Pulling the data from: {idx1}: {url_store} ")
