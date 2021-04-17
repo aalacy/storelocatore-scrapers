@@ -129,7 +129,7 @@ def fetch_data():
 
     for dt in soup.find("ul", {"class": "cms-menu"}).find_all("li")[:-1]:
         st = dt.find("a")["href"]
-    
+
         req = session.get(st)
         soup1 = BeautifulSoup(req.text, "lxml")
 
@@ -138,16 +138,15 @@ def fetch_data():
         if not main1:
             soup2 = soup1
             page_url = req.url
- 
+
             return_main_object.append(get_store(soup2, page_url))
         else:
             for dt1 in main1:
                 page_url = dt1["href"]
-  
+
                 driver.get(page_url)
                 location_raw_data = driver.page_source
-                soup2 = BeautifulSoup(location_raw_data, 'html.parser')
-                # soup2 = BeautifulSoup(session.get(page_url).text, "lxml")
+                soup2 = BeautifulSoup(location_raw_data, "html.parser")
                 return_main_object.append(get_store(soup2, page_url))
 
     return return_main_object
