@@ -95,8 +95,14 @@ def fetch_data():
                                 )
                             except:
                                 pass
-                        city = item.split('"Locality":"')[1].split('"')[0]
-                        state = item.split('"Region":"')[1].split('"')[0]
+                        try:
+                            city = item.split('"Locality":"')[1].split('"')[0]
+                        except:
+                            city = "<MISSING>"
+                        try:
+                            state = item.split('"Region":"')[1].split('"')[0]
+                        except:
+                            state = "<MISSING>"
                         try:
                             zc = item.split('"PostalCode":"')[1].split('"')[0]
                         except:
@@ -106,8 +112,16 @@ def fetch_data():
                         hours = "<MISSING>"
                         if phone == "":
                             phone = "<MISSING>"
-                        if add not in locs:
+                        if lat == "0" or lat is None or lat == "0.0":
+                            lat = "<MISSING>"
+                        if lng == "0" or lng is None or lng == "0.0":
+                            lng = "<MISSING>"
+                        if add not in locs and add != "Test" and add != "":
                             locs.append(add)
+                            if "*" in add:
+                                add = add.split("*")[0].strip()
+                            if "2616 Ogden" in add:
+                                phone = "630-375-9822"
                             yield [
                                 website,
                                 loc,
