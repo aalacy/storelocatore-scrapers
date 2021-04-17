@@ -15,7 +15,7 @@ headers = {
 
 
 def fetch_data():
-    page_list =[]
+    page_list = []
     url = "https://www.radiator.com/locations"
     r = session.get(url, headers=headers)
     soup = BeautifulSoup(r.text, "html.parser")
@@ -46,56 +46,59 @@ def fetch_data():
             except:
                 address = temp[1].split("\r\n")
                 state = address[1]
-                city = address[2].replace(",","")
+                city = address[2].replace(",", "")
                 zip_postal = address[3]
             if zip_postal.isdigit():
-                country_code ="US"
+                country_code = "US"
             else:
-                country_code ="CA"
+                country_code = "CA"
             latitude = "<MISSING>"
             longitude = "<MISSING>"
         else:
             temp = div.text.split("|")
             location_name = temp[0]
             phone = temp[-1]
-            street_address = content.find("span", {"class": "address-address"}).text + " "+content.find("span", {"class": "address-address2"}).text
+            street_address = (
+                content.find("span", {"class": "address-address"}).text
+                + " "
+                + content.find("span", {"class": "address-address2"}).text
+            )
             city = content.find("span", {"class": "address-city"}).text
             state = content.find("span", {"class": "address-state"}).text
             zip_postal = content.find("span", {"class": "address-zip"}).text
             country_code = content.find("span", {"class": "address-country"}).text
             latitude = content.find("input", {"class": "address-latitude"})["value"]
             longitude = content.find("input", {"class": "address-longitude"})["value"]
-            
-            
-##            address = temp[1]
-##            phone = temp[2]
-##            address = address.replace(",", " ")
-##            address = usaddress.parse(address)
-##            i = 0
-##            street_address = ""
-##            city = ""
-##            state = ""
-##            zip_postal = ""
-##            while i < len(address):
-##                temp = address[i]
-##                if (
-##                    temp[1].find("Address") != -1
-##                    or temp[1].find("Street") != -1
-##                    or temp[1].find("Recipient") != -1
-##                    or temp[1].find("Occupancy") != -1
-##                    or temp[1].find("BuildingName") != -1
-##                    or temp[1].find("USPSBoxType") != -1
-##                    or temp[1].find("USPSBoxID") != -1
-##                ):
-##                    street_address = street_address + " " + temp[0]
-##                if temp[1].find("PlaceName") != -1:
-##                    city = city + " " + temp[0]
-##                if temp[1].find("StateName") != -1:
-##                    state = state + " " + temp[0]
-##                if temp[1].find("ZipCode") != -1:
-##                    zip_postal = zip_postal + " " + temp[0]
-##                i += 1
-           
+
+        ##            address = temp[1]
+        ##            phone = temp[2]
+        ##            address = address.replace(",", " ")
+        ##            address = usaddress.parse(address)
+        ##            i = 0
+        ##            street_address = ""
+        ##            city = ""
+        ##            state = ""
+        ##            zip_postal = ""
+        ##            while i < len(address):
+        ##                temp = address[i]
+        ##                if (
+        ##                    temp[1].find("Address") != -1
+        ##                    or temp[1].find("Street") != -1
+        ##                    or temp[1].find("Recipient") != -1
+        ##                    or temp[1].find("Occupancy") != -1
+        ##                    or temp[1].find("BuildingName") != -1
+        ##                    or temp[1].find("USPSBoxType") != -1
+        ##                    or temp[1].find("USPSBoxID") != -1
+        ##                ):
+        ##                    street_address = street_address + " " + temp[0]
+        ##                if temp[1].find("PlaceName") != -1:
+        ##                    city = city + " " + temp[0]
+        ##                if temp[1].find("StateName") != -1:
+        ##                    state = state + " " + temp[0]
+        ##                if temp[1].find("ZipCode") != -1:
+        ##                    zip_postal = zip_postal + " " + temp[0]
+        ##                i += 1
+
         yield SgRecord(
             locator_domain="https://radiator.com/",
             page_url=page_url,
