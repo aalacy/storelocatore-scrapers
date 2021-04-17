@@ -50,7 +50,7 @@ def fetch_data():
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.193 Safari/537.36",
     }
     response = session.get(start_url, headers=headers)
-    all_locations = re.findall("markers\[\d+\] = (.+?);", response.text)
+    all_locations = re.findall(r"markers\[\d+\] = (.+?);", response.text)
 
     for poi in all_locations:
         poi = demjson.decode(poi)
