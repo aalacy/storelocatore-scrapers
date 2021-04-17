@@ -42,10 +42,10 @@ def fetch_data():
     scraped_items = []
 
     DOMAIN = "hugoboss.com"
-    start_url = "https://production-na01-hugoboss.demandware.net/s/US/dw/shop/v16_9/stores?client_id=871c988f-3549-4d76-b200-8e33df5b45ba&latitude=36.18382034838561&longitude=-95.71289100000001&count=100&maxDistance=3670.4097048657495&distanceUnit=mi&start=0"
+    start_url = "https://production-na01-hugoboss.demandware.net/s/US/dw/shop/v20_10/stores?client_id=871c988f-3549-4d76-b200-8e33df5b45ba&latitude=36.891083262550175&longitude=-95.71289100000001&count=100&maxDistance=1903.0609009592447&distanceUnit=mi&start=0"
 
     all_locations = []
-    response = session.get(start_url)
+    response = session.get(start_url, verify=False)
     data = json.loads(response.text)
     all_locations += data["data"]
     next_page = data["next"]
@@ -114,8 +114,9 @@ def fetch_data():
             longitude,
             hoo,
         ]
-        if poi_number not in scraped_items:
-            scraped_items.append(poi_number)
+        check = f'{poi_name} {street}'
+        if check not in scraped_items:
+            scraped_items.append(check)
             items.append(item)
 
     return items
