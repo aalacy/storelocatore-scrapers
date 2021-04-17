@@ -1,9 +1,9 @@
 import csv
 from lxml import etree
-import usaddress
 from urllib.parse import urljoin
 
 from sgrequests import SgRequests
+from sgscrape.sgpostal import parse_address_intl
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 
 
@@ -61,18 +61,18 @@ def fetch_data():
             location_name = poi_html.xpath('.//h3[@itemprop="name"]/a/text()')
             location_name = location_name[0] if location_name else "<MISSING>"
             address_raw = poi_html.xpath('.//span[@itemprop="address"]/text()')[0]
-            address_raw = usaddress.tag(address_raw)[0]
-            AddressNumber = address_raw["AddressNumber"]
-            StreetName = address_raw["StreetName"]
-            StreetNamePostType = address_raw.get("StreetNamePostType")
-            StreetNamePostType = StreetNamePostType if StreetNamePostType else " "
-            street_address = (
-                f"{AddressNumber} {StreetName} {StreetNamePostType}".replace("  ", " ")
-            )
-            state = address_raw["StateName"]
-            city = address_raw["PlaceName"]
-            zip_code = address_raw["ZipCode"]
-            country_code = "<MISSING>"
+            addr = parse_address_intl(address_raw)
+            street_address = addr.street_address_1
+            if addr.street_address_2:
+                street_address += " " + addr.street_address_2
+            state = addr.state
+            state = state if state else "<MISSING>"
+            city = addr.city
+            city = city if city else "<MISSING>"
+            zip_code = addr.postcode
+            zip_code = zip_code if zip_code else "<MISSING>"
+            country_code = addr.country
+            country_code = country_code if country_code else "<MISSING>"
             store_number = "<MISSING>"
             phone = poi_html.xpath('.//a[@itemprop="telephone"]/text()')
             phone = phone[0] if phone else "<MISSING>"
