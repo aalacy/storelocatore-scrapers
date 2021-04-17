@@ -2,6 +2,7 @@ import csv
 import json
 
 from sgrequests import SgRequests
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 
 
 def write_output(data):
@@ -39,9 +40,18 @@ def fetch_data():
     session = SgRequests()
 
     items = []
+    scraped_items = []
 
     DOMAIN = "callitspring.com"
-    start_url = "https://www.callitspring.com/api/stores?allStores=true&countryCode=CA&lat=45.62838199999999&lng=-73.5512572"
+    start_url = "https://www.callitspring.com/api/stores?countryCode={}&lat={}&lng={}"
+
+    us_coords = DynamicGeoSearch(
+        country_codes=[SearchableCountries.USA], max_radius_miles=100
+    )
+    ca_coords = DynamicGeoSearch(
+        country_codes=[SearchableCountries.CANADA], max_radius_miles=100
+    )
+
     headers = {
         "accept": "*/*",
         "accept-encoding": "gzip, deflate, br",
@@ -51,20 +61,27 @@ def fetch_data():
         "x-aldo-api-version": "2",
         "x-aldo-brand": "callitspring",
         "x-aldo-lang": "en",
-        "x-aldo-region": "ca",
+        "x-aldo-region": "",
         "x-aldo-ssr-request-id": "",
         "x-forwarded-akamai-edgescape": "undefined",
     }
     all_locations = []
-    response = session.get(start_url, headers=headers)
-    data = json.loads(response.text)
-    all_locations += data["stores"]
 
-    start_url = "https://www.callitspring.com/api/stores?allStores=true&countryCode=US&lat=45.62838199999999&lng=-73.5512572"
-    headers["x-aldo-region"] = "us"
-    response = session.get(start_url, headers=headers)
-    data = json.loads(response.text)
-    all_locations += data["stores"]
+    for lat, lng in us_coords:
+        country = "US"
+        headers["x-aldo-region"] = country.lower()
+        response = session.get(start_url.format(country, lat, lng), headers=headers)
+        data = json.loads(response.text)
+        if data.get("stores"):
+            all_locations += data["stores"]
+
+    for lat, lng in ca_coords:
+        country = "CA"
+        headers["x-aldo-region"] = country.lower()
+        response = session.get(start_url.format(country, lat, lng), headers=headers)
+        data = json.loads(response.text)
+        if data.get("stores"):
+            all_locations += data["stores"]
 
     for poi in all_locations:
         poi_name = poi["name"]
@@ -117,8 +134,10 @@ def fetch_data():
             longitude,
             hoo,
         ]
-
-        items.append(item)
+        check = f"{poi_name} {street}"
+        if check not in scraped_items:
+            scraped_items.append(check)
+            items.append(item)
 
     return items
 
