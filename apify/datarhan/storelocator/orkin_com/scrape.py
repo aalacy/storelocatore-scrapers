@@ -61,7 +61,7 @@ def fetch_data():
         state_response = session.get(full_state_url.replace(" ", ""), headers=headers)
         scraped_urls.append(full_state_url)
         state_dom = etree.HTML(state_response.text)
-        
+
         allcities_urls = state_dom.xpath(
             '//h4[contains(text(), "Select a City to View Branch Locations")]/following-sibling::div[1]//a/@href'
         )
