@@ -153,7 +153,6 @@ def fetch_data():
             location_type = "coming_soon"
             hours_of_operation = "<MISSING>"
 
-        print(hours_of_operation)
         if latitude == "" or latitude is None:
             latitude = "<MISSING>"
         if longitude == "" or longitude is None:
