@@ -3,7 +3,6 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sglogging import SgLogSetup
 from lxml import html
-import csv
 import json
 
 
@@ -73,8 +72,6 @@ def fetch_data():
         '//div[div[div[contains(., "LOCATIONS")]]]/nav/a/@href'
     )
     url_stores = [f"{base_url}{i}" for i in url_stores]
-    return_main_object = []
-    print(url_stores)
     for num_store, url_store in enumerate(url_stores):
         locator_domain = locator_domain_url
         logger.info(f"Pulling the data from: {num_store} : {url_store} ")
