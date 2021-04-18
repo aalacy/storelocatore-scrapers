@@ -61,7 +61,7 @@ def fetch_data():
             phone = "<MISSING>"
             city = page_url.split("=")[1]
             state = "<MISSING>"
-            country_code = "US"
+            country_code = "CA"
             store_number = "<MISSING>"
             ll = "".join(
                 d.xpath('//preceding::script[contains(text(), "var PNStores")]/text()')

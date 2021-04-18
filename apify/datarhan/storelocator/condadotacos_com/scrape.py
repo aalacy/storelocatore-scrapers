@@ -1,9 +1,9 @@
 import re
 import csv
-from lxml import etree
+import json
 
 from sgrequests import SgRequests
-from sgscrape.sgpostal import parse_address_intl
+from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 
 
 def write_output(data):
@@ -41,41 +41,47 @@ def fetch_data():
     session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
 
     items = []
+    scraped_items = []
 
-    start_url = "http://www.condadotacos.com/location/"
+    start_url = "https://liveapi.yext.com/v2/accounts/me/entities/geosearch?radius=500&location={}&limit=50&api_key=f758e5b45905bc090af86915406d345c&v=20181201&resolvePlaceholders=true&entityTypes=Restaurant&savedFilterIds=192172006"
     domain = re.findall("://(.+?)/", start_url)[0].replace("www.", "")
     hdr = {
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
     }
-    response = session.get(start_url, headers=hdr)
-    dom = etree.HTML(response.text)
 
-    all_locations = dom.xpath('//div[@class="location"]')
-    for poi_html in all_locations:
-        store_url = start_url
-        location_name = poi_html.xpath(".//h2/text()")
-        location_name = location_name[0] if location_name else "<MISSING>"
-        raw_address = poi_html.xpath('.//div[@class="location-address"]//text()')
-        raw_address = " ".join([e.strip() for e in raw_address if e.strip()])
-        addr = parse_address_intl(raw_address)
-        street_address = addr.street_address_1
-        if addr.street_address_2:
-            street_address += " " + addr.street_address_2
-        city = addr.city
+    all_locations = []
+    all_codes = DynamicZipSearch(
+        country_codes=[SearchableCountries.USA], max_radius_miles=500
+    )
+    for code in all_codes:
+        response = session.get(start_url.format(code), headers=hdr)
+        data = json.loads(response.text)
+        all_locations += data["response"]["entities"]
+
+    for poi in all_locations:
+        store_url = poi["landingPageUrl"]
+        location_name = poi["name"]
+        location_name = location_name if location_name else "<MISSING>"
+        street_address = poi["address"]["line1"]
+        city = poi["address"]["city"]
         city = city if city else "<MISSING>"
-        state = addr.state
+        state = poi["address"]["region"]
         state = state if state else "<MISSING>"
-        zip_code = addr.postcode
+        zip_code = poi["address"]["postalCode"]
         zip_code = zip_code if zip_code else "<MISSING>"
-        country_code = addr.country
+        country_code = poi["address"]["countryCode"]
         country_code = country_code if country_code else "<MISSING>"
-        store_number = "<MISSING>"
-        phone = poi_html.xpath('.//div[@class="location-phone"]/text()')
-        phone = phone[0].strip() if phone else "<MISSING>"
+        store_number = poi["meta"]["id"]
+        phone = poi["mainPhone"]
+        phone = phone if phone else "<MISSING>"
         location_type = "<MISSING>"
-        latitude = poi_html.xpath("@data-latitude")[0]
-        longitude = poi_html.xpath("@data-longitude")[0]
-        hoo = poi_html.xpath('.//div[@class="location-hours"]//text()')
+        latitude = poi["geocodedCoordinate"]["latitude"]
+        longitude = poi["geocodedCoordinate"]["longitude"]
+        hoo = []
+        for day, hours in poi["hours"].items():
+            opens = hours["openIntervals"][0]["start"]
+            closes = hours["openIntervals"][0]["end"]
+            hoo.append(f"{day} {opens} - {closes}")
         hoo = [e.strip() for e in hoo if e.strip()][1:]
         hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
 
@@ -95,8 +101,9 @@ def fetch_data():
             longitude,
             hours_of_operation,
         ]
-
-        items.append(item)
+        if store_number not in scraped_items:
+            scraped_items.append(store_number)
+            items.append(item)
 
     return items
 

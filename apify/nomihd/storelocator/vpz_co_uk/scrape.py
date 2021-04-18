@@ -114,7 +114,8 @@ def fetch_data():
                 if store["closed"] is True:
                     location_type = "closed"
 
-            hours = store["hours"]
+            if "hours" in store:
+                hours = store["hours"]
             hours_of_operation = ""
             for day, time in hours.items():
                 if "openIntervals" in time:
