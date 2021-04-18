@@ -1,12 +1,10 @@
-# How to write a Python3 scraper for SafeGraph (Simple)
+# How to run the scraper
+1. Running the scraper using proxy may not always work. The scraper run from particular location such as New York in this case. 
 
-Note: This template differs from the older `python3` template in that you don't need to worry about javascript related files such as `scrape.js` and `package.json`. This template also builds faster if you're testing it in a local docker image.
+2. Running the scraper from the locations such Atlanta state and Las Vegas City were attempted and found to be failed
 
-Please write your scraper such that running `scrape.py` produces a file `data.csv` containing the scraped data.
+3. Running scraper from *New York* State seems to be working but we need to run it from the location New York and see if scraping is completed on the production environment. 
 
-Remember to update `requirements.txt` with all dependencies needed to run your scraper. 
-Please make sure that:
-* Your scraper can be run successfully by executing https://github.com/SafeGraphInc/crawl-service/blob/master/scripts/run_scraper.sh 
-* The resulting output passes https://github.com/SafeGraphInc/crawl-service/blob/master/scripts/validate.py
+**NOTE**: The scraper must run from particular state such as most likely New York. 
 
-This scraper is under development. Location type has been added with all types of services and products for `ultramar_ca`.  
+
