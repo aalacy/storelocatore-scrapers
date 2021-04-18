@@ -5,6 +5,7 @@ from lxml import html
 import re
 from tenacity import retry
 from tenacity import stop_after_attempt
+import time
 
 logger = SgLogSetup().get_logger(logger_name="autozone_com")
 locator_domain_url = " https://www.autozone.com"
@@ -12,6 +13,11 @@ MISSING = "<MISSING>"
 
 headers = {
     "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.90 Safari/537.36",
+    "cookie": "cookie: preferedstore=2205; bm_sz=D5E0F8DDC7E6E58D6BF4559CFD87E184~YAAQlQ8kF85XRc94AQAAG21d4gu9YjnNdFI6t91XRypE1qPo9G0Qrm7NZilDO1Rq8f72u+BxpM2v7hjBuyqS6OEH1zw6aKyulYyKgbA7ksGkVr+xtYGADT2kMszIupkGSvKgNqcLZxGPSjPNm4Omh4X58Vaq4PeNkiHsoHhYsV4AEB3GicLABIFQqecHrRcgtsI=; TLTSID=45afae7cd3f015e1950100e0ed6a79aa; TLTUID=45afae7cd3f015e1950100e0ed6a79aa; ak_bmsc=EF73E1921CB827DCB2E966456E2DD79F~000000000000000000000000000000~YAAQlQ8kF9VXRc94AQAADnRd4gv19zD36KApcoKLWRv4/VvkLR9+kYs1rXeUGzKKN45h1+3S0yHjjhwKYtgRgaPYETYUoyhpx3XbozQE87nnZaAGrEVHWXnm61iVb0SSr8Bltn+YBf6rJ0cPiHp3rNgAJeGj91AMpUqGdxPCQCkfil1ZT/WEXAbVtsD1bFG4eO0uBkjCXFhruW7s7CErAozhJiuNE2fTOMnhyrQETyjfapi/90jUjwvC3xeoArjysip69W9exY7FPncTPAW3QGQE+Yyoi7vV3+au6dYcE9vu5AthmQM86g6QahJpskmzUCyO+umicb0SIVXt5okGHGdI3FhXhbQRkYraUMySkxh9kbLIQRQmSUBEBAeEXiGqN6neJspx/RFDRX40; rewardsId=; JSESSIONID=BWY5nRnFGeVm3CL2-EHlRonNiib6qOKa6jjjixxx.pr-camaro2-xl07-EStoreWS03; WWW-WS-ROUTE=ffffffff09c20ebd45525d5f4f58455e445a4a421730; AKA_A2=A; bm_mi=942C695E21B04C47664A156BF16FB626~BMEpkRk35x3f2TZrFPXxKOifXX+HVkRRMCFTggVHRqr0JnopCfalcC29talGavkzVxileSt81IuFG9dd/GVU2R6FzPdpy6A6kMykF/JABt9n3YLaodY6pouH0jVHDdEh4vb/auj+KR2iCDf1u4l1q4xasJRzwTCHlefZuLSlNrSA5mzr+2kJ9SauDP0o8ogQgZ+OqnOWcQPO4HQE8bfGOIJAmrujop0cRJhqLwKMmDk=; profileId=19308656019; cartProductPartIds=; cartProductSkus=; cartProductTitles=; cartProductVendors=; cartUnitPrice=; cartDiscountPriceList=; prevUrlRouteValue=/; _abck=6E710B00C3C2F3E48C4D20B035973642~0~YAAQX0ofRRHaRdB4AQAA9reZ4gUZPuRQsAVl1AmWKqBqP5VZ33EoZp7oHxpT/VnBlghGCUvRorrnTnNUOH3cVFw/8UvK4qWl+ouIQf4u++3darhHtW9G+H3C0dHpX/5D37gRmnjQpKqLWZlQvO0gFMZckYLP/pFsw09WIdf0pdt2bnuFPs8yDIce6vJC3mrQPEQU9UAPLth0Z+Y576BETphcftJLEQncJbCYujDdBo6wPa+aJhRl+UU+SAUNf+nJMxWutO/svRqy4qasNGNUhL2gctuWsgsNNaC+nvjgQ5NErl8ICO5FFe3BXeWdMxqC4FzKel3YtTsV3jvg3c8148anj1gp19KgorPyvAmpy0JDafjiqBIzVDZLB1U8skCYAQMpnDh0WuizHVN2yxhbNCj8hm4pZZ3HPw==~-1~-1~-1; userType=3; nddMarket=LAS, NV; nddHub=2207; nddStore=6960; bm_sv=654B9C44734C3836E4F9F85279273256~GA1yVGXwqoDT+oRblV04fc9UR2AwEFe41ES3gLUdjRiI+eZ6s6tAjRYqBpgkEDFJXAoQOkbEEn6cJqwrbm8gFbZNPezqJEq1W2dVNt0EuN4UyYqOPdsCNFQ0H2mOSAw6qVJpF/Q0bDpsi0ruXI8Psu1CUzpA6lJ7Tg4oiNGBM7s=",
+    "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+    "accept-encoding": "gzip, deflate, br",
+    "accept-language": "en-US,en;q=0.9",
+    "cache-control": "max-age=0",
 }
 session = SgRequests()
 
@@ -118,6 +124,7 @@ def fetch_data():
     logger.info(f"Store URLs count: {len(all_store_urls)}")
     for idx, url in enumerate(all_store_urls):
         r = get_result(url, headers=headers)
+        time.sleep(5)
         data_raw = html.fromstring(r.text, "lxml")
         logger.info(f"Pulling the Data from: {idx} <<:>> {url}")
         locator_domain = locator_domain_url
