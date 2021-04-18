@@ -69,7 +69,7 @@ def fetch_data():
         zip_code = zip_code if zip_code else "<MISSING>"
         country_code = poi.get("country_code")
         country_code = country_code if country_code else "<MISSING>"
-        if country_code not in ["US", "CA"]:
+        if country_code not in ["US", "CA", "GB"]:
             continue
         poi_number = poi["id"]
         poi_number = poi_number if poi_number else "<MISSING>"
