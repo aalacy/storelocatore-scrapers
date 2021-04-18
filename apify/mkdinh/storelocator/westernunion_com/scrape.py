@@ -146,9 +146,9 @@ def fetch_pages(session, postal, country_code, locations, page=None):
 def scrape():
     session = SgRequests()
     tracker = []
-    us_search = static_zipcode_list(30, SearchableCountries.USA)
-    ca_search = static_zipcode_list(30, SearchableCountries.CANADA)
-    gb_search = static_zipcode_list(30, SearchableCountries.BRITAIN)
+    us_search = static_zipcode_list(20, SearchableCountries.USA)
+    ca_search = static_zipcode_list(20, SearchableCountries.CANADA)
+    gb_search = static_zipcode_list(20, SearchableCountries.BRITAIN)
 
     with ThreadPoolExecutor() as executor:
         futures = []

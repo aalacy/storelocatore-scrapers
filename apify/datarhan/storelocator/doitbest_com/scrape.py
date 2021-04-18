@@ -94,12 +94,14 @@ def fetch_data():
                 "StoreLocatorForm": {
                     "Location": code,
                     "Filter": "All Locations",
-                    "Range": "200",
+                    "Range": "50",
                     "CSRFID": csrfid,
                     "CSRFToken": token,
                 }
             }
             response = session.post(start_url, headers=headers, json=body, verify=False)
+            if not response.text:
+                continue
         data = json.loads(response.text)
         if not data["Response"].get("Stores"):
             continue
@@ -127,7 +129,8 @@ def fetch_data():
         state = poi["State"]
         state = state if state else "<MISSING>"
         zip_code = poi["ZipCode"]
-        zip_code = zip_code if zip_code else "<MISSING>"
+        if not zip_code:
+            continue
         country_code = "<MISSING>"
         store_number = poi["ID"]
         store_number = store_number if store_number else "<MISSING>"
