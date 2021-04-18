@@ -1,124 +1,161 @@
-import requests
-from bs4 import BeautifulSoup
 import csv
-import string
-import re, time
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('searshometownstores_com')
+from sgrequests import SgRequests
+from sgzip.dynamic import SearchableCountries
+from sgzip.static import static_zipcode_list
 
 
+session = SgRequests()
 
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.72 Safari/537.36",
+    "content-type": "application/json",
+    "accept": "application/json, text/plain, */*",
+}
 
 
 def write_output(data):
-    with open('data.csv', mode='w',encoding="utf-8") as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+    with open("data.csv", mode="w") as output_file:
+        writer = csv.writer(
+            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+        )
 
         # Header
-        writer.writerow(["locator_domain","page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(
+            [
+                "locator_domain",
+                "page_url",
+                "location_name",
+                "street_address",
+                "city",
+                "state",
+                "zip",
+                "country_code",
+                "store_number",
+                "phone",
+                "location_type",
+                "latitude",
+                "longitude",
+                "hours_of_operation",
+            ]
+        )
         # Body
         for row in data:
             writer.writerow(row)
 
 
 def fetch_data():
-    # Your scraper here
     data = []
-    p = 1
-    cleanr = re.compile('<.*?>')
-    url = 'http://www.searshometownstores.com/store-list'
-    page = requests.get(url)
-    soup = BeautifulSoup(page.text, "html.parser")
-    statelinks = soup.findAll('a',{'class':'primary'})
-    for state in statelinks:
-        state = "http://www.searshometownstores.com" + state['href']
-        page1 = requests.get(state)
-        soup1 = BeautifulSoup(page1.text, "html.parser")
-        #maindiv = soup1.find('div', {'class': 'col-xs-12'})
-        branchlink = soup1.findAll('div', {'class': 'store-list-divider'})
-        #logger.info("state= ",state)
-        #logger.info(len(branchlink))
-        for branch in branchlink:
-            link = branch.find('a')
-            link = link['href']
-            #logger.info("link = ",link)
-            title = branch.find('strong').text
-            start = len(link) - 1
-            while True:
-                check = link[start]
-                if check == "/":
-                    start = start + 1
-                    store = link[start:len(link)]
-                    break
-                else:
-                    start = start - 1
-            street = branch.find('div',{'class':'text-nowrap'}).text
-            #logger.info(branch.text)
+    linklist = []
+    week = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"]
+    times = {
+        "32400": "9",
+        "64800": "6",
+        "43200": "12",
+        "61200": "5",
+        "68400": "7",
+        "39600": "11",
+        "57600": "4",
+        "30600": "8.30",
+        "36000": "10",
+        "75600": "9",
+        "34200": "9:30",
+        "46800": "12",
+        "45000": "9:30",
+        "63000": "5:30",
+        "28800": "8",
+        "54000": "3",
+        "0": "12",
+        "50400": "2",
+        "66600": "6:30",
+        "72000": "8",
+        "70200": "7:30",
+        "27000": "7:30",
+        "73800": "8:30",
+        "41400": "11:30",
+        "59400": "4:30",
+    }
+    zips = static_zipcode_list(radius=100, country_code=SearchableCountries.USA)
+    if True:
+        for zip_code in zips:
+            search_url = "https://api.searshometownstores.com/lps-mygofer/api/v1/mygofer/store/nearby"
+            myobj = {
+                "city": "",
+                "zipCode": str(zip_code),
+                "searchType": "",
+                "state": "",
+                "session": {
+                    "sessionKey": "",
+                    "trackingKey": "",
+                    "appId": "MYGOFER",
+                    "guid": 0,
+                    "emailId": "",
+                    "userRole": "",
+                    "userId": 0,
+                },
+                "security": {"authToken": "", "ts": "", "src": ""},
+            }
+            try:
+                loclist = session.post(search_url, json=myobj, headers=headers).json()[
+                    "payload"
+                ]["nearByStores"]
+                if len(loclist) > 0:
+                    pass
+            except:
+                continue
+            for loc in loclist:
+                title = loc["storeName"]
+                street = loc["address"]
+                city = loc["city"]
+                state = loc["stateCode"]
+                pcode = loc["zipCode"]
+                phone = loc["phone"]
+                phone = "(" + phone[0:3] + ") " + phone[3:6] + "-" + phone[6:10]
+                store = str(loc["unitNumber"])
+                link = (
+                    "https://www.searshometownstores.com/home/"
+                    + state.lower()
+                    + "/"
+                    + city.lower()
+                    + "/"
+                    + store.replace("000", "")
+                )
+                if link in linklist:
+                    continue
+                linklist.append(link)
+                hourlist = loc["storeDetails"]["strHrs"]
+                hours = ""
+                for day in week:
+                    hours = (
+                        hours
+                        + day
+                        + " "
+                        + times[hourlist[day]["opn"]]
+                        + " AM - "
+                        + times[hourlist[day]["cls"]]
+                        + " PM "
+                    )
+                longt = loc["storeDetails"]["longitude"]
+                lat = loc["storeDetails"]["latitude"]
 
-            hoursd = branch.find('a',{'data-original-title':'Store Hours'})
-            hoursd = hoursd['data-content']
-            hours = re.sub(cleanr," ",hoursd)
-            hours = hours.replace("  ", " ")
-            hours = hours.lstrip()
-            #logger.info(hoursd)
-            city,state = title.split(",")
-            state = state.lstrip()
-            branchtext = branch.text
-            start = branchtext.find(city) +1
-            start = branchtext.find(city, start) + 1
-            start = branchtext.find(state, start) + 1
-            start = branchtext.find(" ", start)
-            temp = branchtext[start:len(branchtext)]
-            temp = temp.lstrip()
-            start = temp.find("Phone")
-            if start != -1:
-                pcode = temp[0:start]
-                start = temp.find(" ", start)
-                end = temp.find("Hours")
-                phone = temp[start:end]
-                phone = phone.strip()
-            else:
-                phone = "<MISSING>"
-
-
-            pcode = pcode.strip()
-
-            #logger.info(title)
-            #logger.info(store)
-            #logger.info(street)
-            #logger.info(city)
-            #logger.info(state)
-            #logger.info(pcode)
-            #logger.info(phone)
-            #logger.info(hours)
-            if len(phone)<3:
-                phone = "<MISSING>"
-            if len(hours)< 3:
-                hours = "<MISSING>"
-            if len(pcode) <5:
-                pcode = "0" + pcode
-
-            data.append([
-                'http://www.searshometownstores.com/',
-                link,
-                title,
-                street,
-                city,
-                state,
-                pcode,
-                'US',
-                store,
-                phone,
-                "<MISSING>",
-                "<MISSING>",
-                "<MISSING>",
-                hours
-            ])
-
-
-
-    return data
+                data.append(
+                    [
+                        "https://www.searshometownstores.com/",
+                        link,
+                        title,
+                        street,
+                        city,
+                        state,
+                        pcode,
+                        "US",
+                        store,
+                        phone,
+                        "<MISSING>",
+                        lat,
+                        longt,
+                        hours,
+                    ]
+                )
+        return data
 
 
 def scrape():
@@ -127,5 +164,5 @@ def scrape():
     write_output(data)
 
 
-scrape()
-
+if __name__ == "__main__":
+    scrape()
