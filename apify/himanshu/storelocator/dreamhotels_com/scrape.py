@@ -1,5 +1,4 @@
 import csv
-import re
 from bs4 import BeautifulSoup as bs
 from sgrequests import SgRequests
 from sglogging import sglog
@@ -98,7 +97,6 @@ def fetch_data():
     locations = []
     for page_url in page_urls:
         soup = pull_content(page_url)
-        content = soup.find("div", {"class": "grid grid--start"})
         address = (
             soup.select(".footer-directions-text")[0]
             .get_text()
