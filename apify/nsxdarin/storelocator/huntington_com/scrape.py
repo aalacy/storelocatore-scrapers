@@ -94,8 +94,10 @@ def fetch_data():
                     hours = "<MISSING>"
                 if store not in ids:
                     ids.append(store)
+                    loc = "<MISSING>"
                     yield [
                         website,
+                        loc,
                         name,
                         add,
                         city,
