@@ -37,6 +37,7 @@ def fetch_data():
                         .get_text(separator="|", strip=True)
                         .replace("|", " ")
                         .replace("Store Hours ", "")
+                        .replace("(Seasonal)", "")
                     )
                 else:
                     hours_of_operation = (
@@ -44,6 +45,7 @@ def fetch_data():
                         .get_text(separator="|", strip=True)
                         .replace("|", " ")
                         .replace("Store Hours ", "")
+                        .replace("(Seasonal)", "")
                     )
             except:
                 try:
@@ -52,6 +54,7 @@ def fetch_data():
                         .get_text(separator="|", strip=True)
                         .replace("|", " ")
                         .replace("Store Hours ", "")
+                        .replace("(Seasonal)", "")
                     )
                 except:
                     if "WE’RE MAKING PROGRESS!" in loc.findAll("strong")[1].text:
