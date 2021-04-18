@@ -22,7 +22,7 @@ url_list = []
 
 def retry_error_callback(retry_state):
     postal = retry_state.args[0]
-    log.error(f'Failure to fetch locations for: {postal}')
+    log.error(f"Failure to fetch locations for: {postal}")
     return []
 
 
