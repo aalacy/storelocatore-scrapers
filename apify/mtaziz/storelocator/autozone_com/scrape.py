@@ -3,6 +3,8 @@ from sglogging import SgLogSetup
 import csv
 from lxml import html
 import re
+from tenacity import retry
+from tenacity import stop_after_attempt
 
 logger = SgLogSetup().get_logger(logger_name="autozone_com")
 locator_domain_url = " https://www.autozone.com"
@@ -39,6 +41,16 @@ def write_output(data):
         writer.writerow(FIELDS)
         for row in data:
             writer.writerow(row)
+
+
+@retry(stop=stop_after_attempt(10))
+def get_result(url, headers):
+    global session
+    try:
+        return session.get(url, headers=headers)
+    except:
+        session = SgRequests()
+        raise
 
 
 url_sitemap_main = "https://www.autozone.com/locations/sitemap.xml"
@@ -100,11 +112,12 @@ def get_hoo(hoo_details):
 
 
 def fetch_data():
+    global session
     items = []
     all_store_urls = get_filtered_urls()
     logger.info(f"Store URLs count: {len(all_store_urls)}")
     for idx, url in enumerate(all_store_urls):
-        r = session.get(url, headers=headers, timeout=10)
+        r = get_result(url, headers=headers)
         data_raw = html.fromstring(r.text, "lxml")
         logger.info(f"Pulling the Data from: {idx} <<:>> {url}")
         locator_domain = locator_domain_url
