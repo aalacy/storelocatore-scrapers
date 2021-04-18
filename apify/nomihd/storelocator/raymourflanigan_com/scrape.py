@@ -105,7 +105,7 @@ def scrape():
     with SgWriter() as writer:
         results = parallelize(
             search_space=static_zipcode_list(
-                radius=30, country_code=SearchableCountries.USA
+                radius=10, country_code=SearchableCountries.USA
             ),
             fetch_results_for_rec=fetch_records_for,
             processing_function=process_record,
