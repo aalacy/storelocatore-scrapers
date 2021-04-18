@@ -102,13 +102,13 @@ def get_coords_from_embed(text):
 def fetch_data():
     out = []
     locator_domain = "https://m.mrmac.com"
-    page_url = "https://m.mrmac.com/pages/locations"
+    page_url = "https://www.mrmac.com/pages/locations"
     location_type = "<MISSING>"
 
     session = SgRequests()
     r = session.get(page_url)
     tree = html.fromstring(r.text)
-    divs = tree.xpath("//div[@class='information' and ./div[@class='row']]")
+    divs = tree.xpath("//div[@class='col-sm-6 locationBox' and .//iframe]")
 
     for d in divs:
         location_name = "".join(d.xpath('.//p[@class="name"]/text()')).strip()
@@ -128,13 +128,13 @@ def fetch_data():
                     './/div[@class="phone"]/text()[1]|.//div[@class="address"]/text()'
                 )
             )
-            .replace('"Phone:"', "")
+            .replace("Phone:", "")
             .strip()
         )
         if "Fax" in phone:
             phone = phone.split("Fax")[0].strip()
 
-        text = "".join(d.xpath(".//p/iframe/@src"))
+        text = "".join(d.xpath(".//iframe/@src"))
         if "ll=" not in text:
             latitude, longitude = get_coords_from_embed(text)
         else:

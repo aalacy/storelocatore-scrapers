@@ -45,8 +45,14 @@ def fetch_data():
     domain = "stlukescarenow.org"
     response = session.get(start_url)
     dom = etree.HTML(response.text)
-
     all_locations = dom.xpath('//div[@class="provider-name"]/a/@href')
+    next_page = dom.xpath('//a[@class="pagination-btn-next pagination-btn"]/@href')
+    while next_page:
+        response = session.get(urljoin(start_url, next_page[0]))
+        dom = etree.HTML(response.text)
+        all_locations += dom.xpath('//div[@class="provider-name"]/a/@href')
+        next_page = dom.xpath('//a[@class="pagination-btn-next pagination-btn"]/@href')
+
     for url in all_locations:
         store_url = urljoin(start_url, url)
         loc_response = session.get(store_url)
@@ -73,6 +79,8 @@ def fetch_data():
         hoo = loc_dom.xpath('//div[label[contains(text(), "Hours")]]//text()')
         hoo = [e.strip() for e in hoo if e.strip()]
         hours_of_operation = " ".join(hoo[1:]) if hoo else "<MISSING>"
+        if hours_of_operation == "<MISSING>":
+            location_type = "Temporarily Closed"
 
         item = [
             domain,

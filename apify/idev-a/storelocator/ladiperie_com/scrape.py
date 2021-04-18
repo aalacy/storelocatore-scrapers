@@ -2,7 +2,6 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 import json
-import re
 from sgscrape.sgpostal import parse_address_intl
 
 locator_domain = "https://ladiperie.com/"
@@ -19,7 +18,15 @@ def _headers():
 
 
 def _phone(val):
-    return val.replace("-", "").replace(")", "").replace("(", "").strip().isdigit()
+    return (
+        val.split(":")[-1]
+        .replace("-", "")
+        .replace(")", "")
+        .replace("(", "")
+        .replace(" ", "")
+        .strip()
+        .isdigit()
+    )
 
 
 def fetch_data():
@@ -27,47 +34,53 @@ def fetch_data():
     with SgRequests() as session:
         res = session.get(base_url, headers=_headers())
         cleaned = (
-            res.text.replace("//", "")
-            .replace('\\"', '"')
+            res.text.replace("\\t", " ")
+            .replace("\t", " ")
             .replace("\\n]", "]")
+            .replace("\n]", "]")
             .replace("\\n,", ",")
             .replace("\\n", "#")
+            .replace('\\"', '"')
+            .replace("\\u003d", "=")
+            .replace("\\u0026", "&")
             .replace("\\", "")
-        )
-        block = re.search(
-            r'\[\[\["\w+",\[\[\[\d+[.]\d+,[-]\d+[.]\d+\]\]\](.*)\]\],\[\[\["data:image',
-            cleaned,
+            .replace("\xa0", " ")
         )
         locations = json.loads(
-            block.group().replace(
-                ',[[["data:image',
-                "",
-            )[1:-1]
-            + "]"
-        )
+            cleaned.split('var _pageData = "')[1].split('";</script>')[0][:-1]
+        )[1][6][0][12][0][13][0]
         for _ in locations:
             location_name = _[5][0][1][0]
-            sharp = _[5][1][1][0].split("#")
+            sharp = [
+                ss.strip()
+                for ss in _[5][1][1][0].replace("  ", "#").split("#")
+                if ss.strip()
+            ]
             hours = []
+            idx = 2
             for x, ss in enumerate(sharp):
-                if _phone(ss):
-                    phone = ss.replace(u"\xa0", " ").strip()
-                    address = " ".join(sharp[:x])
-                    for hh in sharp[x + 1 :]:
-                        if not hh.replace(u"\xa0", " ").strip():
-                            continue
-                        hours.append(hh.replace(u"\xa0", " ").strip())
+                if x >= idx and _phone(ss):
+                    phone = ss.split(":")[-1]
+                    idx = x + 1
                     break
+            address = " ".join(sharp[: idx - 1])
+            for hh in sharp[idx:]:
+                hours.append(hh)
             addr = parse_address_intl(address)
-            if addr.street_address_1 in streets:
+            street_address = addr.street_address_1
+            if addr.street_address_2:
+                street_address += ", " + addr.street_address_2
+            if street_address in streets:
                 continue
-            streets.append(addr.street_address_1)
+            streets.append(street_address)
+            city = addr.city
+            state = addr.state
             yield SgRecord(
                 location_name=location_name,
                 store_number=_[7],
-                street_address=addr.street_address_1,
-                city=addr.city,
-                state=addr.state,
+                street_address=street_address,
+                city=city,
+                state=state,
                 zip_postal=addr.postcode,
                 country_code="CA",
                 phone=phone,

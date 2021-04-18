@@ -7,6 +7,13 @@ from sgselenium.sgselenium import webdriver
 
 option = webdriver.ChromeOptions()
 option.add_argument("--disable-blink-features=AutomationControlled")
+option.add_argument("--headless")
+option.add_argument("window-size=1280,800")
+option.add_argument(
+    "user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36"
+)
+option.add_argument("--no-sandbox")
+option.add_argument("--disable-dev-shm-usage")
 
 
 def write_output(data):
@@ -40,7 +47,6 @@ def write_output(data):
 
 
 def fetch_data():
-    # Your scraper here
 
     items = []
 
@@ -48,6 +54,7 @@ def fetch_data():
     start_url = "https://www.cb2.com/stores/"
 
     with webdriver.Chrome(options=option) as driver:
+
         driver.get(start_url)
         sleep(10)
         dom = etree.HTML(driver.page_source)
@@ -80,11 +87,14 @@ def fetch_data():
         longitude = poi["geo"]["longitude"]
         latitude = latitude if latitude else "<MISSING>"
         longitude = longitude if longitude else "<MISSING>"
-        hours_of_operation = poi["openingHours"]
-        hours_of_operation = (
-            ", ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
-        )
 
+        try:
+            hours_of_operation = poi["openingHours"]
+            hours_of_operation = (
+                ", ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
+            )
+        except Exception:
+            hours_of_operation = "<MISSING>"
         item = [
             DOMAIN,
             store_url,

@@ -2,6 +2,7 @@ import csv
 import json
 
 from sgrequests import SgRequests
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 
 
 def write_output(data):
@@ -42,51 +43,56 @@ def fetch_data():
     scraped_items = []
 
     DOMAIN = "louisianafamousfriedchicken.net"
-    start_url = "https://louisianafriedchickenhq.com/wp-admin/admin-ajax.php?action=store_search&lat=32.77666&lng=-96.79699&max_results=50&search_radius=10&autoload=1"
+    start_url = "https://louisianafriedchickenhq.com/wp-admin/admin-ajax.php?action=store_search&lat={}&lng={}&max_results=100&search_radius=500&autoload=1"
 
-    response = session.get(start_url)
-    data = json.loads(response.text)
+    all_coords = DynamicGeoSearch(
+        country_codes=[SearchableCountries.USA], max_radius_miles=500
+    )
+    for lat, lng in all_coords:
+        response = session.get(start_url.format(lat, lng))
+        data = json.loads(response.text)
 
-    for poi in data:
-        store_url = poi["permalink"]
-        if "6150-ramey-ave/" in store_url:
-            continue
-        location_type = "<MISSING>"
-        hours_of_operation = poi["hours"]
-        hours_of_operation = hours_of_operation if hours_of_operation else "<MISSING>"
-        location_name = poi["store"]
-        location_name = location_name if location_name else "<MISSING"
-        street_address = poi["address"]
-        city = poi["city"]
-        state = poi["state"]
-        zip_code = poi["zip"]
-        country_code = poi["country"]
-        store_number = poi["id"]
-        phone = poi["phone"]
-        phone = phone if phone else "<MISSING>"
-        latitude = poi["lat"]
-        longitude = poi["lng"]
+        for poi in data:
+            store_url = poi["permalink"]
+            location_type = "<MISSING>"
+            hours_of_operation = poi["hours"]
+            hours_of_operation = (
+                hours_of_operation if hours_of_operation else "<MISSING>"
+            )
+            location_name = poi["store"]
+            location_name = location_name if location_name else "<MISSING"
+            street_address = poi["address"]
+            city = poi["city"]
+            state = poi["state"]
+            zip_code = poi["zip"]
+            if len(zip_code) > 5:
+                zip_code = "<MISSING>"
+            country_code = poi["country"]
+            store_number = poi["id"]
+            phone = poi["phone"]
+            phone = phone if phone else "<MISSING>"
+            latitude = poi["lat"]
+            longitude = poi["lng"]
 
-        item = [
-            DOMAIN,
-            store_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip_code,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        check = "{} {}".format(location_name, street_address)
-        if check not in scraped_items:
-            scraped_items.append(check)
-            items.append(item)
+            item = [
+                DOMAIN,
+                store_url,
+                location_name,
+                street_address,
+                city,
+                state,
+                zip_code,
+                country_code,
+                store_number,
+                phone,
+                location_type,
+                latitude,
+                longitude,
+                hours_of_operation,
+            ]
+            if store_number not in scraped_items:
+                scraped_items.append(store_number)
+                items.append(item)
 
     return items
 
