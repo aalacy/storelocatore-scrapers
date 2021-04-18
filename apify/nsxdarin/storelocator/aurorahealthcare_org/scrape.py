@@ -62,65 +62,68 @@ def fetch_data():
                             + item.split('"')[0]
                         )
         for loc in locs:
-            lurl = loc.split("|")[0]
-            typ = loc.split("|")[1]
-            logger.info(lurl)
-            name = ""
-            add = ""
-            city = ""
-            state = ""
-            zc = ""
-            store = "<MISSING>"
-            phone = ""
-            lat = ""
-            lng = ""
-            hours = ""
-            r2 = session.get(lurl, headers=headers)
-            for line2 in r2.iter_lines():
-                line2 = str(line2.decode("utf-8"))
-                if '"openingHours":["' in line2:
-                    hours = (
-                        line2.split('"openingHours":["')[1]
-                        .split("]")[0]
-                        .replace('","', "; ")
-                        .replace('"', "")
-                    )
-                if "<title>" in line2:
-                    name = line2.split("<title>")[1].split("<")[0]
-                    if " |" in name:
-                        name = name.split(" |")[0]
-                if '"streetAddress":"' in line2:
-                    add = line2.split('"streetAddress":"')[1].split('"')[0]
-                if '"addressLocality":"' in line2:
-                    city = line2.split('"addressLocality":"')[1].split('"')[0]
-                if '"addressRegion":"' in line2:
-                    state = line2.split('"addressRegion":"')[1].split('"')[0]
-                if '"postalCode":"' in line2:
-                    zc = line2.split('"postalCode":"')[1].split('"')[0]
-                if '"telephone":"' in line2:
-                    phone = line2.split('"telephone":"')[1].split('"')[0]
-                if 'data-latitude="' in line2:
-                    lat = line2.split('data-latitude="')[1].split('"')[0]
-                    lng = line2.split('longitude="')[1].split('"')[0]
-            if hours == "":
-                hours = "<MISSING>"
-            if add != "":
-                yield [
-                    website,
-                    lurl,
-                    name,
-                    add,
-                    city,
-                    state,
-                    zc,
-                    country,
-                    store,
-                    phone,
-                    typ,
-                    lat,
-                    lng,
-                    hours,
-                ]
+            try:
+                lurl = loc.split("|")[0]
+                typ = loc.split("|")[1]
+                logger.info(lurl)
+                name = ""
+                add = ""
+                city = ""
+                state = ""
+                zc = ""
+                store = "<MISSING>"
+                phone = ""
+                lat = ""
+                lng = ""
+                hours = ""
+                r2 = session.get(lurl, headers=headers)
+                for line2 in r2.iter_lines():
+                    line2 = str(line2.decode("utf-8"))
+                    if '"openingHours":["' in line2:
+                        hours = (
+                            line2.split('"openingHours":["')[1]
+                            .split("]")[0]
+                            .replace('","', "; ")
+                            .replace('"', "")
+                        )
+                    if "<title>" in line2:
+                        name = line2.split("<title>")[1].split("<")[0]
+                        if " |" in name:
+                            name = name.split(" |")[0]
+                    if '"streetAddress":"' in line2:
+                        add = line2.split('"streetAddress":"')[1].split('"')[0]
+                    if '"addressLocality":"' in line2:
+                        city = line2.split('"addressLocality":"')[1].split('"')[0]
+                    if '"addressRegion":"' in line2:
+                        state = line2.split('"addressRegion":"')[1].split('"')[0]
+                    if '"postalCode":"' in line2:
+                        zc = line2.split('"postalCode":"')[1].split('"')[0]
+                    if '"telephone":"' in line2:
+                        phone = line2.split('"telephone":"')[1].split('"')[0]
+                    if 'data-latitude="' in line2:
+                        lat = line2.split('data-latitude="')[1].split('"')[0]
+                        lng = line2.split('longitude="')[1].split('"')[0]
+                if hours == "":
+                    hours = "<MISSING>"
+                if add != "":
+                    yield [
+                        website,
+                        lurl,
+                        name,
+                        add,
+                        city,
+                        state,
+                        zc,
+                        country,
+                        store,
+                        phone,
+                        typ,
+                        lat,
+                        lng,
+                        hours,
+                    ]
+            except:
+                pass
 
 
 def scrape():
