@@ -116,7 +116,7 @@ def fetch_data():
     items = []
     all_store_urls = get_filtered_urls()
     logger.info(f"Store URLs count: {len(all_store_urls)}")
-    for idx, url in enumerate(all_store_urls[0:10]):
+    for idx, url in enumerate(all_store_urls):
         r = get_result(url, headers=headers)
         data_raw = html.fromstring(r.text, "lxml")
         logger.info(f"Pulling the Data from: {idx} <<:>> {url}")
