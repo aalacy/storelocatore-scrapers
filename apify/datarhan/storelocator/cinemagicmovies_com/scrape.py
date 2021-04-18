@@ -3,6 +3,7 @@ import csv
 from lxml import etree
 
 from sgselenium import SgFirefox
+from sgscrape.sgpostal import parse_address_intl
 
 
 def write_output(data):
@@ -56,12 +57,21 @@ def fetch_data():
             continue
         raw_address = poi_html.xpath(".//following-sibling::div[1]/p/text()")
         if not raw_address:
+            raw_address = poi_html.xpath(".//following-sibling::div[2]/p/text()")
+        addr = parse_address_intl(" ".join(raw_address))
+        street_address = addr.street_address_1
+        if addr.street_address_2:
+            street_address += " " + addr.street_address_2
+        city = addr.city
+        city = city if city else "<MISSING>"
+        state = addr.state
+        state = state if state else "<MISSING>"
+        zip_code = addr.postcode
+        zip_code = zip_code if zip_code else "<MISSING>"
+        country_code = addr.country
+        country_code = country_code if country_code else "<MISSING>"
+        if country_code == "Mexico":
             continue
-        street_address = raw_address[0]
-        city = raw_address[-1].split(", ")[0]
-        state = raw_address[-1].split(", ")[-1].split()[0]
-        zip_code = raw_address[-1].split(", ")[-1].split()[-1]
-        country_code = "<MISSING>"
         store_number = "<MISSING>"
         phone = "<MISSING>"
         location_type = "<MISSING>"

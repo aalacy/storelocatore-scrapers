@@ -38,7 +38,7 @@ def write_output(data):
 
 
 def fetch_data():
-    locs = []
+    locs = ["https://petstuff.com/ca-anaheim-hills-protein-for-pets"]
     alllocs = []
     url = "https://petstuff.com/store-locator"
     r = session.get(url, headers=headers)
@@ -54,10 +54,14 @@ def fetch_data():
             for item in items:
                 if "<html>" not in item:
                     lurl = item.split(" ")[0]
+                    if ">Contact" in lurl:
+                        Found = True
                     if "-" in lurl:
-                        if "stella-chewys" in lurl:
-                            Found = True
-                        if lurl not in alllocs and Found is False:
+                        if (
+                            lurl not in alllocs
+                            and Found is False
+                            and "stella-chewys" not in lurl
+                        ):
                             alllocs.append(lurl)
                             locs.append("https://petstuff.com/" + lurl)
     for loc in locs:
@@ -77,8 +81,6 @@ def fetch_data():
             line2 = str(line2.decode("utf-8"))
             if "<title>" in line2:
                 name = line2.split("<title>")[1].split("</title>")[0]
-                if " |" in name:
-                    name = name.split(" |")[0]
             if "ADDRESS:</strong></span><p><span style=font-size:12pt>" in line2:
                 add = line2.split(
                     "ADDRESS:</strong></span><p><span style=font-size:12pt>"
@@ -145,6 +147,22 @@ def fetch_data():
             state = "IL"
             zc = "60173"
             phone = "(630) 635-2344"
+        if "ca-anaheim-hills-protein-for-pets" in loc:
+            add = "701 S. Weir Canyon Rd."
+            city = "Anaheim"
+            state = "CA"
+            zc = "92808"
+            phone = "(714) 395-4158"
+            hours = (
+                "Monday - Friday: 9am - 7pm; Saturday: 10am - 5pm; Sunday: 10am - 5pm"
+            )
+        hours = hours.replace("&amp;", "&").replace("amp;", "&")
+        if "(Groom" in name:
+            name = name.split("(Groom")[0].strip()
+        if "| Bentley's Pet Stuff" in name:
+            name = name.split("| Bentley's Pet Stuff")[0].strip()
+        if "(" in name:
+            name = name.split("(")[0].strip()
         yield [
             website,
             loc,
