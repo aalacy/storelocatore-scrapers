@@ -6,6 +6,7 @@ from sgscrape.simple_utils import parallelize
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgzip.static import static_zipcode_list, SearchableCountries
+from tenacity import retry, stop_after_attempt
 
 website = "raymourflanigan.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -19,6 +20,13 @@ headers = {
 url_list = []
 
 
+def retry_error_callback(retry_state):
+    postal = retry_state.args[0]
+    log.error(f'Failure to fetch locations for: {postal}')
+    return []
+
+
+@retry(retry_error_callback=retry_error_callback, stop=stop_after_attempt(5))
 def fetch_records_for(zipcode):
     url = "https://www.raymourflanigan.com/api/custom/location-search"
     params = {
@@ -29,13 +37,8 @@ def fetch_records_for(zipcode):
         "includeClearanceLocations": True,
         "includeAppointments": True,
     }
-
-    try:
-        stores = session.get(url, params=params, headers=headers).json()
-        return stores["locations"]
-    except Exception as e:
-        log.error(f"{zipcode} >>> {e}")
-        return []
+    stores = session.get(url, params=params, headers=headers).json()
+    return stores["locations"]
 
 
 def process_record(raw_results_from_one_zipcode):
@@ -102,7 +105,7 @@ def scrape():
     with SgWriter() as writer:
         results = parallelize(
             search_space=static_zipcode_list(
-                radius=10, country_code=SearchableCountries.USA
+                radius=30, country_code=SearchableCountries.USA
             ),
             fetch_results_for_rec=fetch_records_for,
             processing_function=process_record,
