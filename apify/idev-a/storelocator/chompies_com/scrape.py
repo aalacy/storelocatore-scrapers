@@ -14,12 +14,16 @@ _headers = {
 
 def fetch_data():
     locator_domain = "https://chompies.com"
-    base_url = "https://chompies.com/online-store/"
+    base_url = "https://chompies.com/contact/"
     with SgRequests() as session:
         soup = bs(session.get(base_url, headers=_headers).text, "lxml")
-        links = soup.select("aside#sow-editor-4 div.siteorigin-widget-tinymce a")[2:]
+        links = soup.select("#pgc-870-1-0 h4 a")
+        links += soup.select("#pgc-870-1-1 h4 a")
         for link in links:
-            page_url = locator_domain + link["href"]
+            page_url = link["href"]
+            if not page_url.startswith("http"):
+                page_url = locator_domain + link["href"]
+
             logger.info(page_url)
             _ = bs(session.get(page_url, headers=_headers).text, "lxml")
             addr = parse_address_intl(
