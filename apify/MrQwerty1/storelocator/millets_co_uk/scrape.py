@@ -7,7 +7,7 @@ from lxml import html
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
 
-logger = SgLogSetup().get_logger('millets_co_uk')
+logger = SgLogSetup().get_logger("millets_co_uk")
 
 
 def write_output(data):
