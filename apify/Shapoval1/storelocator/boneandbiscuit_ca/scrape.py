@@ -75,12 +75,13 @@ def fetch_data():
         if ad != "" and ad.count(",") == 3:
             street_address = ad.split(",")[0].strip() + " " + ad.split(",")[1].strip()
             city = ad.split(",")[2].strip()
+
             state = " ".join(ad.split(",")[3].split()[:-2]).strip()
             postal = " ".join(ad.split(",")[3].split()[-2:]).strip()
 
         if street_address.find("11939") != -1:
-            state = " ".join(ad.split(",")[3].split()[-2:]).strip()
-            postal = "<MISSING>"
+            state = " ".join(ad.split(",")[2].split()[:-2]).strip()
+            postal = " ".join(ad.split(",")[2].split()[-2:]).strip()
 
         if street_address.find("500") != -1:
             state = "".join(ad.split(",")[2].split()[-2:]).strip()
