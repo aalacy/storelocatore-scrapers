@@ -54,8 +54,8 @@ def fetch_data():
         country_code = a.get("country")
         postal = a.get("postal_code")
         store_number = "<MISSING>"
-        latitude = j.get("coordinates")[0]
-        longitude = j.get("coordinates")[1]
+        latitude = j.get("coordinates")[1]
+        longitude = j.get("coordinates")[0]
         location_type = "<MISSING>"
         hours_of_operation = j.get("description")
         hours_of_operation = html.fromstring(hours_of_operation)

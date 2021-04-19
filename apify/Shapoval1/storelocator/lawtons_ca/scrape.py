@@ -1,7 +1,6 @@
 import csv
 from lxml import html
 from sgrequests import SgRequests
-from concurrent import futures
 
 
 def write_output(data):
@@ -33,133 +32,93 @@ def write_output(data):
             writer.writerow(row)
 
 
-def get_urls():
-    session = SgRequests()
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:86.0) Gecko/20100101 Firefox/86.0",
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
-        "Accept-Language": "ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3",
-        "Referer": "https://lawtons.ca/",
-        "Connection": "keep-alive",
-        "Upgrade-Insecure-Requests": "1",
-        "Pragma": "no-cache",
-        "Cache-Control": "no-cache",
-        "TE": "Trailers",
-    }
-    r = session.get("https://lawtons.ca/sitemaps/store-sitemap1.xml", headers=headers)
-    tree = html.fromstring(r.content)
-
-    return tree.xpath("//lastmod//preceding-sibling::loc[1]/text()")
-
-
-def get_data(url):
-    locator_domain = "https://lawtons.ca"
-
-    page_url = "".join(url)
-    session = SgRequests()
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:86.0) Gecko/20100101 Firefox/86.0",
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
-        "Accept-Language": "ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3",
-        "Referer": "https://lawtons.ca/",
-        "Connection": "keep-alive",
-        "Upgrade-Insecure-Requests": "1",
-        "Pragma": "no-cache",
-        "Cache-Control": "no-cache",
-        "TE": "Trailers",
-    }
-    r = session.get(page_url, headers=headers)
-
-    tree = html.fromstring(r.text)
-    hours = tree.xpath('//table[@class="holiday_hours_tbl"]/tbody/tr')
-    tmp = []
-    for h in hours:
-        day = "".join(h.xpath("./td[1]/text()"))
-        time = "".join(h.xpath("./td[2]/text()"))
-        if time == "":
-            time = "Closed"
-        line = f"{day} - {time}"
-        tmp.append(line)
-    hours_of_operation = ";".join(tmp) or "<MISSING>"
-    if hours_of_operation.count("Closed") == 7:
-        hours_of_operation = "Closed"
-    street_address = "".join(
-        tree.xpath('//span[@class="location_address_address_1"]/text()')
-    )
-
-    city = "".join(tree.xpath('//span[@class="city"]/text()'))
-    state = "".join(tree.xpath('//span[@class="province"]/text()'))
-    postal = "".join(tree.xpath('//span[@class="postal_code"]/text()')) or "<MISSING>"
-    country_code = "CA"
-    store_number = "<MISSING>"
-    location_name = "".join(tree.xpath('//h2[@class="fl-heading"]/span/text()'))
-
-    phone = (
-        "".join(tree.xpath('//div[@class="single_store_info contact"]//a/text()'))
-        or "<MISSING>"
-    )
-    latitude = "".join(
-        tree.xpath('//div[@class="fl-module-content fl-node-content"]/div/@data-lat')
-    )
-    longitude = "".join(
-        tree.xpath('//div[@class="fl-module-content fl-node-content"]/div/@data-lng')
-    )
-    location_type = "<MISSING>"
-    if location_name.find("Dartmouth Medical Centre") != -1:
-        return
-    if location_name.find("The Family Focus Medical Clinic") != -1:
-        return
-    if location_name.find("Scotia Square Medical") != -1:
-        return
-    if location_name.find("The Family Focus Medical Clinic") != -1:
-        return
-    if location_name.find("Park West Medical Clinic") != -1:
-        return
-    if location_name.find("Tantallon Walk-In Clinic") != -1:
-        return
-    if location_name.find("New Minas Walk-In Medical Clinic") != -1:
-        return
-    if location_name.find("Providence Walk-In Clinic") != -1:
-        return
-    if location_name.find("Dr. Manon LeRoux") != -1:
-        return
-    if location_name.find("West Side Medical Clinic") != -1:
-        return
-    if location_name.find("Sunday Walk-In Clinic") != -1:
-        return
-    if page_url.find("8") != -1 or page_url.find("7") != -1:
-        store_number = page_url.split("-")[2].replace("/", "").strip()
-    if phone.find("N/A") != -1:
-        phone = "<MISSING>"
-    row = [
-        locator_domain,
-        page_url,
-        location_name,
-        street_address,
-        city,
-        state,
-        postal,
-        country_code,
-        store_number,
-        phone,
-        location_type,
-        latitude,
-        longitude,
-        hours_of_operation,
-    ]
-
-    return row
-
-
 def fetch_data():
     out = []
-    urls = get_urls()
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
-        future_to_url = {executor.submit(get_data, url): url for url in urls}
-        for future in futures.as_completed(future_to_url):
-            row = future.result()
-            if row:
-                out.append(row)
+
+    locator_domain = "https://lawtons.ca"
+    api_url = "https://lawtons.ca/store-locator/"
+    session = SgRequests()
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
+    }
+    r = session.get(api_url, headers=headers)
+    tree = html.fromstring(r.text)
+    div = tree.xpath(
+        '//div[contains(@class, "store-result brand-lawtons-drugs-location")]'
+    )
+    for d in div:
+
+        page_url = "".join(d.xpath('.//a[@class="store-title"]/@href'))
+        location_name = (
+            "".join(d.xpath('.//h4[./a[@class="store-title"]]//text()'))
+            .replace("\n", "")
+            .strip()
+        )
+        location_type = "".join(d.xpath(".//@data-brand"))
+        if location_type == "lawtons-drugs-location-with-a-walk-in-clinic":
+            continue
+        street_address = "".join(
+            d.xpath(
+                './/p[@class="location_address"]/span[@class="location_address_address_1"]//text()'
+            )
+        )
+        phone = "".join(d.xpath('.//a[contains(@href, "tel")]/text()')) or "<MISSING>"
+        if phone.find("N/A") != -1:
+            phone = "<MISSING>"
+        state = (
+            "".join(
+                d.xpath(
+                    './/p[@class="location_address"]/span[@class="province"]//text()'
+                )
+            )
+            or "<MISSING>"
+        )
+        postal = (
+            "".join(
+                d.xpath(
+                    './/p[@class="location_address"]/span[@class="postal_code"]//text()'
+                )
+            )
+            or "<MISSING>"
+        )
+        country_code = "CA"
+        city = (
+            "".join(
+                d.xpath('.//p[@class="location_address"]/span[@class="city"]//text()')
+            )
+            or "<MISSING>"
+        )
+        store_number = "<MISSING>"
+        if page_url.find("charlottetown-") != -1:
+            store_number = page_url.split("-")[-1].split("/")[0]
+
+        latitude = "".join(d.xpath(".//@data-lat"))
+        longitude = "".join(d.xpath(".//@data-lng"))
+        hours_of_operation = (
+            "".join(d.xpath(".//@data-hours"))
+            .replace("{", "")
+            .replace("}", "")
+            .replace('"', "")
+            .replace("null", "Closed")
+        )
+
+        row = [
+            locator_domain,
+            page_url,
+            location_name,
+            street_address,
+            city,
+            state,
+            postal,
+            country_code,
+            store_number,
+            phone,
+            location_type,
+            latitude,
+            longitude,
+            hours_of_operation,
+        ]
+        out.append(row)
 
     return out
 
