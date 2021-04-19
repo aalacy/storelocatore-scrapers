@@ -48,11 +48,14 @@ def fetch_data():
     url = "https://www.howardbank.com/branch-locations"
     r = session.get(url, headers=headers, verify=False)
     soup = BeautifulSoup(r.text, "html.parser")
-    divlist = soup.select("a[href*=branch-locations]")
+    divlist = soup.find("div", {"id": "block-menu-menu-branch-location"}).findAll("a")
+
     p = 0
     for div in divlist:
+
         title = div.text
         link = div["href"]
+
         if link.replace("locations/", "locations") == "/branch-locations":
             continue
         if "https" in link:

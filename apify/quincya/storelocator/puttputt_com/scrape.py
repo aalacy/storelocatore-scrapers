@@ -63,7 +63,7 @@ def fetch_data():
 
     for link in all_links:
         if "locations" not in link:
-            final_links.append([link, "", "", ""])
+            final_links.append([link, "", "", "", ""])
         else:
             req = session.get(link, headers=headers)
             base = BeautifulSoup(req.text, "lxml")
@@ -75,7 +75,7 @@ def fetch_data():
                     city_state = item.strong.text.replace("Putt-Putt", "").strip()
                     phone = item.find(class_="mini_body").text.split("\n")[-1]
                     fin_link = item.a["href"]
-                    final_links.append([fin_link, street, city_state, phone])
+                    final_links.append([fin_link, street, city_state, phone, link])
                 except:
                     pass
 
@@ -89,8 +89,22 @@ def fetch_data():
         if "www.puttputtfunhouse.com" in final_link[0]:
             continue
 
+        link = final_link[0]
+        street_address = final_link[1]
+        try:
+            city = final_link[2].split(",")[0].strip()
+            state = final_link[2].split(",")[1].strip()
+        except:
+            pass
+        location_name = "Putt-Putt Fun Center"
+        phone = final_link[3]
+        zip_code = "<MISSING>"
+        latitude = "<MISSING>"
+        longitude = "<MISSING>"
+
         if "funworks" in final_link[0]:
             link = "https://funworksfuncompany.com/directions-hours"
+            phone_link = "https://funworksfuncompany.com/contact-us-2"
             req = session.get(link, headers=headers)
             base = BeautifulSoup(req.text, "lxml")
             location_name = base.h1.strong.text
@@ -101,7 +115,16 @@ def fetch_data():
             city = city_line[0].strip()
             state = city_line[-1].strip().split()[0].strip()
             zip_code = city_line[-1].strip().split()[1].strip()
-            phone = "209-578-4386"
+            phone_link = "https://funworksfuncompany.com/contact-us-2"
+            req = session.get(phone_link, headers=headers)
+            base = BeautifulSoup(req.text, "lxml")
+
+            try:
+                phone = re.findall(
+                    r"[(\d)]{3}-[\d]{3}-[\d]{4}", base.find(class_="content").text
+                )[0]
+            except:
+                phone = "<MISSING>"
 
             hours_of_operation = ""
             ps = base.find_all("p")
@@ -117,22 +140,140 @@ def fetch_data():
             latitude = "<MISSING>"
             longitude = "<MISSING>"
 
+        elif "hope-mills" in final_link[0]:
+            link = "https://puttputt.com/hope-mills/plan/"
+            if "3311 Footbridge" in street_address:
+                zip_code = "28306"
+            req = session.get(link, headers=headers)
+            base = BeautifulSoup(req.text, "lxml")
+            hours_of_operation = ""
+            ps = base.find_all("p")
+            for p in ps:
+                if "day" in p.text.lower() or "spring break" in p.text.lower():
+                    hours_of_operation = (
+                        hours_of_operation
+                        + " "
+                        + p.text.replace("\n", " ").replace("!", " ").replace("–", "-")
+                    )
+            hours_of_operation = (re.sub(" +", " ", hours_of_operation)).strip()
+        elif "farragutputtputt" in final_link[0]:
+            if "164 West" in street_address:
+                zip_code = "37934"
+            req = session.get(link, headers=headers)
+            base = BeautifulSoup(req.text, "lxml")
+            hours_of_operation = ""
+            ps = base.find_all(style="color:#FFFFFF")
+            for p in ps:
+                if "day" in p.text.lower() or "0p" in p.text.lower():
+                    hours_of_operation = (
+                        hours_of_operation
+                        + " "
+                        + p.text.replace("\n", " ")
+                        .replace("\xa0", "")
+                        .replace("–", "-")
+                    )
+            hours_of_operation = (re.sub(" +", " ", hours_of_operation)).strip()
+        elif "cedarcreeksportscenter" in final_link[0]:
+            if "10770 Lebanon" in street_address:
+                zip_code = "37122"
+            req = session.get(link, headers=headers)
+            base = BeautifulSoup(req.text, "lxml")
+            hours_of_operation = ""
+            ps = base.find_all(class_="size20 ArialNarrow20")
+            for p in ps:
+                if "day" in p.text.lower() or "0p" in p.text.lower():
+                    hours_of_operation = (
+                        hours_of_operation
+                        + " "
+                        + p.text.replace("\n", " ")
+                        .replace("Â\xa0", "")
+                        .replace("–", "-")
+                    )
+            hours_of_operation = (re.sub(" +", " ", hours_of_operation)).strip()
+        elif "golfandgamesmemphis" in final_link[0]:
+            if "5484 Summer" in street_address:
+                zip_code = "38134"
+                latitude = "35.16191"
+                longitude = "-89.87715"
+            req = session.get(link, headers=headers)
+            base = BeautifulSoup(req.text, "lxml")
+            hours_of_operation = ""
+            ps = base.find(class_="entry-content").find_all("strong")
+            for p in ps:
+                if (
+                    "day" in p.text.lower()
+                    or "a.m" in p.text.lower()
+                    or "p.m" in p.text.lower()
+                ):
+                    hours_of_operation = (
+                        hours_of_operation
+                        + " "
+                        + p.text.replace("\n", " ").replace("–", "-")
+                    )
+            hours_of_operation = (re.sub(" +", " ", hours_of_operation)).strip()
+        elif "fortwayneputtputt" in final_link[0]:
+            if "4530 Speedway" in street_address:
+                zip_code = "46825"
+            req = session.get(link, headers=headers)
+            base = BeautifulSoup(req.text, "lxml")
+            hours_of_operation = (
+                " ".join(list(base.find(id="iecwtabe").stripped_strings))
+                .replace("\xa0", "")
+                .replace("\u200b", "")
+                .replace("Hours of operation:", "")
+                .strip()
+            )
+            hours_of_operation = (re.sub(" +", " ", hours_of_operation)).strip()
+        elif "puttlongview" in final_link[0]:
+            if "2630 Bill Owens" in street_address:
+                zip_code = "75604"
+            req = session.get(link, headers=headers)
+            base = BeautifulSoup(req.text, "lxml")
+            hours_of_operation = ""
+            ps = base.find(id="zC").find_all("p")
+            for p in ps:
+                if "day" in p.text.lower() or "pm" in p.text.lower():
+                    hours_of_operation = (
+                        hours_of_operation
+                        + " "
+                        + p.text.replace("Â", " ").replace("\xa0", "")
+                    )
+            hours_of_operation = (re.sub(" +", " ", hours_of_operation)).strip()
+        elif "puttputtofwarren.com" in final_link[0]:
+            if "3937 Youngstown" in street_address:
+                zip_code = "44484"
+            req = session.get(link, headers=headers)
+            base = BeautifulSoup(req.text, "lxml")
+            hours_of_operation = base.find(id="hours").text.replace("\n", " ").strip()
+            hours_of_operation = (re.sub(" +", " ", hours_of_operation)).strip()
+        elif ".myputtputt.com" in final_link[0]:
+            link = "https://www.myputtputt.com/public/contact_us/hours.cfm"
+            if "7901 Midlothian" in street_address:
+                zip_code = "23235"
+                latitude = "37.499972"
+                longitude = "-77.542233"
+            req = session.get(link, headers=headers)
+            base = BeautifulSoup(req.text, "lxml")
+            hours_of_operation = ""
+            ps = base.find(id="body_copy").find_all("p")
+            for p in ps:
+                if "day" in p.text.lower() or "hours" in p.text.lower():
+                    hours_of_operation = (
+                        hours_of_operation
+                        + " "
+                        + p.text.replace("\n", " ").replace("\xa0", "")
+                    )
+            hours_of_operation = (re.sub(" +", " ", hours_of_operation)).strip()
         elif (
             "/puttputt.com/" not in final_link[0]
             and ".puttputt.com" not in final_link[0]
             and "puttputtpa" not in final_link[0]
-            or "hope-mills" in final_link[0]
         ):
-            link = final_link[0]
-            street_address = final_link[1]
-            city = final_link[2].split(",")[0].strip()
-            state = final_link[2].split(",")[1].strip()
-            location_name = "Putt-Putt Fun Center"
-            phone = final_link[3]
-            zip_code = "<INACCESSIBLE>"
-            hours_of_operation = "<INACCESSIBLE>"
-            latitude = "<INACCESSIBLE>"
-            longitude = "<INACCESSIBLE>"
+            zip_code = "<MISSING>"
+            hours_of_operation = "<MISSING>"
+            latitude = "<MISSING>"
+            longitude = "<MISSING>"
+            link = final_link[-1]
 
         else:
             if "puttputtpa.com" in final_link[0]:
@@ -281,8 +422,11 @@ def fetch_data():
                 latitude = "39.92672"
                 longitude = "-75.304327"
 
+        if "6801 Peters" in street_address:
+            zip_code = "24019"
+
         if not hours_of_operation:
-            hours_of_operation = "<INACCESSIBLE>"
+            hours_of_operation = "MISSING"
 
         data.append(
             [
