@@ -1,10 +1,9 @@
 import csv
 
-from bs4 import BeautifulSoup
-
 from sgrequests import SgRequests
-
+from bs4 import BeautifulSoup
 from sgselenium import SgSelenium
+
 
 driver = SgSelenium().chrome()
 
@@ -55,7 +54,12 @@ def get_store(soup2, page_url):
         loc.remove("**New Address**")
         loc.remove("Store Location")
 
-    hours = " ".join(loc[loc.index("Store Hours") :]).replace("Store Hours", "").strip()
+    hours = (
+        " ".join(loc[loc.index("Store Hours") :])
+        .replace("Store Hours", "")
+        .replace("Holiday Hours Memorial Day: Closed", "")
+        .strip()
+    )
 
     i = loc.index("Phone:")
     if i > 3:
