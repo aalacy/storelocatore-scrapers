@@ -68,11 +68,7 @@ def process_record(raw_results_from_one_zipcode):
             hours = store["hours"]
             hours_list = []
             for key, hour in hours.items():
-                if (
-                    hours[key]
-                    and hours[key]["open"]
-                    and hours[key]["close"]
-                ):
+                if hours[key] and hours[key]["open"] and hours[key]["close"]:
                     day = key
                     if day != "today":
                         hours_list.append(
