@@ -5,6 +5,9 @@ import json
 from concurrent import futures
 from lxml import html
 from sgrequests import SgRequests
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('millets_co_uk')
 
 
 def write_output(data):
@@ -44,13 +47,15 @@ def get_urls():
     return tree.xpath("//ul[contains(@id, 'brands_')]//a/@href")
 
 
-def fetch_page_schema(tree, session):
+def fetch_page_schema(session, url):
+    r = session.get(url)
+    tree = html.fromstring(r.text)
     src = tree.xpath("//script[contains(@src, 'yextpages.net')]/@src").pop()
     r = session.get(src)
 
     match = re.search(r"Yext._embed\((.*)\n?\)", r.text, re.IGNORECASE)
     if not match:
-        print("unable to parse")
+        logger.error("unable to parse")
 
     data = json.loads(match.group(1))
     entity = data["entities"].pop()
@@ -60,10 +65,7 @@ def fetch_page_schema(tree, session):
 def get_data(url, session):
     locator_domain = "https://www.millets.co.uk/"
     page_url = f"https://www.millets.co.uk{url}"
-
-    r = session.get(page_url)
-    tree = html.fromstring(r.text)
-    data = fetch_page_schema(tree, session)
+    data = fetch_page_schema(session, page_url)
 
     a = data.get("address")
     street_address = a.get("streetAddress") or "<MISSING>"
