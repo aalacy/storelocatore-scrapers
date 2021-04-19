@@ -66,7 +66,6 @@ def fetch_data():
         hours = "<MISSING>"
         lat = "<MISSING>"
         lng = "<MISSING>"
-        Closed = False
         logger.info("Pulling Stores")
         for line in r.iter_lines():
             line = str(line.decode("utf-8"))
@@ -74,6 +73,8 @@ def fetch_data():
                 items = line.split('"Longitude":')
                 for item in items:
                     if '"Latitude":' in item:
+                        Closed = False
+                        typ = "<MISSING>"
                         add = ""
                         lng = item.split(",")[0]
                         lat = item.split('"Latitude":')[1].split(",")[0]
