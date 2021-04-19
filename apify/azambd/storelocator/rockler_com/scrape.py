@@ -1,10 +1,9 @@
 import csv
 
-from bs4 import BeautifulSoup
-
 from sgrequests import SgRequests
-
+from bs4 import BeautifulSoup
 from sgselenium import SgSelenium
+
 
 driver = SgSelenium().chrome()
 
