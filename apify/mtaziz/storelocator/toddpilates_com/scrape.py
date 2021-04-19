@@ -98,6 +98,7 @@ def fetch_data():
 
             # Get address
             add = data["address"]
+            logger.info(f"Address: {add}")
 
             street_address = add["streetAddress"].replace("\n", ",")
             logger.info(f"Street Address: {street_address}")
@@ -137,6 +138,17 @@ def fetch_data():
             hours_of_operation = get_hoo(data_r_yelp)
             logger.info(f"HOO: {hours_of_operation}")
 
+            # Raw Address
+            raw_address = ""
+            ra_xpath = '//div[p[a[contains(text(), "Get Directions")]]]/p/text()'
+            ra_yelp = data_r_yelp.xpath(ra_xpath)
+            ra_yelp = "".join(ra_yelp)
+            if ra_yelp:
+                raw_address = ra_yelp
+            else:
+                raw_address = MISSING
+            logger.info(f" Raw Address from Yelp: {raw_address}")
+
             yield SgRecord(
                 locator_domain=locator_domain,
                 page_url=page_url,
@@ -152,6 +164,7 @@ def fetch_data():
                 latitude=latitude,
                 longitude=longitude,
                 hours_of_operation=hours_of_operation,
+                raw_address=raw_address,
             )
         else:
             # Get the data from another store which has different domain
@@ -172,6 +185,8 @@ def fetch_data():
             )
             url_austin_pickle_ranch = "".join(url_austin_pickle_ranch)
             logger.info(f"Page URL: {url_austin_pickle_ranch}")
+
+            # Page URL
             page_url = url_austin_pickle_ranch
 
             # Get Address
@@ -184,7 +199,6 @@ def fetch_data():
             address = data_austin_pickle_ranch.xpath(
                 '//address[@class="footer-address"]/text()'
             )
-            logger.info("Raw Address: {address}")
             street_address = address[0]
             logger.info(f"Street Address: {street_address}")
 
@@ -204,7 +218,16 @@ def fetch_data():
             country_code = "US"
             store_number = MISSING
             phone = "<INACCESSIBLE>"
-            location_type = MISSING
+
+            # Get location type
+            location_type = ""
+            loc_type = data_se_austin.xpath('//h1[@class="summer2021"]/text()')
+            loc_type = "".join(loc_type)
+            if "OPENING" in loc_type:
+                location_type = "Coming Soon"
+            else:
+                location_type = MISSING
+            logger.info(f"Location Type: {location_type}")
 
             # Get Latitude and longitude
             latlng = data_se_austin.xpath(
@@ -215,11 +238,23 @@ def fetch_data():
             logger.info(f"Latitude: {latitude}")
             longitude = latlng[1] or MISSING
             logger.info(f"Longitude: {longitude}")
-            hoo = data_se_austin.xpath('//h1[@class="summer2021"]/text()')
-            hoo = "".join(hoo)
+
+            # HOO not found on the source page
             hours_of_operation = MISSING
-            if hoo:
-                hours_of_operation = hoo
+            logger.info(f"Hours of operation: {hours_of_operation}")
+
+            # Raw Address from source site
+            raw_address = ""
+            ra = address
+            ra = ",".join(ra)
+            ra = ra.split()
+            ra = " ".join(ra)
+            if ra:
+                raw_address = ra
+            else:
+                raw_address = MISSING
+
+            logger.info(f"Raw Address: {raw_address}")
 
             yield SgRecord(
                 locator_domain=locator_domain,
@@ -236,6 +271,7 @@ def fetch_data():
                 latitude=latitude,
                 longitude=longitude,
                 hours_of_operation=hours_of_operation,
+                raw_address=raw_address,
             )
 
 

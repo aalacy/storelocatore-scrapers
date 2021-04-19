@@ -89,7 +89,10 @@ def fetch_data():
             hourlist = hourlist["openingHoursSpecification"]
             hours = ""
             for hr in hourlist:
+
                 day = hr["dayOfWeek"][0]
+                if day in hours:
+                    continue
                 opentime = hr["opens"]
                 closetime = hr["closes"]
                 close = (int)(closetime.split(":", 1)[0])
