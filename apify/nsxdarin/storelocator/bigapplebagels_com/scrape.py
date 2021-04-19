@@ -66,6 +66,7 @@ def fetch_data():
         hours = "<MISSING>"
         lat = "<MISSING>"
         lng = "<MISSING>"
+        Closed = False
         logger.info("Pulling Stores")
         for line in r.iter_lines():
             line = str(line.decode("utf-8"))
@@ -77,6 +78,16 @@ def fetch_data():
                         lng = item.split(",")[0]
                         lat = item.split('"Latitude":')[1].split(",")[0]
                         name = item.split('"Name":"')[1].split('"')[0]
+                        if "Temporarily Closed" in name:
+                            Closed = True
+                        try:
+                            if (
+                                "Temporarily Closed"
+                                in item.split('"Address1":"')[1].split('"')[0]
+                            ):
+                                Closed = True
+                        except:
+                            pass
                         try:
                             add = item.split('"Address2":"')[1].split('"')[0]
                         except:
@@ -122,6 +133,8 @@ def fetch_data():
                                 add = add.split("*")[0].strip()
                             if "2616 Ogden" in add:
                                 phone = "630-375-9822"
+                            if Closed:
+                                typ = "Temporarily Closed"
                             yield [
                                 website,
                                 loc,
