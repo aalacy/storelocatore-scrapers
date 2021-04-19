@@ -6,6 +6,7 @@ from sgscrape.sgpostal import parse_address_intl
 
 locator_domain = "http://www.winotstop.com/"
 base_url = "https://www.google.com/maps/d/u/0/embed?mid=1bhjoPX9KjTp7NSJTRRGwoOPUYmA"
+map_url = "https://www.google.com/maps/dir//38.8619831,-77.8480371/@{},{}z"
 
 
 def _headers():
@@ -50,9 +51,6 @@ def fetch_data():
         open("w", "w").write(
             cleaned.split('var _pageData = "')[1].split('";</script>')[0][:-1]
         )
-        import pdb
-
-        pdb.set_trace()
         for _ in locations[1][6][0][12][0][13][0]:
             location_name = _[5][0][1][0]
             sharp = [
@@ -60,15 +58,30 @@ def fetch_data():
                 for ss in _[5][1][1][0].replace("  ", "#").split("#")
                 if ss.strip()
             ]
-            idx = 1
             phone = ""
-            for x, ss in enumerate(sharp):
-                if x >= idx and _phone(ss):
+            for ss in sharp:
+                if _phone(ss):
                     phone = ss.replace("Phone", "")
-                    idx = x + 1
                     break
-            address = " ".join(sharp[: idx - 1])
-            addr = parse_address_intl(address)
+            latitude = _[1][0][0][0]
+            longitude = _[1][0][0][1]
+            res = session.get(
+                map_url.format(latitude, longitude), headers=_headers
+            ).text
+            cleaned_res = (
+                res.replace("\n,[", ",[")
+                .replace("\n],", "],")
+                .replace("\n]", "]")
+                .replace("\\u003d", "=")
+                .replace("\\u0026", "&")
+                .replace("\\u003e", ">")
+                .replace("\\u003c", "<")
+                .replace("\\\\", "")
+                .replace("\\n", "")
+                .replace("\n", "")
+                .replace("\n", "")
+            )
+            addr = parse_address_intl(cleaned_res)
             street_address = addr.street_address_1
             if addr.street_address_2:
                 street_address += ", " + addr.street_address_2
@@ -86,8 +99,8 @@ def fetch_data():
                 zip_postal=addr.postcode,
                 country_code="CA",
                 phone=phone,
-                latitude=_[1][0][0][0],
-                longitude=_[1][0][0][1],
+                latitude=latitude,
+                longitude=latitude,
                 locator_domain=locator_domain,
             )
 
