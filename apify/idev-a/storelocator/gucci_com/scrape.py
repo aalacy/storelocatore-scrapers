@@ -4,6 +4,7 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 import json
 from sglogging import SgLogSetup
+from sgscrape.sgpostal import parse_address_intl
 
 logger = SgLogSetup().get_logger("gucci")
 
@@ -43,25 +44,29 @@ def fetch_data():
                     if time == "-":
                         time = "Closed"
                     hours.append(f"{day}: {time}")
-                addr = loc["address"]
+                aa = loc["address"]
+                street_address = ", ".join(
+                    bs(aa["streetAddress"], "lxml").stripped_strings
+                )
+                addr = parse_address_intl(
+                    f'{street_address} {aa["addressLocality"]}, {aa["addressRegion"]} {aa["postalCode"]} {aa["addressCountry"]}'
+                )
                 phone = loc["telephone"].split("(x")[0]
                 if phone == "n/a":
                     phone = ""
-                logger.info(f"[{addr['addressCountry']}] {page_url}")
+                logger.info(f"[{aa['addressCountry']}] {page_url}")
                 yield SgRecord(
                     page_url=page_url,
                     store_number=_["data-store-code"],
                     location_type=_["data-store-type"],
                     location_name=_["data-store-name"],
-                    street_address=", ".join(
-                        bs(addr["streetAddress"], "lxml").stripped_strings
-                    ),
-                    city=addr["addressLocality"],
-                    state=addr["addressRegion"],
+                    street_address=street_address,
+                    city=addr.city,
+                    state=addr.state,
                     latitude=_["data-latitude"],
                     longitude=_["data-longitude"],
-                    zip_postal=addr["postalCode"],
-                    country_code=addr["addressCountry"],
+                    zip_postal=addr.postcode,
+                    country_code=aa["addressCountry"],
                     phone=phone,
                     locator_domain=locator_domain,
                     hours_of_operation="; ".join(hours),

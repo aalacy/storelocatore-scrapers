@@ -58,14 +58,17 @@ def fetch_data():
             ]
             hours = []
             idx = 2
+            phone = ""
             for x, ss in enumerate(sharp):
                 if x >= idx and _phone(ss):
                     phone = ss.split(":")[-1]
                     idx = x + 1
                     break
-            address = " ".join(sharp[: idx - 1])
             for hh in sharp[idx:]:
                 hours.append(hh)
+            if not phone:
+                idx = 3
+            address = " ".join(sharp[: idx - 1])
             addr = parse_address_intl(address)
             street_address = addr.street_address_1
             if addr.street_address_2:
