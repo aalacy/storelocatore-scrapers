@@ -84,6 +84,14 @@ def fetch_data():
                         country = "US"
                     if add == "" or add is None:
                         add = "<MISSING>"
+                    if phone == "NULL" or "-" not in phone:
+                        phone = "<MISSING>"
+                    if "locations/huntsville" in loc:
+                        phone = "5032068396"
+                    if "sioux-falls" in loc:
+                        phone = "605.271.6908"
+                    if "south-tampa" in loc:
+                        phone = "5032068396"
                     yield [
                         website,
                         loc,
