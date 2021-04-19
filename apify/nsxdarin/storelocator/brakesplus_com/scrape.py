@@ -39,43 +39,38 @@ def write_output(data):
 
 
 def fetch_data():
-    url = "https://www.brakesplus.com/wp/wp-admin/admin-ajax.php"
-    payload = {
-        "address": "",
-        "formdata": "addressInput=",
-        "lat": "37.09024",
-        "lng": "-95.712891",
-        "name": "",
-        "options[initial_radius]": "10000",
-        "options[initial_results_returned]": "200",
-        "action": "csl_ajax_onload",
-        "radius": "10000",
-    }
-    r = session.post(url, headers=headers, data=payload)
+    url = "https://www.brakesplus.com/stores/"
+    r = session.get(url, headers=headers)
     website = "brakesplus.com"
     typ = "<MISSING>"
     country = "US"
-    loc = "<MISSING>"
     logger.info("Pulling Stores")
     for line in r.iter_lines():
         line = str(line.decode("utf-8"))
-        if '"name":"' in line:
-            items = line.split('"name":"')
+        if "var m247Retailers" in line:
+            items = line.split('"location":')
             for item in items:
-                if '"address":"' in item:
-                    name = item.split('"')[0]
-                    store = item.split('"id":"')[1].split('"')[0]
-                    add = item.split(',"address":"')[1].split('"')[0]
-                    state = item.split(',"state":"')[1].split('"')[0]
-                    city = item.split(',"city":"')[1].split('"')[0]
-                    zc = item.split(',"zip":"')[1].split('"')[0]
-                    lat = item.split(',"lat":"')[1].split('"')[0]
-                    lng = item.split(',"lng":"')[1].split('"')[0]
-                    phone = item.split(',"phone":"')[1].split('"')[0]
-                    hours = item.split(',"hours":"')[1].split('"')[0]
-                    hours = hours.replace("\\r\\n", "; ")
-                    if phone == "":
-                        phone = "<MISSING>"
+                if '"storenum":"' in item:
+                    store = item.split('"storenum":"')[1].split('"')[0]
+                    name = item.split('"name":"')[1].split('"')[0]
+                    lat = item.split('"lat":')[1].split(",")[0]
+                    lng = item.split('"lng":')[1].split(",")[0]
+                    loc = (
+                        "https://www.brakesplus.com"
+                        + item.split('"link":"')[1].split('"')[0]
+                    )
+                    phone = item.split('"ph":"')[1].split('"')[0]
+                    add = item.split('"addr1":"')[1].split('"')[0]
+                    city = item.split('"city":"')[1].split('"')[0]
+                    state = item.split('"state":"')[1].split('"')[0]
+                    zc = item.split('"zip":"')[1].split('"')[0]
+                    hours = "Sun: " + item.split('"Sun":"')[1].split('"')[0]
+                    hours = hours + "; Mon: " + item.split('"Mon":"')[1].split('"')[0]
+                    hours = hours + "; Tue: " + item.split('"Tue":"')[1].split('"')[0]
+                    hours = hours + "; Wed: " + item.split('"Wed":"')[1].split('"')[0]
+                    hours = hours + "; Thu: " + item.split('"Thu":"')[1].split('"')[0]
+                    hours = hours + "; Fri: " + item.split('"Fri":"')[1].split('"')[0]
+                    hours = hours + "; Sat: " + item.split('"Sat":"')[1].split('"')[0]
                     yield [
                         website,
                         loc,

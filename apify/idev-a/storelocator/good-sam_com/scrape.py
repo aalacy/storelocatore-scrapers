@@ -12,19 +12,6 @@ _headers = {
 }
 
 
-def _valid(val):
-    return (
-        val.strip()
-        .replace("\u2013", "-")
-        .encode("unicode-escape")
-        .decode("utf8")
-        .replace("\\xa0\\xa", " ")
-        .replace("\\xa0", " ")
-        .replace("\\xa", " ")
-        .replace("\\xae", "")
-    )
-
-
 def fetch_data():
     with SgRequests() as session:
         locator_domain = "https://www.good-sam.com/"
