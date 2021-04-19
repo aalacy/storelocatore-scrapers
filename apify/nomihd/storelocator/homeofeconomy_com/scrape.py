@@ -7,7 +7,7 @@ import lxml.html
 import json
 from sgselenium import SgChrome
 
-website = "homeofeconomy.net"
+website = "homeofeconomy.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 session = SgRequests()
 
