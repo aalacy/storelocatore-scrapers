@@ -69,6 +69,8 @@ def fetch_data():
         else:
             body = suggest_forzip_body % (code + "0A1", "CA")
         sug_response = session.post(suggest_url, data=body, headers=sug_headers)
+        if not sug_response.text:
+            continue
         sug_data = sug_response.json()
         if "Invalid ZIP Code" in sug_response.text:
             continue

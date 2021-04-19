@@ -84,15 +84,30 @@ def fetch_data():
         if len(address) <= 0:
             address = store_sel.xpath('//div[@class="storeInfoLeft"]/h3/text()')
         add_list = []
+        hours_of_operation = ""
+
         for add in address:
             if len("".join(add).strip()) > 0:
                 if "STORE" not in "".join(add).strip():
                     add_list.append("".join(add).strip())
+        if len(add_list) > 0:
+            street_address = add_list[0]
+            city = add_list[1].split(",")[0].strip()
+            state = add_list[1].split(",")[1].strip().split(" ")[0].strip()
+            zip = add_list[1].split(",")[1].strip().split(" ")[1].strip()
+        else:
+            temp_address = store_sel.xpath('//div[@class="main-content"]/text()')
+            add_list = []
+            for temp in temp_address:
+                if len("".join(temp).strip()) > 0:
+                    add_list.append("".join(temp).strip())
 
-        street_address = add_list[0]
-        city = add_list[1].split(",")[0].strip()
-        state = add_list[1].split(",")[1].strip().split(" ")[0].strip()
-        zip = add_list[1].split(",")[1].strip().split(" ")[1].strip()
+            street_address = add_list[0]
+            city = add_list[1].split(",")[0].strip()
+            state = add_list[1].split(",")[1].strip().split(" ")[0].strip()
+            zip = add_list[1].split(",")[1].strip().split(" ")[1].strip()
+            hours_of_operation = "; ".join(add_list[-2:])
+
         country_code = "<MISSING>"
         if us.states.lookup(state):
             country_code = "US"
@@ -114,7 +129,6 @@ def fetch_data():
             '//div[@class="storeInfoLeft"]/div[@class="storeInfo"]/p'
         )
         phone = ""
-        hours_of_operation = ""
         for temp_text in raw_text:
             if "Phone" in "".join(temp_text.xpath("text()")).strip():
                 if len(phone) <= 0:
@@ -131,7 +145,7 @@ def fetch_data():
             if "Monday" in "".join(temp_text.xpath("text()")).strip():
                 if len(hours_of_operation) <= 0:
                     hours_of_operation = (
-                        "".join(temp_text.xpath("text()"))
+                        "; ".join(temp_text.xpath("text()"))
                         .strip()
                         .encode("ascii", "replace")
                         .decode("utf-8")
@@ -140,6 +154,13 @@ def fetch_data():
                         .replace("Hours", "")
                         .strip()
                     )
+
+        if len(phone) <= 0:
+            phone = "".join(
+                store_sel.xpath(
+                    '//div[@class="main-content"]/a[contains(@href,"tel:")]/text()'
+                )
+            ).strip()
 
         location_type = "<MISSING>"
         map_link = "".join(

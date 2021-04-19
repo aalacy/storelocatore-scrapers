@@ -84,6 +84,8 @@ def get_data(url):
         ).strip()
         or "<MISSING>"
     )
+    if phone == "0":
+        return
     text = "".join(
         tree.xpath("//a[@class='location__address--link get-directions']/@href")
     )
