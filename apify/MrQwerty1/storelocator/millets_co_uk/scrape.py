@@ -48,13 +48,13 @@ def fetch_page_schema(tree, session):
     src = tree.xpath("//script[contains(@src, 'yextpages.net')]/@src").pop()
     r = session.get(src)
 
-    match = re.search(r'Yext._embed\((.*)\n?\)', r.text, re.IGNORECASE)
+    match = re.search(r"Yext._embed\((.*)\n?\)", r.text, re.IGNORECASE)
     if not match:
-        print('unable to parse')
+        print("unable to parse")
 
     data = json.loads(match.group(1))
-    entity = data['entities'].pop()
-    return entity['schema']
+    entity = data["entities"].pop()
+    return entity["schema"]
 
 
 def get_data(url, session):
@@ -73,21 +73,21 @@ def get_data(url, session):
     country_code = "GB"
 
     location_name = f"{data.get('name')} {city}"
-    store_number = data.get('@id') or '<MISSING>'
+    store_number = data.get("@id") or "<MISSING>"
     phone = data.get("telephone") or "<MISSING>"
 
-    geo = data.get('geo')
-    latitude = geo.get('latitude') or '<MISSING>'
-    longitude = geo.get('longitude') or '<MISSING>'
-    location_type = data.get('@type').pop()
+    geo = data.get("geo")
+    latitude = geo.get("latitude") or "<MISSING>"
+    longitude = geo.get("longitude") or "<MISSING>"
+    location_type = data.get("@type").pop()
 
     hours_of_operation = []
     for time in data.get("openingHoursSpecification"):
-        day = time['dayOfWeek']
-        opens = time.get('opens')
-        closes = time.get('closes')
+        day = time["dayOfWeek"]
+        opens = time.get("opens")
+        closes = time.get("closes")
         if opens and closes:
-            hours_of_operation.append(f'{day}: {opens}-{closes}')
+            hours_of_operation.append(f"{day}: {opens}-{closes}")
     hours_of_operation = ",".join(hours_of_operation) or "<MISSING>"
 
     row = [
@@ -114,7 +114,7 @@ def fetch_data():
     out = []
     urls = get_urls()
     session = SgRequests()
-    session.get('https://www.millets.co.uk/stores')
+    session.get("https://www.millets.co.uk/stores")
 
     with futures.ThreadPoolExecutor() as executor:
         future_to_url = {executor.submit(get_data, url, session): url for url in urls}
