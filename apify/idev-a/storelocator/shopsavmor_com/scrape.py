@@ -21,7 +21,7 @@ _headers = {
 def fetch_data():
     locator_domain = "https://www.shopsavmor.com/"
     base_url = "https://www.shopsavmor.com/locations.html"
-    with SgChrome(executable_path=r"/mnt/g/work/mia/chromedriver.exe") as driver:
+    with SgChrome() as driver:
         driver.get(base_url)
         soup = bs(driver.page_source, "lxml")
         locations = soup.select("div.location_container > div.location_wrapper")
