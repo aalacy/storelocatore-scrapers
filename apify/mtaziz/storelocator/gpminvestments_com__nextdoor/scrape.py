@@ -31,7 +31,6 @@ def fetch_data():
     data_raw = "".join(data_raw)
     data_json_raw = data_raw.split("wpgmaps_localize_marker_data = ")[-1].split(";")[0]
     data_json = json.loads(data_json_raw)
-    items = []
     for k, v in data_json["7"].items():
         # Location Domain
         locator_domain = locator_domain_url
