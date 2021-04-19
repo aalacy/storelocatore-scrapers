@@ -58,6 +58,7 @@ def get_store(soup2, page_url):
         " ".join(loc[loc.index("Store Hours") :])
         .replace("Store Hours", "")
         .replace("Holiday Hours Memorial Day: Closed", "")
+        .replace("Holiday Hours: Memorial Day: Closed", "")
         .strip()
     )
 
