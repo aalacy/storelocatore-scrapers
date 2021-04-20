@@ -35,53 +35,43 @@ def write_output(data):
 
 def fetch_data():
     out = []
-    locator_domain = "https://www.silverdiner.com/"
-    api_url = "https://www.silverdiner.com/locations"
+    locator_domain = "https://mobettahs.com/"
+    page_url = "https://mobettahs.com/locations/"
 
     session = SgRequests()
-    r = session.get(api_url)
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0"
+    }
+    r = session.get(page_url, headers=headers)
     tree = html.fromstring(r.text)
     divs = tree.xpath(
-        "//div[@class='panel-bootstrap panels-bootstrap-locations_teaser']"
+        "//div[@class='Entry Entry--location Card' and not(.//a[contains(text(), 'Coming soon')])]"
     )
 
     for d in divs:
-        street_address = "".join(d.xpath(".//span[@class='street']/text()")).strip()
-        line = "".join(d.xpath(".//span[@class='city state zip']/text()")).strip()
-        if not line:
-            continue
+        location_name = "".join(d.xpath(".//h4[@itemprop='name']/text()")).strip()
+        line = d.xpath(".//div[@class='address']//text()")
+        line = list(filter(None, [l.strip() for l in line]))
+
+        street_address = ", ".join(line[:-1])
+        line = line[-1]
         city = line.split(",")[0].strip()
         line = line.split(",")[1].strip()
         state = line.split()[0]
         postal = line.split()[1]
         country_code = "US"
         store_number = "<MISSING>"
-        page_url = "https://www.silverdiner.com" + "".join(
-            d.xpath(".//a[@class='btn bg-blue-l']/@href")
+        phone = (
+            "".join(d.xpath(".//div[@class='telephone']/text()")).strip() or "<MISSING>"
         )
-        location_name = "".join(
-            d.xpath(".//h3/a[contains(@href, 'location')]/text()")
-        ).strip()
-        if location_name.find("(") != -1:
-            location_name = location_name.split("(")[0].strip()
-        if not location_name:
-            continue
-
-        phone = "".join(d.xpath(".//div[@class='phone']/text()")).strip()
-        try:
-            latitude, longitude = "".join(
-                d.xpath(".//div[@class='coordinates']/text()")
-            ).split(",")
-        except ValueError:
-            latitude, longitude = "<MISSING>", "<MISSING>"
+        latitude = "<MISSING>"
+        longitude = "<MISSING>"
         location_type = "<MISSING>"
 
         _tmp = []
-        sp = d.xpath(".//span[@class='oh-display']")
-        for s in sp:
-            day = "".join(s.xpath("./span[1]/text()")).strip()
-            time = "".join(s.xpath("./span[2]/text()")).strip()
-            _tmp.append(f"{day}: {time}")
+        hours = d.xpath(".//dl[@class='business-hours']/div")
+        for h in hours:
+            _tmp.append(" ".join("".join(h.xpath(".//text()")).split()))
 
         hours_of_operation = ";".join(_tmp) or "<MISSING>"
 

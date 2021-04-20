@@ -1,2 +1,2 @@
-lxml==4.6.2
+sgzip==0.4.0
 sgrequests==0.1.8

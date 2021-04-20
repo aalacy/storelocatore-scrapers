@@ -35,55 +35,48 @@ def write_output(data):
 
 def fetch_data():
     out = []
-    locator_domain = "https://www.silverdiner.com/"
-    api_url = "https://www.silverdiner.com/locations"
+    coords = []
+    locator_domain = "https://www.membersccu.org/"
+    page_url = "https://www.membersccu.org/hours-and-locations"
 
     session = SgRequests()
-    r = session.get(api_url)
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0"
+    }
+    r = session.get(page_url, headers=headers)
     tree = html.fromstring(r.text)
-    divs = tree.xpath(
-        "//div[@class='panel-bootstrap panels-bootstrap-locations_teaser']"
-    )
+    divs = tree.xpath("//div[@class='listbox']")
+    text = "".join(
+        tree.xpath("//script[contains(text(), 'var markers')]/text()")
+    ).split("var marker, i")[1]
+    for t in text.split("new google.maps.LatLng(")[1:]:
+        lat, lng = t.split(");")[0].split(",")
+        coords.append((lat.strip(), lng.strip()))
 
     for d in divs:
-        street_address = "".join(d.xpath(".//span[@class='street']/text()")).strip()
-        line = "".join(d.xpath(".//span[@class='city state zip']/text()")).strip()
-        if not line:
-            continue
+        location_name = "".join(d.xpath(".//span[@class='cuname']/a/text()")).strip()
+        line = d.xpath(".//p[@class='locicons']/following-sibling::p[1]//text()")
+        line = list(filter(None, [l.strip() for l in line]))
+        street_address = ", ".join(line[:-1])
+        line = line[-1]
         city = line.split(",")[0].strip()
         line = line.split(",")[1].strip()
         state = line.split()[0]
         postal = line.split()[1]
         country_code = "US"
         store_number = "<MISSING>"
-        page_url = "https://www.silverdiner.com" + "".join(
-            d.xpath(".//a[@class='btn bg-blue-l']/@href")
+        phone = (
+            "".join(d.xpath(".//p[./strong[text()='Phone:']]/text()")).strip()
+            or "<MISSING>"
         )
-        location_name = "".join(
-            d.xpath(".//h3/a[contains(@href, 'location')]/text()")
-        ).strip()
-        if location_name.find("(") != -1:
-            location_name = location_name.split("(")[0].strip()
-        if not location_name:
-            continue
-
-        phone = "".join(d.xpath(".//div[@class='phone']/text()")).strip()
-        try:
-            latitude, longitude = "".join(
-                d.xpath(".//div[@class='coordinates']/text()")
-            ).split(",")
-        except ValueError:
-            latitude, longitude = "<MISSING>", "<MISSING>"
+        latitude, longitude = coords.pop(0)
         location_type = "<MISSING>"
 
-        _tmp = []
-        sp = d.xpath(".//span[@class='oh-display']")
-        for s in sp:
-            day = "".join(s.xpath("./span[1]/text()")).strip()
-            time = "".join(s.xpath("./span[2]/text()")).strip()
-            _tmp.append(f"{day}: {time}")
-
-        hours_of_operation = ";".join(_tmp) or "<MISSING>"
+        hours = d.xpath(
+            ".//p[./strong[contains(text(),'Lobby Hours')]]/following-sibling::*[1]/text()"
+        )
+        hours = list(filter(None, [h.strip() for h in hours]))
+        hours_of_operation = ";".join(hours) or "<MISSING>"
 
         row = [
             locator_domain,
