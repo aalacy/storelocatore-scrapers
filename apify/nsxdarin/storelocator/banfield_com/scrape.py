@@ -47,7 +47,7 @@ def fetch_data():
     for line in r.iter_lines(decode_unicode=True):
         if "<loc>https://www.banfield.com/locations/veterinarians/" in line:
             lurl = line.split("<loc>")[1].split("<")[0]
-            if lurl.count("/") == 7:
+            if lurl.count("/") == 7 and "bluffton/bft" not in lurl:
                 locs.append(lurl)
     for loc in locs:
         logger.info(("Pulling Location %s..." % loc))
@@ -104,22 +104,23 @@ def fetch_data():
         if phone == "":
             phone = "<MISSING>"
         add = add.replace("&amp;", "&").replace("amp;", "&")
-        yield [
-            website,
-            loc,
-            name,
-            add,
-            city,
-            state,
-            zc,
-            country,
-            store,
-            phone,
-            typ,
-            lat,
-            lng,
-            hours,
-        ]
+        if store != "":
+            yield [
+                website,
+                loc,
+                name,
+                add,
+                city,
+                state,
+                zc,
+                country,
+                store,
+                phone,
+                typ,
+                lat,
+                lng,
+                hours,
+            ]
 
 
 def scrape():

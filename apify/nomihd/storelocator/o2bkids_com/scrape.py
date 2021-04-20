@@ -92,7 +92,7 @@ def fetch_data():
             address = ""
             phone = ""
             hours = ""
-            sections = store_sel.xpath('//div[@class="address-list"]/div')
+            sections = store_sel.xpath('//div[contains(@class,"address-list")]/div')
             for sec in sections:
                 if (
                     "Address"
