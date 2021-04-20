@@ -129,7 +129,7 @@ def fetch_data():
             hours_of_operation = (
                 " ".join(
                     d.xpath(
-                        './/preceding::h4[contains(text(), "HOURS")]/following-sibling::h6/text()'
+                        './/preceding::h4[contains(text(), "HOURS")]/following-sibling::h6/text() | .//preceding::table[@class="mabel-bhi-businesshours"]//tr/td/text() | .//preceding::div[@id="text-block-58"]/h6/text()'
                     )
                 )
                 .replace("\n", "")
