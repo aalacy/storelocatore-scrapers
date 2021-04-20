@@ -1,8 +1,6 @@
 from bs4 import BeautifulSoup
 import csv
-import string
-import re, time
-
+import re
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -45,7 +43,6 @@ def fetch_data():
 
     data = []
     pattern = re.compile(r"\s\s+")
-    cleanr = re.compile(r"<[^>]+>")
     url = "https://www.sterlingoptical.com/locations"
     r = session.get(url, headers=headers, verify=False)
     soup = BeautifulSoup(r.text, "html.parser")
