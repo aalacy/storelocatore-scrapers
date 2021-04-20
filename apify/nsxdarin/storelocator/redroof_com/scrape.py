@@ -38,7 +38,7 @@ def write_output(data):
 
 def fetch_data():
     locs = []
-    url = "https://www.redroof.com/sitemap.xml"
+    url = "https://www.redroof.com/hotel-sitemap"
     session = SgRequests()
     r = session.get(url, headers=headers)
     website = "redroof.com"
@@ -47,10 +47,18 @@ def fetch_data():
     logger.info("Pulling Stores")
     for line in r.iter_lines():
         line = str(line.decode("utf-8"))
-        if "<loc>/property/" in line:
-            locs.append(
-                "https://www.redroof.com" + line.split("<loc>")[1].split("<")[0]
+        if (
+            '<p xmlns="http://www.w3.org/1999/xhtml"><a href="https://www.redroof.com/property/'
+            in line
+        ):
+            items = line.split(
+                '<p xmlns="http://www.w3.org/1999/xhtml"><a href="https://www.redroof.com/property/'
             )
+            for item in items:
+                if '<div id="react-newhome"><div class="header-wrapper ">' not in item:
+                    locs.append(
+                        "https://www.redroof.com/property/" + item.split('"')[0]
+                    )
     for loc in locs:
         logger.info(loc)
         name = ""
@@ -93,22 +101,39 @@ def fetch_data():
             city = city.split(",")[0].strip()
         city = city.replace(" area", "")
         if state not in intl and "troy/11191" not in loc:
-            yield [
-                website,
-                loc,
-                name,
-                add,
-                city,
-                state,
-                zc,
-                country,
-                store,
-                phone,
-                typ,
-                lat,
-                lng,
-                hours,
-            ]
+            if city == "":
+                city = "<MISSING>"
+            if zc == "":
+                zc = "<MISSING>"
+            if state == "":
+                state = "<MISSING>"
+            if phone == "":
+                phone = "<MISSING>"
+            if lat == "":
+                lat = "<MISSING>"
+            if lng == "":
+                lng = "<MISSING>"
+            if name == "":
+                name = "<MISSING>"
+            if add == "":
+                add = "<MISSING>"
+            if state != "<MISSING>":
+                yield [
+                    website,
+                    loc,
+                    name,
+                    add,
+                    city,
+                    state,
+                    zc,
+                    country,
+                    store,
+                    phone,
+                    typ,
+                    lat,
+                    lng,
+                    hours,
+                ]
 
 
 def scrape():

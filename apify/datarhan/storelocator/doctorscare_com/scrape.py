@@ -1,7 +1,7 @@
 import re
 import csv
+import demjson
 from lxml import etree
-from urllib.parse import urljoin
 
 from sgrequests import SgRequests
 
@@ -41,6 +41,7 @@ def fetch_data():
     session = SgRequests()
 
     items = []
+    scraped_items = []
 
     DOMAIN = "doctorscare.com"
     start_url = "https://doctorscare.com/locate/"
@@ -49,16 +50,16 @@ def fetch_data():
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.193 Safari/537.36",
     }
     response = session.get(start_url, headers=headers)
-    urls = re.findall("window.location='(.+?)'", response.text)
-    urls = [url for url in urls if "http" not in url]
+    all_locations = re.findall(r"markers\[\d+\] = (.+?);", response.text)
 
-    for url in urls:
-        store_url = urljoin(start_url, url)
+    for poi in all_locations:
+        poi = demjson.decode(poi)
+        store_url = f'https://doctorscare.com/Beaufort/{poi["keyword"]}'
         loc_response = session.get(store_url)
         loc_dom = etree.HTML(loc_response.text)
 
-        location_name = loc_dom.xpath('//div[@class="loc-header-title"]/text()')
-        location_name = location_name[0].strip() if location_name else "<MISSING>"
+        location_name = poi["centername"]
+        location_name = location_name if location_name else "<MISSING>"
         address_raw = loc_dom.xpath('//div[@id="locinfodiv"]//text()')
         address_raw = [elem.strip() for elem in address_raw if elem.strip()]
         street_address = address_raw[0]
@@ -70,7 +71,7 @@ def fetch_data():
         zip_code = address_raw[1].split(", ")[-1].split()[-1]
         zip_code = zip_code if zip_code else "<MISSING>"
         country_code = "<MISSING>"
-        store_number = "<MISSING>"
+        store_number = poi["locationid"]
         phone = loc_dom.xpath('//strong[contains(text(), "Phone:")]/following::text()')[
             0
         ].strip()
@@ -78,11 +79,8 @@ def fetch_data():
         if loc_dom.xpath('//div[contains(text(), "Temporarily Closed")]'):
             location_type = "Temporarily Closed"
         location_type = location_type if location_type else "<MISSING>"
-        geo = re.findall(
-            "keyword:'{}', (.+?), locstatus".format(url[1:]), loc_response.text
-        )[0]
-        latitude = re.findall("lat:'(.+?)'", geo)[0]
-        longitude = re.findall("lng:'(.+?)'", geo)[0]
+        latitude = poi["lat"]
+        longitude = poi["lng"]
         hours_of_operation = loc_dom.xpath(
             '//div[strong[contains(text(), "Mon - Fri:")]]//text()'
         )
@@ -109,8 +107,10 @@ def fetch_data():
             longitude,
             hours_of_operation,
         ]
-
-        items.append(item)
+        check = f"{location_name} {street_address}"
+        if check not in scraped_items:
+            scraped_items.append(check)
+            items.append(item)
 
     return items
 
