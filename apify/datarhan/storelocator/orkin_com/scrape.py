@@ -1,6 +1,5 @@
 import csv
 from lxml import etree
-import fake_useragent
 
 from sgrequests import SgRequests
 
@@ -41,7 +40,6 @@ def fetch_data():
     # Your scraper here
     items = []
 
-    ua = fake_useragent.UserAgent()
     scraped_urls = []
     scraped_locations = []
 
@@ -57,7 +55,7 @@ def fetch_data():
         full_state_url = "https://www.orkin.com" + state_url.get("xlink:href")
         if full_state_url in scraped_urls:
             continue
-        headers = {"user-agent": ua.random}
+
         state_response = session.get(full_state_url.replace(" ", ""), headers=headers)
         scraped_urls.append(full_state_url)
         state_dom = etree.HTML(state_response.text)
@@ -69,7 +67,6 @@ def fetch_data():
             full_city_url = "https://www.orkin.com" + city_url
             if full_city_url in scraped_urls:
                 continue
-            headers = {"user-agent": ua.random}
             city_response = session.get(full_city_url.replace(" ", ""), headers=headers)
             scraped_urls.append(full_city_url)
             city_dom = etree.HTML(city_response.text)

@@ -1,9 +1,13 @@
+import re
 import csv
 import json
 
 from concurrent import futures
 from lxml import html
 from sgrequests import SgRequests
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger("millets_co_uk")
 
 
 def write_output(data):
@@ -43,35 +47,50 @@ def get_urls():
     return tree.xpath("//ul[contains(@id, 'brands_')]//a/@href")
 
 
-def get_data(url):
+def fetch_page_schema(session, url):
+    r = session.get(url)
+    tree = html.fromstring(r.text)
+    src = tree.xpath("//script[contains(@src, 'yextpages.net')]/@src").pop()
+    r = session.get(src)
+
+    match = re.search(r"Yext._embed\((.*)\n?\)", r.text, re.IGNORECASE)
+    if not match:
+        logger.error("unable to parse")
+
+    data = json.loads(match.group(1))
+    entity = data["entities"].pop()
+    return entity["schema"]
+
+
+def get_data(url, session):
     locator_domain = "https://www.millets.co.uk/"
     page_url = f"https://www.millets.co.uk{url}"
+    data = fetch_page_schema(session, page_url)
 
-    session = SgRequests()
-    r = session.get(page_url)
-    tree = html.fromstring(r.text)
-    text = "".join(
-        tree.xpath("//script[contains(text(), 'LocalBusiness')]/text()")
-    ).strip()
-    if not text:
-        return
-    j = json.loads(text)
-
-    a = j.get("address")
+    a = data.get("address")
     street_address = a.get("streetAddress") or "<MISSING>"
     city = a.get("addressLocality") or "<MISSING>"
     state = "<MISSING>"
     postal = a.get("postalCode") or "<MISSING>"
     country_code = "GB"
 
-    location_name = f"{j.get('name')} {city}"
-    store_number = "<MISSING>"
-    phone = j.get("telephone") or "<MISSING>"
-    text = j.get("hasmap") or "@<MISSING>,<MISSING>"
-    latitude = text.split("@")[1].split(",")[0]
-    longitude = text.split("@")[1].split(",")[1]
-    location_type = "<MISSING>"
-    hours_of_operation = ";".join(j.get("openingHours")) or "<MISSING>"
+    location_name = f"{data.get('name')} {city}"
+    store_number = data.get("@id") or "<MISSING>"
+    phone = data.get("telephone") or "<MISSING>"
+
+    geo = data.get("geo")
+    latitude = geo.get("latitude") or "<MISSING>"
+    longitude = geo.get("longitude") or "<MISSING>"
+    location_type = data.get("@type").pop()
+
+    hours_of_operation = []
+    for time in data.get("openingHoursSpecification"):
+        day = time["dayOfWeek"]
+        opens = time.get("opens")
+        closes = time.get("closes")
+        if opens and closes:
+            hours_of_operation.append(f"{day}: {opens}-{closes}")
+    hours_of_operation = ",".join(hours_of_operation) or "<MISSING>"
 
     row = [
         locator_domain,
@@ -96,9 +115,11 @@ def get_data(url):
 def fetch_data():
     out = []
     urls = get_urls()
+    session = SgRequests()
+    session.get("https://www.millets.co.uk/stores")
 
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
-        future_to_url = {executor.submit(get_data, url): url for url in urls}
+    with futures.ThreadPoolExecutor() as executor:
+        future_to_url = {executor.submit(get_data, url, session): url for url in urls}
         for future in futures.as_completed(future_to_url):
             row = future.result()
             if row:
