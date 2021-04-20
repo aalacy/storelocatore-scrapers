@@ -33,20 +33,6 @@ def write_output(data):
             writer.writerow(row)
 
 
-def get_coords_from_google_url(url):
-    try:
-        if url.find("ll=") != -1:
-            latitude = url.split("ll=")[1].split(",")[0]
-            longitude = url.split("ll=")[1].split(",")[1].split("&")[0]
-        else:
-            latitude = url.split("@")[1].split(",")[0]
-            longitude = url.split("@")[1].split(",")[1]
-    except IndexError:
-        latitude, longitude = "<MISSING>", "<MISSING>"
-
-    return latitude, longitude
-
-
 def fetch_data():
     out = []
     locator_domain = "https://tocayaorganica.com/"
@@ -73,8 +59,12 @@ def fetch_data():
         country_code = "US"
         store_number = "<MISSING>"
         phone = additional.pop() or "<MISSING>"
-        text = "".join(d.xpath("./a[@class='locations__location-address']/@href"))
-        latitude, longitude = get_coords_from_google_url(text)
+        latitude = (
+            "".join(d.xpath(".//span[@data-from-lat]/@data-from-lat")) or "<MISSING>"
+        )
+        longitude = (
+            "".join(d.xpath(".//span[@data-from-lon]/@data-from-lon")) or "<MISSING>"
+        )
         location_type = "<MISSING>"
         hours_of_operation = additional.pop() or "<MISSING>"
         if hours_of_operation.startswith(": "):
