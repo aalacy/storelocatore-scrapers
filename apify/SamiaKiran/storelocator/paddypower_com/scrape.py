@@ -5,9 +5,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgzip.dynamic import SearchableCountries
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
-
-
-from sgzip.static import static_coordinate_list
+##from sgzip.static import static_coordinate_list
 
 
 session = SgRequests()
