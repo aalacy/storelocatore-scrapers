@@ -28,7 +28,9 @@ def fetch_data():
         hours_of_operation = (
             temp[2].get_text(separator="|", strip=True).replace("|", " ")
         )
-        phone = temp[4].text.split("call us at")[1].split("or Order")[0].replace(",","")
+        phone = (
+            temp[4].text.split("call us at")[1].split("or Order")[0].replace(",", "")
+        )
         address = temp[6].text.split(",")
         street_address = address[0]
         city = address[1]
