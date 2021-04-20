@@ -31,14 +31,16 @@ headers = {
 id_list = []
 
 
-@retry(stop=stop_after_attempt(3), reraise=True)
+@retry(stop=stop_after_attempt(5), reraise=True)
 def fetch_records_for(coords):
     lat = coords[0]
     lng = coords[1]
     log.info(f"pulling records for coordinates: {lat,lng}")
     search_url = "https://apps.pnc.com/locator-api/locator/api/v2/location/?latitude={}&longitude={}&radius=100&radiusUnits=mi&branchesOpenNow=false"
 
-    stores_req = session.get(search_url.format(lat, lng), headers=headers)
+    stores_req = session.get(
+        search_url.format(lat, lng), headers=headers, timeout=60 * 5
+    )
     stores = json.loads(stores_req.text)["locations"]
     return stores
 
