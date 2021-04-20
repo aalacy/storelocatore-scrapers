@@ -68,7 +68,7 @@ def fetch_data():
         name = ""
         store = loc.rsplit("/", 1)[1]
         with SgChrome() as driver:
-            driver.get(url)
+            driver.get(loc)
             text = driver.page_source
             text = str(text).replace("\r", "").replace("\n", "").replace("\t", "")
             if 'id="restLatLong" value="' in text:
