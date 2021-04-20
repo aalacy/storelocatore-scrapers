@@ -1,3 +1,4 @@
+import re
 import csv
 import demjson
 from lxml import etree
@@ -73,8 +74,15 @@ def fetch_data():
                 continue
             poi = demjson.decode(poi[0].replace("\n", ""))
 
+            data = loc_dom.xpath('//script[contains(text(), "JSContext")]/text()')[0]
+            data = re.findall("JSContext =(.+);", data)[0]
+            data = demjson.decode(data)
+
             location_name = poi[0]["name"]
-            street_address = poi[0]["address"]["streetAddress"]
+            street_address = data["profile"]["address"]["street"]
+            suit = data["profile"]["address"].get("suite")
+            if suit:
+                street_address += " " + suit
             street_address = street_address if street_address else "<MISSING>"
             city = poi[0]["address"]["addressLocality"]
             city = city if city else "<MISSING>"
@@ -87,8 +95,10 @@ def fetch_data():
             phone = poi[0]["contactPoint"][0]["telephone"]
             phone = phone if phone else "<MISSING>"
             location_type = poi[0]["@type"]
-            latitude = poi[0]["geo"]["latitude"]
-            longitude = poi[0]["geo"]["longitude"]
+            latitude = data["profile"]["latlng"]
+            latitude = latitude[0] if latitude else "<MISSING>"
+            longitude = data["profile"]["latlng"]
+            longitude = longitude[1] if longitude else "<MISSING>"
             hours_of_operation = "<MISSING>"
 
             item = [
