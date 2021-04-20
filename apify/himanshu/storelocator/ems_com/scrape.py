@@ -3,9 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 import re
 import json
+import cloudscraper
 
 session = SgRequests()
 
+session = cloudscraper.create_scraper(sess=session)
 
 def write_output(data):
     with open("data.csv", mode="w", newline="") as output_file:
@@ -41,6 +43,7 @@ def fetch_data():
     soup_ = soup.find_all("script")[2]
     for x in soup_:
         soup_ = str(soup_)
+        x = x
     soup_ = soup_.split('window.App["stores"]=')[1]
     soup_ = soup_.replace("];</script>", "]")
     for i in json.loads(soup_):
