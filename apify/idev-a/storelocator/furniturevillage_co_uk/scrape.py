@@ -3,6 +3,9 @@ from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 import re
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger("furniturevillage")
 
 _headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
@@ -14,12 +17,15 @@ def fetch_data():
     base_url = "https://www.furniturevillage.co.uk/stores/"
     with SgRequests() as session:
         soup = bs(session.get(base_url, headers=_headers).text, "lxml")
-        for link in soup.find(
-            "div", {"class": "col-xs-12 select-store no-pd"}
-        ).find_all("option"):
+        links = soup.find("div", {"class": "col-xs-12 select-store no-pd"}).find_all(
+            "option"
+        )
+        logger.info(f"{len(links)} found")
+        for link in links:
             if not link["value"]:
                 continue
             page_url = base_url + link["value"]
+            logger.info(page_url)
             r1 = session.get(page_url, headers=_headers)
             soup1 = bs(r1.text, "lxml")
             location_name = soup1.select_one("h1.content-title").text
@@ -35,9 +41,11 @@ def fetch_data():
             for hour in soup1.select("div.item-hours p"):
                 if re.search(r"This store reopens on", hour.text, re.IGNORECASE):
                     location_type = "Closed"
-                    continue
+                    break
                 if re.search(r"temporarily closed", hour.text, re.IGNORECASE):
                     location_type = "Closed"
+                    break
+                if re.search(r"re open", hour.text, re.IGNORECASE):
                     continue
                 hours.append(": ".join(hour.stripped_strings))
 

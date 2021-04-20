@@ -62,6 +62,8 @@ def fetch_data():
         if addr.street_address_2:
             street_address += " " + addr.street_address_2
         street_address = street_address if street_address else "<MISSING>"
+        if street_address == "260":
+            street_address += " City Centre"
         city = addr.city
         if not city:
             city = location_name
