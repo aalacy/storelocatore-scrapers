@@ -39,7 +39,7 @@ def write_output(data):
 
 def fetch_data():
     url = "https://nike.brickworksoftware.com/api/v3/stores.json"
-    r = session.get(url, headers=headers, timeout=90)
+    r = session.get(url, headers=headers, timeout=120)
     website = "nike.com"
     typ = "<MISSING>"
     for line in r.iter_lines():
@@ -50,12 +50,18 @@ def fetch_data():
                 if '"name":"' in item:
                     name = item.split('"name":"')[1].split('"')[0]
                     loc = "https://www.nike.com/us/retail/s/" + item.split('"')[0]
-                    add = item.split('"address_1":"')[1].split('"')[0]
+                    try:
+                        add = item.split('"address_1":"')[1].split('"')[0]
+                    except:
+                        add = "<MISSING>"
                     try:
                         add = add + " " + item.split('"address_2":"')[1].split('"')[0]
                     except:
                         pass
-                    city = item.split('"city":"')[1].split('"')[0]
+                    try:
+                        city = item.split('"city":"')[1].split('"')[0]
+                    except:
+                        city = "<MISSING>"
                     try:
                         state = item.split('"state":"')[1].split('"')[0]
                     except:
@@ -289,6 +295,8 @@ def fetch_data():
                         if state != "FR":
                             if "Nike Factory Store - Merrimack" in name:
                                 add = "80 Premium Outlets Blvd."
+                            if "nike-by-santana-row" in loc:
+                                phone = "<MISSING>"
                             yield [
                                 website,
                                 loc,
