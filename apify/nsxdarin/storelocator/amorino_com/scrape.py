@@ -47,7 +47,7 @@ def fetch_data():
     for line in r.iter_lines():
         line = str(line.decode("utf-8"))
         if ",stores:[{" in line:
-            items = line.split("{country:ay")
+            items = line.split("{country:aA")
             for item in items:
                 if ">window.__AMORINO__=" not in item:
                     name = item.split('name:"')[1].split('"')[0]

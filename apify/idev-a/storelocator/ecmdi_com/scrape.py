@@ -38,6 +38,7 @@ def fetch_data():
                                         "components"
                                     ]["storeLocator"]["branches"]
                                     break
+
         for aa, _ in locations.items():
             hours = []
             for key, value in _["formatted_hours"].items():
@@ -50,14 +51,14 @@ def fetch_data():
                 page_url=base_url,
                 store_number=_["branch_id"],
                 location_name=_["branch_name"],
-                street_address=f"{_['mail']['address_1']} {_['mail'].get('address_2')} {_['mail'].get('address_3')}",
-                city=_["mail"]["city"],
-                state=_["mail"]["region"]["code"],
-                zip_postal=_["mail"]["postcode"],
+                street_address=f"{_['address']['address_1']} {_['address'].get('address_2')} {_['address'].get('address_3')}",
+                city=_["address"]["city"],
+                state=_["address"]["region_code"],
+                zip_postal=_["address"]["postcode"],
                 phone=_["phone"],
                 latitude=_["latitude"],
                 longitude=_["longitude"],
-                country_code="US",
+                country_code=_["address"]["country"],
                 locator_domain=locator_domain,
                 hours_of_operation="; ".join(hours),
             )

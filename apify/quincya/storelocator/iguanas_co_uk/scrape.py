@@ -93,7 +93,10 @@ def fetch_data():
         latitude = store["addressLocation"]["lat"]
         longitude = store["addressLocation"]["lon"]
 
-        if "will open on" in store["description"]:
+        if (
+            "will open on" in store["description"]
+            or "currently closed" in store["description"]
+        ):
             hours_of_operation = "Temporarily Closed"
         else:
             hours = ""

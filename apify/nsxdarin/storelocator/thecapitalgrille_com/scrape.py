@@ -68,7 +68,7 @@ def fetch_data():
         lng = ""
         hours = ""
         with SgChrome() as driver:
-            driver.get(url)
+            driver.get(loc)
             text = driver.page_source
             text = str(text).replace("\r", "").replace("\n", "").replace("\t", "")
             if "<title>" in text:
