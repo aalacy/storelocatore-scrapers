@@ -108,7 +108,7 @@ def fetch_data():
     session = SgRequests()
     r = session.get(page_url)
     tree = html.fromstring(r.text)
-    divs = tree.xpath("//div[@class='information' and ./div[@class='row']]")
+    divs = tree.xpath("//div[@class='col-sm-6 locationBox' and .//iframe]")
 
     for d in divs:
         location_name = "".join(d.xpath('.//p[@class="name"]/text()')).strip()
@@ -134,7 +134,7 @@ def fetch_data():
         if "Fax" in phone:
             phone = phone.split("Fax")[0].strip()
 
-        text = "".join(d.xpath(".//p/iframe/@src"))
+        text = "".join(d.xpath(".//iframe/@src"))
         if "ll=" not in text:
             latitude, longitude = get_coords_from_embed(text)
         else:

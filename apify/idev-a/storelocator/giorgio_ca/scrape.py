@@ -21,11 +21,14 @@ def fetch_data():
             location_name = _.select("h2.elementor-heading-title")[1].text
             block = list(_.select_one("div.elementor-text-editor p").stripped_strings)
             phone = _.find("a", href=re.compile(r"tel:")).text
-            hours = list(
-                _.select("div.elementor-text-editor")[-1]
-                .select_one("p")
-                .stripped_strings
-            )[1:]
+            hours = []
+            for hh in _.find(
+                "div", string=re.compile(r"POUR EMPORTER")
+            ).find_next_siblings("div"):
+                if not hh.text.strip():
+                    break
+
+                hours.append(hh.text.strip())
             yield SgRecord(
                 page_url=base_url,
                 location_name=location_name,

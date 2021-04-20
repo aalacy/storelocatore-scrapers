@@ -60,11 +60,18 @@ def get_data(page_url):
     j = json.loads(text)
     location_name = j.get("name")
     a = j.get("address") or {}
-    street_address = a.get("streetAddress") or "<MISSING>"
-    city = a.get("addressLocality") or "<MISSING>"
+    line = "".join(tree.xpath("//p[@class='store-results__address']/text()")).strip()
+    city = a.get("addressLocality").replace("&#39;", "'") or "<MISSING>"
+    try:
+        street_address = line.split(f", {city},")[0].strip()
+    except:
+        street_address = a.get("streetAddress") or "<MISSING>"
     state = "<MISSING>"
     postal = a.get("postalCode") or "<MISSING>"
     country_code = "GB"
+
+    if "," in location_name:
+        location_name = location_name.split(",")[0].strip()
     store_number = page_url.split("-")[-1]
     phone = j.get("telephone") or "<MISSING>"
     g = j.get("geo") or {}
@@ -83,6 +90,7 @@ def get_data(page_url):
             _tmp.append(f"{day}: {start} - {close}")
         else:
             _tmp.append(f"{day}: Closed")
+
     hours_of_operation = ";".join(_tmp) or "<MISSING>"
     message = "".join(tree.xpath("//p[@class='store-results__message']/text()")).strip()
     if message.lower().find("closed") != -1:

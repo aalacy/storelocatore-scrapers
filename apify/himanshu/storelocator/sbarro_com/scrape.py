@@ -2,6 +2,11 @@ import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 import usaddress
+import lxml.html
+from sglogging import sglog
+
+logger = sglog.SgLogSetup().get_logger(logger_name="sbarro.com")
+
 
 session = SgRequests()
 
@@ -191,6 +196,7 @@ def fetch_data():
 
             location_type = "Restaurant"
             try:
+                logger.info(page_url)
                 location_soup = bs(session.get(page_url).text, "lxml")
                 hours = " ".join(
                     list(
@@ -223,6 +229,128 @@ def fetch_data():
                     continue
                 addressess.append(street_address)
                 yield store
+
+    CA_states = [
+        "NL",
+        "PE",
+        "NS",
+        "NB",
+        "QC",
+        "ON",
+        "MB",
+        "SK",
+        "AB",
+        "BC",
+        "YT",
+        "NT",
+        "NU",
+    ]
+
+    stores_req = session.get("https://sbarro.com/allstores.html")
+    stores_sel = lxml.html.fromstring(stores_req.text)
+    stores = stores_sel.xpath("//div/a/@href")
+    for store_url in stores:
+        url_state = store_url.split("sbarro.com/locations/")[1].split("/")[0].strip()
+        if url_state in CA_states:
+            page_url = store_url
+            store_req = session.get(page_url)
+            if store_req.url == "https://sbarro.com/locations/":
+                continue
+            else:
+                logger.info(page_url)
+                store_sel = lxml.html.fromstring(store_req.text)
+                location_name = "".join(
+                    store_sel.xpath('//h1[@class="location-name "]/text()')
+                ).strip()
+                locator_domain = base_url
+                address = "".join(
+                    store_sel.xpath('//p[@class="location-address "]/text()')
+                ).strip()
+                street_address = address.split(",")[0].strip()
+                city = address.split(",")[1].strip()
+                state = address.split(",")[-1].strip()
+                zip = "<MISSING>"
+                country_code = "CA"
+                store_number = "<MISSING>"
+                phone = "".join(
+                    store_sel.xpath(
+                        '//div[@class="location-phone location-cta"]//text()'
+                    )
+                ).strip()
+                location_type = "Restaurant"
+                latitude = "".join(
+                    store_sel.xpath(
+                        '//section[@class="locations-result"]/@data-latitude'
+                    )
+                ).strip()
+                longitude = "".join(
+                    store_sel.xpath(
+                        '//section[@class="locations-result"]/@data-longitude'
+                    )
+                ).strip()
+                hours_of_operation = ""
+                hours = store_sel.xpath('//ul[@class="hours "]/li')
+                hours_list = []
+                for hour in hours:
+                    day = "".join(hour.xpath("span/text()")).strip()
+                    time = "".join(hour.xpath("text()")).strip()
+                    if "Hours not available" not in time:
+                        hours_list.append(day + ":" + time)
+
+                hours_of_operation = "; ".join(hours_list).strip()
+
+                if store_number == "":
+                    store_number = "<MISSING>"
+
+                if location_name == "":
+                    location_name = "<MISSING>"
+
+                if street_address == "" or street_address is None:
+                    street_address = "<MISSING>"
+
+                if city == "" or city is None:
+                    city = "<MISSING>"
+
+                if state == "" or state is None:
+                    state = "<MISSING>"
+
+                if zip == "" or zip is None:
+                    zip = "<MISSING>"
+
+                if country_code == "" or country_code is None:
+                    country_code = "<MISSING>"
+
+                if phone == "" or phone is None:
+                    phone = "<MISSING>"
+
+                if latitude == "" or latitude is None:
+                    latitude = "<MISSING>"
+                if longitude == "" or longitude is None:
+                    longitude = "<MISSING>"
+
+                if hours_of_operation == "":
+                    hours_of_operation = "<MISSING>"
+
+                if location_type == "":
+                    location_type = "<MISSING>"
+
+                curr_list = [
+                    locator_domain,
+                    location_name,
+                    street_address,
+                    city,
+                    state,
+                    zip,
+                    country_code,
+                    store_number,
+                    phone,
+                    location_type,
+                    latitude,
+                    longitude,
+                    hours_of_operation,
+                    page_url,
+                ]
+                yield curr_list
 
 
 def scrape():

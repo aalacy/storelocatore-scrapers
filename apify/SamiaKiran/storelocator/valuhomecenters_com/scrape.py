@@ -5,17 +5,13 @@ from sglogging import sglog
 from sgselenium import SgChrome
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
-from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support import expected_conditions as EC
 
 website = "valuhomecenters_com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 
 
 def fetch_data():
-    with SgChrome(is_headless=False) as driver:
+    with SgChrome() as driver:
         url = "https://valuhomecenters.com/store-locator"
         driver.get(url)
 
@@ -29,13 +25,10 @@ def fetch_data():
             '//*[@id="StoreLocatorForm_Location"]'
         )
         xpath_search_button = '//*[@id="StoreLocatorForm_Submit"]'
-        WebDriverWait(driver, 40).until(
-            EC.element_to_be_clickable((By.XPATH, xpath_search_button))
-        )
+        time.sleep(5)
         log.info("Sleeping until the search button visible")
-
         search_button = driver.find_element_by_xpath(xpath_search_button)
-        search_field.send_keys(Keys.CONTROL, "a")
+        search_field.clear()
         search_field.send_keys("NY")
         search_button.click()
         log.info("Search Button Clicked with SUCCESS")
