@@ -3,8 +3,6 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sglogging import SgLogSetup
 from sgscrape.sgpostal import parse_address_intl
-from lxml import html
-import json
 
 
 logger = SgLogSetup().get_logger("datacenters_com")
