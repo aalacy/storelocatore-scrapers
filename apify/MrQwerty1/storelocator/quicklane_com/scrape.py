@@ -40,7 +40,7 @@ def generate_ids():
     out = []
     ids = tree.xpath("//h5/a[@class='store-url']/@href")
     for i in ids:
-        out.append(i.split("/")[-1])
+        out.append(i.split("/")[-2])
     return out
 
 
@@ -82,6 +82,8 @@ def fetch_data():
         )
 
         phone = j.get("phone") or "<MISSING>"
+        if phone.strip() == ".":
+            phone = "<MISSING>"
         latitude = j.get("latitude") or "<MISSING>"
         longitude = j.get("longitude") or "<MISSING>"
         location_type = "<MISSING>"
