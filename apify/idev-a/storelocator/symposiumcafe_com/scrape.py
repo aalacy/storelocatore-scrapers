@@ -28,6 +28,7 @@ def fetch_data():
                 sp1.select_one("div.widget iframe")["src"]
                 .split("!2d")[1]
                 .split("!3m")[0]
+                .split("!2m")[0]
                 .split("!3d")
             )
             yield SgRecord(
@@ -44,7 +45,7 @@ def fetch_data():
                 locator_domain=locator_domain,
                 hours_of_operation=": ".join(
                     sp1.select_one("div.widget time").stripped_strings
-                ),
+                ).replace("\n", ""),
             )
 
 
