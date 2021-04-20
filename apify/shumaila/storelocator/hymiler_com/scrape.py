@@ -1,9 +1,5 @@
-# Import libraries
-import requests
-from bs4 import BeautifulSoup
 import csv
-import string
-import re, time
+import re
 from sgrequests import SgRequests
 
 session = SgRequests()
