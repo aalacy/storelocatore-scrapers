@@ -1,5 +1,6 @@
 from bs4 import BeautifulSoup
 import csv
+
 import re
 from sgrequests import SgRequests
 
@@ -68,7 +69,7 @@ def fetch_data():
         longt = loc["geometry"]["coordinates"][0]
         lat = loc["geometry"]["coordinates"][1]
         title = loc["properties"]["name"]
-        link = loc["properties"]["url"]
+        link = "https://hymiler.com" + loc["properties"]["url"]
         desc = loc["properties"]["description"]
         soup = BeautifulSoup(desc, "html.parser")
         soup = re.sub(cleanr, "\n", str(soup))
@@ -78,6 +79,7 @@ def fetch_data():
         pcode = soup[3].rstrip().split("\xa0")[-1]
         phone = soup[-1]
         store = loc["id"]
+
         data.append(
             [
                 "https://hymiler.com",
