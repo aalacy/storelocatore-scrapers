@@ -9,6 +9,7 @@ session = SgRequests()
 
 session = cloudscraper.create_scraper(sess=session)
 
+
 def write_output(data):
     with open("data.csv", mode="w", newline="") as output_file:
         writer = csv.writer(
