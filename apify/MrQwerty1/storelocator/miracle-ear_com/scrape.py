@@ -81,7 +81,8 @@ def fetch_data():
         country_code = j.get("country") or "<MISSING>"
         store_number = j.get("shopNumber") or "<MISSING>"
         slug = j.get("shortName") or ""
-        page_url = f"https://www.miracle-ear.com/stores-near-me/-/{slug}"
+        ain = j.get("AIN") or ""
+        page_url = f"https://www.miracle-ear.com/stores-near-me/-/{slug}-s{ain}"
         location_name = j.get("shopName")
         phone = "<MISSING>"
         phones = j.get("phones") or []
