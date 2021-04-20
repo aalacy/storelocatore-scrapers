@@ -61,7 +61,7 @@ def fetch_data():
             .split(";")[0]
         )
         js = json.loads(jsblock)
-        s = set()
+
         for j in js:
 
             street_address = j.get("sl_address") or "<MISSING>"
@@ -111,11 +111,6 @@ def fetch_data():
                 ).strip()
             hours_of_operation = "<MISSING>"
 
-            line = (latitude, longitude)
-            if line in s:
-                continue
-
-            s.add(line)
             row = [
                 locator_domain,
                 page_url,
