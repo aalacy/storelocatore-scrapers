@@ -39,8 +39,10 @@ def get_urls():
     r = session.get("http://cathaybank.com/location")
     tree = html.fromstring(r.text)
 
-    return tree.xpath(
-        "//div[@class='location-content']//a[contains(@href, 'location')]/@href"
+    return set(
+        tree.xpath(
+            "//div[@class='location-content']//a[contains(@href, 'location')]/@href"
+        )
     )
 
 
