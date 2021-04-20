@@ -1,10 +1,9 @@
 import csv
-import sgrequests
-import json
+import cloudscraper
 
 
 def write_output(data):
-    with open("data.csv", mode="w") as output_file:
+    with open("data.csv", mode="w", newline="") as output_file:
         writer = csv.writer(
             output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
         )
@@ -40,8 +39,9 @@ def fetch_data():
     missingString = "<MISSING>"
 
     def retrieveStores():
+        session = cloudscraper.create_scraper()
         api = "https://www.bobstores.com/api/stores"
-        return json.loads(sgrequests.SgRequests().get(api).text)
+        return session.get(api).json()
 
     stores = retrieveStores()
 
