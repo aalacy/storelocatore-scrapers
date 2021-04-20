@@ -158,7 +158,7 @@ def fetch_data():
             if zip is None:
                 try:
                     address = (
-                        page_req.text.split('addresses: [{"address":"')[1]
+                        page_res.text.split('addresses: [{"address":"')[1]
                         .strip()
                         .split('",')[0]
                         .strip()
@@ -200,7 +200,7 @@ def fetch_data():
             latitude = "<MISSING>"
             try:
                 latitude = (
-                    page_req.text.split('"latitude":"')[1]
+                    page_res.text.split('"latitude":"')[1]
                     .strip()
                     .split('",')[0]
                     .strip()
@@ -210,7 +210,7 @@ def fetch_data():
             longitude = "<MISSING>"
             try:
                 longitude = (
-                    page_req.text.split('"longitude":"')[1]
+                    page_res.text.split('"longitude":"')[1]
                     .strip()
                     .split('"')[0]
                     .strip()
