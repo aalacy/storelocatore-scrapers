@@ -12,7 +12,7 @@ _headers = {
 
 
 def fetch_data():
-    locator_domain = "https://andiamoitalia.com/reservations/"
+    locator_domain = "https://andiamoitalia.com/"
     base_url = "https://andiamoitalia.com/reservations/"
     with SgRequests() as session:
         soup = bs(session.get(base_url, headers=_headers).text, "lxml")
