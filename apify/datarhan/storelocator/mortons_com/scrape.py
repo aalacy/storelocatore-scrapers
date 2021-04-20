@@ -67,6 +67,8 @@ def fetch_data():
         city = city if city else "<MISSING>"
         state = poi["state"]
         state = state if state else "<MISSING>"
+        if len(state) != 2:
+            continue
         zip_code = poi["postal_code"]
         zip_code = zip_code if zip_code else "<MISSING>"
         country_code = "<MISSING>"
@@ -78,9 +80,13 @@ def fetch_data():
         latitude = latitude if latitude else "<MISSING>"
         longitude = poi["lng"]
         longitude = longitude if longitude else "<MISSING>"
-        hoo = loc_dom.xpath('//p[contains(text(), "PM -")]/text()')
-        hoo = [e.strip() for e in hoo if e.strip()]
-        hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
+        hoo = loc_dom.xpath('//div[h2[@class="h1"]]/p[2]//text()')
+        hoo = [e.strip() for e in hoo if e.strip() and "We " not in e]
+        hours_of_operation = (
+            " ".join(hoo).split("Parties")[0].split("Inside")[0].strip()
+            if hoo
+            else "<MISSING>"
+        )
 
         item = [
             DOMAIN,

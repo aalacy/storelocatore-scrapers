@@ -44,7 +44,7 @@ def fetch_data():
             .replace("\\u003d", "=")
             .replace("\\u0026", "&")
             .replace("\\", "")
-            .replace("\xa0", "")
+            .replace("\xa0", " ")
         )
         locations = json.loads(
             cleaned.split('var _pageData = "')[1].split('";</script>')[0][:-1]
@@ -53,19 +53,22 @@ def fetch_data():
             location_name = _[5][0][1][0]
             sharp = [
                 ss.strip()
-                for ss in _[5][1][1][0].replace("     ", "#").split("#")
+                for ss in _[5][1][1][0].replace("  ", "#").split("#")
                 if ss.strip()
             ]
             hours = []
-            address = " ".join(sharp[:2])
             idx = 2
+            phone = ""
             for x, ss in enumerate(sharp):
-                if _phone(ss):
+                if x >= idx and _phone(ss):
                     phone = ss.split(":")[-1]
                     idx = x + 1
                     break
             for hh in sharp[idx:]:
                 hours.append(hh)
+            if not phone:
+                idx = 3
+            address = " ".join(sharp[: idx - 1])
             addr = parse_address_intl(address)
             street_address = addr.street_address_1
             if addr.street_address_2:
