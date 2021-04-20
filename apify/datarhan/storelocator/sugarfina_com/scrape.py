@@ -52,7 +52,7 @@ def fetch_data():
 
     all_locations = []
     all_codes = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA], max_radius_miles=30
+        country_codes=[SearchableCountries.USA], max_radius_miles=200
     )
     for code in all_codes:
         params = {
@@ -74,7 +74,7 @@ def fetch_data():
             "searchCriteria[filter_groups][0][filters][5][value]": code,
             "searchCriteria[filter_groups][0][filters][5][condition_type]": "eq",
             "searchCriteria[filter_groups][0][filters][6][field]": "distance",
-            "searchCriteria[filter_groups][0][filters][6][value]": "100",
+            "searchCriteria[filter_groups][0][filters][6][value]": "200",
             "searchCriteria[filter_groups][0][filters][6][condition_type]": "eq",
             "searchCriteria[filter_groups][0][filters][7][field]": "onlyLocation",
             "searchCriteria[filter_groups][0][filters][7][value]": "0",
@@ -88,6 +88,14 @@ def fetch_data():
         response = session.get(start_url, headers=hdr, params=params)
         data = json.loads(response.text)
         all_locations += data["items"]
+        total = data["total_count"]
+        total_pages = total // 9 + 2
+        for page in range(2, total_pages):
+            new_params = params
+            new_params["searchCriteria[current_page]"] = str(page)
+            response = session.get(start_url, headers=hdr, params=new_params)
+            data = json.loads(response.text)
+            all_locations += data["items"]
 
     for poi in all_locations:
         store_url = poi.get("store_details_link")

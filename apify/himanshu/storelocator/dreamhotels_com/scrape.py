@@ -86,7 +86,7 @@ def fetch_store_urls():
     )
     for link in links:
         if len(link["href"]) > 2:
-            store_urls.append(BASE_URL + link["href"])
+            store_urls.append(link["href"])
     log.info("Found {} URL ".format(len(store_urls)))
     return store_urls
 
@@ -120,7 +120,7 @@ def fetch_data():
             if "or" in address[-1].split(":")[1].strip():
                 phone = address[-1].split(":")[1].strip().split("or")[0].strip()
             else:
-                address[-1].split(":")[1].strip()
+                phone = address[-1].split(":")[1].strip()
         street_address = (
             street_address.replace(city, "").replace(location_name, "").strip()
         )
