@@ -85,6 +85,8 @@ def fetch_data():
             location_name = location_name.split("(")[0].strip()
         if street_address.find("10 Jennings") != -1:
             location_name = "Pride Hartford Truck Stop I-91"
+        if street_address.find("234 East") != -1:
+            street_address = street_address.replace("234 East", "234 E")
         ll = "".join(tree.xpath('//script[contains(text(), "streetAddress")]/text()'))
         try:
             postal = (
@@ -100,8 +102,9 @@ def fetch_data():
         except IndexError:
             postal = "<MISSING>"
         slug = street_address.replace(" ", "+").replace("N.", "N")
-        if slug.find("234 East Main St") != -1:
-            slug = "234 E Main St"
+        if slug.find("234+East+Main+St") != -1:
+            slug = "234+E+Main+St"
+
         try:
             map_link = ll.split(slug)[1].split("data=")[0]
             latitude = map_link.split("@")[1].split(",")[0]
