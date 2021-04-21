@@ -82,7 +82,7 @@ def fetch_data():
         )
         location_type = "<MISSING>"
         line = (
-            "".join(
+            " ".join(
                 b.xpath(
                     './/p[.//a[contains(@href, "tel")]]/text() | .//p[contains(text(), "Coming Soon!")]/following-sibling::p[1]/text()'
                 )
