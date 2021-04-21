@@ -29,6 +29,12 @@ def fetch_data():
                     break
 
                 hours.append(hh.text.strip())
+            coord = (
+                _.find("a", href=re.compile(r"maps/"))["href"]
+                .split("/@")[1]
+                .split("z/data")[0]
+                .split(",")
+            )
             yield SgRecord(
                 page_url=base_url,
                 location_name=location_name,
@@ -38,6 +44,8 @@ def fetch_data():
                 zip_postal=" ".join(block[1].split(",")[1].strip().split(" ")[1:]),
                 country_code="CA",
                 phone=phone,
+                latitude=coord[0],
+                longitude=coord[1],
                 locator_domain=locator_domain,
                 hours_of_operation="; ".join(hours),
             )
