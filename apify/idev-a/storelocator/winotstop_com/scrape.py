@@ -32,7 +32,7 @@ def _phone(val):
 
 def fetch_data():
     streets = []
-    with SgChrome(executable_path=r"/mnt/g/work/mia/chromedriver.exe") as driver:
+    with SgChrome() as driver:
         with SgRequests() as session:
             res = session.get(base_url, headers=_headers())
             cleaned = (
