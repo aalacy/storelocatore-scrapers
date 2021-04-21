@@ -43,25 +43,29 @@ def fetch_data():
                     if time == "-":
                         time = "Closed"
                     hours.append(f"{day}: {time}")
-                addr = loc["address"]
+                aa = loc["address"]
+                street_address = ", ".join(
+                    bs(aa["streetAddress"], "lxml").stripped_strings
+                )
                 phone = loc["telephone"].split("(x")[0]
                 if phone == "n/a":
                     phone = ""
-                logger.info(f"[{addr['addressCountry']}] {page_url}")
+                logger.info(f"[{aa['addressCountry']}] {page_url}")
+                state = aa["addressRegion"].replace("Canada", "").strip()
+                if state.isdigit():
+                    state = ""
                 yield SgRecord(
                     page_url=page_url,
                     store_number=_["data-store-code"],
                     location_type=_["data-store-type"],
                     location_name=_["data-store-name"],
-                    street_address=", ".join(
-                        bs(addr["streetAddress"], "lxml").stripped_strings
-                    ),
-                    city=addr["addressLocality"],
-                    state=addr["addressRegion"],
+                    street_address=street_address,
+                    city=aa["addressLocality"],
+                    state=state,
                     latitude=_["data-latitude"],
                     longitude=_["data-longitude"],
-                    zip_postal=addr["postalCode"],
-                    country_code=addr["addressCountry"],
+                    zip_postal=aa["postalCode"],
+                    country_code=aa["addressCountry"],
                     phone=phone,
                     locator_domain=locator_domain,
                     hours_of_operation="; ".join(hours),
