@@ -4,6 +4,7 @@ import cloudscraper
 import json
 import pandas as pd
 
+
 def extract_json(html_string):
     json_objects = []
     count = 0
@@ -27,6 +28,7 @@ def extract_json(html_string):
         count = count + 1
 
     return json_objects
+
 
 locator_domains = []
 page_urls = []
@@ -52,10 +54,15 @@ response = scraper.get(url).text
 
 soup = bs(response, "html.parser")
 
-loc_urls = ["https://www.umms.org" + a_tag["href"] for a_tag in soup.find("ul", attrs={"class": "nav-content__nested-level"}).find_all("a")]
+loc_urls = [
+    "https://www.umms.org" + a_tag["href"]
+    for a_tag in soup.find("ul", attrs={"class": "nav-content__nested-level"}).find_all(
+        "a"
+    )
+]
 
 for url in loc_urls:
-    
+
     response = scraper.get(url).text
     soup = bs(response, "html.parser")
 
@@ -64,7 +71,9 @@ for url in loc_urls:
 
     json_objects = extract_json(response)
 
-    location_name = soup.find("h1", attrs={"class": "l-content-header__h1"}).text.strip()
+    location_name = soup.find(
+        "h1", attrs={"class": "l-content-header__h1"}
+    ).text.strip()
     address = json_objects[1]["items"][0]["address1"]
     city = json_objects[1]["items"][0]["address2"].split(",")[0]
     state = json_objects[1]["items"][0]["address2"].split(", ")[1].split(" ")[0]
