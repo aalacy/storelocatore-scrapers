@@ -26,3 +26,13 @@ For the `location_name`, instead of using the `name` field in the API, please us
 ## Estimated Counts 
 Estimated Counts: 1,265 US locations, 86 Canada locations, and 119 GB locations
 
+## `location_name` fixing
+
+Some of the `providerName's` had `Data Center` in them already so now there is `NTT Global Data Centers Data Center`. `Data Center` will be appended if only it does not exist in the `location_name` or in another word, if `Data Center` or `Data Centers` is not found in the `providerName`?
+
+## Store Number ( `store_number`)
+
+Instead of using the `providerId` for the `store_number`, please use `id`; `providerid` is not unique as it is for all locations for that provider (e.g., all of NTT Global’s locations)
+
+## NOTE: Running crawler on production env and memory requirements 
+It is found that whenever `sgscrape.sgpostal` used in the `scraper` , with RAM/ memory ( 1024 MB or 2048 MB ) scraper is likely to fail to run on the production environment. However, 4096 MB memory found to be working without any issue. 

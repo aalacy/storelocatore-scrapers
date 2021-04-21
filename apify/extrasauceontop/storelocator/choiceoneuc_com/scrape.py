@@ -1,10 +1,11 @@
 from sgrequests import SgRequests
+from bs4 import BeautifulSoup as bs
 import cloudscraper
 import json
 import pandas as pd
 
 
-def extract_json(html_string, filters=True):
+def extract_json(html_string):
     json_objects = []
     count = 0
 
@@ -21,14 +22,7 @@ def extract_json(html_string, filters=True):
             if brace_count == 0:
                 end = count
                 try:
-                    if (
-                        "acceptsReservations"
-                        in json.loads(html_string[start : end + 1]).keys()
-                        and filters is True
-                    ):
-                        json_objects.append(json.loads(html_string[start : end + 1]))
-                    elif filters is False:
-                        json_objects.append(json.loads(html_string[start : end + 1]))
+                    json_objects.append(json.loads(html_string[start : end + 1]))
                 except Exception:
                     pass
         count = count + 1
@@ -52,32 +46,46 @@ longitudes = []
 hours_of_operations = []
 
 session = SgRequests()
+
 scraper = cloudscraper.create_scraper(sess=session)
 
-url = "https://www.winkinglizard.com/locations"
+url = "https://www.umms.org/health-services/urgent-care/locations"
 response = scraper.get(url).text
-all_json = extract_json(response, filters=False)
 
-for location in all_json[1]["preloadQueries"][4]["data"]["restaurant"]["pageContent"][
-    "sections"
-][0]["locations"]:
-    locator_domain = "winkinglizard.com"
-    page_url = locator_domain + "/" + location["slug"]
-    location_name = location["name"]
-    address = location["streetAddress"].replace("\n", " ")
-    city = location["city"]
-    state = location["state"]
-    zipp = location["postalCode"]
-    country_code = location["country"]
-    store_number = location["id"]
-    phone = location["phone"]
+soup = bs(response, "html.parser")
+
+loc_urls = [
+    "https://www.umms.org" + a_tag["href"]
+    for a_tag in soup.find("ul", attrs={"class": "nav-content__nested-level"}).find_all(
+        "a"
+    )
+]
+
+for url in loc_urls:
+
+    response = scraper.get(url).text
+    soup = bs(response, "html.parser")
+
+    locator_domain = "www.umms.org"
+    page_url = url
+
+    json_objects = extract_json(response)
+
+    location_name = soup.find(
+        "h1", attrs={"class": "l-content-header__h1"}
+    ).text.strip()
+    address = json_objects[1]["items"][0]["address1"]
+    city = json_objects[1]["items"][0]["address2"].split(",")[0]
+    state = json_objects[1]["items"][0]["address2"].split(", ")[1].split(" ")[0]
+    zipp = json_objects[1]["items"][0]["address2"].split(", ")[1].split(" ")[1][:5]
+    country_code = "US"
+    store_number = "<MISSING>"
+    phone = json_objects[1]["items"][0]["phone"]
     location_type = "<MISSING>"
-    latitude = location["lat"]
-    longitude = location["lng"]
-    hours = ""
-    for section in location["schemaHours"]:
-        hours = hours + section + " "
-    hours = hours[:-1]
+    latitude = json_objects[1]["items"][0]["coordinates"][0]["lat"]
+    longitude = json_objects[1]["items"][0]["coordinates"][0]["lng"]
+
+    hours = "Sun-Sat 8 am-8 pm"
 
     locator_domains.append(locator_domain)
     page_urls.append(page_url)
@@ -87,11 +95,11 @@ for location in all_json[1]["preloadQueries"][4]["data"]["restaurant"]["pageCont
     states.append(state)
     zips.append(zipp)
     country_codes.append(country_code)
-    store_numbers.append(store_number)
     phones.append(phone)
     location_types.append(location_type)
     latitudes.append(latitude)
     longitudes.append(longitude)
+    store_numbers.append(store_number)
     hours_of_operations.append(hours)
 
 df = pd.DataFrame(
@@ -107,9 +115,9 @@ df = pd.DataFrame(
         "phone": phones,
         "latitude": latitudes,
         "longitude": longitudes,
-        "hours_of_operation": hours_of_operations,
         "country_code": country_codes,
         "location_type": location_types,
+        "hours_of_operation": hours_of_operations,
     }
 )
 
