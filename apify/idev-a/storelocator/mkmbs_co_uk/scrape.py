@@ -6,6 +6,9 @@ from urllib.parse import urljoin
 import json
 import re
 import copy
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger("mkmbs")
 
 _headers = {
     "accept": "*/*",
@@ -26,7 +29,6 @@ _payload = {
 }
 
 locations = []
-maps = []
 
 
 def branch_path(data, schema):
@@ -42,35 +44,24 @@ def branch_path(data, schema):
                     branch_path(item, schema)
 
 
-def map_path(data, schema):
-    global maps
-    for element, val in data.items():
-        if isinstance(val, dict):
-            map_path(val, schema)
-        elif isinstance(val, list):
-            for item in val:
-                if item.get("_meta") and item["_meta"]["schema"] == schema:
-                    maps.append(item)
-                else:
-                    map_path(item, schema)
-
-
 def _fix(original):
     regex = re.compile(r'\\(?![/u"])')
     return regex.sub(r"\\\\", original)
 
 
 def fetch_data():
-    global maps
     global locations
 
     with SgRequests() as session:
         locator_domain = "https://www.mkmbs.co.uk/"
         base_url = "https://www.mkmbs.co.uk/mobify/proxy/base/services/branchservices.asmx/searchbranches"
-        res = session.post(base_url, headers=_headers, json=_payload)
-        links = json.loads(res.text)["branch_list"]
+        links = session.post(base_url, headers=_headers, json=_payload).json()[
+            "branch_list"
+        ]
+        logger.info(f"{len(links)} found")
         for link in links:
             location_name = link["name"]
+            logger.info(location_name)
             url = "-".join(location_name.split(" ")[1:]).lower()
             page_url = urljoin(
                 locator_domain,
@@ -80,7 +71,6 @@ def fetch_data():
             soup = bs(r1.text, "lxml")
 
             locations = []
-            maps = []
             graphql = json.loads(
                 _fix(
                     soup.find(
@@ -90,14 +80,10 @@ def fetch_data():
             )
             branch_schema = "https://www.mkmbs.co.uk/schema/branchinfo"
             branch_path(graphql["data"]["amplienceReducer"], branch_schema)
-            map_schema = "https://www.mkmbs.co.uk/schema/map"
-            map_path(graphql["data"]["amplienceReducer"], map_schema)
 
             _locations = copy.copy(locations)
-            _maps = copy.copy(maps)
             for x in range(len(_locations)):
                 location = _locations[x]
-                coord = _maps[x]
                 street_address = (
                     f"{location['addressLineOne']} {location.get('addressLineTwo', '')}"
                 )
@@ -115,8 +101,8 @@ def fetch_data():
                     city=city,
                     zip_postal=zip,
                     country_code="uk",
-                    latitude=coord.get("latitude"),
-                    longitude=coord.get("longitude"),
+                    latitude=link["latitude"],
+                    longitude=link["longitude"],
                     phone=phone,
                     locator_domain=locator_domain,
                     hours_of_operation=hours_of_operation,

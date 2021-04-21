@@ -1,4 +1,5 @@
 import json
+import html
 from sglogging import sglog
 from bs4 import BeautifulSoup
 from sgrequests import SgRequests
@@ -38,7 +39,7 @@ def fetch_data():
                     continue
                 log.info(page_url)
                 temp = json.loads(temp)
-                location_name = temp["name"]
+                location_name = html.unescape(temp["name"])
                 latitude = temp["geo"]["latitude"]
                 longitude = temp["geo"]["longitude"]
                 hours_of_operation = temp["openingHours"]
@@ -50,8 +51,8 @@ def fetch_data():
                     )
                 except:
                     phone = "<MISSING>"
-                street_address = temp["address"]["streetAddress"]
-                city = temp["address"]["addressLocality"]
+                street_address = html.unescape(temp["address"]["streetAddress"])
+                city = html.unescape(temp["address"]["addressLocality"])
                 state = temp["address"]["addressRegion"]
                 zip_postal = temp["address"]["postalCode"]
                 yield SgRecord(

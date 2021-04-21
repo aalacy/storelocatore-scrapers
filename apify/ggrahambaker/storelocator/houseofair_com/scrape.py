@@ -1,8 +1,15 @@
 import csv
 from sgselenium import SgSelenium
 import usaddress
-import time
 import re
+import json
+from sglogging import sglog
+
+DOMAIN = "houseofair.com"
+BASE_URL = "https://www.houseofair.com"
+LOCATION_URL = "https://www.houseofair.com/locations"
+
+log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
 
 
 def write_output(data):
@@ -63,12 +70,18 @@ def parse_addy(addy):
     return street_address, city, state, zip_code
 
 
-def fetch_data():
-    locator_domain = "https://houseofair.com/"
-    ext = "locations/"
+def parse_json(driver):
+    info = driver.find_elements_by_css_selector("script[type='application/ld+json']")[
+        1
+    ].get_attribute("innerHTML")
+    data = json.loads(info)
+    return data
 
+
+def fetch_data():
+    log.info("Fetching store_locator data")
     driver = SgSelenium().chrome()
-    driver.get(locator_domain + ext)
+    driver.get(LOCATION_URL)
 
     main = driver.find_element_by_css_selector("section#content-locations")
     locs = main.find_elements_by_css_selector("div.col-md-3")
@@ -82,10 +95,9 @@ def fetch_data():
     all_store_data = []
     for link in link_list:
         page_url = link + "trampoline-park/"
+        log.info("Pull content => " + page_url)
         driver.get(page_url)
-        time.sleep(3)
-        driver.implicitly_wait(30)
-
+        details = parse_json(driver)
         check_closed = driver.find_elements_by_xpath(
             "//span[contains(@class, 'label-danger') and contains(text(), 'Temporarily Closed')]"
         )
@@ -98,42 +110,20 @@ def fetch_data():
             hours = hours_ul.text.replace("\n", ",").strip()
             hours = re.sub(",$", "", re.sub("Phone Hours.*", "", hours))
 
-        contact_info = driver.find_element_by_xpath(
-            "//h2[contains(text(),'CONTACT')]/following-sibling::ul"
-        ).text.split("\n")
-
-        addy = contact_info[0]
-        street_address, city, state, zip_code = parse_addy(addy)
-        phone_number = contact_info[1]
-
-        hrefs = driver.find_elements_by_xpath(
-            "//iframe[contains(@src, 'www.google.com/maps/')]"
-        )
-
-        if len(hrefs) == 0:
-            lat = "<MISSING>"
-            longit = "<MISSING>"
-        else:
-            google_src = hrefs[0].get_attribute("src")
-            start = google_src.find("!2d")
-            if "Old Mason" in street_address:
-                end = google_src.find("!3m")
-            else:
-                end = google_src.find("!2m")
-            coords = google_src[start + 3 : end].split("!3d")
-
-            lat = coords[1]
-            longit = coords[0]
-
-        location_name = "House of Air " + city
-
-        country_code = "US"
-
+        location_name = details["name"]
+        street_address = details["address"]["streetAddress"]
+        city = details["address"]["addressLocality"]
+        state = details["address"]["addressRegion"]
+        zip_code = details["address"]["postalCode"]
+        country_code = details["address"]["addressCountry"]
+        lat = details["geo"]["latitude"]
+        lng = details["geo"]["longitude"]
         location_type = "<MISSING>"
         store_number = "<MISSING>"
+        phone_number = details["telephone"]
 
         store_data = [
-            locator_domain,
+            DOMAIN,
             page_url,
             location_name,
             street_address,
@@ -145,9 +135,10 @@ def fetch_data():
             phone_number,
             location_type,
             lat,
-            longit,
+            lng,
             hours,
         ]
+        log.info("Append {} => {}".format(location_name, street_address))
         all_store_data.append(store_data)
 
     driver.quit()
@@ -155,8 +146,11 @@ def fetch_data():
 
 
 def scrape():
+    log.info("Start {} Scraper".format(DOMAIN))
     data = fetch_data()
+    log.info("Found {} locations".format(len(data)))
     write_output(data)
+    log.info("Finish processed " + str(len(data)))
 
 
 scrape()
