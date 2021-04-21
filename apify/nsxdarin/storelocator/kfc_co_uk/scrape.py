@@ -88,7 +88,6 @@ def fetch_data():
         website = "kfc.co.uk"
         typ = "<MISSING>"
         store = item["storeid"]
-        print(store)
         hours = ""
         country = "GB"
         try:
