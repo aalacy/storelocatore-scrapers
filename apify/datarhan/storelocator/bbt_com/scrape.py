@@ -46,8 +46,7 @@ def fetch_data():
 
     all_codes = DynamicZipSearch(
         country_codes=[SearchableCountries.USA],
-        max_radius_miles=5,
-        max_search_results=None,
+        max_radius_miles=10,
     )
 
     hdr = {
@@ -77,6 +76,7 @@ def fetch_data():
         for poi in data["locationsFound"]:
             store_url = "<MISSING>"
             location_name = poi["locationName"]
+
             location_name = location_name if location_name else "<MISSING>"
             street_address = poi["address1"]
             if poi["address2"]:
@@ -100,6 +100,8 @@ def fetch_data():
             latitude = latitude if latitude else "<MISSING>"
             longitude = poi["longitude"]
             longitude = longitude if longitude else "<MISSING>"
+            if latitude != "<MISSING>" and longitude != "<MISSING>":
+                all_codes.found_location_at(latitude, longitude)
             hours_of_operation = poi["lobbyHours"]
             hours_of_operation = (
                 ", ".join(hours_of_operation).replace("  ", " ")

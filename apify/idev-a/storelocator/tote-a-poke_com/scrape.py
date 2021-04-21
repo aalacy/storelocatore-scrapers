@@ -10,12 +10,16 @@ _headers = {
 
 
 def addr_check(backups, addr):
+    is_exist = False
     for bb in backups:
-        if addr.street_address_1.split(" ")[0].strip() in bb or (
-            addr.city and addr.city.lower() in bb.lower()
-        ):
+        if addr.street_address_1.split(" ")[0].strip() in bb:
+            is_exist = True
             addr = parse_address_intl(bb)
             break
+    if not is_exist:
+        for bb in backups:
+            if addr.city and addr.city.lower() in bb.lower():
+                addr = parse_address_intl(bb)
 
     return addr
 
@@ -25,12 +29,6 @@ def fetch_data():
     base_url = "http://www.tote-a-poke.com/locations/"
     with SgRequests() as session:
         soup = bs(session.get(base_url, headers=_headers).text, "lxml")
-        backups = [
-            _.text
-            for _ in soup.select(
-                ".et_pb_section.et_pb_section_1.et_section_regular .et_pb_text_inner p"
-            )
-        ]
         locations = soup.select("ul.et_pb_tabs_controls li")
         for link in locations:
             _ = soup.select_one(f"div.et_pb_all_tabs .{link['class'][0]} a")
@@ -41,7 +39,6 @@ def fetch_data():
                 address = link.text
             addr = parse_address_intl(address)
             coord = _["href"].split("/@")[1].split(",17z/data")[0].split(",")
-            addr = addr_check(backups, addr)
             yield SgRecord(
                 page_url=base_url,
                 location_name=link.text,
