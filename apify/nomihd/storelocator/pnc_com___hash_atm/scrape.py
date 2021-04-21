@@ -31,7 +31,15 @@ headers = {
 id_list = []
 
 
-@retry(stop=stop_after_attempt(5), reraise=True)
+def retry_error_callback(retry_state):
+    postal = retry_state.args[0]
+    log.error(f"Failure to fetch locations for: {postal}")
+    return []
+
+
+@retry(
+    retry_error_callback=retry_error_callback, stop=stop_after_attempt(5), reraise=True
+)
 def fetch_records_for(coords):
     lat = coords[0]
     lng = coords[1]
@@ -107,7 +115,7 @@ def scrape():
             ),
             fetch_results_for_rec=fetch_records_for,
             processing_function=process_record,
-            max_threads=32,  # tweak to see what's fastest
+            max_threads=20,  # tweak to see what's fastest
         )
         for rec in results:
             writer.write_row(rec)
