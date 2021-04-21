@@ -7,7 +7,7 @@ from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sglogging import sglog
 
-
+# F
 MISSING = "<MISSING>"
 website = "https://www.starbuds.us"
 session = SgRequests().requests_retry_session()
@@ -154,13 +154,17 @@ def fetchData():
 
 
 def scrape():
+    log.info("Crawling Started")
+    count = 0
     start = time.time()
-    results = fetchData()
     with SgWriter() as writer:
+        results = fetchData()
         for rec in results:
             writer.write_row(rec)
+            count = count + 1
 
     end = time.time()
+    log.info(f"No of records being processed: {count}")
     log.info(f"Scrape took {end-start} seconds.")
 
 
