@@ -1,9 +1,8 @@
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
-from sgrequests import SgRequests
+from sgselenium import SgChrome
 from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
-from sgscrape.sgpostal import parse_address_intl
 
 logger = SgLogSetup().get_logger("salsafrescagrill")
 
@@ -15,34 +14,38 @@ _headers = {
 def fetch_data():
     locator_domain = "https://www.salsafrescagrill.com/"
     base_url = "https://www.salsafrescagrill.com/locations"
-    with SgRequests() as session:
-        soup = bs(session.get(base_url, headers=_headers).text, "lxml")
+    with SgChrome() as driver:
+        driver.get(base_url)
+        soup = bs(driver.page_source, "lxml")
         links = [
             aa
             for aa in soup.find_all("a")
             if aa.get("aria-label", "").endswith("locations")
         ]
+        logger.info(f"{len(links)} found")
         for link in links:
             logger.info(link["href"])
-            sp1 = bs(session.get(link["href"], headers=_headers).text, "lxml")
+            driver.get(link["href"])
+            sp1 = bs(driver.page_source, "lxml")
             locs = sp1.select(
-                'div[data-mesh-id="comp-kbgjwzaiinlineContent-gridContainer"] div[data-testid="richTextElement"]'
+                'main#PAGES_CONTAINER div[data-testid="mesh-container-content"] > div[data-testid="richTextElement"]'
             )
-            for x, loc in enumerate(locs):
-                if not loc.select_one("h2"):
-                    del locs[x]
-            for x in range(0, len(locs), 3):
-                addr = parse_address_intl(locs[x] + " " + locs[x + 1])
+            locations = []
+            for loc in locs:
+                if loc.h2 and loc.h2.text.strip() not in ["Connecticut", "NOW OPEN"]:
+                    locations.append(loc)
+            logger.info(f"{len(locations)} found")
+            for loc in locations:
+                block = list(loc.stripped_strings)
                 yield SgRecord(
                     page_url=link["href"],
-                    location_name=locs[0],
-                    street_address=locs[0],
-                    city=addr.city,
-                    state=addr.state,
-                    zip_postal=addr.postcode,
+                    location_name=block[0],
+                    street_address=block[0],
+                    city=block[1].split(",")[0],
+                    state=block[1].split(",")[1],
                     country_code="US",
                     locator_domain=locator_domain,
-                    phone=locs[x + 1],
+                    phone=block[2],
                 )
 
 

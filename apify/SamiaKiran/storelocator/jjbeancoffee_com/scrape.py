@@ -33,7 +33,9 @@ def fetch_data():
             except:
                 latitude = "<MISSING>"
                 longitude = "<MISSING>"
-            hours_of_operation = temp_list[1].text
+            hours_of_operation = (
+                temp_list[1].text.replace("Hours:", "").replace("|", ",")
+            )
             phone = temp_list[2].text.split("|")[1].replace("Phone:", "")
             address = temp_list[0].find("a").text.split(",")
             street_address = address[0]
