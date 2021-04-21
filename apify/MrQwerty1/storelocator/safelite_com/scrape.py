@@ -118,7 +118,6 @@ def get_data(url):
     latitude, longitude = "<MISSING>", "<MISSING>"
     location_type = "<MISSING>"
 
-    _tmp = []
     hours = tree.xpath("//h4[contains(text(), 'hours')]/following-sibling::p[1]/text()")
     hours = list(filter(None, [h.strip() for h in hours]))
     hours_of_operation = ";".join(hours) or "<MISSING>"
