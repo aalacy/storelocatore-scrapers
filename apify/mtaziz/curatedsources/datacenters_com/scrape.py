@@ -52,9 +52,8 @@ def fetch_data():
 
         logger.info(f"Page URL: {page_url} ")
 
-        # Location Name
+        # Location Name if Data Center or Data Centers found in the location name,
         location_name_data_center = "Data Center"
-        existing_data_center = ["Data Center", "Data Centers"]
 
         location_name = d["providerName"]
         if location_name:
