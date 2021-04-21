@@ -114,12 +114,11 @@ def fetch_data():
                         store[
                             "page_url"
                         ] = f"https://locations.comerica.com/location/{name}"
-                    elif store["type"] == "atm" and store["cma_id"]:
+                    elif store["cma_id"]:
                         store["name"] = store["type"] + store["street"]
                         store[
                             "page_url"
                         ] = f"https://locations.comerica.com/location/{store['type'].lower()}-{store['cma_id'].lower()}"
-
                     else:
                         continue
                     store["hours"] = human_hours(store["open_hours_formatted"])
@@ -226,7 +225,6 @@ def scrape():
         ),
         location_type=sp.MappingField(
             mapping=["type"],
-            part_of_record_identity=True,
         ),
         raw_address=sp.MissingField(),
     )
