@@ -55,7 +55,10 @@ def fetch_data():
             continue
         location_name = loc_dom.xpath('//meta[@property="og:site_name"]/@content')
         location_name = location_name[0] if location_name else "<MISSING>"
-        address_raw = loc_dom.xpath('//a[@class="local-address"]/text()')[0].split(", ")
+        address_raw = loc_dom.xpath('//a[@class="local-address"]/text()')
+        if not address_raw:
+            continue
+        address_raw = address_raw[0].split(", ")
         if len(address_raw) > 3:
             address_raw = [", ".join(address_raw[:2])] + address_raw[2:]
         street_address = address_raw[0]

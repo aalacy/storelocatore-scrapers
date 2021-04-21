@@ -14,7 +14,7 @@ _headers = {
 def fetch_data():
     locator_domain = "https://bricktops.com"
     base_url = "https://bricktops.com/locations"
-    with SgChrome(executable_path=r"/home/ec2-user/mia/chromedriver") as driver:
+    with SgChrome() as driver:
         driver.get(base_url)
         soup = bs(driver.page_source, "lxml")
         links = soup.select("div.sqs-gallery a")
