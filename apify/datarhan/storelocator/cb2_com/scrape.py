@@ -12,6 +12,8 @@ option.add_argument("window-size=1280,800")
 option.add_argument(
     "user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36"
 )
+option.add_argument("--no-sandbox")
+option.add_argument("--disable-dev-shm-usage")
 
 
 def write_output(data):
@@ -52,6 +54,7 @@ def fetch_data():
     start_url = "https://www.cb2.com/stores/"
 
     with webdriver.Chrome(options=option) as driver:
+
         driver.get(start_url)
         sleep(10)
         dom = etree.HTML(driver.page_source)

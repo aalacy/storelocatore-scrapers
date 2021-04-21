@@ -9,6 +9,21 @@ _headers = {
 }
 
 
+def addr_check(backups, addr):
+    is_exist = False
+    for bb in backups:
+        if addr.street_address_1.split(" ")[0].strip() in bb:
+            is_exist = True
+            addr = parse_address_intl(bb)
+            break
+    if not is_exist:
+        for bb in backups:
+            if addr.city and addr.city.lower() in bb.lower():
+                addr = parse_address_intl(bb)
+
+    return addr
+
+
 def fetch_data():
     locator_domain = "http://www.tote-a-poke.com/"
     base_url = "http://www.tote-a-poke.com/locations/"
@@ -20,7 +35,7 @@ def fetch_data():
             address = _.img["alt"]
             if not address or address == "Tote-A-Poke":
                 address = _["href"].split("place/")[1].split("/@")[0].replace("+", " ")
-            if address == "Tote-A-Poke":
+            if "Tote-A-Poke" in address:
                 address = link.text
             addr = parse_address_intl(address)
             coord = _["href"].split("/@")[1].split(",17z/data")[0].split(",")

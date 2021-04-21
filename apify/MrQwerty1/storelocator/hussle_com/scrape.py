@@ -69,6 +69,11 @@ def get_data(page_url):
 
     location_name = j.get("name")
     phone = j.get("telephone") or "<MISSING>"
+    if phone == "<MISSING>":
+        t = "".join(tree.xpath("//div[@class='Banner_banner__content__1lZbw']/text()"))
+        if "phone" in t and "details:" in t:
+            phone = t.split("details:")[-1].replace(".", "").strip()
+
     country_code = "GB"
     store_number = j.get("id") or "<MISSING>"
     location_type = "<MISSING>"

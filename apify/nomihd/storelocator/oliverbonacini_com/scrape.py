@@ -58,6 +58,9 @@ def fetch_data():
         street_address = formatted_addr.street_address_1
         if formatted_addr.street_address_2:
             street_address = street_address + ", " + formatted_addr.street_address_2
+        if "At The Corner Of " in street_address:
+            street_address = street_address.split("At The Corner Of ")[1].strip()
+
         zip = formatted_addr.postcode
 
         country_code = "CA"
@@ -65,11 +68,16 @@ def fetch_data():
 
         location_type = "<MISSING>"
 
-        phone = "".join(
-            restaurant_sel.xpath(
-                '//div[./a[contains(text(),"Get Direction")]]/preceding-sibling::div/p/a/text()'
+        phone = (
+            "".join(
+                restaurant_sel.xpath(
+                    '//div[./a[contains(text(),"Get Direction")]]/preceding-sibling::div/p/a[1]/text()'
+                )
             )
-        ).strip()
+            .strip()
+            .replace("Brewpub", "")
+            .strip()
+        )
 
         hours_of_operation = "<MISSING>"
 

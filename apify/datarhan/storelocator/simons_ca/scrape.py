@@ -77,6 +77,8 @@ def fetch_data():
             longitude = geo[1]
             hoo = loc_dom.xpath('//div[@class="simonsStore-regularHours"]//text()')
             hoo = [e.strip() for e in hoo if e.strip()]
+            if not hoo:
+                location_type = "temporarily closed"
             hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
 
             item = [
