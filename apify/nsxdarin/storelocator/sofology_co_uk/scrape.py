@@ -36,7 +36,6 @@ def write_output(data):
 
 
 def fetch_data():
-    locs = []
     url = "https://api.sofology.co.uk/api/store/"
     r = session.get(url, headers=headers)
     for item in json.loads(r.content):
