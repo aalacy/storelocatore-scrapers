@@ -4,6 +4,9 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 import json
 import re
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger("thebuffalospot")
 
 _headers = {
     "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
@@ -35,9 +38,9 @@ def _url(blocks, name):
     url = phone = ""
     for block in blocks:
         if block.h3 and block.h3.text.strip() == name.strip():
-            url = (
-                locator_domain + block.find("a", href=re.compile(r"/locations"))["href"]
-            )
+            url = locator_domain + block.find("a", href=re.compile(r"/locations"))[
+                "href"
+            ].replace("/locations", "")
             _phone = block.find("a", href=re.compile(r"tel"))
             if _phone:
                 phone = _phone.text
@@ -56,12 +59,14 @@ def fetch_data():
             .strip()
             .split(').data("wpgmp_maps");')[0]
         )
+        logger.info(f'{len(locations["places"])} found')
         for _ in locations["places"]:
             page_url, phone = _url(blocks, _["title"])
             hours_of_operation = ""
             try:
-                street_address = _["address"]
+                street_address = _["address"].split(",")[0]
                 res1 = session.get(page_url, headers=_headers)
+                logger.info(page_url)
                 if res1.status_code == 200:
                     soup1 = bs(res1.text, "lxml")
                     loc = json.loads(
