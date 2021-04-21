@@ -18,7 +18,7 @@ function parseHtml(html) {
 }
 
 function formatPhone(phone) {
-  return phone ? phone.replace(/\-|\(|\)|\s/g, '') : null;
+  return phone ? phone.replace(/-|\(|\)|\s/g, '') : null;
 }
 
 function enqueueStoreLinks({ page, requestQueue }) {
@@ -122,14 +122,16 @@ Apify.main(async function () {
     maxRequestsPerCrawl: 1000,
     async handlePageFunction({ page, request }) {
       switch (request.userData.pageType) {
-        case 'locations':
+        case 'locations': {
           await enqueueStoreLinks({ page, requestQueue });
           break;
-        default:
+        }
+        default: {
           const poi = await fetchData({ page, request });
           if (poi) {
             await Apify.pushData(poi);
           }
+        }
       }
     },
   });
