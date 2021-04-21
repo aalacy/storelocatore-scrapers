@@ -38,7 +38,7 @@ function extractHoursOfOperation($) {
     const time = row.find('td:nth-child(2)').text().trim();
     hours[day] = time;
   });
-  return JSON.stringify(hours);
+  return hours.join(',');
 }
 
 async function fetchData({ page, request }) {
