@@ -35,17 +35,19 @@ def write_output(data):
 def fetch_data():
     out = []
 
-    locator_domain = "https://www.beefjerkyoutlet.com/"
-    page_url = "https://www.beefjerkyoutlet.com/location-finder"
+    locator_domain = "https://www.beefjerkyoutlet.com"
+    api_url = "https://www.beefjerkyoutlet.com/location-finder"
     session = SgRequests()
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
     }
-    r = session.get(page_url, headers=headers)
+    r = session.get(api_url, headers=headers)
     tree = html.fromstring(r.text)
     div = tree.xpath('//div[@class="location-content"]')
 
     for d in div:
+        slug = "".join(d.xpath('.//a[@class="btn-yellow"]/@href'))
+        page_url = f"{locator_domain}{slug}"
 
         location_name = "".join(d.xpath(".//h4/text()"))
         location_type = "<MISSING>"
@@ -66,6 +68,21 @@ def fetch_data():
         )
         hours_of_operation = list(filter(None, [a.strip() for a in hours_of_operation]))
         hours_of_operation = " ".join(hours_of_operation) or "<MISSING>"
+        if (
+            hours_of_operation == "<MISSING>"
+            and page_url != "https://www.beefjerkyoutlet.com/node/28"
+        ):
+            session = SgRequests()
+            r = session.get(page_url, headers=headers)
+
+            tree = html.fromstring(r.text)
+            hours_of_operation = tree.xpath(
+                '//span[contains(text(), "Store Hours")]/following-sibling::div[1]//text()'
+            )
+            hours_of_operation = list(
+                filter(None, [a.strip() for a in hours_of_operation])
+            )
+            hours_of_operation = " ".join(hours_of_operation) or "<MISSING>"
 
         row = [
             locator_domain,
