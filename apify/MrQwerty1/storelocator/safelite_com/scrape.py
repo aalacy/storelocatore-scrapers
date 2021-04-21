@@ -70,8 +70,6 @@ def get_address(line):
         street_address = "<MISSING>"
     city = a.get("city") or "<MISSING>"
     state = a.get("state") or "<MISSING>"
-    if "." in state:
-        state = state.replace(".", "")
     postal = a.get("postal") or "<MISSING>"
 
     return street_address, city, state, postal
@@ -79,54 +77,50 @@ def get_address(line):
 
 def get_urls():
     session = SgRequests()
-    r = session.get("https://www.cariloha.com/stores.html")
+    r = session.get("https://www.safelite.com/store-locator/store-locations-by-state")
     tree = html.fromstring(r.text)
 
-    return tree.xpath(
-        "//h3[@class='store-region' and ./span[not(contains(text(), 'MEXICO'))] and ./span[not(contains(text(), 'CARIBBEAN'))]]/following-sibling::p/a/@href"
-    )
+    return tree.xpath("//div[@class='state-store-list']/a/@href")
 
 
-def get_data(page_url):
-    locator_domain = "https://www.cariloha.com/"
+def get_data(url):
+    locator_domain = "https://www.safelite.com/"
+    page_url = f"https://www.safelite.com{url}"
 
     session = SgRequests()
     r = session.get(page_url)
     tree = html.fromstring(r.text)
 
     location_name = "".join(tree.xpath("//h1/text()")).strip()
-    line = tree.xpath("//h3[contains(text(), 'Address')]/following-sibling::p//text()")
-    line = ", ".join(list(filter(None, [l.strip() for l in line]))).replace(
-        ", Poipu Shopping Village", ""
-    )
-
+    if location_name == "Locations":
+        return
+    line = "".join(
+        tree.xpath("//h4[contains(text(), 'address')]/following-sibling::p[1]/text()")
+    ).strip()
     street_address, city, state, postal = get_address(line)
+    if city == "<MISSING>" and state == "<MISSING>":
+        try:
+            city = location_name.split(",")[0].strip()
+            state = location_name.split(",")[1].strip()
+        except IndexError:
+            pass
     country_code = "US"
     store_number = "<MISSING>"
-    phone = (
-        "".join(
+    try:
+        phone = "".join(
             tree.xpath(
-                "//h3[contains(text(), 'Contact')]/following-sibling::a[not(contains(@href, '@'))]/@href"
+                "//strong[contains(text(), 'call ') or contains(text(), '|')]/text()"
             )
-        ).replace("tel:", "")
-        or "<MISSING>"
-    )
-    latitude = (
-        "".join(tree.xpath("//div[@data-latitude]/@data-latitude")) or "<MISSING>"
-    )
-    longitude = (
-        "".join(tree.xpath("//div[@data-latitude]/@data-longitude")) or "<MISSING>"
-    )
+        )
+        phone = phone.split("|")[0].split("call")[1].strip()
+    except IndexError:
+        phone = "<MISSING>"
+    latitude, longitude = "<MISSING>", "<MISSING>"
     location_type = "<MISSING>"
 
-    _tmp = []
-    tr = tree.xpath("//tr[@class='hours-row']")
-    for t in tr:
-        day = "".join(t.xpath("./td[1]//text()")).strip()
-        time = "".join(t.xpath("./td[2]//text()")).strip()
-        _tmp.append(f"{day}: {time}")
-
-    hours_of_operation = ";".join(_tmp) or "<MISSING>"
+    hours = tree.xpath("//h4[contains(text(), 'hours')]/following-sibling::p[1]/text()")
+    hours = list(filter(None, [h.strip() for h in hours]))
+    hours_of_operation = ";".join(hours) or "<MISSING>"
 
     row = [
         locator_domain,
@@ -150,14 +144,18 @@ def get_data(page_url):
 
 def fetch_data():
     out = []
+    s = set()
     urls = get_urls()
 
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
+    with futures.ThreadPoolExecutor(max_workers=5) as executor:
         future_to_url = {executor.submit(get_data, url): url for url in urls}
         for future in futures.as_completed(future_to_url):
             row = future.result()
             if row:
-                out.append(row)
+                check = tuple(row[2:6])
+                if check not in s:
+                    s.add(check)
+                    out.append(row)
 
     return out
 

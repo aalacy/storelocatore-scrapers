@@ -49,6 +49,28 @@ def getTextFromDiv(values):
     return " ".join(result).strip()
 
 
+def getHourOperation(url):
+    hourOperations = []
+    response = request_with_retries(url)
+    body = html.fromstring(response.text, "lxml")
+    parentDivs = body.xpath("//div[@class='facility-properties-office-hours']")
+    for parentDiv in parentDivs:
+        headerText = parentDiv.xpath(".//p/text()")
+        isOfficeHourAvailable = (
+            len(headerText) > 1 and "Office Hours" in headerText[1].strip()
+        )
+        if not isOfficeHourAvailable:
+            continue
+        hourDivs = parentDiv.xpath(".//table/tr/td/text()")
+        if len(hourDivs) % 2 == 1:
+            hourDivs = hourDivs[:-1]
+
+        for index in range(0, int(len(hourDivs) / 2)):
+            hourOperations.append(f"{hourDivs[index * 2]} {hourDivs[index * 2 + 1]}")
+        return ", ".join(hourOperations)
+    return MISSING
+
+
 def fetchData():
     cityLinks = fetchCityLinks()
     log.info(f"Cities = {len(cityLinks)}")
@@ -65,34 +87,55 @@ def fetchData():
         for index in range(0, len(geoLocations)):
             if len(geoLocations[index]) < 2 or len(facilityCards) < index:
                 continue
-            geoLocation = geoLocations[index]
+
+            try:
+                geoLocation = geoLocations[index]
+                latitude = geoLocation[1]
+                longitude = geoLocation[2]
+            except:
+                latitude = MISSING
+                longitude = MISSING
+
             facilityCard = facilityCards[index]
 
             url = facilityCard.xpath('.//p[@class="facility-name"]/a/@href')[0]
-
             if url in allUrls:
                 continue
             allUrls.append(url)
 
-            store_number = url.split("-")[len(url.split("-")) - 1]
+            try:
+                store_number = url.split("-")[len(url.split("-")) - 1]
+            except:
+                store_number = MISSING
+            try:
+                location_name = getTextFromDiv(
+                    facilityCard.xpath('.//p[@class="facility-name"]/a/text()')
+                )
+            except:
+                location_name = MISSING
+            try:
 
-            location_name = getTextFromDiv(
-                facilityCard.xpath('.//p[@class="facility-name"]/a/text()')
-            )
-            address = getTextFromDiv(
-                facilityCard.xpath('.//p[@class="facility-address"]/text()')
-            )
-            address_parts = address.split(",")
-            street_address = address_parts[len(address_parts) - 1]
-            street_parts = street_address.strip().split(" ")
-            zip = str(street_parts[len(street_parts) - 1].strip())
-            state = str(street_parts[len(street_parts) - 2].strip())
-            street_address = address.replace("," + street_address, "")
-            street_parts2 = street_address.split(" ")
-            city = street_parts2[len(street_parts2) - 1]
-            phone = getTextFromDiv(
-                facilityCard.xpath('.//p[@class="facility-phone"]/a/text()')
-            )
+                address = getTextFromDiv(
+                    facilityCard.xpath('.//p[@class="facility-address"]/text()')
+                )
+                address_parts = address.split(",")
+                street_address = address_parts[len(address_parts) - 1]
+                street_parts = street_address.strip().split(" ")
+                zip = str(street_parts[len(street_parts) - 1].strip())
+                state = str(street_parts[len(street_parts) - 2].strip())
+                street_address = address.replace("," + street_address, "")
+                street_parts2 = street_address.split(" ")
+                city = street_parts2[len(street_parts2) - 1]
+            except:
+                street_address = zip = state = city = MISSING
+            try:
+                phone = getTextFromDiv(
+                    facilityCard.xpath('.//p[@class="facility-phone"]/a/text()')
+                )
+            except:
+                phone = MISSING
+
+            hours_of_operation = getHourOperation(website + url)
 
             yield SgRecord(
                 locator_domain=website,
@@ -106,9 +149,9 @@ def fetchData():
                 store_number=store_number,
                 phone=phone,
                 location_type=MISSING,
-                latitude=geoLocation[1],
-                longitude=geoLocation[2],
-                hours_of_operation=MISSING,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
             )
 
 
