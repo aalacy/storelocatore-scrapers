@@ -30,10 +30,16 @@ def fetch_data():
                             hours.append(f"{_['days_02']}: {_['hours_02']}")
                         if _["days_03"]:
                             hours.append(f"{_['days_03']}: {_['hours_03']}")
+                        street_address = _["address"]
+                        cross_street = _["cross_streets"].split("\n")[-1]
+                        if "St." not in street_address and "St." in cross_street:
+                            street_address = cross_street
+                        if cross_street.split(" ")[0].strip().isdigit():
+                            street_address = cross_street
                         yield SgRecord(
                             page_url=base_url,
                             location_name=_["title"],
-                            street_address=_["address"],
+                            street_address=street_address,
                             city=_["city"],
                             state=_["state"],
                             country_code="US",

@@ -67,6 +67,7 @@ def fetch_data():
         response = session.get(urljoin(start_url, url))
         dom = etree.HTML(response.text)
         final_list += dom.xpath('//a[contains(text(), "Locations")]/@href')
+        final_list += dom.xpath('//a[contains(@href, "/locations/")]/@href')
 
     final_list += [
         "https://www.trihealth.com/institutes-and-services/trihealth-orthopedic-and-sports-institute/locations#ANDERSON (7794 Five Mile Road)",

@@ -49,6 +49,7 @@ def fetch_data():
     p = 0
     for div in divlist:
         link = div["href"]
+
         title = div.find("h4", {"class": "location__name"}).text.split("\n", 1)[0]
         address = (
             div.find("p", {"class": "location__address"})
@@ -100,6 +101,14 @@ def fetch_data():
             street = street.split(") ", 1)[1].strip()
         except:
             pass
+        if len(phone) < 3:
+            phone = "<MISSING>"
+        if len(state) < 2:
+            state = city
+            city = title.split("-", 1)[0]
+            street = street.replace(city, "").strip()
+        if "Utah" in state:
+            state = "UT"
         data.append(
             [
                 "https://www.beansandbrews.com/",

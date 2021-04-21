@@ -32,6 +32,8 @@ def fetch_data():
             street_address = _["addressLine1"]
             if _["addressLine2"]:
                 street_address += " " + _["addressLine2"]
+            location_name = _["store"]["name"]
+            street_address = street_address.replace(location_name, "").strip()
             yield SgRecord(
                 page_url=page_url,
                 location_name=_["store"]["name"],

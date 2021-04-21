@@ -57,7 +57,7 @@ def fetch_data():
     data = json.loads(response.text)
 
     for poi in data["storesjson"]:
-        if poi["tag"] != 3:
+        if poi["tag"] and poi["tag"] != 3:
             continue
         store_url = "https://www.waterworks.com/us_en/{}".format(
             poi["rewrite_request_path"]

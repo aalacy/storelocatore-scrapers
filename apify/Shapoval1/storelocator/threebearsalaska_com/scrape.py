@@ -157,7 +157,18 @@ def fetch_data():
         hours_of_operation = (
             hours_of_operation.replace(":  ", "").replace(": M", "M").strip()
         )
-
+        if street_address.find("3457") != -1:
+            hours_of_operation = (
+                hours_of_operation
+                + " "
+                + "".join(
+                    tree.xpath(
+                        '//h3[./strong[contains(text(), "Store Hours")]]/following-sibling::h3[1]/text()'
+                    )
+                )
+                .replace("\n", "")
+                .strip()
+            )
         row = [
             locator_domain,
             page_url,
