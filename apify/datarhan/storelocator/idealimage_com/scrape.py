@@ -41,7 +41,6 @@ def fetch_data():
     session = SgRequests()
 
     items = []
-    scraped_items = []
 
     domain = "idealimage.com"
     start_url = "https://www.idealimage.com/wp-content/plugins/superstorefinder-wp/ssf-wp-xml.php?wpml_lang="
