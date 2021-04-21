@@ -78,10 +78,10 @@ def fetch_data():
             if "error.html" in res.url:
                 continue
             sp1 = bs(res.text, "lxml")
+            if sp1.find("", string=re.compile(r"could not find")):
+                continue
             location_type = sp1.select_one("div.fn.heading").text.strip()
             if "ATM" not in location_type:
-                continue
-            if sp1.find("", string=re.compile(r"could not find")):
                 continue
             logger.info(link)
             try:
