@@ -111,7 +111,7 @@ for grid in grids:
         longitudes.append(longitude)
         hours_of_operations.append(hours)
 
-    except Exception as e:
+    except Exception:
         if "coming soon" in grid.text.strip():
             address_section = grid.find("h5").text.strip()
             address_parts = address_section.split("phone")[0].split(".")
