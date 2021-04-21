@@ -36,7 +36,7 @@ function extractHoursOfOperation($) {
     const row = $(this);
     const day = row.find('td:nth-child(1)').text().replace(':', '').trim();
     const time = row.find('td:nth-child(2)').text().trim();
-    hours.push(`${day}: ${time}`)
+    hours.push(`${day}: ${time}`);
   });
   return hours.join(',');
 }
