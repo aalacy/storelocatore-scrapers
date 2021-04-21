@@ -7,6 +7,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgzip.dynamic import SearchableCountries
 from sgzip.static import static_coordinate_list
+from tenacity import retry, stop_after_attempt
 
 website = "pnc.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -30,68 +31,70 @@ headers = {
 id_list = []
 
 
+@retry(stop=stop_after_attempt(5), reraise=True)
 def fetch_records_for(coords):
     lat = coords[0]
     lng = coords[1]
     log.info(f"pulling records for coordinates: {lat,lng}")
     search_url = "https://apps.pnc.com/locator-api/locator/api/v2/location/?latitude={}&longitude={}&radius=100&radiusUnits=mi&branchesOpenNow=false"
 
-    stores_req = session.get(search_url.format(lat, lng), headers=headers)
+    stores_req = session.get(
+        search_url.format(lat, lng), headers=headers, timeout=60 * 5
+    )
     stores = json.loads(stores_req.text)["locations"]
-    yield stores
+    return stores
 
 
 def process_record(raw_results_from_one_coordinate):
-    for stores in raw_results_from_one_coordinate:
-        for store in stores:
-            if store["locationType"]["locationTypeDesc"] != "ATM":
-                continue
-            if store["partnerFlag"] == "1":
-                continue
-            if store["locationId"] in id_list:
-                continue
+    for store in raw_results_from_one_coordinate:
+        if store["locationType"]["locationTypeDesc"] != "ATM":
+            continue
+        if store["partnerFlag"] == "1":
+            continue
+        if store["locationId"] in id_list:
+            continue
 
-            id_list.append(store["locationId"])
+        id_list.append(store["locationId"])
 
-            page_url = "<MISSING>"
-            locator_domain = website
-            location_name = store["locationName"]
-            street_address = store["address"]["address1"]
-            if (
-                store["address"]["address2"] is not None
-                and len(store["address"]["address2"]) > 0
-            ):
-                street_address = street_address + ", " + store["address"]["address2"]
+        page_url = "<MISSING>"
+        locator_domain = website
+        location_name = store["locationName"]
+        street_address = store["address"]["address1"]
+        if (
+            store["address"]["address2"] is not None
+            and len(store["address"]["address2"]) > 0
+        ):
+            street_address = street_address + ", " + store["address"]["address2"]
 
-            city = store["address"]["city"]
-            state = store["address"]["state"]
-            zip = store["address"]["zip"]
-            country_code = "US"
+        city = store["address"]["city"]
+        state = store["address"]["state"]
+        zip = store["address"]["zip"]
+        country_code = "US"
 
-            store_number = store["locationId"]
-            phone = "<MISSING>"
+        store_number = store["locationId"]
+        phone = "<MISSING>"
 
-            location_type = store["locationType"]["locationTypeDesc"]
-            hours_of_operation = "<MISSING>"
-            latitude = store["address"]["latitude"]
-            longitude = store["address"]["longitude"]
+        location_type = store["locationType"]["locationTypeDesc"]
+        hours_of_operation = "<MISSING>"
+        latitude = store["address"]["latitude"]
+        longitude = store["address"]["longitude"]
 
-            yield SgRecord(
-                locator_domain=locator_domain,
-                page_url=page_url,
-                location_name=location_name,
-                street_address=street_address,
-                city=city,
-                state=state,
-                zip_postal=zip,
-                country_code=country_code,
-                store_number=store_number,
-                phone=phone,
-                location_type=location_type,
-                latitude=latitude,
-                longitude=longitude,
-                hours_of_operation=hours_of_operation,
-            )
+        yield SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=zip,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=location_type,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+        )
 
 
 def scrape():
