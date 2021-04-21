@@ -5,7 +5,7 @@ from sgselenium import SgChrome
 import re
 from sglogging import SgLogSetup
 
-logger = SgLogSetup().get_logger("mycarecompass")
+logger = SgLogSetup().get_logger("flemingssteakhouse")
 
 _headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.141 Safari/537.36",
@@ -26,7 +26,7 @@ def _valid(val):
 
 
 def fetch_data():
-    with SgChrome(executable_path=r"./chromedriver.exe") as driver:
+    with SgChrome() as driver:
         locator_domain = "https://www.flemingssteakhouse.com/"
         base_url = "https://www.flemingssteakhouse.com/locations/"
         driver.get(base_url)
