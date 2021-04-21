@@ -57,7 +57,7 @@ def fetch_data():
                 if ss.strip()
             ]
             hours = []
-            idx = 2
+            idx = 1
             phone = ""
             for x, ss in enumerate(sharp):
                 if x >= idx and _phone(ss):
