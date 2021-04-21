@@ -31,12 +31,12 @@ function enqueueStoreLinks({ page, requestQueue }) {
 
 function extractHoursOfOperation($) {
   const rows = $('#open_hour tr');
-  const hours = {};
-  const data = rows.each(function () {
+  const hours = [];
+  rows.each(function () {
     const row = $(this);
     const day = row.find('td:nth-child(1)').text().replace(':', '').trim();
     const time = row.find('td:nth-child(2)').text().trim();
-    hours[day] = time;
+    hours.push(`${day}: ${time}`)
   });
   return hours.join(',');
 }
