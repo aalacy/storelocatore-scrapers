@@ -24,6 +24,14 @@ def fetch_data():
                 ]
                 if "Located across" in addr[-1]:
                     del addr[-1]
+                hours = list(_.select("td")[2].stripped_strings)
+                if "This location has temporarily relocated" in hours[0]:
+                    del hours[0]
+                if hours[0].startswith("This location follows"):
+                    hours = []
+                for x, hh in enumerate(hours):
+                    if "Shaw Tower" in hh or "This location offers" in hh:
+                        hours[x:] = []
                 yield SgRecord(
                     page_url=base_url,
                     location_name=addr[0],
@@ -32,6 +40,7 @@ def fetch_data():
                     zip_postal=addr[-1],
                     country_code="CA",
                     locator_domain=locator_domain,
+                    hours_of_operation="; ".join(hours),
                 )
 
 

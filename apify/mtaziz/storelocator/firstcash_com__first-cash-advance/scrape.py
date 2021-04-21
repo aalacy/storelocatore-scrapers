@@ -14,8 +14,11 @@ except AttributeError:
 else:
     ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
 
+MISSING = "<MISSING>"
+
 session = SgRequests()
 logger = SgLogSetup().get_logger("firstcash_com__first-cash-advance")
+locator_domain_url = "https://www.firstcash.com/first-cash-advance"
 
 
 def write_output(data):
@@ -48,6 +51,61 @@ def write_output(data):
             writer.writerow(row)
 
 
+state_list = [
+    "AL",
+    "AK",
+    "AZ",
+    "AR",
+    "CA",
+    "CO",
+    "CT",
+    "DC",
+    "DE",
+    "FL",
+    "GA",
+    "HI",
+    "ID",
+    "IL",
+    "IN",
+    "IA",
+    "KS",
+    "KY",
+    "LA",
+    "ME",
+    "MD",
+    "MA",
+    "MI",
+    "MN",
+    "MS",
+    "MO",
+    "MT",
+    "NE",
+    "NV",
+    "NH",
+    "NJ",
+    "NM",
+    "NY",
+    "NC",
+    "ND",
+    "OH",
+    "OK",
+    "OR",
+    "PA",
+    "RI",
+    "SC",
+    "SD",
+    "TN",
+    "TX",
+    "UT",
+    "VT",
+    "VA",
+    "WA",
+    "WV",
+    "WI",
+    "WY",
+]
+
+
 def fetch_data():
     url_store = "http://find.cashamerica.us/api/stores?p="
     url_key = "http://find.cashamerica.us/js/controllers/StoreMapController.js"
@@ -59,9 +117,10 @@ def fetch_data():
     else:
         logger.info(f"Unable to find the Key, please check the {url_key}")
     start = 1
-    total_page_number = 2750  # As of now the last item returned by the page number 2711 while returning 1 item at a time
+    total_page_number = 2800  # As of now the last item returned by the page number 2711 while returning 1 item at a time
     items_num_per_page = 1
     total = 0
+    items = []
     for page in range(start, total_page_number):
         url_data = f"{url_store}{str(page)}&s={items_num_per_page}&lat=40.7128&lng=-74.006&d=2019-07-16T05:32:30.276Z&key={str(key)}"
         try:
@@ -74,86 +133,47 @@ def fetch_data():
 
         logger.info(f"[ Pulling the data from] {url_data}")
         found = 0
-        for i in range(len(data)):
-            store_data = data[i]
-            store = []
-            store.append("https://www.firstcash.com/first-cash-advance")
-            store.append(store_data["brand"] if store_data["brand"] else "<MISSING>")
-            store.append(
-                store_data["address"]["address1"] + store_data["address"]["address2"]
-                if store_data["address"]["address2"] is not None
-                else store_data["address"]["address1"]
-            )
-            store.append(
+        for store_data in data:
+            locator_domain = locator_domain_url
+            location_name = store_data["brand"] if store_data["brand"] else MISSING
+
+            street_address = store_data["address"]["address1"]
+            st1 = store_data["address"]["address1"]
+            st2 = store_data["address"]["address2"]
+
+            if st2 is not None:
+                street_address = st1 + st2
+            elif st1:
+                street_address = street_address
+            else:
+                street_address = MISSING
+
+            city = (
                 store_data["address"]["city"]
                 if store_data["address"]["city"]
-                else "<MISSING>"
+                else MISSING
             )
             state = ""
-            if store_data["address"]["state"] in [
-                "AL",
-                "AK",
-                "AZ",
-                "AR",
-                "CA",
-                "CO",
-                "CT",
-                "DE",
-                "FL",
-                "GA",
-                "HI",
-                "ID",
-                "IL",
-                "IN",
-                "IA",
-                "KS",
-                "KY",
-                "LA",
-                "ME",
-                "MD",
-                "MA",
-                "MI",
-                "MN",
-                "MS",
-                "MO",
-                "MT",
-                "NE",
-                "NV",
-                "NH",
-                "NJ",
-                "NM",
-                "NY",
-                "NC",
-                "ND",
-                "OH",
-                "OK",
-                "OR",
-                "PA",
-                "RI",
-                "SC",
-                "SD",
-                "TN",
-                "TX",
-                "UT",
-                "VT",
-                "VA",
-                "WA",
-                "WV",
-                "WI",
-                "WY",
-            ]:
+            if store_data["address"]["state"] in state_list:
                 state = store_data["address"]["state"]
-            store.append(state if state else "<MISSING>")
-            zipp = store_data["address"]["zipCode"]
+            state = state if state else MISSING
+
+            zip_data = store_data["address"]["zipCode"]
             nomi = pgeocode.Nominatim("us")
-            if nomi.query_postal_code(str(zipp))["country_code"] != "US":
+            if nomi.query_postal_code(str(zip_data))["country_code"] != "US":
                 continue
             if "00000" in store_data["address"]["zipCode"]:
-                zipp = "<MISSING>"
-            store.append(zipp if zipp else "<MISSING>")
-            store.append("US")
-            store.append(
-                store_data["storeNumber"] if store_data["storeNumber"] else "<MISSING>"
+                zip_data = MISSING
+            zip = zip_data if zip_data else MISSING
+
+            country_code = ""
+            if state == MISSING:
+                country_code = "MX"
+            else:
+                country_code = "US"
+
+            store_number = (
+                store_data["storeNumber"] if store_data["storeNumber"] else MISSING
             )
             phone = (
                 "("
@@ -164,9 +184,9 @@ def fetch_data():
                 + store_data["phone"][6:10]
             )
             if "() -" in phone:
-                phone = "<MISSING>"
-            store.append(phone if phone else "<MISSING>")
-            store.append(
+                phone = MISSING
+            phone = phone if phone else MISSING
+            location_type = (
                 store_data["brand"]
                 .replace("0", "")
                 .replace("1", "")
@@ -179,53 +199,66 @@ def fetch_data():
                 .replace("8", "")
                 .replace("9", "")
                 .strip()
-                if store_data["brand"]
-                else "<MISSING>"
             )
-            store.append(
-                store_data["latitude"] if store_data["latitude"] else "<MISSING>"
-            )
-            store.append(
-                store_data["longitude"] if store_data["longitude"] else "<MISSING>"
-            )
-            hours_request = session.get(
+            location_type = location_type if location_type else MISSING
+            latitude = store_data["latitude"] if store_data["latitude"] else MISSING
+            longitude = store_data["longitude"] if store_data["longitude"] else MISSING
+            url_hoo = (
                 "http://find.cashamerica.us/api/stores/"
                 + str(store_data["storeNumber"])
                 + "?key="
                 + key
             )
+            logger.info(f"Hours Data scraping from: {url_hoo}")
+            hours_request = session.get(url_hoo)
             hours_details = hours_request.json()["weeklyHours"]
-            hours = ""
+            hoo_list = []
             for k in range(len(hours_details)):
-                if hours_details[k]["openTime"] != "Closed":
-                    hours = (
-                        hours
-                        + " "
-                        + hours_details[k]["weekDay"]
-                        + " "
-                        + hours_details[k]["openTime"]
-                        + " "
-                        + hours_details[k]["closeTime"]
-                        + " "
-                    )
-            store.append(hours.strip() if hours != "" else "<MISSING>")
-            store.append("<INACCESSIBLE>")
-            for i in range(len(store)):
-                if type(store[i]) == str:
-                    store[i] = "".join(
+                hool = (
+                    hours_details[k]["weekDay"]
+                    + " "
+                    + hours_details[k]["openTime"]
+                    + " - "
+                    + hours_details[k]["closeTime"]
+                )
+                hoo_list.append(hool)
+            hours = "; ".join(hoo_list)
+            hours_of_operation = hours.strip() if hours != "" else MISSING
+            page_url = "<INACCESSIBLE>"
+            row = [
+                locator_domain,
+                location_name,
+                street_address,
+                city,
+                state,
+                zip,
+                country_code,
+                store_number,
+                phone,
+                location_type,
+                latitude,
+                longitude,
+                hours_of_operation,
+                page_url,
+            ]
+
+            for i in range(len(row)):
+                if type(row[i]) == str:
+                    row[i] = "".join(
                         (
                             c
-                            for c in unicodedata.normalize("NFD", store[i])
+                            for c in unicodedata.normalize("NFD", row[i])
                             if unicodedata.category(c) != "Mn"
                         )
                     )
-            store = [x.replace("–", "-") if type(x) == str else x for x in store]
-            store = [x.strip() if type(x) == str else x for x in store]
-            yield store
+            row = [x.replace("–", "-") if type(x) == str else x for x in row]
+            row = [x.strip() if type(x) == str else x for x in row]
+            items.append(row)
             found += 1
         total += found
         logger.info(f"Total Store Count: {total}")
     logger.info(f"Scraping Finished | Total Store Count: {total}")
+    return items
 
 
 def scrape():

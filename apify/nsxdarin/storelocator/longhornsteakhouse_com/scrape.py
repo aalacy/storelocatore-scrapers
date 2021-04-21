@@ -68,7 +68,7 @@ def fetch_data():
         name = ""
         store = loc.rsplit("/", 1)[1]
         with SgChrome() as driver:
-            driver.get(url)
+            driver.get(loc)
             text = driver.page_source
             text = str(text).replace("\r", "").replace("\n", "").replace("\t", "")
             if 'id="restLatLong" value="' in text:
@@ -77,15 +77,6 @@ def fetch_data():
                     text.split('id="restLatLong" value="')[1]
                     .split(",")[1]
                     .split('"')[0]
-                )
-            if '<span id="popRestHrs">' in text:
-                hours = (
-                    text.split('<span id="popRestHrs">')[1]
-                    .split("<br></span>")[0]
-                    .replace("</span>", "")
-                    .replace("<br>", "; ")
-                    .replace('<span class="times">', "")
-                    .strip()
                 )
             if '"weekda' in text:
                 day = text.split('"weekda')[1].split('">')[1].split("<")[0]
@@ -106,7 +97,7 @@ def fetch_data():
                     hours = hrs
                 else:
                     hours = hours + "; " + hrs
-            if "AM&nbsp;-&nbsp;" in text:
+            if "AM&nbsp;-&nbsp;" in text and "EST 20" not in text:
                 hrs = (
                     day
                     + ": "

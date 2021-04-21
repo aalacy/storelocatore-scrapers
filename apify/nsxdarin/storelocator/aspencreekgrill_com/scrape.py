@@ -83,22 +83,23 @@ def fetch_data():
             r2.encoding = "utf-8"
         lines = r2.iter_lines(decode_unicode=True)
         for line2 in lines:
-            if '<div class="et_pb_text_inner"><h2>' in line2 and name == "":
-                name = line2.split('<div class="et_pb_text_inner"><h2>')[1].split("<")[
-                    0
-                ]
-                state = next(lines).split(">")[1].split("<")[0]
+            if "<title>" in line2 and name == "":
+                name = line2.split("<title>")[1].split("<")[0]
+                if "|" in name:
+                    name = name.split("|")[0].strip()
             if "Address</span></h4>" in line2:
                 g = next(lines).replace("<span>", "").replace("</span>", "")
                 if "<p>" in g:
                     add = g.split("<p>")[1].split("<")[0]
                     city = g.split("<br />")[1].split(",")[0].strip()
                     zc = g.split("</p>")[0].rsplit(" ", 1)[1]
+                    state = g.split("<br />")[1].split(",")[1].strip().split(" ")[0]
                 else:
                     add = g.split('">')[1].split("<")[0]
                     g = next(lines)
                     city = g.split(",")[0]
                     zc = g.split("<")[0].rsplit(" ", 1)[1]
+                    state = g.split("<")[0].rsplit(" ", 1)[0]
                 country = "US"
                 store = "<MISSING>"
             if 'href="tel:' in line2:
@@ -115,6 +116,18 @@ def fetch_data():
         if "<" in zc:
             zc = zc.split("<")[0]
         hours = hours.replace("&amp;", "&").replace("&#8211;", "-")
+        if "<" in hours:
+            hours = hours.split("<")[0].strip()
+        if "KENTUCKY" in state:
+            state = "KENTUCKY"
+        if "/tyler" in loc:
+            add = "1725 W SW Loop 323"
+            city = "Tyler"
+            state = "Texas"
+            zc = "75701"
+        phone = "<MISSING>"
+        store = "<MISSING>"
+        country = "US"
         yield [
             website,
             loc,

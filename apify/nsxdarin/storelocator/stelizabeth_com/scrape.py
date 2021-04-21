@@ -105,7 +105,20 @@ def fetch_data():
                 if hours == "":
                     hours = hrs
                 else:
-                    hours = hours + "; " + hrs
+                    if "Mon: " in hrs and "Mon: " not in hours:
+                        hours = hours + "; " + hrs
+                    if "Sun: " in hrs and "Sun: " not in hours:
+                        hours = hours + "; " + hrs
+                    if "Tue: " in hrs and "Tue: " not in hours:
+                        hours = hours + "; " + hrs
+                    if "Wed: " in hrs and "Wed: " not in hours:
+                        hours = hours + "; " + hrs
+                    if "Thu: " in hrs and "Thu: " not in hours:
+                        hours = hours + "; " + hrs
+                    if "Fri: " in hrs and "Fri: " not in hours:
+                        hours = hours + "; " + hrs
+                    if "Sat: " in hrs and "Sat: " not in hours:
+                        hours = hours + "; " + hrs
             if " PM" in line2:
                 hrs = (
                     line2.replace("<br />", "")
@@ -117,7 +130,20 @@ def fetch_data():
                 if hours == "":
                     hours = hrs
                 else:
-                    hours = hours + "; " + hrs
+                    if "Mon: " in hrs and "Mon: " not in hours:
+                        hours = hours + "; " + hrs
+                    if "Sun: " in hrs and "Sun: " not in hours:
+                        hours = hours + "; " + hrs
+                    if "Tue: " in hrs and "Tue: " not in hours:
+                        hours = hours + "; " + hrs
+                    if "Wed: " in hrs and "Wed: " not in hours:
+                        hours = hours + "; " + hrs
+                    if "Thu: " in hrs and "Thu: " not in hours:
+                        hours = hours + "; " + hrs
+                    if "Fri: " in hrs and "Fri: " not in hours:
+                        hours = hours + "; " + hrs
+                    if "Sat: " in hrs and "Sat: " not in hours:
+                        hours = hours + "; " + hrs
             if " pm" in line2:
                 hrs = (
                     line2.replace("<br />", "")
@@ -129,7 +155,20 @@ def fetch_data():
                 if hours == "":
                     hours = hrs
                 else:
-                    hours = hours + "; " + hrs
+                    if "Mon: " in hrs and "Mon: " not in hours:
+                        hours = hours + "; " + hrs
+                    if "Sun: " in hrs and "Sun: " not in hours:
+                        hours = hours + "; " + hrs
+                    if "Tue: " in hrs and "Tue: " not in hours:
+                        hours = hours + "; " + hrs
+                    if "Wed: " in hrs and "Wed: " not in hours:
+                        hours = hours + "; " + hrs
+                    if "Thu: " in hrs and "Thu: " not in hours:
+                        hours = hours + "; " + hrs
+                    if "Fri: " in hrs and "Fri: " not in hours:
+                        hours = hours + "; " + hrs
+                    if "Sat: " in hrs and "Sat: " not in hours:
+                        hours = hours + "; " + hrs
             if " p.m." in line2:
                 hrs = (
                     line2.replace("<br />", "")
@@ -143,7 +182,20 @@ def fetch_data():
                 if hours == "":
                     hours = hrs
                 else:
-                    hours = hours + "; " + hrs
+                    if "Mon: " in hrs and "Mon: " not in hours:
+                        hours = hours + "; " + hrs
+                    if "Sun: " in hrs and "Sun: " not in hours:
+                        hours = hours + "; " + hrs
+                    if "Tue: " in hrs and "Tue: " not in hours:
+                        hours = hours + "; " + hrs
+                    if "Wed: " in hrs and "Wed: " not in hours:
+                        hours = hours + "; " + hrs
+                    if "Thu: " in hrs and "Thu: " not in hours:
+                        hours = hours + "; " + hrs
+                    if "Fri: " in hrs and "Fri: " not in hours:
+                        hours = hours + "; " + hrs
+                    if "Sat: " in hrs and "Sat: " not in hours:
+                        hours = hours + "; " + hrs
             if "<br>Tue:" in line2 and "<br>Thu:" in line2:
                 hours = (
                     line2.strip().replace("\r", "").replace("\t", "").replace("\n", "")
@@ -178,6 +230,9 @@ def fetch_data():
             or "/location/details/imaging-ft-thomas" in loc
         ):
             hours = "X-ray (appointments not necessary): 24/7"
+        hours = hours.replace("&nbsp;;", ";")
+        if "Click Here for Covington Laboratory Services." in hours:
+            hours = "<MISSING>"
         if add != "":
             yield [
                 website,
