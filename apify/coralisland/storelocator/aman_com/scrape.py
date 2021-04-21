@@ -23,7 +23,6 @@ accept_country = [
         "UK": [
             "United Kingdom",
             "Wales",
-            "Greece",
             "England",
             "Northen Ireland",
             "Scotland",
@@ -84,6 +83,8 @@ def fetch_store_urls():
     )
     links = content.find_all("a", {"class": "clean"})
     for link in links:
+        if "Coming soon" in link.text:
+            continue
         store_urls.append(BASE_URL + link["href"])
     log.info("Found {} URL ".format(len(store_urls)))
     return store_urls
