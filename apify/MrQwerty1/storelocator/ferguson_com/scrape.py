@@ -130,7 +130,6 @@ def get_data(url):
 def fetch_data():
     out = []
     urls = get_urls()
-    # urls = ['DC']
 
     with futures.ThreadPoolExecutor(max_workers=10) as executor:
         future_to_url = {executor.submit(get_data, url): url for url in urls}
