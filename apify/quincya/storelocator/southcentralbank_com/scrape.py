@@ -54,6 +54,8 @@ def fetch_data():
 
         raw_data = BeautifulSoup(store["description"], "lxml")
         raw_address = list(raw_data.stripped_strings)[:2]
+        if "LOCATION WILL BE" in raw_address[0]:
+            raw_address = list(raw_data.stripped_strings)[1:3]
 
         street_address = raw_address[0].strip()
         city = raw_address[1].split(",")[0]

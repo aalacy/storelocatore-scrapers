@@ -67,7 +67,9 @@ def fetch_data():
     }
     r = session.get(page_url, headers=headers)
     tree = html.fromstring(r.text)
-    divs = tree.xpath("//div[@class='col col-md-4 col-sm-12' and .//a]")
+    divs = tree.xpath(
+        "//div[(@class='col col-md-4 col-sm-12' or @class='col col-sm-12 col-md-4') and .//a]"
+    )
 
     for d in divs:
         location_name = "".join(

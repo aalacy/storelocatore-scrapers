@@ -47,7 +47,7 @@ def fetch_data():
     for line in r.iter_lines(decode_unicode=True):
         if "<loc>https://www.banfield.com/locations/veterinarians/" in line:
             lurl = line.split("<loc>")[1].split("<")[0]
-            if lurl.count("/") == 7 and "bluffton/bft" not in lurl:
+            if lurl.count("/") == 7:
                 locs.append(lurl)
     for loc in locs:
         logger.info(("Pulling Location %s..." % loc))
