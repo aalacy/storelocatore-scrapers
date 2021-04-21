@@ -1,11 +1,10 @@
 from sgrequests import SgRequests
 import cloudscraper
 import json
-from bs4 import BeautifulSoup as bs
 import pandas as pd
 
 
-def extract_json(html_string):
+def extract_json(html_string, filters=True):
     json_objects = []
     count = 0
 
@@ -25,7 +24,10 @@ def extract_json(html_string):
                     if (
                         "acceptsReservations"
                         in json.loads(html_string[start : end + 1]).keys()
+                        and filters is True
                     ):
+                        json_objects.append(json.loads(html_string[start : end + 1]))
+                    elif filters is False:
                         json_objects.append(json.loads(html_string[start : end + 1]))
                 except Exception:
                     pass
@@ -54,59 +56,49 @@ scraper = cloudscraper.create_scraper(sess=session)
 
 url = "https://www.winkinglizard.com/locations"
 response = scraper.get(url).text
+all_json = extract_json(response, filters=False)
 
-json_objects = extract_json(response)
-
-for location in json_objects:
+for location in all_json[1]["preloadQueries"][4]["data"]["restaurant"]["pageContent"][
+    "sections"
+][0]["locations"]:
     locator_domain = "winkinglizard.com"
-    address = location["address"]["streetAddress"].replace("\n", " ")
-    city = location["address"]["addressLocality"]
-    state = location["address"]["addressRegion"]
-    zipp = location["address"]["postalCode"]
-    country_code = "US"
-    store_number = "<MISSING>"
-    phone = location["address"]["telephone"]
+    page_url = locator_domain + "/" + location["slug"]
+    location_name = location["name"]
+    address = location["streetAddress"].replace("\n", " ")
+    city = location["city"]
+    state = location["state"]
+    zipp = location["postalCode"]
+    country_code = location["country"]
+    store_number = location["id"]
+    phone = location["phone"]
     location_type = "<MISSING>"
-    latitude = "<MISSING>"
-    longitude = "<MISSING>"
-
+    latitude = location["lat"]
+    longitude = location["lng"]
     hours = ""
-    for item in location["openingHours"]:
-        hours = hours + item + " "
+    for section in location["schemaHours"]:
+        hours = hours + section + " "
     hours = hours[:-1]
 
     locator_domains.append(locator_domain)
+    page_urls.append(page_url)
+    location_names.append(location_name)
     street_addresses.append(address)
     citys.append(city)
     states.append(state)
     zips.append(zipp)
     country_codes.append(country_code)
+    store_numbers.append(store_number)
     phones.append(phone)
     location_types.append(location_type)
     latitudes.append(latitude)
     longitudes.append(longitude)
-    store_numbers.append(store_number)
     hours_of_operations.append(hours)
-
-soup = bs(response, "html.parser")
-grids = soup.find_all("div", attrs={"class": "col-md-4 col-xs-12 pm-location"})
-
-test_phones = []
-for grid in grids:
-    location_name = grid.find("h4").text.strip()
-    page_url = (
-        "https://www.winkinglizard.com"
-        + grid.find("a", attrs={"class": "details-button"})["href"]
-    )
-    phone = grid.find_all("p")[1].find("a")["href"].replace("tel:", "")
-
-    page_urls.append(page_url)
-    location_names.append(location_name)
-    test_phones.append(phone)
 
 df = pd.DataFrame(
     {
         "locator_domain": locator_domains,
+        "page_url": page_urls,
+        "location_name": location_names,
         "street_address": street_addresses,
         "city": citys,
         "state": states,
@@ -115,16 +107,26 @@ df = pd.DataFrame(
         "phone": phones,
         "latitude": latitudes,
         "longitude": longitudes,
+        "hours_of_operation": hours_of_operations,
         "country_code": country_codes,
         "location_type": location_types,
-        "hours_of_operation": hours_of_operations,
     }
 )
 
-df_name = pd.DataFrame(
-    {"location_name": location_names, "page_url": page_urls, "phone": test_phones}
+df = df.fillna("<MISSING>")
+df = df.replace(r"^\s*$", "<MISSING>", regex=True)
+
+df["dupecheck"] = (
+    df["location_name"]
+    + df["street_address"]
+    + df["city"]
+    + df["state"]
+    + df["location_type"]
 )
 
-df = df.merge(df_name, left_on="phone", right_on="phone", how="outer")
+df = df.drop_duplicates(subset=["dupecheck"])
+df = df.drop(columns=["dupecheck"])
+df = df.replace(r"^\s*$", "<MISSING>", regex=True)
+df = df.fillna("<MISSING>")
 
 df.to_csv("data.csv", index=False)
