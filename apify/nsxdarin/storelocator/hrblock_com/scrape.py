@@ -58,7 +58,6 @@ def fetch_data():
                 lurl = "https://hrblock.com" + line2.split('href="')[1].split('"')[0]
                 cities.append(lurl)
         for city in cities:
-            locs = []
             logger.info("Pulling City %s..." % city)
             r3 = session.get(city, headers=headers)
             if r3.encoding is None:
