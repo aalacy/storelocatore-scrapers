@@ -82,7 +82,7 @@ def fetch_data():
             hours_of_operation = list(
                 filter(None, [a.strip() for a in hours_of_operation])
             )
-            hours_of_operation = " ".join(hours_of_operation)
+            hours_of_operation = " ".join(hours_of_operation) or "<MISSING>"
 
         row = [
             locator_domain,
