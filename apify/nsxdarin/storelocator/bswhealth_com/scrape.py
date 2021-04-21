@@ -45,7 +45,7 @@ def fetch_data():
         "https://phyndapi.bswapi.com/V2/Places/GetLocations?&location=40.912491449640854,-110.5631319&distance=2500&LineOfBusiness=BSWH&pageNumber=1&perPage=2500&SortBy=Distance&DocIsPrimaryCare=true&DocUsesMyBSWHealth=true&DocSortBy=NextAvailableAppointment&overrideRules=true",
     ]
     for url in urls:
-        r = session.get(url, headers=headers, stream=True)
+        r = session.get(url, headers=headers, stream=True, verify=False)
         if r.encoding is None:
             r.encoding = "utf-8"
         website = "bswhealth.com"
