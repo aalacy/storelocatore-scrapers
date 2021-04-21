@@ -54,7 +54,11 @@ def fetch_data():
     data = json.loads(data["d"])
 
     for poi in data:
-        store_url = poi["Url"]
+        store_url = (
+            "https://www.meridiancu.ca/Contact-Us/Branch-Details.aspx?id={}".format(
+                poi["ItemID"]
+            )
+        )
         store_url = store_url if store_url else "<MISSING>"
         location_name = poi["Title"]
         location_name = location_name if location_name else "<MISSING>"

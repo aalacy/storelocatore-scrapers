@@ -3,7 +3,7 @@ from lxml import etree
 
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
-from sgscrape.sgpostal import parse_address, International_Parser
+from sgscrape.sgpostal import parse_address_intl
 
 logger = SgLogSetup().get_logger("covance_com")
 
@@ -43,6 +43,13 @@ def fetch_data():
     session = SgRequests()
 
     scraped_items = []
+    cities_to_filter = [
+        "Buenos Aires",
+        "Rueil Malmaison",
+        "Seoul",
+        "Singapore",
+        "Zurich",
+    ]
 
     DOMAIN = "covance.com"
     start_url = "https://www.covance.com/locations.html"
@@ -63,17 +70,24 @@ def fetch_data():
             continue
         raw_address = poi_html.xpath('.//li[@class="address"]/text()')
         raw_address = [elem.strip() for elem in raw_address if elem.strip()]
-        full_addr = " ".join(raw_address).replace("\n", " ").replace("\t", " ")
-        addr = parse_address(International_Parser(), full_addr)
+        full_addr = (
+            " ".join(raw_address)
+            .replace("\n", " ")
+            .replace("\t", " ")
+            .split("44 203 810")[0]
+        )
+        addr = parse_address_intl(full_addr)
         country_code = addr.country
         country_code = country_code if country_code else "<MISSING>"
         if country_code not in ["Usa", "<MISSING>", "UK", "United Kingdom"]:
             continue
         city = addr.city
-        city = city if city else "<MISSING>"
+        city = city.strip() if city else "<MISSING>"
+        if city in cities_to_filter:
+            continue
         street_address = addr.street_address_1
         if addr.street_address_2:
-            street_address = addr.street_address_2 + addr.street_address_1
+            street_address += " " + addr.street_address_2
         state = addr.state
         state = state if state else "<MISSING>"
         zip_code = addr.postcode

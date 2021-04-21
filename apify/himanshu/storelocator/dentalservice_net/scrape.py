@@ -58,7 +58,7 @@ def fetch_data():
     )
     json_data = r.json()
     all_locations = json_data["Hit"]
-    for i in range(10, json_data["Found"] + 10, 10):
+    for i in range(10, json_data["Found"] + 20, 10):
         r = session.get(
             "https://locator-api.localsearchprofiles.com/api/LocationSearchResults/?configuration="
             + data_id

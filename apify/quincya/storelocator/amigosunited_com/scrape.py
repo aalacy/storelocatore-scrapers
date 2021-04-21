@@ -1,5 +1,6 @@
 import csv
 import re
+import time
 
 from bs4 import BeautifulSoup
 
@@ -50,13 +51,14 @@ def fetch_data():
     driver = SgChrome(user_agent=user_agent).driver()
 
     driver.get(base_link)
+    time.sleep(6)
 
     base = BeautifulSoup(driver.page_source, "lxml")
 
     data = []
     locator_domain = "amigosunited.com"
 
-    items = base.find_all(class_="storeresult-listitem col-sm-12")
+    items = base.find(id="divSideBar").find_all("div", recursive=False)
 
     for item in items:
 

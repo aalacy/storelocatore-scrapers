@@ -116,6 +116,8 @@ def fetch_data():
         latitude = geo[1]
         longitude = geo[2].replace("]", "")
         hours = [e.strip() for e in store if "AM-" in e]
+        if not hours:
+            location_type = "coming soon"
         hours_of_operation = " ".join(hours) if hours else "<MISSING>"
 
         item = [
