@@ -1,9 +1,8 @@
 import csv
+from lxml import etree
+from urllib.parse import urljoin
+
 from sgrequests import SgRequests
-from bs4 import BeautifulSoup
-
-
-session = SgRequests()
 
 
 def write_output(data):
@@ -37,6 +36,8 @@ def write_output(data):
 
 
 def fetch_data():
+    session = SgRequests()
+
     base_url = "https://www.thriftyfoods.com"
 
     hdr = {
@@ -50,13 +51,12 @@ def fetch_data():
     ).json()
     return_main_object = []
     for loc in r["Data"]:
-        page_url = loc["StoreDetailPageUrl"]
-        r1 = session.get(base_url + loc["StoreDetailPageUrl"])
-        soup = BeautifulSoup(r1.text, "lxml")
-        hour = ""
-        hour = " ".join(
-            soup.find("div", {"id": "body_0_main_0_PnlOpenHours"}).stripped_strings
-        )
+        page_url = urljoin(base_url, loc["StoreDetailPageUrl"])
+        loc_response = session.get(page_url)
+        loc_dom = etree.HTML(loc_response.text)
+        hoo = loc_dom.xpath('//div[@id="body_0_main_0_PnlOpenHours"]//text()')
+        hoo = [e.strip() for e in hoo if e.strip()]
+        hours = " ".join(hoo)
         name = loc["Name"].strip()
         address = loc["AddressMain"]["Line"].strip()
         zip = loc["AddressMain"]["DisplayPostalCode"].strip()
@@ -80,7 +80,7 @@ def fetch_data():
         store.append("thriftyfoods")
         store.append(lat if lat else "<MISSING>")
         store.append(lng if lng else "<MISSING>")
-        store.append(hour if hour else "<MISSING>")
+        store.append(hours if hours else "<MISSING>")
         return_main_object.append(store)
     return return_main_object
 
