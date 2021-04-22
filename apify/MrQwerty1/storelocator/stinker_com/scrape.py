@@ -151,7 +151,6 @@ def get_data(coord, token):
             hours_of_operation,
         ]
         out.append(row)
-    print(api_url, ":", out)
 
     return out
 
