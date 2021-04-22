@@ -125,8 +125,11 @@ def fetch_data():
             .replace("Sa", "Saturday")
             .replace("Su", "Sunday")
         )
-        if "Sunday" not in tim:
+        tim = tim.strip()
+        if "Sunday" not in tim and tim != "":
             tim += ", Sunday: CLOSED"
+        if tim == "":
+            tim = "<MISSING>"
         timing.append(tim)
         if re.findall(r'"addressCountry": "([^"]*)"', data)[0] == "Canada":
             countries.append("CA")

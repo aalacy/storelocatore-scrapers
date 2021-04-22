@@ -71,6 +71,8 @@ def get_data(coord):
         latitude = j.get("latitude") or "<MISSING>"
         longitude = j.get("longitude") or "<MISSING>"
         location_type = "<MISSING>"
+        if store_number == "11111577":
+            city = "Orleans"
 
         _tmp = []
         days = [

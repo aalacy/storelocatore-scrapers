@@ -76,7 +76,7 @@ def fetch_data():
                 [
                     "https://shipleydonuts.com/",
                     link,
-                    title,
+                    title.replace(" &#8211;", " - ").strip(),
                     street,
                     city,
                     state,
@@ -87,7 +87,7 @@ def fetch_data():
                     "<MISSING>",
                     lat,
                     longt,
-                    hours,
+                    hours.replace(":00", ":00 ").strip(),
                 ]
             )
 

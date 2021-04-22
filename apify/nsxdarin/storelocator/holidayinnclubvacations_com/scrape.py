@@ -1,6 +1,8 @@
+import re
 import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
+from sgscrape.sgpostal import parse_address, USA_Best_Parser
 
 logger = SgLogSetup().get_logger("holidayinnclubvacations_com")
 
@@ -38,71 +40,73 @@ def write_output(data):
             writer.writerow(row)
 
 
+MISSING = "<MISSING>"
+
+
+def get(entity, key, default=MISSING):
+    return entity.get(key, default) or default
+
+
 def fetch_data():
     for x in range(1, 4):
-        url = "https://holidayinnclub.com/api/resorts?page=" + str(x)
-        r = session.get(url, headers=headers)
-        website = "holidayinnclubvacations.com"
-        country = "US"
-        typ = "Hotel"
-        hours = "<MISSING>"
-        name = ""
-        add = ""
-        city = ""
-        state = ""
-        zc = ""
-        store = ""
-        phone = ""
-        lat = ""
-        lng = ""
-        for line in r.iter_lines():
-            line = str(line.decode("utf-8"))
-            if '"_content_type_uid":"' in line:
-                items = line.split('"_content_type_uid":"')
-                for item in items:
-                    if '{"entries":' not in item:
-                        name = item.split('"displayTitle":"')[1].split('"')[0]
-                        loc = (
-                            "https://holidayinnclub.com/explore-resorts/"
-                            + item.split(',"resortSlugs":"')[1].split('"')[0]
-                        )
-                        phone = item.split('{"phoneNumber":"')[1].split('"')[0]
-                        add = item.split('"address":"')[1].split("\\n")[0]
-                        city = item.split('"destination":{"displayTitle":"')[1].split(
-                            ","
-                        )[0]
-                        state = (
-                            item.split('"destination":{"displayTitle":"')[1]
-                            .split(",")[1]
-                            .split('"')[0]
-                            .strip()
-                        )
-                        zc = (
-                            item.split('"address":"')[1].split('"')[0].rsplit(" ", 1)[1]
-                        )
-                        lat = item.split('"latitude":')[1].split(",")[0]
-                        lng = item.split('"longitude":')[1].split("}")[0]
-                        store = "<MISSING>"
-                        if "Apple Mountain Resort" in name:
-                            city = "Clarkesville"
-                            state = "Georgia"
-                        if "Coming Soon" not in item:
-                            yield [
-                                website,
-                                loc,
-                                name,
-                                add,
-                                city,
-                                state,
-                                zc,
-                                country,
-                                store,
-                                phone,
-                                typ,
-                                lat,
-                                lng,
-                                hours,
-                            ]
+        url = f"https://holidayinnclub.com/api/resorts?page={x}"
+        data = session.get(url, headers=headers).json()
+
+        for location in data["items"]:
+            locator_domain = "holidayinnclubvacations.com"
+            location_type = "Hotel"
+            hours_of_operation = MISSING
+
+            location_name = get(location, "displayTitle")
+            store_number = get(location, "uid")
+
+            slug = get(location, "resortSlugs", None)
+            page_url = (
+                f"https://holidayinnclub.com/explore-resorts/{slug}"
+                if slug
+                else MISSING
+            )
+
+            contact = location["contactInformation"]
+            address = get(contact, "address")
+            if not address:
+                raise Exception("No address")
+
+            parsed_address = parse_address(
+                USA_Best_Parser(), re.sub("\n", ",", address)
+            )
+
+            street_address = parsed_address.street_address_1
+            city = parsed_address.city
+            state = parsed_address.state
+            postal = parsed_address.postcode
+            country = parsed_address.country
+
+            geolocation = get(location, "coordinates", {})
+            lat = get(geolocation, "latitude")
+            lng = get(geolocation, "longitude")
+
+            phone = MISSING
+            phones = get(contact, "phones")
+            if len(phones):
+                phone = phones[0]["phoneNumber"]
+
+            yield [
+                locator_domain,
+                page_url,
+                location_name,
+                street_address,
+                city,
+                state,
+                postal,
+                country,
+                store_number,
+                phone,
+                location_type,
+                lat,
+                lng,
+                hours_of_operation,
+            ]
 
 
 def scrape():

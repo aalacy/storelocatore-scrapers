@@ -9,10 +9,12 @@ from requests import exceptions  # noqa
 from urllib3 import exceptions as urlibException  # noqa
 from sglogging import sglog
 from sgrequests import SgRequests
+from tenacity import retry, stop_after_attempt
 
 logzilla = sglog.SgLogSetup().get_logger(logger_name="Radisson fam")
 
 
+@retry(stop=stop_after_attempt(3))
 def para(tup):
     k = {}
     headers = {
@@ -52,7 +54,7 @@ def para(tup):
                 if "404" in str(e):
                     k = {}
                     k["STATUS"] = False
-                if "ProxyError" in str(e):
+                elif "ProxyError" in str(e):
                     tup[2] += 1
                     if tup[2] < 15:
                         k = para(tup)

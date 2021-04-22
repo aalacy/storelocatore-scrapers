@@ -82,19 +82,35 @@ def fetch_data():
             endstr = (int)(hour["closes"].split(":")[0])
             if endstr > 12:
                 endstr = endstr - 12
-            hours = (
-                hours
-                + hour["dayOfWeek"]
-                + " "
-                + str(start)
-                + ":"
-                + hour["opens"].split(":")[1]
-                + " AM - "
-                + str(endstr)
-                + ":"
-                + hour["closes"].split(":")[1]
-                + " PM  "
-            )
+            try:
+                hours = (
+                    hours
+                    + hour["dayOfWeek"]
+                    + " "
+                    + str(start)
+                    + ":"
+                    + hour["opens"].split(":", 1)[1]
+                    + " AM - "
+                    + str(endstr)
+                    + ":"
+                    + hour["closes"].split(":", 1)[1]
+                    + " PM  "
+                )
+            except:
+                hours = (
+                    hours
+                    + ", ".join(hour["dayOfWeek"])
+                    + "="
+                    + str(start)
+                    + ":"
+                    + hour["opens"].split(":", 1)[1]
+                    + " AM - "
+                    + str(endstr)
+                    + ":"
+                    + hour["closes"].split(":", 1)[1]
+                    + " PM  "
+                )
+                break
         data.append(
             [
                 "https://www.judesbarbershop.com",

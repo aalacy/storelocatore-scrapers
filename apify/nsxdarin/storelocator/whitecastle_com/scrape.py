@@ -99,7 +99,7 @@ def fetch_data():
             lng = "<MISSING>"
         yield [
             website,
-            loc,
+            lurl,
             name,
             add,
             city,
