@@ -233,6 +233,16 @@ def fetch_data():
         hours = hours.replace("&nbsp;;", ";")
         if "Click Here for Covington Laboratory Services." in hours:
             hours = "<MISSING>"
+        if "Sleep Disorders:" in hours:
+            hours = hours.split("Sleep Disorders:")[1].strip()
+        if "; Sleep" in hours:
+            hours = hours.split("; Sleep")[0].strip()
+        if "Mon: 900-;" in hours and "Edgewood" in city:
+            hours = "Mon-Fri: 9:00 AM-5:00PM"
+        hours = hours.replace("CLOSED TEMPORARILY;", "").strip()
+        if "24/7" in hours and "X-ray (" in hours:
+            hours = "Sun-Sat: 24 Hours"
+        hours = hours.replace("Lab: ", "").replace("MR: ", "")
         if add != "":
             yield [
                 website,
