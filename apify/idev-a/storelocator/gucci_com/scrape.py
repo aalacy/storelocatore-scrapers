@@ -4,7 +4,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 import json
 from sglogging import SgLogSetup
-from sgscrape.sgpostal import parse_address_intl
 
 logger = SgLogSetup().get_logger("gucci")
 
@@ -48,24 +47,24 @@ def fetch_data():
                 street_address = ", ".join(
                     bs(aa["streetAddress"], "lxml").stripped_strings
                 )
-                addr = parse_address_intl(
-                    f'{street_address} {aa["addressLocality"]}, {aa["addressRegion"]} {aa["postalCode"]} {aa["addressCountry"]}'
-                )
                 phone = loc["telephone"].split("(x")[0]
                 if phone == "n/a":
                     phone = ""
                 logger.info(f"[{aa['addressCountry']}] {page_url}")
+                state = aa["addressRegion"].replace("Canada", "").strip()
+                if state.isdigit():
+                    state = ""
                 yield SgRecord(
                     page_url=page_url,
                     store_number=_["data-store-code"],
                     location_type=_["data-store-type"],
                     location_name=_["data-store-name"],
                     street_address=street_address,
-                    city=addr.city,
-                    state=addr.state,
+                    city=aa["addressLocality"],
+                    state=state,
                     latitude=_["data-latitude"],
                     longitude=_["data-longitude"],
-                    zip_postal=addr.postcode,
+                    zip_postal=aa["postalCode"],
                     country_code=aa["addressCountry"],
                     phone=phone,
                     locator_domain=locator_domain,

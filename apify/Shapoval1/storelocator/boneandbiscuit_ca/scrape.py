@@ -117,6 +117,10 @@ def fetch_data():
         if street_address == city == state == postal:
             hours_of_operation = "Coming Soon"
 
+        cms = "".join(tree.xpath('//h3[contains(text(), "Coming Soon")]/text()'))
+        if cms:
+            hours_of_operation = "Coming Soon"
+
         row = [
             locator_domain,
             page_url,

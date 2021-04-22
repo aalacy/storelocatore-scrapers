@@ -104,13 +104,8 @@ def fetch_data():
             )
             phone = phone[0] if phone else "<MISSING>"
         location_type = "<MISSING>"
-        geo = (
-            poi_html.xpath('.//a[contains(text(), "View Map")]/@href')[0]
-            .split("lat=")[-1]
-            .split("&long=")
-        )
-        latitude = geo[0]
-        longitude = geo[1]
+        latitude = "<MISSING>"
+        longitude = "<MISSING>"
         hours_of_operation = (
             loc_dom.xpath('//p[contains(text(), "Open:")]/text()')[-1]
             .replace("Open:", "")

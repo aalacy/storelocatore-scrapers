@@ -21,11 +21,20 @@ def fetch_data():
             location_name = _.select("h2.elementor-heading-title")[1].text
             block = list(_.select_one("div.elementor-text-editor p").stripped_strings)
             phone = _.find("a", href=re.compile(r"tel:")).text
-            hours = list(
-                _.select("div.elementor-text-editor")[-1]
-                .select_one("p")
-                .stripped_strings
-            )[1:]
+            hours = []
+            for hh in _.find(
+                "div", string=re.compile(r"POUR EMPORTER")
+            ).find_next_siblings("div"):
+                if not hh.text.strip():
+                    break
+
+                hours.append(hh.text.strip())
+            coord = (
+                _.find("a", href=re.compile(r"maps/"))["href"]
+                .split("/@")[1]
+                .split("z/data")[0]
+                .split(",")
+            )
             yield SgRecord(
                 page_url=base_url,
                 location_name=location_name,
@@ -35,6 +44,8 @@ def fetch_data():
                 zip_postal=" ".join(block[1].split(",")[1].strip().split(" ")[1:]),
                 country_code="CA",
                 phone=phone,
+                latitude=coord[0],
+                longitude=coord[1],
                 locator_domain=locator_domain,
                 hours_of_operation="; ".join(hours),
             )
