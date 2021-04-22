@@ -74,9 +74,8 @@ def fetch_data():
             store_number = "<MISSING>"
             phone = raw_data[2].split(":")[-1].strip()
             location_type = "<MISSING>"
-            geo = re.findall(r"LatLng\((.+?)\)", loc_response.text)[0].split(",")
-            latitude = geo[-1]
-            longitude = geo[0]
+            latitude = "<INACCESSIBLE>"
+            longitude = "<INACCESSIBLE>"
             hours_of_operation = "<MISSING>"
             if len(raw_data) > 3:
                 hours_of_operation = raw_data[-1].split("Operation: ")[-1]
