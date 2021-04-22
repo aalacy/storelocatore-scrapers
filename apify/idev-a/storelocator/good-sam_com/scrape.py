@@ -2,25 +2,14 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
+from bs4 import BeautifulSoup as bs
+from sgscrape.sgpostal import parse_address_intl
 
 logger = SgLogSetup().get_logger("good-sam")
 
 _headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.141 Safari/537.36",
 }
-
-
-def _valid(val):
-    return (
-        val.strip()
-        .replace("–", "-")
-        .encode("unicode-escape")
-        .decode("utf8")
-        .replace("\\xa0\\xa", " ")
-        .replace("\\xa0", " ")
-        .replace("\\xa", " ")
-        .replace("\\xae", "")
-    )
 
 
 def fetch_data():
@@ -30,33 +19,31 @@ def fetch_data():
         locations = session.get(base_url, headers=_headers).json()
         logger.info(f"{len(locations['results'])} found")
         for _ in locations["results"]:
-            sufix = "79929"
-            for key, val in _["raw"].items():
-                if key.startswith("fcity"):
-                    sufix = key.replace("fcity", "")
-            street_address = ""
-            if f"faddress{sufix}" in _["raw"]:
-                street_address = _["raw"][f"faddress{sufix}"]
-            elif f"fstreetaddress{sufix}" in _["raw"]:
-                street_address = _["raw"][f"fstreetaddress{sufix}"]
-            latitude = longitude = ""
-            if f"freflatitude{sufix}" in _["raw"]:
-                latitude = _["raw"][f"freflatitude{sufix}"]
-                longitude = _["raw"][f"freflongitude{sufix}"]
-            elif f"flatitude{sufix}" in _["raw"]:
-                latitude = _["raw"][f"flatitude{sufix}"]
-                longitude = _["raw"][f"flongitude{sufix}"]
-
+            page_url = _["clickUri"].replace(":443", "")
+            logger.info(page_url)
+            sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
+            address = list(
+                sp1.select_one("div.location-info__info-col p").stripped_strings
+            )
+            street_address = address[0].replace(",", "")
+            addr = parse_address_intl(" ".join(address))
+            coord = (
+                sp1.select_one("div.swiper-slide iframe")["src"]
+                .split("&q=")[1]
+                .split("&z")[0]
+                .split(",")
+            )
             yield SgRecord(
-                page_url=_["clickUri"],
+                page_url=page_url,
                 location_name=_["Title"],
                 street_address=street_address,
-                city=_["raw"][f"fcity{sufix}"][0],
-                state=_["raw"][f"fstate{sufix}"][0],
+                city=addr.city,
+                state=addr.state,
+                zip_postal=addr.postcode,
                 country_code="US",
-                latitude=latitude,
-                longitude=longitude,
-                phone=_["raw"][f"fphone{sufix}"],
+                latitude=coord[0],
+                longitude=coord[1],
+                phone=sp1.select_one("div.location-info__info-col h4").text,
                 locator_domain=locator_domain,
             )
 

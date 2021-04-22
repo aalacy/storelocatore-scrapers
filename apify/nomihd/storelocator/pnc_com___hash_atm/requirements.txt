@@ -3,3 +3,4 @@ sgscrape==0.0.23
 sgvalidator==0.0.70
 sgzip==0.4.0
 sglogging==0.0.4
+tenacity==7.0.0

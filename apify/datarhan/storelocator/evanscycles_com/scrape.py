@@ -81,7 +81,7 @@ def fetch_data():
         country_code = "<MISSING>"
         store_number = store_url.split("-")[-1]
         phone = loc_dom.xpath('//span[@itemprop="telephone"]/text()')
-        phone = phone[0].strip() if phone else "<MISSING>"
+        phone = phone[0].strip() if phone and phone[0].strip() else "<MISSING>"
         location_type = "<MISSING>"
         latitude = "<MISSING>"
         longitude = "<MISSING>"
