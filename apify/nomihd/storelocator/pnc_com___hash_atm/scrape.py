@@ -46,9 +46,7 @@ def fetch_records_for(coords):
     log.info(f"pulling records for coordinates: {lat,lng}")
     search_url = "https://apps.pnc.com/locator-api/locator/api/v2/location/?latitude={}&longitude={}&radius=100&radiusUnits=mi&branchesOpenNow=false"
 
-    stores_req = session.get(
-        search_url.format(lat, lng), headers=headers, timeout=15
-    )
+    stores_req = session.get(search_url.format(lat, lng), headers=headers, timeout=15)
     stores = json.loads(stores_req.text)["locations"]
     return stores
 
