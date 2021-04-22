@@ -24,7 +24,7 @@ def fetch_data():
         for link in links:
             if not link["value"]:
                 continue
-            page_url = base_url + link["value"]
+            page_url = locator_domain + link["value"]
             logger.info(page_url)
             r1 = session.get(page_url, headers=_headers)
             soup1 = bs(r1.text, "lxml")
@@ -62,7 +62,7 @@ def fetch_data():
                 phone=phone,
                 locator_domain=locator_domain,
                 location_type=location_type,
-                hours_of_operation="; ".join(hours),
+                hours_of_operation="; ".join(hours).split(": (")[0],
             )
 
 
