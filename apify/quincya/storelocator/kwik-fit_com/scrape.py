@@ -48,6 +48,7 @@ def fetch_data():
     base = BeautifulSoup(req.text, "lxml")
 
     data = []
+    found = []
 
     items = base.find(class_="lac_our-centres").find_all("a")
     locator_domain = "kwik-fit.com"
@@ -61,6 +62,8 @@ def fetch_data():
 
         location_name = base.h1.text.strip()
         street_address = raw_address[0].strip()
+        if "DISPLAYADDRESS" in street_address:
+            continue
         if street_address[-1:] == ",":
             street_address = street_address[:-1]
 
@@ -74,6 +77,9 @@ def fetch_data():
         store_number = "<MISSING>"
         location_type = "Open"
         phone = raw_address[2]
+        if phone in found:
+            continue
+        found.append(phone)
 
         if "temporarily closed" in base.text:
             location_type = "Temporarily Closed"
