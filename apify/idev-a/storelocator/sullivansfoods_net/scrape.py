@@ -34,7 +34,7 @@ def _hour(_):
 def fetch_data():
     locator_domain = "https://www.sullivansfoods.net"
     base_url = "https://www.sullivansfoods.net/my-store/store-locator"
-    with SgChrome(executable_path=r"/mnt/g/work/mia/chromedriver.exe") as driver:
+    with SgChrome() as driver:
         driver.get(base_url)
         exist = False
         while not exist:
