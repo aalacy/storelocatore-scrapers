@@ -10,6 +10,10 @@ _headers = {
 }
 
 
+def _valid(val):
+    return val.replace("&#39;", "'").strip()
+
+
 def fetch_data():
     locator_domain = "https://bergmanluggage.com/"
     base_url = "https://bergmanluggage.com/pages/all-store-locations"
@@ -29,7 +33,7 @@ def fetch_data():
             yield SgRecord(
                 page_url=base_url,
                 store_number=_["lid"],
-                location_name=_["t"].split("|")[-1],
+                location_name=_valid(_["t"].split("|")[-1]),
                 street_address=street_address,
                 city=addr.city,
                 state=addr.state,
