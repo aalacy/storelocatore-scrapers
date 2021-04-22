@@ -88,9 +88,13 @@ def fetch_data():
         location_type = "<MISSING>"
         latitude = "<MISSING>"
         longitude = "<MISSING>"
-        hoo = dom.xpath('//h2[contains(text(), "MON-")]/text()')
+        hoo = loc_dom.xpath('//h2[contains(text(), "MON")]/text()')
         hoo = [e.strip() for e in hoo if e.strip()]
-        hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
+        hours_of_operation = (
+            " ".join(hoo).split("92880 ")[-1].split(", CA ")[-1] if hoo else "<MISSING>"
+        )
+        if "DIAMOND 5095" in hours_of_operation:
+            hours_of_operation = "<MISSING>"
 
         item = [
             domain,
