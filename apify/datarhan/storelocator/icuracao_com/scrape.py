@@ -77,7 +77,7 @@ def fetch_data():
         location_type = "<MISSING>"
         latitude = poi["latitude"]
         longitude = poi["longitude"]
-        hours_of_operation = poi["phone"].split("Open")[-1].split("✔")[0]
+        hours_of_operation = poi["phone"].split(phone)[-1].split("✔")[0].strip()
 
         item = [
             domain,
