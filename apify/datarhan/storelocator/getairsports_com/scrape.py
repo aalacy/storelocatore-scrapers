@@ -58,6 +58,8 @@ def fetch_data():
         address_raw = loc_dom.xpath('//a[@class="local-address"]/text()')
         if not address_raw:
             continue
+        if dom.xpath('//h5[contains(text(), "Permanently Closed")]'):
+            continue
         address_raw = address_raw[0].split(", ")
         if len(address_raw) > 3:
             address_raw = [", ".join(address_raw[:2])] + address_raw[2:]
