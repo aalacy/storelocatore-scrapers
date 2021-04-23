@@ -1,13 +1,12 @@
 import csv
-import re
-import pdb
-import requests
+from sgrequests import SgRequests
 from lxml import etree
-import json
 import usaddress
+from sglogging import sglog
 
 
 base_url = "https://www.marshfieldclinic.org"
+log = sglog.SgLogSetup().get_logger(logger_name="marshfieldclinic_org")
 
 
 def validate(item):
@@ -100,7 +99,7 @@ def fetch_data():
     output_list = []
     url = "https://www.marshfieldclinic.org/locations"
     page_url = ""
-    session = requests.Session()
+    session = SgRequests()
     source = session.get(url).text
     response = etree.HTML(source)
     store_list = response.xpath('//ul[@class="blockLinks floatListCTALoc"]//a/@href')
@@ -108,7 +107,7 @@ def fetch_data():
         page_res = session.get(store_link)
 
         if base_url not in page_res.url:
-            print(
+            log.info(
                 f"URL REDIRECTED (to new domain and IGNORED)!!!\n {store_link} ---> {page_res.url}\n----------\n"
             )
             continue
@@ -116,7 +115,7 @@ def fetch_data():
         output = []
         output.append(base_url)  # url
         output.append(validate(store_link))  # page url
-        print(store_link)
+        log.info(store_link)
         name = get_value(store.xpath('.//span[@id="loctitle"]//text()'))
         if name != "<MISSING>":
 
@@ -131,9 +130,10 @@ def fetch_data():
             output.append(address["zipcode"])  # zipcode
             output.append("US")  # country code
             output.append("<MISSING>")  # store_number
-            output.append(
-                get_value(store.xpath('.//h2[@id="PhoneTextHeading"]/a/text()'))
-            )  # phone
+            phone = store.xpath('.//h2[@id="PhoneTextHeading"]/a/text()')
+            if len(phone) <= 0:
+                phone = store.xpath('.//h2[@id="PhoneTextHeading"]/text()')
+            output.append(get_value(phone).replace("Phone:", "").strip())  # phone
             output.append("Marshfield Clinic")  # location type
             output.append(
                 get_value(store.xpath('.//span[@id="latitude"]//text()'))
