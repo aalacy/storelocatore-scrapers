@@ -1,4 +1,5 @@
 import csv
+import json
 from lxml import etree
 from urllib.parse import urljoin
 
@@ -52,28 +53,49 @@ def fetch_data():
     for poi_html in all_locations:
         store_url = poi_html.xpath(".//exturl/text()")[0]
         store_url = urljoin("https://www.idealimage.com", store_url)
+
         loc_response = session.get(store_url)
         loc_dom = etree.HTML(loc_response.text)
+        poi = loc_dom.xpath('//script[contains(text(), "PostalAddress")]/text()')
+        if poi:
+            try:
+                poi = json.loads(poi[0])
+            except Exception:
+                poi = json.loads(poi[0].replace("\n", "")[:-1])
 
-        location_name = poi_html.xpath(".//location/text()")
-        location_name = location_name[0] if location_name else "<MISSING>"
-        addr = parse_address_intl(poi_html.xpath(".//address/text()")[0])
-        street_address = addr.street_address_1
-        if addr.street_address_2:
-            street_address += " " + addr.street_address_2
-        street_address = street_address if street_address else "<MISSING>"
-        city = addr.city
-        city = city if city else "<MISSING>"
-        state = addr.state
-        state = state if state else "<MISSING>"
-        zip_code = addr.postcode
-        zip_code = zip_code if zip_code else "<MISSING>"
-        country_code = addr.country
-        country_code = country_code if country_code else "<MISSING>"
+            location_name = poi["name"]
+            location_name = location_name if location_name else "<MISSING>"
+            street_address = poi["address"]["streetAddress"]
+            street_address = street_address if street_address else "<MISSING>"
+            city = poi["address"]["addressLocality"]
+            city = city if city else "<MISSING>"
+            state = poi["address"]["addressRegion"]
+            state = state if state else "<MISSING>"
+            zip_code = poi["address"].get("postalCode")
+            zip_code = zip_code if zip_code else "<MISSING>"
+            country_code = "<MISSING>"
+            phone = poi["telephone"]
+            phone = phone if phone else "<MISSING>"
+            location_type = poi["@type"]
+        else:
+            location_name = poi_html.xpath(".//location/text()")
+            location_name = location_name[0] if location_name else "<MISSING>"
+            addr = parse_address_intl(poi_html.xpath(".//address/text()")[0])
+            street_address = addr.street_address_1
+            if addr.street_address_2:
+                street_address += " " + addr.street_address_2
+            street_address = street_address if street_address else "<MISSING>"
+            city = addr.city
+            city = city if city else "<MISSING>"
+            state = addr.state
+            state = state if state else "<MISSING>"
+            zip_code = addr.postcode
+            zip_code = zip_code if zip_code else "<MISSING>"
+            country_code = "<MISSING>"
+            phone = loc_dom.xpath('//a[contains(@href, "tel")]/text()')
+            phone = phone[0] if phone else "<MISSING>"
+            location_type = "<MISSING>"
         store_number = poi_html.xpath(".//storeid/text()")[0]
-        phone = poi_html.xpath(".//telephone/text()")
-        phone = phone[0] if phone else "<MISSING>"
-        location_type = "<MISSING>"
         latitude = poi_html.xpath(".//latitude/text()")
         latitude = latitude[0] if latitude else "<MISSING>"
         longitude = poi_html.xpath(".//longitude/text()")
