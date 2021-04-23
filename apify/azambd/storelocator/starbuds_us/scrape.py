@@ -7,7 +7,8 @@ from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sglogging import sglog
 
-# F
+# FA
+
 MISSING = "<MISSING>"
 website = "https://www.starbuds.us"
 session = SgRequests().requests_retry_session()
@@ -93,9 +94,12 @@ def fetchStoreDetails(link):
         dayParts = fetchNodeText(parentDiv)
         for dayPart in dayParts[1:]:
             operations.append("".join(dayPart))
+
+    location_type = MISSING
     if len(operations) == 0:
         phone = MISSING
-
+    if phone == MISSING:
+        location_type = "coming soon"
     location = {}
 
     compProps = data["props"]["render"]["compProps"]
@@ -109,6 +113,7 @@ def fetchStoreDetails(link):
         "operations": ", ".join(operations),
         "location": location,
         "store_number": store_number,
+        "location_type": location_type,
     }
 
 
@@ -124,6 +129,7 @@ def fetchData():
         operations = details["operations"]
         store_number = details["store_number"]
         location = details["location"]
+        location_type = details["location_type"]
 
         locationParts = location["address"].split(", ")
         if " " not in locationParts[2]:
@@ -150,6 +156,7 @@ def fetchData():
             latitude=str(location["latitude"]),
             longitude=str(location["longitude"]),
             hours_of_operation=operations,
+            location_type=location_type,
         )
 
 
@@ -157,8 +164,8 @@ def scrape():
     log.info("Crawling Started")
     count = 0
     start = time.time()
+    results = fetchData()
     with SgWriter() as writer:
-        results = fetchData()
         for rec in results:
             writer.write_row(rec)
             count = count + 1

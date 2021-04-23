@@ -2,12 +2,15 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from bs4 import BeautifulSoup as bs
 from sgselenium import SgChrome
+from sgrequests import SgRequests
 import re
 from sglogging import SgLogSetup
 
 logger = SgLogSetup().get_logger("flemingssteakhouse")
 
 _headers = {
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+    "Accept-Language": "en-CA,en-US;q=0.7,en;q=0.3",
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.141 Safari/537.36",
 }
 
@@ -33,32 +36,37 @@ def fetch_data():
         soup = bs(driver.page_source, "lxml")
         links = soup.select("ul.locations li a")
         logger.info(f"{len(links)} locations found")
-        for link in links:
-            logger.info(link["href"])
-            driver.get(link["href"])
-            soup1 = bs(driver.page_source, "lxml")
-            block = soup1.find("p", string=re.compile(r"^Address", re.IGNORECASE))
-            _content = list(block.find_next_sibling("a").stripped_strings)
-            hour_block = soup1.find("p", string=re.compile(r"^Hours"))
-            hours = []
-            for hh in list(hour_block.find_next_sibling("p").stripped_strings):
-                if hh == "Curbside Pickup":
-                    break
-                hours.append(hh)
+        with SgRequests() as session:
+            cookies = []
+            for cookie in driver.get_cookies():
+                cookies.append(f"{cookie['name']}={cookie['value']}")
+            _headers["cookie"] = "; ".join(cookies)
+            for link in links:
+                logger.info(link["href"])
+                soup1 = bs(session.get(link["href"], headers=_headers).text, "lxml")
+                block = soup1.find("p", string=re.compile(r"^Address", re.IGNORECASE))
+                _content = list(block.find_next_sibling().stripped_strings)
+                hour_block = soup1.find("p", string=re.compile(r"^Hours"))
+                hours = []
+                for hh in list(hour_block.find_next_sibling("p").stripped_strings):
+                    if hh == "Curbside Pickup":
+                        break
+                    if "Outdoor Dining" in hh:
+                        continue
+                    hours.append(hh)
 
-            yield SgRecord(
-                store_number=soup1.select_one("a.make-favorite")["data-id"],
-                page_url=link["href"],
-                location_name=soup1.h1.text.strip(),
-                street_address=_content[0],
-                city=_content[1].split(",")[0].strip(),
-                state=_content[1].split(",")[1].strip().split(" ")[0].strip(),
-                zip_postal=_content[1].split(",")[1].strip().split(" ")[-1].strip(),
-                country_code="US",
-                phone=_content[-1],
-                locator_domain=locator_domain,
-                hours_of_operation=_valid("; ".join(hours[2:])),
-            )
+                yield SgRecord(
+                    page_url=link["href"],
+                    location_name=soup1.h1.text.strip().replace("’", "'"),
+                    street_address=_content[0],
+                    city=_content[1].split(",")[0].strip(),
+                    state=_content[1].split(",")[1].strip().split(" ")[0].strip(),
+                    zip_postal=_content[1].split(",")[1].strip().split(" ")[-1].strip(),
+                    country_code="US",
+                    phone=_content[-1],
+                    locator_domain=locator_domain,
+                    hours_of_operation=_valid("; ".join(hours[1:])),
+                )
 
 
 if __name__ == "__main__":

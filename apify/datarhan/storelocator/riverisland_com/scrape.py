@@ -50,6 +50,8 @@ def fetch_data():
 
     for store_url in all_locations:
         loc_response = session.get(store_url)
+        if loc_response.status_code != 200:
+            continue
         loc_dom = etree.HTML(loc_response.text)
         poi = loc_dom.xpath('//div[@id="storeLocatorJSONTemplate"]/script/text()')
         poi = json.loads(poi[0])
