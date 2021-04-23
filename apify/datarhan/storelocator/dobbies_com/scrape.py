@@ -1,9 +1,21 @@
 import csv
 from lxml import etree
+from time import sleep
 from urllib.parse import urljoin
 
 from sgrequests import SgRequests
 from sgscrape.sgpostal import parse_address_intl
+from sgselenium.sgselenium import webdriver
+
+profile = webdriver.FirefoxProfile()
+profile.set_preference("geo.prompt.testing", True)
+profile.set_preference("geo.prompt.testing.allow", True)
+profile.set_preference(
+    "geo.wifi.uri",
+    'data:application/json,{"location": {"lat": 40.7590, "lng": -73.9845}, "accuracy": 27000.0}',
+)
+options = webdriver.FirefoxOptions()
+options.headless = True
 
 
 def write_output(data):
@@ -41,15 +53,23 @@ def fetch_data():
     session = SgRequests()
 
     items = []
+    scraped_items = []
 
     DOMAIN = "dobbies.com"
     start_url = "https://www.dobbies.com/store-locator"
 
-    response = session.get(start_url)
-    dom = etree.HTML(response.text)
+    with webdriver.Firefox(options=options, firefox_profile=profile) as driver:
+        driver.get(start_url)
+        sleep(2)
+        driver.find_element_by_xpath(
+            '//div[contains(text(), "See all stores")]'
+        ).click()
+        sleep(15)
+        dom = etree.HTML(driver.page_source)
 
     all_locations = dom.xpath('//div[h2[contains(text(), "Store List")]]//a/@href')
-    for url in all_locations:
+    all_locations += dom.xpath('//a[contains(text(), "See all details")]/@href')
+    for url in list(set(all_locations)):
         store_url = urljoin(start_url, url)
         loc_response = session.get(store_url)
         loc_dom = etree.HTML(loc_response.text)
@@ -110,8 +130,10 @@ def fetch_data():
             longitude,
             hours_of_operation,
         ]
-
-        items.append(item)
+        check = f"{location_name} {street_address}"
+        if check not in scraped_items:
+            scraped_items.append(check)
+            items.append(item)
 
     return items
 
