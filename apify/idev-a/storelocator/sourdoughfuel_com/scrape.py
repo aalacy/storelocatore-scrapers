@@ -39,7 +39,7 @@ def fetch_data():
                 coord = links[x]["href"].split("/@")[1].split("/data")[0].split(",")
             except:
                 coord = links[x]["href"].split("ll=")[1].split("&")[0].split(",")
-            hours = "24 hour Gas & Diesel" if "24" in block[2] else ""
+            hours = "24 hour" if "24" in block[2] else ""
             addr = parse_address_intl(block[1].split(":")[0])
             street_address = addr.street_address_1
             if addr.street_address_2:
