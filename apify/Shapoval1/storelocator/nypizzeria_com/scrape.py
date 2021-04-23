@@ -117,8 +117,9 @@ def fetch_data():
             time = d.get(f"hours_{day}")
             _tmp.append(f"{day}: {time}")
 
-        hours_of_operation = ";".join(_tmp) or "<MISSING>"
-
+        hours_of_operation = ";".join(_tmp).replace("None", "Closed") or "<MISSING>"
+        if hours_of_operation.count("Closed") == 7:
+            hours_of_operation = "<MISSING>"
         row = [
             locator_domain,
             page_url,

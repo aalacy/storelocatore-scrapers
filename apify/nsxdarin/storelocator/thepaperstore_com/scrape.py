@@ -96,6 +96,7 @@ def fetch_data():
             if '"province":"' in line2:
                 state = line2.split('"province":"')[2].split('"')[0]
         if "435 Boston" not in add:
+            add = add.replace(", null", "")
             yield [
                 website,
                 loc,
