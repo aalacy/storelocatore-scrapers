@@ -83,6 +83,17 @@ def fetch_data():
                 filter(None, [a.strip() for a in hours_of_operation])
             )
             hours_of_operation = " ".join(hours_of_operation) or "<MISSING>"
+        hours_of_operation = (
+            hours_of_operation.replace("Hours may vary Please call for hours", "")
+            .replace(
+                "Closed New Years Day, Easter Sunday, Thanksgiving Day, Christmas.", ""
+            )
+            .replace(
+                "For Curbside Orders please call during normal business hours to schedule your Pickup",
+                "",
+            )
+            .strip()
+        )
 
         row = [
             locator_domain,
