@@ -98,7 +98,6 @@ def write_output(data):
 def fetch_data():
     output_list = []
     url = "https://www.marshfieldclinic.org/locations"
-    page_url = ""
     session = SgRequests()
     source = session.get(url).text
     response = etree.HTML(source)
