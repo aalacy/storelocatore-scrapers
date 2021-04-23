@@ -67,8 +67,11 @@ def fetch_data():
                     lurl = (
                         "https://hrblock.com" + line3.split('href="')[1].split('"')[0]
                     )
+                    if "www.blockadvisors.com" in lurl:
+                        lurl = lurl.replace("https://hrblock.com", "")
                     if lurl not in alllocs:
                         alllocs.append(lurl)
+                        logger.info("Pulling Location %s..." % lurl)
                         r4 = session.get(lurl, headers=headers)
                         lines = r4.iter_lines(decode_unicode=True)
                         website = "hrblock.com"
