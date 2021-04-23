@@ -22,8 +22,8 @@ def fetchAllContactLinks():
     headerLis = body.xpath('//li[@class="header__link--wrapper"]')
 
     for headerLi in headerLis:
-        isContactUs = len(headerLi.xpath('.//a[@href="/contact-us/"]')) > 0
-        if isContactUs == False:
+        isContactUs = headerLi.xpath('.//a[@href="/contact-us/"]')
+        if len(isContactUs) != 1:
             continue
         return headerLi.xpath('.//a[@class="card__link"]/@href')
 
