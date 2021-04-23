@@ -5,7 +5,6 @@ from lxml import html
 import re
 from tenacity import retry
 from tenacity import stop_after_attempt
-import time
 
 logger = SgLogSetup().get_logger(logger_name="autozone_com")
 locator_domain_url = " https://www.autozone.com"
@@ -123,7 +122,7 @@ def fetch_data():
     logger.info(f"Store URLs count: {len(all_store_urls)}")
     for idx, url in enumerate(all_store_urls):
         r = get_result(url, headers=headers)
-        time.sleep(5)
+
         data_raw = html.fromstring(r.text, "lxml")
         logger.info(f"Pulling the Data from: {idx} <<:>> {url}")
         locator_domain = locator_domain_url
