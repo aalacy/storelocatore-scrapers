@@ -88,7 +88,7 @@ def fetch_data():
             .replace("Hours:", "")
             .strip()
         )
-        
+
         latitude = "<MISSING>"
         longitude = "<MISSING>"
         for mp in map_data:
