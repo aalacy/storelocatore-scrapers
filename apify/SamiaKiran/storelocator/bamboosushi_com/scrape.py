@@ -99,8 +99,6 @@ def fetch_data():
             .replace("|", " ")
             .strip("-")
         )
-
-        # Hours of operation
         hours_of_operation = hoo if hoo else MISSING
         log.info(f"[Hours of Operation: {hours_of_operation}]")
 
