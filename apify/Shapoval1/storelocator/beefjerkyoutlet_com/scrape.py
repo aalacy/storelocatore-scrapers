@@ -94,6 +94,11 @@ def fetch_data():
             )
             .strip()
         )
+        if hours_of_operation.find("Now Open") != -1:
+            hours_of_operation = "<MISSING>"
+        hours_of_operation = hours_of_operation.replace("OPEN DAILY!", "").strip()
+        if hours_of_operation.find("Temporarily Closed") != -1:
+            hours_of_operation = "Temporarily Closed"
 
         row = [
             locator_domain,
