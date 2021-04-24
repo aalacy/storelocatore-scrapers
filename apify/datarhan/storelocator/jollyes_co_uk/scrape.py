@@ -1,7 +1,5 @@
-import re
 import csv
 import json
-from lxml import etree
 
 from sgrequests import SgRequests
 
@@ -43,51 +41,43 @@ def fetch_data():
     items = []
 
     DOMAIN = "jollyes.co.uk"
-    start_url = "https://www.jollyes.co.uk/locator/"
+    start_url = "https://api.jollyes.co.uk/api/ext/aureatelabs/storeList"
 
     response = session.get(start_url)
-    data = re.findall("stores = (.+?);", response.text)[0]
-    data = json.loads(data)
+    data = json.loads(response.text)
 
-    for poi in data["items"]:
-        store_url = poi["store_popup_url"]
+    for poi in data["result"]:
+        store_url = "https://www.jollyes.co.uk/store/{}".format(poi["uid"])
         location_name = poi["name"]
         location_name = location_name if location_name else "<MISSING>"
-        street_address = poi["address"]
-        if poi["address1"]:
-            if poi["address1"] not in street_address:
-                street_address += ", " + poi["address1"]
-        if poi["address2"]:
-            if poi["address2"] not in street_address:
-                street_address += ", " + poi["address2"]
+        street_address = poi["streetAddress"]
         city = poi["city"]
         city = city if city else "<MISSING>"
         state = poi["county"]
         state = state if state else "<MISSING>"
-        zip_code = poi["zipcode"]
+        zip_code = poi["postCode"]
         zip_code = zip_code if zip_code else "<MISSING>"
-        country_code = poi["country_id"]
-        country_code = country_code if country_code else "<MISSING>"
-        store_number = poi["shop_id"]
-        store_number = store_number if store_number else "<MISSING>"
-        phone = poi["phone"]
+        country_code = "<MISSING>"
+        store_number = "<MISSING>"
+        phone = poi["phoneNumber"]
         phone = phone if phone else "<MISSING>"
         location_type = "<MISSING>"
-        latitude = poi["lat"]
+        latitude = poi["map"]["latitude"]
         latitude = latitude if latitude else "<MISSING>"
-        longitude = poi["long"]
+        longitude = poi["map"]["longitude"]
         longitude = longitude if longitude else "<MISSING>"
-
-        loc_response = session.get(store_url)
-        loc_dom = etree.HTML(loc_response.text)
-        hours_of_operation = loc_dom.xpath(
-            '//div[@class="addr3"]//div[@class="arrange-margin"]/p//text()'
-        )[:10]
-        hours_of_operation = (
-            ", ".join(hours_of_operation).split(", CHRISTMAS")[0].replace(": ,", ":")
-            if hours_of_operation
-            else "<MISSING>"
-        )
+        hoo = []
+        for key, value in poi.items():
+            if "Opening" in key:
+                day = key.replace("Opening", "")
+                if value:
+                    opens = value[:2] + ":" + value[2:]
+                    closes = poi["{}Closing".format(day)]
+                    closes = closes[:2] + ":" + closes[2:]
+                    hoo.append(f"{day} {opens} - {closes}")
+                else:
+                    hoo.append(f"{day} closed")
+        hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
 
         item = [
             DOMAIN,

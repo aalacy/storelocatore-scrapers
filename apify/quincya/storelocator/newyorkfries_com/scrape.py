@@ -89,7 +89,7 @@ def fetch_data():
         if not zip_code:
             zip_code = "<MISSING>"
 
-        street_address = street_address.split(", Cambridge")
+        street_address = street_address.split(", Cambridge")[0].strip()
         if len(street_address) < 5:
             street_address = "<MISSING>"
 

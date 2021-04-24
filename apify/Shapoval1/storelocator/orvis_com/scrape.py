@@ -64,11 +64,15 @@ def fetch_data():
                 f"{a.street_address_1} {a.street_address_2}".replace("None", "").strip()
                 or "<MISSING>"
             )
+            if street_address.find("#3 Fm 2673") != -1:
+                street_address = "1642 FM 2673 #3"
+            if location_name.find("San Antonio Orvis Retail Store") != -1:
+                street_address = "Park North Shopping Center"
             city = a.city or "<MISSING>"
             state = a.state or "<MISSING>"
             country_code = "US"
             postal = a.postcode or "<MISSING>"
-            if postal == "0":
+            if postal == "00000":
                 postal = "<MISSING>"
             store_number = "<MISSING>"
             latitude = "<MISSING>"

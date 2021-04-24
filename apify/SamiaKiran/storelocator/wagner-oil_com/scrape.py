@@ -28,8 +28,20 @@ def fetch_data():
             location_name = loc.find("h2").find("span").text
             log.info(location_name)
             temp_list = loc.findAll("div", {"class": "_1Z_nJ"})
+            try:
+                latitude, longitude = (
+                    temp_list[1]
+                    .find("a")["href"]
+                    .split("[")[3]
+                    .split("]]", 1)[0]
+                    .strip()
+                    .split(",")
+                )
+            except:
+                latitude = "<MISSING>"
+                longitude = "<MISSING>"
             temp_list = temp_list[1].findAll("p")
-            street_address = temp_list[1].find("span").text
+            street_address = temp_list[0].find("span").text
             phone = temp_list[1].find("span").text
             address = location_name.split(",")
             city = address[0]
@@ -47,8 +59,8 @@ def fetch_data():
                 store_number="<MISSING>",
                 phone=phone.strip(),
                 location_type="<MISSING>",
-                latitude="<MISSING>",
-                longitude="<MISSING>",
+                latitude=latitude,
+                longitude=longitude,
                 hours_of_operation="<MISSING>",
             )
 

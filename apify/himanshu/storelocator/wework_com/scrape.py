@@ -65,9 +65,10 @@ def fetch_data():
                 store_url = urljoin(start_url, url)
                 location_res = session.get(store_url, headers=headers)
                 loc_dom = etree.HTML(location_res.text)
-                data = loc_dom.xpath('//script[@type="application/ld+json"]/text()')[
-                    0
-                ].split("/*")[0]
+                data = loc_dom.xpath('//script[@type="application/ld+json"]/text()')
+                if not data:
+                    continue
+                data = data[0].split("/*")[0]
                 poi = json.loads(data)
                 poi = [e for e in poi["@graph"] if e["@type"] == "LocalBusiness"]
                 if not poi:
@@ -82,11 +83,13 @@ def fetch_data():
                 street_address = street_address if street_address else "<MISSING>"
                 city = poi["address"]["addressLocality"]
                 city = city if city else "<MISSING>"
+                if "801" in street_address:
+                    street_address = location_name
                 state = addr.state
                 state = state if state else "<MISSING>"
                 zip_code = addr.postcode
                 zip_code = zip_code if zip_code else "<MISSING>"
-                country_code = addr.postcode
+                country_code = addr.country
                 country_code = country_code if country_code else "<MISSING>"
                 store_number = "<MISSING>"
                 phone = poi["telephone"]

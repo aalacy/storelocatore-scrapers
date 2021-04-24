@@ -55,7 +55,7 @@ def fetch_data():
         location_name = poi_html.xpath('.//div[@class="title"]/text()')
         location_name = location_name[0] if location_name else "<MISSING>"
         street_address = poi_html.xpath('.//span[@class="street-address"]/text()')
-        street_address = street_address[0] if street_address else "<MISSING>"
+        street_address = "".join(street_address) if street_address else "<MISSING>"
         city = poi_html.xpath('.//span[@class="locality"]/text()')
         city = city[0] if city else "<MISSING>"
         state = poi_html.xpath('.//abbr[@class="region"]/text()')
@@ -77,6 +77,8 @@ def fetch_data():
         hoo = hoo = poi_html.xpath('.//div[span[@class="week-day"]]//text()')
         hoo = [e.strip() for e in hoo if e.strip()]
         hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
+        if hours_of_operation == ": -":
+            hours_of_operation = "<MISSING>"
 
         item = [
             domain,
