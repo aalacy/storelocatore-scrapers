@@ -70,7 +70,7 @@ def fetch_data():
         r_loc = session.get(base_url + a["href"], headers=headers)
         soup_loc = BeautifulSoup(r_loc.text, "lxml")
 
-        div = soup_loc.find("div", class_="et_pb_row et_pb_row_12").find(
+        div = soup_loc.find("div", class_="et_pb_row et_pb_row_13").find(
             class_="et_pb_text_inner"
         )
 

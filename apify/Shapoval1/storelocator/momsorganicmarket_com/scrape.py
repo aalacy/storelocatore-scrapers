@@ -81,6 +81,10 @@ def fetch_data():
                 b.xpath(
                     './/div[contains(@class,"et_pb_blurb_description")]/p[2]/text()'
                 )
+            ) or "".join(
+                b.xpath(
+                    './/div[contains(@class,"et_pb_blurb_description")]/p[3]/text()'
+                )
             )
             a = usaddress.tag(ad, tag_mapping=tag)[0]
             street_address = f"{a.get('address1')} {a.get('address2')}".replace(

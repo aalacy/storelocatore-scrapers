@@ -56,6 +56,27 @@ def fetch_data():
         hours_of_operation = "<MISSING>"
         phone = ad.get("phoneNumber")
         postal = ad.get("postCode")
+        if location_name == "Center Parcs Sherwood Forest":
+            for j in js["includes"]["Entry"]:
+                aaa = j.get("fields").get("name")
+                tmp = [
+                    "monday",
+                    "tuesday",
+                    "wednesday",
+                    "thursday",
+                    "friday",
+                    "saturday",
+                    "sunday",
+                ]
+                _tmp = []
+                if aaa == "Center Parcs Sherwood":
+                    for i in tmp:
+                        days = i
+                        Open = j.get("fields").get(f"{i}Open")
+                        Close = j.get("fields").get(f"{i}Close")
+                        line = f"{days} {Open} - {Close}"
+                        _tmp.append(line)
+                    hours_of_operation = " ; ".join(_tmp)
         row = [
             locator_domain,
             page_url,

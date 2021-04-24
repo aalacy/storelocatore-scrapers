@@ -119,9 +119,10 @@ def fetch_data():
             HOO = HOO.replace(",", ":").strip()
             if HOO == "":
                 HOO = "<MISSING>"
-            coords = soup.findAll("script")
-            if len(coords) == 35:
-                coord = str(coords[3])
+            coords = soup.find("script", {"type": "application/json"})
+            coord = str(coords)
+
+            if coord.find("coordinates") != -1:
                 coord = coord.split('"coordinates":[')[1].split("]}")[0]
                 lng = coord.split(",")[0].strip()
                 lat = coord.split(",")[1].strip()

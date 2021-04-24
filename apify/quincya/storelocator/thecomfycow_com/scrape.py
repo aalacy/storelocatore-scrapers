@@ -51,7 +51,7 @@ def fetch_data():
     base = BeautifulSoup(req.text, "lxml")
 
     maps = base.findAll("div", attrs={"class": "map-marker"})
-    items = base.find_all("p")[:-1]
+    items = base.find_all(class_="col span_12 left")[1].find_all("p")[:-1]
     data = []
     found_poi = []
 
@@ -61,14 +61,16 @@ def fetch_data():
             location_name = item.find("span").text.strip()
         except:
             continue
+        if "coming soon" in location_name.lower():
+            continue
         if location_name in found_poi:
             continue
 
         found_poi.append(location_name)
         logger.info(location_name)
 
-        if location_name == "Cardinal Towne (CLOSED TEMPORARILY)":
-            item = items[i + 2]
+        if "cardinal towne" in location_name.lower():
+            item = items[i + 1]
 
         raw_data = (
             str(item)
