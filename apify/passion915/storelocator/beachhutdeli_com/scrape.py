@@ -3,8 +3,6 @@ from sglogging import SgLogSetup
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from lxml import html
-import csv
-import json
 
 # Location URL
 url_locations = "https://beachhutdeli.com/locations/"
