@@ -38,6 +38,8 @@ def fetch_data():
         locations = soup.select(".each-store-info-box")
         logger.info(f"{len(locations)} found")
         for _ in locations:
+            if _.h2.text.strip() == "Corporate Office":
+                continue
             _id = _.select_one("a.click-address")["data-index"]
             coord = _coord(res, _id)
             addr = [aa.strip() for aa in _addr(res, _id)]
