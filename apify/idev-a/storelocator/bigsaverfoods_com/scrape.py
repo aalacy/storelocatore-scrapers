@@ -14,7 +14,18 @@ _headers = {
 
 def _coord(res, _id):
     return dirtyjson.loads(
-        res.split(f"marketLoc[{_id}] =")[1].split("marketLoc")[0].strip()[:-1]
+        res.split(f"marketLoc[{_id}] =")[1].split("//")[0].strip()[:-1]
+    )
+
+
+def _addr(res, _id):
+    return (
+        res.split(f"marketLoc[{_id}] =")[1]
+        .split("marketLoc")[0]
+        .split("marketInfo")[0]
+        .split("//")[1]
+        .strip()
+        .split(",")
     )
 
 
@@ -27,8 +38,9 @@ def fetch_data():
         locations = soup.select(".each-store-info-box")
         logger.info(f"{len(locations)} found")
         for _ in locations:
-            coord = _coord(res, _.select_one("a.click-address")["data-index"])
-            addr = _.select_one("a.click-address").text.strip().split(",")
+            _id = _.select_one("a.click-address")["data-index"]
+            coord = _coord(res, _id)
+            addr = [aa.strip() for aa in _addr(res, _id)]
             _hr = _.select("p")[-1].text.strip()
             hours_of_operation = ""
             if "Store Hours" in _hr:
@@ -37,8 +49,9 @@ def fetch_data():
                 page_url=base_url,
                 location_name=_.h2.text.strip(),
                 street_address=addr[0],
-                city=" ".join(addr[1].split(" ")[:-1]),
-                zip_postal=addr[1].split(" ")[-1],
+                city=addr[1],
+                state=addr[2].split(" ")[0],
+                zip_postal=addr[2].split(" ")[-1],
                 country_code="US",
                 phone=_.select("p")[1].text.strip().split(":")[-1],
                 locator_domain=locator_domain,
