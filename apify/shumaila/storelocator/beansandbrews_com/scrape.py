@@ -109,6 +109,12 @@ def fetch_data():
             street = street.replace(city, "").strip()
         if "Utah" in state:
             state = "UT"
+        if "East" in city or "West" in city or "North" in city or "South" in city:
+            if city.split(" ", 1)[0] in street.split(" ")[-1]:
+                pass
+            else:
+                street = street + " " + city.split(" ", 1)[0]
+            city = city.split(" ", 1)[1]
         data.append(
             [
                 "https://www.beansandbrews.com/",
