@@ -218,7 +218,6 @@ def fetch_data():
         logger.info(f"[City: {city}]")
 
         # State
-        # sp = ra_scp[2].strip().split(" ")
         state = ra_scp[2].strip()
         state = state if city else MISSING
         logger.info(f"[State: {state}]")
@@ -237,7 +236,6 @@ def fetch_data():
         logger.info(f"[Store Number: {store_number}]")
 
         # Phone
-        # phone = (soup.find("div", {"class": "location-phone"}).text).strip()
         phone = "".join(pd.xpath('.//a[contains(@href, "tel:")]//text()')).strip()
         phone = phone if phone else MISSING
 
