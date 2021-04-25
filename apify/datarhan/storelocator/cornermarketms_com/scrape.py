@@ -1,3 +1,4 @@
+import re
 import csv
 from lxml import etree
 
@@ -36,50 +37,48 @@ def write_output(data):
 
 def fetch_data():
     # Your scraper here
-    session = SgRequests().requests_retry_session(retries=0, backoff_factor=0.3)
+    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
 
     items = []
 
-    DOMAIN = "getairsports.com"
-    start_url = "https://getairsports.com/park-locator/"
-
-    response = session.get(start_url)
+    start_url = "https://www.cornermarketms.com/locations/"
+    domain = re.findall(r"://(.+?)/", start_url)[0].replace("www.", "")
+    hdr = {
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
+    }
+    response = session.get(start_url, headers=hdr)
     dom = etree.HTML(response.text)
-    all_locations = dom.xpath('//div[@class="states defaults"]//a/@href')
-    all_locations += dom.xpath('//div[@class="statess"]//a/@href')
 
-    for store_url in all_locations:
-        loc_response = session.get(store_url)
-        loc_dom = etree.HTML(loc_response.text)
-        if "getairsports.com" not in store_url:
-            continue
-        location_name = loc_dom.xpath('//meta[@property="og:site_name"]/@content')
+    all_locations = dom.xpath("//div[@data-store-filter]")
+    for poi_html in all_locations:
+        store_url = start_url
+        location_name = poi_html.xpath('.//a[@class="store-name"]/text()')
         location_name = location_name[0] if location_name else "<MISSING>"
-        address_raw = loc_dom.xpath('//a[@class="local-address"]/text()')
-        if not address_raw:
-            continue
-        if loc_dom.xpath('//h5[contains(text(), "ly Closed")]'):
-            continue
-        address_raw = address_raw[0].split(", ")
-        if len(address_raw) > 3:
-            address_raw = [", ".join(address_raw[:2])] + address_raw[2:]
-        street_address = address_raw[0]
-        city = address_raw[1]
-        state = address_raw[2].split()[0]
-        if len(state) > 2:
-            continue
-        zip_code = " ".join(address_raw[2].split()[1:])
+        raw_address = poi_html.xpath('.//div[@class="store-address"]/text()')
+        street_address = raw_address[0]
+        city = raw_address[-1].split(", ")[0]
+        state = raw_address[-1].split(", ")[-1].split()[0]
+        zip_code = raw_address[-1].split(", ")[-1].split()[-1]
+        if len(zip_code) > 5:
+            zip_code = "<MISSING>"
         country_code = "<MISSING>"
         store_number = "<MISSING>"
-        phone = loc_dom.xpath('//a[@class="local-number"]/text()')
+        phone = poi_html.xpath('.//a[@class="store-phone"]/text()')
         phone = phone[0] if phone else "<MISSING>"
         location_type = "<MISSING>"
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
-        hours_of_operation = "<MISSING>"
+        geo = (
+            poi_html.xpath('.//a[span[@class="store-link-icon"]]/@href')[-1]
+            .split("/")[-1]
+            .split(",")
+        )
+        latitude = geo[0]
+        longitude = geo[1]
+        hoo = poi_html.xpath('.//div[@class="store-list-row-item-col02"]/text()')
+        hoo = [e.strip() for e in hoo if e.strip()]
+        hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
 
         item = [
-            DOMAIN,
+            domain,
             store_url,
             location_name,
             street_address,

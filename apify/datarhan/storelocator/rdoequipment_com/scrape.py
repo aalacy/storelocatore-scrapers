@@ -1,6 +1,5 @@
 import csv
 import json
-from lxml import etree
 
 from sgrequests import SgRequests
 
@@ -42,52 +41,55 @@ def fetch_data():
     items = []
 
     DOMAIN = "rdoequipment.com"
-    start_url = "https://www.rdoequipment.com/api/locations?industryId=&lat=40.75368539999999&lng=-73.9991637&locationType=&radius=5000"
+    start_url = "https://www.rdoequipment.com/rdo-api/branches/query"
     headers = {
+        "content-type": "application/json",
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.193 Safari/537.36",
     }
-
-    response = session.get(start_url, headers=headers)
+    frm = '{"equipmentTypes":[],"pageNumber":"1","pageSize":"20","searchRadius":50000,"Latitude":40.75368539999999,"Longitude":-73.9991637}'
+    response = session.post(start_url, headers=headers, data=frm)
     data = json.loads(response.text)
 
-    for poi in data:
-        store_url = (
-            "https://www.rdoequipment.com/more/locations/location" + poi["detailURL"]
-        )
-        location_name = poi["name"]
+    for poi in data["Items"]:
+        store_url = poi["Url"]
+        location_name = poi["BranchName"]
         location_name = location_name if location_name else "<MISSING>"
-        street_address = poi["address"]["street"]
+        street_address = poi["Address"]["Street"]
         street_address = street_address if street_address else "<MISSING>"
-        city = poi["address"]["city"].replace(",", "").strip()
+        city = poi["Address"]["City"]
         city = city if city else "<MISSING>"
-        state = poi["address"]["stateCode"]
+        state = poi["Address"]["StateCode"]
         state = state if state else "<MISSING>"
-        zip_code = poi["address"]["zip"]
+        zip_code = poi["Address"]["Zip"]
         zip_code = zip_code if zip_code else "<MISSING>"
-        country_code = poi["address"]["countryCode"]
+        country_code = poi["Address"]["CountryCode"]
         country_code = country_code if country_code else "<MISSING>"
-        store_number = "<MISSING>"
-        phone = poi["phoneNumber"]
+        store_number = poi["BranchId"]
+        phone = json.loads(poi["PhoneNumbers"])[0]["value"]
         phone = phone if phone else "<MISSING>"
-        location_type = [elem["text"] for elem in poi["locationTypes"]]
-        location_type = ", ".join(location_type) if location_type else "<MISSING>"
-        latitude = poi["address"]["latitude"]
+        location_type = "<MISSING>"
+        latitude = poi["Address"]["Latitude"]
         latitude = latitude if latitude else "<MISSING>"
-        longitude = poi["address"]["longitude"]
+        longitude = poi["Address"]["Longitude"]
         longitude = longitude if longitude else "<MISSING>"
-
-        loc_response = session.get(store_url)
-        loc_dom = etree.HTML(loc_response.text)
-
-        hours_of_operation = loc_dom.xpath('//table[@id="allweekhours_sales"]//text()')
-        hours_of_operation = [
-            elem.strip() for elem in hours_of_operation if elem.strip()
-        ]
-        hours_of_operation = (
-            " ".join(hours_of_operation).replace("Days Hours ", "")
-            if hours_of_operation
-            else "<MISSING>"
-        )
+        hoo_data = json.loads(poi["Hours"])
+        hoo_data = hoo_data["hourTypes"][0]["schedule"]
+        hoo = []
+        days_dict = {
+            1: "monday",
+            2: "tuesday",
+            3: "wednesday",
+            4: "thursday",
+            5: "friday",
+            6: "saturday",
+            7: "sunday",
+        }
+        for elem in hoo_data:
+            day = days_dict[elem["weekday"]]
+            opens = elem["from"]
+            closes = elem["to"]
+            hoo.append(f"{day} {opens} - {closes}")
+        hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
 
         item = [
             DOMAIN,

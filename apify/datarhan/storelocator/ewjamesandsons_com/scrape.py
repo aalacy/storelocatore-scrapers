@@ -1,7 +1,7 @@
 import re
 import csv
-import json
 from lxml import etree
+from urllib.parse import urljoin
 
 from sgrequests import SgRequests
 
@@ -42,41 +42,42 @@ def fetch_data():
 
     items = []
 
-    start_url = "https://www.warehouseone.com/on/demandware.store/Sites-warehouseone-Site/default/Stores-GetNearestStores?latitude=48.954408&longitude=-54.6103488&countryCode=CA&distanceUnit=km&maxdistance=50000"
-    domain = re.findall("://(.+?)/", start_url)[0].replace("www.", "")
+    start_url = "https://ewjamesandsons.com/"
+    domain = re.findall(r"://(.+?)/", start_url)[0].replace("www.", "")
     hdr = {
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
     }
     response = session.get(start_url, headers=hdr)
-    data = json.loads(response.text)
+    dom = etree.HTML(response.text)
 
-    for poi in data["stores"].values():
-        store_url = "https://www.warehouseone.com/stores"
-        location_name = poi["displayName"]
-        location_name = location_name if location_name else "<MISSING>"
-        street_address = poi["address1"]
-        if poi["address2"]:
-            street_address += " " + poi["address2"]
-        street_address = street_address if street_address else "<MISSING>"
-        city = poi["city"]
-        city = city if city else "<MISSING>"
-        state = poi["stateCode"]
-        state = state if state else "<MISSING>"
-        zip_code = poi["postalCode"]
-        zip_code = zip_code if zip_code else "<MISSING>"
-        country_code = poi["countryCode"]
-        country_code = country_code if country_code else "<MISSING>"
-        store_number = poi["name"].split()[-1]
-        phone = poi["phone"]
-        phone = phone if phone else "<MISSING>"
+    all_locations = dom.xpath('//div[@class="location-data"]')
+    for poi_html in all_locations:
+        store_url = poi_html.xpath('.//h3[@class="site-loc-name"]/a/@href')[0]
+        store_url = urljoin(start_url, store_url)
+        location_name = poi_html.xpath('.//h3[@class="site-loc-name"]/a/text()')
+        location_name = location_name[-1].strip() if location_name else "<MISSING>"
+        street_address = poi_html.xpath('.//div[@class="site-loc-address"]/text()')
+        if poi_html.xpath('.//div[@class="site-loc-address2"]/text()'):
+            street_address += poi_html.xpath(
+                './/div[@class="site-loc-address2"]/text()'
+            )
+        street_address = " ".join(street_address) if street_address else "<MISSING>"
+        raw_data = poi_html.xpath('.//div[@class="site-city-state-zip"]/text()')[0]
+        city = raw_data.split(",")[0]
+        state = raw_data.split(",")[-1].split()[0]
+        zip_code = raw_data.split(",")[-1].split()[-1]
+        country_code = "<MISSING>"
+        store_number = poi_html.xpath(".//@data-location-id")[0]
+        phone = poi_html.xpath('.//div[@class="site-loc-phone"]/text()')
+        phone = phone[0].split(":")[-1] if phone else "<MISSING>"
         location_type = "<MISSING>"
-        latitude = poi["latitude"]
-        longitude = poi["longitude"]
-        hoo = []
-        if poi.get("storeHours"):
-            hoo = etree.HTML(poi["storeHours"]).xpath("//text()")
-            hoo = [e.strip() for e in hoo if e.strip()]
-        hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
+        latitude = poi_html.xpath(".//@data-lat")[0]
+        longitude = poi_html.xpath(".//@data-lon")[0]
+        hours_of_operation = (
+            poi_html.xpath('.//div[@class="site-loc-hours"]/text()')[0]
+            .split("Hours:")[-1]
+            .strip()
+        )
 
         item = [
             domain,
