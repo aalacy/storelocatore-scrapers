@@ -54,71 +54,79 @@ def fetch_data():
         title = link.text
         link = link["href"]
         r = session.get(link, headers=headers, verify=False)
-        soup = BeautifulSoup(r.text, "html.parser")
-        street = soup.find("span", {"itemprop": "streetAddress"}).text
-        city = soup.find("span", {"itemprop": "addressLocality"}).text
-        state = soup.find("span", {"itemprop": "addressRegion"}).text
+        if "coming-soon" in link:
+            continue
         try:
-            state, pcode = state.strip().split(" ", 1)
-        except:
-            pcode = "<MISSING>"
-        phone = (
-            soup.find("a", {"itemprop": "telephone"})
-            .text.replace("Car Wash:", "")
-            .replace("\n", " ")
-            .strip()
-        )
-        phonelist = re.findall(
-            r"\(?\b[2-9][0-9]{2}\)?[-. ]?[2-9][0-9]{2}[-. ]?[0-9]{4}\b", phone
-        )
-        for ph in phonelist:
-            match = re.match(
-                "\\D?(\\d{0,3}?)\\D{0,2}(\\d{3})?\\D{0,2}(\\d{3})\\D?(\\d{4})$", ph
-            )
-            if match:
-                phone = ph
-                break
-        try:
-            hours = (
-                soup.find("div", {"class": "hours"})
-                .text.replace("Car Wash: ", "")
+            soup = BeautifulSoup(r.text, "html.parser")
+            street = soup.find("span", {"itemprop": "streetAddress"}).text
+            city = soup.find("span", {"itemprop": "addressLocality"}).text
+            state = soup.find("span", {"itemprop": "addressRegion"}).text
+            try:
+                state, pcode = state.strip().split(" ", 1)
+            except:
+                pcode = "<MISSING>"
+            phone = (
+                soup.find("a", {"itemprop": "telephone"})
+                .text.replace("Car Wash:", "")
+                .replace("\n", " ")
                 .strip()
             )
+            phonelist = re.findall(
+                r"\(?\b[2-9][0-9]{2}\)?[-. ]?[2-9][0-9]{2}[-. ]?[0-9]{4}\b", phone
+            )
+            for ph in phonelist:
+                match = re.match(
+                    "\\D?(\\d{0,3}?)\\D{0,2}(\\d{3})?\\D{0,2}(\\d{3})\\D?(\\d{4})$", ph
+                )
+                if match:
+                    phone = ph
+                    break
+            try:
+                hours = (
+                    soup.find("div", {"class": "hours"})
+                    .text.replace("Car Wash: ", "")
+                    .strip()
+                )
+            except:
+                hours = "<MISSING>"
+            lat = longt = store = "<MISSING>"
+            for loc in loclist:
+                if loc["name"].strip() == title.strip():
+                    lat = loc["lat"]
+                    longt = loc["lng"]
+                    store = loc["loc_id"]
+                    break
+            if "United" in state and "TN" in city:
+                state = "TN"
+                city = "<MISSING>"
+                pcode = "<MISSING>"
+            if len(phone) < 3:
+                phone = "<MISSING>"
+            try:
+                hours = hours.split("/", 1)[0]
+            except:
+                pass
+            if "Kennewick" in city:
+                state = "WA"
+            if "Buffalo Gap Rd" in pcode:
+                street = "4002 Buffalo Gap Rd"
+                city = "Abilene"
+                state = "TX"
+                pcode = "<MISSING>"
+            if "Ste 100" in city and "Austin" in state:
+                street = street + " " + city
+                city = state
+                state = "TX"
+            if "Fort Hood TX" in city:
+                city = "Fort Hood"
+                state = "TX"
+            if "Georgia" in state:
+                state = "GA"
         except:
-            hours = "<MISSING>"
-        lat = longt = store = "<MISSING>"
-        for loc in loclist:
-            if loc["name"].strip() == title.strip():
-                lat = loc["lat"]
-                longt = loc["lng"]
-                store = loc["loc_id"]
-                break
-        if "United" in state and "TN" in city:
-            state = "TN"
-            city = "<MISSING>"
-            pcode = "<MISSING>"
-        if len(phone) < 3:
-            phone = "<MISSING>"
-        try:
-            hours = hours.split("/", 1)[0]
-        except:
-            pass
-        if "Kennewick" in city:
-            state = "WA"
-        if "Buffalo Gap Rd" in pcode:
-            street = "4002 Buffalo Gap Rd"
-            city = "Abilene"
-            state = "TX"
-            pcode = "<MISSING>"
-        if "Ste 100" in city and "Austin" in state:
-            street = street + " " + city
-            city = state
-            state = "TX"
-        if "Fort Hood TX" in city:
-            city = "Fort Hood"
-            state = "TX"
-        if "Georgia" in state:
-            state = "GA"
+            if "https://mistercarwash.com/location/walla-walla__trashed" in link:
+                addr = "1110 Dalles Military Rd, Walla Walla, WA 99362"
+                street, city, state = addr.split(", ")
+                state, pcode = state.lstrip().split(" ", 1)
         data.append(
             [
                 "https://mistercarwash.com",

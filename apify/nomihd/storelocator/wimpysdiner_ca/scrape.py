@@ -49,10 +49,11 @@ def fetch_data():
                     ):
                         raw_list.append(list(simpledescription[index].stripped_strings))
                 else:
-                    temp_address = soup.find("div")
+                    temp_address = soup.find_all("div")
                     if temp_address is not None:
-                        if "Open Now!" not in list(temp_address.stripped_strings):
-                            raw_list.append(list(temp_address.stripped_strings))
+                        for temp in temp_address:
+                            if "Open Now!" not in list(temp.stripped_strings):
+                                raw_list.append(list(temp.stripped_strings))
             else:
                 temp_data = list(simpledescription[index].stripped_strings)
                 if len(temp_data) > 0:
@@ -93,8 +94,13 @@ def fetch_data():
         address_section = raw_list[0]
 
         city_state_zip = ""
+        city_state_zip_index = 0
         for index in range(0, len(address_section)):
-            if len(address_section[index].split("-")) == 3 or "(" in address_section:
+            if (
+                len(address_section[index].split("-")) == 3
+                or "(" in address_section[index]
+                or len(address_section[index].split(".")) == 3
+            ):
                 if (
                     "am" not in address_section[index]
                     or "pm" not in address_section[index]
@@ -108,17 +114,29 @@ def fetch_data():
                     .replace("?", " ")
                     .strip()
                 )
+                city_state_zip_index = index
             if "am" in address_section[index] or "pm" in address_section[index]:
                 secondary_hours = address_section[index]
 
         if len(city_state_zip) > 0:
-            city = city_state_zip.split(",")[0].strip()
-            if len(city_state_zip.split(",")[1].strip().split(" ")) > 1:
-                state = city_state_zip.split(",")[1].strip().split(" ", 1)[0].strip()
-                zip = city_state_zip.split(",")[1].strip().split(" ", 1)[-1].strip()
-            else:
+            city = city_state_zip.split(",")[0].strip().replace("Unit #2", "").strip()
+            if len(city_state_zip.split(",")) == 3:
                 state = city_state_zip.split(",")[1].strip()
-                zip = "<MISSING>"
+                zip = city_state_zip.split(",")[-1].strip()
+            else:
+                if len(city_state_zip.split(",")[1].strip().split(" ")) > 1:
+                    state = (
+                        city_state_zip.split(",")[1].strip().split(" ", 1)[0].strip()
+                    )
+                    zip = city_state_zip.split(",")[1].strip().split(" ", 1)[-1].strip()
+                else:
+                    state = city_state_zip.split(",")[1].strip()
+
+        if zip == "":
+            try:
+                zip = address_section[city_state_zip_index + 1]
+            except:
+                pass
 
         if street_address == "":
             if len(address_section) > 0:
@@ -142,6 +160,29 @@ def fetch_data():
                 hours_of_operation = secondary_hours
         else:
             hours_of_operation = secondary_hours
+
+        if phone == "":
+            if len(raw_list) > 1:
+                for index in range(0, len(raw_list[1])):
+                    if (
+                        len(raw_list[1][index].split("-")) == 3
+                        or "(" in raw_list[1][index]
+                        or len(raw_list[1][index].split(".")) == 3
+                    ):
+                        if (
+                            "am" not in raw_list[1][index]
+                            or "pm" not in raw_list[1][index]
+                        ):
+                            phone = raw_list[1][index]
+
+        if len(raw_list) > 1:
+            if zip == "" or zip == "<MISSING>":
+                zip = raw_list[1][0].strip()
+                if "am" in zip or "pm" in zip or "-" in zip:
+                    zip = "<MISSING>"
+
+        if "-" in zip:
+            zip = "<MISSING>"
 
         country_code = "CA"
         store_number = "<MISSING>"

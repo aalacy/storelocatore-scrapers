@@ -4,7 +4,6 @@ from concurrent import futures
 from datetime import datetime
 from lxml import html
 from sgrequests import SgRequests
-from sgscrape.sgpostal import International_Parser, parse_address
 
 
 def write_output(data):
@@ -38,10 +37,10 @@ def write_output(data):
 
 def get_urls():
     session = SgRequests()
-    r = session.get("https://www.beatone.co.uk/bars")
+    r = session.get("https://www.beatone.co.uk/sitemap")
     tree = html.fromstring(r.text)
 
-    return tree.xpath("//a[@class='inner-item']/@href")
+    return tree.xpath("//ul[@class='venue-list']/li/a/@href")
 
 
 def get_data(url):
@@ -53,21 +52,22 @@ def get_data(url):
     tree = html.fromstring(r.text)
 
     location_name = tree.xpath("//h1/text()")[1].strip()
-    line = " ".join(tree.xpath("//ul[@class='menu vertical address']/li/text()"))
-    adr = parse_address(International_Parser(), line)
+    line = tree.xpath("//ul[@class='menu vertical address']/li/text()")
+    street_address = line[0]
+    if line[1][0].isdigit():
+        street_address += f", {line[1]}"
+        line.remove(line[1])
 
-    street_address = (
-        f"{adr.street_address_1} {adr.street_address_2 or ''}".replace(
-            "None", ""
-        ).strip()
-        or "<MISSING>"
-    )
-    city = adr.city or "<MISSING>"
-    state = adr.state or "<MISSING>"
-    postal = adr.postcode or "<MISSING>"
-    if postal == "<MISSING>":
-        postal = " ".join(street_address.split()[-2:])
-        street_address = street_address.replace(postal, "").strip()
+    city = line[1]
+    if len(line) == 3:
+        state = "<MISSING>"
+    else:
+        state = line[-2]
+
+    if city.find(",") != -1:
+        state = city.split(",")[-1].strip()
+        city = city.split(",")[0].strip()
+    postal = line[-1]
     country_code = "GB"
     store_number = "<MISSING>"
     phone = (
