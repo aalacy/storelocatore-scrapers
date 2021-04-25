@@ -90,14 +90,15 @@ def get_data(coord):
         data=data,
     )
     js = r.json()
-
     for j in js:
 
         page_url = f"https:{j.get('order_link')}"
         location_name = j.get("title")
         ad = "".join(j.get("address")).replace("<br>", " ")
         a = usaddress.tag(ad, tag_mapping=tag)[0]
-        street_address = "<MISSING>"
+        street_address = f"{a.get('address1')} {a.get('address2')}".replace(
+            "None", ""
+        ).strip()
         city = a.get("city")
         state = a.get("state")
         postal = a.get("postal") or "<MISSING>"
@@ -108,6 +109,8 @@ def get_data(coord):
         longitude = j.get("lng")
         location_type = "<MISSING>"
         hours_of_operation = "".join(j.get("hours")).replace("<br>", " ")
+        if hours_of_operation.find("drive") != -1:
+            hours_of_operation = hours_of_operation.split("drive")[0].strip()
 
         row = [
             locator_domain,
