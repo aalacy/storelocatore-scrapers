@@ -22,7 +22,7 @@ def fetch_data():
     stores_req = session.get(search_url, headers=headers)
     stores_sel = lxml.html.fromstring(stores_req.text)
     stores = stores_sel.xpath(
-        '//li[contains(@id,"menu")]/a[contains(@href,"/locations/")]/@href'
+        '//li[contains(@class,"menu")]/a[contains(@href,"/locations/")]/@href'
     )
     for store_url in stores:
         if store_url == "https://10fitness.com/locations/":
