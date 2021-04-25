@@ -25,6 +25,7 @@ def write_output(data):
         writer.writerow(
             [
                 "locator_domain",
+                "page_url",
                 "location_name",
                 "street_address",
                 "city",
@@ -107,14 +108,11 @@ def fetch_data():
                 phone = ""
                 lat = ""
                 lng = ""
-                next(lines)
-                store = (
-                    next(lines)
-                    .replace("\t", "")
-                    .replace("\r", "")
-                    .replace("\t", "")
-                    .strip()
-                )
+                g = next(lines)
+                g = next(lines)
+                if "<font" in g:
+                    g = next(lines)
+                store = g.replace("\t", "").replace("\r", "").replace("\t", "").strip()
             if '<td align="left" valign="top" width="400px">' in line2:
                 next(lines)
                 name = (
