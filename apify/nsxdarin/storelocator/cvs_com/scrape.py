@@ -11,6 +11,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
 from sglogging import SgLogSetup
 from tenacity import retry, stop_after_attempt
+from sgscrape.sgpostal import parse_address, USA_Best_Parser
 
 logger = SgLogSetup().get_logger("cvs_com")
 
@@ -167,7 +168,10 @@ def get_location(loc):
     location_name = info["name"]
     location_type = info["@type"]
     store_number = info["url"].split("/")[-1]
-    street_address = info["address"]["streetAddress"]
+
+    # parsing any directional data in the street address
+    parsed = parse_address(USA_Best_Parser(), info["address"]["streetAddress"])
+    street_address = parsed.street_address_1
     city = info["address"]["addressLocality"]
     state = info["address"]["addressRegion"]
     zipcode = info["address"]["postalCode"]
@@ -219,17 +223,20 @@ def scrape_loc_urls(loc_urls):
 
 
 def fetch_data():
-    state_urls = enqueue_links(
-        urljoin(base_url, "/store-locator/cvs-pharmacy-locations"), ".states a"
-    )
+    # state_urls = enqueue_links(
+    #     urljoin(base_url, "/store-locator/cvs-pharmacy-locations"), ".states a"
+    # )
 
-    logger.info(f"number of states: {len(state_urls)}")
-    city_urls = scrape_state_urls(state_urls)
+    # logger.info(f"number of states: {len(state_urls)}")
+    # city_urls = scrape_state_urls(state_urls)
 
-    logger.info(f"number of cities: {len(city_urls)}")
-    loc_urls = scrape_city_urls(city_urls)
+    # logger.info(f"number of cities: {len(city_urls)}")
+    # loc_urls = scrape_city_urls(city_urls)
 
-    logger.info(f"number of locations: {len(loc_urls)}")
+    # logger.info(f"number of locations: {len(loc_urls)}")
+    # with open('locations.json') as file:
+    #     loc_urls = json.load(file)
+    loc_urls = ["https://www.cvs.com/store-locator/cvs-pharmacy-address/3758+Las+Vegas+Blvd+South+Next+To+The+Park+Mgm-Las+Vegas-NV-89109/storeid=3210"]
     return scrape_loc_urls(loc_urls)
 
 
