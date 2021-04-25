@@ -130,7 +130,7 @@ def fetch_data():
                     + str(item["tradingHours"][6][1])
                 )
                 hours = hours.replace("00:00-00:00", "Closed")
-                if store not in ids:
+                if store not in ids and city != "New York":
                     ids.append(store)
                     yield [
                         website,

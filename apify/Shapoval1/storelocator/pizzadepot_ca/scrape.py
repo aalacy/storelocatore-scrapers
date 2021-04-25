@@ -114,8 +114,18 @@ def fetch_data():
 
         location_name = city + " " + "Pizza Depot"
         store_number = "<MISSING>"
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
+
+        map_link = "".join(
+            tree.xpath('//iframe[contains(@src, "google.com/maps/embed")]/@src')
+        )
+        try:
+            latitude = map_link.split("!3d")[1].strip().split("!")[0].strip()
+            longitude = map_link.split("!2d")[1].strip().split("!")[0].strip()
+        except IndexError:
+            latitude, longitude = "<MISSING>", "<MISSING>"
+
+        if city.find("Guelph") != -1:
+            latitude, longitude = "<MISSING>", "<MISSING>"
         hours_of_operation = tree.xpath(
             '//div[./div/h3[contains(text(), "Hours")]]/following-sibling::div//p/text() | //div[./div/h2[contains(text(), "Hours")]]/following-sibling::div//p/text()'
         )
