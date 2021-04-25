@@ -92,8 +92,8 @@ def fetch_data():
         zip_code = zip_code if zip_code else "<MISSING>"
         country_code = "<MISSING>"
         store_number = "<MISSING>"
-        phone = loc_dom.xpath('//a[contains(@href, "tel")]/strong/text()')
-        phone = phone[0] if phone else "<MISSING>"
+        phone = loc_dom.xpath('//a[contains(@href, "tel")]//text()')
+        phone = phone[-1] if phone else "<MISSING>"
         location_type = "<MISSING>"
         tmp_closed = loc_dom.xpath(
             '//h3[contains(text(), "Our restaurant is temporarily closed")]'
