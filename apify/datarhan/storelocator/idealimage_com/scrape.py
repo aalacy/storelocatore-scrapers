@@ -1,5 +1,4 @@
 import csv
-import json
 from lxml import etree
 from urllib.parse import urljoin
 
@@ -88,15 +87,6 @@ def fetch_data():
         hoo = loc_dom.xpath('//table[@class="tbl-hours"]//text()')
         hoo = [e.strip() for e in hoo if e.strip()]
         hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
-
-        if not street_address:
-            addr = parse_address_intl(
-                " ".join(loc_dom.xpath('//div[@class="centeraddress"]//text()')[1:3])
-            )
-        street_address = addr.street_address_1
-        if addr.street_address_2:
-            street_address += " " + addr.street_address_2
-        street_address = street_address if street_address else "<MISSING>"
 
         item = [
             domain,
