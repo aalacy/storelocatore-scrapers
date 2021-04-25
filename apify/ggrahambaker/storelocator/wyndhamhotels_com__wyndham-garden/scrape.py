@@ -147,7 +147,8 @@ def fetch_data():
 
 
 def scrape():
-    logger.info(f"Scraping Started")
+    scraping_started = "Scraping Started"
+    logger.info(f"{scraping_started}")
     data = fetch_data()
     write_output(data)
     logger.info(f"Total store processed: {len(data)}")
