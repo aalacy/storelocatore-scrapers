@@ -40,7 +40,7 @@ def fetch_data():
 
     session = SgRequests()
 
-    max_results = 50
+    max_results = 20
     max_distance = None
     dup_tracker = []
     total = 0
@@ -51,37 +51,28 @@ def fetch_data():
         max_radius_miles=max_distance,
         max_search_results=max_results,
     )
+
     for lat, lng in search:
         base_link = (
-            "https://mapsms.scotiabank.com/branches?1=1&latitude=%s&longitude=%s&recordlimit=%s&locationtypes=1,2,3"
-            % (lat, lng, "50")
+            "https://mapsms.scotiabank.com/branches?1=1&latitude=%s&longitude=%s&recordlimit=%s&locationtypes=3"
+            % (lat, lng, max_results)
         )
         try:
             stores = session.get(base_link, headers=headers).json()["branchInfo"][
                 "marker"
             ]
-        except Exception:
+        except:
             continue
         logger.info(f"Pulling the data from: {base_link}")
         found = 0
         for store in stores:
             store_number = store["@attributes"]["id"]
-            latitude = store["@attributes"]["lat"]
-            longitude = store["@attributes"]["lng"]
-
-            search.found_location_at(latitude, longitude)
             if store_number in dup_tracker:
                 continue
             dup_tracker.append(store_number)
 
             location_name = store["name"]
-            location_type = (
-                "Branch"
-                if store["@attributes"]["type"] == "1"
-                else "ABM"
-                if store["@attributes"]["type"] == "3"
-                else store["@attributes"]["type"]
-            )
+            location_type = "<MISSING>"
             street_address = " ".join(store["address"].split(",")[:-3])
             city = store["address"].split(",")[-3].strip()
             if len(store["address"].split(",")[-2].split()) > 1:
@@ -109,6 +100,10 @@ def fetch_data():
                 hours_of_operation = "<MISSING>"
             if hours_of_operation.count("Closed") == 7:
                 hours_of_operation = "<MISSING>"
+            latitude = store["@attributes"]["lat"]
+            longitude = store["@attributes"]["lng"]
+
+            search.found_location_at(latitude, longitude)
 
             # Store data
             yield [
