@@ -1,6 +1,5 @@
 from sglogging import SgLogSetup
 from sgrequests import SgRequests
-from urllib.parse import urljoin
 from lxml import html
 import re
 import csv
