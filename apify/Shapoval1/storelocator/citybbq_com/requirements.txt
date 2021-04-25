@@ -1,2 +1,4 @@
+lxml==4.5.2
 sgrequests==0.1.8
-lxml==4.6.2
+usaddress==0.5.10
+sgzip==0.4.0

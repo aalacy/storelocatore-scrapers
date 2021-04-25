@@ -32,8 +32,8 @@ id_list = []
 
 
 def retry_error_callback(retry_state):
-    postal = retry_state.args[0]
-    log.error(f"Failure to fetch locations for: {postal}")
+    coord = retry_state.args[0]
+    log.error(f"Failure to fetch locations for: {coord}")
     return []
 
 
