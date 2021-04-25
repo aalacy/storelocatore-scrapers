@@ -100,9 +100,18 @@ def scrape():
             mapping=["sec", "address", "streetAddress"],
             value_transform=lambda x: " ".join(x.split(",")[:-1]),
         ),
-        city=MappingField(mapping=["tert", "city"]),
-        state=MappingField(mapping=["tert", "stateCode"]),
-        zipcode=MappingField(mapping=["tert", "postalCode"]),
+        city=MappingField(
+            mapping=["tert", "city"],
+            value_transform=lambda x: x.replace("None", "<MISSING>"),
+        ),
+        state=MappingField(
+            mapping=["tert", "stateCode"],
+            value_transform=lambda x: x.replace("None", "<MISSING>"),
+        ),
+        zipcode=MappingField(
+            mapping=["tert", "postalCode"],
+            value_transform=lambda x: x.replace("None", "<MISSING>"),
+        ),
         country_code=MappingField(mapping=["sec", "address", "addressCountry"]),
         phone=MappingField(mapping=["tert", "phone"], value_transform=good_phone),
         store_number=MappingField(mapping=["tert", "id"]),
