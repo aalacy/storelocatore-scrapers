@@ -38,6 +38,7 @@ def write_output(data):
 def fetch_data():
     # Your scraper here
     items = []
+    scraped_items = []
 
     session = SgRequests()
 
@@ -46,7 +47,7 @@ def fetch_data():
 
     response = session.get(start_url)
     dom = etree.HTML(response.text)
-    all_locations = dom.xpath('//div[@id="store-search-results-state"]')
+    all_locations = dom.xpath('//a[@class="imagetext-location"]/@href')
     next_page = dom.xpath('//a[contains(text(), "Next")]/@href')
     while next_page:
         page_url = "https://www.tommybahama.com" + next_page[0]
@@ -58,6 +59,8 @@ def fetch_data():
     for poi_html in all_locations:
         url = poi_html.xpath('.//span[@class="store-restaurant-header"]/a/@href')[0]
         store_url = urljoin(start_url, url)
+        if "marlin-bars/" in store_url:
+            continue
         loc_response = session.get(store_url)
         loc_dom = etree.HTML(loc_response.text)
 
@@ -145,8 +148,9 @@ def fetch_data():
             longitude,
             hours_of_operation,
         ]
-
-        items.append(item)
+        if store_url not in scraped_items:
+            scraped_items.append(store_url)
+            items.append(item)
 
     return items
 
