@@ -23,7 +23,12 @@ def fetch_data():
             sp1 = bs(session.get(_.a["href"], headers=_headers).text, "lxml")
             addr = list(_.select_one(".avia_textblock p").stripped_strings)
             addr = [aa.replace("\xa0", " ") for aa in addr]
-            phone = _.select(".avia_textblock p")[-1].text.split(":")[-1]
+            phone = (
+                _.select(".avia_textblock p")[-1]
+                .text.split(":")[-1]
+                .replace("Phone", "")
+                .strip()
+            )
             try:
                 coord = sp1.iframe["src"].split("!2d")[1].split("!2m")[0].split("!3d")
             except:
