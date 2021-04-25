@@ -104,6 +104,15 @@ def fetch_data():
         hoo = [e.strip() for e in hoo if e.strip()]
         hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
 
+        if not street_address:
+            addr = parse_address_intl(
+                " ".join(loc_dom.xpath('//div[@class="centeraddress"]//text()')[1:3])
+            )
+        street_address = addr.street_address_1
+        if addr.street_address_2:
+            street_address += " " + addr.street_address_2
+        street_address = street_address if street_address else "<MISSING>"
+
         item = [
             domain,
             store_url,
