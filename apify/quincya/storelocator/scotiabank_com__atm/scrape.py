@@ -2,7 +2,6 @@ import csv
 from sgrequests import SgRequests
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 from sglogging import SgLogSetup
-import json
 
 logger = SgLogSetup().get_logger("scotiabank_com")
 
@@ -61,13 +60,10 @@ def fetch_data():
             stores = session.get(base_link, headers=headers).json()["branchInfo"][
                 "marker"
             ]
-        except Exception as e:
-            print(session.get(base_link, headers=headers).text)
-            print(e)
+        except Exception:
             continue
         logger.info(f"Pulling the data from: {base_link}")
         found = 0
-        print(len(stores))
         for store in stores:
             store_number = store["@attributes"]["id"]
             latitude = store["@attributes"]["lat"]
@@ -79,8 +75,13 @@ def fetch_data():
             dup_tracker.append(store_number)
 
             location_name = store["name"]
-            location_type = "Branch" if store["@attributes"]["type"] == "1" else "ABM" if store["@attributes"]["type"] == "3" else store["@attributes"]["type"]
-            print(location_type)
+            location_type = (
+                "Branch"
+                if store["@attributes"]["type"] == "1"
+                else "ABM"
+                if store["@attributes"]["type"] == "3"
+                else store["@attributes"]["type"]
+            )
             street_address = " ".join(store["address"].split(",")[:-3])
             city = store["address"].split(",")[-3].strip()
             if len(store["address"].split(",")[-2].split()) > 1:
