@@ -45,10 +45,6 @@ def yield_data(country_code):
             store["main"] = i
             store["sec"] = son["store"][idex + 1]
             store["tert"] = sony["store"][count]
-            if store["main"]["telephone"] != store["tert"]["phone"]:
-                logzilla.info(
-                    f"\n !!!!! !!!!! !!!!! \n This store might be incorrectly scraped!! \n {store}"
-                )
             count += 1
             yield store
 
@@ -57,7 +53,6 @@ def fetch_data():
     logzilla = sglog.SgLogSetup().get_logger(logger_name="clubmonaco")
     domain = "https://www.clubmonaco.com/en/StoreLocator"
     countries = get_codes(domain)
-    print(countries)
     for code in countries:
         count = 0
         for record in yield_data(code):
