@@ -1,7 +1,6 @@
 from bs4 import BeautifulSoup
 import csv
-import string
-import re, time, json
+import json
 
 from sgrequests import SgRequests
 
