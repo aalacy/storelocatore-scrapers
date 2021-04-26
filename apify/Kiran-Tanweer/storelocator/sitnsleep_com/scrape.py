@@ -57,7 +57,7 @@ def write_output(data):
 
 def fetch_data():
     data = []
-    url = "https://www.sitnsleep.com/js/app.851c759c.js"
+    url = "https://www.sitnsleep.com/js/app.f4cb6e20.js"
     r = session.get(url, headers=headers, verify=False)
     soup = BeautifulSoup(r.text, "html.parser")
     bs = str(soup)
