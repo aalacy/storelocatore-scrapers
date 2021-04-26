@@ -40,7 +40,9 @@ def parse_data(entity, page_url):
     _ = entity["profile"]
     street_address = _["address"]["line1"]
     if _["address"]["line2"]:
-        street_address = _["address"]["line2"]
+        street_address += " " + _["address"]["line2"]
+    if _["address"]["line3"]:
+        street_address += " " + _["address"]["line3"]
     latitude = longitude = ""
     if "cityCoordinate" in _:
         latitude = _["cityCoordinate"]["lat"]
