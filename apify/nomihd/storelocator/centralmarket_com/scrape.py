@@ -38,7 +38,7 @@ def fetch_data():
             .split("><!--")[1]
             .split("--></script>")[0]
         )
-        
+
         json_res = json.loads(json_str)
 
         store_obj = json_res["session"]["channels"]["curbside"]["store"]
