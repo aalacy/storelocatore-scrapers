@@ -1,6 +1,8 @@
 from sgrequests import SgRequests
 import pandas as pd
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
+from bs4 import BeautifulSoup as bs
+import cloudscraper
 
 search = DynamicZipSearch(country_codes=[SearchableCountries.USA])
 
@@ -18,12 +20,13 @@ location_types = []
 latitudes = []
 longitudes = []
 hours_of_operations = []
+search_codes = []
 
 session = SgRequests()
+scraper = cloudscraper.create_scraper(sess=session)
 
 for search_code in search:
     url = "https://secure.gotwww.com/gotlocations.com/microd/farmershomefurniture.com/index.php"
-
     params = {
         "brand": "",
         "MinZoom": "",
@@ -43,6 +46,8 @@ for search_code in search:
         locator_domain = "https://www.farmershomefurniture.com/"
         page_url = location.split('href="')[1].split('"')[0]
         location_name = location.split('target="new">')[1].split("<")[0]
+        if location_name == "name":
+            continue
         address = location.split("class=address>")[1].split("<")[0]
         city = location.split("class=city>")[1].split("<")[0].strip().replace(",", "")
         state = location.split("state>")[1].split(" <")[0]
@@ -59,9 +64,18 @@ for search_code in search:
         try:
             hours = location.split("hours: ")[1].split("<")[0]
         except Exception:
-            hours = "<MISSING>"
+            hours_data = scraper.get(page_url).text
+            hours_soup = bs(hours_data, "html.parser")
+            hours = (
+                hours_soup.find("div", attrs={"class": "grid-30"})
+                .text.strip()
+                .split("Store Hours")[1]
+                .split("Email")[0]
+                .replace("\n", " ")
+            )
         search.found_location_at(latitude, longitude)
 
+        search_codes.append(search_code)
         locator_domains.append(locator_domain)
         page_urls.append(page_url)
         location_names.append(location_name)
@@ -93,6 +107,7 @@ df = pd.DataFrame(
         "hours_of_operation": hours_of_operations,
         "country_code": country_codes,
         "location_type": location_types,
+        "search_code": search_codes,
     }
 )
 
