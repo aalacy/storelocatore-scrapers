@@ -69,7 +69,7 @@ def scrape():
             mapping=["name"],
         ),
         store_number=sp.MappingField(
-            mapping=["id"],
+            mapping=["clientkey"],
         ),
         latitude=sp.MappingField(
             mapping=["latitude"],
