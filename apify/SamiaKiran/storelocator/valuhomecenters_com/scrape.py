@@ -11,7 +11,7 @@ log = sglog.SgLogSetup().get_logger(logger_name=website)
 
 
 def fetch_data():
-    with SgChrome(is_headless=False) as driver:
+    with SgChrome() as driver:
         url = "https://valuhomecenters.com/store-locator"
         driver.get(url)
 

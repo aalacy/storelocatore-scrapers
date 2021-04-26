@@ -33,10 +33,10 @@ def fetch_data():
             state = address[0]
             zip_postal = address[1]
             hours_of_operation = (
-                soup.find("div", {"class": "one-fourth locationHours"})
-                .find("p")
+                loc.find("div", {"class": "one-fourth locationHours"})
                 .get_text(separator="|", strip=True)
                 .replace("|", " ")
+                .replace("Hours", "")
             )
             phone = (
                 soup.find("div", {"class": "one-fourth locationContact"})
@@ -57,7 +57,7 @@ def fetch_data():
                 location_type="<MISSING>",
                 latitude="<MISSING>",
                 longitude="<MISSING>",
-                hours_of_operation=hours_of_operation,
+                hours_of_operation=hours_of_operation.strip(),
             )
 
 
