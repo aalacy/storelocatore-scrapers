@@ -197,11 +197,9 @@ def get_basic_info(id, page_schema, location, session):
                 "country_code": addr["addressCountry"].strip(),
             }
     # parsing directional data from street address
-    if ',' in address['street_address']:
-        street_address, *others = re.split(',', address['street_address'])
-        address['street_address'] = street_address
-        print(street_address)
-
+    if "," in address["street_address"]:
+        street_address, *others = re.split(",", address["street_address"])
+        address["street_address"] = street_address
 
     return address
 
@@ -374,7 +372,7 @@ def fetch_data():
     # loc_urls = scrape_city_urls(city_urls)
 
     # logger.info(f"number of locations: {len(loc_urls)}")
-    with open('locations.json') as file:
+    with open("locations.json") as file:
         loc_urls = json.load(file)
     # loc_urls = ["https://www.cvs.com/store-locator/cvs-pharmacy-address/3758+Las+Vegas+Blvd+South+Next+To+The+Park+Mgm-Las+Vegas-NV-89109/storeid=3210"]
     return scrape_loc_urls(loc_urls)
