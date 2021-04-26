@@ -93,7 +93,6 @@ def fetch_data():
             "BC",
             "ON",
             "NT",
-            "NV",
             "PEI",
             "PE",
             "QC",
@@ -103,6 +102,8 @@ def fetch_data():
         ]
         if state in canada:
             country = "CA"
+        else:
+            country = "US"
         if phone == "":
             phone = "<MISSING>"
         yield [
