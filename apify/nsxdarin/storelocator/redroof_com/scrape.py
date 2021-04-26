@@ -38,6 +38,7 @@ def write_output(data):
 
 def fetch_data():
     locs = []
+    alllocs = []
     url = "https://www.redroof.com/hotel-sitemap"
     session = SgRequests()
     r = session.get(url, headers=headers)
@@ -117,23 +118,27 @@ def fetch_data():
                 name = "<MISSING>"
             if add == "":
                 add = "<MISSING>"
+            if "RRI867" in loc:
+                city = "Biloxi"
             if state != "<MISSING>":
-                yield [
-                    website,
-                    loc,
-                    name,
-                    add,
-                    city,
-                    state,
-                    zc,
-                    country,
-                    store,
-                    phone,
-                    typ,
-                    lat,
-                    lng,
-                    hours,
-                ]
+                if loc not in alllocs:
+                    alllocs.append(loc)
+                    yield [
+                        website,
+                        loc,
+                        name,
+                        add,
+                        city,
+                        state,
+                        zc,
+                        country,
+                        store,
+                        phone,
+                        typ,
+                        lat,
+                        lng,
+                        hours,
+                    ]
 
 
 def scrape():
