@@ -28,7 +28,7 @@ def fetch_data():
             url = "https://ppsl.s73.co/api/store/FindStores"
             loclist = session.post(url, data=data, headers=headers).json()
             for loc in loclist:
-                if loc["payPoint"] == True:
+                if loc["payPoint"] is True:
                     location_type = "PayPoint Location"
                 else:
                     location_type = "Paddy Power Shop"
