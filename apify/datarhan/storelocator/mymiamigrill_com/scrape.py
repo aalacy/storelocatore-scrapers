@@ -43,7 +43,11 @@ def fetch_data():
     DOMAIN = "mymiamigrill.com"
     start_url = "https://www.mymiamigrill.com/wp-json/miamigrill-locations/v1/locations"
 
-    response = session.get(start_url)
+    hdr = {
+        "accept": "application/json, text/plain, */*",
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.85 Safari/537.36",
+    }
+    response = session.get(start_url, headers=hdr)
     data = json.loads(response.text)
 
     for poi in data:
