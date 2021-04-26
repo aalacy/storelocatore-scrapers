@@ -83,11 +83,16 @@ def get_data(page_url):
             line = line.split(",")[1].strip()
             if line.count(" ") == 1:
                 state = line.split()[0]
-                postal = line.replace(state, "").strip()
+                postal = line.split()[1]
                 country_code = "US"
             else:
                 state = "<MISSING>"
                 postal = line
+                country_code = "CA"
+
+            if len(postal) < 5:
+                postal = line
+                state = "<MISSING>"
                 country_code = "CA"
 
             phone = (
@@ -122,6 +127,8 @@ def get_data(page_url):
                 _tmp.append(line)
 
             hours_of_operation = ";".join(_tmp) or "<MISSING>"
+            if "Not Yet" in hours_of_operation:
+                hours_of_operation = "<MISSING>"
             row = [
                 locator_domain,
                 page_url,
@@ -158,7 +165,10 @@ def get_data(page_url):
             state = line.split()[0]
             postal = line.replace(state, "").strip()
             country_code = "US"
-            if len(postal) > 5 and "-" not in postal:
+
+            if len(postal) < 5:
+                postal = line
+                state = "<MISSING>"
                 country_code = "CA"
 
             phone = "".join(s.xpath(".//a/text()")).strip() or "<MISSING>"
@@ -188,6 +198,8 @@ def get_data(page_url):
                 _tmp.append(line)
 
             hours_of_operation = ";".join(_tmp) or "<MISSING>"
+            if "Not Yet" in hours_of_operation:
+                hours_of_operation = "<MISSING>"
 
             row = [
                 locator_domain,
