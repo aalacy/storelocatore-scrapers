@@ -18,6 +18,7 @@ headers = {
 }
 
 
+
 def fetch_data():
     with SgChrome() as driver:
         driver.get("https://www.tacocabana.com/locations")
@@ -70,7 +71,7 @@ def fetch_data():
                 temp = content[3].split()
                 city = temp[0]
                 state = temp[1]
-                zip_potsal = temp[2]
+                zip_postal = temp[2]
                 phone = content[4]
             except:
                 street_address = content[1]
@@ -102,21 +103,22 @@ def fetch_data():
                 longitude = temp["longitude"]
 
         yield SgRecord(
-            locator_domain="https://www.tacocabana.com/",
-            page_url="https://www.tacocabana.com/locations",
-            location_name=location_name.strip(),
-            street_address=street_address,
-            city=city.strip(),
-            state=state,
-            zip_postal=zip_postal,
-            country_code="US",
-            store_number="<MISSING>",
-            phone=phone.strip(),
-            location_type="<MISSING>",
-            latitude=latitude,
-            longitude=longitude,
-            hours_of_operation=hours_of_operation.strip(),
-        )
+                locator_domain="https://www.tacocabana.com/",
+                page_url="https://www.tacocabana.com/locations",
+                location_name=location_name.strip(),
+                street_address=street_address,
+                city=city.strip(),
+                state=state,
+                zip_postal=zip_postal,
+                country_code="US",
+                store_number="<MISSING>",
+                phone=phone.strip(),
+                location_type="<MISSING>",
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation.strip(),
+            )
+
 
 
 def scrape():
