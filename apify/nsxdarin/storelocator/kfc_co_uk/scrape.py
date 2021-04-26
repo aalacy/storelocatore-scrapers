@@ -90,7 +90,10 @@ def fetch_data():
         store = item["storeid"]
         hours = ""
         country = "GB"
-        street = item["street"].replace("\n", " ")
+        try:
+            street = item["street"].replace("\n", " ")
+        except Exception:
+            street = "<MISSING>"
         city = item["city"]
         state = "<MISSING>"
         zc = item["postalcode"]
