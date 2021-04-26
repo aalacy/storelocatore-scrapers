@@ -11,7 +11,6 @@ from bs4 import BeautifulSoup
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
 from tenacity import retry, stop_after_attempt
-from sgscrape.sgpostal import parse_address, USA_Best_Parser
 
 logger = SgLogSetup().get_logger("cvs_com")
 
