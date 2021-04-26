@@ -46,10 +46,11 @@ def fetch_data():
     url = "https://broadwaypizza.com/locations.html"
     r = session.get(url, headers=headers, verify=False)
     soup = BeautifulSoup(r.text, "html.parser")
-    divlist = soup.findAll("div", {"class": "location-box2"})
+    divlist = soup.findAll("div", {"class": "padd-10"})
     p = 0
     for div in divlist:
         title = div.find("h3").text
+
         link = "https://broadwaypizza.com/" + div.find("a")["href"]
         content = div.find("p").text
         content = re.sub(pattern, "\n", content).strip().splitlines()
