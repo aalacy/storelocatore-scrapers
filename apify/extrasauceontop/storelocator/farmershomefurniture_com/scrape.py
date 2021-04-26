@@ -20,7 +20,6 @@ location_types = []
 latitudes = []
 longitudes = []
 hours_of_operations = []
-search_codes = []
 
 session = SgRequests()
 scraper = cloudscraper.create_scraper(sess=session)
@@ -75,7 +74,6 @@ for search_code in search:
             )
         search.found_location_at(latitude, longitude)
 
-        search_codes.append(search_code)
         locator_domains.append(locator_domain)
         page_urls.append(page_url)
         location_names.append(location_name)
@@ -107,7 +105,6 @@ df = pd.DataFrame(
         "hours_of_operation": hours_of_operations,
         "country_code": country_codes,
         "location_type": location_types,
-        "search_code": search_codes,
     }
 )
 
