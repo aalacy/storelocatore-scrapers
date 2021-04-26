@@ -34,6 +34,13 @@ def fetch_data():
                     "div#av-layout-grid-2 div.avia-builder-el-last ul li"
                 )
             ]
+            script = sp1.select_one("script.av-php-sent-to-frontend").string.strip()
+            longitude = (
+                script.split("['long'] =")[1].split("av_google_map")[0].strip()[:-1]
+            )
+            latitude = (
+                script.split("['lat'] =")[1].split("av_google_map")[0].strip()[:-1]
+            )
             yield SgRecord(
                 page_url=page_url,
                 location_name=sp1.select_one('h2[itemprop="headline"]').text.strip(),
@@ -44,6 +51,8 @@ def fetch_data():
                 country_code="US",
                 phone=sp1.select(".avia_textblock")[1].text.strip(),
                 locator_domain=locator_domain,
+                latitude=latitude,
+                longitude=longitude,
                 hours_of_operation="; ".join(hours).replace("–", "-"),
             )
 

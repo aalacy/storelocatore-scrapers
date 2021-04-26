@@ -65,6 +65,7 @@ def fetch_data():
                 url = "https://www.fastsigns.com/" + url
 
             log.info(url)
+
             try:
                 res = session.get(url)
             except:
@@ -76,19 +77,40 @@ def fetch_data():
 
             loc = js["SiteDesignator"]
             phone = js["Phone"]
+            if phone.strip() == "":
+                try:
+                    phone = re.findall(r'"telePhone": "([^"]+)"', str(soup))[0]
+                except:
+                    phone = "<MISSING>"
+
             tim = js["WeekHours"] + ", " + js["SatHours"] + ", " + js["SunHours"]
+
+            if tim.replace(",", "").strip() == "":
+                try:
+                    tim = re.findall(r'"openingHours": "([^"]+)"', str(soup))[0]
+                except:
+                    tim = "<MISSING>"
             addr = js["Address"].replace("|", "").strip().split(",")
             sz = addr[-1].strip().split(" ")
-            if country == "CA":
-                zip = re.findall(r"[A-Z][0-9][A-Z] *[0-9][A-Z][0-9]", addr[-1])[0]
-            else:
-                zip = sz[-1]
+            try:
+                zip = re.findall(r'"postalCode": "([^"]+)"', str(soup))[0]
+            except:
+                if country == "CA":
+                    zip = re.findall(r"[A-Z][0-9][A-Z] *[0-9][A-Z][0-9]", addr[-1])[0]
+                else:
+                    zip = sz[-1]
 
             state = sz[0]
             del addr[-1]
             city = addr[-1]
             del addr[-1]
-            street = ",".join(addr)
+            try:
+                street = re.findall(
+                    r'"streetAddress": "Street: (.*), City:', str(soup)
+                )[0]
+            except:
+                street = ",".join(addr)
+
             try:
                 lat = re.findall(r'"latitude": "([^"]+)"', str(soup))[0]
             except:

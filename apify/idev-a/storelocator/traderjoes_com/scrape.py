@@ -50,7 +50,12 @@ def fetch_data():
                         street_address=addr[0],
                         city=addr[1].split(",")[0].strip(),
                         state=addr[1].split(",")[1].strip().split(" ")[0].strip(),
-                        zip_postal=addr[1].split(",")[1].strip().split(" ")[-1].strip(),
+                        zip_postal=addr[1]
+                        .split(",")[1]
+                        .strip()
+                        .split(" ")[-1]
+                        .strip()
+                        .replace("?", ""),
                         latitude=sp2.select_one(
                             'meta[property="place:location:latitude"]'
                         )["content"],
