@@ -80,11 +80,6 @@ def fetch_data():
         zip = "<MISSING>"
 
         country_code = "US"
-        # delivery_urls = store["delivery_urls"]
-
-        # for url in delivery_urls:
-        #     if ''
-
         store_number = store["id"]
 
         phone = store["phone"]
