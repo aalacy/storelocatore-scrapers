@@ -116,9 +116,11 @@ def fetch_data():
         country_code = "GB"
         store_number = "<MISSING>"
         phone = handle_missing(info["telephone"])
+        hoo_content = soup.find("ul", {"id": "clinic__opens"})
+        if not hoo_content:
+            hoo_content = soup.find("table", {"class": "clinic-times"}).find("tbody")
         hours_of_operation = (
-            soup.find("ul", {"id": "clinic__opens"})
-            .get_text(strip=True, separator=",")
+            hoo_content.get_text(strip=True, separator=",")
             .replace("day,", "day: ")
             .replace(",–,", " - ")
             .strip()

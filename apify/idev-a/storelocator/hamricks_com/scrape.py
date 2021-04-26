@@ -43,12 +43,12 @@ def fetch_data():
     data = []
     for state_link in state_list:
         link = state_link["data-href"]
+        page_url = "https://www.hamricks.com/store-locator"
         res1 = session.get(link)
         soup1 = bs(res1.text, "lxml")
         store_list = soup1.select("div.FaqWrap")
         if len(store_list) == 0:
             store = soup1.select_one("div.DetailInfo")
-            page_url = "<MISSING>"
             location_name = (
                 store.select_one("h3").text.replace("\n", "").replace("\t", "").strip()
             )
@@ -62,7 +62,7 @@ def fetch_data():
             city = detail.split(", ")[0]
             zip = detail.split(", ")[1].split(" ").pop()
             state = " ".join(detail.split(", ")[1].split(" ")[:-1])
-            street_address = " ".join(address).replace("•", "•")
+            street_address = address.pop().replace("•", "•")
             phone = (
                 store.select_one("div.StoreInfo")
                 .text.replace("\n", "")
@@ -102,7 +102,6 @@ def fetch_data():
             )
         else:
             for store in store_list:
-                page_url = "<MISSING>"
                 location_name = (
                     store.select_one("div.FaqTitle").text.replace("\n", "").strip()
                 )
@@ -123,7 +122,7 @@ def fetch_data():
                 city = detail.split(", ")[0]
                 zip = detail.split(", ")[1].split(" ").pop()
                 state = " ".join(detail.split(", ")[1].split(" ")[:-1])
-                street_address = " ".join(address).replace("•", ".")
+                street_address = address.pop().replace("•", ".")
                 country_code = "<MISSING>"
                 store_number = "<MISSING>"
                 location_type = "<MISSING>"

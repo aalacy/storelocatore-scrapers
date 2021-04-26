@@ -84,7 +84,7 @@ def fetch_data():
     stores = locations_resp.text.split("<loc>")
     for index in range(1, len(stores)):
         page_url = stores[index].split("</loc>")[0].strip()
-
+        log.info(page_url)
         store_resp = session.get(
             page_url,
             headers=headers,
@@ -92,74 +92,69 @@ def fetch_data():
         store_sel = lxml.html.fromstring(store_resp.text)
 
         json_temp = store_sel.xpath('//script[@type="application/ld+json"]/text()')
-        if len(json_temp) > 0:
-            json_temp = json_temp[0]
+        for js in json_temp:
+            if "streetAddress" in js:
+                store_json = json.loads(js)
+                location_name = store_json["name"]
+                street_address = store_json["address"]["streetAddress"]
+                city = store_json["address"]["addressLocality"]
+                state = store_json["address"]["addressRegion"]
 
-            store_json = json.loads(json_temp)
+                zip = store_json["address"]["postalCode"]
 
-            location_name = store_json["name"]
-            street_address = store_json["address"]["streetAddress"]
-            city = store_json["address"]["addressLocality"]
-            state = store_json["address"]["addressRegion"]
+                if location_type == "":
+                    location_type = "<MISSING>"
 
-            zip = store_json["address"]["postalCode"]
-
-            if location_type == "":
-                location_type = "<MISSING>"
-
-            latitude = "".join(
-                store_sel.xpath(
-                    '//a[@class="show-map"]' '/span[@class="addr"]/@data-latitude'
+                latitude = "".join(
+                    store_sel.xpath(
+                        '//a[@class="show-map"]' '/span[@class="addr"]/@data-latitude'
+                    )
                 )
-            )
-            longitude = "".join(
-                store_sel.xpath(
-                    '//a[@class="show-map"]' '/span[@class="addr"]/@data-longitude'
+                longitude = "".join(
+                    store_sel.xpath(
+                        '//a[@class="show-map"]' '/span[@class="addr"]/@data-longitude'
+                    )
                 )
-            )
 
-            if us.states.lookup(state):
-                country_code = "US"
-            else:
-                country_code = "CA"
+                if us.states.lookup(state):
+                    country_code = "US"
 
-            if country_code == "":
-                country_code = "<MISSING>"
+                if country_code == "":
+                    country_code = "<MISSING>"
 
-            store_number = "".join(
-                store_sel.xpath('//div[@class="school-info"]' "/@data-school-id")
-            ).strip()
-            phone = "".join(
-                store_sel.xpath('//span[@class="localPhone"]/text()')
-            ).strip()
-            if phone == "":
-                phone = "<MISSING>"
+                store_number = "".join(
+                    store_sel.xpath('//div[@class="school-info"]' "/@data-school-id")
+                ).strip()
+                phone = "".join(
+                    store_sel.xpath('//span[@class="localPhone"]/text()')
+                ).strip()
+                if phone == "":
+                    phone = "<MISSING>"
 
-            hours_of_operation = store_json["openingHours"]
+                hours_of_operation = store_json["openingHours"]
 
-            if hours_of_operation == "":
-                hours_of_operation = "<MISSING>"
+                if hours_of_operation == "":
+                    hours_of_operation = "<MISSING>"
 
-            curr_list = [
-                locator_domain,
-                page_url,
-                location_name,
-                street_address,
-                city,
-                state,
-                zip,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
+                curr_list = [
+                    locator_domain,
+                    page_url,
+                    location_name,
+                    street_address,
+                    city,
+                    state,
+                    zip,
+                    country_code,
+                    store_number,
+                    phone,
+                    location_type,
+                    latitude,
+                    longitude,
+                    hours_of_operation,
+                ]
 
-            loc_list.append(curr_list)
-            # break
-        # break
+                loc_list.append(curr_list)
+
     return loc_list
 
 

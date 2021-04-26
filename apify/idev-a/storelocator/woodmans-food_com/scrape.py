@@ -29,7 +29,7 @@ def fetch_data():
             hours_of_operation = "; ".join(
                 soup1.select_one("div.store-content p")
                 .text.strip()
-                .split("|")[1]
+                .split("|")[0]
                 .split(": ")[1]
                 .replace("++", "")
                 .split(",")

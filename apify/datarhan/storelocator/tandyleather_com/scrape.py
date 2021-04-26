@@ -43,7 +43,7 @@ def fetch_data():
     scraped_items = []
 
     DOMAIN = "tandyleather.com"
-    start_url = "https://cdn.shopify.com/s/files/1/0063/5997/3970/t/47/assets/sca.storelocatordata.json?v=1608582295&formattedAddress=&boundsNorthEast=&boundsSouthWest="
+    start_url = "https://cdn.shopify.com/s/files/1/0063/5997/3970/t/44/assets/sca.storelocatordata.json?v=1613368747&formattedAddress=&boundsNorthEast=&boundsSouthWest="
 
     response = session.get(start_url)
     data = json.loads(response.text)

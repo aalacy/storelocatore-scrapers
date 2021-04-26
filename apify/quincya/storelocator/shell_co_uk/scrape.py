@@ -42,7 +42,6 @@ def fetch_data():
 
     session = SgRequests()
 
-    data = []
     found_poi = []
 
     locator_domain = "shell.co.uk"
@@ -99,21 +98,22 @@ def fetch_data():
 
             # Store data
             yield [
-                    locator_domain,
-                    link,
-                    location_name,
-                    street_address,
-                    city,
-                    state,
-                    zip_code,
-                    country_code,
-                    store_number,
-                    phone,
-                    location_type,
-                    latitude,
-                    longitude,
-                    hours_of_operation,
-                ]
+                locator_domain,
+                link,
+                location_name,
+                street_address,
+                city,
+                state,
+                zip_code,
+                country_code,
+                store_number,
+                phone,
+                location_type,
+                latitude,
+                longitude,
+                hours_of_operation,
+            ]
+
 
 def scrape():
     data = fetch_data()

@@ -82,9 +82,14 @@ def fetch_data():
                 zc = addinfo.rsplit(" ", 1)[1]
             if '<a href="tel:' in line2:
                 phone = line2.split('<a href="tel:')[1].split('"')[0]
-            if "day:" in line2:
+            if "AM -" in line2 or "PM - " in line2:
                 hours = (
-                    line2.split("</p><p>")[1].split("<br/><")[0].replace("<br/>", "; ")
+                    line2.split("<br/><h4>")[0]
+                    .replace("<p>", "")
+                    .replace("</p>", "")
+                    .replace("<br/>", "; ")
+                    .strip()
+                    .replace("\t", "")
                 )
         if "san-antonio-riverwalk" in loc:
             name = "San Antonio Riverwalk"
@@ -96,6 +101,9 @@ def fetch_data():
             city = "Oklahoma City"
             state = "OK"
             zc = "73159"
+        if "SALTGRASS BAR" in hours:
+            hours = hours.split("SALTGRASS BAR")[0]
+        hours = hours.replace("<br>", "; ")
         yield [
             website,
             loc,

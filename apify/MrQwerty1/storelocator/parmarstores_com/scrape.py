@@ -63,6 +63,7 @@ def get_data(_id):
     )
     city = j.get("sl_city") or "<MISSING>"
     state = j.get("sl_state") or "<MISSING>"
+    state = state[:2]
     postal = j.get("sl_zip") or "<MISSING>"
     country_code = j.get("sl_country") or "US"
     if country_code == "USA" or country_code == "United States":

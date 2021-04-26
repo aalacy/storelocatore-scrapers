@@ -1,6 +1,4 @@
-selenium==3.141.0
-bs4==0.0.1
-usaddress
-requests==2.7.0
-sgrequests
-sglogging
+sgrequests==0.1.8
+sglogging==0.0.4
+beautifulsoup4==4.7.1
+lxml==4.6.2

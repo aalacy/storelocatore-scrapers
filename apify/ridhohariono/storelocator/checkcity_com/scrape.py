@@ -1,4 +1,5 @@
 import csv
+import re
 import usaddress
 from bs4 import BeautifulSoup as bs
 from sgrequests import SgRequests
@@ -76,9 +77,13 @@ def fetch_link(link_url, tag, div_class, tag_link, tag_p):
 
 def fetch_store_urls():
     store_urls = []
-    state_links = fetch_link(
-        LOCATION_URL, "table", {"class": "servicesTable"}, "a", False
+    soup = pull_content(LOCATION_URL)
+    menu_location = (
+        soup.find("ul", {"id": "menu-main_menu-1"})
+        .find("a", {"href": re.compile(r"\/locations\/")})
+        .find_next("ul")
     )
+    state_links = [x["href"] for x in menu_location.find_all("a")]
     for state_link in state_links:
         store_links = fetch_link(
             state_link, "table", {"class": "locationlink"}, "a", True
@@ -86,7 +91,8 @@ def fetch_store_urls():
         for store_link in store_links:
             if state_link not in store_link:
                 store_link = state_link + store_link
-            store_urls.append(store_link)
+            if "sandy-2" not in store_link:
+                store_urls.append(store_link)
     log.info("Found {} URL ".format(len(store_urls)))
     return store_urls
 

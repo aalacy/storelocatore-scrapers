@@ -95,6 +95,8 @@ def fetch_data():
             locator_domain = website
 
             location_type = "<MISSING>"
+            if store["type"] == "3":
+                location_type = "ATM"
 
             street_address = store_json["adr"]
             city = store_json["ville"]

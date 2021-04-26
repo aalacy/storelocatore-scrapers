@@ -43,7 +43,11 @@ def get_urls():
     text = "".join(
         tree.xpath("//script[contains(text(), 'carinos.locations.list')]/text()")
     )
-    text = text.split("carinos.locations.list = ")[1].split("carinos.")[0].strip()[:-1]
+    text = (
+        text.split("carinos.locations.list = ")[1]
+        .split("carinos.locations")[0]
+        .strip()[:-1]
+    )
     js = json.loads(text)
 
     for j in js:

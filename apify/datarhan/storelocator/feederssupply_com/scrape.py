@@ -3,6 +3,7 @@ import json
 from lxml import etree
 
 from sgrequests import SgRequests
+from sgscrape.sgpostal import parse_address_intl
 
 
 def write_output(data):
@@ -65,91 +66,40 @@ def fetch_data():
             "https://www.feederssupply.com/"
             + store_url.split("-of-")[-1].split("-loc")[0]
         )
+        base_url_2 = "https://www.feederssupply.com/" + store_url.split("-of-")[-1]
 
-        final_list = [store_url, base_url]
+        final_list = [store_url, base_url, base_url_2]
         for store_url in final_list:
             loc_response = session.get(store_url)
             if loc_response.status_code != 200:
                 continue
             loc_dom = etree.HTML(loc_response.text)
-            location_name = loc_dom.xpath('//div[@data-packed="true"]/h2/span/text()')
-            if not location_name:
-                location_name = loc_dom.xpath(
-                    "//div[@data-packed]/p[1]//span[@style='font-family:futura-lt-w01-book,sans-serif;']/text()"
-                )
-            location_name = location_name[0] if location_name else "<MISSING>"
-            street_address = loc_dom.xpath("//div[@data-packed]/p[3]/text()")
-            if not street_address:
-                street_address = loc_dom.xpath("//div[@data-packed]/p[1]/span/text()")
-            if not street_address:
-                street_address = loc_dom.xpath(
-                    "//div[@data-packed]/p[1]/span/span/span/text()"
-                )
-            if not street_address:
-                street_address = loc_dom.xpath("//div[@data-packed]/p[1]/span/text()")
-            if street_address and "|" in street_address[0]:
-                street_address = loc_dom.xpath(
-                    "//div[@data-packed]/p[1]/span/span/text()"
-                )
-            if not street_address:
-                street_address = loc_dom.xpath(
-                    "//div[@data-packed]/p[3]/span/span/span/text()"
-                )
-            street_address = street_address[0] if street_address else "<MISSING>"
-            alt = loc_dom.xpath("//div[@data-packed]/p[3]/text()")
-            city = loc_dom.xpath("//div[@data-packed]/p[4]/text()")
-            if not city:
-                city = loc_dom.xpath("//div[@data-packed]/p[2]/span/text()")
-            if not city:
-                city = loc_dom.xpath("//div[@data-packed]/p[2]/text()")
-            if city and not city[0].strip():
-                city = loc_dom.xpath("//div[@data-packed]/p[3]/text()")[1:]
-            if not city:
-                city = loc_dom.xpath("//div[@data-packed]/p[2]/span/span/span/text()")
-            if "|" in city[0]:
-                city = loc_dom.xpath("//div[@data-packed]/p[2]/span/span/text()")
-            city = (
-                city[0].split(", ")[0].strip()
-                if city
-                else alt[-1].split(", ")[0].strip()
+            raw_data = loc_dom.xpath(
+                '//div[@data-testid="mesh-container-content"]/div[1]//text()'
             )
-            state = loc_dom.xpath("//div[@data-packed]/p[4]/text()")
-            if not state:
-                state = loc_dom.xpath("//div[@data-packed]/p[2]/span/text()")
-            if not state:
-                state = loc_dom.xpath("//div[@data-packed]/p[2]/text()")
-            if state and not state[0].strip():
-                state = loc_dom.xpath("//div[@data-packed]/p[3]/text()")[1:]
-            if not state:
-                state = loc_dom.xpath("//div[@data-packed]/p[2]/span/span/span/text()")
-            if "|" in state[0]:
-                state = loc_dom.xpath("//div[@data-packed]/p[2]/span/span/text()")
-            state = (
-                state[0].split(", ")[-1].split()[0]
-                if state
-                else alt[-1].split(", ")[-1].split()[0]
-            )
-            zip_code = loc_dom.xpath("//div[@data-packed]/p[4]/text()")
-            if not zip_code:
-                zip_code = loc_dom.xpath("//div[@data-packed]/p[2]/span/text()")
-            if not zip_code:
-                zip_code = loc_dom.xpath("//div[@data-packed]/p[2]/text()")
-            if zip_code and not zip_code[0].strip():
-                zip_code = loc_dom.xpath("//div[@data-packed]/p[3]/text()")[1:]
-            if not zip_code:
-                zip_code = loc_dom.xpath(
-                    "//div[@data-packed]/p[2]/span/span/span/text()"
+            raw_data = [e.strip() for e in raw_data if e.strip()]
+            if len(raw_data) < 3:
+                raw_data = loc_dom.xpath(
+                    '//div[@data-testid="mesh-container-content"]/div[3]//text()'
                 )
-            if "|" in zip_code[0]:
-                zip_code = loc_dom.xpath("//div[@data-packed]/p[2]/span/span/text()")
-            zip_code = (
-                zip_code[0].split(", ")[-1].split()[-1]
-                if zip_code
-                else alt[-1].split(", ")[-1].split()[-1]
-            )
+                raw_data = [e.strip() for e in raw_data if e.strip()]
+            if not raw_data:
+                continue
+            addr = parse_address_intl(" ".join(raw_data[1:-1]))
+
+            location_name = raw_data[0]
+            street_address = addr.street_address_1
+            if addr.street_address_2:
+                street_address += " " + addr.street_address_2
+            city = addr.city
+            city = city if city else "<MISSING>"
+            state = addr.state
+            state = state if state else "<MISSING>"
+            zip_code = addr.postcode
+            zip_code = zip_code if zip_code else "<MISSING>"
             country_code = "<MISSING>"
             store_number = "<MISSING>"
-            phone = loc_dom.xpath('//a[@data-type="phone"]/@data-content')
+            phone = loc_dom.xpath('//a[contains(@href, "tel")]/text()')
             phone = phone[0] if phone else "<MISSING>"
             location_type = "<MISSING>"
             latitude = "<MISSING>"
@@ -157,10 +107,18 @@ def fetch_data():
             hours_of_operation = loc_dom.xpath(
                 '//div[contains(@id,"comp")]/div[@data-packed="true"][2]/p[2]//text()'
             )
+            if not hours_of_operation:
+                hours_of_operation = loc_dom.xpath(
+                    '//*[contains(text(), "00pm")][1]/text()'
+                )
             hours_of_operation = [elem.strip() for elem in hours_of_operation]
             hours_of_operation = (
-                " ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
+                " ".join(hours_of_operation).replace("  ", " ")
+                if hours_of_operation
+                else "<MISSING>"
             )
+            if "pm Mon." in hours_of_operation:
+                hours_of_operation = hours_of_operation.split("pm Mon.")[0] + "pm"
 
             item = [
                 DOMAIN,
@@ -178,11 +136,28 @@ def fetch_data():
                 longitude,
                 hours_of_operation,
             ]
-            check = location_name.split(",")[0].replace("- ", "")
+            check = f'{location_name.split(",")[0].replace("- ", "")} {street_address}'
             if check not in scraped_items:
                 scraped_items.append(check)
                 items.append(item)
 
+    ex_item = [
+        DOMAIN,
+        store_url,
+        "Feeders Supply Somerset, KY",
+        "1250 S Highway 27",
+        "Somerset",
+        "KY",
+        "42501",
+        "<MISSING>",
+        "<MISSING>",
+        "(606) 219-4793",
+        "<MISSING>",
+        "<MISSING>",
+        "<MISSING>",
+        "Mon. – Sun. 9:00am – 9:00pm",
+    ]
+    items.append(ex_item)
     return items
 
 

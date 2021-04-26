@@ -84,6 +84,7 @@ def fetch_data():
         ).strip()
         if location_name == "":
             location_name = "<MISSING>"
+            continue
 
         sections = store_sel.xpath('//dl[@class="store_info_list"]')
         for sec in sections:

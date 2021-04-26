@@ -63,14 +63,17 @@ def handle_missing(field):
 def fetch_store_urls():
     log.info("Fetching store URL")
     soup = pull_content(LOCATION_URL)
-    store_urls = [
-        val["href"]
-        for val in soup.find_all(
-            "a",
-            href=re.compile(r"https\:\/\/barcelonawinebar.com\/location\/\D+"),
-            title=True,
-        )
-    ]
+    store_urls = []
+    for val in soup.find_all(
+        "a",
+        href=re.compile(r"https\:\/\/barcelonawinebar.com\/location\/[a-zA-Z0-9_.-]"),
+        title=True,
+    ):
+        content = val.find("div", {"class": "info-wrap-two"})
+        city = content.find("h3").text.strip()
+        state = val.find_parent("div", {"class": "state"})["id"]
+        store_dict = {"link": val["href"], "city": city, "state": state}
+        store_urls.append(store_dict)
     log.info("Found {} URL ".format(len(store_urls)))
     return store_urls
 
@@ -79,15 +82,16 @@ def fetch_data():
     log.info("Fetching store_locator data")
     store_urls = fetch_store_urls()
     locations = []
-    for page_url in store_urls:
+    for row in store_urls:
+        page_url = row["link"]
         soup = pull_content(page_url)
         locator_domain = DOMAIN
         location_name = soup.find("meta", {"property": "og:title"})["content"]
         address = soup.find("address").get_text(strip=True, separator=",").split(",")
         parse_addr = usaddress.tag(", ".join(address))[0]
         street_address = address[0]
-        city = parse_addr["PlaceName"] if "PlaceName" in parse_addr else "<MISSING>"
-        state = parse_addr["StateName"] if "StateName" in parse_addr else "<MISSING>"
+        city = parse_addr["PlaceName"] if "PlaceName" in parse_addr else row["city"]
+        state = parse_addr["StateName"] if "StateName" in parse_addr else row["state"]
         zip_code = parse_addr["ZipCode"] if "ZipCode" in parse_addr else "<MISSING>"
         country_code = "US"
         store_number = "<MISSING>"

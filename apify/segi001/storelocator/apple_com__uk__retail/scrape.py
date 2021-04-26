@@ -49,6 +49,11 @@ def fetch_data():
 
     result = []
 
+    tA = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
+
+    def checkTime(t):
+        return tA[t.index("Today")]
+
     for el in stores["stores"]:
         name = el["address"]["name"]
         city = el["address"]["city"]
@@ -61,40 +66,41 @@ def fetch_data():
             sgrequests.SgRequests().get(locator_domain + "/" + el["slug"]).text,
             features="lxml",
         )
-        addr = s.findAll("p", {"class": "hcard-address"})[0].text
-        zp = (
-            s.findAll("p", {"class": "hcard-address"})[-2]
-            .text.replace(city, "")
-            .replace(",", "")
-        )
-        phone = s.findAll("p", {"class": "hcard-address"})[-1].text
+        addr = s.find("address").get_text(separator="\n").strip().split("\n")
+        addr.remove(",")
+        addr.remove(" ")
+        street = addr[0]
+        zp = addr[-2]
+        phone = addr[-1]
         hours = missingString
         timeArr = []
         loc_type = missingString
-        if (
-            "We’re temporarily closed."
-            in s.find(
-                "div", {"class": "special-message typography-intro-elevated"}
-            ).text
-        ):
-            hours = missingString
-            loc_type = "Temporarily closed"
-        else:
-            for e in s.findAll("tr", {"class": "store-hours-line"}):
+        dayTimes = []
+        for e in s.findAll("tr"):
+            if not e.find("td", {"class": "store-open-hours-day"}):
+                pass
+            else:
+                dayTimes.append(e.find("td", {"class": "store-open-hours-day"}).text)
                 timeArr.append(
                     "{} : {}".format(
-                        e.find("td", {"class": "store-hours-day"}).text,
-                        e.find("td", {"class": "store-hours-time"}).text,
+                        e.find("td", {"class": "store-open-hours-day"}).text,
+                        e.find("td", {"class": "store-open-hours-span"})
+                        .text.strip()
+                        .replace("*", "")
+                        .replace("–", "-")
+                        .replace(u"\xa0", u""),
                     )
                 )
-            hours = ", ".join(timeArr)
-
+        hours = ", ".join(timeArr)
+        if hours == "":
+            hours = missingString
+        hours = hours.replace("Today", checkTime(dayTimes))
         result.append(
             [
                 locator_domain,
                 locator_domain + "/" + el["slug"],
                 name,
-                addr,
+                street,
                 city,
                 country,
                 zp,

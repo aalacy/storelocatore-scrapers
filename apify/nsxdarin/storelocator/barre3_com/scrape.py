@@ -1,6 +1,7 @@
 import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
+import json
 
 session = SgRequests()
 headers = {
@@ -38,65 +39,75 @@ def write_output(data):
 
 
 def fetch_data():
-    locs = []
-    url = "https://barre3.com/studio-locations"
+    url = "https://storerocket.global.ssl.fastly.net/api/user/jN49m3n4Gy/locations"
     r = session.get(url, headers=headers)
     website = "barre3.com"
     typ = "<MISSING>"
     hours = "<MISSING>"
     country = "US"
-    Found = True
     logger.info("Pulling Stores")
-    for line in r.iter_lines():
-        line = str(line.decode("utf-8"))
-        if "Locations in Philippines</h2>" in line:
-            Found = False
-        if "<a href='/studio-locations/" in line and Found:
-            locs.append(
-                "https://online.barre3.com/api/multiparts/studio-detail/"
-                + line.split("<a href='/studio-locations/")[1].split("'")[0]
-            )
-    for loc in locs:
-        logger.info(loc)
-        lurl = (
-            "https://online.barre3.com/studio-locations/"
-            + loc.split("studio-detail/")[1]
-        )
-        r2 = session.get(loc, headers=headers)
-        for line2 in r2.iter_lines():
-            line2 = str(line2.decode("utf-8"))
-            if '"id":' in line2:
-                store = line2.split('"id":')[1].split(",")[0]
-                name = line2.split('"name":"')[1].split('"')[0]
-                add = line2.split(',"address1":"')[1].split('"')[0]
-                try:
-                    add = add + " " + line2.split('address2":"')[1].split('"')[0]
-                except:
-                    pass
-                city = line2.split(',"city":"')[1].split('"')[0]
-                state = line2.split(',"state":"')[1].split('"')[0]
-                zc = line2.split(',"postalCode":"')[1].split('"')[0]
-                lat = line2.split('"unformattedText7":"')[1].split('"')[0]
-                lng = line2.split('"unformattedText8":"')[1].split('"')[0]
-                phone = line2.split(',"phone":"')[1].split('"')[0].encode("utf-8")
-        if add == "":
-            add = "<MISSING>"
-        yield [
-            website,
-            lurl,
-            name,
-            add,
-            city,
-            state,
-            zc,
-            country,
-            store,
-            phone,
-            typ,
-            lat,
-            lng,
-            hours,
-        ]
+    for item in json.loads(r.content)["results"]["locations"]:
+        store = item["id"]
+        loc = "https://barre3.com/studio-locations/" + item["slug"]
+        add = item["address_line_1"]
+        try:
+            add = add + " " + item["address_line_2"]
+        except:
+            pass
+        city = item["city"]
+        state = item["state"]
+        zc = item["postcode"]
+        phone = item["phone"]
+        lat = item["lat"]
+        lng = item["lng"]
+        name = item["name"]
+        if "939-2510" in str(phone):
+            phone = "480-939-2510"
+        if "811.2828" in str(phone):
+            phone = "811.2828"
+        if phone is None:
+            phone = "<MISSING>"
+        if "R3 Level," in str(add):
+            add = "R3 Level, Power Plant Mall, Rockwell Center"
+        if state != "":
+            if zc != "":
+                if add == "":
+                    add = "<MISSING>"
+                if "westfield" in loc:
+                    name = name + " - Coming Soon"
+                if "Asia" not in str(item["timezone"]):
+                    if " (" in zc:
+                        zc = zc.split(" (")[0]
+                    if " " in zc:
+                        country = "CA"
+                    else:
+                        country = "US"
+                    if add == "" or add is None:
+                        add = "<MISSING>"
+                    if phone == "NULL" or "-" not in phone:
+                        phone = "<MISSING>"
+                    if "locations/huntsville" in loc:
+                        phone = "5032068396"
+                    if "sioux-falls" in loc:
+                        phone = "605.271.6908"
+                    if "south-tampa" in loc:
+                        phone = "5032068396"
+                    yield [
+                        website,
+                        loc,
+                        name,
+                        add,
+                        city,
+                        state,
+                        zc,
+                        country,
+                        store,
+                        phone,
+                        typ,
+                        lat,
+                        lng,
+                        hours,
+                    ]
 
 
 def scrape():

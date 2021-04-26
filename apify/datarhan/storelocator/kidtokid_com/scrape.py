@@ -75,6 +75,13 @@ def fetch_data():
             hours_of_operation = (
                 poi["hours_of_operation"].replace("\n", " ").replace("\t", " ")
             )
+        hours_of_operation = hours_of_operation.split("for high")[0].strip()
+        hours_of_operation = (
+            hours_of_operation.split("or anytime")[0].strip().split("Buying")[0].strip()
+        )
+        hours_of_operation = hours_of_operation.split("Face masks")[0].strip()
+        if hours_of_operation.endswith(","):
+            hours_of_operation = hours_of_operation[:-1]
         if not hours_of_operation:
             location_type = "coming soon"
             hours_of_operation = "<MISSING>"

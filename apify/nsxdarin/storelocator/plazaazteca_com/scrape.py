@@ -126,6 +126,12 @@ def fetch_data():
                     state = "Connecticut"
                     zc = "06111"
                     phone = "(860) 436-9708"
+                elif "/york" in loc and "/yorktown" not in loc:
+                    add = "2180 York Crossing Dr"
+                    city = "York"
+                    state = "Pennsylvania"
+                    zc = "17408"
+                    phone = "(717) 650-6200"
                 else:
                     add = line2.split(
                         '<div class="elementor-text-editor elementor-clearfix lazyload"><p'

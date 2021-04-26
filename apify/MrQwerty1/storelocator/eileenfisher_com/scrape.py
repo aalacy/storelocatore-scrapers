@@ -42,7 +42,9 @@ def fetch_data():
 
     r = session.get(api_url)
     js_init = r.json()["maplist"]
-    js = json.loads("[" + js_init.split(">")[1].split("<")[0][:-1] + "]")
+    js = json.loads(
+        "[" + ">".join(js_init.split(">")[1:]).split("</div>")[0][:-1] + "]"
+    )
 
     for j in js:
         locator_domain = url

@@ -48,10 +48,12 @@ def fetch_data():
     for line in r.iter_lines():
         line = str(line.decode("utf-8"))
         if 'title="Daycare in ' in line:
-            locs.append(
+            lurl = (
                 "https://www.childrenofamerica.com/"
                 + line.split('href="')[1].split('"')[0]
             )
+            if lurl not in locs:
+                locs.append(lurl)
     for loc in locs:
         logger.info(loc)
         name = ""

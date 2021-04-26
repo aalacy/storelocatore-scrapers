@@ -3,7 +3,6 @@ import csv
 from sgrequests import SgRequests
 from sglogging import sglog
 import json
-from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 import lxml.html
 
 website = "mainevent.com"
@@ -62,113 +61,133 @@ def write_output(data):
 def fetch_data():
     # Your scraper here
 
-    search = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA], max_radius_miles=200
-    )
+    search_url = "https://www.mainevent.com/site-map/"
+    stores_req = session.get(search_url, headers=headers)
+    stores_sel = lxml.html.fromstring(stores_req.text)
+    stores = stores_sel.xpath('//div[@class="w-64 lg:text-center"]/a/@href')
+    for store_url in stores:
+        page_url = "https://www.mainevent.com" + store_url
+        log.info(page_url)
+        store_req = session.get(page_url, headers=headers)
+        store_sel = lxml.html.fromstring(store_req.text)
+        json_text = "".join(
+            store_sel.xpath('//script[@type="application/ld+json"]/text()')
+        ).strip()
+        if len(json_text) > 0:
+            store_json = json.loads(json_text)
 
-    done_links = []
-    for zip in search:
-        log.info(f"{(zip)} | remaining: {search.items_remaining()}")
+            locator_domain = website
+            location_name = store_json["name"]
+            if location_name == "":
+                location_name = "<MISSING>"
 
-        search_url = "https://www.mainevent.com/api/locations?zipcode=" + zip
-        stores_req = session.get(search_url, headers=headers)
-        if "results" in stores_req.text:
-            stores = json.loads(stores_req.text)["results"]
-            for store in stores:
-                page_url = store["websiteUrl"]
-                if page_url not in done_links:
-                    done_links.append(page_url)
-                    log.info(page_url)
-                    store_req = session.get(page_url, headers=headers)
-                    store_sel = lxml.html.fromstring(store_req.text)
-                    json_text = "".join(
-                        store_sel.xpath('//script[@type="application/ld+json"]/text()')
-                    ).strip()
-                    if len(json_text) > 0:
-                        store_json = json.loads(json_text)
+            street_address = store_json["address"]["streetAddress"]
+            city = store_json["address"]["addressLocality"]
+            state = store_json["address"]["addressRegion"]
+            zip = store_json["address"]["postalCode"]
+            country_code = store_json["address"]["addressCountry"]
 
-                        locator_domain = website
-                        location_name = store_json["name"]
-                        if location_name == "":
-                            location_name = "<MISSING>"
+            if street_address == "" or street_address is None:
+                street_address = "<MISSING>"
 
-                        street_address = store_json["address"]["streetAddress"]
-                        city = store_json["address"]["addressLocality"]
-                        state = store_json["address"]["addressRegion"]
-                        zip = store_json["address"]["postalCode"]
-                        country_code = store_json["address"]["addressCountry"]
+            if city == "" or city is None:
+                city = "<MISSING>"
 
-                        if street_address == "" or street_address is None:
-                            street_address = "<MISSING>"
+            if state == "" or state is None:
+                state = "<MISSING>"
 
-                        if city == "" or city is None:
-                            city = "<MISSING>"
+            if zip == "" or zip is None:
+                zip = "<MISSING>"
 
-                        if state == "" or state is None:
-                            state = "<MISSING>"
+            if country_code == "" or country_code is None:
+                country_code = "<MISSING>"
 
-                        if zip == "" or zip is None:
-                            zip = "<MISSING>"
+            store_number = ""
+            try:
+                store_number = (
+                    store_req.text.split('"qubicaCenterId":"')[1]
+                    .strip()
+                    .split('"')[0]
+                    .strip()
+                )
+            except:
+                pass
 
-                        if country_code == "" or country_code is None:
-                            country_code = "<MISSING>"
+            phone = store_json["telephone"]
 
-                        store_number = store["centerId"]
-                        phone = store_json["telephone"]
+            location_type = "<MISSING>"
 
-                        location_type = "<MISSING>"
+            latitude = ""
+            try:
+                latitude = (
+                    store_req.text.split('"latitude":')[1]
+                    .strip()
+                    .split('"')[0]
+                    .strip()
+                    .replace(",", "")
+                    .strip()
+                )
+            except:
+                pass
 
-                        latitude = store["latitude"]
-                        longitude = store["longitude"]
+            longitude = ""
+            try:
+                longitude = (
+                    store_req.text.split('"longitude":')[1]
+                    .strip()
+                    .split('"')[0]
+                    .strip()
+                    .replace(",", "")
+                    .strip()
+                )
+            except:
+                pass
 
-                        search.found_location_at(latitude, longitude)
+            if latitude == "" or latitude is None:
+                latitude = "<MISSING>"
+            if longitude == "" or longitude is None:
+                longitude = "<MISSING>"
 
-                        if latitude == "" or latitude is None:
-                            latitude = "<MISSING>"
-                        if longitude == "" or longitude is None:
-                            longitude = "<MISSING>"
+            hours_of_operation = ""
+            hours = store_json["openingHoursSpecification"]
+            hours_list = []
+            for hour in hours:
+                time = hour["opens"] + "-" + hour["closes"]
+                if isinstance(hour["dayOfWeek"], str):
+                    day = hour["dayOfWeek"]
+                    hours_list.append(day + ":" + time)
+                else:
+                    days = hour["dayOfWeek"]
+                    for day in days:
+                        hours_list.append(day + ":" + time)
 
-                        hours_of_operation = ""
-                        hours = store_json["openingHoursSpecification"]
-                        hours_list = []
-                        for hour in hours:
-                            time = hour["opens"] + "-" + hour["closes"]
-                            if isinstance(hour["dayOfWeek"], str):
-                                day = hour["dayOfWeek"]
-                                hours_list.append(day + ":" + time)
-                            else:
-                                days = hour["dayOfWeek"]
-                                for day in days:
-                                    hours_list.append(day + ":" + time)
+            hours_of_operation = "; ".join(hours_list).strip()
+            if hours_of_operation == "":
+                hours_of_operation = "<MISSING>"
 
-                        hours_of_operation = "; ".join(hours_list).strip()
-                        if hours_of_operation == "":
-                            hours_of_operation = "<MISSING>"
+            if store_number == "" or store_number is None:
+                store_number = "<MISSING>"
 
-                        if store_number == "" or store_number is None:
-                            store_number = "<MISSING>"
+            if phone == "" or phone is None:
+                phone = "<MISSING>"
 
-                        if phone == "" or phone is None:
-                            phone = "<MISSING>"
-
-                        curr_list = [
-                            locator_domain,
-                            page_url,
-                            location_name,
-                            street_address,
-                            city,
-                            state,
-                            zip,
-                            country_code,
-                            store_number,
-                            phone,
-                            location_type,
-                            latitude,
-                            longitude,
-                            hours_of_operation,
-                        ]
-                        yield curr_list
-
+            curr_list = [
+                locator_domain,
+                page_url,
+                location_name,
+                street_address,
+                city,
+                state,
+                zip,
+                country_code,
+                store_number,
+                phone,
+                location_type,
+                latitude,
+                longitude,
+                hours_of_operation,
+            ]
+            yield curr_list
 
 
 def scrape():

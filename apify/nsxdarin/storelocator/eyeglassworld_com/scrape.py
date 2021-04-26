@@ -87,22 +87,26 @@ def fetch_data():
                 phone = "<MISSING>"
             if hours == "":
                 hours = "<MISSING>"
-            yield [
-                website,
-                loc,
-                name,
-                add,
-                city,
-                state,
-                zc,
-                country,
-                store,
-                phone,
-                typ,
-                lat,
-                lng,
-                hours,
-            ]
+            add = (
+                add.replace("Suite", " Suite").replace("  ", " ").replace("&amp;", "&")
+            )
+            if add != "":
+                yield [
+                    website,
+                    loc,
+                    name,
+                    add,
+                    city,
+                    state,
+                    zc,
+                    country,
+                    store,
+                    phone,
+                    typ,
+                    lat,
+                    lng,
+                    hours,
+                ]
         except:
             pass
 

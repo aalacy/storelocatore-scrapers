@@ -138,7 +138,7 @@ def fetch_data():
                         city,
                         state,
                         pcode,
-                        "US",
+                        "CA",
                         storeid,
                         phone,
                         "<MISSING>",

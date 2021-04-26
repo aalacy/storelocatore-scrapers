@@ -56,17 +56,17 @@ def fetch_data():
         req = session.get(link, headers=headers)
         base = BeautifulSoup(req.text, "lxml")
 
-        script = base.find(class_="region region-content").script.text
+        script = base.find(class_="region region-content").script.contents[0]
         store = json.loads(script)
 
         location_name = store["name"]
-        if "BAHA" in location_name.upper() or "cancun" in location_name.lower():
+        country_code = store["address"]["addressCountry"]
+        if country_code not in ["US", "CA"]:
             continue
         street_address = store["address"]["streetAddress"]
         city = store["address"]["addressLocality"]
         state = store["address"]["addressRegion"]
         zip_code = store["address"]["postalCode"]
-        country_code = store["address"]["addressCountry"]
 
         store_number = "<MISSING>"
         location_type = "<MISSING>"

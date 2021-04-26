@@ -68,14 +68,15 @@ def fetch_data():
         lines = r2.iter_lines()
         for line2 in lines:
             line2 = str(line2.decode("utf-8"))
-            if "Phone Number</h1>" in line2:
-                next(lines)
-                next(lines)
-                next(lines)
-                next(lines)
-                g = next(lines)
-                g = str(g.decode("utf-8"))
-                phone = g.split('">')[1].split("<")[0]
+            if (
+                '<div class="elementor-text-editor elementor-clearfix">' in line2
+                and phone == ""
+            ):
+                ph = line2.split('">')[1].split("<")[0]
+                if ph.count("-") == 2:
+                    phone = ph
+                if ")" in ph and "(" in ph:
+                    phone = ph
             if "<title>" in line2:
                 name = line2.split("<title>")[1].split(" - ")[0]
             if '<div class="elementor-custom-embed"><iframe frameborder="0"' in line2:
@@ -135,6 +136,13 @@ def fetch_data():
             if state == "Linda":
                 state = "CA"
                 city = "Yorba Linda"
+            if phone == "":
+                phone = "<MISSING>"
+            if "1717 East Vista" in rawadd:
+                add = "1717 East Vista Chino"
+                city = "Palm Springs"
+            if ", L A" in city:
+                city = city.split(", L A")[0].strip()
             yield [
                 website,
                 loc,

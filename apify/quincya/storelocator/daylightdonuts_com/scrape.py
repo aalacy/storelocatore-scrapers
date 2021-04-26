@@ -1,10 +1,12 @@
 import csv
+import json
+import time
 
 from bs4 import BeautifulSoup
 
 from sglogging import sglog
 
-from sgrequests import SgRequests
+from sgselenium import SgChrome
 
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 
@@ -43,25 +45,16 @@ def write_output(data):
 
 def fetch_data():
 
-    session = SgRequests()
-    headers = {
-        "Accept": "*/*",
-        "Accept-Encoding": "gzip, deflate",
-        "Accept-Language": "en-US,en;q=0.9,it;q=0.8",
-        "Connection": "keep-alive",
-        "Host": "www.daylightdonuts.com",
-        "Referer": "http://www.daylightdonuts.com/find-your-daylight/",
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36",
-        "X-Requested-With": "XMLHttpRequest",
-    }
+    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
+
+    driver = SgChrome(user_agent=user_agent).driver()
 
     locator_domain = "daylightdonuts.com"
-    url = "http://www.daylightdonuts.com/wp-admin/admin-ajax.php"
 
     found_poi = []
 
     max_results = 100
-    max_distance = 200
+    max_distance = 100
 
     search = DynamicGeoSearch(
         country_codes=[SearchableCountries.USA],
@@ -75,25 +68,22 @@ def fetch_data():
             % (lat, lng, search.items_remaining())
         )
 
-        query_params = {
-            "action": "store_search",
-            "lat": lat,
-            "lng": lng,
-            "max_results": max_results,
-            "search_radius": max_distance,
-            "autoload": "1",
-            "_": "1564199818851",
-        }
+        url = (
+            "http://www.daylightdonuts.com/wp-admin/admin-ajax.php?action=store_search&lat=%s&lng=%s&max_results=%s&search_radius=%s&_=1564199818851"
+            % (lat, lng, max_results, max_distance)
+        )
+
+        driver.get(url)
+        time.sleep(1)
+        base = BeautifulSoup(driver.page_source, "lxml")
 
         try:
-            store_data = session.get(url, params=query_params, headers=headers).json()
+            store_data = json.loads(base.text)
         except:
             continue
 
         for store in store_data:
-            page_url = store["url"]
-            if not page_url:
-                page_url = "<MISSING>"
+            page_url = "<MISSING>"
 
             location_name = store["store"].replace("#038;", "")
             street_address = (store["address"] + " " + store["address2"]).strip()
@@ -124,21 +114,22 @@ def fetch_data():
             search.found_location_at(latitude, longitude)
 
             yield [
-                    locator_domain,
-                    page_url,
-                    location_name,
-                    street_address,
-                    city,
-                    state,
-                    zip_code,
-                    country_code,
-                    store_number,
-                    phone,
-                    location_type,
-                    latitude,
-                    longitude,
-                    hours_of_operation,
-                ]
+                locator_domain,
+                page_url,
+                location_name,
+                street_address,
+                city,
+                state,
+                zip_code,
+                country_code,
+                store_number,
+                phone,
+                location_type,
+                latitude,
+                longitude,
+                hours_of_operation,
+            ]
+    driver.close()
 
 
 def scrape():

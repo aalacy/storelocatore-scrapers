@@ -52,8 +52,6 @@ def fetch_data():
     endpoint("London", 4, data)
     endpoint("Paris", 2, data)
     endpoint("Dublin", 1, data)
-    endpoint("UK", 1, data)
-    endpoint("France", 2, data)
     endpoint("all", 24, data)
 
     result = []
