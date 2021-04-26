@@ -105,7 +105,6 @@ df = pd.DataFrame(
         "hours_of_operation": hours_of_operations,
         "country_code": country_codes,
         "location_type": location_types,
-        "search_code": search_codes,
     }
 )
 
