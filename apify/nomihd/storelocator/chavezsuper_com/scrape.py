@@ -70,8 +70,6 @@ def fetch_data():
         )
         hours_info = list(filter(str, [x.strip() for x in hours_info]))
 
-        hour_list = []
-
         hours_of_operation = ": ".join(hours_info)
 
         lat_lng_href = "".join(store.xpath('./a[contains(@href,"maps")]/@href'))
