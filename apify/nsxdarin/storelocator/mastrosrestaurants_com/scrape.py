@@ -86,9 +86,15 @@ def fetch_data():
             if 'gmaps-lat="' in line2:
                 lat = line2.split('gmaps-lat="')[1].split('"')[0]
                 lng = line2.split('-lng="')[1].split('"')[0]
-            if "PM -" in line2 and "</p><p>" in line2:
+            if "PM -" in line2 and "</p><p>" in line2 and hours == "":
                 hours = (
                     line2.split("</p><p>")[1].split("<br/><")[0].replace("<br/>", "; ")
+                )
+            if "<h4>Live Music is Back!</h4><p>" in line2:
+                hours = (
+                    line2.split("<h4>Live Music is Back!</h4><p>")[1]
+                    .split("<strong>")[0]
+                    .replace("<br>", "; ")
                 )
         if "; Lounge" in hours:
             hours = hours.split("; Lounge")[0]
@@ -101,6 +107,8 @@ def fetch_data():
         hours = (
             hours.replace("<strong>", "").replace("</strong>", "").replace("<br>", "; ")
         )
+        if "; <" in hours:
+            hours = hours.split("; <")[0].strip()
         yield [
             website,
             loc,

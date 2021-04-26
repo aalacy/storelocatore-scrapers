@@ -63,6 +63,9 @@ def fetch_data():
         phone = "".join(j.get("content")).split("Phone:")[1].split("<")[0].strip()
         state = a.get("state")
         postal = a.get("postal_code") or "<MISSING>"
+        if postal == "<MISSING>":
+            postal = "".join(j.get("address")).split()[-1].strip()
+
         country_code = "US"
         city = a.get("city")
         store_number = "<MISSING>"

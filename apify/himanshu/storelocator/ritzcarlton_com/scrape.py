@@ -72,6 +72,9 @@ def fetch_data():
         state = state if state else "<MISSING>"
         zip_code = poi["address"]["postalCode"]
         zip_code = zip_code if zip_code else "<MISSING>"
+        if len(zip_code.split()) == 3:
+            state = zip_code.split()[0]
+            zip_code = " ".join(zip_code.split()[1:])
         country_code = "<MISSING>"
         store_number = "<MISSING>"
         phone = poi["telephone"]

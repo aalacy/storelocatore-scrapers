@@ -617,7 +617,9 @@ def fetch_data():
         logger.info(f"\nScraping Data From: {page_url}\n")
         xpath_location_name = '//h1[@class="station__title"]/text()'
         location_name = data_store.xpath(xpath_location_name)
-        location_name = "".join(location_name).strip() if location_name else "<MISSING>"
+        location_name = "".join(location_name).strip().replace("0000", "")
+        location_name = location_name if location_name else "<MISSING>"
+        logger.info(f"\nLocation Name: {location_name}\n")
 
         xpath_address_data = '//address/span[@class="station__coordinates-line"]/text()'
         address_data = data_store.xpath(xpath_address_data)

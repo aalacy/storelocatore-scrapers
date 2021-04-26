@@ -93,6 +93,8 @@ def get_data(page_url):
     tree = html.fromstring(r.text)
 
     location_name = "".join(tree.xpath("//title/text()")).split("-")[0].strip()
+    if "#" not in location_name:
+        return
     text = "".join(tree.xpath("//div[@data-et-multi-view]/@data-et-multi-view"))
     source = json.loads(text)["schema"]["content"]["desktop"]
     root = html.fromstring(source)
@@ -110,7 +112,7 @@ def get_data(page_url):
 
     street_address, city, state, postal = get_address(adr)
     country_code = "US"
-    store_number = "<MISSING>"
+    store_number = location_name.split("#")[-1]
     map_link = "".join(tree.xpath("//iframe/@src"))
     latitude = map_link.split("!3d")[1].strip().split("!")[0].strip()
     longitude = map_link.split("!2d")[1].strip().split("!")[0].strip()
