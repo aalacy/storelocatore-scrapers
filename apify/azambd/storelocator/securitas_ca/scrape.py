@@ -65,7 +65,7 @@ def fetchData():
                 state=result["li-State:"],
                 country_code=result["li-Country:"],
                 zip_postal=result["Zip"],
-                phone=result["Phone"],
+                phone=result["Phone"].split(" or ")[0],
                 latitude=str(result["Latitude"]),
                 longitude=str(result["Longitude"]),
             )
