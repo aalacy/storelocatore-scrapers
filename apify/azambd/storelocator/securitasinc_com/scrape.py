@@ -54,7 +54,6 @@ def fetchData():
         for clink in contactLinks:
             allContacts = clink.xpath(".//a/@href")
             log.info(f"Total Contact Pages = {len(allContacts)}")
-            contacts = []
             for contact in allContacts:
                 url = website + contact
                 # known Issue
