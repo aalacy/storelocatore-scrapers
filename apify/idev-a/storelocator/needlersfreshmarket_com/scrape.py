@@ -27,7 +27,7 @@ def _valid(val):
 
 def fetch_data():
     base_url = "https://api.freshop.com/1/stores?app_key=needle&has_address=true&limit=-1&token="
-    with SgChrome(executable_path=r"/mnt/g/work/mia/chromedriver.exe") as driver:
+    with SgChrome() as driver:
         driver.get(base_url)
         exist = False
         while not exist:
