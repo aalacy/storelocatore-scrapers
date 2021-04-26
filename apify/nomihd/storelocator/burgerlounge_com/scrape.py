@@ -127,6 +127,10 @@ def fetch_data():
             .strip()
         )
 
+        if "Temporarily Closed" in hours_of_operation:
+            location_type = "Temporarily Closed"
+            hours_of_operation = "<MISSING>"
+
         if store_number == "":
             store_number = "<MISSING>"
 

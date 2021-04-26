@@ -95,7 +95,7 @@ def fetch_data():
         location_name = soup.find("div", {"class": "title"}).text.strip()
         address = info[2].get_text(strip=True, separator=",").split(",")
         parse_addr = usaddress.tag(", ".join(address[:-1]))[0]
-        city = row["city"]
+        city = row["city"].replace("Domain", "").strip()
         state = row["state"]
         zip_code = parse_addr["ZipCode"] if "ZipCode" in parse_addr else "<MISSING>"
         street_address = (
@@ -118,7 +118,9 @@ def fetch_data():
                 location_type = "TEMP_CLOSED"
         else:
             location_type = "TEMP_CLOSED"
-        hours_of_operation = get_hoo.replace("CLOSED-", "CLOSED").strip()
+        hours_of_operation = re.sub(
+            r"21\s+.*", "", get_hoo.replace("CLOSED-", "CLOSED").strip()
+        )
         latitude = "<MISSING>"
         longitude = "<MISSING>"
         log.info("Append {} => {}".format(location_name, street_address))

@@ -2,11 +2,14 @@ import csv
 import usaddress
 from bs4 import BeautifulSoup as bs
 from sgrequests import SgRequests
+from sglogging import sglog
 
 
 DOMAIN = "dreamdinners.com"
 BASE_URL = "https://dreamdinners.com"
 LOCATION_URL = "https://dreamdinners.com/main.php?page=locations"
+
+log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
 session = SgRequests()
 
 
@@ -40,7 +43,7 @@ def write_output(data):
 
 
 def pull_content(url):
-    soup = bs(session.get(url).content, "html.parser")
+    soup = bs(session.get(url).content, "lxml")
     return soup
 
 
@@ -77,7 +80,7 @@ def fetch_data():
 
                         section = store_page_content.find_all("section")[1]
                         content_info = section.find("div", {"class": "container"}).find(
-                            "div", {"class": "row mt-5"}
+                            "div", {"class": "col-lg-6 text-center text-md-left"}
                         )
                         locator_domain = DOMAIN
                         location_name = handle_missing(
@@ -115,6 +118,9 @@ def fetch_data():
                         latitude = "<MISSING>"
                         longitude = "<MISSING>"
                         hours_of_operation = "<MISSING>"
+                        log.info(
+                            "Append {} => {}".format(location_name, street_address)
+                        )
                         locations.append(
                             [
                                 locator_domain,
@@ -137,8 +143,11 @@ def fetch_data():
 
 
 def scrape():
+    log.info("Start {} Scraper".format(DOMAIN))
     data = fetch_data()
+    log.info("Found {} locations".format(len(data)))
     write_output(data)
+    log.info("Finish processed " + str(len(data)))
 
 
 scrape()

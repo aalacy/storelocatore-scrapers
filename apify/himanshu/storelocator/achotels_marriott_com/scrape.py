@@ -5,7 +5,7 @@ session = SgRequests()
 import json
 from bs4 import BeautifulSoup
 
-base_url = "https://residence-inn.marriott.com/"
+base_url = "https://ac-hotels.marriott.com/"
 
 
 def write_output(data):
@@ -36,7 +36,7 @@ def write_output(data):
 
 
 def fetch_data():
-    url = "https://pacsys.marriott.com/data/marriott_properties_RI_en-US.json"
+    url = "https://pacsys.marriott.com/data/marriott_properties_AR_en-US.json"
     headers = {
         "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3",
         "upgrade-insecure-requests": "1",
@@ -49,18 +49,17 @@ def fetch_data():
     store_list = json.loads(data)
     data_8 = store_list["regions"]
     for region in data_8:
-        if (
-            region["region_id"] == "central.america"
-            or region["region_id"] == "north.america"
-            or region["region_id"] == "south.america"
-        ):
+        if region["region_id"] == "north.america":
             for country in region["region_countries"]:
                 for stat in country["country_states"]:
                     for cty in stat["state_cities"]:
                         for loc in cty["city_properties"]:
                             zipp = loc["postal_code"]
                             location_name = loc["name"]
-                            street_address = loc["address"]
+                            temp_street_address = loc["address"]
+                            street_address = "".join(
+                                char for char in temp_street_address if ord(char) < 128
+                            )
                             city = loc["city"]
                             state = loc["state_name"]
                             country_code = loc["country_name"]
@@ -77,29 +76,21 @@ def fetch_data():
                                 location_name if location_name else "<MISSING>"
                             )
                             output.append(
-                                str(street_address).strip().replace("é", "e")
+                                street_address.replace("é", "e")
                                 if street_address
                                 else "<MISSING>"
                             )
-                            output.append(str(city).strip() if city else "<MISSING>")
-                            output.append(str(state).strip() if state else "<MISSING>")
-                            output.append(str(zipp).strip() if zipp else "<MISSING>")
-                            output.append(
-                                str(country_code) if country_code else "<MISSING>"
-                            )
+                            output.append(city if city else "<MISSING>")
+                            output.append(state if state else "<MISSING>")
+                            output.append(zipp if zipp else "<MISSING>")
+                            output.append(country_code if country_code else "<MISSING>")
                             output.append("<MISSING>")
-                            output.append(str(phone).strip() if phone else "<MISSING>")
+                            output.append(phone if phone else "<MISSING>")
                             output.append("AC Hotel Marriott")
-                            output.append(
-                                str(latitude).strip() if latitude else "<MISSING>"
-                            )
-                            output.append(
-                                str(longitude).strip() if longitude else "<MISSING>"
-                            )
+                            output.append(latitude if latitude else "<MISSING>")
+                            output.append(longitude if longitude else "<MISSING>")
                             output.append("<MISSING>")
-                            output.append(
-                                str(page_url).strip() if page_url else "<MISSING>"
-                            )
+                            output.append(page_url if page_url else "<MISSING>")
                             if output[2] in address:
                                 continue
                             address.append(output[2])

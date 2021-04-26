@@ -55,9 +55,14 @@ def fetch_data():
                 store.select_one("div.store-panel-info").select("p")[0].text.split(", ")
             )
             zip_city = address_detail.pop().split(" ")
-            if len(zip_city) < 3:
+            if len(zip_city) == 2:
                 zip = "<MISSING>"
                 city = " ".join(zip_city)
+            elif len(zip_city) == 1:
+                city = zip_city.pop()
+                zip_city = address_detail.pop().split(" ")
+                zip = " ".join(zip_city[:2])
+                city = " ".join(zip_city[2:]) if len(zip_city) > 2 else city
             else:
                 city = " ".join(zip_city[2:])
                 zip = " ".join(zip_city[:2])
@@ -81,17 +86,20 @@ def fetch_data():
                 store.select_one("div.store-panel-info").select("p")[2].text.split("\n")
             )
 
+            keyword_list = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+
             hours_of_operation = ""
             for x in hours:
-                if ":" in x or "0" in x or "Mon" in x:
-                    if "appointment" in x or "Week" in x or "th" in x or "call" in x:
-                        continue
+                if any(s in x for s in keyword_list):
                     hours_of_operation += x.strip() + " "
-
+                elif x.strip().lower().islower() is False:
+                    hours_of_operation += x.strip() + " "
+            hours_of_operation = hours_of_operation.strip()
             hours_of_operation = (
-                hours_of_operation.replace("Click and Collect", "") or "Closed"
+                hours_of_operation.replace("Click and Collect", "")
+                or "Temporarily closed"
             )
-            if hours_of_operation == "Closed" or "now closed" in hours_of_operation:
+            if "now closed" in "".join(hours):
                 continue
 
             data.append(

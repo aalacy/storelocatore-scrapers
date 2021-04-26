@@ -1,10 +1,12 @@
 import csv
 import json
-from datetime import datetime
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
+from sglogging import sglog
+from bs4 import BeautifulSoup
 
-logger = SgLogSetup().get_logger("bellacinos_com")
+website = "bellacinos_com"
+log = sglog.SgLogSetup().get_logger(logger_name=website)
+session = SgRequests()
 
 session = SgRequests()
 headers = {
@@ -13,7 +15,7 @@ headers = {
 
 
 def write_output(data):
-    with open("data.csv", mode="w") as output_file:
+    with open("data.csv", mode="w", newline="", encoding="utf8") as output_file:
         writer = csv.writer(
             output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
         )
@@ -37,22 +39,55 @@ def write_output(data):
                 "hours_of_operation",
             ]
         )
-        # Body
         for row in data:
             writer.writerow(row)
+        log.info(f"No of records being processed: {len(data)}")
 
 
 def fetch_data():
     # Your scraper here
     final_data = []
-    url = "https://momentfeed-prod.apigee.net/api/llp.json?auth_token=BAVYISWKYNNQTIXK&center=31.8039734986,-98.8223185136653&coordinates=10.74167474861858,-141.02202554491512,37.493303137349145,-106.62261148241522&multi_account=false&page=1&pageSize=60"
-    r = session.get(url, headers=headers, verify=False)
-    loclist = r.text
-    loclist = json.loads(loclist)
+    daylist = {
+        "1": "Monday",
+        "2": "Tuesday",
+        "3": "Wednesday",
+        "4": "Thursday",
+        "5": "Friday",
+        "6": "Saturday",
+        "7": "Sunday",
+    }
+    url = "https://api.momentfeed.com/v1/analytics/api/llp.json?auth_token=BAVYISWKYNNQTIXK&center=31.8039734986,-98.8223185136653&coordinates=10.74167474861858,-141.02202554491512,37.493303137349145,-106.62261148241522&multi_account=false&page=1&pageSize=60"
+    r = session.get(url, headers=headers)
+    loclist = json.loads(r.text)
+    link_list = "https://locations.bellacinos.com/sitemap.xml"
+    r = session.get(link_list, headers=headers)
+    soup = BeautifulSoup(r.text, "html.parser")
+    link_list = soup.findAll("loc")
     for loc in loclist:
         phone = loc["store_info"]["phone"]
         title = loc["store_info"]["name"]
-        street = loc["store_info"]["address"]
+        temp = loc["store_info"]["address"]
+        temp = temp.replace(" ", "-")
+        for link in link_list:
+            link = str(link)
+            if temp in link:
+                link = (
+                    link.replace("<loc>", "")
+                    .replace("</loc>", "")
+                    .replace(
+                        "https://locations.bellacinosgrinders.com/",
+                        "https://locations.bellacinos.com/",
+                    )
+                )
+                break
+        try:
+            street = (
+                loc["store_info"]["address"]
+                + " "
+                + loc["store_info"]["address_extended"]
+            )
+        except:
+            street = loc["store_info"]["address"]
         city = loc["store_info"]["locality"]
         state = loc["store_info"]["region"]
         pcode = loc["store_info"]["postcode"]
@@ -60,22 +95,25 @@ def fetch_data():
         store = loc["store_info"]["corporate_id"]
         lat = loc["store_info"]["latitude"]
         longt = loc["store_info"]["longitude"]
-        temp = loc["store_info"]["store_hours"]
-        temp = temp.split(";", 1)[0]
-        temp = temp.split(",")
-        open_time = temp[1]
-        open_time = open_time[0:2] + ":" + open_time[2:4]
-        open_time = datetime.strptime(open_time, "%H:%M")
-        open_time = open_time.strftime("%I:%M %p")
-        close = temp[2]
-        close = close[0:2] + ":" + close[2:4]
-        close = datetime.strptime(close, "%H:%M")
-        close = close.strftime("%I:%M %p")
-        hours = open_time + " - " + close
+        hour_list = loc["store_info"]["store_hours"]
+        hour_list = hour_list.split(";")
+        hour_list = hour_list[:-1]
+        if len(hour_list) < 7:
+            if "1," not in hour_list[0]:
+                hour_list.insert(0, "1,Closed,")
+            elif "7," not in hour_list[5]:
+                hour_list.append("7,Closed,")
+        hours = ""
+        for hour in hour_list:
+            hour = hour.split(",")
+            day = daylist[hour[0]]
+            open_time = hour[1]
+            close_time = hour[2]
+            hours = hours + day + " " + open_time + " " + close_time + " "
         final_data.append(
             [
                 "https://bellacinos.com/",
-                "https://locations.bellacinos.com/",
+                link,
                 title,
                 street,
                 city,
@@ -94,8 +132,11 @@ def fetch_data():
 
 
 def scrape():
+    log.info("Started")
     data = fetch_data()
     write_output(data)
+    log.info("Finished")
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()

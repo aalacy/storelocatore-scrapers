@@ -74,7 +74,6 @@ def fetch_data():
     for i in all_links:
         country_code = i[0]
         link = i[1]
-
         req = session.get(link, headers=headers)
         base = BeautifulSoup(req.text, "lxml")
 
@@ -87,7 +86,12 @@ def fetch_data():
         if "COMING SOON" in str(raw_address).upper():
             continue
 
+        if "Rooftop" in raw_address[0]:
+            raw_address.pop(0)
+
         location_name = base.h1.text.strip()
+        if "Located at" in raw_address[0]:
+            raw_address.pop(0)
         street_address = raw_address[0].split("(")[0].replace("New York", "").strip()
         city_line = (
             raw_address[1].replace("CA, ", "CA ").replace("NY, ", "NY ").split(",")
@@ -108,12 +112,15 @@ def fetch_data():
             if "72-74 W" in street_address:
                 street_address = "72-74 W. 69th St New York"
                 city_line = "New York, NY 10023".split(",")
+            if "12950 Ventura" in street_address:
+                street_address = "12950 Ventura Blvd."
+                city_line = "Studio City, CA 91604".split(",")
             city = city_line[0].strip()
             state = city_line[1].split()[0].strip()
             zip_code = city_line[1].split()[1].strip()
             if "2 Marina Blvd" in street_address:
-                state = "New York"
-                zip_code = "10023"
+                state = "CA"
+                zip_code = "94123"
         elif country_code == "CA":
             if "2306 4th Street" in street_address:
                 street_address = "2306 4th Street SW"
@@ -144,7 +151,7 @@ def fetch_data():
 
         raw_text = base.find(
             class_="grid__item wysiwyg two-up__item two-up__item--content"
-        ).text
+        ).text.replace(" CA 91604", " CA")
         try:
             phone = re.findall(r"[\d]{1}.+[\d]{3}.+[\d]{4}", raw_text)[0]
         except:

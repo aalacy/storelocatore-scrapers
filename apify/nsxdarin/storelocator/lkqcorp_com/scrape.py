@@ -54,6 +54,65 @@ def fetch_data():
         "NU",
         "BC",
     ]
+    usstates = [
+        "AK",
+        "AL",
+        "AR",
+        "AS",
+        "AZ",
+        "CA",
+        "CO",
+        "CT",
+        "DC",
+        "DE",
+        "FL",
+        "GA",
+        "GU",
+        "HI",
+        "IA",
+        "ID",
+        "IL",
+        "IN",
+        "KS",
+        "KY",
+        "LA",
+        "MA",
+        "MD",
+        "ME",
+        "MI",
+        "MN",
+        "MO",
+        "MP",
+        "MS",
+        "MT",
+        "NC",
+        "ND",
+        "NE",
+        "NH",
+        "NJ",
+        "NM",
+        "NV",
+        "NY",
+        "OH",
+        "OK",
+        "OR",
+        "PA",
+        "PR",
+        "RI",
+        "SC",
+        "SD",
+        "TN",
+        "TX",
+        "UM",
+        "UT",
+        "VA",
+        "VI",
+        "VT",
+        "WA",
+        "WI",
+        "WV",
+        "WY",
+    ]
     for x in range(1, 240):
         url = (
             "https://www.lkqcorp.com/wp-json/cf-elementor-modules/v1/location-finder/search?category_id=0&lat=&lng=&page="
@@ -99,31 +158,29 @@ def fetch_data():
                                 zc = addinfo.split(",")[3].strip().split(" ", 1)[1]
                         except:
                             name = "none"
-                        if (
-                            "LKQ" in name[:3]
-                            and "Ireland" not in state
-                            and "Northern" not in state
-                        ):
+                        if "LKQ" in name[:3]:
+                            country = ""
                             if state in canada:
                                 country = "CA"
-                            else:
+                            if state in usstates:
                                 country = "US"
-                            yield [
-                                website,
-                                lurl,
-                                name,
-                                add,
-                                city,
-                                state,
-                                zc,
-                                country,
-                                store,
-                                phone,
-                                typ,
-                                lat,
-                                lng,
-                                hours,
-                            ]
+                            if country == "US" or country == "CA":
+                                yield [
+                                    website,
+                                    lurl,
+                                    name,
+                                    add,
+                                    city,
+                                    state,
+                                    zc,
+                                    country,
+                                    store,
+                                    phone,
+                                    typ,
+                                    lat,
+                                    lng,
+                                    hours,
+                                ]
 
 
 def scrape():

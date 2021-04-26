@@ -75,7 +75,7 @@ for loc in locs:
     lat = ""
     lng = ""
     hours = ""
-    website = "coffeebean.com"
+    website = loc
     for line in r.iter_lines(decode_unicode=True):
         if '<span class="field-content">' in line:
             name = line.split('<span class="field-content">')[1].split("<")[0]

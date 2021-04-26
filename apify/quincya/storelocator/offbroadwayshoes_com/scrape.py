@@ -1,15 +1,10 @@
 import csv
 import json
-
+import time
 from bs4 import BeautifulSoup
-
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support import expected_conditions as ec
-from selenium.webdriver.support.ui import WebDriverWait
-
 from sglogging import SgLogSetup
-
 from sgselenium import SgChrome
+from tenacity import retry, stop_after_attempt
 
 log = SgLogSetup().get_logger("offbroadwayshoes.com")
 
@@ -41,84 +36,90 @@ def write_output(data):
             writer.writerow(row)
 
 
+MISSING = "<MISSING>"
+
+
+def get(entity, key):
+    return entity.get(key, MISSING) or MISSING
+
+
+def get_location_type(store):
+    hide_store = store["hideStore"] == "true"
+    if hide_store:
+        return "Off Broadway Shoe Warehouse"
+    else:
+        return "Rack Room Shoes"
+
+
+@retry(stop=stop_after_attempt(3))
+def fetch_page(page, driver):
+    base_link = f"https://www.rackroomshoes.com/store-finder?q=&page={page}&latitude=25.790654&longitude=-80.130045"
+    driver.get(base_link)
+    time.sleep(3)
+
+    soup = BeautifulSoup(driver.page_source, "lxml")
+    return json.loads(soup.text)
+
+
 def fetch_data():
-
-    driver = SgChrome().chrome()
-
-    data = []
+    page = 0
     found = []
+
+    driver = SgChrome().driver()
     locator_domain = "rackroomshoes.com"
+    run = True
 
-    total = 1000
-
-    for i in range(150):
-
-        if len(data) == int(total):
-            break
-
-        base_link = (
-            "https://www.rackroomshoes.com/store-finder?q=&page=%s&latitude=25.790654&longitude=-80.130045"
-            % (i)
-        )
-        print(base_link)
-        driver.get(base_link)
-        base = BeautifulSoup(driver.page_source, "lxml")
-
-        stores = json.loads(base.text)["data"]
-        total = json.loads(base.text)["total"]
+    while run:
+        result = fetch_page(page, driver)
+        stores = result["data"]
+        total = result["total"]
 
         for store in stores:
-            location_name = store["displayName"]
-            street_address = store["line1"].strip()
-            city = store["town"]
-            state = store["city"]
-            zip_code = store["postalCode"]
-            country_code = store["country"]
-            store_number = store["name"]
-            phone = store["phone"]
-            hours_of_operation = ""
-            raw_hours = store["openings"]
-            for hour in raw_hours:
-                hours_of_operation = (
-                    hours_of_operation + " " + hour + " " + raw_hours[hour]
-                ).strip()
-            latitude = store["latitude"]
-            longitude = store["longitude"]
-            link = "https://www.rackroomshoes.com/store/" + store_number
-            if link in found:
+            store_number = get(store, "name")
+            if store_number in found:
                 continue
-            found.append(link)
+            found.append(store_number)
 
-            driver.get(link)
+            location_name = get(store, "displayName")
+            street_address = get(store, "line1").strip()
+            city = get(store, "town")
+            state = get(store, "city")
+            zip_code = get(store, "postalCode")
+            country_code = get(store, "country")
+            phone = get(store, "phone")
 
-            WebDriverWait(driver, 50).until(
-                ec.presence_of_element_located((By.CLASS_NAME, "store-logo"))
-            )
+            openings = store["openings"]
+            hours_of_operation = ",".join(f"{day} {openings[day]}" for day in openings)
 
-            base = BeautifulSoup(driver.page_source, "lxml")
-            location_type = base.find(class_="store-logo")["alt"]
+            latitude = get(store, "latitude")
+            longitude = get(store, "longitude")
+            link = "https://www.rackroomshoes.com/store/" + store_number
+            location_type = get_location_type(store)
 
             # Store data
-            data.append(
-                [
-                    locator_domain,
-                    link,
-                    location_name,
-                    street_address,
-                    city,
-                    state,
-                    zip_code,
-                    country_code,
-                    store_number,
-                    phone,
-                    location_type,
-                    latitude,
-                    longitude,
-                    hours_of_operation,
-                ]
-            )
+            yield [
+                locator_domain,
+                link,
+                location_name,
+                street_address,
+                city,
+                state,
+                zip_code,
+                country_code,
+                store_number,
+                phone,
+                location_type,
+                latitude,
+                longitude,
+                hours_of_operation,
+            ]
+
+        if len(found) >= total:
+            run = False
+        else:
+            page += 1
+
     driver.close()
-    return data
 
 
 def scrape():

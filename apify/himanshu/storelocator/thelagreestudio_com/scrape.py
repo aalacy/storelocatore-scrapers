@@ -1,63 +1,119 @@
-import csv
-from sgrequests import SgRequests
 from bs4 import BeautifulSoup
+import csv
 import re
-import json
 
+from sgrequests import SgRequests
 
 session = SgRequests()
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+}
+
 
 def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+    with open("data.csv", mode="w") as output_file:
+        writer = csv.writer(
+            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+        )
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(
+            [
+                "locator_domain",
+                "page_url",
+                "location_name",
+                "street_address",
+                "city",
+                "state",
+                "zip",
+                "country_code",
+                "store_number",
+                "phone",
+                "location_type",
+                "latitude",
+                "longitude",
+                "hours_of_operation",
+            ]
+        )
         # Body
         for row in data:
             writer.writerow(row)
 
+
 def fetch_data():
-    base_url = "https://www.thelagreestudio.com"
-    r = session.get(base_url+"/locations.html")
-    soup=BeautifulSoup(r.text,'lxml')
-    return_main_object = []
-    main=soup.find('li',{"class":'menu-locations'}).find('ul',{"class":"dropdown-menu"}).find_all('a')
-    for atag in main:
-        r1 = session.get(atag['href'])
-        soup1=BeautifulSoup(r1.text,'lxml')
-        main1=soup1.find('main',{"id":"main-content"}).find("div",{"class":"editor-content"}).find('div',{"class":"grid-desk-4"}).find_all('p')
-        mn=list(soup1.find('main',{"id":"main-content"}).find("div",{"class":"editor-content"}).find('div',{"class":"grid-desk-4"}).stripped_strings)
-        name=mn[0]+' '+mn[1]
-        lat=main1[2].find('a')['href'].split('/@')[1].split(',')[0]
-        lng=main1[2].find('a')['href'].split('/@')[1].split(',')[1]
-        del main1[2]
-        address=list(main1[0].stripped_strings)[0]
-        ct=list(main1[0].stripped_strings)[1].split(',')
-        city=ct[0].strip()
-        state=ct[1].strip().split(' ')[0].strip()
-        zip=ct[1].strip().split(' ')[1].strip()
-        phone=list(main1[1].stripped_strings)[0].strip()
-        hour=' '.join(list(main1[2].stripped_strings))+","+' '.join(list(main1[3].stripped_strings))+","+' '.join(list(main1[4].stripped_strings))+","+' '.join(list(main1[5].stripped_strings))
-        store=[]
-        store.append(base_url)
-        store.append(name)
-        store.append(address)
-        store.append(city)
-        store.append(state)
-        store.append(zip)
-        store.append("US")
-        store.append("<MISSING>")
-        store.append(phone)
-        store.append("thelagreestudio")
-        store.append(lat)
-        store.append(lng)
-        store.append(hour)
-        return_main_object.append(store)
-    return return_main_object
+    data = []
+    pattern = re.compile(r"\s\s+")
+    url = "https://www.thelagreestudio.com/"
+    r = session.get(url, headers=headers, verify=False)
+    soup = BeautifulSoup(r.text, "html.parser")
+    linklist = soup.find("li", {"class": "menu-locations"}).findAll("a")[1:]
+    p = 0
+    for link in linklist:
+        link = link["href"]
+        r = session.get(link, headers=headers, verify=False)
+        soup = BeautifulSoup(r.text, "html.parser")
+        content = soup.find("div", {"class": "editor-content"}).text.strip()
+        content = re.sub(pattern, "\n", content).splitlines()
+        m = 0
+        title = content[m]
+        m += 2
+        street = content[m]
+        m += 1
+        try:
+            city, state = content[m].split(", ", 1)
+        except:
+            m += 1
+            city, state = content[m].split(", ", 1)
+        state, pcode = state.strip().split(" ", 1)
+        m += 1
+        phone = content[m]
+        m += 1
+        hours = ""
+        for i in range(m, len(content)):
+            if "day" in content[i] or " am " in content[i]:
+                hours = hours + content[i] + " "
+            else:
+                pass
+        try:
+            lat, longt = (
+                soup.select_one('a:contains("GET DIRECTIONS")')["href"]
+                .split("@", 1)[1]
+                .split("data", 1)[0]
+                .split(",", 1)
+            )
+            longt = longt.split(",", 1)[0]
+        except:
+            lat = longt = "<MISSING>"
+        if len(phone) > 13:
+            phone = "<MISSING>"
+        if len(hours) < 3:
+            hours = "<MISSING>"
+        data.append(
+            [
+                "https://www.thelagreestudio.com",
+                link,
+                title,
+                street,
+                city,
+                state,
+                pcode,
+                "US",
+                "<MISSING>",
+                phone,
+                "<MISSING>",
+                lat,
+                longt,
+                hours.replace("\xa0", ""),
+            ]
+        )
+
+        p += 1
+    return data
+
 
 def scrape():
     data = fetch_data()
     write_output(data)
+
 
 scrape()

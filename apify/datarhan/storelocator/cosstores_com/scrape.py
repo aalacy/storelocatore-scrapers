@@ -2,7 +2,7 @@ import csv
 from lxml import etree
 
 from sgrequests import SgRequests
-from sgscrape.sgpostal import parse_address_intl
+from sgscrape.sgpostal import parse_address, International_Parser
 
 
 def write_output(data):
@@ -61,7 +61,7 @@ def fetch_data():
             raw_address = " ".join(
                 [elem.strip() for elem in raw_address if elem.strip()]
             )
-            parsed_adr = parse_address_intl(raw_address)
+            parsed_adr = parse_address(International_Parser(), raw_address)
             street_address = parsed_adr.street_address_1
             city = parsed_adr.city
             city = city if city else "<MISSING>"

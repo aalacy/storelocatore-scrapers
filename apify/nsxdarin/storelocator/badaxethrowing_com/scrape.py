@@ -81,7 +81,7 @@ def fetch_data():
             r2 = session.get(lurl, headers=headers)
             for line2 in r2.iter_lines():
                 line2 = str(line2.decode("utf-8"))
-                if "coming soon" in line2:
+                if "coming soon" in line2 and "wide variety coming soon" not in line2:
                     CS = True
                 if "<title>" in line2:
                     name = line2.split("<title>")[1].split("<")[0]
@@ -135,6 +135,12 @@ def fetch_data():
                     and "8" not in zc
                 ):
                     zc = "<MISSING>"
+                if "#" in zc:
+                    zc = "<MISSING>"
+                if "Evarts St" in add:
+                    zc = "20018"
+                if "30 Hill St" in add:
+                    zc = "94014"
                 yield [
                     website,
                     lurl,

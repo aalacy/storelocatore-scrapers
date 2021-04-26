@@ -1,80 +1,136 @@
-from bs4 import BeautifulSoup
 import csv
-import time
 import re
-from sgselenium import SgSelenium
 
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import TimeoutException
+from bs4 import BeautifulSoup
+
+from sgrequests import SgRequests
+
 
 def write_output(data):
-	with open('data.csv', mode='w', encoding="utf-8") as output_file:
-		writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+    with open("data.csv", mode="w", encoding="utf-8") as output_file:
+        writer = csv.writer(
+            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+        )
 
-		# Header
-		writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-		# Body
-		for row in data:
-			writer.writerow(row)
+        # Header
+        writer.writerow(
+            [
+                "locator_domain",
+                "page_url",
+                "location_name",
+                "street_address",
+                "city",
+                "state",
+                "zip",
+                "country_code",
+                "store_number",
+                "phone",
+                "location_type",
+                "latitude",
+                "longitude",
+                "hours_of_operation",
+            ]
+        )
+        # Body
+        for row in data:
+            writer.writerow(row)
+
 
 def fetch_data():
-	
-	base_link = "https://finleysbarbershop.com/locations/"
 
-	driver = SgSelenium().chrome()
-	time.sleep(2)
+    base_link = "https://finleysbarbershop.com/locations/"
 
-	data = []
+    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
+    headers = {"User-Agent": user_agent}
 
-	driver.get(base_link)
-	time.sleep(2)
+    session = SgRequests()
+    req = session.get(base_link, headers=headers)
+    base = BeautifulSoup(req.text, "lxml")
 
-	element = WebDriverWait(driver, 50).until(EC.presence_of_element_located(
-		(By.CLASS_NAME, "vc_tta-tab")))
-	time.sleep(2)
+    data = []
+    locator_domain = "finleysbarbershop.com"
 
-	base = BeautifulSoup(driver.page_source,"lxml")
+    panels = base.find(class_="vc_tta-panels").find_all(class_="vc_tta-panel")
 
-	panels = base.find(class_="vc_tta-panels").find_all(class_="vc_tta-panel") 
-	locator_domain = "finleysbarbershop.com"
+    for panel in panels:
+        loc = panel.find(class_="vc_tta-title-text").text.upper()
+        if "AUSTIN" in loc:
+            code = "base64eJyrVkrLzClJLVKyUqqOUcpNLIjPTIlRsopRMoxR0gEJFGeUFni6FAPFomOBAsmlxSX5uW6ZqTkpELFapVoABU0Wug"
+        elif "DALLAS" in loc:
+            code = "base64eJyrVkrLzClJLVKyUqqOUcpNLIjPTIlRsopRMopR0gEJFGeUFni6FAPFomOBAsmlxSX5uW6ZqTkpELFapVoABXgWuw"
+        elif "DENVER" in loc:
+            code = "base64eJyrVkrLzClJLVKyUqqOUcpNLIjPTIlRsopRMo5R0gEJFGeUFni6FAPFomOBAsmlxSX5uW6ZqTkpELFapVoABaMWvA"
+        elif "HOUSTON" in loc:
+            code = "base64eJyrVkrLzClJLVKyUqqOUcpNLIjPTIlRsopRMolR0gEJFGeUFni6FAPFomOBAsmlxSX5uW6ZqTkpELFapVoABc4WvQ"
+        else:
+            raise
 
-	for panel in panels:
+        link = "https://finleysbarbershop.com/wp-json/wpgmza/v1/features/" + code
+        stores = session.get(link, headers=headers).json()["markers"]
 
-		items = panel.find_all(class_="wpgmaps_mlist_row")
-		link = base_link + "#" + panel["id"]
-		for item in items:
-			location_name = item.p.text.strip()
-			
-			raw_address = item["data-address"].replace("F620 Westlake","F620, Westlake").replace("Avenue, Suite","Avenue Suite").replace("Road, Suite","Road Suite").split(",")
+        for store in stores:
+            location_name = store["title"].strip()
 
-			if len(raw_address) == 3:
-				street_address = raw_address[0].strip()
-				city = raw_address[1].strip()
-			else:
-				street_address = " ".join(raw_address[0].split()[:-1]).strip()
-				city = raw_address[0].split()[-1].strip()
+            raw_address = (
+                store["address"]
+                .replace("F620 Westlake", "F620, Westlake")
+                .replace("Avenue, Suite", "Avenue Suite")
+                .replace("Road, Suite", "Road Suite")
+                .replace("4 Green", "4, Green")
+                .split(",")
+            )
 
-			state = raw_address[-1].strip()[:-6].upper().strip()
-			zip_code = raw_address[-1][-6:].strip()
+            if len(raw_address) == 3:
+                street_address = raw_address[0].strip()
+                city = raw_address[1].strip()
+            else:
+                street_address = " ".join(raw_address[0].split()[:-1]).strip()
+                city = raw_address[0].split()[-1].strip()
 
-			country_code = "US"
-			store_number = "<MISSING>"
-			location_type = "<MISSING>"
-			phone = item.h4.text.strip()
-			hours_of_operation = item.find(class_="loc-txt-descr").p.text.replace("PM","PM ").replace("OPEN","").replace("\xa0"," ").strip()
-			hours_of_operation = (re.sub(' +', ' ', hours_of_operation)).strip()
+            state = raw_address[-1].strip()[:-6].upper().strip()
+            zip_code = raw_address[-1][-6:].strip()
 
-			latitude = item["data-latlng"].split(",")[0].strip()
-			longitude = item["data-latlng"].split(",")[1].strip()
+            country_code = "US"
+            store_number = store["id"]
+            location_type = "<MISSING>"
+            raw_data = BeautifulSoup(store["description"], "lxml")
+            phone = raw_data.h4.text.strip()
+            hours_of_operation = (
+                raw_data.find(class_="loc-txt-descr")
+                .p.text.replace("PM", "PM ")
+                .replace("OPEN", "")
+                .replace("\xa0", " ")
+                .strip()
+            )
+            hours_of_operation = (re.sub(" +", " ", hours_of_operation)).strip()
 
-			data.append([locator_domain, link, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
-	driver.close()
-	return data
+            latitude = store["lat"].strip()
+            longitude = store["lng"].strip()
+
+            data.append(
+                [
+                    locator_domain,
+                    "https://finleysbarbershop.com/locations/",
+                    location_name,
+                    street_address,
+                    city,
+                    state,
+                    zip_code,
+                    country_code,
+                    store_number,
+                    phone,
+                    location_type,
+                    latitude,
+                    longitude,
+                    hours_of_operation,
+                ]
+            )
+    return data
+
 
 def scrape():
-	data = fetch_data()
-	write_output(data)
+    data = fetch_data()
+    write_output(data)
+
 
 scrape()

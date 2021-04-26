@@ -56,13 +56,14 @@ def fetch_data():
         name = ""
         add = ""
         city = ""
-        state = ""
+        state = "<MISSING>"
         zc = ""
         store = "<MISSING>"
         phone = "<MISSING>"
         lat = ""
         lng = ""
         hours = "<MISSING>"
+        rawadd = ""
         r2 = session.get(loc, headers=headers)
         for line2 in r2.iter_lines():
             line2 = str(line2.decode("utf-8"))
@@ -82,7 +83,6 @@ def fetch_data():
                 city = addr.city
                 zc = addr.postcode
                 add = addr.street_address_1
-                state = "<MISSING>"
         if city == "" or city is None:
             city = "<MISSING>"
         if zc == "" or zc is None:

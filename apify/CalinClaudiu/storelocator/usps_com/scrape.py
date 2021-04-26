@@ -53,7 +53,7 @@ def fetch_data():
                     try:
                         search.found_location_at(i["latitude"], i["longitude"])
                     except Exception:
-                        pair = ""
+                        pass
                     if i["locationID"] not in identities:
                         identities.add(i["locationID"])
                         try:

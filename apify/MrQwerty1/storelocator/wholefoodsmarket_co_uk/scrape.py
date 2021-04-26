@@ -1,5 +1,10 @@
-import csv
 from sgrequests import SgRequests
+from lxml import html
+from sglogging import SgLogSetup
+import json
+import csv
+
+logger = SgLogSetup().get_logger(logger_name="wholefoodsmarket_co_uk")
 
 
 def write_output(data):
@@ -34,21 +39,30 @@ def write_output(data):
 def fetch_data():
     out = []
     locator_domain = "https://www.wholefoodsmarket.co.uk/"
-    api_url = "https://www.wholefoodsmarket.co.uk/staticData/Z26G8nI.json"
+
+    url_json_data_src = "https://www.wholefoodsmarket.co.uk/staticData/"
 
     session = SgRequests()
-    r = session.get(api_url)
+    res = session.get(locator_domain)
+    data_raw = html.fromstring(res.text, "lxml")
+    get_the_code_local = data_raw.xpath('//script[@type="text/javascript"]/text()')[0]
+    get_the_code_local = get_the_code_local.split("window.__routeData = ")[1].split(
+        ";"
+    )[0]
+    get_the_code_local = json.loads(get_the_code_local)["propsMap"]["__local"]
+    url_json_data_src_built = f"{url_json_data_src}{get_the_code_local}.json"
+    r = session.get(url_json_data_src_built)
     js = r.json()["siteData"]["stores"]
-
+    logger.info(f"Pulling the Data From {url_json_data_src_built}")
     for j in js:
         street_address = (
             f"{j.get('address')} {j.get('address2') or ''}".strip() or "<MISSING>"
         )
         city = j.get("city") or "<MISSING>"
-        state = j.get("metro_area") or "<MISSING>"
+        state = j.get("state") or "<MISSING>"
         postal = j.get("zip_code") or "<MISSING>"
         country_code = "GB"
-        store_number = j.get("") or "<MISSING>"
+        store_number = "<MISSING>"
         page_url = f'https://www.wholefoodsmarket.co.uk/stores/{j.get("folder")}'
         location_name = j.get("name")
         phone = j.get("phone") or "<MISSING>"
@@ -82,7 +96,9 @@ def fetch_data():
 
 
 def scrape():
+    logger.info("Scraping Started")
     data = fetch_data()
+    logger.info(f"Scraping Finished | Total Store Count:{len(data)}")
     write_output(data)
 
 

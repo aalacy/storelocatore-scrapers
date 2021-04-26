@@ -75,17 +75,30 @@ def fetch_data():
 
     for j in js:
         d = j.get("data")
-        line = d.get("address", {}) or {}
-        a = usaddress.tag(line, tag_mapping=tag)[0]
-        street_address = f"{a.get('address1')} {a.get('address2') or ''}".strip()
-        if street_address == "None":
-            street_address = "<MISSING>"
-        city = a.get("city") or "<MISSING>"
-        if city.find("(") != -1:
-            city = city.split(",")[-1].strip()
-        state = a.get("state") or "<MISSING>"
-        postal = a.get("postal") or "<MISSING>"
-        country_code = "US"
+        line = d.get("address", {}) or ""
+        if "Canada" not in line:
+            a = usaddress.tag(line, tag_mapping=tag)[0]
+            street_address = (
+                f"{a.get('address1')} {a.get('address2') or ''}".replace(
+                    "None", ""
+                ).strip()
+                or "<MISSING>"
+            )
+            if street_address == "None":
+                street_address = "<MISSING>"
+            city = a.get("city") or "<MISSING>"
+            if city.find("(") != -1:
+                city = city.split(",")[-1].strip()
+            state = a.get("state") or "<MISSING>"
+            postal = a.get("postal") or "<MISSING>"
+            country_code = "US"
+        else:
+            street_address = line.split(",")[0]
+            city = line.split(",")[1].strip()
+            line = line.split(",")[2].strip()
+            state = line.split()[0].strip()
+            postal = line.replace(state, "").strip()
+            country_code = "CA"
         store_number = j.get("storeid") or "<MISSING>"
         page_url = "<MISSING>"
         location_name = j.get("name") or "<MISSING>"

@@ -62,47 +62,41 @@ def fetch_data():
     # Your scraper here
     loc_list = []
 
-    search_url = "http://www.wildwingcafe.com/locations/"
+    search_url = "http://www.wildwingcafe.com/"
     stores_req = session.get(search_url, headers=headers)
     stores_sel = lxml.html.fromstring(stores_req.text)
-    stores = stores_sel.xpath('//div[@class="drop-content"]/ul/li/h5/a/@href')
+    stores = stores_sel.xpath('//li[@id="comp-kff079nf3"]/ul/li/a/@href')
     for store_url in stores:
-        page_url = "http://www.wildwingcafe.com" + store_url
+        page_url = store_url
         log.info(page_url)
         store_req = session.get(page_url, headers=headers)
         store_sel = lxml.html.fromstring(store_req.text)
 
         locator_domain = website
-        location_name = "".join(store_sel.xpath('//div[@class="address"]/h4/text()'))
+        location_name = "".join(
+            store_sel.xpath(
+                "//section[2]/div[2]/div/div[2]/div/div[@class='_1Z_nJ'][1]/h2//text()"
+            )
+        ).strip()
         if location_name == "":
             location_name = "<MISSING>"
 
-        sections = store_sel.xpath('//div[@class="address"]/p')
-        address = ""
-        if len(sections) > 0:
-            address = sections[0].xpath("text()")
-
-        if len(sections) > 2:
-            hours_of_operation = (
-                "; ".join("".join(sections[2].xpath("text()")).strip().split("\n"))
-                .strip()
-                .replace("Temporary Hours:", "")
-                .strip()
-                .replace("Hours:", "")
-                .strip()
-                .replace("Hours of Good Times:", "")
-                .strip()
+        address = "".join(
+            store_sel.xpath(
+                "//section[2]/div[2]/div/div[2]/div/div[@class='_1Z_nJ'][2]/h2//text()"
             )
-
-        add_list = []
-        for add in address:
-            if len("".join(add).strip()) > 0:
-                add_list.append("".join(add).strip())
-
-        street_address = ", ".join(add_list[:-1]).strip()
-        city = add_list[-1].split(",")[0].strip()
-        state = add_list[-1].split(",")[1].strip().split(" ")[0].strip()
-        zip = add_list[-1].split(",")[1].strip().split(" ")[1].strip()
+        ).strip()
+        street_address = (
+            ", ".join(address.split(",")[:-2])
+            .strip()
+            .replace("The Gardens at Westgreen,", "")
+            .strip()
+            .replace("The Shoppes at River Crossing,", "")
+            .strip()
+        )
+        city = address.split(",")[-2]
+        state = address.split(",")[-1].strip().split(" ")[0].strip()
+        zip = address.split(",")[-1].strip().split(" ")[1].strip()
 
         country_code = "<MISSING>"
         if us.states.lookup(state):
@@ -127,29 +121,58 @@ def fetch_data():
         phone = (
             "".join(
                 store_sel.xpath(
-                    '//div[@class="address"]/p[contains(text(),"P:")]/text()'
+                    "//section[2]/div[2]/div/div[2]/div/div[@class='_1Z_nJ'][4]/h2//text()"
                 )
             )
             .strip()
-            .replace("P:", "")
+            .replace("Phone:", "")
             .strip()
         )
 
-        location_type = ""
-        if "opening" in location_name.lower():
-            location_type = "Coming Soon"
-        if location_type == "":
-            location_type = "<MISSING>"
+        if "(" not in phone:
+            phone = (
+                "".join(
+                    store_sel.xpath(
+                        "//section[2]/div[2]/div/div[2]/div/div[@class='_1Z_nJ'][3]/h2//text()"
+                    )
+                )
+                .strip()
+                .replace("Phone:", "")
+                .strip()
+            )
 
+        location_type = "<MISSING>"
         latitude = "<MISSING>"
         longitude = "<MISSING>"
+        map_link = "".join(
+            store_sel.xpath(
+                "//section[2]/div[2]/div/div[2]/div/div[@class='_1Z_nJ'][2]/h2/a/@href"
+            )
+        ).strip()
+        if len(map_link) > 0:
+            if "/@" in map_link:
+                latitude = map_link.split("/@")[1].strip().split(",")[0].strip()
+                longitude = map_link.split("/@")[1].strip().split(",")[1]
 
         if latitude == "" or latitude is None:
             latitude = "<MISSING>"
         if longitude == "" or longitude is None:
             longitude = "<MISSING>"
 
-        if hours_of_operation == "":
+        if "Open Hours" in store_sel.xpath("//section[4]//text()"):
+            hours_of_operation = "; ".join(
+                store_sel.xpath(
+                    "//section[4]/div[2]/div/div[2]/div/div[@class='_1Z_nJ'][3]/p//text()"
+                )
+            ).strip()
+
+        elif "Open Hours" in store_sel.xpath("//section[3]//text()"):
+            hours_of_operation = "; ".join(
+                store_sel.xpath(
+                    "//section[3]/div[2]/div/div[2]/div/div[@class='_1Z_nJ'][3]/p//text()"
+                )
+            ).strip()
+        if hours_of_operation == "" or "Opening" in hours_of_operation:
             hours_of_operation = "<MISSING>"
 
         if phone == "" or phone is None:

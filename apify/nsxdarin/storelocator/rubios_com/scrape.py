@@ -80,9 +80,18 @@ def fetch_data():
                     + g.split('"field-content">')[2].split("<")[0]
                 )
                 add = add.strip()
-                city = g.split('"field-content">')[3].split("<")[0]
-                state = h.split('"field-content">')[1].split("<")[0]
-                zc = h.split('"field-content">')[2].split("<")[0]
+                if 'store-address__address_2">' not in h:
+                    city = g.split('"field-content">')[3].split("<")[0]
+                    state = h.split('"field-content">')[1].split("<")[0]
+                    zc = h.split('"field-content">')[2].split("<")[0]
+                else:
+                    g = next(lines)
+                    h = next(lines)
+                    g = str(g.decode("utf-8"))
+                    h = str(h.decode("utf-8"))
+                    city = g.split('"field-content">')[1].split("<")[0]
+                    state = h.split('"field-content">')[1].split("<")[0]
+                    zc = h.split('<span class="field-content">')[2].split("<")[0]
             if '<a href="tel:' in line2:
                 phone = line2.split('<a href="tel:')[1].split('"')[0]
             if '"lat":"' in line2:
@@ -104,6 +113,10 @@ def fetch_data():
                             hours = hrs
                         else:
                             hours = hours + "; " + hrs
+        if "for Base Entry" in add:
+            add = add.split("for Base Entry")[1].strip()
+        if "Commons Building" in add:
+            add = add.split("Commons Building")[1].strip()
         yield [
             website,
             loc,

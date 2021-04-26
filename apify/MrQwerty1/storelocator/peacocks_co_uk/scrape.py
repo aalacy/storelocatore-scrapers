@@ -52,8 +52,14 @@ def get_data(url):
     tree = html.fromstring(r.text)
 
     location_name = "".join(tree.xpath("//h1/text()")).strip()
-    line = " ".join(tree.xpath("//div[@class='FF_grid-65']/p[1]/text()"))
-    adr = parse_address(International_Parser(), line)
+    line = "".join(tree.xpath("//div[@class='FF_grid-65']/p[1]/text()"))
+    line = line.replace(", ,", ",").replace(",,", ",").strip()
+    try:
+        postal = line.split(",")[-1].strip()
+    except IndexError:
+        postal = ""
+    line = ",".join(line.split(",")[:-1])
+    adr = parse_address(International_Parser(), line, postcode=postal)
 
     street_address = (
         f"{adr.street_address_1} {adr.street_address_2 or ''}".replace(
@@ -61,6 +67,11 @@ def get_data(url):
         ).strip()
         or "<MISSING>"
     )
+    if len(street_address) <= 5:
+        try:
+            street_address = line.split(",")[0].strip()
+        except IndexError:
+            street_address = "<MISSING>"
 
     city = adr.city or "<MISSING>"
     state = adr.state or "<MISSING>"
@@ -70,6 +81,7 @@ def get_data(url):
     phone = (
         "".join(tree.xpath("//*[contains(text(), 'Tel:')]/text()"))
         .replace("Tel:", "")
+        .replace("TBC", "")
         .strip()
         or "<MISSING>"
     )

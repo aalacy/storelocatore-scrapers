@@ -69,20 +69,8 @@ def get_api_key(resp):
         .strip()
         .split('");')[0]
         .strip()
-        .replace('"', '"')
-        .strip()
-        .split("<link")[0]
-        .strip()
-        + resp.split("window.urbn.runtimeConfig =")[1]
-        .strip()
-        .split('JSON.parse("')[1]
-        .strip()
-        .split('");')[0]
-        .strip()
-        .strip()
-        .split(">")[1]
-        .strip()
     )
+
     json_config = json_config.replace(r"\"", '"')
     return json_config
 
@@ -143,7 +131,6 @@ def fetch_data():
     api_resp = session.get("https://www.freepeople.com/stores/", headers=headers)
     json_config = get_api_key(api_resp.text)
     API_KEY = json.loads(json_config)["misl"]["apiKey"]
-
     locations_resp = session.get(
         "https://www.freepeople.com/stores/#?viewAll=true",
         headers=headers,
