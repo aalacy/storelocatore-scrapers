@@ -1,6 +1,5 @@
 import csv
 from lxml import etree
-import fake_useragent
 
 from sgrequests import SgRequests
 
@@ -41,7 +40,6 @@ def fetch_data():
     # Your scraper here
     items = []
 
-    ua = fake_useragent.UserAgent()
     scraped_urls = []
     scraped_locations = []
 
@@ -57,7 +55,7 @@ def fetch_data():
         full_state_url = "https://www.orkin.com" + state_url.get("xlink:href")
         if full_state_url in scraped_urls:
             continue
-        headers = {"user-agent": ua.random}
+
         state_response = session.get(full_state_url.replace(" ", ""), headers=headers)
         scraped_urls.append(full_state_url)
         state_dom = etree.HTML(state_response.text)
@@ -69,13 +67,12 @@ def fetch_data():
             full_city_url = "https://www.orkin.com" + city_url
             if full_city_url in scraped_urls:
                 continue
-            headers = {"user-agent": ua.random}
             city_response = session.get(full_city_url.replace(" ", ""), headers=headers)
             scraped_urls.append(full_city_url)
             city_dom = etree.HTML(city_response.text)
             all_stores_data = city_dom.xpath('//section[@class="branch-data"]')
             for store_data in all_stores_data:
-                store_url = "<MISSING>"
+                store_url = full_city_url
                 location_name = store_data.find("h2").text
                 location_name = location_name if location_name else "<MISSING>"
                 street_address = store_data.xpath(
@@ -92,6 +89,8 @@ def fetch_data():
                 country_code = country_code if country_code else "<MISSING>"
                 store_number = location_name.split("#")[-1]
                 phone = store_data.xpath('.//span[@itemprop="telephone"]/text()')
+                if not phone:
+                    phone = store_data.xpath("//@data-branch-phone")
                 phone = phone[0] if phone else "<MISSING>"
                 location_type = store_data.get("data-service-type")
                 location_type = location_type if location_type else "<MISSING>"
