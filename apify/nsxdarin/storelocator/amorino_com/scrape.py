@@ -119,6 +119,7 @@ def fetch_data():
                         city = "New York"
                         state = "NY"
                         zc = "10036"
+                        phone = "212-445-0101"
                     yield [
                         website,
                         loc,
