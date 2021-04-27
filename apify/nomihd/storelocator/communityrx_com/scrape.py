@@ -32,7 +32,6 @@ def fetch_data():
             store_sel.xpath('//h3[@class="widget-title"]/span/text()')
         ).strip()
 
-        store_soup = BS(store_req.text, "lxml")
         raw_info = store_sel.xpath('//div[@class="textwidget"]/p//text()')
         raw_list = []
         for raw in raw_info:
