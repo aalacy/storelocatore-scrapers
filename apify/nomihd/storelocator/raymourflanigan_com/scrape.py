@@ -6,6 +6,7 @@ from sgscrape.simple_utils import parallelize
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgzip.static import static_zipcode_list, SearchableCountries
+from tenacity import retry, stop_after_attempt
 
 website = "raymourflanigan.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -19,6 +20,13 @@ headers = {
 url_list = []
 
 
+def retry_error_callback(retry_state):
+    postal = retry_state.args[0]
+    log.error(f"Failure to fetch locations for: {postal}")
+    return []
+
+
+@retry(retry_error_callback=retry_error_callback, stop=stop_after_attempt(5))
 def fetch_records_for(zipcode):
     url = "https://www.raymourflanigan.com/api/custom/location-search"
     params = {
@@ -29,13 +37,8 @@ def fetch_records_for(zipcode):
         "includeClearanceLocations": True,
         "includeAppointments": True,
     }
-
-    try:
-        stores = session.get(url, params=params, headers=headers).json()
-        return stores["locations"]
-    except Exception as e:
-        log.error(f"{zipcode} >>> {e}")
-        return []
+    stores = session.get(url, params=params, headers=headers).json()
+    return stores["locations"]
 
 
 def process_record(raw_results_from_one_zipcode):
@@ -65,11 +68,7 @@ def process_record(raw_results_from_one_zipcode):
             hours = store["hours"]
             hours_list = []
             for key, hour in hours.items():
-                if (
-                    hours[key] is not None
-                    and hours[key]["open"] is not None
-                    and hours[key]["close"] is not None
-                ):
+                if hours[key] and hours[key]["open"] and hours[key]["close"]:
                     day = key
                     if day != "today":
                         hours_list.append(

@@ -68,7 +68,7 @@ def fetch_data():
         lng = ""
         hours = ""
         with SgChrome() as driver:
-            driver.get(url)
+            driver.get(loc)
             text = driver.page_source
             text = str(text).replace("\r", "").replace("\n", "").replace("\t", "")
             if "<title>" in text:
@@ -102,6 +102,16 @@ def fetch_data():
             phone = "(248) 649-5300"
             lat = "<MISSING>"
             lng = "<MISSING>"
+        if "/dunwoody" in loc:
+            name = "Atlanta - Dunwoody"
+            add = "94 Perimeter Center West"
+            city = "Atlanta"
+            state = "GA"
+            zc = "30346"
+            phone = "(770) 730-8447"
+            lat = "33.92653800"
+            lng = "-84.34037200"
+            hours = "Mon-Thu: 11:30AM - 9:00PM; Fri: 11:30AM - 10:00PM; Sat: 5:00PM - 10:00PM; Sun: 4:00PM - 9:00PM"
         if "mc/cuauhtemo" not in loc and "/nl/san-pedro" not in loc:
             yield [
                 website,

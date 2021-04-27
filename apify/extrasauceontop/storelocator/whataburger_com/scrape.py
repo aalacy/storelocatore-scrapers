@@ -73,7 +73,6 @@ for a_tag in state_links:
                         + single_location_link["href"]
                     )
 
-x = 0
 for location_url in location_urls:
     response = session.get(location_url).text
     soup = bs(response, "html.parser")
@@ -85,7 +84,7 @@ for location_url in location_urls:
     ).text
     address = soup.find("span", attrs={"class": "c-address-street-1"}).text
     city = soup.find("span", attrs={"class": "c-address-city"}).text
-    state = page_url.split("/")[-3]
+    state = page_url.split("/")[-3].upper()
     if len(state) > 3:
         state = page_url.split("/")[-4]
     zipp = soup.find("span", attrs={"class": "c-address-postal-code"}).text
@@ -110,7 +109,7 @@ for location_url in location_urls:
             hours = hours + day + " " + str(start) + "-" + str(end) + ", "
         except Exception:
             day = section["day"]
-            hours = hours + day + "closed" + ", "
+            hours = hours + day + " closed" + ", "
 
     hours = hours[:-2]
 
@@ -128,10 +127,6 @@ for location_url in location_urls:
     longitudes.append(longitude)
     store_numbers.append(store_number)
     hours_of_operations.append(hours)
-
-    x = x + 1
-    # if x == 10:
-    #     break
 
 df = pd.DataFrame(
     {
