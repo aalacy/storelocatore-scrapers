@@ -62,7 +62,7 @@ def fetch_data():
         ].text.lower():
             url = tds[0].find("a").get("href")
             if "https://www.fastsigns.com/" not in url:
-                url = "https://www.fastsigns.com/" + url
+                url = "https://www.fastsigns.com" + url
 
             log.info(url)
 
