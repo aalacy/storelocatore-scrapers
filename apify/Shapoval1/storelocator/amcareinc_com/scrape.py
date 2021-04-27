@@ -81,7 +81,6 @@ def fetch_data():
         longitude = "<MISSING>"
         hours = tree.xpath('//div[@class="seventy-left"]/div[2]//text()')
         hours_of_operation = " ".join(hours[:2]).replace("\r\n", "").strip()
-        print(hours_of_operation)
 
         row = [
             locator_domain,
