@@ -139,7 +139,9 @@ def fetch_data():
                 .get_text(strip=True, separator=",")
                 .split(",")[2:]
             )
-            street_address = handle_missing(address[0]).strip()
+            street_address = (
+                handle_missing(address[0]).replace("\n", " ").replace("\t", "").strip()
+            )
             city = handle_missing(address[1]).strip()
             state = handle_missing(address[2]).strip()
             zip_code = handle_missing(address[3]).strip()
@@ -147,7 +149,11 @@ def fetch_data():
             store_number = "<MISSING>"
             phone = soup.find(
                 "a", {"class": "store-no", "href": re.compile(r"tel\:\/\/.*")}
-            ).text
+            )
+            if not phone:
+                phone = "<MISSING>"
+            else:
+                phone = phone.text
             day_hours = content.find("ul", {"class": "opening-times"}).find_all(
                 "li", {"class": False}
             )
@@ -159,10 +165,14 @@ def fetch_data():
                 location_type = "CLOSED"
             else:
                 location_type = "OPEN"
-            hours_of_operation = ", ".join(
-                content.find("ul", {"class": "opening-times"})
-                .get_text(strip=True, separator=",")
-                .split(",")[1:]
+            hours_of_operation = (
+                ", ".join(
+                    content.find("ul", {"class": "opening-times"})
+                    .get_text(strip=True, separator=",")
+                    .split(",")[1:]
+                )
+                .replace("Delivery, ", "")
+                .strip()
             )
             latitude = payload["lat"]
             longitude = payload["lng"]

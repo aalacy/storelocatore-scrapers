@@ -1,4 +1,5 @@
 import csv
+import time
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
 from sgselenium import SgChrome
@@ -52,6 +53,7 @@ def fetch_data():
             lurl = line.split("<loc>")[1].split("<")[0]
             locs.append(lurl)
     for loc in locs:
+        time.sleep(10)
         logger.info("Pulling Location %s..." % loc)
         website = "longhornsteakhouse.com"
         typ = "Restaurant"
