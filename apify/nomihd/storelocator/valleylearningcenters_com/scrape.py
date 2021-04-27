@@ -5,7 +5,6 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import lxml.html
 import json
-from sgscrape import sgpostal as parser
 
 website = "valleylearningcenters.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
