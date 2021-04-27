@@ -60,7 +60,6 @@ def get_data(store_number):
     except IndexError:
         return
     line = list(filter(None, [l.strip() for l in line]))
-    print(page_url, ":", line)
     try:
         location_name = line.pop(0)
     except IndexError:
