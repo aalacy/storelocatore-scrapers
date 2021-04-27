@@ -3,7 +3,6 @@ import time
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import json
-import sgzip
 from sglogging import SgLogSetup
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 
@@ -70,7 +69,7 @@ def fetch_data():
             try:
                 r = session.post(location_url, headers=headers, data=data)
                 break
-            except Exception as e:
+            except:
                 time.sleep(10)
                 continue
 
@@ -90,7 +89,6 @@ def fetch_data():
             location_type = ""
             latitude = ""
             longitude = ""
-            raw_address = ""
             page_url = ""
             hours_of_operation = ""
 
