@@ -1,7 +1,6 @@
 import re
 import csv
 import json
-from datetime import datetime as dt
 from lxml import etree
 from urllib.parse import urljoin
 
@@ -149,10 +148,8 @@ def fetch_data():
 
 
 def scrape():
-    start = dt.now()
     data = fetch_data()
     write_output(data)
-    print(f"duration: {dt.now() - start}")
 
 
 if __name__ == "__main__":
