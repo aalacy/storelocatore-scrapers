@@ -10,6 +10,7 @@ from sgrequests import SgRequests
 from sgzip.static import static_coordinate_list, SearchableCountries
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
+
 def write_output(data):
     with open("data.csv", mode="w", encoding="utf-8") as output_file:
         writer = csv.writer(
@@ -39,8 +40,10 @@ def write_output(data):
         for rows in data:
             writer.writerows(rows)
 
+
 def identify(location):
-    return location['profile']['meta']['id']
+    return location["profile"]["meta"]["id"]
+
 
 start_url = "https://locations.td.com/index.html?q={},{}&qp=&locType=stores&l=en"
 hdr = {
@@ -48,12 +51,13 @@ hdr = {
     "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36",
 }
 
+
 @retry(stop=stop_after_attempt(3))
 def fetch_locations(coord, tracker, session):
     lat, lng = coord
     response = session.get(start_url.format(lat, lng), headers=hdr)
     data = json.loads(response.text)
-    locations = data['response']['entities']
+    locations = data["response"]["entities"]
 
     new = []
     for location in locations:
@@ -74,6 +78,7 @@ def get_hours(url, session):
     )[1:]
     hoo = [e.strip() for e in hoo if e.strip()]
     return " ".join(hoo).split("{")[0].strip() if hoo else "<MISSING>"
+
 
 def extract(poi, session):
     domain = re.findall("://(.+?)/", start_url)[0].replace("www.", "")
@@ -100,8 +105,8 @@ def extract(poi, session):
     phone = phone if phone else "<MISSING>"
     location_type = "<MISSING>"
 
-    latitude = '<MISSING>'
-    longitude = '<MISSING>'
+    latitude = "<MISSING>"
+    longitude = "<MISSING>"
     if poi["profile"].get("geocodedCoordinate"):
         latitude = poi["profile"]["geocodedCoordinate"]["lat"]
         longitude = poi["profile"]["geocodedCoordinate"]["long"]
@@ -125,15 +130,19 @@ def extract(poi, session):
         hours_of_operation,
     ]
 
+
 def fetch_data():
     # Your scraper here
     scraped_items = []
     session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
 
     search = static_coordinate_list(5, country_code=SearchableCountries.USA)
-    
+
     with ThreadPoolExecutor() as executor:
-        futures = [executor.submit(fetch_locations, coord, scraped_items, session) for coord in search]
+        futures = [
+            executor.submit(fetch_locations, coord, scraped_items, session)
+            for coord in search
+        ]
         for future in as_completed(futures):
             pois = future.result()
             yield pois
@@ -143,7 +152,7 @@ def scrape():
     start = dt.now()
     data = fetch_data()
     write_output(data)
-    print(f'duration: {dt.now() - start}')
+    print(f"duration: {dt.now() - start}")
 
 
 if __name__ == "__main__":
