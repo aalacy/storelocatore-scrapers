@@ -108,6 +108,10 @@ def fetch_data():
                 .replace("Open:", "")
                 .replace("|", ",")
             )
+        if not hours_of_operation:
+            hours_of_operation = loc_dom.xpath(
+                '//p[contains(text(), "Open:")]/following-sibling::p[1]/text()'
+            )[0]
         hours_of_operation = hours_of_operation if hours_of_operation else "<MISSING>"
         hours_of_operation = hours_of_operation.split("Happy")[0].strip()
 
