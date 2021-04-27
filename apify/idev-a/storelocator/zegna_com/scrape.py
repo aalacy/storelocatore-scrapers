@@ -1,0 +1,40 @@
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+from sgrequests import SgRequests
+
+_headers = {
+    "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
+}
+
+
+def fetch_data():
+    locator_domain = "https://www.zegna.com/"
+    base_url = "https://storelocator-webservice.zegna.com/ws/REST/V8/storeList.php?country_id=US&r=5000000&displayCountry=US&language=EN"
+    with SgRequests() as session:
+        locations = session.get(base_url, headers=_headers).json()
+        for key, _ in locations.items():
+            _city = "-".join(_["CITY"].strip().split(" "))
+            _address = "-".join(_["ADDRESS"].strip().split(" ")).replace("#", "")
+            page_url = f"https://www.zegna.com/us-en/store-locator/store-detail/united-states/{_city}/{_address}.{_['STORE_ID']}/"
+            yield SgRecord(
+                page_url=page_url,
+                location_name=_["NAME"],
+                store_number=_["STORE_ID"],
+                street_address=_["ADDRESS"],
+                city=_["CITY"],
+                state=_["STATE"],
+                zip_postal=_["POSTAL_CODE"],
+                latitude=_["LATITUDE"],
+                longitude=_["LONGITUDE"],
+                country_code=_["COUNTRY"],
+                phone=_["PHONE_NUMBER"].split("ext")[0].strip(),
+                locator_domain=locator_domain,
+                hours_of_operation=_["OPENING_HOURS"].replace(",", ";"),
+            )
+
+
+if __name__ == "__main__":
+    with SgWriter() as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
