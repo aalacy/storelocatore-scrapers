@@ -66,6 +66,13 @@ def fetch_data():
         street_address = street_address if street_address else "<MISSING>"
         if "closed" in street_address.lower():
             continue
+        if "Palagio" in street_address:
+            street_address = (
+                loc_dom.xpath("//h1/text()")[-1]
+                .split("Jump!Zones,")[-1]
+                .strip()
+                .split(",")[0]
+            )
         city = addr.city
         city = city if city else "<MISSING>"
         state = addr.state

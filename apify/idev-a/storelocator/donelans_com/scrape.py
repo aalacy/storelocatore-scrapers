@@ -28,6 +28,10 @@ def fetch_data():
         base_url = f"https://api-2.freshop.com/1/stores?app_key=donelans&has_address=true&token={token}"
         locations = session.get(base_url, headers=_headers).json()
         for _ in locations["items"]:
+            hours = []
+            for hh in _["hours_md"].split("\n\n"):
+                if "**" not in hh and "Senior" not in hh:
+                    hours.append(hh)
             yield SgRecord(
                 store_number=_["store_number"],
                 page_url=_["url"],
@@ -41,7 +45,7 @@ def fetch_data():
                 longitude=_["longitude"],
                 phone=_["phone_md"].split("\n")[0],
                 locator_domain=locator_domain,
-                hours_of_operation=_valid(_["hours_md"].replace("\n\n", ";")),
+                hours_of_operation=_valid("; ".join(hours)),
             )
 
 

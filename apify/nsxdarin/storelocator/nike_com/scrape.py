@@ -295,6 +295,8 @@ def fetch_data():
                         if state != "FR":
                             if "Nike Factory Store - Merrimack" in name:
                                 add = "80 Premium Outlets Blvd."
+                            if "nike-by-santana-row" in loc:
+                                phone = "<MISSING>"
                             yield [
                                 website,
                                 loc,

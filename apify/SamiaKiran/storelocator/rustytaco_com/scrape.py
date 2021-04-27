@@ -23,6 +23,7 @@ def fetch_data():
     loclist = loclist.replace(";", "").strip()
     loclist = json.loads(loclist)
     for loc in loclist:
+        page_url = loc["detailPageUrl"]
         store_number = loc["id"]
         location_name = loc["name"]
         log.info(location_name)
@@ -49,7 +50,7 @@ def fetch_data():
                 )
         yield SgRecord(
             locator_domain="https://rustytaco.com/",
-            page_url="https://rustytaco.com/locations-search/",
+            page_url=page_url,
             location_name=location_name,
             street_address=street_address.strip(),
             city=city.strip(),
