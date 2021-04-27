@@ -70,7 +70,6 @@ def write_output(data):
 
 def fetch_data():
     # Your scraper here
-    loc_list = []
     address_list = []
     coords = static_coordinate_list(radius=200, country_code=SearchableCountries.USA)
 
