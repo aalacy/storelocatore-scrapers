@@ -126,9 +126,7 @@ def fetch_data():
 
                     page_url = "https://www.pga.com" + store1["href"]
                 try:
-                    r3 = session.get(
-                        page_url, headers=headers
-                    )
+                    r3 = session.get(page_url, headers=headers)
                 except:
                     pass
 
@@ -145,7 +143,11 @@ def fetch_data():
                     pass
 
                 if ", " + state.upper() in st.upper():
-                    st = soup3.find("div", attrs={"data-cy": "course-contacts"}).div.text.split(",")[-1].strip()
+                    st = (
+                        soup3.find("div", attrs={"data-cy": "course-contacts"})
+                        .div.text.split(",")[-1]
+                        .strip()
+                    )
                     if not st:
                         st = "<MISSING>"
 
