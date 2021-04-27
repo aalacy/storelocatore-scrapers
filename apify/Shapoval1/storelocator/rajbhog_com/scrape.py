@@ -1,4 +1,5 @@
 import csv
+import sgzip
 import usaddress
 from lxml import html
 from sgrequests import SgRequests
@@ -90,13 +91,19 @@ def get_data(url):
     if city.find("Fabrics") != -1:
         city = city.split("Fabrics")[1].strip()
     state = a.get("state")
-    postal = a.get("postal")
+    postal = a.get("postal") or "<MISSING>"
+    if postal == "<MISSING>":
+        postal = (
+            "".join(tree.xpath("//iframe/@src")).split("%20")[6].split("%")[0].strip()
+        )
     country_code = "US"
     store_number = "<MISSING>"
     location_name = "".join(tree.xpath("//title/text()"))
-    phone = "".join(
-        tree.xpath('//a[./strong[contains(text(), "Phone")]]/text()')
-    ).strip()
+    phone = (
+        "".join(tree.xpath('//a[./strong[contains(text(), "Phone")]]/text()')).strip()
+        or "<MISSING>"
+    )
+
     map_link = "".join(tree.xpath("//iframe/@src"))
     latitude = map_link.split("!3d")[1].strip().split("!")[0].strip()
     longitude = map_link.split("!2d")[1].strip().split("!")[0].strip()
