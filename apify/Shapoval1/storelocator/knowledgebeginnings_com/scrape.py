@@ -6,12 +6,29 @@ from sgrequests import SgRequests
 
 
 def write_output(data):
-    with open('data.csv', mode='w', encoding='utf8', newline='') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
+        writer = csv.writer(
+            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+        )
 
         writer.writerow(
-            ["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code",
-             "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+            [
+                "locator_domain",
+                "page_url",
+                "location_name",
+                "street_address",
+                "city",
+                "state",
+                "zip",
+                "country_code",
+                "store_number",
+                "phone",
+                "location_type",
+                "latitude",
+                "longitude",
+                "hours_of_operation",
+            ]
+        )
 
         for row in data:
             writer.writerow(row)
@@ -20,11 +37,11 @@ def write_output(data):
 def get_ids():
     ids = []
     session = SgRequests()
-    r = session.get('https://www.kindercare.com/sitemap.xml')
+    r = session.get("https://www.kindercare.com/sitemap.xml")
     tree = html.fromstring(r.content)
     urls = tree.xpath("//loc[contains(text(), '/our-centers/')]/text()")
     for u in urls:
-        _id = u.split('/')[-1]
+        _id = u.split("/")[-1]
         if _id.isdigit():
             ids.append(_id)
 
@@ -32,8 +49,8 @@ def get_ids():
 
 
 def get_data(store_number):
-    locator_domain = 'https://www.knowledgebeginnings.com/'
-    page_url = f'https://www.knowledgebeginnings.com/our-centers/center-details/{store_number}/'
+    locator_domain = "https://www.knowledgebeginnings.com/"
+    page_url = f"https://www.knowledgebeginnings.com/our-centers/center-details/{store_number}/"
 
     session = SgRequests()
     r = session.get(page_url)
@@ -43,33 +60,61 @@ def get_data(store_number):
     except IndexError:
         return
     line = list(filter(None, [l.strip() for l in line]))
-    print(page_url, ':', line)
+    print(page_url, ":", line)
     try:
         location_name = line.pop(0)
     except IndexError:
-        location_name = '<MISSING>'
-    street_address = ', '.join(line[:-1])
+        location_name = "<MISSING>"
+    street_address = ", ".join(line[:-1])
     line = line[-1]
-    city = line.split(',')[0].strip()
-    line = line.split(',')[1].strip()
+    city = line.split(",")[0].strip()
+    line = line.split(",")[1].strip()
     state = line.split()[0]
     postal = line.split()[1]
-    country_code = 'US'
-    phone = ''.join(tree.xpath("//p[contains(text(), 'Phone')]/text()")).replace('Phone:', '').strip() or '<MISSING>'
-    if 'Fax' in phone:
-        phone = phone.split('Fax')[0].strip()
+    country_code = "US"
+    phone = (
+        "".join(tree.xpath("//p[contains(text(), 'Phone')]/text()"))
+        .replace("Phone:", "")
+        .strip()
+        or "<MISSING>"
+    )
+    if "Fax" in phone:
+        phone = phone.split("Fax")[0].strip()
 
     try:
-        text = ''.join(tree.xpath("//script[contains(text(), 'google.maps.LatLng')]/text()"))
-        latitude, longitude = eval(text.split('point = new google.maps.LatLng')[1].split(';')[0])
+        text = "".join(
+            tree.xpath("//script[contains(text(), 'google.maps.LatLng')]/text()")
+        )
+        latitude, longitude = eval(
+            text.split("point = new google.maps.LatLng")[1].split(";")[0]
+        )
     except:
-        latitude, longitude = '<MISSING>', '<MISSING>'
-    location_type = '<MISSING>'
+        latitude, longitude = "<MISSING>", "<MISSING>"
+    location_type = "<MISSING>"
 
-    hours_of_operation = ''.join(tree.xpath("//li[contains(text(), 'Open: ')]/text()")).replace('Open:', '').strip() or '<MISSING>'
+    hours_of_operation = (
+        "".join(tree.xpath("//li[contains(text(), 'Open: ')]/text()"))
+        .replace("Open:", "")
+        .strip()
+        or "<MISSING>"
+    )
 
-    row = [locator_domain, page_url, location_name, street_address, city, state, postal,
-           country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation]
+    row = [
+        locator_domain,
+        page_url,
+        location_name,
+        street_address,
+        city,
+        state,
+        postal,
+        country_code,
+        store_number,
+        phone,
+        location_type,
+        latitude,
+        longitude,
+        hours_of_operation,
+    ]
 
     return row
 
