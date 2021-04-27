@@ -78,6 +78,8 @@ def fetch_data():
         hoo = loc_dom.xpath('//div[@class="hours"]/table//text()')
         hoo = [e.strip() for e in hoo if e.strip()]
         hours_of_operation = " ".join(hoo[2:]) if hoo else "<MISSING>"
+        if hours_of_operation == "<MISSING>":
+            hours_of_operation = "Open 24 Hours"
 
         item = [
             domain,

@@ -81,7 +81,11 @@ def fetch_data():
             state = "<MISSING>"
         else:
             state = state.text
-        phone = soup.find("a", {"class": "Phone-link"}).text
+        phone = soup.find("a", {"class": "Phone-link"})
+        if phone is None:
+            phone = "<MISSING>"
+        else:
+            phone = phone.text
         hours = (
             soup.find("table", {"class": "c-hours-details"}).find("tbody").findAll("tr")
         )

@@ -47,10 +47,8 @@ def fetch_data():
     logger.info("Pulling Stores")
     for line in r.iter_lines():
         line = str(line.decode("utf-8"))
-        if 'locationcols"><a target="_blank" href="' in line:
-            locs.append(
-                line.split('locationcols"><a target="_blank" href="')[1].split('"')[0]
-            )
+        if '<a target="_blank" href="https://www.spaviadayspa.com/' in line:
+            locs.append(line.split('href="')[1].split('"')[0])
     for loc in locs:
         logger.info(loc)
         name = ""
@@ -85,8 +83,14 @@ def fetch_data():
                     hours = hrs
                 else:
                     hours = hours + "; " + hrs
-        lng = "<MISSING>"
-        lat = "<MISSING>"
+            if '"latitude": ' in line2:
+                lat = line2.split('"latitude": ')[1].split(",")[0]
+            if '"longitude": ' in line2:
+                lng = line2.split('"longitude": ')[1].split("}")[0]
+        if lng == "":
+            lng = "<MISSING>"
+        if lat == "":
+            lat = "<MISSING>"
         if CS is False:
             yield [
                 website,

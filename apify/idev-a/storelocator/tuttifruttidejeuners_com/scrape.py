@@ -44,16 +44,19 @@ def fetch_data():
             .strip()[:-1]
         )
         for _ in locations["KOObject"][0]["locations"]:
-            addr = parse_address_intl(
-                " ".join(list(bs(_["address"], "lxml").stripped_strings))
-            )
             desc = bs(_["description"], "lxml")
+            blocks = desc.select("p")
+            addr = parse_address_intl(" ".join(blocks[0].stripped_strings))
+            city = addr.city
+            street_address = addr.street_address_1
+            if city and len(city.split(".")) > 1:
+                city = city.split(".")[-1]
+                street_address += " " + city.split(".")[0]
             phone = ""
             hours = []
-            blocks = desc.select("p")
             location_type = ""
             for x, dd in enumerate(blocks):
-                if dd.text.startswith("Fermé"):
+                if dd.text.startswith("Fer"):
                     location_type = "Temporarily Closed"
                     for i in range(x, len(blocks)):
                         if _phone(blocks[i].text):
@@ -75,8 +78,8 @@ def fetch_data():
             yield SgRecord(
                 page_url=base_url,
                 location_name=bs(_["title"], "lxml").text,
-                street_address=addr.street_address_1,
-                city=addr.city,
+                street_address=street_address,
+                city=city,
                 state=addr.state,
                 zip_postal=addr.postcode,
                 country_code="CA",

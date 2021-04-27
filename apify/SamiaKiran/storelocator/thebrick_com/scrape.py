@@ -34,12 +34,23 @@ def fetch_data():
             try:
                 page_url = soup.find("div", {"class": "store-page"}).find("a")["href"]
                 page_url = "https://thebrick.com" + page_url
+                temp_address = session.get(page_url, headers=headers)
+                temp_address = BeautifulSoup(temp_address.text, "html.parser")
+                raw_address = temp_address.find("div", {"id": "content"})[
+                    "data-storecode"
+                ]
+                raw_address = (
+                    "https://ecom.api.lflgroup.ca/ecom/stores/brick/" + raw_address
+                )
+                temp_list = session.get(raw_address, headers=headers).json()
+                raw_address = temp_list["address"]["full"]
             except:
                 page_url = "https://thebrick.com/apps/store-locator"
+                raw_address = soup.find("span", {"class": "address"}).get_text(
+                    separator=",", strip=True
+                )
             log.info(page_url)
-            raw_address = soup.find("span", {"class": "address"}).get_text(
-                separator=",", strip=True
-            )
+
             formatted_addr = parser.parse_address_intl(raw_address)
             street_address = formatted_addr.street_address_1
             if street_address is None:

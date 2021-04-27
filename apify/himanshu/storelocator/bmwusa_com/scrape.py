@@ -85,7 +85,11 @@ def fetch_data():
                 and store_data["DefaultService"]["FormattedPhone"] is not None
                 else "<MISSING>"
             )
-            store.append("bmw")
+            if "CCRC" in store_data["DefaultService"]["Name"]:
+                loc_type = "Certified Collision Repair Center"
+            else:
+                loc_type = "BMW CENTER"
+            store.append(loc_type)
             latitude = store_data["DefaultService"]["LonLat"]["Lat"]
             longitude = store_data["DefaultService"]["LonLat"]["Lon"]
             store.append(latitude)

@@ -1,6 +1,8 @@
 import csv
-from sgrequests import SgRequests
 from bs4 import BeautifulSoup
+from sgrequests import SgRequests
+from sgzip.dynamic import SearchableCountries
+from sgzip.static import static_coordinate_list
 
 
 session = SgRequests()
@@ -41,14 +43,10 @@ def fetch_data():
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36"
     }
     data = []
-    addr = [
-        "lat=29.5330493&lng=-98.78116449999999",
-        "lat=30.2228447&lng=-97.74735720000001",
-        "lat=27.700785&lng=-97.3462545",
-        "lat=28.80663839999999&lng=-96.99609249999999",
-    ]
-    for latnow in addr:
-
+    titlelist = []
+    mylist = static_coordinate_list(100, SearchableCountries.USA)
+    for lat, lng in mylist:
+        latnow = "lat=" + str(lat) + "&lng=" + str(lng)
         base_url = (
             "https://brakecheck.com/wp-content/plugins/store-locator/content/phpsqlsearch_genxml.php?"
             + latnow
@@ -78,6 +76,10 @@ def fetch_data():
             )
             if "San Antonio Store 438" in title:
                 hours_of_operation = "Mon - Sat: 7:30am - 6pm, Sun: 9am - 5pm"
+            if pageurl in titlelist:
+                continue
+            else:
+                titlelist.append(pageurl)
             data.append(
                 [
                     "www.brakecheck.com",
