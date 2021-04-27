@@ -93,7 +93,6 @@ def fetch_data():
             "BC",
             "ON",
             "NT",
-            "NV",
             "PEI",
             "PE",
             "QC",
@@ -103,24 +102,31 @@ def fetch_data():
         ]
         if state in canada:
             country = "CA"
+        else:
+            country = "US"
         if phone == "":
             phone = "<MISSING>"
-        yield [
-            website,
-            loc,
-            name,
-            add,
-            city,
-            state,
-            zc,
-            country,
-            store,
-            phone,
-            typ,
-            lat,
-            lng,
-            hours,
-        ]
+        if (
+            "2949 Petrol Road" not in add
+            and "1405 East 58th" not in add
+            and "4422 Dunham St" not in add
+        ):
+            yield [
+                website,
+                loc,
+                name,
+                add,
+                city,
+                state,
+                zc,
+                country,
+                store,
+                phone,
+                typ,
+                lat,
+                lng,
+                hours,
+            ]
 
 
 def scrape():

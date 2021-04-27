@@ -40,10 +40,16 @@ def fetch_data():
 
         # Location Name
         location_name = v["title"]
-        logger.info(f"Store Number>{k} : {v['address']}")
+        location_name = " ".join(location_name.split())
+        location_name = location_name if location_name else MISSING
+        logger.info(f": Location Name: {location_name}")
 
         # Parse Raw Address
         address_to_be_parsed = v["address"]
+        logger.info(
+            f"Parsing Address for the Store Number-->{k}: {address_to_be_parsed}"
+        )
+
         address_to_be_parsed = address_to_be_parsed.replace(" -", "-")
         pa = parse_address_intl(address_to_be_parsed)
 

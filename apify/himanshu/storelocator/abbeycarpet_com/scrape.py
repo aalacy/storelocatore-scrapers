@@ -53,7 +53,7 @@ def fetch_data():
     search = DynamicZipSearch(
         country_codes=[SearchableCountries.USA],
         max_search_results=5,
-        max_radius_miles=50,
+        max_radius_miles=30,
     )
     logger.info("Running sgzips ..")
 
@@ -101,35 +101,71 @@ def fetch_data():
 
             # Get data from page_url
             if got_page:
+                data_style = ""
                 page_soup = BeautifulSoup(home.text, "lxml")
+                if page_soup.find(class_="home__showroom-title"):
+                    data_style = "showroom"
+                    show_data = page_soup.find_all(class_="home__showroom-information")
+                    row_data = []
+                    for i, show in enumerate(show_data):
+                        if i % 2 == 0:
+                            row_data.append([show, show_data[i + 1]])
 
-                if page_soup.find("a", {"class": "footer-address"}):
+                    addresses = []
+                    hours = []
+
+                    for row in row_data:
+                        addresses.append(row[0])
+                        hours.append(row[1])
+
+                elif page_soup.find("a", {"class": "footer-address"}):
+                    data_style = "footer"
                     addresses = page_soup.find_all("a", {"class": "footer-address"})
                     phones = page_soup.find_all("a", {"class": "footer-phone"})
                     hours = page_soup.find_all("p", {"class": "hours"})
 
+                if data_style:
                     for i, address in enumerate(addresses):
-                        address = address["href"].split("/")[-1]
-                        if len(address.split(",")) == 4:
-                            name = address.split(",")[0]
-                            street = address.split(",")[1]
+                        if data_style == "footer":
+                            address = address["href"].split("/")[-1]
+                            if len(address.split(",")) == 4:
+                                name = address.split(",")[0]
+                                street = address.split(",")[1]
+                            else:
+                                name = address.split(",")[0]
+                                street = "".join(address.split(",")[1:-2])
+                            city = address.split(",")[-2]
+                            state = address.split(",")[-1].split()[:-1]
+                            if len(address.split(",")[-1].split()) > 2:
+                                state = " ".join(state)
+                            else:
+                                state = address.split(",")[-1].split()[0]
+                            zip_code = address.split(",")[-1].split()[-1]
+                            phone = phones[i].text
+                            location_type = "<MISSING>"
+                            hrs = hours[i].text.split("\n")
+                            hours_of_operation = " ".join(hrs)
+                            hours_of_operation = (
+                                re.sub(" +", " ", hours_of_operation)
+                            ).strip()
                         else:
-                            name = address.split(",")[0]
-                            street = "".join(address.split(",")[1:-2])
-                        city = address.split(",")[-2]
-                        state = address.split(",")[-1].split()[:-1]
-                        if len(address.split(",")[-1].split()) > 2:
-                            state = " ".join(state)
-                        else:
-                            state = address.split(",")[-1].split()[0]
-                        zip_code = address.split(",")[-1].split()[-1]
-                        phone = phones[i].text
-                        location_type = "<MISSING>"
-                        hrs = hours[i].text.split("\n")
-                        hours_of_operation = " ".join(hrs)
-                        hours_of_operation = (
-                            re.sub(" +", " ", hours_of_operation)
-                        ).strip()
+                            name = address.find(class_="home__showroom-title").text
+                            street = address.find(
+                                class_="home__showroom-address-line"
+                            ).text
+                            city_line = address.find_all(
+                                class_="home__showroom-address-line"
+                            )[1].text
+                            city = city_line.split(",")[0]
+                            state = city_line.split(",")[-1].split()[0]
+                            zip_code = city_line.split(",")[-1].split()[-1]
+                            phone = address.a.text
+                            location_type = "<MISSING>"
+                            hrs = hours[i].text.replace("Showroom", "").split("\n")
+                            hours_of_operation = " ".join(hrs)
+                            hours_of_operation = (
+                                re.sub(" +", " ", hours_of_operation)
+                            ).strip()
 
                         iframe = ""
                         src = None
@@ -165,11 +201,11 @@ def fetch_data():
                                             iframe = page_soup.find_all(
                                                 "div", {"class": "col-xs-12 col-sm-8"}
                                             )[i].find("iframe")
-                            elif len(addresses) == 3:
+                            elif len(addresses) > 2:
                                 maps = page_soup.find_all(
                                     "div", {"class": "mapWrapper"}
                                 )
-                                if len(maps) == 3:
+                                if len(maps) > 2:
                                     iframe = maps[i].find("iframe")
                                 elif (
                                     page_soup.find_all(
@@ -223,10 +259,6 @@ def fetch_data():
                                 longitude = geo[1]
                             except:
                                 pass
-
-                        if len(addresses) > 3:
-                            latitude = "<INACCESSIBLE>"
-                            longitude = "<INACCESSIBLE>"
 
                         if name == "font>":
                             name = "Southern Carpet & Interiors"
