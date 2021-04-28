@@ -55,7 +55,12 @@ def fetch_data():
         city = j.get("city") or "<MISSING>"
         state = j.get("stateCode") or "<MISSING>"
         country_code = j.get("countryCode") or "<MISSING>"
-        postal = j.get("postalCode") or "<MISSING>"
+
+        postal = "".join(j.get("postalCode")) or "<MISSING>"
+        if postal.find("-") != -1:
+            postal = postal.split("-")[0].strip()
+        if not postal.isdigit():
+            country_code = "UK"
         store_number = "<MISSING>"
         latitude = j.get("latitude") or "<MISSING>"
         longitude = j.get("longitude") or "<MISSING>"
