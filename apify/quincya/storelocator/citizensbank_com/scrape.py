@@ -155,7 +155,10 @@ def fetch_data():
         if not hours_of_operation:
             hours_of_operation = "<MISSING>"
 
-        if final_link == "https://locations.citizensbank.com/ri/warwick/300-quaker-ln-3817966.html":
+        if (
+            final_link
+            == "https://locations.citizensbank.com/ri/warwick/300-quaker-ln-3817966.html"
+        ):
             street_address = street_address.split("Suite")[0].strip()
 
         yield [
