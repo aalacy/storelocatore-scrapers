@@ -42,6 +42,11 @@ def fetch_data():
                     phone = ""
                     if _.select_one("div.phone"):
                         phone = _.select_one("div.phone").text.strip()
+                    hours = []
+                    for hh in list(_.select_one("div.hours").stripped_strings):
+                        if "Video Banking Hours" in hh or "ATM" in hh:
+                            break
+                        hours.append(hh)
                     yield SgRecord(
                         page_url=page_url,
                         location_name=_.select_one("div.field-content a").text.strip(),
@@ -59,9 +64,7 @@ def fetch_data():
                         location_type=list(_.select_one("div.type").stripped_strings)[
                             0
                         ].replace("What's This?", ""),
-                        hours_of_operation="; ".join(
-                            list(_.select_one("div.hours").stripped_strings)
-                        ).replace("–", "-"),
+                        hours_of_operation="; ".join(hours).replace("–", "-"),
                     )
 
 

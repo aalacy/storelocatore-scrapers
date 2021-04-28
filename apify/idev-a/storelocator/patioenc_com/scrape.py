@@ -48,7 +48,8 @@ def fetch_data():
                 if "Location coming soon!" in info:
                     continue
 
-                if "By Appointment Only" in info or "By Appointment Only!" in info:
+                _info = " ".join(info)
+                if "By Appointment Only" == _info or "By Appointment Only!" == _info:
                     street_address = "<MISSING>"
                     city = "<MISSING>"
                     state = "<MISSING>"
@@ -117,7 +118,7 @@ def fetch_data():
                 state=state,
                 zip_postal=zipp,
                 country_code=country_code,
-                phone=phone.split(":")[0],
+                phone=phone.split(":")[0].replace("Toll-free", ""),
                 locator_domain=locator_domain,
                 hours_of_operation=hours_of_operation.replace("By Appointment", ""),
             )
