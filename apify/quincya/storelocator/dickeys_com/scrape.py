@@ -52,7 +52,6 @@ def fetch_data():
 
     locator_domain = "https://www.dickeys.com/"
 
-    data = []
     found = []
 
     main_items = base.find(
@@ -104,26 +103,22 @@ def fetch_data():
                 latitude = "<INACCESSIBLE>"
                 longitude = "<INACCESSIBLE>"
 
-                data.append(
-                    [
-                        locator_domain,
-                        final_link,
-                        location_name,
-                        street_address,
-                        city,
-                        state,
-                        zip_code,
-                        country_code,
-                        store_number,
-                        phone,
-                        location_type,
-                        latitude,
-                        longitude,
-                        hours_of_operation,
-                    ]
-                )
-
-    return data
+                yield [
+                    locator_domain,
+                    final_link,
+                    location_name,
+                    street_address,
+                    city,
+                    state,
+                    zip_code,
+                    country_code,
+                    store_number,
+                    phone,
+                    location_type,
+                    latitude,
+                    longitude,
+                    hours_of_operation,
+                ]
 
 
 def scrape():
