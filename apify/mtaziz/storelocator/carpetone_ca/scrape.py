@@ -76,7 +76,7 @@ url_all_stores_951.extend(
     ["http://www.irvinecarpetone.com"]
 )  # irvinecarpetone was missing from Google Tag Manager
 url_all_stores = url_all_stores_951
-logger.info(f"Worldwide Number of Store URLs: {len(url_all_stores)}")
+logger.info(f"Worldwide Number of Store URLs: {len(url_all_stores[0:10])}")
 for url_cone in url_all_stores[0:10]:
     logger.info(
         f"Checking if we are getting Store URLs from Google Tag Manager URL: {url_cone} "
@@ -97,8 +97,19 @@ def get_data_from_multi_locations(data_list, url_store_domain_check):
 
         page_url = page_url_data or MISSING
         location_name = data["StoreName"] or MISSING
-        sa = data["StoreLocationSingle"]["Address"]
-        street_address = sa if sa else MISSING
+
+        # Street Address
+        street_address = ""
+        street_address_1 = data["StoreLocationSingle"]["Address"]
+        street_address_2 = data["StoreLocationSingle"]["Address2"]
+        if street_address_1:
+            if street_address_2:
+                street_address = f"{street_address_1} {street_address_2}"
+            else:
+                street_address = street_address_1
+        else:
+            street_address = MISSING
+
         c = data["StoreLocationSingle"]["City"]
         city = c if c else MISSING
         state = data["StoreLocationSingle"]["State"]

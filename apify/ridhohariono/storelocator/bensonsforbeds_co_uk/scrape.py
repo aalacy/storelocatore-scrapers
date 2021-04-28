@@ -59,6 +59,8 @@ def handle_missing(field):
 
 
 def parse_hours(table):
+    if not table:
+        return "<MISSING>"
     data = table.find("tbody")
     days = data.find_all("td", {"class": "c-hours-details-row-day"})
     hours = data.find_all("td", {"class": "c-hours-details-row-intervals"})
@@ -116,7 +118,11 @@ def fetch_data():
             soup.find("address", {"id": "address"})["data-country"]
         )
         store_number = "<MISSING>"
-        phone = soup.find("div", {"id": "phone-main"}).text
+        phone = soup.find("div", {"id": "phone-main"})
+        if not phone:
+            phone = "<MISSING>"
+        else:
+            phone = phone.text
         hours = soup.find_all("td", {"class": "c-hours-details-row-intervals"})
         if all(value.text == "Closed" for value in hours):
             location_type = "TEMP_CLOSED"

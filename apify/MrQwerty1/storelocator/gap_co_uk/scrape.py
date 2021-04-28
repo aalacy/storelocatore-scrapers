@@ -105,17 +105,15 @@ def get_data(_id):
     if location_type.startswith(","):
         location_type = location_type.replace(",", "").strip()
 
-    try:
-        hours_of_operation = (
-            "".join(tree.xpath("//span[@class='store-hours']/p")[-1].xpath("./text()"))
-            .replace("\n", ";")
-            .strip()
-            or "<MISSING>"
+    hours = tree.xpath("//span[@class='store-hours']//text()")
+    hours = list(filter(None, [h.strip() for h in hours]))
+    hours_of_operation = (
+        ";".join(hours).replace(
+            "due to covid restrictions this store is temporarily closed, please visit www.gap.co.uk;",
+            "",
         )
-        if hours_of_operation.lower().find("closed") != -1:
-            hours_of_operation = "Closed"
-    except IndexError:
-        hours_of_operation = "<MISSING>"
+        or "<MISSING>"
+    )
 
     row = [
         locator_domain,
