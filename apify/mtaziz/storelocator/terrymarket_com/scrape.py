@@ -40,12 +40,10 @@ def get_address_phone(data_address_phone_raw):
         if idx == 1:
             address_list.append(i[0])
         if idx == 2:
-            print(i)
             for idx1, j in enumerate(i):
                 if idx1 == 0:
                     address_list.append(j)
                 if idx1 == 1:
-                    print(j)
                     ij1 = " ".join(" ".join(j.split()).split(" ")[2:])
                     address_list.append(ij1)
                 if idx1 == 2:
@@ -57,7 +55,6 @@ def get_address_phone(data_address_phone_raw):
         if idx == 3:
             address_list.append(i[0])
         if idx == 4:
-            print(i)
             for idx2, k in enumerate(i):
                 if idx2 == 0:
                     address_list.append(k.strip())
