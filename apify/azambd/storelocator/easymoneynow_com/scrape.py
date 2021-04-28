@@ -1,4 +1,3 @@
-# import json
 import time
 from lxml import html
 
