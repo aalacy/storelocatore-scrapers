@@ -74,7 +74,6 @@ def fetch_data():
 
     for poi in all_locations:
         store_url = "https://www.onceuponachild.com/locations/" + poi["xp"]["slug"]
-        print(store_url)
         loc_response = session.get(
             f'https://api.ordercloud.io/v1/suppliers/{poi["ID"]}/addresses/{poi["ID"]}',
             headers=headers,
