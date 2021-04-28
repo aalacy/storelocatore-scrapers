@@ -40,7 +40,7 @@ def fetch_data():
 
     base_link = "https://www.menards.com/main/storeLocator.html"
 
-    user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36'
+    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
     driver = SgChrome(user_agent=user_agent).driver()
 
     driver.get(base_link)
