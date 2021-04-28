@@ -134,8 +134,6 @@ for grid in grids:
 
             hours = hours[:-2]
 
-
-
         locator_domains.append(locator_domain)
         page_urls.append(page_url)
         location_names.append(location_name)
@@ -150,7 +148,6 @@ for grid in grids:
         latitudes.append(latitude)
         longitudes.append(longitude)
         hours_of_operations.append(hours)
-
 
 
 df = pd.DataFrame(
