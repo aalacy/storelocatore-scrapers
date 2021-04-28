@@ -3,7 +3,6 @@ from sglogging import SgLogSetup
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
-from lxml import html
 
 DOMAIN = "https://www.rogers.com/"
 logger = SgLogSetup().get_logger("rogers_com")
