@@ -23,7 +23,7 @@ def fetch_data():
             logger.info(page_url)
             sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
             addr = list(sp1.select("div.entry__content p")[0].a.stripped_strings)
-            script = sp1.select_one("div.marker")
+            script = sp1.select("div.marker")[-1]
             yield SgRecord(
                 page_url=page_url,
                 location_name=sp1.select_one("div.entry__content h3").text.strip(),
