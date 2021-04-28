@@ -38,6 +38,7 @@ def fetch_data():
     ca_country_code_names = ["Canada"]
 
     for num_store, d in enumerate(data_all):
+
         # Locator Domain
         locator_domain = locator_domain_url
         logger.info(f"Extracting the data from: {num_store}: \n{d}\n")
@@ -51,11 +52,17 @@ def fetch_data():
 
         logger.info(f"Page URL: {page_url} ")
 
-        # Location Name
+        # Location Name if Data Center or Data Centers found in the location name,
         location_name_data_center = "Data Center"
+
         location_name = d["providerName"]
         if location_name:
-            location_name = f"{location_name} {location_name_data_center}"
+            if "Data Center" in location_name:
+                location_name = location_name
+            elif "Data Centers" in location_name:
+                location_name = location_name
+            else:
+                location_name = f"{location_name} {location_name_data_center}"
         else:
             location_name = MISSING
 
@@ -114,7 +121,7 @@ def fetch_data():
         logger.info(f"Country Code: {country_code}")
 
         # Store Number
-        store_number = d["providerId"] if d["providerId"] else MISSING
+        store_number = d["id"] if d["id"] else MISSING
         logger.info(f"Store Number: {store_number}")
 
         # Phone data can be obtained from each store site
