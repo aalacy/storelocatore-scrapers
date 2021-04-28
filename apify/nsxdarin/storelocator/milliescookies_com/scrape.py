@@ -92,13 +92,16 @@ def fetch_data():
                     day_name = "Sat"
                 if wd == 0:
                     day_name = "Sun"
-                hrs = (
-                    day_name
-                    + ": "
-                    + day.split("{'open': '")[1].split("'")[0]
-                    + "-"
-                    + day.split("'close': '")[1].split("'")[0]
-                )
+                try:
+                    hrs = (
+                        day_name
+                        + ": "
+                        + day.split("{'open': '")[1].split("'")[0]
+                        + "-"
+                        + day.split("'close': '")[1].split("'")[0]
+                    )
+                except:
+                    hrs = "<MISSING>"
                 if dc <= 7:
                     if hours == "":
                         hours = hrs
@@ -119,6 +122,7 @@ def fetch_data():
             .replace(", Newcastle", "")
             .replace(", Glasgow", "")
         )
+        hours = hours.replace("; <MISSING>", "").replace("<MISSING>; ", "")
         yield [
             website,
             loc,
