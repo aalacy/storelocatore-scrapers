@@ -1,6 +1,6 @@
 from sgrequests import SgRequests
 import pandas as pd
-
+import json
 
 def extract_json(html_string):
     json_objects = []
