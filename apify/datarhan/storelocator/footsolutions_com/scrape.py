@@ -1,10 +1,8 @@
 import csv
 from lxml import etree
-from time import sleep
 from urllib.parse import urljoin
 
 from sgrequests import SgRequests
-from sgselenium import SgFirefox
 
 
 def write_output(data):
