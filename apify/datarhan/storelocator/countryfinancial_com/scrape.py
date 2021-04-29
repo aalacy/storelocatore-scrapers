@@ -72,7 +72,6 @@ def fetch_data():
             poi = loc_dom.xpath('//script[contains(text(), "PostalAddress")]/text()')
             if not poi:
                 continue
-            print(poi)
             poi = demjson.decode(poi[0].replace("\n", ""))
 
             data = loc_dom.xpath('//script[contains(text(), "JSContext")]/text()')[0]
