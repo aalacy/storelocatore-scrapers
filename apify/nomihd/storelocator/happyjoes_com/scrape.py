@@ -55,8 +55,6 @@ def write_output(data):
 
 def fetch_data():
     # Your scraper here
-    loc_list = []
-
     headers = {
         "Connection": "keep-alive",
         "Cache-Control": "max-age=0",
