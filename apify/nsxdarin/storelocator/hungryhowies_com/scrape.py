@@ -104,6 +104,8 @@ def fetch_data():
         store = name.split("#")[1]
         if len(phone) < 3:
             phone = "<MISSING>"
+        if "5555 Con" in add:
+            phone = "<MISSING>"
         yield [
             website,
             name,
