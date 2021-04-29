@@ -74,11 +74,14 @@ def fetch_data():
         if lat == "0" and lng == "0":
             lat = "<MISSING>"
             lng = "<MISSING>"
-        if address == "Coming Soon, ":
-            address = address.replace("Coming Soon, ", "")
+        if address.find("Coming Soon") != -1:
+            address = address.replace("Coming Soon ", "")
             hours = "Coming Soon"
         else:
             hours = "<MISSING>"
+        address = address.replace(",", "")
+        address = address.replace("  ", " ")
+        addr = address
         parsed = parser.parse_address_intl(address)
         street1 = parsed.street_address_1 if parsed.street_address_1 else "<MISSING>"
         street = (
@@ -90,6 +93,11 @@ def fetch_data():
         state = parsed.state if parsed.state else "<MISSING>"
         pcode = parsed.postcode if parsed.postcode else "<MISSING>"
 
+        if addr == "81 James Snow Pkwy S #1 Main and James Snow Milton":
+            street = "81 James Snow Pkwy S #1, Main and James Snow"
+            city = "Milton"
+        if addr == "2379 Trafalgar Rd Unit C5 Coming Soon Oakville":
+            city = "Oakville"
         data.append(
             [
                 "https://galitoschicken.com/",
