@@ -57,7 +57,6 @@ def fetch_data():
             )
             r = session.get(url, headers=headers)
             array = json.loads(r.content)
-            rc = 0
             for item in array["nearestOutletResponse"]["nearestlocationinfolist"][
                 "nearestLocationInfo"
             ]:
