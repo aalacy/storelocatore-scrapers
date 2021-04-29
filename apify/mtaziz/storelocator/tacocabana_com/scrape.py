@@ -30,7 +30,6 @@ def get_hoo(hoo):
         today = datetime.today()
         today_date = datetime.strftime(today, "%Y-%m-%d")
         start_time = h["start"]
-        current_date_id = 0
         if today_date in start_time:
             current_date_found_at += idx
     logger.info(f"Current Date Id: {current_date_found_at}")
@@ -66,8 +65,8 @@ def get_all_stores_data():
     logger.info(f"Headers: {headers}")
     page_num = 1
     url_api = f"https://api.koala.fuzzhq.com/v1/ordering/store-locations/?include%5B0%5D=operating_hours&include%5B1%5D=attributes&per_page=50&page={page_num}"
-    logger.info(f"URL API Endpoin: {url_api} ")
-    logger.info(f"Pulling the count for total number of pages")
+    logger.info(f"URL API Endpoint: {url_api} ")
+    logger.info("Pulling the count info for total number of pages")
     data_json = session.get(url_api, headers=headers, timeout=60).json()
     total_pages = data_json.get("meta").get("pagination").get("total_pages")
     logger.info(f"Total Pages Found: {total_pages}")
