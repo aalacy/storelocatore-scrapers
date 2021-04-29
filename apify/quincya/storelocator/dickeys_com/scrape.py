@@ -43,7 +43,7 @@ def fetch_data():
 
     base_link = "https://www.dickeys.com/locations"
 
-    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
+    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36"
     headers = {"User-Agent": user_agent}
 
     session = SgRequests()
@@ -52,8 +52,7 @@ def fetch_data():
 
     locator_domain = "https://www.dickeys.com/"
 
-    data = []
-    found = []
+    all_links = []
 
     main_items = base.find(
         class_="style__StyledSearchByState-sc-1hzbtfv-1 kmMKLM"
@@ -62,10 +61,13 @@ def fetch_data():
         main_link = locator_domain + main_item["href"]
         logger.info(main_link)
 
-        req = session.get(main_link, headers=headers)
-        base = BeautifulSoup(req.text, "lxml")
+        for i in range(5):
+            req = session.get(main_link, headers=headers)
+            base = BeautifulSoup(req.text, "lxml")
+            next_items = base.find_all(class_="state-city__item")
+            if len(next_items) > 0:
+                break
 
-        next_items = base.find_all(class_="state-city__item")
         for next_item in next_items:
             next_link = (locator_domain + next_item.a["href"]).replace("//loc", "/loc")
 
@@ -73,11 +75,13 @@ def fetch_data():
             next_base = BeautifulSoup(next_req.text, "lxml")
 
             final_items = next_base.find_all(class_="store-info__inner")
+
             for item in final_items:
                 final_link = (locator_domain + item.a["href"]).replace("//loc", "/loc")
-                if final_link in found:
+                if final_link in all_links:
                     continue
-                found.append(final_link)
+                all_links.append(final_link)
+
                 location_name = item.a.text.strip()
                 raw_address = item.find(
                     class_="Typography__P2-sc-11outmd-1 dqthKE store-info__address"
@@ -104,26 +108,22 @@ def fetch_data():
                 latitude = "<INACCESSIBLE>"
                 longitude = "<INACCESSIBLE>"
 
-                data.append(
-                    [
-                        locator_domain,
-                        final_link,
-                        location_name,
-                        street_address,
-                        city,
-                        state,
-                        zip_code,
-                        country_code,
-                        store_number,
-                        phone,
-                        location_type,
-                        latitude,
-                        longitude,
-                        hours_of_operation,
-                    ]
-                )
-
-    return data
+                yield [
+                    locator_domain,
+                    final_link,
+                    location_name,
+                    street_address,
+                    city,
+                    state,
+                    zip_code,
+                    country_code,
+                    store_number,
+                    phone,
+                    location_type,
+                    latitude,
+                    longitude,
+                    hours_of_operation,
+                ]
 
 
 def scrape():
