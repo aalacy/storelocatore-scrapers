@@ -70,24 +70,27 @@ for location in map_json:
     latitude = location["lat"]
     longitude = location["lng"]
 
-    try:
-        hours_section = extract_json(location["hours_sets:primary"])[0]["days"]
-        days = hours_section.keys()
+    if location["location_closure_message"] == "":
+        try:
+            hours_section = extract_json(location["hours_sets:primary"])[0]["days"]
+            days = hours_section.keys()
 
-        hours = ""
-        for day in days:
-            try:
-                start_time = hours_section[day][0]["open"]
-                end_time = hours_section[day][0]["close"]
+            hours = ""
+            for day in days:
+                try:
+                    start_time = hours_section[day][0]["open"]
+                    end_time = hours_section[day][0]["close"]
 
-                hours = hours + day + " " + start_time + "-" + end_time + ", "
+                    hours = hours + day + " " + start_time + "-" + end_time + ", "
 
-            except Exception:
-                hours = hours + day + " " + hours_section[day] + ", "
+                except Exception:
+                    hours = hours + day + " " + hours_section[day] + ", "
 
-        hours = hours[:-2]
-    except Exception:
-        hours = "closed"
+            hours = hours[:-2]
+        except Exception:
+            hours = "closed"
+    else:
+        hours = location["location_closure_message"]
 
     locator_domains.append(locator_domain)
     page_urls.append(page_url)
