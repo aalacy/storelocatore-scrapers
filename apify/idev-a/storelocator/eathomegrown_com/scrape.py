@@ -38,6 +38,10 @@ def fetch_data():
                 street_address = _["street1"]
                 if _["street2"]:
                     street_address += " " + _["street2"]
+                hours = []
+                for hh in _["hours"].split(","):
+                    if "&amp;" not in hh:
+                        hours.append(hh)
                 yield SgRecord(
                     page_url=page_url,
                     location_name=_["storeName"].replace("&amp;", "&"),
@@ -50,9 +54,7 @@ def fetch_data():
                     locator_domain=locator_domain,
                     latitude=_["lat"],
                     longitude=_["lng"],
-                    hours_of_operation=_["hours"]
-                    .replace(",", ";")
-                    .replace("&amp;", "&"),
+                    hours_of_operation="; ".join(hours),
                 )
 
 
