@@ -92,6 +92,8 @@ def fetch_data():
             city = city.split(",")[0].strip()
         city = city.replace(" area", "")
         if state not in intl and "troy/11191" not in loc:
+            if "3440 W" in add:
+                name = "HomeTowne Studios Dallas - Irving"
             yield [
                 website,
                 loc,
