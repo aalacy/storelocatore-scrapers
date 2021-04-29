@@ -1,7 +1,7 @@
 import csv
 import json
 
-from sgzip.dynamic import DynamicZipSearch, SearchableCountries, DynamicZipAndGeoSearch
+from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 from sgrequests import SgRequests
 
 
