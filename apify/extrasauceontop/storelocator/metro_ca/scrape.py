@@ -57,11 +57,14 @@ for location in locations:
     driver.get(page_url)
 
     while True:
-        if "Cloudflare" in driver.page_source:
-            time.sleep(5)
-            driver.get(page_url)
-        else:
-            break
+        try:
+            if "Cloudflare" in driver.page_source:
+                time.sleep(5)
+                driver.get(page_url)
+            else:
+                break
+        except Exception:
+            pass
 
     hours_soup = bs(driver.page_source, "html.parser")
 
