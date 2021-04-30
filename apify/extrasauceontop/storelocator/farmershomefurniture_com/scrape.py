@@ -63,15 +63,18 @@ for search_code in search:
         try:
             hours = location.split("hours: ")[1].split("<")[0]
         except Exception:
-            hours_data = scraper.get(page_url).text
-            hours_soup = bs(hours_data, "html.parser")
-            hours = (
-                hours_soup.find("div", attrs={"class": "grid-30"})
-                .text.strip()
-                .split("Store Hours")[1]
-                .split("Email")[0]
-                .replace("\n", " ")
-            )
+            try:
+                hours_data = scraper.get(page_url).text
+                hours_soup = bs(hours_data, "html.parser")
+                hours = (
+                    hours_soup.find("div", attrs={"class": "grid-30"})
+                    .text.strip()
+                    .split("Store Hours")[1]
+                    .split("Email")[0]
+                    .replace("\n", " ")
+                )
+            except Exception:
+                hours = "<MISSING>"
         search.found_location_at(latitude, longitude)
 
         locator_domains.append(locator_domain)
