@@ -67,7 +67,7 @@ def fetch_data():
         country = ""
         name = ""
         store = loc.rsplit("/", 1)[1]
-        with SgChrome(executable_path='/bin/chromedriver') as driver:
+        with SgChrome(executable_path="/bin/chromedriver") as driver:
             driver.get(loc)
             text = driver.page_source
             text = str(text).replace("\r", "").replace("\n", "").replace("\t", "")
