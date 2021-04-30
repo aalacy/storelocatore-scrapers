@@ -48,7 +48,6 @@ def fetch_data():
     # Your scraper here
     data = []
     url = "https://www.seasons52.com/locations/all-locations"
-    # r = session.get(url, headers=headers, verify = False)
     storelist = []
     driver.get(url)
     soup = BeautifulSoup(driver.page_source, "html.parser")
