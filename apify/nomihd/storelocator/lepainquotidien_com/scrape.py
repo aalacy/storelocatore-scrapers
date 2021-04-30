@@ -136,18 +136,20 @@ def fetch_data():
                     phone = "<MISSING>"
 
                 hours_of_operation = ""
-                hours = store["hours"]
-                for hour in hours.keys():
-                    if "openIntervals" in hours[hour]:
-                        hours_of_operation = (
-                            hours_of_operation
-                            + hours[hour]["openIntervals"][0]["start"]
-                            + "-"
-                            + hours[hour]["openIntervals"][0]["end"]
-                            + " "
-                        )
+                hours_list = []
+                if "hours" in store:
+                    hours = store["hours"]
+                    for hour in hours.keys():
+                        if "openIntervals" in hours[hour]:
+                            time = (
+                                hours[hour]["openIntervals"][0]["start"]
+                                + "-"
+                                + hours[hour]["openIntervals"][0]["end"]
+                            )
 
-                hours_of_operation = hours_of_operation.strip()
+                            hours_list.append(hour + ":" + time)
+
+                hours_of_operation = "; ".join(hours_list).strip()
                 if hours_of_operation == "" or hours_of_operation is None:
                     hours_of_operation = "<MISSING>"
 
@@ -167,14 +169,12 @@ def fetch_data():
                     longitude,
                     hours_of_operation,
                 ]
-                loc_list.append(curr_list)
+                yield curr_list
 
         else:
             break
 
         offset = offset + 50
-        # break
-    return loc_list
 
 
 def scrape():
