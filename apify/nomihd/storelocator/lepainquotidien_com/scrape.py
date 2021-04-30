@@ -59,8 +59,6 @@ def write_output(data):
 
 def fetch_data():
     # Your scraper here
-    loc_list = []
-
     search_url = "https://liveapi.yext.com/v2/accounts/1308693/entities/geosearch?api_key=a8db8f1f1c70c53b5f6346b6882e13a4&v=20200802&location=United%20States&countryBias=us&radius=2500&offset=0&limit=50&entityTypes=location&languages=primary&filter={%22closed%22:{%22$eq%22:false},%22countryCode%22:{%22$in%22:[%22us%22]}}"
     offset = 0
     total_count = None
