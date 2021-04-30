@@ -56,7 +56,7 @@ def fetch_data():
     base = str(BeautifulSoup(req.text, "lxml"))
 
     all_links = re.findall(r"https://www.freshiesdeli.com/storelocations/[a-z]+", base)
-
+    geos = re.findall(r"LatLng\([0-9]{2}\.[0-9]+,-[0-9]{2,3}\.[0-9]+\);", base)[1:]
     for i, link in enumerate(all_links):
         logger.info(link)
 
@@ -124,12 +124,8 @@ def fetch_data():
         if not hours_of_operation:
             hours_of_operation = "<MISSING>"
 
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
-
-        if "1187 Union St" in street_address:
-            latitude = "44.8193746"
-            longitude = "-68.814065"
+        latitude = geos[i].split("(")[1].split(",")[0]
+        longitude = geos[i].split(",")[1][:-2]
 
         data.append(
             [
