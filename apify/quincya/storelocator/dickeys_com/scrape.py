@@ -61,20 +61,32 @@ def fetch_data():
         main_link = locator_domain + main_item["href"]
         logger.info(main_link)
 
-        for i in range(5):
+        main_status = False
+        for i in range(10):
             req = session.get(main_link, headers=headers)
             base = BeautifulSoup(req.text, "lxml")
             next_items = base.find_all(class_="state-city__item")
             if len(next_items) > 0:
+                main_status = True
                 break
+
+        if not main_status:
+            raise
 
         for next_item in next_items:
             next_link = (locator_domain + next_item.a["href"]).replace("//loc", "/loc")
 
-            next_req = session.get(next_link, headers=headers)
-            next_base = BeautifulSoup(next_req.text, "lxml")
+            next_status = False
+            for i in range(10):
+                next_req = session.get(next_link, headers=headers)
+                next_base = BeautifulSoup(next_req.text, "lxml")
+                final_items = next_base.find_all(class_="store-info__inner")
+                if len(final_items) > 0:
+                    next_status = True
+                    break
 
-            final_items = next_base.find_all(class_="store-info__inner")
+            if not next_status:
+                raise
 
             for item in final_items:
                 final_link = (locator_domain + item.a["href"]).replace("//loc", "/loc")
