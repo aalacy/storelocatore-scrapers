@@ -155,6 +155,9 @@ def fetch_data():
                         city = add.split(",")[1].strip()
                     else:
                         city = "<MISSING>"
+                if "." not in lat or "." not in lng:
+                    lat = "<MISSING>"
+                    lng = "<MISSING>"
                 yield [
                     website,
                     loc,
