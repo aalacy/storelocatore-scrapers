@@ -35,38 +35,25 @@ def write_output(data):
             writer.writerow(row)
 
 
-def get_coords_from_embed(text):
-    try:
-        latitude = text.split("!3d")[1].strip().split("!")[0].strip()
-        longitude = text.split("!2d")[1].strip().split("!")[0].strip()
-    except IndexError:
-        latitude, longitude = "<MISSING>", "<MISSING>"
-
-    return latitude, longitude
-
-
 def get_urls():
     session = SgRequests()
-    r = session.get("https://www.seafoodcity.com/store-finder/")
+    r = session.get("https://www.freshstmarket.com/")
     tree = html.fromstring(r.text)
 
-    return tree.xpath("//div[contains(@class, 'store-cont')]//a/@href")
+    return tree.xpath(
+        "//div[text()='Select a Location']/following-sibling::ul/li[not(@class)]/a/@href"
+    )
 
 
 def get_data(page_url):
-    locator_domain = "https://www.seafoodcity.com/"
+    locator_domain = "https://www.freshstmarket.com/"
 
     session = SgRequests()
     r = session.get(page_url)
     tree = html.fromstring(r.text)
 
-    location_name = "".join(
-        tree.xpath("//div[@class='store-details']/h3/text()")
-    ).strip()
-    line = tree.xpath(
-        "//div[@class='store-details']/div[@class='store-address']/p/text()"
-    )
-    line = " ".join(list(filter(None, [l.strip() for l in line])))
+    location_name = "".join(tree.xpath("//title/text()")).split("-")[0].strip()
+    line = "".join(tree.xpath("//div[contains(@class, 'cAddress')]//text()")).strip()
 
     adr = parse_address(International_Parser(), line)
     street_address = (
@@ -79,26 +66,21 @@ def get_data(page_url):
     city = adr.city or "<MISSING>"
     state = adr.state or "<MISSING>"
     postal = adr.postcode or "<MISSING>"
-    country_code = "US"
-    if len(postal) > 5 and "-" not in postal:
-        country_code = "CA"
+    country_code = "CA"
     store_number = "<MISSING>"
-    try:
-        phone = tree.xpath(
-            "//div[@class='store-phone' and ./span[contains(text(), 'Phone')]]/p/text()"
-        )[0].strip()
-    except IndexError:
-        phone = "<MISSING>"
-    text = "".join(tree.xpath("//iframe/@src"))
-    latitude, longitude = get_coords_from_embed(text)
+    phone = (
+        "".join(tree.xpath("//div[contains(@class, 'phone ')]/i[1]/text()")).strip()
+        or "<MISSING>"
+    )
+    latitude = "<MISSING>"
+    longitude = "<MISSING>"
     location_type = "<MISSING>"
 
-    hours = "".join(
-        tree.xpath(
-            "//div[@class='store-phone' and ./span[contains(text(), 'Hours')]]/p/text()"
-        )
-    ).strip()
-    hours_of_operation = hours.replace("\n", " ").replace("pm ", "pm;") or "<MISSING>"
+    hours = tree.xpath("//address//div[contains(@class,'time cTime')]/p/text()")
+    hours = list(
+        filter(None, [h.replace("(", "").replace(")", "").strip() for h in hours])
+    )
+    hours_of_operation = ";".join(hours) or "<MISSING>"
 
     row = [
         locator_domain,
