@@ -46,10 +46,10 @@ def fetch_data():
 
     all_codes = []
     all_codes = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA], max_radius_miles=100
+        country_codes=[SearchableCountries.USA], max_radius_miles=50
     )
 
-    start_url = "https://www.mapquestapi.com/search/v2/radius?origin={}&radius=200&maxMatches=500&ambiguities=ignore&hostedData=mqap.32547_SunTrust_Branch_Loc&outFormat=json&key=Gmjtd|lu6zn1ua2d,70=o5-l0850"
+    start_url = "https://www.mapquestapi.com/search/v2/radius?origin={}&radius=50&maxMatches=500&ambiguities=ignore&hostedData=mqap.32547_SunTrust_Branch_Loc&outFormat=json&key=Gmjtd|lu6zn1ua2d,70=o5-l0850"
     for code in all_codes:
         response = session.get(start_url.format(code))
         data = json.loads(response.text)
@@ -132,8 +132,8 @@ def fetch_data():
                 hours_of_operation,
             ]
 
-            if location_name not in scraped_items:
-                scraped_items.append(location_name)
+            if store_number not in scraped_items:
+                scraped_items.append(store_number)
                 items.append(item)
 
     return items

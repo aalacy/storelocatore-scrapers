@@ -52,7 +52,7 @@ def fetch_data():
 
     all_locations = []
     all_codes = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA], max_radius_miles=200
+        country_codes=[SearchableCountries.USA], max_radius_miles=50
     )
     for code in all_codes:
         params = {
@@ -74,7 +74,7 @@ def fetch_data():
             "searchCriteria[filter_groups][0][filters][5][value]": code,
             "searchCriteria[filter_groups][0][filters][5][condition_type]": "eq",
             "searchCriteria[filter_groups][0][filters][6][field]": "distance",
-            "searchCriteria[filter_groups][0][filters][6][value]": "200",
+            "searchCriteria[filter_groups][0][filters][6][value]": "50",
             "searchCriteria[filter_groups][0][filters][6][condition_type]": "eq",
             "searchCriteria[filter_groups][0][filters][7][field]": "onlyLocation",
             "searchCriteria[filter_groups][0][filters][7][value]": "0",
