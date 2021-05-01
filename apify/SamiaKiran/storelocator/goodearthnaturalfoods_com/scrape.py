@@ -31,7 +31,8 @@ def fetch_data():
             hours_of_operation = (
                 soup.find("p", {"class": "p-0 mb-2 location-store-hours"})
                 .get_text(separator="|", strip=True)
-                .replace("|", " ").replace("Store Hours:","")
+                .replace("|", " ")
+                .replace("Store Hours:", "")
             )
             address = loc.find("div", {"class": "sstreet"}).text
             address = re.sub(pattern, "\n", address).strip()
