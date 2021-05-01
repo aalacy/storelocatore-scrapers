@@ -55,7 +55,7 @@ def fetch_data():
         store.append(store_data["name"])
         store.append(
             store_data["address"] + store_data["address2"]
-            if store_data["address2"] != None
+            if store_data["address2"] is not None
             else store_data["address"]
         )
         store.append(store_data["city"])
@@ -65,18 +65,18 @@ def fetch_data():
         store.append(store_data["id"])
         store.append(
             store_data["phone"]
-            if store_data["phone"] != "" and store_data["phone"] != None
+            if store_data["phone"] != "" and store_data["phone"] is not None
             else "<MISSING>"
         )
         store.append(
             "fnb " + store_data["locationtype"]
-            if "locationtype" in store_data and store_data["locationtype"] != None
+            if "locationtype" in store_data and store_data["locationtype"] is not None
             else "fnb"
         )
         store.append(store_data["lat"])
         store.append(store_data["lng"])
         hours = ""
-        if "hours" in store_data and store_data["hours"] != None:
+        if "hours" in store_data and store_data["hours"] is not None:
             hours = (
                 store_data["hours"]
                 .replace("{", " ")
@@ -85,7 +85,7 @@ def fetch_data():
             )
         elif "atmhours" in store_data:
             hours = store_data["atmhours"]
-        if hours == "" or hours == None:
+        if hours == "" or hours is None:
             hours = "<MISSING>"
         store.append(hours)
         yield store
