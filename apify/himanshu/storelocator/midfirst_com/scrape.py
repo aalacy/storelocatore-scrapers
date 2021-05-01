@@ -1,13 +1,8 @@
 import csv
 from sgrequests import SgRequests
-import json
 from sgselenium import SgSelenium
 from sgzip.dynamic import SearchableCountries
 from sgzip.static import static_coordinate_list
-
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger("midfirst_com")
 
 
 session = SgRequests()
@@ -115,6 +110,8 @@ def fetch_data():
             ).json()["FilteredResults"]
 
             check = len(json_data)
+            if check > 0:
+                pass
         except:
             continue
         for location in json_data:
