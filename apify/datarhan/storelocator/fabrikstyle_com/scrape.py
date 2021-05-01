@@ -53,6 +53,7 @@ def fetch_data():
     all_locations = dom.xpath('//div[@class="state-locations"]/div/div')
     for poi_html in all_locations:
         store_url = poi_html.xpath('.//h5[@class="loc-title"]/a/@href')[0]
+        print(store_url)
         loc_response = session.get(store_url)
         loc_dom = etree.HTML(loc_response.text)
 
@@ -79,14 +80,15 @@ def fetch_data():
         latitude = "<MISSING>"
         longitude = "<MISSING>"
         if loc_response.status_code == 200:
-            geo = (
-                loc_dom.xpath("//iframe/@src")[0]
-                .split("!2d")[1]
-                .split("!2m")[0]
-                .split("!3d")
-            )
-            latitude = geo[-1]
-            longitude = geo[0]
+            if loc_dom.xpath("//iframe/@src"):
+                geo = (
+                    loc_dom.xpath("//iframe/@src")[0]
+                    .split("!2d")[1]
+                    .split("!2m")[0]
+                    .split("!3d")
+                )
+                latitude = geo[-1]
+                longitude = geo[0]
         hoo = loc_dom.xpath(
             '//div[i[@class="fa fa-clock-o icon-custom"]]/following-sibling::div[1]//text()'
         )
