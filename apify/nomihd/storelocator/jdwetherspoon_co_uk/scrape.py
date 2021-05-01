@@ -81,7 +81,7 @@ def fetch_data():
         for sub in subRegions:
             stores = sub["items"]
             for store in stores:
-                if store["PubIsClosed"] is False:
+                if store["pubIsClosed"] is False:
                     page_url = "https://www.jdwetherspoon.com" + store["url"]
 
                     locator_domain = website
@@ -133,7 +133,7 @@ def fetch_data():
                         location_type = "hotel"
 
                     hours_of_operation = ""
-                    if store["PubIsTemporaryClosed"] is True:
+                    if store["pubIsTemporaryClosed"] is True:
                         hours_of_operation = "Temporary Closed"
 
                     latitude = store["lat"]
