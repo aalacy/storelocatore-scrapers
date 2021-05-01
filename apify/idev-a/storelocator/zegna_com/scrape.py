@@ -6,6 +6,16 @@ _headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
 }
 
+hours_object = {
+    "1": "Monday",
+    "2": "Tuesday",
+    "3": "Wednesday",
+    "4": "Thursday",
+    "5": "Friday",
+    "6": "Saturday",
+    "7": "Sunday",
+}
+
 
 def fetch_data():
     locator_domain = "https://www.zegna.com/"
@@ -16,6 +26,13 @@ def fetch_data():
             _city = "-".join(_["CITY"].strip().split(" "))
             _address = "-".join(_["ADDRESS"].strip().split(" ")).replace("#", "")
             page_url = f"https://www.zegna.com/us-en/store-locator/store-detail/united-states/{_city}/{_address}.{_['STORE_ID']}/"
+            hours = []
+            for hh in _["OPENING_HOURS"].split(","):
+                if not hh:
+                    continue
+                day = hh.split(":")[0]
+                times = " ".join(hh.split(":")[1:])
+                hours.append(f"{hours_object[day]}: {times}")
             yield SgRecord(
                 page_url=page_url,
                 location_name=_["NAME"],
@@ -29,7 +46,7 @@ def fetch_data():
                 country_code=_["COUNTRY"],
                 phone=_["PHONE_NUMBER"].split("ext")[0].strip(),
                 locator_domain=locator_domain,
-                hours_of_operation=_["OPENING_HOURS"].replace(",", ";"),
+                hours_of_operation="; ".join(hours),
             )
 
 

@@ -43,7 +43,7 @@ def fetch_data():
     }
     r = session.get(api_url, headers=headers)
     tree = html.fromstring(r.text)
-    div = tree.xpath("//h4/following-sibling::ul/li/a")
+    div = tree.xpath("//a[contains(@href, '/locations/')]")
     for d in div:
 
         page_url = "".join(d.xpath(".//@href"))
@@ -52,42 +52,30 @@ def fetch_data():
         tree = html.fromstring(r.text)
 
         location_name = (
-            "".join(tree.xpath('//h1[@class="f-med large_dark"]/text()'))
+            "".join(
+                tree.xpath(
+                    '//h4[@class="title"]//text() | //h1[@class="f-med large_dark"]/text()'
+                )
+            )
             .replace("\n", "")
             .strip()
         )
+
+        if location_name.find("(") != -1:
+            location_name = location_name.split("(")[0].strip()
 
         location_type = "<MISSING>"
         street_address = (
             "".join(tree.xpath('//h4[@class="f-30 m-text"]/a/text()[1]')).strip()
             or "<MISSING>"
         )
-        ad = (
-            "".join(tree.xpath('//h4[@class="f-30 m-text"]/a/text()[2]'))
-            .replace("\n", "")
-            .strip()
-        )
+        ad = "".join(tree.xpath('//h4[@class="f-30 m-text"]/a/text()[2]')).strip()
+        phone = "<MISSING>"
 
-        phone = "".join(tree.xpath('//h3[@class="f-med"]/a/text()')) or "<MISSING>"
-        state = "<MISSING>"
-        postal = "<MISSING>"
+        state = ad.split(",")[1].split()[0].strip()
+        postal = ad.split(",")[1].split()[1].strip()
         country_code = "US"
-        city = "<MISSING>"
-        if ad != ",":
-            city = ad.split(",")[0].strip()
-            state = ad.split(",")[1].split()[0].strip()
-            postal = ad.split(",")[1].split()[-1].strip()
-        if (
-            page_url.find("https://www.jabzboxing.com/locations/Drexel-Hill,-PA") != -1
-            or page_url.find("https://www.jabzboxing.com/locations/Tampa,-FL") != -1
-        ):
-            state = page_url.split("-")[-1]
-        if (
-            location_name.find("Bel Air, MD") != -1
-            or location_name.find("Midland, TX") != -1
-        ):
-            city = location_name.split(",")[0].strip()
-            state = location_name.split(",")[1].strip()
+        city = ad.split(",")[0].strip()
         store_number = "<MISSING>"
         hours_of_operation = "<MISSING>"
         if location_name.find(",") != -1:

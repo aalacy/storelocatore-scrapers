@@ -78,7 +78,7 @@ def fetch_data():
     page_dom = etree.HTML(data["template"])
     all_locations = page_dom.xpath('//div[@class="item"]')
     for page in range(2, int(total_pages) + 2):
-        url = "https://harnoisenergies.com/en/service-stations/?fwp_station_banners=petro-t&fwp_paged={}"
+        url = "https://harnoisenergies.com/fr/nos-stations-service/?fwp_station_banners=petro-t&fwp_paged={}"
         formdata = {
             "action": "facetwp_refresh",
             "data[facets]": '{"station_banners":["petro-t"],"station_area":[],"station_main_services":[],"station_restauration":[],"station_promotions":[],"station_alternate_energy":[]}',
@@ -96,13 +96,16 @@ def fetch_data():
             "data[first_load]": "0",
             "data[paged]": str(page),
         }
+
         response = session.post(url.format(str(page)), data=formdata, headers=headers)
         data = json.loads(response.text)
         page_dom = etree.HTML(data["template"])
         all_locations += page_dom.xpath('//div[@class="item"]')
 
     for poi_html in all_locations:
-        store_url = "<MISSING>"
+        if not poi_html.xpath('.//img[contains(@src, "petro-t")]'):
+            continue
+        store_url = "https://harnoisenergies.com/fr/nos-stations-service/"
         location_name = poi_html.xpath(".//h4/text()")
         location_name = location_name[0] if location_name else "<MISSING>"
         street_address = poi_html.xpath('.//span[@class="street"]/text()')
