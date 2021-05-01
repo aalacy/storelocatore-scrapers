@@ -53,7 +53,6 @@ def fetch_data():
     all_locations = dom.xpath('//div[@class="state-locations"]/div/div')
     for poi_html in all_locations:
         store_url = poi_html.xpath('.//h5[@class="loc-title"]/a/@href')[0]
-        print(store_url)
         loc_response = session.get(store_url)
         loc_dom = etree.HTML(loc_response.text)
 
