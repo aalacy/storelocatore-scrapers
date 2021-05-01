@@ -60,8 +60,7 @@ def fetch_data():
                         ltyp = "<MISSING>"
                     lurl = "https://texashealth.org" + item.split('"')[0]
                     lurl = lurl.replace("https://texashealth.orghttps", "https")
-                    if "8440" in lurl:
-                        locs.append(lurl + "|" + ltyp)
+                    locs.append(lurl + "|" + ltyp)
     for loc in locs:
         name = ""
         lat = ""

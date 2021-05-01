@@ -123,6 +123,10 @@ def fetch_data():
             .replace(", Glasgow", "")
         )
         hours = hours.replace("; <MISSING>", "").replace("<MISSING>; ", "")
+        if "High Cross Shopping Centre" in add:
+            hours = "Mon: 10:00-20:00; Tue: 10:00-20:00; Wed: 10:00-20:00; Thu: 10:00-20:00; Fri: 10:00-19:00; Sat: 11:00-17:00; Sun: 10:00-20:00"
+        if "Unit K7 Middle Mall Bullring Shopping Centre" in add:
+            hours = "Mon: 09:00-20:00; Tue: 09:00-20:00; Wed: 09:00-20:00; Thu: 09:00-20:00; Fri: 09:00-20:00; Sat: 11:00-17:00; Sun: 09:00-20:00"
         yield [
             website,
             loc,

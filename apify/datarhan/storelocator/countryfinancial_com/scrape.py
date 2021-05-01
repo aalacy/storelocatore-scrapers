@@ -52,7 +52,7 @@ def fetch_data():
     }
 
     all_codes = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA], max_radius_miles=100
+        country_codes=[SearchableCountries.USA], max_radius_miles=50
     )
     for code in all_codes:
         try:
@@ -62,7 +62,7 @@ def fetch_data():
         dom = etree.HTML(response.text)
 
         all_poi_html = dom.xpath('//div[@itemtype="//schema.org/Organization"]')
-        for poi_html in all_poi_html[1:]:
+        for poi_html in all_poi_html:
             store_url = poi_html.xpath('.//a[@itemprop="url"]/@href')[0]
             if store_url in scraped_urls:
                 continue
