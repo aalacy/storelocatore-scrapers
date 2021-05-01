@@ -2,7 +2,6 @@ import undetected_chromedriver as uc
 from sgselenium.sgselenium import webdriver
 from bs4 import BeautifulSoup as bs
 import pandas as pd
-import time
 
 locator_domains = []
 page_urls = []
