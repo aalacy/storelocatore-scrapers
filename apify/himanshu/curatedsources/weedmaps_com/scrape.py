@@ -2,7 +2,7 @@ import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 
-session = SgRequests()
+session = SgRequests(proxy_rotation_failure_threshold=2)
 
 
 def write_output(data):
@@ -36,7 +36,8 @@ def write_output(data):
 def fetch_data():
     address = []
     headers = {
-        "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.96 Safari/537.36"
+        "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.96 Safari/537.36",
+        "accept": "*/*",
     }
     page = 1
     while True:
@@ -74,18 +75,7 @@ def fetch_data():
             longitude = loc["longitude"]
             page_url = loc["web_url"]
 
-            try:
-                r = session.get(page_url)
-                soup = BeautifulSoup(r.text, "lxml")
-                temp_h_o_o = list(
-                    soup.find(
-                        "div",
-                        class_="src__Box-sc-1sbtrzs-0 styled-components__DetailGridItem-sc-5o6q5l-0 styled-components__OpenHours-sc-5o6q5l-1 lfmwKQ",
-                    ).stripped_strings
-                )
-                h_o_o = " ".join(temp_h_o_o).replace("Closed now", "")
-            except:
-                h_o_o = "<MISSING>"
+            h_o_o = "<INACCESSIBLE>"
 
             if (
                 "https://weedmaps.com/dispensaries/tokyo-smoke-3003-danforth"
