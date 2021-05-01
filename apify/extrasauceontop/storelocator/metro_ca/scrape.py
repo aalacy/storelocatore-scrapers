@@ -2,7 +2,6 @@ import undetected_chromedriver as uc
 from sgselenium.sgselenium import webdriver
 from bs4 import BeautifulSoup as bs
 import pandas as pd
-import time
 
 locator_domains = []
 page_urls = []
@@ -54,30 +53,7 @@ for location in locations:
     latitude = location["data-store-lat"]
     longitude = location["data-store-lng"]
 
-    driver.get(page_url)
-
-    while True:
-        try:
-            if "Cloudflare" in driver.page_source:
-                time.sleep(5)
-                driver.get(page_url)
-            else:
-                break
-        except Exception:
-            pass
-
-    hours_soup = bs(driver.page_source, "html.parser")
-
-    days = hours_soup.find_all("span", attrs={"class": "sd-opening-day"})
-    times = hours_soup.find_all("span", attrs={"class": "sd-opening-hours"})
-
-    hours = ""
-    for x in range(len(days)):
-        day = days[x]
-        my_time = times[x]
-
-        hours = hours + day.text.strip() + " " + my_time.text.strip() + ", "
-    hours = hours[:-2]
+    hours = "<INACCESSIBLE>"
 
     locator_domains.append(locator_domain)
     page_urls.append(page_url)
