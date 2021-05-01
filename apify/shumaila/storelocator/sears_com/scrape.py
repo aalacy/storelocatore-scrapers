@@ -41,7 +41,6 @@ def write_output(data):
 
 def fetch_data():
     data = []
-    links = []
     pattern = re.compile(r"\s\s+")
     url = "https://www.sears.com/stores.html"
     page = session.get(url, headers=headers, verify=False)
@@ -57,7 +56,6 @@ def fetch_data():
                 try:
                     page1 = session.get(statelink, headers=headers, verify=False)
                     soup1 = BeautifulSoup(page1.text, "html.parser")
-                    maindiv = soup1.find("div", {"class": "shc-quick-links"})
                     linklist = soup1.findAll(
                         "li", {"class": "shc-quick-links--store-details__list--stores"}
                     )
@@ -75,7 +73,6 @@ def fetch_data():
                                     page2 = session.get(
                                         link, headers=headers, verify=False
                                     )
-                                    time.sleep(2)
 
                                     if page2.url.find("closed") > -1:
                                         break
@@ -108,12 +105,6 @@ def fetch_data():
                                             store = title.split("#", 1)[1].lstrip()
                                         else:
                                             store = "<MISSING>"
-                                        mainp = soup2.find(
-                                            "p",
-                                            {
-                                                "class": "shc-store-location__details--address"
-                                            },
-                                        ).findAll("span")
                                         try:
                                             street = (
                                                 soup2.find(
@@ -126,7 +117,7 @@ def fetch_data():
                                                 .text
                                             )
                                             street = street.lstrip()
-                                        except Exception as e:
+                                        except:
                                             street = "<MISSING>"
                                         try:
                                             city = (
@@ -231,11 +222,11 @@ def fetch_data():
                                             )
 
                                             flag = False
-                                except Exception as e:
+                                except:
 
                                     pass
                     flag1 = False
-                except Exception as e:
+                except:
 
                     pass
     return data
