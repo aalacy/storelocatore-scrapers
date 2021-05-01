@@ -9,10 +9,8 @@ logger = SgLogSetup().get_logger("rascalhouse_com")
 session = SgRequests()
 
 headers = {
-
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.141 Safari/537.36',
-
-    }
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.141 Safari/537.36",
+}
 
 
 def write_output(data):
@@ -40,7 +38,7 @@ def write_output(data):
             ]
         )
 
-        temp_list = []  
+        temp_list = []
         for row in data:
             comp_list = [
                 row[2].strip(),
@@ -56,21 +54,19 @@ def write_output(data):
                 writer.writerow(row)
         logger.info(f"No of records being processed: {len(temp_list)}")
 
-        
-
 
 def fetch_data():
     data = []
     search_url = "https://rascalhouse.com/wp-content/uploads/ssf-wp-uploads/ssf-data.json?t=1619753584570"
     stores_req = session.get(search_url, headers=headers).json()
-    for loc in stores_req['item']:
-        title = loc['location']
-        address = loc['address']
-        lat = loc['latitude']
-        lng = loc['longitude']
-        hours = loc['operatingHours']
-        phone = loc['telephone']
-        storeid = loc['storeId']
+    for loc in stores_req["item"]:
+        title = loc["location"]
+        address = loc["address"]
+        lat = loc["latitude"]
+        lng = loc["longitude"]
+        hours = loc["operatingHours"]
+        phone = loc["telephone"]
+        storeid = loc["storeId"]
 
         parsed = parser.parse_address_usa(address)
         street1 = parsed.street_address_1 if parsed.street_address_1 else "<MISSING>"
@@ -82,31 +78,31 @@ def fetch_data():
         city = parsed.city if parsed.city else "<MISSING>"
         state = parsed.state if parsed.state else "<MISSING>"
         pcode = parsed.postcode if parsed.postcode else "<MISSING>"
-        hours = hours.replace('<p>', '')
-        hours = hours.replace('<br>', ' ')
-        hours = hours.replace('</p>', '')
-        hours = hours.replace('<div>', '')
-        hours = hours.replace('</div>', '')
+        hours = hours.replace("<p>", "")
+        hours = hours.replace("<br>", " ")
+        hours = hours.replace("</p>", "")
+        hours = hours.replace("<div>", "")
+        hours = hours.replace("</div>", "")
         hours = hours.strip()
 
         data.append(
-                    [
-                        "https://rascalhouse.com",
-                        'https://rascalhouse.com/locations/',
-                        title,
-                        street,
-                        city,
-                        state,
-                        pcode,
-                        "US",
-                        storeid,
-                        phone,
-                        "<MISSING>",
-                        lat,
-                        lng,
-                        hours,
-                    ]
-                )
+            [
+                "https://rascalhouse.com",
+                "https://rascalhouse.com/locations/",
+                title,
+                street,
+                city,
+                state,
+                pcode,
+                "US",
+                storeid,
+                phone,
+                "<MISSING>",
+                lat,
+                lng,
+                hours,
+            ]
+        )
     return data
 
 
@@ -118,4 +114,3 @@ def scrape():
 
 
 scrape()
-fetch_data()
