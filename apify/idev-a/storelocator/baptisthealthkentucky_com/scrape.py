@@ -5,6 +5,7 @@ from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
 from sgscrape.sgpostal import parse_address_intl
 import re
+import json
 
 logger = SgLogSetup().get_logger("baptisthealth")
 
@@ -37,6 +38,17 @@ def fetch_data():
             street_address = addr.street_address_1
             if addr.street_address_2:
                 street_address += " " + addr.street_address_2
+            _script = sp1.find_all("script", type="application/ld+json")
+            latitude = longitude = ""
+            hours_of_operation = ""
+            if _script:
+                script = json.loads(_script[-1].string.strip())
+                if "geo" in script:
+                    latitude = script["geo"]["latitude"]
+                    longitude = script["geo"]["longitude"]
+                if "openingHoursSpecification" in script:
+                    day = ",".join(script["openingHoursSpecification"]["dayOfWeek"])
+                    hours_of_operation = f"{day}: {script['openingHoursSpecification']['opens']}-{script['openingHoursSpecification']['closes']}"
             yield SgRecord(
                 page_url=page_url,
                 location_name=sp1.title.text.split("in")[0].split("–")[-1].strip(),
@@ -47,6 +59,9 @@ def fetch_data():
                 country_code="US",
                 phone=phone,
                 locator_domain=locator_domain,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
             )
 
 
