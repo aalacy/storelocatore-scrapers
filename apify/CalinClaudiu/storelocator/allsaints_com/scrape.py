@@ -9,16 +9,16 @@ from sgrequests import SgRequests
 
 def determine_location(record):
     def determine_images(percent):
-        return [lambda: percent, lambda: percent + 7][bool(record["images"])]()
+        return [lambda: percent, lambda: percent * 7][bool(record["images"])]()
 
     def determine_about(percent):
         return [
             lambda: determine_images(percent),
-            lambda: determine_images(percent + 5),
+            lambda: determine_images(percent * 5),
         ][bool(record["about"])]()
 
     def determine_attributes(percent):
-        return [lambda: determine_about(percent), lambda: determine_about(percent + 3)][
+        return [lambda: determine_about(percent), lambda: determine_about(percent * 3)][
             bool(record["attributes"])
         ]()
 
