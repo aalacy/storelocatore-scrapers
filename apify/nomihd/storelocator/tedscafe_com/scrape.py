@@ -74,12 +74,12 @@ def fetch_data():
                 page_url = search_url
                 locator_domain = website
 
-                location_name = "".join(store.xpath(f".//text()")).strip()
+                location_name = "".join(store.xpath(".//text()")).strip()
 
                 address_info = list(
                     filter(
                         str,
-                        detail_list[idx].xpath(f".//h4//text()"),
+                        detail_list[idx].xpath(".//h4//text()"),
                     )
                 )
 
