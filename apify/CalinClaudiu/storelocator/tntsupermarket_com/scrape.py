@@ -1,16 +1,13 @@
 from sgscrape import simple_scraper_pipeline as sp
-from sgscrape import simple_network_utils as net_utils
 from sgscrape import simple_utils as utils
 from sgrequests import SgRequests
 from sglogging import sglog
-import json
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 
 
 def para(k):
     session = SgRequests()
     # https://www.tntsupermarket.com/rest/V1/xmapi/get-store-details?lang=en&id=2479
-    backup = k
     ide = k["id"]
     headers = {
         "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
