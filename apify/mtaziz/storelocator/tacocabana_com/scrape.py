@@ -43,7 +43,6 @@ def get_hoo(hoo, state_for_different_timezone):
             start_line = test_start.split("T")[1]
             end_line = test_end.split("T")[1]
             if "NM" in state_for_different_timezone:
-                # Time in New Mexico (NM)
                 start_sanitized = (
                     datetime.strptime(start_line, "%H:%M:%S+00:00") - timedelta(hours=6)
                 ).strftime("%I:%M %p")
@@ -52,7 +51,6 @@ def get_hoo(hoo, state_for_different_timezone):
                     datetime.strptime(end_line, "%H:%M:%S+00:00") - timedelta(hours=6)
                 ).strftime("%I:%M %p")
             else:
-                # Time in Texas (TX)
                 start_sanitized = (
                     datetime.strptime(start_line, "%H:%M:%S+00:00") - timedelta(hours=5)
                 ).strftime("%I:%M %p")
