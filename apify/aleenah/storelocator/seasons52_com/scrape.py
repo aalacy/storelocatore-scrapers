@@ -1,22 +1,12 @@
 from bs4 import BeautifulSoup
 import csv
 import json
-
+from sgselenium import SgSelenium
 from sgrequests import SgRequests
 
 session = SgRequests()
 headers = {
     "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-    "accept-encoding": "gzip, deflate",
-    "accept-language": "en-US,en;q=0.9,ms;q=0.8,ur;q=0.7,lb;q=0.6",
-    "cache-control": "max-age=0",
-    "sec-ch-ua": '" Not A;Brand";v="99", "Chromium";v="90", "Google Chrome";v="90"',
-    "sec-ch-ua-mobile": "?0",
-    "sec-fetch-dest": "document",
-    "sec-fetch-mode": "navigate",
-    "sec-fetch-site": "none",
-    "sec-fetch-user": "?1",
-    "upgrade-insecure-requests": "1",
     "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.85 Safari/537.36",
 }
 
@@ -51,13 +41,16 @@ def write_output(data):
             writer.writerow(row)
 
 
+driver = SgSelenium().chrome()
+
+
 def fetch_data():
     # Your scraper here
     data = []
-    url = "https://www.seasons52.com/site-map"
-    r = session.get(url, headers=headers)
+    url = "https://www.seasons52.com/locations/all-locations"
     storelist = []
-    soup = BeautifulSoup(r.text, "html.parser")
+    driver.get(url)
+    soup = BeautifulSoup(driver.page_source, "html.parser")
 
     divlist = soup.select("a[href*=locations]")
     p = 0
@@ -70,13 +63,14 @@ def fetch_data():
         else:
             link = "https://www.seasons52.com" + div["href"]
 
-        if link.find("all-locations") == -1:
-            r = session.get(link, headers=headers, verify=False)
+        if link.find("-locations") == -1:
+            driver.get(link)
             loc = (
-                r.text.split('<script type="application/ld+json">', 1)[1]
+                driver.page_source.split('<script type="application/ld+json">', 1)[1]
                 .split("</script>", 1)[0]
                 .replace("\n", "")
             )
+
             loc = json.loads(loc)
 
             if (
@@ -97,7 +91,7 @@ def fetch_data():
                 title = loc["name"]
                 store = loc["branchCode"]
                 if len(street) < 2:
-                    soup = BeautifulSoup(r.text, "html.parser")
+                    soup = BeautifulSoup(driver.page_source, "html.parser")
                     address = soup.find("input", {"id": "restAddress"})["value"]
                     street, city, state, pcode = address.split(",")
                     store = soup.find("input", {"id": "restID"})["value"]
@@ -133,7 +127,7 @@ def fetch_data():
                 )
 
             else:
-                soup = BeautifulSoup(r.text, "html.parser")
+                soup = BeautifulSoup(driver.page_source, "html.parser")
                 address = soup.find("input", {"id": "restAddress"})["value"]
 
                 street, city, state, pcode = address.split(",")
@@ -202,6 +196,7 @@ def fetch_data():
 def scrape():
     data = fetch_data()
     write_output(data)
+    driver.quit()
 
 
 scrape()
