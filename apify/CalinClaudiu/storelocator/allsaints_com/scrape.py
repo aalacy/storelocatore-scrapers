@@ -23,7 +23,7 @@ def determine_location(record):
         ]()
 
     return [lambda: determine_attributes(0), lambda: determine_attributes(11)][
-        bool(re.match("^[A-Z0-9\-]+$", record["slug"]))
+        bool(re.match(r"^[A-Z0-9\-]+$", record["slug"]))
     ]()
 
 
