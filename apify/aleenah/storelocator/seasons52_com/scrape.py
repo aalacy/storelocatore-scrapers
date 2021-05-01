@@ -2,13 +2,6 @@ from bs4 import BeautifulSoup
 import csv
 import json
 from sgselenium import SgSelenium
-from sgrequests import SgRequests
-
-session = SgRequests()
-headers = {
-    "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-    "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.85 Safari/537.36",
-}
 
 
 def write_output(data):
