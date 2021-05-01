@@ -55,6 +55,8 @@ def fetch_data():
         store_url = store_url if store_url else "<MISSING>"
         location_name = poi["name"]
         location_name = location_name if location_name else "<MISSING>"
+        if "Coming Soon" in location_name:
+            continue
         street_address = poi["streetAddress"]
         city = poi["locality"]
         state = poi["region"]
@@ -64,8 +66,8 @@ def fetch_data():
         phone = poi["phone"]
         phone = phone if phone else "<MISSING>"
         location_type = "<MISSING>"
-        if store_url == "<MISSING>":
-            continue
+        # if store_url == "<MISSING>":
+        #     continue
         latitude = poi["lat"]
         latitude = latitude if latitude else "<MISSING>"
         longitude = poi["lng"]
