@@ -54,13 +54,13 @@ def para(tup):
                 if "404" in str(e):
                     k = {}
                     k["STATUS"] = False
-                elif "ProxyError" in str(e):
+                elif "ProxyError" in str(e) or "Bad status code: 500" in str(e):
                     tup[2] += 1
                     if tup[2] < 15:
                         k = para(tup)
                 else:
                     logzilla.info(f"Exception: {e}, retried {tup[2]} times")
-                    raise Exception
+                    raise e
         except urlibException.SSLError as e:
             if "BAD_RECORD_MAC" in str(e):
                 tup[2] += 1
@@ -68,7 +68,7 @@ def para(tup):
                     k = para(tup)
             else:
                 logzilla.info(f"Exception: {e}, retried {tup[2]} times")
-                raise Exception
+                raise e
 
     except StopIteration:
         return

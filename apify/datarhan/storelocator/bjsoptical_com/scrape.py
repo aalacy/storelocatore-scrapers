@@ -83,6 +83,8 @@ def fetch_data():
         hours_of_operation = (
             hours_of_operation if hours_of_operation.strip() else "<MISSING>"
         )
+        if hours_of_operation == "N/A":
+            hours_of_operation = "<MISSING>"
 
         item = [
             DOMAIN,

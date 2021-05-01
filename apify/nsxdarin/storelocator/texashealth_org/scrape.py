@@ -78,12 +78,38 @@ def fetch_data():
         ll = []
         logger.info(loc.split("|")[0])
         r2 = session.get(loc.split("|")[0], headers=headers)
-        for line2 in r2.iter_lines():
+        lines = r2.iter_lines()
+        for line2 in lines:
             line2 = str(line2.decode("utf-8"))
             if "<title>" in line2:
                 name = line2.split("<title>")[1].split("<")[0]
                 if "|" in name:
                     name = name.split("|")[0].strip()
+            if (
+                "<a href='https://www.google.com/maps/place/" in line2
+                and "Get Directions" not in line2
+            ):
+                g = next(lines)
+                g = str(g.decode("utf-8"))
+                if ">" not in g:
+                    g = next(lines)
+                    g = str(g.decode("utf-8"))
+                h = next(lines)
+                h = str(h.decode("utf-8"))
+                i = next(lines)
+                i = str(i.decode("utf-8"))
+                add = (
+                    g.split(">")[1].split("<")[0] + " " + h.split(">")[1].split("<")[0]
+                )
+                add = add.strip()
+                csz = i.split(">")[1].split("<")[0].strip()
+                city = csz.split(",")[0]
+                state = csz.split(",")[1].strip().split(" ")[0]
+                zc = csz.rsplit(" ", 1)[1]
+                phone = "(682) 549-7916"
+                locinfo.append(
+                    name + "|" + add + "|" + city + "|" + state + "|" + zc + "|" + phone
+                )
             if '<div class="row profile-details">' in line2:
                 items = line2.split('<div class="row profile-details">')
                 for item in items:
@@ -146,8 +172,12 @@ def fetch_data():
             state = locinfo[x].split("|")[3]
             zc = locinfo[x].split("|")[4]
             phone = locinfo[x].split("|")[5]
-            lat = ll[x].split("|")[0]
-            lng = ll[x].split("|")[1]
+            try:
+                lat = ll[x].split("|")[0]
+                lng = ll[x].split("|")[1]
+            except:
+                lat = "<MISSING>"
+                lng = "<MISSING>"
             if phone == "":
                 phone = "<MISSING>"
             info = name + "|" + add + "|" + phone
