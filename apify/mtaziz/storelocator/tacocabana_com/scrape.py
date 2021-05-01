@@ -5,6 +5,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from datetime import datetime, timedelta
 import time
+import pytz
 
 session = SgRequests()
 DOMAIN = "https://www.tacocabana.com"
@@ -23,12 +24,13 @@ def get_headers(url, api_v1_ordering, headerIdent):
                 return r.headers
 
 
-def get_hoo(hoo):
+def get_hoo(hoo, state_for_different_timezone):
     hoo_list = []
     current_date_found_at = 0
     for idx, h in enumerate(hoo):
-        today = datetime.today()
-        today_date = datetime.strftime(today, "%Y-%m-%d")
+        tz = pytz.timezone("US/Central")
+        ct = datetime.now(tz=tz)
+        today_date = datetime.strftime(ct, "%Y-%m-%d")
         start_time = h["start"]
         if today_date in start_time:
             current_date_found_at += idx
@@ -40,12 +42,24 @@ def get_hoo(hoo):
             test_end = h["end"]
             start_line = test_start.split("T")[1]
             end_line = test_end.split("T")[1]
-            start_sanitized = (
-                datetime.strptime(start_line, "%H:%M:%S+00:00") - timedelta(hours=5)
-            ).strftime("%I:%M %p")
-            end_sanitized = (
-                datetime.strptime(end_line, "%H:%M:%S+00:00") - timedelta(hours=5)
-            ).strftime("%I:%M %p")
+            if "NM" in state_for_different_timezone:
+                # Time in New Mexico (NM)
+                start_sanitized = (
+                    datetime.strptime(start_line, "%H:%M:%S+00:00") - timedelta(hours=6)
+                ).strftime("%I:%M %p")
+
+                end_sanitized = (
+                    datetime.strptime(end_line, "%H:%M:%S+00:00") - timedelta(hours=6)
+                ).strftime("%I:%M %p")
+            else:
+                # Time in Texas (TX)
+                start_sanitized = (
+                    datetime.strptime(start_line, "%H:%M:%S+00:00") - timedelta(hours=5)
+                ).strftime("%I:%M %p")
+
+                end_sanitized = (
+                    datetime.strptime(end_line, "%H:%M:%S+00:00") - timedelta(hours=5)
+                ).strftime("%I:%M %p")
             hoo_sanitized = f"{day_of_week} {start_sanitized} - {end_sanitized}"
             hoo_list.append(hoo_sanitized)
     hoo_formatted = "; ".join(hoo_list)
@@ -86,10 +100,13 @@ def get_all_stores_data():
 def fetch_data():
     data_all = get_all_stores_data()
     location_name_menu = "https://olo.tacocabana.com/menu/"
+    s = set()
     for row_num, data in enumerate(data_all):
+        logger.info(f"(Data: {row_num}: {data} ")
         logger.info(f"Parsing the data at Row: {row_num}")
         # Location Name
-        location_name = data["label"] or MISSING
+        location_name_data = data["label"]
+        location_name = location_name_data if location_name_data else MISSING
 
         # Page URL
         slug = data["slug"]
@@ -104,16 +121,22 @@ def fetch_data():
         street_address = data["street_address"].strip() or MISSING
         logger.info(f"[Street Address: {street_address} ]")
         city = data["city"] or MISSING
-        state = data["cached_data"]["state"] or MISSING
+        state_data = data["cached_data"]["state"]
+        state = state_data if state_data else MISSING
         zip_postal = data["zip_code"] or MISSING
         country_code = data["country"] or MISSING
         logger.info(
             f"[Street Address: {street_address} | [City: {city} | State: {state} | Zip: {zip_postal} | Country Code: {country_code}]"
         )
 
-        # Store Number
-        store_number = data["attributes"][0]["store_location_id"] or MISSING
+        store_number = data["brand_id"]
+        store_number = store_number if store_number else MISSING
         logger.info(f"[Store Number: {store_number} ]")
+        if "OLO" in store_number:
+            continue
+        if store_number in s:
+            continue
+        s.add(store_number)
 
         # Phone Number
         phone = phone = data["phone_number"] or MISSING
@@ -133,7 +156,7 @@ def fetch_data():
 
         # Hours of Operation
         hoo_raw = data["operating_hours"]
-        hours_of_operation = get_hoo(hoo_raw)
+        hours_of_operation = get_hoo(hoo_raw, state_data)
 
         # Raw Address
         raw_address = MISSING
