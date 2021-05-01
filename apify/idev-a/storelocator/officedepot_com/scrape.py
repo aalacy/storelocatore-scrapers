@@ -24,7 +24,7 @@ def fetch_data():
     session = SgRequests(proxy_rotation_failure_threshold=20)
     maxZ = search.items_remaining()
     total = 0
-    MAX_DISTANCE = 250
+    MAX_DISTANCE = 550
     for zip_code in search:
         if search.items_remaining() > maxZ:
             maxZ = search.items_remaining()
