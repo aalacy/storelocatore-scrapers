@@ -37,6 +37,7 @@ def fetch_data():
                         .get_text(separator="|", strip=True)
                         .replace("|", " ")
                         .replace("Store Hours ", "")
+                        .replace("(Seasonal)", "")
                     )
                 else:
                     hours_of_operation = (
@@ -44,6 +45,7 @@ def fetch_data():
                         .get_text(separator="|", strip=True)
                         .replace("|", " ")
                         .replace("Store Hours ", "")
+                        .replace("(Seasonal)", "")
                     )
             except:
                 try:
@@ -52,12 +54,13 @@ def fetch_data():
                         .get_text(separator="|", strip=True)
                         .replace("|", " ")
                         .replace("Store Hours ", "")
+                        .replace("(Seasonal)", "")
                     )
                 except:
                     if "WE’RE MAKING PROGRESS!" in loc.findAll("strong")[1].text:
                         continue
             if "CLOSED FOR RENOVATION" in hours_of_operation:
-                hours_of_operation = "<MISSING>"
+                hours_of_operation = "Temporarily closed"
             temp = temp[0].get_text(separator="|", strip=True).split("|")
             if "DENVILLE COMMONS" in temp[0]:
                 phone = temp[3].replace("Phone: ", "")
@@ -93,7 +96,7 @@ def fetch_data():
                 i += 1
 
             longitude, latitude = (
-                soup.select_one("iframe[src*=maps]")["src"]
+                loc.select_one("iframe[src*=maps]")["src"]
                 .split("!2d", 1)[1]
                 .split("!2m", 1)[0]
                 .split("!3d")

@@ -99,7 +99,10 @@ def fetch_data():
         hours = get_hours(item["hours"], item["status"])
         page_url = f'https://{website}{item["link"]}' if item["link"] else "<MISSING>"
         phone = "<MISSING>"
-
+        if ". Deliver" in hours:
+            hours = hours.split(". Deliver")[0].strip()
+        if ". Drive" in hours:
+            hours = hours.split(". Drive")[0].strip()
         yield [
             website,
             page_url,

@@ -59,15 +59,19 @@ def fetch_data():
             '//h1[contains(@class, "headerBox__heroTitle")]/text()'
         )
         location_name = location_name[0] if location_name else "<MISSING>"
+        if "PAGE NOT FOUND" in location_name:
+            continue
         street_address = loc_dom.xpath(
             '//span[@class="retailerContact__address1"]/text()'
-        )[0]
+        )
+        street_address = street_address[0] if street_address else ""
         street_2 = loc_dom.xpath('//span[@class="retailerContact__address2"]/text()')
         if street_2:
             street_address += " " + street_2[0]
         street_3 = loc_dom.xpath('//span[@class="retailerContact__address3"]/text()')
         if street_3:
             street_address += " " + street_3[0]
+        street_address = street_address if street_address else "<MISSING>"
         city = loc_dom.xpath('//span[@class="retailerContact__locality"]/text()')
         city = city[0] if city else "<MISSING>"
         state = loc_dom.xpath('//span[@class="retailerContact__county"]/text()')

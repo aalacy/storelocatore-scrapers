@@ -46,6 +46,7 @@ def fetch_data():
         js = r.json()
 
         for j in js:
+
             a = j.get("store_info")
             page_url = "".join(a.get("website"))
             if (
@@ -53,8 +54,12 @@ def fetch_data():
                 != -1
             ):
                 continue
+
             location_name = a.get("name")
+            status = "".join(j.get("status"))
             location_type = "<MISSING>"
+            if status != "open":
+                location_type = status
             street_address = f"{a.get('address')} {a.get('address_extended')}".replace(
                 "None", ""
             ).strip()
