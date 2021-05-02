@@ -17,7 +17,7 @@ headers = {
 
 
 def sleep():
-    time.sleep(random.randint(2, 4))
+    time.sleep(random.randint(4, 7))
 
 
 def write_output(data):
