@@ -57,7 +57,10 @@ def fetch_data():
         location_name = poi_html.xpath('.//a[@class="cinema-title"]/h3/text()')
         location_name = location_name[0] if location_name else "<MISSING>"
         raw_address = poi_html.xpath('.//div[@class="contact-address"]/p/text()')
+        raw_address = [e.strip() for e in raw_address if e.strip()]
         street_address = raw_address[0]
+        if "suit" in raw_address[1].lower():
+            street_address += " " + raw_address[1].strip()
         street_address = street_address if street_address else "<MISSING>"
         city = raw_address[-1].split(", ")[0]
         city = city if city else "<MISSING>"
