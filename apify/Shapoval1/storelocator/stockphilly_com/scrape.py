@@ -66,7 +66,8 @@ def fetch_data():
         hours_of_operation = (
             " ".join(d.xpath(".//div/text()")).replace("\n", "").strip()
         )
-        if hours_of_operation.find("Mon") != -1:
+
+        if hours_of_operation.find("Mon") == -1:
             phone = phone.split("\n")[0].replace("Walk-in only,", "").strip()
             street_address = (
                 "".join(
@@ -111,7 +112,7 @@ def fetch_data():
                 .strip()
             )
             location_name = "Fishtown"
-        if hours_of_operation.find("Mon") == -1:
+        if hours_of_operation.find("Mon") != -1:
             phone = phone.split("\n")[1].strip()
             street_address = (
                 "".join(
