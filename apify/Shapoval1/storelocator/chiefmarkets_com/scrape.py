@@ -1,4 +1,5 @@
 import csv
+from lxml import html
 from sgrequests import SgRequests
 
 
@@ -34,7 +35,7 @@ def write_output(data):
 def fetch_data():
     out = []
     locator_domain = "https://www.chiefmarkets.com"
-    api_url = "https://api.freshop.com/1/stores?app_key=chief_markets&has_address=true&is_selectable=true&limit=100&token=936086459c586517fe05a625bf21f3df"
+    api_url = "https://api.freshop.com/1/stores?app_key=chief_markets&has_address=true&is_selectable=true&limit=100&token=3dc14bd9daf7f2ae9dd54675e2e815f1"
     location_type = "<MISSING>"
     session = SgRequests()
     r = session.get(api_url)
