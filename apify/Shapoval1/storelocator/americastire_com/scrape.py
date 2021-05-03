@@ -36,19 +36,19 @@ def write_output(data):
 def fetch_data():
     out = []
 
-    locator_domain = "https://www.discounttire.com"
+    locator_domain = "https://www.americastire.com"
     session = SgRequests()
-    data = '{"operationName":"CmsPage","variables":{"id":"/store","siteId":"discounttire"},"query":"query CmsPage($id: String!, $siteId: String) {\\n cms {\\n page(id: $id, siteId: $siteId) {\\n documentTitle\\n metaTags {\\n name\\n content\\n __typename\\n }\\n breadcrumbs {\\n name\\n url\\n __typename\\n }\\n htmlContent\\n source\\n __typename\\n }\\n __typename\\n }\\n}\\n"}'
+    data = '{"operationName":"CmsPage","variables":{"id":"/store","siteId":"americastire"},"query":"query CmsPage($id: String!, $siteId: String) {\\n cms {\\n page(id: $id, siteId: $siteId) {\\n documentTitle\\n metaTags {\\n name\\n content\\n __typename\\n }\\n breadcrumbs {\\n name\\n url\\n __typename\\n }\\n htmlContent\\n source\\n __typename\\n }\\n __typename\\n }\\n}\\n"}'
 
     r = session.post(
-        "https://data.discounttire.com/webapi/discounttire.graph", data=data
+        "https://data.americastire.com/webapi/americastire.graph", data=data
     )
     js = r.json()["data"]["cms"]["page"]["htmlContent"]
     tree = html.fromstring(js)
     div = tree.xpath('//a[contains(@href, "store")]')
     s = set()
     for d in div:
-        page_url = "https://www.discounttire.com" + "".join(d.xpath(".//@href"))
+        page_url = "https://www.americastire.com" + "".join(d.xpath(".//@href"))
         slug = "".join(d.xpath(".//@href")).split("/")[-1]
         month = datetime.today().strftime("%b")
 
@@ -61,7 +61,7 @@ def fetch_data():
             + '","sourceLatitude":0,"sourceLongitude":0},"query":"query StoreByCodeStoreDetailPage($storeCode: String!, $month: String!, $dayOfWeek: String, $sourceLatitude: Float, $sourceLongitude: Float) {\\n store {\\n byCode(storeCode: $storeCode, sourceLatitude: $sourceLatitude, sourceLongitude: $sourceLongitude) {\\n address {\\n line1\\n town\\n phone\\n region {\\n isocodeShort\\n __typename\\n }\\n postalCode\\n __typename\\n }\\n baseStore\\n rating {\\n cleanlinessRating\\n knowledgeRating\\n numberOfReviews\\n rating\\n recommendedCount\\n recommendedPercentage\\n __typename\\n }\\n reviewsSummary {\\n rating\\n count\\n __typename\\n }\\n code\\n storeContent\\n distance\\n features {\\n iconName\\n name\\n description\\n code\\n __typename\\n }\\n largeImages: images(format: \\"large\\") {\\n altText\\n url\\n __typename\\n }\\n mediumImages: images(format: \\"medium\\") {\\n altText\\n url\\n __typename\\n }\\n smallImages: images(format: \\"small\\") {\\n altText\\n url\\n __typename\\n }\\n legacyStoreCode\\n geoPoint {\\n latitude\\n longitude\\n __typename\\n }\\n managerName\\n weekDays {\\n holidayType\\n name\\n comment\\n closed\\n closingTime {\\n formattedHour\\n hour\\n minute\\n __typename\\n }\\n formattedDate\\n openingTime {\\n formattedHour\\n hour\\n minute\\n __typename\\n }\\n __typename\\n }\\n popularTimes(month: $month, dayOfWeek: $dayOfWeek) {\\n peakHourData {\\n hourOfDay\\n peakTimesData {\\n avgWaitTime\\n median\\n percentile75\\n mean\\n message\\n stdDev\\n n\\n percentile25\\n __typename\\n }\\n __typename\\n }\\n dayOfWeek\\n __typename\\n }\\n currentTime\\n __typename\\n }\\n __typename\\n }\\n services(storeCode: $storeCode) {\\n name\\n __typename\\n }\\n}\\n"}'
         )
         r = session.post(
-            "https://data.discounttire.com/webapi/discounttire.graph", data=data
+            "https://data.americastire.com/webapi/americastire.graph", data=data
         )
         js = r.json()
         try:
@@ -69,13 +69,13 @@ def fetch_data():
         except:
             continue
 
-        location_name = "Discount Tire Store"
+        location_name = "America's Tire Store"
         location_type = "Store"
         street_address = a.get("line1")
         phone = a.get("phone")
         state = a.get("region").get("isocodeShort")
         postal = a.get("postalCode")
-        country_code = "<MISSING>"
+        country_code = "US"
         city = a.get("town")
         store_number = slug
         latitude = (
