@@ -72,7 +72,6 @@ def fetch_data():
         location_name = "America's Tire Store"
         location_type = "Store"
         street_address = a.get("line1")
-        print(street_address)
         phone = a.get("phone")
         state = a.get("region").get("isocodeShort")
         postal = a.get("postalCode")
