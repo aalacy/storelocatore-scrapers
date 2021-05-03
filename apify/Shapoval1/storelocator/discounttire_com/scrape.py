@@ -36,7 +36,7 @@ def write_output(data):
 def fetch_data():
     out = []
 
-    locator_domain = "https://www.zippys.com"
+    locator_domain = "https://www.discounttire.com"
     session = SgRequests()
     data = '{"operationName":"CmsPage","variables":{"id":"/store","siteId":"discounttire"},"query":"query CmsPage($id: String!, $siteId: String) {\\n cms {\\n page(id: $id, siteId: $siteId) {\\n documentTitle\\n metaTags {\\n name\\n content\\n __typename\\n }\\n breadcrumbs {\\n name\\n url\\n __typename\\n }\\n htmlContent\\n source\\n __typename\\n }\\n __typename\\n }\\n}\\n"}'
 
