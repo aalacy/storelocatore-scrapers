@@ -125,7 +125,8 @@ def fetch_data():
                 open_time = store["attributes"][day + "_opening_time"]
                 if open_time is not None:
                     close_time = store["attributes"][day + "_closing_time"]
-                    hours_list.append(day + ":" + open_time + "-" + close_time)
+                    if close_time is not None:
+                        hours_list.append(day + ":" + open_time + "-" + close_time)
 
         hours_of_operation = "; ".join(hours_list).strip()
 

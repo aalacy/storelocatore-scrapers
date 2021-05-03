@@ -1,4 +1,2 @@
-bs4==0.0.1
-usaddress
-sgrequests
-lxml
+sgselenium==0.0.15
+beautifulsoup4==4.9.3

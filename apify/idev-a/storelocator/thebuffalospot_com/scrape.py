@@ -4,6 +4,9 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 import json
 import re
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger("thebuffalospot")
 
 _headers = {
     "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
@@ -35,9 +38,9 @@ def _url(blocks, name):
     url = phone = ""
     for block in blocks:
         if block.h3 and block.h3.text.strip() == name.strip():
-            url = (
-                locator_domain + block.find("a", href=re.compile(r"/locations"))["href"]
-            )
+            url = locator_domain + block.find("a", href=re.compile(r"/locations"))[
+                "href"
+            ].replace("/locations", "")
             _phone = block.find("a", href=re.compile(r"tel"))
             if _phone:
                 phone = _phone.text
@@ -56,25 +59,40 @@ def fetch_data():
             .strip()
             .split(').data("wpgmp_maps");')[0]
         )
+        logger.info(f'{len(locations["places"])} found')
         for _ in locations["places"]:
             page_url, phone = _url(blocks, _["title"])
-            hours_of_operation = ""
+            hours = []
             try:
+                street_address = " ".join(_["address"].split(",")[:-1])
                 res1 = session.get(page_url, headers=_headers)
+                logger.info(page_url)
                 if res1.status_code == 200:
-                    soup1 = bs(res1.text, "lxml")
-                    loc = json.loads(
-                        soup1.findAll("script", type="application/ld+json")[
-                            -1
-                        ].string.strip()
+                    sp1 = bs(res1.text, "lxml")
+                    street_address = " ".join(
+                        list(
+                            sp1.find("h3", string=re.compile(r"^ADDRESS"))
+                            .find_next_sibling()
+                            .stripped_strings
+                        )[:-1]
                     )
-                    hours_of_operation = _valid(loc.get("openingHours", []))
+                    _hours = [
+                        hh.text
+                        for hh in sp1.find(
+                            "h3", string=re.compile(r"^HOURS OF OPERATION")
+                        ).find_next_siblings()
+                    ]
+                    if len(_hours) % 2 == 0:
+                        for x in range(0, len(_hours), 2):
+                            hours.append(f"{_hours[x]}: {_hours[x+1]}")
+                    else:
+                        hours = _hours
             except:
                 pass
             yield SgRecord(
                 page_url=page_url,
                 location_name=_["title"],
-                street_address=_["address"],
+                street_address=street_address,
                 city=_["location"]["city"],
                 state=_["location"]["state"],
                 zip_postal=_["location"]["postal_code"],
@@ -83,7 +101,7 @@ def fetch_data():
                 latitude=_["location"]["lat"],
                 longitude=_["location"]["lng"],
                 locator_domain=locator_domain,
-                hours_of_operation=hours_of_operation,
+                hours_of_operation="; ".join(hours).replace("–", "-").replace("’", "'"),
             )
 
 

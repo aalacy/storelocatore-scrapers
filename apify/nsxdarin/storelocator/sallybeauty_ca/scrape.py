@@ -39,6 +39,7 @@ def write_output(data):
 
 def fetch_data():
     ids = []
+    alllocs = []
     canadaurls = [
         "https://www.sallybeauty.ca/on/demandware.store/Sites-SC-Site/en_CA/Stores-FindStores?showMap=true&radius=300&radius=300&lat=49.895136&long=-97.13837439999999&searchKey=Winnipeg%2C%20ON",
         "https://www.sallybeauty.ca/on/demandware.store/Sites-SC-Site/en_CA/Stores-FindStores?showMap=true&radius=300&radius=300&lat=49.2827291&long=-123.1207375&searchKey=Vancouver%2C%20BC",
@@ -137,22 +138,24 @@ def fetch_data():
                     if hours == "":
                         hours = "<MISSING>"
                     store = store.replace("store_", "")
-                    yield [
-                        website,
-                        loc,
-                        name,
-                        add,
-                        city,
-                        state,
-                        zc,
-                        country,
-                        store,
-                        phone,
-                        typ,
-                        lat,
-                        lng,
-                        hours,
-                    ]
+                    if loc not in alllocs:
+                        alllocs.append(loc)
+                        yield [
+                            website,
+                            loc,
+                            name,
+                            add,
+                            city,
+                            state,
+                            zc,
+                            country,
+                            store,
+                            phone,
+                            typ,
+                            lat,
+                            lng,
+                            hours,
+                        ]
 
 
 def scrape():

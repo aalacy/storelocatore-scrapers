@@ -3,7 +3,7 @@ from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from sgscrape.sgpostal import parse_address_intl
 from bs4 import BeautifulSoup as bs
-
+import re
 
 _headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
@@ -42,7 +42,7 @@ def fetch_data():
             country_code = "US"
             if addr.state in ca_provinces_codes:
                 country_code = "CA"
-            phone = soup1.select('a[gtm-label="ticket-sales-phone"]')[-1].text
+            phone = soup1.find("a", href=re.compile(r"tel:"))["href"][4:]
             yield SgRecord(
                 page_url=page_url,
                 location_name=location_name,
