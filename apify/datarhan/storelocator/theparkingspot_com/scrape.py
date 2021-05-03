@@ -66,27 +66,34 @@ def fetch_data():
         poi = loc_dom.xpath('//script[@type="application/ld+json"]/text()')[-1]
         poi = json.loads(poi)
 
-        location_name = poi["@graph"][0]["name"]
+        location_name = poi["name"]
         location_name = location_name if location_name else "<MISSING>"
-        street_address = poi["@graph"][0]["address"]["streetAddress"]
-        street_address = street_address if street_address else "<MISSING>"
-        city = poi["@graph"][0]["address"]["addressLocality"]
+        street_address = poi["address"]["streetAddress"]
+        street_address = (
+            street_address.replace("&amp;", "&") if street_address else "<MISSING>"
+        )
+        city = poi["address"]["addressLocality"]
         city = city if city else "<MISSING>"
-        state = poi["@graph"][0]["address"]["addressRegion"]
+        state = poi["address"]["addressRegion"]
         state = state if state else "<MISSING>"
-        zip_code = poi["@graph"][0]["address"]["postalCode"]
+        zip_code = poi["address"]["postalCode"]
         zip_code = zip_code if zip_code else "<MISSING>"
-        country_code = poi["@graph"][0]["address"]["addressCountry"]
+        country_code = poi["address"]["addressCountry"]
         store_number = "<MISSING>"
-        phone = poi["@graph"][0]["telephone"]
+        phone = poi["telephone"]
         phone = phone if phone else "<MISSING>"
-        location_type = poi["@graph"][0]["@type"]
+        location_type = poi["@type"]
         location_type = location_type if location_type else "<MISSING>"
-        latitude = poi["@graph"][0]["geo"]["latitude"]
+        latitude = poi["geo"]["latitude"]
         latitude = latitude if latitude else "<MISSING>"
-        longitude = poi["@graph"][0]["geo"]["longitude"]
+        longitude = poi["geo"]["longitude"]
         longitude = longitude if longitude else "<MISSING>"
-        hours_of_operation = poi["@graph"][0]["openingHours"]
+        hoo = []
+        for day in poi["openingHoursSpecification"]["dayOfWeek"]:
+            opens = poi["openingHoursSpecification"]["opens"]
+            closes = poi["openingHoursSpecification"]["closes"]
+            hoo.append(f"{day} {opens} {closes}")
+        hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
 
         item = [
             DOMAIN,

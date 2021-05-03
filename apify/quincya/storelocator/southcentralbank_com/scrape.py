@@ -54,6 +54,8 @@ def fetch_data():
 
         raw_data = BeautifulSoup(store["description"], "lxml")
         raw_address = list(raw_data.stripped_strings)[:2]
+        if "LOCATION WILL BE" in raw_address[0]:
+            raw_address = list(raw_data.stripped_strings)[1:3]
 
         street_address = raw_address[0].strip()
         city = raw_address[1].split(",")[0]
@@ -66,7 +68,12 @@ def fetch_data():
         try:
             phone = re.findall(r"[(\d)]{3}-[\d]{3}-[\d]{4}", store["description"])[0]
         except:
-            phone = "<MISSING>"
+            try:
+                phone = re.findall(r"[(\d)]{5} [\d]{3}-[\d]{4}", store["description"])[
+                    0
+                ]
+            except:
+                phone = "<MISSING>"
 
         hours_of_operation = "<MISSING>"
         rows = list(raw_data.stripped_strings)

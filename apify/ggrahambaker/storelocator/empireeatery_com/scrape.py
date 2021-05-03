@@ -73,6 +73,8 @@ def fetch_data():
                     hours = "24 hours"
                 elif "GENOA" in city:
                     hours = "MON-THURS 5AM-10PM FRI- SAT 5AM-11PM SUN 6AM-10PM"
+                elif "FULTON" in city:
+                    hours = "MON-SAT 5 AM- 11PM SUNDAY 6AM-10PM"
                 else:
                     hours = "<MISSING>"
 
