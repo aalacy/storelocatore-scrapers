@@ -219,6 +219,7 @@ def fetch_loc_data(loc, allstores):
             zc = "<MISSING>"
         if phone == "":
             phone = "<MISSING>"
+        name = name.replace("\\u0026&amp;", "&")
         yield [
             website,
             loc,
