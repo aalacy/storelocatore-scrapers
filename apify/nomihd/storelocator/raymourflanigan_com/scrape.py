@@ -60,10 +60,11 @@ def process_record(raw_results_from_one_zipcode):
 
             location_type = "Showroom"
             if store["clearanceCenter"] is True:
-                location_type = "clearanceCenter"
+                location_type = "Clearance Center"
             if store["outlet"] is True:
-                location_type = "outlet"
+                location_type = "Outlet"
 
+            location_name = "Raymour & Flanigan " + location_type
             hours_of_operation = ""
             hours = store["hours"]
             hours_list = []

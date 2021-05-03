@@ -80,7 +80,7 @@ def fetch_data():
                 continue
 
             try:
-                map_link = page_base.find(id="locations-map").iframe["data-lazy-src"]
+                map_link = page_base.find(id="locations-map").iframe["src"]
                 lat_pos = map_link.rfind("!3d")
                 latitude = map_link[
                     lat_pos + 3 : map_link.find("!", lat_pos + 5)
