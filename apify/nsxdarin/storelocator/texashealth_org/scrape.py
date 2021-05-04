@@ -180,9 +180,9 @@ def fetch_data():
                 lng = "<MISSING>"
             if phone == "":
                 phone = "<MISSING>"
-            info = name + "|" + add + "|" + phone
-            if info not in locinfo:
-                locinfo.append(info)
+            if loc.split("|")[0] not in locinfo:
+                locinfo.append(loc.split("|")[0])
+                name = name.replace("&amp;", "&").replace("&quot;", '"')
                 yield [
                     website,
                     loc.split("|")[0],
