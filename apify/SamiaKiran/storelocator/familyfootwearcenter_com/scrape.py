@@ -39,10 +39,14 @@ def fetch_data():
             address = address[1].split()
             state = address[0]
             zip_postal = address[1]
+            coords = soup.select_one("iframe[src*=maps]")["src"]
+            r = session.get(coords, headers=headers)
+            temp = "Family Footwear Center - " + city + "," + " " + state
             latitude, longitude = (
-                soup.select_one("iframe[src*=maps]")["src"]
-                .split("ll=", 1)[1]
-                .split("&spn", 1)[0]
+                r.text.split(temp, 2)[0]
+                .rsplit('",', 1)[1]
+                .split("]\\n")[0]
+                .replace("[", "")
                 .split(",")
             )
             yield SgRecord(
