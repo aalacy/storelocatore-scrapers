@@ -1,4 +1,5 @@
 import csv
+from lxml import html
 from sgrequests import SgRequests
 
 
@@ -33,36 +34,45 @@ def write_output(data):
 
 def fetch_data():
     out = []
-    locator_domain = "https://www.mauidivers.com/"
-    api_url = "https://stores.boldapps.net/front-end/get_surrounding_stores.php?shop=maui-divers-jewelry.myshopify.com&latitude=33.0218117&longitude=-97.12516989999999&limit=50"
-    page_url = "https://www.mauidivers.com/apps/store-locator"
 
+    locator_domain = "https://www.angelikafilmcenter.com"
+    api_url = "https://www.angelikafilmcenter.com/"
     session = SgRequests()
-    r = session.get(api_url)
-    js = r.json()["stores"]
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
+    }
+    r = session.get(api_url, headers=headers)
+    tree = html.fromstring(r.text)
+    div = tree.xpath('//div[@class="dropdown-slide-options"]/a')
 
-    for j in js:
-        street_address = (
-            f"{j.get('address')} {j.get('address2') or ''}".strip() or "<MISSING>"
+    for d in div:
+
+        page_url = locator_domain + "".join(d.xpath(".//@href"))
+        location_name = "".join(d.xpath(".//text()"))
+        session = SgRequests()
+        r = session.get(page_url, headers=headers)
+        tree = html.fromstring(r.text)
+
+        location_type = "Cinema"
+        ad = (
+            "".join(tree.xpath('//div[@class="footer-address clearfix"]/p/text()[3]'))
+            .replace("\n", "")
+            .strip()
         )
-        city = j.get("city") or "<MISSING>"
-        state = j.get("prov_state") or "<MISSING>"
-        postal = j.get("postal_zip") or "<MISSING>"
-        country_code = j.get("country") or "<MISSING>"
-        location_name = j.get("name")
-        store_number = location_name.split("#")[-1].split()[0]
-        phone = j.get("phone") or "<MISSING>"
-        latitude = j.get("lat") or "<MISSING>"
-        longitude = j.get("lng") or "<MISSING>"
-        location_type = "<MISSING>"
-
-        _tmp = []
-        hours = j.get("hours") or "\r\n"
-        for h in hours.split("\r\n"):
-            if h.find(":") == -1 and h.lower().find("daily") == -1:
-                continue
-            _tmp.append(" ".join(h.split()))
-        hours_of_operation = ";".join(_tmp) or "<MISSING>"
+        street_address = (
+            "".join(tree.xpath('//div[@class="footer-address clearfix"]/p/text()[2]'))
+            .replace("\n", "")
+            .strip()
+        )
+        phone = "<MISSING>"
+        state = ad.split(",")[1].split()[0].strip()
+        postal = ad.split(",")[1].split()[1].strip()
+        city = ad.split(",")[0].strip()
+        country_code = "US"
+        store_number = "<MISSING>"
+        hours_of_operation = "<MISSING>"
+        latitude = "<MISSING>"
+        longitude = "<MISSING>"
 
         row = [
             locator_domain,
