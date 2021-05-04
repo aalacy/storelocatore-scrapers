@@ -24,7 +24,9 @@ def fetch_data():
             logger.info(page_url)
             sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
             block = sp1.select(".fl-module-content.fl-node-content .fl-rich-text")[1]
-            addr = list(block.select("p")[0].stripped_strings)
+            addr = [
+                aa.replace("\xa0", " ") for aa in block.select("p")[0].stripped_strings
+            ]
             _hr = sp1.find("strong", string=re.compile(r"Hours"))
             if _hr:
                 hours = [
