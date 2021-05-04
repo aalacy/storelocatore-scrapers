@@ -40,6 +40,7 @@ def write_output(data):
 
 def fetch_data():
     locs = []
+    alllocs = []
     locinfo = []
     url = "https://www.texashealth.org//sxa/search/results/?s={E6D4398E-5377-4F52-A622-BA5985AA0E05}|{489713F2-2F53-486A-A99A-125A4921BB4F}&itemid={AF045BC3-3192-47D4-9F02-14F252C53DC8}&sig=location-search&g=32.735687%7C-97.10806559999997&o=DistanceMi%2CAscending&p=2000&e=0&v=%7B46E173AB-F518-41E7-BFB5-00206EDBA9E6%7D"
     r = session.get(url, headers=headers)
@@ -91,6 +92,9 @@ def fetch_data():
             ):
                 g = next(lines)
                 g = str(g.decode("utf-8"))
+                if ">" not in g:
+                    g = next(lines)
+                    g = str(g.decode("utf-8"))
                 if ">" not in g:
                     g = next(lines)
                     g = str(g.decode("utf-8"))
@@ -180,6 +184,7 @@ def fetch_data():
                 lng = "<MISSING>"
             if phone == "":
                 phone = "<MISSING>"
+            info = name + "|" + add + "|" + phone
             if loc.split("|")[0] not in locinfo:
                 locinfo.append(loc.split("|")[0])
                 name = name.replace("&amp;", "&").replace("&quot;", '"')
