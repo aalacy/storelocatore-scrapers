@@ -116,6 +116,7 @@ def fetch_data():
             lat = "<MISSING>"
         if lng == "":
             lng = "<MISSING>"
+        link = "https://www.ombudsman.com/state/" + state.lower()
 
         data.append(
             [
