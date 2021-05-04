@@ -1,5 +1,4 @@
 import csv
-
 from lxml import html
 from sgrequests import SgRequests
 
@@ -35,40 +34,54 @@ def write_output(data):
 
 def fetch_data():
     out = []
-    locator_domain = "https://www.goorin.com/"
-    page_url = "https://www.goorin.com/pages/goorin-retail-locations"
 
+    locator_domain = "https://vidafitness.com"
+    api_url = "https://vidafitness.com/location"
     session = SgRequests()
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0"
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
     }
-    r = session.get(page_url, headers=headers)
+    r = session.get(api_url, headers=headers)
     tree = html.fromstring(r.text)
-    divs = tree.xpath("//div[@class='find-shop-item']")
+    div = tree.xpath('//div[@class="nw-left"]')
 
-    for d in divs:
-        location_name = "".join(
-            d.xpath(".//div[@class='address-blog']/h4/text()")
-        ).strip()
-        line = d.xpath(".//div[@class='address-blog'][1]/p/text()")
-        line = list(filter(None, [l.strip() for l in line]))
-
-        phone = line[2]
-        street_address = line[0]
-        line = line[1]
-        city = line.split(",")[0].strip()
-        line = line.split(",")[1].strip()
-        postal = line.split()[-1]
-        state = line.replace(postal, "").strip()
+    for d in div:
+        page_url = "https://vidafitness.com" + "".join(
+            d.xpath('.//div[@class="nwlocation-name"]/a/@href')
+        )
+        location_name = (
+            "".join(d.xpath('.//div[@class="nwlocation-name"]/a/text()'))
+            .replace("\n", "")
+            .strip()
+        )
+        location_type = "<MISSING>"
+        street_address = (
+            "".join(d.xpath('.//div[@class="nwaddress"]/p/text()[1]'))
+            .replace("\n", "")
+            .strip()
+        )
+        ad = (
+            "".join(d.xpath('.//div[@class="nwaddress"]/p/text()[2]'))
+            .replace("\n", "")
+            .strip()
+        )
+        phone = (
+            "".join(d.xpath('.//div[@class="nwaddress"]/p/text()[3]'))
+            .replace("\n", "")
+            .strip()
+        )
+        state = ad.split(",")[1].split()[0].strip()
+        postal = ad.split(",")[1].split()[1].strip()
+        city = ad.split(",")[0].strip()
         country_code = "US"
         store_number = "<MISSING>"
+        hours_of_operation = (
+            " ".join(d.xpath('.//div[@class="nwtime"]/p/text()'))
+            .replace("\n", "")
+            .strip()
+        )
         latitude = "<MISSING>"
         longitude = "<MISSING>"
-        location_type = "<MISSING>"
-        hours_of_operation = (
-            ";".join(d.xpath(".//h4[text()='HOURS']/following-sibling::p/text()"))
-            or "<MISSING>"
-        )
 
         row = [
             locator_domain,
