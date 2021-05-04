@@ -84,6 +84,7 @@ def fetch_data():
             if lat == "" and "api=1&destination=" in line2:
                 lat = line2.split("api=1&destination=")[1].split(",")[0]
                 lng = line2.split("api=1&destination=")[1].split(",")[1].split('"')[0]
+        name = name.replace("&#8211;", "-")
         yield [
             website,
             loc,

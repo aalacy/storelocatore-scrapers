@@ -39,6 +39,7 @@ def write_output(data):
 def fetch_data():
     url = "https://www.hrblock.com/tax-offices/local/"
     alllocs = []
+    allinfo = []
     states = []
     r = session.get(url, headers=headers)
     if r.encoding is None:
@@ -124,21 +125,25 @@ def fetch_data():
                         if lng == "":
                             lng = "<MISSING>"
                         if add != "":
-                            yield [
-                                website,
-                                name,
-                                add,
-                                city,
-                                state,
-                                zc,
-                                country,
-                                store,
-                                phone,
-                                typ,
-                                lat,
-                                lng,
-                                hours,
-                            ]
+                            city = city.replace(",", "")
+                            info = add + "|" + zc + "|" + city
+                            if info not in allinfo:
+                                allinfo.append(info)
+                                yield [
+                                    website,
+                                    name,
+                                    add,
+                                    city,
+                                    state,
+                                    zc,
+                                    country,
+                                    store,
+                                    phone,
+                                    typ,
+                                    lat,
+                                    lng,
+                                    hours,
+                                ]
 
 
 def scrape():

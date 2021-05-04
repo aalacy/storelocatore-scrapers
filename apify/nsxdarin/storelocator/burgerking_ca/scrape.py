@@ -138,14 +138,21 @@ def fetch_data():
                         + "-"
                         + line2.split('"satClose":"')[1].split(':00"')[0].split(" ")[1]
                     )
-                    hours = (
-                        hours
-                        + "; "
-                        + "Sun: "
-                        + line2.split('"sunOpen":"')[1].split(':00"')[0].split(" ")[1]
-                        + "-"
-                        + line2.split('"sunClose":"')[1].split(':00"')[0].split(" ")[1]
-                    )
+                    if '"sunOpen":"' in line2:
+                        hours = (
+                            hours
+                            + "; "
+                            + "Sun: "
+                            + line2.split('"sunOpen":"')[1]
+                            .split(':00"')[0]
+                            .split(" ")[1]
+                            + "-"
+                            + line2.split('"sunClose":"')[1]
+                            .split(':00"')[0]
+                            .split(" ")[1]
+                        )
+                    else:
+                        hours = hours + "; Sun: Closed"
                 except:
                     hours = "<MISSING>"
                 if phone == "":
