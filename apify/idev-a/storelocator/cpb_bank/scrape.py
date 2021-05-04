@@ -13,6 +13,23 @@ _headers = {
 }
 
 
+def _valid(val):
+    return (
+        val.replace("&#39;", "&")
+        .replace("&amp;", "&")
+        .replace("&a", "'a")
+        .replace("&s", "'s")
+        .replace("–", "-")
+        .replace("’", "'")
+    )
+
+
+def _removeComma(val):
+    if val.endswith(","):
+        val = val[:-1]
+    return val
+
+
 def fetch_data():
     locator_domain = "https://www.cpb.bank"
     base_url = "https://www.cpb.bank/locations"
@@ -34,6 +51,7 @@ def fetch_data():
             street_address = _["addr1"]
             if _["addr2"]:
                 street_address += " " + _["addr2"]
+            street_address = _removeComma(street_address).split(",")[0].strip()
             hours = []
             hours.append(f"Mon-Thu: {_['monHours']}")
             hours.append(f"Fri: {_['friHours']}")
@@ -41,9 +59,9 @@ def fetch_data():
             hours.append(f"Sun: {_['sunHours']}")
             yield SgRecord(
                 page_url=page_url,
-                location_name=_["name"].replace("–", "-").replace("&#39;", "&"),
-                street_address=street_address,
-                city=_["city"],
+                location_name=_valid(_["name"]),
+                street_address=_valid(street_address),
+                city=_removeComma(_["city"]),
                 state=_["state"],
                 zip_postal=_["zipcode"],
                 latitude=_["lat"],
