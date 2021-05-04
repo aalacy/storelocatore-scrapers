@@ -71,8 +71,18 @@ def fetch_data():
         )
         phone = phone[0].split(":")[-1].strip() if phone else "<MISSING>"
         location_type = "<MISSING>"
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
+        geo = (
+            dom.xpath(
+                '//iframe[contains(@src, "{}")]/@src'.format(
+                    city.replace("Pt ", "").replace(" ", "+")
+                )
+            )[0]
+            .split("!2d")[-1]
+            .split("!2m")[0]
+            .split("!3d")
+        )
+        latitude = geo[-1]
+        longitude = geo[0]
         hoo = poi_html.xpath(
             './/following-sibling::p[contains(text(), "Mon")][1]/text()'
         )
