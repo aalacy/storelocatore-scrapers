@@ -61,7 +61,9 @@ def fetch_data():
                         "<loc>https://stores.cosmoprofbeauty.com/" in line
                         and ".html" in line
                     ):
-                        locs.append(line.split("<loc>")[1].split("<")[0])
+                        lurl = line.split("<loc>")[1].split("<")[0]
+                        if lurl not in locs:
+                            locs.append(lurl)
         logger.info((str(len(locs)) + " Locations Found..."))
     for loc in locs:
         website = "cosmoprofbeauty.com"
