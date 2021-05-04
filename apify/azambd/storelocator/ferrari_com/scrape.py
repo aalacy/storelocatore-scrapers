@@ -37,13 +37,10 @@ def fetchData():
         data = i["U"]
         try:
             page_url = data["URLSite"]
-            # log.info(f"Page URL: {page_url}")
         except:
             page_url = MISSING
-            # log.info(f"Page URL: {page_url}")
         try:
             store_number = i["D"]
-            # log.info(f"Store Number: {store_number}")
             if store_number == "GHOST":
                 continue
         except:
@@ -73,14 +70,10 @@ def fetchData():
         except:
             city = MISSING
         try:
-            state1 = data["ProvinceState"]
-            if (state1) != None:
-                state = state1
+            state = data["ProvinceState"]
         except:
             try:
-                state2 = data["ProvinceStateExt"]
-                if (state2) != None:
-                    state = state2
+                state = data["ProvinceStateExt"]
             except:
                 state = MISSING
         try:
