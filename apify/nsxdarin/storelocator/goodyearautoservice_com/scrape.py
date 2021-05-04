@@ -64,7 +64,6 @@ def fetch_data():
     for city in cities:
         locs = []
         logger.info("Pulling City %s..." % city)
-        citystate = city.split("/tire-stores/")[1].split("/")[0]
         r2 = session.get(city, headers=headers)
         if r2.encoding is None:
             r2.encoding = "utf-8"
