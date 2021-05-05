@@ -46,19 +46,24 @@ def get_data(coord):
     js = r.json()
     for j in js:
         page_url = "https://dailys.com/stores"
-        location_name = ''.join(j.get('store')).replace('&#8217;', '’').replace('&#8211;', '–').replace('-',' – ').strip()
-        print(location_name)
+        location_name = (
+            "".join(j.get("store"))
+            .replace("&#8217;", "’")
+            .replace("&#8211;", "–")
+            .replace("-", " – ")
+            .strip()
+        )
         location_type = "<MISSING>"
         street_address = f"{j.get('address')} {j.get('address2') or ''}".strip()
-        phone = j.get('phone') or '<MISSING>'
-        state = j.get('state') or '<MISSING>'
-        postal = j.get('zip') or '<MISSING>'
-        country_code = j.get('country') or '<MISSING>'
-        city = j.get('city') or '<MISSING>'
+        phone = j.get("phone") or "<MISSING>"
+        state = j.get("state") or "<MISSING>"
+        postal = j.get("zip") or "<MISSING>"
+        country_code = j.get("country") or "<MISSING>"
+        city = j.get("city") or "<MISSING>"
         store_number = location_name.split()[-1]
-        latitude = j.get('lat') or '<MISSING>'
-        longitude = j.get('lng') or '<MISSING>'
-        hours_of_operation = j.get('hours') or '<MISSING>'
+        latitude = j.get("lat") or "<MISSING>"
+        longitude = j.get("lng") or "<MISSING>"
+        hours_of_operation = j.get("hours") or "<MISSING>"
 
         row = [
             locator_domain,
