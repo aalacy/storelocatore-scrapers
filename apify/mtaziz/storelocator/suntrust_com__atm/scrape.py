@@ -18,7 +18,6 @@ def fetch_data():
     # Your scraper here
     start_url = "https://www.mapquestapi.com/search/v2/radius?origin=10002&radius=3000&maxMatches=2000&ambiguities=ignore&hostedData=mqap.32547_SunTrust_Branch_Loc&outFormat=json&key=Gmjtd|lu6zn1ua2d,70=o5-l0850"
     data = session.get(start_url, headers=headers, timeout=180).json()
-    items = []
     s = set()
     for idx, poi in enumerate(data["searchResults"]):
         location_name = poi["name"]
