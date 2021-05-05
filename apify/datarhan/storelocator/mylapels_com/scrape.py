@@ -185,7 +185,7 @@ def fetch_data():
                     .replace("Tampa", "")
                     .strip()
                 )
-        street_address = street_address.replace(state, '').strip()
+        street_address = street_address.replace(state, "").strip()
 
         item = [
             DOMAIN,
