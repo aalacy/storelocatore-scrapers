@@ -57,6 +57,7 @@ def fetch_data():
         if "http" not in poi["locationUrl"]:
             store_url = "https://mylapels.com/location{}".format(poi["locationUrl"])
         store_url = store_url.replace("/ww.", "/www.")
+        print(store_url)
         loc_response = session.get(store_url)
         loc_dom = etree.HTML(loc_response.text)
 
@@ -120,6 +121,9 @@ def fetch_data():
         poi_html = etree.HTML(poi["description"])
         phone = poi_html.xpath('//a[contains(@href, "tel")]/text()')
         phone = " ".join(phone[0].split()[1:]) if phone else "<MISSING>"
+        if phone == "<MISSING>":
+            phone = loc_dom.xpath('//p[contains(text(), "please call")]/strong/text()')
+            phone = phone[0] if phone else "<MISSING>"
         location_type = "<MISSING>"
         latitude = poi["latitude"]
         latitude = latitude if latitude else "<MISSING>"
@@ -168,11 +172,20 @@ def fetch_data():
                 street_address = street_address.replace(city, "")
                 state = "FL"
         if len(street_address.strip()) == 2:
-            street_address = ", ".join(
-                loc_dom.xpath(
-                    '//div[a[contains(@href, "tel")]]/following-sibling::p[1]/text()'
-                )[0].split(", ")[:2]
+            street_address = loc_dom.xpath(
+                '//div[a[contains(@href, "tel")]]/following-sibling::p[1]/text()'
             )
+            if street_address:
+                street_address = ", ".join(street_address[0].split(", ")[:2])
+            else:
+                street_address = (
+                    loc_dom.xpath(
+                        '//h5[contains(text(), "Or Visit us at:")]/following-sibling::p/text()'
+                    )[0]
+                    .replace("Tampa", "")
+                    .strip()
+                )
+        street_address = street_address.replace(state, '').strip()
 
         item = [
             DOMAIN,
