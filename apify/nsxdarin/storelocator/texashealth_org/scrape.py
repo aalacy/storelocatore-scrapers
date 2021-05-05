@@ -94,6 +94,15 @@ def fetch_data():
                 if ">" not in g:
                     g = next(lines)
                     g = str(g.decode("utf-8"))
+                if ">" not in g:
+                    g = next(lines)
+                    g = str(g.decode("utf-8"))
+                if ">" not in g:
+                    g = next(lines)
+                    g = str(g.decode("utf-8"))
+                if ">" not in g:
+                    g = next(lines)
+                    g = str(g.decode("utf-8"))
                 h = next(lines)
                 h = str(h.decode("utf-8"))
                 i = next(lines)

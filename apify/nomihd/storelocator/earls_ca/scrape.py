@@ -79,7 +79,7 @@ def fetch_data():
         state = store["address2"].split(",")[1].strip()
         zip = "<MISSING>"
 
-        country_code = "US"
+        country_code = "CA"
         store_number = store["id"]
 
         phone = store["phone"]
