@@ -33,7 +33,7 @@ def fetch_data():
                 location_name=_["StoreName"],
                 street_address=street_address,
                 city=_["City"],
-                state=_["State"],
+                state=_["LinkState"]["Abbreviation"],
                 zip_postal=_["PostalCode"],
                 latitude=_["Latitude"],
                 longitude=_["Longitude"],

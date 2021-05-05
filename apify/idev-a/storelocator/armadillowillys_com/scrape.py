@@ -43,9 +43,9 @@ def fetch_data():
             logger.info(page_url)
             coord = ["", ""]
             res = session.get(page_url, headers=_headers)
+            addr = list(_.select_one("td.address").stripped_strings)
             if res.status_code == 200:
                 sp1 = bs(res.text, "lxml")
-                addr = list(_.select_one("td.address").stripped_strings)
                 try:
                     coord = (
                         sp1.select_one("div iframe")["src"]
