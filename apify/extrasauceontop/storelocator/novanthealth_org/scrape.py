@@ -35,6 +35,7 @@ while True:
         break
     except Exception:
         continue
+
 locator_domains = []
 page_urls = []
 location_names = []
@@ -49,6 +50,7 @@ location_types = []
 latitudes = []
 longitudes = []
 hours_of_operations = []
+
 for location in data["Locations"]:
     locator_domain = "novanthealth.org"
     page_url = location["WebsiteUrl"]
