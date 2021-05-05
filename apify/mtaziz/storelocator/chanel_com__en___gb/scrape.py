@@ -21,7 +21,7 @@ def fetch_data():
     identities = set()
     maxZ = search.items_remaining()
     total = 0
-    with SgChrome(executable_path="/bin/chromedriver") as driver:
+    with SgChrome() as driver:
         for lat, lng in search:
             if search.items_remaining() > maxZ:
                 maxZ = search.items_remaining()
