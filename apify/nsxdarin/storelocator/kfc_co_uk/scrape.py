@@ -106,7 +106,7 @@ def fetch_data():
             hours = hours.split(". Deliver")[0].strip()
         if ". Drive" in hours:
             hours = hours.split(". Drive")[0].strip()
-        hours = hours.replace("Restaurant:",'').replace("Restaurant :",'').strip()
+        hours = hours.replace("Restaurant:", "").replace("Restaurant :", "").strip()
         yield [
             website,
             page_url,
