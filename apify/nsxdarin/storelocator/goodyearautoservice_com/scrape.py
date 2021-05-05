@@ -64,7 +64,6 @@ def fetch_data():
     for city in cities:
         locs = []
         logger.info("Pulling City %s..." % city)
-        citystate = city.split("/tire-stores/")[1].split("/")[0]
         r2 = session.get(city, headers=headers)
         if r2.encoding is None:
             r2.encoding = "utf-8"
@@ -101,38 +100,26 @@ def fetch_data():
                     phone = "<MISSING>"
                     HFound = False
                     for line3 in lines3:
-                        if '<h1 class="page-title" itemprop="name">' in line3:
-                            name = (
-                                next(lines3)
-                                .split("<")[0]
-                                .strip()
-                                .replace("\t", "")
-                                .replace('"', "'")
-                            )
+                        if "</h1>" in line3:
+                            name = line3.split("</h1>")[0].strip().replace("\t", "")
                         if '"name":"' in line3:
                             store = line3.split('"name":"')[1].split('"')[0]
                             lat = line3.split('"latitude":')[1].split(",")[0]
                             lng = line3.split('"longitude":')[1].split(",")[0]
-                        if 'itemprop="streetAddress">' in line3:
-                            add = (
-                                line3.split('itemprop="streetAddress">')[1]
-                                .split("<")[0]
-                                .replace('"', "'")
+                        if '"streetAddress": "' in line3:
+                            add = line3.split('"streetAddress": "')[1].split('"')[0]
+                        if '"addressLocality": "' in line3:
+                            city = line3.split('"addressLocality": "')[1].split('"')[0]
+                        if '"addressRegion": "' in line3:
+                            state = line3.split('"addressRegion": "')[1].split('"')[0]
+                        if '"postalCode": "' in line3:
+                            zc = line3.split('"postalCode": "')[1].split('"')[0]
+                        if '"telephone": "' in line3:
+                            phone = (
+                                line3.split('"telephone": "')[1]
+                                .split('"')[0]
+                                .replace("+1", "")
                             )
-                        if 'itemprop="addressLocality">' in line3:
-                            city = line3.split('itemprop="addressLocality">')[1].split(
-                                ","
-                            )[0]
-                            try:
-                                state = line3.split("&nbsp;")[1].split("<")[0]
-                            except:
-                                state = citystate
-                        if 'itemprop="postalCode">' in line3:
-                            zc = line3.split('itemprop="postalCode">')[1].split("<")[0]
-                        if 'itemprop="telephone">' in line3:
-                            phone = line3.split('itemprop="telephone">')[1].split("<")[
-                                0
-                            ]
                         if "Monday</span>" in line3:
                             hours = "Mon: " + next(lines3).split(">")[1].split("<")[0]
                             hours = (
