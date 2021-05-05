@@ -57,7 +57,6 @@ def fetch_data():
         if "http" not in poi["locationUrl"]:
             store_url = "https://mylapels.com/location{}".format(poi["locationUrl"])
         store_url = store_url.replace("/ww.", "/www.")
-        print(store_url)
         loc_response = session.get(store_url)
         loc_dom = etree.HTML(loc_response.text)
 
