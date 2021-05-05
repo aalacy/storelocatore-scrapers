@@ -58,7 +58,7 @@ def fetchData():
             jsonDp = json.loads(dpr[0])
             latitude = jsonDp["Latitude"]
             longitude = jsonDp["Longitude"]
-        except Exception as e:
+        except:
             latitude = MISSING
             longitude = MISSING
 
