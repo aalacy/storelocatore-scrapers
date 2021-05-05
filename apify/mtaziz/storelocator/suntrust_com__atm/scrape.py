@@ -54,7 +54,7 @@ def fetch_data():
                     logger.info(f"Location Type ATM: {location_type}")
                 else:
                     if (
-                        poi["fields"]["Is_Branch"] == None
+                        poi["fields"]["Is_Branch"] is None
                         and poi["fields"]["Is_ATM"] == 1
                     ):
                         location_type = "atm"
@@ -62,7 +62,7 @@ def fetch_data():
                     else:
                         if (
                             poi["fields"]["Is_Branch"] == 1
-                            and poi["fields"]["Is_ATM"] == None
+                            and poi["fields"]["Is_ATM"] is None
                         ):
                             location_type = "branch"
                             logger.info(f"Location Type: {location_type}")
