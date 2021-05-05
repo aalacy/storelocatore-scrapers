@@ -1,6 +1,8 @@
 import csv
+import json
 import usaddress
 
+from lxml import html
 from sgrequests import SgRequests
 
 
@@ -75,32 +77,36 @@ def get_address(line):
 
 def fetch_data():
     out = []
-    locator_domain = "https://boomerjacks.com/"
-    api_url = "https://storerocket.global.ssl.fastly.net/api/user/DMJbBrQJXe/locations"
+    locator_domain = "https://www.crispers.com/"
+    page_url = "https://www.crispers.com/locations"
 
     session = SgRequests()
-    r = session.get(api_url)
-    js = r.json()["results"]["locations"]
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0"
+    }
+    r = session.get(page_url, headers=headers)
+    tree = html.fromstring(r.text)
+    text = "".join(
+        tree.xpath("//script[contains(text(), 'wpgmaps_localize_marker_data')]/text()")
+    )
+    text = text.split("wpgmaps_localize_marker_data =")[1].split(";")[0]
+    js = json.loads(text)["1"].values()
 
     for j in js:
+        source = j.get("desc") or "<html></html>"
+        root = html.fromstring(source)
+        location_name = j.get("title")
         line = j.get("address")
         street_address, city, state, postal = get_address(line)
         country_code = "US"
         store_number = "<MISSING>"
-        page_url = j.get("url") or "<MISSING>"
-        location_name = j.get("name")
-        phone = j.get("phone") or "<MISSING>"
+        phone = "".join(root.xpath("//h5/text()")).strip() or "<MISSING>"
         latitude = j.get("lat") or "<MISSING>"
         longitude = j.get("lng") or "<MISSING>"
         location_type = "<MISSING>"
-
-        _tmp = []
-        days = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"]
-        for d in days:
-            time = j.get(d)
-            _tmp.append(f"{d}: {time}")
-
-        hours_of_operation = ";".join(_tmp) or "<MISSING>"
+        hours = root.xpath(".//p[./strong[contains(text(), 'Hours')]]/text()")
+        hours = list(filter(None, [h.strip() for h in hours]))
+        hours_of_operation = ";".join(hours) or "<MISSING>"
 
         row = [
             locator_domain,

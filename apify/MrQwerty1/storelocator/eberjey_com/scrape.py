@@ -1,6 +1,7 @@
 import csv
 import usaddress
 
+from lxml import html
 from sgrequests import SgRequests
 
 
@@ -73,34 +74,47 @@ def get_address(line):
     return street_address, city, state, postal
 
 
+def get_coords_from_google_url(url):
+    try:
+        if url.find("ll=") != -1:
+            latitude = url.split("ll=")[1].split(",")[0]
+            longitude = url.split("ll=")[1].split(",")[1].split("&")[0]
+        else:
+            latitude = url.split("@")[1].split(",")[0]
+            longitude = url.split("@")[1].split(",")[1]
+    except IndexError:
+        latitude, longitude = "<MISSING>", "<MISSING>"
+
+    return latitude, longitude
+
+
 def fetch_data():
     out = []
-    locator_domain = "https://boomerjacks.com/"
-    api_url = "https://storerocket.global.ssl.fastly.net/api/user/DMJbBrQJXe/locations"
+    locator_domain = "https://www.eberjey.com/"
+    page_url = "https://www.eberjey.com/store-locator"
 
     session = SgRequests()
-    r = session.get(api_url)
-    js = r.json()["results"]["locations"]
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0"
+    }
+    r = session.get(page_url, headers=headers)
+    tree = html.fromstring(r.text)
+    divs = tree.xpath(
+        "//h3[text()='Eberjey boutiques']/following-sibling::div[@class='sl-item']"
+    )
 
-    for j in js:
-        line = j.get("address")
+    for d in divs:
+        location_name = "".join(d.xpath(".//p[@class='sl-name']/text()")).strip()
+        line = ", ".join(d.xpath(".//address/text()")).replace("\n", " ").strip()
         street_address, city, state, postal = get_address(line)
         country_code = "US"
         store_number = "<MISSING>"
-        page_url = j.get("url") or "<MISSING>"
-        location_name = j.get("name")
-        phone = j.get("phone") or "<MISSING>"
-        latitude = j.get("lat") or "<MISSING>"
-        longitude = j.get("lng") or "<MISSING>"
+        text = d.xpath(".//div[@class='sl-info']/text()")
+        text = list(filter(None, [t.strip() for t in text]))
+        phone = text.pop(0).replace("T - ", "").strip()
+        latitude, longitude = get_coords_from_google_url("".join(d.xpath(".//a/@href")))
         location_type = "<MISSING>"
-
-        _tmp = []
-        days = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"]
-        for d in days:
-            time = j.get(d)
-            _tmp.append(f"{d}: {time}")
-
-        hours_of_operation = ";".join(_tmp) or "<MISSING>"
+        hours_of_operation = ";".join(text) or "<MISSING>"
 
         row = [
             locator_domain,
