@@ -12,30 +12,29 @@ type_dict = {
 }
 
 start_url = "https://www.novanthealth.org/"
-
 while True:
     try:
         with SgChrome() as driver:
             driver.get(start_url)
             data = driver.execute_async_script(
-                f"""
+                """
             var done = arguments[0]
-            fetch('https://www.novanthealth.org/DesktopModules/NHLocationFinder/API/Location/ByType', {{
-                "headers": {{
+            fetch('https://www.novanthealth.org/DesktopModules/NHLocationFinder/API/Location/ByType', {
+                "headers": {
                     "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
                     "x-requested-with": "XMLHttpRequest"
-                }},
+                },
                 "body": "LocationGroupId=1&Latitude=&Longitude=&Distance=5&SubTypes=&Keyword=&SortOrder=&MaxLocations=5000&MapBounds=",
                 "method": "POST"
-            }})
+            })
             .then(res => res.json())
             .then(data => done(data))
             """
             )
         break
-    except Exception:
+    except Exception as e:
+        print(e)
         continue
-
 locator_domains = []
 page_urls = []
 location_names = []
@@ -50,7 +49,6 @@ location_types = []
 latitudes = []
 longitudes = []
 hours_of_operations = []
-
 for location in data["Locations"]:
     locator_domain = "novanthealth.org"
     page_url = location["WebsiteUrl"]
