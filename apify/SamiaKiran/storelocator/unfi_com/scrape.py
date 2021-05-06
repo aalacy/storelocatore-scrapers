@@ -65,6 +65,8 @@ def fetch_data():
                     + str(state)
                     + ","
                     + str(zip_postal)
+                    + ","
+                    + str(location_name)
                 )
                 if identity in identities:
                     continue
