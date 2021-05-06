@@ -75,7 +75,6 @@ def fetch_data():
         store_url = f'https://www.chimasteakhouse.com/{city.lower().replace(" ", "-")}-{state.lower()}/'
         if "corner-vienna-va" in store_url:
             store_url = "https://www.chimasteakhouse.com/tysons-corner-va/"
-        print(store_url)
         loc_response = session.get(store_url, headers=hdr)
         loc_dom = etree.HTML(loc_response.text)
         geo = (
