@@ -1,4 +1,6 @@
 import csv
+import time
+import random
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
 from sgselenium import SgChrome
@@ -12,6 +14,10 @@ headers = {
     "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
     "method": "GET",
 }
+
+
+def sleep():
+    time.sleep(random.randint(4, 7))
 
 
 def write_output(data):
@@ -67,7 +73,8 @@ def fetch_data():
         country = ""
         name = ""
         store = loc.rsplit("/", 1)[1]
-        with SgChrome() as driver:
+        with SgChrome(executable_path="/bin/chromedriver") as driver:
+            sleep()
             driver.get(loc)
             text = driver.page_source
             text = str(text).replace("\r", "").replace("\n", "").replace("\t", "")
@@ -82,37 +89,6 @@ def fetch_data():
                 day = text.split('"weekda')[1].split('">')[1].split("<")[0]
                 if "(" in day:
                     day = day.split("(")[1].split(")")[0]
-            if "&nbsp;-&nbsp;" in text and "EST 20" in text:
-                hrs = (
-                    day
-                    + ": "
-                    + text.replace('<span class="whitetxt">', "")
-                    .replace("</span>", "")
-                    .split(" ")[4]
-                    .rsplit(":00", 1)[0]
-                    + "-"
-                    + text.split("&nbsp;-&nbsp;")[1].split(" ")[4].rsplit(":00", 1)[0]
-                )
-                if hours == "":
-                    hours = hrs
-                else:
-                    hours = hours + "; " + hrs
-            if "AM&nbsp;-&nbsp;" in text and "EST 20" not in text:
-                hrs = (
-                    day
-                    + ": "
-                    + text.replace("\r", "")
-                    .replace("\t", "")
-                    .replace("\n", "")
-                    .strip()
-                    .replace("&nbsp;-&nbsp;", "-")
-                    .replace('<span class="whitetxt">', "")
-                    .replace("</span>", "")
-                )
-                if hours == "":
-                    hours = hrs
-                else:
-                    hours = hours + "; " + hrs
             if "<title>" in text:
                 name = text.split("<title>")[1].split(" |")[0]
             if 'id="restAddress" value="' in text:
@@ -139,14 +115,12 @@ def fetch_data():
                     except:
                         lat = "<MISSING>"
                         lng = "<MISSING>"
-                try:
-                    hours = (
-                        text.split('"openingHours":["')[1]
-                        .split('"]')[0]
-                        .replace('","', "; ")
-                    )
-                except:
-                    pass
+            if '"openingHours":["' in text:
+                hours = (
+                    text.split('"openingHours":["')[1]
+                    .split('"]')[0]
+                    .replace('","', "; ")
+                )
             if ',"telephone":"' in text:
                 phone = text.split(',"telephone":"')[1].split('"')[0]
         if hours == "":
