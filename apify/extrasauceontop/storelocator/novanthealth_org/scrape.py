@@ -1,5 +1,4 @@
 from sgselenium import SgChrome
-import json
 import pandas as pd
 
 type_dict = {
