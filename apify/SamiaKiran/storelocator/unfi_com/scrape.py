@@ -34,6 +34,7 @@ def fetch_data():
                 soup = BeautifulSoup(text, "html.parser")
                 latitude = link["latitude"]
                 longitude = link["longitude"]
+                log.info(link["offset"])
                 street_address = soup.find("span", {"itemprop": "streetAddress"}).text
                 city = soup.find("span", {"itemprop": "addressLocality"}).text.replace(
                     ",", ""
