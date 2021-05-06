@@ -13,6 +13,7 @@ type_dict = {
 }
 
 start_url = "https://www.novanthealth.org/"
+
 while True:
     try:
         with SgChrome() as driver:
