@@ -19,13 +19,17 @@ Please crawl daynurseries.co.uk (approximately 12K total).  A few specifics:
 
 2. Please add a NEW column to just this crawl called `brand_website`. E.g., for that same page_url provided above, this would come from https://www.brighthorizons.co.uk/our-nurseries/24-st-swithin-early-learning-and-childcare?utm_source=daynurseries.co.uk&utm_medium=Referral&utm_campaign=24StSwithin. (If you are able to truncate this so it is just the top-level domaine.g.,brighthorizons.co.uk that is preferred, but not required).
 
-## Challenge:
+## Challenges:
 
-* Website has Incapsula Security, so it is tricky
-* `brand_site` redirects as outbound that needs to bypass Incapsula too
-* `phone` is not avialble on page, it needs click on a Incapsula secured link and parse from popup
-* sitemap page is also secured, and it needs cookies if it get too many hits [ I observed it when I was testing ]
-* In order to subdue Incapsula Security, I had to use `sgselenium` which is slow from my pc, didn't pull all rows in test run.
+The website has Incapsula Security, so it is complex
+
+brand_site redirects as outbound that needs to bypass Incapsula too
+
+phone is not available on-page, it needs to click on an Incapsula secured link and parse from the popup
+
+sitemap page is also secured, and it needs cookies if it gets too many hits [ I observed it when I was testing ]
+
+In order to subdue Incapsula Security, I had to use sgselenium which is slow from my pc, didn't pull all rows in a test run.
 
 ## Possible roadmap 
 
