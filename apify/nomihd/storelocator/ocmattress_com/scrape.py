@@ -26,6 +26,8 @@ def fetch_data():
 
         for store in stores_list:
 
+            locator_domain = website
+
             location_name = "".join(
                 store.xpath('.//div[contains(@id,"title")]/text()')
             ).strip()
@@ -34,7 +36,10 @@ def fetch_data():
                 "https://www.ocmattress.com/pages/"
                 + location_name.lower().replace(" ", "-")
             )
-            locator_domain = website
+
+            log.info(page_url)
+            store_req = session.get(page_url)
+            store_sel = lxml.html.fromstring(store_req.text)
 
             address_info = list(
                 filter(
@@ -59,6 +64,11 @@ def fetch_data():
 
             phone = "".join(store.xpath('.//div[contains(@id,"phone")]/text()')).strip()
 
+            if not phone:
+                phone = "".join(
+                    store_sel.xpath('//p[.//*[contains(text(), "PHONE")]]/text()')
+                ).strip()
+
             location_type = "<MISSING>"
 
             hours_of_operation = (
@@ -68,9 +78,6 @@ def fetch_data():
                 .strip()
             )
 
-            log.info(page_url)
-            store_req = session.get(page_url)
-            store_sel = lxml.html.fromstring(store_req.text)
             map_link = "".join(
                 store_sel.xpath('//iframe[contains(@src,"maps/embed?")]/@src')
             ).strip()
