@@ -1,3 +1,6 @@
+import time
+import json
+from ast import literal_eval
 from sgscrape import simple_scraper_pipeline as sp
 from sglogging import SgLogSetup
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
@@ -5,9 +8,6 @@ from sgselenium import SgChrome
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
-import time
-import json
-from ast import literal_eval
 
 
 def fetch_data():
@@ -63,9 +63,6 @@ def fetch_data():
                         raise i
                     yield i
 
-            progress = (
-                str(round(100 - (search.items_remaining() / maxZ * 100), 2)) + "%"
-            )
             total += found
         logzilla.info(f"Finished grabbing data!!")  # noqa
 
