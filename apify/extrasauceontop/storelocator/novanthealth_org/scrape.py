@@ -33,7 +33,6 @@ while True:
             )
         break
     except Exception as e:
-        print(e)
         continue
 locator_domains = []
 page_urls = []
