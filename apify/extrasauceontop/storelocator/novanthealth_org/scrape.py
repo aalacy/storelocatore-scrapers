@@ -32,7 +32,7 @@ while True:
             """
             )
         break
-    except Exception as e:
+    except Exception:
         continue
 locator_domains = []
 page_urls = []
