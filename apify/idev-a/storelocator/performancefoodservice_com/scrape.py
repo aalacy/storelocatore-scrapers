@@ -26,6 +26,15 @@ def fetch_data():
                     break
                 addr.append(aa)
             page_url = locator_domain + _.select_one("a.btn-primary")["href"]
+            try:
+                coord = (
+                    _.select_one("a.cta-link")["href"]
+                    .split("/@")[1]
+                    .split("/data")[0]
+                    .split(",")
+                )
+            except:
+                coord = ["", ""]
             yield SgRecord(
                 page_url=page_url,
                 location_name=_.h3.text.strip(),
@@ -34,6 +43,8 @@ def fetch_data():
                 state=addr[-1].split(",")[1].strip().split(" ")[0].strip(),
                 zip_postal=addr[-1].split(",")[1].strip().split(" ")[-1].strip(),
                 country_code="US",
+                latitude=coord[0],
+                longitude=coord[1],
                 phone=_.find("a", href=re.compile(r"tel:")).text.strip(),
                 locator_domain=locator_domain,
             )
