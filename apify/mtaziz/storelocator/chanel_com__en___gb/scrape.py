@@ -43,7 +43,6 @@ def fetch_data():
                         timeout2 = 5
                         waited2 = 0
                         if not r.response:
-                            print(r.url)
                             continue
 
                         while not r.response.body and waited2 < timeout2:
