@@ -19,6 +19,9 @@ def fetch_data():
         locations = soup.select(
             "section#utah div.l-section-h .g-cols > .vc_column_container > .vc_column-inner  .g-cols.wpb_row > .wpb_column"
         )
+        locations += soup.select(
+            "section#idaho div.l-section-h .g-cols > .vc_column_container > .vc_column-inner  .g-cols.wpb_row > .wpb_column"
+        )
         logger.info(f"{len(locations)} found")
         for _ in locations:
             if not _.p:
