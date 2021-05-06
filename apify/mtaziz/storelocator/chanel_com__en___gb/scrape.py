@@ -98,24 +98,44 @@ def scrape():
     field_defs = sp.SimpleScraperPipeline.field_definitions(
         locator_domain=sp.ConstantField(url),
         page_url=sp.MissingField(),
-        location_name=sp.MappingField(mapping=["translations", 0, "name"],),
-        latitude=sp.MappingField(mapping=["latitude"],),
-        longitude=sp.MappingField(mapping=["longitude"],),
+        location_name=sp.MappingField(
+            mapping=["translations", 0, "name"],
+        ),
+        latitude=sp.MappingField(
+            mapping=["latitude"],
+        ),
+        longitude=sp.MappingField(
+            mapping=["longitude"],
+        ),
         street_address=sp.MultiMappingField(
             mapping=[["translations", 0, "address1"], ["translations", 0, "address2"]],
             multi_mapping_concat_with=", ",
             value_transform=fix_comma,
         ),
-        city=sp.MappingField(mapping=["translations", 0, "cityname"],),
-        state=sp.MappingField(
-            mapping=["translations", 0, "statename"], is_required=False,
+        city=sp.MappingField(
+            mapping=["translations", 0, "cityname"],
         ),
-        zipcode=sp.MappingField(mapping=["zipcode"],),
-        country_code=sp.MappingField(mapping=["legacycountryname"], is_required=False,),
-        phone=sp.MappingField(mapping=["phone"], is_required=False,),
-        store_number=sp.MappingField(mapping=["id"],),
+        state=sp.MappingField(
+            mapping=["translations", 0, "statename"],
+            is_required=False,
+        ),
+        zipcode=sp.MappingField(
+            mapping=["zipcode"],
+        ),
+        country_code=sp.MappingField(
+            mapping=["legacycountryname"],
+            is_required=False,
+        ),
+        phone=sp.MappingField(
+            mapping=["phone"],
+            is_required=False,
+        ),
+        store_number=sp.MappingField(
+            mapping=["id"],
+        ),
         hours_of_operation=sp.MappingField(
-            mapping=["openinghours"], value_transform=hoo_transform,
+            mapping=["openinghours"],
+            value_transform=hoo_transform,
         ),
         location_type=sp.MultiMappingField(
             mapping=[["postypename"], ["translations", 0, "division_name"]],
