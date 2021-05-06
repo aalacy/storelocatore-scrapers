@@ -38,7 +38,9 @@ def write_output(data):
 
 
 def fetch_data():
-    locs = []
+    locs = [
+        "https://locations.panerabread.com/fl/odessa/16034-preserve-marketplace-blvd.html"
+    ]
     states = []
     cities = []
     url = "https://locations.panerabread.com/index.html"

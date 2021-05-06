@@ -94,27 +94,28 @@ def fetch_data():
                 if ">" not in g:
                     g = next(lines)
                     g = str(g.decode("utf-8"))
-                if ">" not in g:
-                    g = next(lines)
-                    g = str(g.decode("utf-8"))
-                if ">" not in g:
-                    g = next(lines)
-                    g = str(g.decode("utf-8"))
-                if ">" not in g:
-                    g = next(lines)
-                    g = str(g.decode("utf-8"))
                 h = next(lines)
                 h = str(h.decode("utf-8"))
                 i = next(lines)
                 i = str(i.decode("utf-8"))
-                add = (
-                    g.split(">")[1].split("<")[0] + " " + h.split(">")[1].split("<")[0]
-                )
-                add = add.strip()
-                csz = i.split(">")[1].split("<")[0].strip()
-                city = csz.split(",")[0]
-                state = csz.split(",")[1].strip().split(" ")[0]
-                zc = csz.rsplit(" ", 1)[1]
+                try:
+                    add = (
+                        g.split(">")[1].split("<")[0]
+                        + " "
+                        + h.split(">")[1].split("<")[0]
+                    )
+                    add = add.strip()
+                except:
+                    add = "<MISSING>"
+                try:
+                    csz = i.split(">")[1].split("<")[0].strip()
+                    city = csz.split(",")[0]
+                    state = csz.split(",")[1].strip().split(" ")[0]
+                    zc = csz.rsplit(" ", 1)[1]
+                except:
+                    city = "<MISSING>"
+                    state = "<MISSING>"
+                    zc = "<MISSING>"
                 phone = "(682) 549-7916"
                 locinfo.append(
                     name + "|" + add + "|" + city + "|" + state + "|" + zc + "|" + phone
