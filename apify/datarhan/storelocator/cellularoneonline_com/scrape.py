@@ -71,7 +71,11 @@ def fetch_data():
         location_name = poi_html.xpath('.//div[@class="location-name"]/text()')
         location_name = location_name[0] if location_name else "<MISSING>"
         raw_data = poi_html.xpath(".//address/text()")[0].split(":")[-1].split("\n")
+        if len(raw_data) > 2:
+            raw_data = [" ".join(raw_data[:2])] + raw_data[2:]
         street_address = raw_data[0].strip()
+        if street_address.endswith(","):
+            street_address = street_address[:-1]
         city = raw_data[-1].split(", ")[0]
         state = raw_data[-1].split(", ")[-1].split()[0]
         zip_code = raw_data[-1].split(", ")[-1].split()[-1]
@@ -84,7 +88,9 @@ def fetch_data():
         longitude = longitude[0] if longitude else "<MISSING>"
         hoo = loc_dom.xpath('//div[@class="nmld-detail-item for-hours"]/text()')
         hoo = [elem.strip() for elem in hoo]
-        hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
+        hours_of_operation = (
+            " ".join(hoo).replace("Lunch Hours Vary", "") if hoo else "<MISSING>"
+        )
 
         item = [
             DOMAIN,

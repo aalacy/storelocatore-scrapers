@@ -76,11 +76,9 @@ def fetch_data():
         store_req = session.get(page_url, headers=headers)
         store_sel = lxml.html.fromstring(store_req.text)
 
-        location_name = "".join(
-            store_sel.xpath(
-                '//*[@id="content"]/div[1]/div[2]/div/div/div[1]/div/h2/text()'
-            )
-        ).strip()
+        location_name = store_sel.xpath('//*[@id="content"]//div/h2/text()')
+        if len(location_name) > 0:
+            location_name = location_name[0].strip()
         if location_name == "":
             location_name = "<MISSING>"
 

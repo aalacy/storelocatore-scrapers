@@ -23,9 +23,15 @@ def _valid(val):
 def fetch_data():
     with SgRequests() as session:
         locator_domain = "https://www.donelans.com/"
-        base_url = "https://api-2.freshop.com/1/stores?app_key=donelans&has_address=true&token=014d13f8f8449f5cab1c5d480d408c61"
+        key_url = "https://api.freshop.com/2/sessions/aa69a2963a0ed813fa0885052c051af7?app_key=donelans"
+        token = session.get(key_url, headers=_headers).json()["token"]
+        base_url = f"https://api-2.freshop.com/1/stores?app_key=donelans&has_address=true&token={token}"
         locations = session.get(base_url, headers=_headers).json()
         for _ in locations["items"]:
+            hours = []
+            for hh in _["hours_md"].split("\n\n"):
+                if "**" not in hh and "Senior" not in hh:
+                    hours.append(hh)
             yield SgRecord(
                 store_number=_["store_number"],
                 page_url=_["url"],
@@ -39,7 +45,7 @@ def fetch_data():
                 longitude=_["longitude"],
                 phone=_["phone_md"].split("\n")[0],
                 locator_domain=locator_domain,
-                hours_of_operation=_valid(_["hours_md"].replace("\n\n", ";")),
+                hours_of_operation=_valid("; ".join(hours)),
             )
 
 

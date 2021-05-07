@@ -84,6 +84,19 @@ def get_data(coord):
             _tmp.append(f"{day}: {start} - {close}")
 
         hours_of_operation = ";".join(_tmp) or "<MISSING>"
+        if hours_of_operation != "<MISSING>":
+            days = [
+                "Monday",
+                "Tuesday",
+                "Wednesday",
+                "Thursday",
+                "Friday",
+                "Saturday",
+                "Sunday",
+            ]
+            for d in days:
+                if d not in hours_of_operation:
+                    hours_of_operation += f";{d}: Closed"
 
         row = [
             locator_domain,

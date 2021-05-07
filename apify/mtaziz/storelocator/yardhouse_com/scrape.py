@@ -1,10 +1,8 @@
-from sgscrape.sgrecord import SgRecord
-from sgscrape.sgwriter import SgWriter
 from sglogging import SgLogSetup
 from sgrequests import SgRequests
 from lxml import html
+import csv
 import json
-
 
 logger = SgLogSetup().get_logger(logger_name="yardhouse_com")
 session = SgRequests()
@@ -20,11 +18,65 @@ headers = {
     "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.90 Safari/537.36",
 }
 
-locator_domain = "https://www.yardhouse.com"
+MISSING = "<MISSING>"
+
+FIELDS = [
+    "locator_domain",
+    "page_url",
+    "location_name",
+    "street_address",
+    "city",
+    "state",
+    "zip",
+    "country_code",
+    "store_number",
+    "phone",
+    "location_type",
+    "latitude",
+    "longitude",
+    "hours_of_operation",
+]
+
+
+def write_output(data):
+    with open("data.csv", mode="w") as output_file:
+        writer = csv.writer(
+            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+        )
+        writer.writerow(FIELDS)
+        for row in data:
+            writer.writerow(row)
+
+
+locator_domain_url = "https://www.yardhouse.com"
+
+
+def get_hoo(url_store):
+    r_hoo = session.get(url_store, headers=headers)
+    data_raw = html.fromstring(r_hoo.text, "lxml")
+    xpath_hoo = '//div[h2[contains(text(), "HOURS")]]/div/ul/li//text()'
+    hoo_raw = data_raw.xpath(xpath_hoo)
+    hoo_raw = "".join(hoo_raw).split()
+    hoo_raw = "; ".join(hoo_raw)
+    hoo_raw = hoo_raw.split("None")
+    hoo_raw = [
+        i.replace(";", "")
+        .replace(")", "")
+        .replace("(", "")
+        .replace("Today", "")
+        .strip()
+        for i in hoo_raw
+        if i
+    ]
+    hoo_clean = "; ".join(hoo_raw)
+    if hoo_clean:
+        return hoo_clean
+    else:
+        return MISSING
 
 
 def fetch_data():
-
+    items = []
     locs = []
     url = "https://www.yardhouse.com/en-locations-sitemap.xml"
     r = session.get(url, headers=headers)
@@ -33,45 +85,92 @@ def fetch_data():
         line = str(line.decode("utf-8"))
         if "<loc>https://www.yardhouse.com/locations/" in line:
             locs.append(line.split("<loc>")[1].split("<")[0])
-    for loc in locs:
+
+    for idx, loc in enumerate(locs):
         r = session.get(loc, headers=headers)
         logger.info(f"Pulling store data from: {loc}")
         data_raw = html.fromstring(r.text, "lxml")
         data_json = data_raw.xpath('//script[@type="application/ld+json"]/text()')[0]
         data_json1 = data_json.replace("\n", "")
-        data_json2 = json.loads(data_json1)
-        logger.info(f"Pulling the Data from: {loc}")
-        if data_json2:
-            phone_data = data_json2["telephone"]
-            if phone_data == str(0):
-                phone_data = "<MISSING>"
+        data = json.loads(data_json1)
+        if data:
+
+            logger.info(f"Pulling the Data from: {idx} <<:>> {loc}")
+
+            page_url = loc if loc else MISSING
+
+            location_name = data["name"] if data["name"] else MISSING
+
+            sa = data["address"]["streetAddress"]
+            street_address = sa if sa else MISSING
+
+            city = data["address"]["addressLocality"]
+            city = city if city else MISSING
+
+            state = data["address"]["addressRegion"]
+            state = state if state else MISSING
+
+            zipcode = data["address"]["postalCode"]
+            zip = zipcode if zipcode else MISSING
+
+            store_number = data["branchCode"] if data["branchCode"] else MISSING
+
+            location_type = data["@type"] if data["@type"] else MISSING
+
+            cc = data["address"]["addressCountry"]
+            country_code = cc if cc else MISSING
+
+            lat = data["geo"]["latitude"]
+            latitude = lat if lat else MISSING
+
+            lng = data["geo"]["longitude"]
+            longitude = lng if lng else MISSING
+
+            try:
+                phone = data["telephone"]
+            except KeyError:
+                phone = MISSING
+
+            if MISSING not in phone and phone == str(0):
+                phone = MISSING
+
+            logger.info(f"Phone Data: {phone}")
+
+            locator_domain = locator_domain_url if locator_domain_url else MISSING
+            if data["openingHours"]:
+                hours_of_operation = "; ".join(data["openingHours"])
             else:
-                phone_data = phone_data
-            yield SgRecord(
-                page_url=loc,
-                location_name=data_json2["name"],
-                street_address=data_json2["address"]["streetAddress"],
-                city=data_json2["address"]["addressLocality"],
-                state=data_json2["address"]["addressRegion"],
-                zip_postal=data_json2["address"]["postalCode"],
-                store_number=data_json2["branchCode"],
-                location_type=data_json2["@type"],
-                country_code=data_json2["address"]["addressCountry"],
-                latitude=data_json2["geo"]["latitude"],
-                longitude=data_json2["geo"]["longitude"],
-                phone=phone_data,
-                locator_domain=locator_domain,
-                hours_of_operation="; ".join(data_json2["openingHours"]),
-            )
+                hours_of_operation = get_hoo(loc)
+
+            row = [
+                locator_domain,
+                page_url,
+                location_name,
+                street_address,
+                city,
+                state,
+                zip,
+                country_code,
+                store_number,
+                phone,
+                location_type,
+                latitude,
+                longitude,
+                hours_of_operation,
+            ]
+            items.append(row)
         else:
             continue
+    return items
 
-    logger.info("Scraping Finished")
+
+def scrape():
+    logger.info("Scraping Started!")
+    data = fetch_data()
+
+    logger.info(f" Scraping Finished | Total Store Count:{len(data)}")
+    write_output(data)
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
-        logger.info("Scraping Started!")
-        results = fetch_data()
-        for rec in results:
-            writer.write_row(rec)
+    scrape()
