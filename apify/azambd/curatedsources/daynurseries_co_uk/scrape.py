@@ -221,7 +221,7 @@ def fetchData():
     writer = csv.writer(file)
     writer.writerow(COLUMNS)
 
-    for page_url in stores[0:10]:
+    for page_url in stores:
         try:
             data = fetchSingleStore(page_url)
         except Exception as e:
