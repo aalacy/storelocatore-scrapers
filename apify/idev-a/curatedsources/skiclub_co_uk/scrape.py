@@ -44,7 +44,7 @@ def fetch_data():
                 city=city,
                 zip_postal=_["Postcode"],
                 country_code="UK",
-                phone=_["Phone"].strip(),
+                phone=_["Phone"],
                 locator_domain=locator_domain,
                 latitude=_["Latitude"],
                 longitude=_["Longitude"],
