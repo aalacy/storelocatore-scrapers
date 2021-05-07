@@ -197,7 +197,7 @@ def fetchData():
 
     for page_url in stores:
         data = fetchSingleStore(page_url)
-        if data == None:
+        if data is None:
             continue
 
         row = []
