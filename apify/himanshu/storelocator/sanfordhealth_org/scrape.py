@@ -1,5 +1,7 @@
 import csv
 
+from bs4 import BeautifulSoup
+
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -78,7 +80,20 @@ def fetch_data():
         if "fpostalcode46747" in anchor["raw"]:
             zipp = anchor["raw"]["fpostalcode46747"]
         else:
-            zipp = "<INACCESSIBLE>"
+            try:
+                req = session.get(page_url, headers=headers)
+                base = BeautifulSoup(req.text, "lxml")
+                script = base.find(
+                    "script", attrs={"type": "application/ld+json"}
+                ).contents[0]
+                zipp = (
+                    script.split('postalCode":')[1]
+                    .split(",")[0]
+                    .replace('"', "")
+                    .strip()
+                )
+            except:
+                zipp = "<MISSING>"
 
         if "fphone46747" in anchor["raw"]:
             phone = anchor["raw"]["fphone46747"]
