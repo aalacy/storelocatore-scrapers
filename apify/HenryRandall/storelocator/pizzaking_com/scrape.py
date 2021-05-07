@@ -1,12 +1,12 @@
 import csv
 import re
 from sgrequests import SgRequests
-
+from bs4 import BeautifulSoup
+from concurrent.futures import ThreadPoolExecutor, as_completed
 session = SgRequests()
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
-
 
 def find_locs():
     url = "https://www.pizzaking.com/locations/"
@@ -151,11 +151,38 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
+def fetch_related_posts(base_url, posts):
+    params = {
+        'relatedposts': 1
+    }
+    if len(posts):
+        params['relatedposts_exclude'] = ','.join(str(post['id']) for post in posts)
+
+    data = session.get(base_url, params=params).json()
+
+    items = data['items']
+
+    for post in items:
+        id = post['id']
+        ids = [p['id'] for p in posts]
+        if not id in ids:
+            posts.append(post)
+
+    if len(items):
+        fetch_related_posts(base_url, posts)
 
 def scrape():
-    linklist = find_locs()
-    data = fetch_data(linklist)
-    write_output(data)
+    posts = []
+
+    with ThreadPoolExecutor() as executor:
+        fetch_related_posts('https://www.pizzaking.com/location/w-walnut-st/', posts)    
+        fetch_related_posts('https://www.pizzaking.com/location/western-avenue/', posts)
+
+        [executor.submit(fetch_related_posts,post['url'], posts) for post in posts]
+
+    print(posts)
+    # data = fetch_data(linklist)
+    # write_output(data)
 
 
 scrape()
