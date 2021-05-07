@@ -1,6 +1,7 @@
 from sgselenium import SgChrome
 import pandas as pd
 import os
+
 os.system("pip uninstall -y sgselenium")
 os.system("pip install sgselenium==0.0.15")
 
