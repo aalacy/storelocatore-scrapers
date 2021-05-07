@@ -66,11 +66,11 @@ def fetch_data():
     logger.info("Pulling Stores")
     for line in r.iter_lines():
         line = str(line.decode("utf-8"))
-        if "<loc>https://baptisthealth.net/Locations/" in line:
-            items = line.split("<loc>https://baptisthealth.net/Locations/")
+        if "<loc>https://baptisthealth.net/locations/" in line:
+            items = line.split("<loc>https://baptisthealth.net/locations/")
             for item in items:
-                if "</loc>" in item and " Pricing<" not in item:
-                    lurl = "https://baptisthealth.net/Locations/" + item.split("<")[0]
+                if "</loc>" in item and "<urlset xmlns" not in item:
+                    lurl = "https://baptisthealth.net/locations/" + item.split("<")[0]
                     if lurl not in bad_urls:
                         locs.append(lurl)
     for loc in locs:
@@ -80,7 +80,7 @@ def fetch_data():
         city = ""
         state = ""
         zc = ""
-        typ = loc.split("https://baptisthealth.net/Locations/")[1].split("/")[0]
+        typ = loc.split("https://baptisthealth.net/locations/")[1].split("/")[0]
         store = "<MISSING>"
         phone = ""
         lat = "<MISSING>"
