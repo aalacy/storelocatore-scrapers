@@ -44,7 +44,6 @@ headers = {
     "content-type": "application/json; charset=UTF-8",
 }
 
-
 def fetch_locations(code, ids):
     logger.info(("Pulling Postal Code %s..." % code))
     url = "https://www.walgreens.com/locator/v1/stores/search?requestor=search"
@@ -84,22 +83,8 @@ def fetch_locations(code, ids):
             item["store"]["phone"]["areaCode"].strip()
             + item["store"]["phone"]["number"].strip()
         )
-        hours = ""
         typ = "<MISSING>"
-
-        page = session.get(loc, headers=headers).text
-        soup = BeautifulSoup(page, "html.parser")
-
-        data = json.loads(soup.select_one("#jsonLD").string)
-        hours = data["openingHoursSpecification"]
-
-        hours_of_operation = []
-        for hour in hours:
-            day = hour["dayOfWeek"].split(" ").pop(0)
-            opens = hour["opens"]
-            closes = hour["closes"]
-
-            hours_of_operation.append(f"{day}: {opens}-{closes}")
+        hours_of_operation = get_hours(loc, session)
 
         locations.append(
             [
@@ -116,12 +101,30 @@ def fetch_locations(code, ids):
                 typ,
                 lat,
                 lng,
-                (",").join(hours_of_operation),
+                hours_of_operation,
             ]
         )
 
     return locations
 
+def get_hour(url, session):
+    hours_of_operation = []
+
+    soup = BeautifulSoup(session.get(url, headers=headers).text, "html.parser")
+    script = soup.select_one("#jsonLD")
+
+    if script:
+        data = json.loads(script.string)
+        hours = data["openingHoursSpecification"]
+
+        for hour in hours:
+            day = hour["dayOfWeek"].split(" ").pop(0)
+            opens = hour["opens"]
+            closes = hour["closes"]
+
+            hours_of_operation.append(f"{day}: {opens}-{closes}")
+    
+    return (",").join(hours_of_operation) or '<MISSING>'
 
 def fetch_data():
     ids = []
