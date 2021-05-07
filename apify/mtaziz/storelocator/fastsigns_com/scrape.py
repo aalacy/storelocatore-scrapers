@@ -27,7 +27,6 @@ session = SgRequests()
 
 def get_data_from_3_different_sources(puuc, idx):
 
-    data_json_list = []
     data_src = OrderedDict()
     page_url_usca = puuc
     logger.info(f"Pulling the data from {idx}: {page_url_usca}")
@@ -153,8 +152,6 @@ def get_page_urls_and_country_codes():
     xpath_trs = '//table[@id="DataTables_Table_0"]/tbody/tr'
     trs = data_raw.xpath(xpath_trs)
     page_urls_and_countries = []
-    countries = []
-    items = []
     for tr in trs:
         # Location Name
         locname = "".join(tr.xpath('./td[@class="sorting_1"]//text()'))
@@ -225,14 +222,14 @@ def fetch_data():
             location_type = data["data_src_script1"]["@type"]
         else:
             location_type = MISSING
-        logger.info(f"\n\{location_type}")
+        logger.info(f"Location Type: {location_type}")
 
         latitude = lat3 if lat3 else MISSING
         longitude = lng3 if lng3 else MISSING
         hours_of_operation = hoo3 if hoo3 else MISSING
         raw_address = MISSING
         yield SgRecord(
-            locator_domain=DOMAIN,
+            locator_domain=locator_domain,
             page_url=page_url,
             location_name=location_name,
             street_address=street_address,
