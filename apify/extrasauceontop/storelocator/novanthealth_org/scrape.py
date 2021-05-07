@@ -1,4 +1,3 @@
-from sgselenium import SgChrome
 import pandas as pd
 import os
 
