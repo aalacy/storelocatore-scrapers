@@ -17,7 +17,7 @@ def fetch_data():
     base_url = "https://www.goldilocks-usa.com/locations/"
     with SgRequests() as session:
         soup = bs(session.get(base_url, headers=_headers).text, "lxml")
-        locations = soup.select("#tab1 div.tab-content div.tab-pane")
+        locations = soup.select("div.tab-content div.tab-pane.sub-loc-con")
         logger.info(f"{len(locations)} found")
         for _ in locations:
             addr = list(_.select_one(".map-info ul li").stripped_strings)
