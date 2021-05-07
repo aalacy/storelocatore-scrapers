@@ -74,9 +74,7 @@ def parallel_run(code, hdr, start_url, DOMAIN, scraped_items, items, session):
     passed = False
     while not passed:
         response = session.get(start_url.format(code), headers=hdr)
-        print("try")
         if "Access Denied" not in response.text:
-            print("SUCCESS")
             passed = True
 
     if response.text.endswith("}}"):
@@ -113,8 +111,6 @@ def parallel_run(code, hdr, start_url, DOMAIN, scraped_items, items, session):
         latitude = latitude if latitude else "<MISSING>"
         longitude = poi["longitude"]
         longitude = longitude if longitude else "<MISSING>"
-        if latitude != "<MISSING>" and longitude != "<MISSING>":
-            print("found location: " + location_name)
         hours_of_operation = poi["lobbyHours"]
         hours_of_operation = (
             ", ".join(hours_of_operation).replace("  ", " ")
