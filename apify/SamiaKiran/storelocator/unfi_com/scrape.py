@@ -34,6 +34,7 @@ def fetch_data():
                 soup = BeautifulSoup(text, "html.parser")
                 latitude = link["latitude"]
                 longitude = link["longitude"]
+                log.info(link["offset"])
                 street_address = soup.find("span", {"itemprop": "streetAddress"}).text
                 city = soup.find("span", {"itemprop": "addressLocality"}).text.replace(
                     ",", ""
@@ -53,6 +54,23 @@ def fetch_data():
                     location_name = "SUPERVALU/UNFI Distribution Center"
                 if "2995 Oates Street" in street_address:
                     location_name = "Nor-Cal Produce Distribution Center"
+
+                if (
+                    "Tony's Fine Foods Distribution Center" in location_name
+                    and "50 Charles Lindbergh Boulevard" in street_address
+                ):
+                    continue
+                if (
+                    "Tony's Fine Foods Distribution Center" in location_name
+                    and "12745 Earhart Ave" in street_address
+                ):
+                    continue
+                if (
+                    "Tony's Fine Foods Distribution Center" in location_name
+                    and "2722 Commerce Way" in street_address
+                ):
+                    continue
+
                 try:
                     phone = soup.find("span", {"itemprop": "telephone"}).text
                 except:
@@ -65,6 +83,8 @@ def fetch_data():
                     + str(state)
                     + ","
                     + str(zip_postal)
+                    + ","
+                    + str(location_name)
                 )
                 if identity in identities:
                     continue
