@@ -6,6 +6,17 @@ from sgrequests import SgRequests
 from sgselenium import SgChrome
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
+import ssl
+
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
+
 
 session = SgRequests()
 website = "unfi_com"
@@ -34,8 +45,8 @@ def fetch_data():
                 soup = BeautifulSoup(text, "html.parser")
                 latitude = link["latitude"]
                 longitude = link["longitude"]
-                log.info(link["offset"])
                 street_address = soup.find("span", {"itemprop": "streetAddress"}).text
+                log.info(street_address)
                 city = soup.find("span", {"itemprop": "addressLocality"}).text.replace(
                     ",", ""
                 )
