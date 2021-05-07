@@ -77,23 +77,11 @@ def fetch_data():
             state = "<MISSING>"
         if state == "Greater Accra" or state == "Central":
             continue
-        if "fpostalcode46747" in anchor["raw"]:
-            zipp = anchor["raw"]["fpostalcode46747"]
-        else:
-            try:
-                req = session.get(page_url, headers=headers)
-                base = BeautifulSoup(req.text, "lxml")
-                script = base.find(
-                    "script", attrs={"type": "application/ld+json"}
-                ).contents[0]
-                zipp = (
-                    script.split('postalCode":')[1]
-                    .split(",")[0]
-                    .replace('"', "")
-                    .strip()
-                )
-            except:
-                zipp = "<MISSING>"
+
+        req = session.get(page_url, headers=headers)
+        base = BeautifulSoup(req.text, "lxml")
+        script = base.find("script", attrs={"type": "application/ld+json"}).contents[0]
+        zipp = script.split('postalCode":')[1].split(",")[0].replace('"', "").strip()
 
         if "fphone46747" in anchor["raw"]:
             phone = anchor["raw"]["fphone46747"]
