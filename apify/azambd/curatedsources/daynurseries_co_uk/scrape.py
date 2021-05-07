@@ -12,6 +12,7 @@ from sglogging import sglog
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
+
 DOMAIN = "daynurseries.co.uk"
 
 website = "https://www.daynurseries.co.uk"
@@ -118,6 +119,7 @@ def getHoursOfOperation():
 def getPhone():
     try:
         driver.find_element_by_xpath("//a[@id='brochure_phone']").click()
+        time.sleep(4)
         phones = driver.find_elements_by_xpath(
             "//div[@id='contacts_telephone_general']/p/strong/a"
         )
@@ -136,6 +138,26 @@ def getScriptWithGeo(body):
     return None
 
 
+def getVarName(value):
+    try:
+        return int(value)
+    except ValueError:
+        pass
+    return value
+
+
+def getJSONObjectVariable(Object, varNames, noVal=MISSING):
+    value = noVal
+    for varName in varNames.split("."):
+        varName = getVarName(varName)
+        try:
+            value = Object[varName]
+            Object = Object[varName]
+        except Exception:
+            return noVal
+    return value
+
+
 def fetchSingleStore(page_url):
     split_url = page_url.split("/")
     if len(split_url) != 6:
@@ -145,20 +167,24 @@ def fetchSingleStore(page_url):
     store_number = split_url[5]
     store_response = fetchSinglePage(page_url)
 
-    hours_of_operation = store_response["hours_of_operation"]
-    phone = store_response["phone"].strip()
+    hours_of_operation = getJSONObjectVariable(store_response, "hours_of_operation")
+    phone = getJSONObjectVariable(store_response, "phone").strip()
     body = html.fromstring(store_response["response"], "lxml")
 
     geoJSON = getScriptWithGeo(body)
-    location_name = geoJSON["name"].strip().split(" at ")[0]
+    location_name = getJSONObjectVariable(geoJSON, "name").strip().split(" at ")[0]
 
-    street_address = geoJSON["address"]["streetAddress"].strip()
-    city = geoJSON["address"]["addressLocality"].strip()
-    state = geoJSON["address"]["addressRegion"].strip()
-    zip_postal = geoJSON["address"]["postalCode"].strip()
+    address = {}
+    if "address" in geoJSON:
+        address = geoJSON["address"]
 
-    latitude = str(geoJSON["geo"]["latitude"])
-    longitude = str(geoJSON["geo"]["longitude"])
+    street_address = getJSONObjectVariable(address, "streetAddress").strip()
+    city = getJSONObjectVariable(address, "addressLocality").strip()
+    state = getJSONObjectVariable(address, "addressRegion").strip()
+    zip_postal = getJSONObjectVariable(address, "postalCode").strip()
+
+    latitude = str(getJSONObjectVariable(geoJSON, "geo.latitude"))
+    longitude = str(getJSONObjectVariable(geoJSON, "geo.longitude"))
 
     redirect_urls = body.xpath('//a[contains(@class, "button-website")]/@href')
     if len(redirect_urls) > 0:
@@ -195,8 +221,11 @@ def fetchData():
     writer = csv.writer(file)
     writer.writerow(COLUMNS)
 
-    for page_url in stores:
-        data = fetchSingleStore(page_url)
+    for page_url in stores[0:10]:
+        try:
+            data = fetchSingleStore(page_url)
+        except Exception as e:
+            log.error(f"Error fetching data {page_url}", e)
         if data is None:
             continue
 
