@@ -78,10 +78,17 @@ def fetch_data():
         if state == "Greater Accra" or state == "Central":
             continue
 
-        req = session.get(page_url, headers=headers)
-        base = BeautifulSoup(req.text, "lxml")
-        script = base.find("script", attrs={"type": "application/ld+json"}).contents[0]
-        zipp = script.split('postalCode":')[1].split(",")[0].replace('"', "").strip()
+        try:
+            req = session.get(page_url, headers=headers)
+            base = BeautifulSoup(req.text, "lxml")
+            script = base.find(
+                "script", attrs={"type": "application/ld+json"}
+            ).contents[0]
+            zipp = (
+                script.split('postalCode":')[1].split(",")[0].replace('"', "").strip()
+            )
+        except:
+            zipp = "<INACCESSIBLE>"
 
         if "fphone46747" in anchor["raw"]:
             phone = anchor["raw"]["fphone46747"]
