@@ -148,6 +148,11 @@ def fetch_data():
                     phone = phone.split(",")[0].strip()
                 if " Option" in phone:
                     phone = phone.split(" Option")[0].strip()
+                citytext = " - " + city
+                name = name.replace(citytext, "")
+                addfirst = add[0:5]
+                if addfirst in name:
+                    name = name.split(addfirst)[0].strip()
                 yield [
                     website,
                     mloc,
@@ -256,6 +261,11 @@ def fetch_data():
                                 if ladd.split("|")[0] == mloc:
                                     newadd = ladd.split("|")[1]
                                     hours = ladd.split("|")[2]
+                            citytext = " - " + city
+                            name = name.replace(citytext, "")
+                            addfirst = add[0:5]
+                            if addfirst in name:
+                                name = name.split(addfirst)[0].strip()
                             yield [
                                 website,
                                 mloc,
@@ -358,6 +368,11 @@ def fetch_data():
                     phone = phone.split(",")[0].strip()
                 if " Option" in phone:
                     phone = phone.split(" Option")[0].strip()
+                citytext = " - " + city
+                name = name.replace(citytext, "")
+                addfirst = add[0:5]
+                if addfirst in name:
+                    name = name.split(addfirst)[0].strip()
                 yield [
                     website,
                     mloc,
@@ -525,6 +540,11 @@ def fetch_data():
                 if ladd.split("|")[0] == loc:
                     newadd = ladd.split("|")[1]
                     hours = ladd.split("|")[2]
+            citytext = " - " + city
+            name = name.replace(citytext, "")
+            addfirst = add[0:5]
+            if addfirst in name:
+                name = name.split(addfirst)[0].strip()
             yield [
                 website,
                 loc,
@@ -612,6 +632,11 @@ def fetch_data():
                 phone = phone.split(",")[0].strip()
             if " Option" in phone:
                 phone = phone.split(" Option")[0].strip()
+            citytext = " - " + city
+            name = name.replace(citytext, "")
+            addfirst = add[0:5]
+            if addfirst in name:
+                name = name.split(addfirst)[0].strip()
             yield [
                 website,
                 loc,
@@ -692,6 +717,11 @@ def fetch_data():
                 phone = phone.split(",")[0].strip()
             if " Option" in phone:
                 phone = phone.split(" Option")[0].strip()
+            citytext = " - " + city
+            name = name.replace(citytext, "")
+            addfirst = add[0:5]
+            if addfirst in name:
+                name = name.split(addfirst)[0].strip()
             yield [
                 website,
                 loc,
