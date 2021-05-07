@@ -75,7 +75,7 @@ def fetch_data(linklist):
         name = r.text.split('{"store":"')[1].split('",')[0]
         name = name.replace("&#8211;", "-")
         name = name.replace("&#8217;", "'")
-        name = name.replace("\/", "/")
+        name = name.replace(r"\/", "/")
         if "(Franchise)" in name:
             name = name.replace("(Franchise)", "")
             loctype = "Franchise"
@@ -118,7 +118,7 @@ def fetch_data(linklist):
         loc_data.append(lng)
         loc_data.append(hoo)
         loc_data = ["<MISSING>" if point is None else point for point in loc_data]
-        loc_data = ["<MISSING>" if point is "" else point for point in loc_data]
+        loc_data = ["<MISSING>" if point == "" else point for point in loc_data]
         data.append(loc_data)
     return data
 
