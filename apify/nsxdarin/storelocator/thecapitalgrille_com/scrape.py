@@ -42,7 +42,7 @@ def write_output(data):
 def fetch_data():
     locs = []
     url = "https://www.thecapitalgrille.com/locations-sitemap.xml"
-    r = session.get(url, headers=headers)
+    r = session.get(url, headers=headers, verify=False)
     website = "thecapitalgrille.com"
     typ = "<MISSING>"
     country = "US"

@@ -65,6 +65,8 @@ def fetch_data():
                         state = store_json["State"]
                         zip = store_json["PostalCode"]
                         country_code = store_json["Country"]
+                        if " " in zip:
+                            country_code = "CAN"
                         phone = store_json["Phone"]
                         location_type = slug.replace("/", "").strip()
                         if location_type == "distributor-locations":

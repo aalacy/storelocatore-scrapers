@@ -102,25 +102,7 @@ def fetch_data():
                                     + h1
                                 )
 
-                    if "Day" in i["ServiceHours"]:
-                        for j in i["ServiceHours"]["Day"]:
-                            if "closed" in j and j == "true":
-                                h1 = j["name"] + " " + "closed"
-                            elif "open" in j:
-                                time1 = (
-                                    time1
-                                    + " "
-                                    + j["name"]
-                                    + " "
-                                    + j["open"]
-                                    + " "
-                                    + j["close"]
-                                    + " "
-                                    + h1
-                                )
-                    hours_of_operation = (
-                        " SalesHours " + time + " ServiceHours " + time1
-                    )
+                    hours_of_operation = time.strip()
                     latitude = i["Latitude"]
                     longitude = i["Longitude"]
                     store = []
@@ -137,11 +119,7 @@ def fetch_data():
                     store.append(latitude)
                     store.append(longitude)
                     store.append(
-                        hours_of_operation.replace(
-                            " SalesHours  ServiceHours ", "<MISSING>"
-                        )
-                        if hours_of_operation
-                        else "<MISSING>"
+                        hours_of_operation if hours_of_operation else "<MISSING>"
                     )
                     store.append(
                         "https://www.lincoln.com/dealerships/dealer-details/"
