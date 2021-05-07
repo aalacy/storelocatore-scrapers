@@ -43,7 +43,7 @@ def fetch_data():
     }
     r = session.get(api_url, headers=headers)
     tree = html.fromstring(r.text)
-    div = tree.xpath('//a[@class="location-panel no-img now-open"]')
+    div = tree.xpath('//a[contains(@class, "now-open")]')
 
     for d in div:
         page_url = "".join(d.xpath(".//@href"))
@@ -72,7 +72,7 @@ def fetch_data():
 
         phone = "".join(tree.xpath('//div[@itemprop="telephone"]/a/text()')).strip()
         state = adr.split(",")[1].split()[0].strip()
-        postal = " ".join(adr.split(",")[1].split()[1:]).strip()
+        postal = " ".join(adr.split(",")[1].split()[1:]).strip() or "<MISSING>"
         country_code = "Canada"
         city = adr.split(",")[0].strip()
         store_number = "<MISSING>"

@@ -60,12 +60,13 @@ def get_data(url):
     store_number = "<MISSING>"
     location_name = f"The Great Escape - {city}"
     phone = "".join(tree.xpath("//address/following-sibling::p[1]/text()")).strip()
-    ll = "".join(tree.xpath('//div[@class="span6"]/iframe/@src'))
-    ll = ll.split("!2d")[1].split("!3m")[0].replace("!3d", ",")
-    latitude = ll.split(",")[1]
-    if latitude.find("!2m") != -1:
-        latitude = latitude.split("!2m")[0]
-    longitude = ll.split(",")[0]
+    map_link = "".join(tree.xpath('//div[@class="span6"]/iframe/@src'))
+    try:
+        latitude = map_link.split("!3d")[1].strip().split("!")[0].strip()
+        longitude = map_link.split("!2d")[1].strip().split("!")[0].strip()
+    except IndexError:
+        latitude = "<MISSING>"
+        longitude = "<MISSING>"
     location_type = "<MISSING>"
     hours_of_operation = tree.xpath(
         "//h3[contains(text(), 'Store Hours')]/following-sibling::table//tr//text()"

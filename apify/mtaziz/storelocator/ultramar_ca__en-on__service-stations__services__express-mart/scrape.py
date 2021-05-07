@@ -2,6 +2,8 @@ import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
 from lxml import html
+from time import sleep
+from random import randint
 
 logger = SgLogSetup().get_logger(
     logger_name="ultramar_ca__en-on__service-stations__services__express-mart"
@@ -558,7 +560,7 @@ def get_store_urls_and_lat_lng():
             + lng
             + "&is_depanneur=on"
         )
-        logger.info(f"Pulling Store URL from : {url}")
+        logger.info(f"\nPulling Store URL from : {url}")
         r = session.get(url, headers=headers)
         data_r = html.fromstring(r.text, "lxml")
         store_list_ul = data_r.xpath('//ul[@id="store_list"]')
@@ -573,20 +575,46 @@ def get_store_urls_and_lat_lng():
                 store_urls_latlng.append((page_url, data_lat[idx], data_lng[idx]))
                 found += 1
     total += found
-    logger.info(f"Total Store URLs Found:{total}")
+    logger.info(f"\nTotal Store URLs Found:{total}")
     return store_urls_latlng
+
+
+def get_station_location_type(data_r_location_type, url):
+    loctype_dict = {}
+    loctype_list = []
+    xpath_emart = '//div[h2[contains(text(), "Products and services")]]/ul[@class="station__icons-list"]/li//text()'
+    data_icon_list = data_r_location_type.xpath(xpath_emart)
+    data_icon_list = [" ".join(i.split()) for i in data_icon_list]
+    data_icon_list = [i.replace("Open 24h", "") for i in data_icon_list]
+    data_icon_list = [i for i in data_icon_list if i]
+    data_icon_list = "; ".join(data_icon_list)
+    loctype_dict = {"page_url": url, "location_type": data_icon_list}
+    loctype_list.append(loctype_dict)
+    return loctype_dict
 
 
 def fetch_data():
     items = []
     list_of_store_urls_latlng = get_store_urls_and_lat_lng()
-    for store_url_lat_lng in list_of_store_urls_latlng:
+    logger.info(f"\nTotal Number of Store URLs: {len(list_of_store_urls_latlng)}\n")
+    list_of_store_urls_latlng = list(dict.fromkeys(list_of_store_urls_latlng))
+    logger.info(
+        f"\n\nTotal Number of Store URLs after Deduplication: {len(list_of_store_urls_latlng)}\n"
+    )
+
+    for idx, store_url_lat_lng in enumerate(list_of_store_urls_latlng):
+        logger.info(f"\nPulling the data from: {store_url_lat_lng}\n")
+        logger.info(
+            f"\nScraping Store Number: {idx} out of {len(list_of_store_urls_latlng)}\n"
+        )
         store_url = store_url_lat_lng[0]
         r_store = session.get(store_url, headers=headers)
+        sleep(randint(1, 4))
         data_store = html.fromstring(r_store.text, "lxml")
+
         locator_domain = locator_domain_url
         page_url = store_url.strip()
-        logger.info(f"Scraping Data From: {page_url}")
+        logger.info(f"\nScraping Data From: {page_url}\n")
         xpath_location_name = '//h1[@class="station__title"]/text()'
         location_name = data_store.xpath(xpath_location_name)
         location_name = "".join(location_name).strip() if location_name else "<MISSING>"
@@ -596,10 +624,12 @@ def fetch_data():
         street_address = address_data[0] if address_data[0] else "<MISSING>"
 
         city_state_postalcode = address_data[1] if address_data[1] else ""
-        logger.info(f"city state postal code data: {city_state_postalcode}")
+        logger.info(f"\nCity,State,Zip data: {city_state_postalcode}\n")
         city = city_state_postalcode.split(",")[0] or "<MISSING>"
-        state = city_state_postalcode.split(",")[1].strip().split(" ")[0] or "<MISSING>"
-        zip = city_state_postalcode.split(",")[1].strip().split(" ")[1] or "<MISSING>"
+        state = (
+            city_state_postalcode.split(",")[-1].strip().split(" ")[0] or "<MISSING>"
+        )
+        zip = city_state_postalcode.split(",")[-1].strip().split(" ")[1] or "<MISSING>"
 
         country_code = "CA"
         store_number = "<MISSING>"
@@ -608,20 +638,23 @@ def fetch_data():
         phone_data = data_store.xpath(xpath_phone)[0].strip()
         phone = phone_data if phone_data else "<MISSING>"
 
-        location_type = "Convenience Store"
-
+        location_type_data = get_station_location_type(data_store, store_url)
+        if "Express Mart" in location_type_data["location_type"]:
+            location_type = "Express Mart"
+        else:
+            location_type = "<MISSING>"
         latitude = store_url_lat_lng[1]
         longitude = store_url_lat_lng[2]
 
         xpath_hoo = '//div[img[@alt="24h clock"]]/text()'
         hoo = data_store.xpath(xpath_hoo)
         hoo = "".join(hoo).strip()
-        logger.info(f"Hours of Operation Raw Data1: {hoo}")
+        logger.info(f"\nHours of Operation Raw Data1: {hoo}\n")
         xpath_hoo2 = (
             '//div[img[@alt="24h clock"]]/div[@class="station__hours"]/div/span/text()'
         )
         hoo2 = data_store.xpath(xpath_hoo2)
-        logger.info(f"Hours of Operation Data2: {hoo2}")
+        logger.info(f"\nHours of Operation Data2: {hoo2}\n")
 
         if hoo2:
             hoo3 = []
@@ -632,7 +665,7 @@ def fetch_data():
             hours_of_operation = hoo2
         else:
             if hoo:
-                logger.info(f"Hours of Operation Raw Data: {hoo}")
+                logger.info(f"\nHours of Operation Raw Data: {hoo}\n")
                 hours_of_operation = hoo
             else:
                 hours_of_operation = "<MISSING>"
@@ -652,7 +685,12 @@ def fetch_data():
             longitude,
             hours_of_operation,
         ]
-        items.append(row)
+        if "Express Mart" in location_type:
+            logger.info(f"\nExpress Mart found: {location_type}")
+            items.append(row)
+        else:
+            continue
+
     return items
 
 
@@ -668,6 +706,7 @@ def pairwise_hoo2(it):
 def scrape():
     logger.info("Scraping Started...")
     data = fetch_data()
+    logger.info(f"\nScraping Finished | Total Store Count: {len(data)}")
     write_output(data)
 
 
