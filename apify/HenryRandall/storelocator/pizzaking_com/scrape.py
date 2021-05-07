@@ -1,12 +1,12 @@
 import csv
 import re
 from sgrequests import SgRequests
-from bs4 import BeautifulSoup
-from concurrent.futures import ThreadPoolExecutor, as_completed
+
 session = SgRequests()
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
+
 
 def find_locs():
     url = "https://www.pizzaking.com/locations/"
@@ -42,24 +42,37 @@ def find_locs():
         except:
             pass
 
-    x = 1
-    y = 0
-    while x != y:
-        x = len(linklist)
-        newlinklist = []
-        for link in linklist:
-            try:
-                rplink = link + "?relatedposts=1"
-                r = session.get(rplink, headers=headers)
-                r = r.text.replace("\\/", "/").split("url")
-                r = [r[1][3:-3], r[3][3:-3], r[5][3:-3]]
-                newlinklist.append(link)
-                for newlink in r:
-                    newlinklist.append(newlink)
-            except:
-                newlinklist.append(link)
-        [linklist.append(x) for x in newlinklist if x not in linklist]
-        y = len(linklist)
+    return linklist
+
+
+def fetch_related_posts(linklist):
+    excludes = []
+    for link in linklist:
+        session = SgRequests()
+
+        params = {"relatedposts": 1}
+        if len(excludes):
+            params["relatedposts_exclude"] = ",".join(
+                str(exclude) for exclude in excludes
+            )
+
+        try:
+            data = session.get(link, params=params).json()
+            items = data["items"]
+            index = items[0]["url_meta"]["origin"]
+
+            if index not in excludes:
+                excludes.append(index)
+
+            for post in items:
+                id = post["id"]
+                url = post["url"]
+                if id not in excludes:
+                    excludes.append(post["id"])
+                if url not in linklist:
+                    linklist.append(post["url"])
+        except:
+            pass
     return linklist
 
 
@@ -79,9 +92,9 @@ def fetch_data(linklist):
         if "(Franchise)" in name:
             name = name.replace("(Franchise)", "")
             loctype = "Franchise"
-        street = r.text.split(',"address":"')[1].split('",')[0]
-        if street == "Online Ordering Available":
-            street = r.text.split(',"address2":"')[1].split('",')[0]
+        street = r.text.split(',"address2":"')[1].split('",')[0]
+        if street == "":
+            street = r.text.split(',"address":"')[1].split('",')[0]
         city = r.text.split(',"city":"')[1].split('",')[0]
         state = r.text.split(',"state":"')[1].split('",')[0]
         zipcode = r.text.split(',"zip":"')[1].split('",')[0]
@@ -151,38 +164,12 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-def fetch_related_posts(base_url, posts):
-    params = {
-        'relatedposts': 1
-    }
-    if len(posts):
-        params['relatedposts_exclude'] = ','.join(str(post['id']) for post in posts)
-
-    data = session.get(base_url, params=params).json()
-
-    items = data['items']
-
-    for post in items:
-        id = post['id']
-        ids = [p['id'] for p in posts]
-        if not id in ids:
-            posts.append(post)
-
-    if len(items):
-        fetch_related_posts(base_url, posts)
 
 def scrape():
-    posts = []
-
-    with ThreadPoolExecutor() as executor:
-        fetch_related_posts('https://www.pizzaking.com/location/w-walnut-st/', posts)    
-        fetch_related_posts('https://www.pizzaking.com/location/western-avenue/', posts)
-
-        [executor.submit(fetch_related_posts,post['url'], posts) for post in posts]
-
-    print(posts)
-    # data = fetch_data(linklist)
-    # write_output(data)
+    linklist = find_locs()
+    linklist = fetch_related_posts(linklist)
+    data = fetch_data(linklist)
+    write_output(data)
 
 
 scrape()
