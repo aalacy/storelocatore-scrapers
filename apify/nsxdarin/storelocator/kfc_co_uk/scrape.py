@@ -91,7 +91,9 @@ def fetch_data():
         hours = ""
         country = "GB"
         try:
-            street = item["street"].replace("\n", " ")
+            street = (
+                item["street"].replace("\n", " ").replace("\r", "").replace("\t", "")
+            )
         except:
             street = "<MISSING>"
         city = item["city"]
@@ -107,6 +109,17 @@ def fetch_data():
         if ". Drive" in hours:
             hours = hours.split(". Drive")[0].strip()
         hours = hours.replace("Restaurant:", "").replace("Restaurant :", "").strip()
+        if lat == "" or lat is None:
+            lat = "<MISSING>"
+        if lng == "" or lng is None:
+            lng = "<MISSING>"
+        if zc == "" or zc is None:
+            zc = "<MISSING>"
+        if state == "" or state is None:
+            state = "<MISSING>"
+        if city == "" or city is None:
+            city = "<MISSING>"
+        city = city.replace('"', "").replace("\r", "").replace("\n", "")
         yield [
             website,
             page_url,
