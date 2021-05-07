@@ -61,7 +61,7 @@ def fetch_data():
                 website = "pret.co.uk"
                 loc = "<MISSING>"
                 country = "GB"
-                store = item["id"]
+                store = item["shopNumber"]
                 name = item["name"]
                 lat = item["location"]["lat"]
                 lng = item["location"]["lng"]

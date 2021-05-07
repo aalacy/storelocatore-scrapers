@@ -41,6 +41,7 @@ def write_output(data):
 def fetch_data():
     locs = []
     locinfo = []
+    alllocs = []
     url = "https://www.texashealth.org//sxa/search/results/?s={E6D4398E-5377-4F52-A622-BA5985AA0E05}|{489713F2-2F53-486A-A99A-125A4921BB4F}&itemid={AF045BC3-3192-47D4-9F02-14F252C53DC8}&sig=location-search&g=32.735687%7C-97.10806559999997&o=DistanceMi%2CAscending&p=2000&e=0&v=%7B46E173AB-F518-41E7-BFB5-00206EDBA9E6%7D"
     r = session.get(url, headers=headers)
     website = "texashealth.org"
@@ -98,14 +99,24 @@ def fetch_data():
                 h = str(h.decode("utf-8"))
                 i = next(lines)
                 i = str(i.decode("utf-8"))
-                add = (
-                    g.split(">")[1].split("<")[0] + " " + h.split(">")[1].split("<")[0]
-                )
-                add = add.strip()
-                csz = i.split(">")[1].split("<")[0].strip()
-                city = csz.split(",")[0]
-                state = csz.split(",")[1].strip().split(" ")[0]
-                zc = csz.rsplit(" ", 1)[1]
+                try:
+                    add = (
+                        g.split(">")[1].split("<")[0]
+                        + " "
+                        + h.split(">")[1].split("<")[0]
+                    )
+                    add = add.strip()
+                except:
+                    add = "<MISSING>"
+                try:
+                    csz = i.split(">")[1].split("<")[0].strip()
+                    city = csz.split(",")[0]
+                    state = csz.split(",")[1].strip().split(" ")[0]
+                    zc = csz.rsplit(" ", 1)[1]
+                except:
+                    city = "<MISSING>"
+                    state = "<MISSING>"
+                    zc = "<MISSING>"
                 phone = "(682) 549-7916"
                 locinfo.append(
                     name + "|" + add + "|" + city + "|" + state + "|" + zc + "|" + phone
@@ -120,17 +131,14 @@ def fetch_data():
                         add = item.split('<div class="field-address-line-1">')[1].split(
                             "<"
                         )[0]
-                        try:
-                            add = (
-                                add
-                                + " "
-                                + line2.split('<div class="field-address-line-2">')[
-                                    1
-                                ].split("<")[0]
-                            )
-                            add = add.strip()
-                        except:
-                            pass
+                        add = (
+                            add
+                            + " "
+                            + line2.split('<div class="field-address-line-2">')[
+                                1
+                            ].split("<")[0]
+                        )
+                        add = add.strip()
                         city = item.split('<span class="field-city">')[1].split("<")[0]
                         state = item.split('<span class="field-state">')[1].split("<")[
                             0
@@ -180,9 +188,12 @@ def fetch_data():
                 lng = "<MISSING>"
             if phone == "":
                 phone = "<MISSING>"
-            info = name + "|" + add + "|" + phone
-            if info not in locinfo:
-                locinfo.append(info)
+            infotext = (
+                loc.split("|")[0] + "|" + name + "|" + add + "|" + city + "|" + state
+            )
+            if infotext not in alllocs:
+                alllocs.append(infotext)
+                name = name.replace("&amp;", "&").replace("&quot;", '"')
                 yield [
                     website,
                     loc.split("|")[0],
