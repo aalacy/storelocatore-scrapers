@@ -51,7 +51,7 @@ def fetch_data():
                 if (
                     "<?xml version" not in item
                     and "test-" not in item
-                    and "13101" in item
+                    and "13101" not in item
                 ):
                     locs.append(
                         "https://www.burgerking.ca/store-locator/store/"
