@@ -114,6 +114,8 @@ def fetch_data():
         if phone == "":
             phone = "<MISSING>"
         if add != "":
+            if "150 Smith Road" in add:
+                state = "<MISSING>"
             yield [
                 website,
                 loc,
