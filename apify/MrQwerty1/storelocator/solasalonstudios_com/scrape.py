@@ -127,7 +127,7 @@ def fetch_data():
     exc = []
     urls = get_urls()
 
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
+    with futures.ThreadPoolExecutor(max_workers=3) as executor:
         future_to_url = {executor.submit(get_data, url): url for url in urls}
         for future in futures.as_completed(future_to_url):
             row = future.result()
@@ -137,7 +137,7 @@ def fetch_data():
                 url = future_to_url[future].replace(".com", ".ca")
                 exc.append(url)
 
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
+    with futures.ThreadPoolExecutor(max_workers=3) as executor:
         future_to_url = {executor.submit(get_data, e): e for e in exc}
         for future in futures.as_completed(future_to_url):
             row = future.result()

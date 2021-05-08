@@ -62,20 +62,31 @@ def fetch_data():
         logger.info(f'{len(locations["places"])} found')
         for _ in locations["places"]:
             page_url, phone = _url(blocks, _["title"])
-            hours_of_operation = ""
+            hours = []
             try:
-                street_address = _["address"].split(",")[0]
+                street_address = " ".join(_["address"].split(",")[:-1])
                 res1 = session.get(page_url, headers=_headers)
                 logger.info(page_url)
                 if res1.status_code == 200:
-                    soup1 = bs(res1.text, "lxml")
-                    loc = json.loads(
-                        soup1.findAll("script", type="application/ld+json")[
-                            -1
-                        ].string.strip()
+                    sp1 = bs(res1.text, "lxml")
+                    street_address = " ".join(
+                        list(
+                            sp1.find("h3", string=re.compile(r"^ADDRESS"))
+                            .find_next_sibling()
+                            .stripped_strings
+                        )[:-1]
                     )
-                    hours_of_operation = _valid(loc.get("openingHours", []))
-                    street_address = loc["address"]["streetAddress"]
+                    _hours = [
+                        hh.text
+                        for hh in sp1.find(
+                            "h3", string=re.compile(r"^HOURS OF OPERATION")
+                        ).find_next_siblings()
+                    ]
+                    if len(_hours) % 2 == 0:
+                        for x in range(0, len(_hours), 2):
+                            hours.append(f"{_hours[x]}: {_hours[x+1]}")
+                    else:
+                        hours = _hours
             except:
                 pass
             yield SgRecord(
@@ -90,7 +101,7 @@ def fetch_data():
                 latitude=_["location"]["lat"],
                 longitude=_["location"]["lng"],
                 locator_domain=locator_domain,
-                hours_of_operation=hours_of_operation,
+                hours_of_operation="; ".join(hours).replace("–", "-").replace("’", "'"),
             )
 
 

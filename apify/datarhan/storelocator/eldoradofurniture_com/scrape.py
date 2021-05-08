@@ -50,13 +50,15 @@ def fetch_data():
     response = session.get(start_url, headers=hdr)
     dom = etree.HTML(response.text)
 
-    all_locations = dom.xpath('//div[@class="tiles clear stores"]//a/@href')
+    all_locations = dom.xpath(
+        '//button[@aria-label="Click here to view store details."]/@data-goto'
+    )
     for url in all_locations:
         store_url = urljoin(start_url, url)
         loc_response = session.get(store_url, headers=hdr)
         loc_dom = etree.HTML(loc_response.text)
 
-        location_name = loc_dom.xpath('//div[@class="margin-bottom"]/h2/text()')
+        location_name = loc_dom.xpath('//section[@class="store"]/h2/text()')
         location_name = location_name[0] if location_name else "<MISSING>"
         raw_address = loc_dom.xpath("//address//text()")
         street_address = raw_address[0]
@@ -65,14 +67,12 @@ def fetch_data():
         zip_code = raw_address[-1].split(", ")[-1].split()[-1]
         country_code = "<MISSING>"
         store_number = "<MISSING>"
-        phone = loc_dom.xpath("//address/following-sibling::h4[1]/text()")
+        phone = loc_dom.xpath('//a[contains(@href, "tel")]/text()')
         phone = phone[0] if phone else "<MISSING>"
         location_type = "<MISSING>"
         latitude = loc_dom.xpath("//@data-map-lat")[0]
         longitude = loc_dom.xpath("//@data-map-lng")[0]
-        hoo = loc_dom.xpath(
-            '//h2[contains(text(), "Store Hours")]/following-sibling::h4[1]/text()'
-        )
+        hoo = loc_dom.xpath('//div[@class="store-hours-item"]//text()')
         hoo = [e.strip() for e in hoo if e.strip()]
         if not hoo:
             location_type = "Coming Soon"
