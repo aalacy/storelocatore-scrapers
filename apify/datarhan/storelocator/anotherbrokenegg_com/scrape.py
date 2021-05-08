@@ -107,6 +107,15 @@ def fetch_data():
         )
         if location_type == "coming soon":
             hours_of_operation = "<MISSING>"
+        hours_of_operation = hours_of_operation.replace(
+            "Open For To-Go & Limited Dine-in ", ""
+        )
+        hours_of_operation = hours_of_operation.replace(
+            " Closed: Christmas, Thanksgiving", ""
+        )
+        hours_of_operation = hours_of_operation.replace(
+            " Closed: Christmas Day, Thanksgiving Day", ""
+        )
 
         item = [
             DOMAIN,
