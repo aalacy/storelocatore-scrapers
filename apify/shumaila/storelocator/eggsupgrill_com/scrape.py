@@ -56,7 +56,7 @@ def fetch_data():
         m = session.get(link, headers=headers, verify=False)
         soup = BeautifulSoup(m.text, "html.parser")
         divlist = soup.findAll("div", {"class": "location-container"})
-        coordlist = soup.find("div", {"class": "marker"})
+
         for div in divlist:
             title = div.find("h3").text.lstrip().rstrip()
             address = div.findAll("p", {"class": "address"})[1]
