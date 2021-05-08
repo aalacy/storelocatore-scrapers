@@ -84,7 +84,7 @@ def fetch_data():
                     except:
                         phone = "<MISSING>"
             address = address.replace(",", " ")
-            address = usaddress.parse(raw_address)
+            address = usaddress.parse(address)
             i = 0
             street_address = ""
             city = ""
