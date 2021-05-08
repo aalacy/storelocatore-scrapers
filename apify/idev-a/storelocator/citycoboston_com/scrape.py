@@ -1,6 +1,6 @@
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
-from sgselenium import SgChrome
+from sgselenium import SgFirefox
 from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
 from sgscrape.sgpostal import parse_address_intl
@@ -11,7 +11,7 @@ logger = SgLogSetup().get_logger("citycoboston")
 def fetch_data():
     locator_domain = "https://citycoboston.com/"
     base_url = "https://citycoboston.com/locations/"
-    with SgChrome() as driver:
+    with SgFirefox() as driver:
         driver.get(base_url)
         soup = bs(driver.page_source, "lxml")
         locations = soup.select("div.bu_collapsible_container  ")
