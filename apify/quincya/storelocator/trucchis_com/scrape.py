@@ -87,7 +87,8 @@ def fetch_data():
         )
         hours_of_operation = (
             " ".join(list(base.find(class_="collection-container").p.stripped_strings))
-            .replace("Store Hours", "").split("Senior")[0]
+            .replace("Store Hours", "")
+            .split("Senior")[0]
             .strip()
         )
 
