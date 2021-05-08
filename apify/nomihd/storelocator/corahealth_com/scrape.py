@@ -67,13 +67,22 @@ def fetch_data():
     stores = stores_req.text.split("<loc>")
     for index in range(1, len(stores)):
         page_url = "".join(stores[index].split("</loc>")[0].strip()).strip()
+        log.info(page_url)
         store_req = session.get(page_url, headers=headers)
         store_sel = lxml.html.fromstring(store_req.text)
         store_json = None
-        store_json = json.loads(
-            store_sel.xpath('//script[@type="application/ld+json"]/text()')[-1]
-        )
 
+        try:
+            store_json = json.loads(
+                store_sel.xpath('//script[@type="application/ld+json"]/text()')[-1]
+            )
+        except:
+            store_json = json.loads(
+                store_sel.xpath('//script[@type="application/ld+json"]/text()')[-1]
+                .replace('"latitude": ,', '"latitude": "",')
+                .replace('"longitude":', '"longitude": ""')
+                .strip()
+            )
         if store_json:
             locator_domain = website
             location_name = store_json["name"]
@@ -143,10 +152,7 @@ def fetch_data():
                 longitude,
                 hours_of_operation,
             ]
-            loc_list.append(curr_list)
-
-        # break
-    return loc_list
+            yield curr_list
 
 
 def scrape():
