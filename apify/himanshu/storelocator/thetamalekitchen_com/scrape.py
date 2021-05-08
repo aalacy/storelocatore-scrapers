@@ -104,8 +104,8 @@ def fetch_data():
             street_address = street_address.replace("Lakewood", "").strip()
             city = "Lakewood"
 
-        latitude = "<INACCESSIBLE>"
-        longitude = "<INACCESSIBLE>"
+        latitude = "<MISSING>"
+        longitude = "<MISSING>"
         location_name = "TAMALE KITCHEN " + city.strip()
 
         store = [
