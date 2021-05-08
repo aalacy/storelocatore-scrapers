@@ -2,7 +2,6 @@ from sgrequests import SgRequests
 from sglogging import SgLogSetup
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
-from lxml import html
 import json
 import ssl
 
@@ -29,7 +28,6 @@ session = SgRequests()
 
 
 def fetch_data():
-    output_list = []
     url = "https://pacsys.marriott.com/data/marriott_properties_MC_en-US.json"
     response = session.get(url, headers=headers, timeout=180)
     logger.info("JSON data being loaded...")
@@ -68,8 +66,8 @@ def fetch_data():
                         state = state if state else MISSING
 
                         # Zip Code
-                        zipcode = g["postal_code"]
-                        zip_postal = zipcode if zipcode else MISSING
+                        zip_postal = g["postal_code"]
+                        zip_postal = zip_postal if zip_postal else MISSING
 
                         # Country Code
                         country_code = g["country_name"]
@@ -112,7 +110,7 @@ def fetch_data():
                             street_address=street_address,
                             city=city,
                             state=state,
-                            zip_postal=zipcode,
+                            zip_postal=zip_postal,
                             country_code=country_code,
                             store_number=store_number,
                             phone=phone,
