@@ -1,6 +1,5 @@
 from lxml import etree
 from sglogging import SgLogSetup
-from sgselenium import SgFirefox
 from sgselenium import SgChrome
 import time
 import re
