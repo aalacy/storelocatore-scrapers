@@ -22,11 +22,14 @@ def fetch_data():
             page_url = _["clickUri"].replace(":443", "")
             logger.info(page_url)
             sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
-            address = list(
-                sp1.select_one("div.location-info__info-col p").stripped_strings
+            addr = parse_address_intl(
+                " ".join(
+                    sp1.select_one("div.location-info__info-col p").stripped_strings
+                )
             )
-            street_address = address[0].replace(",", "")
-            addr = parse_address_intl(" ".join(address))
+            street_address = addr.street_address_1
+            if addr.street_address_2:
+                street_address += " " + addr.street_address_2
             coord = (
                 sp1.select_one("div.swiper-slide iframe")["src"]
                 .split("&q=")[1]
