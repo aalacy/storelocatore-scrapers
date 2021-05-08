@@ -61,7 +61,6 @@ def handle_missing(field):
 
 def fetch_data():
     log.info("Fetching store_locator data")
-    # page_urls = fetch_store_urls()
     soup = pull_content(LOCATION_URL)
     content = (
         soup.find_all("div", {"class": "blog"})[1]
