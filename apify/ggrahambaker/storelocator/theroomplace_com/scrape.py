@@ -5,6 +5,7 @@ import time
 
 from bs4 import BeautifulSoup
 
+from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as ec
 from selenium.webdriver.support.ui import WebDriverWait
@@ -62,11 +63,18 @@ def addy_ext(addy):
 def fetch_data():
 
     user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
+    options = Options()
     locator_domain = "https://www.theroomplace.com/"
     ext = "location-view-all"
 
-    driver = SgChrome(user_agent=user_agent).driver()
-    driver1 = SgChrome(user_agent=user_agent).driver()
+    driver = SgChrome(
+        user_agent=user_agent,
+        chrome_options=options.add_argument("--ignore-certificate-errors"),
+    ).driver()
+    driver1 = SgChrome(
+        user_agent=user_agent,
+        chrome_options=options.add_argument("--ignore-certificate-errors"),
+    ).driver()
     driver.get(locator_domain + ext)
     time.sleep(8)
 
