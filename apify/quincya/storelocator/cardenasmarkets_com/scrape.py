@@ -61,10 +61,10 @@ def fetch_data():
         link = store["location_url"]
 
         hours_of_operation = ""
-        raw_hours = store['formatted_hours']['primary']['days']
+        raw_hours = store["formatted_hours"]["primary"]["days"]
         for hours in raw_hours:
-            day = hours['label']
-            clean_hours = day + " " + hours['content']
+            day = hours["label"]
+            clean_hours = day + " " + hours["content"]
             hours_of_operation = (hours_of_operation + " " + clean_hours).strip()
 
         data.append(
