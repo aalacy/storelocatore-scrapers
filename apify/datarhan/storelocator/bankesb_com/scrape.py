@@ -54,6 +54,9 @@ def fetch_data():
     for poi_html in all_locations:
         store_url = poi_html.xpath('.//a[contains(text(), "View Details")]/@href')[0]
         store_url = urljoin(start_url, store_url)
+        loc_response = session.get(store_url)
+        loc_dom = etree.HTML(loc_response.text)
+
         location_name = poi_html.xpath('.//h2[@class="f-h3-strong"]/a/text()')
         location_name = location_name[0] if location_name else "<MISSING>"
         raw_address = poi_html.xpath(
@@ -65,11 +68,13 @@ def fetch_data():
         zip_code = raw_address[-1].split(" ")[-1]
         country_code = "<MISSING>"
         store_number = poi_html.xpath("@data-id")[0]
-        phone = "<MISSING>"
+        phone = loc_dom.xpath('//span[@class="phone"]/text()')
+        phone = phone[0] if phone else "<MISSING>"
         location_type = "<MISSING>"
         latitude = "<MISSING>"
         longitude = "<MISSING>"
-        hours_of_operation = "<MISSING>"
+        hoo = loc_dom.xpath('//div[@class="branch-hours"]/div[1]//text()')
+        hours_of_operation = " ".join(hoo[1:]) if hoo else "<MISSING>"
 
         item = [
             domain,

@@ -23,6 +23,8 @@ def fetch_data():
             addr = parse_address_intl(_.address.p.text.strip())
             sp = bs(session.get(_.h2.a["href"], headers=_headers).text, "lxml")
             hours = [hh.text.replace("|", ":") for hh in sp.select("p.hours")]
+            if "coming soon" in "".join(hours).lower():
+                continue
             logger.info(_.h2.a["href"])
             yield SgRecord(
                 page_url=_.h2.a["href"],
