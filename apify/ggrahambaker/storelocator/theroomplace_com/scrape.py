@@ -60,11 +60,13 @@ def addy_ext(addy):
 
 
 def fetch_data():
+
+    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
     locator_domain = "https://www.theroomplace.com/"
     ext = "location-view-all"
 
-    driver = SgChrome().driver()
-    driver1 = SgChrome().driver()
+    driver = SgChrome(user_agent=user_agent).driver()
+    driver1 = SgChrome(user_agent=user_agent).driver()
     driver.get(locator_domain + ext)
     time.sleep(8)
 
@@ -110,7 +112,7 @@ def fetch_data():
         WebDriverWait(driver1, 50).until(
             ec.presence_of_element_located((By.CLASS_NAME, "location-item"))
         )
-        time.sleep(10)
+        time.sleep(20)
         base = BeautifulSoup(driver1.page_source, "lxml")
 
         fin_script = ""
