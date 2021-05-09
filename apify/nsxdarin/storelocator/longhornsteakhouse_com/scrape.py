@@ -1,4 +1,6 @@
 import csv
+import time
+import random
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
 from sgselenium import SgChrome
@@ -12,6 +14,10 @@ headers = {
     "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
     "method": "GET",
 }
+
+
+def sleep():
+    time.sleep(random.randint(4, 7))
 
 
 def write_output(data):
@@ -68,6 +74,7 @@ def fetch_data():
         name = ""
         store = loc.rsplit("/", 1)[1]
         with SgChrome(executable_path="/bin/chromedriver") as driver:
+            sleep()
             driver.get(loc)
             text = driver.page_source
             text = str(text).replace("\r", "").replace("\n", "").replace("\t", "")
