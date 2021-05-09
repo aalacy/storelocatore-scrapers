@@ -35,44 +35,51 @@ def write_output(data):
 def fetch_data():
     out = []
 
-    locator_domain = "https://marukai.com/"
-    api_url = "https://marukai.com/pages/all-locations"
+    locator_domain = "https://www.empireeatery.com"
+    page_url = "https://www.empireeatery.com/find-us"
     session = SgRequests()
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
     }
-    r = session.get(api_url, headers=headers)
+    r = session.get(page_url, headers=headers)
     tree = html.fromstring(r.text)
-    div = tree.xpath("//table//tr")
+    div = tree.xpath('//h2[.//span[contains(text(), "(")]]')
 
     for d in div:
 
-        location_name = "".join(d.xpath(".//td[1]//text()")).replace("\n", "").strip()
-        location_type = "Marukai Market"
-        ad = "".join(d.xpath(".//td[2]/p/text()")).replace("\n", "").strip()
-        street_address = ad.split(",")[0].strip()
-        state = ad.split(",")[2].split()[0].strip()
-        postal = ad.split(",")[2].split()[1].strip()
-        hours_of_operation = (
-            " ".join(d.xpath(".//td[4]/p/text()")).replace("\n", "").strip()
+        location_type = "<MISSING>"
+        ad = "".join(d.xpath(".//preceding-sibling::h2[1]//text()"))
+        street_address = (
+            "".join(d.xpath(".//preceding-sibling::h2[2]//text()"))
+            .replace("\n", "")
+            .strip()
         )
-        if hours_of_operation.find("Senior") != -1:
-            hours_of_operation = hours_of_operation.split("Senior")[0].strip()
-        phone = "".join(d.xpath(".//td[3]/p/text()")).replace("\n", "").strip()
-        country_code = "USA"
-        city = ad.split(",")[1].strip()
-        page_url = "".join(d.xpath(".//td[5]/p/a/@href"))
+        phone = "".join(d.xpath(".//text()"))
+        state = ad.split(",")[1].split()[0].strip()
+        postal = ad.split(",")[1].split()[1].strip()
+        country_code = "US"
+        city = ad.split(",")[0].strip()
         store_number = "<MISSING>"
-        session = SgRequests()
-        r = session.get(page_url, headers=headers)
-        tree = html.fromstring(r.text)
-        map_link = "".join(tree.xpath('//div[@class="rte"]/iframe[1]/@src')) or "".join(
-            tree.xpath('//div[@class="rte"]/p/iframe[1]/@src')
-        )
-        if street_address.find("8125") != -1:
-            map_link = "".join(tree.xpath('//div[@class="rte"]/iframe[2]/@src'))
-        latitude = map_link.split("!3d")[1].strip().split("!")[0].strip()
-        longitude = map_link.split("!2d")[1].strip().split("!")[0].strip()
+        latitude = "<MISSING>"
+        longitude = "<MISSING>"
+        location_name = "<MISSING>"
+        hours_of_operation = "<MISSING>"
+        if city == "WEEDSPORT":
+            location_name = "Weedsport"
+            hours_of_operation = "24 Hours"
+        if city == "PORT BYRON":
+            location_name = "PORT BYRON"
+            hours_of_operation = "MON-SAT 5AM -11PM SUNDAY 6AM -11PM"
+        if city == "FULTON":
+            location_name = "GRANBY CENTER"
+            hours_of_operation = "MON-SAT 5 AM - 11PM SUNDAY 6AM -10PM"
+        if city == "GENOA":
+            location_name = "GENOA"
+            hours_of_operation = "MON-THURS 5AM-9PM FRI- SAT 5AM-10PM SUN 6AM-9PM"
+        city = city.capitalize()
+        location_name = location_name.capitalize()
+        hours_of_operation = hours_of_operation.lower()
+        street_address = street_address.capitalize()
 
         row = [
             locator_domain,

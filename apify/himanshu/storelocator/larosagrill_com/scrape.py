@@ -85,8 +85,8 @@ def fetch_data():
                 street_address = address[0].strip()
                 city = address[1].strip()
                 state = re.sub(r"\d+", "", address[2]).strip()
-                zip_code = re.sub(r"r\D+", "", address[2]).strip()
-                if len(address) < 4:
+                zip_code = re.sub(r"\D+", "", address[2]).strip()
+                if len(address) < 4 and "United States" in address[2]:
                     city = "<MISSING>"
                     state = address[1]
                     zip_code = "<MISSING>"
