@@ -56,6 +56,8 @@ def fetch_data():
         hours_of_operation = (
             " ".join(d.xpath(".//td[4]/p/text()")).replace("\n", "").strip()
         )
+        if hours_of_operation.find("Senior") != -1:
+            hours_of_operation = hours_of_operation.split("Senior")[0].strip()
         phone = "".join(d.xpath(".//td[3]/p/text()")).replace("\n", "").strip()
         country_code = "USA"
         city = ad.split(",")[1].strip()
