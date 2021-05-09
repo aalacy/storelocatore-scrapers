@@ -43,13 +43,13 @@ def fetch_data():
     }
 
     data = {
-        "store_locatore_search_input": "First Financial Bank ATM, South State Road 63, Terre Haute, \u0418\u043D\u0434\u0438\u0430\u043D\u0430, United States",
-        "store_locatore_search_radius": "5000",
-        "store_locator_category": "5",
+        "store_locatore_search_input": "One First Financial Plaza  Terre Haute, United States",
+        "store_locatore_search_radius": "500",
+        "store_locator_category": "",
         "action": "make_search_request_custom_maps",
         "map_id": "4939",
-        "lat": "39.431482",
-        "lng": "-87.42943040000002",
+        "lat": "39.466166",
+        "lng": "-87.409383",
     }
 
     r = session.post(api_url, headers=headers, data=data)
@@ -59,9 +59,10 @@ def fetch_data():
     for d in div:
 
         location_name = "".join(d.xpath('.//div[@class="wpsl-name"]/a/text()'))
-        if location_name.find("ATM") != -1:
-            continue
+
         location_type = "Branch"
+        if location_name.find("ATM") != -1:
+            location_type = "ATM"
         street_address = "".join(d.xpath('.//div[@class="wpsl-address"]/text()'))
         ad = "".join(d.xpath('.//div[@class="wpsl-city"]/text()'))
         state = ad.split(",")[1].split()[0].strip()
@@ -94,7 +95,7 @@ def fetch_data():
                 tree.xpath(
                     '//span[contains(text(), "Phone")]/following-sibling::text()'
                 )
-            )
+            ).strip()
             or "<MISSING>"
         )
         if phone.find("-") == -1:
