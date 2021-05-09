@@ -111,7 +111,6 @@ def get(url, attempts=1):
         logger.info(
             f">>> exception getting {url} on thread {threading.current_thread().ident}: {ex}"
         )
-        logger.info(f">>> reset session and try again")
         session = get_session(reset=True)
         return get(url, attempts + 1)
 
