@@ -1,8 +1,22 @@
+from lxml import etree
+from sglogging import SgLogSetup
+from sgselenium import SgChrome
+import time
 import re
 import csv
-from lxml import etree
+import ssl
 
-from sgselenium import SgFirefox
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
+
+
+logger = SgLogSetup().get_logger("jaegerlumber_com")
 
 
 def write_output(data):
@@ -42,8 +56,11 @@ def fetch_data():
     start_url = "https://www.jaegerlumber.com/locations/"
     domain = re.findall(r"://(.+?)/", start_url)[0].replace("www.", "")
 
-    with SgFirefox() as driver:
+    with SgChrome() as driver:
+
         driver.get(start_url)
+        logger.info("Driver is loading the page, Please wait....!")
+        time.sleep(20)
         dom = etree.HTML(driver.page_source)
 
     all_locations = dom.xpath('.//p[a[contains(@href, "mailto")]]')
@@ -64,7 +81,7 @@ def fetch_data():
         city = raw_address[1].split(", ")[0].strip()
         state = raw_address[1].split(", ")[-1].split()[0].strip()
         zip_code = raw_address[1].split(", ")[-1].split()[-1].strip()
-        country_code = "<MISSING>"
+        country_code = "US"
         store_number = "<MISSING>"
         phone = poi_html.xpath(
             './/preceding-sibling::p[contains(text(), "Phone:")][1]/text()'
@@ -112,8 +129,10 @@ def fetch_data():
 
 
 def scrape():
+    logger.info("Scraping Started...")
     data = fetch_data()
     write_output(data)
+    logger.info(f"Scraping Finished | Total Store Count: {len(data)}")
 
 
 if __name__ == "__main__":
