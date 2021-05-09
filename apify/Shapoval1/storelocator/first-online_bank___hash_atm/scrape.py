@@ -59,8 +59,6 @@ def fetch_data():
     for d in div:
 
         location_name = "".join(d.xpath('.//div[@class="wpsl-name"]/a/text()'))
-        if location_name.find("ATM") == -1:
-            continue
         location_type = "ATM"
         street_address = "".join(d.xpath('.//div[@class="wpsl-address"]/text()'))
         ad = "".join(d.xpath('.//div[@class="wpsl-city"]/text()'))
