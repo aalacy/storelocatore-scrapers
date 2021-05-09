@@ -1,14 +1,9 @@
 import csv
 from sgrequests import SgRequests
-import json
-import requests_random_user_agent
-from requests.exceptions import RequestException
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import threading
 import random
 import time
-import os
-from datetime import datetime
 from sglogging import SgLogSetup
 
 logger = SgLogSetup().get_logger("tacobell_com")
@@ -264,7 +259,6 @@ def crawl_location_url(loc_url):
 
 def fetch_data():
 
-    locs = []
     state_urls = []
 
     url = "https://locations.tacobell.com/"
