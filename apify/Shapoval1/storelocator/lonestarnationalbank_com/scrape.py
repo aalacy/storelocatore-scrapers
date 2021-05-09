@@ -55,13 +55,14 @@ def fetch_data():
         street_address = j.get("streetAddress")
         city = j.get("city")
         state = j.get("state")
-        location_name = j.get("name")
+        location_name = "".join(j.get("name"))
         country_code = "US"
         store_number = "<MISSING>"
         latitude = j.get("geo")[1]
         longitude = j.get("geo")[0]
         location_type = j.get("category") or "<MISSING>"
         hours = j.get("lobbyHours") or "<MISSING>"
+        hoursM = j.get("motorBankHours")
         tmp = []
         if hours != "<MISSING>":
             for h in hours:
@@ -73,6 +74,18 @@ def fetch_data():
         hours_of_operation = ";".join(tmp) or "<MISSING>"
         if location_type == "ATM":
             hours_of_operation = "24 hrs"
+        if hours_of_operation == "<MISSING>":
+            for h in hoursM:
+                day = h.get("days")
+                times = h.get("times")
+                line = f"{day} {times}"
+                tmp.append(line)
+            hours_of_operation = ";".join(tmp) or "<MISSING>"
+        cms = j.get("comingSoon")
+        if cms:
+            hours_of_operation = "Coming Soon"
+        if location_name.find("ATM") != -1:
+            location_type = "ATM"
         postal = j.get("zipCode")
         page_url = "https://www.lonestarnationalbank.com/locations/"
 

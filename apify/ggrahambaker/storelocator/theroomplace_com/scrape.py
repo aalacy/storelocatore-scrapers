@@ -5,6 +5,11 @@ import time
 
 from bs4 import BeautifulSoup
 
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as ec
+from selenium.webdriver.support.ui import WebDriverWait
+
 from sglogging import SgLogSetup
 
 from sgselenium import SgChrome
@@ -56,11 +61,20 @@ def addy_ext(addy):
 
 
 def fetch_data():
+
+    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
+    options = Options()
     locator_domain = "https://www.theroomplace.com/"
     ext = "location-view-all"
 
-    driver = SgChrome().driver()
-    driver1 = SgChrome().driver()
+    driver = SgChrome(
+        user_agent=user_agent,
+        chrome_options=options.add_argument("--ignore-certificate-errors"),
+    ).driver()
+    driver1 = SgChrome(
+        user_agent=user_agent,
+        chrome_options=options.add_argument("--ignore-certificate-errors"),
+    ).driver()
     driver.get(locator_domain + ext)
     time.sleep(8)
 
@@ -102,21 +116,30 @@ def fetch_data():
         ).get_attribute("data-store-id")
 
         driver1.get(link)
-        time.sleep(8)
+        time.sleep(2)
+        WebDriverWait(driver1, 50).until(
+            ec.presence_of_element_located((By.CLASS_NAME, "location-item"))
+        )
+        time.sleep(20)
         base = BeautifulSoup(driver1.page_source, "lxml")
 
+        fin_script = ""
         all_scripts = base.find_all("script", attrs={"type": "application/ld+json"})
         for script in all_scripts:
             if "latitude" in str(script):
                 fin_script = script.contents[0]
                 break
-        try:
-            store = json.loads(fin_script)
-            lat = store["geo"]["latitude"]
-            longit = store["geo"]["longitude"]
-        except:
-            lat = "<MISSING>"
-            longit = "<MISSING>"
+        if fin_script:
+            try:
+                store = json.loads(fin_script)
+                lat = store["geo"]["latitude"]
+                longit = store["geo"]["longitude"]
+            except:
+                lat = "<MISSING>"
+                longit = "<MISSING>"
+        else:
+            lat = "<INACCESSIBLE>"
+            longit = "<INACCESSIBLE>"
 
         store_data = [
             locator_domain,
