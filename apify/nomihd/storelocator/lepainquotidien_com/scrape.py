@@ -59,8 +59,6 @@ def write_output(data):
 
 def fetch_data():
     # Your scraper here
-    loc_list = []
-
     search_url = "https://liveapi.yext.com/v2/accounts/1308693/entities/geosearch?api_key=a8db8f1f1c70c53b5f6346b6882e13a4&v=20200802&location=United%20States&countryBias=us&radius=2500&offset=0&limit=50&entityTypes=location&languages=primary&filter={%22closed%22:{%22$eq%22:false},%22countryCode%22:{%22$in%22:[%22us%22]}}"
     offset = 0
     total_count = None
@@ -136,18 +134,20 @@ def fetch_data():
                     phone = "<MISSING>"
 
                 hours_of_operation = ""
-                hours = store["hours"]
-                for hour in hours.keys():
-                    if "openIntervals" in hours[hour]:
-                        hours_of_operation = (
-                            hours_of_operation
-                            + hours[hour]["openIntervals"][0]["start"]
-                            + "-"
-                            + hours[hour]["openIntervals"][0]["end"]
-                            + " "
-                        )
+                hours_list = []
+                if "hours" in store:
+                    hours = store["hours"]
+                    for hour in hours.keys():
+                        if "openIntervals" in hours[hour]:
+                            time = (
+                                hours[hour]["openIntervals"][0]["start"]
+                                + "-"
+                                + hours[hour]["openIntervals"][0]["end"]
+                            )
 
-                hours_of_operation = hours_of_operation.strip()
+                            hours_list.append(hour + ":" + time)
+
+                hours_of_operation = "; ".join(hours_list).strip()
                 if hours_of_operation == "" or hours_of_operation is None:
                     hours_of_operation = "<MISSING>"
 
@@ -167,14 +167,12 @@ def fetch_data():
                     longitude,
                     hours_of_operation,
                 ]
-                loc_list.append(curr_list)
+                yield curr_list
 
         else:
             break
 
         offset = offset + 50
-        # break
-    return loc_list
 
 
 def scrape():

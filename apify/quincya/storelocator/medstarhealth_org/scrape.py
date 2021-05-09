@@ -94,18 +94,21 @@ def fetch_data():
             if link != "<MISSING>" and "www.medstarhealth.org/mhs" in link:
                 req = session.get(link, headers=headers)
                 soup = BeautifulSoup(req.content, "html.parser")
-                raw_hours = soup.find(class_="well").find_all("h4")
-                for raw_hour in raw_hours:
-                    if (
-                        "hours of op" in raw_hour.text.lower()
-                        or "office hours" in raw_hour.text.lower()
-                    ):
-                        hours = " ".join(
-                            list(raw_hour.find_next_sibling().stripped_strings)
-                        )
-                        if "day" in hours or "p.m" in hours:
-                            hours_of_operation = hours
-                        break
+                try:
+                    raw_hours = soup.find(class_="well").find_all("h4")
+                    for raw_hour in raw_hours:
+                        if (
+                            "hours of op" in raw_hour.text.lower()
+                            or "office hours" in raw_hour.text.lower()
+                        ):
+                            hours = " ".join(
+                                list(raw_hour.find_next_sibling().stripped_strings)
+                            )
+                            if "day" in hours or "p.m" in hours:
+                                hours_of_operation = hours
+                            break
+                except:
+                    hours_of_operation = "<MISSING>"
 
                 try:
                     try:

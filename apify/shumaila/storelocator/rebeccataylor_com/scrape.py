@@ -42,36 +42,27 @@ def write_output(data):
 
 def fetch_data():
     data = []
-    cleanr = re.compile(r"<[^>]+>")
-    url = "https://www.rebeccataylor.com/store-locator.html"
+    pattern = re.compile(r"\s\s+")
+    url = "https://www.rebeccataylor.com/our-stores/"
     r = session.get(url, headers=headers, verify=False)
     soup = BeautifulSoup(r.text, "html.parser")
-    store_list = soup.findAll("div", {"class": "store"})
+    store_list = soup.select('a:contains("Details")')
     p = 0
-    for store in store_list:
-        if "ot" in store["class"]:
-            ltype = "Outlet"
-        else:
-            ltype = "Store"
-        title = store.find("h2").text
-        det = store.find("p")
-        det = re.sub(cleanr, " ", str(det))
-        address, hours = det.split("Store Hours:")
-        lat = longt = "<MISSING>"
-        try:
-            lat, longt = (
-                store.find("a")["href"].split("@")[1].split("data", 1)[0].split(",", 1)
-            )
-            longt = longt.split(",", 1)[0]
-        except:
-            pass
-        hours, phone = hours.split("Telephone: ")
-        phone = phone.split("Map")[0]
-        address = address.replace("\n", "").strip()
-        hours = hours.replace("Store Hours:", "").lstrip().replace("\n", "")
-        phone = (
-            phone.replace("\n", "").lstrip().replace("pm", " pm").replace("am", " am")
+    for st in store_list:
+        link = "https://www.rebeccataylor.com" + st["href"]
+        r = session.get(link, headers=headers, verify=False)
+        soup = BeautifulSoup(r.text, "html.parser")
+        title = soup.find("h2", {"class": "card-title"}).text
+        address = (
+            soup.find("div", {"class": "directions"}).text.strip().split("\n", 1)[0]
         )
+        hours = soup.find("div", {"class": "card-info"}).find("ul").text
+        hours, phone = hours.split("TEL", 1)
+        hours = re.sub(pattern, " ", hours).replace("\n", " ").strip()
+        phone = phone.split("\n", 1)[0].split(": ", 1)[1]
+        ltype = "Store"
+        if "Outlet" in title:
+            ltype = "Outlet"
         address = usaddress.parse(address)
         i = 0
         street = ""
@@ -99,19 +90,19 @@ def fetch_data():
         data.append(
             [
                 "https://www.rebeccataylor.com/",
-                "https://www.rebeccataylor.com/store-locator.html",
+                link,
                 title,
-                street,
-                city.lstrip().replace(",", ""),
-                state.lstrip(),
-                pcode.lstrip().replace(".", ""),
+                street.strip().replace(",", ""),
+                city.strip().replace(",", ""),
+                state.strip(),
+                pcode.strip().replace(".", ""),
                 "US",
                 "<MISSING>",
                 phone.rstrip(),
                 ltype,
-                lat,
-                longt,
-                hours.rstrip(),
+                "<MISSING>",
+                "<MISSING>",
+                hours.strip(),
             ]
         )
 
