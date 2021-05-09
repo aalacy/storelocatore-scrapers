@@ -65,7 +65,7 @@ def write_output(data):
 
 def fetch_data():
 
-    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
+    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.114 Safari/537.36"
     driver = SgChrome(user_agent=user_agent).driver()
 
     output_list = []
@@ -81,7 +81,7 @@ def fetch_data():
         if store_list:
             break
         else:
-            sleep_time += 5
+            sleep_time += 10
             continue
 
     hours = ""

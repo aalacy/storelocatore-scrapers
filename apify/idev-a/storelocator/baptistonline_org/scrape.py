@@ -15,8 +15,8 @@ base_url = "https://www.baptistonline.org/locations"
 
 search = DynamicZipSearch(
     country_codes=[SearchableCountries.USA],
-    max_radius_miles=None,
-    max_search_results=None,
+    max_radius_miles=500,
+    max_search_results=500,
 )
 
 urls = [

@@ -53,10 +53,8 @@ def fetch_data():
         street_address = "".join(d.xpath(".//following-sibling::div[1]/p[1]/text()"))
         ad = "".join(d.xpath(".//following-sibling::div[1]/p[2]/text()"))
         if street_address.find("(") != -1:
-            street_address = (
-                street_address
-                + " "
-                + "".join(d.xpath(".//following-sibling::div[1]/p[2]/text()"))
+            street_address = "".join(
+                d.xpath(".//following-sibling::div[1]/p[2]/text()")
             )
             ad = "".join(d.xpath(".//following-sibling::div[1]/p[3]/text()"))
         phone = "".join(
