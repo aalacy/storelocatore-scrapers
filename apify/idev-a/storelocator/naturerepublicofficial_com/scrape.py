@@ -18,9 +18,7 @@ _headers = {
 def fetch_data():
     locator_domain = "https://www.naturerepublicofficial.com/"
     base_url = "https://www.naturerepublicofficial.com/about-us"
-    with SgChrome(
-        executable_path=r"/mnt/g/work/mia/chromedriver.exe", is_headless=False
-    ) as driver:
+    with SgChrome() as driver:
         driver.get(base_url)
         WebDriverWait(driver, 10).until(
             EC.presence_of_element_located(

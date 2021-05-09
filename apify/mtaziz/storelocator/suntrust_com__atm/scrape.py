@@ -89,6 +89,8 @@ def fetch_data():
             )
         logger.info(f"Pulling the data from : {idx}: {store_url} ")
         raw_address = MISSING
+        if MISSING in store_url:
+            continue
 
         yield SgRecord(
             locator_domain=DOMAIN,
