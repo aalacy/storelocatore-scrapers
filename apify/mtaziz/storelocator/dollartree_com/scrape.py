@@ -57,7 +57,6 @@ def fetch_data():
             continue
         total += len(data["response"]["collection"])
         for poi in data["response"]["collection"]:
-            # page_url = ""
             search.found_location_at(
                 poi["latitude"],
                 poi["longitude"],
