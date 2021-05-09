@@ -28,7 +28,7 @@ def fetch_data():
             .find_all("script", type="application/json")[-1]
             .string.strip()
         )
-        for _ in data["authorizedStores"]:
+        for _ in data["authorizedStores"] + data["exclusiveStores"]:
             yield SgRecord(
                 page_url=base_url,
                 location_name=_["n"],

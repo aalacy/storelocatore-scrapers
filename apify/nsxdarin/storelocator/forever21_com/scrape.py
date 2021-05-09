@@ -1,7 +1,7 @@
 import csv
 from sgrequests import SgRequests
 import json
-import sgzip
+from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 from sglogging import SgLogSetup
 
 logger = SgLogSetup().get_logger("forever21_com")
@@ -10,6 +10,12 @@ session = SgRequests()
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
+
+search = DynamicZipSearch(
+    country_codes=[SearchableCountries.USA],
+    max_radius_miles=None,
+    max_search_results=20,
+)
 
 
 def write_output(data):
@@ -41,14 +47,14 @@ def write_output(data):
 
 def fetch_data():
     ids = []
-    for code in sgzip.for_radius(200):
+    for code in search:
         if code != "00794":
             try:
                 logger.info("Pulling Zip Code %s..." % code)
                 url = (
                     "https://locations.forever21.com/modules/multilocation/?near_location="
                     + code
-                    + "&limit=100&services__in=&published=1&within_business=true&threshold=20000"
+                    + "&services__in=&published=1&within_business=true"
                 )
                 r = session.get(url, headers=headers, timeout=90, stream=True)
                 for item in json.loads(r.content)["objects"]:

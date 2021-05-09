@@ -52,7 +52,7 @@ def fetch_data():
     }
 
     all_codes = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA], max_radius_miles=100
+        country_codes=[SearchableCountries.USA], max_radius_miles=50
     )
     for code in all_codes:
         try:
@@ -62,7 +62,7 @@ def fetch_data():
         dom = etree.HTML(response.text)
 
         all_poi_html = dom.xpath('//div[@itemtype="//schema.org/Organization"]')
-        for poi_html in all_poi_html[1:]:
+        for poi_html in all_poi_html:
             store_url = poi_html.xpath('.//a[@itemprop="url"]/@href')[0]
             if store_url in scraped_urls:
                 continue
@@ -78,14 +78,14 @@ def fetch_data():
             data = re.findall("JSContext =(.+);", data)[0]
             data = demjson.decode(data)
 
-            location_name = poi[0]["name"]
+            location_name = poi[0]["name"].replace("&#39;", "'")
             street_address = data["profile"]["address"]["street"]
             suit = data["profile"]["address"].get("suite")
             if suit:
                 street_address += " " + suit
             street_address = street_address if street_address else "<MISSING>"
             city = poi[0]["address"]["addressLocality"]
-            city = city if city else "<MISSING>"
+            city = city.replace("&#39;", "'") if city else "<MISSING>"
             state = poi[0]["address"]["addressRegion"]
             state = state if state else "<MISSING>"
             zip_code = poi[0]["address"]["postalCode"]
