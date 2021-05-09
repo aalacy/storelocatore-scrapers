@@ -3,9 +3,7 @@ from sgrequests import SgRequests
 from sglogging import SgLogSetup
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
-import csv
 import json
-from lxml import etree
 
 
 logger = SgLogSetup().get_logger("dollartree_com")
@@ -19,37 +17,6 @@ headers = {
 DOMAIN = "dollartree.com"
 MISSING = "<MISSING>"
 session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
-
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-                "raw_address",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
 
 
 search = DynamicZipSearch(
