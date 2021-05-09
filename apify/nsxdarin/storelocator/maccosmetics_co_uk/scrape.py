@@ -82,6 +82,9 @@ def fetch_data():
                     if "contact this store" in hours.lower():
                         hours = "<MISSING>"
                     if "Boots" not in name and state != "Ireland":
+                        if "are: <BR>" in hours:
+                            hours = hours.split("are: <BR>")[1]
+                        hours = hours.replace("<BR>", "; ")
                         yield [
                             website,
                             loc,
