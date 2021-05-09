@@ -93,7 +93,6 @@ def fetch_store_urls():
 
 def fetch_data():
     log.info("Fetching store_locator data")
-    # page_urls = ["https://www.lapetite.com/your-local-school/washington-dc-7122/"]
     page_urls = fetch_store_urls()
     locations = []
     for page_url in page_urls:
