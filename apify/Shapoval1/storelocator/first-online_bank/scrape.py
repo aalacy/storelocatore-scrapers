@@ -43,13 +43,13 @@ def fetch_data():
     }
 
     data = {
-        "store_locatore_search_input": "One First Financial Plaza  Terre Haute, United States",
+        "store_locatore_search_input": "First Financial Bank ATM, South State Road 63, Terre Haute, \u0418\u043D\u0434\u0438\u0430\u043D\u0430, United States",
         "store_locatore_search_radius": "5000",
-        "store_locator_category": "10",
+        "store_locator_category": "5",
         "action": "make_search_request_custom_maps",
         "map_id": "4939",
-        "lat": "39.466166",
-        "lng": "-87.409383",
+        "lat": "39.431482",
+        "lng": "-87.42943040000002",
     }
 
     r = session.post(api_url, headers=headers, data=data)
@@ -59,13 +59,13 @@ def fetch_data():
     for d in div:
 
         location_name = "".join(d.xpath('.//div[@class="wpsl-name"]/a/text()'))
-        location_type = "ATM"
+        if location_name.find("ATM") != -1:
+            continue
+        location_type = "Branch"
         street_address = "".join(d.xpath('.//div[@class="wpsl-address"]/text()'))
         ad = "".join(d.xpath('.//div[@class="wpsl-city"]/text()'))
         state = ad.split(",")[1].split()[0].strip()
         postal = ad.split(",")[1].split()[1].strip()
-        hours_of_operation = "<MISSING>"
-        phone = "<MISSING>"
         country_code = "USA"
         city = ad.split(",")[0].strip()
         page_url = "".join(d.xpath('.//div[@class="wpsl-name"]/a/@href'))
@@ -73,6 +73,36 @@ def fetch_data():
         ll = "".join(d.xpath('.//a[@class="store-direction"]/@data-direction'))
         latitude = ll.split(",")[0]
         longitude = ll.split(",")[1]
+        session = SgRequests()
+        r = session.get(page_url, headers=headers)
+        tree = html.fromstring(r.text)
+
+        hours_of_operation = (
+            tree.xpath(
+                '//span[contains(text(), "Lobby Hours")]/following-sibling::span/text()'
+            )
+            or "<MISSING>"
+        )
+        if hours_of_operation != "<MISSING>":
+            hours_of_operation = list(
+                filter(None, [a.strip() for a in hours_of_operation])
+            )
+            hours_of_operation = " ".join(hours_of_operation)
+        cls = "".join(tree.xpath('//span[contains(text(), "Lobby")]/text()'))
+        phone = (
+            "".join(
+                tree.xpath(
+                    '//span[contains(text(), "Phone")]/following-sibling::text()'
+                )
+            )
+            or "<MISSING>"
+        )
+        if phone.find("-") == -1:
+            phone = "<MISSING>"
+        if hours_of_operation.find("Drive") != -1:
+            hours_of_operation = hours_of_operation.split("Drive")[0].strip()
+        if cls.find("Closed") != -1:
+            hours_of_operation = "Closed"
 
         row = [
             locator_domain,

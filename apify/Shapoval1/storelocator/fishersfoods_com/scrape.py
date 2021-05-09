@@ -60,6 +60,8 @@ def fetch_data():
         if phone.find("\n") != -1:
             phone = phone.split("\n")[0].replace(")4", ") 4").strip()
         hours_of_operation = "".join(j.get("hours_md")).replace("\n", " ").strip()
+        if hours_of_operation.find("Market") != -1:
+            hours_of_operation = hours_of_operation.split("Market")[0].strip()
 
         row = [
             locator_domain,
