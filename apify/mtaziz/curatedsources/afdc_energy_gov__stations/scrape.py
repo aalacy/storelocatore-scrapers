@@ -39,7 +39,7 @@ def fetch_data():
         if location_name:
             location_name = f"{location_name} {'Charging Station'}"
         else:
-            location = MISSING
+            location_name = MISSING
 
         street_address = poi["street_address"]
         city = poi["city"]
