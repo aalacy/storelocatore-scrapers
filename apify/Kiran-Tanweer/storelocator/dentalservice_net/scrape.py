@@ -63,10 +63,8 @@ def fetch_data():
     search_url = "https://locations.dentalservice.net/"
     stores_req = session.get(search_url, headers=headers)
     soup = BeautifulSoup(stores_req.text, "html.parser")
-    ##    print(soup)
     children = soup.findAll("li", {"class": "location-link"})
     for child in children:
-        ##        print(child)
         links = child.findAll("a")
         for link in links:
             url = link["href"]
