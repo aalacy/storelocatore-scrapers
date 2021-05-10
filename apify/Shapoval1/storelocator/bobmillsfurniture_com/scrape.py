@@ -37,7 +37,6 @@ def write_output(data):
 def get_urls():
     session = SgRequests()
     r = session.get("https://www.bobmillsfurniture.com/api/rest/pages/")
-    tree = html.fromstring(r.text)
     jsblock = r.text.replace("['", "").replace("']", "")
     js = json.loads(jsblock)
     slugs = []
