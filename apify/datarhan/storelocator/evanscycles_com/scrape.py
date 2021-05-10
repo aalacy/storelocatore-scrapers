@@ -1,3 +1,4 @@
+import re
 import csv
 from lxml import etree
 from urllib.parse import urljoin
@@ -78,10 +79,12 @@ def fetch_data():
             '//div[@itemprop="address"]/following-sibling::div[4]/text()'
         )
         zip_code = zip_code[0].strip() if zip_code else "<MISSING>"
-        country_code = "<MISSING>"
+        country_code = re.findall('countryCode":"(.+?)",', loc_response.text)[0]
+        if country_code not in ["US", "GB", "CA"]:
+            continue
         store_number = store_url.split("-")[-1]
         phone = loc_dom.xpath('//span[@itemprop="telephone"]/text()')
-        phone = phone[0].strip() if phone else "<MISSING>"
+        phone = phone[0].strip() if phone and phone[0].strip() else "<MISSING>"
         location_type = "<MISSING>"
         latitude = "<MISSING>"
         longitude = "<MISSING>"

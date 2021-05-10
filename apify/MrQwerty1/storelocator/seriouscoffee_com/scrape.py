@@ -78,8 +78,16 @@ def get_data(page_url):
         ).strip()
         or "<MISSING>"
     )
-    latitude = "<MISSING>"
-    longitude = "<MISSING>"
+
+    text = "".join(tree.xpath("//script[contains(text(), 'var latitude')]/text()"))
+    try:
+        latitude = text.split("var latitude")[1].split(";")[0].replace("=", "").strip()
+        longitude = (
+            text.split("var longitude")[1].split(";")[0].replace("=", "").strip()
+        )
+    except IndexError:
+        latitude = "<MISSING>"
+        longitude = "<MISSING>"
     location_type = "<MISSING>"
 
     _tmp = []

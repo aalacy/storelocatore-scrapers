@@ -56,6 +56,13 @@ def fetch_data():
         if formatted_addr.street_address_2:
             street_address = street_address + ", " + formatted_addr.street_address_2
 
+        street_address = (
+            street_address.replace("Rockbrook Village", "")
+            .strip()
+            .replace("Fashion Square Mall", "")
+            .replace(", 912.05 Mi", "")
+            .strip()
+        )
         if " Local Store," in street_address:
             street_address = street_address.split(" Local Store,")[1].strip()
         if " Local Store" in street_address:
@@ -87,7 +94,19 @@ def fetch_data():
                 if len("".join(hours[index].xpath("@class")).strip()) <= 0:
                     hours_list.append("".join(hours[index].xpath(".//text()")).strip())
 
+        hour2 = "".join(
+            store_sel.xpath(
+                '//section[@id="section_2"]//ul[./li[@class="icon-hours"]]/text()'
+            )
+        )
+        if hour2:
+            hours_list.append(hour2)
+
         hours_of_operation = "; ".join(hours_list).strip()
+        if "; We are open for delivery" in hours_of_operation:
+            hours_of_operation = hours_of_operation.split("; We are open for delivery")[
+                0
+            ].strip()
 
         latitude = "<MISSING>"
         longitude = "<MISSING>"
@@ -107,6 +126,7 @@ def fetch_data():
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=hours_of_operation,
+            raw_address=raw_address,
         )
 
 

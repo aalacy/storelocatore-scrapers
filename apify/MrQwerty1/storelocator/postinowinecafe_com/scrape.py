@@ -49,7 +49,15 @@ def fetch_data():
         city = j.get("Locality") or "<MISSING>"
         if "," in city:
             city = city.split(",")[0].strip()
-        state = j.get("State") or "<MISSING>"
+
+        state = "<MISSING>"
+        if j.get("AZ") == "YES":
+            state = "AZ"
+        if j.get("CO") == "YES":
+            state = "CO"
+        if j.get("TX") == "YES":
+            state = "TX"
+
         postal = j.get("Postcode") or "<MISSING>"
         if " " in postal:
             postal = postal.split()[-1]

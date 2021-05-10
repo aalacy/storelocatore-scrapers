@@ -1,11 +1,7 @@
 from sgrequests import SgRequests
+from bs4 import BeautifulSoup as bs
 import json
 import pandas as pd
-from sgzip.dynamic import DynamicZipSearch, SearchableCountries
-
-session = SgRequests()
-headers = {"accept": "application/json"}
-search = DynamicZipSearch(country_codes=[SearchableCountries.USA], max_radius_miles=10)
 
 locator_domains = []
 page_urls = []
@@ -22,84 +18,115 @@ latitudes = []
 longitudes = []
 hours_of_operations = []
 
-for search_code in search:
-    response = session.get(
-        "https://locations.whataburger.com/search.html?q="
-        + search_code
-        + "&qp="
-        + search_code
-        + "&l=en",
-        headers=headers,
+session = SgRequests()
+state_url = "https://locations.whataburger.com/directory.html"
+
+response = session.get(state_url).text
+
+soup = bs(response, "html.parser")
+state_links = soup.find_all("a", attrs={"class": "Directory-listLink"})
+
+location_urls = []
+for a_tag in state_links:
+    loc_count = (
+        a_tag.find("span", attrs={"class": "Directory-listLinkText"})["data-count"]
+        .replace("(", "")
+        .replace(")", "")
+    )
+
+    if loc_count == "1":
+        location_urls.append("https://locations.whataburger.com/" + a_tag["href"])
+
+    else:
+        state_url = "https://locations.whataburger.com/" + a_tag["href"]
+        response = session.get(state_url).text
+
+        state_soup = bs(response, "html.parser")
+        city_links = state_soup.find_all("a", attrs={"class": "Directory-listLink"})
+
+        for city_link in city_links:
+
+            loc_count = (
+                city_link.find("span", attrs={"class": "Directory-listLinkText"})[
+                    "data-count"
+                ]
+                .replace("(", "")
+                .replace(")", "")
+            )
+
+            if loc_count == "1":
+                location_urls.append(
+                    "https://locations.whataburger.com/" + city_link["href"]
+                )
+
+            else:
+                city_url = "https://locations.whataburger.com/" + city_link["href"]
+                response = session.get(city_url).text
+
+                location_soup = bs(response, "html.parser")
+                single_location_links = location_soup.find_all(
+                    "a", attrs={"class": "Teaser-titleLink"}
+                )
+                for single_location_link in single_location_links:
+                    location_urls.append(
+                        "https://locations.whataburger.com/"
+                        + single_location_link["href"]
+                    )
+
+for location_url in location_urls:
+    response = session.get(location_url).text
+    soup = bs(response, "html.parser")
+
+    locator_domain = "whataburger.com"
+    page_url = location_url.replace("../", "")
+    location_name = soup.find(
+        "span", attrs={"itemprop": "name", "id": "location-name"}
     ).text
-    response = json.loads(response)
-    locations = response["response"]["entities"]
-    with open("file.txt", "w", encoding="utf-8") as output:
-        json.dump(locations, output, indent=4)
+    address = soup.find("span", attrs={"class": "c-address-street-1"}).text
+    city = soup.find("span", attrs={"class": "c-address-city"}).text
+    state = page_url.split("/")[-3].upper()
+    if len(state) > 3:
+        state = page_url.split("/")[-4]
+    zipp = soup.find("span", attrs={"class": "c-address-postal-code"}).text
+    country_code = "US"
+    store_number = location_name.split(" ")[-1].replace("#", "")
+    phone = soup.find("div", attrs={"id": "phone-main"}).text
+    location_type = "<MISSING>"
+    latitude = soup.find("meta", attrs={"itemprop": "latitude"})["content"]
+    longitude = soup.find("meta", attrs={"itemprop": "longitude"})["content"]
 
-    for location in locations:
-        locator_domain = "whataburger.com"
-        page_url = location["profile"]["c_pagesWebsiteURL"]
+    hour_sections = soup.find("div", attrs={"class": "HoursToday-dineIn"}).find("span")[
+        "data-days"
+    ]
+    hour_sections = json.loads(hour_sections)
+
+    hours = ""
+    for section in hour_sections:
         try:
-            location_name = location["profile"]["c_locationNickname"]
+            day = section["day"]
+            start = section["intervals"][0]["start"]
+            end = section["intervals"][0]["end"]
+            hours = hours + day + " " + str(start) + "-" + str(end) + ", "
         except Exception:
-            location_name = location["profile"]["c_locationName"]
-        address = location["profile"]["address"]["line1"]
-        city = location["profile"]["address"]["city"]
-        state = location["profile"]["address"]["region"]
-        zipp = location["profile"]["address"]["postalCode"]
-        country_code = location["profile"]["address"]["countryCode"]
-        store_number = location["distance"]["id"]
-        phone = location["profile"]["mainPhone"]["number"].replace("+", "")
-        location_type = location["profile"]["c_locationType2"]
+            day = section["day"]
+            hours = hours + day + " closed" + ", "
 
-        try:
-            latitude = location["profile"]["geocodedCoordinate"]["lat"]
-            longitude = location["profile"]["geocodedCoordinate"]["long"]
-            search.found_location_at(latitude, longitude)
-        except Exception:
-            try:
-                latitude = location["profile"]["displayCoordinate"]["lat"]
-                longitude = location["profile"]["displayCoordinate"]["long"]
-                search.found_location_at(latitude, longitude)
-            except Exception:
-                latitude = "<MISSING>"
-                longitude = "<MISSING>"
+    hours = hours[:-2]
 
-        hours = ""
-        try:
-            for item in location["profile"]["c_dineInHours"]["normalHours"]:
-                day = item["day"]
-                start_time = str(item["intervals"][0]["start"])
-                if start_time == 0 or start_time == "0":
-                    start_time = "000"
-                start_time = start_time[:-2] + ":" + start_time[-2:]
-                end_time = str(item["intervals"][0]["end"])
-                if end_time == 0 or end_time == "0":
-                    end_time = "000"
-                end_time = end_time[:-2] + ":" + end_time[-2:]
-
-                hours = hours + day + " " + start_time + "-" + end_time + ", "
-
-            hours = hours[:-2]
-        except Exception:
-            hours = "<MISSING>"
-
-        locator_domains.append(locator_domain)
-        page_urls.append(page_url)
-        location_names.append(location_name)
-        street_addresses.append(address)
-        citys.append(city)
-        states.append(state)
-        zips.append(zipp)
-        country_codes.append(country_code)
-        phones.append(phone)
-        location_types.append(location_type)
-        latitudes.append(latitude)
-        longitudes.append(longitude)
-        store_numbers.append(store_number)
-        hours_of_operations.append(hours)
-
-        search.found_location_at(latitude, longitude)
+    locator_domains.append(locator_domain)
+    page_urls.append(page_url)
+    location_names.append(location_name)
+    street_addresses.append(address)
+    citys.append(city)
+    states.append(state)
+    zips.append(zipp)
+    country_codes.append(country_code)
+    phones.append(phone)
+    location_types.append(location_type)
+    latitudes.append(latitude)
+    longitudes.append(longitude)
+    store_numbers.append(store_number)
+    hours_of_operations.append(hours)
 
 df = pd.DataFrame(
     {

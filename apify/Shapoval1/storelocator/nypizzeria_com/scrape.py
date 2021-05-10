@@ -1,6 +1,5 @@
 import csv
 import json
-
 import usaddress
 from sgrequests import SgRequests
 
@@ -75,7 +74,8 @@ def fetch_data():
 
     for j in js:
         d = j.get("data")
-        line = d.get("address", {}) or {}
+        line = d.get("address") or "<MISSING>"
+
         a = usaddress.tag(line, tag_mapping=tag)[0]
         street_address = f"{a.get('address1')} {a.get('address2') or ''}".strip()
         if street_address == "None":
@@ -91,13 +91,18 @@ def fetch_data():
         store_number = j.get("storeid") or "<MISSING>"
         page_url = d.get("website") or "<MISSING>"
         location_name = j.get("name") or "<MISSING>"
+
         phone = d.get("phone") or "<MISSING>"
         if phone == "TBA":
             phone = "<MISSING>"
         latitude = d.get("map_lat") or "<MISSING>"
         longitude = d.get("map_lng") or "<MISSING>"
         location_type = "<MISSING>"
-
+        if location_name.find("COMING SOON") != -1:
+            location_type = "COMING SOON"
+            location_name = (
+                location_name.split("COMING SOON")[0].replace("-", "").strip()
+            )
         _tmp = []
         days = [
             "Monday",
@@ -112,8 +117,9 @@ def fetch_data():
             time = d.get(f"hours_{day}")
             _tmp.append(f"{day}: {time}")
 
-        hours_of_operation = ";".join(_tmp) or "<MISSING>"
-
+        hours_of_operation = ";".join(_tmp).replace("None", "Closed") or "<MISSING>"
+        if hours_of_operation.count("Closed") == 7:
+            hours_of_operation = "<MISSING>"
         row = [
             locator_domain,
             page_url,
