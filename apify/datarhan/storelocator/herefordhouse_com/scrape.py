@@ -3,6 +3,7 @@ import csv
 from lxml import etree
 
 from sgrequests import SgRequests
+from sgselenium import SgFirefox
 
 
 def write_output(data):
@@ -54,8 +55,14 @@ def fetch_data():
     )
     for poi_html in all_locations:
         store_url = poi_html.xpath(".//a/@href")[0]
-        loc_response = session.get(store_url)
-        loc_dom = etree.HTML(loc_response.text)
+        with SgFirefox() as driver:
+            driver.get(store_url)
+            iframe = driver.find_element_by_xpath("//iframe[contains(@src, 'google')]")
+            driver.switch_to.frame(iframe)
+            loc_dom = etree.HTML(driver.page_source)
+            zip_code = loc_dom.xpath('//div[@class="address"]/text()')[0].split()[-1]
+            driver.switch_to.default_content()
+            loc_dom = etree.HTML(driver.page_source)
 
         location_name = loc_dom.xpath('//h1[@id="page-title"]/text()')
         location_name = location_name[0] if location_name else "<MISSING>"
@@ -66,7 +73,6 @@ def fetch_data():
             street_address = street_address[:-1]
         city = raw_address[-1].split(", ")[0]
         state = raw_address[-1].split(", ")[-1]
-        zip_code = "<MISSING>"
         country_code = "<MISSING>"
         store_number = "<MISSING>"
         phone = loc_dom.xpath('//strong[contains(text(), "CALL NOW")]/text()')
