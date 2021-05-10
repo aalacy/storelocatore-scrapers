@@ -2,6 +2,9 @@ from bs4 import BeautifulSoup
 import csv
 import json
 from sgselenium import SgSelenium
+from sglogging import sglog
+
+log = sglog.SgLogSetup().get_logger(logger_name="seasons52.com")
 
 
 def write_output(data):
@@ -43,9 +46,11 @@ def fetch_data():
     url = "https://www.seasons52.com/locations/all-locations"
     storelist = []
     driver.get(url)
+    log.info(driver.page_source)
     soup = BeautifulSoup(driver.page_source, "html.parser")
 
     divlist = soup.select("a[href*=locations]")
+    
     p = 0
 
     for div in divlist:
@@ -57,6 +62,7 @@ def fetch_data():
             link = "https://www.seasons52.com" + div["href"]
 
         if link.find("-locations") == -1:
+            log.info(link)
             driver.get(link)
             loc = (
                 driver.page_source.split('<script type="application/ld+json">', 1)[1]
