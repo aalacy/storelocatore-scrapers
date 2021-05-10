@@ -1,10 +1,10 @@
-import csv
-from sgrequests import SgRequests
 from bs4 import BeautifulSoup
+import csv
 import json
+from sgselenium import SgSelenium
 from sglogging import sglog
 
-log = sglog.SgLogSetup().get_logger(logger_name="lifestorage.com")
+log = sglog.SgLogSetup().get_logger(logger_name="seasons52.com")
 
 
 def write_output(data):
@@ -17,6 +17,7 @@ def write_output(data):
         writer.writerow(
             [
                 "locator_domain",
+                "page_url",
                 "location_name",
                 "street_address",
                 "city",
@@ -29,7 +30,6 @@ def write_output(data):
                 "latitude",
                 "longitude",
                 "hours_of_operation",
-                "page_url",
             ]
         )
         # Body
@@ -37,99 +37,163 @@ def write_output(data):
             writer.writerow(row)
 
 
-session = SgRequests()
+driver = SgSelenium().chrome()
 
 
 def fetch_data():
     # Your scraper here
-    locs = []
-    street = []
-    states = []
-    cities = []
-    types = []
-    phones = []
-    zips = []
-    long = []
-    lat = []
-    timing = []
-    ids = []
-    page_url = []
-    countries = []
+    data = []
+    url = "https://www.seasons52.com/locations/all-locations"
+    storelist = []
+    driver.get(url)
+    log.info(driver.page_source)
+    soup = BeautifulSoup(driver.page_source, "html.parser")
 
-    res = session.get("https://www.lifestorage.com/")
-    soup = BeautifulSoup(res.text, "html.parser")
-    sls = soup.find("div", {"class": "footerStates"}).find_all("a")
+    divlist = soup.select("a[href*=locations]")
+    p = 0
 
-    for sl in sls:
-        url = "https://www.lifestorage.com" + sl.get("href")
-        log.info(url)
-        res = session.get(url)
-        soup = BeautifulSoup(res.text, "html.parser")
-        sa = soup.find_all("a", {"class": "btn store"})
+    for div in divlist:
+        if p == 0:
+            link = (
+                "https://www.seasons52.com/locations/fl/sunrise/sunrise-sawgrass/4548"
+            )
+        else:
+            link = "https://www.seasons52.com" + div["href"]
 
-        for a in sa:
-            url = "https://www.lifestorage.com" + a.get("href")
-            log.info(url)
-            req = session.get(url)
-            soup = BeautifulSoup(req.text, "lxml")
-            data = "".join(
-                soup.find_all("script", {"type": "application/ld+json"})[-1].contents
+        if link.find("-locations") == -1:
+            driver.get(link)
+            loc = (
+                driver.page_source.split('<script type="application/ld+json">', 1)[1]
+                .split("</script>", 1)[0]
+                .replace("\n", "")
             )
 
-            data = (
-                data.replace("[,", "[").replace("}{", "},{").split(',"priceRange"')[0]
-                + "}]}"
+            loc = json.loads(loc)
+
+            if (
+                len(loc) > 0
+                and loc["address"]
+                and loc["address"]["addressLocality"].strip() != ""
+                and loc["openingHours"] != []
+            ):
+                address = loc["address"]
+                street = address["streetAddress"]
+                pcode = address["postalCode"]
+                city = address["addressLocality"]
+                state = address["addressRegion"]
+                phone = loc["telephone"]
+                lat = loc["geo"]["latitude"]
+                longt = loc["geo"]["longitude"]
+                hourslist = loc["openingHours"]
+                title = loc["name"]
+                store = loc["branchCode"]
+                if len(street) < 2:
+                    soup = BeautifulSoup(driver.page_source, "html.parser")
+                    address = soup.find("input", {"id": "restAddress"})["value"]
+                    street, city, state, pcode = address.split(",")
+                    store = soup.find("input", {"id": "restID"})["value"]
+                    title = soup.find("h1").text
+                    phone = soup.find("span", {"id": "restPhoneNumber1"}).text
+                hours = ""
+                for hr in hourslist:
+                    day = hr.split(" ", 1)[0]
+                    start = hr.split(" ", 1)[1].split("-")[0]
+                    end = hr.split(" ", 1)[1].split("-")[1]
+                    check = (int)(end.split(":", 1)[0])
+                    if check > 12:
+                        endtime = check - 12
+                    hours = (
+                        hours
+                        + day
+                        + " "
+                        + start
+                        + " AM - "
+                        + str(endtime)
+                        + ":"
+                        + end.split(":", 1)[1]
+                        + " PM "
+                    )
+                hours = (
+                    hours.replace("Mo", "Monday")
+                    .replace("Tu", "Tuesday")
+                    .replace("Th", "Thursday")
+                    .replace("We", "Wednesday")
+                    .replace("Fr", "Friday")
+                    .replace("Sa", "Saturday")
+                    .replace("Su", "Sunday")
+                )
+
+            else:
+                soup = BeautifulSoup(driver.page_source, "html.parser")
+                address = soup.find("input", {"id": "restAddress"})["value"]
+
+                street, city, state, pcode = address.split(",")
+                try:
+                    lat, longt = soup.find("input", {"id": "restLatLong"})[
+                        "value"
+                    ].split(",")
+                except:
+                    continue
+                store = soup.find("input", {"id": "restID"})["value"]
+                title = soup.find("h1").text
+                phone = soup.find("span", {"id": "restPhoneNumber1"}).text
+                hourlist = soup.find("div", {"class": "week-schedule"}).findAll(
+                    "ul", {"class": "top-bar"}
+                )
+                hours = ""
+                for hr in hourlist:
+                    try:
+                        nowhr = (
+                            hr.find("li", {"class": "weekday"}).text
+                            + " "
+                            + hr.find("li", {"class": "rolling-hours-start"}).text
+                            + " "
+                        )
+                    except:
+                        nowhr = (
+                            hr.find("li", {"class": "weekday-active"}).text
+                            + " "
+                            + hr.find("li", {"class": "rolling-hours-start"}).text
+                            + " "
+                        )
+
+                    nowhr = (
+                        nowhr.replace("Tue Nov 10 ", "")
+                        .replace(":00 EST 2020", "")
+                        .replace("\n", " ")
+                    )
+                    hours = hours + nowhr
+
+            if store in storelist:
+                continue
+            storelist.append(store)
+            data.append(
+                [
+                    "https://www.seasons52.com/",
+                    link,
+                    title,
+                    street,
+                    city,
+                    state,
+                    pcode,
+                    "US",
+                    store,
+                    phone,
+                    "<MISSING>",
+                    lat,
+                    longt,
+                    hours.replace("\xa0", "").strip(),
+                ]
             )
+            p += 1
 
-            js = json.loads(data)["@graph"][0]
-
-            page_url.append(url)
-            locs.append(js["alternateName"])
-            ids.append(js["branchCode"])
-            addr = js["address"]
-            street.append(addr["streetAddress"])
-            states.append(addr["addressRegion"])
-            cities.append(addr["addressLocality"])
-            zips.append(addr["postalCode"])
-            countries.append(addr["addressCountry"])
-            timl = js["openingHoursSpecification"]
-            tim = ""
-            for l in timl:
-                tim += l["dayOfWeek"] + ": " + l["opens"] + " - " + l["closes"] + " "
-            if "Sunday:" not in tim:
-                tim += "Sunday: Closed"
-            timing.append(tim.strip())
-            phones.append(js["telephone"])
-            lat.append(js["geo"]["latitude"])
-            long.append(js["geo"]["longitude"])
-            types.append(js["@type"])
-
-    all = []
-    for i in range(0, len(locs)):
-        row = []
-        row.append("https://www.lifestorage.com/")
-        row.append(locs[i])
-        row.append(street[i])
-        row.append(cities[i])
-        row.append(states[i])
-        row.append(zips[i])
-        row.append(countries[i])
-        row.append(ids[i])  # store #
-        row.append(phones[i])  # phone
-        row.append(types[i])  # type
-        row.append(lat[i])  # lat
-        row.append(long[i])  # long
-        row.append(timing[i])  # timing
-        row.append(page_url[i])  # page url
-
-        all.append(row)
-
-    return all
+    return data
 
 
 def scrape():
     data = fetch_data()
     write_output(data)
+    driver.quit()
 
 
 scrape()
