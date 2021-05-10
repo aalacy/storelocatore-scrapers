@@ -72,7 +72,9 @@ def fetch_data():
         longitude = geo[1][1:-1]
         hoo = loc_dom.xpath('//table[@id="hours_info-BS"]//text()')
         hoo = [e.strip() for e in hoo if e.strip()]
-        hours_of_operation = " ".join(hoo[1:]) if hoo else "<MISSING>"
+        hours_of_operation = (
+            " ".join(hoo[1:]).split(" Holiday")[0] if hoo else "<MISSING>"
+        )
 
         item = [
             domain,
