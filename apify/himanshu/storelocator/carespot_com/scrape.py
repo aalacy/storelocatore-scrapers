@@ -56,7 +56,8 @@ def fetch_data():
         location_request = session.get(page_url)
         location_soup = BeautifulSoup(location_request.text, "lxml")
         if (
-                location_soup.find("p", text=re.compile("coming soon!", re.IGNORECASE)) is not None
+            location_soup.find("p", text=re.compile("coming soon!", re.IGNORECASE))
+            is not None
         ):
             continue
         try:
