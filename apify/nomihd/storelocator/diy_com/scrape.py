@@ -60,8 +60,6 @@ def write_output(data):
 
 def fetch_data():
     # Your scraper here
-    loc_list = []
-
     search_url = "https://www.diy.com/static/sitemap.xml"
     stores_req = session.get(search_url, headers=headers)
     stores = stores_req.text.split("<loc>")
@@ -71,97 +69,95 @@ def fetch_data():
             log.info(page_url)
             store_resp = session.get(page_url, headers=headers)
             store_sel = lxml.html.fromstring(store_resp.text)
-            json_text = "".join(
-                store_sel.xpath('//script[@type="application/ld+json"]/text()')
-            ).strip()
-            if len(json_text) > 0:
-                store_json = json.loads(json_text)
+            json_list = store_sel.xpath('//script[@type="application/ld+json"]/text()')
+            for json_text in json_list:
+                if "address" in json_text:
+                    store_json = json.loads(json_text)
 
-                locator_domain = website
+                    locator_domain = website
 
-                store_number = (
-                    store_resp.text.split('"externalId":"')[1]
-                    .strip()
-                    .split('"')[0]
-                    .strip()
-                )
+                    store_number = (
+                        store_resp.text.split('"externalId":"')[1]
+                        .strip()
+                        .split('"')[0]
+                        .strip()
+                    )
 
-                page_url = "https://www.diy.com/store/" + store_number
-                location_name = store_json["name"]
-                if location_name == "":
-                    location_name = "<MISSING>"
+                    page_url = "https://www.diy.com/store/" + store_number
+                    location_name = store_json["name"]
+                    if location_name == "":
+                        location_name = "<MISSING>"
 
-                street_address = store_json["address"]["streetAddress"]
-                city = store_json["address"]["addressLocality"]
-                state = store_json["address"]["addressRegion"]
-                zip = store_json["address"]["postalCode"]
+                    street_address = store_json["address"]["streetAddress"]
+                    city = store_json["address"]["addressLocality"]
+                    state = store_json["address"]["addressRegion"]
+                    zip = store_json["address"]["postalCode"]
 
-                country_code = store_json["address"]["addressCountry"]
+                    country_code = store_json["address"]["addressCountry"]
 
-                if street_address == "" or street_address is None:
-                    street_address = "<MISSING>"
+                    if street_address == "" or street_address is None:
+                        street_address = "<MISSING>"
 
-                if city == "" or city is None:
-                    city = "<MISSING>"
+                    if city == "" or city is None:
+                        city = "<MISSING>"
 
-                if state == "" or state is None:
-                    state = "<MISSING>"
+                    if state == "" or state is None:
+                        state = "<MISSING>"
 
-                if zip == "" or zip is None:
-                    zip = "<MISSING>"
+                    if zip == "" or zip is None:
+                        zip = "<MISSING>"
 
-                phone = store_json["telephone"]
+                    phone = store_json["telephone"]
 
-                location_type = "<MISSING>"
-                hours_of_operation = "<MISSING>"
-                hour_list = []
-                try:
-                    hours = store_json["openingHoursSpecification"]
-                    for hour in hours:
-                        day = hour["dayOfWeek"]
-                        time = hour["opens"] + "-" + hour["closes"]
-                        hour_list.append(day + ":" + time)
-
-                except:
-                    pass
-
-                hours_of_operation = ";".join(hour_list).strip()
-
-                latitude = store_json["geo"]["latitude"]
-                longitude = store_json["geo"]["longitude"]
-
-                if latitude == "" or latitude is None:
-                    latitude = "<MISSING>"
-                if longitude == "" or longitude is None:
-                    longitude = "<MISSING>"
-
-                if hours_of_operation == "":
+                    location_type = "<MISSING>"
                     hours_of_operation = "<MISSING>"
+                    hour_list = []
+                    try:
+                        hours = store_json["openingHoursSpecification"]
+                        for hour in hours:
+                            day = hour["dayOfWeek"]
+                            time = hour["opens"] + "-" + hour["closes"]
+                            hour_list.append(day + ":" + time)
 
-                if phone == "" or phone is None:
-                    phone = "<MISSING>"
+                    except:
+                        pass
 
-                curr_list = [
-                    locator_domain,
-                    page_url,
-                    location_name,
-                    street_address,
-                    city,
-                    state,
-                    zip,
-                    country_code,
-                    store_number,
-                    phone,
-                    location_type,
-                    latitude,
-                    longitude,
-                    hours_of_operation,
-                ]
+                    hours_of_operation = (
+                        ";".join(hour_list).strip().replace("Europe/London", "").strip()
+                    )
 
-                loc_list.append(curr_list)
-            # break
+                    latitude = store_json["geo"]["latitude"]
+                    longitude = store_json["geo"]["longitude"]
 
-    return loc_list
+                    if latitude == "" or latitude is None:
+                        latitude = "<MISSING>"
+                    if longitude == "" or longitude is None:
+                        longitude = "<MISSING>"
+
+                    if hours_of_operation == "":
+                        hours_of_operation = "<MISSING>"
+
+                    if phone == "" or phone is None:
+                        phone = "<MISSING>"
+
+                    curr_list = [
+                        locator_domain,
+                        page_url,
+                        location_name,
+                        street_address,
+                        city,
+                        state,
+                        zip,
+                        country_code,
+                        store_number,
+                        phone,
+                        location_type,
+                        latitude,
+                        longitude,
+                        hours_of_operation,
+                    ]
+
+                    yield curr_list
 
 
 def scrape():

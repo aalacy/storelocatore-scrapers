@@ -53,6 +53,10 @@ def fetch_data():
             continue
         name = store["name"]
         street = store["address1"]
+        if store.get("address2"):
+            street += " " + store["address2"]
+        if "RE MOVING" in street:
+            street = "<MISSING>"
         city = store["city"]
         state = store["stateCode"]
         zipcode = store["postalCode"]
