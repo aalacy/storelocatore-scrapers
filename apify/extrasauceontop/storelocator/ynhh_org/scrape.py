@@ -166,7 +166,7 @@ with webdriver.Chrome(options=option) as driver:
                 )
                 if "or" in hours:
                     hours = hours.split("pm")[0] + "pm"
-            
+
             if hours[0] == "M":
                 hours = "M " + hours.split("M")[1].strip()
 
