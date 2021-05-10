@@ -35,7 +35,7 @@ def fetch_data():
         .replace(" ,", ",")
         .replace("\\u0027", "")
         .replace("\\u0071", "")
-        .replace("\/", "/")
+        .replace("\\/", "/")
         .replace("\\n", "")
         .replace("\\r", "")
         .split('"],["')
