@@ -42,6 +42,36 @@ def fetch_data():
     mtlocs = []
     aklocs = []
     orlocs = []
+    locadds = [
+        "https://oregon.providence.org/location-directory/p/providence-arrhythmia-services-at-providence-portland-medical-center|4805 NE Glisan St.|<MISSING>",
+        "https://oregon.providence.org/location-directory/p/providence-childrens-development-institute-east|830 NE 47th Ave|Mon-Fri: 8 a.m.-5 p.m.",
+        "https://alaska.providence.org/locations/p/providence-laboratory-services|3851 Piper St Suite T211|Mon - Fri: 6 a.m. - 6 p.m.; Sat - Sun: 7 a.m. - 3 p.m.",
+        "https://oregon.providence.org/location-directory/p/providence-outpatient-neurological-therapy-southern-oregon|1111 Crater Lake Ave.|Mon. - Fri.: 7 a.m. - 6 p.m.",
+        "https://oregon.providence.org/location-directory/p/providence-outpatient-orthopedic-therapy-southern-oregon/|1111 Crater Lake Ave.|Mon. - Fri.: 7 a.m. - 6 p.m.",
+        "https://oregon.providence.org/location-directory/c/community-teaching-kitchen|10202 SE 32nd Ave., Suite 101|Monday-Friday, 8 a.m.-5 p.m.",
+        "https://oregon.providence.org/location-directory/p/providence-neurological-specialties-milwaukie|10330 SE 32nd Ave., Suite 226|<MISSING>",
+        "https://oregon.providence.org/location-directory/p/providence-psychiatry-clinic-milwaukie|10202 SE 32nd Ave., Bldg. 700, Suite 701|<MISSING>",
+        "https://oregon.providence.org/location-directory/p/providence-cancer-institute-newberg-clinic|1000 Providence Drive, Suite 310|Mon - Fri: 8 a.m. - 5 p.m.",
+        "https://oregon.providence.org/location-directory/p/providence-medical-group-ear-nose-and-throat-newberg|1003 Providence Drive, Suite 210|Monday-Friday: 7:30 a.m.-5 p.m.",
+        "https://oregon.providence.org/location-directory/p/providence-neurological-specialties-newberg|1003 Providence Drive, Suite 110|Monday-Friday: 7:30 a.m.-5 p.m.",
+        "https://oregon.providence.org/location-directory/p/providence-cancer-institute-franz-breast-care-clinic|4805 NE Glisan St, Suite 11N-2|Mon - Fri: 8 a.m. - 5 p.m.",
+        "https://oregon.providence.org/location-directory/p/providence-cancer-institute-franz-clinic|4805 NE Glisan St, Suite 11N-1|Monday-Friday, 8 a.m. to 5 p.m.",
+        "https://oregon.providence.org/location-directory/p/providence-cancer-institute-franz-dysplasia-clinic|4805 NE Glisan St., Suite 11N-5|Monday-Friday 8 a.m.-5 p.m.",
+        "https://oregon.providence.org/location-directory/p/providence-cancer-institute-franz-genetic-risk-clinic|4805 NE Glisan St., Suite 11N-3|Monday-Friday, 8 a.m.-5 p.m.",
+        "https://oregon.providence.org/location-directory/p/providence-cancer-institute-franz-head-and-neck-clinic|4805 NE Glisan St., Suite 11N-7|Monday-Friday, 8 a.m.-5 p.m.",
+        "https://oregon.providence.org/location-directory/p/providence-cancer-institute-franz-liver-clinic|4805 NE Glisan St., Suite 11N-6|Monday-Friday, 8 a.m.-5 p.m.",
+        "https://oregon.providence.org/location-directory/p/providence-cancer-institute-franz-oral-oncology-clinic|4805 NE Glisan St., Suite 11N-4|Monday-Friday, 8 a.m.-5 p.m.",
+        "https://oregon.providence.org/location-directory/p/providence-cancer-institute-franz-thoracic-surgery|4805 NE Glisan St., Suite 11N-8|Monday-Friday, 8 a.m.-5 p.m.",
+        "https://oregon.providence.org/location-directory/p/providence-neurological-specialties-east|5050 NE Hoyt St., Suite 315|Monday - Friday: 8 a.m. to 4:30 p.m.",
+        "https://oregon.providence.org/location-directory/p/providence-occupational-medicine-the-plaza|5050 NE Hoyt, Suite B48|Monday-Friday, 7 a.m.-6 p.m.",
+        "https://oregon.providence.org/location-directory/p/providence-pediatric-surgery-the-plaza|5050 NE Hoyt St., Suite 610|1st and 3rd Monday of each month from 10 a.m. to noon",
+        "https://oregon.providence.org/location-directory/p/providence-cancer-center-oncology-and-hematology-care-clinic-westside-portland|9135 SW Barnes Road, Suite 261|Monday-Friday, 8 a.m. to 5 p.m.",
+        "https://oregon.providence.org/location-directory/p/providence-childrens-development-institute-west|9135 SW Barnes Rd, Suite 561|Mon-Fri: 8 a.m.-4:30 p.m.",
+        "https://oregon.providence.org/location-directory/p/providence-diabetes-and-health-education-center|9340 SW Barnes Road, Suite 200|<MISSING>",
+        "https://oregon.providence.org/location-directory/p/providence-oral-oncology-and-oral-medicine-clinic-west|9135 SW Barnes Road, Suite 261|<MISSING>",
+        "https://oregon.providence.org/location-directory/p/providence-neurological-specialties-willamette-falls|1510 Division St, Suite 180|Mon-Fri: 8 a.m.-5 p.m.",
+    ]
+
     Found = False
     for x in range(1, 10):
         logger.info(("Pulling MT Page %s..." % str(x)))
@@ -118,6 +148,11 @@ def fetch_data():
                     phone = phone.split(",")[0].strip()
                 if " Option" in phone:
                     phone = phone.split(" Option")[0].strip()
+                citytext = " - " + city
+                name = name.replace(citytext, "")
+                addfirst = add[0:5]
+                if addfirst in name:
+                    name = name.split(addfirst)[0].strip()
                 yield [
                     website,
                     mloc,
@@ -173,19 +208,7 @@ def fetch_data():
                     if "pnlAddress_" in line:
                         next(lines)
                         g = next(lines)
-                        if g.count("<br/>") == 2:
-                            add = g.split("<br/>")[1].strip().replace("\t", "")
-                            csz = (
-                                g.split("<br/>")[2]
-                                .strip()
-                                .replace("\t", "")
-                                .replace("\r", "")
-                                .replace("\n", "")
-                            )
-                            city = csz.split(",")[0]
-                            state = csz.split(",")[1].strip().split(" ")[0]
-                            zc = csz.rsplit(" ", 1)[1]
-                        elif g.count("<br/>") == 1:
+                        if g.count("<br/>") == 1:
                             add = g.split("<br/>")[0].strip().replace("\t", "")
                             csz = (
                                 g.split("<br/>")[1]
@@ -234,6 +257,15 @@ def fetch_data():
                                 phone = phone.split(",")[0].strip()
                             if " Option" in phone:
                                 phone = phone.split(" Option")[0].strip()
+                            for ladd in locadds:
+                                if ladd.split("|")[0] == mloc:
+                                    newadd = ladd.split("|")[1]
+                                    hours = ladd.split("|")[2]
+                            citytext = " - " + city
+                            name = name.replace(citytext, "")
+                            addfirst = add[0:5]
+                            if addfirst in name:
+                                name = name.split(addfirst)[0].strip()
                             yield [
                                 website,
                                 mloc,
@@ -336,6 +368,11 @@ def fetch_data():
                     phone = phone.split(",")[0].strip()
                 if " Option" in phone:
                     phone = phone.split(" Option")[0].strip()
+                citytext = " - " + city
+                name = name.replace(citytext, "")
+                addfirst = add[0:5]
+                if addfirst in name:
+                    name = name.split(addfirst)[0].strip()
                 yield [
                     website,
                     mloc,
@@ -421,14 +458,7 @@ def fetch_data():
                 addinfo = (
                     g.strip().replace("\r", "").replace("\t", "").replace("\n", "")
                 )
-                if addinfo.count("<br/>") == 2:
-                    add = addinfo.split("<br/>")[1]
-                    city = addinfo.split("<br/>")[2].split(",")[0]
-                    state = (
-                        addinfo.split("<br/>")[2].split(",")[1].strip().split(" ")[0]
-                    )
-                    zc = addinfo.split("<br/>")[2].rsplit(" ", 1)[1]
-                elif addinfo.count("<br/>") == 1:
+                if addinfo.count("<br/>") == 1:
                     add = addinfo.split("<br/>")[0]
                     city = addinfo.split("<br/>")[1].split(",")[0]
                     state = (
@@ -506,6 +536,15 @@ def fetch_data():
                 phone = phone.split(",")[0].strip()
             if " Option" in phone:
                 phone = phone.split(" Option")[0].strip()
+            for ladd in locadds:
+                if ladd.split("|")[0] == loc:
+                    newadd = ladd.split("|")[1]
+                    hours = ladd.split("|")[2]
+            citytext = " - " + city
+            name = name.replace(citytext, "")
+            addfirst = add[0:5]
+            if addfirst in name:
+                name = name.split(addfirst)[0].strip()
             yield [
                 website,
                 loc,
@@ -593,6 +632,11 @@ def fetch_data():
                 phone = phone.split(",")[0].strip()
             if " Option" in phone:
                 phone = phone.split(" Option")[0].strip()
+            citytext = " - " + city
+            name = name.replace(citytext, "")
+            addfirst = add[0:5]
+            if addfirst in name:
+                name = name.split(addfirst)[0].strip()
             yield [
                 website,
                 loc,
@@ -673,6 +717,11 @@ def fetch_data():
                 phone = phone.split(",")[0].strip()
             if " Option" in phone:
                 phone = phone.split(" Option")[0].strip()
+            citytext = " - " + city
+            name = name.replace(citytext, "")
+            addfirst = add[0:5]
+            if addfirst in name:
+                name = name.split(addfirst)[0].strip()
             yield [
                 website,
                 loc,
