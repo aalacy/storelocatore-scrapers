@@ -56,8 +56,7 @@ def fetch_data():
         location_request = session.get(page_url)
         location_soup = BeautifulSoup(location_request.text, "lxml")
         if (
-            location_soup.find("p", text=re.compile("coming soon!", re.IGNORECASE))
-            != None
+                location_soup.find("p", text=re.compile("coming soon!", re.IGNORECASE)) is not None
         ):
             continue
         try:
@@ -68,7 +67,7 @@ def fetch_data():
         except:
             continue
         phone = location_soup.find("span", {"itemprop": "telephone"}).text
-        if location_soup.find("div", {"class": "hours"}) == None:
+        if location_soup.find("div", {"class": "hours"}) is None:
             location_hours = "<MISSING>"
         else:
             location_hours = " ".join(
