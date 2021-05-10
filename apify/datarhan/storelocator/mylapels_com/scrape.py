@@ -68,6 +68,11 @@ def fetch_data():
         with SgFirefox() as driver:
             driver.get(store_url)
             loc_dom = etree.HTML(driver.page_source)
+        if loc_dom.xpath('//div[@id="error-404"]'):
+            store_url = store_url.replace("/locations/", "/location/")
+            with SgFirefox() as driver:
+                driver.get(store_url)
+                loc_dom = etree.HTML(driver.page_source)
         poi_page = loc_dom.xpath('//script[contains(text(), "StreetAddress")]/text()')
         if poi_page:
             poi_page = json.loads(poi_page[0])
@@ -107,6 +112,44 @@ def fetch_data():
         if phone == "<MISSING>":
             phone = loc_dom.xpath('//p[contains(text(), "please call")]/strong/text()')
             phone = phone[0] if phone else "<MISSING>"
+        if phone == "<MISSING>":
+            phone = loc_dom.xpath(
+                '//h1[contains(text(), "{}")]/following-sibling::p[1]/a/text()'.format(
+                    location_name
+                )
+            )
+            phone = phone[0] if phone else "<MISSING>"
+        if phone == "<MISSING>":
+            phone = loc_dom.xpath(
+                '//p[span[contains(text(), "{}")]]/following-sibling::p[1]//a/text()'.format(
+                    street_address
+                )
+            )
+            phone = phone[0] if phone else "<MISSING>"
+        if phone == "<MISSING>":
+            phone = loc_dom.xpath('//a[contains(@href, "tel")]/text()')
+            phone = phone[0] if phone else "<MISSING>"
+        if phone == "<MISSING>":
+            phone = loc_dom.xpath(
+                '//p[contains(text(), "{}")]/text()'.format(street_address)
+            )
+            phone = [e.strip() for e in phone if "(" in e]
+            phone = phone[0] if phone else "<MISSING>"
+        if phone == "<MISSING>":
+            phone = loc_dom.xpath(
+                '//p[contains(text(), "{}")]/text()'.format(street_address)
+            )
+            phone = phone[-1].strip() if phone and "-" in phone[-1] else "<MISSING>"
+        if phone == "<MISSING>":
+            phone = loc_dom.xpath('//p[contains(text(), "{}")]/text()'.format(city))
+            phone = phone[-1].strip() if phone and "-" in phone[-1] else "<MISSING>"
+        if phone == "<MISSING>":
+            phone = loc_dom.xpath(
+                '//p[contains(text(), "{}")]/preceding-sibling::div[1]/a/text()'.format(
+                    city
+                )
+            )
+            phone = phone[0].strip() if phone else "<MISSING>"
         latitude = poi["latitude"]
         latitude = latitude if latitude else "<MISSING>"
         longitude = poi["longitude"]
