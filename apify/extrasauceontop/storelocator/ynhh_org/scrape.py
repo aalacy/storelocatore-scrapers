@@ -142,7 +142,7 @@ with webdriver.Chrome(options=option) as driver:
                                 .split("<")[0]
                                 .strip()
                             )
-                except Exception as e:
+                except Exception:
                     hours = "<MISSING>"
 
             else:
