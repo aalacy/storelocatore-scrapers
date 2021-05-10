@@ -4,7 +4,7 @@ from lxml import etree
 from urllib.parse import urljoin
 
 from sgrequests import SgRequests
-from sgselenium import SgChrome
+from sgselenium import SgFirefox
 
 
 def write_output(data):
@@ -45,7 +45,7 @@ def fetch_data():
 
     DOMAIN = "clothesmentor.com"
     start_url = "https://clothesmentor.com/apps/store-locator/all"
-    with SgChrome() as driver:
+    with SgFirefox() as driver:
         driver.get(start_url)
         dom = etree.HTML(driver.page_source)
 

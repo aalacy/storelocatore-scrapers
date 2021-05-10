@@ -88,12 +88,15 @@ def fetch_data():
             continue
 
         location_name = (
-            base.find_all(class_="font_4")[-1].text.replace("  ", " ").strip()
+            base.find_all(class_="font_4")[-1]
+            .text.replace("  ", " ")
+            .replace("\xa0", " ")
+            .strip()
         )
         if "We are now seeing" in location_name:
             continue
 
-        rows = base.find_all(class_="_1Z_nJ")
+        rows = base.find_all("div", attrs={"data-testid": "richTextElement"})
 
         for row in rows:
             if "phone:" in row.text.lower():
@@ -152,17 +155,26 @@ def fetch_data():
             else:
                 phone = "<MISSING>"
 
-        hours_of_operation = "<MISSING>"
-        for row in rows:
-            if "hours of operation" in row.text.lower():
-                hours_of_operation = (
-                    row.text.split("tion")[1]
-                    .split("*")[-1]
-                    .split("Weekend")[0]
-                    .replace("\n", " ")
-                    .strip()
-                )
-                break
+        hours_of_operation = ""
+        if "hours of operation" in str(rows).lower():
+            for row in rows:
+                if "hours of operation" in row.text.lower():
+                    hours_of_operation = (
+                        row.text.split("tion")[1]
+                        .split("*")[-1]
+                        .split("Weekend")[0]
+                        .replace("\n", " ")
+                        .strip()
+                    )
+                    break
+        else:
+            for row in rows:
+                if "pm" in row.text.lower() or "0am" in row.text.lower():
+                    hours_of_operation = " ".join(list(row.stripped_strings)[-2:])
+                    break
+        if not hours_of_operation:
+            hours_of_operation = "<MISSING>"
+
         try:
             geo = re.findall(r"[0-9]{2}\.[0-9]+,-[0-9]{2,3}\.[0-9]+", map_link)[
                 0

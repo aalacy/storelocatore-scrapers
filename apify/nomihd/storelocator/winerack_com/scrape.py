@@ -25,6 +25,8 @@ def fetch_data():
         locator_domain = website
         location_name = store["id"]
         street_address = store["fullAddress"].split(",")[0].strip()
+        if "(" in street_address:
+            street_address = street_address.split("(")[0].strip()
 
         city = store["city"]
         state = store["province"]

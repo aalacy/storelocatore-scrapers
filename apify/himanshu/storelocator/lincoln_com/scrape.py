@@ -4,7 +4,7 @@ from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 from sglogging import SgLogSetup
 
 logger = SgLogSetup().get_logger("lincoln_com")
-session = SgRequests()
+session = SgRequests(retry_behavior=None, proxy_rotation_failure_threshold=0)
 
 
 def write_output(data):
@@ -47,9 +47,10 @@ def fetch_data():
     zipcodes = DynamicZipSearch(
         country_codes=[SearchableCountries.USA],
         max_search_results=100,
-        max_radius_miles=200,
+        max_radius_miles=100,
     )
     for zip_code in zipcodes:
+        logger.info(f"fetching records for zipcode:{zip_code}")
         street_address = ""
         city = ""
         state = ""
@@ -101,25 +102,7 @@ def fetch_data():
                                     + h1
                                 )
 
-                    if "Day" in i["ServiceHours"]:
-                        for j in i["ServiceHours"]["Day"]:
-                            if "closed" in j and j == "true":
-                                h1 = j["name"] + " " + "closed"
-                            elif "open" in j:
-                                time1 = (
-                                    time1
-                                    + " "
-                                    + j["name"]
-                                    + " "
-                                    + j["open"]
-                                    + " "
-                                    + j["close"]
-                                    + " "
-                                    + h1
-                                )
-                    hours_of_operation = (
-                        " SalesHours " + time + " ServiceHours " + time1
-                    )
+                    hours_of_operation = time.strip()
                     latitude = i["Latitude"]
                     longitude = i["Longitude"]
                     store = []
@@ -136,19 +119,15 @@ def fetch_data():
                     store.append(latitude)
                     store.append(longitude)
                     store.append(
-                        hours_of_operation.replace(
-                            " SalesHours  ServiceHours ", "<MISSING>"
-                        )
-                        if hours_of_operation
-                        else "<MISSING>"
+                        hours_of_operation if hours_of_operation else "<MISSING>"
                     )
                     store.append(
                         "https://www.lincoln.com/dealerships/dealer-details/"
                         + i["urlKey"]
                     )
-                    if store[2] in addresses:
+                    if store[13] in addresses:
                         continue
-                    addresses.append(store[2])
+                    addresses.append(store[13])
                     yield store
 
         if "Response" in k and "Dealer" in k["Response"]:
@@ -231,9 +210,9 @@ def fetch_data():
                 store.append(
                     "https://www.lincoln.com/dealerships/dealer-details/" + i["urlKey"]
                 )
-                if store[2] in addresses:
+                if store[13] in addresses:
                     continue
-                addresses.append(store[2])
+                addresses.append(store[13])
                 yield store
 
 

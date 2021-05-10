@@ -71,25 +71,12 @@ def fetch_data():
         except:
             phone = "<MISSING>"
         try:
-            hourslist = loc["openingHoursSpecification"]
-            hours = ""
-            for hr in hourslist:
-                day = hr["dayOfWeek"]
-                openstr = hr["opens"] + " AM - "
-                closestr = hr["closes"]
-                close = (int)(closestr.split(":")[0])
-                if close > 12:
-                    close = close - 12
-                hours = (
-                    hours
-                    + day
-                    + " "
-                    + openstr
-                    + str(close)
-                    + ":"
-                    + closestr.split(":")[1]
-                    + " PM "
-                )
+            hours = (
+                soup.find("table", {"class": "hours"})
+                .text.replace("Day of the WeekHours", "")
+                .replace("PM", "PM ")
+                .replace("day", "day ")
+            )
         except:
             hours = "<MISSING>"
         data.append(
