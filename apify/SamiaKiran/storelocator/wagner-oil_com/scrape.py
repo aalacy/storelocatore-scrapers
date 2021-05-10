@@ -27,7 +27,7 @@ def fetch_data():
                 continue
             location_name = loc.find("h2").find("span").text
             log.info(location_name)
-            temp_list = loc.findAll("div", {"class": "_1Z_nJ"})
+            temp_list = loc.findAll("div", {"data-testid": "richTextElement"})
             try:
                 latitude, longitude = (
                     temp_list[1]

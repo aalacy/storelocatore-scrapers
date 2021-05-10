@@ -51,7 +51,7 @@ def fetch_data():
         "Content-Type": "application/json",
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.141 Safari/537.36",
     }
-    formdata = '{"Radius":100,"StartLocation":"Short Hills, NJ","Type":"Office","NodeAliasPath":"/Branch-Locations","Latitude":40.7483499,"Longitude":-74.3232194}'
+    formdata = '{"Radius":10000,"StartLocation":"Short Hills, NJ","Type":"Office","NodeAliasPath":"/Branch-Locations","Latitude":40.7483499,"Longitude":-74.3232194}'
     headers = {"Content-Type": "application/json"}
     response = session.post(start_url, data=formdata, headers=headers)
     data = json.loads(response.text)

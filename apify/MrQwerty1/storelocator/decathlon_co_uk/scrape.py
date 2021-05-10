@@ -56,7 +56,7 @@ def fetch_data():
     for j in js:
         g = j.get("geometry")
         j = j.get("properties")
-        c = j.get("contact")
+        c = j.get("contact") or {}
         a = j.get("address")
         street_address = a.get("lines") or []
         street_address = list(filter(None, street_address))

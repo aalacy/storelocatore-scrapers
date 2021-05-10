@@ -47,22 +47,27 @@ def write_output(data):
 def fetch_data():
     locs = []
     canada = ["AB", "BC", "MB", "NB", "NL", "NS", "ON", "PE", "SK", "QC"]
-    for x in range(1, 5):
-        logger.info(("Pulling Sitemap %s..." % str(x)))
-        smurl = (
-            "https://stores.cosmoprofbeauty.com/sitemap/sitemap" + str(x) + ".xml.gz"
-        )
-        with open("branches.xml.gz", "wb") as f:
-            f.write(urllib.request.urlopen(smurl, context=ctx).read())
-            f.close()
-            with gzip.open("branches.xml.gz", "rt") as f:
-                for line in f:
-                    if (
-                        "<loc>https://stores.cosmoprofbeauty.com/" in line
-                        and ".html" in line
-                    ):
-                        locs.append(line.split("<loc>")[1].split("<")[0])
-        logger.info((str(len(locs)) + " Locations Found..."))
+    while len(locs) < 1180:
+        for x in range(1, 5):
+            logger.info(("Pulling Sitemap %s..." % str(x)))
+            smurl = (
+                "https://stores.cosmoprofbeauty.com/sitemap/sitemap"
+                + str(x)
+                + ".xml.gz"
+            )
+            with open("branches.xml.gz", "wb") as f:
+                f.write(urllib.request.urlopen(smurl, context=ctx).read())
+                f.close()
+                with gzip.open("branches.xml.gz", "rt") as f:
+                    for line in f:
+                        if (
+                            "<loc>https://stores.cosmoprofbeauty.com/" in line
+                            and ".html" in line
+                        ):
+                            lurl = line.split("<loc>")[1].split("<")[0]
+                            if lurl not in locs:
+                                locs.append(lurl)
+            logger.info((str(len(locs)) + " Locations Found..."))
     for loc in locs:
         website = "cosmoprofbeauty.com"
         typ = "<MISSING>"
