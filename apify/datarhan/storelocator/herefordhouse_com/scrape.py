@@ -70,6 +70,8 @@ def fetch_data():
         country_code = "<MISSING>"
         store_number = "<MISSING>"
         phone = loc_dom.xpath('//strong[contains(text(), "CALL NOW")]/text()')
+        if not phone:
+            phone = poi_html.xpath(".//strong/text()")
         phone = phone[0].split("NOW")[-1].strip() if phone else "<MISSING>"
         location_type = "<MISSING>"
         geo = (
