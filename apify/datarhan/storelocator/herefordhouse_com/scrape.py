@@ -1,6 +1,7 @@
 import re
 import csv
 from lxml import etree
+from time import sleep
 
 from sgrequests import SgRequests
 from sgselenium import SgFirefox
@@ -57,6 +58,7 @@ def fetch_data():
         store_url = poi_html.xpath(".//a/@href")[0]
         with SgFirefox() as driver:
             driver.get(store_url)
+            sleep(10)
             iframe = driver.find_element_by_xpath("//iframe[contains(@src, 'google')]")
             driver.switch_to.frame(iframe)
             loc_dom = etree.HTML(driver.page_source)
