@@ -58,23 +58,24 @@ def fetch_data():
         )
 
         page_url = f"https://www.pizzadepot.ca/{sg}"
+        if page_url.find("https://www.pizzadepot.ca/1527-provincial-rd-windsor") != -1:
+            continue
         session = SgRequests()
         r = session.get(page_url, headers=headers)
         tree = html.fromstring(r.text)
 
         ad = "".join(tree.xpath('//meta[@property="og:description"]/@content'))
 
-        if ad.find("Hagersville 28") == -1 and ad.find("Vaughan (Wonderland)") == -1:
-            ad = ad.split("Depot")[1].split("@")[0].strip()
         if ad.find("Hours") != -1:
             ad = ad.split("Monday")[0].strip()
+        if ad.find("@") != -1:
+            ad = ad.split("@")[0]
+        if ad.find("Depot") != -1 and ad.find("Vaughan") == -1:
+            ad = ad.split("Depot")[1].strip()
+
+        ad = ad.replace("Hagersville 28", "28").strip()
         ad = " ".join(ad.split()[:-1]).strip()
-        if ad.find("Hagersville 28") != -1:
-            ad = (
-                ad.replace("Hagersville 28", "28")
-                .split("hagersville@pizzadepot.ca")[0]
-                .strip()
-            )
+
         ad = (
             ad.replace("945 Peter Robertson", "945 Peter Robertson,")
             .replace("4265 Thomas Alton Blvd", "4265 Thomas Alton Blvd,")
@@ -83,7 +84,6 @@ def fetch_data():
         if ad.find("Vaughan") != -1:
             ad = "".join(tree.xpath('//iframe[contains(@title, "9461")]/@title'))
         ad = ad.replace("(519) 256", "(519)-256")
-
         location_type = "<MISSING>"
         street_address = ad.split(",")[0].strip()
 
@@ -114,8 +114,18 @@ def fetch_data():
 
         location_name = city + " " + "Pizza Depot"
         store_number = "<MISSING>"
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
+
+        map_link = "".join(
+            tree.xpath('//iframe[contains(@src, "google.com/maps/embed")]/@src')
+        )
+        try:
+            latitude = map_link.split("!3d")[1].strip().split("!")[0].strip()
+            longitude = map_link.split("!2d")[1].strip().split("!")[0].strip()
+        except IndexError:
+            latitude, longitude = "<MISSING>", "<MISSING>"
+
+        if city.find("Guelph") != -1:
+            latitude, longitude = "<MISSING>", "<MISSING>"
         hours_of_operation = tree.xpath(
             '//div[./div/h3[contains(text(), "Hours")]]/following-sibling::div//p/text() | //div[./div/h2[contains(text(), "Hours")]]/following-sibling::div//p/text()'
         )

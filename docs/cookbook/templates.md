@@ -8,6 +8,9 @@
 * Maintained to offer the option of implementing a Node.js crawler (not recommended).
 
 ## Python3 Templates
+
+* __Consider using the realtime, [live web templating engine](./crawly_web.md)__
+
 * Located in `./templates/python`
 * They make use of the `sgcrawler` engine, and offer two functionally-equivalent flavours:
     * The __Succinct__ form makes use of passing functions, and is more readable/succinct.
