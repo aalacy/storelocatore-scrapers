@@ -3,20 +3,38 @@ from sgselenium import SgSelenium
 import re
 from bs4 import BeautifulSoup
 from sgrequests import SgRequests
+import json
 from sglogging import sglog
 
 driver = SgSelenium().chrome()
-log = sglog.SgLogSetup().get_logger(logger_name='www.fastsigns.com')
+log = sglog.SgLogSetup().get_logger(logger_name="www.fastsigns.com")
 
 
 def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+    with open("data.csv", mode="w") as output_file:
+        writer = csv.writer(
+            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+        )
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation",
-                         "page_url"])
+        writer.writerow(
+            [
+                "locator_domain",
+                "location_name",
+                "street_address",
+                "city",
+                "state",
+                "zip",
+                "country_code",
+                "store_number",
+                "phone",
+                "location_type",
+                "latitude",
+                "longitude",
+                "hours_of_operation",
+                "page_url",
+            ]
+        )
         # Body
         for row in data:
             writer.writerow(row)
@@ -28,111 +46,106 @@ all = []
 
 def fetch_data():
     driver.get("https://www.fastsigns.com/worldwide")
-    driver.find_element_by_xpath("//select[@name='DataTables_Table_0_length']/option[5]").click()
+    driver.find_element_by_xpath(
+        "//select[@name='DataTables_Table_0_length']/option[5]"
+    ).click()
 
-    soup = BeautifulSoup(driver.page_source, 'html.parser')
-
-    trs = soup.find_all('tr')
+    soup = BeautifulSoup(driver.page_source, "html.parser")
+    trs = soup.find_all("tr")
     del trs[0]
+
     for tr in trs:
-        tds = tr.find_all('td')
+        tds = tr.find_all("td")
         country = tds[-1].text.strip()
-        if (country == "US" or country == "CA") and "coming soon" not in tds[0].text.lower():
-            url = tds[0].find('a').get('href')
+        if (country == "US" or country == "CA") and "coming soon" not in tds[
+            0
+        ].text.lower():
+            url = tds[0].find("a").get("href")
             if "https://www.fastsigns.com/" not in url:
-                url = "https://www.fastsigns.com/" + url
-            #print(url)
+                url = "https://www.fastsigns.com" + url
+
             log.info(url)
+
             try:
                 res = session.get(url)
             except:
                 res = session.get(url)
-            soup = BeautifulSoup(res.text, 'html.parser')
-            if "coming soon" in soup.find('div', {'class': 'location-x'}).text.lower():
-                continue
-            loc = soup.find('h1', {'class': 'title'}).text.strip()
-            if loc == "":
-                loc = "<MISSING>"
-            phone = soup.find('a', {'class': 'phone'}).text.strip()
+            soup = BeautifulSoup(res.text, "html.parser")
 
-            addr = soup.find('div', {'class': 'address'}).text.replace('VIEW MAP & DIRECTIONS', '').replace(',',
-                                                                                                            '').strip()
-            if country == "US":
-                zip = re.findall(r'[0-9]{5}\-[\d]+', addr)
-                if zip != []:
-                    addr = addr.replace(zip[-1], '').strip()
-                    zip = zip[-1].split('-')[0]
+            jso = soup.find("input", {"id": "CookieValue"}).get("value")
+            js = json.loads(jso.replace("%20", " "))
 
+            loc = js["SiteDesignator"]
+            phone = js["Phone"]
+            if phone.strip() == "":
+                try:
+                    phone = re.findall(r'"telePhone": "([^"]+)"', str(soup))[0]
+                except:
+                    phone = "<MISSING>"
+
+            tim = js["WeekHours"] + ", " + js["SatHours"] + ", " + js["SunHours"]
+
+            if tim.replace(",", "").strip() == "":
+                try:
+                    tim = re.findall(r'"openingHours": "([^"]+)"', str(soup))[0]
+                except:
+                    tim = "<MISSING>"
+            addr = js["Address"].replace("|", "").strip().split(",")
+            sz = addr[-1].strip().split(" ")
+            try:
+                zip = re.findall(r'"postalCode": "([^"]+)"', str(soup))[0]
+            except:
+                if country == "CA":
+                    zip = re.findall(r"[A-Z][0-9][A-Z] *[0-9][A-Z][0-9]", addr[-1])[0]
                 else:
-                    zip = re.findall(r'[0-9]{5}', addr)
-                    if zip != []:
-                        zip = zip[-1]
-                        addr = addr.replace(zip, '').strip()
+                    zip = sz[-1]
 
-                    else:
-                        zip = re.findall(r'[0-9]{4}', addr.strip().split(" ")[-1])
-                        if zip == []:
-                            zip = "<MISSING>"
-                        else:
-                            addr = addr.replace(zip[-1], '').strip()
-                            zip = "0" + zip[-1]
-
-            else:
-                zip = re.findall(r'[A-Z][0-9][A-Z] [0-9][A-Z][0-9]', addr)
-                if zip == []:
-                    zip = re.findall(r'[A-Z][0-9][A-Z][0-9][A-Z][0-9]', addr)
-                    if zip != []:
-
-                        addr = addr.replace(zip[-1], "").strip()
-                        zip = zip[-1][:3] + " " + zip[-1][-3:]
-                    else:
-                        zip = "<MISSING>"
-                else:
-                    zip = zip[-1]
-                    addr = addr.replace(zip, "").strip()
-
-            state = re.findall(r'[A-Z]{2}', addr)
-            if state == []:
-                state = "<MISSING>"
-            else:
-                state = state[-1]
-                addr = addr.replace(state, "").strip()
-            addr = addr.split("\n")
+            state = sz[0]
+            del addr[-1]
             city = addr[-1]
             del addr[-1]
-            street = " ".join(addr)
-            # print(soup.find('div',{'class':'address'}).find('a').get('href'))
-            ll = soup.find('div', {'class': 'address'}).find('a').get('href').strip().strip('/').split('/')[-1].split(
-                ',')
-            # print(ll)
-            lat = ll[0]
-            long = ll[1]
-            # print(ll)
-            tim = soup.find('ul', {'class': 'location-info'}).find_all('li')[-2].text.replace(' | ', '').replace('\n',
-                                                                                                                 ' ').strip()
-            # print()
+            try:
+                street = re.findall(
+                    r'"streetAddress": "Street: (.*), City:', str(soup)
+                )[0]
+            except:
+                street = ",".join(addr)
 
-            all.append([
-                "https://www.fastsigns.com",
-                loc,
-                street,
-                city.strip(),
-                state,
-                zip,
-                country,
-                url.strip().strip('/').split('/')[-1].split('-')[0],  # store #
-                phone,  # phone
-                "<MISSING>",  # type
-                lat,  # lat
-                long,  # long
-                tim,  # timing
-                url])
+            try:
+                lat = re.findall(r'"latitude": "([^"]+)"', str(soup))[0]
+            except:
+                lat = "<MISSING>"
+
+            try:
+                long = re.findall(r'"longitude": "([^"]+)"', str(soup))[0]
+            except:
+                long = "<MISSING>"
+
+            all.append(
+                [
+                    "https://www.fastsigns.com",
+                    loc.replace("%c2%ae", ""),
+                    street,
+                    city.strip(),
+                    state,
+                    zip,
+                    country,
+                    url.strip().strip("/").split("/")[-1].split("-")[0],  # store #
+                    phone,  # phone
+                    "<MISSING>",  # type
+                    lat,  # lat
+                    long,  # long
+                    tim.replace("%e2%80%93", "-"),  # timing
+                    url,
+                ]
+            )
     return all
 
 
 def scrape():
     data = fetch_data()
     write_output(data)
+    driver.quit()
 
 
 scrape()

@@ -74,7 +74,8 @@ def fetch_data():
         ).strip()
 
     markers = json.loads(
-        stores_req.text.split("var maps = ")[1].strip().split("}];")[0].strip() + "}]"
+        stores_req.text.split("var mmm_maps = ")[1].strip().split("}];")[0].strip()
+        + "}]"
     )[0]["markers"]
 
     for marker in markers:

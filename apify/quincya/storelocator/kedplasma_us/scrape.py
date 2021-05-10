@@ -91,7 +91,7 @@ def fetch_data():
         all_scripts = base.find_all("script")
         for script in all_scripts:
             if "myLatlng" in str(script):
-                script = str(script)
+                script = str(script).replace(", -8", ",-8")
                 geo = re.findall(r"[0-9]{2}\.[0-9]+,-[0-9]{2,3}\.[0-9]+", script)[
                     0
                 ].split(",")

@@ -64,7 +64,7 @@ def fetch_data():
 
         location_type = "<MISSING>"
 
-        json_text = '{"lat"' + coord_list[index + 1].split('"),JSON.parse')[
+        json_text = '{"lat"' + coord_list[index + 1].split('"),context:JSON.parse')[
             0
         ].strip().replace('\\"', '"')
         coord_json = json.loads(json_text)
