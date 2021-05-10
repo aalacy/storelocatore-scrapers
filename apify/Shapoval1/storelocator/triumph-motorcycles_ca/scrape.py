@@ -95,9 +95,6 @@ def fetch_data():
         if postal == "<MISSING>":
             postal = cs.split(",")[1].strip()
         store_number = "<MISSING>"
-        hours_of_operation = d.xpath('.//span[@class="openingTimes"]/text()')
-        hours_of_operation = list(filter(None, [a.strip() for a in hours_of_operation]))
-        hours_of_operation = "".join(hours_of_operation).replace("\r\n", " ")
         session = SgRequests()
         r = session.get(page_url, headers=headers)
         tree = html.fromstring(r.text)
@@ -108,6 +105,11 @@ def fetch_data():
         longitude = "".join(
             tree.xpath('//img[@class="dealer-location__map-img"]/@data-map-lon')
         )
+        hours_of_operation = tree.xpath(
+            '//ul[@class="dealer-location__opening-times"]/li//text()'
+        )
+        hours_of_operation = list(filter(None, [a.strip() for a in hours_of_operation]))
+        hours_of_operation = " ".join(hours_of_operation)
 
         row = [
             locator_domain,
