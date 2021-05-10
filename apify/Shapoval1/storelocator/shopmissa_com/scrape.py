@@ -1,5 +1,6 @@
 import csv
 import json
+from lxml import html
 from sgrequests import SgRequests
 
 
@@ -36,7 +37,7 @@ def fetch_data():
     out = []
 
     locator_domain = "https://www.shopmissa.com/"
-    api_url = "https://cdn.shopify.com/s/files/1/0882/6874/t/251/assets/sca.storelocator_scripttag.js?v=1614629086&shop=shopmissa.myshopify.com"
+    api_url = "https://cdn.shopify.com/s/files/1/0882/6874/t/269/assets/sca.storelocator_scripttag.js?v=1619556494&shop=shopmissa.myshopify.com"
     session = SgRequests()
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
