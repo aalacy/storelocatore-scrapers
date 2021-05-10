@@ -4,7 +4,6 @@ import time
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
 from sgscrape import sgpostal as parser
-import re
 
 
 logger = SgLogSetup().get_logger("dentalservice_net")
@@ -61,8 +60,6 @@ def write_output(data):
 def fetch_data():
     data = []
     locations = []
-    pattern = re.compile(r"\s\s+")
-    cleanr = re.compile(r"<[^>]+>")
     search_url = "https://locations.dentalservice.net/"
     stores_req = session.get(search_url, headers=headers)
     soup = BeautifulSoup(stores_req.text, "html.parser")
