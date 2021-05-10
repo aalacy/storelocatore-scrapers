@@ -17,7 +17,9 @@ def fetch_data():
         locator_domain = "https://www.good-sam.com/"
         base_url = "https://www.good-sam.com/coveo/rest/search/v2?sitecoreItemUri=sitecore%3A%2F%2Fweb%2F%7B7D2D77E4-CABF-4506-84FF-C3DC79854B74%7D%3Flang%3Den%26amp%3Bver%3D1&siteName=GoodSam&actionsHistory=%5B%5D&referrer=&visitorId=&isGuestUser=false&aq=(((%40fz95xpath79929%3D%3D7D2D77E4CABF450684FFC3DC79854B74%20%40fz95xtemplate79929%3D%3D57E2BFE90934466D93CD4A4405A15441)%20NOT%20%40fz95xtemplate79929%3D%3D(ADB6CA4F03EF4F47B9AC9CE2BA53FF97%2CFE5DD82648C6436DB87A7C4210C7413B)))%20(((%24qf(function%3A%20%27dist(%40flocationlatitude79929%2C%40flocationlongitude79929%2C0%2C0)%2F%201609.344%27%2C%20fieldName%3A%20%27distance%27)%20%40distance%3C100000)%20OR%20(%40fstate79929%3D%3DKS))%20OR%20(%40flocationservices79929%3DKS))&cq=(%40fz95xlanguage79929%3D%3Den)%20(%40fz95xlatestversion79929%3D%3D1)%20(%40source%3D%3D%22GoodSam_coveo_web_index%20-%20sanford-coveo-prod%22)&searchHub=GSSLocationSearch&locale=en&maximumAge=900000&firstResult=0&numberOfResults=1000&excerptLength=200&enableDidYouMean=false&sortCriteria=distance%20ascending&queryFunctions=%5B%5D&rankingFunctions=%5B%5D&facetOptions=%7B%7D&categoryFacets=%5B%5D&retrieveFirstSentences=true&timezone=Asia%2FDhaka&enableQuerySyntax=false&enableDuplicateFiltering=false&enableCollaborativeRating=false&debug=false&allowQueriesWithoutKeywords=true"
         locations = session.get(base_url, headers=_headers).json()
-        logger.info(f"{len(locations['results'])} found")
+
+        logger.info(f"{len(locations['results'])} locations found")
+
         for _ in locations["results"]:
             page_url = _["clickUri"].replace(":443", "")
             logger.info(page_url)
