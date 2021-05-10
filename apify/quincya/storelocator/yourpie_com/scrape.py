@@ -49,13 +49,11 @@ def fetch_data():
 
     found_poi = []
 
-    max_results = 10
-    max_distance = 50
+    max_distance = 150
 
     search = DynamicZipSearch(
         country_codes=[SearchableCountries.USA],
         max_radius_miles=max_distance,
-        max_search_results=max_results,
     )
 
     log.info("Running sgzip ..")
@@ -72,7 +70,7 @@ def fetch_data():
         except:
             continue
         for item in items:
-            locator_domain = "citizensbank.com"
+            locator_domain = "yourpie.com"
             if "COMING SOON" in item.text.upper():
                 continue
 

@@ -29,7 +29,7 @@ def fetch_data():
         page_url = store["location_permalink"]
 
         locator_domain = website
-        location_name = store["location_name"].strip()
+        location_name = store["location_name"].replace("amp;", "").strip()
 
         street_address = store["address_1"].strip()
         if (
@@ -39,8 +39,8 @@ def fetch_data():
         ):
             street_address = street_address + ", " + store["address_2"].strip()
 
-        city = store["city"]
-        state = store["region"]
+        city = store["region"].replace("-", " ").capitalize()
+        state = "<MISSING>"
         zip = store["postal_code"].strip()
 
         if zip == "n/a" or zip == "Permanently Closed":
