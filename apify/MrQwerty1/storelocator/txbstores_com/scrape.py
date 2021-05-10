@@ -1,5 +1,4 @@
 import csv
-
 from lxml import html
 from sgrequests import SgRequests
 
@@ -35,10 +34,12 @@ def write_output(data):
 
 def fetch_data():
     out = []
-    locator_domain = "https://www.wscopetroleum.com/"
-    api_url = "https://www.wscopetroleum.com/wp-admin/admin-ajax.php?action=store_search&autoload=1"
+    locator_domain = "https://txbstores.com/"
+    api_url = (
+        "https://txbstores.com/wp-admin/admin-ajax.php?action=store_search&autoload=1"
+    )
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:88.0) Gecko/20100101 Firefox/88.0"
+        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:84.0) Gecko/20100101 Firefox/84.0"
     }
 
     session = SgRequests()
@@ -46,23 +47,16 @@ def fetch_data():
     js = r.json()
 
     for j in js:
-        page_url = "https://www.wscopetroleum.com/locations/"
-        location_name = (
-            j.get("store")
-            .replace("&#8217;", "'")
-            .replace("&#038;", "&")
-            .replace("&#8211;", "-")
-            .strip()
-        )
+        page_url = "https://txbstores.com/locations/"
+        location_name = j.get("store").strip()
         street_address = (
             f"{j.get('address')} {j.get('address2') or ''}".strip() or "<MISSING>"
         )
-
         city = j.get("city") or "<MISSING>"
         state = j.get("state") or "<MISSING>"
         postal = j.get("zip") or "<MISSING>"
         country_code = "US"
-        store_number = j.get("id") or "<MISSING>"
+        store_number = location_name.split()[-1]
         phone = j.get("phone") or "<MISSING>"
         latitude = j.get("lat") or "<MISSING>"
         longitude = j.get("lng") or "<MISSING>"
@@ -74,7 +68,7 @@ def fetch_data():
         tr = tree.xpath("//tr")
 
         for t in tr:
-            day = "".join(t.xpath("./td[1]//text()"))
+            day = "".join(t.xpath("./td[1]/text()"))
             time = "".join(t.xpath("./td[2]//text()"))
             _tmp.append(f"{day}: {time}")
 
@@ -96,7 +90,6 @@ def fetch_data():
             longitude,
             hours_of_operation,
         ]
-
         out.append(row)
 
     return out
