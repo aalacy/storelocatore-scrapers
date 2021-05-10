@@ -50,7 +50,7 @@ def fetch_data():
     soup = BeautifulSoup(driver.page_source, "html.parser")
 
     divlist = soup.select("a[href*=locations]")
-    
+
     p = 0
 
     for div in divlist:
