@@ -35,11 +35,13 @@ def fetch_data():
         else:
             page_url = MISSING
 
+        # Ev Network
+        ev_network = poi["ev_network"]
         location_name = poi["station_name"]
-        if location_name:
+        if ev_network is None or ev_network == "All" or ev_network == "Non-Networked":
             location_name = f"{location_name} {'Charging Station'}"
         else:
-            location_name = MISSING
+            location_name = ev_network + " " + "Charging Station"
 
         street_address = poi["street_address"]
         city = poi["city"]
@@ -55,9 +57,12 @@ def fetch_data():
         phone = poi["station_phone"]
         phone = phone if phone else MISSING
 
-        location_type = poi["access_code"]
+        location_type = poi["fuel_type_code"]
         location_type = location_type if location_type else MISSING
-        if "private" in location_type:
+
+        # Drop private stations
+        location_type_private_or_public = poi["access_code"]
+        if "private" in location_type_private_or_public:
             continue
 
         latitude = poi["latitude"]
@@ -74,6 +79,11 @@ def fetch_data():
         raw_address += ", " + state
         raw_address += " " + zip_postal
         raw_address += ", " + country_code
+        status_code = poi["status_code"]
+
+        # P and T Stand for Planned & Temporarily Unavailable Resepectively )
+        if status_code == "P" or status_code == "T":
+            continue
         yield SgRecord(
             locator_domain=locator_domain,
             page_url=page_url,
