@@ -98,7 +98,6 @@ def fetchSinglePage(data_url, findRedirect=False):
         except Exception:
             continue
 
-    print("broken")
 
 
 def getHoursOfOperation():
@@ -136,8 +135,6 @@ def getPhone(session, headers, response_text):
             .find("a")
             .text.strip()
         )
-        with open("file.txt", "w", encoding="utf-8") as output:
-            print(phone_response, file=output)
         return phone
     except Exception as e:
         log.error("error loading phone", e)
@@ -192,14 +189,12 @@ def fetchSingleStore(page_url, session=None, headers=None):
         test_html = test_html = response_text.split("div")
 
         if len(test_html) < 2:
-            print("here")
             store_response_session = fetchSinglePage(page_url)
             session = store_response_session[0]
             headers = store_response_session[1]
             store_response = store_response_session[2]
 
         else:
-            print("there")
             store_response = {
                 "response": response_text,
                 "hours_of_operation": getHoursOfOperation(),
@@ -273,7 +268,6 @@ def fetchData():
 
         if x == 2:
             try:
-                print("first pass")
                 data_session_headers = fetchSingleStore(page_url)
                 data = data_session_headers[2]
                 session = data_session_headers[0]
@@ -285,7 +279,6 @@ def fetchData():
 
         else:
             try:
-                print("going")
                 data_session_headers = fetchSingleStore(page_url, session, headers)
                 data = data_session_headers[2]
                 session = data_session_headers[0]
