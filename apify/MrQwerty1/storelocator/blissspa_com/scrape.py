@@ -53,7 +53,7 @@ def fetch_data():
         line = d.xpath(".//div[@class='spa-location-description']/span/text()")
         line = list(filter(None, [l.strip() for l in line]))
         street_address = ", ".join(line[:-1])
-        line = line[-1].replace("DC,", "DC, WA ")
+        line = line[-1].replace("DC,", ", DC")
         city = line.split(",")[0].strip()
         line = line.split(",")[1].strip()
         state = line.split()[0]
@@ -68,7 +68,9 @@ def fetch_data():
         longitude = "<MISSING>"
         location_type = "<MISSING>"
 
-        hours = d.xpath(".//p[@class='wpsl-contact-details']/span[last()]/text()")
+        hours = d.xpath(
+            ".//p[@class='wpsl-contact-details']/span[last()]/text()|.//p[@class='wpsl-contact-details']/text()"
+        )
         hours = list(filter(None, [h.strip() for h in hours]))
         hours_of_operation = ";".join(hours).replace(":", "").strip() or "<MISSING>"
 
