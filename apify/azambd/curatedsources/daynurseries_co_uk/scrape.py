@@ -99,7 +99,6 @@ def fetchSinglePage(data_url, findRedirect=False):
             continue
 
 
-
 def getHoursOfOperation():
     try:
         hours_of_operation = []
