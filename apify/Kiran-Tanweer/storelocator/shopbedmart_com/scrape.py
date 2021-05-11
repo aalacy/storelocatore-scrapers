@@ -97,25 +97,20 @@ def fetch_data():
                 address = info[0]
                 phone = info[1]
                 hours = info[3]
-
             if address == " 1825 Haleukana St Unit C, Lihue 808-600-3934":
                 address = " 1825 Haleukana St Unit C, Lihue"
                 phone = "808-600-3934"
                 hours = info[1]
-
             if address == " 380 Dairy Rd Kahului, HI 808.376.2740":
                 address = " 380 Dairy Rd Kahului, HI"
                 phone = "808.376.2740"
                 hours = info[1] + " " + info[2] + " " + info[3]
-
             if address == " 1039 NW Glisan St Portland, OR 97209":
                 hours = info[2] + " " + info[3]
-
             if address == " 15387 bangy road lake oswego, or 503.639.9750":
                 address = " 15387 bangy road lake oswego, or"
                 phone = "503.639.9750"
                 hours = info[1] + " " + info[2] + " " + info[3]
-
             address = address.strip()
             phone = phone.strip()
             hours = hours.strip()
@@ -138,15 +133,13 @@ def fetch_data():
 
             if state == "or":
                 state = "OR"
-
             if state == "hi":
                 state = "HI"
-
             p = session.get(link, headers=headers, verify=False)
             soup = BeautifulSoup(p.text, "html.parser")
 
             scripts = soup.findAll("script")
-            script = str(scripts[30])
+            script = str(scripts[29])
             coords = script.split("center: {")[1].split("},")[0]
             coords = coords.split(",")
             lat = coords[0].strip()
