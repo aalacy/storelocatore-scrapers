@@ -61,7 +61,7 @@ def fetch_data():
                 website = "pret.co.uk"
                 loc = "<MISSING>"
                 country = "GB"
-                store = item["id"]
+                store = item["shopNumber"]
                 name = item["name"]
                 lat = item["location"]["lat"]
                 lng = item["location"]["lng"]
@@ -130,7 +130,7 @@ def fetch_data():
                     + str(item["tradingHours"][6][1])
                 )
                 hours = hours.replace("00:00-00:00", "Closed")
-                if store not in ids and city != "New York":
+                if store not in ids and city != "New York" and " " in zc:
                     ids.append(store)
                     yield [
                         website,

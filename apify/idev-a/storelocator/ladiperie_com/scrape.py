@@ -18,15 +18,18 @@ def _headers():
 
 
 def _phone(val):
-    return (
+    _val = (
         val.split(":")[-1]
         .replace("-", "")
         .replace(")", "")
         .replace("(", "")
         .replace(" ", "")
         .strip()
-        .isdigit()
     )
+    return _val.isdigit() and len(_val) >= 9
+
+
+days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun", "Everyday"]
 
 
 def fetch_data():
@@ -44,7 +47,7 @@ def fetch_data():
             .replace("\\u003d", "=")
             .replace("\\u0026", "&")
             .replace("\\", "")
-            .replace("\xa0", "")
+            .replace("\xa0", " ")
         )
         locations = json.loads(
             cleaned.split('var _pageData = "')[1].split('";</script>')[0][:-1]
@@ -53,19 +56,40 @@ def fetch_data():
             location_name = _[5][0][1][0]
             sharp = [
                 ss.strip()
-                for ss in _[5][1][1][0].replace("     ", "#").split("#")
+                for ss in _[5][1][1][0].replace("  ", "#").split("#")
                 if ss.strip()
             ]
+            if "Opening soon" in " ".join(sharp):
+                continue
             hours = []
-            address = " ".join(sharp[:2])
-            idx = 2
+            idx = 1
+            phone = ""
             for x, ss in enumerate(sharp):
-                if _phone(ss):
+                if x >= idx and _phone(ss):
                     phone = ss.split(":")[-1]
                     idx = x + 1
                     break
+            if not phone:
+                idx = 1
+                for x, ss in enumerate(sharp):
+                    _s1 = ss.split(" ")[0].split("-")[0].split(":")[0]
+                    if _s1 in days:
+                        idx = x + 1
+                        break
+
             for hh in sharp[idx:]:
+                if "Closed for the season" in hh:
+                    hh = "Temporary Closed"
+                hh = (
+                    hh.replace("/Tous les jours:", "")
+                    .replace("- Tous les jours:", "")
+                    .replace("fermé -", "")
+                    .replace("Fermé -", "")
+                    .replace("Fermé/", "")
+                    .replace("fermé/", "")
+                )
                 hours.append(hh)
+            address = " ".join(sharp[: idx - 1])
             addr = parse_address_intl(address)
             street_address = addr.street_address_1
             if addr.street_address_2:

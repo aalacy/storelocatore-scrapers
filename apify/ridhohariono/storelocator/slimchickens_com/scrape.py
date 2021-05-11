@@ -146,20 +146,25 @@ def fetch_data():
             latitude = handle_missing(data["latitude"])
             longitude = handle_missing(data["longitude"])
             page_url = data["locationUrl"]
-            check_country = usaddress.tag(data["categories"][0]["title"])
-            if (
-                "CountryName" in check_country[0]
-                and check_country[0]["CountryName"] != "Kansas"
-            ):
-                country_code = check_country[0]["CountryName"]
-            else:
-                country_code = "US"
+            country_code = "US"
+            if data["categories"]:
+                check_country = usaddress.tag(data["categories"][0]["title"])
+                if (
+                    "CountryName" in check_country[0]
+                    and check_country[0]["CountryName"] != "Kansas"
+                ):
+                    country_code = check_country[0]["CountryName"]
             if "Kuwait" not in country_code:
                 parsed_addr = get_address(location_name, country_code)
                 street_address = handle_missing(parsed_addr["street_address"])
                 city = handle_missing(parsed_addr["city"])
-                state = handle_missing(data["categories"][0]["title"])
-                zip_code = handle_missing(parsed_addr["zip_code"])
+                if data["categories"]:
+                    state = handle_missing(data["categories"][0]["title"])
+                else:
+                    state = state = re.sub(
+                        r"•.*", "", data["title"].split(",")[1]
+                    ).strip()
+                zip_code = re.sub(r"\(.*", "", handle_missing(parsed_addr["zip_code"]))
                 location_type = "<MISSING>"
                 store_number = data["cssClass"].split("loc-", 1)[1]
                 if country_code == "US":
@@ -175,9 +180,12 @@ def fetch_data():
                         )
                         phone = "<MISSING>" if len(get_phone) > 15 else get_phone
                     hours = soup.find(text=re.compile(r".*([0-9]+)am.*", re.IGNORECASE))
-                    hours_of_operation = handle_missing(
-                        re.sub(r".?(7 days/week).*", "", hours.strip())
-                    )
+                    if hours:
+                        hours_of_operation = handle_missing(
+                            re.sub(r".?(7 days/week).*", "", hours).strip()
+                        )
+                    else:
+                        hours_of_operation = "<MISSING>"
                 else:
                     if "location" in page_url:
                         soup = pull_content(page_url)
@@ -209,6 +217,9 @@ def fetch_data():
                         else:
                             hours_of_operation = "<MISSING>"
                             phone = "<MISSING>"
+                if "Coming Soon" in phone:
+                    phone = "<MISSING>"
+                    location_type = "COMING_SOON"
                 log.info("Append info to locations => " + location_name)
                 locations.append(
                     [

@@ -1,4 +1,5 @@
 import csv
+import json
 import usaddress
 
 from lxml import html
@@ -97,7 +98,6 @@ def fetch_data():
         "USPSBoxGroupType": "address1",
         "USPSBoxID": "address1",
         "USPSBoxType": "address1",
-        "BuildingName": "address2",
         "OccupancyType": "address2",
         "OccupancyIdentifier": "address2",
         "SubaddressIdentifier": "address2",
@@ -113,15 +113,15 @@ def fetch_data():
     li = tree.xpath("//div[@class='location-results']/ul/li")
     coords = dict()
 
-    text = "".join(
-        tree.xpath("//script[contains(text(), 'smartMap.createMarker(')]/text()")
-    )
-    text = text.split("scrollwheel")[1].split("createInfoWindow")[0].split("\n")
-    for t in text:
-        if "createMarker" in t:
-            v = eval(t.split("smartMap.coords")[1].split(',"')[0])
-            k = t.split('"title":"')[1].split('"})')[0]
-            coords[k] = v
+    text = "".join(tree.xpath("//div[@data-dna]/@data-dna"))
+    js = json.loads(text)[1:]
+    for j in js:
+        lat = j["locations"][0]["lat"]
+        lng = j["locations"][0]["lng"]
+        source = j["options"]["infoWindowOptions"]["content"]
+        root = html.fromstring(source)
+        name = "".join(root.xpath("./h3/text()")).strip()
+        coords[name] = (lat, lng)
 
     for l in li:
         location_name = "".join(l.xpath("./strong/text()|./a/text()")).strip()

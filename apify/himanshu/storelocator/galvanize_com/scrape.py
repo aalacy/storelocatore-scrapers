@@ -1,9 +1,9 @@
 import csv
-from sgrequests import SgRequests
-from bs4 import BeautifulSoup
-from sglogging import SgLogSetup
 
-logger = SgLogSetup().get_logger("galvanize_com")
+from bs4 import BeautifulSoup
+
+from sgrequests import SgRequests
+
 session = SgRequests()
 
 
@@ -61,13 +61,13 @@ def fetch_data():
     page_url = "<MISSING>"
 
     r = session.get("https://www.galvanize.com", headers=headers)
-    soup = BeautifulSoup(r.text, "html5lib")
+    soup = BeautifulSoup(r.text, "lxml")
     li = soup.find("li", {"data-tag": "Campuses"}).find_all("a")
     for i in li:
         if "/campuses/remote" in i["href"] or "/campuses/san-jose" in i["href"]:
             continue
         r_loc = session.get(locator_domain + i["href"], headers=headers)
-        soup = BeautifulSoup(r_loc.text, "html5lib")
+        soup = BeautifulSoup(r_loc.text, "lxml")
         loc = soup.find("textarea", {"id": "state"}).text
         script_text = loc.split(',"location":')[-1].split("}")[0] + "}"
         try:
@@ -76,12 +76,22 @@ def fetch_data():
             pass
         latitude = json_data["lat"]
         longitude = json_data["lon"]
+
+        if not latitude[:2].isdigit():
+            geos = soup.find_all("meta", attrs={"name": "geo.position"})
+            for geo in geos:
+                lon = geo["content"].split(";")[1]
+                if lon[:7] in longitude[:7]:
+                    latitude = geo["content"].split(";")[0]
+                    break
         zipp = json_data["zip"].replace("90045", "90401")
         city = json_data["city"]
         location_name = json_data["name"]
         phone = json_data["phone"]
         state = json_data["state"]
         street_address = json_data["address"].replace(", Santa Monica, CA 90401", "")
+        if "1221 2nd Street" in street_address:
+            latitude = "34.017238"
         page_url = locator_domain + i["href"]
 
         store = [

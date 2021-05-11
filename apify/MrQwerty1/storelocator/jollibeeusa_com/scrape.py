@@ -47,9 +47,9 @@ def fetch_data():
         line = t.xpath("./td[1]/text()")
         line = list(filter(None, [l.strip() for l in line]))
         location_name = "".join(t.xpath("./td[1]/a/text()")).strip()
+
         if not location_name:
-            location_name = line[0]
-            line = line[1:]
+            location_name = line.pop(0)
 
         if len(line) == 1:
             line = line[0].split(".")
@@ -62,15 +62,18 @@ def fetch_data():
         city = line.split(",")[0].strip()
         state = "<MISSING>"
         postal = line.split()[-1].strip()
+        if postal in city:
+            city = city.replace(postal, "").strip()
+            state = city.split()[-1]
+            city = city.replace(state, "").strip()
         country_code = "US"
         store_number = "<MISSING>"
-        page_url = "<MISSING>"
         phone = "".join(t.xpath("./td[3]/text()")).strip() or "<MISSING>"
         try:
             loc = "".join(t.xpath("./td[1]/a/@href")).split("@")[1].split(",")
             latitude = loc[0]
             longitude = loc[1]
-        except:
+        except IndexError:
             latitude, longitude = "<MISSING>", "<MISSING>"
         location_type = "<MISSING>"
         hours_of_operation = (
