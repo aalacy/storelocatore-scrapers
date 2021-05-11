@@ -53,8 +53,7 @@ def fetch_data():
             llng = line.split('"')[1]
         if "Location Details</a>" in line:
             locs.append(
-                "https://drayer.urpt.com"
-                + line.split('href="')[1].split('"')[0]
+                line.split('href="')[1].split('"')[0]
                 + "|"
                 + llat
                 + "|"
