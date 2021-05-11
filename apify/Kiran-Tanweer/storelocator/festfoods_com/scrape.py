@@ -89,8 +89,6 @@ def fetch_data():
                 phone = loc["phone"]
             except KeyError:
                 phone = "<MISSING>"
-            print(phone)
-
             data.append(
                 [
                     "https://www.festfoods.com/",
