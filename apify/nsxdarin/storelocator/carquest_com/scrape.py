@@ -222,7 +222,7 @@ def fetch_loc_data(loc, allstores):
         name = (
             name.replace("\\u0026&amp;", "&")
             .replace("\\u0026amp;", "&")
-            .replace("\u0026#39;", "'")
+            .replace("\\u0026#39;", "'")
         )
         yield [
             website,
