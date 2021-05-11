@@ -58,18 +58,19 @@ def fetch_location(id):
         lat = "<MISSING>"
         lng = "<MISSING>"
         AFound = False
-        for line in r.iter_lines():
+        lines = r.iter_lines()
+        for line in lines:
             line = str(line.decode("utf-8"))
             if "<h1>" in line and name == "":
                 name = line.split("<h1>")[1].split("</h1>")[0]
             if "Set as default Y" in line:
                 while AFound is False:
-                    g = next(page_text)
+                    g = next(lines)
                     g = str(g.decode("utf-8"))
                     if "<br />" in g:
                         AFound = True
                         add = g.split("<")[0].strip().replace("\t", "")
-                        g = next(page_text)
+                        g = next(lines)
                         g = str(g.decode("utf-8"))
                         if g.count("<br />") == 2:
                             add = (
