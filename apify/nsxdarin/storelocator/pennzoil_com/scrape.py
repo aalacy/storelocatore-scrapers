@@ -62,7 +62,6 @@ def fetch_data():
             )
             r = session.get(url, headers=headers, timeout=15)
             purl = "<MISSING>"
-            array = []
             for item in json.loads(r.content):
                 store = item["id"]
                 name = item["name"]
@@ -78,7 +77,6 @@ def fetch_data():
                     phone = "<MISSING>"
                 hours = "<MISSING>"
                 typ = "<MISSING>"
-                info = add + ";" + city + ";" + state
                 canada = [
                     "NL",
                     "NS",
