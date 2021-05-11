@@ -152,7 +152,10 @@ def fetch_data():
                 name = name.replace(citytext, "")
                 addfirst = add[0:5]
                 if addfirst in name:
+                    nameorig = name
                     name = name.split(addfirst)[0].strip()
+                    if name == "":
+                        name = nameorig
                 yield [
                     website,
                     mloc,
@@ -265,7 +268,10 @@ def fetch_data():
                             name = name.replace(citytext, "")
                             addfirst = add[0:5]
                             if addfirst in name:
+                                nameorig = name
                                 name = name.split(addfirst)[0].strip()
+                                if name == "":
+                                    name = nameorig
                             yield [
                                 website,
                                 mloc,
@@ -372,7 +378,10 @@ def fetch_data():
                 name = name.replace(citytext, "")
                 addfirst = add[0:5]
                 if addfirst in name:
+                    nameorig = name
                     name = name.split(addfirst)[0].strip()
+                    if name == "":
+                        name = nameorig
                 yield [
                     website,
                     mloc,
@@ -544,7 +553,10 @@ def fetch_data():
             name = name.replace(citytext, "")
             addfirst = add[0:5]
             if addfirst in name:
+                nameorig = name
                 name = name.split(addfirst)[0].strip()
+                if name == "":
+                    name = nameorig
             yield [
                 website,
                 loc,
@@ -636,7 +648,10 @@ def fetch_data():
             name = name.replace(citytext, "")
             addfirst = add[0:5]
             if addfirst in name:
+                nameorig = name
                 name = name.split(addfirst)[0].strip()
+                if name == "":
+                    name = nameorig
             yield [
                 website,
                 loc,
@@ -721,7 +736,10 @@ def fetch_data():
             name = name.replace(citytext, "")
             addfirst = add[0:5]
             if addfirst in name:
+                nameorig = name
                 name = name.split(addfirst)[0].strip()
+                if name == "":
+                    name = nameorig
             yield [
                 website,
                 loc,
