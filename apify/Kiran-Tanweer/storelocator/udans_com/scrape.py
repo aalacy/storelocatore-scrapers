@@ -67,13 +67,21 @@ def fetch_data():
     locations = soup.findAll("div", {"class": "store-info-floating-box"})
     for loc in locations:
         title = loc.find("h3").text.strip()
-        address = loc.findAll("p")[1].text
+        address = loc.findAll("p")[1]
         phone = loc.find("span", {"itemprop": "telephone"}).text
         hours = loc.find("div", {"class": "regular-hours"}).text
         hours = re.sub(pattern, " ", hours)
         hours = re.sub(cleanr, " ", hours)
         hours = hours.split("Regular Hours: ")[1]
+        address = str(address)
         address = address.replace("\n", "")
+        address = address.lstrip("<p>")
+        address = address.rstrip("</p>")
+        address = address.replace("<br>", " ")
+        address = address.replace("</br>", " ")
+        address = address.replace("<br/>", " ")
+        address = address.replace("</br", " ")
+        address = address.strip()
         parsed = parser.parse_address_usa(address)
         street1 = parsed.street_address_1 if parsed.street_address_1 else "<MISSING>"
         street = (
