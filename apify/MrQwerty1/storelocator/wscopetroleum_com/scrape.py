@@ -37,9 +37,12 @@ def fetch_data():
     out = []
     locator_domain = "https://www.wscopetroleum.com/"
     api_url = "https://www.wscopetroleum.com/wp-admin/admin-ajax.php?action=store_search&autoload=1"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:88.0) Gecko/20100101 Firefox/88.0"
+    }
 
     session = SgRequests()
-    r = session.get(api_url)
+    r = session.get(api_url, headers=headers)
     js = r.json()
 
     for j in js:

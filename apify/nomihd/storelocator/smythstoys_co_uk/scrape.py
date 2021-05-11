@@ -82,6 +82,9 @@ def fetch_data():
             if store["line3"] is not None:
                 street_address = street_address + ", " + store["line3"]
 
+            street_address = street_address.replace(", ,", "").strip()
+            if "," in street_address[-1]:
+                street_address = "".join(street_address[:-1])
             city = store["town"]
             state = region["regionName"]
             zip = store["postalCode"]
@@ -119,9 +122,10 @@ def fetch_data():
             hours = store["openings"]
             hours_of_operation = ""
             hours_list = []
-            for day in hours.keys():
-                time = hours[day]
-                hours_list.append(day + ":" + time)
+            if isinstance(hours, dict):
+                for day in hours.keys():
+                    time = hours[day]
+                    hours_list.append(day + ":" + time)
 
             hours_of_operation = "; ".join(hours_list).strip()
 

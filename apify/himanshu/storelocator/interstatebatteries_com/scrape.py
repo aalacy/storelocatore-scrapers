@@ -64,13 +64,14 @@ def fetch_data():
                         city = store_json["City"]
                         state = store_json["State"]
                         zip = store_json["PostalCode"]
-                        country_code = store_json["Country"]
+                        if not zip:
+                            country_code = "<MISSING>"
+                        elif bool(re.search("[a-zA-Z]", zip)):
+                            country_code = "CA"
+                        else:
+                            country_code = "US"
                         phone = store_json["Phone"]
                         location_type = slug.replace("/", "").strip()
-                        if location_type == "distributor-locations":
-                            location_name = location_name + " Distributor"
-                        elif location_type == "distributor-locations":
-                            location_name = location_name + " Distributor"
                         latitude = store_json["PinLatitude"]
                         longitude = store_json["PinLongitude"]
                         store_number = store_json["id"]
