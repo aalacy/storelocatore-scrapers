@@ -115,9 +115,8 @@ def fetch_data():
             longitude,
             hours_of_operation,
         ]
-        check = f"{location_name} {street_address}"
-        if check not in scraped_items:
-            scraped_items.append(check)
+        if store_url not in scraped_items:
+            scraped_items.append(store_url)
             items.append(item)
 
     return items
