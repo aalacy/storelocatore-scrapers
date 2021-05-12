@@ -40,7 +40,8 @@ def fetch_data():
     r = session.get(url, headers=headers)
     website = "plazaazteca.com"
     country = "US"
-    for line in r.iter_lines():
+    linesone = r.iter_lines()
+    for line in linesone:
         line = str(line.decode("utf-8"))
         if (
             '<h2 class="elementor-heading-title elementor-size-default"><a href="'
@@ -49,21 +50,60 @@ def fetch_data():
             lurl = line.split(
                 '<h2 class="elementor-heading-title elementor-size-default"><a href="'
             )[1].split('"')[0]
-            if lurl not in locs:
-                locs.append(lurl)
+        if '<div class="elementor-text-editor elementor-clearfix">' in line:
+            g = next(linesone)
+            g = str(g.decode("utf-8"))
+            try:
+                a5 = g.split('">(')[1].split("<")[0]
+            except:
+                pass
+            try:
+                a5 = g.split(';">(')[1].split("<")[0]
+            except:
+                pass
+            if (
+                '</p><p><span style="font-size: 15px;">' not in g
+                and '</p><p class="p1"><span style="font-size: 15px;">' not in g
+            ):
+                a1 = g.split(">")[1].split("<")[0].replace(",", "")
+                a2 = g.split("</p><p>")[1].split(",")[0]
+                a3 = g.split("</p><p>")[1].split("<")[0].split(",")[1].strip()
+                a4 = g.split("</p><p>")[1].split("<")[0].strip().rsplit(" ", 1)[1]
+                try:
+                    a5 = g.split("</p><p>")[2].split("<")[0].strip()
+                except:
+                    a5 = "<MISSING>"
+            else:
+                a1 = g.split(">")[1].split("<")[0].replace(",", "")
+                try:
+                    a2 = g.split('</p><p><span style="font-size: 15px;">')[1].split(
+                        ","
+                    )[0]
+                except:
+                    a2 = g.split('</p><p class="p1"><span style="font-size: 15px;">')[
+                        1
+                    ].split(",")[0]
+                a3 = g.split('</span><span style="font-size: 15px;">')[1].split(",")[0]
+                a4 = (
+                    g.split('</span><span style="font-size: 15px;">')[2]
+                    .split("<")[0]
+                    .strip()
+                )
+            locs.append(lurl + "|" + a1 + "|" + a2 + "|" + a3 + "|" + a4 + "|" + a5)
     for loc in locs:
         store = "<MISSING>"
         name = ""
-        add = ""
-        city = ""
-        state = ""
-        zc = ""
-        phone = ""
+        add = loc.split("|")[1]
+        city = loc.split("|")[2]
+        state = loc.split("|")[3]
+        zc = loc.split("|")[4]
+        purl = loc.split("|")[0]
+        phone = loc.split("|")[5]
         lat = "<MISSING>"
         lng = "<MISSING>"
         hours = ""
         typ = "<MISSING>"
-        r2 = session.get(loc, headers=headers)
+        r2 = session.get(purl, headers=headers)
         lines = r2.iter_lines()
         for line2 in lines:
             line2 = str(line2.decode("utf-8"))
@@ -71,79 +111,6 @@ def fetch_data():
                 name = line2.split("<title>")[1].split("&")[0].strip()
                 if "|" in name:
                     name = name.split("|")[0].strip()
-            if (
-                '<div class="elementor-text-editor elementor-clearfix lazyload"><p'
-                in line2
-                and "At Plaza" not in line2
-                and "We invite" not in line2
-                and "Welcome to the" not in line2
-            ):
-                if "2835 Lehigh St" in line2:
-                    add = "2835 Lehigh St"
-                    city = "Allentown"
-                    state = "Pennsylvania"
-                    zc = "18103"
-                    phone = "(484) 656 7277"
-                elif "153 S Gulph Rd" in line2:
-                    add = "153 S Gulph Rd"
-                    city = "King of Prussia"
-                    state = "Pennsylvania"
-                    zc = "19406"
-                    phone = "(610) 265-1170"
-                elif "821 W Lancaster Ave" in line2:
-                    add = "821 W Lancaster Ave"
-                    city = "Wayne"
-                    state = "Pennsylvania"
-                    zc = "19087"
-                    phone = "484-580-6369"
-                elif "6623 W Broad St" in line2:
-                    add = "6623 W Broad St"
-                    city = "Richmond"
-                    state = "Virginia"
-                    zc = "23230"
-                    phone = "804-888-9984"
-                elif "/suffolk" in loc:
-                    add = "1467 N Main St"
-                    city = "Suffolk"
-                    state = "Virginia"
-                    zc = "23434"
-                    phone = "(757) 925-1222"
-                elif "/warwick" in loc:
-                    add = "12428 Warwick Blvd"
-                    city = "Newport News"
-                    state = "Virginia"
-                    zc = "23606"
-                    phone = "(757) 599-6727"
-                elif "/greenville" in loc:
-                    add = "400 Greenville Blvd SW"
-                    city = "Greenville"
-                    state = "North Carolina"
-                    zc = "27834"
-                    phone = "(252) 321-8008"
-                elif "/newington" in loc:
-                    add = "3260 Berlin Tpke"
-                    city = "Newington"
-                    state = "Connecticut"
-                    zc = "06111"
-                    phone = "(860) 436-9708"
-                else:
-                    add = line2.split(
-                        '<div class="elementor-text-editor elementor-clearfix lazyload"><p'
-                    )[1].split(",")[0]
-                    city = line2.split("</p><p")[1].split(">")[1].split(",")[0]
-                    state = line2.split("</p><p")[1].split(">")[1].split(",")[1].strip()
-                    zc = line2.split("</p><p")[1].split(">")[1].split(",")[2].strip()
-                    phone = line2.split("</p><p")[2].split(">")[1].split("<")[0]
-            if (
-                '<div class="elementor-text-editor elementor-clearfix lazyload"><p class="p1">'
-                in line2
-            ):
-                add = line2.split(
-                    '<div class="elementor-text-editor elementor-clearfix lazyload"><p class="p1">'
-                )[1].split("<")[0]
-                city = line2.split('Sans-serif;">')[1].split(",")[0]
-                state = line2.split('Sans-serif;">')[2].split(",")[0]
-                zc = line2.split('Sans-serif;">')[3].split("<")[0]
             if "<span >" in line2 and "<span ><" not in line2 and "</span>" in line2:
                 g = next(lines)
                 g = str(g.decode("utf-8"))
@@ -159,32 +126,6 @@ def fetch_data():
                     hours = hrs
                 else:
                     hours = hours + "; " + hrs
-            if '<p class="p1">(' in line2:
-                phone = line2.split('<p class="p1">(')[1].split("<")[0]
-            if "</p" in add:
-                add = add.split("<")[0]
-            if "1467 N Main St" in add:
-                city = "Suffolk"
-                state = "Virginia"
-                zc = "23434"
-                phone = "(757) 925-1222"
-            if "12428 Warwick Blvd" in add:
-                city = "Newport News"
-                state = "Virginia"
-                zc = "23606"
-                phone = "(757) 599-6727"
-            if "greenville" in loc:
-                add = "400 Greenville Blvd SW"
-                city = "Greenville"
-                state = "North Carolina"
-                zc = "27834"
-                phone = "(252) 321-8008"
-            if "newington" in loc:
-                add = "3260 Berlin Tpke"
-                city = "Newington"
-                state = "Connecticut"
-                zc = "06111"
-                phone = "860-436-9708"
             if "www.toroazteca.com" in loc:
                 add = "194 Buckland Hills Drive Suite 1052"
                 city = "Manchester"
@@ -195,11 +136,9 @@ def fetch_data():
             if "<" in name:
                 name = name.split("<")[0]
         if "Coming Soon" not in name:
-            if ">" in add:
-                add = add.split(">")[1].strip()
             yield [
                 website,
-                loc,
+                purl,
                 name,
                 add,
                 city,

@@ -68,6 +68,8 @@ def fetch_data():
             raw_address = (
                 raw_data[1]
                 .replace("Avenue, NW", "Avenue NW")
+                .replace("RD FAIR", "RD, FAIR")
+                .replace("FAX VA", "FAX, VA")
                 .replace(", SUITE", " SUITE")
                 .split(",")
             )
@@ -88,6 +90,11 @@ def fetch_data():
                     street_address = street_address.replace("SILVER", "").strip()
 
             hours_of_operation = " ".join(raw_data[2:-1]).replace("\xa0", "")
+
+            if "8251" in hours_of_operation:
+                hours_of_operation = raw_data[-1]
+            if " for delivery" in hours_of_operation:
+                hours_of_operation = hours_of_operation.split("for delivery")[1].strip()
 
             if "temporarily closed" in raw_data[-1]:
                 hours_of_operation = "Temporarily Closed"

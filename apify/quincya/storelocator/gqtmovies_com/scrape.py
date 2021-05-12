@@ -64,11 +64,20 @@ def fetch_data():
         req = session.get(link, headers=headers)
         item = BeautifulSoup(req.text, "lxml")
 
+        if (
+            "coming soon"
+            in item.find(class_="gridRow section-box cinemaInfo").text.lower()
+        ):
+            continue
+
         location_name = page.text.strip()
         raw_address = (
             item.find(class_="cinAdress")
-            .text.split("|")[1]
+            .text.replace("tum) 590", "tum) | 590")
+            .split("|")[1]
             .strip()
+            .replace("Tarentum ", "Tarentum,")
+            .replace("Mills Cir ", "Mills Cir,")
             .replace("\n", "")
             .split(",")
         )
@@ -83,11 +92,22 @@ def fetch_data():
             phone = (
                 item.find(class_="cinTel").text.replace("Office Phone: ", "").strip()
             )
+            if not phone:
+                phone = (
+                    item.find_all(class_="cinTel")[1]
+                    .text.replace("Showtimes Number:", "")
+                    .strip()
+                )
         except:
             phone = "<MISSING>"
         map_link = item.find("a", string="GET DIRECTIONS")["href"]
         latitude = map_link[map_link.rfind("=") + 1 : map_link.rfind(",")].strip()
         longitude = map_link[map_link.rfind(",") + 1 :].strip()
+
+        if "590 Pittsburgh" in street_address:
+            latitude = "40.572417"
+            longitude = "-79.799902"
+
         hours_of_operation = "<MISSING>"
 
         data.append(

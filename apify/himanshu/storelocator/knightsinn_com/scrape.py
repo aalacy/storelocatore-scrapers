@@ -1,11 +1,8 @@
 import re
 import csv
-import json
-from lxml import etree
-from time import sleep
 from urllib.parse import urljoin
 
-from sgselenium import SgFirefox
+from sgrequests import SgRequests
 
 
 def write_output(data):
@@ -45,62 +42,50 @@ def fetch_data():
     start_url = "https://www.redlion.com/locations"
     domain = re.findall("://(.+?)/", start_url)[0].replace("www.", "")
 
-    all_locations = []
-    with SgFirefox() as driver:
-        driver.get(start_url)
-        sleep(10)
-        dom = etree.HTML(driver.page_source)
-        all_states = dom.xpath('//ul[contains(@class, "locations__List")]//a/@href')
-        for url in all_states:
-            state_url = urljoin(start_url, url)
-            driver.get(state_url)
-            sleep(4)
-            state_dom = etree.HTML(driver.page_source)
-            all_cities = state_dom.xpath(
-                '//ul[contains(@class, "region__List")]//a/@href'
-            )
-            for url in all_cities:
-                city_url = urljoin(start_url, url)
-                driver.get(city_url)
-                sleep(4)
-                city_dom = etree.HTML(driver.page_source)
-                all_locations += city_dom.xpath('//h4[@itemprop="name"]/a/@href')
+    session = SgRequests()
+    data = session.get(
+        "https://www.redlion.com/page-data/locations/page-data.json"
+    ).json()
+    static_hashes = data["staticQueryHashes"]
 
-    for url in list(set(all_locations)):
-        store_url = urljoin(start_url, url)
-        with SgFirefox() as driver:
-            driver.get(store_url)
-            sleep(4)
-            loc_dom = etree.HTML(driver.page_source)
-            poi = loc_dom.xpath('//script[@data-react-helmet="true"]/text()')
-            if not poi:
-                sleep(10)
-                loc_dom = etree.HTML(driver.page_source)
-                poi = loc_dom.xpath('//script[@data-react-helmet="true"]/text()')
-
-        poi = poi[-1]
-        if "streetAddress" not in poi:
+    for hash in static_hashes:
+        response = session.get(
+            f"https://www.redlion.com/page-data/sq/d/{hash}.json"
+        ).json()
+        data = response["data"]
+        all_hotels = data.get("allHotel")
+        if not all_hotels:
             continue
-        poi = json.loads(poi)
+
+        all_locations = all_hotels["nodes"]
+
+    for poi in all_locations:
+        store_url = urljoin(start_url, poi["path"]["alias"])
+        poi = session.get(
+            f'https://www.redlion.com/page-data{poi["path"]["alias"]}/page-data.json'
+        ).json()
+        poi = poi["result"]["data"]["hotel"]
 
         location_name = poi["name"]
         location_name = location_name if location_name else "<MISSING>"
-        street_address = poi["address"]["streetAddress"]
+        street_address = poi["address"]["address_line1"]
+        if poi["address"].get("address_line2"):
+            street_address += " " + poi["address"]["address_line2"]
         street_address = street_address if street_address else "<MISSING>"
-        city = poi["address"]["addressLocality"]
+        city = poi["address"]["locality"]
         city = city if city else "<MISSING>"
-        state = poi["address"]["addressRegion"]
+        state = poi["address"]["administrative_area"]
         state = state if state else "<MISSING>"
-        zip_code = poi["address"]["postalCode"]
+        zip_code = poi["address"]["postal_code"]
         zip_code = zip_code if zip_code else "<MISSING>"
-        country_code = poi["address"]["addressCountry"]
+        country_code = poi["address"]["country_code"]
         country_code = country_code if country_code else "<MISSING>"
         store_number = "<MISSING>"
-        phone = poi["telephone"]
+        phone = poi["phone"]
         phone = phone if phone else "<MISSING>"
-        location_type = poi["@type"]
-        latitude = poi["geo"]["latitude"]
-        longitude = poi["geo"]["longitude"]
+        location_type = "<MISSING>"
+        latitude = poi["lat_lon"]["lat"]
+        longitude = poi["lat_lon"]["lon"]
         hours_of_operation = "<MISSING>"
 
         item = [

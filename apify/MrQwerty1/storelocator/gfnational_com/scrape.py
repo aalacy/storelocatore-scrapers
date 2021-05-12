@@ -64,7 +64,7 @@ def fetch_data():
         )
         country_code = "US"
         store_number = "<MISSING>"
-        location_name = "".join(t.xpath("./p/strong/text()")).strip() or "<MISSING>"
+        location_name = "".join(t.xpath("./p[1]/text()")).strip() or "<MISSING>"
         phone = (
             "".join(t.xpath(".//span[@class='loc-phone']/text()")).strip()
             or "<MISSING>"

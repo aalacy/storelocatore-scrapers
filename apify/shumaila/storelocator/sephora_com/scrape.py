@@ -59,6 +59,11 @@ def fetch_data():
         r = r + "}"
         loc = json.loads(r)
         street = loc["address"]["address1"]
+        try:
+            street = street + " " + str(loc["address"]["address2"])
+            street = street.replace("None", "").replace("null", "").strip()
+        except:
+            pass
         ccode = loc["address"]["country"]
         state = loc["address"]["state"]
         city = loc["address"]["city"]
@@ -69,7 +74,7 @@ def fetch_data():
         store = loc["storeId"]
         ltype = "Store"
         link = "https://www.sephora.com" + loc["targetUrl"]
-        title = loc["displayName"]
+        title = "Sephora " + loc["displayName"]
         hours = "<MISSING>"
         try:
             hours = (

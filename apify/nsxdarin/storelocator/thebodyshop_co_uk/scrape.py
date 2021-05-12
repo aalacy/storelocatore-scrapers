@@ -100,22 +100,28 @@ def fetch_data():
                     hours = hrs
                 else:
                     hours = hours + "; " + hrs
-            yield [
-                website,
-                loc,
-                name,
-                add,
-                city,
-                state,
-                zc,
-                country,
-                store,
-                phone,
-                typ,
-                lat,
-                lng,
-                hours,
-            ]
+            if (
+                "DUBLIN" not in city
+                and "CORK" not in city
+                and "GALWAY" not in city
+                and "COUNTY DUB" not in city
+            ):
+                yield [
+                    website,
+                    loc,
+                    name,
+                    add,
+                    city,
+                    state,
+                    zc,
+                    country,
+                    store,
+                    phone,
+                    typ,
+                    lat,
+                    lng,
+                    hours,
+                ]
         except:
             pass
 

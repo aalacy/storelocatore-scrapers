@@ -102,6 +102,27 @@ def fetch_data():
         name = name.replace("\\u0027", "'")
         if " - " in name:
             name = name.split(" - ")[0]
+        if name == "BACA Pediatrics":
+            add = "159 North Reading Road"
+            zc = "17517"
+            city = "Ephrata"
+            state = "PA"
+        if (
+            loc
+            == "https://towerhealth.org/locations/st-christophers-pediatric-associates-physical-therapy-e-erie-avenue"
+        ):
+            zc = "<MISSING>"
+        if loc == "https://towerhealth.org/locations/sleep-center":
+            city = "Wyomissing"
+            zc = "<MISSING>"
+        if loc == "https://towerhealth.org/locations/surgical-institute-reading":
+            zc = "<MISSING>"
+        if loc == "https://towerhealth.org/locations/temple-university-hospital-1":
+            zc = "<MISSING>"
+        if loc == "https://towerhealth.org/locations/wilmington-va-medical-center":
+            zc = "19805"
+            city = "Wilmington"
+            state = "DE"
         yield [
             website,
             loc,
