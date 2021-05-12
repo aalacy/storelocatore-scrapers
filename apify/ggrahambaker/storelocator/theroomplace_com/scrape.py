@@ -80,7 +80,7 @@ def fetch_data():
     divs = driver.find_elements_by_css_selector("div.dl-storelocator-info")
 
     all_store_data = []
-    for div in divs[:2]:
+    for div in divs:
         link = (
             "http://www.theroomplace.com/location/"
             + div.find_element_by_css_selector(
