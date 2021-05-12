@@ -1,3 +1,4 @@
+# -*- coding: cp1252 -*-
 import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
@@ -128,6 +129,15 @@ def fetch_data():
                         .replace("\t", "")
                         .replace("pmD", "pm; D")
                     )
+                    hours = (
+                        hours.replace("Sábado", "Sat")
+                        .replace("Lunes", "Mon")
+                        .replace("Domingo", "Sun")
+                    )
+                    hours = hours.replace("Mon a Sat", "Mon-Sat").replace(
+                        "Mon a Sun", "Mon-Sun"
+                    )
+                    hours = hours.replace(" de ", ": ").replace("am a ", "am - ")
                     if add != "":
                         yield [
                             website,
