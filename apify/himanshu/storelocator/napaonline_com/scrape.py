@@ -307,12 +307,10 @@ def get_driver():
 def load_initial_page(driver):
     driver.get("https://www.napaonline.com")
     driver.execute_script('window.open("https://www.napaonline.com")')
-    try:
-        WebDriverWait(driver, 20).until(
-            EC.presence_of_element_located((By.CLASS_NAME, "header-branding-logo"))
-        )
-    except:
-        print(driver.page_source)
+
+    WebDriverWait(driver, 20).until(
+        EC.presence_of_element_located((By.CLASS_NAME, "header-branding-logo"))
+    )
 
 
 def fetch_data():
