@@ -4,6 +4,7 @@ import time
 from bs4 import BeautifulSoup
 
 from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as ec
 from selenium.webdriver.support.ui import WebDriverWait
 
@@ -42,13 +43,20 @@ def write_output(data):
 
 def fetch_data():
 
+    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
+
     base_link = "https://www.tillys.com/store-list/"
 
-    driver = SgChrome().chrome()
+    driver = SgChrome(user_agent=user_agent).driver()
     time.sleep(2)
 
     driver.get(base_link)
-    WebDriverWait(driver, 30).until(ec.presence_of_element_located((By.ID, "primary")))
+    try:
+        WebDriverWait(driver, 30).until(
+            ec.presence_of_element_located((By.ID, "primary"))
+        )
+    except:
+        driver.find_element_by_tag_name("body").send_keys(Keys.ESCAPE)
     time.sleep(2)
 
     base = BeautifulSoup(driver.page_source, "lxml")
@@ -76,14 +84,16 @@ def fetch_data():
         try:
             phone = store.find("div", attrs={"itemprop": "telephone"}).text.strip()
         except:
-            phone = "<MISSING>"
+            phone = "<INACCESSIBLE>"
 
-        if len(raw_address) == 3 and phone != "<MISSING>":
+        if (len(raw_address) == 3 and phone != "<INACCESSIBLE>") or len(
+            raw_address
+        ) == 2:
             street_address = raw_address[0].strip()
             city = raw_address[1].split(",")[0].strip()
             state = raw_address[1].split(",")[1].strip().split("\n")[0]
             zip_code = raw_address[1].split(",")[1].strip().split("\n")[1]
-        if len(raw_address) == 4 or phone == "<MISSING>":
+        elif len(raw_address) == 4 or phone == "<INACCESSIBLE>":
             street_address = raw_address[0].strip() + " " + raw_address[1].strip()
             city = raw_address[2].split(",")[0].strip()
             state = raw_address[2].split(",")[1].strip().split("\n")[0]
@@ -121,7 +131,7 @@ def fetch_data():
                 location_name,
                 street_address,
                 city,
-                state,
+                state.replace("RH", "RI"),
                 zip_code,
                 country_code,
                 store_number,
