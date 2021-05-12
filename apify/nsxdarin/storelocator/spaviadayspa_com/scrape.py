@@ -83,8 +83,14 @@ def fetch_data():
                     hours = hrs
                 else:
                     hours = hours + "; " + hrs
-        lng = "<MISSING>"
-        lat = "<MISSING>"
+            if '"latitude": ' in line2:
+                lat = line2.split('"latitude": ')[1].split(",")[0]
+            if '"longitude": ' in line2:
+                lng = line2.split('"longitude": ')[1].split("}")[0]
+        if lng == "":
+            lng = "<MISSING>"
+        if lat == "":
+            lat = "<MISSING>"
         if CS is False:
             yield [
                 website,

@@ -82,10 +82,12 @@ def fetch_data():
             pcode = loc["postal_code"]
             lat = loc["latitude"]
             lng = loc["longitude"]
-            phone = loc["phone"]
             storeid = loc["store_number"]
             link = loc["url"]
-
+            try:
+                phone = loc["phone"]
+            except KeyError:
+                phone = "<MISSING>"
             data.append(
                 [
                     "https://www.festfoods.com/",

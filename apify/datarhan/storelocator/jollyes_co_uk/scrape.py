@@ -47,7 +47,7 @@ def fetch_data():
     data = json.loads(response.text)
 
     for poi in data["result"]:
-        store_url = "https://www.jollyes.co.uk/locator/store/{}".format(poi["uid"])
+        store_url = "https://www.jollyes.co.uk/store/{}".format(poi["uid"])
         location_name = poi["name"]
         location_name = location_name if location_name else "<MISSING>"
         street_address = poi["streetAddress"]
