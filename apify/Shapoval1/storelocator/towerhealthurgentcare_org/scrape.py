@@ -35,7 +35,7 @@ def write_output(data):
 def fetch_data():
     out = []
 
-    locator_domain = "https://towerhealth.org"
+    locator_domain = "https://towehealthurgentcare.org"
 
     for i in range(3):
 
