@@ -3,3 +3,5 @@ sgrequests
 beautifulsoup4==4.7.1
 requests_random_user_agent
 sglogging
+sgselenium==0.1.1
+webdriver_manager
