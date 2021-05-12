@@ -18,27 +18,6 @@ addresses = []
 base_url = "https://www.napaonline.com"
 
 
-class objdict(dict):
-    # wrapper class to allow accessing dict keys as object properties
-    # needed in order to mock the Beautiful Soup Tag object, so we can access, for example
-    # url["href"] and url.text in the code below that tests one city url
-    # https://goodcode.io/articles/python-dict-object/
-    def __getattr__(self, name):
-        if name in self:
-            return self[name]
-        else:
-            raise AttributeError("No such attribute: " + name)
-
-    def __setattr__(self, name, value):
-        self[name] = value
-
-    def __delattr__(self, name):
-        if name in self:
-            del self[name]
-        else:
-            raise AttributeError("No such attribute: " + name)
-
-
 def write_output(data):
     with open("data.csv", mode="w", encoding="utf-8", newline="") as output_file:
         writer = csv.writer(
@@ -269,7 +248,6 @@ def scrape_multiple_in_city(url, driver):
     for link in soup.find_all("div", {"class": "store-browse-store-detail"}):
 
         link_url = base_url + link.a["href"].replace("https://www.napaonline.com", "")
-        # logger.info(link_url)
         html = get(link_url, driver)
         soup = bs(html, "lxml")
 
@@ -300,7 +278,6 @@ def scrape_multiple_in_city(url, driver):
 
 def crawl_city_url(url, driver):
     # the url argument is of type bs4.element.Tag
-    # logger.info(f'type(url): {type(url)}')
     if "(1)" in url.text:
         return scrape_one_in_city(url, driver)
     else:
