@@ -5,10 +5,11 @@ import time
 
 from bs4 import BeautifulSoup
 
-from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as ec
 from selenium.webdriver.support.ui import WebDriverWait
+
+from seleniumwire import webdriver
 
 from sglogging import SgLogSetup
 
@@ -62,18 +63,24 @@ def addy_ext(addy):
 
 def fetch_data():
 
-    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
-    options = Options()
-    locator_domain = "https://www.theroomplace.com/"
+    options = webdriver.ChromeOptions()
+    options.headless = True
+    options.add_argument("--headless")
+    options.add_argument("--disable-gpu")
+    options.add_argument("--no-sandbox")
+    options.add_argument("--disable-dev-shm-usage")
+    options.add_argument("--ignore-certificate-errors")
+    options.add_argument(
+        "--user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.121 Safari/537.36"
+    )
+    locator_domain = "http://www.theroomplace.com/"
     ext = "location-view-all"
 
     driver = SgChrome(
-        user_agent=user_agent,
-        chrome_options=options.add_argument("--ignore-certificate-errors"),
+        chrome_options=options,
     ).driver()
     driver1 = SgChrome(
-        user_agent=user_agent,
-        chrome_options=options.add_argument("--ignore-certificate-errors"),
+        chrome_options=options,
     ).driver()
     driver.get(locator_domain + ext)
     time.sleep(8)
@@ -89,7 +96,7 @@ def fetch_data():
     all_store_data = []
     for div in divs:
         link = (
-            "https://www.theroomplace.com/location/"
+            "http://www.theroomplace.com/location/"
             + div.find_element_by_css_selector(
                 ".mz-locationlisting-name.show-store-detail"
             ).get_attribute("data-store-slug")
@@ -140,10 +147,11 @@ def fetch_data():
         else:
             lat = "<INACCESSIBLE>"
             longit = "<INACCESSIBLE>"
+        page_url = driver1.current_url
 
         store_data = [
             locator_domain,
-            link,
+            page_url,
             location_name,
             street_address,
             city,
