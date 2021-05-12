@@ -33,10 +33,27 @@ def write_output(data):
             writer.writerow(row)
 
 
+def get_coords():
+    coords = []
+    session = SgRequests()
+    r = session.get(
+        "https://www.google.com/maps/d/u/0/kml?mid=16SO1IYTK6nn7HGLwAHFWH14ijkE&forcekml=1"
+    )
+    tree = html.fromstring(r.content)
+    markers = tree.xpath("//coordinates/text()")
+    for m in markers:
+        m = m.replace(",0", "")
+        lng, lat = m.split(",")
+        coords.append((lat.strip(), lng.strip()))
+
+    return coords
+
+
 def fetch_data():
     out = []
-    locator_domain = "https://www.blissspa.com/"
-    page_url = "https://www.blissspa.com/locations/"
+    coords = get_coords()
+    locator_domain = "https://www.pitstopc-stores.com/"
+    page_url = "https://www.pitstopc-stores.com/store-locations"
 
     session = SgRequests()
     headers = {
@@ -44,37 +61,30 @@ def fetch_data():
     }
     r = session.get(page_url, headers=headers)
     tree = html.fromstring(r.text)
-    divs = tree.xpath("//div[@class='wpsl-stores']")[0].xpath(".//li")
+    text = tree.xpath("//p[@class='font_8']//text()")
+    text = list(filter(None, [t.strip() for t in text]))
 
-    for d in divs:
-        location_name = "".join(
-            d.xpath(".//div[@class='spa-location-description']/strong/text()")
-        ).strip()
-        line = d.xpath(".//div[@class='spa-location-description']/span/text()")
-        line = list(filter(None, [l.strip() for l in line]))
-        street_address = ", ".join(line[:-1])
-        line = line[-1].replace("DC,", ", DC")
-        city = line.split(",")[0].strip()
-        line = line.split(",")[1].strip()
-        state = line.split()[0]
-        postal = line.split()[1]
+    cnt = 0
+    for t in text:
+        if "zip" not in t:
+            cnt += 1
+            continue
+
+        location_name = text[cnt - 1]
+        line = text[cnt]
+        street_address = line.split("zip")[0].replace(",", "").strip()
+        city = location_name.split(",")[0].strip()
+        state = location_name.split(",")[1].strip()
+        postal = line.split("zip")[-1]
+        if "(" in postal:
+            postal = (postal.split("(")[0] + postal.split(")")[1]).strip()
         country_code = "US"
         store_number = "<MISSING>"
-        phone = (
-            "".join(d.xpath(".//a[contains(@href, 'tel:')]/text()")).strip()
-            or "<MISSING>"
-        )
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
+        phone = text[cnt + 1]
+        latitude, longitude = coords.pop(0)
         location_type = "<MISSING>"
-
-        hours = d.xpath(".//p[@class='wpsl-contact-details']/span[last()]/text()")
-        if d.xpath(
-            ".//p[@class='wpsl-contact-details']/strong[contains(text(), 'New Hours')]"
-        ):
-            hours = d.xpath(".//p[@class='wpsl-contact-details']/text()")
-        hours = list(filter(None, [h.strip() for h in hours]))
-        hours_of_operation = ";".join(hours).replace(":", "").strip() or "<MISSING>"
+        hours_of_operation = "<MISSING>"
+        cnt += 1
 
         row = [
             locator_domain,

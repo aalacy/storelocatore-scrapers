@@ -1,12 +1,11 @@
 from bs4 import BeautifulSoup
 import csv
-import re
 import time
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
 from sgscrape import sgpostal as parser
 
-logger = SgLogSetup().get_logger("udans_com")
+logger = SgLogSetup().get_logger("starlightcinemas_com")
 
 session = SgRequests()
 
@@ -59,29 +58,19 @@ def write_output(data):
 
 def fetch_data():
     data = []
-    pattern = re.compile(r"\s\s+")
-    cleanr = re.compile(r"<[^>]+>")
-    search_url = "https://udans.com/pages/ud-locations"
+    search_url = "https://starlightcinemas.com/locations/"
     stores_req = session.get(search_url, headers=headers)
     soup = BeautifulSoup(stores_req.text, "html.parser")
-    locations = soup.findAll("div", {"class": "store-info-floating-box"})
-    for loc in locations:
-        title = loc.find("h3").text.strip()
-        address = loc.findAll("p")[1]
-        phone = loc.find("span", {"itemprop": "telephone"}).text
-        hours = loc.find("div", {"class": "regular-hours"}).text
-        hours = re.sub(pattern, " ", hours)
-        hours = re.sub(cleanr, " ", hours)
-        hours = hours.split("Regular Hours: ")[1]
-        address = str(address)
-        address = address.replace("\n", "")
-        address = address.lstrip("<p>")
-        address = address.rstrip("</p>")
-        address = address.replace("<br>", " ")
-        address = address.replace("</br>", " ")
-        address = address.replace("<br/>", " ")
-        address = address.replace("</br", " ")
-        address = address.strip()
+    container = soup.find("div", {"class": "regionsContainer"})
+    title = container.findAll("h3", {"class": "cinemaItemTitle"})
+    address = container.findAll("div", {"class": "cinemaItemText"})
+    phone = container.findAll("div", {"class": "cinemaItemTelephone redTitle h4"})
+    link = container.findAll("a", {"class": "btn-1 cinemaItemLink"})
+    for title, address, phone, link in zip(title, address, phone, link):
+        title = title.text
+        address = address.text
+        phone = phone.text
+        link = "https://starlightcinemas.com/" + link["href"]
         parsed = parser.parse_address_usa(address)
         street1 = parsed.street_address_1 if parsed.street_address_1 else "<MISSING>"
         street = (
@@ -95,8 +84,8 @@ def fetch_data():
 
         data.append(
             [
-                "https://udans.com/",
-                search_url,
+                "https://starlightcinemas.com/",
+                link,
                 title,
                 street,
                 city,
@@ -108,7 +97,7 @@ def fetch_data():
                 "<MISSING>",
                 "<MISSING>",
                 "<MISSING>",
-                hours,
+                "<MISSING>",
             ]
         )
     return data
