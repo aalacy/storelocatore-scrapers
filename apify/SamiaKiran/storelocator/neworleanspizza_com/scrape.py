@@ -124,7 +124,6 @@ def fetch_data():
                         hours_of_operation=hours_of_operation.strip(),
                     )
             else:
-                loc = loc
                 (
                     location_name,
                     store_number,
