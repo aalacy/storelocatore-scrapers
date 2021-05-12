@@ -18,6 +18,7 @@ def write_output(data):
         writer.writerow(
             [
                 "locator_domain",
+                "page_url",
                 "location_name",
                 "street_address",
                 "city",
@@ -106,8 +107,11 @@ def fetch_data():
             phone = "<MISSING>"
         if "5555 Con" in add:
             phone = "<MISSING>"
+        if "0000000" in phone:
+            name = name + " - Coming Soon"
         yield [
             website,
+            loc,
             name,
             add,
             city,

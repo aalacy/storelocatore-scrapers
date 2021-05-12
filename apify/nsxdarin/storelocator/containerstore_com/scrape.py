@@ -51,6 +51,7 @@ def fetch_data():
             locs.append(
                 "https://www.containerstore.com" + line.split('href="')[1].split('"')[0]
             )
+    logger.info(len(locs))
     for loc in locs:
         logger.info(loc)
         name = ""
@@ -88,8 +89,8 @@ def fetch_data():
                     .replace("\r", "")
                     .replace("\n", "")
                 )
-            if '"telephone": "' in line2:
-                phone = line2.split('"telephone": "')[1].split('"')[0]
+            if '"phone-color" href="tel:' in line2 and phone == "":
+                phone = line2.split('"phone-color" href="tel:')[1].split('"')[0]
             if '"dayOfWeek": "http://schema.org/' in line2:
                 day = line2.split('"dayOfWeek": "http://schema.org/')[1].split('"')[0]
             if '"opens": "' in line2:
@@ -100,23 +101,24 @@ def fetch_data():
                     hours = day
                 else:
                     hours = hours + "; " + day
-        if phone != "":
-            yield [
-                website,
-                loc,
-                name,
-                add,
-                city,
-                state,
-                zc,
-                country,
-                store,
-                phone,
-                typ,
-                lat,
-                lng,
-                hours,
-            ]
+        if phone == "":
+            phone = "<MISSING>"
+        yield [
+            website,
+            loc,
+            name,
+            add,
+            city,
+            state,
+            zc,
+            country,
+            store,
+            phone,
+            typ,
+            lat,
+            lng,
+            hours,
+        ]
 
 
 def scrape():

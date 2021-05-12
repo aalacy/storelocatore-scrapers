@@ -48,7 +48,11 @@ def fetch_data():
         if "<loc>https://www.burgerking.ca/store-locator/store/" in line:
             items = line.split("<loc>https://www.burgerking.ca/store-locator/store/")
             for item in items:
-                if "<?xml version" not in item and "test-" not in item:
+                if (
+                    "<?xml version" not in item
+                    and "test-" not in item
+                    and "13101" not in item
+                ):
                     locs.append(
                         "https://www.burgerking.ca/store-locator/store/"
                         + item.split("<")[0]
@@ -138,14 +142,21 @@ def fetch_data():
                         + "-"
                         + line2.split('"satClose":"')[1].split(':00"')[0].split(" ")[1]
                     )
-                    hours = (
-                        hours
-                        + "; "
-                        + "Sun: "
-                        + line2.split('"sunOpen":"')[1].split(':00"')[0].split(" ")[1]
-                        + "-"
-                        + line2.split('"sunClose":"')[1].split(':00"')[0].split(" ")[1]
-                    )
+                    if '"sunOpen":"' in line2:
+                        hours = (
+                            hours
+                            + "; "
+                            + "Sun: "
+                            + line2.split('"sunOpen":"')[1]
+                            .split(':00"')[0]
+                            .split(" ")[1]
+                            + "-"
+                            + line2.split('"sunClose":"')[1]
+                            .split(':00"')[0]
+                            .split(" ")[1]
+                        )
+                    else:
+                        hours = hours + "; Sun: Closed"
                 except:
                     hours = "<MISSING>"
                 if phone == "":
@@ -158,6 +169,8 @@ def fetch_data():
                 if "." not in lat or "." not in lng:
                     lat = "<MISSING>"
                     lng = "<MISSING>"
+                if "4967 Clifton Hill" in add:
+                    hours = "Mon: Closed; Tue: Closed; Wed: Closed; Thu: Closed; Fri: 12:00 p.m. - 8:00 p.m.; Sat: 12:00 p.m. - 8:00 p.m.; Sun: 12:00 p.m. - 7:00 p.m."
                 yield [
                     website,
                     loc,
