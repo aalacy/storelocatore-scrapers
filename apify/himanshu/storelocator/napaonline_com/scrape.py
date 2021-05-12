@@ -5,7 +5,7 @@ from bs4 import BeautifulSoup as bs
 from datetime import datetime
 from sglogging import SgLogSetup
 from sgselenium.sgselenium import SgChrome
-from selenium import webdriver
+from selenium import webdriver  # noqa
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
