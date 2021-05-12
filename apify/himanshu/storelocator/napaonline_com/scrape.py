@@ -368,7 +368,6 @@ def fetch_data():
 
         logger.info(f"found {len(city_urls)} city urls")
 
-
         with ThreadPoolExecutor() as executor:
             futures = [
                 executor.submit(crawl_city_url, url, driver) for url in city_urls
