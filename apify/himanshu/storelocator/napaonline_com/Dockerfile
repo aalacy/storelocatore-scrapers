@@ -6,8 +6,6 @@ USER root
 
 RUN pip3.7 install -r requirements.txt
 
-ENV PROXY_PASSWORD='HKT2ZAHSvokX3hLibngLgo5nT'
-
 RUN pip3.7 install certifi \
     && ln -s /usr/local/lib/python3.7/site-packages/certifi/cacert.pem /usr/local/ssl/cert.pem
 
