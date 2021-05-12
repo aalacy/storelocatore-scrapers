@@ -9,8 +9,6 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as ec
 from selenium.webdriver.support.ui import WebDriverWait
 
-from seleniumwire import webdriver
-
 from sglogging import SgLogSetup
 
 from sgselenium import SgChrome
@@ -63,25 +61,13 @@ def addy_ext(addy):
 
 def fetch_data():
 
-    options = webdriver.ChromeOptions()
-    options.headless = True
-    options.add_argument("--headless")
-    options.add_argument("--disable-gpu")
-    options.add_argument("--no-sandbox")
-    options.add_argument("--disable-dev-shm-usage")
-    options.add_argument("--ignore-certificate-errors")
-    options.add_argument(
-        "--user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.121 Safari/537.36"
-    )
+    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
+
     locator_domain = "http://www.theroomplace.com/"
     ext = "location-view-all"
 
-    driver = SgChrome(
-        chrome_options=options,
-    ).driver()
-    driver1 = SgChrome(
-        chrome_options=options,
-    ).driver()
+    driver = SgChrome(user_agent=user_agent).driver()
+    driver1 = SgChrome(user_agent=user_agent).driver()
     driver.get(locator_domain + ext)
     time.sleep(8)
 
@@ -94,7 +80,7 @@ def fetch_data():
     divs = driver.find_elements_by_css_selector("div.dl-storelocator-info")
 
     all_store_data = []
-    for div in divs:
+    for div in divs[:2]:
         link = (
             "http://www.theroomplace.com/location/"
             + div.find_element_by_css_selector(
