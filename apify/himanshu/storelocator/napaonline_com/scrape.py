@@ -295,7 +295,7 @@ def get_driver():
     seleniumwire_options["auto_config"] = False
 
     chrome = webdriver.Chrome(
-        executable_path=ChromeDriverManager.install(),
+        executable_path=ChromeDriverManager().install(),
         chrome_options=chrome_options,
         seleniumwire_options=seleniumwire_options,
     )
