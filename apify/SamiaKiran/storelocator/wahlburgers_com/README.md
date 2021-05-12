@@ -8,6 +8,4 @@ Remember to update `requirements.txt` with all dependencies needed to run your s
 Please make sure that:
 * Your scraper can be run successfully by executing https://github.com/SafeGraphInc/crawl-service/blob/master/scripts/run_scraper.sh 
 * The resulting output passes https://github.com/SafeGraphInc/crawl-service/blob/master/scripts/validate.py
-
-
-zipcode not in state,i checed all data is true this websites
+ --ignore CountryValidator --ignore GeoConsistencyValidator --ignore StreetAddressHasNumber
