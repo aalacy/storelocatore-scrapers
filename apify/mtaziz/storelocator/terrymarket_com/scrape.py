@@ -141,10 +141,18 @@ def fetch_data():
         # Parse address using sgpostal
         address = d.split("Phone:")[0].strip()
         address = address.replace("100Dallas", "100 Dallas")
+        address = address.replace("Dr.Fort", "Dr. Fort")
+        address = address.replace("160Grand Prairie", "160 Grand Prairie")
         pai = parse_address_intl(address)
 
         # Street Address
         street_address = pai.street_address_1
+        street_address = street_address.replace(
+            "1830 E. Main St.", "1830 E. Main St., Suite 160"
+        )
+        street_address = street_address.replace(
+            "4444 W. Illinois Ave.", "4444 W. Illinois Ave., Suite 100"
+        )
         street_address = street_address if street_address else MISSING
         logger.info(f"[Street Address: {street_address}]")
 

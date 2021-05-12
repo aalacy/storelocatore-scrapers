@@ -42,7 +42,7 @@ def fetch_data():
 
     items = []
 
-    start_url = "https://sperohealth.com/wp-admin/admin-ajax.php?action=get_locations&security=a4a5f16bd9"
+    start_url = "https://sperohealth.com/wp-admin/admin-ajax.php?action=get_locations&security=1f09cceee5"
     domain = re.findall(r"://(.+?)/", start_url)[0].replace("www.", "")
     hdr = {
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
