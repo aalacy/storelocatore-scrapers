@@ -1,7 +1,9 @@
 from sgselenium import SgChrome
 import pandas as pd
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
+import ssl
 
+ssl._create_default_https_context = ssl._create_unverified_context
 search = DynamicGeoSearch(country_codes=[SearchableCountries.USA])
 
 locator_domains = []
