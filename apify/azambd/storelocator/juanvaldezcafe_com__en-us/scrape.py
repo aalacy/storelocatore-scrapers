@@ -37,7 +37,7 @@ def getJSONObjectVariable(Object, varNames, noVal=MISSING):
             Object = Object[varName]
         except Exception:
             return noVal
-    if value == None:
+    if value is None:
         value = noVal
     return value
 
