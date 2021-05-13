@@ -86,7 +86,6 @@ def extract(location, store_number, country):
     phone = re.sub("[^0-9]", "", phone)
     if phone == "":
         phone = "<MISSING>"
-    # print(phone)
 
     location_type = get(location, "locationType")
     latitude = get(location, "latitude")
@@ -185,13 +184,10 @@ def fetch_data():
         radius=10, country_code=SearchableCountries.BRITAIN
     )
     all_coordinates = {"US": us_search, "CA": ca_search, "UK": uk_search}
-    # all_coordinates = {"UK": uk_search, "CA": ca_search}
 
     for country, coordinates in all_coordinates.items():
 
         set_jwt_token_header(session)
-        # coords = []
-        # for lat, lng in coordinates:
         data = scrape_loc_urls(country, coordinates)
         yield data
 
@@ -211,7 +207,6 @@ def parallel_run(lat, lng, country):
                 poi = extract(location, loc_id, country)
                 if not poi:
                     pass
-                # coords.append([poi.get("latitude"), poi.get("longitude")])
                 else:
                     yield poi
 
