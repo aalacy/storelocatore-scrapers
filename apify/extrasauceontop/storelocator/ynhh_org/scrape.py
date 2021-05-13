@@ -1,9 +1,7 @@
 from sgselenium.sgselenium import webdriver
+from webdriver_manager.chrome import ChromeDriverManager
 from bs4 import BeautifulSoup as bs
 import pandas as pd
-import ssl
-
-ssl._create_default_https_context = ssl._create_unverified_context
 
 locator_domains = []
 page_urls = []
@@ -32,7 +30,9 @@ option.add_argument("--headless")
 
 start_url = "https://www.ynhh.org/find-a-location.aspx?page=1&keyword=&sortBy=&distance=0&cz=&locs=0&within=Yale+New+Haven+Hospital&avail=0"
 
-with webdriver.Chrome(options=option) as driver:
+with webdriver.Chrome(
+    executable_path=ChromeDriverManager().install(), options=option
+) as driver:
     driver.get(start_url)
     html = driver.page_source
     soup = bs(html, "html.parser")
