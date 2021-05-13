@@ -13,8 +13,8 @@ logger = SgLogSetup().get_logger("boostmobile_com")
 
 search = DynamicZipSearch(
     country_codes=[SearchableCountries.USA],
-    max_radius_miles=1,
-    max_search_results=20,
+    max_radius_miles=None,
+    max_search_results=None,
 )
 
 
