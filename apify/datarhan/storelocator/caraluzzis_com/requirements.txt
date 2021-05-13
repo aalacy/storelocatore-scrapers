@@ -1,0 +1,4 @@
+sgscrape==0.0.23
+sgselenium==0.1.1
+lxml==4.6.2
+sgvalidator==0.0.71
