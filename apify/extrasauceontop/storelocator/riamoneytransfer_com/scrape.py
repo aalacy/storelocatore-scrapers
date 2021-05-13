@@ -171,9 +171,6 @@ def scrape_loc_urls(country, coordinates):
                 pass
 
 
-searched = []
-
-
 def fetch_data():
     all_coordinates = {}
     us_search = static_coordinate_list(radius=10, country_code=SearchableCountries.USA)
