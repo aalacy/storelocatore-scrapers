@@ -1,6 +1,7 @@
 import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
+import json
 
 session = SgRequests()
 headers = {
@@ -38,80 +39,39 @@ def write_output(data):
 
 
 def fetch_data():
-    locs = [
-        "https://www.kirbyfoodsiga.com/stores/view-store.1002871.html",
-        "https://www.kirbyfoodsiga.com/stores/view-store.1002873.html",
-        "https://www.kirbyfoodsiga.com/stores/view-store.1002869.html",
-    ]
-    states = []
-    url = "https://www.kirbyfoodsiga.com/stores/search-stores.html"
+    url = "https://api.freshop.com/1/stores?app_key=kirby_foods_iga&has_address=true&is_selectable=true&limit=50&token=57701bf01e371bcec77bec3b61bfc444"
     r = session.get(url, headers=headers)
     website = "kirbyfoodsiga.com"
     typ = "<MISSING>"
     country = "US"
     logger.info("Pulling Stores")
-    for line in r.iter_lines():
-        line = str(line.decode("utf-8"))
-        if '<a href="/stores/store-search-results.html?state=' in line:
-            states.append(
-                "https://www.kirbyfoodsiga.com/stores/store-search-results.html?state="
-                + line.split('<a href="/stores/store-search-results.html?state=')[
-                    1
-                ].split('"')[0]
-            )
-    for state in states:
-        r2 = session.get(state, headers=headers)
-        for line2 in r2.iter_lines():
-            line2 = str(line2.decode("utf-8"))
-            if ">See Store Details" in line2:
-                locs.append(
-                    "https://www.kirbyfoodsiga.com"
-                    + line2.split('href="')[1].split('"')[0]
-                )
-    for loc in locs:
-        logger.info(loc)
-        name = ""
-        add = ""
-        city = ""
-        state = ""
-        zc = ""
-        store = "<MISSING>"
-        phone = ""
-        lat = ""
-        lng = ""
-        hours = ""
-        r2 = session.get(loc, headers=headers)
-        for line2 in r2.iter_lines():
-            line2 = str(line2.decode("utf-8"))
-            if 'itemprop="name">' in line2:
-                name = line2.split('itemprop="name">')[1].split("<")[0]
-            if '<span itemprop="streetAddress">' in line2:
-                add = line2.split('<span itemprop="streetAddress">')[1].split("<")[0]
-            if '<span itemprop="addressLocality">' in line2:
-                city = line2.split('<span itemprop="addressLocality">')[1].split("<")[0]
-                state = line2.split('<span itemprop="addressRegion">')[1].split("<")[0]
-                zc = line2.split('"postalCode">')[1].split("<")[0]
-            if '"phoneNumber" href="tel:' in line2:
-                phone = (
-                    line2.split('"phoneNumber" href="tel:')[1]
-                    .split('"')[0]
-                    .replace("+1", "")
-                )
-            if 'itemprop="openingHours" content="' in line2:
-                hrs = line2.split('itemprop="openingHours" content="')[1].split('"')[0]
-                if hours == "":
-                    hours = hrs
-                else:
-                    hours = hours + "; " + hrs
-            if 'var storeLat = "' in line2:
-                lat = line2.split('var storeLat = "')[1].split('"')[0]
-            if 'ar storeLng = "' in line2:
-                lng = (
-                    line2.split('ar storeLng = "')[1]
-                    .split('"')[0]
-                    .replace("\\u002D", "-")
-                )
-        store = loc.split("store.")[1].split(".")[0]
+    for item in json.loads(r.content)["items"]:
+        store = item["id"]
+        lat = item["latitude"]
+        lng = item["longitude"]
+        name = item["name"]
+        loc = item["url"]
+        add = item["address_1"]
+        city = item["city"]
+        state = item["state"]
+        zc = item["postal_code"]
+        hours = item["hours_md"]
+        phone = item["phone"]
+        phone = str(phone)
+        phone = (
+            phone.replace("\n", "").replace("\r", "").replace("\t", "").replace("*", "")
+        )
+        hours = str(hours)
+        hours = (
+            hours.replace("\n", "").replace("\r", "").replace("\t", "").replace("*", "")
+        )
+        if "Pharmacy" in hours:
+            hours = hours.split("Pharmacy")[0].strip()
+        if "Fax" in phone:
+            phone = phone.split("Fax")[0].strip()
+        if "Pharmacy" in phone:
+            phone = phone.split("Pharmacy")[0].strip()
+        phone = phone.replace("Store: ", "")
         yield [
             website,
             loc,

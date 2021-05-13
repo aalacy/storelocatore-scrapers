@@ -25,6 +25,7 @@ def write_output(data):
         writer.writerow(
             [
                 "locator_domain",
+                "page_url",
                 "location_name",
                 "street_address",
                 "city",
@@ -184,8 +185,10 @@ def fetch_data():
                         ids.append(store)
                         if "<" in lng and lng != "<MISSING>":
                             lng = lng.split("<")[0].strip()
+                        loc = "https://branchlocator.kellyservices.com/default.aspx"
                         yield [
                             website,
+                            loc,
                             name,
                             add,
                             city,

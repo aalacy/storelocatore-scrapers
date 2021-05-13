@@ -20,27 +20,27 @@ def fetch_data():
     locator_domain = "https://www.newleafcannabis.ca/"
     base_url = "https://www.newleafcannabis.ca/contact/"
     json_url = "https://v3.dutchie.com/graphql?operationName=ConsumerDispensaries"
-    with SgChrome() as driver:
-        with SgRequests() as session:
-            res = session.get(base_url, headers=_headers).text
-            locations = json.loads(
-                res.split("var now_open_store_data =")[1]
-                .split("var coming_soon_store_data =")[0]
-                .strip()[1:-2]
-            )
-            for _ in locations:
-                address = list(bs(_["address"], "lxml").stripped_strings)
-                hours = []
-                for x, hh in _["days"].items():
-                    times = f"{hh['open']}-{hh['close']}"
-                    if hh["is_closed"]:
-                        times = "closed"
-                    hours.append(f"{days[int(x)]}: {times}")
+    with SgRequests() as session:
+        res = session.get(base_url, headers=_headers).text
+        locations = json.loads(
+            res.split("var now_open_store_data =")[1]
+            .split("var coming_soon_store_data =")[0]
+            .strip()[1:-2]
+        )
+        for _ in locations:
+            address = list(bs(_["address"], "lxml").stripped_strings)
+            hours = []
+            for x, hh in _["days"].items():
+                times = f"{hh['open']}-{hh['close']}"
+                if hh["is_closed"]:
+                    times = "closed"
+                hours.append(f"{days[int(x)]}: {times}")
 
-                page_url = _["shop_now_button_url"]
-                if not page_url.endswith("/"):
-                    page_url += "/"
+            page_url = _["shop_now_button_url"]
+            if not page_url.endswith("/"):
+                page_url += "/"
 
+            with SgChrome() as driver:
                 driver.get(page_url)
                 logger.info(page_url)
                 exist = False
@@ -56,6 +56,7 @@ def fetch_data():
                             street_address = addr["ln1"]
                             if addr["ln2"]:
                                 street_address += ", " + addr["ln2"]
+                            del rr
                             yield SgRecord(
                                 page_url=_["shop_now_button_url"],
                                 store_number=_["id"],

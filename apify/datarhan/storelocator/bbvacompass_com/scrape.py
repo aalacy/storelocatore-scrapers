@@ -49,7 +49,7 @@ def fetch_data():
     response = session.get(start_url)
     data = json.loads(response.text)
     all_locations = data["response"]["results"]
-    for offset in range(20, data["response"]["resultsCount"] + 20, 20):
+    for offset in range(0, data["response"]["resultsCount"] + 20, 20):
         response = session.get(
             add_or_replace_parameter(start_url, "offset", str(offset))
         )

@@ -1,5 +1,4 @@
-lxml==4.3.4
-beautifulsoup4==4.7.1
-sgrequests
-simplejson==3.17.2
-sglogging
+sgrequests==0.1.8
+sgzip==0.4.0
+lxml==4.6.2
+sgvalidator==0.0.71

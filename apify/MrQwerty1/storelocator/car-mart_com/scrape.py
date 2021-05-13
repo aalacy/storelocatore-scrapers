@@ -1,8 +1,6 @@
 import cloudscraper
 import csv
 
-from lxml import html
-
 
 def write_output(data):
     with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
@@ -36,36 +34,33 @@ def write_output(data):
 def fetch_data():
     out = []
     locator_domain = "https://www.car-mart.com/"
-    api_url = "https://www.car-mart.com/locations/?search=75022&distance=5000"
+    api_url = "https://www.car-mart.com/wp-admin/admin-ajax.php"
+
+    data = {"action": "nearbylots", "lot": "048", "distance": "5000"}
 
     scraper = cloudscraper.create_scraper()
-    r = scraper.get(api_url)
-    tree = html.fromstring(r.text)
-    locs = tree.xpath("//div[@class='locations']/div[@class='loc']")
+    r = scraper.post(api_url, data=data)
+    js = r.json()
 
-    for l in locs:
-        location_name = "".join(l.xpath(".//h2/a//text()")).strip()
-        slug = "".join(l.xpath(".//h2/a/@href"))
-        line = l.xpath(".//div[@class='info']/p[1]//text()")
-        line = list(filter(None, [l.strip() for l in line]))
-        street_address = line[0]
-        line = line[1]
-        city = line.split(",")[0].strip()
-        line = line.split(",")[-1].strip()
-        state = line.split()[0].strip()
-        postal = line.split()[1].strip()
+    for j in js:
+        location_name = j.get("Name")
+        street_address = j.get("Street") or "<MISSING>"
+        city = j.get("City") or "<MISSING>"
+        state = j.get("State") or "<MISSING>"
+        postal = j.get("Zip") or "<MISSING>"
         country_code = "US"
-        store_number = slug.split("-")[-1].replace("/", "")
-        page_url = f"https://www.car-mart.com{slug}"
-        phone = "".join(l.xpath(".//a[contains(@href, 'tel')]/text()")) or "<MISSING>"
-        latitude = "".join(l.xpath("./@data-lat")) or "<MISSING>"
-        longitude = "".join(l.xpath("./@data-lng")) or "<MISSING>"
+        store_number = j.get("Id")
+        page_url = f'https://www.car-mart.com/locations/{store_number}/{city.replace(" ", "-").lower()}'
+        phone = j.get("Phone") or "<MISSING>"
+        latitude = j.get("Latitude") or "<MISSING>"
+        longitude = j.get("Longitude") or "<MISSING>"
         location_type = "<MISSING>"
-        hours_of_operation = (
-            "".join(l.xpath(".//p[contains(text(), 'Hours')]/text()"))
-            .replace("Hours", "")
-            .strip()
-            or "<MISSING>"
+        hours = j.get("Hours") or "<MISSING>"
+        hours_of_operation = " ".join(
+            hours.replace("<span>", " ")
+            .replace("</span>", "")
+            .replace("PM", "PM;")
+            .split()
         )
 
         row = [

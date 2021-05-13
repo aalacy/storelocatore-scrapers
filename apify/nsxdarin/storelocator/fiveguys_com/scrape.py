@@ -38,7 +38,9 @@ def write_output(data):
 
 
 def fetch_data():
-    locs = []
+    locs = [
+        "https://restaurants.fiveguys.com/concourse-b-gate-b71-dulles-international-airport"
+    ]
     url = "https://restaurants.fiveguys.com/sitemap.xml"
     r = session.get(url, headers=headers)
     website = "fiveguys.com"
@@ -50,7 +52,11 @@ def fetch_data():
         line = str(line.decode("utf-8"))
         if "https://restaurants.fiveguys.com/al" in line:
             Found = False
-        if "<loc>https://restaurants.fiveguys.com/" in line and Found:
+        if (
+            "<loc>https://restaurants.fiveguys.com/" in line
+            and Found
+            and "concourse-b-gate-b71-dulles" not in line
+        ):
             locs.append(line.split("<loc>")[1].split("<")[0].replace("&#39;", "'"))
     for loc in locs:
         logger.info(loc)
@@ -110,6 +116,8 @@ def fetch_data():
                             hours = hours + "; " + hrs
         if hours == "":
             hours = "<MISSING>"
+        if "-" not in phone:
+            phone = "<MISSING>"
         yield [
             website,
             loc,

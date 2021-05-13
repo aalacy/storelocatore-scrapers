@@ -9,7 +9,6 @@ def write_output(data):
         writer = csv.writer(
             output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
         )
-
         writer.writerow(
             [
                 "locator_domain",
@@ -38,16 +37,19 @@ def fetch_data():
     locator_domain = "https://www.renspets.com"
     page_url = "https://www.renspets.com/store_locations"
     session = SgRequests()
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:88.0) Gecko/20100101 Firefox/88.0",
+    }
 
-    r = session.get(page_url)
+    r = session.get(page_url, headers=headers)
 
     tree = html.fromstring(r.text)
-    block = "".join(tree.xpath('//div[@class="store-results-map"]/@data-google-map'))
 
+    block = "".join(tree.xpath('//div[@class="store-results-map"]/@data-google-map'))
     js = json.loads(block)
     for j in js["locations"]:
         a = j.get("address")
-        location_name = j.get("name")
+        location_name = "".join(j.get("name"))
         street_address = f"{a.get('street')} {a.get('street_2')}"
         city = a.get("city")
         state = a.get("region")
@@ -57,13 +59,14 @@ def fetch_data():
         latitude = j.get("coordinates")[1]
         longitude = j.get("coordinates")[0]
         location_type = "<MISSING>"
-        hours_of_operation = j.get("description")
-        hours_of_operation = html.fromstring(hours_of_operation)
         hours_of_operation = (
-            " ".join(hours_of_operation.xpath("//*/text()")).replace("\n", "").strip()
+            "".join(j.get("description"))
+            .replace("<br>", " ")
+            .replace("<div> </div>", "")
         )
-
-        phone = a.get("phone_number")
+        phone = a.get("phone_number") or "<MISSING>"
+        if location_name.find("COMING SOON") != -1:
+            hours_of_operation = "Coming Soon"
 
         row = [
             locator_domain,

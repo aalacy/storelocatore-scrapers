@@ -82,6 +82,8 @@ def fetch_data():
             if store not in ids:
                 if status == "NEW" or status == "OPEN":
                     ids.append(store)
+                    if add == "":
+                        add = "<MISSING>"
                     yield [
                         website,
                         loc,

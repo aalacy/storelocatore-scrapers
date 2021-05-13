@@ -53,7 +53,7 @@ def fetch_data():
         city = j.get("city")
         country_code = "CA"
         location_type = "<MISSING>"
-        store_number = "<MISSING>"
+        store_number = j.get("id")
         location_name = j.get("store")
         phone = j.get("phone") or "<MISSING>"
         latitude = j.get("lat")
