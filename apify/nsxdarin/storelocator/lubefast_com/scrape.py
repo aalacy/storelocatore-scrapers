@@ -124,6 +124,8 @@ def fetch_data():
                     phone = "8509412235"
                 hours = hours + "; Sunday: Closed"
                 name = "American Lube Fast"
+                if "2001 Carter Hill" in add:
+                    phone = "334-834-3015"
                 yield [
                     website,
                     loc,
