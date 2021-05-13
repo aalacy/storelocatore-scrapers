@@ -85,7 +85,7 @@ def fetch_data():
             else:
                 loclist.append(cities)
             state = province["name"]
-            if isinstance(cities, list) == True:
+            if type(cities) is list:
                 length = len(cities)
                 i = 0
                 for i in range(0, length):
