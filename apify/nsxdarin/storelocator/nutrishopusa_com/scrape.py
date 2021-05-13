@@ -121,7 +121,10 @@ def fetch_data():
                         zc = addinfo.rsplit(" ", 1)[1]
                         city = addinfo.split(",")[0]
                         state = addinfo.split(",")[1].strip().split(" ")[0]
-                        phone = item.split('"phone":"')[1].split('"')[0]
+                        try:
+                            phone = item.split('"phone":"')[1].split('"')[0]
+                        except:
+                            phone = "<MISSING>"
                         lat = item.split('"lat":"')[1].split('"')[0]
                         lng = item.split('"lon":"')[1].split('"')[0]
                         if '"1":{"start":"' in item:

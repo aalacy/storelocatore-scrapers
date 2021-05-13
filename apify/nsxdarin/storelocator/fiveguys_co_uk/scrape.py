@@ -169,6 +169,9 @@ def fetch_data():
                         else:
                             hours = hours + "; " + hrs
         hours = hours.replace("'[{: Closed; ", "")
+        name = name.replace("\\u0026", "&").strip().replace("\t", "")
+        if "(" in name:
+            name = name.split("(")[0].strip()
         yield [
             website,
             loc,

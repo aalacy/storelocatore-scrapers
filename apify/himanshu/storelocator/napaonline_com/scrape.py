@@ -11,6 +11,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from selenium_stealth import stealth
 
 logger = SgLogSetup().get_logger("napaonline_com")
 
@@ -301,16 +302,29 @@ def get_driver():
     )
     sgchrome._SgSelenium__configure_chromedriver(chrome, user_agent)
 
-    return sgchrome.driver()
+    stealth(
+        chrome,
+        languages=["en-US", "en"],
+        vendor="Google Inc.",
+        platform="Win32",
+        webgl_vendor="Intel Inc.",
+        renderer="Intel Iris OpenGL Engine",
+        fix_hairline=True,
+    )
+
+    return chrome
 
 
 def load_initial_page(driver):
     driver.get("https://www.napaonline.com")
     driver.execute_script('window.open("https://www.napaonline.com")')
 
-    WebDriverWait(driver, 20).until(
-        EC.presence_of_element_located((By.CLASS_NAME, "header-branding-logo"))
-    )
+    try:
+        WebDriverWait(driver, 20).until(
+            EC.presence_of_element_located((By.CLASS_NAME, "header-branding-logo"))
+        )
+    except:
+        raise Exception()
 
 
 def fetch_data():
@@ -359,4 +373,5 @@ def scrape():
     write_output(data)
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()
