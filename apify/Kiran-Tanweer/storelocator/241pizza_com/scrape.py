@@ -1,160 +1,183 @@
-from bs4 import BeautifulSoup
-import csv
-import re
-import time
+from sglogging import sglog
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-
-logger = SgLogSetup().get_logger("241pizza_com")
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
 
 session = SgRequests()
+website = "123pizza_com"
+log = sglog.SgLogSetup().get_logger(logger_name=website)
+session = SgRequests()
 
-headers = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.141 Safari/537.36",
+headers_cities = {
+    "authority": "241pizza.com",
+    "method": "POST",
+    "path": "/src/themes/twoforone/lib/php/ajax.php",
+    "scheme": "https",
+    "accept": "application/json, text/plain, */*",
+    "content-type": "application/x-www-form-urlencoded",
+    "endpoint": "getcities_prov.pvp",
+    "origin": "https://241pizza.com",
+    "prefix": "TFO",
+    "referer": "https://241pizza.com/restaurant-locator/",
+    "url": "https://chairmanbrands.impellent.app/v1/locations/cities.php",
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.93 Safari/537.36",
+}
+headers_stores = {
+    "authority": "241pizza.com",
+    "method": "POST",
+    "path": "/src/themes/twoforone/lib/php/ajax.php",
+    "scheme": "https",
+    "accept": "application/json, text/plain, */*",
+    "content-type": "application/x-www-form-urlencoded",
+    "endpoint": "getstores_city.pvp",
+    "origin": "https://241pizza.com",
+    "prefix": "TFO",
+    "referer": "https://241pizza.com/restaurant-locator/",
+    "url": "https://chairmanbrands.impellent.app/v1/locations/stores.php",
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.93 Safari/537.36",
 }
 
 
-def write_output(data):
-    with open("data.csv", mode="w", newline="", encoding="utf8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        temp_list = []
-        for row in data:
-            comp_list = [
-                row[2].strip(),
-                row[3].strip(),
-                row[4].strip(),
-                row[5].strip(),
-                row[6].strip(),
-                row[8].strip(),
-                row[10].strip(),
-            ]
-            if comp_list not in temp_list:
-                temp_list.append(comp_list)
-                writer.writerow(row)
-        logger.info(f"No of records being processed: {len(temp_list)}")
+def store_data(loc):
+    location_name = loc["location"]
+    store_number = loc["store_number"]
+    latitude = loc["latitude"]
+    longitude = loc["longitude"]
+    phone = loc["phone"]
+    hours_of_operation = (
+        str(loc["hours"])
+        .replace("'", "")
+        .replace("{", "")
+        .replace("}", "")
+        .replace(": open: ", " ")
+        .replace(", close: ", " - ")
+    )
+    street_address = loc["address"]
+    city = loc["city"]
+    zip_postal = loc["postal"]
+    return (
+        location_name,
+        store_number,
+        latitude,
+        longitude,
+        phone,
+        hours_of_operation,
+        street_address,
+        city,
+        zip_postal,
+    )
 
 
 def fetch_data():
-    data = []
-    pattern = re.compile(r"\s\s+")
-    cleanr = re.compile(r"<[^>]+>")
-    url = "https://www.241pizza.com/locations.aspx"
-    req = session.get(url, headers=headers)
-    soup = BeautifulSoup(req.text, "html.parser")
-    cities = soup.find("select", {"id": "city"}).findAll("option")
-    for city in cities:
-        if city["value"] != "":
-            city = city["value"]
-            form_data = {
-                "city": city,
-                "address": "",
-            }
-            r = session.post(url, headers=headers, data=form_data)
-            soup = BeautifulSoup(r.text, "html.parser")
-            loc_box = soup.findAll("div", {"class": "addr-box"})
-            for loc in loc_box:
-                link = loc.find("a", {"class": "locationname"})["href"]
-                storeid = link.split("-")[-1]
-                street = loc.find("p", {"class": "fontXXL"}).text.strip()
-                locality = (
-                    loc.find("p", {"class": "fontpro under-line Locationswidth qq"})
-                    .find("span")
-                    .text.strip()
-                )
-                locality = locality.split(",")
-                city = locality[0]
-                state = locality[1]
-                pcode = locality[-1]
-                phone = loc.find("a", {"class": "pull-right"}).text.strip()
-                coords = loc.find("div", {"class": "storeDetails"}).find("a")["href"]
-                coords = (
-                    coords.split("EndAddress=")[1].split("&Storenumber")[0].split(",")
-                )
-                lat = coords[0]
-                lng = coords[1]
-                link = "https://www.241pizza.com/" + link
-                p = session.get(link, headers=headers)
-                soup = BeautifulSoup(p.text, "html.parser")
-                title = soup.find("article", {"class": "col-lg-5 col-md-6"})
-                if title is None:
-                    title = "<MISSING>"
-                else:
-                    title = title.find("h1").text
-                section = soup.find("main", {"id": "main"})
-                if section is None:
-                    hours = "<MISSING>"
-                else:
-                    section = section.find(
-                        "aside", {"class": "col-lg-4 col-md-3"}
-                    ).find("div")
-                    if section is None:
-                        hours = "<MISSING>"
-                    else:
-                        section = section.text
-                        hours = section.replace("\n", " ").strip()
-                        hours = re.sub(pattern, " ", hours)
-                        hours = re.sub(cleanr, " ", hours)
-                link = link.strip()
-                title = title.strip()
-                street = street.strip()
-                city = city.strip()
-                state = state.strip()
-                pcode = pcode.strip()
-                storeid = storeid.strip()
-                phone = phone.strip()
-                lat = lat.strip()
-                lng = lng.strip()
-                hours = hours.strip()
+    if True:
+        loclist = []
+        statelist = []
+        url = "https://241pizza.com/src/themes/twoforone/lib/php/ajax.php"
+        province_list = session.post(url, headers=headers_cities).json()["response"][
+            "province"
+        ]
+        for province in province_list:
+            cities = province["cities"]
+            cities = cities["city"]
+            if type(cities) is list:
+                for city in cities:
+                    loclist.append(city)
+            else:
+                loclist.append(cities)
+            state = province["name"]
+            if isinstance(cities, list) == True:
+                length = len(cities)
+                i = 0
+                for i in range(0, length):
+                    statelist.append(state)
+            else:
+                statelist.append(state)
 
-                data.append(
-                    [
-                        "https://www.241pizza.com/",
-                        link,
-                        title,
-                        street,
-                        city,
-                        state,
-                        pcode,
-                        "CA",
-                        storeid,
+        for loc, state in zip(loclist, statelist):
+            page_url = (
+                "https://241pizza.com/restaurant-locator/#!/province/"
+                + state.strip().lower()
+                + "/city/"
+                + loc.strip().lower()
+                + "/"
+            )
+            log.info(page_url)
+            payload = {"city": loc}
+            loc = session.post(url, data=payload, headers=headers_stores).json()[
+                "response"
+            ]["city"]["store"]
+            if type(loc) is list:
+                stores = loc
+                for store in stores:
+                    (
+                        location_name,
+                        store_number,
+                        latitude,
+                        longitude,
                         phone,
-                        "<MISSING>",
-                        lat,
-                        lng,
-                        hours,
-                    ]
+                        hours_of_operation,
+                        street_address,
+                        city,
+                        zip_postal,
+                    ) = store_data(store)
+                    yield SgRecord(
+                        locator_domain="https://241pizza.com/",
+                        page_url=page_url,
+                        location_name=location_name,
+                        street_address=street_address.strip(),
+                        city=city.strip(),
+                        state=state,
+                        zip_postal=zip_postal.strip(),
+                        country_code="CA",
+                        store_number=store_number,
+                        phone=phone,
+                        location_type="<MISSING>",
+                        latitude=latitude,
+                        longitude=longitude,
+                        hours_of_operation=hours_of_operation.strip(),
+                    )
+            else:
+                (
+                    location_name,
+                    store_number,
+                    latitude,
+                    longitude,
+                    phone,
+                    hours_of_operation,
+                    street_address,
+                    city,
+                    zip_postal,
+                ) = store_data(loc)
+                yield SgRecord(
+                    locator_domain="https://241pizza.com/",
+                    page_url=page_url,
+                    location_name=location_name,
+                    street_address=street_address.strip(),
+                    city=city.strip(),
+                    state=state,
+                    zip_postal=zip_postal.strip(),
+                    country_code="CA",
+                    store_number=store_number,
+                    phone=phone,
+                    location_type="<MISSING>",
+                    latitude=latitude,
+                    longitude=longitude,
+                    hours_of_operation=hours_of_operation.strip(),
                 )
-    return data
 
 
 def scrape():
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
-    data = fetch_data()
-    write_output(data)
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    log.info("Started")
+    count = 0
+    with SgWriter() as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()
