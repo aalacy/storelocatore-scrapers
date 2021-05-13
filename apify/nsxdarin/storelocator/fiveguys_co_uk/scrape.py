@@ -172,6 +172,9 @@ def fetch_data():
         name = name.replace("\\u0026", "&").strip().replace("\t", "")
         if "(" in name:
             name = name.split("(")[0].strip()
+        name = name.replace("&amp;", "&").replace("&quot;", '"')
+        add = add.replace("&amp;", "&").replace("&quot;", '"')
+        city = city.replace("&amp;", "&").replace("&quot;", '"')
         yield [
             website,
             loc,
