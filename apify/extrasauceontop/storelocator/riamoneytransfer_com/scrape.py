@@ -1,6 +1,4 @@
-import csv
 import json
-from tenacity import retry, stop_after_attempt
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from sgzip.static import static_coordinate_list, SearchableCountries
 from sgrequests import SgRequests
@@ -190,7 +188,6 @@ def fetch_data():
     # all_coordinates = {"UK": uk_search, "CA": ca_search}
 
     for country, coordinates in all_coordinates.items():
-        print(len(coordinates))
 
         set_jwt_token_header(session)
         # coords = []
