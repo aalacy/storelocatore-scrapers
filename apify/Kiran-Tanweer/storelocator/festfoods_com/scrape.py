@@ -74,7 +74,7 @@ def fetch_data():
     r = r["items"]
     for loc in r:
         ids = loc["id"].strip()
-        if ids != "2240" and ids != "3322" and ids != "1955" and ids != "100":
+        if ids != "3322" and ids != "1955" and ids != "100":
             title = loc["name"]
             street = loc["address_1"]
             city = loc["city"]

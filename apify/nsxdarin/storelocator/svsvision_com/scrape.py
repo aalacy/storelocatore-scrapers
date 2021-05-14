@@ -1,6 +1,8 @@
 import csv
-from sgrequests import SgRequests
+
 from sglogging import SgLogSetup
+
+from sgrequests import SgRequests
 
 session = SgRequests()
 headers = {
@@ -67,9 +69,10 @@ def fetch_data():
             line2 = str(line2.decode("utf-8"))
             if "<title>" in line2:
                 name = line2.split("<title>")[1].split("<")[0].split(" - ")[0]
-                store = line2.split(" - ")[1]
             if '<div class="elementor-shortcode">' in line2 and add == "":
                 add = line2.split('<div class="elementor-shortcode">')[1].split("<")[0]
+                if not add:
+                    add = "<MISSING>"
                 g = next(lines)
                 g = str(g.decode("utf-8"))
                 city = name
@@ -85,6 +88,9 @@ def fetch_data():
                     hours = hrs
                 else:
                     hours = hours + "; " + hrs
+        store = loc.split("-")[-1].replace("/", "")
+        if add == "<MISSING>":
+            continue
         yield [
             website,
             loc,
