@@ -1,5 +1,6 @@
 import csv
 import usaddress
+
 from lxml import html
 from sgrequests import SgRequests
 
@@ -9,6 +10,7 @@ def write_output(data):
         writer = csv.writer(
             output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
         )
+
         writer.writerow(
             [
                 "locator_domain",
@@ -32,11 +34,7 @@ def write_output(data):
             writer.writerow(row)
 
 
-def fetch_data():
-    out = []
-    locator_domain = "https://www.bankofmarionva.com"
-    api_url = "https://www.bankofmarionva.com/"
-    session = SgRequests()
+def get_address(line):
     tag = {
         "Recipient": "recipient",
         "AddressNumber": "address1",
@@ -56,7 +54,6 @@ def fetch_data():
         "USPSBoxGroupType": "address1",
         "USPSBoxID": "address1",
         "USPSBoxType": "address1",
-        "BuildingName": "address2",
         "OccupancyType": "address2",
         "OccupancyIdentifier": "address2",
         "SubaddressIdentifier": "address2",
@@ -65,78 +62,53 @@ def fetch_data():
         "StateName": "state",
         "ZipCode": "postal",
     }
+
+    a = usaddress.tag(line, tag_mapping=tag)[0]
+    street_address = f"{a.get('address1')} {a.get('address2') or ''}".strip()
+    if street_address == "None":
+        street_address = "<MISSING>"
+    city = a.get("city") or "<MISSING>"
+    state = a.get("state") or "<MISSING>"
+    postal = a.get("postal") or "<MISSING>"
+
+    return street_address, city, state, postal
+
+
+def fetch_data():
+    out = []
+    locator_domain = "https://www.presbyterianmanors.org/"
+    page_url = "https://www.presbyterianmanors.org/our-communities"
+
+    session = SgRequests()
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:88.0) Gecko/20100101 Firefox/88.0",
+        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0"
     }
-    r = session.get(api_url, headers=headers)
+    r = session.get(page_url, headers=headers)
     tree = html.fromstring(r.text)
-    div = tree.xpath(
-        '//a[contains(text(), "Locations")]/following-sibling::ul/li/ul/li/a'
+    divs = tree.xpath(
+        "//div[@class='c-table-body']|//div[@class='oc-single-detail-block w-row']//div[@class='three-quarters left-align']"
     )
 
-    for d in div:
-        slug = "".join(d.xpath(".//@href"))
-        page_url = f"{locator_domain}{slug}"
-
-        session = SgRequests()
-        r = session.get(page_url, headers=headers)
-        tree = html.fromstring(r.text)
-
-        location_name = "".join(tree.xpath("//h1//text()"))
-        ad = tree.xpath("//h1/following::address[1]//text()")
-        ad = list(filter(None, [a.strip() for a in ad]))
-        ad = (
-            " ".join(ad)
-            .split("elephone")[0]
-            .replace(" Te", "e")
-            .replace(" te", "e")
-            .strip()
-        )
-        a = usaddress.tag(ad, tag_mapping=tag)[0]
-
-        street_address = f"{a.get('address1')} {a.get('address2')}".replace(
-            "None", ""
+    for d in divs:
+        location_name = "".join(
+            d.xpath(".//h4[@class='oc-single-detail-header']//text()")
         ).strip()
-        city = a.get("city") or "<MISSING>"
-        state = a.get("state") or "<MISSING>"
+
+        line = d.xpath(".//p[@class='oc-para']/text()")
+        line = ", ".join(list(filter(None, [l.strip() for l in line])))
+
+        street_address, city, state, postal = get_address(line)
         country_code = "US"
-        postal = a.get("postal") or "<MISSING>"
         store_number = "<MISSING>"
-        try:
-            latitude = (
-                "".join(tree.xpath('//script[contains(text(), "myLatLng ")]/text()'))
-                .split("lat:")[1]
-                .split(",")[0]
-            )
-            longitude = (
-                "".join(tree.xpath('//script[contains(text(), "myLatLng ")]/text()'))
-                .split("lng:")[1]
-                .split("}")[0]
-            )
-        except:
-            latitude, longitude = "<MISSING>", "<MISSING>"
-        location_type = "<MISSING>"
-        hours_of_operation = (
-            " ".join(
-                tree.xpath(
-                    '//strong[contains(text(), "Office Hours")]/following-sibling::text()'
-                )
-            )
-            .replace("\n", "")
-            .strip()
+        phone = (
+            "".join(d.xpath(".//span[@class='oc-phone-number']/text()")).strip()
             or "<MISSING>"
         )
-        if hours_of_operation.find("Our") != -1:
-            hours_of_operation = hours_of_operation.split("Our")[0].strip()
-        hours_of_operation = (
-            hours_of_operation.replace("(", "").replace(")", "").strip()
-        )
-        phone = (
-            "".join(tree.xpath("//h1/following::address[1]//text()"))
-            .split("elephone:")[1]
-            .split()[0]
-            .strip()
-        )
+        latitude = "<MISSING>"
+        longitude = "<MISSING>"
+        location_type = "<MISSING>"
+        hours_of_operation = "<MISSING>"
+
         row = [
             locator_domain,
             page_url,

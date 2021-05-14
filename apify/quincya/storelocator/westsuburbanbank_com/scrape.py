@@ -37,7 +37,7 @@ def write_output(data):
 
 def fetch_data():
 
-    base_link = "https://republicebank.com/locations/"
+    base_link = "https://westsuburbanbank.com/locations.php"
 
     user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
     headers = {"User-Agent": user_agent}
@@ -47,38 +47,48 @@ def fetch_data():
     base = BeautifulSoup(req.text, "lxml")
 
     data = []
-    locator_domain = "republicebank.com"
+    locator_domain = "westsuburbanbank.com"
 
-    items = (
-        base.find(class_="page-content")
-        .find_all(class_="wpv-grid")[0]
-        .find_all(class_="wpv-grid")[2:]
-    )
+    raw_hours = base.find(class_="table")
+    heads = raw_hours.find_all("th")
+    cols = raw_hours.find_all("tr")[1:]
+
+    lobby_hours = ""
+    for i in range(len(heads)):
+        day = cols[i].td.text.strip()
+        lobby = cols[i].find_all("td")[1].text.strip()
+        lobby_hours = (lobby_hours + " " + day + " " + lobby).strip()
+    lobby_hours = heads[1].text + " " + lobby_hours
+
+    wsb_hours = ""
+    for i in range(len(heads)):
+        day = cols[i].td.text.strip()
+        lobby = cols[i].find_all("td")[2].text.strip()
+        wsb_hours = (wsb_hours + " " + day + " " + lobby).strip()
+    wsb_hours = heads[2].text + " " + wsb_hours
+
+    hours_of_operation = lobby_hours + " " + wsb_hours
+
+    items = base.find(id="nav-tabContent").find_all(class_="tab-pane fade")
+
     for item in items:
-        raw_data = list(item.stripped_strings)
-        location_name = "<MISSING>"
-        raw_address = raw_data[0].split(",")
-        street_address = "".join(raw_address[:-1])
-        city = raw_address[-1][:-6].strip()
-        state = "IL"
-        zip_code = raw_address[-1][-6:].strip()
-        country_code = "US"
-        store_number = "<MISSING>"
-        phone = raw_data[1].split("f")[0].replace("p", "").replace("Retail", "").strip()
-        location_type = "<MISSING>"
-        latitude = "<INACCESSIBLE>"
-        longitude = "<INACCESSIBLE>"
-
-        hours_of_operation = ""
-        for i, row in enumerate(raw_data):
-            if "lobby hours" in row.lower():
-                break
-        for y in range(5):
-            text = raw_data[y + i + 1]
-            if "day" in text.lower():
-                hours_of_operation = (hours_of_operation + " " + text).strip()
-            else:
-                break
+        location_name = item.h3.text
+        stores = item.find_all(class_="col-12")
+        for store in stores:
+            street_address = store.h5.text
+            city_line = store.p.text.split(",")
+            city = city_line[0].strip()
+            state = city_line[-1].strip().split()[0].strip()
+            zip_code = city_line[-1].strip().split()[1].strip()
+            country_code = "US"
+            store_number = "<MISSING>"
+            phone = base.find(class_="footer-widget").find_all("a")[-1].text
+            try:
+                location_type = store.small.text.split(".")[0]
+            except:
+                location_type = "<MISSING>"
+            latitude = "<MISSING>"
+            longitude = "<MISSING>"
 
         data.append(
             [
@@ -87,8 +97,8 @@ def fetch_data():
                 location_name,
                 street_address,
                 city,
-                state.strip(),
-                zip_code.strip(),
+                state,
+                zip_code,
                 country_code,
                 store_number,
                 phone,
