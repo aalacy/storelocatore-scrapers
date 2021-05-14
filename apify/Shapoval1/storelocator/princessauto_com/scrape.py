@@ -46,7 +46,9 @@ def fetch_data():
     for j in js["items"]:
 
         location_name = j.get("name")
-        street_address = f"{j.get('address1')} {j.get('address2') or ''} {j.get('address3') or ''}".strip()
+        street_address = f"{j.get('address1')} {j.get('address2') or ''} {j.get('address3') or ''}".replace(
+            "second street", ""
+        ).strip()
         city = j.get("city")
         state = j.get("state")
         country_code = j.get("country")
