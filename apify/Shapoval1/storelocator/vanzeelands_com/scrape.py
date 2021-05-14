@@ -33,43 +33,39 @@ def write_output(data):
 
 def fetch_data():
     out = []
-    locator_domain = "https://www.princessauto.com"
-    api_url = "https://mwprod-processing-princessauto.objectedge.com/api/location"
+    locator_domain = "https://www.vanzeelands.com/"
+    api_url = "https://www.vanzeelands.com/Locations"
     session = SgRequests()
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:88.0) Gecko/20100101 Firefox/88.0",
     }
 
     r = session.get(api_url, headers=headers)
-    js = r.json()
+    tree = html.fromstring(r.text)
+    div = tree.xpath('//div[@class="loclisting type0"]')
 
-    for j in js["items"]:
+    for d in div:
 
-        location_name = j.get("name")
-        street_address = f"{j.get('address1')} {j.get('address2') or ''} {j.get('address3') or ''}".replace(
-            "second street", ""
-        ).strip()
-        city = j.get("city")
-        state = j.get("state")
-        country_code = j.get("country")
-        postal = j.get("postalCode")
-        store_number = j.get("locationId")
-        page_url = f"https://www.princessauto.com/en/store?storeId={store_number}"
-        latitude = j.get("latitude")
-        longitude = j.get("longitude")
-        location_type = j.get("type")
-        hours = j.get("hours") or "<MISSING>"
-        hours_of_operation = "<MISSING>"
-        if hours != "<MISSING>":
-            hours = html.fromstring(hours)
-            hours_of_operation = hours.xpath(
-                '//h4[contains(text(), "Store Hours")]/following-sibling::ul[1]/li//text()'
-            )
-            hours_of_operation = list(
-                filter(None, [a.strip() for a in hours_of_operation])
-            )
-            hours_of_operation = " ".join(hours_of_operation)
-        phone = j.get("phoneNumber")
+        page_url = "".join(d.xpath('.//a[contains(text(), "Location Details")]/@href'))
+        location_name = "".join(d.xpath('.//div[@class="locationInfo"]/strong/text()'))
+        ad = d.xpath('.//div[@class="locationInfo"]/strong/following-sibling::text()')
+        ad = list(filter(None, [a.strip() for a in ad]))
+        street_address = "".join(ad[0])
+        csz = "".join(ad[1])
+        city = csz.split(",")[0].strip()
+        state = csz.split(",")[1].split()[0].strip()
+        country_code = "US"
+        postal = csz.split(",")[1].split()[1].strip()
+        store_number = "<MISSING>"
+        latitude = "".join(d.xpath('.//span[@class="hideDistance distance"]/@lat'))
+        longitude = "".join(d.xpath('.//span[@class="hideDistance distance"]/@lon'))
+        location_type = "Auto Care Centers"
+        hours_of_operation = d.xpath(
+            './/strong[contains(text(), "Hours")]/following-sibling::text() | .//strong[contains(text(), "Hours")]/following-sibling::span/text()'
+        )
+        hours_of_operation = list(filter(None, [a.strip() for a in hours_of_operation]))
+        hours_of_operation = " ".join(hours_of_operation)
+        phone = "".join(d.xpath('.//a[contains(@href, "tel")]/text()'))
 
         row = [
             locator_domain,
