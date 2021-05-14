@@ -1,5 +1,4 @@
 import csv
-import re
 
 from bs4 import BeautifulSoup
 
@@ -67,9 +66,8 @@ def fetch_data():
         store_number = "<MISSING>"
         phone = raw_data[1].split("f")[0].replace("p", "").replace("Retail", "").strip()
         location_type = "<MISSING>"
-        map_link = item.find_all("a")[-1]["href"]
-        latitude = re.findall(r"[0-9]{2}\.[0-9]+", map_link)[0]
-        longitude = re.findall(r"\-[0-9]{2,3}\.[0-9]+", map_link)[0]
+        latitude = "<INACCESSIBLE>"
+        longitude = "<INACCESSIBLE>"
 
         hours_of_operation = ""
         for i, row in enumerate(raw_data):
