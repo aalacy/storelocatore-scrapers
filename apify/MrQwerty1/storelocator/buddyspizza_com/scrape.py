@@ -1,38 +1,30 @@
 import csv
 import usaddress
-
-from concurrent import futures
 from lxml import html
 from sgrequests import SgRequests
+from sglogging import SgLogSetup
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+logger = SgLogSetup().get_logger("buddyspizza_com")
 
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
 
-        for row in data:
-            writer.writerow(row)
+DOMAIN = "https://www.buddyspizza.com"
+URL_LOCATION = "https://www.buddyspizza.com/locations"
+MISSING = "<MISSING>"
+
+headers_custom_for_location_url = {
+    "authority": "www.buddyspizza.com",
+    "method": "GET",
+    "path": "/locations",
+    "scheme": "https",
+    "accept": "application/json, text/plain, */*",
+    "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.114 Safari/537.36",
+    "upgrade-insecure-requests": "1",
+}
+
+session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
 
 
 def get_address(line):
@@ -67,10 +59,10 @@ def get_address(line):
     a = usaddress.tag(line, tag_mapping=tag)[0]
     street_address = f"{a.get('address1')} {a.get('address2') or ''}".strip()
     if street_address == "None":
-        street_address = "<MISSING>"
-    city = a.get("city") or "<MISSING>"
-    state = a.get("state") or "<MISSING>"
-    postal = a.get("postal") or "<MISSING>"
+        street_address = MISSING
+    city = a.get("city") or MISSING
+    state = a.get("state") or MISSING
+    postal = a.get("postal") or MISSING
 
     return street_address, city, state, postal
 
@@ -80,89 +72,109 @@ def get_coords_from_embed(text):
         latitude = text.split("!3d")[1].strip().split("!")[0].strip()
         longitude = text.split("!2d")[1].strip().split("!")[0].strip()
     except IndexError:
-        latitude, longitude = "<MISSING>", "<MISSING>"
+        latitude, longitude = MISSING, MISSING
 
     return latitude, longitude
 
 
 def get_urls():
-    session = SgRequests()
-    r = session.get("https://www.buddyspizza.com/locations")
-    tree = html.fromstring(r.text)
 
+    r = session.get(URL_LOCATION, headers=headers_custom_for_location_url, timeout=180)
+    tree = html.fromstring(r.text, "lxml")
     return tree.xpath("//div[@class='image-slide-title']/preceding-sibling::a/@href")
 
 
-def get_data(url):
-    locator_domain = "https://www.buddyspizza.com/"
-    page_url = f"https://www.buddyspizza.com{url}"
-
-    session = SgRequests()
-    r = session.get(page_url)
-    tree = html.fromstring(r.text)
-
-    location_name = "".join(tree.xpath("//meta[@itemprop='name']/@content"))
-    line = tree.xpath("//p[./strong[contains(text(), 'Address')]]/text()")
-    line = ", ".join(list(filter(None, [l.strip() for l in line])))
-
-    street_address, city, state, postal = get_address(line)
-    country_code = "US"
-    store_number = "<MISSING>"
-    phone = (
-        "".join(tree.xpath("//p[./strong[contains(text(), 'Phone')]]/a/text()")).strip()
-        or "<MISSING>"
-    )
-    text = "".join(tree.xpath("//iframe/@src"))
-    latitude, longitude = get_coords_from_embed(text)
-    location_type = "<MISSING>"
-
-    hours = tree.xpath(
-        "//h3[text()='Hours']/following-sibling::p/text()|//h3[./strong[contains(text(), 'Hours')]]/following-sibling::p/text()"
-    )
-    hours = list(filter(None, [h.strip() for h in hours]))
-    if len(hours) > 7:
-        hours = hours[:7]
-    hours_of_operation = ";".join(hours).replace("*", "") or "<MISSING>"
-    if ";Dine-in" in hours_of_operation:
-        hours_of_operation = hours_of_operation.split(";Dine-in")[0]
-
-    row = [
-        locator_domain,
-        page_url,
-        location_name,
-        street_address,
-        city,
-        state,
-        postal,
-        country_code,
-        store_number,
-        phone,
-        location_type,
-        latitude,
-        longitude,
-        hours_of_operation,
-    ]
-
-    return row
-
-
 def fetch_data():
-    out = []
     urls = get_urls()
+    for page_num, url in enumerate(urls):
+        locator_domain = DOMAIN
+        page_url = f"https://www.buddyspizza.com{url}"
+        logger.info(f"Pulling the data from Page Num: {page_num} --> {page_url} ")
+        headers_custom_with_url_path = {
+            "authority": "www.buddyspizza.com",
+            "method": "GET",
+            "path": url,
+            "scheme": "https",
+            "accept": "application/json, text/plain, */*",
+            "referer": "https://www.buddyspizza.com/locations",
+            "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.114 Safari/537.36",
+            "upgrade-insecure-requests": "1",
+        }
 
-    with futures.ThreadPoolExecutor(max_workers=1) as executor:
-        future_to_url = {executor.submit(get_data, url): url for url in urls}
-        for future in futures.as_completed(future_to_url):
-            row = future.result()
-            if row:
-                out.append(row)
+        r = session.get(page_url, headers=headers_custom_with_url_path, timeout=180)
+        tree = html.fromstring(r.text, "lxml")
+        location_name = tree.xpath("//meta[@itemprop='name']/@content")
+        location_name = [" ".join(ln.split()) for ln in location_name]
+        location_name = "".join(location_name) if location_name else MISSING
 
-    return out
+        # Parse Address using usaddress
+        line = tree.xpath("//p[./strong[contains(text(), 'Address')]]/text()")
+        logger.info(f"Raw Addresses: {line}")
+        line = [" ".join(i.split()) for i in line]
+        line = ", ".join(list(filter(None, [l.strip() for l in line])))
+
+        street_address, city, state, postal = get_address(line)
+        country_code = "US"
+        store_number = MISSING
+
+        # Phone
+        phone = (
+            "".join(
+                tree.xpath("//p[./strong[contains(text(), 'Phone')]]/a/text()")
+            ).strip()
+            or MISSING
+        )
+
+        # Latitude and Longitude
+        text = "".join(tree.xpath("//iframe/@src"))
+        latitude, longitude = get_coords_from_embed(text)
+        location_type = MISSING
+
+        # Hours of Operation
+        hours = tree.xpath(
+            "//h3[text()='Hours']/following-sibling::p/text()|//h3[./strong[contains(text(), 'Hours')]]/following-sibling::p/text()"
+        )
+        logger.info(f"Raw hours data: {hours}")
+
+        hours = list(filter(None, [h.strip() for h in hours]))
+        hours = [" ".join(i.split()) for i in hours]
+        if len(hours) > 7:
+            hours = hours[:7]
+        hours_of_operation = "; ".join(hours).replace("*", "") or MISSING
+        if ";Dine-in" in hours_of_operation:
+            hours_of_operation = hours_of_operation.split(";Dine-in")[0]
+
+        raw_address = line
+        yield SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=location_type,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+            raw_address=raw_address,
+        )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    logger.info("Started")
+    count = 0
+    with SgWriter() as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+
+    logger.info(f"No of records being processed: {count}")
+    logger.info("Finished")
 
 
 if __name__ == "__main__":
