@@ -90,16 +90,19 @@ def fetch_locations(code, ids):
         page = session.get(loc, headers=headers).text
         soup = BeautifulSoup(page, "html.parser")
 
-        data = json.loads(soup.select_one("#jsonLD").string)
-        hours = data["openingHoursSpecification"]
+        try:
+            data = json.loads(soup.select_one("#jsonLD").string)
+            hours = data["openingHoursSpecification"]
 
-        hours_of_operation = []
-        for hour in hours:
-            day = hour["dayOfWeek"].split(" ").pop(0)
-            opens = hour["opens"]
-            closes = hour["closes"]
+            hours_of_operation = []
+            for hour in hours:
+                day = hour["dayOfWeek"].split(" ").pop(0)
+                opens = hour["opens"]
+                closes = hour["closes"]
 
-            hours_of_operation.append(f"{day}: {opens}-{closes}")
+                hours_of_operation.append(f"{day}: {opens}-{closes}")
+        except:
+            hours = "<MISSING>"
 
         locations.append(
             [
