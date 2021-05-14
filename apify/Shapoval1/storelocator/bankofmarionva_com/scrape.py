@@ -88,8 +88,8 @@ def fetch_data():
         ad = (
             " ".join(ad)
             .split("elephone")[0]
-            .replace(" T", "")
-            .replace(" t", "")
+            .replace(" Te", "e")
+            .replace(" te", "e")
             .strip()
         )
         a = usaddress.tag(ad, tag_mapping=tag)[0]
