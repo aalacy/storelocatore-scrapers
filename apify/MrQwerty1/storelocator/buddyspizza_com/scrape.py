@@ -1,4 +1,3 @@
-import csv
 import usaddress
 from lxml import html
 from sgrequests import SgRequests
