@@ -13,27 +13,41 @@ _headers = {
 
 
 def _time(val):
-    return str(val)[:2] + ":" + str(val)[2:]
+    val = str(val)
+    if len(val) == 3:
+        val = "0" + val
+    return val[:2] + ":" + val[2:]
 
 
 def fetch_data():
-    locator_domain = "https://www.saloncielo.com/"
+    locator_domain = "https://www.saloncielo.com"
     base_url = "https://locations.saloncielo.com"
     with SgRequests() as session:
         soup = bs(session.get(base_url, headers=_headers).text, "lxml")
         locations = soup.select("div.c-location-grid-col")
         logger.info(f"{len(locations)} found")
         for _ in locations:
-            page_url = base_url + _.h2.a["href"]
+            _page_url = _.h2.a["href"]
+            if not _page_url.startswith("/"):
+                _page_url = "/" + _page_url
+            page_url = base_url + _page_url
+            logger.info(page_url)
+            sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
             hours = []
             for hh in json.loads(_.select_one("span.js-location-hours")["data-days"]):
                 times = "closed"
                 if hh["intervals"]:
                     times = f"{_time(hh['intervals'][0]['start'])}-{_time(hh['intervals'][0]['end'])}"
                 hours.append(f"{hh['day']}: {times}")
+            _name = _.select_one("span.location-name-brand").text.strip().split("-")
+            location_name = _name[0].strip()
+            location_name += " " + _.select_one("span.location-name-geo").text.strip()
+            location_type = ""
+            if _name[-1].strip().lower() == "closed":
+                location_type = "Closed"
             yield SgRecord(
                 page_url=page_url,
-                location_name=_.h2.text.strip().split("-")[0],
+                location_name=location_name,
                 street_address=" ".join(
                     _.select_one("span.c-address-street").stripped_strings
                 ),
@@ -41,8 +55,11 @@ def fetch_data():
                 state=_.select_one("abbr.c-address-state").text.strip(),
                 zip_postal=_.select_one("span.c-address-postal-code").text.strip(),
                 country_code=_.select_one("abbr.c-address-country-name").text.strip(),
-                phone=_.select_one("div.c-location-grid-item-phone").text.strip(),
+                phone=_.select_one("div.c-location-grid-item-phone a").text.strip(),
                 locator_domain=locator_domain,
+                latitude=sp1.select_one('meta[itemprop="latitude"]')["content"],
+                longitude=sp1.select_one('meta[itemprop="longitude"]')["content"],
+                location_type=location_type,
                 hours_of_operation="; ".join(hours).replace("–", "-"),
             )
 
