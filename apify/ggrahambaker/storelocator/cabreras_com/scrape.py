@@ -66,7 +66,7 @@ def fetch_data():
     locator_domain = "cabreras.com"
 
     for link in link_list:
-        print("pull content {}".format(link))
+        log.info("Pull content {}".format(link))
         req = session.get(link, headers=headers)
         base = BeautifulSoup(req.text, "lxml")
 
@@ -101,7 +101,6 @@ def fetch_data():
                 )
             ]
         ).replace("&", "-")
-        print(hours)
         country_code = "US"
         store_number = "<MISSING>"
         location_type = "<MISSING>"
