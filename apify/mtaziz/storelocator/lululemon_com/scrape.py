@@ -86,7 +86,7 @@ def fetch_data():
             street_address = street_address.replace("114", "114 West County Center")
 
         yield SgRecord(
-            locator_domain=DOMAIN,
+            locator_domain=locator_domain,
             page_url=page_url,
             location_name=location_name,
             street_address=street_address,
