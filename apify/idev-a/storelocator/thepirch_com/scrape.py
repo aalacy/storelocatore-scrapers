@@ -4,7 +4,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
 import dirtyjson as json
-from sgscrape.sgpostal import parse_address_intl
 
 logger = SgLogSetup().get_logger("pirch")
 
@@ -34,14 +33,7 @@ def fetch_data():
             page_url = locator_domain + _["st_page_url"]
             logger.info(page_url)
             sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
-            addr = parse_address_intl(
-                " ".join(list(sp1.select_one("div.store_info p").stripped_strings)[:-1])
-            )
-            street_address = addr.street_address_1
-            if not street_address:
-                street_address = ""
-            if addr.street_address_2:
-                street_address += " " + addr.street_address_2
+            street_address = " ".join(_["st_address"].split(",")[:-1])
             hours = []
             for hh in _["st_schedule"]:
                 hours.append(f"{hh['day']}: {hh['open']}-{hh['close']}")
@@ -58,11 +50,15 @@ def fetch_data():
                 page_url=page_url,
                 location_name=_["name"],
                 street_address=street_address,
-                city=addr.city,
-                state=addr.state,
-                zip_postal=addr.postcode,
+                city=_["value"],
+                state=_["st_address"].split(",")[-1].strip().split(" ")[0].strip(),
+                zip_postal=_["st_address"]
+                .split(",")[-1]
+                .strip()
+                .split(" ")[-1]
+                .strip(),
                 country_code="US",
-                phone=_["st_contact"][0]["phone"],
+                phone=sp1.select_one("div.store_info a.phone-link").text.strip(),
                 locator_domain=locator_domain,
                 latitude=_c(coord[0]),
                 longitude=_c(coord[1]),
