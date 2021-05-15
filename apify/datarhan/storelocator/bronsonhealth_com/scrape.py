@@ -3,6 +3,7 @@ import csv
 import json
 from lxml import etree
 from urllib.parse import urljoin
+from w3lib.url import add_or_replace_parameter
 
 from sgrequests import SgRequests
 
@@ -50,8 +51,16 @@ def fetch_data():
     }
     response = session.get(start_url, headers=hdr)
     data = json.loads(response.text)
-
     all_locations = data["Values"]
+
+    total_pages = data["TotalRecords"] // 10 + 2
+    for page in range(2, total_pages):
+        response = session.get(
+            add_or_replace_parameter(start_url, "pageNumber", str(page)), headers=hdr
+        )
+        data = json.loads(response.text)
+        all_locations += data["Values"]
+
     for poi in all_locations:
         store_url = urljoin("https://www.bronsonhealth.com/locations/", poi["Slug"])
         loc_reponse = session.get(store_url)
@@ -76,7 +85,11 @@ def fetch_data():
         phone = phone if phone else "<MISSING>"
         location_type = "<MISSING>"
         latitude = poi["Latitude"]
+        if latitude == 0.0:
+            latitude = "<MISSING>"
         longitude = poi["Longitude"]
+        if longitude == 0.0:
+            longitude = "<MISSING>"
         hoo = loc_dom.xpath('//div[@class="OfficeHours"]//text()')
         hoo = [e.strip() for e in hoo if e.strip()]
         hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"

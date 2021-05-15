@@ -5,13 +5,10 @@ from bs4 import BeautifulSoup as bs
 from datetime import datetime
 from sglogging import SgLogSetup
 from sgselenium.sgselenium import SgChrome
-from selenium import webdriver  # noqa
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from webdriver_manager.chrome import ChromeDriverManager
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from selenium_stealth import stealth
 
 logger = SgLogSetup().get_logger("napaonline_com")
 
@@ -285,53 +282,21 @@ def crawl_city_url(url, driver):
         return scrape_multiple_in_city(url, driver)
 
 
-def get_driver():
-    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.103 Safari/537.36"
-    sgchrome = SgChrome(is_headless=True, user_agent=user_agent)
-    chrome_options = webdriver.ChromeOptions()
-    sgchrome._SgSelenium__add_common_args(chrome_options, user_agent)
-    sgchrome._SgSelenium__add_chrome_arguments(chrome_options, user_agent)
-
-    seleniumwire_options = sgchrome.set_proxy_options()
-    seleniumwire_options["auto_config"] = False
-
-    chrome = webdriver.Chrome(
-        executable_path=ChromeDriverManager().install(),
-        chrome_options=chrome_options,
-        seleniumwire_options=seleniumwire_options,
-    )
-    sgchrome._SgSelenium__configure_chromedriver(chrome, user_agent)
-
-    stealth(
-        chrome,
-        languages=["en-US", "en"],
-        vendor="Google Inc.",
-        platform="Win32",
-        webgl_vendor="Intel Inc.",
-        renderer="Intel Iris OpenGL Engine",
-        fix_hairline=True,
-    )
-
-    return chrome
-
-
 def load_initial_page(driver):
     driver.get("https://www.napaonline.com")
     driver.execute_script('window.open("https://www.napaonline.com")')
 
-    try:
-        WebDriverWait(driver, 20).until(
-            EC.presence_of_element_located((By.CLASS_NAME, "header-branding-logo"))
-        )
-    except:
-        raise Exception()
+    WebDriverWait(driver, 10).until(
+        EC.presence_of_element_located((By.CLASS_NAME, "header-branding-logo"))
+    )
 
 
 def fetch_data():
     state_urls = []
     city_urls = []
 
-    with get_driver() as driver:
+    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.103 Safari/537.36"
+    with SgChrome(is_headless=True, user_agent=user_agent).driver() as driver:
         load_initial_page(driver)
 
         html = get("https://www.napaonline.com/en/auto-parts-stores-near-me", driver)
