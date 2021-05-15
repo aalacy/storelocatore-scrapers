@@ -1,8 +1,4 @@
-from bs4 import BeautifulSoup
 import csv
-import string
-import re, time
-import json
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -22,38 +18,24 @@ def write_output(data):
             writer.writerow(row)
 
 
-def fetch_data():
-    # Your scraper here
-    data = []
-    states = {'AL':"Alabama","AK":"Alaska","AZ":"Arizona","AR":"Arkansas","CA":"California","CO":"Colorado",
-    "CT":"Connecticut","DC":"DC","DE":"Delaware","FL":"Florida","GA":"Georgia",
-    "HI":"Hawaii","ID":"Idaho","IL":"Illinois","IN":"Indiana","IA":"Iowa","KS":"Kansas",
-    "KY":"Kentucky","LA":"Louisiana","ME":"Maine","MD":"Maryland","MA":"Massachusetts","MI":"Michigan",
-    "MN":"Minnesota","MS":"Mississippi","MO":"Missouri","MT":"Montana", "NE":"Nebraska","NV":"Nevada",
-    "NH":"New Hampshire","NJ":"New Jersey","NM":"New Mexico","NY":"New York", "NC":"North Carolina","ND":"North Dakota",
-    "OH":"Ohio","OK":"Oklahoma","OR":"Oregon","PA":"Pennsylvania", "RI":"Rhode Island","SC":"South Carolina",
-    "SD":"South Dakota","TN":"Tennessee","TX":"Texas","UT":"Utah",  "VT":"Vermont","VA":"Virginia"
-    ,"WA":"Washington","WV":"West Virginia","WI":"Wisconsin","WY":"Wyoming"}
-                 
-    cleanr = re.compile(r'<[^>]+>')    
+def fetch_data(): 
+    data = []                
     url = 'https://www.cubesmart.com/facilities/query/GetSiteGeoLocations'
     p = 0
     storelist = []
-    loclist = session.post(url,headers=headers).json()
+    loclist = session.post(url,headers=headers).json()    
     for loc in loclist:
         
         store = str(loc['Id'])
         street = loc['Address']
         title = 'Self Storage of '+ loc['City']
         city = loc['City'].lower().strip().replace(' ','-')
-        nowstate = loc['State']
-        state = states[nowstate].lower().strip().replace(' ','-')
+        state = loc['State']
         lat = loc['Latitude']
         longt = loc['Longitude']        
         link = 'https://www.cubesmart.com/'+state+'-self-storage/'+city+'-self-storage/'+store+'.html'
         if street in storelist:
-            continue
-        #print(link)
+            continue        
         storelist.append(street)
         r = session.get(link,headers=headers).text
         try:
@@ -83,9 +65,9 @@ def fetch_data():
                 '<MISSING>',
                 lat,
                 longt,
-                hours
+                hours.replace('<br/>',' ').strip()
             ])
-            #print(p,data[p])
+            
             p += 1
         
 
