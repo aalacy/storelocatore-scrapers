@@ -4,6 +4,7 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
 import dirtyjson as json
+from sgscrape.sgpostal import parse_address_intl
 
 logger = SgLogSetup().get_logger("pirch")
 
@@ -33,7 +34,12 @@ def fetch_data():
             page_url = locator_domain + _["st_page_url"]
             logger.info(page_url)
             sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
-            street_address = " ".join(_["st_address"].split(",")[:-1])
+            addr = parse_address_intl(
+                " ".join(list(sp1.select_one("div.store_info p").stripped_strings)[:-1])
+            )
+            street_address = addr.street_address_1
+            if addr.street_address_2:
+                street_address += " " + addr.street_address_2
             hours = []
             for hh in _["st_schedule"]:
                 hours.append(f"{hh['day']}: {hh['open']}-{hh['close']}")
@@ -50,7 +56,7 @@ def fetch_data():
                 page_url=page_url,
                 location_name=_["name"],
                 street_address=street_address,
-                city=_["value"],
+                city=addr.city,
                 state=_["st_address"].split(",")[-1].strip().split(" ")[0].strip(),
                 zip_postal=_["st_address"]
                 .split(",")[-1]
