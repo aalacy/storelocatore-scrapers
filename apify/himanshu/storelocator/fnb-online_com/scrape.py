@@ -29,6 +29,7 @@ def write_output(data):
                 "latitude",
                 "longitude",
                 "hours_of_operation",
+                "page_url",
             ]
         )
         # Body
@@ -38,7 +39,7 @@ def write_output(data):
 
 def fetch_data():
     r = session.get(
-        "https://code.metalocator.com/index.php?option=com_locator&view=directory&force_link=1&tmpl=component&task=search_zip&framed=1&format=raw&no_html=1&templ[]=address_format&layout=_jsonfast&postal_code=40.588928169693745,-78.6181640625&radius=nearest&interface_revision=871&user_lat=0&user_lng=0&Itemid=6740&parent_table=&parent_id=0&search_type=point&_opt_out=&option=com_locator&ml_location_override=&reset=false&nearest=false&callback=handleJSONPResults"
+        "https://code.metalocator.com/index.php?option=com_locator&view=directory&force_link=1&tmpl=component&task=search_zip&framed=1&format=raw&no_html=1&templ[]=address_format&layout=_jsonfast&postal_code=40.588928169693745,-78.6181640625&radius=1000000&interface_revision=871&user_lat=0&user_lng=0&Itemid=6740&parent_table=&parent_id=0&search_type=point&_opt_out=&option=com_locator&ml_location_override=&reset=false&nearest=false&callback=handleJSONPResults"
     )
     data = json.loads(r.text.split("handleJSONPResults(")[1][0:-2])["results"]
     for i in range(len(data)):
@@ -88,6 +89,16 @@ def fetch_data():
         if hours == "" or hours is None:
             hours = "<MISSING>"
         store.append(hours)
+        page_url = (
+            "https://locations.fnb-online.com/"
+            + store_data["state"]
+            + "/"
+            + store_data["slug"]
+        )
+        if page_url == "" or page_url is None:
+            page_url = "<MISSING>"
+
+        store.append(page_url)
         yield store
 
 
