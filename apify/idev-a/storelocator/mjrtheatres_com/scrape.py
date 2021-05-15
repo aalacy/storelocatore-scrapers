@@ -4,7 +4,7 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
 
-logger = SgLogSetup().get_logger("hightechburrito")
+logger = SgLogSetup().get_logger("mjrtheatres")
 
 _headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
@@ -12,33 +12,24 @@ _headers = {
 
 
 def fetch_data():
-    locator_domain = "http://hightechburrito.com/"
-    base_url = "http://hightechburrito.com/locations/"
+    locator_domain = "https://mjrtheatres.com"
+    base_url = "https://mjrtheatres.com/locations"
     with SgRequests() as session:
         soup = bs(session.get(base_url, headers=_headers).text, "lxml")
-        links = soup.select("table tr td")
+        links = soup.select("div.locations-container > a")
         logger.info(f"{len(links)} found")
         for link in links:
-            if not link.text.strip():
-                continue
-            addr = [_.text.strip() for _ in link.select("a") if _.text.strip()]
-            try:
-                coord = link.a["href"].split("/@")[1].split("/data")[0].split(",")
-            except:
-                coord = ["", ""]
+            page_url = locator_domain + link["href"]
+            addr = list(link.figcaption.stripped_strings)
             yield SgRecord(
-                page_url=base_url,
-                location_name=" ".join(
-                    [nn.text.strip() for nn in link.select("strong")]
-                ),
+                page_url=page_url,
+                location_name=link.h2.text.strip(),
                 street_address=addr[0],
                 city=addr[1].split(",")[0].strip(),
                 state=addr[1].split(",")[1].strip().split(" ")[0].strip(),
                 zip_postal=addr[1].split(",")[1].strip().split(" ")[-1].strip(),
                 country_code="US",
-                phone=addr[2],
-                latitude=coord[0],
-                longitude=coord[1],
+                phone=addr[-1],
                 locator_domain=locator_domain,
             )
 
