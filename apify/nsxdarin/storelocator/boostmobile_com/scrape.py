@@ -14,7 +14,7 @@ logger = SgLogSetup().get_logger("boostmobile_com")
 search = DynamicZipSearch(
     country_codes=[SearchableCountries.USA],
     max_radius_miles=None,
-    max_search_results=None,
+    max_search_results=50,
 )
 
 
@@ -88,8 +88,11 @@ def fetch_data():
                     phone = "<MISSING>"
                 if "see store" in hours.lower():
                     hours = "<MISSING>"
-                if store not in ids and store != "" and "Boost Mobile" in typ:
-                    ids.append(store)
+                storeinfo = add + "|" + city + "|" + state
+                if loc == "" or loc is None:
+                    loc = "<MISSING>"
+                if storeinfo not in ids and store != "" and "Boost Mobile" in typ:
+                    ids.append(storeinfo)
                     yield [
                         website,
                         loc,
