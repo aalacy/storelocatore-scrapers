@@ -30,7 +30,12 @@ def fetch_data():
                 street_address += " " + addr.street_address_2
             hours = list(_.select("p")[1].stripped_strings)[1:]
             coord = (
-                links[x + 1].iframe["src"].split("!2d")[1].split("!2m")[0].split("!3d")
+                links[x + 1]
+                .iframe["src"]
+                .split("!2d")[1]
+                .split("!2m")[0]
+                .split("!3m")[0]
+                .split("!3d")
             )
             yield SgRecord(
                 page_url=base_url,
