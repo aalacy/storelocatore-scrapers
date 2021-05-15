@@ -1,7 +1,9 @@
 from sgselenium import SgChrome
 import pandas as pd
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
+import ssl
 
+ssl._create_default_https_context = ssl._create_unverified_context
 search = DynamicGeoSearch(country_codes=[SearchableCountries.USA])
 
 locator_domains = []
@@ -21,7 +23,7 @@ hours_of_operations = []
 
 base_url = "https://online.citi.com/US/ag/citibank-location-finder"
 
-with SgChrome(is_headless=True, executable_path="chromedriver.exe").driver() as driver:
+with SgChrome(is_headless=True).driver() as driver:
     driver.get(base_url)
     for search_lat, search_lon in search:
         data = driver.execute_async_script(
