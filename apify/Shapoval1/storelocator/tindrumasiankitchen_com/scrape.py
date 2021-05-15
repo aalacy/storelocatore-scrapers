@@ -71,6 +71,10 @@ def fetch_data():
             .replace(",", "-")
             or "<MISSING>"
         )
+        cms = "".join(j.get("status"))
+        if cms == "coming soon":
+            hours_of_operation = "Coming Soon"
+
         row = [
             locator_domain,
             page_url,

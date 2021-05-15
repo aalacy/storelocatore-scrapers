@@ -38,7 +38,7 @@ def write_output(data):
 
 
 def fetch_data():
-    url = "https://maceys.com/pharm/locations"
+    url = "https://maceys.com/all"
     locs = []
     r = session.get(url, headers=headers)
     website = "maceys.com"
@@ -56,7 +56,7 @@ def fetch_data():
             Found = True
         if Found and "</ul>" in line:
             Found = False
-        if Found and '<a href="' in line and 'Locations <i class="' not in line:
+        if Found and 'href="' in line and 'Locations <i class="' not in line:
             locs.append("https://maceys.com" + line.split('href="')[1].split('"')[0])
     url = "https://afsshareportal.com/lookUpFeatures.php?callback=jsonpcallbackHours&action=storeInfo&website_url=maceys.com&expandedHours=true"
     r = session.get(url, headers=headers)

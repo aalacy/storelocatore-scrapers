@@ -98,6 +98,19 @@ def fetch_data():
 
             if "cinema is closed at the moment" in base.text:
                 location_type = "Temporarily Closed"
+            try:
+                if (
+                    "venue is opening on"
+                    in base.find(class_="cmv-message__message").text
+                ):
+                    location_type = (
+                        base.find(class_="cmv-message__message")
+                        .text.split(".")[0]
+                        .strip()
+                    )
+            except:
+                pass
+
             geo = (
                 base.find("a", string="Get directions")["href"].split("=")[1].split(",")
             )
