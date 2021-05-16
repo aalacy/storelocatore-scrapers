@@ -215,7 +215,7 @@ def fetchData():
             count = count + 1
             if count % 100 == 0:
                 log.info(f"updated {count} mosques")
-            if details == None:
+            if details is None:
                 failed = failed + 1
                 continue
             yield SgRecord(
