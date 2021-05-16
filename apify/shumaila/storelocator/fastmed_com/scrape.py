@@ -100,8 +100,6 @@ def fetch_data():
                     pass
             except:
                 hours = "<MISSING>"
-        # print(hours)
-
         try:
             hours = hours.split("Family", 1)[0]
         except:
