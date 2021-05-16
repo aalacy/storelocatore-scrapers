@@ -1,6 +1,15 @@
-import undetected_chromedriver as uc
-from sgselenium.sgselenium import webdriver
+import os
+os.system("pip uninstall -y sgselenium")
+os.system("pip install sgselenium==0.0.15")
+
 from bs4 import BeautifulSoup as bs
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from sgselenium.sgselenium import SgChrome
+from webdriver_manager.chrome import ChromeDriverManager
+
+
 import pandas as pd
 
 locator_domains = []
@@ -18,14 +27,13 @@ latitudes = []
 longitudes = []
 hours_of_operations = []
 
-options = webdriver.ChromeOptions()
-options.add_argument("start-maximized")
-options.add_argument("--headless")
-driver = uc.Chrome(options=options)
-driver.get("https://www.metro.ca/en/find-a-grocery#")
-html = driver.page_source
-
-soup = bs(html, "html.parser")
+user_agent='Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0'
+with SgChrome(executable_path=ChromeDriverManager().install(), user_agent=user_agent, is_headless=True).driver() as driver:
+    driver.get("https://www.metro.ca/en/find-a-grocery")
+    WebDriverWait(driver, 20).until(
+        EC.presence_of_element_located((By.CLASS_NAME, "hero--small"))
+    )
+    soup = bs(driver.page_source, 'html.parser')
 
 locations = soup.find_all("li", attrs={"class": "fs--box-shop"})
 
