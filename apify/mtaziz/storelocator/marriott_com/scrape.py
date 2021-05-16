@@ -35,10 +35,7 @@ headers = {
 
 def fetch_data():
 
-    items = []
     with SgChrome() as driver:
-        addresses = []
-        brand_id = "FP"
         driver.get(URL_LOCATION)
         data1 = html.fromstring(driver.page_source, "lxml")
         xpath_view_all_hotels = '//a[contains(text(), "View all hotels")]/@href'
@@ -57,16 +54,10 @@ def fetch_data():
 
             while True:
                 soup = BeautifulSoup(driver.page_source, "lxml")
-                data = html.fromstring(driver.page_source, "lxml")
                 for location in soup.find(
                     "div", {"class": "js-property-list-container"}
                 ).find_all("div", {"data-brand": True}, recursive=False):
                     locator_domain = DOMAIN
-                    detail_id = (
-                        location.find("span", {"class": "l-property-name"})
-                        .parent.parent["href"]
-                        .split("=")[-1]
-                    )
                     slug = location["data-marsha"]
                     page_url = "https://www.marriott.com/hotels/travel/" + str(slug)
                     location_name = location.find(
@@ -128,7 +119,7 @@ def scrape():
     logger.info("Started")
     count = 0
     with SgWriter() as writer:
-        results = fetch_data_au()
+        results = fetch_data()
         for rec in results:
             writer.write_row(rec)
             count = count + 1
