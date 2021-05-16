@@ -80,7 +80,7 @@ for zipcode in search:
     for item in response["data"]["storeSearch"]["fuel"]:
 
         locator_domain = "picknsave.com"
-        page_url = url
+        page_url = "https://www.picknsave.com/stores/details/" + item["divisionNumber"] + "/" + item["storeNumber"]
         location_name = item["vanityName"]
         address = item["address"]["addressLine1"]
         city = item["address"]["city"]
@@ -119,7 +119,7 @@ for zipcode in search:
     for item in response["data"]["storeSearch"]["stores"]:
 
         locator_domain = "picknsave.com"
-        page_url = url
+        page_url = "https://www.picknsave.com/stores/details/" + item["divisionNumber"] + "/" + item["storeNumber"]
         location_name = item["vanityName"]
         address = item["address"]["addressLine1"]
         city = item["address"]["city"]
@@ -160,6 +160,8 @@ for zipcode in search:
             search.found_location_at(item[0], item[1])
 
     x = x + 1
+    if x == 10:
+        break
 
 
 df = pd.DataFrame(
