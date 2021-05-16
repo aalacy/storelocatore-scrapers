@@ -1,7 +1,7 @@
 import time
 import re
 from lxml import html
-from concurrent.futures import *
+from concurrent.futures import ThreadPoolExecutor
 
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
@@ -63,7 +63,6 @@ def fetchMosques():
         body = html.fromstring(response.text, "lxml")
         states = body.xpath('//div[@id="directory_listing_body"]/h2/a')
         log.info(f"Total states in {countryName} = {len(states)}")
-        countryMosqueCount = 0
         for stateNode in states:
             stateName = stateNode.xpath(".//text()")[0].split(" (")[0]
             state = stateNode.xpath(".//@href")[0]
