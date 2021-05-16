@@ -38,8 +38,6 @@ def fetch_data():
                 " ".join(list(sp1.select_one("div.store_info p").stripped_strings)[:-1])
             )
             street_address = addr.street_address_1
-            if not street_address:
-                street_address = ""
             if addr.street_address_2:
                 street_address += " " + addr.street_address_2
             hours = []
@@ -59,10 +57,14 @@ def fetch_data():
                 location_name=_["name"],
                 street_address=street_address,
                 city=addr.city,
-                state=addr.state,
-                zip_postal=addr.postcode,
+                state=_["st_address"].split(",")[-1].strip().split(" ")[0].strip(),
+                zip_postal=_["st_address"]
+                .split(",")[-1]
+                .strip()
+                .split(" ")[-1]
+                .strip(),
                 country_code="US",
-                phone=_["st_contact"][0]["phone"],
+                phone=sp1.select_one("div.store_info a.phone-link").text.strip(),
                 locator_domain=locator_domain,
                 latitude=_c(coord[0]),
                 longitude=_c(coord[1]),

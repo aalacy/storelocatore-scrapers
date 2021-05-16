@@ -22,15 +22,23 @@ def fetch_data():
             if not link.text.strip():
                 continue
             addr = [_.text.strip() for _ in link.select("a") if _.text.strip()]
+            try:
+                coord = link.a["href"].split("/@")[1].split("/data")[0].split(",")
+            except:
+                coord = ["", ""]
             yield SgRecord(
                 page_url=base_url,
-                location_name=link.strong.text.strip(),
+                location_name=" ".join(
+                    [nn.text.strip() for nn in link.select("strong")]
+                ),
                 street_address=addr[0],
                 city=addr[1].split(",")[0].strip(),
                 state=addr[1].split(",")[1].strip().split(" ")[0].strip(),
                 zip_postal=addr[1].split(",")[1].strip().split(" ")[-1].strip(),
                 country_code="US",
                 phone=addr[2],
+                latitude=coord[0],
+                longitude=coord[1],
                 locator_domain=locator_domain,
             )
 

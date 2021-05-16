@@ -42,6 +42,8 @@ def fetch_data():
         zip_postal = addinfo.rsplit(" ", 1)[1]
         country_code = item["country"]
         store_number = item["storeNumber"]
+        if store_number == "11992":
+            continue
         logger.info(f"Store Number: {store_number}")
         if store_number in s:
             continue
