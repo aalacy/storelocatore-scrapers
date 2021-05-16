@@ -70,9 +70,7 @@ def fetch_data():
 
     all_locations = []
     all_codes = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA],
-        max_radius_miles=50,
-        # granularity=Grain_2()
+        country_codes=[SearchableCountries.USA], max_radius_miles=50
     )
     for code in all_codes:
         body = {
