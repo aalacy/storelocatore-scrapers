@@ -1,4 +1,5 @@
 import os
+
 os.system("pip uninstall -y sgselenium")
 os.system("pip install sgselenium==0.0.15")
 
@@ -27,13 +28,19 @@ latitudes = []
 longitudes = []
 hours_of_operations = []
 
-user_agent='Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0'
-with SgChrome(executable_path=ChromeDriverManager().install(), user_agent=user_agent, is_headless=True).driver() as driver:
+user_agent = (
+    "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0"
+)
+with SgChrome(
+    executable_path=ChromeDriverManager().install(),
+    user_agent=user_agent,
+    is_headless=True,
+).driver() as driver:
     driver.get("https://www.metro.ca/en/find-a-grocery")
     WebDriverWait(driver, 20).until(
         EC.presence_of_element_located((By.CLASS_NAME, "hero--small"))
     )
-    soup = bs(driver.page_source, 'html.parser')
+    soup = bs(driver.page_source, "html.parser")
 
 locations = soup.find_all("li", attrs={"class": "fs--box-shop"})
 
