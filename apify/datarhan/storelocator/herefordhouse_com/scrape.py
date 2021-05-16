@@ -3,7 +3,7 @@ import csv
 from lxml import etree
 
 from sgrequests import SgRequests
-from sgselenium import SgFirefox
+from sgselenium import SgChrome
 
 
 def write_output(data):
@@ -55,7 +55,7 @@ def fetch_data():
     )
     for poi_html in all_locations:
         store_url = poi_html.xpath(".//a/@href")[0]
-        with SgFirefox() as driver:
+        with SgChrome() as driver:
             driver.get(store_url)
             iframe = driver.find_element_by_xpath("//iframe[contains(@src, 'google')]")
             driver.switch_to.frame(iframe)
