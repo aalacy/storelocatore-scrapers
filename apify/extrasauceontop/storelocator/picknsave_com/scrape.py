@@ -170,9 +170,6 @@ for zipcode in search:
             search.found_location_at(item[0], item[1])
 
     x = x + 1
-    if x == 10:
-        break
-
 
 df = pd.DataFrame(
     {
