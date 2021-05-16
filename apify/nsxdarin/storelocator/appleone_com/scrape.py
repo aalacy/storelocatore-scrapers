@@ -131,7 +131,7 @@ def fetch_location(zipcode, EV, VSG, VS, ids, url):
                         hours,
                     ]
     except Exception as e:
-        print(e)
+        logger.error(e)
 
 
 def fetch_data():
