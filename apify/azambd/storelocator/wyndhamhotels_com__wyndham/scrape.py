@@ -197,7 +197,7 @@ def fetchData():
         location_name = geoJSON["name"]
         page_url = geoJSON["@id"]
         street_address = geoJSON["address"]["streetAddress"]
-        street_address = re.sub("\s+", " ", street_address)
+        street_address = re.sub(r"\s+", " ", street_address)
         city = geoJSON["address"]["addressLocality"]
         state = getScriptVariable(body, "property_state_name")
         zip_postal = MISSING
