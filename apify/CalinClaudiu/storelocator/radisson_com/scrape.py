@@ -10,6 +10,7 @@ import time
 
 EXPECTED_TOTAL = 0
 DEFAULT_PROXY_URL = "http://groups-RESIDENTIAL,country-us:{}@proxy.apify.com:8000/"
+logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
 
 
 def set_proxies():
@@ -43,6 +44,7 @@ async def fetch_data(index: int, url: str) -> dict:
         ) as client:
             response = await client.get(url)
             soup = b4(response.text, "lxml")
+            logzilla.info(f"URL\n{url}\nLen:{len(response.text)}\n\n")
             data = json.loads(
                 str(
                     soup.find(
@@ -67,7 +69,7 @@ async def fetch_data(index: int, url: str) -> dict:
     return data
 
 
-async def get_brand(brand_code, brand_name, logzilla, url):
+async def get_brand(brand_code, brand_name, url):
     url = url + brand_code
 
     headers = {}
@@ -243,7 +245,6 @@ def clean_record(k):
 
 
 def start():
-    logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
     urls = [
         "https://www.radissonhotelsamericas.com/zimba-api/destinations/hotels?brand=",
         "https://www.radissonhotels.com/zimba-api/destinations/hotels?brand=",
@@ -269,7 +270,6 @@ def start():
                 get_brand(
                     brand["code"],
                     brand["name"],
-                    logzilla,
                     "https://www.radissonhotels.com/zimba-api/destinations/hotels?brand=",
                 )
             )
@@ -346,7 +346,7 @@ def scrape():
         scraper_name="pipeline",
         data_fetcher=start,
         field_definitions=field_defs,
-        log_stats_interval=1,
+        log_stats_interval=30,
     )
 
     pipeline.run()
