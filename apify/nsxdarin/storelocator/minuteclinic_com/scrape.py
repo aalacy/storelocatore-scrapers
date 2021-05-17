@@ -179,7 +179,7 @@ def get_location(url):
         allurls.append(url)
         if "133 Peachtree St" in add:
             phone = "(404) 522-6330"
-        if "sanantonio/7829" in loc:
+        if "sanantonio/7829" in url:
             add = "16580 Huebner Road"
             city = "San Antonio"
             state = "TX"
