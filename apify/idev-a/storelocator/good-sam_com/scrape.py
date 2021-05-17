@@ -23,6 +23,11 @@ def fetch_data():
         for _ in locations["results"]:
             logger.info(_["clickUri"])
             page_url = _["clickUri"]
+            if page_url:
+                page_url = page_url.split("locations")[-1]
+                page_url = f"{locator_domain}locations{page_url}"
+            else:
+                page_url = "<MISSING>"
             logger.info(page_url)
             sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
             addr = parse_address_intl(
@@ -52,10 +57,6 @@ def fetch_data():
                 phone=sp1.select_one("div.location-info__info-col h4").text,
                 locator_domain=locator_domain,
             )
-        division_by_zero = 100 / 0
-        if division_by_zero:
-            division_by_zero = None
-            logger.info(f"I had to add this to please the linter {division_by_zero}")
 
 
 if __name__ == "__main__":
