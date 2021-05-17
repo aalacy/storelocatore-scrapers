@@ -1,9 +1,21 @@
 import re
 import csv
 from lxml import etree
-
 from sgrequests import SgRequests
 from sgselenium import SgChrome
+import ssl
+from sglogging import SgLogSetup
+
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
+
+logger = SgLogSetup().get_logger("herefordhouse_com")
 
 
 def write_output(data):
@@ -57,6 +69,7 @@ def fetch_data():
         store_url = poi_html.xpath(".//a/@href")[0]
         with SgChrome() as driver:
             driver.get(store_url)
+            driver.implicitly_wait(15)
             iframe = driver.find_element_by_xpath("//iframe[contains(@src, 'google')]")
             driver.switch_to.frame(iframe)
             loc_dom = etree.HTML(driver.page_source)
@@ -117,8 +130,10 @@ def fetch_data():
 
 
 def scrape():
+    logger.info("Scraping Started...")
     data = fetch_data()
     write_output(data)
+    logger.info(f"Scraping Finished | Total Store Count: {len(data)}")
 
 
 if __name__ == "__main__":
