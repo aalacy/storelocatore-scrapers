@@ -1,4 +1,3 @@
-from bs4 import BeautifulSoup
 import csv
 from sgzip.dynamic import SearchableCountries
 from sgzip.static import static_coordinate_list
