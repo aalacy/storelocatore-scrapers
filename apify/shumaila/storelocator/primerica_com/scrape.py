@@ -1,7 +1,6 @@
 from bs4 import BeautifulSoup
 import csv
 import re
-import usaddress
 from sgrequests import SgRequests
 
 session1 = SgRequests()
@@ -64,7 +63,6 @@ def fetch_data():
             if True:
                 session = SgRequests()
                 page1 = session.get(link, headers=headers)
-                time.sleep(1)
                 soup1 = BeautifulSoup(page1.text, "html.parser")
                 maindiv = soup1.find("main")
                 xip_list = maindiv.findAll("a")
@@ -75,7 +73,6 @@ def fetch_data():
 
                         statelink = "http://www.primerica.com" + xip["href"]
                         page2 = session1.get(statelink, headers=headers, verify=False)
-                        time.sleep(1)
                         soup2 = BeautifulSoup(page2.text, "html.parser")
                         mainul = soup2.find("ul", {"class": "agent-list"})
                         li_list = mainul.findAll("li")
@@ -93,7 +90,6 @@ def fetch_data():
                                 page3 = session.get(
                                     alink, headers=headers, verify=False
                                 )
-                                time.sleep(2)
 
                                 soup3 = BeautifulSoup(page3.text, "html.parser")
                                 address = soup3.find(
