@@ -1,3 +1,4 @@
+import re
 import csv
 import time
 import random
@@ -70,6 +71,10 @@ def fetch_location(loc):
 
         driver.get(loc)
         text = driver.page_source
+
+        if re.search('access denied', text, re.IGNORECASE):
+            raise Exception()
+
         text = str(text).replace("\r", "").replace("\n", "").replace("\t", "")
         if 'id="restLatLong" value="' in text:
             lat = text.split('id="restLatLong" value="')[1].split(",")[0]
