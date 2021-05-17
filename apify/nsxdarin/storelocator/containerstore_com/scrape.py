@@ -1,8 +1,8 @@
 import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
+import time
 
-session = SgRequests()
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
@@ -39,6 +39,7 @@ def write_output(data):
 
 def fetch_data():
     locs = []
+    session = SgRequests()
     url = "https://www.containerstore.com/locations/index.htm"
     r = session.get(url, headers=headers)
     website = "containerstore.com"
@@ -53,6 +54,7 @@ def fetch_data():
             )
     logger.info(len(locs))
     for loc in locs:
+        session = SgRequests()
         logger.info(loc)
         name = ""
         add = ""
@@ -119,6 +121,7 @@ def fetch_data():
             lng,
             hours,
         ]
+        time.sleep(5)
 
 
 def scrape():

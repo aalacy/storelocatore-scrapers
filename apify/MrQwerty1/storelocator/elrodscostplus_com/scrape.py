@@ -1,5 +1,4 @@
 import csv
-import json
 
 from lxml import html
 from sgrequests import SgRequests
@@ -36,44 +35,45 @@ def write_output(data):
 
 def fetch_data():
     out = []
-    locator_domain = "https://www.bonichoix.com/"
-    api = "https://www.bonichoix.com/en/store-locator/"
 
+    locator_domain = "https://elrodscostplus.com"
+    api_url = "https://elrodscostplus.com/"
     session = SgRequests()
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0"
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
     }
-    r = session.get(api, headers=headers)
+    r = session.get(api_url, headers=headers)
     tree = html.fromstring(r.text)
-    divs = tree.xpath("//div[@class='store-result ']")
+    div = tree.xpath('//div[@class="location-data"]')
 
-    for d in divs:
-        location_name = "".join(d.xpath(".//span[@class='name']/text()")).strip()
-        page_url = "".join(d.xpath(".//a[@class='store-title']/@href"))
-        street_address = ", ".join(
-            d.xpath(".//span[contains(@class, 'location_address_address')]/text()")
-        ).strip()
-        city = "".join(d.xpath(".//span[@class='city']/text()")).strip()
-        state = "".join(d.xpath(".//span[@class='province']/text()")).strip()
-        postal = "".join(d.xpath(".//span[@class='postal_code']/text()")).strip()
-        country_code = "CA"
-        store_number = "<MISSING>"
-        phone = (
-            "".join(d.xpath(".//a[contains(@href, 'tel:')]/text()")).strip()
-            or "<MISSING>"
+    for d in div:
+        slug = "".join(d.xpath('.//a[@class="title_color"]/@href'))
+        page_url = f"{locator_domain}{slug}"
+        location_name = (
+            "".join(d.xpath('.//a[@class="title_color"]/text()'))
+            .replace("\n", "")
+            .strip()
         )
-        latitude = "".join(d.xpath("./@data-lat")) or "<MISSING>"
-        longitude = "".join(d.xpath("./@data-lng")) or "<MISSING>"
         location_type = "<MISSING>"
-
-        _tmp = []
-        text = "".join(d.xpath("./@data-hours")) or "{}"
-        js = json.loads(text)
-        for k, v in js.items():
-            if v:
-                _tmp.append(f"{k}: {v}")
-
-        hours_of_operation = ";".join(_tmp) or "<MISSING>"
+        street_address = "".join(d.xpath('.//div[@class="site-loc-address"]/text()'))
+        csz = "".join(d.xpath('.//div[@class="site-city-state-zip"]/text()'))
+        phone = (
+            "".join(d.xpath('.//div[@class="site-loc-phone"]/text()'))
+            .replace("Phone:", "")
+            .strip()
+        )
+        state = csz.split(",")[1].split()[0].strip()
+        postal = csz.split(",")[1].split()[1].strip()
+        country_code = "US"
+        city = csz.split(",")[0].strip()
+        store_number = page_url.split("+")[-1].strip()
+        latitude = "".join(d.xpath(".//@data-lat"))
+        longitude = "".join(d.xpath(".//@data-lon"))
+        hours_of_operation = (
+            "".join(d.xpath('.//div[@class="site-loc-hours"]/text()'))
+            .replace("Hours:", "")
+            .strip()
+        )
 
         row = [
             locator_domain,
