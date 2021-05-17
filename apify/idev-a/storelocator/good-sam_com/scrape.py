@@ -52,7 +52,7 @@ def fetch_data():
                 phone=sp1.select_one("div.location-info__info-col h4").text,
                 locator_domain=locator_domain,
             )
-        division_by_zero = 100/0
+        division_by_zero = 100 / 0
 
 
 if __name__ == "__main__":
