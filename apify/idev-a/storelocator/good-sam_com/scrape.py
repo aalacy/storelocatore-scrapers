@@ -52,10 +52,6 @@ def fetch_data():
                 phone=sp1.select_one("div.location-info__info-col h4").text,
                 locator_domain=locator_domain,
             )
-        division_by_zero = 100 / 0
-        if division_by_zero:
-            division_by_zero = None
-            logger.info(f"I had to add this to please the linter {division_by_zero}")
 
 
 if __name__ == "__main__":
