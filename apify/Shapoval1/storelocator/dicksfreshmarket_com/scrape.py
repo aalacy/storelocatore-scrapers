@@ -33,7 +33,7 @@ def write_output(data):
 
 
 def fetch_data():
-    locator_domain = "https://dicksfreshmarket.com/contact"
+    locator_domain = "https://dicksfreshmarket.com"
     all_store_data = []
     with SgFirefox() as fox:
         fox.get(locator_domain)
