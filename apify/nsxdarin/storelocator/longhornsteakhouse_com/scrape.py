@@ -165,7 +165,7 @@ def fetch_data():
         for future in as_completed(futures):
             poi = future.result()
             if poi:
-                yield future.result()
+                yield poi
 
 
 def scrape():
