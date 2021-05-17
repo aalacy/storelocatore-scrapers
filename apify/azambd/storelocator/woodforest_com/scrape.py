@@ -61,7 +61,7 @@ def fetchSingleZip(zip_code):
         return zip_code, [], e
     locations = getJSONObjectVariable(r.json(), "locations", [])
     result = []
-    if locations == None:
+    if locations is None:
         locations = []
 
     for location in locations:
