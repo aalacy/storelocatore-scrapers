@@ -149,10 +149,14 @@ def fetch_data():
                 logger.info("---- Saving from result list ----")
                 name = " ".join(raw_address[:-3])
                 street = raw_address[-3]
+                if street in ["25321 Bernwood Dr", "304 S. Euclid"]:
+                    continue
                 city_line = raw_address[-2].strip().split(",")
                 city = city_line[0].strip()
                 state = city_line[-1].strip().split()[0].strip()
                 zip_code = city_line[-1].strip().split()[1].strip()
+                if zip_code == "99999":
+                    continue
                 phone = raw_address[-1]
                 page_url = location_url
                 store_number = "<MISSING>"
@@ -213,6 +217,8 @@ def fetch_data():
                     break
             name = " ".join(raw_address[:-3])
             street = raw_address[-3]
+            if street in ["25321 Bernwood Dr", "304 S. Euclid"]:
+                continue
             city_line = raw_address[-2].strip().split(",")
             city = city_line[0].strip()
             state = city_line[-1].strip().split()[0].strip()
@@ -226,6 +232,8 @@ def fetch_data():
             store.append(city.strip())
             store.append(state.replace("N. Carolina", "NC").strip())
             store.append(zip_code)
+            if zip_code == "99999":
+                continue
             if zip_code.isdigit():
                 store.append("US")
             else:
@@ -395,9 +403,12 @@ def fetch_data():
                                             "div", {"class": "col-xs-12 col-sm-8"}
                                         )[1:][i].find("iframe")
                                     except:
-                                        iframe = page_soup.find_all(
-                                            "div", {"class": "col-xs-12 col-sm-8"}
-                                        )[i].find("iframe")
+                                        try:
+                                            iframe = page_soup.find_all(
+                                                "div", {"class": "col-xs-12 col-sm-8"}
+                                            )[i].find("iframe")
+                                        except:
+                                            pass
                         elif len(addresses) > 2:
                             maps = page_soup.find_all("div", {"class": "mapWrapper"})
                             if len(maps) > 2:
@@ -469,6 +480,8 @@ def fetch_data():
                     store.append(city.strip())
                     store.append(state.replace("N. Carolina", "NC").strip())
                     store.append(zip_code)
+                    if zip_code == "99999":
+                        continue
                     if zip_code.isdigit():
                         store.append("US")
                     else:
