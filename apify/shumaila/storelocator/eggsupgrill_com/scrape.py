@@ -64,7 +64,7 @@ def fetch_data():
 
             phone = div.find("p", {"class": "phone"}).text
             hours = div.find("p", {"class": "hours"}).text
-            flag = 0
+
             lat = "<MISSING>"
             longt = "<MISSING>"
             try:
