@@ -18,6 +18,7 @@ def write_output(data):
         writer.writerow(
             [
                 "locator_domain",
+                "page_url",
                 "location_name",
                 "street_address",
                 "city",
@@ -92,6 +93,7 @@ def fetch_data():
         country = "US"
         typ = "Store"
         zc = item["zipcode"]
+        loc = "https://www.southernstates.com/farm-store/store-locations/" + store
         hours = (
             "Mon: "
             + item["storeOpenMonday"].split(" ")[1].rsplit(":", 1)[0]
@@ -151,6 +153,7 @@ def fetch_data():
         if "Southern States" in name:
             yield [
                 website,
+                loc,
                 name,
                 add,
                 city,
