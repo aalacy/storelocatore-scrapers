@@ -25,14 +25,14 @@ def fetch_data():
             )
         )
         locations = json.loads(
-            driver.page_source.split("window.siteData = ")[1]
+            driver.page_source.split("window.__BOOTSTRAP_STATE__ = ")[1]
             .strip()
-            .split("window.__BOOTSTRAP_STATE__ =")[0]
+            .split("</script>")[0]
             .strip()[:-1]
         )
-        for cell in locations["page"]["properties"]["contentAreas"]["userContent"][
-            "content"
-        ]["cells"]:
+        for cell in locations["siteData"]["page"]["properties"]["contentAreas"][
+            "userContent"
+        ]["content"]["cells"]:
             location_name = ""
             street_address = ""
             phone = ""
