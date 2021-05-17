@@ -49,10 +49,17 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
+def fetch(loc, driver):
+    return driver.execute_async_script(f"""
+        var done = arguments[0]
+        fetch("{loc}")
+            .then(res => res.text())
+            .then(done)
+    """)
+
 
 @retry(stop=stop_after_attempt(3))
-def fetch_location(loc):
-    with SgChrome() as driver:
+def fetch_location(loc, driver):
         logger.info("Pulling Location %s..." % loc)
         website = "longhornsteakhouse.com"
         typ = "Restaurant"
@@ -69,8 +76,7 @@ def fetch_location(loc):
         name = ""
         store = loc.rsplit("/", 1)[1]
 
-        driver.get(loc)
-        text = driver.page_source
+        text = fetch(loc, driver)
 
         if re.search("access denied", text, re.IGNORECASE):
             raise Exception()
@@ -152,8 +158,9 @@ def fetch_data():
             lurl = line.split("<loc>")[1].split("<")[0]
             locs.append(lurl)
 
-    with ThreadPoolExecutor() as executor:
-        futures = [executor.submit(fetch_location, loc) for loc in locs]
+    with ThreadPoolExecutor() as executor, SgChrome() as driver:
+        driver.get('https://www.longhornsteakhouse.com/locations/')
+        futures = [executor.submit(fetch_location, loc, driver) for loc in locs]
         for future in as_completed(futures):
             yield future.result()
 
