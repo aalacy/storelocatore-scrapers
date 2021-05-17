@@ -117,10 +117,8 @@ def fetch_data():
 
 
 def scrape():
-    logger.info("Scraping Started...")
     data = fetch_data()
     write_output(data)
-    logger.info(f"Scraping Finished | Total Store Count: {len(data)}")
 
 
 if __name__ == "__main__":
