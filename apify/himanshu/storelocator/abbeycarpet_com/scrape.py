@@ -149,7 +149,7 @@ def fetch_data():
                 logger.info("---- Saving from result list ----")
                 name = " ".join(raw_address[:-3])
                 street = raw_address[-3]
-                if street in ["25321 Bernwood Dr", "304 S. Euclid"]:
+                if street.strip() in ["25321 Bernwood Dr", "304 S. Euclid"]:
                     continue
                 city_line = raw_address[-2].strip().split(",")
                 city = city_line[0].strip()
@@ -217,7 +217,7 @@ def fetch_data():
                     break
             name = " ".join(raw_address[:-3])
             street = raw_address[-3]
-            if street in ["25321 Bernwood Dr", "304 S. Euclid"]:
+            if street.strip() in ["25321 Bernwood Dr", "304 S. Euclid"]:
                 continue
             city_line = raw_address[-2].strip().split(",")
             city = city_line[0].strip()
