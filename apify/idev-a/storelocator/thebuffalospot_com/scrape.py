@@ -96,12 +96,6 @@ def fetch_data():
                 ),
             )
 
-        # locations = json.loads(
-        #     res.split('var map1 = $("#map1").maps(')[1]
-        #     .strip()
-        #     .split(').data("wpgmp_maps");')[0]
-        # )
-
 
 if __name__ == "__main__":
     with SgWriter() as writer:
