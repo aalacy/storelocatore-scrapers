@@ -1,4 +1,5 @@
 import csv
+import usaddress
 
 from lxml import html
 from sgrequests import SgRequests
@@ -33,6 +34,46 @@ def write_output(data):
             writer.writerow(row)
 
 
+def get_address(line):
+    tag = {
+        "Recipient": "recipient",
+        "AddressNumber": "address1",
+        "AddressNumberPrefix": "address1",
+        "AddressNumberSuffix": "address1",
+        "StreetName": "address1",
+        "StreetNamePreDirectional": "address1",
+        "StreetNamePreModifier": "address1",
+        "StreetNamePreType": "address1",
+        "StreetNamePostDirectional": "address1",
+        "StreetNamePostModifier": "address1",
+        "StreetNamePostType": "address1",
+        "CornerOf": "address1",
+        "IntersectionSeparator": "address1",
+        "LandmarkName": "address1",
+        "USPSBoxGroupID": "address1",
+        "USPSBoxGroupType": "address1",
+        "USPSBoxID": "address1",
+        "USPSBoxType": "address1",
+        "OccupancyType": "address2",
+        "OccupancyIdentifier": "address2",
+        "SubaddressIdentifier": "address2",
+        "SubaddressType": "address2",
+        "PlaceName": "city",
+        "StateName": "state",
+        "ZipCode": "postal",
+    }
+
+    a = usaddress.tag(line, tag_mapping=tag)[0]
+    street_address = f"{a.get('address1')} {a.get('address2') or ''}".strip()
+    if street_address == "None":
+        street_address = "<MISSING>"
+    city = a.get("city") or "<MISSING>"
+    state = a.get("state") or "<MISSING>"
+    postal = a.get("postal") or "<MISSING>"
+
+    return street_address, city, state, postal
+
+
 def fetch_data():
     out = []
 
@@ -53,14 +94,13 @@ def fetch_data():
             d.xpath('.//span[@class="branch-panel-title left"]/text()')
         )
         location_type = "<MISSING>"
-        ad = " ".join(d.xpath(".//address/text()")).replace("\n", "").strip()
-        street_address = " ".join(ad.split(",")[0].split()[:-1])
-        phone = "".join(d.xpath('.//p[@class="phone info-text"]/text()'))
-        state = ad.split(",")[1].split()[0].strip()
-        postal = ad.split(",")[1].split()[1].strip()
+        line = " ".join(d.xpath(".//address/text()")).strip()
+        street_address, city, state, postal = get_address(line)
+        if street_address == "<MISSING>":
+            street_address = line.split("  ")[0]
         country_code = "US"
-        city = ad.split(",")[0].split()[-1].strip()
         store_number = "<MISSING>"
+        phone = "".join(d.xpath('.//p[@class="phone info-text"]/text()'))
         latitude = "".join(
             d.xpath('.//following-sibling::div[1]//div[@class="gMap"]/@data-lat')
         )
