@@ -43,11 +43,11 @@ def write_output(data):
 def fetch_data():
     data = []
     cleanr = re.compile(r"<[^>]+>")
-    url = "https://eggsupgrill.com/locations/"
+    url = "https://eggsupgrill.com/"
     p = 0
     r = session.get(url, headers=headers, verify=False)
     soup = BeautifulSoup(r.text, "html.parser")
-    linklist = soup.find("ul", {"id": "locations-top-menu"}).findAll("a")
+    linklist = soup.find("div", {"id": "nav-locations"}).findAll("a")
 
     for link in linklist:
         link = link["href"]
@@ -65,6 +65,8 @@ def fetch_data():
             phone = div.find("p", {"class": "phone"}).text
             hours = div.find("p", {"class": "hours"}).text
             flag = 0
+            lat = "<MISSING>"
+            longt = "<MISSING>"
             try:
                 coord = (
                     div.find("p", {"class": "directions"})
@@ -72,21 +74,22 @@ def fetch_data():
                     .split("/@")[1]
                     .split("/data")[0]
                 )
+                lat, longt = coord.split(",", 1)
+                longt = longt.split(",", 1)[0]
             except:
                 try:
                     coord = div.find("p", {"class": "directions"}).find("a")["href"]
-                    m = session.get(coord, headers=headers, verify=False)
-                    coord = m.url
-                    coord = coord.split("/@")[1].split("/data")[0]
+                    m1 = session.get(coord, headers=headers, verify=False)
+                    coord = m1.url
+                    lat, longt = coord.split("/@")[1].split("/data")[0].split(",", 1)
+                    longt = longt.split(",", 1)[0]
                 except:
-                    flag = 1
-                    pass
-            if flag == 0:
-                lat, longt = coord.split(",", 1)
-                longt = longt.split(",", 1)[0]
-            else:
-                lat = "<MISSING>"
-                longt = "<MISSING>"
+                    try:
+                        lat = m.text.split('data-lat="', 1)[1].split('"', 1)[0]
+                        longt = m.text.split('data-lng="', 1)[1].split('"', 1)[0]
+                    except:
+                        lat = "<MISSING>"
+                        longt = "<MISSING>"
             address = usaddress.parse(address)
             i = 0
             street = ""
@@ -98,8 +101,8 @@ def fetch_data():
                 if (
                     temp[1].find("Address") != -1
                     or temp[1].find("Street") != -1
-                    or temp[1].find("Occupancy") != -1
                     or temp[1].find("Recipient") != -1
+                    or temp[1].find("Occupancy") != -1
                     or temp[1].find("BuildingName") != -1
                     or temp[1].find("USPSBoxType") != -1
                     or temp[1].find("USPSBoxID") != -1
@@ -131,6 +134,9 @@ def fetch_data():
             except:
                 pass
             phone = phone.replace("-EGGS (3447)", "-3447")
+            if "North" in city:
+                city = city.replace("North ", "").strip()
+                street = street + " North"
             data.append(
                 [
                     "https://eggsupgrill.com",
