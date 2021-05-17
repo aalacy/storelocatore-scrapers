@@ -35,6 +35,7 @@ def fetch_data():
                 longitude=_["lng"],
                 country_code=_["country"],
                 phone=_["phone"],
+                location_type=bs(_["category"], "lxml").text,
                 locator_domain=locator_domain,
                 hours_of_operation="; ".join(hours),
             )
