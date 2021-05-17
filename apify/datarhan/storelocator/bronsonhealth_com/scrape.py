@@ -93,6 +93,16 @@ def fetch_data():
         hoo = loc_dom.xpath('//div[@class="OfficeHours"]//text()')
         hoo = [e.strip() for e in hoo if e.strip()]
         hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
+        hoo = []
+        if hours_of_operation == "<MISSING>":
+            for day, hours in poi["OfficeHoursList"].items():
+                if hours["Status"] == "Closed":
+                    hoo.append(f"{day} - Closed")
+                else:
+                    opens = hours["OfficeHours"][0]["OpenTime"]
+                    closes = hours["OfficeHours"][0]["CloseTime"]
+                    hoo.append(f"{day} - {opens} - {closes}")
+                    hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
 
         item = [
             domain,
