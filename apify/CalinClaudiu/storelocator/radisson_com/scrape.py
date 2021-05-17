@@ -44,8 +44,7 @@ async def fetch_data(index: int, url: str) -> dict:
         ) as client:
             response = await client.get(url)
             soup = b4(response.text, "lxml")
-            print(url)  # noqa
-            print(len(response.text))  # noqa
+            logzilla.info(f"URL\n{url}\nLen:{len(response.text)}\n\n")
             data = json.loads(
                 str(
                     soup.find(
