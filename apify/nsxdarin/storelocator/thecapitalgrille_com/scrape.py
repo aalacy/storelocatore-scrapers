@@ -1,9 +1,9 @@
 import re
 import csv
+import time
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
 from sgselenium import SgChrome
-import time
 from tenacity import retry, stop_after_attempt
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
