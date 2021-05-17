@@ -163,7 +163,9 @@ def fetch_data():
         driver.get("https://www.longhornsteakhouse.com/locations/")
         futures = [executor.submit(fetch_location, loc, driver) for loc in locs]
         for future in as_completed(futures):
-            yield future.result()
+            poi = future.result()
+            if poi:
+                yield future.result()
 
 
 def scrape():
