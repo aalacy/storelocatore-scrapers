@@ -7,6 +7,7 @@ import httpx
 import os
 import json
 import time
+import pprint
 
 EXPECTED_TOTAL = 0
 DEFAULT_PROXY_URL = "http://groups-RESIDENTIAL,country-us:{}@proxy.apify.com:8000/"
@@ -43,6 +44,8 @@ async def fetch_data(index: int, url: str) -> dict:
         ) as client:
             response = await client.get(url)
             soup = b4(response.text, "lxml")
+            pprint(url)
+            pprint(len(response.text))
             data = json.loads(
                 str(
                     soup.find(
@@ -346,7 +349,7 @@ def scrape():
         scraper_name="pipeline",
         data_fetcher=start,
         field_definitions=field_defs,
-        log_stats_interval=1,
+        log_stats_interval=30,
     )
 
     pipeline.run()
