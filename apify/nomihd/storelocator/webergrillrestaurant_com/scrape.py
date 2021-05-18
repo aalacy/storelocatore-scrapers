@@ -126,7 +126,13 @@ def fetch_data():
         hours_of_operation = "; ".join(hours).replace("day;", "day:")
 
         latitude = store_res.text.split('"latitude":')[1].split(",")[0].strip()
-        longitude = store_res.text.split('"longitude":')[1].split(",")[0].strip()
+        longitude = (
+            store_res.text.split('"longitude":')[1]
+            .split(",")[0]
+            .strip()
+            .replace("}", "")
+            .strip()
+        )
 
         raw_address = "<MISSING>"
 

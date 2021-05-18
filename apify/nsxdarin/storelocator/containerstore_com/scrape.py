@@ -79,8 +79,6 @@ def fetch_data():
                 city = line2.split('"addressLocality": "')[1].split('"')[0]
             if '"postalCode": "' in line2:
                 zc = line2.split('"postalCode": "')[1].split('"')[0]
-            if '"addressCountry": "' in line2:
-                country = line2.split('"addressCountry": "')[1].split('"')[0]
             if '"latitude": ' in line2:
                 lat = line2.split('"latitude": ')[1].split(",")[0]
             if '"longitude": ' in line2:

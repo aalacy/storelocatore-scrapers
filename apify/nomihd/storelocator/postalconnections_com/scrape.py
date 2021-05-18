@@ -97,7 +97,7 @@ def fetch_data():
         if len(phone) <= 0:
             phone = store_sel.xpath('//a[@class="c-header__phone"]/text()')
             if len(phone) <= 0:
-                "".join(
+                phone = "".join(
                     store_sel.xpath(
                         '//section[@class="section hero store"]//a[contains(@href,"tel:")]/text()'
                     )
@@ -110,6 +110,7 @@ def fetch_data():
         hours_of_operation = "; ".join(
             store_sel.xpath('//span[@class="c-header__hours"]/text()')
         ).strip()
+
         if len(hours_of_operation) <= 0:
             try:
                 hours_of_operation = (
@@ -141,6 +142,15 @@ def fetch_data():
 
             except:
                 pass
+
+        else:
+            if len(hours_of_operation.split("; Mon")) > 0:
+                if location_name == "Modesto":
+                    hours_of_operation = hours_of_operation.split("; Mon")[0].strip()
+                elif location_name == "Modesto #2":
+                    hours_of_operation = (
+                        "Mon" + hours_of_operation.split("; Mon")[1].strip()
+                    )
 
         store_number = "<MISSING>"
 

@@ -1,5 +1,7 @@
 import re
 import csv
+from random import randint
+from time import sleep
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
 from sgselenium import SgChrome
@@ -73,7 +75,11 @@ def fetch_location(loc, driver):
     lat = ""
     lng = ""
     hours = ""
-    text = fetch(loc, driver)
+
+    driver.get(loc)
+    sleep(randint(2, 3))
+
+    text = driver.page_source
 
     if re.search("access denied", text, re.IGNORECASE):
         raise Exception()
