@@ -36,8 +36,17 @@ async def get_main(url, headers):
     async with httpx.AsyncClient(
         proxies=proxies, headers=headers, timeout=timeout
     ) as client:
-        response = await client.get(url)
-        return response.json()
+        retry_loop = 5
+        retries = 0
+        response = None
+        while retries <= retry_loop and not response:
+            try:
+                response = await client.get(url)
+                retries = retry_loop
+            except Exception as e:
+                retries += 1
+        if response:
+            return response.json()
 
 
 async def fetch_data(index: int, url: str, headers) -> dict:
@@ -47,15 +56,7 @@ async def fetch_data(index: int, url: str, headers) -> dict:
         async with httpx.AsyncClient(
             proxies=proxies, headers=headers, timeout=timeout
         ) as client:
-            retry_loop = 5
-            retries = 0
-            response = None
-            while retries <= retry_loop and not response:
-                try:
-                    response = await client.get(url)
-                    retries = retry_loop
-                except Exception as e:
-                    retries += 1
+            response = await client.get(url)
             soup = b4(response.text, "lxml")
             logzilla.info(f"URL\n{url}\nLen:{len(response.text)}\n")
             if len(response.text) < 400:
