@@ -50,6 +50,7 @@ async def get_main(url, headers):
 
 
 async def fetch_data(index: int, url: str, headers) -> dict:
+
     timeout = httpx.Timeout(60.0, connect=120.0)
     data = {}
     if len(url) > 0:
