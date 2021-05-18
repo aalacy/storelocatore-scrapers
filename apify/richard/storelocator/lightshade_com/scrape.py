@@ -1,18 +1,12 @@
 import csv
-import time
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
 
 logger = SgLogSetup().get_logger("lightshade_com")
 
-session = SgRequests()
-headers = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
-}
-
 
 def write_output(data):
-    with open("data.csv", mode="w", newline="") as output_file:
+    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
         writer = csv.writer(
             output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
         )
@@ -42,8 +36,12 @@ def write_output(data):
 
 def fetch_data():
 
-    data = []
-
+    out = []
+    locator_domain = "https://lightshade.com/"
+    session = SgRequests()
+    headers = {
+        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+    }
     url = "https://lightshade.com/wp-admin/admin-ajax.php"
     params = (
         ("action", "asl_load_stores"),
@@ -79,34 +77,32 @@ def fetch_data():
         ccode = store["country"]
         if ccode == "United States":
             ccode = "US"
-        data.append(
-            [
-                "https://lightshade.com/",
-                link,
-                title,
-                street,
-                city,
-                state,
-                pcode,
-                "US",
-                sid,
-                phone,
-                ltype,
-                lat,
-                longt,
-                hours,
-            ]
-        )
-        p += 1
 
-    return data
+        row = [
+            locator_domain,
+            link,
+            title,
+            street,
+            city,
+            state,
+            pcode,
+            ccode,
+            sid,
+            phone,
+            ltype,
+            lat,
+            longt,
+            hours,
+        ]
+        out.append(row)
+
+    return out
 
 
 def scrape():
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
     data = fetch_data()
     write_output(data)
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()
