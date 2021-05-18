@@ -67,14 +67,20 @@ def fetch_data():
         latitude = "<MISSING>"
         longitude = "<MISSING>"
         location_type = "<MISSING>"
-        hours_of_operation = (
-            "".join(
-                d.xpath(
-                    ".//h4[contains(text(), 'Lobby Hours:')]/following-sibling::p[1]/text()"
-                )
+        hours_of_operation = "".join(
+            d.xpath(
+                ".//h4[contains(text(), 'Lobby Hours:')]/following-sibling::p[1]/text()"
             )
-            or "<MISSING>"
         )
+        if not hours_of_operation:
+            hours_of_operation = (
+                " ".join(
+                    d.xpath(
+                        ".//h4[contains(text(), 'Drive-Up Hours')]/following-sibling::p/text()"
+                    )
+                )
+                or "<MISSING>"
+            )
 
         row = [
             locator_domain,
