@@ -33,7 +33,6 @@ proxies = set_proxies()
 
 async def get_main(url, headers):
     timeout = httpx.Timeout(120.0)
-    data = {}
     async with httpx.AsyncClient(
         proxies=proxies, headers=headers, timeout=timeout
     ) as client:
