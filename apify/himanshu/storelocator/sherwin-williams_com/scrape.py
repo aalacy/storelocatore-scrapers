@@ -44,6 +44,10 @@ def write_output(data):
             writer.writerow(row)
 
 
+def clean(x):
+    return x.replace("&#039;", "'").replace("amp;", "")
+
+
 def fetch_data():
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36"
@@ -116,12 +120,12 @@ def fetch_data():
                 search.found_location_at(lat, lng)
                 store = []
                 store.append("https://www.sherwin-williams.com")
-                store.append(store_data["name"])
-                store.append(store_data["address"])
+                store.append(clean(store_data["name"]))
+                store.append(clean(store_data["address"]))
                 if store[-1] in addresses:
                     continue
                 addresses.append(store[-1])
-                store.append(store_data["city"])
+                store.append(clean(store_data["city"]))
                 store.append(store_data["state"])
                 store_data["zipcode"] = store_data["zipcode"].replace(
                     "                                   ", ""
