@@ -51,7 +51,6 @@ def fetch_data():
     )
     r = session.get(url, headers=headers, params=params, verify=False)
     stores = r.json()
-    p = 0
 
     for store in stores:
         link = store["website"]
