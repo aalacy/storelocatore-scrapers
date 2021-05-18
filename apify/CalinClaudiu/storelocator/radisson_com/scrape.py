@@ -44,7 +44,8 @@ async def fetch_data(index: int, url: str) -> dict:
         ) as client:
             response = await client.get(url)
             soup = b4(response.text, "lxml")
-            logzilla.info(f"URL\n{url}\nLen:{len(response.text)}\n\n")
+            logzilla.info(f"URL\n{url}\nLen:{len(response.text)}\n")
+            logzilla.info(f"Content\n{response.text}\n\n")
             data = json.loads(
                 str(
                     soup.find(
@@ -92,7 +93,7 @@ async def get_brand(brand_code, brand_name, url):
     son = session.get(url, headers=headers).json()
     task_list = []
     results = []
-    chunk_size = 50
+    chunk_size = 10
     last_chunk = 0
     last_tick = time.monotonic()
     total_records = len(son["hotels"])
