@@ -1,6 +1,5 @@
 import re
 import csv
-import time
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
 from sgselenium import SgChrome
@@ -43,7 +42,20 @@ def write_output(data):
 
 
 @retry(reraise=True, stop=stop_after_attempt(3))
-def fetch_location(loc):
+def fetch(loc, driver):
+    return driver.execute_async_script(
+        f"""
+        var done = arguments[0]
+
+        fetch("{loc}")
+            .then(res => res.text())
+            .then(done)
+    """
+    )
+
+
+@retry(reraise=True, stop=stop_after_attempt(3))
+def fetch_location(loc, driver):
     logger.info(loc)
 
     website = "thecapitalgrille.com"
@@ -51,7 +63,6 @@ def fetch_location(loc):
     country = "US"
     CS = False
 
-    time.sleep(10)
     name = ""
     add = ""
     city = ""
@@ -62,34 +73,31 @@ def fetch_location(loc):
     lat = ""
     lng = ""
     hours = ""
-    with SgChrome() as driver:
-        driver.get(loc)
-        text = driver.page_source
+    text = fetch(loc, driver)
 
-        if re.search("access denied", text, re.IGNORECASE):
-            raise Exception()
+    if re.search("access denied", text, re.IGNORECASE):
+        raise Exception()
 
-        text = str(text).replace("\r", "").replace("\n", "").replace("\t", "")
-        if "<title>" in text:
-            name = text.split("<title>")[1].split(" |")[0]
-        if "> ARRIVING" in text:
-            CS = True
-        if '"postalCode":"' in text:
-            zc = text.split('"postalCode":"')[1].split('"')[0]
-        if '"addressRegion":"' in text:
-            state = text.split('"addressRegion":"')[1].split('"')[0]
-        if '"streetAddress":"' in text:
-            add = text.split('"streetAddress":"')[1].split('"')[0]
-            phone = text.split('telephone":"')[1].split('"')[0]
-        if '"addressRegion":"' in text:
-            city = text.split('addressLocality":"')[1].split('"')[0]
-        if '"latitude":"' in text:
-            lat = text.split('"latitude":"')[1].split('"')[0]
-            lng = text.split('"longitude":"')[1].split('"')[0]
-        if ',"openingHours":["' in text:
-            hours = (
-                text.split(',"openingHours":["')[1].split('"]')[0].replace('","', "; ")
-            )
+    text = str(text).replace("\r", "").replace("\n", "").replace("\t", "")
+    if "<title>" in text:
+        name = text.split("<title>")[1].split(" |")[0]
+    if "> ARRIVING" in text:
+        CS = True
+    if '"postalCode":"' in text:
+        zc = text.split('"postalCode":"')[1].split('"')[0]
+    if '"addressRegion":"' in text:
+        state = text.split('"addressRegion":"')[1].split('"')[0]
+    if '"streetAddress":"' in text:
+        add = text.split('"streetAddress":"')[1].split('"')[0]
+        phone = text.split('telephone":"')[1].split('"')[0]
+    if '"addressRegion":"' in text:
+        city = text.split('addressLocality":"')[1].split('"')[0]
+    if '"latitude":"' in text:
+        lat = text.split('"latitude":"')[1].split('"')[0]
+        lng = text.split('"longitude":"')[1].split('"')[0]
+    if ',"openingHours":["' in text:
+        hours = text.split(',"openingHours":["')[1].split('"]')[0].replace('","', "; ")
+
     if hours == "":
         hours = "<MISSING>"
     if "/troy/" in loc:
@@ -146,8 +154,9 @@ def fetch_data():
         ):
             locs.append(line.split("<loc>")[1].split("<")[0])
 
-    with ThreadPoolExecutor() as executor:
-        futures = [executor.submit(fetch_location, loc) for loc in locs]
+    with ThreadPoolExecutor() as executor, SgChrome() as driver:
+        driver.get("https://www.thecapitalgrille.com/home")
+        futures = [executor.submit(fetch_location, loc, driver) for loc in locs]
         for future in as_completed(futures):
             poi = future.result()
             if poi:
