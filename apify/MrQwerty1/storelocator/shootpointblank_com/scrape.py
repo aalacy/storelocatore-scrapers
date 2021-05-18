@@ -65,6 +65,9 @@ def get_data(url):
     ).strip()
     line = tree.xpath("//span[@class='set-store']/following-sibling::p[1]/text()")
     line = list(filter(None, [l.strip() for l in line]))
+    if not line:
+        return
+
     if line[-1][0].isdigit() or line[-1][0] == "(":
         phone = line.pop()
     else:
