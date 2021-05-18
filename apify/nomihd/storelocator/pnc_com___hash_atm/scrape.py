@@ -53,8 +53,6 @@ def fetch_records_for(coords):
 
 def process_record(raw_results_from_one_coordinate):
     for store in raw_results_from_one_coordinate:
-        if store["locationType"]["locationTypeDesc"] != "ATM":
-            continue
         if store["partnerFlag"] == "1":
             continue
         if store["locationId"] in id_list:
@@ -81,26 +79,31 @@ def process_record(raw_results_from_one_coordinate):
         phone = "<MISSING>"
 
         location_type = store["locationType"]["locationTypeDesc"]
+        if location_type != "ATM":
+            if store["children"] is not None:
+                location_type = "BRANCH AND ATM"
+
         hours_of_operation = "<MISSING>"
         latitude = store["address"]["latitude"]
         longitude = store["address"]["longitude"]
 
-        yield SgRecord(
-            locator_domain=locator_domain,
-            page_url=page_url,
-            location_name=location_name,
-            street_address=street_address,
-            city=city,
-            state=state,
-            zip_postal=zip,
-            country_code=country_code,
-            store_number=store_number,
-            phone=phone,
-            location_type=location_type,
-            latitude=latitude,
-            longitude=longitude,
-            hours_of_operation=hours_of_operation,
-        )
+        if location_type == "ATM" or location_type == "BRANCH AND ATM":
+            yield SgRecord(
+                locator_domain=locator_domain,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
 
 
 def scrape():
