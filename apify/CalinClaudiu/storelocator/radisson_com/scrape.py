@@ -1,6 +1,5 @@
 from sgscrape import simple_scraper_pipeline as sp
 from sglogging import sglog
-from sgrequests import SgRequests
 from bs4 import BeautifulSoup as b4
 import asyncio
 import httpx
@@ -32,6 +31,15 @@ def set_proxies():
 proxies = set_proxies()
 
 
+async def get_main(url, headers):
+    timeout = httpx.Timeout(120.0)
+    async with httpx.AsyncClient(
+        proxies=proxies, headers=headers, timeout=timeout
+    ) as client:
+        response = await client.get(url)
+        return response.json()
+
+
 async def fetch_data(index: int, url: str) -> dict:
     headers = {
         "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
@@ -45,7 +53,8 @@ async def fetch_data(index: int, url: str) -> dict:
             response = await client.get(url)
             soup = b4(response.text, "lxml")
             logzilla.info(f"URL\n{url}\nLen:{len(response.text)}\n")
-            logzilla.info(f"Content\n{response.text}\n\n")
+            if len(response.text) < 400:
+                logzilla.info(f"Content\n{response.text}\n\n")
             data = json.loads(
                 str(
                     soup.find(
@@ -70,18 +79,17 @@ async def fetch_data(index: int, url: str) -> dict:
     return data
 
 
-async def get_brand(brand_code, brand_name, url):
-    url = url + brand_code
+async def get_brand(brand_code, brand_name, url, url2):
 
     headers = {}
-    headers["authority"] = "www.radissonhotels.com"
+    headers["authority"] = str(url).replace("https://", "")
     headers["method"] = "GET"
     headers["path"] = "/zimba-api/destinations/hotels?brand=" + brand_code
     headers["scheme"] = "https"
     headers["accept"] = "application/json, text/plain, */*"
     headers["accept-encoding"] = "gzip, deflate, br"
     headers["accept-language"] = "en-us"
-    headers["referer"] = "https://www.radissonhotels.com/en-us/destination"
+    headers["referer"] = str("{}/en-us/destination").format(url)
     headers["sec-fetch-dest"] = "empty"
     headers["sec-fetch-mode"] = "cors"
     headers["sec-fetch-site"] = "same-origin"
@@ -89,8 +97,7 @@ async def get_brand(brand_code, brand_name, url):
         "user-agent"
     ] = "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.66 Safari/537.36"
 
-    session = SgRequests()
-    son = session.get(url, headers=headers).json()
+    son = await get_main(str(url + url2 + brand_code), headers)
     task_list = []
     results = []
     chunk_size = 10
@@ -247,9 +254,10 @@ def clean_record(k):
 
 def start():
     urls = [
-        "https://www.radissonhotelsamericas.com/zimba-api/destinations/hotels?brand=",
-        "https://www.radissonhotels.com/zimba-api/destinations/hotels?brand=",
+        "https://www.radissonhotelsamericas.com",
+        "https://www.radissonhotels.com",
     ]
+    url2 = "/zimba-api/destinations/hotels?brand="
     brands = [
         {"code": "pii", "name": "Park Inn by Radisson"},
         {"code": "rdb", "name": "Radisson Blu"},
@@ -271,7 +279,8 @@ def start():
                 get_brand(
                     brand["code"],
                     brand["name"],
-                    "https://www.radissonhotels.com/zimba-api/destinations/hotels?brand=",
+                    url,
+                    url2,
                 )
             )
             for i in data:
