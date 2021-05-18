@@ -46,7 +46,7 @@ def fetch_data():
 
     for location in soup.find_all("ul", {"class": "sub-menu"})[2].find_all("a"):
         location_request = session.get(location["href"], headers=headers)
-        location_soup = BeautifulSoup(location_request.text, "lxml")
+        location_soup = BeautifulSoup(location_request.text, "html.parser")
 
         hours = " ".join(
             list(location_soup.find("div", {"class": "hours-data"}).stripped_strings)
