@@ -11,6 +11,14 @@ _headers = {
 }
 
 
+def _dedu(v):
+    _name = []
+    for h in v.split(" "):
+        if h not in _name:
+            _name.append(h)
+    return " ".join(_name)
+
+
 def fetch_data():
     locator_domain = "http://hightechburrito.com/"
     base_url = "http://hightechburrito.com/locations/"
@@ -26,11 +34,10 @@ def fetch_data():
                 coord = link.a["href"].split("/@")[1].split("/data")[0].split(",")
             except:
                 coord = ["", ""]
+            location_name = " ".join([nn.text.strip() for nn in link.select("strong")])
             yield SgRecord(
                 page_url=base_url,
-                location_name=" ".join(
-                    [nn.text.strip() for nn in link.select("strong")]
-                ),
+                location_name=_dedu(location_name),
                 street_address=addr[0],
                 city=addr[1].split(",")[0].strip(),
                 state=addr[1].split(",")[1].strip().split(" ")[0].strip(),

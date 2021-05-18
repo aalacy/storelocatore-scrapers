@@ -8,7 +8,7 @@ _headers = {
 
 
 def fetch_data():
-    locator_domain = "https://www.altamed.org/"
+    locator_domain = "https://www.ridgewoodbank.com/"
     base_url = "https://liveapi.yext.com/v2/accounts/me/answers/vertical/query?v=20190101&api_key=59988490a310f6125098e7c4147e5ebf&jsLibVersion=v1.6.5&sessionTrackingEnabled=true&input=Locations%20near%20me&experienceKey=ridgewood_savings&version=PRODUCTION&filters=%7B%7D&facetFilters=%7B%7D&verticalKey=locations&limit=20&offset=0&retrieveFacets=true&locale=en&referrerPageUrl=https%3A%2F%2Fwww.ridgewoodbank.com%2F"
     with SgRequests() as session:
         locations = session.get(base_url, headers=_headers).json()

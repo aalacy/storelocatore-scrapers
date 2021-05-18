@@ -24,6 +24,7 @@ def fetch_data():
         home_sel.xpath('//div[@class="branchLocator"]/@data-dpws-tool-datafiles')
     ).strip()
     urls_list = []
+    unique_list = []
     if "branches" in data_files:
         urls_list.append(json.loads(data_files)["branches"])
     if "atms" in data_files:
@@ -61,6 +62,13 @@ def fetch_data():
 
             store_number = "<MISSING>"
             location_type = store["Type"]
+
+            if street_address != "":
+                unique_id = f"{street_address}+{location_type}"
+                if unique_id in unique_list:
+                    continue
+
+                unique_list.append(unique_id)
 
             hours_list = []
             if "openingTimes" in store:
