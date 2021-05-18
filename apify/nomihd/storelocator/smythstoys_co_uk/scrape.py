@@ -4,7 +4,7 @@ from sgrequests import SgRequests
 from sglogging import sglog
 import json
 
-website = "smythstoys_co.uk"
+website = "smythstoys.co.uk"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 session = SgRequests()
 headers = {
@@ -59,8 +59,6 @@ def write_output(data):
 
 def fetch_data():
     # Your scraper here
-    loc_list = []
-
     search_url = "https://www.smythstoys.com/uk/en-gb/store-finder/getAllStores"
     stores_req = session.get(search_url, headers=headers)
     json_text = stores_req.text.strip()
@@ -151,9 +149,7 @@ def fetch_data():
                 longitude,
                 hours_of_operation,
             ]
-            loc_list.append(curr_list)
-
-    return loc_list
+            yield curr_list
 
 
 def scrape():

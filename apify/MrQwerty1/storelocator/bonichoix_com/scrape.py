@@ -1,4 +1,7 @@
 import csv
+import json
+
+from lxml import html
 from sgrequests import SgRequests
 
 
@@ -34,45 +37,41 @@ def write_output(data):
 def fetch_data():
     out = []
     locator_domain = "https://www.bonichoix.com/"
-    api_url = "https://www.api-sobeys.com/magasins/stores_locator/MmE4ZTZiNjIzMWYzMzU2YTA4ZDBiZWIzNTdmMGQyOTA2ODk5YTNlNjQ3ZTBlMmM4NjVkYTA2YzU2NzA3Nzg1MmU0NGRhNjkwMWUwMjYyZThlZjMzZWU4YTRiM2E3OTVjMDk4ODUyZWE2MmIwNDEzZDQzN2VjMzU5ZmVlMDlkM2NLeDV0R2VORUhadENvME0wR25KWnZVcWhwMWRSTDc5WkJiaDlaMDBMVW9CMzRTc0VkVlpaRGZBbWU0RWNLTGVj/3?"
+    api = "https://www.bonichoix.com/en/store-locator/"
 
     session = SgRequests()
-    r = session.get(api_url)
-    js = r.json()
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0"
+    }
+    r = session.get(api, headers=headers)
+    tree = html.fromstring(r.text)
+    divs = tree.xpath("//div[@class='store-result ']")
 
-    for j in js:
-        street_address = (
-            f"{j.get('address')} {j.get('address2') or ''}".strip() or "<MISSING>"
-        )
-        city = j.get("city") or "<MISSING>"
-        state = j.get("state") or "<MISSING>"
-        postal = j.get("postal") or "<MISSING>"
+    for d in divs:
+        location_name = "".join(d.xpath(".//span[@class='name']/text()")).strip()
+        page_url = "".join(d.xpath(".//a[@class='store-title']/@href"))
+        street_address = ", ".join(
+            d.xpath(".//span[contains(@class, 'location_address_address')]/text()")
+        ).strip()
+        city = "".join(d.xpath(".//span[@class='city']/text()")).strip()
+        state = "".join(d.xpath(".//span[@class='province']/text()")).strip()
+        postal = "".join(d.xpath(".//span[@class='postal_code']/text()")).strip()
         country_code = "CA"
-        store_number = j.get("id") or "<MISSING>"
-        page_url = f"https://www.bonichoix.com/en/store/{store_number}"
-        location_name = j.get("name")
-        phone = j.get("phone") or "<MISSING>"
-        latitude = j.get("lat") or "<MISSING>"
-        longitude = j.get("lng") or "<MISSING>"
+        store_number = "<MISSING>"
+        phone = (
+            "".join(d.xpath(".//a[contains(@href, 'tel:')]/text()")).strip()
+            or "<MISSING>"
+        )
+        latitude = "".join(d.xpath("./@data-lat")) or "<MISSING>"
+        longitude = "".join(d.xpath("./@data-lng")) or "<MISSING>"
         location_type = "<MISSING>"
 
         _tmp = []
-        days = [
-            "Monday",
-            "Tuesday",
-            "Wednesday",
-            "Thursday",
-            "Friday",
-            "Saturday",
-            "Sunday",
-        ]
-        try:
-            starts = j.get("hours1").split(",")
-            ends = j.get("hours2").split(",")
-        except:
-            starts, ends = list(), list()
-        for d, s, e in zip(days, starts, ends):
-            _tmp.append(f"{d}: {s} - {e}")
+        text = "".join(d.xpath("./@data-hours")) or "{}"
+        js = json.loads(text)
+        for k, v in js.items():
+            if v:
+                _tmp.append(f"{k}: {v}")
 
         hours_of_operation = ";".join(_tmp) or "<MISSING>"
 
