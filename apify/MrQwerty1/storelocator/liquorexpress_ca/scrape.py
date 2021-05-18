@@ -34,21 +34,42 @@ def write_output(data):
             writer.writerow(row)
 
 
+def get_coords_from_embed(text):
+    try:
+        latitude = text.split("!3d")[1].strip().split("!")[0].strip()
+        longitude = text.split("!2d")[1].strip().split("!")[0].strip()
+    except IndexError:
+        latitude, longitude = "<MISSING>", "<MISSING>"
+
+    return latitude, longitude
+
+
 def fetch_data():
     out = []
-    locator_domain = "https://www.farmboy.ca/"
-    api_url = "https://www.farmboy.ca/stores/"
+    locator_domain = "https://www.liquorexpress.ca/"
+    api = "https://www.liquorexpress.ca/locations/"
 
     session = SgRequests()
-    r = session.get(api_url)
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0"
+    }
+    r = session.get(api, headers=headers)
     tree = html.fromstring(r.text)
-    articles = tree.xpath("//article[contains(@class, 'all portfolio-item')]")
+    divs = tree.xpath("//div[@class='location-container']")
 
-    for a in articles:
-        location_name = "".join(a.xpath(".//h3/text()")).strip()
-        page_url = "".join(a.xpath(".//a[./img]/@href")) or "<MISSING>"
-        line = a.xpath(".//div[@id='sin']/*[1]//text()")
-        line = " ".join(list(filter(None, [l.strip() for l in line])))
+    for d in divs:
+        location_name = "".join(d.xpath("./preceding-sibling::h3[1]/text()")).strip()
+        page_url = "".join(d.xpath(".//a[contains(@href, '/locations/')]/@href"))
+        if not page_url:
+            page_url = api
+        if page_url.startswith("/"):
+            page_url = f"https://www.liquorexpress.ca{page_url}"
+
+        line = "".join(
+            d.xpath(
+                ".//td[contains(text(), 'Location:')]/following-sibling::td[1]/text()"
+            )
+        ).strip()
 
         adr = parse_address(International_Parser(), line)
         street_address = (
@@ -57,42 +78,23 @@ def fetch_data():
             ).strip()
             or "<MISSING>"
         )
+
         city = adr.city or "<MISSING>"
         state = adr.state or "<MISSING>"
         postal = adr.postcode or "<MISSING>"
         country_code = "CA"
         store_number = "<MISSING>"
-        phone = (
-            "".join(
-                a.xpath(
-                    ".//*[contains(text(), 'Phone') or contains(text(), 'Tel')]/text()"
-                )
+        phone = "".join(
+            d.xpath(
+                ".//td[contains(text(), 'Contact')]/following-sibling::td[1]/span[contains(text(), 'Ph')]/following-sibling::text()[1]"
             )
-            .replace("Phone", "")
-            .replace("Tel", "")
-            .replace(":", "")
-            .strip()
-            or "<MISSING>"
-        )
-        if phone.find("\n") != -1:
-            phone = phone.split("\n")[0].strip()
-
-        text = "".join(a.xpath(".//div[@id='mstore']/a[contains(@href, 'maps')]/@href"))
-        try:
-            latitude = text.split("@")[1].split(",")[0]
-            longitude = text.split("@")[1].split(",")[0]
-        except IndexError:
-            latitude, longitude = "<MISSING>", "<MISSING>"
+        ).strip()
+        text = "".join(d.xpath(".//iframe/@src"))
+        latitude, longitude = get_coords_from_embed(text)
         location_type = "<MISSING>"
-
-        _tmp = []
-        tr = a.xpath(".//div[@id='sinfo']/table//tr")
-        for t in tr:
-            day = "".join(t.xpath("./td[1]/text()")).strip()
-            time = "".join(t.xpath("./td[2]/text()")).replace("*", "").strip()
-            _tmp.append(f"{day} {time}")
-
-        hours_of_operation = ";".join(_tmp) or "<MISSING>"
+        hours_of_operation = "".join(
+            d.xpath(".//td[contains(text(), 'Hours')]/following-sibling::td[1]/text()")
+        ).strip()
 
         row = [
             locator_domain,
