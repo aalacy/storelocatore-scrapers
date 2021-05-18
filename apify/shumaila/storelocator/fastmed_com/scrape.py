@@ -112,7 +112,7 @@ def fetch_data():
             [
                 "https://www.fastmed.com/",
                 link,
-                title.replace("&amp;", "&").strip(),
+                title.replace("&amp;", "&").replace("&#8211;", "-").strip(),
                 street.replace("\xa0", " ").strip(),
                 city,
                 state,
