@@ -50,95 +50,102 @@ def write_output(data):
             writer.writerow(row)
 
 
+def fetch(loc, driver):
+    return driver.execute_async_script(
+        f"""
+        var done = arguments[0]
+        fetch("{loc}")
+            .then(res => res.text())
+            .then(done)
+    """
+    )
+
+
 @retry(stop=stop_after_attempt(3))
-def fetch_location(loc):
-    with SgChrome() as driver:
-        logger.info("Pulling Location %s..." % loc)
-        website = "longhornsteakhouse.com"
-        typ = "Restaurant"
-        hours = ""
-        add = ""
-        city = ""
-        state = ""
-        zc = ""
-        phone = ""
-        lat = ""
-        lng = ""
-        hours = ""
-        country = ""
-        name = ""
-        store = loc.rsplit("/", 1)[1]
+def fetch_location(loc, driver):
+    logger.info("Pulling Location %s..." % loc)
+    website = "longhornsteakhouse.com"
+    typ = "Restaurant"
+    hours = ""
+    add = ""
+    city = ""
+    state = ""
+    zc = ""
+    phone = ""
+    lat = ""
+    lng = ""
+    hours = ""
+    country = ""
+    name = ""
+    store = loc.rsplit("/", 1)[1]
 
-        driver.get(loc)
-        text = driver.page_source
+    text = fetch(loc, driver)
 
-        if re.search("access denied", text, re.IGNORECASE):
-            raise Exception()
+    if re.search("access denied", text, re.IGNORECASE):
+        raise Exception()
 
-        text = str(text).replace("\r", "").replace("\n", "").replace("\t", "")
-        if 'id="restLatLong" value="' in text:
-            lat = text.split('id="restLatLong" value="')[1].split(",")[0]
-            lng = text.split('id="restLatLong" value="')[1].split(",")[1].split('"')[0]
-        if '"weekda' in text:
-            day = text.split('"weekda')[1].split('">')[1].split("<")[0]
-            if "(" in day:
-                day = day.split("(")[1].split(")")[0]
-        if "<title>" in text:
-            name = text.split("<title>")[1].split(" |")[0]
-        if 'id="restAddress" value="' in text:
-            add = text.split('id="restAddress" value="')[1].split(",")[0]
-            city = text.split('id="restAddress" value="')[1].split(",")[1]
-            state = text.split('id="restAddress" value="')[1].split(",")[2]
-            zc = text.split('id="restAddress" value="')[1].split(",")[3].split('"')[0]
-            country = "US"
-        if '"streetAddress":"' in text:
-            if add == "":
-                add = text.split('"streetAddress":"')[1].split('"')[0]
-                country = text.split('"addressCountry":"')[1].split('"')[0]
-                city = text.split('"addressLocality":"')[1].split('"')[0]
-                state = text.split('"addressRegion":"')[1].split('"')[0]
-                zc = text.split('"postalCode":"')[1].split('"')[0]
-            if lat == "":
-                try:
-                    lat = text.split('"latitude":"')[1].split('"')[0]
-                    lng = text.split('"longitude":"')[1].split('"')[0]
-                except:
-                    lat = "<MISSING>"
-                    lng = "<MISSING>"
-        if '"openingHours":["' in text:
-            hours = (
-                text.split('"openingHours":["')[1].split('"]')[0].replace('","', "; ")
-            )
-        if ',"telephone":"' in text:
-            phone = text.split(',"telephone":"')[1].split('"')[0]
+    text = str(text).replace("\r", "").replace("\n", "").replace("\t", "")
+    if 'id="restLatLong" value="' in text:
+        lat = text.split('id="restLatLong" value="')[1].split(",")[0]
+        lng = text.split('id="restLatLong" value="')[1].split(",")[1].split('"')[0]
+    if '"weekda' in text:
+        day = text.split('"weekda')[1].split('">')[1].split("<")[0]
+        if "(" in day:
+            day = day.split("(")[1].split(")")[0]
+    if "<title>" in text:
+        name = text.split("<title>")[1].split(" |")[0]
+    if 'id="restAddress" value="' in text:
+        add = text.split('id="restAddress" value="')[1].split(",")[0]
+        city = text.split('id="restAddress" value="')[1].split(",")[1]
+        state = text.split('id="restAddress" value="')[1].split(",")[2]
+        zc = text.split('id="restAddress" value="')[1].split(",")[3].split('"')[0]
+        country = "US"
+    if '"streetAddress":"' in text:
+        if add == "":
+            add = text.split('"streetAddress":"')[1].split('"')[0]
+            country = text.split('"addressCountry":"')[1].split('"')[0]
+            city = text.split('"addressLocality":"')[1].split('"')[0]
+            state = text.split('"addressRegion":"')[1].split('"')[0]
+            zc = text.split('"postalCode":"')[1].split('"')[0]
+        if lat == "":
+            try:
+                lat = text.split('"latitude":"')[1].split('"')[0]
+                lng = text.split('"longitude":"')[1].split('"')[0]
+            except:
+                lat = "<MISSING>"
+                lng = "<MISSING>"
+    if '"openingHours":["' in text:
+        hours = text.split('"openingHours":["')[1].split('"]')[0].replace('","', "; ")
+    if ',"telephone":"' in text:
+        phone = text.split(',"telephone":"')[1].split('"')[0]
 
-        if hours == "":
-            hours = "<MISSING>"
-        if phone == "":
-            phone = "<MISSING>"
-        if "Cincinnati - Eastgate" in name:
-            phone = "(513) 947-8882"
-        if "Orchard Park" in name:
-            phone = "(716) 825-1378"
-        if "Gainesville" in name:
-            phone = "(352) 372-5715"
-        if "Find A R" not in name:
-            return [
-                website,
-                loc,
-                name,
-                add,
-                city,
-                state,
-                zc,
-                country,
-                store,
-                phone,
-                typ,
-                lat,
-                lng,
-                hours,
-            ]
+    if hours == "":
+        hours = "<MISSING>"
+    if phone == "":
+        phone = "<MISSING>"
+    if "Cincinnati - Eastgate" in name:
+        phone = "(513) 947-8882"
+    if "Orchard Park" in name:
+        phone = "(716) 825-1378"
+    if "Gainesville" in name:
+        phone = "(352) 372-5715"
+    if "Find A R" not in name:
+        return [
+            website,
+            loc,
+            name,
+            add,
+            city,
+            state,
+            zc,
+            country,
+            store,
+            phone,
+            typ,
+            lat,
+            lng,
+            hours,
+        ]
 
 
 def fetch_data():
@@ -152,10 +159,13 @@ def fetch_data():
             lurl = line.split("<loc>")[1].split("<")[0]
             locs.append(lurl)
 
-    with ThreadPoolExecutor() as executor:
-        futures = [executor.submit(fetch_location, loc) for loc in locs]
+    with ThreadPoolExecutor() as executor, SgChrome() as driver:
+        driver.get("https://www.longhornsteakhouse.com/locations/")
+        futures = [executor.submit(fetch_location, loc, driver) for loc in locs]
         for future in as_completed(futures):
-            yield future.result()
+            poi = future.result()
+            if poi:
+                yield poi
 
 
 def scrape():
