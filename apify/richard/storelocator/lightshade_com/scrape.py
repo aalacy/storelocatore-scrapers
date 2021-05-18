@@ -76,8 +76,6 @@ def fetch_data():
             .replace('"', "")
             .strip()
         )
-        print(hours)
-        # hours = f"Daily Start time:{store['start_time_0']} Daily End time: {store['end_time_0']}"
         ccode = store["country"]
         if ccode == "United States":
             ccode = "US"
@@ -99,7 +97,6 @@ def fetch_data():
                 hours,
             ]
         )
-        # logger.info(p,data[p])
         p += 1
 
     return data
