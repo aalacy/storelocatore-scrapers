@@ -42,7 +42,7 @@ def fetch_data():
     }
 
     r = session.get("https://bxfitness.com", headers=headers)
-    soup = BeautifulSoup(r.text, "lxml")
+    soup = BeautifulSoup(r.text, "html.parser")
 
     for location in soup.find_all("ul", {"class": "sub-menu"})[2].find_all("a"):
         location_request = session.get(location["href"], headers=headers)
