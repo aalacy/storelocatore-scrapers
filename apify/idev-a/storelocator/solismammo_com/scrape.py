@@ -17,11 +17,18 @@ def fetch_data():
     with SgRequests() as session:
         sp = bs(session.get(base_url, headers=_headers).text, "lxml")
         locations = sp.select("div.geolocation-location")
+        logger.info(f"{len(locations)} found")
         for _ in locations:
             page_url = (
                 f"{locator_domain}{_.select_one('div.views-field-title').a['href']}"
             )
             addr = list(_.select_one("div.views-field-field-location").stripped_strings)
+            sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
+            logger.info(page_url)
+            hours = [
+                ": ".join(hh.stripped_strings)
+                for hh in sp1.select("div.field--name-field-working-hours .field__item")
+            ]
             yield SgRecord(
                 page_url=page_url,
                 location_name=_.select_one("div.views-field-title").a.text,
@@ -34,6 +41,7 @@ def fetch_data():
                 country_code="US",
                 phone=_.select_one("div.views-field-field-phone").a.text,
                 locator_domain=locator_domain,
+                hours_of_operation="; ".join(hours),
             )
 
 
