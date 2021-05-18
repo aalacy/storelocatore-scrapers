@@ -7,6 +7,17 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
 from sglogging import SgLogSetup
 import re
+import ssl
+
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
+
 
 logger = SgLogSetup().get_logger("naturerepublicofficial")
 
@@ -18,9 +29,7 @@ _headers = {
 def fetch_data():
     locator_domain = "https://www.naturerepublicofficial.com/"
     base_url = "https://www.naturerepublicofficial.com/about-us"
-    with SgChrome(
-        executable_path=r"/mnt/g/work/mia/chromedriver.exe", is_headless=False
-    ) as driver:
+    with SgChrome() as driver:
         driver.get(base_url)
         WebDriverWait(driver, 10).until(
             EC.presence_of_element_located(
@@ -47,6 +56,8 @@ def fetch_data():
                     if "Call store" in temp[x]:
                         break
                     hours.append(f"{temp[x]} {temp[x+1]}")
+            else:
+                hours = [_.strong.em.text.strip()]
             yield SgRecord(
                 page_url=base_url,
                 location_name=_.h4.text.strip(),

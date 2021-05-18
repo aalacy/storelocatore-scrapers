@@ -22,9 +22,10 @@ url_list = []
 
 def fetch_data():
 
-    search_url = "https://www.renasantbank.com/api/location/locationfinder/locationsearch?key={}&latitude={}&longitude={}&radius=50"
+    search_url = "https://www.renasantbank.com/api/location/locationfinder/locationsearch?key={}&latitude={}&longitude={}&radius=100"
     search = DynamicGeoSearch(
         country_codes=[SearchableCountries.USA],
+        max_radius_miles=100,
         max_search_results=50,
     )
 

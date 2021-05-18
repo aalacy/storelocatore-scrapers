@@ -1,67 +1,138 @@
-from sgscrape.simple_scraper_pipeline import SimpleScraperPipeline
-from sgscrape.simple_scraper_pipeline import ConstantField
-from sgscrape.simple_scraper_pipeline import MappingField
-from sgscrape.simple_scraper_pipeline import MissingField
-from sgscrape import simple_network_utils as net_utils
-from sgscrape import simple_utils as utils
-import json
-from requests import exceptions  # noqa
+from sgscrape import simple_scraper_pipeline as sp
 from sglogging import sglog
 from sgrequests import SgRequests
+from bs4 import BeautifulSoup as b4
+import asyncio
+import httpx
+import os
+import json
+import time
 
-logzilla = sglog.SgLogSetup().get_logger(logger_name="Radisson fam")
+EXPECTED_TOTAL = 0
+DEFAULT_PROXY_URL = "http://groups-RESIDENTIAL,country-us:{}@proxy.apify.com:8000/"
+logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
 
 
-def para(tup):
-    k = {}
+def set_proxies():
+    if "PROXY_PASSWORD" in os.environ and os.environ["PROXY_PASSWORD"].strip():
+
+        proxy_password = os.environ["PROXY_PASSWORD"]
+        url = (
+            os.environ["PROXY_URL"] if "PROXY_URL" in os.environ else DEFAULT_PROXY_URL
+        )
+        proxy_url = url.format(proxy_password)
+        proxies = {
+            "http://": proxy_url,
+        }
+        return proxies
+    else:
+        return None
+
+
+proxies = set_proxies()
+
+
+async def fetch_data(index: int, url: str) -> dict:
     headers = {
         "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
     }
-    try:
-        try:
-            if len(tup[1]) > 0:
-                k = json.loads(
-                    str(
-                        next(
-                            net_utils.fetch_xml(
-                                root_node_name="body",
-                                location_node_name="script",
-                                location_node_properties={
-                                    "type": "application/ld+json",
-                                    "id": "schema-webpage",
-                                },
-                                request_url=tup[1],
-                                headers=headers,
-                            )
-                        )["script type=application/ld+json id=schema-webpage"]
-                    )
-                    .replace("\u0119", "e")
-                    .replace("\u011f", "g")
-                    .replace("\u0144", "n")
-                    .replace("\u0131", "i"),
-                    strict=False,
-                )  # ['script type=application/ld+json']).rsplit(';',1)[0])
-                k["STATUS"] = True
-            else:
-                k["requrl"] = "<MISSING>"
-                k["index"] = tup[0]
-                k["STATUS"] = True
-        except exceptions.RequestException as e:
-            if "404" in str(e):
-                k = {}
-                k["STATUS"] = False
-            else:
-                raise Exception
-    except StopIteration:
-        return
+    timeout = httpx.Timeout(60.0, connect=120.0)
+    data = {}
+    if len(url) > 0:
+        async with httpx.AsyncClient(
+            proxies=proxies, headers=headers, timeout=timeout
+        ) as client:
+            response = await client.get(url)
+            soup = b4(response.text, "lxml")
+            logzilla.info(f"URL\n{url}\nLen:{len(response.text)}\n")
+            logzilla.info(f"Content\n{response.text}\n\n")
+            data = json.loads(
+                str(
+                    soup.find(
+                        "script",
+                        {"type": "application/ld+json", "id": "schema-webpage"},
+                    ).text
+                )
+                .replace("\u0119", "e")
+                .replace("\u011f", "g")
+                .replace("\u0144", "n")
+                .replace("\u0131", "i"),
+                strict=False,
+            )
+            data["index"] = index
+            data["requrl"] = url
+            data["STATUS"] = True
+    else:
+        await asyncio.sleep(0)  # had to improvise
+        data["index"] = index
+        data["requrl"] = "<MISSING>"
+        data["STATUS"] = False
+    return data
 
-    k["index"] = tup[0]
-    k["requrl"] = tup[1]
-    return k
+
+async def get_brand(brand_code, brand_name, url):
+    url = url + brand_code
+
+    headers = {}
+    headers["authority"] = "www.radissonhotels.com"
+    headers["method"] = "GET"
+    headers["path"] = "/zimba-api/destinations/hotels?brand=" + brand_code
+    headers["scheme"] = "https"
+    headers["accept"] = "application/json, text/plain, */*"
+    headers["accept-encoding"] = "gzip, deflate, br"
+    headers["accept-language"] = "en-us"
+    headers["referer"] = "https://www.radissonhotels.com/en-us/destination"
+    headers["sec-fetch-dest"] = "empty"
+    headers["sec-fetch-mode"] = "cors"
+    headers["sec-fetch-site"] = "same-origin"
+    headers[
+        "user-agent"
+    ] = "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.66 Safari/537.36"
+
+    session = SgRequests()
+    son = session.get(url, headers=headers).json()
+    task_list = []
+    results = []
+    chunk_size = 10
+    last_chunk = 0
+    last_tick = time.monotonic()
+    total_records = len(son["hotels"])
+    global EXPECTED_TOTAL
+    EXPECTED_TOTAL += total_records
+    for index, record in enumerate(son["hotels"]):
+        task_list.append(fetch_data(index, record["overviewPath"]))
+        if index % chunk_size == 0 and last_chunk != index:
+            last_tick = time.monotonic()
+            last_chunk = index
+            if len(task_list) > 0:
+                z = await asyncio.gather(*task_list)
+                for item in z:
+                    results.append(
+                        {
+                            "main": son["hotels"][item["index"]],
+                            "sub": item,
+                            "@type": brand_name,
+                        }
+                    )
+                logzilla.info(
+                    f"Finished {last_chunk}/{total_records} for brand {brand_name}, last step took {round(time.monotonic()-last_tick,5)} seconds."
+                )
+                task_list = []
+
+    last_tick = time.monotonic()
+    if len(task_list) > 0:
+        z = await asyncio.gather(*task_list)
+        for item in z:
+            results.append(
+                {"main": son["hotels"][item["index"]], "sub": item, "@type": brand_name}
+            )
+        logzilla.info(
+            f"Finished {total_records}/{total_records} for brand {brand_name}, last step took {round(time.monotonic()-last_tick,5)} seconds."
+        )
+    return results
 
 
 def clean_record(k):
-
     try:
         k["sub"] = k["sub"]
     except Exception:
@@ -174,109 +245,10 @@ def clean_record(k):
     return k
 
 
-def get_brand(brand, humanBrand):
-    logzilla.info(f"Selected brand: {brand}")
-    # Brand selector
-    url = "https://www.radissonhotels.com/zimba-api/destinations/hotels?brand=" + brand
-
-    headers = {}
-    headers["authority"] = "www.radissonhotels.com"
-    headers["method"] = "GET"
-    headers["path"] = "/zimba-api/destinations/hotels?brand=" + brand
-    headers["scheme"] = "https"
-    headers["accept"] = "application/json, text/plain, */*"
-    headers["accept-encoding"] = "gzip, deflate, br"
-    headers["accept-language"] = "en-us"
-    headers["referer"] = "https://www.radissonhotels.com/en-us/destination"
-    headers["sec-fetch-dest"] = "empty"
-    headers["sec-fetch-mode"] = "cors"
-    headers["sec-fetch-site"] = "same-origin"
-    headers[
-        "user-agent"
-    ] = "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.66 Safari/537.36"
-
-    session = SgRequests()
-    resp = session.get(url, headers=headers).json()
-    son = []
-    son.append(resp)
-    badrecords = []
-
-    for i in son:
-        k = i
-        if len(k["hotels"]) != 0:
-            if k["hotels"][0]["brand"] == brand:
-                par = utils.parallelize(
-                    search_space=[
-                        [counter, z["overviewPath"]]
-                        for counter, z in enumerate(k["hotels"])
-                    ],
-                    fetch_results_for_rec=para,
-                    max_threads=20,
-                    print_stats_interval=20,
-                )
-                for store in par:
-                    if store and store["STATUS"]:
-                        uscagb = 0
-                        try:
-                            if (
-                                "Canada"
-                                in store["mainEntity"]["address"]["addressCountry"]
-                                or "United S"
-                                in store["mainEntity"]["address"]["addressCountry"]
-                                or "United King"
-                                in store["mainEntity"]["address"]["addressCountry"]
-                            ):
-                                uscagb = 1
-                            else:
-                                logzilla.info(
-                                    f"Ignoring hotel due to country not US/CA/UK: {store['mainEntity']['address']['addressCountry']}\n (for url -> {store['requrl']})"
-                                )
-
-                        except:
-                            logzilla.info(f"Issues finding Country for record: {store}")
-                            if len(list(store)) > 5:
-                                logzilla.info(f"====================")  # noqa
-                                logzilla.info(f"====================")  # noqa
-                                logzilla.info(f"{store}")
-                                logzilla.info(f"====================")  # noqa
-                                logzilla.info(f"====================")  # noqa
-                                raise Exception(
-                                    "Crawler would've dropped this location above"
-                                )
-                            else:
-                                badrecords.append(store)
-                        if uscagb == 1:
-                            try:
-                                store["mainEntity"]["address"]["addressRegion"] = store[
-                                    "mainEntity"
-                                ]["address"]["addressRegion"]
-                            except Exception:
-                                store["mainEntity"]["address"]["addressRegion"] = ""
-                            try:
-                                store["mainEntity"]["@type"] = (
-                                    humanBrand + " - " + store["mainEntity"]["@type"]
-                                )
-                            except Exception:
-                                store["mainEntity"]["@type"] = (
-                                    humanBrand if humanBrand else ""
-                                )
-                            yield clean_record(
-                                {"main": k["hotels"][store["index"]], "sub": store}
-                            )
-
-
-def fetch_data():
-    brands = [
-        "pii",  # 0-Park Inn ###DONE
-        "rdb",  # 1-Radisson Blu   ###DONE
-        "rdr",  # 2-Radisson RED   ###DONE
-        "art",  # 3-art'otel
-        "rad",  # 4-Radisson Hotel ###DONE
-        "ri",  # 5-Radisson Individuals
-        "prz",  # 6-??? Empty
-        "pph",  # 7-Park Plaza
-        "cis",  # 8-Country Inn & Suites by Radisson ###DONE
-        "rco",  # 9-Radisson Collection Paradise Resort
+def start():
+    urls = [
+        "https://www.radissonhotelsamericas.com/zimba-api/destinations/hotels?brand=",
+        "https://www.radissonhotels.com/zimba-api/destinations/hotels?brand=",
     ]
     brands = [
         {"code": "pii", "name": "Park Inn by Radisson"},
@@ -290,59 +262,92 @@ def fetch_data():
         {"code": "cis", "name": "Country Inn & Suites"},
         {"code": "rco", "name": "Radisson Collection"},
     ]
-    for brand in brands:
-        for record in get_brand(brand["code"], brand["name"]):
-            yield record
-
-    logzilla.info(f"Finished grabbing data!!")  # noqa
-
-
-def validatorsux(x):
-    if x == "Wisconsin":
-        x = "WI"
-    if x == "Washington":
-        x = "WA"
-    if x == "West Virginia":
-        x = "WV"
-    if x == "Wyoming":
-        x = "WY"
-    return x
+    badrecords = []
+    for url in urls:
+        for brand in brands:
+            start_time = time.monotonic()
+            logzilla.info(f"Selected brand: {brand}")
+            data = asyncio.run(
+                get_brand(
+                    brand["code"],
+                    brand["name"],
+                    "https://www.radissonhotels.com/zimba-api/destinations/hotels?brand=",
+                )
+            )
+            for i in data:
+                k = clean_record(i)
+                if k["sub"]["STATUS"]:
+                    yield k
+                else:
+                    badrecords.append(k)
+                    yield k
+            logzilla.info(
+                f"Finished brand {brand['name']}, it took {round(time.monotonic()-start_time,5)}\n it has {len(data)} locations"
+            )
+    logzilla.info(f"Badrecords :\n\n{badrecords}")
+    global EXPECTED_TOTAL
+    logzilla.info(f"Finished grabbing data!!\n expected total {EXPECTED_TOTAL}")  # noqa
 
 
 def scrape():
     url = "https://www.radissonhotels.com/en-us/destination"
-    field_defs = SimpleScraperPipeline.field_definitions(
-        locator_domain=ConstantField(url),
-        page_url=MappingField(mapping=["sub", "requrl"]),
-        location_name=MappingField(mapping=["main", "name"]),
-        latitude=MappingField(mapping=["main", "coordinates", "latitude"]),
-        longitude=MappingField(mapping=["main", "coordinates", "longitude"]),
-        street_address=MappingField(
-            mapping=["sub", "mainEntity", "address", "streetAddress"]
-        ),
-        city=MappingField(mapping=["sub", "mainEntity", "address", "addressLocality"]),
-        state=MappingField(
-            mapping=["sub", "mainEntity", "address", "addressRegion"],
-            value_transform=validatorsux,
+    field_defs = sp.SimpleScraperPipeline.field_definitions(
+        locator_domain=sp.ConstantField(url),
+        page_url=sp.MappingField(
+            mapping=["sub", "requrl"],
             is_required=False,
         ),
-        zipcode=MappingField(
+        location_name=sp.MappingField(
+            mapping=["main", "name"],
+            is_required=False,
+        ),
+        latitude=sp.MappingField(
+            mapping=["main", "coordinates", "latitude"],
+            is_required=False,
+        ),
+        longitude=sp.MappingField(
+            mapping=["main", "coordinates", "longitude"],
+            is_required=False,
+        ),
+        street_address=sp.MappingField(
+            mapping=["sub", "mainEntity", "address", "streetAddress"],
+            is_required=False,
+        ),
+        city=sp.MappingField(
+            mapping=["sub", "mainEntity", "address", "addressLocality"],
+            is_required=False,
+        ),
+        state=sp.MappingField(
+            mapping=["sub", "mainEntity", "address", "addressRegion"],
+            is_required=False,
+        ),
+        zipcode=sp.MappingField(
             mapping=["sub", "mainEntity", "address", "postalCode"], is_required=False
         ),
-        country_code=MappingField(
-            mapping=["sub", "mainEntity", "address", "addressCountry"]
+        country_code=sp.MappingField(
+            mapping=["sub", "mainEntity", "address", "addressCountry"],
+            is_required=False,
         ),
-        phone=MappingField(mapping=["sub", "mainEntity", "telephone", 0]),
-        store_number=MappingField(mapping=["main", "code"]),
-        hours_of_operation=MissingField(),
-        location_type=MappingField(mapping=["sub", "mainEntity", "@type"]),
+        phone=sp.MappingField(
+            mapping=["sub", "mainEntity", "telephone", 0],
+            is_required=False,
+        ),
+        store_number=sp.MappingField(
+            mapping=["main", "code"],
+            is_required=False,
+        ),
+        hours_of_operation=sp.MissingField(),
+        location_type=sp.MappingField(
+            mapping=["@type"],
+            is_required=False,
+        ),
     )
 
-    pipeline = SimpleScraperPipeline(
-        scraper_name="radissonblu.com",
-        data_fetcher=fetch_data,
+    pipeline = sp.SimpleScraperPipeline(
+        scraper_name="pipeline",
+        data_fetcher=start,
         field_definitions=field_defs,
-        log_stats_interval=15,
+        log_stats_interval=30,
     )
 
     pipeline.run()

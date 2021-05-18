@@ -1,10 +1,21 @@
 import csv
-
 from lxml import etree
-
 from sgselenium import SgChrome
+from sglogging import SgLogSetup
+import ssl
+
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
+
 
 base_url = "https://bookmans.com"
+logger = SgLogSetup().get_logger("bookmans_com")
 
 
 def validate(item):
@@ -123,8 +134,11 @@ def fetch_data():
 
 
 def scrape():
+    logger.info("Scraping Started...")
     data = fetch_data()
     write_output(data)
+    logger.info(f"Scraping Finished | Total Store Count: {len(data)}")
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()

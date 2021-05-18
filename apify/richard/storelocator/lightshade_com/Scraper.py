@@ -1,32 +1,36 @@
 import csv
 from collections import defaultdict
 
+
 class Scrape:
     def __init__(self, url):
         self.url = url
-        self.CHROME_DRIVER_PATH = 'chromedriver'
+        self.CHROME_DRIVER_PATH = "chromedriver"
 
     def write_output(self, data):
-        with open('data.csv', mode='w') as output_file:
-            writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+        with open("data.csv", mode="w") as output_file:
+            writer = csv.writer(
+                output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+            )
 
-            # Header
-            writer.writerow([
-                "locator_domain",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation"
-            ])
-            # Body
+            writer.writerow(
+                [
+                    "locator_domain",
+                    "location_name",
+                    "street_address",
+                    "city",
+                    "state",
+                    "zip",
+                    "country_code",
+                    "store_number",
+                    "phone",
+                    "location_type",
+                    "latitude",
+                    "longitude",
+                    "hours_of_operation",
+                ]
+            )
+
             for row in data:
                 writer.writerow(row)
 
@@ -38,16 +42,14 @@ class Scrape:
             for dc in map(self.etree_to_dict, children):
                 for k, v in dc.items():
                     dd[k].append(v)
-            d = {t.tag: {k: v[0] if len(v) == 1 else v
-                         for k, v in dd.items()}}
+            d = {t.tag: {k: v[0] if len(v) == 1 else v for k, v in dd.items()}}
         if t.attrib:
-            d[t.tag].update(('@' + k, v)
-                            for k, v in t.attrib.items())
+            d[t.tag].update(("@" + k, v) for k, v in t.attrib.items())
         if t.text:
             text = t.text.strip()
             if children or t.attrib:
                 if text:
-                    d[t.tag]['#text'] = text
+                    d[t.tag]["#text"] = text
             else:
                 d[t.tag] = text
 
