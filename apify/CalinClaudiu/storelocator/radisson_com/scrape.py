@@ -1,6 +1,5 @@
 from sgscrape import simple_scraper_pipeline as sp
 from sglogging import sglog
-from sgrequests import SgRequests
 from bs4 import BeautifulSoup as b4
 import asyncio
 import httpx
