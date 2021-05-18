@@ -1,11 +1,9 @@
 import csv
-import time
-from lxml import html
-from sgselenium import SgFirefox
+from sgrequests import SgRequests
 
 
 def write_output(data):
-    with open("data.csv", mode="w", newline="") as output_file:
+    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
         writer = csv.writer(
             output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
         )
@@ -13,6 +11,7 @@ def write_output(data):
         writer.writerow(
             [
                 "locator_domain",
+                "page_url",
                 "location_name",
                 "street_address",
                 "city",
@@ -25,69 +24,66 @@ def write_output(data):
                 "latitude",
                 "longitude",
                 "hours_of_operation",
-                "page_url",
             ]
         )
+
         for row in data:
             writer.writerow(row)
 
 
 def fetch_data():
+    out = []
+
     locator_domain = "https://dicksfreshmarket.com"
-    all_store_data = []
-    with SgFirefox() as fox:
-        fox.get(locator_domain)
-        time.sleep(5)
-        all = fox.find_elements_by_xpath('//div[contains(@class, "fade tab-pane")]')
-        for l in all:
-            a = l.get_attribute("innerHTML")
-            tree = html.fromstring(a)
-            div = tree.xpath('//div[@class="row"]')
-            for d in div:
-                location_name = "".join(d.xpath(".//h2/text()"))
-                street_address = "".join(d.xpath(".//p[1]/text()"))
-                ad = "".join(d.xpath(".//p[2]/text()"))
-                city = ad.split(",")[0].strip()
-                state = ad.split(",")[1].split()[0].strip()
-                zip_code = ad.split(",")[1].split()[1].strip()
-                phone_number = "".join(d.xpath('.//a[contains(@href, "tel")]/text()'))
-                hours = "".join(
-                    d.xpath(
-                        './/b[contains(text(), "HOURS:")]/following-sibling::text()'
-                    )
-                )
-                store_number = "<MISSING>"
-                location_type = "Dick's Fresh Market"
-                lat = "".join(d.xpath(".//iframe/@src")).split("q=")[1].split(",")[0]
-                longit = (
-                    "".join(d.xpath(".//iframe/@src"))
-                    .split("q=")[1]
-                    .split(",")[1]
-                    .split("&")[0]
-                )
-                page_url = "https://dicksfreshmarket.com/contact"
-                country_code = "US"
+    api_url = "https://dicksfreshmarket.com/ajax/index.php"
+    session = SgRequests()
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:88.0) Gecko/20100101 Firefox/88.0",
+        "Referer": "https://dicksfreshmarket.com/contact",
+    }
 
-                store_data = [
-                    locator_domain,
-                    location_name,
-                    street_address,
-                    city,
-                    state,
-                    zip_code,
-                    country_code,
-                    store_number,
-                    phone_number,
-                    location_type,
-                    lat,
-                    longit,
-                    hours,
-                    page_url,
-                ]
+    data = {
+        "method": "POST",
+        "apiurl": "https://dicksfreshmarket.rsaamerica.com/Services/SSWebRestApi.svc/GetClientStores/1",
+    }
 
-                all_store_data.append(store_data)
+    r = session.post(api_url, headers=headers, data=data)
+    js = r.json()
+    for j in js["GetClientStores"]:
 
-    return all_store_data
+        page_url = "https://dicksfreshmarket.com/contact"
+        location_name = j.get("ClientStoreName")
+        location_type = "<MISSING>"
+        street_address = j.get("AddressLine1")
+        phone = j.get("StorePhoneNumber")
+        state = j.get("StateName")
+        postal = j.get("ZipCode")
+        country_code = "US"
+        city = j.get("City")
+        store_number = j.get("StoreNumber")
+        latitude = j.get("Latitude")
+        longitude = j.get("Longitude")
+        hours_of_operation = j.get("StoreTimings")
+
+        row = [
+            locator_domain,
+            page_url,
+            location_name,
+            street_address,
+            city,
+            state,
+            postal,
+            country_code,
+            store_number,
+            phone,
+            location_type,
+            latitude,
+            longitude,
+            hours_of_operation,
+        ]
+        out.append(row)
+
+    return out
 
 
 def scrape():
@@ -95,4 +91,5 @@ def scrape():
     write_output(data)
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()
