@@ -1,7 +1,6 @@
 import json
 import time
 from lxml import html
-import re
 from concurrent.futures import ThreadPoolExecutor
 
 from sgscrape.sgwriter import SgWriter
@@ -142,7 +141,7 @@ def fetchStores():
                             "page_url": page_url,
                             "countryCode": countryCode,
                             "state": stateName,
-                            "location_type": brand
+                            "location_type": brand,
                         }
                     )
     return stores
@@ -153,8 +152,8 @@ def fetchSingleSore(store):
     if response.text is None or response.text == "":
         return store, None
 
-    if 'hotels were found that match your search' in response.text:
-        return store, 'redirect'
+    if "hotels were found that match your search" in response.text:
+        return store, "redirect"
 
     body = html.fromstring(response.text, "lxml")
     return store, body
@@ -172,8 +171,7 @@ def getScriptVariable(body, varName):
     scripts = body.xpath("//script/text()")
     for script in scripts:
         if f"{varName} = " in script:
-            data = script.split(
-                f"{varName} = ", 1)[-1].rsplit(";", 1)[0].strip()
+            data = script.split(f"{varName} = ", 1)[-1].rsplit(";", 1)[0].strip()
             data = script.split(f"{varName} =")[1]
             data = data.split(";")[0]
 
@@ -189,29 +187,32 @@ def fetchData():
     count = 0
     failed = 0
     failedUrls = []
-    with ThreadPoolExecutor(max_workers=max_workers, thread_name_prefix='fetcher') as executor:
+    with ThreadPoolExecutor(
+        max_workers=max_workers, thread_name_prefix="fetcher"
+    ) as executor:
         for store, body in executor.map(fetchSingleSore, stores):
             count = count + 1
             if count % 100 == 0:
                 log.info(f"scrapped {count} pages ...")
-            if body is None or body == 'redirect':
+            if body is None or body == "redirect":
                 failed = failed + 1
-                failedUrls.append(store['page_url'])
+                failedUrls.append(store["page_url"])
                 log.error(
-                    f"#{failed}. {store['page_url']} {'Not Found' if body is None else 'Redirected'}!!!")
+                    f"#{failed}. {store['page_url']} {'Not Found' if body is None else 'Redirected'}!!!"
+                )
 
-                location_type = 'Not Found' if body is None else 'redirected',
+                location_type = ("Not Found" if body is None else "redirected",)
                 yield SgRecord(
                     locator_domain=website,
-                    page_url=store['page_url'],
-                    location_type=location_type
+                    page_url=store["page_url"],
+                    location_type=location_type,
                 )
                 continue
 
             geoJSON = getScriptWithGeo(body)
             if geoJSON is None:
                 log.error(f"#{failed}. {store['page_url']}  No Geo !!!")
-                failedUrls.append(store['page_url'])
+                failedUrls.append(store["page_url"])
                 failed = failed + 1
                 continue
 
@@ -220,8 +221,8 @@ def fetchData():
             page_url = geoJSON["@id"]
             street_address = geoJSON["address"]["streetAddress"]
             city = geoJSON["address"]["addressLocality"]
-            state = store['state']
-            location_type = store['location_type']
+            state = store["state"]
+            location_type = store["location_type"]
             zip_postal = MISSING
             if "postalCode" in geoJSON["address"]:
                 zip_postal = geoJSON["address"]["postalCode"]
