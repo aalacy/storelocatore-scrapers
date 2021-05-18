@@ -36,14 +36,21 @@ async def get_main(url, headers):
     async with httpx.AsyncClient(
         proxies=proxies, headers=headers, timeout=timeout
     ) as client:
-        response = await client.get(url)
-        return response.json()
+        retry_loop = 5
+        retries = 0
+        response = None
+        while retries <= retry_loop and not response:
+            try:
+                response = await client.get(url)
+                retries = retry_loop
+            except Exception:
+                retries += 1
+        if response:
+            return response.json()
 
 
-async def fetch_data(index: int, url: str) -> dict:
-    headers = {
-        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
-    }
+async def fetch_data(index: int, url: str, headers) -> dict:
+
     timeout = httpx.Timeout(60.0, connect=120.0)
     data = {}
     if len(url) > 0:
@@ -107,7 +114,7 @@ async def get_brand(brand_code, brand_name, url, url2):
     global EXPECTED_TOTAL
     EXPECTED_TOTAL += total_records
     for index, record in enumerate(son["hotels"]):
-        task_list.append(fetch_data(index, record["overviewPath"]))
+        task_list.append(fetch_data(index, record["overviewPath"], headers))
         if index % chunk_size == 0 and last_chunk != index:
             last_tick = time.monotonic()
             last_chunk = index
