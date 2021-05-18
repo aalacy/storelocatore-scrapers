@@ -34,7 +34,7 @@ def fetch_data():
                     del hours[0]
             phone = ""
             if _.find("a", href=re.compile(r"tel:")):
-                phone = _.find("a", href=re.compile(r"tel:")).text
+                phone = _.find("a", href=re.compile(r"tel:")).text.strip()
             street_address = soup1.select_one(
                 "div.location-details .street-address"
             ).text
@@ -72,7 +72,7 @@ def fetch_data():
                 zip_postal=zip_postal,
                 latitude=coord[0],
                 longitude=coord[1],
-                country_code="US",
+                country_code="CA",
                 phone=phone,
                 locator_domain=locator_domain,
                 hours_of_operation="; ".join(hours),
