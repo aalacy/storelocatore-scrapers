@@ -46,13 +46,13 @@ def fetch_data():
             location_name = ""
             street_address = ""
             phone = ""
-            coord = ["", ""]
             state = cell["content"]["elements"][1]["properties"]["title"]["quill"][
                 "ops"
             ][0]["insert"].strip()
             location = cell["content"]["elements"][2]["properties"]["title"]["quill"][
                 "ops"
             ]
+            coord = ["", ""]
             for x, _ in enumerate(location):
                 if (
                     not _["insert"]
@@ -93,7 +93,7 @@ def fetch_data():
                             map_link = _["attributes"]["wLink"]["link"]["external"]
                             coord = map_link.split("/@")[1].split("/data")[0].split(",")
                     except:
-                        pass
+                        coord = ["", ""]
 
                 if location_name and street_address and phone:
                     yield SgRecord(
@@ -109,6 +109,7 @@ def fetch_data():
                         locator_domain=locator_domain,
                     )
                     location_name = street_address = phone = ""
+                    coord = ["", ""]
 
 
 if __name__ == "__main__":
