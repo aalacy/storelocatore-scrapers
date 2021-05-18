@@ -23,6 +23,11 @@ def fetch_data():
         for _ in locations["results"]:
             logger.info(_["clickUri"])
             page_url = _["clickUri"]
+            if page_url:
+                page_url = page_url.split("locations")[-1]
+                page_url = f"{locator_domain}locations{page_url}"
+            else:
+                page_url = "<MISSING>"
             logger.info(page_url)
             sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
             addr = parse_address_intl(
