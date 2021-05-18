@@ -43,7 +43,7 @@ async def get_main(url, headers):
             try:
                 response = await client.get(url)
                 retries = retry_loop
-            except Exception as e:
+            except Exception:
                 retries += 1
         if response:
             return response.json()
