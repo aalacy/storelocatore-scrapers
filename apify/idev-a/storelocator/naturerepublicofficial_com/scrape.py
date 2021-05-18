@@ -56,6 +56,8 @@ def fetch_data():
                     if "Call store" in temp[x]:
                         break
                     hours.append(f"{temp[x]} {temp[x+1]}")
+            else:
+                hours = [_.strong.em.text.strip()]
             yield SgRecord(
                 page_url=base_url,
                 location_name=_.h4.text.strip(),
