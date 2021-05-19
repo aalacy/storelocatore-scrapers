@@ -41,7 +41,7 @@ def fetch_data():
             .strip()
             .split("\n")
         )
-        street_address = address[0].strip()
+        street_address = ", ".join([x.strip() for x in address[:-1]]).strip()
         city = address[-1].strip().split(",")[0].strip()
         state = address[-1].strip().split(",")[1].strip().split(" ")[0].strip()
         zipp = ""
