@@ -3,6 +3,7 @@ from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
+import re
 
 _headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
@@ -22,14 +23,18 @@ def fetch_data():
             location_name = _.select_one("div h1").text.replace("*NOW OPEN*", "")
             page_url = _.select_one("div.store-location-link a")["href"]
             soup1 = bs(session.get(page_url, headers=_headers).text, "lxml")
-            hours = list(soup1.select_one("div.location-hours p").stripped_strings)
-            if hours[0].startswith("WE HAVE MERGED WITH"):
-                continue
-            if hours[0] == "OPENING SOON!":
-                hours = ["OPENING SOON!"]
-            else:
-                del hours[0]
-            phone = _.select_one("p.store-location-phone a").text
+            hours = []
+            if soup1.select_one("div.location-hours p"):
+                hours = list(soup1.select_one("div.location-hours p").stripped_strings)
+                if hours[0].startswith("WE HAVE MERGED WITH"):
+                    continue
+                if hours[0] == "OPENING SOON!":
+                    hours = ["OPENING SOON!"]
+                else:
+                    del hours[0]
+            phone = ""
+            if _.find("a", href=re.compile(r"tel:")):
+                phone = _.find("a", href=re.compile(r"tel:")).text.strip()
             street_address = soup1.select_one(
                 "div.location-details .street-address"
             ).text
@@ -67,7 +72,7 @@ def fetch_data():
                 zip_postal=zip_postal,
                 latitude=coord[0],
                 longitude=coord[1],
-                country_code="US",
+                country_code="CA",
                 phone=phone,
                 locator_domain=locator_domain,
                 hours_of_operation="; ".join(hours),

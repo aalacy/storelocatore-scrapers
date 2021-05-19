@@ -1,11 +1,18 @@
 import re
 import csv
+import ssl
 from lxml import etree
 from time import sleep
 from urllib.parse import urljoin
 
-from sgselenium import SgFirefox
+from sgselenium import SgChrome
 from sgscrape.sgpostal import parse_address_intl
+
+from sglogging import SgLogSetup
+
+ssl._create_default_https_context = ssl._create_unverified_context
+
+logger = SgLogSetup().get_logger("caraluzzis.com")
 
 
 def write_output(data):
@@ -45,7 +52,7 @@ def fetch_data():
     start_url = "https://caraluzzis.com/locations/"
     domain = re.findall(r"://(.+?)/", start_url)[0].replace("www.", "")
 
-    with SgFirefox() as driver:
+    with SgChrome() as driver:
         driver.get(start_url)
         dom = etree.HTML(driver.page_source)
 
@@ -56,13 +63,16 @@ def fetch_data():
                 continue
             location_name = poi_html.xpath(".//strong/text()")
             location_name = location_name[0] if location_name else "<MISSING>"
+            logger.info(f"Location Name: {location_name}")
+            logger.info(f"Page URL: {store_url}")
             if "WINE & SPIRITS" in location_name:
                 continue
 
             driver.get(store_url)
-            sleep(15)
+            driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
             iframe = driver.find_element_by_xpath('//div[@class="fl-map"]/iframe')
             driver.switch_to.frame(iframe)
+            sleep(15)
             loc_dom = etree.HTML(driver.page_source)
             geo = (
                 loc_dom.xpath('//a[@class="navigate-link"]/@href')[0]

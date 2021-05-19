@@ -2,6 +2,9 @@ from sgselenium.sgselenium import webdriver
 from webdriver_manager.chrome import ChromeDriverManager
 from bs4 import BeautifulSoup as bs
 import pandas as pd
+import ssl
+
+ssl._create_default_https_context = ssl._create_unverified_context
 
 locator_domains = []
 page_urls = []
@@ -17,7 +20,6 @@ location_types = []
 latitudes = []
 longitudes = []
 hours_of_operations = []
-
 option = webdriver.ChromeOptions()
 option.add_argument("--disable-blink-features=AutomationControlled")
 option.add_argument("window-size=1280,800")
