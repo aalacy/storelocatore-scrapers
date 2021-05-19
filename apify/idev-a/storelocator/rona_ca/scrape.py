@@ -5,7 +5,7 @@ from bs4 import BeautifulSoup as bs
 import re
 import json
 import demjson
-from sgselenium import SgChrome
+from sgselenium import SgFirefox
 from sglogging import SgLogSetup
 
 logger = SgLogSetup().get_logger("rona")
@@ -51,7 +51,7 @@ days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 
 def fetch_data():
     with SgRequests() as session:
-        with SgChrome() as driver:
+        with SgFirefox() as driver:
             locator_domain = "https://www.rona.ca/"
             base_url = "https://www.rona.ca/webapp/wcs/stores/servlet/RonaStoreListDisplay?storeLocAddress=toronto&storeId=10151&catalogId=10051&langId=-1&latitude=43.653226&longitude=-79.3831843"
             soup = bs(session.get(base_url, headers=_headers).text, "lxml")
