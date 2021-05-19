@@ -29,7 +29,7 @@ with SgChrome(is_headless=True, executable_path="chromedriver.exe").driver() as 
     for search_lat, search_lon in search:
         x = 0
         while True:
-            x = x+1
+            x = x + 1
             try:
                 data = driver.execute_async_script(
                     """
@@ -71,7 +71,6 @@ with SgChrome(is_headless=True, executable_path="chromedriver.exe").driver() as 
                 if x == 10:
                     break
                 continue
-        
 
         for location in data["features"]:
             # print(location["properties"]["additionalProperties"]["atm24HR"])
@@ -98,9 +97,13 @@ with SgChrome(is_headless=True, executable_path="chromedriver.exe").driver() as 
                 == "AllPoint"
             ):
                 continue
-            
+
             if location_type == "branch":
-                if location["properties"]["additionalProperties"]["atm24HR"] == True or location["properties"]["additionalProperties"]["atmLimited"] == True:
+                if (
+                    location["properties"]["additionalProperties"]["atm24HR"] == True
+                    or location["properties"]["additionalProperties"]["atmLimited"]
+                    == True
+                ):
                     location_type = "branch and atm"
 
             latitude = location["geometry"]["coordinates"][1]
