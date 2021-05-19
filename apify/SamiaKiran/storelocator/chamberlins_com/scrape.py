@@ -30,13 +30,19 @@ def fetch_data():
                 location_name = temp[0].text
                 log.info(location_name)
                 address = temp[1].get_text(separator="|", strip=True).split("|")
-                phone = address[-3].split("Phone:", 1)[1]
-                hours_of_operation = address[-2] + " " + address[-1]
-                address = address[:-3]
-                if "(" in address[2]:
-                    del address[2]
-                if ")" in address[-1]:
-                    del address[-1]
+                try:
+                    phone = address[-3].split("Phone:", 1)[1]
+                    hours_of_operation = address[-2] + " " + address[-1]
+                    address = address[:-3]
+                    if "(" in address[2]:
+                        del address[2]
+                    if ")" in address[-1]:
+                        del address[-1]
+                except:
+                    address = temp[2].get_text(separator="|", strip=True).split("|")
+                    temp_1 = temp[-1].get_text(separator="|", strip=True).split("|")
+                    phone = temp_1[0].split("Phone:", 1)[1]
+                    hours_of_operation = temp_1[-2] + " " + temp_1[-1]
                 address = " ".join(x for x in address)
                 try:
                     coords = (
