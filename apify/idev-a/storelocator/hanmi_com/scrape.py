@@ -41,7 +41,7 @@ def fetch_data():
         driver.find_element_by_css_selector("input#search_input").send_keys(
             "90006", Keys.ENTER
         )
-        WebDriverWait(driver, 10).until(
+        WebDriverWait(driver, 20).until(
             EC.presence_of_element_located((By.XPATH, '//ul/li[@class="poi-item"]'))
         )
         driver.switch_to.default_content()
