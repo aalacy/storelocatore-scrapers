@@ -150,8 +150,8 @@ def fetch_data():
                 hours_list = []
                 for hour in hours:
                     day = "".join(hour.xpath('th[@class="dayname"]/text()')).strip()
-                    time = "".join(hour.xpath("td/text()")).strip()
-                    hours_list.append(day + ":" + time)
+                    timee = "".join(hour.xpath("td/text()")).strip()
+                    hours_list.append(day + ":" + timee)
 
                 hours_of_operation = "; ".join(hours_list).strip()
 
