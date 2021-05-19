@@ -118,14 +118,6 @@ def fetch_data():
                 zc = addr.postcode
                 state = addr.state
                 add = addr.street_address_1
-                add = item["storeAddress"]["addressLine1"]
-                add = (
-                    add
-                    + " "
-                    + item["storeAddress"]["addressLine2"]
-                    + " "
-                    + item["storeAddress"]["addressLine3"]
-                )
                 add = add.strip()
             if '<span class="type">' in line2 and typ == "":
                 typ = typ + "; " + line2.split('<span class="type">')[1].split("<")[0]
