@@ -1,5 +1,6 @@
 import re
 import csv
+import ssl
 from lxml import etree
 from time import sleep
 from urllib.parse import urljoin
@@ -8,6 +9,8 @@ from sgselenium import SgChrome
 from sgscrape.sgpostal import parse_address_intl
 
 from sglogging import SgLogSetup
+
+ssl._create_default_https_context = ssl._create_unverified_context
 
 logger = SgLogSetup().get_logger("caraluzzis.com")
 
