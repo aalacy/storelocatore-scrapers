@@ -38,8 +38,6 @@ async def get_main(url, headers):
     async with httpx.AsyncClient(
         proxies=proxies, headers=headers, timeout=timeout
     ) as client:
-        retry_loop = 5
-        retries = 0
         response = None
         response = await client.get(url)
         return response.json()
