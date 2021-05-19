@@ -7,6 +7,16 @@ import json
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
+import ssl
+
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
 
 _headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
@@ -21,9 +31,9 @@ def _time(start, end):
 
 
 def fetch_data():
-    locator_domain = "https://www.altamed.org/"
-    page_url = "https://www.hanmi.com/about-us/locations"
+    locator_domain = "https://www.hanmi.com/"
     json_url = "https://hosted.where2getit.com/hanmi/rest/locatorsearch"
+    page_url = "https://www.hanmi.com/about-us/locations"
     with SgChrome() as driver:
         driver.get(page_url)
         driver.find_element_by_css_selector("button.set-location").click()
@@ -39,7 +49,7 @@ def fetch_data():
         for rr in driver.requests:
             if rr.url.startswith(json_url):
                 appkey = json.loads(rr.body)["request"]["appkey"]
-        with SgRequests() as session:
+        with SgRequests(proxy_rotation_failure_threshold=1) as session:
             payload = {
                 "request": {
                     "appkey": appkey,
@@ -79,8 +89,13 @@ def fetch_data():
                 hours.append(f"Fri: {_time(_['fri_open'], _['fri_close'])}")
                 hours.append(f"Sat: {_time(_['sat_open'], _['sat_close'])}")
                 hours.append(f"Sun: {_time(_['sun_open'], _['sun_close'])}")
+                page_url = f"https://locations.hanmi.com/{_['state'].lower()}/{'-'.join(_['city'].lower().strip().split(' '))}/{_['clientkey']}/"
+                res = session.get(page_url, headers=_headers)
+                if res.status_code != 200:
+                    continue
                 yield SgRecord(
                     page_url=page_url,
+                    store_number=_["clientkey"],
                     location_name=_["internalname"],
                     street_address=street_address,
                     city=_["city"],
