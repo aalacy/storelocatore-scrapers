@@ -94,9 +94,9 @@ with SgChrome(is_headless=True, executable_path="chromedriver.exe").driver() as 
 
             if location_type == "branch":
                 if (
-                    location["properties"]["additionalProperties"]["atm24HR"] == True
+                    location["properties"]["additionalProperties"]["atm24HR"] is True
                     or location["properties"]["additionalProperties"]["atmLimited"]
-                    == True
+                    is True
                 ):
                     location_type = "branch and atm"
 
