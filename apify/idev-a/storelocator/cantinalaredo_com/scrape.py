@@ -15,7 +15,6 @@ def fetch_data():
     with SgRequests() as session:
         soup = bs(session.get(base_url, headers=_headers).text, "lxml")
         locations = soup.select("div.wpb_wrapper div.single-location")
-        data = []
         for location in locations:
             page_url = location.select_one(".location-visit a")["href"]
             location_name = " ".join(
