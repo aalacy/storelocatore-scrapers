@@ -17,20 +17,27 @@ def fetch_data():
         sp1 = bs(session.get(base_url, headers=_headers).text, "lxml")
         locations = sp1.find_all("item")
         for _ in locations:
-            addr = parse_address_intl(_.address.text.replace("&#44;", ","))
+            _addr = _.address.text.replace("&#44;", ",")
+            addr = parse_address_intl(_addr)
             street_address = addr.street_address_1
             if addr.street_address_2:
                 street_address += " " + addr.street_address_2
             if "google" in street_address.lower():
                 street_address = ""
+            zip_postal = addr.postcode
+            state = addr.state
+            if not zip_postal:
+                zip_postal = " ".join(_addr.split(",")[-1].strip().split(" ")[1:])
+            if not state:
+                state = _addr.split(",")[-1].strip().split(" ")[0]
             yield SgRecord(
                 page_url=page_url,
                 store_number=_.storeId.text if _.storeId else _.storeid.text,
                 location_name=_.location.text,
                 street_address=street_address,
                 city=addr.city,
-                state=addr.state,
-                zip_postal=addr.postcode,
+                state=state,
+                zip_postal=zip_postal,
                 latitude=_.latitude.text,
                 longitude=_.longitude.text,
                 country_code="CA",

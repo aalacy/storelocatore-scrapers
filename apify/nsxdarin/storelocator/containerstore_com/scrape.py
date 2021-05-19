@@ -1,8 +1,8 @@
 import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
+import time
 
-session = SgRequests()
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
@@ -39,6 +39,7 @@ def write_output(data):
 
 def fetch_data():
     locs = []
+    session = SgRequests()
     url = "https://www.containerstore.com/locations/index.htm"
     r = session.get(url, headers=headers)
     website = "containerstore.com"
@@ -51,7 +52,9 @@ def fetch_data():
             locs.append(
                 "https://www.containerstore.com" + line.split('href="')[1].split('"')[0]
             )
+    logger.info(len(locs))
     for loc in locs:
+        session = SgRequests()
         logger.info(loc)
         name = ""
         add = ""
@@ -76,8 +79,6 @@ def fetch_data():
                 city = line2.split('"addressLocality": "')[1].split('"')[0]
             if '"postalCode": "' in line2:
                 zc = line2.split('"postalCode": "')[1].split('"')[0]
-            if '"addressCountry": "' in line2:
-                country = line2.split('"addressCountry": "')[1].split('"')[0]
             if '"latitude": ' in line2:
                 lat = line2.split('"latitude": ')[1].split(",")[0]
             if '"longitude": ' in line2:
@@ -88,8 +89,8 @@ def fetch_data():
                     .replace("\r", "")
                     .replace("\n", "")
                 )
-            if '"telephone": "' in line2:
-                phone = line2.split('"telephone": "')[1].split('"')[0]
+            if '"phone-color" href="tel:' in line2 and phone == "":
+                phone = line2.split('"phone-color" href="tel:')[1].split('"')[0]
             if '"dayOfWeek": "http://schema.org/' in line2:
                 day = line2.split('"dayOfWeek": "http://schema.org/')[1].split('"')[0]
             if '"opens": "' in line2:
@@ -100,23 +101,25 @@ def fetch_data():
                     hours = day
                 else:
                     hours = hours + "; " + day
-        if phone != "":
-            yield [
-                website,
-                loc,
-                name,
-                add,
-                city,
-                state,
-                zc,
-                country,
-                store,
-                phone,
-                typ,
-                lat,
-                lng,
-                hours,
-            ]
+        if phone == "":
+            phone = "<MISSING>"
+        yield [
+            website,
+            loc,
+            name,
+            add,
+            city,
+            state,
+            zc,
+            country,
+            store,
+            phone,
+            typ,
+            lat,
+            lng,
+            hours,
+        ]
+        time.sleep(5)
 
 
 def scrape():

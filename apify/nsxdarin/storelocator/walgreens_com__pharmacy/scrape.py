@@ -1,8 +1,10 @@
 import csv
-from sgzip.dynamic import DynamicZipSearch, SearchableCountries
+import json
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
-import json
+from sgzip.static import static_zipcode_list, SearchableCountries
+from bs4 import BeautifulSoup
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 logger = SgLogSetup().get_logger("walgreens_com__pharmacy")
 
@@ -30,15 +32,11 @@ def write_output(data):
                 "hours_of_operation",
             ]
         )
-        for row in data:
-            writer.writerow(row)
+        for rows in data:
+            writer.writerows(rows)
 
 
-search = DynamicZipSearch(
-    country_codes=[SearchableCountries.USA],
-    max_radius_miles=10,
-    max_search_results=50,
-)
+search = static_zipcode_list(10, SearchableCountries.USA)
 
 session = SgRequests()
 headers = {
@@ -47,133 +45,95 @@ headers = {
 }
 
 
+def fetch_locations(code, ids):
+    logger.info(("Pulling Postal Code %s..." % code))
+    url = "https://www.walgreens.com/locator/v1/stores/search?requestor=search"
+    payload = {
+        "r": "50",
+        "requestType": "dotcom",
+        "s": "20",
+        "p": 1,
+        "q": code,
+        "lat": "",
+        "lng": "",
+        "zip": code,
+    }
+    data = session.post(url, headers=headers, data=json.dumps(payload)).json()
+    website = "walgreens.com/pharmacy"
+
+    locations = []
+    if not data.get("results"):
+        return locations
+
+    for item in data["results"]:
+        store = item["storeSeoUrl"].split("/id=")[1]
+        if store in ids:
+            continue
+        ids.append(store)
+
+        loc = "https://www.walgreens.com" + item["storeSeoUrl"]
+        lat = item["latitude"]
+        country = "US"
+        lng = item["longitude"]
+        add = item["store"]["address"]["street"]
+        zc = item["store"]["address"]["zip"]
+        city = item["store"]["address"]["city"]
+        state = item["store"]["address"]["state"]
+        name = item["store"]["name"]
+        phone = (
+            item["store"]["phone"]["areaCode"].strip()
+            + item["store"]["phone"]["number"].strip()
+        )
+        hours = ""
+        typ = "<MISSING>"
+
+        page = session.get(loc, headers=headers).text
+        soup = BeautifulSoup(page, "html.parser")
+
+        try:
+            data = json.loads(soup.select_one("#jsonLD").string)
+            hours = data["openingHoursSpecification"]
+
+            hours_of_operation = []
+            for hour in hours:
+                day = hour["dayOfWeek"].split(" ").pop(0)
+                opens = hour["opens"]
+                closes = hour["closes"]
+
+                hours_of_operation.append(f"{day}: {opens}-{closes}")
+        except:
+            hours = "<MISSING>"
+
+        locations.append(
+            [
+                website,
+                loc,
+                name,
+                add,
+                city,
+                state,
+                zc,
+                country,
+                store,
+                phone,
+                typ,
+                lat,
+                lng,
+                (",").join(hours_of_operation),
+            ]
+        )
+
+    return locations
+
+
 def fetch_data():
     ids = []
-    for code in search:
-        try:
-            logger.info(("Pulling Postal Code %s..." % code))
-            url = "https://www.walgreens.com/locator/v1/stores/search?requestor=search"
-            payload = {
-                "r": "50",
-                "requestType": "dotcom",
-                "s": "20",
-                "p": 1,
-                "q": code,
-                "lat": "",
-                "lng": "",
-                "zip": code,
-            }
-            r = session.post(url, headers=headers, data=json.dumps(payload))
-            website = "walgreens.com/pharmacy"
-            for item in json.loads(r.content)["results"]:
-                loc = "https://www.walgreens.com" + item["storeSeoUrl"]
-                store = loc.split("/id=")[1]
-                lat = item["latitude"]
-                country = "US"
-                lng = item["longitude"]
-                add = item["store"]["address"]["street"]
-                zc = item["store"]["address"]["zip"]
-                city = item["store"]["address"]["city"]
-                state = item["store"]["address"]["state"]
-                name = item["store"]["name"]
-                hours = ""
-                typ = "<MISSING>"
-                Closed = False
-                if store not in ids:
-                    r2 = session.get(loc, headers=headers)
-                    logger.info(loc)
-                    for line2 in r2.iter_lines():
-                        line2 = str(line2.decode("utf-8"))
-                        if "This location is temporarily closed" in line2:
-                            Closed = True
-                        if "Pharmacy</strong></h3>" in line2 and hours == "":
-                            days = (
-                                line2.split("Pharmacy</strong></h3>")[1]
-                                .split("</ul></li><li")[0]
-                                .split('<li class="day"')
-                            )
-                            for day in days:
-                                if "pharmacyHoursList" not in day:
-                                    if ">Closed<" in day:
-                                        hrs = (
-                                            day.split(">")[1].split("<")[0] + ": Closed"
-                                        )
-                                    elif "Open</strong> 24 hours" in day:
-                                        hrs = "Sun-Sat: 24 hours"
-                                    else:
-                                        hrs = (
-                                            day.split(">")[1].split("<")[0]
-                                            + ": "
-                                            + day.split('<li class="time">')[1].split(
-                                                "<"
-                                            )[0]
-                                        )
-                                        hrs = (
-                                            hrs
-                                            + "-"
-                                            + day.split("<!-- -->")[2].split("<")[0]
-                                        )
-                                    if hours == "":
-                                        hours = hrs
-                                    else:
-                                        hours = hours + "; " + hrs
-                        if (
-                            "Store &amp; Shopping</strong></h3>" in line2
-                            and hours == ""
-                        ):
-                            days = (
-                                line2.split("Store &amp; Shopping")[1]
-                                .split("</ul></li><")[0]
-                                .split('<li class="day"')
-                            )
-                            for day in days:
-                                if "pharmacyHoursList" not in day:
-                                    if ">Closed<" in day:
-                                        hrs = (
-                                            day.split(">")[1].split("<")[0] + ": Closed"
-                                        )
-                                    else:
-                                        hrs = (
-                                            day.split(">")[1].split("<")[0]
-                                            + ": "
-                                            + day.split('<li class="time">')[1].split(
-                                                "<"
-                                            )[0]
-                                        )
-                                        hrs = (
-                                            hrs
-                                            + "-"
-                                            + day.split("<!-- -->")[2].split("<")[0]
-                                        )
-                                    if hours == "":
-                                        hours = hrs
-                                    else:
-                                        hours = hours + "; " + hrs
-                    phone = (
-                        item["store"]["phone"]["areaCode"]
-                        + item["store"]["phone"]["number"]
-                    )
-                    if Closed:
-                        hours = "Temporarily Closed"
-                    ids.append(store)
-                    yield [
-                        website,
-                        loc,
-                        name,
-                        add,
-                        city,
-                        state,
-                        zc,
-                        country,
-                        store,
-                        phone,
-                        typ,
-                        lat,
-                        lng,
-                        hours,
-                    ]
-        except:
-            pass
+
+    with ThreadPoolExecutor() as executor:
+        futures = [executor.submit(fetch_locations, code, ids) for code in search]
+        for future in as_completed(futures):
+            locations = future.result()
+            yield locations
 
 
 def scrape():
