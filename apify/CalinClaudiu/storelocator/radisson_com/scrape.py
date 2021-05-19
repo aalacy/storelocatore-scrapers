@@ -2,8 +2,10 @@ from sgscrape import simple_scraper_pipeline as sp
 from sglogging import sglog
 from bs4 import BeautifulSoup as b4
 import asyncio
-import httpx
 import os
+
+os.environ["HTTPX_LOG_LEVEL"] = "trace"
+import httpx
 import json
 import time
 
@@ -36,21 +38,12 @@ async def get_main(url, headers):
     async with httpx.AsyncClient(
         proxies=proxies, headers=headers, timeout=timeout
     ) as client:
-        retry_loop = 5
-        retries = 0
         response = None
-        while retries <= retry_loop and not response:
-            try:
-                response = await client.get(url)
-                retries = retry_loop
-            except Exception:
-                retries += 1
-        if response:
-            return response.json()
+        response = await client.get(url)
+        return response.json()
 
 
 async def fetch_data(index: int, url: str, headers) -> dict:
-
     timeout = httpx.Timeout(60.0, connect=120.0)
     data = {}
     if len(url) > 0:
