@@ -35,7 +35,7 @@ def fetch_data():
 
             country_code = store["coun"].upper()
             if (
-                zip.isdigit() == False
+                zip.isdigit() is False
                 and "," in street_address
                 and country_code == "US"
             ):
