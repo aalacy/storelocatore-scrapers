@@ -46,7 +46,9 @@ with webdriver.Chrome(
         location_deets = location.split(",")
         locator_domain = "https://www.ynhh.org"
         location_name = location_deets[0].replace("'", "")
-        page_url = ("https://www.ynhh.org" + location_deets[-3].replace("'", "")).replace(" ", "")
+        page_url = (
+            "https://www.ynhh.org" + location_deets[-3].replace("'", "")
+        ).replace(" ", "")
         latitude = location_deets[-2]
         longitude = str(location_deets[-1]).replace("]];", "")
         country_code = "US"
@@ -174,7 +176,9 @@ with webdriver.Chrome(
             if hours[0] == "M":
                 hours = "M " + hours.split("M")[1].strip()
 
-            page_url_to_check = "https://www.ynhh.org" + grid.find("h3").find("a")["href"]
+            page_url_to_check = (
+                "https://www.ynhh.org" + grid.find("h3").find("a")["href"]
+            )
 
             url_checks.append(page_url_to_check)
             street_addresses.append(address)
@@ -191,26 +195,30 @@ with webdriver.Chrome(
         driver.get(new_url)
         soup = bs(driver.page_source, "html.parser")
 
-df_first = pd.DataFrame({
-    "locator_domain": locator_domains,
-    "page_url": page_urls,
-    "location_name": location_names,
-    "latitude": latitudes,
-    "longitude": longitudes,
-    "country_code": country_codes,
-    "store_number": store_numbers,
-    "location_type": location_types
-})
+df_first = pd.DataFrame(
+    {
+        "locator_domain": locator_domains,
+        "page_url": page_urls,
+        "location_name": location_names,
+        "latitude": latitudes,
+        "longitude": longitudes,
+        "country_code": country_codes,
+        "store_number": store_numbers,
+        "location_type": location_types,
+    }
+)
 
-df_second = pd.DataFrame({
-    "url_checks": url_checks,
-    "street_address": street_addresses,
-    "city": citys,
-    "state": states,
-    "zip": zips,
-    "phone": phones,
-    "hours_of_operation": hours_of_operations
-})
+df_second = pd.DataFrame(
+    {
+        "url_checks": url_checks,
+        "street_address": street_addresses,
+        "city": citys,
+        "state": states,
+        "zip": zips,
+        "phone": phones,
+        "hours_of_operation": hours_of_operations,
+    }
+)
 
 df = df_first.merge(df_second, left_on="page_url", right_on="url_checks")
 
