@@ -5,6 +5,17 @@ from sglogging import sglog
 import us
 import lxml.html
 from sgselenium import SgChrome
+import time
+import ssl
+
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
 
 website = "gloriajeans.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -63,6 +74,7 @@ def fetch_data():
     # Your scraper here
     with SgChrome() as driver:
         driver.get("https://www.gloriajeans.com/pages/store-locator")
+        time.sleep(60)
         stores_sel = lxml.html.fromstring(driver.page_source)
         stores = stores_sel.xpath('//div[@class="item thumbnail"]')
         for store in stores:
@@ -148,8 +160,8 @@ def fetch_data():
                 hours_list = []
                 for hour in hours:
                     day = "".join(hour.xpath('th[@class="dayname"]/text()')).strip()
-                    time = "".join(hour.xpath("td/text()")).strip()
-                    hours_list.append(day + ":" + time)
+                    timee = "".join(hour.xpath("td/text()")).strip()
+                    hours_list.append(day + ":" + timee)
 
                 hours_of_operation = "; ".join(hours_list).strip()
 
