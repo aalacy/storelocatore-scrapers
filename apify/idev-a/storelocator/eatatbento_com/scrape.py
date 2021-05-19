@@ -76,9 +76,6 @@ def fetch_data():
                 )
             except:
                 coord = ["", ""]
-                import pdb
-
-                pdb.set_trace()
             yield SgRecord(
                 page_url=link.a["href"],
                 location_name=soup1.h1.text,
