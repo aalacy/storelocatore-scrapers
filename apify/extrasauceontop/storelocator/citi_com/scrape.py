@@ -1,7 +1,4 @@
 from sgselenium import SgChrome
-from sgrequests import SgRequests
-import time
-import json
 import pandas as pd
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 
@@ -64,16 +61,13 @@ with SgChrome(is_headless=True, executable_path="chromedriver.exe").driver() as 
                     .then(data => done(data))
                     """
                 )
-                print("SUCCESS")
                 break
             except Exception:
-                print(x)
                 if x == 10:
                     break
                 continue
 
         for location in data["features"]:
-            # print(location["properties"]["additionalProperties"]["atm24HR"])
             locator_domain = "online.citi.com"
             page_url = "https://online.citi.com/US/ag/citibank-location-finder"
             location_name = location["properties"]["additionalProperties"]["StoreName"]
