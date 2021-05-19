@@ -22,7 +22,9 @@ hours_of_operations = []
 
 base_url = "https://online.citi.com/US/ag/citibank-location-finder"
 
-with SgChrome(is_headless=True, executable_path=ChromeDriverManager().install()).driver() as driver:
+with SgChrome(
+    is_headless=True, executable_path=ChromeDriverManager().install()
+).driver() as driver:
     driver.get(base_url)
     for search_lat, search_lon in search:
         x = 0
