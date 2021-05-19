@@ -1,31 +1,21 @@
 import time
+import json
 
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sglogging import sglog
 
-session = SgRequests()
-
-MISSING = "<MISSING>"
-
 DOMAIN = "juanvaldezcafe.com/en-us"
 
-website = "https://www.juanvaldezcafe.com"
+MISSING = "<MISSING>"
+website = "https://www.juanvaldezcafe.com/"
+jsonUrl = "https://storerocket.global.ssl.fastly.net/api/user/OdJEDYo4WE/locations"
 
-APIUrl = "https://storerocket.global.ssl.fastly.net/api/user/OdJEDYo4WE/locations"
-
+session = SgRequests().requests_retry_session()
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 
-headers = {
-    "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.93 Safari/537.36"
-}
-
 days = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"]
-
-
-def requests_with_retry(url):
-    return session.get(url, headers=headers).json()
 
 
 def getJSONObjectVariable(Object, varNames, noVal=MISSING):
@@ -51,14 +41,22 @@ def getVarName(value):
 
 
 def fetchData():
-    jResp = requests_with_retry(APIUrl)
-    jnodes = jResp["results"]["locations"]
-    log.info(f"Total Locations = {len(jnodes)}")
+    body = session.get(jsonUrl)
+    response = json.loads(body.text)
+    restaurants = response["results"]["locations"]
+    log.info(f"Total restaurants = {len(restaurants)}")
 
-    for data in jnodes:
+    for data in restaurants:
         locator_domain = DOMAIN
         store_number = str(getJSONObjectVariable(data, "id"))
-        page_url = website
+        page_url_part1 = (
+            "https://www.juanvaldezcafe.com/tienda-online/tiendas?location="
+        )
+        page_url_part2 = str(getJSONObjectVariable(data, "slug"))
+        if page_url_part2 != "":
+            page_url = page_url_part1 + page_url_part2
+        else:
+            page_url = website
         location_name = str(getJSONObjectVariable(data, "name"))
         location_type = str(getJSONObjectVariable(data, "location_type_name"))
         city = str(getJSONObjectVariable(data, "city"))
@@ -69,19 +67,17 @@ def fetchData():
         latitude = str(getJSONObjectVariable(data, "lat"))
         longitude = str(getJSONObjectVariable(data, "lng"))
         raw_address = str(getJSONObjectVariable(data, "address"))
-        address_line_1 = getJSONObjectVariable(data, "address_line_1")
-        address_line_2 = getJSONObjectVariable(data, "address_line_2")
-        street_address = address_line_1 + address_line_2
+        street_address = str(getJSONObjectVariable(data, "address_line_1"))
 
-        hours_of_operation = ""
+        address2 = getJSONObjectVariable(data, "address_line_2")
+        if address2 != MISSING and street_address != address2:
+            street_address = street_address + " " + address2
+
         operations = []
         for day in days:
-            value = data[f"{day}"]
-            if value is not None:
-                operations.append(f"{day}: {value}")
-                hours_of_operation = ", ".join(operations)
-            else:
-                hours_of_operation = MISSING
+            if day in data and data[day] is not None:
+                operations.append(f"{day}: {data[day]}")
+        hours_of_operation = ", ".join(operations)
 
         yield SgRecord(
             locator_domain=locator_domain,
