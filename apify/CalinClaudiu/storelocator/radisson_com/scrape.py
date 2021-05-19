@@ -2,8 +2,10 @@ from sgscrape import simple_scraper_pipeline as sp
 from sglogging import sglog
 from bs4 import BeautifulSoup as b4
 import asyncio
-import httpx
 import os
+
+os.environ["HTTPX_LOG_LEVEL"] = "debug"
+import httpx
 import json
 import time
 
@@ -50,7 +52,6 @@ async def get_main(url, headers):
 
 
 async def fetch_data(index: int, url: str, headers) -> dict:
-
     timeout = httpx.Timeout(60.0, connect=120.0)
     data = {}
     if len(url) > 0:
