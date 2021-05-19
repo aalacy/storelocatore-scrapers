@@ -60,7 +60,6 @@ for li in state_location_urls:
     state_urls.append(li.find("a")["href"])
 
 state_urls = state_urls[1:]
-# print(state_urls)
 
 response = response.split("routes")[1]
 
@@ -135,7 +134,6 @@ for key in data:
                 if "N/A" in phone:
                     phone = "<MISSING>"
 
-        # print(phone)
         street = street.replace("Address:", "")
         locator_domains.append(locator_domain)
         page_urls.append(page_url)
