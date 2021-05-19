@@ -129,6 +129,8 @@ def fetch_location(loc, driver):
         phone = "(716) 825-1378"
     if "Gainesville" in name:
         phone = "(352) 372-5715"
+    if "4590 Jon" in name or "9150 Cov" in name:
+        hours = "Sun-Thu: 11:00AM-10:00PM; Fri-Sat: 11:00AM-11:00PM"
     if "Find A R" not in name:
         return [
             website,
