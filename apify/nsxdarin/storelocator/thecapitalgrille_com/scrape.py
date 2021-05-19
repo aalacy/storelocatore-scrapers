@@ -77,7 +77,7 @@ def fetch_location(loc, retry_count=0):
     sleep(randint(2, 3))
 
     text = driver.page_source
-    if re.sub("access denied", text, re.IGNORECASE):
+    if re.search("access denied", re.escape(text), re.IGNORECASE):
         if retry_count > 3:
             raise Exception()
 
