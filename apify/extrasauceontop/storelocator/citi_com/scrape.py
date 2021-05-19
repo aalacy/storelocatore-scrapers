@@ -1,9 +1,7 @@
 from sgselenium import SgChrome
 import pandas as pd
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
-import ssl
 
-ssl._create_default_https_context = ssl._create_unverified_context
 search = DynamicGeoSearch(country_codes=[SearchableCountries.USA])
 
 locator_domains = []
@@ -23,42 +21,51 @@ hours_of_operations = []
 
 base_url = "https://online.citi.com/US/ag/citibank-location-finder"
 
-with SgChrome(is_headless=True).driver() as driver:
+with SgChrome(is_headless=True, executable_path="chromedriver.exe").driver() as driver:
     driver.get(base_url)
     for search_lat, search_lon in search:
-        data = driver.execute_async_script(
-            """
-            var done = arguments[0]
-            fetch("https://online.citi.com/gcgapi/prod/public/v1/geoLocations/places/retrieve", {
-            "headers": {
-                "accept": "application/json",
-                "accept-language": "en-US",
-                "businesscode": "GCB",
-                "channelid": "INTERNET",
-                "client_id": "4a51fb19-a1a7-4247-bc7e-18aa56dd1c40",
-                "content-type": "application/json; charset=UTF-8",
-                "countrycode": "US",
-                "scope": "VISITOR",
-                "sec-ch-ua-mobile": "?0",
-                "sec-fetch-dest": "empty",
-                "sec-fetch-mode": "cors",
-                "sec-fetch-site": "same-origin"
-            },
-            "referrer": "https://online.citi.com/US/ag/citibank-location-finder",
-            "referrerPolicy": "strict-origin-when-cross-origin",
-            "body": '{"type":"branchesAndATMs","inputLocation":["""
-            + str(search_lon)
-            + """, """
-            + str(search_lat)
-            + """],"resultCount":"10000","distanceUnit":"MILE","findWithinRadius":"1000000"}',
-            "method": "POST",
-            "mode": "cors",
-            "credentials": "include"
-            })
-            .then(res => res.json())
-            .then(data => done(data))
-            """
-        )
+        x = 0
+        while True:
+            x = x + 1
+            try:
+                data = driver.execute_async_script(
+                    """
+                    var done = arguments[0]
+                    fetch("https://online.citi.com/gcgapi/prod/public/v1/geoLocations/places/retrieve", {
+                    "headers": {
+                        "accept": "application/json",
+                        "accept-language": "en-US",
+                        "businesscode": "GCB",
+                        "channelid": "INTERNET",
+                        "client_id": "4a51fb19-a1a7-4247-bc7e-18aa56dd1c40",
+                        "content-type": "application/json; charset=UTF-8",
+                        "countrycode": "US",
+                        "scope": "VISITOR",
+                        "sec-ch-ua-mobile": "?0",
+                        "sec-fetch-dest": "empty",
+                        "sec-fetch-mode": "cors",
+                        "sec-fetch-site": "same-origin"
+                    },
+                    "referrer": "https://online.citi.com/US/ag/citibank-location-finder",
+                    "referrerPolicy": "strict-origin-when-cross-origin",
+                    "body": '{"type":"branchesAndATMs","inputLocation":["""
+                    + str(search_lon)
+                    + """, """
+                    + str(search_lat)
+                    + """],"resultCount":"10000","distanceUnit":"MILE","findWithinRadius":"1000000"}',
+                    "method": "POST",
+                    "mode": "cors",
+                    "credentials": "include"
+                    })
+                    .then(res => res.json())
+                    .then(data => done(data))
+                    """
+                )
+                break
+            except Exception:
+                if x == 10:
+                    break
+                continue
 
         for location in data["features"]:
             locator_domain = "online.citi.com"
@@ -84,6 +91,15 @@ with SgChrome(is_headless=True).driver() as driver:
                 == "AllPoint"
             ):
                 continue
+
+            if location_type == "branch":
+                if (
+                    location["properties"]["additionalProperties"]["atm24HR"] is True
+                    or location["properties"]["additionalProperties"]["atmLimited"]
+                    is True
+                ):
+                    location_type = "branch and atm"
+
             latitude = location["geometry"]["coordinates"][1]
             longitude = location["geometry"]["coordinates"][0]
             search.found_location_at(latitude, longitude)
