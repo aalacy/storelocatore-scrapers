@@ -4,7 +4,6 @@ from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import json
-from sgscrape import sgpostal as parser
 
 website = "td.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
