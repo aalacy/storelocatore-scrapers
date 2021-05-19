@@ -32,7 +32,17 @@ def fetch_data():
             city = address.split(",")[-3].strip()
             state = address.split(",")[-2].strip()
             zip = address.split(",")[-1].strip()
+
             country_code = store["coun"].upper()
+            if (
+                zip.isdigit() is False
+                and "," in street_address
+                and country_code == "US"
+            ):
+                zip = state
+                state = city
+                city = street_address.split(",")[1].strip()
+                street_address = street_address.split(",")[0].strip()
 
             phone = store["phoneNo"]
 
