@@ -1,1 +1,2 @@
-sgrequests==0.1.7
+bs4==0.0.1
+sgrequests==0.1.8
