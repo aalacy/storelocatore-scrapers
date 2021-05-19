@@ -51,7 +51,15 @@ def fetch_data():
             location_name = store["name"]
             street_address = ""
             if "street" in store["address"]:
-                street_address = store["address"]["street"]
+                street_address = (
+                    store["address"]["street"]
+                    .encode("ascii", "replace")
+                    .decode("utf-8")
+                    .replace("?", "-")
+                    .strip()
+                    .replace("---", "-")
+                    .strip()
+                )
             city = store["address"]["townOrCity"]
             state = store["address"]["stateRegionCounty"]
             zip = store["address"]["postcode"]

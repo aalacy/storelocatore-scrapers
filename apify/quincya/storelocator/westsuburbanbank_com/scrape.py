@@ -69,7 +69,7 @@ def fetch_data():
 
     hours_of_operation = lobby_hours + " " + wsb_hours
 
-    items = base.find(id="nav-tabContent").find_all(class_="tab-pane fade")
+    items = base.find(id="nav-tabContent").find_all(class_="tab-pane")
 
     for item in items:
         location_name = item.h3.text
@@ -90,24 +90,24 @@ def fetch_data():
             latitude = "<MISSING>"
             longitude = "<MISSING>"
 
-        data.append(
-            [
-                locator_domain,
-                base_link,
-                location_name,
-                street_address,
-                city,
-                state,
-                zip_code,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
-        )
+            data.append(
+                [
+                    locator_domain,
+                    base_link,
+                    location_name,
+                    street_address,
+                    city,
+                    state,
+                    zip_code,
+                    country_code,
+                    store_number,
+                    phone,
+                    location_type,
+                    latitude,
+                    longitude,
+                    hours_of_operation,
+                ]
+            )
 
     return data
 
