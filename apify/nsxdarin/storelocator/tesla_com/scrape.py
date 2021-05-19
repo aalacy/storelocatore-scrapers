@@ -51,21 +51,31 @@ def fetch_data():
     Found = False
     for line in r.iter_lines():
         line = str(line.decode("utf-8"))
-        if '<h2>Tesla Stores & Galleries</h2>' in line:
+        if "<h2>Tesla Stores & Galleries</h2>" in line:
             Found = True
-        if Found and '<h2>Tesla Service Centers</h2>' in line:
+        if Found and "<h2>Tesla Service Centers</h2>" in line:
             Found = False
-        if 'Germany' in line:
+        if "Germany" in line:
             Found = False
-        if Found and '<a href="/en_AE/findus/list/stores/' in line and 'United+States' not in line and 'Canada' not in line and 'United+Kingdom' not in line:
-            states.append('https://www.tesla.com' + line.split('href="')[1].split('"')[0])
+        if (
+            Found
+            and '<a href="/en_AE/findus/list/stores/' in line
+            and "United+States" not in line
+            and "Canada" not in line
+            and "United+Kingdom" not in line
+        ):
+            states.append(
+                "https://www.tesla.com" + line.split('href="')[1].split('"')[0]
+            )
     for state in states:
         logger.info(state)
         r2 = session.get(state, headers=headers)
         for line2 in r2.iter_lines():
-            line2 = str(line2.decode('utf-8'))
+            line2 = str(line2.decode("utf-8"))
             if '<a href="/en_AE/findus/location/store/' in line2:
-                otherlocs.append('https://www.tesla.com' + line2.split('href="')[1].split('"')[0])
+                otherlocs.append(
+                    "https://www.tesla.com" + line2.split('href="')[1].split('"')[0]
+                )
     for loc in otherlocs:
         logger.info(loc)
         name = ""
@@ -100,9 +110,9 @@ def fetch_data():
                 rawadd = add.strip()
             if '<span class="locality">' in line2:
                 g = line2.replace("  ", " ").replace("  ", " ")
-                rawadd = rawadd + ' ' + g.split('ity">')[1].split('<')[0]
-                if '<br />' in g:
-                    rawadd = rawadd + ' ' + g.split('<br />')[1].split('<')[0]
+                rawadd = rawadd + " " + g.split('ity">')[1].split("<")[0]
+                if "<br />" in g:
+                    rawadd = rawadd + " " + g.split("<br />")[1].split("<")[0]
                 addr = parse_address_intl(rawadd)
                 city = addr.city
                 zc = addr.postcode
