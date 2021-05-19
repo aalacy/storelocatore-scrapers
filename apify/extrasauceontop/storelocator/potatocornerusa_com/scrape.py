@@ -51,10 +51,25 @@ headers = {
 url = "https://www.potatocornerusa.com"
 response = session.get(url, headers=headers).text
 
+soup = bs(response, "html.parser")
+state_urls = []
+state_location_urls = (
+    soup.find("li", attrs={"id": "DrpDwnMn03"}).find("ul").find_all("li")
+)
+for li in state_location_urls:
+    state_urls.append(li.find("a")["href"])
+
+state_urls = state_urls[1:]
+# print(state_urls)
+
 response = response.split("routes")[1]
 
 json_objects = extract_json(response)
 data = json_objects[0]
+with open("file.txt", "w", encoding="utf-8") as output:
+    json.dump(json_objects, output, indent=4)
+
+data["./galleria-at-sunset"] = {"type": "Static", "pageId": "oki4j"}
 
 for key in data:
     route = key[1:]
@@ -73,10 +88,12 @@ for key in data:
         hours = "<MISSING>"
 
         location_name = soup.find("span", attrs={"class": "color_28"}).text.strip()
+
         full_address_and_phone = soup.find_all(
             attrs={"style": "font-family:montserrat,sans-serif"}
         )
 
+        phone = "<MISSING>"
         for item in full_address_and_phone:
             if item.text.strip() == "Store Address:":
                 full_address = (
@@ -118,6 +135,7 @@ for key in data:
                 if "N/A" in phone:
                     phone = "<MISSING>"
 
+        # print(phone)
         street = street.replace("Address:", "")
         locator_domains.append(locator_domain)
         page_urls.append(page_url)
@@ -133,6 +151,20 @@ for key in data:
         latitudes.append(latitude)
         longitudes.append(longitude)
         hours_of_operations.append(hours)
+
+for url in state_urls:
+    state_response = session.get(url).text
+    state_soup = bs(state_response, "html.parser")
+    grids = state_soup.find_all("div", attrs={"class": "_2bafp"})
+    for grid in grids:
+        if "coming soon" in str(grid.text.strip().encode("utf-8").lower()):
+            grid_text = str(grid.text.strip().encode("utf-8").lower())
+
+            x = 0
+            for location_name in location_names:
+                if location_name.lower() in grid_text:
+                    hours_of_operations[x] = "Coming Soon"
+                x = x + 1
 
 df = pd.DataFrame(
     {
