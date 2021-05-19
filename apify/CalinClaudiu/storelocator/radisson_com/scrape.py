@@ -41,14 +41,8 @@ async def get_main(url, headers):
         retry_loop = 5
         retries = 0
         response = None
-        while retries <= retry_loop and not response:
-            try:
-                response = await client.get(url)
-                retries = retry_loop
-            except Exception:
-                retries += 1
-        if response:
-            return response.json()
+        response = await client.get(url)
+        return response.json()
 
 
 async def fetch_data(index: int, url: str, headers) -> dict:
