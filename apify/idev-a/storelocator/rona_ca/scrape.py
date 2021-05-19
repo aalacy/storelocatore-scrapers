@@ -52,6 +52,7 @@ days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 def fetch_data():
     with SgRequests() as session:
         with SgFirefox() as driver:
+            total = 0
             locator_domain = "https://www.rona.ca/"
             base_url = "https://www.rona.ca/webapp/wcs/stores/servlet/RonaStoreListDisplay?storeLocAddress=toronto&storeId=10151&catalogId=10051&langId=-1&latitude=43.653226&longitude=-79.3831843"
             soup = bs(session.get(base_url, headers=_headers).text, "lxml")
@@ -72,8 +73,9 @@ def fetch_data():
                 marker_url = f"https://www.rona.ca/webapp/wcs/stores/servlet/RonaStoreDetailAjax?catalogId=10051&langId=-1&storeId=10151&id={marker['id']}"
                 soup1 = bs(session.get(marker_url, headers=_headers).text, "lxml")
                 page_url = soup1.select_one("a.detail")["href"]
-                logger.info(page_url)
                 driver.get(page_url)
+                total += 1
+                logger.info(f"[total {total}] {page_url}")
                 soup2 = bs(driver.page_source, "lxml")
                 block = soup2.select_one(
                     "div.visible-xs div.storedetails__address-block"
