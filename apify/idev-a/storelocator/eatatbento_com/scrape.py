@@ -67,6 +67,15 @@ def fetch_data():
             if soup1.find("a", href=re.compile(r"tel:")):
                 phone = soup1.find("a", href=re.compile(r"tel:")).text
             addr = list(link.select_one("span.price").stripped_strings)
+            try:
+                coord = (
+                    soup1.select_one("div.inner iframe")["src"]
+                    .split("!2d")[1]
+                    .split("!2m")[0]
+                    .split("!3d")
+                )
+            except:
+                coord = ["", ""]
             yield SgRecord(
                 page_url=link.a["href"],
                 location_name=soup1.h1.text,
@@ -76,6 +85,8 @@ def fetch_data():
                 zip_postal=addr[-1].split(",")[1].strip().split(" ")[-1].strip(),
                 country_code="US",
                 phone=phone,
+                latitude=coord[1],
+                longitude=coord[0],
                 locator_domain=locator_domain,
                 hours_of_operation=_valid("; ".join(hours)),
             )
