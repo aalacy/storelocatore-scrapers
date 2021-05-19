@@ -4,7 +4,7 @@ from bs4 import BeautifulSoup as b4
 import asyncio
 import os
 
-os.environ["HTTPX_LOG_LEVEL"] = "debug"
+os.environ["HTTPX_LOG_LEVEL"] = "trace"
 import httpx
 import json
 import time
