@@ -14,7 +14,6 @@ def fetch_data():
     with SgRequests() as session:
         locations = session.get(base_url, headers=_headers).json()
         for _ in locations:
-            page_url = f"https://www.bmt.com/locations/{_['address_url']}"
             street_address = _["address"]
             if _["address2"]:
                 street_address += " " + _["address2"]
@@ -24,7 +23,7 @@ def fetch_data():
                     f"{hh.select_one('.day').text.strip()} {hh.select_one('.hours').text.strip()}"
                 )
             yield SgRecord(
-                page_url=page_url,
+                page_url=_["permalink"],
                 location_name=_["store"],
                 store_number=_["id"],
                 street_address=street_address,

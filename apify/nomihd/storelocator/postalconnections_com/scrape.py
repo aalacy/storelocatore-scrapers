@@ -97,7 +97,7 @@ def fetch_data():
         if len(phone) <= 0:
             phone = store_sel.xpath('//a[@class="c-header__phone"]/text()')
             if len(phone) <= 0:
-                "".join(
+                phone = "".join(
                     store_sel.xpath(
                         '//section[@class="section hero store"]//a[contains(@href,"tel:")]/text()'
                     )
@@ -110,6 +110,7 @@ def fetch_data():
         hours_of_operation = "; ".join(
             store_sel.xpath('//span[@class="c-header__hours"]/text()')
         ).strip()
+
         if len(hours_of_operation) <= 0:
             try:
                 hours_of_operation = (
@@ -142,6 +143,15 @@ def fetch_data():
             except:
                 pass
 
+        else:
+            if len(hours_of_operation.split("; Mon")) > 0:
+                if location_name == "Modesto":
+                    hours_of_operation = hours_of_operation.split("; Mon")[0].strip()
+                elif location_name == "Modesto #2":
+                    hours_of_operation = (
+                        "Mon" + hours_of_operation.split("; Mon")[1].strip()
+                    )
+
         store_number = "<MISSING>"
 
         modified_loc_name = (
@@ -155,6 +165,17 @@ def fetch_data():
         if modified_loc_name in lat_lng_dict:
             latitude = lat_lng_dict[modified_loc_name][0]
             longitude = lat_lng_dict[modified_loc_name][1]
+
+        if street_address == "":
+            hours_of_operation = "<INACCESSIBLE>"
+            location_type = "<INACCESSIBLE>"
+            store_number = "<INACCESSIBLE>"
+            street_address = "<INACCESSIBLE>"
+            city = "<INACCESSIBLE>"
+            state = "<INACCESSIBLE>"
+            zip = "<INACCESSIBLE>"
+            phone = "<INACCESSIBLE>"
+
         yield SgRecord(
             locator_domain=locator_domain,
             page_url=page_url,

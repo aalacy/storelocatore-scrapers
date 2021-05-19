@@ -1,9 +1,10 @@
 import re
 import csv
+from random import randint
+from time import sleep
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
 from sgselenium import SgChrome
-from tenacity import retry, stop_after_attempt
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 session = SgRequests()
@@ -41,21 +42,18 @@ def write_output(data):
             writer.writerow(row)
 
 
-@retry(reraise=True, stop=stop_after_attempt(3))
-def fetch(loc, driver):
-    return driver.execute_async_script(
-        f"""
-        var done = arguments[0]
-
-        fetch("{loc}")
-            .then(res => res.text())
-            .then(done)
-    """
-    )
+driver = SgChrome().driver()
 
 
-@retry(reraise=True, stop=stop_after_attempt(3))
-def fetch_location(loc, driver):
+def get_driver(reset=False):
+    global driver
+    if reset:
+        driver = SgChrome().driver()
+
+    return driver
+
+
+def fetch_location(loc, retry_count=0):
     logger.info(loc)
 
     website = "thecapitalgrille.com"
@@ -73,10 +71,17 @@ def fetch_location(loc, driver):
     lat = ""
     lng = ""
     hours = ""
-    text = fetch(loc, driver)
 
-    if re.search("access denied", text, re.IGNORECASE):
-        raise Exception()
+    driver = get_driver(retry_count > 0)
+    driver.get(loc)
+    sleep(randint(2, 3))
+
+    text = driver.page_source
+    if re.search("access denied", re.escape(text), re.IGNORECASE):
+        if retry_count > 3:
+            raise Exception()
+
+        return fetch_location(loc, retry_count + 1)
 
     text = str(text).replace("\r", "").replace("\n", "").replace("\t", "")
     if "<title>" in text:
@@ -154,9 +159,8 @@ def fetch_data():
         ):
             locs.append(line.split("<loc>")[1].split("<")[0])
 
-    with ThreadPoolExecutor() as executor, SgChrome() as driver:
-        driver.get("https://www.thecapitalgrille.com/home")
-        futures = [executor.submit(fetch_location, loc, driver) for loc in locs]
+    with ThreadPoolExecutor() as executor:
+        futures = [executor.submit(fetch_location, loc) for loc in locs]
         for future in as_completed(futures):
             poi = future.result()
             if poi:
