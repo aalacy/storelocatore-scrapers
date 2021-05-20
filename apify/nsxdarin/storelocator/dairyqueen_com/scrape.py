@@ -49,7 +49,7 @@ def fetch_data():
     locs = []
     for lat, lng in search:
         url = (
-            "https://www.dairyqueen.com/api/vtl/locations?country=ca&lat="
+            "https://prod-dairyqueen.dotcmscloud.com/api/vtl/locations?country=us&lat="
             + str(lat)
             + "&long="
             + str(lng)
@@ -68,14 +68,18 @@ def fetch_data():
                         )
                         if lurl not in locs:
                             locs.append(lurl)
-    url = "https://www.dairyqueen.com/en-us/sitemap/sitemap-en-us.xml"
+    url = "https://www.dairyqueen.com/en-us/sitemap.xml"
     r = session.get(url, headers=headers)
     website = "dairyqueen.com"
     typ = "<MISSING>"
+    country = "US"
     logger.info("Pulling Stores")
     for line in r.iter_lines():
         line = str(line.decode("utf-8"))
-        if "<loc>https://www.dairyqueen.com/en-us/locations/" in line:
+        if (
+            "<loc>https://www.dairyqueen.com/en-us/locations/" in line
+            and "-us/locations/</loc>" not in line
+        ):
             locs.append(line.split("<loc>")[1].split("<")[0])
     for loc in locs:
         logger.info(loc)
@@ -83,45 +87,63 @@ def fetch_data():
         add = ""
         city = ""
         state = ""
+        country = "US"
         zc = ""
-        store = loc.rsplit("/", 1)[1]
+        store = loc.rsplit("/", 2)[1]
         phone = ""
         lat = ""
         lng = ""
         hours = ""
-        lurl = (
-            "https://www.dairyqueen.com/api/vtl/location-detail-schema?storeId=" + store
-        )
-        r2 = session.get(lurl, headers=headers)
+        r2 = session.get(loc, headers=headers)
         for line2 in r2.iter_lines():
             line2 = str(line2.decode("utf-8"))
-            if '"amenities"' in line2:
-                name = line2.split('{"address1":"')[1].split('"')[0]
+            if '<h1 class="my-1 h2">' in line2:
+                name = line2.split('<h1 class="my-1 h2">')[1].split("<")[0]
+            if '"address3":"' in line2:
                 add = line2.split('"address3":"')[1].split('"')[0]
-                country = line2.split('"country":"')[1].split('"')[0]
-                lat = line2.split('"latlong":"')[1].split('"')[0].split(",")[0]
-                lng = line2.split('"latlong":"')[1].split('"')[0].split(",")[1]
+                lat = line2.split('"latlong":"')[1].split(",")[0]
+                lng = line2.split('"latlong":"')[1].split(",")[1].replace('"', "")
                 city = line2.split('"city":"')[1].split('"')[0]
+                state = line2.split('"stateProvince":"')[1].split('"')[0]
+                zc = line2.split('"postalCode":"')[1].split('"')[0]
                 try:
                     phone = line2.split('"phone":"')[1].split('"')[0]
                 except:
                     phone = "<MISSING>"
-                state = line2.split('"stateProvince":"')[1].split('"')[0]
+            if '{"miniSiteHours":' in line2:
+                days = line2.split('{"miniSiteHours":')[1].split('","')[0]
                 try:
-                    hours = line2.split('"storeHours":"1:')[1].split('"')[0]
-                    hours = "Sun: " + hours
-                    hours = hours.replace(",2:", "; Mon: ")
-                    hours = hours.replace(",3:", "; Tue: ")
-                    hours = hours.replace(",4:", "; Wed: ")
-                    hours = hours.replace(",5:", "; Thu: ")
-                    hours = hours.replace(",6:", "; Fri: ")
-                    hours = hours.replace(",7:", "; Sat: ")
+                    hours = "Sun: " + days.split("1:")[1].split(",")[0]
                 except:
-                    hours = "<MISSING>"
-                zc = line2.split('"postalCode":"')[1].split('"')[0]
-                name = line2.split('"address1":"')[1].split('"')[0]
+                    hours = "Sun: Closed"
+                try:
+                    hours = hours + "; Mon: " + days.split(",2:")[1].split(",")[0]
+                except:
+                    hours = "Mon: Closed"
+                try:
+                    hours = hours + "; Tue: " + days.split(",3:")[1].split(",")[0]
+                except:
+                    hours = "Tue: Closed"
+                try:
+                    hours = hours + "; Wed: " + days.split(",4:")[1].split(",")[0]
+                except:
+                    hours = "Wed: Closed"
+                try:
+                    hours = hours + "; Thu: " + days.split(",5:")[1].split(",")[0]
+                except:
+                    hours = "Thu: Closed"
+                try:
+                    hours = hours + "; Fri: " + days.split(",6:")[1].split(",")[0]
+                except:
+                    hours = "Fri: Closed"
+                try:
+                    hours = hours + "; Sat: " + days.split(",7:")[1]
+                except:
+                    hours = "Sat: Closed"
         if phone == "":
             phone = "<MISSING>"
+        if hours == "":
+            hours = "<MISSING>"
         yield [
             website,
             loc,
