@@ -68,7 +68,6 @@ def fetch_data():
                         )
                         if lurl not in locs:
                             locs.append(lurl)
-                            print(lurl)
     url = "https://www.dairyqueen.com/en-us/sitemap/sitemap-en-us.xml"
     r = session.get(url, headers=headers)
     website = "dairyqueen.com"
