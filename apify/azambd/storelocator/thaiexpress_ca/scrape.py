@@ -113,14 +113,6 @@ def getHOO(response):
     return cleanHours(hours)
 
 
-def getScriptWithGeo(body):
-    scripts = body.xpath("//script/text()")
-    for script in scripts:
-        if '"geo":{' in script:
-            return json.loads(script)
-    return None
-
-
 def getAddress(raw_address):
     street_address = raw_address
     city = MISSING
