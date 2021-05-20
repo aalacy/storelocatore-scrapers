@@ -35,9 +35,7 @@ def write_output(data):
 
 def fetch_data():
     out = []
-
-    locator_domain = "https://grizzlysgrill.com/"
-    api_url = "https://grizzlysgrill.com/"
+    locator_domain = "https://choicepet.com"
     session = SgRequests()
     tag = {
         "Recipient": "recipient",
@@ -65,79 +63,53 @@ def fetch_data():
         "SubaddressType": "address2",
         "PlaceName": "city",
         "StateName": "state",
+        "ZipCode": "postal",
     }
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:88.0) Gecko/20100101 Firefox/88.0",
     }
-    r = session.get(api_url, headers=headers)
+
+    r = session.get("https://choicepet.com/pages/locations-1", headers=headers)
     tree = html.fromstring(r.text)
-    div = tree.xpath('//li[./a[contains(text(), "Locations")]]/ul/li/a')
+    div = tree.xpath('//div[./div/p/strong[text()="Business Hours"]]')
+
     for d in div:
 
-        page_url = "".join(d.xpath(".//@href"))
-        location_name = "Grizzly’s Wood-Fired Grill – " + "".join(d.xpath(".//text()"))
-        session = SgRequests()
-        r = session.get(page_url, headers=headers)
-        tree = html.fromstring(r.text)
+        page_url = "https://choicepet.com/pages/locations-1"
 
-        location_type = "<MISSING>"
-        phone = "".join(
-            tree.xpath(
-                '//p/a[contains(@href, "tel")]/text() | //a[contains(@href, "tel")]//text()'
-            )
-        )
-
-        ad = (
-            " ".join(tree.xpath('//p[./a[contains(@href, "goo")]]/a/text()'))
-            .replace("\n", "")
-            .strip()
-            or "<MISSING>"
-        )
-        if ad == "<MISSING>":
-            ad = (
-                r.text.split(
-                    'amp;cid=14220503103323169527" target="_blank" rel="noopener">'
-                )[1]
-                .split("<")[0]
-                .replace("\n", " ")
-                .strip()
-            )
+        ad = " ".join(d.xpath(".//p[2]/text()")).replace("\n", "").strip()
         a = usaddress.tag(ad, tag_mapping=tag)[0]
-
+        location_name = "".join(d.xpath(".//p[1]/strong/text()"))
         street_address = f"{a.get('address1')} {a.get('address2')}".replace(
             "None", ""
         ).strip()
-        city = a.get("city")
-        state = a.get("state")
-        postal = a.get("ZipCode")
+        city = a.get("city") or "<MISSING>"
+        state = a.get("state") or "<MISSING>"
+        postal = a.get("postal") or "<MISSING>"
+        if ad.find("28") != -1:
+            state = ad.split()[-2].strip()
+            postal = ad.split()[-1].strip()
+            city = location_name
+
         country_code = "US"
         store_number = "<MISSING>"
-        map_link = "".join(tree.xpath('//iframe[contains(@src, "google")]/@src'))
-        latitude = map_link.split("!3d")[1].strip().split("!")[0].strip()
-        longitude = map_link.split("!2d")[1].strip().split("!")[0].strip()
-
+        text = "".join(d.xpath('.//a[contains(@href, "google")]/@href'))
+        try:
+            if text.find("ll=") != -1:
+                latitude = text.split("ll=")[1].split(",")[0]
+                longitude = text.split("ll=")[1].split(",")[1].split("&")[0]
+            else:
+                latitude = text.split("@")[1].split(",")[0]
+                longitude = text.split("@")[1].split(",")[1]
+        except IndexError:
+            latitude, longitude = "<MISSING>", "<MISSING>"
+        location_type = "Pet Shop"
         hours_of_operation = (
-            " ".join(
-                tree.xpath(
-                    '//p[./a[contains(@href, "tel")]]/following-sibling::p//text()'
-                )
-            )
-            .replace("\n", "")
-            .replace("WE’RE OPEN!", "")
-            .replace("HOURS", "")
-            .strip()
-            or "<MISSING>"
+            " ".join(d.xpath(".//ul/li/text()")).replace("\n", "").strip()
         )
-        if hours_of_operation == "<MISSING>":
-            hours_of_operation = (
-                " ".join(
-                    tree.xpath('//a[contains(@href, "tel")]/preceding-sibling::text()')
-                )
-                .replace("\n", "")
-                .split("from")[1]
-                .split("Click")[0]
-                .strip()
-            )
+        phone = "".join(d.xpath(".//p[4]/strong/text()"))
+        if phone.find("Store:") != -1:
+            phone = phone.split("Store:")[1].split("Grooming")[0].strip()
 
         row = [
             locator_domain,
@@ -156,6 +128,7 @@ def fetch_data():
             hours_of_operation,
         ]
         out.append(row)
+
     return out
 
 

@@ -54,72 +54,76 @@ def get_driver(url, class_name, driver=None):
     return driver
 
 
-class_name = "store-list__store"
-url = "https://www.foodmaxx.com/stores/?coordinates=39.64096403685537,-112.39632159999998&zoom=5"
-driver = get_driver(url, class_name)
+driver = get_driver("https://thedump.com/locations", "thedump-location-title")
+
 soup = bs(driver.page_source, "html.parser")
-grids = soup.find("div", class_="store-list__scroll-container").find_all("li")
+grids = soup.find_all("div", attrs={"class": "col-md-4 thedump-location-block"})
 
 for grid in grids:
-    name = grid.find("span", attrs={"class": "name"}).text.strip()
-    number = grid.find("span", attrs={"class": "number"}).text.strip()
-    page_url = (
-        "https://www.foodmaxx.com/stores/"
-        + name.split("\n")[0].replace(" ", "-").replace(".", "").lower()
-        + "-"
-        + number.split("\n")[0].split("#")[-1]
-        + "/"
-        + grid["id"].split("-")[-1]
-    )
+    locator_domain = "theudmp.com"
+    page_url = locator_domain + grid.find("h3").find("a")["href"]
+    location_name = grid.find("h3").text.strip()
+
+    address_part = grid.find(
+        "div", attrs={"class": "thedump-location-address"}
+    ).text.strip()
+    if "Newport News" in address_part:
+        address_pieces = address_part.split(",")[0].split(" ")
+        address = ""
+        for x in range(len(address_pieces) - 2):
+            address = address + address_pieces[x] + " "
+
+        city = address_pieces[-2] + " " + address_pieces[-1]
+    else:
+        address_pieces = address_part.split(",")[0].split(" ")
+        address = ""
+        for x in range(len(address_pieces) - 1):
+            address = address + address_pieces[x] + " "
+
+        city = address_pieces[-1]
+
+    state = location_name.split(", ")[1]
+    zipp = address_part.split(", ")[1].split(" ")[-1]
+    country_code = "US"
+    store_number = "<MISSING>"
+
     try:
-        driver.get(page_url)
-        WebDriverWait(driver, 20).until(
-            EC.presence_of_element_located(
-                (By.CLASS_NAME, "store-details-store-hours__content")
-            )
+        phone = (
+            grid.find("div", attrs={"class": "thedump-location-phone"})
+            .find("a")["href"]
+            .replace("tel:", "")
         )
     except Exception:
-        driver = get_driver(
-            page_url, "store-details-store-hours__content", driver=driver
+        phone = "<MISSING>"
+
+    if "warehouse" in location_name.lower():
+        location_type = "Warehouse"
+    else:
+        location_type = "Store"
+
+    lat_lon_url = grid.find_all("a")[-1]["href"]
+
+    latitude = lat_lon_url.split("!3d")[1].split("!4d")[0]
+    longitude = lat_lon_url.split("!4d")[1].split("?")[0]
+
+    try:
+        hours = (
+            grid.text.strip()
+            .split(phone[-4:])[1]
+            .split("View on Map")[0]
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .strip()
         )
-
-    location_soup = bs(driver.page_source, "html.parser")
-
-    locator_domain = "foodmaxx.com"
-    location_name = location_soup.find("meta", attrs={"property": "og:title"})[
-        "content"
-    ]
-    address = location_soup.find("meta", attrs={"property": "og:street-address"})[
-        "content"
-    ]
-    city = location_soup.find("meta", attrs={"property": "og:locality"})["content"]
-    state = location_soup.find("meta", attrs={"property": "og:region"})["content"]
-    zipp = location_soup.find("meta", attrs={"property": "og:postal-code"})["content"]
-    country_code = location_soup.find("meta", attrs={"property": "og:country-name"})[
-        "content"
-    ]
-    store_number = location_name.split("#")[-1]
-    phone = location_soup.find("meta", attrs={"property": "og:phone_number"})["content"]
-    location_type = "<MISSING>"
-    latitude = location_soup.find("meta", attrs={"property": "og:location:latitude"})[
-        "content"
-    ]
-    longitude = location_soup.find("meta", attrs={"property": "og:location:longitude"})[
-        "content"
-    ]
-
-    hours = ""
-    days = location_soup.find("dl", attrs={"aria-label": "Store Hours"}).find_all("dt")
-    hours_list = location_soup.find("dl", attrs={"aria-label": "Store Hours"}).find_all(
-        "dd"
-    )
-
-    for x in range(len(days)):
-        day = days[x].text.strip()
-        hour = hours_list[x].text.strip()
-        hours = hours + day + " " + hour + ", "
-
-    hours = hours[:-2]
+    except Exception:
+        hours = (
+            grid.text.strip()
+            .split("Pickups Only")[1]
+            .split("View on Map")[0]
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .strip()
+        )
 
     locator_domains.append(locator_domain)
     page_urls.append(page_url)
@@ -154,6 +158,7 @@ df = pd.DataFrame(
         "location_type": location_types,
     }
 )
+
 
 df = df.fillna("<MISSING>")
 df = df.replace(r"^\s*$", "<MISSING>", regex=True)
