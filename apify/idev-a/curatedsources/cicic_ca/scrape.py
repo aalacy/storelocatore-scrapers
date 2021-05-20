@@ -31,7 +31,7 @@ def _parse(_, session, page=1):
     _addr = sp3.select_one("div.postaladdress")
     if not _addr:
         return None
-    addr = list(_addr.stripped_strings)
+    addr = [aa.text.strip() for aa in sp3.select("div.postaladdress nobr")]
     if sp3.select_one("span#ctl12_ctl00_orgtollfree"):
         phone = sp3.select_one("#ctl12_ctl00_orgtollfree").text.strip()
     elif sp3.select_one("#ctl12_ctl00_orgphone"):
@@ -39,13 +39,25 @@ def _parse(_, session, page=1):
     else:
         phone = ""
 
+    location_name = td[1]
+    portion = ""
+    _location_name = location_name
+    if "," in location_name:
+        portion = location_name.split(",")[-1].strip()
+        _location_name = location_name.split(",")[0]
+    elif "-" in location_name:
+        portion = location_name.split("-")[-1].strip()
+        _location_name = location_name.split("-")[0]
+    if portion and portion == td[2].strip():
+        location_name = _location_name
+
     return SgRecord(
         page_url=page_url,
         store_number=td[0],
-        location_name=td[1],
-        street_address=addr[0],
+        location_name=location_name,
+        street_address=sp3.select_one("div.postaladdress .addressTitle").text.strip(),
         city=td[2],
-        state=addr[2],
+        state=addr[1],
         zip_postal=td[3],
         country_code=addr[-1],
         phone=phone,

@@ -71,8 +71,8 @@ def fetch_data():
 
     url = (
         "https://www.hibbett.com/on/demandware.store/Sites-Hibbett-US-Site/"
-        "default/Stores-GetNearestStores?latitude=42.4685771&"
-        "longitude=-83.42107759999999&countryCode=US&distanceUnit=mi&maxdistance=2500000"
+        "default/Stores-GetNearestStores?latitude=28.14&"
+        "longitude=-95.85&countryCode=US&distanceUnit=mi&maxdistance=2500000"
     )
     stores_req = session.get(
         url,

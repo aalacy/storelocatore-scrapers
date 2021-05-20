@@ -78,14 +78,14 @@ def fetch_data():
             data = re.findall("JSContext =(.+);", data)[0]
             data = demjson.decode(data)
 
-            location_name = poi[0]["name"]
+            location_name = poi[0]["name"].replace("&#39;", "'")
             street_address = data["profile"]["address"]["street"]
             suit = data["profile"]["address"].get("suite")
             if suit:
                 street_address += " " + suit
             street_address = street_address if street_address else "<MISSING>"
             city = poi[0]["address"]["addressLocality"]
-            city = city if city else "<MISSING>"
+            city = city.replace("&#39;", "'") if city else "<MISSING>"
             state = poi[0]["address"]["addressRegion"]
             state = state if state else "<MISSING>"
             zip_code = poi[0]["address"]["postalCode"]
