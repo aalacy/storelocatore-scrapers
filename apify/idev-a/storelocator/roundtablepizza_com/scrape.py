@@ -4,7 +4,6 @@ from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 from sglogging import SgLogSetup
 from bs4 import BeautifulSoup as bs
 from sgselenium import SgChrome
-import re
 
 logger = SgLogSetup().get_logger("roundtablepizza")
 
