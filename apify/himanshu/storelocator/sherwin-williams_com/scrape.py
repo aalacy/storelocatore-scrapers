@@ -161,18 +161,25 @@ def fetch_data():
                     headers=headers,
                 )
                 location_soup = BeautifulSoup(location_request.text, "lxml")
-                hours = (
-                    " ".join(
-                        list(
-                            location_soup.find(
-                                "div",
-                                {"class": "cmp-storedetailhero__store-hours-container"},
-                            ).stripped_strings
+
+                hours = ""
+                try:
+                    hours = (
+                        " ".join(
+                            list(
+                                location_soup.find(
+                                    "div",
+                                    {
+                                        "class": "cmp-storedetailhero__store-hours-container"
+                                    },
+                                ).stripped_strings
+                            )
                         )
+                        .replace("Store Hours", "")
+                        .strip()
                     )
-                    .replace("Store Hours", "")
-                    .strip()
-                )
+                except:
+                    pass
                 store.append(hours if hours != "" else "<MISSING>")
                 store.append(link)
                 yield store
