@@ -47,14 +47,19 @@ def fetch_data():
     asd = tree.xpath('//div[@id="submenu"]/div/ul/li/a/@data-option-value')
     i = 0
     for d in div:
-        page_url = "https://www.pitfirepizza.com/" + "".join(asd[i]).replace(".", "")
-        i += 1
+
         location_name = (
             "".join(d.xpath(".//h2//text()"))
             .replace("\n", "")
             .replace("  |  ", " | ")
             .strip()
         )
+        page_url = "https://www.pitfirepizza.com/" + "".join(asd[i]).replace(".", "")
+        i += 1
+        if location_name.find("MAR VISTA") != -1:
+            page_url = "https://www.pitfirepizza.com/mar-vista"
+        if location_name.find("NORTH HOLLYWOOD") != -1:
+            page_url = "https://www.pitfirepizza.com/north-hollywood"
         location_type = "<MISSING>"
         street_address = (
             "".join(
