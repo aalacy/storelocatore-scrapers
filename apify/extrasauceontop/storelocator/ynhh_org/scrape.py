@@ -1,4 +1,5 @@
 from sgselenium.sgselenium import webdriver
+from webdriver_manager.chrome import ChromeDriverManager
 from bs4 import BeautifulSoup as bs
 import pandas as pd
 
@@ -16,6 +17,7 @@ location_types = []
 latitudes = []
 longitudes = []
 hours_of_operations = []
+url_checks = []
 
 option = webdriver.ChromeOptions()
 option.add_argument("--disable-blink-features=AutomationControlled")
@@ -29,7 +31,9 @@ option.add_argument("--headless")
 
 start_url = "https://www.ynhh.org/find-a-location.aspx?page=1&keyword=&sortBy=&distance=0&cz=&locs=0&within=Yale+New+Haven+Hospital&avail=0"
 
-with webdriver.Chrome(options=option) as driver:
+with webdriver.Chrome(
+    executable_path=ChromeDriverManager().install(), options=option
+) as driver:
     driver.get(start_url)
     html = driver.page_source
     soup = bs(html, "html.parser")
@@ -42,7 +46,9 @@ with webdriver.Chrome(options=option) as driver:
         location_deets = location.split(",")
         locator_domain = "https://www.ynhh.org"
         location_name = location_deets[0].replace("'", "")
-        page_url = "https://www.ynhh.org" + location_deets[-3].replace("'", "")
+        page_url = (
+            "https://www.ynhh.org" + location_deets[-3].replace("'", "")
+        ).replace(" ", "")
         latitude = location_deets[-2]
         longitude = str(location_deets[-1]).replace("]];", "")
         country_code = "US"
@@ -170,6 +176,11 @@ with webdriver.Chrome(options=option) as driver:
             if hours[0] == "M":
                 hours = "M " + hours.split("M")[1].strip()
 
+            page_url_to_check = (
+                "https://www.ynhh.org" + grid.find("h3").find("a")["href"]
+            )
+
+            url_checks.append(page_url_to_check)
             street_addresses.append(address)
             citys.append(city)
             states.append(state)
@@ -184,24 +195,32 @@ with webdriver.Chrome(options=option) as driver:
         driver.get(new_url)
         soup = bs(driver.page_source, "html.parser")
 
-df = pd.DataFrame(
+df_first = pd.DataFrame(
     {
-        "locator_domain": locator_domains[: len(zips)],
-        "page_url": page_urls[: len(zips)],
-        "location_name": location_names[: len(zips)],
-        "street_address": street_addresses[: len(zips)],
-        "city": citys[: len(zips)],
-        "state": states[: len(zips)],
-        "zip": zips[: len(zips)],
-        "store_number": store_numbers[: len(zips)],
-        "phone": phones[: len(zips)],
-        "latitude": latitudes[: len(zips)],
-        "longitude": longitudes[: len(zips)],
-        "hours_of_operation": hours_of_operations[: len(zips)],
-        "country_code": country_codes[: len(zips)],
-        "location_type": location_types[: len(zips)],
+        "locator_domain": locator_domains,
+        "page_url": page_urls,
+        "location_name": location_names,
+        "latitude": latitudes,
+        "longitude": longitudes,
+        "country_code": country_codes,
+        "store_number": store_numbers,
+        "location_type": location_types,
     }
 )
+
+df_second = pd.DataFrame(
+    {
+        "url_checks": url_checks,
+        "street_address": street_addresses,
+        "city": citys,
+        "state": states,
+        "zip": zips,
+        "phone": phones,
+        "hours_of_operation": hours_of_operations,
+    }
+)
+
+df = df_first.merge(df_second, left_on="page_url", right_on="url_checks")
 
 df = df.fillna("<MISSING>")
 df = df.replace(r"^\s*$", "<MISSING>", regex=True)
@@ -214,7 +233,7 @@ df["dupecheck"] = (
     + df["location_type"]
 )
 
-df = df.drop_duplicates(subset=["dupecheck"])
+df = df.drop_duplicates(subset=["dupecheck", "url_checks"])
 df = df.drop(columns=["dupecheck"])
 df = df.replace(r"^\s*$", "<MISSING>", regex=True)
 df = df.fillna("<MISSING>")

@@ -17,10 +17,10 @@ headers = {
 def fetch_data():
     # Your scraper here
 
-    search_url = "http://www.oldspaghettifactory.ca/#locations"
+    search_url = "https://oldspaghettifactory.ca/locations/"
     stores_req = session.get(search_url, headers=headers)
     stores_sel = lxml.html.fromstring(stores_req.text)
-    stores = stores_sel.xpath('//footer/a[contains(text(),"View More")]/@href')
+    stores = stores_sel.xpath('//div[@class="location-info-wrap"]/a/@href')
     for store_url in stores:
         page_url = store_url
         location_type = "<MISSING>"
@@ -29,43 +29,41 @@ def fetch_data():
         store_req = session.get(page_url, headers=headers)
         store_sel = lxml.html.fromstring(store_req.text)
         location_name = "".join(
-            store_sel.xpath('//header/div[@class="title"]/text()')
+            store_sel.xpath('//div[@class="location-content-wrap"]/h2/text()')
         ).strip()
 
-        street_address = "".join(
-            store_sel.xpath('//div[@class="address"]/text()')
-        ).strip()
-        state = "".join(store_sel.xpath('//div[@class="province"]/text()')).strip()
-        city_zip = "".join(store_sel.xpath('//div[@class="city"]/text()')).strip()
+        address = store_sel.xpath('//ul[@class="address"]/li/text()')
+        street_address = ", ".join(address[:-1]).strip()
+        city_zip = address[-1].strip()
         city = city_zip.split(",")[0].strip()
+        state = "".join(
+            store_sel.xpath('//div[@class="location-content-wrap"]/h3/text()')
+        ).strip()
         zip = city_zip.split(",")[1].strip()
         country_code = "CA"
 
-        phone = (
-            "".join(store_sel.xpath('//div[@class="phone"]/a/text()'))
-            .strip()
-            .replace("Phone:", "")
-            .strip()
-        )
+        sections = store_sel.xpath('//div[@class="location-content-wrap"]/ul')
+        phone = ""
+        try:
+            phone = "".join(sections[-2].xpath("li[1]/span[2]/text()")).strip()
+        except:
+            pass
 
-        hours_of_operation = (
-            "; ".join(store_sel.xpath('//div[@class="hours"]/p/text()'))
-            .strip()
-            .encode("ascii", "replace")
-            .decode("utf-8")
-            .replace("?", " ")
-            .strip()
-        )
+        hours_list = []
+        try:
+            hours = sections[-1].xpath("li")
+            for hour in hours:
+                day = "".join(hour.xpath("span[1]/text()")).strip()
+                time = "".join(hour.xpath("span[2]/text()")).strip()
+                hours_list.append(day + time)
+        except:
+            pass
+
+        hours_of_operation = "; ".join(hours_list).strip()
         store_number = "<MISSING>"
 
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
-
-        map_link = "".join(store_sel.xpath('//a[@class="map-link"]/@href')).strip()
-        if len(map_link) > 0:
-            if "/@" in map_link:
-                latitude = map_link.split("/@")[1].strip().split(",")[0].strip()
-                longitude = map_link.split("/@")[1].strip().split(",")[1].strip()
+        latitude = "".join(store_sel.xpath('//div[@class="marker"]/@data-lat'))
+        longitude = "".join(store_sel.xpath('//div[@class="marker"]/@data-lng'))
 
         yield SgRecord(
             locator_domain=locator_domain,

@@ -39,7 +39,7 @@ headers_stores = {
 
 
 def store_data(loc):
-    location_name = loc["location"]
+    location_name = loc["location"].replace("&amp;", "")
     store_number = loc["store_number"]
     latitude = loc["latitude"]
     longitude = loc["longitude"]
