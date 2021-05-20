@@ -3,7 +3,7 @@ from sgrequests import SgRequests
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 from sglogging import SgLogSetup
 from bs4 import BeautifulSoup as bs
-import re
+from sgselenium import SgChrome
 
 logger = SgLogSetup().get_logger("roundtablepizza")
 
@@ -18,58 +18,104 @@ search = DynamicGeoSearch(
 )
 
 
+def _phone(val):
+    return (
+        val.replace("(", "")
+        .replace(")", "")
+        .replace("-", "")
+        .replace(" ", "")
+        .strip()
+        .isdigit()
+    )
+
+
 def fetch_data():
     # Need to add dedupe. Added it in pipeline.
     session = SgRequests(proxy_rotation_failure_threshold=20)
     maxZ = search.items_remaining()
     total = 0
-    for lat, lng in search:
-        if search.items_remaining() > maxZ:
-            maxZ = search.items_remaining()
-        logger.info(("Pulling Geo Code %s..." % lat, lng))
-        url = f"https://ordering.roundtablepizza.com/Site/rtp/Locations?isFrame=False&lat={lat}&lon={lng}&IsInit=false"
-        locations = bs(
-            session.get(url, headers=headers, timeout=15).text, "lxml"
-        ).select("section > div.locationInfo")
-        total += len(locations)
-        for _ in locations:
-            store = dict()
-            store["store_number"] = _["data-companyseq"]
-            store["location_name"] = _.select_one(".locationName").text
-            store["page_url"] = (
-                _.select_one("a.locationName")["href"]
-                if _.select_one("a.locationName")
-                else "<MISSING>"
-            )
-            addr = list(_.select("div.locationInfoBox > div")[1].stripped_strings)
-            store["street_address"] = addr[0]
-            store["city"] = addr[1].split(",")[0].strip()
-            store["state"] = addr[1].split(",")[1].strip().split(" ")[0].strip()
-            store["zip_postal"] = addr[1].split(",")[1].strip().split(" ")[-1].strip()
-            store["phone"] = addr[-1]
-            store["hours_of_operation"] = ""
-            hours = _.find("span", string=re.compile(r"open", re.IGNORECASE))
-            if hours:
-                store["hours_of_operation"] = hours.text.strip()
-            coord = (
-                _.select_one("a.locationCenter")["onclick"]
-                .split("(")[1]
-                .split(")")[0]
-                .split(",")
-            )
-            store["latitude"] = float(coord[0].strip()[1:-1])
-            store["longitude"] = float(coord[1].strip()[1:-1])
-            search.found_location_at(
-                store["latitude"],
-                store["longitude"],
-            )
-            yield store
-        progress = str(round(100 - (search.items_remaining() / maxZ * 100), 2)) + "%"
+    with SgChrome() as driver:
+        for lat, lng in search:
+            if search.items_remaining() > maxZ:
+                maxZ = search.items_remaining()
+            logger.info(("Pulling Geo Code %s..." % lat, lng))
+            url = f"https://ordering.roundtablepizza.com/Site/rtp/Locations?isFrame=False&lat={lat}&lon={lng}&IsInit=false"
+            locations = bs(
+                session.get(url, headers=headers, timeout=15).text, "lxml"
+            ).select("section > div.locationInfo")
+            total += len(locations)
+            for _ in locations:
+                store = dict()
+                store["store_number"] = _["data-companyseq"]
+                store["location_name"] = _.select_one(".locationName").text
+                store["page_url"] = (
+                    _.select_one("a.locationName")["href"]
+                    if _.select_one("a.locationName")
+                    else "<MISSING>"
+                )
+                addr = list(_.select("div.locationInfoBox > div")[1].stripped_strings)
+                store["street_address"] = addr[0]
+                store["city"] = addr[1].split(",")[0].strip()
+                store["state"] = addr[1].split(",")[1].strip().split(" ")[0].strip()
+                zip_postal = addr[1].split(",")[1].strip().split(" ")[-1].strip()
+                store["zip_postal"] = zip_postal if _phone(zip_postal) else "<MISSING>"
+                store["phone"] = addr[-1] if _phone(addr[-1]) else "<MISSING>"
+                store["hours_of_operation"] = "<MISSING>"
+                if (
+                    store["page_url"] != "<MISSING>"
+                    and store["page_url"] != "https://pinol03.intouchposonline.com"
+                ):
+                    logger.info(f"[url] {store['page_url']}")
+                    try:
+                        sp1 = bs(
+                            session.get(
+                                store["page_url"], headers=headers, timeout=15
+                            ).text,
+                            "lxml",
+                        )
+                        hours = [
+                            ": ".join(hh.stripped_strings)
+                            for hh in sp1.select("#openHours ul li")
+                        ]
+                        if not hours:
+                            driver.get(store["page_url"])
+                            sp1 = bs(driver.page_source, "lxml")
+                            store["zip_postal"] = sp1.select_one(
+                                "span.zip"
+                            ).text.strip()
+                            store["phone"] = sp1.select_one("span.phone").text.strip()
+                            for hh in sp1.select("div.dayHoursContainer div.dayHours"):
+                                hours.append(
+                                    f"{hh.select_one('span.startDayContainer').text.strip()}: {''.join(hh.select_one('span.timeContainer').stripped_strings)}"
+                                )
+                    except:
+                        pass
 
-        if len(locations):
-            logger.info(
-                f"found: {len(locations)} | total: {total} | progress: {progress}"
+                    store["hours_of_operation"] = (
+                        "; ".join(hours).replace("–", "-") or "<MISSING>"
+                    )
+
+                coord = (
+                    _.select_one("a.locationCenter")["onclick"]
+                    .split("(")[1]
+                    .split(")")[0]
+                    .split(",")
+                )
+                store["latitude"] = float(coord[0].strip()[1:-1])
+                store["longitude"] = float(coord[1].strip()[1:-1])
+                search.found_location_at(
+                    store["latitude"],
+                    store["longitude"],
+                )
+                yield store
+            progress = (
+                str(round(100 - (search.items_remaining() / maxZ * 100), 2)) + "%"
             )
+
+            if len(locations):
+                logger.info(
+                    f"found: {len(locations)} | total: {total} | progress: {progress}"
+                )
 
 
 def scrape():
