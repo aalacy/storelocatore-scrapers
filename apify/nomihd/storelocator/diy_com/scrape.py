@@ -4,7 +4,6 @@ from sgrequests import SgRequests
 from sglogging import sglog
 import json
 import lxml.html
-from sgscrape import sgpostal as parser
 
 website = "diy.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
