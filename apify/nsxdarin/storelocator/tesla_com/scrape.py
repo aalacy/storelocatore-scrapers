@@ -118,7 +118,12 @@ def fetch_data():
                 zc = addr.postcode
                 state = addr.state
                 add = addr.street_address_1
-                add = add.strip()
+                if add is None:
+                    add = "<MISSING>"
+                else:
+                    add = add.strip()
+                if "prsanjuan" in loc:
+                    add = "381 Calle Juan Calaf"
             if '<span class="type">' in line2 and typ == "":
                 typ = typ + "; " + line2.split('<span class="type">')[1].split("<")[0]
                 if phone == "":
