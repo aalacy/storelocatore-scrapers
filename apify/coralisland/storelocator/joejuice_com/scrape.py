@@ -125,7 +125,6 @@ def fetch_data():
                 if row["closed"]:
                     hour = "closed"
                 else:
-                    "datetime.strptime(str(j.get('mon_time_open')),'%H%M').strftime('%I:%M %p')"
                     hour = (
                         datetime.strptime(str(row.get("openTime")), "%H%M").strftime(
                             "%I:%M %p"
@@ -138,7 +137,11 @@ def fetch_data():
                 store_hours.append(day + " " + hour)
         else:
             store_hours = "Store is closed"
-        output.append(get_value(store_hours))  # opening hours
+        isOpen = store.get("isOpen")
+        isOpenTomorrow = store.get("isOpenTomorrow")
+        if not isOpen and not isOpenTomorrow:
+            store_hours = "Store is closed"
+        output.append(get_value(store_hours))
         output.append("https://www.joejuice.com/stores")
         output_list.append(output)
     return output_list
