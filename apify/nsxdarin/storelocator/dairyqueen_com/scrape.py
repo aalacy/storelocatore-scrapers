@@ -49,7 +49,7 @@ def fetch_data():
     locs = []
     for lat, lng in search:
         url = (
-            "https://www.dairyqueen.com/api/vtl/locations?country=ca&lat="
+            "https://prod-dairyqueen.dotcmscloud.com/api/vtl/locations?country=us&lat="
             + str(lat)
             + "&long="
             + str(lng)
