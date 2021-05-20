@@ -68,7 +68,7 @@ def get_data(coord):
         page_url = f"https://www.honeybaked.com/stores/{store_number}"
         phone = a.get("phoneNumber") or "<MISSING>"
         latitude = a.get("location").get("coordinates")[1]
-        longitude = a.get("location").get("coordinates")[1]
+        longitude = a.get("location").get("coordinates")[0]
         location_type = a.get("storeType")
         hours = a.get("storeHours")
         hours_of_operation = "<MISSING>"
