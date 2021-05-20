@@ -31,7 +31,7 @@ def fetch_data():
             zip_postal = loc["postal_code"]
             state = loc["state"]
             yield SgRecord(
-                locator_domain="https://www.gretchenscottdesigns.com/",
+                locator_domain="https://www.kingcashsaver.com/",
                 page_url=page_url,
                 location_name=location_name,
                 street_address=street_address.strip(),

@@ -13,6 +13,16 @@ headers = {
 
 MISSING = "<MISSING>"
 
+UK_COUNTRY_CODES = [
+    "uk",
+    "united kingdom",
+    "great britain",
+    "gb",
+    "england",
+    "scotland",
+    "wales",
+]
+
 FIELDS = [
     "locator_domain",
     "page_url",
@@ -91,6 +101,9 @@ def fetch_data():
         country_code = data_per_loc.xpath('//meta[@name="description"]/@content')
         country_code = "".join(country_code).split(">")[0].strip()
         country_code = country_code if country_code else MISSING
+
+        if country_code.lower() in UK_COUNTRY_CODES:
+            country_code = "GB"
 
         store_number = ""
         store_number = store_number if store_number else MISSING

@@ -7,6 +7,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgzip.dynamic import SearchableCountries
 from sgzip.static import static_coordinate_list
+from tenacity import retry, stop_after_attempt
 
 website = "pnc.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -30,52 +31,63 @@ headers = {
 id_list = []
 
 
+def retry_error_callback(retry_state):
+    coord = retry_state.args[0]
+    log.error(f"Failure to fetch locations for: {coord}")
+    return []
+
+
+@retry(
+    retry_error_callback=retry_error_callback, stop=stop_after_attempt(5), reraise=True
+)
 def fetch_records_for(coords):
     lat = coords[0]
     lng = coords[1]
     log.info(f"pulling records for coordinates: {lat,lng}")
     search_url = "https://apps.pnc.com/locator-api/locator/api/v2/location/?latitude={}&longitude={}&radius=100&radiusUnits=mi&branchesOpenNow=false"
 
-    stores_req = session.get(search_url.format(lat, lng), headers=headers)
+    stores_req = session.get(search_url.format(lat, lng), headers=headers, timeout=15)
     stores = json.loads(stores_req.text)["locations"]
-    yield stores
+    return stores
 
 
 def process_record(raw_results_from_one_coordinate):
-    for stores in raw_results_from_one_coordinate:
-        for store in stores:
-            if store["locationType"]["locationTypeDesc"] != "ATM":
-                continue
-            if store["partnerFlag"] == "1":
-                continue
-            if store["locationId"] in id_list:
-                continue
+    for store in raw_results_from_one_coordinate:
+        if store["partnerFlag"] == "1":
+            continue
+        if store["locationId"] in id_list:
+            continue
 
-            id_list.append(store["locationId"])
+        id_list.append(store["locationId"])
 
-            page_url = "<MISSING>"
-            locator_domain = website
-            location_name = store["locationName"]
-            street_address = store["address"]["address1"]
-            if (
-                store["address"]["address2"] is not None
-                and len(store["address"]["address2"]) > 0
-            ):
-                street_address = street_address + ", " + store["address"]["address2"]
+        page_url = "<MISSING>"
+        locator_domain = website
+        location_name = store["locationName"]
+        street_address = store["address"]["address1"]
+        if (
+            store["address"]["address2"] is not None
+            and len(store["address"]["address2"]) > 0
+        ):
+            street_address = street_address + ", " + store["address"]["address2"]
 
-            city = store["address"]["city"]
-            state = store["address"]["state"]
-            zip = store["address"]["zip"]
-            country_code = "US"
+        city = store["address"]["city"]
+        state = store["address"]["state"]
+        zip = store["address"]["zip"]
+        country_code = "US"
 
-            store_number = store["locationId"]
-            phone = "<MISSING>"
+        store_number = store["locationId"]
+        phone = "<MISSING>"
 
-            location_type = store["locationType"]["locationTypeDesc"]
-            hours_of_operation = "<MISSING>"
-            latitude = store["address"]["latitude"]
-            longitude = store["address"]["longitude"]
+        location_type = store["locationType"]["locationTypeDesc"]
+        if location_type != "ATM":
+            if store["children"] is not None:
+                location_type = "BRANCH AND ATM"
 
+        hours_of_operation = "<MISSING>"
+        latitude = store["address"]["latitude"]
+        longitude = store["address"]["longitude"]
+
+        if location_type == "ATM" or location_type == "BRANCH AND ATM":
             yield SgRecord(
                 locator_domain=locator_domain,
                 page_url=page_url,
@@ -104,7 +116,7 @@ def scrape():
             ),
             fetch_results_for_rec=fetch_records_for,
             processing_function=process_record,
-            max_threads=32,  # tweak to see what's fastest
+            max_threads=20,  # tweak to see what's fastest
         )
         for rec in results:
             writer.write_row(rec)

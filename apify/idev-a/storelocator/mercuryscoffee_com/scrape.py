@@ -17,11 +17,16 @@ def fetch_data():
     base_url = "https://www.mercurys.com/pages/locations-1"
     with SgRequests() as session:
         soup = bs(session.get(base_url, headers=_headers).text, "lxml")
-        locs = [
-            _
-            for _ in soup.select_one("div.gf_row").select("div.element-wrap")
-            if _["data-label"] != "Button" and _["data-label"] != "Image"
-        ]
+        try:
+            locs = [
+                _
+                for _ in soup.select("div.item-content div.element-wrap")
+                if _["data-label"] != "Button" and _["data-label"] != "Image"
+            ]
+        except:
+            import pdb
+
+            pdb.set_trace()
         for x in range(0, len(locs), 2):
             block = list(locs[x + 1].stripped_strings)
             address = None
