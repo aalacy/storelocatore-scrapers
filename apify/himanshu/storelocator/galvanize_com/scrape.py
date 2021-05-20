@@ -81,7 +81,7 @@ def fetch_data():
             geos = soup.find_all("meta", attrs={"name": "geo.position"})
             for geo in geos:
                 lon = geo["content"].split(";")[1]
-                if lon[:6] in longitude[:6]:
+                if lon[:7] in longitude[:7]:
                     latitude = geo["content"].split(";")[0]
                     break
         zipp = json_data["zip"].replace("90045", "90401")

@@ -28,6 +28,7 @@ def retry_error_callback(retry_state):
 
 @retry(retry_error_callback=retry_error_callback, stop=stop_after_attempt(5))
 def fetch_records_for(zipcode):
+    log.info(f"pulling records for zipcode: {zipcode}")
     url = "https://www.raymourflanigan.com/api/custom/location-search"
     params = {
         "postalCode": zipcode,
@@ -47,9 +48,17 @@ def process_record(raw_results_from_one_zipcode):
             url_list.append(store["url"])
 
             page_url = "https://www.raymourflanigan.com" + store["url"]
+            log.info(page_url)
             locator_domain = website
             location_name = store["displayName"]
             street_address = store["addressLine1"]
+            if (
+                "addressLine2" in store
+                and store["addressLine2"] is not None
+                and len(store["addressLine2"]) > 0
+            ):
+                street_address = street_address + ", " + store["addressLine2"]
+
             city = store["city"]
             state = store["stateProvince"]
             zip = store["postalCode"]
@@ -60,10 +69,11 @@ def process_record(raw_results_from_one_zipcode):
 
             location_type = "Showroom"
             if store["clearanceCenter"] is True:
-                location_type = "clearanceCenter"
+                location_type = "Clearance Center"
             if store["outlet"] is True:
-                location_type = "outlet"
+                location_type = "Outlet"
 
+            location_name = "Raymour & Flanigan " + location_type
             hours_of_operation = ""
             hours = store["hours"]
             hours_list = []

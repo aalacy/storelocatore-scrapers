@@ -15,8 +15,6 @@ locator_domain = "https://roundtablepizza.com/"
 
 search = DynamicGeoSearch(
     country_codes=[SearchableCountries.USA],
-    max_radius_miles=100,
-    max_search_results=10,
 )
 
 
@@ -37,8 +35,12 @@ def fetch_data():
         for _ in locations:
             store = dict()
             store["store_number"] = _["data-companyseq"]
-            store["location_name"] = _.select_one("a.locationName").text
-            store["page_url"] = _.select_one("a.locationName")["href"]
+            store["location_name"] = _.select_one(".locationName").text
+            store["page_url"] = (
+                _.select_one("a.locationName")["href"]
+                if _.select_one("a.locationName")
+                else "<MISSING>"
+            )
             addr = list(_.select("div.locationInfoBox > div")[1].stripped_strings)
             store["street_address"] = addr[0]
             store["city"] = addr[1].split(",")[0].strip()

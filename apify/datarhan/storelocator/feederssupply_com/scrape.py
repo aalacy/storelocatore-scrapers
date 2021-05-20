@@ -101,6 +101,8 @@ def fetch_data():
             store_number = "<MISSING>"
             phone = loc_dom.xpath('//a[contains(@href, "tel")]/text()')
             phone = phone[0] if phone else "<MISSING>"
+            if phone == "Opening Soon":
+                continue
             location_type = "<MISSING>"
             latitude = "<MISSING>"
             longitude = "<MISSING>"
@@ -136,7 +138,7 @@ def fetch_data():
                 longitude,
                 hours_of_operation,
             ]
-            check = f'{location_name.split(",")[0].replace("- ", "")} {street_address}'
+            check = f"{city} {zip_code}"
             if check not in scraped_items:
                 scraped_items.append(check)
                 items.append(item)
