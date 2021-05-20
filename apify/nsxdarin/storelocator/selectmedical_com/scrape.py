@@ -20,6 +20,7 @@ def write_output(data):
         writer.writerow(
             [
                 "locator_domain",
+                "page_url",
                 "location_name",
                 "street_address",
                 "city",
@@ -39,7 +40,6 @@ def write_output(data):
 
 
 def fetch_data():
-    ids = []
     url = "https://www.selectmedical.com//sxa/search/results/?s={648F4C3A-C9EA-4FCF-82A3-39ED2AC90A06}&itemid={94793D6A-7CC7-4A8E-AF41-2FB3EC154E1C}&sig=&autoFireSearch=true&v={D2D3D65E-3A18-43DD-890F-1328E992446A}&p=50&e=0&g=&o=Distance,Ascending"
     r = session.get(url, headers=headers)
     if r.encoding is None:
@@ -49,12 +49,11 @@ def fetch_data():
         if '"Count":' in line:
             count = int(line.split('"Count":')[1].split(",")[0])
     logger.info(("Found %s Locations..." % str(count)))
-    for x in range(0, count + 75, 50):
+    for x in range(0, count + 9, 8):
         logger.info(("Pulling Results %s..." % str(x)))
         url2 = (
-            "https://www.selectmedical.com//sxa/search/results/?s={648F4C3A-C9EA-4FCF-82A3-39ED2AC90A06}&itemid={94793D6A-7CC7-4A8E-AF41-2FB3EC154E1C}&sig=&autoFireSearch=true&v={D2D3D65E-3A18-43DD-890F-1328E992446A}&p=50&e="
+            "https://www.selectmedical.com//sxa/search/results/?s={648F4C3A-C9EA-4FCF-82A3-39ED2AC90A06}&itemid={94793D6A-7CC7-4A8E-AF41-2FB3EC154E1C}&sig=&autoFireSearch=true&v=%7BD2D3D65E-3A18-43DD-890F-1328E992446A%7D&p=8&g=&o=&e="
             + str(x)
-            + "&g=&o=Distance,Ascending"
         )
         r2 = session.get(url2, headers=headers)
         if r2.encoding is None:
@@ -112,6 +111,9 @@ def fetch_data():
                                 )
                             phone = item.split('<a href=\\"tel:')[1].split("\\")[0]
                             hours = "<MISSING>"
+                            lurl = item.split('title field-link\\"><a href=\\"')[
+                                1
+                            ].split('\\"')[0]
                             country = "US"
                             typ = item.split('\\"line-of-business\\">')[1].split("<")[0]
                             store = item.split('"')[0]
@@ -128,23 +130,22 @@ def fetch_data():
                             if lat == "":
                                 lat = "<MISSING>"
                                 lng = "<MISSING>"
-                            if store not in ids:
-                                ids.append(store)
-                                yield [
-                                    website,
-                                    name,
-                                    add,
-                                    city,
-                                    state,
-                                    zc,
-                                    country,
-                                    store,
-                                    phone,
-                                    typ,
-                                    lat,
-                                    lng,
-                                    hours,
-                                ]
+                            yield [
+                                website,
+                                lurl,
+                                name,
+                                add,
+                                city,
+                                state,
+                                zc,
+                                country,
+                                store,
+                                phone,
+                                typ,
+                                lat,
+                                lng,
+                                hours,
+                            ]
                         except:
                             pass
 
