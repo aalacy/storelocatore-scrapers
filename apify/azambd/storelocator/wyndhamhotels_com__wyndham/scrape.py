@@ -11,6 +11,7 @@ from sglogging import sglog
 MISSING = "<MISSING>"
 website = "wyndhamhotels.com/wyndham"
 propertyUrl = "https://www.wyndhamhotels.com/BWSServices/services/search/properties?recordsPerPage=501200&pageNumber=1&brandId=ALL&countryCode="
+propertListUrl = "https://www.wyndhamhotels.com/bin/propertyDataList.json"
 max_workers = 1
 
 session = SgRequests().requests_retry_session()
@@ -104,6 +105,7 @@ def fetchStores():
     response = session.get(propertyUrl, headers=headers)
     data = json.loads(response.text)
     stores = []
+
     for country in data["countries"]:
         countryName = country["countryName"]
         countryCode = country["countryCode"]
@@ -119,9 +121,10 @@ def fetchStores():
                     store_number = prop["propertyId"]
                     location_name = prop["propertyName"]
                     brand = prop["brand"]
-
-                    if prop["brandId"] in brandMap:
-                        brand = brandMap[prop["brandId"]]
+                    location_type = brand
+                    brandId = prop["brandId"]
+                    if brandId in brandMap:
+                        brand = brandMap[brandId]
 
                     if prop["tierId"] in brandMap:
                         brand = brandMap[prop["tierId"]]
@@ -141,22 +144,62 @@ def fetchStores():
                             "page_url": page_url,
                             "countryCode": countryCode,
                             "state": stateName,
-                            "location_type": brand,
+                            "location_type": location_type,
+                            "cityName": cityName,
+                            "brandId": brandId,
                         }
                     )
     return stores
 
 
+def getRedirectUrl(store):
+    postBody = {
+        "locale": "en-us",
+        "hotels": [
+            {
+                "brandId": store["brandId"],
+                "hotelId": store["store_number"],
+                "hotelCode": store["store_number"],
+            }
+        ],
+    }
+
+    try:
+        response = session.post(
+            propertListUrl, headers=headers, data=json.dumps(postBody)
+        )
+        data = json.loads(response.text)
+        page_url = data["hotels"][0]["overviewPath"]
+        store["ex_page_url"] = store["page_url"]
+        store["page_url"] = page_url
+        response = session.get(store["page_url"], headers=headers)
+
+        if response.text is None or response.text == "":
+            return store, None, None
+
+        if "hotels were found that match your search" in response.text:
+            return store, None, None
+
+        body = html.fromstring(response.text, "lxml")
+        geoJSON = getScriptWithGeo(body)
+        return store, body, geoJSON
+    except Exception as e:
+        return store, None, None
+
+
 def fetchSingleSore(store):
     response = session.get(store["page_url"], headers=headers)
     if response.text is None or response.text == "":
-        return store, None
+        return getRedirectUrl(store)
 
     if "hotels were found that match your search" in response.text:
-        return store, "redirect"
+        return getRedirectUrl(store)
 
     body = html.fromstring(response.text, "lxml")
-    return store, body
+    geoJSON = getScriptWithGeo(body)
+    if geoJSON is None:
+        return getRedirectUrl(store)
+    return store, body, geoJSON
 
 
 def getScriptWithGeo(body):
@@ -186,43 +229,35 @@ def fetchData():
 
     count = 0
     failed = 0
-    failedUrls = []
     with ThreadPoolExecutor(
         max_workers=max_workers, thread_name_prefix="fetcher"
     ) as executor:
-        for store, body in executor.map(fetchSingleSore, stores):
+        for store, body, geoJSON in executor.map(fetchSingleSore, stores):
             count = count + 1
             if count % 100 == 0:
                 log.info(f"scrapped {count} pages ...")
-            if body is None or body == "redirect":
-                failed = failed + 1
-                failedUrls.append(store["page_url"])
-                log.error(
-                    f"#{failed}. {store['page_url']} {'Not Found' if body is None else 'Redirected'}!!!"
-                )
-
-                location_type = ("Not Found" if body is None else "redirected",)
-                yield SgRecord(
-                    locator_domain=website,
-                    page_url=store["page_url"],
-                    location_type=location_type,
-                )
-                continue
-
-            geoJSON = getScriptWithGeo(body)
-            if geoJSON is None:
-                log.error(f"#{failed}. {store['page_url']}  No Geo !!!")
-                failedUrls.append(store["page_url"])
-                failed = failed + 1
-                continue
 
             store_number = store["store_number"]
+            location_type = store["location_type"]
+
+            if body is None or geoJSON is None:
+                failed = failed + 1
+                log.error(f"{count}. #failed {failed}  {store['page_url']} ...")
+
+                page_url = store["ex_page_url"]
+                yield SgRecord(
+                    locator_domain=website,
+                    location_type=location_type,
+                    store_number=store_number,
+                    page_url=page_url,
+                )
+                continue
+
             location_name = geoJSON["name"]
             page_url = geoJSON["@id"]
             street_address = geoJSON["address"]["streetAddress"]
             city = geoJSON["address"]["addressLocality"]
             state = store["state"]
-            location_type = store["location_type"]
             zip_postal = MISSING
             if "postalCode" in geoJSON["address"]:
                 zip_postal = geoJSON["address"]["postalCode"]
@@ -231,8 +266,6 @@ def fetchData():
             phone = f" {geoJSON['telephone']}"
             latitude = f" {geoJSON['geo']['latitude']}"
             longitude = f" {geoJSON['geo']['longitude']}"
-
-            hours_of_operation = MISSING
 
             yield SgRecord(
                 locator_domain=website,
@@ -248,10 +281,9 @@ def fetchData():
                 phone=phone,
                 latitude=latitude,
                 longitude=longitude,
-                hours_of_operation=hours_of_operation,
             )
 
-    log.info(f"{failed} requests failed ...")
+    log.error(f"{failed} requests failed ...")
 
 
 def scrape():
