@@ -48,9 +48,9 @@ def fetch_data():
     logger.info("Pulling Stores")
     Found = False
     for line in r.iter_lines():
-        line = str(line.decode('utf-8'))
+        line = str(line.decode("utf-8"))
         if '<a href="/findus/location/service/' in line:
-            locs.append('https://www.tesla.com' + line.split('href="')[1].split('"')[0])
+            locs.append("https://www.tesla.com" + line.split('href="')[1].split('"')[0])
     for loc in locs:
         logger.info(loc)
         name = ""
@@ -229,6 +229,7 @@ def fetch_data():
             lng,
             hours,
         ]
+
 
 def scrape():
     data = fetch_data()
