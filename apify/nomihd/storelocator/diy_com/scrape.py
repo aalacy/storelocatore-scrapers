@@ -4,6 +4,7 @@ from sgrequests import SgRequests
 from sglogging import sglog
 import json
 import lxml.html
+from sgscrape import sgpostal as parser
 
 website = "diy.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -94,6 +95,10 @@ def fetch_data():
                     zip = store_json["address"]["postalCode"]
 
                     country_code = store_json["address"]["addressCountry"]
+
+                    if not city:
+                        city = street_address.split(",")[-1].strip()
+                        street_address = ",".join(street_address.split(",")[:-1])
 
                     if street_address == "" or street_address is None:
                         street_address = "<MISSING>"
