@@ -44,9 +44,7 @@ def fetch_data():
     r = session.get(url, headers=headers)
     website = "tesla.com/findus/list/services"
     typ = "<MISSING>"
-    country = ""
     logger.info("Pulling Stores")
-    Found = False
     for line in r.iter_lines():
         line = str(line.decode("utf-8"))
         if '<a href="/findus/location/service/' in line:
@@ -58,6 +56,7 @@ def fetch_data():
         city = ""
         typ = ""
         state = ""
+        country = ""
         zc = ""
         CS = False
         store = "<MISSING>"
@@ -92,6 +91,7 @@ def fetch_data():
                 city = addr.city
                 zc = addr.postcode
                 state = addr.state
+                country = addr.country
                 add = addr.street_address_1
                 if add is None:
                     add = "<MISSING>"
