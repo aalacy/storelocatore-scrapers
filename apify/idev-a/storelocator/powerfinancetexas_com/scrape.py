@@ -32,8 +32,8 @@ def fetch_data():
     with SgRequests() as session:
         soup = bs(session.get(base_url, headers=_headers).text, "lxml")
         links = (
-            soup.find("h3", string=re.compile(r"Multiple Locations"))
-            .find_next_sibling("div")
+            soup.find("a", string=re.compile(r"Locations"))
+            .find_next_sibling("ul")
             .select("a")
         )
         for link in links:
@@ -43,15 +43,24 @@ def fetch_data():
                 logger.info("- 404 -")
                 continue
             sp1 = bs(res.text, "lxml")
-            _ = json.loads(
-                sp1.find_all("script", type="application/ld+json")[-1].string.strip()
-            )
+            _script = sp1.find_all("script", type="application/ld+json")
+            if len(_script) < 2:
+                logger.info("-- 404 --")
+                continue
+            _ = json.loads(_script[-1].string.strip())
             hours = []
             for hh in _["openingHoursSpecification"]:
-                hours.append(
-                    f"{','.join(hh['dayOfWeek'])}: {hh['opens']}-{hh['closes']}"
-                )
-            coord = sp1.iframe["src"].split("!2d")[1].split("!3m")[0].split("!3d")
+                days = hh["dayOfWeek"]
+                if type(days) != list:
+                    days = [days]
+                hours.append(f"{','.join(days)}: {hh['opens']}-{hh['closes']}")
+            coord = (
+                sp1.iframe["src"]
+                .split("!2d")[1]
+                .split("!3m")[0]
+                .split("!2m")[0]
+                .split("!3d")
+            )
             yield SgRecord(
                 page_url=link["href"],
                 location_name=sp1.h1.text.strip(),
