@@ -184,6 +184,7 @@ def getRedirectUrl(store):
         geoJSON = getScriptWithGeo(body)
         return store, body, geoJSON
     except Exception as e:
+        log.info(f"Handling this:\n{e}")
         return store, None, None
 
 
