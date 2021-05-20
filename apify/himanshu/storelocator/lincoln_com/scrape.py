@@ -1,6 +1,6 @@
 import csv
 from sgrequests import SgRequests
-from sgzip.dynamic import DynamicZipSearch, SearchableCountries
+from sgzip.dynamic import DynamicZipSearch, SearchableCountries, Grain_2
 from sglogging import SgLogSetup
 
 logger = SgLogSetup().get_logger("lincoln_com")
@@ -48,6 +48,7 @@ def fetch_data():
         country_codes=[SearchableCountries.USA],
         max_search_results=100,
         max_radius_miles=100,
+        granularity=Grain_2(),
     )
     for zip_code in zipcodes:
         logger.info(f"fetching records for zipcode:{zip_code}")
@@ -102,25 +103,7 @@ def fetch_data():
                                     + h1
                                 )
 
-                    if "Day" in i["ServiceHours"]:
-                        for j in i["ServiceHours"]["Day"]:
-                            if "closed" in j and j == "true":
-                                h1 = j["name"] + " " + "closed"
-                            elif "open" in j:
-                                time1 = (
-                                    time1
-                                    + " "
-                                    + j["name"]
-                                    + " "
-                                    + j["open"]
-                                    + " "
-                                    + j["close"]
-                                    + " "
-                                    + h1
-                                )
-                    hours_of_operation = (
-                        " SalesHours " + time + " ServiceHours " + time1
-                    )
+                    hours_of_operation = time.strip()
                     latitude = i["Latitude"]
                     longitude = i["Longitude"]
                     store = []
@@ -137,11 +120,7 @@ def fetch_data():
                     store.append(latitude)
                     store.append(longitude)
                     store.append(
-                        hours_of_operation.replace(
-                            " SalesHours  ServiceHours ", "<MISSING>"
-                        )
-                        if hours_of_operation
-                        else "<MISSING>"
+                        hours_of_operation if hours_of_operation else "<MISSING>"
                     )
                     store.append(
                         "https://www.lincoln.com/dealerships/dealer-details/"

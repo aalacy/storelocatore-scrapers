@@ -49,13 +49,11 @@ def fetch_data():
 
     found_poi = []
 
-    max_results = 10
-    max_distance = 50
+    max_distance = 150
 
     search = DynamicZipSearch(
         country_codes=[SearchableCountries.USA],
         max_radius_miles=max_distance,
-        max_search_results=max_results,
     )
 
     log.info("Running sgzip ..")
@@ -72,7 +70,7 @@ def fetch_data():
         except:
             continue
         for item in items:
-            locator_domain = "citizensbank.com"
+            locator_domain = "yourpie.com"
             if "COMING SOON" in item.text.upper():
                 continue
 
@@ -90,27 +88,36 @@ def fetch_data():
                 zip_code = "<MISSING>"
             country_code = "US"
             store_number = "<MISSING>"
-            phone = item.find(class_="phone").text.strip()
-            if phone in found_poi:
-                continue
-            found_poi.append(phone)
-            location_type = "<MISSING>"
             latitude = item["data-lat"]
             longitude = item["data-lng"]
 
             search.found_location_at(latitude, longitude)
+            location_type = "<MISSING>"
+
+            try:
+                phone = item.find(class_="phone").text.strip()
+                if phone in found_poi:
+                    continue
+                found_poi.append(phone)
+            except:
+                phone = ""
 
             link = item.a["href"]
             log.info(link)
             req = session.get(link, headers=headers)
             base = BeautifulSoup(req.text, "lxml")
-
             try:
                 hours_of_operation = " ".join(
                     list(base.find(class_="thirty hours").div.stripped_strings)
                 )
             except:
                 hours_of_operation = "<MISSING>"
+
+            if not phone:
+                phone = base.find(class_="contactInfo").a.text.strip()
+                if phone in found_poi:
+                    continue
+                found_poi.append(phone)
 
             yield [
                 locator_domain,

@@ -1,5 +1,6 @@
 import csv
 import json
+from datetime import datetime
 
 from sgrequests import SgRequests
 
@@ -35,7 +36,7 @@ def eliminate_space(items):
 
 
 def write_output(data):
-    with open("data.csv", mode="w") as output_file:
+    with open("data.csv", mode="w", newline="") as output_file:
         writer = csv.writer(
             output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
         )
@@ -75,42 +76,37 @@ def fetch_data():
             country = "United Kingdom"
         else:
             continue
-        output.append(base_url)  # url
-        output.append(get_value(store["name"]))  # location name
+        output.append(base_url)
+        output.append(get_value(store["name"]))
         zip_code = "<MISSING>"
-        street_address = get_value(store["address"])
+        street_address = get_value(store["address"]).replace(
+            "New York City New York", ""
+        )
+        if street_address.find(",") != -1:
+            street_address = " ".join(street_address.split(",")[:-1])
         if "B91 3RA" in store["address"]:
             zip_code = "B91 3RA"
             street_address = street_address.replace("B91 3RA", "").strip()
-        output.append(street_address)  # address
-        city = store["name"].split("[")[1].replace("]", "").strip()
-        if country == "United States":
-            if (
-                "San " not in city
-                and "Beach" not in city
-                and "Paul" not in city
-                and "Pitt" not in city
-                and "Seattle" not in city
-                and "Brentwood" not in city
-                and "Beverly" not in city
-                and "Hollywood" not in city
-                and "Glendale" not in city
-                and "Palo" not in city
-                and "Miami" not in city
-                and "Corte" not in city
-            ):
-                city = "<MISSING>"
-        output.append(city)  # city
-        output.append("<MISSING>")  # state
-        output.append(zip_code)  # zipcode
-        output.append(country)  # country code
-        output.append(get_value(store["externalId"]))  # store_number
-        output.append("<MISSING>")  # phone
-        output.append(
-            "Date Active " + store["availableAt"].split("T")[0]
-        )  # location type
-        output.append(get_value(store["latitude"]))  # latitude
-        output.append(get_value(store["longitude"]))  # longitude
+        output.append(street_address)
+        city = store.get("city") or "<MISSING>"
+        if city == "<MISSING>":
+            city = "".join(store.get("name")).split("[")[1].split("]")[0]
+        state = "<MISSING>"
+        if city.find(",") != -1:
+            state = city.split(",")[1].strip()
+            city = city.split(",")[0].strip()
+        if state == "London":
+            state = "<MISSING>"
+
+        output.append(city)
+        output.append(state)
+        output.append(zip_code)
+        output.append(country)
+        output.append(get_value(store["externalId"]))
+        output.append("<MISSING>")
+        output.append("<MISSING>")
+        output.append(get_value(store["latitude"]))
+        output.append(get_value(store["longitude"]))
         store_hours = []
 
         raw_hours = store["storeBusinessHours"]
@@ -129,11 +125,23 @@ def fetch_data():
                 if row["closed"]:
                     hour = "closed"
                 else:
-                    hour = row["openTime"] + "-" + row["closeTime"]
+                    hour = (
+                        datetime.strptime(str(row.get("openTime")), "%H%M").strftime(
+                            "%I:%M %p"
+                        )
+                        + "-"
+                        + datetime.strptime(str(row.get("closeTime")), "%H%M").strftime(
+                            "%I:%M %p"
+                        )
+                    )
                 store_hours.append(day + " " + hour)
         else:
             store_hours = "Store is closed"
-        output.append(get_value(store_hours))  # opening hours
+        isOpen = store.get("isOpen")
+        isOpenTomorrow = store.get("isOpenTomorrow")
+        if not isOpen and not isOpenTomorrow:
+            store_hours = "Store is closed"
+        output.append(get_value(store_hours))
         output.append("https://www.joejuice.com/stores")
         output_list.append(output)
     return output_list

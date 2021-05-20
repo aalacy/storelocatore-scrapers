@@ -45,8 +45,11 @@ def get_urls():
 
 def get_data(page_url):
     locator_domain = "https://www.tsb.co.uk/"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:88.0) Gecko/20100101 Firefox/88.0"
+    }
     session = SgRequests()
-    r = session.get(page_url)
+    r = session.get(page_url, headers=headers)
     tree = html.fromstring(r.text)
     text = "".join(
         tree.xpath("//script[contains(text(),'BankOrCreditUnion')]/text()")
@@ -109,7 +112,7 @@ def fetch_data():
     s = set()
     urls = get_urls()
 
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
+    with futures.ThreadPoolExecutor(max_workers=3) as executor:
         future_to_url = {executor.submit(get_data, url): url for url in urls}
         for future in futures.as_completed(future_to_url):
             row = future.result()
