@@ -116,6 +116,7 @@ def fetch_data():
         if add != "":
             if "150 Smith Road" in add:
                 state = "<MISSING>"
+            add = add.replace(",", "")
             yield [
                 website,
                 loc,
