@@ -201,7 +201,6 @@ for search_lat, search_lon in search:
         state = "<MISSING>"
         location_type = "<MISSING>"
 
-        print(location_name)
         search.found_location_at(latitude, longitude)
 
         locator_domains.append(locator_domain)
