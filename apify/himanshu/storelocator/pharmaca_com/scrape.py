@@ -46,8 +46,8 @@ def fetch_data():
     jsblock = (
         "".join(tree.xpath('//script[contains(text(), "jsonLocations")]/text()'))
         .split("jsonLocations: ")[1]
-        .split('<\/div>\\n"},')[0]
-        + '<\/div>\\n"}'
+        .split('/div>\\n"},')[0]
+        + '/div>\\n"}'
     )
     data = json.loads(jsblock)
     for obj in data["items"]:
