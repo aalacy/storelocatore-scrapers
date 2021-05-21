@@ -44,7 +44,9 @@ COLUMNS = [
 
 session = SgRequests().requests_retry_session()
 log = sglog.SgLogSetup().get_logger(logger_name=website)
-driver = SgChrome(is_headless=True, executable_path=ChromeDriverManager().install()).driver()
+driver = SgChrome(
+    is_headless=True, executable_path=ChromeDriverManager().install()
+).driver()
 
 
 def fetchStores():
