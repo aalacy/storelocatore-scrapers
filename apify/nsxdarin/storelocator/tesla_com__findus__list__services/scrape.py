@@ -121,7 +121,6 @@ def fetch_data():
     website = "tesla.com/findus/list/services"
     typ = "<MISSING>"
     logger.info("Pulling Stores")
-    Found = False
     for line in r.iter_lines():
         line = str(line.decode("utf-8"))
         if '<a href="/findus/location/service/' in line:
