@@ -4,9 +4,6 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgpostal import parse_address_intl
 from sgselenium import SgFirefox
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.action_chains import ActionChains
 from lxml import html
 import json
@@ -41,7 +38,6 @@ session = SgRequests()
 def get_special_headers():
     with SgFirefox(is_headless=True) as driver:
         requestName = "/cne/graphql"
-        headers_from_graphql_path = None
         driver.get(URL_LOCATION)
         driver.implicitly_wait(20)
         time.sleep(10)
@@ -67,7 +63,6 @@ def get_special_headers():
         driver.implicitly_wait(20)
         time.sleep(10)
         logger.info("The page is loaded")
-        returned_response = None
         for r in driver.requests:
             logger.info(f"Finding /cne/graphql in {r.path}")
             if requestName in r.path:
@@ -104,7 +99,7 @@ def fetch_data():
 
             # Location Name
             location_name = item["name"]
-            logger.info(f"")
+            logger.info(f"Location Name: {location_name}")
 
             # Address Data
             addinfo = item["fullAddress"]
@@ -166,7 +161,7 @@ def fetch_data():
             if store_number == "11927" and street_address == "114":
                 street_address = street_address.replace("114", "114 West County Center")
             yield SgRecord(
-                locator_domain=DOMAIN,
+                locator_domain=locator_domain,
                 page_url=page_url,
                 location_name=location_name,
                 street_address=street_address,
