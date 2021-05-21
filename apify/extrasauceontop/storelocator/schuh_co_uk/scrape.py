@@ -9,20 +9,20 @@ import ast
 
 search = DynamicGeoSearch(country_codes=[SearchableCountries.BRITAIN])
 
-locator_domains = []  #
-page_urls = []  #
-location_names = []  #
-street_addresses = []  ###
-citys = []  #
+locator_domains = []
+page_urls = []
+location_names = []
+street_addresses = []
+citys = []
 states = []
-zips = []  #
-country_codes = []  #
-store_numbers = []  #
-phones = []  #
+zips = []
+country_codes = []
+store_numbers = []
+phones = []
 location_types = []
-latitudes = []  #
-longitudes = []  #
-hours_of_operations = []  ###
+latitudes = []
+longitudes = []
+hours_of_operations = []
 
 hours_key_list = [
     ["MonOpen", "MonClose"],
