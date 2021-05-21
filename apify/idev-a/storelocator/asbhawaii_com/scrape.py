@@ -50,6 +50,7 @@ def fetch_data():
                 locator_domain=locator_domain,
                 latitude=coord[0],
                 longitude=coord[1],
+                location_type=location_type,
                 hours_of_operation="; ".join(hours).replace("–", "-"),
             )
 
