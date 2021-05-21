@@ -6,7 +6,7 @@ from urllib.parse import urlparse
 from lxml import html
 import ssl
 from bs4 import BeautifulSoup as bs
-
+from webdriver_manager.chrome import ChromeDriverManager
 from sgselenium import SgChrome
 from sgrequests import SgRequests
 from sglogging import sglog
@@ -44,7 +44,9 @@ COLUMNS = [
 
 session = SgRequests().requests_retry_session()
 log = sglog.SgLogSetup().get_logger(logger_name=website)
-driver = SgChrome(is_headless=True).driver()
+driver = SgChrome(
+    is_headless=True, executable_path=ChromeDriverManager().install()
+).driver()
 
 
 def fetchStores():
