@@ -1,4 +1,3 @@
-from bs4 import BeautifulSoup as bs
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -120,7 +119,6 @@ for search_lat, search_lon in search:
     try:
         data = ast.literal_eval(data)
     except Exception:
-        print(data)
         continue
 
     for location in data:
@@ -168,18 +166,12 @@ for search_lat, search_lon in search:
                 )
                 break
             except Exception:
-                print("fail")
                 driver = get_driver(
                     "https://www.schuh.co.uk/stores/", "secondLine", driver=driver
                 )
                 continue
 
-        try:
-            location_data = location_data["d"]
-        except Exception:
-            print("failed: " + location_name)
-            with open("file.txt", "w", encoding="utf-8") as output:
-                print(location_data, file=output)
+        location_data = location_data["d"]
 
         location_data = (
             location_data.replace('"', "'")
