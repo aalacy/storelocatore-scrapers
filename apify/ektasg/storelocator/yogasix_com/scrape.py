@@ -1,144 +1,146 @@
-import time
 import csv
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+import json
 import re
-from sglogging import SgLogSetup
 
-logger = SgLogSetup().get_logger('yogasix_com')
+from bs4 import BeautifulSoup
 
-
-
-options = Options()
-options.add_argument('--headless')
-options.add_argument('--no-sandbox')
-options.add_argument('--disable-dev-shm-usage')
-
-#driver = webdriver.Chrome("C:\chromedriver.exe", options=options)
-driver = webdriver.Chrome("chromedriver", options=options)
-#driver2 = webdriver.Chrome("C:\chromedriver.exe", options=options)
-driver2 = webdriver.Chrome("chromedriver", options=options)
-#driver3 = webdriver.Chrome("C:\chromedriver.exe", options=options)
-driver3 = webdriver.Chrome("chromedriver", options=options)
-
-
-def parse_geo(url):
-    try:
-        lon = re.findall(r'\,(--?[\d\.]*)', url)[0]
-    except:
-        lon = re.findall(r'\,(-?[\d\.]*)', url)[0]
-    try:
-        lat = re.findall(r'\@(-?[\d\.]*)', url)[0]
-    except:
-        try:
-            lat = re.findall(r'/@(-?[\d\.]*)', url)[0]
-        except:
-            lat = '<MISSING>'
-    return lat, lon
+from sgrequests import SgRequests
 
 
 def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+    with open("data.csv", mode="w") as output_file:
+        writer = csv.writer(
+            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+        )
 
         # Header
-        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(
+            [
+                "locator_domain",
+                "page_url",
+                "location_name",
+                "street_address",
+                "city",
+                "state",
+                "zip",
+                "country_code",
+                "store_number",
+                "phone",
+                "location_type",
+                "latitude",
+                "longitude",
+                "hours_of_operation",
+            ]
+        )
         # Body
         for row in data:
             writer.writerow(row)
 
 
-
-
 def fetch_data():
 
-    data = []
-    driver.get("https://www.yogasix.com/location-search")
-    time.sleep(5)
-    count=0
-    while True:
+    base_link = "https://www.yogasix.com/location-search"
+
+    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
+    headers = {"User-Agent": user_agent}
+
+    session = SgRequests()
+    req = session.get(base_link, headers=headers)
+    base = BeautifulSoup(req.text, "lxml")
+
+    js = base.find(class_="location-search__content")["data-locations"]
+    stores = json.loads(js)
+    for i in stores:
+        slug = (
+            i.replace("yogasix-", "")
+            .replace("westchase-fl", "westchase")
+            .replace("san-clemente-ca", "san-clemente")
+            .replace("mercer-island-wa", "mercer-island")
+        )
+        link = "https://www.yogasix.com/location/" + slug
+
+        req = session.get(link, headers=headers)
+        base = BeautifulSoup(req.text, "lxml")
         try:
-            driver.find_element_by_xpath("//button[@class='location-search-list__showMore']").click()
-            time.sleep(5)
-        except:
-            break
-
-
-    stores = driver.find_elements_by_xpath("//a[contains(@class,'button button--primary location-search-list__cta')]")
-    names = [stores[i].get_attribute("href") for i in range(0, len(stores))]
-    for i in range(len(names)):
-        driver2.get(names[i])
-        time.sleep(5)
-        page_url = names[i]
-        logger.info(names[i])
-        #logger.info(driver2.find_element_by_class_name("location-info-map__details-inner-container").get_attribute("innerText"))
-        if "coming soon" in driver2.find_element_by_class_name("location-info-map__details-inner-container").get_attribute("innerText").lower():
-
-            logger.info("coming soon")
+            base.find(class_="location-hero hero--coming-soon hero--default").text
             continue
-        else:
-            store_name=driver2.find_element_by_tag_name('title').get_attribute('textContent').strip()
-            #logger.info(store_name)
-            try:
-                hours_elems =driver2.find_elements_by_css_selector('div.map__days')
-                if hours_elems == []:
-                    store_opening_hours = '<MISSING>'
-                else:
-                    store_opening_hours =""
-                    for j in range(len(hours_elems)):
-                        store_opening_hours = store_opening_hours + " " + hours_elems[j].get_attribute('textContent').replace("\n"," ")
-            except:
-                store_opening_hours = '<MISSING>'
-            try:
-                phone_no =driver2.find_element_by_xpath("//a[contains(@href,'tel:')]").get_attribute('textContent').replace("\n","").replace(" ","")
-            except:
-                phone_no = '<MISSING>'
-            elem = driver2.find_element_by_class_name("location-info-map__info").find_element_by_tag_name('a')
-            #geomap = elem.get_attribute('href')
-            #store_address = elem.get_attribute("innerHTML")
-            store_address = elem.get_attribute("text").strip()
-            #logger.info(store_address)
-            street_addr= store_address.split("\n")[0].strip()
-            state= store_address.split("\n")[1].split(",")[1].split(" ")[-2]
-            city= store_address.split("\n")[1].split(",")[0].strip()
-            zipcode = store_address.split("\n")[1].split(",")[1].split(" ")[-1]
-            coords=driver2.find_element_by_id("map").get_attribute("data-location").replace("[","").replace("]","").split(",")
-            lon=coords[0].strip()
-            lat=coords[1].strip()
-            #logger.info(lat,lon)
-            #geomap = driver2.find_element_by_xpath("//a[contains(@itemprop, 'address')]").get_attribute('href')
-            #driver3.get(geomap)
-            #time.sleep(5)
-            #lat, lon = parse_geo(driver3.current_url)
-            data.append([
-                 'https://www.yogasix.com/',
-                  page_url,
-                  store_name,
-                  street_addr,
-                  city,
-                  state,
-                  zipcode,
-                  'US',
-                  '<MISSING>',
-                  phone_no,
-                  '<MISSING>',
-                  lat,
-                  lon,
-                  store_opening_hours
-                ])
-            count+=1
-            #logger.info(count)
+        except:
+            pass
 
+        try:
+            store_name = base.h1.text.strip()
+        except:
+            continue
+        try:
+            hours_js = base.find(
+                class_="location-info-map__icon fas fa-clock"
+            ).find_next("span")["data-hours"]
+            raw_hours = json.loads(hours_js)
+            store_opening_hours = ""
+            for day in raw_hours:
+                store_opening_hours = (
+                    store_opening_hours
+                    + " "
+                    + day.title()
+                    + " "
+                    + str(raw_hours[day])
+                    .replace("], [", " | ")
+                    .replace("'", "")
+                    .replace(", ", " - ")
+                    .replace("[[", "")
+                    .replace("]]", "")
+                ).strip()
+        except:
+            store_opening_hours = "<MISSING>"
+        if not store_opening_hours:
+            store_opening_hours = "<MISSING>"
 
-    time.sleep(3)
-    driver.quit()
-    driver2.quit()
-    driver3.quit()
-    return data
+        try:
+            phone_no = (
+                base.find(class_="location-info-map__icon fas fa-phone")
+                .find_next("div")
+                .text.replace("\n", "")
+                .strip()
+            )
+            phone_no = (re.sub(" +", " ", phone_no)).strip()
+        except:
+            phone_no = "<MISSING>"
+
+        store_address = base.find(class_="location-info-map__info").a.text.strip()
+        street_addr = store_address.split("\n")[0].strip()
+        state = store_address.split("\n")[1].split(",")[1].split(" ")[-2]
+        city = store_address.split("\n")[1].split(",")[0].strip()
+        zipcode = store_address.split("\n")[1].split(",")[1].split(" ")[-1]
+        coords = (
+            base.find(id="map")["data-location"]
+            .replace("[", "")
+            .replace("]", "")
+            .split(",")
+        )
+        lon = coords[0].strip()
+        lat = coords[1].strip()
+
+        yield [
+            "https://www.yogasix.com/",
+            link,
+            store_name,
+            street_addr,
+            city,
+            state,
+            zipcode,
+            "US",
+            "<MISSING>",
+            phone_no,
+            "<MISSING>",
+            lat,
+            lon,
+            store_opening_hours,
+        ]
 
 
 def scrape():
     data = fetch_data()
     write_output(data)
+
 
 scrape()

@@ -35,7 +35,7 @@ def fetch_data():
     out = []
     s = set()
     locator_domain = "https://www.jetlocal.co.uk/"
-    api_url = "https://storerocket.global.ssl.fastly.net/api/user/2BkJ1wEpqR/locations?filters=3202"
+    api_url = "https://storerocket.global.ssl.fastly.net/api/user/2BkJ1wEpqR/locations?filters=37343"
 
     session = SgRequests()
     r = session.get(api_url)

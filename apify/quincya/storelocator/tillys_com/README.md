@@ -1,1 +1,2 @@
---ignore StreetAddressHasNumber --ignore StoreNumberColumnValidator --ignore LatLngDuplicationValidator (Confirmed scraper worked correctly)
+--ignore StreetAddressHasNumber (Confirmed scraper worked correctly)
+Website security making it difficult to get phone from individual page_url

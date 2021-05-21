@@ -1,8 +1,11 @@
+import re
 import csv
+from random import randint
+from time import sleep
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
 from sgselenium import SgChrome
-import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 session = SgRequests()
 headers = {
@@ -39,38 +42,48 @@ def write_output(data):
             writer.writerow(row)
 
 
-def fetch_data():
-    locs = []
-    url = "https://www.thecapitalgrille.com/locations-sitemap.xml"
-    r = session.get(url, headers=headers, verify=False)
+driver = SgChrome().driver()
+
+
+def get_driver(reset=False):
+    global driver
+    if reset:
+        driver = SgChrome().driver()
+
+    return driver
+
+
+def fetch_location(loc, retry_count=0):
+    logger.info(loc)
     website = "thecapitalgrille.com"
     typ = "<MISSING>"
     country = "US"
-    logger.info("Pulling Stores")
-    for line in r.iter_lines():
-        line = str(line.decode("utf-8"))
-        if (
-            "<loc>https://www.thecapitalgrille.com/locations/" in line
-            and "/mexico/" not in line
-        ):
-            locs.append(line.split("<loc>")[1].split("<")[0])
-    for loc in locs:
-        CS = False
-        logger.info(loc)
-        time.sleep(10)
-        name = ""
-        add = ""
-        city = ""
-        state = ""
-        zc = ""
-        store = loc.rsplit("/", 1)[1]
-        phone = ""
-        lat = ""
-        lng = ""
-        hours = ""
-        with SgChrome() as driver:
+    CS = False
+
+    name = ""
+    add = ""
+    city = ""
+    state = ""
+    zc = ""
+    store = loc.rsplit("/", 1)[1]
+    phone = ""
+    lat = ""
+    lng = ""
+    hours = ""
+
+    try:
+        with SgChrome(is_headless=True) as driver:
             driver.get(loc)
+            sleep(randint(2, 3))
+
             text = driver.page_source
+
+            if re.search("access denied", re.escape(text), re.IGNORECASE):
+                if retry_count > 3:
+                    raise Exception()
+
+                return fetch_location(loc, retry_count + 1)
+
             text = str(text).replace("\r", "").replace("\n", "").replace("\t", "")
             if "<title>" in text:
                 name = text.split("<title>")[1].split(" |")[0]
@@ -94,46 +107,71 @@ def fetch_data():
                     .split('"]')[0]
                     .replace('","', "; ")
                 )
-        if hours == "":
-            hours = "<MISSING>"
-        if "/troy/" in loc:
-            name = "Troy"
-            add = "2800 West Big Beaver Rd"
-            city = "Troy"
-            state = "MI"
-            zc = "48084"
-            phone = "(248) 649-5300"
-            lat = "<MISSING>"
-            lng = "<MISSING>"
-        if "/dunwoody" in loc:
-            name = "Atlanta - Dunwoody"
-            add = "94 Perimeter Center West"
-            city = "Atlanta"
-            state = "GA"
-            zc = "30346"
-            phone = "(770) 730-8447"
-            lat = "33.92653800"
-            lng = "-84.34037200"
-            hours = "Mon-Thu: 11:30AM - 9:00PM; Fri: 11:30AM - 10:00PM; Sat: 5:00PM - 10:00PM; Sun: 4:00PM - 9:00PM"
-        if "mc/cuauhtemo" not in loc and "/nl/san-pedro" not in loc:
-            if CS:
-                name = name + " - Coming Soon"
-            yield [
-                website,
-                loc,
-                name,
-                add,
-                city,
-                state,
-                zc,
-                country,
-                store,
-                phone,
-                typ,
-                lat,
-                lng,
-                hours,
-            ]
+
+            if hours == "":
+                hours = "<MISSING>"
+            if "/troy/" in loc:
+                name = "Troy"
+                add = "2800 West Big Beaver Rd"
+                city = "Troy"
+                state = "MI"
+                zc = "48084"
+                phone = "(248) 649-5300"
+                lat = "<MISSING>"
+                lng = "<MISSING>"
+            if "/dunwoody" in loc:
+                name = "Atlanta - Dunwoody"
+                add = "94 Perimeter Center West"
+                city = "Atlanta"
+                state = "GA"
+                zc = "30346"
+                phone = "(770) 730-8447"
+                lat = "33.92653800"
+                lng = "-84.34037200"
+                hours = "Mon-Thu: 11:30AM - 9:00PM; Fri: 11:30AM - 10:00PM; Sat: 5:00PM - 10:00PM; Sun: 4:00PM - 9:00PM"
+            if "mc/cuauhtemo" not in loc and "/nl/san-pedro" not in loc:
+                if CS:
+                    name = name + " - Coming Soon"
+
+                return [
+                    website,
+                    loc,
+                    name,
+                    add,
+                    city,
+                    state,
+                    zc,
+                    country,
+                    store,
+                    phone,
+                    typ,
+                    lat,
+                    lng,
+                    hours,
+                ]
+    except:
+        return fetch_location(loc, retry_count + 1)
+
+
+def fetch_data():
+    locs = []
+    url = "https://www.thecapitalgrille.com/locations-sitemap.xml"
+    r = session.get(url, headers=headers, verify=False)
+    logger.info("Pulling Stores")
+    for line in r.iter_lines():
+        line = str(line.decode("utf-8"))
+        if (
+            "<loc>https://www.thecapitalgrille.com/locations/" in line
+            and "/mexico/" not in line
+        ):
+            locs.append(line.split("<loc>")[1].split("<")[0])
+
+    with ThreadPoolExecutor(max_workers=1) as executor:
+        futures = [executor.submit(fetch_location, loc) for loc in locs]
+        for future in as_completed(futures):
+            poi = future.result()
+            if poi:
+                yield poi
 
 
 def scrape():
