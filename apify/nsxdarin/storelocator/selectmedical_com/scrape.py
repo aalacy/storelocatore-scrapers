@@ -130,6 +130,25 @@ def fetch_data():
                             if lat == "":
                                 lat = "<MISSING>"
                                 lng = "<MISSING>"
+                            r3 = session.get(lurl, headers=headers)
+                            if r3.encoding is None:
+                                r3.encoding = "utf-8"
+                            logger.info(lurl)
+                            for line3 in r3.iter_lines(decode_unicode=True):
+                                if "PM</td></tr>" in line3:
+                                    try:
+                                        hours = line3.split("<table><tr><td>")[1].split(
+                                            "</td></tr></table>"
+                                        )[0]
+                                        hours = (
+                                            hours.replace("</td></tr><tr><td>", "; ")
+                                            .replace("<td>", "")
+                                            .replace("</td>", "")
+                                            .replace("</tr>", "")
+                                            .replace("<tr>", "")
+                                        )
+                                    except:
+                                        pass
                             yield [
                                 website,
                                 lurl,
