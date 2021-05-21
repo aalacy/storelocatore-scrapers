@@ -20,7 +20,6 @@ def fetch_data():
     if True:
         url = "https://www.norco-inc.com/Locations"
         r = session.get(url, headers=headers)
-        soup = BeautifulSoup(r.text, "html.parser")
         loclist = r.text.split("var data = '")[1].split("';")[0]
         loclist = json.loads(loclist)
         for loc in loclist:
