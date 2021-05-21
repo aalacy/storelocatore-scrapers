@@ -3,7 +3,7 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import time
-from sgzip.dynamic import DynamicZipSearch, SearchableCountries
+from sgzip.dynamic import DynamicZipSearch, SearchableCountries, Grain_8
 from sglogging import SgLogSetup
 
 logger = SgLogSetup().get_logger("rbcroyalbank_com")
@@ -80,6 +80,7 @@ def fetch_data():
     search = DynamicZipSearch(
         country_codes=[SearchableCountries.CANADA],
         max_search_results=100,
+        granularity=Grain_8(),
     )
 
     headers = {
@@ -156,13 +157,12 @@ def fetch_data():
                     },
                 )
 
-                if loc_dat1 is not None:
-                    location_name = list(loc_dat1.stripped_strings)[0]
-                    street_address = list(loc_dat1.stripped_strings)[1]
-                    city_state_zipp = (
-                        list(loc_dat1.stripped_strings)[2].strip().lstrip()
-                    )
+                if loc_dat1:
+                    stripped_strings = list(loc_dat1.stripped_strings)
 
+                    location_name = stripped_strings[0]
+                    street_address = stripped_strings[1]
+                    city_state_zipp = stripped_strings[2].strip().lstrip()
                     ca_zip_list = re.findall(
                         r"[A-Z]{1}[0-9]{1}[A-Z]{1}\s*[0-9]{1}[A-Z]{1}[0-9]{1}",
                         str(city_state_zipp),
@@ -190,10 +190,14 @@ def fetch_data():
                         .replace(",", "")
                     )
 
-                if loc_dat is not None:
-                    location_name = list(loc_dat.stripped_strings)[0]
-                    street_address = list(loc_dat.stripped_strings)[1]
-                    city_state_zipp = list(loc_dat.stripped_strings)[2].strip().lstrip()
+                if loc_dat:
+                    stripped_strings = list(loc_dat.stripped_strings)
+                    if stripped_strings[0].upper() == "IMPORTANT":
+                        stripped_strings = stripped_strings[2:]  # Skip 0 and 1
+
+                    location_name = stripped_strings[0]
+                    street_address = stripped_strings[1]
+                    city_state_zipp = stripped_strings[2].strip().lstrip()
                     ca_zip_list = re.findall(
                         r"[A-Z]{1}[0-9]{1}[A-Z]{1}\s*[0-9]{1}[A-Z]{1}[0-9]{1}",
                         str(city_state_zipp),
@@ -221,23 +225,16 @@ def fetch_data():
                         .replace(",", "")
                     )
                     hours_of_operation = " ".join(list(loc_dat.stripped_strings)[8:22])
+                    if "ours:" in hours_of_operation:
+                        hours_of_operation = hours_of_operation.split("ours:")[
+                            1
+                        ].strip()
 
                 if location_type == "Branch":
-                    phone = list(loc_dat.stripped_strings)[4]
+                    phone = stripped_strings[4]
                 else:
                     phone = "<MISSING>"
 
-                if location_name == "Important":
-                    location_name = "RBC On Campus Laurier University"
-                if city == "RBC On Campus Laurier University":
-                    city = "Waterloo"
-                if (
-                    street_address
-                    == "This branch is temporarily closed. Please consider using Online Banking or the Mobile app to meet your banking needs during this time, or search for the next closest branch in your area."
-                ):
-                    street_address = "75 University Ave W"
-                else:
-                    pass
                 store = []
                 result_coords.append((latitude, longitude))
                 store.append(locator_domain if locator_domain else "<MISSING>")

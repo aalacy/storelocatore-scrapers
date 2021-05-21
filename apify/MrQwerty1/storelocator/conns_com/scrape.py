@@ -35,10 +35,11 @@ def write_output(data):
 
 
 def get_key():
-    session = SgRequests()
-    r = session.get("https://www.conns.com/store-locator")
+    s = SgRequests()
+    r = s.get("https://www.conns.com/store-locator")
     tree = html.fromstring(r.text)
-    cookies = session.get_session().cookies.get_dict()
+    cookies = r.cookies.get_dict()
+
     return cookies, tree.xpath("//input[@name='form_key']/@value")[0]
 
 
@@ -59,10 +60,11 @@ def fetch_data():
 
         line = l.xpath(".//div[@class='address']/span/text()")
         line = list(filter(None, [l.strip() for l in line]))
+
         street_address = line[0]
         line = line[-1]
         city = line.split(",")[0].strip()
-        line = line.split(",")[1].strip()
+        line = line.split(",")[-1].strip()
         state = line.split()[0].strip()
         postal = line.split()[1].strip()
         country_code = "US"
@@ -79,6 +81,9 @@ def fetch_data():
             ";".join(l.xpath(".//div[@class='store-hours-title']//meta/@content"))
             or "Closed"
         )
+
+        if l.xpath(".//font[contains(text(), 'Coming Soon')]"):
+            hours_of_operation = "Coming Soon"
 
         row = [
             locator_domain,

@@ -97,6 +97,12 @@ def fetch_data():
             raw_address[1].replace("CA, ", "CA ").replace("NY, ", "NY ").split(",")
         )
 
+        if "suite" in city_line[0].lower():
+            street_address = street_address + " " + city_line[0]
+            city_line = (
+                raw_address[2].replace("CA, ", "CA ").replace("NY, ", "NY ").split(",")
+            )
+
         if country_code == "US":
             if "hours" in city_line[0]:
                 city_line = " ".join(street_address.split(",")[1:]).split(",")
@@ -174,7 +180,10 @@ def fetch_data():
             hours_of_operation = hours_of_operation.split("Operation")[1].strip()
 
         hours_of_operation = (
-            hours_of_operation.split("Parking")[0].replace("\xa0", " ").strip()
+            hours_of_operation.split("Parking")[0]
+            .replace("\xa0", " ")
+            .replace("–", "-")
+            .strip()
         )
         hours_of_operation = (re.sub(" +", " ", hours_of_operation)).strip()
         if not hours_of_operation:
