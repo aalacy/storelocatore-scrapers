@@ -1,7 +1,6 @@
 # Validation Issues
-> --ignore StreetAddressHasNumber 
-> --ignore CountryValidator 
-> --ignore StateLevelCountValidator
+- --ignore StreetAddressHasNumber 
+- --ignore StateLevelCountValidator
 
 # Command
 ```
