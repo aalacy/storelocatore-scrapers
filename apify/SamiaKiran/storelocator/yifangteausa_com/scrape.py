@@ -50,11 +50,23 @@ def fetch_data():
             )
             if "ShoppingMall Hours" in hours_of_operation:
                 hours_of_operation = "<MISSING>"
+            if len(temp) > 2:
+                if "Mon" in temp[-3]:
+                    hours_of_operation = temp[-3] + " " + temp[-2] + " " + temp[-1]
+                    hours_of_operation = (
+                        hours_of_operation.replace("Opening Hours:", "")
+                        .replace("2020 Temporary \xa0Hours:", "")
+                        .replace("Hours:", "")
+                        .replace("Opening Hours", "")
+                    )
             if "Tel:" in temp[1]:
-                phone = temp[1].split("Tel:")[1]
-                phone = "".join(phone.split()).strip()
-                phone = phone.encode("ascii", "ignore")
-                phone = phone.decode("utf-8")
+                if len(temp[1]) < 5:
+                    phone = temp[2]
+                else:
+                    phone = temp[1].split("Tel:")[1]
+                    phone = "".join(phone.split()).strip()
+                    phone = phone.encode("ascii", "ignore")
+                    phone = phone.decode("utf-8")
             else:
                 phone = "<MISSING>"
 
