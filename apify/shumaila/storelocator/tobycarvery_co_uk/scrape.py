@@ -69,8 +69,8 @@ def fetch_data():
             state = "<MISSING>"
         pcode = loc["address"]["postalCode"]
         ccode = loc["address"]["addressCountry"]
-        lat = loc["geo"]["latitude"]
-        longt = loc["geo"]["longitude"]
+        longt = loc["geo"]["latitude"]
+        lat = loc["geo"]["longitude"]
         hourslist = json.loads(str(loc["openingHoursSpecification"]).replace("'", '"'))
         hours = ""
         for hr in hourslist:
