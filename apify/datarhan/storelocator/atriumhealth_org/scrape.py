@@ -97,7 +97,7 @@ def fetch_data():
         if poi["HoursAdditionalDetails"]:
             hoo = etree.HTML(poi["HoursAdditionalDetails"]).xpath("//text()")
             hoo = [e.strip() for e in hoo if e.strip()]
-        hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
+        hours_of_operation = " ".join(hoo) if hoo else "Open 24 hours"
 
         item = [
             DOMAIN,
