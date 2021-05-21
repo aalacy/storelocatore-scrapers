@@ -9,6 +9,82 @@ headers = {
 
 logger = SgLogSetup().get_logger("tesla_com__findus__list__services")
 
+usstates = [
+    "AK",
+    "AL",
+    "AR",
+    "AS",
+    "AZ",
+    "CA",
+    "CO",
+    "CT",
+    "DC",
+    "DE",
+    "FL",
+    "GA",
+    "GU",
+    "HI",
+    "IA",
+    "ID",
+    "IL",
+    "IN",
+    "KS",
+    "KY",
+    "LA",
+    "MA",
+    "MD",
+    "ME",
+    "MI",
+    "MN",
+    "MO",
+    "MP",
+    "MS",
+    "MT",
+    "NC",
+    "ND",
+    "NE",
+    "NH",
+    "NJ",
+    "NM",
+    "NV",
+    "NY",
+    "OH",
+    "OK",
+    "OR",
+    "PA",
+    "PR",
+    "RI",
+    "SC",
+    "SD",
+    "TN",
+    "TX",
+    "UM",
+    "UT",
+    "VA",
+    "VI",
+    "VT",
+    "WA",
+    "WI",
+    "WV",
+    "WY",
+]
+castates = [
+    "AB",
+    "BC",
+    "MB",
+    "NB",
+    "NL",
+    "NT",
+    "NS",
+    "NU",
+    "ON",
+    "PE",
+    "PEI",
+    "QC",
+    "SK",
+    "YT",
+]
+
 
 def write_output(data):
     with open("data.csv", mode="w") as output_file:
@@ -55,8 +131,8 @@ def fetch_data():
         add = ""
         city = ""
         typ = ""
-        state = ""
         country = ""
+        state = ""
         zc = ""
         CS = False
         store = "<MISSING>"
@@ -199,7 +275,7 @@ def fetch_data():
         if hours == "":
             hours = "<MISSING>"
         hours = hours.replace(";;", ";")
-        if lat == "":
+        if lat == "" or lng == "":
             lat = "<MISSING>"
             lng = "<MISSING>"
         if phone == "":
@@ -213,6 +289,18 @@ def fetch_data():
             name = name + " - Coming Soon"
         if state == "":
             state = "<MISSING>"
+        if state in usstates:
+            country = "US"
+        if state in castates:
+            country = "CA"
+        if zc == "":
+            zc = "<MISSING>"
+        if city == "":
+            city = "<MISSING>"
+        if country == "":
+            country = "<MISSING>"
+        if add == "":
+            add = "<MISSING>"
         yield [
             website,
             loc,
