@@ -58,7 +58,7 @@ def fetch_data():
                 phone = sp1.select_one("p.contact-details").text
             yield SgRecord(
                 page_url=page_url,
-                location_name=script["title"],
+                location_name=sp1.select_one("div.headerImageTitle").text.strip(),
                 street_address=addr[0],
                 city=addr[1].split(",")[0].strip(),
                 state=addr[1].split(",")[1].strip().split(" ")[0].strip(),
