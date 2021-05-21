@@ -95,6 +95,10 @@ def fetch_data():
 
                     country_code = store_json["address"]["addressCountry"]
 
+                    if not city:
+                        city = street_address.split(",")[-1].strip()
+                        street_address = ",".join(street_address.split(",")[:-1])
+
                     if street_address == "" or street_address is None:
                         street_address = "<MISSING>"
 

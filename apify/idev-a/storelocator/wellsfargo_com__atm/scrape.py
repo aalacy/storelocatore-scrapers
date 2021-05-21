@@ -1,11 +1,8 @@
-from sgscrape.sgrecord import SgRecord
-from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
-from sglogging import SgLogSetup
 import re
-
-logger = SgLogSetup().get_logger("wellsfargo")
+import csv
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 locator_domain = "https://www.wellsfargo.com/"
 base_url = "https://www.wellsfargo.com/locator/"
@@ -20,109 +17,178 @@ _headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
 }
 
+session = SgRequests()
+
+
+def parallel_run_one(link):
+    session.get(link, headers=_headers)
+    locations = session.post(payload_url, headers=_headers).json()["searchResults"]
+
+    for _ in locations:
+
+        page_url = f"https://www.wellsfargo.com/locator/bank/?slindex={_['index']}"
+        hours_of_operation = "; ".join(_.get("arrDailyEvents", []))
+        if (
+            "incidentMessage" in _
+            and _["incidentMessage"].get("incidentDesc", "").lower()
+            == "temporary closure"
+            and _["incidentMessage"].get("outletStatusDesc", "").lower() == "closed"
+        ):
+            hours_of_operation = "Temporary closed"
+
+        yield [
+            page_url,
+            _["branchName"],
+            _["locationLine1Address"],
+            _["city"],
+            _["state"],
+            _["postalcode"],
+            "US",
+            _["latitude"],
+            _["longitude"],
+            _["locationType"],
+            _["phone"].strip(),
+            locator_domain,
+            hours_of_operation,
+            "<MISSING>",
+        ]
+
+
+def scrape_loc_urls(location_urls):
+    with ThreadPoolExecutor() as executor:
+        futures = [executor.submit(parallel_run_one, link) for link in location_urls]
+        for future in as_completed(futures):
+            try:
+                record = future.result()
+                if record:
+                    yield record
+            except Exception:
+                pass
+
+
+def scrape_loc_urls_two(location_urls):
+    with ThreadPoolExecutor() as executor:
+        futures = [executor.submit(parallel_run_two, link) for link in location_urls]
+        for future in as_completed(futures):
+            try:
+                record = future.result()
+                if record:
+                    yield record
+            except Exception:
+                pass
+
+
+def parallel_run_two(link):
+    res = session.get(link, headers=_headers)
+    if "error.html" in res.url:
+        return None
+    sp1 = bs(res.text, "lxml")
+    if sp1.find("", string=re.compile(r"could not find")):
+        return None
+    location_type = sp1.select_one("div.fn.heading").text.strip()
+    if "ATM" not in location_type:
+        return None
+    try:
+        coord = (
+            sp1.select_one("div.mapView img")["src"]
+            .split("Road/")[1]
+            .split("/")[0]
+            .split(",")
+        )
+    except:
+        coord = ["", ""]
+    hours = []
+    _hr = sp1.find("h2", string=re.compile(r"Lobby Hours", re.IGNORECASE))
+    if _hr:
+        hours = list(_hr.find_next_sibling().stripped_strings)
+    addr = [aa for aa in list(sp1.address.stripped_strings) if aa.strip() != ","]
+    street_address = " ".join(addr[1].split(",")[:-1])
+    yield [
+        link,
+        addr[0],
+        street_address,
+        addr[1].split(",")[-1],
+        addr[2],
+        addr[3],
+        "US",
+        coord[0],
+        coord[1],
+        location_type,
+        sp1.find("a", href=re.compile(r"tel:")).text.strip(),
+        locator_domain,
+        "; ".join(hours),
+        "<MISSING>",
+    ]
+
 
 def fetch_data():
-    with SgRequests() as session:
-        total = 0
-        streets = []
-        # sitemap1
-        links = bs(session.get(sitemap1).text, "lxml").text.strip().split("\n")
-        for link in links:
-            session.get(link, headers=_headers)
-            locations = session.post(payload_url, headers=_headers).json()[
-                "searchResults"
-            ]
-            total += len(locations)
-            logger.info(f"[total {total}] {len(locations)} locations")
-            for _ in locations:
-                if _["locationLine1Address"] in streets:
-                    continue
-                streets.append(_["locationLine1Address"])
 
-                page_url = (
-                    f"https://www.wellsfargo.com/locator/bank/?slindex={_['index']}"
-                )
-                hours_of_operation = "; ".join(_.get("arrDailyEvents", []))
-                if (
-                    "incidentMessage" in _
-                    and _["incidentMessage"].get("incidentDesc", "").lower()
-                    == "temporary closure"
-                    and _["incidentMessage"].get("outletStatusDesc", "").lower()
-                    == "closed"
-                ):
-                    hours_of_operation = "Temporary closed"
-                yield SgRecord(
-                    page_url=page_url,
-                    location_name=_["branchName"],
-                    street_address=_["locationLine1Address"],
-                    city=_["city"],
-                    state=_["state"],
-                    zip_postal=_["postalcode"],
-                    country_code="US",
-                    latitude=_["latitude"],
-                    location_type=_["locationType"],
-                    longitude=_["longitude"],
-                    phone=_["phone"].strip(),
-                    locator_domain=locator_domain,
-                    hours_of_operation=hours_of_operation,
-                )
+    # sitemap1
+    links = bs(session.get(sitemap1).text, "lxml").text.strip().split("\n")
+    results = scrape_loc_urls(links)
 
-        # sitemap2
-        links = (
-            bs(session.get(sitemap2, headers=_headers).text, "lxml")
-            .text.strip()
-            .split("\n")
+    for result in results:
+        for item in result:
+            yield item
+
+    # sitemap2
+    links = (
+        bs(session.get(sitemap2, headers=_headers).text, "lxml")
+        .text.strip()
+        .split("\n")
+    )
+    results = scrape_loc_urls_two(links)
+
+    for result in results:
+        for item in result:
+            yield item
+
+
+def write_output(data):
+    with open("data.csv", mode="w", encoding="utf-8") as output_file:
+        writer = csv.writer(
+            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
         )
-        for link in links:
-            res = session.get(link, headers=_headers)
-            if "error.html" in res.url:
-                continue
-            sp1 = bs(res.text, "lxml")
-            if sp1.find("", string=re.compile(r"could not find")):
-                continue
-            location_type = sp1.select_one("div.fn.heading").text.strip()
-            if "ATM" not in location_type:
-                continue
-            logger.info(link)
-            try:
-                coord = (
-                    sp1.select_one("div.mapView img")["src"]
-                    .split("Road/")[1]
-                    .split("/")[0]
-                    .split(",")
-                )
-            except:
-                coord = ["", ""]
-            hours = []
-            _hr = sp1.find("h2", string=re.compile(r"Lobby Hours", re.IGNORECASE))
-            if _hr:
-                hours = list(_hr.find_next_sibling().stripped_strings)
-            addr = [
-                aa for aa in list(sp1.address.stripped_strings) if aa.strip() != ","
+
+        # Header
+        writer.writerow(
+            [
+                "page_url",
+                "location_name",
+                "street_address",
+                "city",
+                "state",
+                "zip",
+                "country_code",
+                "latitude",
+                "longitude",
+                "location_type",
+                "phone",
+                "locator_domain",
+                "hours_of_operation",
+                "store_number",
             ]
-            street_address = " ".join(addr[1].split(",")[:-1])
-            if street_address in streets:
+        )
+        # Body
+        streets = []
+        for row in data:
+
+            street_check = row[2]
+            if street_check in streets:
                 continue
-            streets.append(street_address)
-            yield SgRecord(
-                page_url=link,
-                location_name=addr[0],
-                street_address=street_address,
-                city=addr[1].split(",")[-1],
-                state=addr[2],
-                zip_postal=addr[3],
-                country_code="US",
-                latitude=coord[0],
-                longitude=coord[1],
-                location_type=location_type,
-                phone=sp1.find("a", href=re.compile(r"tel:")).text.strip(),
-                locator_domain=locator_domain,
-                hours_of_operation="; ".join(hours),
-            )
+            else:
+                streets.append(street_check)
+
+            final_row = []
+            for item in row:
+                if item == "":
+                    final_row.append("<MISSING>")
+                else:
+                    final_row.append(item)
+            writer.writerow(final_row)
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
-        results = fetch_data()
-        for rec in results:
-            writer.write_row(rec)
+
+    results = fetch_data()
+    write_output(results)
