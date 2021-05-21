@@ -109,12 +109,14 @@ def fetch_data():
                 g = g.replace("Strand, London", "Strand, London - London")
                 g = g.replace("Scotland", "Scotland - Scotland")
                 add = g.split(",")[0]
+                g = g.replace(",Massac", "- Massac")
                 city = g.split(",")[1].strip().split(" - ")[0]
                 state = g.split(",")[1].strip().split(" - ")[1]
                 if "United States" in g:
-                    zc = g.rsplit(" ", 1)[1]
+                    zc = g.rsplit(",", 1)[0].rsplit(" ", 1)[1]
+                    state = state.rsplit(" ", 1)[0]
                 if "Canada" in g:
-                    zc = g.split("Canada ")[1].strip()
+                    zc = g.split("Canada")[0].rsplit(" ", 1)[1].replace(",", "")
                 if "United Kingdom" in g:
                     zc = g.split("United Kingdom")[1].strip()
             if 'aria-label="Phone number"' in line2:
@@ -135,6 +137,21 @@ def fetch_data():
             zc = "V6C 2W6"
         if "1038 Canada Place" in add:
             zc = "V6C 0B9"
+        if " Estab" in state:
+            state = state.split(" Estab")[0]
+        if (
+            "Alberta" in state
+            or "Ontario" in state
+            or "Quebec" in state
+            or "Scotland" in state
+            or "London" in state
+            or "Manitoba" in state
+        ):
+            zc = state.split(" ", 1)[1]
+            state = state.split(" ")[0]
+        if "British Columbia" in state:
+            zc = state.split("Columbia")[1].strip()
+            state = "British Columbia"
         yield [
             website,
             purl,

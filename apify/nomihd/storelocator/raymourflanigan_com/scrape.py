@@ -6,6 +6,7 @@ from sgscrape.simple_utils import parallelize
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgzip.static import static_zipcode_list, SearchableCountries
+from tenacity import retry, stop_after_attempt
 
 website = "raymourflanigan.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -19,7 +20,15 @@ headers = {
 url_list = []
 
 
+def retry_error_callback(retry_state):
+    postal = retry_state.args[0]
+    log.error(f"Failure to fetch locations for: {postal}")
+    return []
+
+
+@retry(retry_error_callback=retry_error_callback, stop=stop_after_attempt(5))
 def fetch_records_for(zipcode):
+    log.info(f"pulling records for zipcode: {zipcode}")
     url = "https://www.raymourflanigan.com/api/custom/location-search"
     params = {
         "postalCode": zipcode,
@@ -29,13 +38,8 @@ def fetch_records_for(zipcode):
         "includeClearanceLocations": True,
         "includeAppointments": True,
     }
-
-    try:
-        stores = session.get(url, params=params, headers=headers).json()
-        return stores["locations"]
-    except Exception as e:
-        log.error(f"{zipcode} >>> {e}")
-        return []
+    stores = session.get(url, params=params, headers=headers).json()
+    return stores["locations"]
 
 
 def process_record(raw_results_from_one_zipcode):
@@ -44,9 +48,17 @@ def process_record(raw_results_from_one_zipcode):
             url_list.append(store["url"])
 
             page_url = "https://www.raymourflanigan.com" + store["url"]
+            log.info(page_url)
             locator_domain = website
             location_name = store["displayName"]
             street_address = store["addressLine1"]
+            if (
+                "addressLine2" in store
+                and store["addressLine2"] is not None
+                and len(store["addressLine2"]) > 0
+            ):
+                street_address = street_address + ", " + store["addressLine2"]
+
             city = store["city"]
             state = store["stateProvince"]
             zip = store["postalCode"]
@@ -57,19 +69,16 @@ def process_record(raw_results_from_one_zipcode):
 
             location_type = "Showroom"
             if store["clearanceCenter"] is True:
-                location_type = "clearanceCenter"
+                location_type = "Clearance Center"
             if store["outlet"] is True:
-                location_type = "outlet"
+                location_type = "Outlet"
 
+            location_name = "Raymour & Flanigan " + location_type
             hours_of_operation = ""
             hours = store["hours"]
             hours_list = []
             for key, hour in hours.items():
-                if (
-                    hours[key] is not None
-                    and hours[key]["open"] is not None
-                    and hours[key]["close"] is not None
-                ):
+                if hours[key] and hours[key]["open"] and hours[key]["close"]:
                     day = key
                     if day != "today":
                         hours_list.append(

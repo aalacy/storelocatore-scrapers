@@ -40,7 +40,7 @@ def get_data(postal):
     locator_domain = "https://woodforest.com/"
     page_url = (
         f"https://woodforest.com/Lib/WFNB.Functions.GetLocations.ashx?address="
-        f"&city=&state=&zipCode={postal}&distance=50&display=45"
+        f"&city=&state=&zipCode={postal}&distance=30&display=45"
     )
 
     r = session.post(page_url)
@@ -101,7 +101,7 @@ def fetch_data():
     s = set()
     zips = static_zipcode_list(radius=20, country_code=SearchableCountries.USA)
 
-    with futures.ThreadPoolExecutor(max_workers=5) as executor:
+    with futures.ThreadPoolExecutor(max_workers=3) as executor:
         future_to_url = {executor.submit(get_data, postal): postal for postal in zips}
         for future in futures.as_completed(future_to_url):
             rows = future.result()

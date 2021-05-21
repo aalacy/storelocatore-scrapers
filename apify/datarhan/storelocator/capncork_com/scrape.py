@@ -58,6 +58,9 @@ def fetch_data():
         location_name = location_name[0] if location_name else "<MISSING>"
         raw_address = poi_html.xpath('.//div[@class="x-text"]/p[2]//text()')
         raw_address = [e.strip() for e in raw_address if e.strip()]
+        if "Get Directions" in raw_address[0]:
+            raw_address = poi_html.xpath('.//div[@class="x-text"]/p[1]//text()')
+            raw_address = [e.strip() for e in raw_address if e.strip()]
         street_address = raw_address[0]
         city = raw_address[1].split(", ")[0]
         state = raw_address[1].split(", ")[-1].split()[0]

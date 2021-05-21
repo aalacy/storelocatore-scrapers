@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
-import csv
 from sgrequests import SgRequests
 from sglogging import sglog
 import json
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
 
 website = "citygear.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -21,58 +22,12 @@ headers = {
 }
 
 
-def write_output(data):
-    with open("data.csv", mode="w", newline="", encoding="utf8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        temp_list = []  # ignoring duplicates
-        for row in data:
-            comp_list = [
-                row[2].strip(),
-                row[3].strip(),
-                row[4].strip(),
-                row[5].strip(),
-                row[6].strip(),
-                row[8].strip(),
-                row[10].strip(),
-            ]
-            if comp_list not in temp_list:
-                temp_list.append(comp_list)
-                writer.writerow(row)
-
-        log.info(f"No of records being processed: {len(temp_list)}")
-
-
 def fetch_data():
     # Your scraper here
-    loc_list = []
-
     url = (
         "https://www.hibbett.com/on/demandware.store/Sites-Hibbett-US-Site/"
-        "default/Stores-GetNearestStores?latitude=42.4685771&"
-        "longitude=-83.42107759999999&countryCode=US&distanceUnit=mi&maxdistance=2500000"
+        "default/Stores-GetNearestStores?latitude=28.14&"
+        "longitude=-95.85&countryCode=US&distanceUnit=mi&maxdistance=2500000"
     )
     stores_req = session.get(
         url,
@@ -82,6 +37,8 @@ def fetch_data():
     for store in stores.keys():
         locator_domain = website
         location_name = stores[store]["name"]
+        if location_name != "City Gear":
+            continue
         street_address = stores[store]["address1"]
         if len(stores[store]["address2"]) > 0:
             street_address = street_address + ", " + stores[store]["address2"]
@@ -112,40 +69,34 @@ def fetch_data():
         longitude = stores[store]["longitude"]
         hours_of_operation = stores[store]["storeHours"].replace("|", " ").strip()
 
-        if hours_of_operation == "":
-            hours_of_operation = "<MISSING>"
-        if phone == "":
-            phone = "<MISSING>"
-
-        if country_code == "":
-            country_code = "<MISSING>"
-
-        curr_list = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-
-        loc_list.append(curr_list)
-
-    return loc_list
+        yield SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=zip,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=location_type,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+        )
 
 
 def scrape():
     log.info("Started")
-    data = fetch_data()
-    write_output(data)
+    count = 0
+    with SgWriter() as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+
+    log.info(f"No of records being processed: {count}")
     log.info("Finished")
 
 

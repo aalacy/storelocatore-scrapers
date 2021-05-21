@@ -1,5 +1,2 @@
-bs4==0.0.1
-usaddress
-sgrequests
-sgvalidator
-sgzip
+sgrequests==0.1.8
+sgzip==0.5.3

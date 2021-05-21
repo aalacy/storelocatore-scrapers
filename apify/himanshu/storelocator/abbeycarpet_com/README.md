@@ -1,2 +1,1 @@
---ignore GeoConsistencyValidator (Confirmed on website)
---ignore CountValidator --ignore StateLevelCountValidator (Expected 248 POI, but found 345)
+--ignore CountValidator --ignore StateLevelCountValidator (Expected 248 POI, but found 426)

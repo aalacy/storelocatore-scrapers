@@ -59,7 +59,7 @@ def fetch_data():
         location_name = loc_dom.xpath('//div[@class="blue-head"]/h3/text()')
         location_name = location_name[0] if location_name else "<MISSING>"
         street_address = loc_dom.xpath('//div[@class="street-block"]/div/text()')
-        street_address = street_address[0] if street_address else "<MISSING>"
+        street_address = " ".join(street_address) if street_address else "<MISSING>"
         city = loc_dom.xpath('//span[@class="locality"]/text()')
         city = city[0] if city else "<MISSING>"
         state = loc_dom.xpath('//span[@class="state"]/text()')
@@ -81,7 +81,9 @@ def fetch_data():
             longitude = geo[1]
         hoo = loc_dom.xpath('//table[@class="hours-table"]//text()')
         hoo = [e.strip() for e in hoo if e.strip()]
-        hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
+        hours_of_operation = (
+            " ".join(hoo).split("Meat")[0].strip() if hoo else "<MISSING>"
+        )
 
         item = [
             domain,

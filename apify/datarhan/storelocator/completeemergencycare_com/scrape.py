@@ -50,25 +50,29 @@ def fetch_data():
     response = session.get(start_url, headers=hdr)
     dom = etree.HTML(response.text)
 
-    all_locations = dom.xpath('//div[@itemscope="itemscope"]')
+    all_locations = dom.xpath('//address[@title=" Location"]')
     for poi_html in all_locations:
-        store_url = poi_html.xpath('.//span[@itemprop="name"]/a/@href')[0]
+        store_url = poi_html.xpath('.//span[@class="title ultra-bold"]/a/@href')[0]
         store_url = urljoin(start_url, store_url)
-        location_name = poi_html.xpath('.//span[@itemprop="name"]/a/text()')
+        location_name = poi_html.xpath('.//span[@class="title ultra-bold"]/a/text()')
         location_name = location_name[0] if location_name else "<MISSING>"
-        street_address = poi_html.xpath('.//span[@itemprop="streetAddress"]/text()')
+        street_address = poi_html.xpath(
+            './/div[@class="contact_info"]/span[@itemprop="name"]/text()'
+        )
         street_address = street_address[0] if street_address else "<MISSING>"
-        city = poi_html.xpath('.//span[@itemprop="addressLocality"]/text()')
+        city = poi_html.xpath('.//span[@itemprop="streetAddress"]/text()')
         city = city[0] if city else "<MISSING>"
-        state = poi_html.xpath('.//span[@itemprop="addressRegion"]/text()')
+        state = poi_html.xpath('.//span[@itemprop="addressLocality"]/text()')
         state = state[0].strip() if state else "<MISSING>"
-        zip_code = poi_html.xpath('.//span[@itemprop="postalCode"]/text()')
+        zip_code = poi_html.xpath('.//span[@itemprop="addressRegion"]/text()')
         zip_code = zip_code[0].strip() if zip_code else "<MISSING>"
         country_code = "<MISSING>"
         store_number = "<MISSING>"
         phone = poi_html.xpath('.//span[@itemprop="telephone"]/a/text()')
         phone = phone[0] if phone else "<MISSING>"
-        location_type = poi_html.xpath("@itemtype")[0].split("/")[-1]
+        location_type = poi_html.xpath('.//div[@class="contact_info"]/@itemtype')[
+            0
+        ].split("/")[-1]
         geo = (
             poi_html.xpath('.//span[@class="ftr-mapus"]/a/@href')[0]
             .split("/@")[-1]

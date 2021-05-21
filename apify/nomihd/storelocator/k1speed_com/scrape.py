@@ -100,8 +100,10 @@ def fetch_data():
             for ph in phone_list:
                 hours_list.append("".join(ph.xpath("a/text()")).strip())
 
-            if len(hours_list) > 0:
+            if len(hours_list) > 0:  # It was 0 before
                 phone = hours_list[-1].strip()
+            else:
+                phone = "<MISSING>"
 
             country_code = "<MISSING>"
             if us.states.lookup(state):
@@ -149,6 +151,17 @@ def fetch_data():
 
             if phone == "" or phone is None:
                 phone = "<MISSING>"
+
+            if (
+                (street_address == "" or street_address == "<MISSING>")
+                and (city == "" or city == "<MISSING>")
+                and (state == "" or state == "<MISSING>")
+                and (zip == "" or zip == "<MISSING>")
+                and (latitude == "" or latitude == "<MISSING>")
+                and (longitude == "" or longitude == "<MISSING>")
+                and (hours_of_operation == "" or hours_of_operation == "<MISSING>")
+            ):
+                continue
 
             curr_list = [
                 locator_domain,
