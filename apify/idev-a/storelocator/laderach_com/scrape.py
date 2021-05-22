@@ -90,26 +90,25 @@ def fetch_data():
         stores = soup.select("div.store-row-container div.store-row")
         logger.info(f"{len(stores)} found")
         missing = []
-        with SgRequests() as session:
-            for store in stores:
-                _id = store["id"]
-                logger.info(_id)
-                try:
-                    yield _detail(_id, driver)
-                except Exception as err:
-                    logger.warning(str(err))
-                    logger.info(f"missing {_id}")
-                    missing.append(_id)
+        for store in stores:
+            _id = store["id"]
+            logger.info(_id)
+            try:
+                yield _detail(_id, driver)
+            except Exception as err:
+                logger.warning(str(err))
+                logger.info(f"missing {_id}")
+                missing.append(_id)
 
-            logger.info(f"{len(missing)} missing")
-            if missing:
-                time.sleep(2)
-            for _id in missing:
-                try:
-                    yield _detail(_id, driver)
-                except Exception as err:
-                    logger.warning(str(err))
-                    logger.info(f"missing {_id}")
+        logger.info(f"{len(missing)} missing")
+        if missing:
+            time.sleep(2)
+        for _id in missing:
+            try:
+                yield _detail(_id, driver)
+            except Exception as err:
+                logger.warning(str(err))
+                logger.info(f"missing {_id}")
 
 
 if __name__ == "__main__":
