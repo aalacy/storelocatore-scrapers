@@ -16,7 +16,6 @@ days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 def fetch_data():
     locator_domain = "https://macewen.ca/"
     base_url = "https://macewen.ca/wp-content/cache/interactive-maps/station-en.json"
-    streets = []
     with SgRequests() as session:
         locations = session.get(base_url, headers=_headers).json()["places"]
         for _ in locations:
