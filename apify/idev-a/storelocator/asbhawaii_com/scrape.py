@@ -37,7 +37,7 @@ def fetch_data():
             )
             location_type = "branch"
             location_name = link.strong.text.strip()
-            if "atm" in location_name:
+            if "atm" in location_name.lower():
                 location_type = "atm"
             yield SgRecord(
                 page_url=page_url,
