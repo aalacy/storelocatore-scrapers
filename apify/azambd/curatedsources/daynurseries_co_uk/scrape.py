@@ -248,8 +248,6 @@ def fetchSingleStore(page_url, session=None, headers=None):
     else:
         brand_website = MISSING
 
-    print(brand_website)
-
     return [
         session,
         headers,
