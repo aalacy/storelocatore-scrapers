@@ -14,30 +14,30 @@ def fetch_data():
     base_url = "https://www.kenzo.com/us/en/allstoresjson"
     with SgChrome() as driver:
         driver.get(base_url)
-        locations = json.loads(bs(driver.page_source, 'lxml').text)
+        locations = json.loads(bs(driver.page_source, "lxml").text)
         for k, _ in locations.items():
-            page_url = locator_domain + _['url']
+            page_url = locator_domain + _["url"]
             hours = []
-            for hh in list(bs(_['schedule'], 'lxml').stripped_strings):
-                if hh.strip().startswith('-'):
+            for hh in list(bs(_["schedule"], "lxml").stripped_strings):
+                if hh.strip().startswith("-"):
                     hh = hh.strip()[1:].strip()
                 hours.append(hh)
-            street_address=_['address'].strip()
-            if street_address.endswith(','):
+            street_address = _["address"].strip()
+            if street_address.endswith(","):
                 street_address = street_address[:-1]
             yield SgRecord(
                 page_url=page_url,
-                store_number=_['id'],
+                store_number=_["id"],
                 location_name=_["name"],
                 street_address=street_address,
-                city=_['city'],
-                zip_postal=_['zipcode'],
+                city=_["city"],
+                zip_postal=_["zipcode"],
                 latitude=_["latitude"],
                 longitude=_["longitude"],
-                country_code=_['country'],
+                country_code=_["country"],
                 phone=_["phone"],
                 locator_domain=locator_domain,
-                hours_of_operation='; '.join(hours).replace('/', ';'),
+                hours_of_operation="; ".join(hours).replace("/", ";"),
             )
 
 
