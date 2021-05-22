@@ -67,38 +67,42 @@ def fetchSinglePage(data_url, findRedirect=False):
     incap_url = website + incap_str
     session.get(incap_url)
 
-    for request in driver.requests:
-        headers = request.headers
-        try:
-            response = session.get(data_url, headers=headers)
-            response_text = response.text
+    for x in range(10):
+        if findRedirect:
+            print("find redirect")
+        print("try: " + str(x))
+        for request in driver.requests:
+            headers = request.headers
+            try:
+                response = session.get(data_url, headers=headers)
+                response_text = response.text
 
-            test_html = response_text.split("div")
+                test_html = response_text.split("div")
 
-            if findRedirect and response_text.find("window.location.replace") > -1:
+                if findRedirect and response_text.find("window.location.replace") > -1:
 
-                try:
-                    return response_text.split("window.location.replace('")[1].split(
-                        "')"
-                    )[0]
-                except Exception:
+                    try:
+                        return [session, headers, response_text.split("window.location.replace('")[1].split(
+                            "')"
+                        )[0]]
+                    except Exception:
+                        continue
+                elif len(test_html) < 2:
                     continue
-            elif len(test_html) < 2:
+                else:
+
+                    return [
+                        session,
+                        headers,
+                        {
+                            "response": response_text,
+                            "hours_of_operation": getHoursOfOperation(),
+                            "phone": getPhone(),
+                        },
+                    ]
+
+            except Exception:
                 continue
-            else:
-
-                return [
-                    session,
-                    headers,
-                    {
-                        "response": response_text,
-                        "hours_of_operation": getHoursOfOperation(),
-                        "phone": getPhone(session, headers, response_text),
-                    },
-                ]
-
-        except Exception:
-            continue
 
 
 def getHoursOfOperation():
@@ -125,21 +129,8 @@ def getHoursOfOperation():
     return MISSING
 
 
-def getPhone(session, headers, response_text):
-    try:
-        phone_soup = bs(response_text, "html.parser")
-        phone_link = phone_soup.find("a", attrs={"id": "brochure_phone"})["href"]
-        phone_response = session.get(phone_link, headers=headers).text
-        response_soup = bs(phone_response, "html.parser")
-        phone = (
-            response_soup.find("div", attrs={"class": "contacts_telephone"})
-            .find("a")
-            .text.strip()
-        )
-        return phone
-    except Exception as e:
-        log.error("error loading phone", e)
-        return "broken"
+def getPhone():
+    return "<INACCESSIBLE>"
 
 
 def getScriptWithGeo(body):
@@ -199,7 +190,7 @@ def fetchSingleStore(page_url, session=None, headers=None):
             store_response = {
                 "response": response_text,
                 "hours_of_operation": getHoursOfOperation(),
-                "phone": getPhone(session, headers, response_text),
+                "phone": getPhone(),
             }
 
     hours_of_operation = getJSONObjectVariable(store_response, "hours_of_operation")
@@ -223,11 +214,23 @@ def fetchSingleStore(page_url, session=None, headers=None):
 
     redirect_urls = body.xpath('//a[contains(@class, "button-website")]/@href')
     if len(redirect_urls) > 0:
-        brand_website = fetchSinglePage(redirect_urls[0], True)
-        brand_website = (urlparse(brand_website).netloc).replace("www.", "")
+
+        url_text = session.get(redirect_urls[0], headers=headers).text
+
+        try:
+            brand_website = url_text.split("window.location.replace(")[1].split(")")[0]
+        except Exception:
+            brand_website_session = fetchSinglePage(redirect_urls[0], True)
+            brand_website = brand_website_session[2]
+            session = brand_website_session[0]
+            headers = brand_website_session[1]
+
+            brand_website = (urlparse(brand_website).netloc).replace("www.", "")
 
     else:
         brand_website = MISSING
+    
+    print(brand_website)
 
     return [
         session,
@@ -253,7 +256,7 @@ def fetchSingleStore(page_url, session=None, headers=None):
 
 
 def fetchData():
-    stores = fetchStores()
+    stores = fetchStores()[:100]
     log.info(f"Total stores = {len(stores)}")
 
     file = open(CSV_FILENAME, "w")
