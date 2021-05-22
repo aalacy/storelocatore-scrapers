@@ -3,6 +3,7 @@ from sgrequests import SgRequests
 from lxml import etree
 import usaddress
 from sglogging import sglog
+from bs4 import BeautifulSoup as BS
 
 
 base_url = "https://www.marshfieldclinic.org"
@@ -141,10 +142,9 @@ def fetch_data():
             output.append(base_url)  # url
             output.append(validate(page_url))  # page url
             log.info(page_url)
-            name = get_value(store.xpath('.//span[@id="loctitle"]//text()'))
-            if name != "<MISSING>":
-
-                output.append(name)  # location name
+            name = store.xpath('.//span[@id="loctitle"]//text()')
+            if len(name) > 0:
+                output.append("".join(name[0]).strip())  # location name
                 address = eliminate_space(
                     store.xpath('.//div[@class="contentDetail"]//h2')[1].xpath(
                         "./text()"
@@ -163,10 +163,10 @@ def fetch_data():
                 output.append(get_value(phone).replace("Phone:", "").strip())  # phone
                 output.append(location_type)  # location type
                 output.append(
-                    get_value(store.xpath('.//span[@id="latitude"]//text()'))
+                    get_value(store.xpath('.//span[@id="latitude"]//text()')[0])
                 )  # latitude
                 output.append(
-                    get_value(store.xpath('.//span[@id="longitude"]//text()'))
+                    get_value(store.xpath('.//span[@id="longitude"]//text()')[0])
                 )  # longitude
                 store_hours = "; ".join(
                     get_value(
@@ -175,15 +175,26 @@ def fetch_data():
                         )
                     ).split("\n")
                 ).strip()
+
+                store_hours = BS(store_hours, "html.parser").get_text()
+                if len(store_hours) <= 0:
+                    hours = store.xpath('//ul[@style="list-style-type: disc;"]//text()')
+                    hours_list = []
+                    for hour in hours:
+                        if len("".join(hour).strip()) > 0:
+                            hours_list.append("".join(hour).strip())
+
+                    store_hours = "; ".join(hours_list).strip()
+                if len(store_hours) <= 0:
+                    store_hours = "<MISSING>"
                 output.append(store_hours)  # opening hours
                 yield output
             else:
-                name = get_value(
-                    store.xpath('.//div[@class="hero-caption-content"]//h3//text()')
-                )
-                if name == "<MISSING>":
+                name = store.xpath('.//div[@class="hero-caption-content"]//h3//text()')
+
+                if len(name) <= 0:
                     continue
-                output.append(name)  # location name
+                output.append("".join(name[0]).strip())  # location name
                 details = eliminate_space(
                     store.xpath('.//div[@class="foot-content-3 clearfix"]//p//text()')
                 )
@@ -212,6 +223,7 @@ def fetch_data():
                     ).split("\n")
                 ).strip()
                 output.append(store_hours)  # opening hours
+                store_hours = BS(store_hours, "html.parser").get_text()
                 yield output
 
 
