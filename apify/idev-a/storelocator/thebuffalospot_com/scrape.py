@@ -45,7 +45,7 @@ def fetch_data():
         for _ in blocks:
             if not _.text.strip():
                 continue
-            addr = parse_address_intl(" ".join(list(_.p.stripped_strings)[1:]))
+            addr = parse_address_intl(" ".join(list(_.p.stripped_strings)[2:]))
             street_address = addr.street_address_1
             if addr.street_address_2:
                 street_address += " " + addr.street_address_2
@@ -68,16 +68,42 @@ def fetch_data():
                     sp1 = bs(res1.text, "lxml")
                     if "COMING SOON!" in sp1.h2.text:
                         continue
-                    script = json.loads(
-                        sp1.select('script[type="application/ld+json"]')[-1].string
+                    addr = list(
+                        sp1.find("h3", string=re.compile(r"^ADDRESS"))
+                        .find_next_sibling("p")
+                        .stripped_strings
                     )
-                    street_address = script["address"]["streetAddress"]
-                    city = script["address"]["addressLocality"]
-                    state = script["address"]["addressRegion"]
-                    zip_postal = script["address"]["postalCode"]
-                    latitude = script["geo"]["latitude"]
-                    longitude = script["geo"]["longitude"]
-                    hours_of_operation = script["openingHours"]
+                    street_address = " ".join(addr[:-1])
+                    city = addr[-1].split(",")[0].strip()
+                    state = (
+                        addr[-1]
+                        .replace("\xa0", " ")
+                        .split(",")[1]
+                        .strip()
+                        .split(" ")[0]
+                        .strip()
+                    )
+                    zip_postal = (
+                        addr[-1]
+                        .replace("\xa0", " ")
+                        .split(",")[1]
+                        .strip()
+                        .split(" ")[-1]
+                        .strip()
+                    )
+                    coord = (
+                        sp1.iframe["src"].split("!2d")[1].split("!2m")[0].split("!3d")
+                    )
+                    latitude = coord[1]
+                    longitude = coord[0]
+                    hours_of_operation = "; ".join(
+                        [
+                            hh.text.strip()
+                            for hh in sp1.find(
+                                "h3", string=re.compile(r"HOURS OF OPERATION")
+                            ).find_next_siblings("p")
+                        ]
+                    )
 
             yield SgRecord(
                 page_url=page_url,
