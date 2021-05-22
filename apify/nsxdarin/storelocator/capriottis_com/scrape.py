@@ -69,7 +69,7 @@ def fetch_data():
                             "https://capriottis.olo.com/menu/"
                             + item.split('"slug":"')[1].split('"')[0]
                         )
-                        hours = "<MISSING>"
+                        hours = "<INACCESSIBLE>"
                         yield [
                             website,
                             lurl,
