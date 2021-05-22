@@ -46,12 +46,13 @@ def fetch_data():
         "content-type": "application/json",
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.193 Safari/537.36",
     }
-    frm = '{"equipmentTypes":[],"pageNumber":"1","pageSize":"20","searchRadius":50000,"Latitude":40.75368539999999,"Longitude":-73.9991637}'
+    frm = '{"equipmentTypes":[],"pageNumber":"1","pageSize":"200","searchRadius":90000,"Latitude":40.75368539999999,"Longitude":-73.9991637}'
     response = session.post(start_url, headers=headers, data=frm)
     data = json.loads(response.text)
 
     for poi in data["Items"]:
         store_url = poi["Url"]
+        store_url = store_url if store_url else '<MISSING>'
         location_name = poi["BranchName"]
         location_name = location_name if location_name else "<MISSING>"
         street_address = poi["Address"]["Street"]
