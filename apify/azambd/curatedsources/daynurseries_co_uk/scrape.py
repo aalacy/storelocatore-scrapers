@@ -67,10 +67,11 @@ def fetchSinglePage(data_url, findRedirect=False):
     incap_url = website + incap_str
     session.get(incap_url)
 
-    for x in range(10):
-        if findRedirect:
-            print("find redirect")
-        print("try: " + str(x))
+    x = 0
+    while True:
+        x = x + 1
+        if x == 10:
+            break
         for request in driver.requests:
             headers = request.headers
             try:
