@@ -272,7 +272,7 @@ def fetchSingleStore(page_url, session=None, headers=None):
 
 
 def fetchData():
-    stores = fetchStores()[:100]
+    stores = fetchStores()
     log.info(f"Total stores = {len(stores)}")
 
     file = open(CSV_FILENAME, "w")
