@@ -83,7 +83,6 @@ def fetch_data():
         ):
             street_address = street_address.replace("45", "45 Whitechapel")
 
-        st2 = pa.street_address_2
         city = pa.city or MISSING
         state = pa.state or MISSING
         if (
