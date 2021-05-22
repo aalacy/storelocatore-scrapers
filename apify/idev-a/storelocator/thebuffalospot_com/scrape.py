@@ -2,7 +2,6 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
-import json
 import re
 from sglogging import SgLogSetup
 from sgscrape.sgpostal import parse_address_intl
