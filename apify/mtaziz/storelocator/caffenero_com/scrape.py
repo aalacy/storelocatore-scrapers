@@ -57,9 +57,54 @@ def fetch_data():
 
         pa = parse_address_intl(store_address)
         street_address = pa.street_address_1 or MISSING
+        if (
+            street_address == "23"
+            and store_address1
+            == "Unit 210, 23 The Galleria, Meadowhall Shopping Centre, Sheffield, South Yorkshire, S9 1EP"
+        ):
+            street_address = street_address.replace(
+                "23", "23 The Galleria, Meadowhall Shopping Centre"
+            )
+        if (
+            street_address == "35"
+            and store_address1
+            == "35 Fairhill Shopping Centre, Ballymena, Antrim, BT43 6UF"
+        ):
+            street_address = street_address.replace("35", "35 Fairhill Shopping Centre")
+        if (
+            street_address == "18"
+            and store_address1
+            == "18  Wheelergate, Nottingham, Nottinghamshire, NG1 2NB"
+        ):
+            street_address = street_address.replace("18", "18 Wheelergate")
+        if (
+            street_address == "45"
+            and store_address1 == "45 Whitechapel, Liverpool, Merseyside, L1 6DT"
+        ):
+            street_address = street_address.replace("45", "45 Whitechapel")
+
         st2 = pa.street_address_2
         city = pa.city or MISSING
         state = pa.state or MISSING
+        if (
+            state == "G2"
+            and store_address1
+            == "St Vincent Plaza, 319 St Vincent St, Glasgow, Glasgow City, G2 5LP"
+        ):
+            state = state.replace("G2", "<MISSING>")
+        if (
+            state == "L3"
+            and store_address1
+            == "c/o Blackwells, Crown Place, 200 Brownlow Hill, Liverpool, Merseyside, L3 5UE"
+        ):
+            state = state.replace("L3", "<MISSING>")
+        if (
+            state == "E20"
+            and store_address1
+            == "Westfield Stratford City, Monfichet Road, London, Greater London, E20 1EJ"
+        ):
+            state = state.replace("E20", "<MISSING>")
+
         try:
             zip_postal = store_address.split(",")[-1].lstrip().rstrip().strip()
         except:

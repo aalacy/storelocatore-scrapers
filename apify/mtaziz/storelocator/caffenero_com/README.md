@@ -1,8 +1,12 @@
 # Validation Issues
-- --ignore StreetAddressHasNumber 
-- --ignore StateLevelCountValidator
+- --ignore CountryCodeFillRateChecker
+- --ignore GeoConsistencyValidator
+- --ignore CountryValidator
+- --ignore LatLngDuplicationValidator
+- --ignore StreetAddressHasNumber
+
 
 # Command
 ```
-python3 validate.py data.csv --ignore StateLevelCountValidator  --ignore StreetAddressHasNumber
+python3 validate.py data.csv --ignore CountryCodeFillRateChecker --ignore GeoConsistencyValidator --ignore CountryValidator --ignore LatLngDuplicationValidator --ignore StreetAddressHasNumber
 ```
