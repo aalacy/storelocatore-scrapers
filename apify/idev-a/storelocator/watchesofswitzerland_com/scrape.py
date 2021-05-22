@@ -2,7 +2,6 @@ from sgscrape import simple_scraper_pipeline as sp
 from sgrequests import SgRequests
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 from sglogging import SgLogSetup
-from bs4 import BeautifulSoup as bs
 
 logger = SgLogSetup().get_logger("watchesofswitzerland")
 
