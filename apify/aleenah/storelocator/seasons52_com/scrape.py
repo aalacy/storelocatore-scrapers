@@ -58,16 +58,16 @@ def fetch_data():
     with SgChrome() as driver:
         driver.get(url)
         time.sleep(10)
-        log.info(driver.page_source)
         soup = BeautifulSoup(driver.page_source, "html.parser")
 
-        divlist = soup.select("a[href*=locations]")
-        p = 0
+        divlist = soup.select("input[id=redirectLocationUrl]")
+
+        links = ["https://www.seasons52.com/locations/fl/sunrise/sunrise-sawgrass/4548"]
         for div in divlist:
-            if p == 0:
-                link = "https://www.seasons52.com/locations/fl/sunrise/sunrise-sawgrass/4548"
-            else:
-                link = "https://www.seasons52.com" + div["href"]
+
+            links.append("https://www.seasons52.com" + div["value"])
+
+        for link in links:
 
             if link.find("-locations") == -1:
                 log.info(link)
@@ -147,8 +147,15 @@ def fetch_data():
                         ].split(",")
                     except:
                         continue
-                    store = soup.find("input", {"id": "restID"})["value"]
-                    title = soup.find("h1").text
+                    store = link.strip().strip("/").split("/")[-1]
+                    title = (
+                        link.strip()
+                        .strip("/")
+                        .split("/")[-2]
+                        .upper()
+                        .replace("-", " - ")
+                    )
+
                     phone = soup.find("span", {"id": "restPhoneNumber1"}).text
                     hourlist = soup.find("div", {"class": "week-schedule"}).findAll(
                         "ul", {"class": "top-bar"}
@@ -195,10 +202,13 @@ def fetch_data():
                         "<MISSING>",
                         lat,
                         longt,
-                        hours.replace("\xa0", "").strip(),
+                        hours.replace("\xa0", "")
+                        .replace("Today", "")
+                        .replace("(", "")
+                        .replace(")", "")
+                        .strip(),
                     ]
                 )
-                p += 1
 
     return data
 
