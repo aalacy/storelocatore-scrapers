@@ -82,9 +82,13 @@ def fetchSinglePage(data_url, findRedirect=False):
                 if findRedirect and response_text.find("window.location.replace") > -1:
 
                     try:
-                        return [session, headers, response_text.split("window.location.replace('")[1].split(
-                            "')"
-                        )[0]]
+                        return [
+                            session,
+                            headers,
+                            response_text.split("window.location.replace('")[1].split(
+                                "')"
+                            )[0],
+                        ]
                     except Exception:
                         continue
                 elif len(test_html) < 2:
@@ -97,7 +101,7 @@ def fetchSinglePage(data_url, findRedirect=False):
                         {
                             "response": response_text,
                             "hours_of_operation": getHoursOfOperation(),
-                            "phone": getPhone(),
+                            "phone": getPhone(session, headers, response_text),
                         },
                     ]
 
@@ -129,8 +133,21 @@ def getHoursOfOperation():
     return MISSING
 
 
-def getPhone():
-    return "<INACCESSIBLE>"
+def getPhone(session, headers, response_text):
+    try:
+        phone_soup = bs(response_text, "html.parser")
+        phone_link = phone_soup.find("a", attrs={"id": "brochure_phone"})["href"]
+        phone_response = session.get(phone_link, headers=headers).text
+        response_soup = bs(phone_response, "html.parser")
+        phone = (
+            response_soup.find("div", attrs={"class": "contacts_telephone"})
+            .find("a")
+            .text.strip()
+        )
+        return phone
+    except Exception as e:
+        log.error("error loading phone", e)
+        return "broken"
 
 
 def getScriptWithGeo(body):
@@ -190,7 +207,7 @@ def fetchSingleStore(page_url, session=None, headers=None):
             store_response = {
                 "response": response_text,
                 "hours_of_operation": getHoursOfOperation(),
-                "phone": getPhone(),
+                "phone": getPhone(session, headers, response_text),
             }
 
     hours_of_operation = getJSONObjectVariable(store_response, "hours_of_operation")
@@ -229,7 +246,7 @@ def fetchSingleStore(page_url, session=None, headers=None):
 
     else:
         brand_website = MISSING
-    
+
     print(brand_website)
 
     return [
