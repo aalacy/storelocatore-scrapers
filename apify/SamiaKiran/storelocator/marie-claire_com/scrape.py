@@ -26,7 +26,6 @@ def strip_accents(text):
 
 def fetch_data():
     if True:
-        linklist = []
         url = "https://www.marie-claire.com/fr/boutiques"
         r = session.get(url, headers=headers)
         soup = BeautifulSoup(r.text, "html.parser")
@@ -35,9 +34,6 @@ def fetch_data():
         )
         for loc in loclist:
             page_url = loc.find("a")["href"]
-            if page_url in linklist:
-                continue
-            linklist.append(page_url)
             log.info(page_url)
             r = session.get(page_url, headers=headers)
             temp = r.text.split('<script type="application/ld+json">')[3].split(

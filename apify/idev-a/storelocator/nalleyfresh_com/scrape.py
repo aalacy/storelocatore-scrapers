@@ -28,10 +28,15 @@ def fetch_data():
             page_url = link["href"]
             logger.info(page_url)
             sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
-            addr = parse_address_intl(sp1.select_one("div.address").text.strip())
-            street_address = addr.street_address_1
-            if addr.street_address_2:
-                street_address += " " + addr.street_address_2
+            _addr = sp1.select_one("div.address").text.strip()
+            addr = parse_address_intl(_addr)
+            street_address = (
+                _addr.replace(addr.city, "")
+                .replace(addr.state, "")
+                .replace(addr.postcode, "")
+                .replace(",", " ")
+                .strip()
+            )
             _phone = sp1.select_one("div.phone")
             phone = ""
             if _phone:
