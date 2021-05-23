@@ -85,9 +85,7 @@ def fetch_data():
                 country_code = "US"
                 if " " in zipp:
                     country_code = "CA"
-                location_name = (
-                    loc.find("h5", class_="location-title").text.strip()
-                )
+                location_name = loc.find("h5", class_="location-title").text.strip()
                 full_address = list(
                     loc.find("p", class_="location-address").stripped_strings
                 )
