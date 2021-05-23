@@ -3,7 +3,7 @@ import time
 import json
 import math
 from lxml import html
-from concurrent.futures import *
+from concurrent.futures import ThreadPoolExecutor
 
 from sgrequests import SgRequests
 from sglogging import sglog
