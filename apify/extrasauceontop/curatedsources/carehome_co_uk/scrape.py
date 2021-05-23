@@ -35,7 +35,6 @@ def extract_json(html_string):
 
 
 def reset_sessions(data_url):
-    base_url = "https://www.carehome.co.uk/"
     s = SgRequests()
 
     driver = SgChrome(
