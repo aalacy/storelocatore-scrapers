@@ -52,6 +52,14 @@ def fetch_data():
                     lurl = "https://www.hungryhowies.com/store/" + loc
                     if lurl not in locs:
                         locs.append(lurl)
+        if "href=\\u0022\\/STORE\\/" in line:
+            items = line.split("href=\\u0022\\/STORE\\/")
+            for item in items:
+                if "jQuery.extend(Drupal.settings" not in item:
+                    loc = item.split("\\u0022")[0]
+                    lurl = "https://www.hungryhowies.com/store/" + loc
+                    if lurl not in locs:
+                        locs.append(lurl)
     for loc in locs:
         logger.info(("Pulling Location %s..." % loc))
         r2 = session.get(loc, headers=headers)
