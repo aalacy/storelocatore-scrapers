@@ -2,8 +2,8 @@ from sgselenium import SgChrome
 from bs4 import BeautifulSoup as bs
 from sgrequests import SgRequests
 import json
-from concurrent.futures import ThreadPoolExecutor, as_completed
 import csv
+from webdriver_manager.chrome import ChromeDriverManager
 
 
 def extract_json(html_string):
@@ -35,16 +35,13 @@ def extract_json(html_string):
 
 
 def reset_sessions(data_url):
-
+    base_url = "https://www.carehome.co.uk/"
     s = SgRequests()
 
-    driver = SgChrome(is_headless=True).driver()
-    driver.get(base_url)
-
-    incap_str = "/_Incapsula_Resource?SWJIYLWA=719d34d31c8e3a6e6fffd425f7e032f3"
-    incap_url = base_url + incap_str
-
-    s.get(incap_url)
+    driver = SgChrome(
+        is_headless=True, executable_path=ChromeDriverManager().install()
+    ).driver()
+    driver.get(data_url)
 
     for request in driver.requests:
 
@@ -64,9 +61,8 @@ def reset_sessions(data_url):
             continue
 
 
-base_url = "https://www.carehome.co.uk/"
-
-new_sess = reset_sessions(base_url)
+data_url = "https://www.carehome.co.uk/"
+new_sess = reset_sessions(data_url)
 
 s = new_sess[0]
 headers = new_sess[1]
@@ -141,8 +137,8 @@ for country_url in country_urls:
                 location_urls.append(location_url)
         count = count + 1
 
-
-def get_location(location_url, headers, s):
+all_rows = []
+for location_url in location_urls:
     response = s.get(location_url, headers=headers)
     response_text = response.text
     if len(response_text.split("div")) > 2:
@@ -159,7 +155,6 @@ def get_location(location_url, headers, s):
     locator_domain = "carehome.co.uk"
     page_url = location_url
     location_name = soup.find("h1", attrs={"class": "mb-0 card-title"}).text.strip()
-
     address_parts = soup.find("meta", attrs={"property": "og:title"})["content"].split(
         ","
     )
@@ -193,64 +188,46 @@ def get_location(location_url, headers, s):
     else:
         location_type = "<MISSING>"
 
-    return [
-        locator_domain,
-        page_url,
-        location_name,
-        location_type,
-        store_number,
-        address,
-        city,
-        state,
-        zipp,
-        country_code,
-        latitude,
-        longitude,
-        phone,
-        hours,
-    ]
-
-
-def scrape_loc_urls(location_urls):
-    with ThreadPoolExecutor() as executor:
-        futures = [
-            executor.submit(get_location, loc, headers, s) for loc in location_urls
+    all_rows.append(
+        [
+            locator_domain,
+            page_url,
+            location_name,
+            location_type,
+            store_number,
+            address,
+            city,
+            state,
+            zipp,
+            country_code,
+            latitude,
+            longitude,
+            phone,
+            hours,
         ]
-        for future in as_completed(futures):
-            try:
-                record = future.result()
-                if record:
-                    yield record
-            except Exception:
-                pass
+    )
 
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "location_type",
-                "store_number",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "latitude",
-                "longitude",
-                "phone",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
-
-
-data = scrape_loc_urls(location_urls)
-write_output(data)
+with open("data.csv", mode="w") as output_file:
+    writer = csv.writer(
+        output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+    )
+    writer.writerow(
+        [
+            "locator_domain",
+            "page_url",
+            "location_name",
+            "location_type",
+            "store_number",
+            "street_address",
+            "city",
+            "state",
+            "zip",
+            "country_code",
+            "latitude",
+            "longitude",
+            "phone",
+            "hours_of_operation",
+        ]
+    )
+    for row in all_rows:
+        writer.writerow(row)
