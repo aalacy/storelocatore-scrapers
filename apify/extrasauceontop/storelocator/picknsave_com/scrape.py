@@ -29,6 +29,7 @@ headers = {
 }
 url = "https://www.picknsave.com/stores/api/graphql"
 
+
 def get_session(data):
     while True:
         try:
