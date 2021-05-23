@@ -158,8 +158,6 @@ def fetch_data():
                 )
                 break
 
-        # hours_of_operation = "; ".join(hours_list).strip()
-
         if hours_of_operation == "":
             hours_of_operation = "<MISSING>"
 
