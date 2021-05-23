@@ -1,6 +1,8 @@
 import csv
+
 from lxml import html
 from sgrequests import SgRequests
+from sgscrape.sgpostal import parse_address, International_Parser
 
 
 def write_output(data):
@@ -46,22 +48,18 @@ def fetch_data():
         location_name = "".join(a.xpath(".//h3/text()")).strip()
         page_url = "".join(a.xpath(".//a[./img]/@href")) or "<MISSING>"
         line = a.xpath(".//div[@id='sin']/*[1]//text()")
-        line = list(filter(None, [l.strip() for l in line]))
+        line = " ".join(list(filter(None, [l.strip() for l in line])))
 
-        if line[0][0].isdigit():
-            street_address = line[0].replace(", 2", "")
-        else:
-            street_address = line[1]
-        if street_address.endswith(","):
-            street_address = street_address[:-1]
-        postal = line[-1]
-        line = line[-2].strip()
-        if line.find(",") != -1:
-            city = line.split(",")[0].strip()
-            state = line.split(",")[1].strip()
-        else:
-            city = line.split()[0]
-            state = line.split()[-1]
+        adr = parse_address(International_Parser(), line)
+        street_address = (
+            f"{adr.street_address_1} {adr.street_address_2 or ''}".replace(
+                "None", ""
+            ).strip()
+            or "<MISSING>"
+        )
+        city = adr.city or "<MISSING>"
+        state = adr.state or "<MISSING>"
+        postal = adr.postcode or "<MISSING>"
         country_code = "CA"
         store_number = "<MISSING>"
         phone = (

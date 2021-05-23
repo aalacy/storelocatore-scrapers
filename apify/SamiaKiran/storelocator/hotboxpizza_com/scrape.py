@@ -33,12 +33,16 @@ def fetch_data():
                     location_name = soup.find("h2", {"itemprop": "headline"}).text
                 except:
                     location_name = soup.find("h2").text
-            longitude, latitude = (
-                soup.select_one("iframe[src*=maps]")["src"]
-                .split("!2d", 1)[1]
-                .split("!2m", 1)[0]
-                .split("!3d")
-            )
+            try:
+                longitude, latitude = (
+                    soup.select_one("iframe[src*=maps]")["src"]
+                    .split("!2d", 1)[1]
+                    .split("!2m", 1)[0]
+                    .split("!3d")
+                )
+            except:
+                longitude = "<MISSING>"
+                latitude = "<MISSING>"
             try:
                 temp_list = soup.findAll("div", {"itemprop": "text"})
                 address = temp_list[1].get_text(separator="|", strip=True).split("|")
@@ -53,7 +57,9 @@ def fetch_data():
                 temp_list = soup.findAll("div", {"itemprop": "text"})
                 address = temp_list[0].get_text(separator="|", strip=True).split("|")
                 street_address = address[0]
-                hours_of_operation = " ".join(x for x in address[-2:])
+                hours_of_operation = " ".join(x for x in address[-2:]).replace(
+                    "Curbside and Delivery!", ""
+                )
                 address = address[1].split(",")
                 city = address[0]
                 address = address[1].split()
