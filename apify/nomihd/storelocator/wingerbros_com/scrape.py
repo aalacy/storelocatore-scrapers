@@ -155,7 +155,28 @@ def fetch_data():
                     .strip()
                     .replace("\n", "")
                     .strip()
+                    .replace(
+                        "(MONDAY & TUESDAY TAKE-OUT ONLY from 11-4) (DINE-IN & TAKE-OUT 4-9);",
+                        "",
+                    )
+                    .replace(
+                        "(MONDAY & TUESDAY TAKE-OUT ONLY from 11-4) ( DINE-IN & TAKE-OUT 4-9 );",
+                        "",
+                    )
+                    .strip()
                 )
+                if (
+                    page_url
+                    == "https://wingerbros.com/locations/goto/wingers-restaurant-moscow"
+                ):
+                    hours_of_operation = (
+                        hours_of_operation
+                        + "; "
+                        + "; ".join(sections[index + 2].xpath(".//text()"))
+                        .strip()
+                        .replace("\n", "")
+                        .strip()
+                    )
                 break
 
         if hours_of_operation == "":
