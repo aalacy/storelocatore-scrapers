@@ -276,11 +276,18 @@ def fetch_data():
                 zip = "<MISSING>"
                 country_code = "CA"
                 store_number = "<MISSING>"
-                phone = "".join(
-                    store_sel.xpath(
-                        '//div[@class="location-phone location-cta"]//text()'
-                    )
-                ).strip()
+                temp_phone = store_sel.xpath(
+                    '//div[@class="location-phone location-cta"]//text()'
+                )
+                phone_list = []
+                phone = ""
+                for tmp in temp_phone:
+                    if len("".join(tmp).strip()) > 0:
+                        phone_list.append("".join(tmp).strip())
+
+                if len(phone_list) > 0:
+                    phone = phone_list[0]
+
                 location_type = "Restaurant"
                 latitude = "".join(
                     store_sel.xpath(
@@ -437,8 +444,8 @@ def fetch_data():
                 if state == "" or state is None:
                     state = "<MISSING>"
 
-                if zip == "" or zip is None:
-                    zip = "<MISSING>"
+                if zipp == "" or zipp is None:
+                    zipp = "<MISSING>"
 
                 store = []
                 store.append(base_url)

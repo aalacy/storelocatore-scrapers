@@ -46,7 +46,7 @@ def fetch_data():
     r = session.get(url, headers=headers)
     website = "tesla.com"
     typ = "<MISSING>"
-    country = "GB"
+    country = "US"
     logger.info("Pulling Stores")
     Found = False
     for line in r.iter_lines():
@@ -124,6 +124,8 @@ def fetch_data():
                     add = add.strip()
                 if "prsanjuan" in loc:
                     add = "381 Calle Juan Calaf"
+                    state = "PR"
+                    country = "US"
             if '<span class="type">' in line2 and typ == "":
                 typ = typ + "; " + line2.split('<span class="type">')[1].split("<")[0]
                 if phone == "":
@@ -238,6 +240,8 @@ def fetch_data():
             typ = "Store"
         if CS:
             name = name + " - Coming Soon"
+        if state == "":
+            state = "<MISSING>"
         yield [
             website,
             loc,
