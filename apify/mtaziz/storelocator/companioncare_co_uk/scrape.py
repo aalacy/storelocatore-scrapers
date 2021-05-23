@@ -22,10 +22,8 @@ session = SgRequests()
 def fetch_data():
     API_ENDPOINT_URL = "https://api.woosmap.com/stores/"
     API_KEY = "woos-85314341-5e66-3ddf-bb9a-43b1ce46dbdc"
-    # for x in range(1, 1000):
-    for x in range(50, 70):
+    for x in range(1, 1000):
         url = f"{API_ENDPOINT_URL}{str(x)}?key={API_KEY}"
-        # with SgRequests() as session:
         r = session.get(url, headers=headers)
         if r.status_code != 200:
             logger.info("Website could not be reached : 404 Error Code Experienced")
