@@ -7,6 +7,7 @@ import lxml.html
 from sgselenium import SgChrome
 import time
 import ssl
+from sgscrape import sgpostal as parser
 
 try:
     _create_unverified_https_context = (
@@ -55,13 +56,13 @@ def write_output(data):
         temp_list = []  # ignoring duplicates
         for row in data:
             comp_list = [
-                row[2].strip(),
-                row[3].strip(),
-                row[4].strip(),
-                row[5].strip(),
-                row[6].strip(),
-                row[8].strip(),
-                row[10].strip(),
+                row[2],
+                row[3],
+                row[4],
+                row[5],
+                row[6],
+                row[8],
+                row[10],
             ]
             if comp_list not in temp_list:
                 temp_list.append(comp_list)
@@ -80,12 +81,12 @@ def fetch_data():
         for store in stores:
             page_url = "".join(
                 store.xpath(
-                    'div/div[@class="item-content"]/a[@class="linkdetailstore"]/@href'
+                    './/div[@class="item-content"]/a[contains(@class,"linkdetailstore")]/@href'
                 )
             ).strip()
             locator_domain = website
             location_name = "".join(
-                store.xpath('div/div[@class="item-content"]/label/strong/text()')
+                store.xpath('.//div[@class="item-content"]/label/strong/text()')
             ).strip()
             if location_name == "":
                 location_name = "<MISSING>"
@@ -96,17 +97,35 @@ def fetch_data():
                 )
             ).strip()
 
+            formatted_addr = parser.parse_address_usa(address)
+            street_address = formatted_addr.street_address_1
+            if formatted_addr.street_address_2:
+                street_address = street_address + ", " + formatted_addr.street_address_2
+
+            city = formatted_addr.city
+            city = city.split(",")[0].strip()
+            state = address.split(",")[-3].strip()
+            zip = address.split(",")[-2].strip()
+
             country_code = ""
             if "USA" in address or "United States" in address:
                 country_code = "US"
 
-            street_address = address.split(",")[0].strip()
-            city = "<MISSING>"
-            state = address.split(",")[-3].strip()
-            zip = address.split(",")[-2].strip()
+            if city:
+                street_address = address.title().split(f"{city},")[0].strip()
+
+            if city == state:
+                if "Center" in street_address:
+                    city = street_address.split("Center")[1].strip(", ").strip()
+                    street_address = street_address.split(f"{city},")[0].strip()
+                else:
+                    city = street_address.split(" ")[-1].strip(", ").strip()
+                    street_address = street_address.split(f"{city},")[0].strip()
+            street_address = street_address.strip(",")
+
             phone = "".join(
                 store.xpath(
-                    'div/div[@class="item-content"]//a[contains(@href,"tel:")]/text()'
+                    'div/div[@class="item-content"]//a[contains(@class,"phone-no")]/text()'
                 )
             ).strip()
 
