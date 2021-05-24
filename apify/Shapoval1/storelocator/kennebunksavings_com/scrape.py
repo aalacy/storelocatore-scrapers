@@ -57,8 +57,6 @@ def fetch_data():
         location_name = "".join(
             d.xpath('. //div[@class="map-filter__control"]/h3/text()')
         )
-        if location_name.find("(") != -1:
-            location_name = location_name.split("(")[0].strip()
         country_code = "US"
         store_number = "<MISSING>"
         latitude = "".join(d.xpath('. //div[@class="map-filter__control"]/@data-lat'))
@@ -79,7 +77,9 @@ def fetch_data():
             )
         if hours_of_operation.find("Drive Up:") != -1:
             hours_of_operation = hours_of_operation.replace("Drive Up:", "").strip()
-        hours_of_operation = hours_of_operation.replace("  ", " ")
+        hours_of_operation = (
+            hours_of_operation.replace("  ", " ").replace("No", "").strip()
+        )
         phone = "".join(d.xpath('.//a[contains(@href, "tel")]/text()'))
 
         row = [
