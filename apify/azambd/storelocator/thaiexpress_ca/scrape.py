@@ -128,8 +128,6 @@ def getAddress(raw_address):
         state = parts1.split(" ")[0]
         zip_postal = parts1.replace(f"{state} ", "")
 
-    if "#" in city:
-        return MISSING, MISSING, MISSING, MISSING, MISSING
     return raw_address, street_address, city, state, zip_postal
 
 

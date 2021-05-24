@@ -1,6 +1,6 @@
 import csv
 from sgrequests import SgRequests
-from sgzip.dynamic import DynamicZipSearch, SearchableCountries, Grain_2
+from sgzip.dynamic import DynamicZipSearch, SearchableCountries, Grain_8
 from sglogging import SgLogSetup
 
 logger = SgLogSetup().get_logger("lincoln_com")
@@ -47,8 +47,8 @@ def fetch_data():
     zipcodes = DynamicZipSearch(
         country_codes=[SearchableCountries.USA],
         max_search_results=100,
-        max_radius_miles=100,
-        granularity=Grain_2(),
+        max_radius_miles=20,
+        granularity=Grain_8(),
     )
     for zip_code in zipcodes:
         logger.info(f"fetching records for zipcode:{zip_code}")
