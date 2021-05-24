@@ -23,7 +23,8 @@ def fetch_data():
         loclist = soup.findAll("div", {"class": "storelocator__store"})
         for loc in loclist:
             page_url = loc["href"]
-            r = session.get(page_url, headers=headers)
+            log.info(page_url)
+            r = session.get(page_url, headers=headers, timeout=15)
             soup = BeautifulSoup(r.text, "html.parser")
             temp = soup.find("div", {"class": "single-restaurant__general"}).findAll(
                 "p"
@@ -39,19 +40,22 @@ def fetch_data():
             state = formatted_addr.state if formatted_addr.state else "<MISSING>"
             zip_postal = formatted_addr.postcode
             phone = temp[1].findAll("a")[1].text
-            hour_list = soup.find("div", {"class": "single-restaurant__hours"}).findAll(
-                "tr"
-            )
-            hours_of_operation = ""
-            for hour in hour_list:
-                hour = hour.findAll("td")
-                time = hour[0].text
-                day = hour[1].text
-                hours_of_operation = hours_of_operation + " " + day + " " + time
+            try:
+                hour_list = soup.find(
+                    "div", {"class": "single-restaurant__hours"}
+                ).findAll("tr")
+                hours_of_operation = ""
+                for hour in hour_list:
+                    hour = hour.findAll("td")
+                    time = hour[0].text
+                    day = hour[1].text
+                    hours_of_operation = hours_of_operation + " " + day + " " + time
+            except:
+                hours_of_operation = "<MISSING>"
             latitude = soup.find("input", {"class": "latitude"})["value"]
             longitude = soup.find("input", {"class": "longitude"})["value"]
             location_name = soup.find("h1").text.replace(" MR MIKES ", "")
-            log.info(page_url)
+
             yield SgRecord(
                 locator_domain="https://www.mrmikes.ca/",
                 page_url=page_url,
