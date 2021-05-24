@@ -66,7 +66,9 @@ def fetch_data():
         location_name = location_name[0] if location_name else "<MISSING>"
         latitude = loc_dom.xpath("//@data-latt")[0]
         longitude = loc_dom.xpath("//@data-lngg")[0]
-        hoo = loc_dom.xpath('//div[@class="hours"]//text()')
+        hoo = loc_dom.xpath(
+            '//h3[contains(text(), "Gym Hours")]/following-sibling::div[@class="hours"]//text()'
+        )
         if not hoo:
             continue
         hours_of_operation = " ".join(hoo)

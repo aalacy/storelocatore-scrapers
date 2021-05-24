@@ -144,27 +144,40 @@ def fetch_data():
             '//div[@class="wpb_text_column wpb_content_element "]/div[@class="wpb_wrapper"]/p'
         )
 
-        hours_list = []
+        hours_of_operation = ""
         for index in range(0, len(sections)):
             if (
                 "Restaurant Hours"
                 in "".join(sections[index].xpath("strong/text()")).strip()
             ):
-                days = sections[index + 1].xpath("text()")
-                time = sections[index + 1].xpath("span/text()")
-                for index in range(0, len(days)):
-                    if len("".join(days[index]).strip()) > 0:
-                        hours_list.append(
-                            "".join(days[index] + ":" + time[index])
-                            .strip()
-                            .encode("ascii", "replace")
-                            .decode("utf-8")
-                            .replace("?", "-")
-                            .strip()
-                        )
+                hours_of_operation = (
+                    "; ".join(sections[index + 1].xpath(".//text()"))
+                    .strip()
+                    .replace("\n", "")
+                    .strip()
+                    .replace(
+                        "(MONDAY & TUESDAY TAKE-OUT ONLY from 11-4) (DINE-IN & TAKE-OUT 4-9);",
+                        "",
+                    )
+                    .replace(
+                        "(MONDAY & TUESDAY TAKE-OUT ONLY from 11-4) ( DINE-IN & TAKE-OUT 4-9 );",
+                        "",
+                    )
+                    .strip()
+                )
+                if (
+                    page_url
+                    == "https://wingerbros.com/locations/goto/wingers-restaurant-moscow"
+                ):
+                    hours_of_operation = (
+                        hours_of_operation
+                        + "; "
+                        + "; ".join(sections[index + 2].xpath(".//text()"))
+                        .strip()
+                        .replace("\n", "")
+                        .strip()
+                    )
                 break
-
-        hours_of_operation = "; ".join(hours_list).strip()
 
         if hours_of_operation == "":
             hours_of_operation = "<MISSING>"

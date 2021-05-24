@@ -18,8 +18,8 @@ def fetch_data():
             city = store["TOWN"]
             street_address = store["ADDRESS"]
             phone = store["TEL_1"]
-            latitude = store["XCOORD"]
-            longitude = store["YCOORD"]
+            latitude = store["YCOORD"]
+            longitude = store["XCOORD"]
             hours = store["ACTIVITY"][0]
             hours_of_operation = ""
             for x in hours:

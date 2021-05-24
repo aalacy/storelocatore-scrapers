@@ -82,11 +82,14 @@ def fetch_data():
         hours = ""
         lat = ""
         lng = ""
+        CL = False
         r = session.get(loc, headers=headers, verify=False)
         if r.encoding is None:
             r.encoding = "utf-8"
         lines = r.iter_lines(decode_unicode=True)
         for line in lines:
+            if "location is temporarily closed" in line:
+                CL = True
             if '<div class="map-list-item-wrap" data-fid="' in line:
                 store = line.split('<div class="map-list-item-wrap" data-fid="')[
                     1
@@ -116,6 +119,8 @@ def fetch_data():
             hours = "<MISSING>"
         if "6841" in phone and state == "PR":
             add = "Los Jardines S/C Rd #20"
+        if CL:
+            name = name + " - Temporarily Closed"
         yield [
             website,
             loc,

@@ -56,7 +56,7 @@ def fetch_data():
         content = re.sub(pattern, "\n", content).strip().splitlines()
         m = 0
         if len(content) == 4:
-            street = content[m] + content[m + 1]
+            street = content[m] + " " + content[m + 1]
             m += 2
         elif len(content) == 3:
             street = content[m]
@@ -68,7 +68,7 @@ def fetch_data():
         soup = BeautifulSoup(r.text, "html.parser")
         try:
             longt, lat = (
-                soup.findAll("iframe")[-1]["src"]
+                soup.select_one("iframe[src*=maps]")["src"]
                 .split("!2d", 1)[1]
                 .split("!2m", 1)[0]
                 .split("!3d", 1)
@@ -79,7 +79,38 @@ def fetch_data():
             except:
                 pass
         except:
-            lat = longt = "<MISSING>"
+            try:
+                lat, longt = (
+                    soup.select_one("iframe[src*=maps]")["src"]
+                    .split("ll=", 1)[1]
+                    .split("&", 1)[0]
+                    .split(",")
+                )
+            except:
+                lat = longt = "<MISSING>"
+        try:
+            street = street.split(" ™ ", 1)[1]
+        except:
+            pass
+        hours = "<MISSING>"
+        if "https://broadwaypizza.com/downtown-minneapolis/" in link:
+            link = (
+                "https://broadwaypizza.com/downtown-minneapolis/"
+                + soup.select_one("a[href*=location]")["href"]
+            )
+            r = session.get(link, headers=headers, verify=False)
+            soup = BeautifulSoup(r.text, "html.parser")
+            try:
+                longt, lat = (
+                    soup.select_one("iframe[src*=maps]")["src"]
+                    .split("!2d", 1)[1]
+                    .split("!2m", 1)[0]
+                    .split("!3d", 1)
+                )
+
+                hours = "Monday – Friday 10:30am – 3:30pm"
+            except:
+                pass
         data.append(
             [
                 "https://broadwaypizza.com/",
@@ -95,7 +126,7 @@ def fetch_data():
                 "<MISSING>",
                 lat,
                 longt,
-                "<MISSING>",
+                hours,
             ]
         )
 

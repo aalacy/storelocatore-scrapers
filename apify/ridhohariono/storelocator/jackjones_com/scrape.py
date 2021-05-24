@@ -4,7 +4,7 @@ from sglogging import sglog
 
 DOMAIN = "jackjones.com"
 BASE_URL = "https://www.jackjones.com"
-COUNTRY_LIST = ["CA", "GB"]
+COUNTRY_LIST = ["US", "CA", "GB"]
 HEADERS = {
     "Accept": "application/json, text/plain, */*",
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
@@ -75,10 +75,16 @@ def fetch_data():
             page_url = "https://www.jackjones.com/nl/en/stores"
             locator_domain = DOMAIN
             location_name = handle_missing(row["storeName"])
+            street_address = ""
             if "address2" in row and len(row["address2"]) > 0:
                 street_address = "{}, {}".format(row["address1"], row["address2"])
             else:
                 street_address = row["address1"]
+            if "houseNumber" in row:
+                street_address = street_address + " " + row["houseNumber"]
+            elif "houseNumberExtension" in row:
+                street_address = street_address + " " + row["houseNumberExtension"]
+            street_address = street_address.strip()
             city = handle_missing(row["city"])
             state = "<MISSING>" if "state" not in row else row["state"]
             zip_code = handle_missing(row["postalCode"])

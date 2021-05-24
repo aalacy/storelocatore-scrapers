@@ -100,7 +100,7 @@ def fetch_data():
         hoo = loc_dom.xpath('//div[@class="hours"]/p//text()')
         hoo = [e.strip() for e in hoo if e.strip()]
         if not hoo:
-            hoo = loc_dom.xpath('//div[@id="hours"]//li//text()')
+            hoo = loc_dom.xpath('//div[@id="hours"]/div/ul[1]/li//text()')
         hoo = [e.strip() for e in hoo if e.strip()]
         hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
 
