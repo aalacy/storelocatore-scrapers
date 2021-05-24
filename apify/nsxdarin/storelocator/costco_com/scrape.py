@@ -113,6 +113,7 @@ def fetch_data():
         if phone == "":
             phone = "<MISSING>"
         if add != "":
+            loc = loc.replace("/ ", "/").replace(" ", "-")
             yield [
                 website,
                 loc,
@@ -211,6 +212,7 @@ def fetch_data():
                     zc = "<MISSING>"
                 if state == "":
                     state = "<MISSING>"
+                loc = loc.replace("/ ", "/").replace(" ", "-")
                 yield [
                     website,
                     loc,
