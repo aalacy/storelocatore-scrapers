@@ -46,8 +46,6 @@ def fetch_data():
         locator_domain = website
         phone = "".join(store.xpath('.//*[contains(@href,"tel:")]/text()')).strip()
 
-        add_list = store.xpath('.//span[@class="location-card__address"]/text()')
-
         street_address = "".join(
             store.xpath('.//address/span[@class="address-line1"]/text()')
         ).strip()
