@@ -38,9 +38,11 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
+
 def retry_error_callback(retry_state):
     id = retry_state.args[0]
     logger.error(f"Failure to fetch details for: {id}")
+
 
 @retry(stop=stop_after_attempt(3), retry_error_callback=retry_error_callback)
 def fetch_location(id):
@@ -77,11 +79,7 @@ def fetch_location(id):
                     g = next(lines)
                     g = str(g.decode("utf-8"))
                     if g.count("<br />") == 2:
-                        add = (
-                            add
-                            + " "
-                            + g.split("<br />")[0].strip().replace("\t", "")
-                        )
+                        add = add + " " + g.split("<br />")[0].strip().replace("\t", "")
                         csz = g.split("<br />")[1].strip().replace("\t", "")
                     else:
                         csz = g.split("<br />")[0].strip().replace("\t", "")
