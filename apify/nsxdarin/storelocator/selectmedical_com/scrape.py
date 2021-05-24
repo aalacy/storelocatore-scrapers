@@ -50,123 +50,135 @@ def fetch_data():
             count = int(line.split('"Count":')[1].split(",")[0])
     logger.info(("Found %s Locations..." % str(count)))
     for x in range(0, count + 9, 8):
-        logger.info(("Pulling Results %s..." % str(x)))
-        url2 = (
-            "https://www.selectmedical.com//sxa/search/results/?s={648F4C3A-C9EA-4FCF-82A3-39ED2AC90A06}&itemid={94793D6A-7CC7-4A8E-AF41-2FB3EC154E1C}&sig=&autoFireSearch=true&v=%7BD2D3D65E-3A18-43DD-890F-1328E992446A%7D&p=8&g=&o=&e="
-            + str(x)
-        )
-        r2 = session.get(url2, headers=headers)
-        if r2.encoding is None:
-            r2.encoding = "utf-8"
-        for line2 in r2.iter_lines(decode_unicode=True):
-            if '"Id":"' in line2:
-                items = line2.split('"Id":"')
-                for item in items:
-                    if '"Language":"e' in item:
-                        website = "selectmedical.com"
-                        try:
-                            name = (
-                                item.split('data-variantfieldname=\\"Link')[1]
-                                .split(">")[1]
-                                .split("<")[0]
-                            )
-                            addinfo = item.split('"address-line\\">')[1].split(
-                                "</div>"
-                            )[0]
-                            if addinfo.count("<br/>") == 1:
-                                add = addinfo.split("<")[0]
-                                city = item.split("<br/>")[1].split(",")[0]
-                                state = (
-                                    item.split("<br/>")[1]
-                                    .split(",")[1]
-                                    .strip()
-                                    .split(" ")[0]
-                                )
-                                zc = (
-                                    item.split("<br/>")[1]
-                                    .split(",")[1]
-                                    .strip()
-                                    .split("<")[0]
-                                    .rsplit(" ", 1)[1]
-                                )
-                            else:
-                                add = (
-                                    addinfo.split("<")[0]
-                                    + " "
-                                    + addinfo.split("<br/>")[1].strip()
-                                )
-                                city = item.split("<br/>")[2].split(",")[0]
-                                state = (
-                                    item.split("<br/>")[2]
-                                    .split(",")[1]
-                                    .strip()
-                                    .split(" ")[0]
-                                )
-                                zc = (
-                                    item.split("<br/>")[2]
-                                    .split(",")[1]
-                                    .strip()
-                                    .split("<")[0]
-                                    .rsplit(" ", 1)[1]
-                                )
-                            phone = item.split('<a href=\\"tel:')[1].split("\\")[0]
-                            hours = "<MISSING>"
-                            lurl = item.split('title field-link\\"><a href=\\"')[
-                                1
-                            ].split('\\"')[0]
-                            country = "US"
-                            typ = item.split('\\"line-of-business\\">')[1].split("<")[0]
-                            store = item.split('"')[0]
-                            if typ == "":
-                                typ = "<MISSING>"
-                            if phone == "":
-                                phone = "<MISSING>"
-                            lat = item.split('data-latlong=\\"')[1].split("|")[0]
-                            lng = (
-                                item.split('data-latlong=\\"')[1]
-                                .split("|")[1]
-                                .split("\\")[0]
-                            )
-                            if lat == "":
-                                lat = "<MISSING>"
-                                lng = "<MISSING>"
-                            r3 = session.get(lurl, headers=headers)
-                            if r3.encoding is None:
-                                r3.encoding = "utf-8"
-                            logger.info(lurl)
-                            for line3 in r3.iter_lines(decode_unicode=True):
-                                if "PM</td></tr>" in line3:
-                                    try:
-                                        hours = line3.split("<table><tr><td>")[1].split(
-                                            "</td></tr></table>"
-                                        )[0]
-                                        hours = (
-                                            hours.replace("</td></tr><tr><td>", "; ")
-                                            .replace("<td>", "")
-                                            .replace("</td>", "")
-                                            .replace("</tr>", "")
-                                            .replace("<tr>", "")
+        Amount = True
+        while Amount:
+            logger.info(("Pulling Results %s..." % str(x)))
+            url2 = (
+                "https://www.selectmedical.com//sxa/search/results/?s={648F4C3A-C9EA-4FCF-82A3-39ED2AC90A06}&itemid={94793D6A-7CC7-4A8E-AF41-2FB3EC154E1C}&sig=&autoFireSearch=true&v=%7BD2D3D65E-3A18-43DD-890F-1328E992446A%7D&p=8&g=&o=&e="
+                + str(x)
+            )
+            r2 = session.get(url2, headers=headers)
+            if r2.encoding is None:
+                r2.encoding = "utf-8"
+            for line2 in r2.iter_lines(decode_unicode=True):
+                if '"Id":"' in line2:
+                    items = line2.split('"Id":"')
+                    if len(items) == 9 or x >= count - 9:
+                        Amount = False
+                        for item in items:
+                            if '"Language":"e' in item:
+                                website = "selectmedical.com"
+                                try:
+                                    name = (
+                                        item.split('data-variantfieldname=\\"Link')[1]
+                                        .split(">")[1]
+                                        .split("<")[0]
+                                    )
+                                    addinfo = item.split('"address-line\\">')[1].split(
+                                        "</div>"
+                                    )[0]
+                                    if addinfo.count("<br/>") == 1:
+                                        add = addinfo.split("<")[0]
+                                        city = item.split("<br/>")[1].split(",")[0]
+                                        state = (
+                                            item.split("<br/>")[1]
+                                            .split(",")[1]
+                                            .strip()
+                                            .split(" ")[0]
                                         )
-                                    except:
-                                        pass
-                            yield [
-                                website,
-                                lurl,
-                                name,
-                                add,
-                                city,
-                                state,
-                                zc,
-                                country,
-                                store,
-                                phone,
-                                typ,
-                                lat,
-                                lng,
-                                hours,
-                            ]
-                        except:
-                            pass
+                                        zc = (
+                                            item.split("<br/>")[1]
+                                            .split(",")[1]
+                                            .strip()
+                                            .split("<")[0]
+                                            .rsplit(" ", 1)[1]
+                                        )
+                                    else:
+                                        add = (
+                                            addinfo.split("<")[0]
+                                            + " "
+                                            + addinfo.split("<br/>")[1].strip()
+                                        )
+                                        city = item.split("<br/>")[2].split(",")[0]
+                                        state = (
+                                            item.split("<br/>")[2]
+                                            .split(",")[1]
+                                            .strip()
+                                            .split(" ")[0]
+                                        )
+                                        zc = (
+                                            item.split("<br/>")[2]
+                                            .split(",")[1]
+                                            .strip()
+                                            .split("<")[0]
+                                            .rsplit(" ", 1)[1]
+                                        )
+                                    phone = item.split('<a href=\\"tel:')[1].split(
+                                        "\\"
+                                    )[0]
+                                    hours = "<MISSING>"
+                                    lurl = item.split(
+                                        'title field-link\\"><a href=\\"'
+                                    )[1].split('\\"')[0]
+                                    country = "US"
+                                    typ = item.split('\\"line-of-business\\">')[
+                                        1
+                                    ].split("<")[0]
+                                    store = item.split('"')[0]
+                                    if typ == "":
+                                        typ = "<MISSING>"
+                                    if phone == "":
+                                        phone = "<MISSING>"
+                                    lat = item.split('data-latlong=\\"')[1].split("|")[
+                                        0
+                                    ]
+                                    lng = (
+                                        item.split('data-latlong=\\"')[1]
+                                        .split("|")[1]
+                                        .split("\\")[0]
+                                    )
+                                    if lat == "":
+                                        lat = "<MISSING>"
+                                        lng = "<MISSING>"
+                                    r3 = session.get(lurl, headers=headers)
+                                    if r3.encoding is None:
+                                        r3.encoding = "utf-8"
+                                    logger.info(lurl)
+                                    for line3 in r3.iter_lines(decode_unicode=True):
+                                        if "PM</td></tr>" in line3:
+                                            try:
+                                                hours = line3.split("<table><tr><td>")[
+                                                    1
+                                                ].split("</td></tr></table>")[0]
+                                                hours = (
+                                                    hours.replace(
+                                                        "</td></tr><tr><td>", "; "
+                                                    )
+                                                    .replace("<td>", "")
+                                                    .replace("</td>", "")
+                                                    .replace("</tr>", "")
+                                                    .replace("<tr>", "")
+                                                )
+                                            except:
+                                                pass
+                                    yield [
+                                        website,
+                                        lurl,
+                                        name,
+                                        add,
+                                        city,
+                                        state,
+                                        zc,
+                                        country,
+                                        store,
+                                        phone,
+                                        typ,
+                                        lat,
+                                        lng,
+                                        hours,
+                                    ]
+                                except:
+                                    pass
 
 
 def scrape():
