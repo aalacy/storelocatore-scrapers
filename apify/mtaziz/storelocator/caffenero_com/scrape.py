@@ -104,11 +104,15 @@ def fetch_data():
         ):
             state = state.replace("E20", "<MISSING>")
 
-        try:
-            zip_postal = store_address.split(",")[-1].lstrip().rstrip().strip()
-        except:
-            zip_postal = MISSING
         country_code = loc["country_code"]
+        if country_code == "gb":
+            try:
+                zip_postal = store_address.split(",")[-1].lstrip().rstrip().strip()
+            except:
+                zip_postal = MISSING
+        else:
+            zip_postal = pa.postcode or MISSING
+
         country_code = country_code.upper() if country_code else MISSING
         store_number = loc["store_id"] or MISSING
         location_type = MISSING
