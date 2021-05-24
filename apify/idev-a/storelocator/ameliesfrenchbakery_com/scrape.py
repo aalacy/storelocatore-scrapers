@@ -23,7 +23,7 @@ def fetch_data():
             page_url = locator_domain + link["href"]
             logger.info(page_url)
             sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
-            block = sp1.select(".fl-module-content.fl-node-content .fl-rich-text")[1]
+            block = sp1.select(".fl-module-content.fl-node-content .fl-rich-text")[0]
             addr = [
                 aa.replace("\xa0", " ") for aa in block.select("p")[0].stripped_strings
             ]
