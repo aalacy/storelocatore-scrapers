@@ -8,6 +8,7 @@ from sglogging import sglog
 
 log = sglog.SgLogSetup().get_logger(logger_name="carehome")
 
+
 def extract_json(html_string):
     json_objects = []
     count = 0
@@ -141,7 +142,7 @@ for country_url in country_urls:
 all_rows = []
 x = 0
 for location_url in location_urls:
-    x = x+1
+    x = x + 1
     response = s.get(location_url, headers=headers)
     response_text = response.text
     log.info("URL " + str(x) + "/" + str(len(location_urls)))
@@ -151,7 +152,7 @@ for location_url in location_urls:
     else:
         y = 0
         while True:
-            y = y+1
+            y = y + 1
             log.info("location_url_fail: " + str(y))
             try:
                 new_sess = reset_sessions(location_url)
