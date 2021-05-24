@@ -57,7 +57,7 @@ def fetch_data():
         if location_name.lower().find("coming") != -1 or location_name == "<MISSING>":
             continue
 
-        page_url = "".join(d.xpath(".//h5/a/@href"))
+        page_url = "".join(d.xpath(".//h5/a/@href")) or "<MISSING>"
         line = d.xpath(".//h4/text()")
         line = list(filter(None, [l.strip() for l in line]))
         street_address = line[0]
@@ -72,13 +72,15 @@ def fetch_data():
             "".join(d.xpath(".//a[contains(@href, 'tel')]/text()")).strip()
             or "<MISSING>"
         )
-        loc = (
-            "".join(d.xpath(".//img[@class='location-map lazy']/@data-src"))
-            .split("markers=")[1]
-            .split("&")[0]
-            .split(",")
-        )
-        latitude, longitude = loc
+        try:
+            latitude, longitude = (
+                "".join(d.xpath(".//img[@class='location-map lazy']/@data-src"))
+                .split("markers=")[1]
+                .split("&")[0]
+                .split(",")
+            )
+        except IndexError:
+            latitude, longitude = "<MISSING>", "<MISSING>"
         location_type = "<MISSING>"
 
         hours = d.xpath(".//p[@style='margin-top: 20px;']/text()")
