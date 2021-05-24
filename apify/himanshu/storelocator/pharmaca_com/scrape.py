@@ -41,6 +41,7 @@ def fetch_data():
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:88.0) Gecko/20100101 Firefox/88.0",
     }
+    session = SgRequests()
     r = session.get("https://www.pharmaca.com/store-locator", headers=headers)
     tree = html.fromstring(r.text)
     jsblock = (
@@ -58,7 +59,14 @@ def fetch_data():
         city = obj["city"]
         zip_code = obj["zip"]
         if "Santa" in zip_code:
-            zip_code = "<MISSING>"
+            session = SgRequests()
+            r = session.get(page_url, headers=headers)
+            tree = html.fromstring(r.text)
+            zip_code = (
+                "".join(tree.xpath('//p[contains(text(), "530 West")]/text()[3]'))
+                .replace("\n", "")
+                .strip()
+            )
         state = obj["state"]
         street_address = obj["address"]
 
