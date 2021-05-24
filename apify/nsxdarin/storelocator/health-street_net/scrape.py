@@ -126,7 +126,7 @@ def fetch_data():
                     lat = "<MISSING>"
                 if lng == "":
                     lng = "<MISSING>"
-                name = name.replace("&amp;", "&").replace("&amp", "&")
+                aname = aname.replace("&amp;", "&").replace("&amp", "&")
                 add = add.replace("&amp;", "&").replace("&amp", "&")
                 yield [
                     website,
