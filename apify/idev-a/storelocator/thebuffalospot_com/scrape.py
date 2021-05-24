@@ -6,7 +6,6 @@ import bs4
 import re
 from sglogging import SgLogSetup
 from sgscrape.sgpostal import parse_address_intl
-import dirtyjson as json
 
 logger = SgLogSetup().get_logger("thebuffalospot")
 
