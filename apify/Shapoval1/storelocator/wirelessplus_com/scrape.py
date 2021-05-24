@@ -59,7 +59,7 @@ def fetch_data():
         city = "".join(j.get("City")).replace("(DTLA)", "")
         state = j.get("ProvinceAbbrev")
         postal = j.get("PostalCode")
-        location_name = j.get("Name")
+
         country_code = j.get("CountryCode")
         store_number = j.get("LocationId")
         latitude = j.get("Position").get("Latitude")
@@ -96,6 +96,12 @@ def fetch_data():
             tmp.append(line)
         hours_of_operation = ";".join(tmp) or "<MISSING>"
         phone = j.get("Phone")
+
+        session = SgRequests()
+        r = session.get(page_url, headers=headers)
+        tree = html.fromstring(r.text)
+
+        location_name = "".join(tree.xpath("//h1//text()"))
 
         row = [
             locator_domain,

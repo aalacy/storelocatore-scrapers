@@ -40,7 +40,7 @@ def get_driver(url, class_name, driver=None):
             ).driver()
             driver.get(url)
 
-            WebDriverWait(driver, 20).until(
+            WebDriverWait(driver, 30).until(
                 EC.presence_of_element_located((By.CLASS_NAME, class_name))
             )
             break
@@ -54,11 +54,22 @@ def get_driver(url, class_name, driver=None):
     return driver
 
 
-class_name = "store-list__store"
-url = "https://www.spring-market.com/stores/?coordinates=32.29024040770592,-96.101997&zoom=7"
-driver = get_driver(url, class_name)
-soup = bs(driver.page_source, "html.parser")
-grids = soup.find("div", class_="store-list__scroll-container").find_all("li")
+x = 0
+while True:
+    x = x + 1
+    class_name = "store-preview__info"
+    url = "https://www.spring-market.com/stores/?coordinates=36.01301919805139,-124.22992541516308&zoom=1"
+    if x == 1:
+        driver = get_driver(url, class_name)
+    else:
+        driver = get_driver(url, class_name, driver=driver)
+    soup = bs(driver.page_source, "html.parser")
+    grids = soup.find("div", class_="store-list__scroll-container").find_all("li")
+    if len(grids) == 0:
+        continue
+    else:
+        break
+
 
 for grid in grids:
     name = grid.find("span", attrs={"class": "name"}).text.strip()
