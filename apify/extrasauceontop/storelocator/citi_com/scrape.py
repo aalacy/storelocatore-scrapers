@@ -99,7 +99,6 @@ with SgChrome(
 
             if location_type == "branch":
                 location_type = "branch and atm"
-            
 
             latitude = location["geometry"]["coordinates"][1]
             longitude = location["geometry"]["coordinates"][0]
