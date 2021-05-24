@@ -23,7 +23,7 @@ hours_of_operations = []
 base_url = "https://online.citi.com/US/ag/citibank-location-finder"
 
 with SgChrome(
-    is_headless=True, executable_path=ChromeDriverManager().install()
+    is_headless=False, executable_path=ChromeDriverManager().install()
 ).driver() as driver:
     driver.get(base_url)
     for search_lat, search_lon in search:
@@ -74,6 +74,8 @@ with SgChrome(
             locator_domain = "online.citi.com"
             page_url = "https://online.citi.com/US/ag/citibank-location-finder"
             location_name = location["properties"]["additionalProperties"]["StoreName"]
+            if location_name == "":
+                location_name = location["properties"]["name"]
             address = location["properties"]["addressLine1"]
             city = location["properties"]["city"]
             state = location["properties"]["state"]
@@ -96,12 +98,7 @@ with SgChrome(
                 continue
 
             if location_type == "branch":
-                if (
-                    location["properties"]["additionalProperties"]["atm24HR"] is True
-                    or location["properties"]["additionalProperties"]["atmLimited"]
-                    is True
-                ):
-                    location_type = "branch and atm"
+                location_type = "branch and atm"
 
             latitude = location["geometry"]["coordinates"][1]
             longitude = location["geometry"]["coordinates"][0]
