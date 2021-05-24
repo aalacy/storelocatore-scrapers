@@ -20,21 +20,6 @@ _headers = {
 
 locator_domain = "https://thebuffalospot.com"
 
-
-def _valid(val):
-    return (
-        val.strip()
-        .replace("–", "-")
-        .replace("-", "-")
-        .encode("unicode-escape")
-        .decode("utf8")
-        .replace("\\xa", "")
-        .replace("\\xa0", "")
-        .replace("\\xa0\\xa", "")
-        .replace("\\xae", "")
-    )
-
-
 def fetch_data():
     with SgRequests() as session:
         base_url = "https://thebuffalospot.com/our-spots/"
