@@ -20,6 +20,7 @@ _headers = {
 
 locator_domain = "https://thebuffalospot.com"
 
+
 def fetch_data():
     with SgRequests() as session:
         base_url = "https://thebuffalospot.com/our-spots/"
