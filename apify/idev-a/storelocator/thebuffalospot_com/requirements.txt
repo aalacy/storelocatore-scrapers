@@ -1,4 +1,3 @@
-dirtyjson==1.0.7
 sglogging==0.0.4
 sgscrape==0.0.23
 sgrequests==0.1.8
