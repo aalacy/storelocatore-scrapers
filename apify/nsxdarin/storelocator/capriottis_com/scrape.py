@@ -70,6 +70,7 @@ def fetch_data():
                             + item.split('"slug":"')[1].split('"')[0]
                         )
                         hours = "<INACCESSIBLE>"
+                        name = name.replace("\\u2019", "'")
                         yield [
                             website,
                             lurl,
