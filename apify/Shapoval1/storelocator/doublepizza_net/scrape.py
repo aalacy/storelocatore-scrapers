@@ -47,6 +47,7 @@ def fetch_data():
         "".join(tree.xpath('//script[contains(text(), "var locations")]/text()'))
         .split("var locations = ")[1]
         .split(";")[0]
+        .replace("//", "")
     )
     li = eval(ll)
     div = tree.xpath('//div[@id="sidebarLocationEntry-manual"]')

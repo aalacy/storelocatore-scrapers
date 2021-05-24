@@ -1,10 +1,13 @@
 import csv
 import sgrequests
 import bs4
+from sglogging import sglog
+
+log = sglog.SgLogSetup().get_logger(logger_name="doublebees.com")
 
 
 def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8") as output_file:
+    with open("data.csv", mode="w", newline="", encoding="utf8") as output_file:
         writer = csv.writer(
             output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
         )
@@ -61,21 +64,30 @@ def fetch_data():
         res = []
 
         for s in store:
+            log.info(s)
             soup = bs4.BeautifulSoup(
                 sgrequests.SgRequests().get(s).text, features="lxml"
             )
             name = soup.find("div", {"class": "store-title"}).text
+            store_number = missingString
+            if "#" in name:
+                store_number = name.split("#")[1].strip()
+
             addr = soup.find("div", {"class": "address fl"})
             street = addr.findAll("div")[0].text
-            city = addr.findAll("div")[1].text.strip().split(u"\n")[0]
-            state = addr.findAll("div")[1].text.split(u"\n")[2].strip().split(" ")[0]
-            zp = addr.findAll("div")[1].text.split(u"\n")[2].strip().split(" ")[-1]
-            if s == "https://doublebees.com/stores/conoco-store-136/":
+            city_state_zip = (
+                addr.findAll("div")[1]
+                .text.strip()
+                .replace("\t", "")
+                .replace("   ", ",")
+                .strip()
+            )
+            city = city_state_zip.split(",")[0].strip()
+            state = city_state_zip.split(",")[-2].strip()
+            zp = city_state_zip.split(",")[-1].strip()
+            if "(" in zp:
+                phone = zp
                 zp = missingString
-                phone = (
-                    addr.findAll("div")[1].text.split(u"\n")[2].strip().split(" ")[-2]
-                    + addr.findAll("div")[1].text.split(u"\n")[2].strip().split(" ")[-1]
-                )
             else:
                 phone = soup.find("div", {"class": "contact-number fr"}).find("a").text
             latlng = (
@@ -101,7 +113,7 @@ def fetch_data():
                     "state": state,
                     "zip": zp,
                     "country_code": missingString,
-                    "store_number": missingString,
+                    "store_number": store_number,
                     "phone": phone.replace("(", "").replace(")", ""),
                     "location_type": missingString,
                     "latitude": lat,
