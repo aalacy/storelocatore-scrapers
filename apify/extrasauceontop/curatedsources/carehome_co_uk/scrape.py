@@ -108,15 +108,23 @@ for country_url in country_urls:
         search_url = country_url + "/startpage/" + str(count)
         response = s.get(search_url, headers=headers)
         response_text = response.text
-
+        log.info(search_url)
         if len(response_text.split("div")) > 2:
             pass
         else:
-            new_sess = reset_sessions(search_url)
+            y = 0
+            while True:
+                y = y + 1
+                log.info("page_url_fail: " + str(y))
+                try:
+                    new_sess = reset_sessions(search_url)
 
-            s = new_sess[0]
-            headers = new_sess[1]
-            response_text = new_sess[2]
+                    s = new_sess[0]
+                    headers = new_sess[1]
+                    response_text = new_sess[2]
+                    break
+                except Exception:
+                    continue
 
         soup = bs(response_text, "html.parser")
         div_tags = soup.find_all("div", attrs={"class": "col-sm-9 col-xs-12"})
@@ -146,7 +154,7 @@ for location_url in location_urls:
     response = s.get(location_url, headers=headers)
     response_text = response.text
     log.info("URL " + str(x) + "/" + str(len(location_urls)))
-    log.info("location_url")
+    log.info(location_url)
     if len(response_text.split("div")) > 2:
         pass
     else:
