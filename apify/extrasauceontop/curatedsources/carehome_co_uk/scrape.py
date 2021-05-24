@@ -4,6 +4,9 @@ from sgrequests import SgRequests
 import json
 import csv
 from webdriver_manager.chrome import ChromeDriverManager
+from sglogging import sglog
+
+log = sglog.SgLogSetup().get_logger(logger_name="carehome")
 
 
 def extract_json(html_string):
@@ -137,17 +140,29 @@ for country_url in country_urls:
         count = count + 1
 
 all_rows = []
+x = 0
 for location_url in location_urls:
+    x = x + 1
     response = s.get(location_url, headers=headers)
     response_text = response.text
+    log.info("URL " + str(x) + "/" + str(len(location_urls)))
+    log.info("location_url")
     if len(response_text.split("div")) > 2:
         pass
     else:
-        new_sess = reset_sessions(location_url)
+        y = 0
+        while True:
+            y = y + 1
+            log.info("location_url_fail: " + str(y))
+            try:
+                new_sess = reset_sessions(location_url)
 
-        s = new_sess[0]
-        headers = new_sess[1]
-        response_text = new_sess[2]
+                s = new_sess[0]
+                headers = new_sess[1]
+                response_text = new_sess[2]
+                break
+            except Exception:
+                continue
 
     soup = bs(response_text, "html.parser")
 

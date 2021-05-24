@@ -144,6 +144,8 @@ def fetch_data():
             phone = "<MISSING>"
         if hours == "":
             hours = "<MISSING>"
+        name = name.replace("&amp;", "&").replace("&amp", "&")
+        add = add.replace("&amp;", "&").replace("&amp", "&")
         yield [
             website,
             loc,

@@ -38,6 +38,7 @@ def write_output(data):
 
 
 def fetch_data():
+    alllocs = []
     scalocs = []
     mtlocs = []
     aklocs = []
@@ -156,22 +157,25 @@ def fetch_data():
                     name = name.split(addfirst)[0].strip()
                     if name == "":
                         name = nameorig
-                yield [
-                    website,
-                    mloc,
-                    name,
-                    newadd,
-                    city,
-                    state,
-                    zc,
-                    country,
-                    store,
-                    phone,
-                    typ,
-                    lat,
-                    lng,
-                    hours,
-                ]
+                infotext = mloc + "|" + name + "|" + newadd + "|" + phone
+                if infotext not in alllocs:
+                    alllocs.append(infotext)
+                    yield [
+                        website,
+                        mloc,
+                        name,
+                        newadd,
+                        city,
+                        state,
+                        zc,
+                        country,
+                        store,
+                        phone,
+                        typ,
+                        lat,
+                        lng,
+                        hours,
+                    ]
         logger.info(("%s MT Locations Found" % str(len(mtlocs))))
     for x in range(1, 50):
         logger.info(("Pulling OR Page %s..." % str(x)))
@@ -272,22 +276,25 @@ def fetch_data():
                                 name = name.split(addfirst)[0].strip()
                                 if name == "":
                                     name = nameorig
-                            yield [
-                                website,
-                                mloc,
-                                name,
-                                newadd,
-                                city,
-                                state,
-                                zc,
-                                country,
-                                store,
-                                phone,
-                                typ,
-                                lat,
-                                lng,
-                                hours,
-                            ]
+                            infotext = mloc + "|" + name + "|" + newadd + "|" + phone
+                            if infotext not in alllocs:
+                                alllocs.append(infotext)
+                                yield [
+                                    website,
+                                    mloc,
+                                    name,
+                                    newadd,
+                                    city,
+                                    state,
+                                    zc,
+                                    country,
+                                    store,
+                                    phone,
+                                    typ,
+                                    lat,
+                                    lng,
+                                    hours,
+                                ]
                 logger.info(("%s OR Locations Found" % str(len(orlocs))))
             except:
                 PFound = True
@@ -382,22 +389,25 @@ def fetch_data():
                     name = name.split(addfirst)[0].strip()
                     if name == "":
                         name = nameorig
-                yield [
-                    website,
-                    mloc,
-                    name,
-                    newadd,
-                    city,
-                    state,
-                    zc,
-                    country,
-                    store,
-                    phone,
-                    typ,
-                    lat,
-                    lng,
-                    hours,
-                ]
+                infotext = mloc + "|" + name + "|" + newadd + "|" + phone
+                if infotext not in alllocs:
+                    alllocs.append(infotext)
+                    yield [
+                        website,
+                        mloc,
+                        name,
+                        newadd,
+                        city,
+                        state,
+                        zc,
+                        country,
+                        store,
+                        phone,
+                        typ,
+                        lat,
+                        lng,
+                        hours,
+                    ]
         logger.info(("%s WA Locations Found" % str(len(mtlocs))))
     for x in range(1, 10):
         logger.info(("Pulling AK Page %s..." % str(x)))
@@ -557,22 +567,26 @@ def fetch_data():
                 name = name.split(addfirst)[0].strip()
                 if name == "":
                     name = nameorig
-            yield [
-                website,
-                loc,
-                name,
-                newadd,
-                city,
-                state,
-                zc,
-                country,
-                store,
-                phone,
-                typ,
-                lat,
-                lng,
-                hours,
-            ]
+            infotext = loc + "|" + name + "|" + newadd + "|" + phone
+            if infotext not in alllocs:
+                alllocs.append(infotext)
+                yield [
+                    website,
+                    loc,
+                    name,
+                    newadd,
+                    city,
+                    state,
+                    zc,
+                    country,
+                    store,
+                    phone,
+                    typ,
+                    lat,
+                    lng,
+                    hours,
+                ]
+
     for x in range(1, 75):
         logger.info(("Pulling SCA Page %s..." % str(x)))
         url = (
@@ -652,22 +666,26 @@ def fetch_data():
                 name = name.split(addfirst)[0].strip()
                 if name == "":
                     name = nameorig
-            yield [
-                website,
-                loc,
-                name,
-                newadd,
-                city,
-                state,
-                zc,
-                country,
-                store,
-                phone,
-                typ,
-                lat,
-                lng,
-                hours,
-            ]
+            infotext = loc + "|" + name + "|" + newadd + "|" + phone
+            if infotext not in alllocs:
+                alllocs.append(infotext)
+                yield [
+                    website,
+                    loc,
+                    name,
+                    newadd,
+                    city,
+                    state,
+                    zc,
+                    country,
+                    store,
+                    phone,
+                    typ,
+                    lat,
+                    lng,
+                    hours,
+                ]
+
     r = session.get("https://www.stjosephhealth.org/our-locations/", headers=headers)
     if r.encoding is None:
         r.encoding = "utf-8"
@@ -740,22 +758,25 @@ def fetch_data():
                 name = name.split(addfirst)[0].strip()
                 if name == "":
                     name = nameorig
-            yield [
-                website,
-                loc,
-                name,
-                newadd,
-                city,
-                state,
-                zc,
-                country,
-                store,
-                phone,
-                typ,
-                lat,
-                lng,
-                hours,
-            ]
+            infotext = loc + "|" + name + "|" + newadd + "|" + phone
+            if infotext not in alllocs:
+                alllocs.append(infotext)
+                yield [
+                    website,
+                    loc,
+                    name,
+                    newadd,
+                    city,
+                    state,
+                    zc,
+                    country,
+                    store,
+                    phone,
+                    typ,
+                    lat,
+                    lng,
+                    hours,
+                ]
 
 
 def scrape():

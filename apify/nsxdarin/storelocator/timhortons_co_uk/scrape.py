@@ -90,7 +90,7 @@ def fetch_data():
                 add = addinfo.split("<br/>")[0]
                 city = addinfo.split("<br/>")[1].split(",")[0]
                 zc = addinfo.rsplit(",", 1)[1].strip()
-        if "COMING SOON" in line:
+        if "COMING SOON" in line and "<!--p" not in line:
             name = name + " - COMING SOON"
         if '<div class="location-delivery-partners">' in line:
             phone = "<MISSING>"
