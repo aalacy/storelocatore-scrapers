@@ -287,19 +287,19 @@ def fetch_data():
             typ = "Store"
         if CS:
             name = name + " - Coming Soon"
-        if state == "":
+        if state == "" or state is None:
             state = "<MISSING>"
         if state in usstates:
             country = "US"
         if state in castates:
             country = "CA"
-        if zc == "":
+        if zc == "" or zc is None:
             zc = "<MISSING>"
-        if city == "":
+        if city == "" or city is None:
             city = "<MISSING>"
-        if country == "":
+        if country == "" or country is None:
             country = "<MISSING>"
-        if add == "":
+        if add == "" or add is None:
             add = "<MISSING>"
         yield [
             website,
