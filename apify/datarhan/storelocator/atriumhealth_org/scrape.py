@@ -1,5 +1,6 @@
 import csv
 import json
+from lxml import etree
 from w3lib.url import add_or_replace_parameter
 
 from sgrequests import SgRequests
@@ -40,9 +41,10 @@ def fetch_data():
     session = SgRequests()
 
     items = []
+    scraped_items = []
 
     DOMAIN = "atriumhealth.org"
-    start_url = "https://atriumhealth.org/mobileDataApI/MobileserviceAPi/LocationSearch?cityName=&locationType=All+Locations&community=All+Communities&locationName=&pageNumber=2&pageSize=5&sortBy=&childrensLocationOnly=false&latitude=35.2270869&longitude=-80.8431267"
+    start_url = "https://atriumhealth.org/mobileDataApI/MobileserviceAPi/LocationSearch?cityName=&locationType=All+Locations&community=All+Communities&locationName=&pageNumber=1&pageSize=5&sortBy=&childrensLocationOnly=false&latitude=35.2270869&longitude=-80.8431267"
 
     headers = {
         "Accept": "application/json",
@@ -71,7 +73,7 @@ def fetch_data():
 
     for poi in all_poi:
         store_url = "https://atriumhealth.org" + poi["ClickableUri"]
-        location_name = poi["Name"]
+        location_name = poi["Name"].split(", a facility")[0].split(" - ")[0]
         location_name = location_name if location_name else "<MISSING>"
         street_address = poi["Address"]
         street_address = street_address if street_address else "<MISSING>"
@@ -91,12 +93,11 @@ def fetch_data():
         latitude = latitude if latitude else "<MISSING>"
         longitude = poi["Longitude"]
         longitude = longitude if longitude else "<MISSING>"
-        hours_of_operation = poi["HoursAdditionalDetails"]
-        hours_of_operation = (
-            hours_of_operation.replace("<br/>", "")
-            if hours_of_operation
-            else "<MISSING>"
-        )
+        hoo = []
+        if poi["HoursAdditionalDetails"]:
+            hoo = etree.HTML(poi["HoursAdditionalDetails"]).xpath("//text()")
+            hoo = [e.strip() for e in hoo if e.strip()]
+        hours_of_operation = " ".join(hoo) if hoo else "Open 24 hours"
 
         item = [
             DOMAIN,
@@ -114,7 +115,9 @@ def fetch_data():
             longitude,
             hours_of_operation,
         ]
-        items.append(item)
+        if store_url not in scraped_items:
+            scraped_items.append(store_url)
+            items.append(item)
 
     return items
 

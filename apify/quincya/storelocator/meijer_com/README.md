@@ -1,1 +1,1 @@
-Hours available on page_url but requires selenium and inefficient so set to <INACCESSIBLE>
+Hours available on search page but requires selenium and inefficient so set to <INACCESSIBLE>

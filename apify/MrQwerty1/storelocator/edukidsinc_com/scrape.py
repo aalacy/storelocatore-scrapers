@@ -36,7 +36,10 @@ def write_output(data):
 
 def get_urls():
     session = SgRequests()
-    r = session.get("https://edukidsinc.com/locations/")
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:88.0) Gecko/20100101 Firefox/88.0"
+    }
+    r = session.get("https://edukidsinc.com/locations/", headers=headers)
     tree = html.fromstring(r.text)
 
     return tree.xpath("//a[@class='arrow-btn']/@href")
@@ -44,9 +47,12 @@ def get_urls():
 
 def get_data(page_url):
     locator_domain = "https://edukidsinc.com/"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:88.0) Gecko/20100101 Firefox/88.0"
+    }
 
     session = SgRequests()
-    r = session.get(page_url)
+    r = session.get(page_url, headers=headers)
     tree = html.fromstring(r.text)
 
     location_name = "".join(tree.xpath("//h1/text()")).strip()

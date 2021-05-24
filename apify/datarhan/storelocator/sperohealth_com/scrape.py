@@ -1,6 +1,7 @@
 import re
 import csv
 import json
+from lxml import etree
 
 from sgrequests import SgRequests
 from sgscrape.sgpostal import parse_address_intl
@@ -42,12 +43,17 @@ def fetch_data():
 
     items = []
 
-    start_url = "https://sperohealth.com/wp-admin/admin-ajax.php?action=get_locations&security=a4a5f16bd9"
+    start_url = "https://sperohealth.com/wp-admin/admin-ajax.php?action=get_locations&security={}"
     domain = re.findall(r"://(.+?)/", start_url)[0].replace("www.", "")
     hdr = {
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
     }
-    response = session.get(start_url, headers=hdr)
+
+    response = session.get("https://sperohealth.com/locations-near-you/")
+    dom = etree.HTML(response.text)
+    token = dom.xpath('//input[@id="search-location-ajax-nonce"]/@value')[0]
+
+    response = session.get(start_url.format(token), headers=hdr)
     all_locations = json.loads(response.text)
 
     for poi in all_locations:

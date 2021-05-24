@@ -3,6 +3,7 @@ import csv
 from sgrequests import SgRequests
 from sglogging import sglog
 import json
+import lxml.html
 
 website = "jdwetherspoon.co.uk"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -11,7 +12,6 @@ headers = {
     "Connection": "keep-alive",
     "sec-ch-ua": '"Google Chrome";v="87", " Not;A Brand";v="99", "Chromium";v="87"',
     "Accept": "application/json, text/plain, */*",
-    # 'Request-Id': '|c7e8e7ea677740eda1e4b2d005230d0c.f0d48d57da094a63',
     "sec-ch-ua-mobile": "?0",
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.141 Safari/537.36",
     "Content-Type": "application/json;charset=UTF-8",
@@ -70,8 +70,6 @@ def write_output(data):
 
 def fetch_data():
     # Your scraper here
-    loc_list = []
-
     data = '{"region":null,"paging":{"UsePagination":false},"facilities":[],"searchType":0}'
     search_url = "https://www.jdwetherspoon.com/api/advancedsearch"
     stores_req = session.post(search_url, data=data, headers=headers)
@@ -81,7 +79,7 @@ def fetch_data():
         for sub in subRegions:
             stores = sub["items"]
             for store in stores:
-                if store["PubIsClosed"] is False:
+                if store["pubIsClosed"] is False:
                     page_url = "https://www.jdwetherspoon.com" + store["url"]
 
                     locator_domain = website
@@ -133,8 +131,17 @@ def fetch_data():
                         location_type = "hotel"
 
                     hours_of_operation = ""
-                    if store["PubIsTemporaryClosed"] is True:
+                    if store["pubIsTemporaryClosed"] is True:
                         hours_of_operation = "Temporary Closed"
+                    else:
+                        log.info(page_url)
+                        store_req = session.get(page_url, headers=headers)
+                        store_sel = lxml.html.fromstring(store_req.text)
+                        hours_of_operation = "; ".join(
+                            store_sel.xpath(
+                                '//div[@id="opening-times"]/div[1]/table/tr/td[@itemprop="openingHours"]/@content'
+                            )
+                        ).strip()
 
                     latitude = store["lat"]
                     longitude = store["lng"]
@@ -166,9 +173,7 @@ def fetch_data():
                         longitude,
                         hours_of_operation,
                     ]
-                    loc_list.append(curr_list)
-
-    return loc_list
+                    yield curr_list
 
 
 def scrape():

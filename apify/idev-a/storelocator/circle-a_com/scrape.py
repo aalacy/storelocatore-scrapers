@@ -13,21 +13,32 @@ _headers = {
 
 def fetch_data():
     locator_domain = "https://circle-a.com/"
-    base_url = "https://circle-a.com/"
+    base_url = "https://www.circle-a.com/locations.php"
     with SgRequests() as session:
         soup = bs(session.get(base_url, headers=_headers).text, "lxml")
-        addr = list(soup.select("p.indentp")[1].stripped_strings)
-        yield SgRecord(
-            page_url=base_url,
-            location_name="Circle A - Fleet Fueling Solutions",
-            street_address=addr[0],
-            city=addr[1].split(",")[0].strip(),
-            state=addr[1].split(",")[1].strip().split(" ")[0].strip(),
-            zip_postal=addr[1].split(",")[1].strip().split(" ")[-1].strip(),
-            country_code="US",
-            phone=list(soup.blockquote.stripped_strings)[1],
-            locator_domain=locator_domain,
-        )
+        locations = soup.select("ul li a")
+        logger.info(f"{len(locations)} founds")
+        for _ in locations:
+            page_url = locator_domain + _["href"]
+            logger.info(page_url)
+            sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
+            location_name = sp1.select("table tr td table tr td  table tr td")[
+                1
+            ].text.strip()
+            block = list(
+                sp1.select("table tr td table tr td  table tr td")[3].stripped_strings
+            )
+            yield SgRecord(
+                page_url=page_url,
+                location_name=location_name,
+                street_address=block[-3],
+                city=block[-2].split(",")[0].strip(),
+                state=block[-2].split(",")[1].strip().split(" ")[0].strip(),
+                zip_postal=block[-2].split(",")[1].strip().split(" ")[-1].strip(),
+                country_code="US",
+                phone=block[-1],
+                locator_domain=locator_domain,
+            )
 
 
 if __name__ == "__main__":

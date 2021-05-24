@@ -57,7 +57,7 @@ def fetch_data():
     session = SgRequests()
     r = session.get(page_url)
     tree = html.fromstring(r.text)
-    divs = tree.xpath("//div[@class='sfContentBlock' and .//a[text()='Map']]")
+    divs = tree.xpath("//div[@class='sfContentBlock' and .//*[text()='Map']]")
 
     for d in divs:
         location_name = " ".join("".join(d.xpath("./h1//text()|./h2//text()")).split())
