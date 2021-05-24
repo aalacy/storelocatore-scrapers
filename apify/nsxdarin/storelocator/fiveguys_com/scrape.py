@@ -58,6 +58,14 @@ def fetch_data():
             and "concourse-b-gate-b71-dulles" not in line
         ):
             locs.append(line.split("<loc>")[1].split("<")[0].replace("&#39;", "'"))
+    url = "https://restaurants.fiveguys.ca/sitemap.xml"
+    r = session.get(url, headers=headers)
+    for line in r.iter_lines():
+        line = str(line.decode("utf-8"))
+        if "https://restaurants.fiveguys.ca/ab</loc>" in line:
+            Found = False
+        if 'hreflang="en_CA" href="https://restaurants.fiveguys.ca/' in line and Found:
+            locs.append(line.split('href="')[1].split('"')[0].replace("&#39;", "'"))
     for loc in locs:
         logger.info(loc)
         name = ""
@@ -69,6 +77,10 @@ def fetch_data():
         phone = ""
         lat = ""
         lng = ""
+        if "fiveguys.ca/" in loc:
+            country = "CA"
+        else:
+            country = "US"
         hours = ""
         r2 = session.get(loc, headers=headers)
         for line2 in r2.iter_lines():

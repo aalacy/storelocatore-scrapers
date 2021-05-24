@@ -74,6 +74,7 @@ def fetch_data():
                     .split("!2m")[0]
                     .split("!3d")
                 )
+                latitude = coord[1].split("!3m")
             except:
                 coord = ["", ""]
             yield SgRecord(
@@ -85,7 +86,7 @@ def fetch_data():
                 zip_postal=addr[-1].split(",")[1].strip().split(" ")[-1].strip(),
                 country_code="US",
                 phone=phone,
-                latitude=coord[1],
+                latitude=latitude[0],
                 longitude=coord[0],
                 locator_domain=locator_domain,
                 hours_of_operation=_valid("; ".join(hours)),
