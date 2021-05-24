@@ -2,9 +2,9 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
-from sgselenium import SgChrome
-import json
+from sgselenium import SgFirefox
 import time
+import json
 from sglogging import SgLogSetup
 
 logger = SgLogSetup().get_logger("newleafcannabis")
@@ -27,32 +27,33 @@ def fetch_data():
             .split("var coming_soon_store_data =")[0]
             .strip()[1:-2]
         )
-        for _ in locations:
-            address = list(bs(_["address"], "lxml").stripped_strings)
-            hours = []
-            for x, hh in _["days"].items():
-                times = f"{hh['open']}-{hh['close']}"
-                if hh["is_closed"]:
-                    times = "closed"
-                hours.append(f"{days[int(x)]}: {times}")
+        with SgFirefox() as driver:
+            for _ in locations:
+                address = list(bs(_["address"], "lxml").stripped_strings)
+                hours = []
+                for x, hh in _["days"].items():
+                    times = f"{hh['open']}-{hh['close']}"
+                    if hh["is_closed"]:
+                        times = "closed"
+                    hours.append(f"{days[int(x)]}: {times}")
 
-            page_url = _["shop_now_button_url"]
-            if not page_url.endswith("/"):
-                page_url += "/"
+                page_url = _["shop_now_button_url"]
+                if not page_url.endswith("/"):
+                    page_url += "/"
 
-            with SgChrome() as driver:
                 driver.get(page_url)
                 logger.info(page_url)
                 exist = False
                 while not exist:
                     time.sleep(1)
-                    for rr in driver.requests:
+                    for rr in driver.requests[::-1]:
                         if rr.url.startswith(json_url) and rr.response:
                             exist = True
-                            locations = json.loads(rr.response.body)
-                            addr = json.loads(rr.response.body)["data"][
-                                "filteredDispensaries"
-                            ][0]["location"]
+                            logger.info("found =======")
+                            locations = session.get(rr.url).json()
+                            addr = locations["data"]["filteredDispensaries"][0][
+                                "location"
+                            ]
                             street_address = addr["ln1"]
                             if addr["ln2"]:
                                 street_address += ", " + addr["ln2"]
