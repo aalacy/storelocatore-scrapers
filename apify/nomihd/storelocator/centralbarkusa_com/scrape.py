@@ -26,11 +26,11 @@ def fetch_data():
 
     for store in stores_list:
 
-        page_url = "".join(store.xpath('.//p[@class="name-line"]/a/@href')).strip()
+        page_url = "".join(store.xpath('.//h2[@class="name-line"]/a/@href')).strip()
 
         locator_domain = website
         location_name = "".join(
-            store.xpath('.//p[@class="name-line"]/a/text()')
+            store.xpath('.//h2[@class="name-line"]/a/text()')
         ).strip()
 
         raw_address = " ".join(

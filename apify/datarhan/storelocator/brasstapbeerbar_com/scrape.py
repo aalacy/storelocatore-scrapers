@@ -1,6 +1,6 @@
 import csv
 import json
-
+from lxml import etree
 from sgrequests import SgRequests
 
 
@@ -47,18 +47,25 @@ def fetch_data():
     data = json.loads(response.text)
 
     for poi in data:
-        store_url = poi["onlineordering"]
+        store_url = ""
+        if poi["urltag"]:
+            store_url = "https://www.brasstapbeerbar.com/" + poi["urltag"]
+        if not store_url:
+            store_url = poi["onlineordering"]
         store_url = store_url if store_url else "<MISSING>"
+        loc_response = session.get(store_url)
+        loc_dom = etree.HTML(loc_response.text)
+
         location_name = poi["title"]
         location_name = location_name if location_name else "<MISSING>"
         street_address = poi["address"]
-        street_address = street_address if street_address else "<MISSING>"
+        street_address = street_address.strip() if street_address else "<MISSING>"
         city = poi["city"]
         city = city if city else "<MISSING>"
         state = poi["state"]
         state = state if state else "<MISSING>"
         zip_code = poi["zip"]
-        zip_code = zip_code if zip_code else "<MISSING>"
+        zip_code = zip_code.strip() if zip_code else "<MISSING>"
         country_code = "<MISSING>"
         store_number = poi["storeID"]
         phone = poi["phone"]
@@ -68,7 +75,11 @@ def fetch_data():
         latitude = latitude if latitude else "<MISSING>"
         longitude = poi["lng"]
         longitude = longitude if longitude else "<MISSING>"
-        hours_of_operation = "<MISSING>"
+        hoo = loc_dom.xpath(
+            '//div[@class="frame hours"]//div[@class="box list"]//text()'
+        )
+        hoo = [e.strip() for e in hoo if e.strip()]
+        hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
 
         item = [
             DOMAIN,
