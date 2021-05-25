@@ -53,15 +53,11 @@ def getJSObject(response, varName, noVal=MISSING):
     return JSObject[0]
 
 
-def request_with_retries(url):
-    return session.get(url, headers=headers)
-
-
 def fetchStores():
     response = get_driver(f"{website}/deervalley/")
 
     body = html.fromstring(response, "lxml")
-    storeUrls = As = body.xpath('//select[@id="destination-selector"]/option/@data-url')
+    storeUrls = body.xpath('//select[@id="destination-selector"]/option/@data-url')
     return storeUrls
 
 
