@@ -193,7 +193,7 @@ def fetch_data():
                 )
             if "Hours</strong>" in line2 and "day" in line2 and HFound:
                 hours = (
-                    line2.split("Hours</strong><br />")[1]
+                    line2.split("Hours</strong>")[1]
                     .replace("<br />", "; ")
                     .replace("<br/>", "; ")
                     .replace("\r", "")
@@ -204,7 +204,7 @@ def fetch_data():
                 HFound = False
             if "Hours</strong>" in line2 and "day" in line2 and HFound:
                 hours = (
-                    line2.split("Hours</strong><br/>")[1]
+                    line2.split("Hours</strong>")[1]
                     .replace("<br/>", "; ")
                     .replace("<br />", "; ")
                     .replace("\r", "")
