@@ -50,7 +50,6 @@ def fetch_data():
     req = session.get(base_link, headers=headers)
     base = BeautifulSoup(req.text, "lxml")
 
-    data = []
     all_links = []
     found_poi = []
 
@@ -69,76 +68,121 @@ def fetch_data():
             req = session.get(city_link, headers=headers)
             base = BeautifulSoup(req.text, "lxml")
 
-            raw_links = base.find_all(class_="media-title")
-            for raw_link in raw_links:
+            city_data = base.find_all(class_="media-body row")
+            for row in city_data:
                 link = (
-                    "https://financialprofessionals.massmutual.com" + raw_link.a["href"]
+                    "https://financialprofessionals.massmutual.com"
+                    + row.find(class_="media-title").a["href"]
                 )
+                name = row.find(class_="media-title").text
+                raw_address = list(row.address.stripped_strings)
+                street_address = raw_address[0].strip().replace("  ", " ")
+                city_line = raw_address[-1].strip().split(",")
+                city = city_line[0].strip()
+                state = city_line[-1].strip().split()[0].strip()
+                zip_code = city_line[-1].strip().split()[1].strip()
+                try:
+                    loc_type = row.find(class_="media-subtitle").text
+                except:
+                    loc_type = "<MISSING>"
+                phone = (
+                    row.find(class_="sr-only")
+                    .find_previous("a")
+                    .text.replace("phone", "")
+                )
+
                 if link not in all_links:
-                    all_links.append(link)
+                    all_links.append(
+                        [
+                            link,
+                            name,
+                            street_address,
+                            city,
+                            state,
+                            zip_code,
+                            loc_type,
+                            phone,
+                            city_link,
+                        ]
+                    )
 
     logger.info("Processing " + str(len(all_links)) + " potential links ..")
-    for link in all_links:
+    for row in all_links:
+        link = row[0]
         req = session.get(link, headers=headers)
         base = BeautifulSoup(req.text, "lxml")
 
+        got_page = True
         try:
             location_name = base.find(class_="es-agency-name").text.strip()
         except:
-            continue
+            got_page = False
 
-        street_address = base.find(class_="es-street-address").text.strip()
-
-        loc_str = location_name + "_" + street_address
-        if loc_str in found_poi:
-            continue
-
-        found_poi.append(loc_str)
-
-        city = base.find(class_="es-address-locality").text.strip()
-        state = base.find(class_="es-address-region").text.strip().upper()
-        zip_code = (
-            base.find(class_="es-postal-code").text.replace("050301", "05301").strip()
-        )
-        if len(zip_code) == 4:
-            zip_code = "0" + zip_code
         country_code = "US"
         store_number = "<MISSING>"
-        location_type = "<MISSING>"
-        try:
-            location_type = base.find(class_="title es-office-type").text.strip()
-        except:
-            pass
-        phone = base.find(class_="es-telephone").text.strip()
-        if not phone:
-            phone = "<MISSING>"
         hours_of_operation = "<MISSING>"
-        lat = float(base.find(class_="es-street-address")["data-geo"].split(",")[0])
-        lon = float(base.find(class_="es-street-address")["data-geo"].split(",")[1])
+        latitude = "<MISSING>"
+        longitude = "<MISSING>"
 
-        latitude = format(lat, ".4f")
-        longitude = format(lon, ".4f")
+        if got_page:
+            street_address = base.find(class_="es-street-address").text.strip()
 
-        data.append(
-            [
-                locator_domain,
-                link,
-                location_name,
-                street_address,
-                city,
-                state,
-                zip_code,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
-        )
+            loc_str = location_name + "_" + street_address
+            if loc_str in found_poi:
+                continue
 
-    return data
+            found_poi.append(loc_str)
+
+            city = base.find(class_="es-address-locality").text.strip()
+            state = base.find(class_="es-address-region").text.strip().upper()
+            zip_code = (
+                base.find(class_="es-postal-code")
+                .text.replace("050301", "05301")
+                .strip()
+            )
+            if len(zip_code) == 4:
+                zip_code = "0" + zip_code
+            try:
+                location_type = base.find(class_="title es-office-type").text.strip()
+            except:
+                location_type = row[6]
+            phone = base.find(class_="es-telephone").text.strip()
+            if not phone:
+                if row[6]:
+                    phone = row[6]
+                else:
+                    phone = "<MISSING>"
+            lat = float(base.find(class_="es-street-address")["data-geo"].split(",")[0])
+            lon = float(base.find(class_="es-street-address")["data-geo"].split(",")[1])
+
+            latitude = format(lat, ".4f")
+            longitude = format(lon, ".4f")
+        else:
+            link = row[-1]
+            location_name = row[1]
+            street_address = row[2]
+            city = row[3]
+            state = row[4]
+            zip_code = row[5]
+            loc_type = row[6]
+            phone = row[7]
+
+        yield [
+            locator_domain,
+            link,
+            location_name,
+            street_address,
+            city,
+            state,
+            zip_code,
+            country_code,
+            store_number,
+            phone,
+            location_type,
+            latitude,
+            longitude,
+            hours_of_operation,
+        ]
 
 
 def scrape():
