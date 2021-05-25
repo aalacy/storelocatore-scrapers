@@ -29,7 +29,7 @@ def fetch_data():
         location_name = "".join(
             store_sel.xpath("//div[@class='et_pb_text_inner']/h1/text()")
         ).strip()
-        location_type = "<MISSING>"
+        location_type = "Branch"
         locator_domain = website
         raw_info = store_sel.xpath(
             '//div[@class="et_pb_module et_pb_text et_pb_text_1  et_pb_text_align_left et_pb_bg_layout_light"]/div/p/text()'
@@ -49,6 +49,18 @@ def fetch_data():
             .replace(":;", "")
             .strip()
         )
+        if "ATM Only:" in "".join(
+            store_sel.xpath(
+                '//div[@class="et_pb_module et_pb_text et_pb_text_3  et_pb_text_align_left et_pb_bg_layout_light"]/div/p[1]/b/text()'
+            )
+        ):
+            location_type = "ATM Only"
+
+        try:
+            hours_of_operation = hours_of_operation.split("; : ;")[0].strip()
+        except:
+            pass
+
         country_code = "US"
         store_number = "<MISSING>"
 

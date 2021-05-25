@@ -66,7 +66,7 @@ def fetch_data():
 
             url_list.append(page_url)
             phone = stores[store]["phone"]
-            store_number = "<MISSING>"
+            store_number = stores[store]["id"]
 
             location_type = "<MISSING>"
             if stores[store]["isOpeningSoon"] is True:

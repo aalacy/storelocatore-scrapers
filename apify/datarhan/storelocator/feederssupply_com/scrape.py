@@ -63,8 +63,7 @@ def fetch_data():
             except:
                 driver.execute_script("window.scrollBy(0, -200);")
                 poi.click()
-            sleep(15)
-            driver.save_screenshot("feeder.png")
+            sleep(20)
             poi_html = etree.HTML(driver.page_source)
             raw_data = poi_html.xpath(
                 '//div[@class="animating-screenIn-exit"]//div[@data-testid="mesh-container-content"]/div[3]//text()'
@@ -100,7 +99,9 @@ def fetch_data():
                 if len(geo) == 2:
                     latitude = geo[0]
                     longitude = geo[1]
-
+            if "http" in latitude:
+                latitude = "<MISSING>"
+                longitude = "<MISSING>"
             driver.find_element_by_xpath(
                 '//div[@data-testid="popupCloseIconButtonRoot"]'
             ).click()
