@@ -3,7 +3,6 @@ import csv
 from sgrequests import SgRequests
 from sglogging import sglog
 import json
-import lxml.html
 
 website = "frankieandbennys.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -64,7 +63,6 @@ def fetch_data():
 
     search_url = "https://www.frankieandbennys.com/sitemap.xml"
     stores_req = session.get(search_url, headers=headers)
-    # stores_sel = lxml.html.fromstring(stores_req.text)
     stores = stores_req.text.split("<loc>")
     for index in range(1, len(stores)):
         if "https://www.frankieandbennys.com/restaurants/" in stores[index]:
