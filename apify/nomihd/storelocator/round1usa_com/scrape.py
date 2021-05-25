@@ -3,7 +3,8 @@ import csv
 from sgrequests import SgRequests
 from sglogging import sglog
 import json
-import lxml.html
+import us
+from sgscrape import sgpostal as parser
 
 website = "round1usa.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -37,6 +38,7 @@ def write_output(data):
                 "latitude",
                 "longitude",
                 "hours_of_operation",
+                "raw_address",
             ]
         )
         # Body
@@ -62,47 +64,31 @@ def fetch_data():
     # Your scraper here
     loc_list = []
 
-    search_url = "https://www.round1usa.com/wprs/wp-admin/admin-ajax.php"
+    search_url = "https://api2.storepoint.co/v1/16026f2c5ac3c7/locations"
+    stores_req = session.get(search_url, headers=headers)
+    if json.loads(stores_req.text)["success"] is True:
+        stores = json.loads(stores_req.text)["results"]["locations"]
 
-    data = {
-        "action": "get_stores",
-        "lat": "33.9697897",
-        "lng": "-118.2468148",
-        "radius": "2800",
-        "categories[0]": "",
-    }
-
-    stores_req = session.post(search_url, data=data, headers=headers)
-    stores = json.loads(stores_req.text)
-
-    for key in stores.keys():
-        location_type = stores[key]["ca"]["0"]
-        if location_type == "Open" or location_type == "Temporarily Closed":
-            latitude = stores[key]["lat"]
-            longitude = stores[key]["lng"]
-            page_url = stores[key]["gu"]
-
+        for store in stores:
+            page_url = "https://round1usa.com/locations"
             locator_domain = website
-            location_name = stores[key]["na"]
+            location_name = store["name"].replace("<br>", "").strip()
             if location_name == "":
                 location_name = "<MISSING>"
 
-            street_address = stores[key]["st"]
-            city = stores[key]["ct"]
-            state = ""
-            log.info(page_url)
-            store_req = session.get(page_url, headers=headers)
-            store_sel = lxml.html.fromstring(store_req.text)
-            temp_addrss = "".join(
-                store_sel.xpath('//div[@class="store_locator_single_address"]/text()')
-            ).strip()
-            try:
-                state = temp_addrss.split(",")[-1].strip().split(" ")[0].strip()
-            except:
-                pass
-            zip = stores[key]["zp"]
+            raw_address = store["streetaddress"]
+            formatted_addr = parser.parse_address_usa(raw_address)
+            street_address = formatted_addr.street_address_1
+            if formatted_addr.street_address_2:
+                street_address = street_address + ", " + formatted_addr.street_address_2
+
+            city = formatted_addr.city
+            state = formatted_addr.state
+            zip = formatted_addr.postcode
 
             country_code = "<MISSING>"
+            if us.states.lookup(state):
+                country_code = "US"
 
             if street_address == "" or street_address is None:
                 street_address = "<MISSING>"
@@ -116,37 +102,59 @@ def fetch_data():
             if zip == "" or zip is None:
                 zip = "<MISSING>"
 
-            store_number = str(stores[key]["ID"])
-            location_type = stores[key]["ca"]["0"]
+            store_number = str(store["id"])
+            phone = store["phone"]
+            if "(" not in phone:
+                phone = "<MISSING>"
 
-            if stores[key]["de"] is not None and len(stores[key]["de"]) > 0:
-                phone = ""
-                try:
-                    phone = (
-                        stores[key]["de"]
-                        .split("Tel</span></strong>:")[1]
-                        .strip()
-                        .split("<")[0]
-                        .strip()
-                    )
-                except:
-                    pass
+            if "Temporarily Closed" in location_name:
+                location_type = "Temporarily Closed"
+            elif "Coming Soon" in location_name:
+                location_type = "Coming Soon"
+            else:
+                location_type = "<MISSING>"
 
-                hours_of_operation = ""
-                try:
-                    hours_of_operation = (
-                        stores[key]["de"]
-                        .split("Hours</span></strong>: ")[1]
-                        .strip()
-                        .split("<")[0]
-                        .strip()
-                        .encode("ascii", "replace")
-                        .decode("utf-8")
-                        .replace("?", "-")
-                        .strip()
-                    )
-                except:
-                    pass
+            hours_of_operation = ""
+            hours_list = []
+            if len(store["monday"]) > 0:
+                hours_list.append("monday:" + store["monday"])
+            else:
+                hours_list.append("monday:" + "Closed")
+            if len(store["tuesday"]) > 0:
+                hours_list.append("tuesday:" + store["tuesday"])
+            else:
+                hours_list.append("tuesday:" + "Closed")
+            if len(store["wednesday"]) > 0:
+                hours_list.append("wednesday:" + store["wednesday"])
+            else:
+                hours_list.append("wednesday:" + "Closed")
+            if len(store["thursday"]) > 0:
+                hours_list.append("thursday:" + store["thursday"])
+            else:
+                hours_list.append("thursday:" + "Closed")
+            if len(store["friday"]) > 0:
+                hours_list.append("friday:" + store["friday"])
+            else:
+                hours_list.append("friday:" + "Closed")
+            if len(store["saturday"]) > 0:
+                hours_list.append("saturday:" + store["saturday"])
+            else:
+                hours_list.append("saturday:" + "Closed")
+            if len(store["sunday"]) > 0:
+                hours_list.append("sunday:" + store["sunday"])
+            else:
+                hours_list.append("sunday:" + "Closed")
+
+            hours_of_operation = (
+                "; ".join(hours_list)
+                .strip()
+                .replace("<br>", "")
+                .replace("&nbsp", "")
+                .replace(" ;", ";")
+                .replace(":;", ":")
+            )
+            latitude = store["loc_lat"]
+            longitude = store["loc_long"]
 
             if latitude == "" or latitude is None:
                 latitude = "<MISSING>"
@@ -174,9 +182,12 @@ def fetch_data():
                 latitude,
                 longitude,
                 hours_of_operation,
+                raw_address,
             ]
             loc_list.append(curr_list)
-
+    else:
+        log.error("Something wrong with the response SUCCESS value")
+        # break
     return loc_list
 
 

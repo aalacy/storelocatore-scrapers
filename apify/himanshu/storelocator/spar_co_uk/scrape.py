@@ -1,171 +1,129 @@
-import csv
-from bs4 import BeautifulSoup
 import re
+import csv
 import json
+from lxml import etree
+from urllib.parse import urljoin
+
 from sgrequests import SgRequests
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 
-MISSING = "<MISSING>"
-
-STREET_NUM = re.compile("""^\d{1,7}[A-Z]?$""")
-CONNECTED_HOUSE_NUMS = re.compile("""^\d+ ?- ?\d+$""")
-UNIT_NUM = re.compile("""^Unit \d+$""")
-
-# Source: https://stackoverflow.com/questions/164979/regex-for-matching-uk-postcodes
-BRITISH_POST_CODE = re.compile("""^(([gG][iI][rR] {0,}0[aA]{2})|(([aA][sS][cC][nN]|[sS][tT][hH][lL]|[tT][dD][cC][uU]|[bB][bB][nN][dD]|[bB][iI][qQ][qQ]|[fF][iI][qQ][qQ]|[pP][cC][rR][nN]|[sS][iI][qQ][qQ]|[iT][kK][cC][aA]) {0,}1[zZ]{2})|((([a-pr-uwyzA-PR-UWYZ][a-hk-yxA-HK-XY]?[0-9][0-9]?)|(([a-pr-uwyzA-PR-UWYZ][0-9][a-hjkstuwA-HJKSTUW])|([a-pr-uwyzA-PR-UWYZ][a-hk-yA-HK-Y][0-9][abehmnprv-yABEHMNPRV-Y]))) {0,}[0-9][abd-hjlnp-uw-zABD-HJLNP-UW-Z]{2}))$""")
-
-def or_default(get_value: lambda: str, default = MISSING) -> str:
-    try:
-        v_stripped = get_value().strip()
-        return v_stripped if v_stripped else default
-    except:
-        return default
-
-def condense(string: str) -> str:
-    return re.sub(" +", " ", re.sub("\r*\n", " ", string)).strip()
 
 def write_output(data):
-    with open('data.csv', mode='w', newline='') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+    with open("data.csv", mode="w", encoding="utf-8") as output_file:
+        writer = csv.writer(
+            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+        )
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url", "raw_address"])
+        writer.writerow(
+            [
+                "locator_domain",
+                "page_url",
+                "location_name",
+                "street_address",
+                "city",
+                "state",
+                "zip",
+                "country_code",
+                "store_number",
+                "phone",
+                "location_type",
+                "latitude",
+                "longitude",
+                "hours_of_operation",
+            ]
+        )
         # Body
         for row in data:
             writer.writerow(row)
 
 
 def fetch_data():
-    requests = SgRequests()
+    # Your scraper here
+    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
 
-    base_url = "https://www.spar.co.uk"
+    items = []
+    scraped_items = []
 
-    r = requests.get("https://www.spar.co.uk/sitemap-page",headers={})
-    soup = BeautifulSoup(r.text, "lxml")
+    start_url = "https://www.spar.co.uk/umbraco/api/storesearch/searchstores?maxResults=5&radius=10&startNodeId=1053&location=&filters=&lat={}&lng={}&filtermethod="
+    domain = re.findall(r"://(.+?)/", start_url)[0].replace("www.", "")
+    hdr = {
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
+    }
 
-    encountered_identities = set()
+    all_locations = []
+    all_coords = DynamicGeoSearch(
+        country_codes=[SearchableCountries.BRITAIN], max_radius_miles=10
+    )
+    for lat, lng in all_coords:
+        response = session.get(start_url.format(lat, lng), headers=hdr)
+        data = json.loads(response.text)
+        if data.get("locations"):
+            all_locations += data["locations"]
 
-    for inex,link in enumerate(soup.find_all("a")):
-        if "/store-locator/" in link['href']:
-            page_url = base_url + link['href']
+    for poi in all_locations:
+        store_url = urljoin("https://www.spar.co.uk/", poi["url"])
+        loc_response = session.get(store_url)
+        loc_dom = etree.HTML(loc_response.text)
+        loc = loc_dom.xpath('//script[contains(text(), "postalCode")]/text()')[-1]
+        loc = json.loads(loc)
 
-            # special case
-            if "https://www.spar.co.uk/store-locator/hal24301" in page_url:
-                continue
-            
-            r1= requests.get(page_url)
-            soup1 = BeautifulSoup(r1.text, "lxml")
+        location_name = poi.get("name")
+        location_name = location_name if location_name else "<MISSING>"
+        street_address = loc["address"].get("streetAddress")
+        street_address = street_address if street_address else "<MISSING>"
+        city = loc["address"].get("addressLocality")
+        city = city if city else "<MISSING>"
+        state = "<MISSING>"
+        zip_code = loc["address"].get("postalCode")
+        zip_code = zip_code if zip_code else "<MISSING>"
+        country_code = "<MISSING>"
+        store_number = poi.get("code")
+        phone = poi.get("telephone")
+        phone = phone if phone else "<MISSING>"
+        location_type = poi.get("@type")
+        location_type = location_type if location_type else "<MISSING>"
+        latitude = poi.get("lat")
+        latitude = latitude if latitude else "<MISSING>"
+        longitude = poi.get("lng")
+        longitude = longitude if longitude else "<MISSING>"
+        hoo = []
+        if loc.get("openingHoursSpecification"):
+            for elem in loc["openingHoursSpecification"]:
+                day = elem["dayOfWeek"][0]
+                opens = elem["opens"]
+                closes = elem["closes"]
+                hoo.append(f"{day} {opens} {closes}")
+        hoo = [e.strip() for e in hoo if e.strip()]
+        hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
 
-            # Sometimes, the JSON doesn't have all the answers... or the correct answers, fot that matter.
-            contact_us_raw = list(soup1.find("div", {"class": "store-details__contact"}).stripped_strings)
+        item = [
+            domain,
+            store_url,
+            location_name,
+            street_address,
+            city,
+            state,
+            zip_code,
+            country_code,
+            store_number,
+            phone,
+            location_type,
+            latitude,
+            longitude,
+            hours_of_operation,
+        ]
+        if store_number not in scraped_items:
+            scraped_items.append(store_number)
+            items.append(item)
 
-            contact_us_semi_processed = list(map(condense,
-                                  list(filter(lambda s: s.strip() and s.strip() != ",",
-                                              ",".join(contact_us_raw).split(",")))))
+    return items
 
-            # Putting street numbers back with the street, if they were comma-separated.
-            contact_us = []
-            street_address_seen = False
-            for item in contact_us_semi_processed:
-                # some street addresses have these in them, which isn't necessary.
-                if item == "SPAR" or item == "Euro Garages":
-                    continue
-
-                if STREET_NUM.match(item) \
-                        or CONNECTED_HOUSE_NUMS.match(item) \
-                        or UNIT_NUM.match(item):
-                    street_address_seen = True
-                    contact_us.append(item)
-
-                elif not street_address_seen:
-                    contact_us.append(item)
-
-                else:
-                    contact_us[-1] = f"{contact_us[-1]} {item}"
-                    street_address_seen = False
-            # ------
-
-            try:
-                address_idx = contact_us.index("Address")
-                street_address = contact_us[address_idx + 1]
-                city = contact_us[address_idx + 2]
-
-                if len(contact_us) > address_idx + 4:
-                    state = contact_us[address_idx + 3]
-                else:
-                    state = None
-            except (ValueError, IndexError) as e:
-                # either no values, or ambiguous data
-                (street_address, city, state, zipcode) = (None, None, None, None)
-
-            try:
-                phone_idx = contact_us.index("Phone")
-                phone = contact_us[phone_idx + 1]
-            except ValueError:
-                phone = None
-
-            if BRITISH_POST_CODE.match(contact_us[-1]):
-                zipcode = contact_us[-1]
-            else:
-                zipcode = None
-
-
-            addr = json.loads(soup1.find(lambda tag : (tag.name == "script") and "latitude" in tag.text).text)
-
-            street_address = street_address if street_address else or_default(lambda: addr['address']['streetAddress'])
-            zipcode =        zipcode if zipcode else or_default(lambda: addr['address']['postalCode'])
-            store_number =   or_default(lambda: page_url[page_url.rfind("/") + 1:])
-
-            city =           city if city else or_default(lambda: addr['address']['addressLocality'])
-            state =          state if state else or_default(lambda: addr['address']['addressRegion'])
-            phone =          phone if phone else or_default(lambda: addr['telephone'])
-
-            lat =            or_default(lambda: addr['geo']['latitude'])
-            lng =            or_default(lambda: addr['geo']['longitude'])
-            location_name =  or_default(lambda: addr['name'], "SPAR")
-            location_type =  or_default(lambda: addr['@type'])
-
-            operating_hours = ", ".join(
-                [" ".join(
-                    [" ".join(d['dayOfWeek']), d['opens'], d['closes']]) for d in addr['openingHoursSpecification']
-                ]
-            )
-
-            # missing crucial address details
-            if not street_address and not zipcode:
-                continue
-
-            # if it's closed 7 days a week, treat it as permanently closed
-            if operating_hours.count("CLOSED") == 7:
-                continue
-
-            # deduping
-            if store_number in encountered_identities:
-                continue
-            else:
-                encountered_identities.add(store_number)
-
-            store = [base_url,
-                     location_name,
-                     street_address,
-                     city,
-                     state,
-                     zipcode,
-                     "UK",
-                     store_number,
-                     phone,
-                     location_type,
-                     lat,
-                     lng,
-                     operating_hours,
-                     page_url,
-                     str((contact_us_raw, addr["address"]))]
-
-            yield [field.strip() if field else MISSING for field in store]
 
 def scrape():
     data = fetch_data()
     write_output(data)
+
 
 if __name__ == "__main__":
     scrape()

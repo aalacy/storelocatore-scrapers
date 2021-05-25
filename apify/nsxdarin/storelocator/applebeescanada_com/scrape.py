@@ -157,8 +157,8 @@ def fetch_data():
             city = "Windsor"
             state = "ON"
             zc = "<MISSING>"
-            lat = "<MISSING>"
-            lng = "<MISSING>"
+            lat = "42.275843"
+            lng = "-83.052079"
         if "applebees-crossroads" in loc:
             hours = "Sun-Sat: 11:30 PM to 9:00 PM"
         hours = hours.replace(": :", ":")

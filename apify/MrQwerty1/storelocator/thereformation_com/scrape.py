@@ -68,8 +68,13 @@ def get_data(page_url):
         "//div[@class='content-block content-block--hidden-for-small content-block--image-new content-block--show-divider-true']//text()"
     )
     lines = list(filter(None, [l.strip() for l in lines]))
+    hours_index = 0
+    for l in lines:
+        if l.startswith("Hours:"):
+            break
+        hours_index += 1
 
-    line = lines[1 : lines.index("Hours:")]
+    line = lines[1:hours_index]
     street_address = ", ".join(line[:-1]).replace(",,", ",")
     if "Mall" in street_address:
         street_address = street_address.split("Mall,")[1].strip()
@@ -97,7 +102,7 @@ def get_data(page_url):
     latitude, longitude = get_coords_from_google_url(text)
     location_type = "<MISSING>"
     hours_of_operation = (
-        ";".join(lines[lines.index("Hours:") + 1 : lines.index("Call:")]) or "<MISSING>"
+        ";".join(lines[hours_index + 1 : lines.index("Call:")]) or "Closed"
     )
 
     row = [

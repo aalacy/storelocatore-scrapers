@@ -1,11 +1,10 @@
 import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
+import cloudscraper
 
 session = SgRequests()
-headers = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
-}
+scraper = cloudscraper.create_scraper(sess=session)
 
 logger = SgLogSetup().get_logger("sixt_com")
 
@@ -41,7 +40,7 @@ def fetch_data():
     locs = []
     states = []
     url = "https://www.sixt.com/car-rental/#/"
-    r = session.get(url, headers=headers)
+    r = scraper.get(url)
     website = "sixt.com"
     typ = "<MISSING>"
     country = "US"
@@ -60,7 +59,7 @@ def fetch_data():
                     )
     for state in states:
         logger.info(state)
-        r2 = session.get(state, headers=headers)
+        r2 = scraper.get(state)
         for line2 in r2.iter_lines():
             line2 = str(line2.decode("utf-8"))
             if 'locationLink: "' in line2:
@@ -80,7 +79,7 @@ def fetch_data():
         lat = ""
         lng = ""
         hours = ""
-        r2 = session.get(loc, headers=headers)
+        r2 = scraper.get(loc)
         for line2 in r2.iter_lines():
             line2 = str(line2.decode("utf-8"))
             if "<h1>" in line2:
@@ -119,7 +118,7 @@ def fetch_data():
     locs = []
     states = []
     url = "https://www.sixt.com/car-rental/united-kingdom/#/"
-    r = session.get(url, headers=headers)
+    r = scraper.get(url)
     website = "sixt.com"
     typ = "<MISSING>"
     country = "GB"
@@ -137,7 +136,7 @@ def fetch_data():
                     )
     for state in states:
         logger.info(state)
-        r2 = session.get(state, headers=headers)
+        r2 = scraper.get(state)
         for line2 in r2.iter_lines():
             line2 = str(line2.decode("utf-8"))
             if 'locationLink: "' in line2:
@@ -157,7 +156,7 @@ def fetch_data():
         lat = ""
         lng = ""
         hours = ""
-        r2 = session.get(loc, headers=headers)
+        r2 = scraper.get(loc)
         try:
             for line2 in r2.iter_lines():
                 line2 = str(line2.decode("utf-8"))

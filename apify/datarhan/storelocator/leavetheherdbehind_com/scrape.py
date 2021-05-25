@@ -8,6 +8,17 @@ from sgrequests import SgRequests
 from sgselenium import SgChrome
 from sgscrape.sgpostal import parse_address_intl
 
+import ssl
+
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
+
 
 def write_output(data):
     with open("data.csv", mode="w", encoding="utf-8") as output_file:
@@ -80,8 +91,8 @@ def fetch_data():
         phone = "<MISSING>"
         geo_data = loc_dom.xpath('//script[contains(text(), "center:")]/text()')[0]
         geo = re.findall(r"center: \[(.+?)\],", geo_data)[0].split(",")
-        latitude = geo[0]
-        longitude = geo[1]
+        latitude = geo[1]
+        longitude = geo[0]
         hours_of_operation = loc_dom.xpath(
             '//h2[contains(text(), "Opening Hours")]/following-sibling::div/span/text()'
         )

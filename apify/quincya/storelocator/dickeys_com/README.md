@@ -1,2 +1,2 @@
---ignore StreetAddressHasNumber --ignore StreetAddressHasStateName (Confirmed on website)
---ignore CountValidator --ignore StateLevelCountValidator (validation expected 88 POI, but website has has 99 POI)
+hours_of_operation, lat/lng available on page_url but requires selenium making scrape unstable & inefficient
+--ignore StreetAddressHasNumber --ignore StateLevelCountValidator (Confirmed on website)

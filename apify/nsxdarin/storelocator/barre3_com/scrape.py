@@ -73,22 +73,41 @@ def fetch_data():
             if zc != "":
                 if add == "":
                     add = "<MISSING>"
-                yield [
-                    website,
-                    loc,
-                    name,
-                    add,
-                    city,
-                    state,
-                    zc,
-                    country,
-                    store,
-                    phone,
-                    typ,
-                    lat,
-                    lng,
-                    hours,
-                ]
+                if "westfield" in loc:
+                    name = name + " - Coming Soon"
+                if "Asia" not in str(item["timezone"]):
+                    if " (" in zc:
+                        zc = zc.split(" (")[0]
+                    if " " in zc:
+                        country = "CA"
+                    else:
+                        country = "US"
+                    if add == "" or add is None:
+                        add = "<MISSING>"
+                    if phone == "NULL" or "-" not in phone:
+                        phone = "<MISSING>"
+                    if "locations/huntsville" in loc:
+                        phone = "5032068396"
+                    if "sioux-falls" in loc:
+                        phone = "605.271.6908"
+                    if "south-tampa" in loc:
+                        phone = "5032068396"
+                    yield [
+                        website,
+                        loc,
+                        name,
+                        add,
+                        city,
+                        state,
+                        zc,
+                        country,
+                        store,
+                        phone,
+                        typ,
+                        lat,
+                        lng,
+                        hours,
+                    ]
 
 
 def scrape():

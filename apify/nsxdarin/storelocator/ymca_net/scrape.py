@@ -2,6 +2,7 @@ import csv
 from sgrequests import SgRequests
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from sglogging import SgLogSetup
+from tenacity import retry, stop_after_attempt
 
 logger = SgLogSetup().get_logger("ymca_net")
 headers = {
@@ -38,91 +39,90 @@ def write_output(data):
             writer.writerow(row)
 
 
-def fetch_location(id):
-    try:
-        session = SgRequests()
-        url = f"https://www.ymca.net/y-profile/?id={id}"
-        page_text = session.get(url, headers=headers).iter_lines()
+def retry_error_callback(retry_state):
+    id = retry_state.args[0]
+    logger.error(f"Failure to fetch details for: {id}")
 
-        name = ""
-        add = ""
-        city = ""
-        state = ""
-        zc = ""
-        phone = ""
-        website = "ymca.net"
-        typ = "<MISSING>"
-        country = "US"
-        loc = url
-        store = id
-        hours = ""
-        lat = "<MISSING>"
-        lng = "<MISSING>"
-        AFound = False
-        for line in page_text:
-            line = str(line)
-            if "<h1>" in line and name == "":
-                name = line.split("<h1>")[1].split("</h1>")[0]
-            if "Set as default Y" in line:
-                while AFound is False:
-                    g = next(page_text)
+
+@retry(stop=stop_after_attempt(3), retry_error_callback=retry_error_callback)
+def fetch_location(id):
+    session = SgRequests()
+    url = f"https://www.ymca.net/y-profile/?id={id}"
+    r = session.get(url, headers=headers)
+    name = ""
+    add = ""
+    city = ""
+    state = ""
+    zc = ""
+    phone = ""
+    website = "ymca.net"
+    typ = "<MISSING>"
+    country = "US"
+    loc = url
+    store = id
+    hours = ""
+    lat = "<MISSING>"
+    lng = "<MISSING>"
+    AFound = False
+    lines = r.iter_lines()
+    for line in lines:
+        line = str(line.decode("utf-8"))
+        if "<h1>" in line and name == "":
+            name = line.split("<h1>")[1].split("</h1>")[0]
+        if "Set as default Y" in line:
+            while AFound is False:
+                g = next(lines)
+                g = str(g.decode("utf-8"))
+                if "<br />" in g:
+                    AFound = True
+                    add = g.split("<")[0].strip().replace("\t", "")
+                    g = next(lines)
                     g = str(g.decode("utf-8"))
-                    if "<br />" in g:
-                        AFound = True
-                        add = g.split("<")[0].strip().replace("\t", "")
-                        g = next(page_text)
-                        g = str(g.decode("utf-8"))
-                        if g.count("<br />") == 2:
-                            add = (
-                                add
-                                + " "
-                                + g.split("<br />")[0].strip().replace("\t", "")
-                            )
-                            csz = g.split("<br />")[1].strip().replace("\t", "")
-                        else:
-                            csz = g.split("<br />")[0].strip().replace("\t", "")
-                        city = csz.split(",")[0]
-                        state = csz.split(",")[1].strip().split(" ")[0]
-                        zc = csz.rsplit(" ", 1)[1]
-            if "Phone:" in line:
-                phone = line.split("Phone:")[1].split("<")[0].strip()
-            if 'data-latitude="' in line:
-                lat = line.split('data-latitude="')[1].split('"')[0]
-            if 'data-longitude"' in line:
-                lng = line.split('data-longitude="')[1].split('"')[0]
-            if "ay: " in line and " - " in line and "<br />" in line:
-                hrs = line.split("<")[0].strip().replace("\t", "")
-                if hours == "":
-                    hours = hrs
-                else:
-                    hours = hours + "; " + hrs
-        if name != "":
+                    if g.count("<br />") == 2:
+                        add = add + " " + g.split("<br />")[0].strip().replace("\t", "")
+                        csz = g.split("<br />")[1].strip().replace("\t", "")
+                    else:
+                        csz = g.split("<br />")[0].strip().replace("\t", "")
+                    city = csz.split(",")[0]
+                    state = csz.split(",")[1].strip().split(" ")[0]
+                    zc = csz.rsplit(" ", 1)[1]
+        if "Phone:" in line:
+            phone = line.split("Phone:")[1].split("<")[0].strip()
+        if 'data-latitude="' in line:
+            lat = line.split('data-latitude="')[1].split('"')[0]
+        if 'data-longitude"' in line:
+            lng = line.split('data-longitude="')[1].split('"')[0]
+        if "ay: " in line and " - " in line and "<br />" in line:
+            hrs = line.split("<")[0].strip().replace("\t", "")
             if hours == "":
-                hours = "<MISSING>"
-            if phone == "":
-                phone = "<MISSING>"
-            return [
-                website,
-                loc,
-                name,
-                add,
-                city,
-                state,
-                zc,
-                country,
-                store,
-                phone,
-                typ,
-                lat,
-                lng,
-                hours,
-            ]
-    except Exception as e:
-        logger.error(f"{id} >>> {e}")
+                hours = hrs
+            else:
+                hours = hours + "; " + hrs
+    if name != "":
+        if hours == "":
+            hours = "<MISSING>"
+        if phone == "":
+            phone = "<MISSING>"
+        return [
+            website,
+            loc,
+            name,
+            add,
+            city,
+            state,
+            zc,
+            country,
+            store,
+            phone,
+            typ,
+            lat,
+            lng,
+            hours,
+        ]
 
 
 def fetch_data():
-    with ThreadPoolExecutor(max_workers=20) as executor:
+    with ThreadPoolExecutor(max_workers=10) as executor:
         futures = [executor.submit(fetch_location, id) for id in range(1, 5000)]
 
         for future in as_completed(futures):

@@ -1,4 +1,3 @@
-import html
 from sglogging import sglog
 from bs4 import BeautifulSoup
 from sgrequests import SgRequests
@@ -36,14 +35,13 @@ def fetch_data():
             address = address[1].split()
             state = address[0]
             zip_postal = address[1]
-            phone = soup.select_one("a[href*=tel]").text
-            temp = (
-                soup.find("div", {"class": "store-hours"})
+            phone = soup.find("div", {"class": "store-hours"}).find("a").text
+            hours_of_operation = (
+                soup.find("p", {"class": "store-hours"})
                 .get_text(separator="|", strip=True)
-                .split("|")
+                .replace("|", " ")
             )
-            phone = html.unescape(temp[-2])
-            hours_of_operation = " ".join(x for x in temp[:-3])
+
             yield SgRecord(
                 locator_domain="https://www.nfm.com/",
                 page_url=page_url,
