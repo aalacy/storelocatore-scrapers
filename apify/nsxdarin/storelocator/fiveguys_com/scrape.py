@@ -60,6 +60,7 @@ def fetch_data():
             locs.append(line.split("<loc>")[1].split("<")[0].replace("&#39;", "'"))
     url = "https://restaurants.fiveguys.ca/sitemap.xml"
     r = session.get(url, headers=headers)
+    Found = True
     for line in r.iter_lines():
         line = str(line.decode("utf-8"))
         if "https://restaurants.fiveguys.ca/ab</loc>" in line:

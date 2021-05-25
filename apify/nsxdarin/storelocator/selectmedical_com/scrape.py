@@ -63,7 +63,7 @@ def fetch_data():
             for line2 in r2.iter_lines(decode_unicode=True):
                 if '"Id":"' in line2:
                     items = line2.split('"Id":"')
-                    if len(items) == 9 or x >= count - 9:
+                    if len(items) == 9 or int(x) >= count - 20:
                         Amount = False
                         for item in items:
                             if '"Language":"e' in item:
