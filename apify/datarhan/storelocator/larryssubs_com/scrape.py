@@ -1,4 +1,6 @@
+import re
 import csv
+import demjson
 from lxml import etree
 
 from sgrequests import SgRequests
@@ -45,28 +47,36 @@ def fetch_data():
 
     response = session.get(start_url)
     dom = etree.HTML(response.text)
-    all_locations = dom.xpath('//div[@class="location"]')
+    data = (
+        dom.xpath('//script[contains(text(), "var settings = ")]/text()')[0]
+        .replace("\n", "")
+        .replace("\t", "")
+    )
+    data = re.findall("settings =(.+?);var", data)[0]
+    data = demjson.decode(data)
 
-    for poi_html in all_locations:
-        store_url = "<MISSING>"
+    all_locations = data["pins"]["pins"]
+    for poi in all_locations:
+        store_url = start_url
         location_type = "<MISSING>"
-        location_name = "{} {}".format(
-            poi_html.xpath(".//h3/text()")[0], poi_html.xpath(".//h6/text()")[0]
-        ).strip()
-        raw_address = poi_html.xpath(".//h5/text()")
-        street_address = raw_address[0]
-        city = raw_address[1].split(", ")[0]
-        state = raw_address[1].split(", ")[-1].split()[0]
-        zip_code = raw_address[1].split(", ")[-1].split()[-1]
+        location_name = poi["title"]
+        street_address = "<MISSING>"
+        city = poi["city"]
+        state = "<MISSING>"
+        zip_code = poi["zip"]
         country_code = "<MISSING>"
         store_number = location_name.split("#")[-1]
-        if len(raw_address) == 5:
-            phone = raw_address[-2]
-        else:
-            phone = raw_address[-1]
-        latitude = poi_html.xpath("@data-lat")[0]
-        longitude = poi_html.xpath("@data-lon")[0]
-        hours_of_operation = "<MISSING>"
+        phone = "<MISSING>"
+        latitude = str(poi["latlng"][0])
+        longitude = str(poi["latlng"][-1])
+        hoo_html = etree.HTML(poi["tooltipContent"])
+        hours_of_operation = hoo_html.xpath("//text()")[-1].split("Open")[-1].strip()
+        splitter = re.findall(r"(#\d+)", location_name)[0]
+        hours_of_operation = " ".join(
+            [e.strip() for e in hours_of_operation.split()]
+        ).split(splitter)[-1]
+        if "OPEN SEASONALLY" in hours_of_operation:
+            hours_of_operation = "<MISSING>"
 
         item = [
             DOMAIN,
