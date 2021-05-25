@@ -44,7 +44,11 @@ def fetch_data():
     start_url = "https://www.smartstartcanada.ca/"
     domain = re.findall(r"://(.+?)/", start_url)[0].replace("www.", "")
 
-    response = session.get(start_url)
+    hdr = {
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
+    }
+
+    response = session.get(start_url, headers=hdr)
     dom = etree.HTML(response.text)
     all_states = dom.xpath(
         '//div[@id="cssmenu"]//a[contains(text(), "Locations")]/following-sibling::ul//a/@href'
@@ -64,7 +68,7 @@ def fetch_data():
                 raw_data = [" ".join(raw_data[:2])] + raw_data[2:]
             if "Bay C" in raw_data[1]:
                 raw_data = [" ".join(raw_data[:2])] + raw_data[2:]
-            location_name = loc_dom.xpath('//div[@id="panel3_list"]/h3/text()')
+            location_name = loc_dom.xpath('//div[@id="panel3_list"]/h3/strong/text()')
             location_name = location_name[0] if location_name else "<MISSING>"
             street_address = raw_data[0]
             city = raw_data[1].split(", ")[0]
@@ -74,12 +78,12 @@ def fetch_data():
             store_number = "<MISSING>"
             phone = raw_data[2].split(":")[-1].strip()
             location_type = "<MISSING>"
-            geo = re.findall(r"LatLng\((.+?)\)", loc_response.text)[0].split(",")
-            latitude = geo[-1]
-            longitude = geo[0]
-            hours_of_operation = "<MISSING>"
-            if len(raw_data) > 3:
-                hours_of_operation = raw_data[-1].split("Operation: ")[-1]
+            latitude = "<INACCESSIBLE>"
+            longitude = "<INACCESSIBLE>"
+            hoo = loc_dom.xpath('//li[contains(text(), "Hours of Operation:")]/text()')
+            hours_of_operation = hoo[0].split("Operation:")[-1] if hoo else "<MISSING>"
+            if "Reduced Hours" in hours_of_operation:
+                hours_of_operation = "<MISSING>"
 
             item = [
                 domain,

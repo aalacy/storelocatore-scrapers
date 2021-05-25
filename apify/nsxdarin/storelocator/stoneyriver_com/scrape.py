@@ -114,6 +114,16 @@ def fetch_data():
                 lng = "-76.546898"
             if hours == "":
                 hours = "<MISSING>"
+            if "Oak Brook" in city:
+                hours = "Sun-Thurs: 11:30am-9pm; Fri-Sat: 11:30am-10pm"
+            if "; Outdoor" in hours:
+                hours = hours.split("; Outdoor")[0].strip()
+            if "; Patio" in hours:
+                hours = hours.split("; Patio")[0].strip()
+            if "; Dine" in hours:
+                hours = hours.split("; Dine")[0].strip()
+            if "3900 Sum" in add:
+                hours = hours.replace("; Mon", "Mon")
             yield [
                 website,
                 purl,

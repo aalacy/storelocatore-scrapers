@@ -1,7 +1,7 @@
 import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
-import time
+import json
 
 session = SgRequests()
 headers = {
@@ -39,65 +39,36 @@ def write_output(data):
 
 
 def fetch_data():
-    locs = []
-    url = "https://locations.schnucks.com/sitemap.xml"
+    url = "https://schnucks.locally.com/stores/conversion_data?has_data=true&company_id=136637&store_mode=&style=&color=&upc=&category=&inline=1&show_links_in_list=&parent_domain=&map_center_lat=44.98428912805207&map_center_lng=-93.27137000000019&map_distance_diag=42.597530622701505&sort_by=proximity&no_variants=0&only_retailer_id=136637&dealers_company_id=&only_store_id=false&uses_alt_coords=false&q=false&zoom_level="
     r = session.get(url, headers=headers)
     website = "schnucks.com"
     typ = "<MISSING>"
     country = "US"
     logger.info("Pulling Stores")
-    for line in r.iter_lines():
-        line = str(line.decode("utf-8"))
-        if "<loc>https://locations.schnucks.com/" in line:
-            items = line.split("<loc>https://locations.schnucks.com/")
-            for item in items:
-                if "<?xml" not in item:
-                    locs.append("https://locations.schnucks.com/" + item.split("<")[0])
-    for loc in locs:
-        logger.info(loc)
-        time.sleep(3)
-        name = ""
-        add = ""
-        city = ""
-        state = loc.split(".com/")[1].split("-")[0].upper()
-        zc = ""
-        store = ""
-        phone = ""
-        lat = ""
-        lng = ""
+    for item in json.loads(r.content)["markers"]:
         hours = ""
-        r2 = session.get(loc, headers=headers)
-        for line2 in r2.iter_lines():
-            line2 = str(line2.decode("utf-8"))
-            if 'property="og:title" content="' in line2:
-                name = line2.split('property="og:title" content="')[1].split(" |")[0]
-            if '"branchCode":"' in line2:
-                store = line2.split('"branchCode":"')[1].split('"')[0]
-                add = line2.split('"streetAddress":"')[1].split('"')[0].strip()
-                city = line2.split('"addressLocality":"')[1].split('"')[0]
-                zc = line2.split('"postalCode":"')[1].split('"')[0]
-                phone = (
-                    line2.split('"telephone":"')[1]
-                    .split('"')[0]
-                    .replace("+", "")
-                    .strip()
+        store = item["id"]
+        name = item["name"]
+        lat = item["lat"]
+        lng = item["lng"]
+        add = item["address"]
+        city = item["city"]
+        state = item["state"]
+        zc = item["zip"]
+        phone = item["phone"]
+        loc = "https://locations.schnucks.com/" + item["slug"]
+        days = str(item["display_dow"]).split("{")
+        for day in days:
+            if "bil_hrs" in day:
+                hrs = (
+                    day.split("'label': '")[1].split("'")[0]
+                    + ": "
+                    + day.split("'bil_hrs': '")[1].split("'")[0]
                 )
-                lat = line2.split('"latitude":')[1].split(",")[0]
-                lng = line2.split('"longitude":')[1].split("}")[0]
-                days = line2.split('"dayOfWeek":"')
-                for day in days:
-                    if '"opens":"' in day:
-                        hrs = (
-                            day.split('"')[0]
-                            + ": "
-                            + day.split('"opens":"')[1].split('"')[0]
-                            + "-"
-                            + day.split('"closes":"')[1].split('"')[0]
-                        )
-                        if hours == "":
-                            hours = hrs
-                        else:
-                            hours = hours + "; " + hrs
+                if hours == "":
+                    hours = hrs
+                else:
+                    hours = hours + "; " + hrs
         yield [
             website,
             loc,

@@ -53,7 +53,9 @@ def fetch_data():
 
     for item in items:
         location_name = item.p.text.strip()
-        location_type = item.find_all("p")[2].text.strip()
+        location_type = (
+            item.find_all("p")[2].text.replace(", delivery", " delivery").strip()
+        )
         raw_address = item.find_all("p")[3].text.strip()
         if ", " in location_type:
             raw_address = item.find_all("p")[2].text.strip()

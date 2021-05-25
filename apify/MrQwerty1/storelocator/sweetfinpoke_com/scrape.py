@@ -60,7 +60,7 @@ def fetch_data():
         country_code = "US"
         store_number = "<MISSING>"
 
-        text = d.xpath(".//i/following-sibling::text()")
+        text = d.xpath(".//div[./p/i]//text()|.//div[./i]//text()")
         text = list(filter(None, [t.strip() for t in text]))
         phone = text.pop(0)
         latitude = "<MISSING>"

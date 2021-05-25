@@ -55,7 +55,10 @@ def fetch_data():
         data = demjson.decode(data)
 
         for poi in data:
-            store_url = start_url
+            store_url = start_url + "locations/" + poi["details"]["storeUrl"]
+            loc_response = session.get(store_url)
+            loc_dom = etree.HTML(loc_response.text)
+
             location_name = poi["details"]["name"]
             location_name = location_name if location_name else "<MISSING>"
             street_address = poi["details"]["address"]
@@ -74,7 +77,9 @@ def fetch_data():
             location_type = "<MISSING>"
             latitude = poi["lat"]
             longitude = poi["lng"]
-            hours_of_operation = "<MISSING>"
+            hoo = loc_dom.xpath('//table[@class="store-hours w-full"]//text()')
+            hoo = [e.strip() for e in hoo if e.strip()]
+            hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
 
             item = [
                 domain,
