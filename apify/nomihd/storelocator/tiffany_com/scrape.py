@@ -19,7 +19,7 @@ headers = {
 def validhour(x):
     if (
         ("AM" in x.upper() and "PM" in x.upper())
-        or (re.search("\d *[AP]M", x.upper()))
+        or (re.search("\\d *[AP]M", x.upper()))
         or ("DAILY" in x.upper())
         or ("MON" in x.upper() and ":" in x.upper())
         or ("TUE" in x.upper() and ":" in x.upper())
