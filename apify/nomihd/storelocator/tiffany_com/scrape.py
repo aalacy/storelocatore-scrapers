@@ -5,6 +5,7 @@ import lxml.html
 import json
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
+import re
 
 website = "tiffany.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -13,6 +14,39 @@ headers = {
     "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.66 Safari/537.36",
     "Accept": "application/json",
 }
+
+
+def validhour(x):
+    if (
+        ("AM" in x.upper() and "PM" in x.upper())
+        or (re.search("\d *[AP]M", x.upper()))
+        or ("DAILY" in x.upper())
+        or ("MON" in x.upper() and ":" in x.upper())
+        or ("TUE" in x.upper() and ":" in x.upper())
+        or ("WED" in x.upper() and ":" in x.upper())
+        or ("THU" in x.upper() and ":" in x.upper())
+        or ("FRI" in x.upper() and ":" in x.upper())
+        or ("SAT" in x.upper() and ":" in x.upper())
+        or ("SUN" in x.upper() and ":" in x.upper())
+    ):
+
+        if (
+            "JAN" in x.upper()
+            or "FEB" in x.upper()
+            or "MAR" in x.upper()
+            or "APR" in x.upper()
+            or "MAY" in x.upper()
+            or "JUN" in x.upper()
+            or "JUL" in x.upper()
+            or "AUG" in x.upper()
+            or "SEP" in x.upper()
+            or "OCT" in x.upper()
+            or "NOV" in x.upper()
+            or "DEC" in x.upper()
+        ):
+            return False
+        return True
+    return False
 
 
 def fetch_data():
@@ -24,14 +58,20 @@ def fetch_data():
     countries = countries_sel.xpath(
         '//ul[@class="stores-filter__regions-content-dropdown-list"]/li/a/@href'
     )
+    countries = list(set(countries))
     for country_url in countries:
         search_url = "https://www.tiffany.com/" + country_url
+
+        if "/homepage/" in search_url:
+            continue
+        log.info(f"\n======\n{search_url}\n=======\n")
+
         stores_req = session.get(search_url, headers=headers)
         stores_sel = lxml.html.fromstring(stores_req.text)
         stores = stores_sel.xpath(
             '//div[@class="store-list__store-item"]/a[@class="cta"]/@href'
         )
-        for store_url in stores:
+        for store_url in stores[:]:
             page_url = "https://www.tiffany.com" + store_url
             locator_domain = website
             location_name = ""
@@ -77,44 +117,50 @@ def fetch_data():
                     except:
                         pass
 
-                    if "permanently closed" in json_data["openingHours"]:
+                    if (
+                        "permanently closed"
+                        in json_data["openingHours"]
+                        + " "
+                        + json_data["specialOpeningHoursSpecification"]
+                    ):
                         hours_of_operation = "permanently closed"
-                    elif "temporarily closed" in json_data["openingHours"]:
+                    elif (
+                        "temporarily closed"
+                        in json_data["openingHours"]
+                        + " "
+                        + json_data["specialOpeningHoursSpecification"]
+                    ):
                         hours_of_operation = "temporarily closed"
                     else:
                         temp_hours = json_data["openingHours"]
-                        try:
-                            if len(temp_hours.split("<br><br>")) == 3:
-                                hours_of_operation = (
-                                    temp_hours.split("<br><br>")[-1]
-                                    .replace("<br>", "; ")
-                                    .strip()
-                                )
-                            else:
-                                hours_of_operation = json_data[
-                                    "specialOpeningHoursSpecification"
-                                ].strip()
-                                try:
-                                    hours_of_operation = (
-                                        hours_of_operation.split("<br><br>")[1]
-                                        .replace("<br>", "; ")
-                                        .strip()
-                                    )
-                                except:
-                                    pass
-                        except:
-                            pass
+                        temp_hours = (
+                            temp_hours.split("Holiday ")[0]
+                            .split("urbside ")[0]
+                            .split("Café Hours")[0]
+                        )
+                        hours = list(filter(validhour, temp_hours.split("<br>")))
+                        hours_of_operation = "; ".join(hours).strip("; ").strip()
+                        if not hours_of_operation:
 
-                    try:
-                        hours_of_operation = hours_of_operation.split("; Holidays: ")[
-                            0
-                        ].strip()
-                    except:
-                        pass
+                            temp_hours = json_data["specialOpeningHoursSpecification"]
 
-                    hours_of_operation = hours_of_operation.replace(
-                        " <br>", "; "
-                    ).strip()
+                            temp_hours = (
+                                temp_hours.split("Holiday ")[0]
+                                .split("urbside ")[0]
+                                .split("Café Hours")[0]
+                            )
+                            hours = list(filter(validhour, temp_hours.split("<br>")))
+                            hours_of_operation = "; ".join(hours).strip("; ").strip()
+
+                        hours_of_operation = hours_of_operation.replace(
+                            "<b>", ""
+                        ).replace("<BR>", "")
+                        hours_of_operation = (
+                            hours_of_operation.split("e-mail from")[1].strip()
+                            if "e-mail from" in hours_of_operation
+                            else hours_of_operation
+                        )
+
                     yield SgRecord(
                         locator_domain=locator_domain,
                         page_url=page_url,
