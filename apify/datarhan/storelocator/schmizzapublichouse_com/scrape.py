@@ -53,7 +53,6 @@ def fetch_data():
 
     all_locations = dom.xpath('//a[contains(text(), "View Location")]/@href')
     for store_url in all_locations:
-        print(store_url)
         with SgFirefox() as driver:
             driver.get(store_url)
             loc_dom = etree.HTML(driver.page_source)
