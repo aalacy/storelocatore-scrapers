@@ -181,9 +181,8 @@ def fetch_data():
                     zipp = add_list[1].split(",")[1].split()[-1].strip()
         else:
             continue
-
         phone_list = re.findall(
-            re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"),
+            re.compile(r".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"),
             info.split("message:")[-1],
         )
         if phone_list != []:
@@ -204,7 +203,7 @@ def fetch_data():
 
                     if len(hours_list.split()) > 1:
                         p = re.findall(
-                            re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"),
+                            re.compile(r".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"),
                             str(hours_list),
                         )
                         if p == []:
