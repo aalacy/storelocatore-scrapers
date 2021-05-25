@@ -1,8 +1,9 @@
 import csv
+import json
 from lxml import etree
-from urllib.parse import urljoin
 
 from sgrequests import SgRequests
+from sgscrape.sgpostal import parse_address_intl
 
 
 def write_output(data):
@@ -40,61 +41,94 @@ def fetch_data():
     session = SgRequests()
 
     items = []
-    scraped_items = []
 
     DOMAIN = "ketteringhealth.org"
-    start_url = "https://www.ketteringhealth.org/locations/"
+    start_url = "https://ketteringhealth.org/wp-json/facetwp/v1/refresh"
 
-    response = session.get(start_url)
-    dom = etree.HTML(response.text)
-    all_locations = dom.xpath(
-        '//h1[contains(text(), "All Locations")]/following-sibling::div[@class="row"]'
-    )
-    pages = dom.xpath('//div[@class="pagebox"]/a/@href')
-    for page in pages:
-        response = session.get(urljoin(start_url, page))
-        dom = etree.HTML(response.text)
-        all_locations += dom.xpath(
-            '//h1[contains(text(), "All Locations")]/following-sibling::div[@class="row"]'
-        )
+    hdr = {
+        "content-type": "application/json",
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.212 Safari/537.36",
+    }
+    page = 1
+    frm = {
+        "action": "facetwp_refresh",
+        "data": {
+            "facets": {
+                "count_locations": [],
+                "l_search": "",
+                "location_type": [],
+                "services": [],
+                "distance": [],
+                "load_more": [],
+                "locations_map": [],
+                "paged": page,
+            },
+            "frozen_facets": {"distance": "hard", "locations_map": "hard"},
+            "http_params": {"get": [], "uri": "locations", "url_vars": []},
+            "template": "locations",
+            "extras": {"sort": "default"},
+            "soft_refresh": 1,
+            "is_bfcache": 1,
+            "first_load": 0,
+            "paged": page,
+        },
+    }
+    response = session.post(start_url, json=frm, headers=hdr)
+    data = json.loads(response.text)
+    total_pages = data["settings"]["pager"]["total_pages"]
 
-    for poi_html in all_locations:
-        store_url = "<MISSING>"
-        store_url = store_url if store_url else "<MISSING>"
-        location_name = poi_html.xpath('.//h1[@class="locnamebig"]/text()')
+    dom = etree.HTML(data["template"])
+    all_locations = dom.xpath('//a[@class="directory-card"]/@href')
+
+    for page in range(2, total_pages + 1):
+        frm["data"]["facets"]["paged"] = page
+        frm["data"]["paged"] = page
+        response = session.post(start_url, json=frm, headers=hdr)
+        data = json.loads(response.text)
+        dom = etree.HTML(data["template"])
+        all_locations += dom.xpath('//a[@class="directory-card"]/@href')
+
+    for store_url in list(set(all_locations)):
+        loc_response = session.get(store_url)
+        loc_dom = etree.HTML(loc_response.text)
+
+        location_name = loc_dom.xpath('//h1[@class="heading-1"]/text()')
         location_name = location_name[0] if location_name else "<MISSING>"
-        raw_address = poi_html.xpath('.//div[@class="locaddress"]/text()')
+        raw_address = loc_dom.xpath('//div[@class="profile-content"]/address//text()')
         raw_address = [elem.strip() for elem in raw_address if elem.strip()]
-        if len(raw_address) == 2:
-            raw_address = [raw_address[0]] + raw_address[1].split(", ")
-        if len(raw_address) == 4:
-            raw_address = [", ".join(raw_address[:3])] + raw_address[-1].split(", ")
-        if len(raw_address) == 3:
-            if ", " in raw_address[-1]:
-                raw_address = [", ".join(raw_address[:2])] + raw_address[-1].split(", ")
-        street_address = raw_address[0]
+        addr = parse_address_intl(" ".join(raw_address))
+
+        street_address = addr.street_address_1
+        if addr.street_address_2:
+            street_address += " " + addr.street_address_2
         street_address = street_address if street_address else "<MISSING>"
-        city = raw_address[1].split(",")[0]
+        city = addr.city
         city = city if city else "<MISSING>"
-        state = raw_address[-1].split()[0]
+        state = addr.state
         state = state if state else "<MISSING>"
-        zip_code = raw_address[-1].split()[-1]
+        zip_code = addr.postcode
         zip_code = zip_code if zip_code else "<MISSING>"
-        country_code = "<MISSING>"
+        country_code = addr.country
+        country_code = country_code if country_code else "<MISSING>"
         store_number = "<MISSING>"
-        phone = poi_html.xpath('.//strong[abbr[@title="Phone"]]/text()')
+        phone = loc_dom.xpath('//div[@class="contact-info"]/p/a/text()')
         phone = phone[0].strip() if phone else "<MISSING>"
         location_type = "<MISSING>"
-        geo = (
-            poi_html.xpath('.//iframe[@title="Google Map"]/@src')[0]
-            .split("=")[1]
-            .split("&")[0]
-            .split(",")
-        )
-        latitude = geo[0]
-        latitude = latitude if latitude else "<MISSING>"
-        longitude = geo[1]
-        longitude = longitude if longitude else "<MISSING>"
+        latitude = "<MISSING>"
+        longitude = "<MISSING>"
+        geo = loc_dom.xpath('//address/p/a[contains(@href, "maps")]/@href')
+        if geo:
+            geo = geo[0].split("query=")[-1].split("&")[0].split(",")
+            latitude = geo[0]
+            longitude = geo[1]
+        hoo = loc_dom.xpath('//ul[@class="hours-list"]//text()')
+        if hoo:
+            hoo = [e.strip() for e in hoo if e.strip()]
+        if len(hoo) == 0:
+            hoo = loc_dom.xpath(
+                '//div[@class="profile-content"]//div[@class="hours-info"]//text()'
+            )
+        hoo = [e.strip() for e in hoo if e.strip()]
         hours_of_operation = "<MISSING>"
 
         item = [
@@ -113,10 +147,7 @@ def fetch_data():
             longitude,
             hours_of_operation,
         ]
-        check = f"{location_name} {street_address}"
-        if check not in scraped_items:
-            scraped_items.append(check)
-            items.append(item)
+        items.append(item)
 
     return items
 
