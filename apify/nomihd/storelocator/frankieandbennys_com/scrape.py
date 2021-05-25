@@ -78,6 +78,11 @@ def fetch_data():
     stores = list(set(url_list))
     for slug in stores:
         page_url = "https://www.frankieandbennys.com/restaurants/" + slug
+        if (
+            "https://www.frankieandbennys.com/restaurants/east-midlands-airport"
+            == page_url
+        ):
+            continue
         log.info(page_url)
         store_req = session.get(
             "https://www.frankieandbennys.com/api/content/restaurants/" + slug
@@ -127,6 +132,10 @@ def fetch_data():
 
             if "telephone" in store_json:
                 phone = store_json["telephone"]
+
+            if "," in city:
+                city = city.split(",")[0].strip()
+
             hours_of_operation = ""
             hours_list = []
             for key in store_json.keys():
