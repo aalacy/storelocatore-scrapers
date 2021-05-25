@@ -113,14 +113,14 @@ def fetch_data():
                 us_zip_list = re.findall(
                     re.compile(r"\b[0-9]{5}(?:-[0-9]{4})?\b"), str(sz)
                 )
-                if us_zip_list != []:
+                if us_zip_list:
                     zipp = us_zip_list[0]
 
                 else:
                     m = re.findall(r"\d", sz)
                     zip = "".join(m)
 
-                    if zip.split() != []:
+                    if zip.split():
                         zipp = zip
 
                     else:
@@ -131,7 +131,7 @@ def fetch_data():
 
                 else:
 
-                    if zip.split() != []:
+                    if zip.split():
                         state = sz.split(zip)[0].strip()
 
                     else:
@@ -143,7 +143,7 @@ def fetch_data():
                 zipp_list = re.findall(
                     re.compile(r"\b[0-9]{5}(?:-[0-9]{4})?\b"), " ".join(add_list)
                 )
-                if zipp_list == []:
+                if not zipp_list:
                     zipp = "<MISSING>"
                 else:
                     zipp = zipp_list[0]
@@ -185,7 +185,7 @@ def fetch_data():
             re.compile(r".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"),
             info.split("message:")[-1],
         )
-        if phone_list != []:
+        if phone_list:
             phone = phone_list[0].strip()
         else:
             phone = "<MISSING>"
@@ -199,19 +199,19 @@ def fetch_data():
                 hours_of_operation = hours[0].strip()
             else:
                 hours_list = hours[1].strip()
-                if hours_list.split() != []:
+                if hours_list.split():
 
                     if len(hours_list.split()) > 1:
                         p = re.findall(
                             re.compile(r".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"),
                             str(hours_list),
                         )
-                        if p == []:
+                        if not p:
                             hours_of_operation = hours_list
                         else:
                             p1 = "".join(p)
                             h = hours_list.split(p1)[-1].split()
-                            if h == []:
+                            if not h:
                                 hours_of_operation = "<MISSING>"
                             else:
                                 hours_of_operation = hours_list.split(p1)[-1].strip()
@@ -256,7 +256,7 @@ def fetch_data():
                 page_url,
             ]
             store = [
-                "<MISSING>" if x == "" or x == None or x == "." else x for x in store
+                "<MISSING>" if x == "" or x is None or x == "." else x for x in store
             ]
 
         return_main_object.append(store)
