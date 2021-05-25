@@ -38,7 +38,6 @@ states = {
 def fetch_data():
     locator_domain = "https://www.newleafcannabis.ca/"
     base_url = "https://www.newleafcannabis.ca/contact/"
-    json_url = "https://v3.dutchie.com/graphql?operationName=ConsumerDispensaries"
     with SgRequests() as session:
         res = session.get(base_url, headers=_headers).text
         locations = json.loads(
@@ -47,32 +46,31 @@ def fetch_data():
             .strip()[1:-2]
         )
         logger.info(f"{len(locations)} found")
-        with SgFirefox() as driver:
-            for _ in locations:
-                address = list(bs(_["address"], "lxml").stripped_strings)
-                hours = []
-                for x, hh in _["days"].items():
-                    times = f"{hh['open']}-{hh['close']}"
-                    if hh["is_closed"]:
-                        times = "closed"
-                    hours.append(f"{days[int(x)]}: {times}")
+        for _ in locations:
+            address = list(bs(_["address"], "lxml").stripped_strings)
+            hours = []
+            for x, hh in _["days"].items():
+                times = f"{hh['open']}-{hh['close']}"
+                if hh["is_closed"]:
+                    times = "closed"
+                hours.append(f"{days[int(x)]}: {times}")
 
-                zip_postal = " ".join(address[1].split(" ")[1:])
-                yield SgRecord(
-                    page_url=_["shop_now_button_url"],
-                    store_number=_["id"],
-                    location_name=_["name"],
-                    street_address=address[0].replace("–", "-"),
-                    city=_["city"],
-                    state=states[zip_postal[0].upper()],
-                    latitude=_["latitude"],
-                    longitude=_["longitude"],
-                    zip_postal=zip_postal,
-                    country_code="CA",
-                    phone=_["phone_number"],
-                    locator_domain=locator_domain,
-                    hours_of_operation="; ".join(hours).replace("–", "-"),
-                )
+            zip_postal = " ".join(address[1].split(" ")[1:])
+            yield SgRecord(
+                page_url=_["shop_now_button_url"],
+                store_number=_["id"],
+                location_name=_["name"],
+                street_address=address[0].replace("–", "-"),
+                city=_["city"],
+                state=states[zip_postal[0].upper()],
+                latitude=_["latitude"],
+                longitude=_["longitude"],
+                zip_postal=zip_postal,
+                country_code="CA",
+                phone=_["phone_number"],
+                locator_domain=locator_domain,
+                hours_of_operation="; ".join(hours).replace("–", "-"),
+            )
 
 
 if __name__ == "__main__":
