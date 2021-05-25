@@ -115,7 +115,6 @@ def fetch_data():
         )
         r = session.get(location_url, headers=headers, verify=False).json()
         if r["locations"] is not None:
-            print(len(r["locations"]))
             for data in r["locations"]:
                 location_name = data["facilityname"]
                 street_address = (
