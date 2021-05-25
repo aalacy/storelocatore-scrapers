@@ -59,7 +59,8 @@ def fetch_data():
         all_locations += data["response"]["entities"]
 
     for poi in all_locations:
-        store_url = poi["landingPageUrl"]
+        store_url = poi.get("landingPageUrl")
+        store_url = store_url if store_url else "<MISSING>"
         location_name = poi["name"]
         location_name = location_name if location_name else "<MISSING>"
         street_address = poi["address"]["line1"]
@@ -78,10 +79,13 @@ def fetch_data():
         latitude = poi["geocodedCoordinate"]["latitude"]
         longitude = poi["geocodedCoordinate"]["longitude"]
         hoo = []
-        for day, hours in poi["hours"].items():
-            opens = hours["openIntervals"][0]["start"]
-            closes = hours["openIntervals"][0]["end"]
-            hoo.append(f"{day} {opens} - {closes}")
+        if poi.get("hours"):
+            for day, hours in poi["hours"].items():
+                if day in ["reopenDate", "holidayHours"]:
+                    continue
+                opens = hours["openIntervals"][0]["start"]
+                closes = hours["openIntervals"][0]["end"]
+                hoo.append(f"{day} {opens} - {closes}")
         hoo = [e.strip() for e in hoo if e.strip()][1:]
         hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
 
