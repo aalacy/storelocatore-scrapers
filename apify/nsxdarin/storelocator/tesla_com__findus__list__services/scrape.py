@@ -140,11 +140,16 @@ def fetch_data():
         lat = ""
         lng = ""
         HFound = True
+        locality = ""
         hours = ""
         r2 = session.get(loc, headers=headers)
         lines = r2.iter_lines()
         for line2 in lines:
             line2 = str(line2.decode("utf-8"))
+            if '<span class="locality">' in line2:
+                locality = (
+                    line2.split('<span class="locality">')[1].split("<")[0].strip()
+                )
             if '<span class="coming-soon">Coming Soon</span>' in line2:
                 CS = True
             if "<title>" in line2:
@@ -186,7 +191,7 @@ def fetch_data():
                     .split(",")[1]
                     .split('"')[0]
                 )
-            if "Hours</strong><br />" in line2 and "day" in line2 and HFound:
+            if "Hours</strong>" in line2 and "day" in line2 and HFound:
                 hours = (
                     line2.split("Hours</strong><br />")[1]
                     .replace("<br />", "; ")
@@ -197,7 +202,7 @@ def fetch_data():
                     .strip()
                 )
                 HFound = False
-            if "Hours</strong><br/>" in line2 and "day" in line2 and HFound:
+            if "Hours</strong>" in line2 and "day" in line2 and HFound:
                 hours = (
                     line2.split("Hours</strong><br/>")[1]
                     .replace("<br/>", "; ")
@@ -208,7 +213,7 @@ def fetch_data():
                     .strip()
                 )
                 HFound = False
-            if "Hours</strong><br />" in line2 and "day" not in line2 and HFound:
+            if "Hours</strong>" in line2 and "day" not in line2 and HFound:
                 g = next(lines)
                 g = str(g.decode("utf-8"))
                 if "day" not in g:
@@ -239,7 +244,7 @@ def fetch_data():
                     g = next(lines)
                     g = str(g.decode("utf-8"))
                 HFound = False
-            if "Hours</strong><br/>" in line2 and "day" not in line2 and HFound:
+            if "Hours</strong>" in line2 and "day" not in line2 and HFound:
                 g = next(lines)
                 g = str(g.decode("utf-8"))
                 if "day" not in g:
@@ -301,6 +306,13 @@ def fetch_data():
             country = "<MISSING>"
         if add == "" or add is None:
             add = "<MISSING>"
+        if country == "US":
+            try:
+                city = locality.split(",")[0].strip()
+                state = locality.split(",")[1].strip().split(" ")[0]
+                zc = locality.rsplit(" ", 1)[1]
+            except:
+                pass
         yield [
             website,
             loc,
