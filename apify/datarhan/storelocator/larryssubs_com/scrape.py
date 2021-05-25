@@ -57,16 +57,29 @@ def fetch_data():
 
     all_locations = data["pins"]["pins"]
     for poi in all_locations:
-        store_url = start_url
         location_type = "<MISSING>"
         location_name = poi["title"]
-        street_address = "<MISSING>"
+        store_url = "https://larryssubs.com/map-location/{}/".format(
+            location_name.replace(" #", "-").lower().replace(" ", "-").replace(".", "")
+        )
+        loc_response = session.get(store_url)
+        loc_dom = etree.HTML(loc_response.text)
+        raw_data = loc_dom.xpath('//meta[@property="og:description"]/@content')[0]
+        if "Hours" in raw_data:
+            raw_data = raw_data.split("Hours")[0].strip().split("\r\n")
+        else:
+            raw_data = raw_data.split("Phone")[0].strip().split("\r\n")
+
+        street_address = raw_data[0]
         city = poi["city"]
-        state = "<MISSING>"
+        state = raw_data[-1].split(",")[-1].split()[0]
         zip_code = poi["zip"]
         country_code = "<MISSING>"
         store_number = location_name.split("#")[-1]
         phone = "<MISSING>"
+        phone = loc_dom.xpath('//meta[@property="og:description"]/@content')[0]
+        if "Phone" in phone:
+            phone = phone.split("Phone:")[-1].split("\r\n")[0].strip()
         latitude = str(poi["latlng"][0])
         longitude = str(poi["latlng"][-1])
         hoo_html = etree.HTML(poi["tooltipContent"])
