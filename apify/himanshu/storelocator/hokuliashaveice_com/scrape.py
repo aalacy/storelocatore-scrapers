@@ -57,7 +57,7 @@ def fetch_data():
     page_url = "https://hokuliashaveice.com/locations/"
 
     r = session.get("https://hokuliashaveice.com/locations/", headers=headers)
-    soup = BeautifulSoup(r.text, "html5lib")
+    soup = BeautifulSoup(r.text, "html.parser")
     script = soup.find("div", {"id": "locations"}).find_next("script")
     s = script.text.split(" var features = ")[-1].split("];")[0] + "]".replace("\n", "")
     sc = s.split(" position:")
