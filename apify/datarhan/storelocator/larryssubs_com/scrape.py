@@ -64,12 +64,11 @@ def fetch_data():
         )
         loc_response = session.get(store_url)
         loc_dom = etree.HTML(loc_response.text)
-        raw_data = (
-            loc_dom.xpath('//meta[@property="og:description"]/@content')[0]
-            .split("Hours")[0]
-            .strip()
-            .split("\r\n")
-        )
+        raw_data = loc_dom.xpath('//meta[@property="og:description"]/@content')[0]
+        if "Hours" in raw_data:
+            raw_data = raw_data.split("Hours")[0].strip().split("\r\n")
+        else:
+            raw_data = raw_data.split("Phone")[0].strip().split("\r\n")
 
         street_address = raw_data[0]
         city = poi["city"]
