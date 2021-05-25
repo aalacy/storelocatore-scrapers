@@ -2,6 +2,7 @@ import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 from sglogging import SgLogSetup
+import re
 
 logger = SgLogSetup().get_logger("hueymagoos_com")
 
@@ -46,7 +47,7 @@ def fetch_data():
     p_url = "https://hueymagoos.com/locations/"
     r = session.get(p_url, headers=headers)
     soup = BeautifulSoup(r.text, "html.parser")
-
+    pattern = re.compile(r"\s\s+")
     data_list = soup.findAll("div", {"class": "loc-box-new"})
 
     for loc in data_list:
@@ -73,7 +74,7 @@ def fetch_data():
             else:
                 phone = "<MISSING>"
             if details.findAll("a")[1].get("href").find("maps") != -1:
-                address = details.findAll("a")[1].text
+                address = re.sub(pattern, "\n", details.findAll("a")[1].text).strip()
                 street = address.split("\n")[0]
                 city = address.split("\n")[1].split(", ")[0].strip()
                 state = address.split("\n")[1].split(", ")[1].split(" ")[0].strip()
@@ -89,7 +90,7 @@ def fetch_data():
             else:
                 phone = "<MISSING>"
             if details.findAll("a")[0].get("href").find("maps") != -1:
-                address = details.findAll("a")[0].text
+                address = re.sub(pattern, "\n", details.findAll("a")[0].text).strip()
                 street = address.split("\n")[0]
                 city = address.split("\n")[1].split(", ")[0].strip()
                 state = address.split("\n")[1].split(", ")[1].split(" ")[0].strip()

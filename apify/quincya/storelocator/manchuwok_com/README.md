@@ -1,2 +1,3 @@
 --ignore StreetAddressHasNumber --ignore GeoConsistencyValidator (Confrimed scraped correctly)
---ignore CountValidator --ignore StateLevelCountValidator (Site has 76 POI, validation expected 101)
+--ignore CountValidator --ignore StateLevelCountValidator (Site has 86 POI, validation expected 101)
+--ignore CountryValidator (All countries included)

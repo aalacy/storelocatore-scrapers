@@ -4,8 +4,7 @@ from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import json
-from sgzip.dynamic import SearchableCountries
-from sgzip.dynamic import DynamicGeoSearch
+from sgzip.dynamic import SearchableCountries, DynamicGeoSearch, Grain_8
 import lxml.html
 from sgzip.static import static_zipcode_list
 
@@ -23,16 +22,17 @@ url_list = []
 def fetch_data():
 
     search_url = "https://www.renasantbank.com/api/location/locationfinder/locationsearch?key={}&latitude={}&longitude={}&radius=100"
-    search = DynamicGeoSearch(
-        country_codes=[SearchableCountries.USA],
-        max_radius_miles=100,
-        max_search_results=50,
-    )
 
     zips = static_zipcode_list(radius=200, country_code=SearchableCountries.USA)
 
     for zip_code in zips:
         log.info(zip_code)
+        search = DynamicGeoSearch(
+            country_codes=[SearchableCountries.USA],
+            max_radius_miles=100,
+            max_search_results=50,
+            granularity=Grain_8(),
+        )
         for lat, lng in search:
             log.info(f"pulling records for coordinates: {lat,lng}")
 

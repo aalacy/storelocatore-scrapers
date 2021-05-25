@@ -66,6 +66,8 @@ def fetch_data():
             hours_of_operation = "; ".join(hours_list).strip()
             latitude = store["lat"]
             longitude = store["lng"]
+            if longitude == "N":
+                longitude = "<MISSING>"
 
             yield SgRecord(
                 locator_domain=locator_domain,
