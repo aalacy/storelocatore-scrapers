@@ -8,6 +8,7 @@ from sgscrape.sgwriter import SgWriter
 from sgzip.dynamic import SearchableCountries
 from sgzip.static import static_coordinate_list
 from tenacity import retry, stop_after_attempt
+import datetime
 
 website = "pnc.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -15,16 +16,14 @@ session = SgRequests()
 
 headers = {
     "authority": "apps.pnc.com",
-    "cache-control": "max-age=0",
-    "sec-ch-ua": '"Google Chrome";v="89", "Chromium";v="89", ";Not A Brand";v="99"',
+    "sec-ch-ua": '" Not A;Brand";v="99", "Chromium";v="90", "Google Chrome";v="90"',
+    "accept": "application/json, text/plain, */*",
     "sec-ch-ua-mobile": "?0",
-    "upgrade-insecure-requests": "1",
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.114 Safari/537.36",
-    "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-    "sec-fetch-site": "none",
-    "sec-fetch-mode": "navigate",
-    "sec-fetch-user": "?1",
-    "sec-fetch-dest": "document",
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.93 Safari/537.36",
+    "sec-fetch-site": "same-origin",
+    "sec-fetch-mode": "cors",
+    "sec-fetch-dest": "empty",
+    "referer": "https://apps.pnc.com/locator/search",
     "accept-language": "en-US,en-GB;q=0.9,en;q=0.8",
 }
 
@@ -44,9 +43,11 @@ def fetch_records_for(coords):
     lat = coords[0]
     lng = coords[1]
     log.info(f"pulling records for coordinates: {lat,lng}")
-    search_url = "https://apps.pnc.com/locator-api/locator/api/v2/location/?latitude={}&longitude={}&radius=100&radiusUnits=mi&branchesOpenNow=false"
-
-    stores_req = session.get(search_url.format(lat, lng), headers=headers, timeout=15)
+    search_url = "https://apps.pnc.com/locator-api/locator/api/v2/location/?t={}&latitude={}&longitude={}&radius=100&radiusUnits=mi&branchesOpenNow=false"
+    timestamp = str(datetime.datetime.now().timestamp()).split(".")[0].strip()
+    stores_req = session.get(
+        search_url.format(timestamp, lat, lng), headers=headers, timeout=15
+    )
     stores = json.loads(stores_req.text)["locations"]
     return stores
 
@@ -77,6 +78,16 @@ def process_record(raw_results_from_one_coordinate):
 
         store_number = store["locationId"]
         phone = "<MISSING>"
+
+        try:
+            cInfo = store["contactInfo"]
+            if cInfo is not None:
+                for contact in cInfo:
+                    if "External Phone" in contact["contactType"]:
+                        phone = contact["contactInfo"]
+                        break
+        except:
+            pass
 
         location_type = store["locationType"]["locationTypeDesc"]
         if location_type != "ATM":

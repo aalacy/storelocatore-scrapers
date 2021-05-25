@@ -129,7 +129,7 @@ def fetch_data():
                 '//div[@class="profile-content"]//div[@class="hours-info"]//text()'
             )
         hoo = [e.strip() for e in hoo if e.strip()]
-        hours_of_operation = "<MISSING>"
+        hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
 
         item = [
             DOMAIN,
