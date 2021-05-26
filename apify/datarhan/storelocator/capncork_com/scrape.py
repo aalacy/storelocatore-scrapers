@@ -76,7 +76,9 @@ def fetch_data():
         longitude = "<MISSING>"
         hoo = poi_html.xpath('.//p[@style="text-align: center;"]//text()')[3:]
         hoo = [e.strip() for e in hoo if e.strip() and "get" not in e.lower()]
-        hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
+        hours_of_operation = (
+            " ".join(hoo).split(zip_code)[-1].strip() if hoo else "<MISSING>"
+        )
 
         item = [
             domain,
