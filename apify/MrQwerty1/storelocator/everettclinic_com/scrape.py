@@ -36,6 +36,7 @@ def write_output(data):
 
 def fetch_data():
     out = []
+    s = set()
     locator_domain = "https://www.everettclinic.com/"
     api_url = "https://www.everettclinic.com/bin/optumcare/findlocations"
     session = SgRequests()
@@ -73,6 +74,10 @@ def fetch_data():
             j = j["provider"]
             a = j.get("locations")[0].get("addressInfo")
             store_number = j.get("individualProviderId")
+            if store_number in s:
+                continue
+
+            s.add(store_number)
             page_url = f"https://www.everettclinic.com/locations-nav/locations/-/-/{store_number}.html"
             try:
                 location_name = j["providerInfo"]["businessName"]

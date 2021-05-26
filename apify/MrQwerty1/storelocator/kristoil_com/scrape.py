@@ -92,7 +92,17 @@ def fetch_data():
         phone = j.get("phone") or "<MISSING>"
         a = j.get("location")
         line = a.get("address")
-        street_address, city, state, postal = get_address(line)
+        line2 = j.get("address")
+
+        if len(line) > len(line2):
+            street_address, city, state, postal = get_address(line)
+        else:
+            if "Hwy 51 & 3rd. Box 769" in line2:
+                line2 = line2.replace("Hwy 51 & 3rd. Box 769", "")
+                street_address, city, state, postal = get_address(line2)
+                street_address = "Hwy 51 & 3rd. Box 769"
+            else:
+                street_address, city, state, postal = get_address(line2)
         country_code = "US"
         latitude = a.get("lat") or "<MISSING>"
         longitude = a.get("lng") or "<MISSING>"
