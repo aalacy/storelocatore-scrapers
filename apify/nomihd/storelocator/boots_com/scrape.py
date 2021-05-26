@@ -72,7 +72,6 @@ def fetch_data():
     stores_req = session.get(search_url, headers=headers)
     stores_sel = lxml.html.fromstring(stores_req.text)
     stores = stores_sel.xpath('//div[@class="brand_list_viewer"]//ul/li/a/@href')
-    print(len(stores))
 
     loc_list = scrape_loc_urls(stores)
     return loc_list
@@ -198,7 +197,7 @@ def parallel_run(store_url):
             longitude,
             hours_of_operation,
         ]
-        print("SUCCESS")
+
         return curr_list
 
 
