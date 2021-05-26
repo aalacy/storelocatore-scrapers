@@ -54,6 +54,13 @@ def fetch_data():
     all_locations = dom.xpath('//a[@class="single-location__image"]/@href')
     for store_url in all_locations:
         store_url = urljoin(start_url, store_url)
+        urls_pass = [
+            "https://leavetheherdbehind.com/blogs/locations/greenhill-mall",
+            "https://leavetheherdbehind.com/blogs/locations/manila",
+        ]
+        if store_url in urls_pass:
+            continue
+
         with SgChrome() as driver:
             driver.get(store_url)
             loc_dom = etree.HTML(driver.page_source)
