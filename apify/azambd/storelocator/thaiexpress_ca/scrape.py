@@ -97,11 +97,11 @@ def isValidHooPart(part):
         if "day" not in part:
             return [part]
         dayMatch = ""
-        for match in re.findall("([a-zA-Z ]*/[a-zA-Z ]*)\d*.*", part):
+        for match in re.findall(r"([a-zA-Z ]*/[a-zA-Z ]*)\d*.*", part):
             if len(match) > 0:
                 dayMatch = match
 
-        for match in re.findall("([a-zA-Z ]*)\d*.*", part):
+        for match in re.findall(r"([a-zA-Z ]*)\d*.*", part):
             if len(match) > 0 and dayMatch == "":
                 dayMatch = match
         if dayMatch == "":
