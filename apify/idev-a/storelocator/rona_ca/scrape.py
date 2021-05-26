@@ -3,11 +3,9 @@ from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 import re
-import json
 import demjson
 from sgselenium import SgFirefox
 from sglogging import SgLogSetup
-import time
 
 logger = SgLogSetup().get_logger("rona")
 
@@ -89,23 +87,22 @@ def _detail(page_url, driver):
 
 
 def fetch_data():
-    with SgRequests() as session:
-        with SgFirefox() as driver:
-            total = 0
-            base_url = "https://www.rona.ca/sitemap-stores-en.xml"
-            driver.get(base_url)
-            soup = bs(driver.page_source, "lxml")
-            urls = soup.select("loc")
-            logger.info(f"{len(urls)} urls found")
-            for url in urls:
-                page_url = url.text.strip()
-                try:
-                    driver.get(page_url)
-                except:
-                    continue
-                total += 1
-                logger.info(f"[total {total}] {page_url}")
-                yield _detail(page_url, driver)
+    with SgFirefox() as driver:
+        total = 0
+        base_url = "https://www.rona.ca/sitemap-stores-en.xml"
+        driver.get(base_url)
+        soup = bs(driver.page_source, "lxml")
+        urls = soup.select("loc")
+        logger.info(f"{len(urls)} urls found")
+        for url in urls:
+            page_url = url.text.strip()
+            try:
+                driver.get(page_url)
+            except:
+                continue
+            total += 1
+            logger.info(f"[total {total}] {page_url}")
+            yield _detail(page_url, driver)
 
 
 if __name__ == "__main__":
