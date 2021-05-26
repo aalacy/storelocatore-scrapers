@@ -34,40 +34,92 @@ proxies = set_proxies()
 
 
 async def get_main(url, headers):
-    timeout = httpx.Timeout(120.0)
     async with httpx.AsyncClient(
-        proxies=proxies, headers=headers, timeout=timeout
+        proxies=proxies, headers=headers, timeout=None
     ) as client:
         response = None
         response = await client.get(url)
         return response.json()
 
 
+def no_json(soup):
+    soup = b4(soup, "lxml")
+    k = {}
+    k["mainEntity"] = {}
+    k["mainEntity"]["address"] = {}
+    try:
+        address = soup.find(
+            "span",
+            {"class": lambda x: x and all(i in x for i in ["item-info", "t-address"])},
+        ).text.strip()
+    except Exception:
+        address = "<MISSING>"
+
+    try:
+        telephone = soup.find(
+            "span",
+            {"class": lambda x: x and all(i in x for i in ["item-info", "t-phone"])},
+        ).text.strip()
+    except Exception:
+        telephone = "<MISSING>"
+
+    try:
+        city = soup.find("span", {"class": "t-city"})
+    except Exception:
+        city = "<MISSING>"
+
+    try:
+        state = soup.find("span", {"class": "t-state"})
+    except Exception:
+        state = "<MISSING>"
+
+    try:
+        zipcode = soup.find("span", {"class": "t-zip"})
+    except Exception:
+        zipcode = "<MISSING>"
+
+    try:
+        country = soup.find("span", {"class": "t-country"})
+    except Exception:
+        country = "<MISSING>"
+
+    k["mainEntity"]["address"]["streetAddress"] = address
+    k["mainEntity"]["address"]["telephone"] = []
+    k["mainEntity"]["address"]["telephone"].append(telephone)
+    k["mainEntity"]["address"]["addressLocality"] = city
+    k["mainEntity"]["address"]["addressRegion"] = state
+    k["mainEntity"]["address"]["postalCode"] = zipcode
+    k["mainEntity"]["address"]["addressCountry"] = country
+    return k
+
+
 async def fetch_data(index: int, url: str, headers) -> dict:
-    timeout = httpx.Timeout(60.0, connect=120.0)
     data = {}
     if len(url) > 0:
         async with httpx.AsyncClient(
-            proxies=proxies, headers=headers, timeout=timeout
+            proxies=proxies, headers=headers, timeout=None
         ) as client:
             response = await client.get(url)
             soup = b4(response.text, "lxml")
             logzilla.info(f"URL\n{url}\nLen:{len(response.text)}\n")
             if len(response.text) < 400:
                 logzilla.info(f"Content\n{response.text}\n\n")
-            data = json.loads(
-                str(
-                    soup.find(
-                        "script",
-                        {"type": "application/ld+json", "id": "schema-webpage"},
-                    ).text
+            try:
+                data = json.loads(
+                    str(
+                        soup.find(
+                            "script",
+                            {"type": "application/ld+json", "id": "schema-webpage"},
+                        ).text
+                    )
+                    .replace("\u0119", "e")
+                    .replace("\u011f", "g")
+                    .replace("\u0144", "n")
+                    .replace("\u0131", "i"),
+                    strict=False,
                 )
-                .replace("\u0119", "e")
-                .replace("\u011f", "g")
-                .replace("\u0144", "n")
-                .replace("\u0131", "i"),
-                strict=False,
-            )
+            except Exception:
+                data = no_json(response.text)
             data["index"] = index
             data["requrl"] = url
             data["STATUS"] = True
