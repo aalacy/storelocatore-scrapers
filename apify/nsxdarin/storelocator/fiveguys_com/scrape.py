@@ -131,6 +131,8 @@ def fetch_data():
             hours = "<MISSING>"
         if "-" not in phone:
             phone = "<MISSING>"
+        if "{: Closed; MONDAY: Closed" in hours:
+            hours = "Sun-Sat: Closed"
         yield [
             website,
             loc,
