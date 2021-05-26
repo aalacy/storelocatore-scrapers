@@ -2,10 +2,20 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
-from sgselenium import SgChrome
+from sgselenium import SgFirefox
 from sgscrape.sgpostal import parse_address_intl
 import re
 import time
+import ssl
+
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
 
 logger = SgLogSetup().get_logger("laderach")
 
@@ -35,6 +45,8 @@ def _detail(_id, driver):
     sp1 = bs(driver.page_source, "lxml")
     _addr = sp1.select_one("a.sk-google-business-profile-address-link").text.strip()
     addr = parse_address_intl(_addr)
+    city = addr.city
+    state = addr.state
     street_address = addr.street_address_1
     if addr.street_address_2:
         street_address += " " + addr.street_address_2
@@ -43,6 +55,10 @@ def _detail(_id, driver):
     country_code = addr.country
     if not country_code and "Singapore" in _addr:
         country_code = "Singapore"
+    if country_code == "United Arab Emirates":
+        street_address = " ".join(_addr.split("-")[:-3])
+        city = _addr.split("-")[-3]
+        state = _addr.split("-")[-2]
     hours = []
     _hr = sp1.find("label", string=re.compile(r"Business Hours"))
     if _hr:
@@ -70,8 +86,8 @@ def _detail(_id, driver):
         location_name=sp1.select_one(".name").text.strip(),
         store_number=_id.split("-")[-1],
         street_address=street_address,
-        city=addr.city,
-        state=addr.state,
+        city=city,
+        state=state,
         zip_postal=addr.postcode,
         country_code=country_code,
         phone=phone,
@@ -83,7 +99,7 @@ def _detail(_id, driver):
 
 
 def fetch_data():
-    with SgChrome() as driver:
+    with SgFirefox() as driver:
         driver.get(base_url)
         soup = bs(driver.page_source, "lxml")
         stores = soup.select("div.store-row-container div.store-row")

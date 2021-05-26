@@ -96,6 +96,7 @@ def write_output(data):
                 "locator_domain",
                 "page_url",
                 "location_name",
+                "raw_address",
                 "street_address",
                 "city",
                 "state",
@@ -140,11 +141,16 @@ def fetch_data():
         lat = ""
         lng = ""
         HFound = True
+        locality = ""
         hours = ""
         r2 = session.get(loc, headers=headers)
         lines = r2.iter_lines()
         for line2 in lines:
             line2 = str(line2.decode("utf-8"))
+            if '<span class="locality">' in line2:
+                locality = (
+                    line2.split('<span class="locality">')[1].split("<")[0].strip()
+                )
             if '<span class="coming-soon">Coming Soon</span>' in line2:
                 CS = True
             if "<title>" in line2:
@@ -186,9 +192,9 @@ def fetch_data():
                     .split(",")[1]
                     .split('"')[0]
                 )
-            if "Hours</strong><br />" in line2 and "day" in line2 and HFound:
+            if "Hours</strong>" in line2 and "day" in line2 and HFound:
                 hours = (
-                    line2.split("Hours</strong><br />")[1]
+                    line2.split("Hours</strong>")[1]
                     .replace("<br />", "; ")
                     .replace("<br/>", "; ")
                     .replace("\r", "")
@@ -197,9 +203,9 @@ def fetch_data():
                     .strip()
                 )
                 HFound = False
-            if "Hours</strong><br/>" in line2 and "day" in line2 and HFound:
+            if "Hours</strong>" in line2 and "day" in line2 and HFound:
                 hours = (
-                    line2.split("Hours</strong><br/>")[1]
+                    line2.split("Hours</strong>")[1]
                     .replace("<br/>", "; ")
                     .replace("<br />", "; ")
                     .replace("\r", "")
@@ -208,7 +214,7 @@ def fetch_data():
                     .strip()
                 )
                 HFound = False
-            if "Hours</strong><br />" in line2 and "day" not in line2 and HFound:
+            if "Hours</strong>" in line2 and "day" not in line2 and HFound:
                 g = next(lines)
                 g = str(g.decode("utf-8"))
                 if "day" not in g:
@@ -239,7 +245,7 @@ def fetch_data():
                     g = next(lines)
                     g = str(g.decode("utf-8"))
                 HFound = False
-            if "Hours</strong><br/>" in line2 and "day" not in line2 and HFound:
+            if "Hours</strong>" in line2 and "day" not in line2 and HFound:
                 g = next(lines)
                 g = str(g.decode("utf-8"))
                 if "day" not in g:
@@ -287,24 +293,38 @@ def fetch_data():
             typ = "Store"
         if CS:
             name = name + " - Coming Soon"
-        if state == "":
+        if state == "" or state is None:
             state = "<MISSING>"
         if state in usstates:
             country = "US"
         if state in castates:
             country = "CA"
-        if zc == "":
+        if zc == "" or zc is None:
             zc = "<MISSING>"
-        if city == "":
+        if city == "" or city is None:
             city = "<MISSING>"
-        if country == "":
+        if country == "" or country is None:
             country = "<MISSING>"
-        if add == "":
+        if add == "" or add is None:
             add = "<MISSING>"
+        if country == "US":
+            try:
+                city = locality.split(",")[0].strip()
+                state = locality.split(",")[1].strip().split(" ")[0]
+                zc = locality.rsplit(" ", 1)[1]
+            except:
+                pass
+        hours = (
+            hours.replace(";Mon", "Mon")
+            .replace("<br>Mon", "Mon")
+            .replace("; Mon", "Mon")
+            .replace("<br> Mon", "Mon")
+        )
         yield [
             website,
             loc,
             name,
+            rawadd,
             add,
             city,
             state,
