@@ -1,5 +1,6 @@
 import csv
 import json
+import re
 
 from bs4 import BeautifulSoup
 
@@ -71,8 +72,25 @@ def fetch_data():
         location_type = "<MISSING>"
         phone = "<MISSING>"
         hours_of_operation = "<MISSING>"
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
+
+        req = session.get(link, headers=headers)
+        base = BeautifulSoup(req.text, "lxml")
+
+        map_link = base.find(class_="getting-here-info__link")["href"]
+        try:
+            try:
+                geo = re.findall(r"[0-9]{2}\.[0-9]+,[0-9]{1,3}\.[0-9]+", map_link)[
+                    0
+                ].split(",")
+            except:
+                geo = re.findall(r"[0-9]{2}\.[0-9]+,-[0-9]{1,3}\.[0-9]+", map_link)[
+                    0
+                ].split(",")
+            latitude = geo[0]
+            longitude = geo[1]
+        except:
+            latitude = "<MISSING>"
+            longitude = "<MISSING>"
 
         data.append(
             [
