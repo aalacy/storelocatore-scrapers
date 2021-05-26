@@ -135,7 +135,7 @@ def getHOO(response):
     parts = []
     for part in parts1:
         valid_parts = isValidHooPart(part)
-        if valid_parts != False:
+        if valid_parts is not False:
             for valid_part in valid_parts:
                 parts.append(valid_part)
     hoo = ""
@@ -164,7 +164,7 @@ def getHOO(response):
         if part.endswith(": "):
             if part in hoo:
                 break
-            if hoo.endswith(" to ") == False:
+            if hoo.endswith(" to ") is False:
                 hoo = hoo + "; "
 
         hoo = hoo + part
