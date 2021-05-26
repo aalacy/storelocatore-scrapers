@@ -1,18 +1,13 @@
 from sgscrape import simple_scraper_pipeline as sp
 from sglogging import sglog
-from typing import Any, Dict, List, Optional, Tuple, Set, Union
+from typing import Any, Dict, Optional
 import configparser
 
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as b4
 
 import json
-import asyncio
 import os
-import httpx
-
-os.environ["HTTPX_LOG_LEVEL"] = "trace"
-import time
 
 logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
 
@@ -93,14 +88,14 @@ class CrawlMethod(CleanRecord):
         def getPointChina(Point):
             url = (
                 self._config.get("PostUrl")
-                .format(*self._config.get("PostUrlFormat"))
+                .format(*json.loads(self._config.get("PostUrlFormat")))
                 .format(*Point)
             )
             headers = str(self._config.get("Headers"))
             headers = json.loads(headers)
             data = (
                 self._config.get("urlencodedData")
-                .format(*self._config.get("dataFormat"))
+                .format(*json.loads(self._config.get("dataFormat")))
                 .format(*Point)
             )
             response = self._session.post(url, headers=headers, data=data)
@@ -113,30 +108,28 @@ class CrawlMethod(CleanRecord):
         for Point in self._search:
             found = 0
             results = getPointChina(Point)
-            for data in results:
+            for data in results[str(self._config.get("pathToResults"))]:
                 record = record_cleaner(data, self._config)
-                self._search.found_location_at(
-                    (record["latitude"], record["longitude"])
-                )
+                self._search.found_location_at(record["latitude"], record["longitude"])
                 if (
                     str(
-                        record["latitude"]
-                        + record["longitude"]
-                        + record["phone"]
-                        + record["store_number"]
-                        + record["street_address1"]
-                        + record["location_name"]
+                        str(record["latitude"])
+                        + str(record["longitude"])
+                        + str(record["phone"])
+                        + str(record["store_number"])
+                        + str(record["street_address1"])
+                        + str(record["location_name"])
                     )
                     not in identities
                 ):
                     identities.add(
                         str(
-                            record["latitude"]
-                            + record["longitude"]
-                            + record["phone"]
-                            + record["store_number"]
-                            + record["street_address1"]
-                            + record["location_name"]
+                            str(record["latitude"])
+                            + str(record["longitude"])
+                            + str(record["phone"])
+                            + str(record["store_number"])
+                            + str(record["street_address1"])
+                            + str(record["location_name"])
                         )
                     )
                     found += 1
@@ -183,7 +176,6 @@ class getData(CrawlMethod):
             getattr(SearchableCountries, country)
             for country in json.loads(self._config.get("sgzipSearchableCountries"))
         ]
-        print(Countries)
         self._search = search(
             country_codes=Countries,
             max_radius_miles=self._config.getint("sgzipmax_radius_miles")
@@ -276,8 +268,6 @@ def fix_proxy(StripProxyCountry):
 
 
 def fetch_data():
-    test = "this is a string!{}".format("{}").format("yes it is")
-    print(test)
     config = readConfig("mcconfig.ini")
     configuredCountries = todoCountries(config)
     ogProxy = fix_proxy(config["DEFAULT"].getboolean("StripProxyCountry"))
@@ -289,7 +279,7 @@ def fetch_data():
     for Country in configuredCountries:
         results = getData(config=Country, ogProxy=ogProxy)
         for record in results.Start():
-            print(record)
+            yield record
 
     logzilla.info(f"Finished grabbing data!!")  # noqa
 
@@ -310,50 +300,27 @@ def scrape():
         locator_domain=sp.MappingField(
             mapping=["locator_domain"],
         ),
-        page_url=sp.MappingField(
-            mapping=["page_url"],
-        ),
-        location_name=sp.MappingField(
-            mapping=["location_name"],
-        ),
-        latitude=sp.MappingField(
-            mapping=["latitude"],
-        ),
-        longitude=sp.MappingField(
-            mapping=["longitude"],
-        ),
+        page_url=sp.MappingField(mapping=["page_url"], is_required=False),
+        location_name=sp.MappingField(mapping=["location_name"], is_required=False),
+        latitude=sp.MappingField(mapping=["latitude"], is_required=False),
+        longitude=sp.MappingField(mapping=["longitude"], is_required=False),
         street_address=sp.MultiMappingField(
             mapping=[["street_address1"], ["street_address2"]],
             multi_mapping_concat_with=", ",
             value_transform=fix_comma,
+            is_required=False,
         ),
-        city=sp.MappingField(
-            mapping=["city"],
-        ),
-        state=sp.MappingField(
-            mapping=["state"],
-        ),
-        zipcode=sp.MappingField(
-            mapping=["zipcode"],
-        ),
-        country_code=sp.MappingField(
-            mapping=["country_code"],
-        ),
-        phone=sp.MappingField(
-            mapping=["phone"],
-        ),
-        store_number=sp.MappingField(
-            mapping=["store_number"],
-        ),
+        city=sp.MappingField(mapping=["city"], is_required=False),
+        state=sp.MappingField(mapping=["state"], is_required=False),
+        zipcode=sp.MappingField(mapping=["zipcode"], is_required=False),
+        country_code=sp.MappingField(mapping=["country_code"], is_required=False),
+        phone=sp.MappingField(mapping=["phone"], is_required=False),
+        store_number=sp.MappingField(mapping=["store_number"], is_required=False),
         hours_of_operation=sp.MappingField(
-            mapping=["hours_of_operation"],
+            mapping=["hours_of_operation"], is_required=False
         ),
-        location_type=sp.MappingField(
-            mapping=["location_type"],
-        ),
-        raw_address=sp.MappingField(
-            mapping=["raw_address"],
-        ),
+        location_type=sp.MappingField(mapping=["location_type"], is_required=False),
+        raw_address=sp.MappingField(mapping=["raw_address"], is_required=False),
     )
 
     pipeline = sp.SimpleScraperPipeline(
