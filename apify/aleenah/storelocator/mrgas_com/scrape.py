@@ -25,7 +25,7 @@ def write_output(data):
                 "latitude",
                 "longitude",
                 "hours_of_operation",
-                "<MISSING>",
+                "page_url",
             ]
         )
         # Body
@@ -93,7 +93,7 @@ def fetch_data():
                 "<MISSING>",  # lat
                 "<MISSING>",  # long
                 tim.strip(),  # timing
-                "http://mrgas.com",
+                "<MISSING>",
             ]
         )
 
