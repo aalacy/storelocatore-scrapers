@@ -105,6 +105,8 @@ for country_url in country_urls:
 
     count = 1
     while count < search_length + 1:
+        if count == 10:
+            break
         search_url = country_url + "/startpage/" + str(count)
         response = s.get(search_url, headers=headers)
         response_text = response.text
@@ -182,13 +184,15 @@ for location_url in location_urls:
     )
     address = address_parts[1].strip()
     city = address_parts[-2].strip()
-    state_parts = address_parts[-1].split(" ")[:-2]
+    state_zipp_parts = address_parts[-1].split(" |")[0].split(" ")
+    state_parts = state_zipp_parts[:-2]
     state = ""
     for part in state_parts:
         state = state + part + " "
     state = state.strip().replace("County ", "")
 
-    zipp = address_parts[-1].split(" ")[-2] + " " + address_parts[-1].split(" ")[-1]
+    zipp = state_zipp_parts[-2] + " " + state_zipp_parts[-1]
+
     country_code = "UK"
     store_number = location_url.split("/")[-1]
     phone = "<INACCESSIBLE>"

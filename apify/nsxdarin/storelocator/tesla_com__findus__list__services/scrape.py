@@ -96,6 +96,7 @@ def write_output(data):
                 "locator_domain",
                 "page_url",
                 "location_name",
+                "raw_address",
                 "street_address",
                 "city",
                 "state",
@@ -313,10 +314,17 @@ def fetch_data():
                 zc = locality.rsplit(" ", 1)[1]
             except:
                 pass
+        hours = (
+            hours.replace(";Mon", "Mon")
+            .replace("<br>Mon", "Mon")
+            .replace("; Mon", "Mon")
+            .replace("<br> Mon", "Mon")
+        )
         yield [
             website,
             loc,
             name,
+            rawadd,
             add,
             city,
             state,

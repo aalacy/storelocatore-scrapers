@@ -119,6 +119,20 @@ def fetch_location(loc, retry_count=0):
                 phone = "(248) 649-5300"
                 lat = "<MISSING>"
                 lng = "<MISSING>"
+            if "scottsdale/scottsdale/8024" in loc:
+                name = "Scottsdale"
+                add = "16489 North Scottsdale Rd"
+                city = "Scottsdale"
+                state = "AZ"
+                zc = "85254"
+                phone = "(480) 348-1700"
+                lat = "33.63713300"
+                lng = "-111.92410500"
+                hours = "Mon-Thu: 11:00AM - 9:00PM; Fri: 11:00AM - 10:00PM; Sat: 5:00PM - 10:00PM; Sun: 5:00PM - 9:00PM"
+            if "tn/memphis/memphis/8051" in loc:
+                hours = "Mon-Thu: 11:30AM - 9:00PM; Fri: 11:30AM - 10:00PM; Sat: 5:00PM - 10:00PM; Sun: 4:00PM - 9:00PM"
+            if "/jacksonville/jacksonville/8029" in loc:
+                hours = "Mon-Thu: 11:30AM - 9:00PM; Fri: 11:30AM - 10:00PM; Sat: 5:00PM - 10:00PM; Sun: 5:00PM - 9:00PM"
             if "/dunwoody" in loc:
                 name = "Atlanta - Dunwoody"
                 add = "94 Perimeter Center West"
