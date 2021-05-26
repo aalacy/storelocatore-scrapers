@@ -18,7 +18,6 @@ def fetch_data():
         )
         for store in store_list:
             page_url = locator_domain + store["UrlSlug"]
-            store_number = store["Id"]
             location_name = store["Name"].replace("&amp;", "&")
             location_type = (
                 "Factory & Store" if "Factory & Store" in location_name else "Store"
@@ -59,6 +58,7 @@ def fetch_data():
             yield SgRecord(
                 page_url=page_url,
                 location_name=location_name,
+                store_number=store["Id"],
                 street_address=street_address,
                 city=addr.city,
                 state=addr.state,
