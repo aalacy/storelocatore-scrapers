@@ -68,8 +68,8 @@ def fetch_data():
         zip_code = zip_code.strip() if zip_code else "<MISSING>"
         country_code = "<MISSING>"
         store_number = poi["storeID"]
-        phone = poi["phone"]
-        phone = phone if phone else "<MISSING>"
+        phone = loc_dom.xpath('//div[@itemprop="telephone"]/a/text()')
+        phone = phone[0] if phone else "<MISSING>"
         location_type = "<MISSING>"
         latitude = poi["lat"]
         latitude = latitude if latitude else "<MISSING>"
@@ -80,6 +80,8 @@ def fetch_data():
         )
         hoo = [e.strip() for e in hoo if e.strip()]
         hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
+        if "This location isn" in hours_of_operation:
+            hours_of_operation = "<MISSING>"
 
         item = [
             DOMAIN,
