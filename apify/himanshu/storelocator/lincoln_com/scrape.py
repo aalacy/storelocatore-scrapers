@@ -64,7 +64,6 @@ def fetch_data():
         try:
             k = session.get(get_u, timeout=5).json()
         except:
-            logger.info(f"timeout probably")
             continue
         if "Response" in k and "Dealer" in k["Response"]:
             if isinstance(k["Response"]["Dealer"], list):
