@@ -1,5 +1,6 @@
 import re
 import csv
+import json
 from lxml import etree
 
 from sgrequests import SgRequests
@@ -41,70 +42,45 @@ def fetch_data():
 
     items = []
 
-    start_url = "https://www.super-saver.com/connect-with-us/"
-    domain = re.findall("://(.+?)/", start_url)[0].replace("www.", "")
+    start_url = "https://www2.super-saver.com/StoreLocator/Store_MapDistance_S.las?miles=50000&zipcode=51501"
+    domain = "super-saver.com"
     hdr = {
-        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
+        "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36",
     }
     response = session.get(start_url, headers=hdr)
-    dom = etree.HTML(response.text)
+    all_locations = json.loads(response.text)
 
-    all_locations = dom.xpath(
-        '//div[@class="entry-content"]/div[@class="vc_row wpb_row vc_row-fluid"]'
-    )[1:]
-    for poi_html in all_locations:
-        store_url = poi_html.xpath(".//h3/a/@href")
-        if not store_url:
-            continue
-        store_url = store_url[0]
+    for poi in all_locations:
+        store_url = f'https://www2.super-saver.com/StoreLocator/Store?L={poi["StoreNbr"]}&M=&From=&S='
         loc_response = session.get(store_url)
         loc_dom = etree.HTML(loc_response.text)
 
-        location_name = poi_html.xpath(".//h3/a/text()")
-        location_name = location_name[0].strip() if location_name else "<MISSING>"
-        raw_address = poi_html.xpath('.//p[contains(text(), "Store Director")]/text()')[
-            1:3
+        location_name = "<MISSING>"
+        raw_address = loc_dom.xpath('//p[@class="Address"]/text()')
+        raw_address = [
+            " ".join([s.strip() for s in e.strip().split()])
+            for e in raw_address
+            if e.strip()
         ]
-        raw_address = [e.strip() for e in raw_address if e.strip()]
-        if not raw_address:
-            raw_address = poi_html.xpath(
-                './/*[contains(text(), "Store Director")]/following-sibling::*//text()'
-            )[:2]
-        if not raw_address:
-            continue
         street_address = raw_address[0].strip()
-        city = raw_address[1].split(", ")[0].strip()
-        state = raw_address[1].split(", ")[-1].split()[0].strip()
-        zip_code = raw_address[1].split(", ")[-1].split()[-1].strip()
+        city = raw_address[1].split(", ")[0]
+        state = raw_address[1].split(", ")[-1].split()[0]
+        zip_code = raw_address[1].split(", ")[-1].split()[-1]
         country_code = "<MISSING>"
-        store_number = "<MISSING>"
-        try:
-            phone = (
-                poi_html.xpath('.//p[contains(text(), "Store Director")]/text()')[3]
-                .split(":")[-1]
-                .strip()
-            )
-        except:
-            phone = (
-                poi_html.xpath(
-                    './/*[contains(text(), "Store Director")]/following-sibling::*//text()'
-                )[2]
-                .split(":")[-1]
-                .strip()
-            )
+        store_number = poi["StoreNbr"]
+        phone = loc_dom.xpath('//p[@class="PhoneNumber"]/a/text()')
+        phone = phone[0] if phone else "<MISSING>"
         location_type = "<MISSING>"
-        geo = (
-            loc_dom.xpath('//a[contains(@href, "/maps/")]/@href')[0]
-            .split("/@")[-1]
-            .split(",")[:2]
+        geo = re.findall(r"initializeMap\((.+?)\);", loc_response.text)[0][1:-1].split(
+            ","
         )
-        latitude = geo[0]
-        longitude = geo[1]
-        hours_of_operation = poi_html.xpath(".//text()")
-        hours_of_operation = [e for e in hours_of_operation if "Open 24" in e]
-        hours_of_operation = (
-            hours_of_operation[0].strip() if hours_of_operation else "<MISSING>"
+        latitude = geo[0][:-1]
+        longitude = geo[1][1:]
+        hoo = loc_dom.xpath(
+            '//dt[contains(text(), "Hours of Operation:")]/following-sibling::dd/text()'
         )
+        hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
 
         item = [
             domain,
