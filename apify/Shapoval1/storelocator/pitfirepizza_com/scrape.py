@@ -130,6 +130,30 @@ def fetch_data():
             )
             .replace("\n", "")
             .strip()
+            + " "
+            + " ".join(
+                d.xpath(
+                    './/span[contains(text(), "HOURS:")]/following-sibling::text()[3]'
+                )
+            )
+            .replace("\n", "")
+            .strip()
+            + " "
+            + " ".join(
+                d.xpath(
+                    './/span[contains(text(), "HOURS:")]/following-sibling::text()[4]'
+                )
+            )
+            .replace("\n", "")
+            .strip()
+            + " "
+            + " ".join(
+                d.xpath(
+                    './/span[contains(text(), "HOURS:")]/following-sibling::text()[5]'
+                )
+            )
+            .replace("\n", "")
+            .strip()
         )
         session = SgRequests()
         r = session.get("https://pitfirepizza.olo.com/locations/ca", headers=headers)

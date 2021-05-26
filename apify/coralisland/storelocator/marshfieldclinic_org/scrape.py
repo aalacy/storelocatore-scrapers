@@ -175,7 +175,18 @@ def fetch_data():
                         )
                     ).split("\n")
                 ).strip()
+
                 store_hours = BS(store_hours, "html.parser").get_text()
+                if len(store_hours) <= 0:
+                    hours = store.xpath('//ul[@style="list-style-type: disc;"]//text()')
+                    hours_list = []
+                    for hour in hours:
+                        if len("".join(hour).strip()) > 0:
+                            hours_list.append("".join(hour).strip())
+
+                    store_hours = "; ".join(hours_list).strip()
+                if len(store_hours) <= 0:
+                    store_hours = "<MISSING>"
                 output.append(store_hours)  # opening hours
                 yield output
             else:

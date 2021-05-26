@@ -9,6 +9,82 @@ headers = {
 
 logger = SgLogSetup().get_logger("tesla_com__findus__list__services")
 
+usstates = [
+    "AK",
+    "AL",
+    "AR",
+    "AS",
+    "AZ",
+    "CA",
+    "CO",
+    "CT",
+    "DC",
+    "DE",
+    "FL",
+    "GA",
+    "GU",
+    "HI",
+    "IA",
+    "ID",
+    "IL",
+    "IN",
+    "KS",
+    "KY",
+    "LA",
+    "MA",
+    "MD",
+    "ME",
+    "MI",
+    "MN",
+    "MO",
+    "MP",
+    "MS",
+    "MT",
+    "NC",
+    "ND",
+    "NE",
+    "NH",
+    "NJ",
+    "NM",
+    "NV",
+    "NY",
+    "OH",
+    "OK",
+    "OR",
+    "PA",
+    "PR",
+    "RI",
+    "SC",
+    "SD",
+    "TN",
+    "TX",
+    "UM",
+    "UT",
+    "VA",
+    "VI",
+    "VT",
+    "WA",
+    "WI",
+    "WV",
+    "WY",
+]
+castates = [
+    "AB",
+    "BC",
+    "MB",
+    "NB",
+    "NL",
+    "NT",
+    "NS",
+    "NU",
+    "ON",
+    "PE",
+    "PEI",
+    "QC",
+    "SK",
+    "YT",
+]
+
 
 def write_output(data):
     with open("data.csv", mode="w") as output_file:
@@ -55,8 +131,8 @@ def fetch_data():
         add = ""
         city = ""
         typ = ""
-        state = ""
         country = ""
+        state = ""
         zc = ""
         CS = False
         store = "<MISSING>"
@@ -64,11 +140,16 @@ def fetch_data():
         lat = ""
         lng = ""
         HFound = True
+        locality = ""
         hours = ""
         r2 = session.get(loc, headers=headers)
         lines = r2.iter_lines()
         for line2 in lines:
             line2 = str(line2.decode("utf-8"))
+            if '<span class="locality">' in line2:
+                locality = (
+                    line2.split('<span class="locality">')[1].split("<")[0].strip()
+                )
             if '<span class="coming-soon">Coming Soon</span>' in line2:
                 CS = True
             if "<title>" in line2:
@@ -110,9 +191,9 @@ def fetch_data():
                     .split(",")[1]
                     .split('"')[0]
                 )
-            if "Hours</strong><br />" in line2 and "day" in line2 and HFound:
+            if "Hours</strong>" in line2 and "day" in line2 and HFound:
                 hours = (
-                    line2.split("Hours</strong><br />")[1]
+                    line2.split("Hours</strong>")[1]
                     .replace("<br />", "; ")
                     .replace("<br/>", "; ")
                     .replace("\r", "")
@@ -121,9 +202,9 @@ def fetch_data():
                     .strip()
                 )
                 HFound = False
-            if "Hours</strong><br/>" in line2 and "day" in line2 and HFound:
+            if "Hours</strong>" in line2 and "day" in line2 and HFound:
                 hours = (
-                    line2.split("Hours</strong><br/>")[1]
+                    line2.split("Hours</strong>")[1]
                     .replace("<br/>", "; ")
                     .replace("<br />", "; ")
                     .replace("\r", "")
@@ -132,7 +213,7 @@ def fetch_data():
                     .strip()
                 )
                 HFound = False
-            if "Hours</strong><br />" in line2 and "day" not in line2 and HFound:
+            if "Hours</strong>" in line2 and "day" not in line2 and HFound:
                 g = next(lines)
                 g = str(g.decode("utf-8"))
                 if "day" not in g:
@@ -163,7 +244,7 @@ def fetch_data():
                     g = next(lines)
                     g = str(g.decode("utf-8"))
                 HFound = False
-            if "Hours</strong><br/>" in line2 and "day" not in line2 and HFound:
+            if "Hours</strong>" in line2 and "day" not in line2 and HFound:
                 g = next(lines)
                 g = str(g.decode("utf-8"))
                 if "day" not in g:
@@ -199,7 +280,7 @@ def fetch_data():
         if hours == "":
             hours = "<MISSING>"
         hours = hours.replace(";;", ";")
-        if lat == "":
+        if lat == "" or lng == "":
             lat = "<MISSING>"
             lng = "<MISSING>"
         if phone == "":
@@ -211,8 +292,27 @@ def fetch_data():
             typ = "Store"
         if CS:
             name = name + " - Coming Soon"
-        if state == "":
+        if state == "" or state is None:
             state = "<MISSING>"
+        if state in usstates:
+            country = "US"
+        if state in castates:
+            country = "CA"
+        if zc == "" or zc is None:
+            zc = "<MISSING>"
+        if city == "" or city is None:
+            city = "<MISSING>"
+        if country == "" or country is None:
+            country = "<MISSING>"
+        if add == "" or add is None:
+            add = "<MISSING>"
+        if country == "US":
+            try:
+                city = locality.split(",")[0].strip()
+                state = locality.split(",")[1].strip().split(" ")[0]
+                zc = locality.rsplit(" ", 1)[1]
+            except:
+                pass
         yield [
             website,
             loc,

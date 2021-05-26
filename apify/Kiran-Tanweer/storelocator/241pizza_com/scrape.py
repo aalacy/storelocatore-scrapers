@@ -39,7 +39,9 @@ headers_stores = {
 
 
 def store_data(loc):
-    location_name = loc["location"]
+    location_name = loc["location"].replace("amp;", "").strip()
+    location_name = location_name.replace("..", " ").strip()
+    location_name = location_name.replace("/", " ").strip()
     store_number = loc["store_number"]
     latitude = loc["latitude"]
     longitude = loc["longitude"]
@@ -92,7 +94,6 @@ def fetch_data():
                     statelist.append(state)
             else:
                 statelist.append(state)
-
         for loc, state in zip(loclist, statelist):
             page_url = (
                 "https://241pizza.com/restaurant-locator/#!/province/"
@@ -174,7 +175,6 @@ def scrape():
         for rec in results:
             writer.write_row(rec)
             count = count + 1
-
     log.info(f"No of records being processed: {count}")
     log.info("Finished")
 

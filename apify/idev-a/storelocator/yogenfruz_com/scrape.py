@@ -19,10 +19,10 @@ def get_country_by_code(code=""):
         return "CA"
 
 
-def _l(links, name):
+def _l(links, street_address):
     _link = ""
     for link in links:
-        if link.text.strip() == name:
+        if link.select_one(".location-detail-address-1").text.strip() == street_address:
             _link = link.a["href"]
             break
     return _link
@@ -33,7 +33,9 @@ def fetch_data():
     base_url = "https://yogenfruz.com/find-a-store/"
     with SgRequests() as session:
         soup = bs(session.get(base_url, headers=_headers).text, "lxml")
-        links = soup.select("div.location-search-results div.location-search-result h3")
+        links = soup.select(
+            "div.location-search-results div.location-search-result .location-details-wrapper"
+        )
         locations = soup.select("#location-singles .location-single")
         for _ in locations:
             phone = ""
@@ -66,7 +68,7 @@ def fetch_data():
                 .strip()
             )["center"]
             yield SgRecord(
-                page_url=_l(links, _.h3.text.strip()),
+                page_url=_l(links, street_address),
                 store_number=_["id"].split("-")[-1],
                 location_name=_.h3.text.strip(),
                 street_address=street_address,

@@ -72,8 +72,7 @@ def fetch_location(loc, retry_count=0):
     hours = ""
 
     try:
-
-        with SgChrome() as driver:
+        with SgChrome(is_headless=True) as driver:
             driver.get(loc)
             sleep(randint(2, 3))
 
@@ -167,7 +166,7 @@ def fetch_data():
         ):
             locs.append(line.split("<loc>")[1].split("<")[0])
 
-    with ThreadPoolExecutor() as executor:
+    with ThreadPoolExecutor(max_workers=1) as executor:
         futures = [executor.submit(fetch_location, loc) for loc in locs]
         for future in as_completed(futures):
             poi = future.result()
