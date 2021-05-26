@@ -105,8 +105,6 @@ for country_url in country_urls:
 
     count = 1
     while count < search_length + 1:
-        if count == 10:
-            break
         search_url = country_url + "/startpage/" + str(count)
         response = s.get(search_url, headers=headers)
         response_text = response.text
