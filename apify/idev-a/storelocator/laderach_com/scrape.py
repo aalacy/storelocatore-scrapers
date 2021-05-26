@@ -6,6 +6,16 @@ from sgselenium import SgChrome
 from sgscrape.sgpostal import parse_address_intl
 import re
 import time
+import ssl
+
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
 
 logger = SgLogSetup().get_logger("laderach")
 

@@ -1,257 +1,212 @@
+from bs4 import BeautifulSoup
+import csv
 import re
-import time
-import json
-import math
-from lxml import html
-from concurrent.futures import ThreadPoolExecutor
-
 from sgrequests import SgRequests
-from sglogging import sglog
-from sgscrape.sgwriter import SgWriter
-from sgscrape.sgrecord import SgRecord
 
-website = "http://www.primerica.com"
-max_workers = 1
-MISSING = "<MISSING>"
+session1 = SgRequests()
 headers = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.198 Safari/537.36",
-    "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-    "accept-language": "en-US,en-GB;q=0.9,en;q=0.8",
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
 
-session = SgRequests().requests_retry_session()
-log = sglog.SgLogSetup().get_logger(logger_name=website)
 
-
-def fetchConcurrentSingle(data):
-    try:
-        response = session.get(data["url"], headers=headers)
-        body = html.fromstring(response.text, "lxml")
-        return {"data": data, "body": body, "response": response.text}
-    except Exception as e:
-        log.error(f"can't load {data['url']} and Err:{e}")
-
-
-def fetchConcurrentList(list, occurrence=max_workers):
-    output = []
-    total = len(list)
-    reminder = math.floor(total / 50)
-    if reminder < occurrence:
-        reminder = occurrence
-
-    count = 0
-    with ThreadPoolExecutor(
-        max_workers=occurrence, thread_name_prefix="fetcher"
-    ) as executor:
-        for result in executor.map(fetchConcurrentSingle, list):
-            count = count + 1
-            if count % reminder == 0:
-                log.debug(f"Concurrent Operation count = {count}")
-            if result is not None:
-                output.append(result)
-    return output
-
-
-def fetchStores():
-    response = session.get(f"{website}/public/locations.html", headers=headers)
-    body = html.fromstring(response.text, "lxml")
-    states = []
-    countryList = body.xpath('//section[@class="content locList"]')
-
-    countCountry = 0
-    for stateDiv in countryList:
-        if countCountry == 0:
-            country_code = "CA"
-        else:
-            country_code = "US"
-        countCountry = 1
-
-        for stateA in stateDiv.xpath(".//a"):
-            states.append(
-                {
-                    "url": f"{website}/public/{stateA.xpath('.//@href')[0]}",
-                    "state": stateA.xpath(".//text()")[0],
-                    "country_code": country_code,
-                }
-            )
-    log.info(f"Total state = {len(states)}")
-
-    zips = []
-    urls = []
-    for state in fetchConcurrentList(states):
-        data = state["data"]
-        body = state["body"]
-        mainDiv = body.xpath("//main")[0]
-        for A in mainDiv.xpath(".//a"):
-            url = website + A.xpath(".//@href")[0]
-            zip_postal = A.xpath(".//text()")[0]
-            if url in urls:
-                continue
-            urls.append(url)
-            zips.append(
-                {
-                    "url": url,
-                    "zip_postal": zip_postal,
-                    "state": data["state"],
-                    "country_code": data["country_code"],
-                }
-            )
-    log.info(f"Total zip code = {len(zips)}")
-
-    storeList = []
-    urls = []
-    zipCount = 0
-    for zip in zips:
-        response = session.get(zip["url"], headers=headers)
-        body = html.fromstring(response.text, "lxml")
-        mainDiv = body.xpath("//main")[0]
-        page_urls = mainDiv.xpath(".//a/@href")
-        count = 0
-        for page_url in page_urls:
-            page_url = page_url + "&origin=customStandard"
-            if page_url in urls:
-                continue
-            count = count + 1
-            urls.append(page_url)
-            storeList.append(
-                {
-                    "url": page_url,
-                    "page_url": page_url,
-                    "zip_postal": zip["zip_postal"],
-                    "state": zip["state"],
-                    "country_code": zip["country_code"],
-                }
-            )
-        if len(page_urls) > 0:
-            log.debug(
-                f"{zip['state']}:{zip['zip_postal']}-->{zip['url']}--> total {len(page_urls)} inserted {count}"
-            )
-        zipCount = zipCount + 1
-
-        if zipCount % 50 == 0:
-            log.debug(f"Updated {zipCount} Total store found {len(storeList)} ...")
-    log.info(f"Total store link = {len(storeList)}")
-
-    stores = []
-    for store in fetchConcurrentList(storeList):
-        stores.append(
-            {
-                "page_url": store["data"]["page_url"],
-                "zip_postal": store["data"]["zip_postal"],
-                "state": store["data"]["state"],
-                "country_code": store["data"]["country_code"],
-                "response": store["response"],
-                "body": store["body"],
-            }
+def write_output(data):
+    with open("data.csv", mode="w") as output_file:
+        writer = csv.writer(
+            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
         )
 
-    return stores
-
-
-def getScriptWithAddress(body):
-    scripts = body.xpath("//script/text()")
-    for script in scripts:
-        if '"addressLocality"' in script:
-            return json.loads(script, strict=False)
-    return None
-
-
-def getVarName(value):
-    try:
-        return int(value)
-    except ValueError:
-        pass
-    return value
-
-
-def getJSONObjectVariable(Object, varNames, noVal=MISSING):
-    value = noVal
-    for varName in varNames.split("."):
-        varName = getVarName(varName)
-        try:
-            value = Object[varName]
-            Object = Object[varName]
-        except Exception:
-            return noVal
-    return value
-
-
-def getJSObject(response, varName):
-    JSObject = re.findall(f'{varName} = "(.+?)";', response)
-    if JSObject is None or len(JSObject) == 0:
-        return MISSING
-    return JSObject[0]
-
-
-def fetchData():
-    stores = fetchStores()
-    log.info(f"Total stores = {len(stores)}")
-
-    for store in stores:
-        body = store["body"]
-        response = store["response"]
-        page_url = store["page_url"]
-        zip_postal = store["zip_postal"]
-        state = store["state"]
-        country_code = store["country_code"]
-
-        location_name = body.xpath('.//div[@class="divResumeName"]/text()')
-        if len(location_name) > 0:
-            location_name = location_name[0]
-        else:
-            location_name = MISSING
-
-        jsonData = getScriptWithAddress(body)
-
-        street_address = getJSObject(response, "addressLine1")
-        addressLine2 = getJSObject(response, "addressLine2")
-        if street_address == MISSING:
-            street_address = addressLine2
-        elif addressLine2 != MISSING:
-            street_address = street_address + " " + addressLine2
-
-        city = getJSObject(response, "addressCity")
-        if getJSObject(response, "addressState") != MISSING:
-            state = getJSObject(response, "addressState")
-
-        phone = getJSONObjectVariable(jsonData, "address.telephone", MISSING)
-        raw_address = ""
-        if street_address != MISSING:
-            raw_address = street_address
-
-        if city != MISSING:
-            raw_address = raw_address + " " + city
-
-        if state != MISSING:
-            raw_address = raw_address + ", " + state
-
-        if zip_postal != MISSING:
-            raw_address = raw_address + " " + zip_postal
-
-        yield SgRecord(
-            locator_domain=website,
-            page_url=page_url,
-            location_name=location_name,
-            street_address=street_address,
-            city=city,
-            zip_postal=zip_postal,
-            state=state,
-            country_code=country_code,
-            phone=phone,
-            raw_address=raw_address,
+        # Header
+        writer.writerow(
+            [
+                "locator_domain",
+                "page_url",
+                "location_name",
+                "street_address",
+                "city",
+                "state",
+                "zip",
+                "country_code",
+                "store_number",
+                "phone",
+                "location_type",
+                "latitude",
+                "longitude",
+                "hours_of_operation",
+            ]
         )
-    return []
+        # Body
+        for row in data:
+            writer.writerow(row)
+
+
+def fetch_data():
+    linklist = []
+    data = []
+    p = 0
+    url = "http://www.primerica.com/public/locations.html"
+    page = session1.get(url, headers=headers, verify=False)
+    soup = BeautifulSoup(page.text, "html.parser")
+    maidiv = soup.find("main")
+    mainsection = maidiv.findAll("section", {"class": "content locList"})
+    sec = 0
+    while sec < 2:
+        if sec == 0:
+            ccode = "US"
+        if sec == 1:
+            ccode = "CA"
+        rep_list = mainsection[sec].findAll("a")
+        cleanr = re.compile("<.*?>")
+        pattern = re.compile(r"\s\s+")
+        for rep in rep_list:
+            link = "http://www.primerica.com/public/" + rep["href"]
+
+            if True:
+                session = SgRequests()
+                page1 = session.get(link, headers=headers)
+                soup1 = BeautifulSoup(page1.text, "html.parser")
+                maindiv = soup1.find("main")
+                xip_list = maindiv.findAll("a")
+
+                for xip in xip_list:
+                    if True:
+                        pcode = xip.text
+
+                        statelink = "http://www.primerica.com" + xip["href"]
+                        page2 = session1.get(statelink, headers=headers, verify=False)
+                        soup2 = BeautifulSoup(page2.text, "html.parser")
+                        mainul = soup2.find("ul", {"class": "agent-list"})
+                        li_list = mainul.findAll("li")
+                        for m in range(0, len(li_list)):
+                            if True:
+                                address = ""
+                                alink = li_list[m].find("a")
+
+                                title = alink.text
+                                alink = alink["href"] + "&origin=customStandard"
+                                if alink in linklist:
+                                    continue
+                                linklist.append(alink)
+
+                                page3 = session.get(
+                                    alink, headers=headers, verify=False
+                                )
+
+                                soup3 = BeautifulSoup(page3.text, "html.parser")
+                                address = soup3.find(
+                                    "div", {"class": "officeInfoDataWidth"}
+                                )
+                                cleanr = re.compile(r"<[^>]+>")
+                                address = cleanr.sub(" ", str(address))
+                                address = re.sub(pattern, "\n", address).lstrip()
+                                address = address.splitlines()
+
+                                city = ""
+                                state = ""
+                                i = 0
+                                street = address[i]
+                                i += 1
+                                try:
+                                    if address[i].find(",") == -1:
+                                        street = street + " " + address[i]
+                                        i += 1
+                                    else:
+                                        city, state = address[i].split(", ")
+                                except:
+                                    data.append(
+                                        [
+                                            "http://www.primerica.com/",
+                                            alink,
+                                            title,
+                                            "<MISSING>",
+                                            "<MISSING>",
+                                            "<MISSING>",
+                                            "<MISSING>",
+                                            "<MISSING>",
+                                            "<MISSING>",
+                                            "<MISSING>",
+                                            "<MISSING>",
+                                            "<MISSING>",
+                                            "<MISSING>",
+                                            "<MISSING>",
+                                        ]
+                                    )
+
+                                    p += 1
+                                    continue
+                                if address[i].find(",") > -1:
+                                    city, state = address[i].split(", ")
+                                i += 1
+                                pcode = address[i]
+                                if len(state) > 4:
+                                    street = address[0] + " " + address[1]
+                                    city, state = address[2].split(",", 1)
+                                    state = state.lstrip()
+                                    pcode = address[3]
+                                phone = soup3.find(
+                                    "div", {"class": "telephoneLabel"}
+                                ).text
+                                phone = phone.replace("Office: ", "")
+                                phone = phone.replace("Mobile", "")
+                                phone = phone.replace(":", "")
+                                phone = phone.strip()
+                                if len(phone) < 2:
+                                    phone = "<MISSING>"
+                                if len(street) < 2:
+                                    street = "<MISSING>"
+                                if len(city) < 2:
+                                    city = "<MISSING>"
+                                if len(state) < 2:
+                                    state = "<MISSING>"
+                                if len(pcode) < 2:
+                                    pcode = "<MISSING>"
+                                if len(phone) < 11:
+                                    phone = "<MISSING>"
+                                street = street.lstrip().replace(",", "")
+                                city = city.lstrip().replace(",", "")
+                                state = state.lstrip().replace(",", "")
+                                pcode = pcode.lstrip().replace(",", "").rstrip()
+
+                                if (
+                                    pcode.find("-") == -1
+                                    and sec == 0
+                                    and pcode != "<MISSING>"
+                                    and len(pcode) > 6
+                                ):
+                                    pcode = pcode[0:5] + "-" + pcode[5 : len(pcode)]
+                                if state == "NF":
+                                    state = "NL"
+                                if state == "PQ":
+
+                                    state = "QC"
+                                if True:
+                                    data.append(
+                                        [
+                                            "http://www.primerica.com/",
+                                            alink,
+                                            title,
+                                            street,
+                                            city,
+                                            state,
+                                            pcode.rstrip(),
+                                            ccode,
+                                            "<MISSING>",
+                                            phone,
+                                            "<MISSING>",
+                                            "<MISSING>",
+                                            "<MISSING>",
+                                            "<MISSING>",
+                                        ]
+                                    )
+
+                                    p += 1
+        sec += 1
+    return data
 
 
 def scrape():
-    start = time.time()
-    result = fetchData()
-    with SgWriter() as writer:
-        for rec in result:
-            writer.write_row(rec)
-    end = time.time()
-    log.info(f"Scrape took {end-start} seconds.")
+
+    data = fetch_data()
+    write_output(data)
 
 
-if __name__ == "__main__":
-    scrape()
+scrape()

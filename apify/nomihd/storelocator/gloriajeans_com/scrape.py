@@ -161,6 +161,11 @@ def fetch_data():
 
             if len(page_url) > 0:
                 page_url = "https://www.gloriajeans.com" + page_url
+                if (
+                    page_url
+                    == "https://www.gloriajeans.com/apps/store-locator/chicago-ridge-mall.html"
+                ):
+                    state = "Illinois"
                 log.info(page_url)
                 store_req = session.get(page_url, headers=headers)
                 store_sel = lxml.html.fromstring(store_req.text)
