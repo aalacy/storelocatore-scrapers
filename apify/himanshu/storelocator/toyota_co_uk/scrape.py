@@ -1,8 +1,6 @@
 import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
-import json
-import pgeocode
 from sglogging import sglog
 
 log = sglog.SgLogSetup().get_logger(logger_name="toyota.co.uk")
@@ -56,7 +54,7 @@ def fetch_data():
         city = data["address"]["city"]
         zipp = data["address"]["zip"]
         phone = data["phone"]
-
+        state = data["address"]["region"]
         if "Newbridge" in street_address:
             street_address = "2 Lonehead Drive"
             city = "Newbridge"
@@ -64,28 +62,6 @@ def fetch_data():
         lat = data["address"]["geo"]["lat"]
         lng = data["address"]["geo"]["lon"]
         page_url = data["url"]
-
-        if data["address"]["_region"]:
-            state = data["address"]["_region"]
-        else:
-            try:
-                log.info(hour_url)
-                location_soup = bs(session.get(hour_url).text, "lxml")
-                state = (
-                    json.loads(
-                        location_soup.find(
-                            lambda tag: (tag.name == "script")
-                            and "jQuery.extend(Drupal.settings" in tag.text
-                        )
-                        .text.split("jQuery.extend(Drupal.settings,")[1]
-                        .split("//--><!]]>")[0]
-                        .replace(");", "")
-                    )["gmap"]["auto1map"]["markers"][0]["text"]
-                    .split('"state">')[1]
-                    .split("<")[0]
-                )
-            except:
-                state = pgeocode.Nominatim("GB").query_postal_code(zipp)["county_name"]
 
         temp_hours = data["openingDays"]
         hours = ""
@@ -100,8 +76,9 @@ def fetch_data():
                 hours_list.append(day + ":" + time)
 
         if len(hours_list) <= 0:
+
             for temp in temp_hours:
-                if temp["originalService"] == "WorkShop":
+                if temp["originalService"] == "ShowRoom":
                     day = temp["startDayCode"]
                     if temp["endDayCode"] not in day:
                         day = day + "-" + temp["endDayCode"]
@@ -112,7 +89,6 @@ def fetch_data():
                         + temp["hours"][0]["endTime"]
                     )
                     hours_list.append(day + ":" + time)
-
         hours = "; ".join(hours_list).strip()
         if state == "City of Edinburgh":
             state = "Edinburgh"
@@ -147,3 +123,6 @@ def scrape():
 
 
 scrape()
+
+"https://turnersburystedmunds.toyota.co.uk/about-us#anchor-views-opening_hours-block_3"
+"http://burystedmunds.toyota.co.uk//about-us#anchor-views-opening_hours-block_3"
