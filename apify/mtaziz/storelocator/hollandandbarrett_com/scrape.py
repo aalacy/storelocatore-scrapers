@@ -38,10 +38,10 @@ def get_country_code(zip_postal):
     logger.info(f"Country Code UK: {country_code_uk}")
 
     # Netherlands Postal Code Regex Pattern
-    pattern_postal_code_nl = "^(?:NL-)?(?:[1-9]\d{3} ?(?:[A-EGHJ-NPRTVWXZ][A-EGHJ-NPRSTVWXZ]|S[BCEGHJ-NPRTVWXZ]))$"
+    pattern_postal_code_nl = r"^(?:NL-)?(?:[1-9]\d{3} ?(?:[A-EGHJ-NPRTVWXZ][A-EGHJ-NPRSTVWXZ]|S[BCEGHJ-NPRTVWXZ]))$"
 
     # Belgium Postal Code Regex Pattern
-    pattern_postal_code_be = "^(?:(?:[1-9])(?:\d{3}))$"
+    pattern_postal_code_be = r"^(?:(?:[1-9])(?:\d{3}))$"
 
     country_code = ""
 
@@ -73,7 +73,6 @@ def fetch_data():
         "https://cdn1.assets.hollandandbarrett.com/page-data/stores/page-data.json"
     )
     response = session.get(start_url, headers=headers, timeout=180)
-    items = []
     page_data = json.loads(response.text)
     data_json = page_data["result"]["pageContext"]["storeDetails"]
     for idx, data in enumerate(data_json):
@@ -128,14 +127,14 @@ def fetch_data():
 
         location_type = "<MISSING>"
         latitude = data_store["latitude"]
-        if latitude == 0:
+        if str(latitude) == str(0):
             latitude = MISSING
         else:
             latitude = latitude if latitude else MISSING
 
         longitude = data_store["longitude"]
-        if longitude == 0:
-            longtitude = MISSING
+        if str(longitude) == str(0):
+            longitude = MISSING
         else:
             longitude = longitude if longitude else MISSING
 
