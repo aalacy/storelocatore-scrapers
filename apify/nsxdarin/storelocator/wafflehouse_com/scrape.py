@@ -56,7 +56,7 @@ def fetch_data():
         website = "wafflehouse.com"
         typ = "Restaurant"
         hours = "Mon-Sun: 24 Hours"
-        loc = "<MISSING>"
+        loc = "https://locations.wafflehouse.com/shop/" + str(store)
         if add[-1:] == "/" or add[-1:] == ",":
             add = add[:-1]
         yield [
