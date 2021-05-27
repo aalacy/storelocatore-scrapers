@@ -1,5 +1,5 @@
 from sgrequests import SgRequests
-from sgzip.dynamic import DynamicZipSearch, SearchableCountries
+from sgzip.static import static_zipcode_list, SearchableCountries
 import pandas as pd
 
 locator_domains = []
@@ -17,9 +17,7 @@ latitudes = []
 longitudes = []
 hours_of_operations = []
 
-search = DynamicZipSearch(country_codes=[SearchableCountries.USA])
-
-session = SgRequests()
+search = static_zipcode_list(radius=50, country_code=SearchableCountries.USA)
 
 headers = {
     "User-Agent": "PostmanRuntime/7.19.0",
@@ -29,14 +27,7 @@ headers = {
     "Accept-Language": "en-US,en;q=0.5",
     "Accept-Encoding": "gzip, deflate",
 }
-session = SgRequests()
 url = "https://www.picknsave.com/stores/api/graphql"
-
-data = {
-    "query": "\n      query storeSearch($searchText: String!, $filters: [String]!) {\n        storeSearch(searchText: $searchText, filters: $filters) {\n          stores {\n            ...storeSearchResult\n          }\n          fuel {\n            ...storeSearchResult\n          }\n          shouldShowFuelMessage\n        }\n      }\n      \n  fragment storeSearchResult on Store {\n    banner\n    vanityName\n    divisionNumber\n    storeNumber\n    phoneNumber\n    showWeeklyAd\n    showShopThisStoreAndPreferredStoreButtons\n    storeType\n    distance\n    latitude\n    longitude\n    tz\n    ungroupedFormattedHours {\n      displayName\n      displayHours\n      isToday\n    }\n    address {\n      addressLine1\n      addressLine2\n      city\n      countryCode\n      stateCode\n      zip\n    }\n    pharmacy {\n      phoneNumber\n    }\n    departments {\n      code\n    }\n    fulfillmentMethods{\n      hasPickup\n      hasDelivery\n    }\n  }\n",
-    "variables": {"searchText": "39702", "filters": []},
-    "operationName": "storeSearch",
-}
 
 
 def get_session(data):
@@ -53,6 +44,7 @@ def get_session(data):
 
 
 x = 0
+
 for zipcode in search:
     coords = []
     data = {
@@ -163,11 +155,7 @@ for zipcode in search:
         hours_of_operations.append(hour_string)
         phones.append(phone)
 
-    deduped_coords = []
-    for item in coords:
-        if item not in deduped_coords:
-            deduped_coords.append(item)
-            search.found_location_at(item[0], item[1])
+        coords.append([latitude, longitude])
 
     x = x + 1
 

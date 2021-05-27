@@ -1,16 +1,10 @@
 import csv
-import re
-import time
-
-from random import randint
 
 from bs4 import BeautifulSoup
 
 from sglogging import SgLogSetup
 
 from sgrequests import SgRequests
-
-from sgselenium import SgChrome
 
 log = SgLogSetup().get_logger("altaconvenience.com")
 
@@ -56,8 +50,6 @@ def fetch_data():
     req = session.get(base_link, headers=headers)
     base = BeautifulSoup(req.text, "lxml")
 
-    driver = SgChrome().chrome()
-
     data = []
 
     items = base.find_all(class_="location")
@@ -97,6 +89,7 @@ def fetch_data():
                 " ".join(raw_data[3:])
                 .replace("Hours S", "S")
                 .replace("Hours:", "")
+                .replace("Hours", "")
                 .replace("\xa0", " ")
                 .replace("\u200b", " ")
                 .replace("  ", " ")
@@ -121,25 +114,8 @@ def fetch_data():
                     ].strip()
                     longitude = raw_gps[raw_gps.find("-") : raw_gps.find("&")].strip()
                 except:
-                    latitude = "<MISSING>"
-                    longitude = "<MISSING>"
-            if not latitude[-3:].isdigit():
-                driver.get(link)
-                time.sleep(4)
-
-                try:
-                    map_frame = driver.find_elements_by_tag_name("iframe")[0]
-                    driver.switch_to.frame(map_frame)
-                    time.sleep(randint(1, 2))
-                    map_str = driver.page_source
-                    geo = re.findall(r"[0-9]{2}\.[0-9]+,-[0-9]{2,3}\.[0-9]+", map_str)[
-                        0
-                    ].split(",")
-                    latitude = geo[0]
-                    longitude = geo[1]
-                except:
-                    latitude = "<MISSING>"
-                    longitude = "<MISSING>"
+                    latitude = "<INACCESSIBLE>"
+                    longitude = "<INACCESSIBLE>"
 
             if "-" not in phone:
                 phone = list(item.stripped_strings)[-1]
@@ -179,7 +155,7 @@ def fetch_data():
                 location_name,
                 street_address,
                 city,
-                state,
+                state.replace(",", ""),
                 zip_code,
                 country_code,
                 store_number,
@@ -190,7 +166,6 @@ def fetch_data():
                 hours_of_operation,
             ]
         )
-    driver.close()
     return data
 
 

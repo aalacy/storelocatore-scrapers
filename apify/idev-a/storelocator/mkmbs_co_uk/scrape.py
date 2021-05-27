@@ -11,21 +11,7 @@ from sglogging import SgLogSetup
 logger = SgLogSetup().get_logger("mkmbs")
 
 _headers = {
-    "accept": "*/*",
-    "accept-encoding": "gzip, deflate, br",
-    "accept-language": "en-US,en;q=0.5",
-    "referer": "https://www.mkmbs.co.uk/",
-    "origin": "https://www.mkmbs.co.uk",
-    "Content-Type": "application/json",
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.182 Safari/537.36",
-}
-
-_payload = {
-    "latitude": "51.5073509",
-    "longitude": "-0.1277583",
-    "statuses": ["live"],
-    "services": ["collection", "delivery"],
-    "page_size": "150",
 }
 
 locations = []
@@ -52,12 +38,15 @@ def _fix(original):
 def fetch_data():
     global locations
 
+    streets = []
     with SgRequests() as session:
         locator_domain = "https://www.mkmbs.co.uk/"
-        base_url = "https://www.mkmbs.co.uk/mobify/proxy/base/services/branchservices.asmx/searchbranches"
-        links = session.post(base_url, headers=_headers, json=_payload).json()[
-            "branch_list"
-        ]
+        base_url = "https://www.mkmbs.co.uk/mobify/proxy/base/"
+        links = json.loads(
+            bs(session.get(base_url, headers=_headers).text, "lxml")
+            .select_one("div#mobify_branchdata")
+            .text.replace("&quot;", '"')
+        )["branch_list"]
         logger.info(f"{len(links)} found")
         for link in links:
             location_name = link["name"]
@@ -67,8 +56,7 @@ def fetch_data():
                 locator_domain,
                 f"branch/{url}",
             )
-            r1 = session.get(page_url)
-            soup = bs(r1.text, "lxml")
+            soup = bs(session.get(page_url).text, "lxml")
 
             locations = []
             graphql = json.loads(
@@ -87,9 +75,10 @@ def fetch_data():
                 street_address = (
                     f"{location['addressLineOne']} {location.get('addressLineTwo', '')}"
                 )
-                city = location["townOrCity"]
-                zip = location["postcode"]
-                phone = location["phoneNumber"]
+                if street_address in streets:
+                    logger.info(f"duplicated [{page_url}]")
+                    continue
+                streets.append(street_address)
                 hours_of_operation = (
                     location["openingHours"].replace("\\n\\n", "; ").replace("**", "")
                 )
@@ -98,12 +87,12 @@ def fetch_data():
                     store_number=link["id"],
                     location_name=location_name,
                     street_address=street_address,
-                    city=city,
-                    zip_postal=zip,
+                    city=location["townOrCity"],
+                    zip_postal=location["postcode"],
                     country_code="uk",
                     latitude=link["latitude"],
                     longitude=link["longitude"],
-                    phone=phone,
+                    phone=location["phoneNumber"],
                     locator_domain=locator_domain,
                     hours_of_operation=hours_of_operation,
                 )
