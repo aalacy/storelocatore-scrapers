@@ -1,9 +1,9 @@
 import re
 import csv
-import json
 from lxml import etree
 
 from sgrequests import SgRequests
+from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 
 
 def write_output(data):
@@ -41,18 +41,25 @@ def fetch_data():
     session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
 
     items = []
+    scraped_items = []
 
-    start_url = "https://www2.super-saver.com/StoreLocator/Store_MapDistance_S.las?miles=50000&zipcode=51501"
+    start_url = "https://www2.super-saver.com/StoreLocator/Search/?ZipCode={}&miles=500"
     domain = "super-saver.com"
     hdr = {
         "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36",
     }
-    response = session.get(start_url, headers=hdr)
-    all_locations = json.loads(response.text)
 
-    for poi in all_locations:
-        store_url = f'https://www2.super-saver.com/StoreLocator/Store?L={poi["StoreNbr"]}&M=&From=&S='
+    all_locations = []
+    all_codes = DynamicZipSearch(
+        country_codes=[SearchableCountries.USA], max_radius_miles=500
+    )
+    for code in all_codes:
+        response = session.get(start_url.format(code), headers=hdr)
+        dom = etree.HTML(response.text)
+        all_locations += dom.xpath('//div[@id="StoreLocator"]//td/a/@href')
+
+    for store_url in list(set(all_locations)):
         loc_response = session.get(store_url)
         loc_dom = etree.HTML(loc_response.text)
 
@@ -68,7 +75,7 @@ def fetch_data():
         state = raw_address[1].split(", ")[-1].split()[0]
         zip_code = raw_address[1].split(", ")[-1].split()[-1]
         country_code = "<MISSING>"
-        store_number = poi["StoreNbr"]
+        store_number = store_url.split("L=")[-1].split("&")[0]
         phone = loc_dom.xpath('//p[@class="PhoneNumber"]/a/text()')
         phone = phone[0] if phone else "<MISSING>"
         location_type = "<MISSING>"
@@ -76,7 +83,9 @@ def fetch_data():
             ","
         )
         latitude = geo[0][:-1]
+        latitude = latitude if latitude.strip() else "<MISSING>"
         longitude = geo[1][1:]
+        longitude = longitude if longitude.strip() else "<MISSING>"
         hoo = loc_dom.xpath(
             '//dt[contains(text(), "Hours of Operation:")]/following-sibling::dd/text()'
         )
@@ -99,7 +108,9 @@ def fetch_data():
             hours_of_operation,
         ]
 
-        items.append(item)
+        if store_number not in scraped_items:
+            scraped_items.append(store_number)
+            items.append(item)
 
     return items
 
