@@ -95,7 +95,6 @@ def fetch_data():
             lat = coords.split('"latitude":')[1].split(',"')[0]
             lng = coords.split('"longitude":')[1].split("}")[0]
 
-
             data.append(
                 [
                     "https://www.hayssupermarkets.com",
