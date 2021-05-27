@@ -6,6 +6,7 @@ from sgscrape.sgwriter import SgWriter
 import pgeocode
 import re
 import ssl
+
 try:
     _create_unverified_https_context = (
         ssl._create_unverified_context
