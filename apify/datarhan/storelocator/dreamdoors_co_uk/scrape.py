@@ -57,7 +57,7 @@ def fetch_data():
         formdata = {
             "option": "com_ajax",
             "module": "dreamdoors_store_finder",
-            "postcode": code + " 0RS",
+            "postcode": code,
             "format": "raw",
         }
         headers = {
@@ -87,8 +87,14 @@ def fetch_data():
                 street_address = f"{addr.street_address_2} {addr.street_address_1}"
             else:
                 street_address = addr.street_address_1
+            street_address = street_address if street_address else "<MISSING>"
+            if "Coming Soon" in street_address:
+                continue
             city = addr.city
             city = city if city else "<MISSING>"
+            if "Tbc" in city:
+                street_address = city
+                city = "<MISSING>"
             state = "<MISSING>"
             zip_code = addr.postcode
             zip_code = zip_code if zip_code else "<MISSING>"
