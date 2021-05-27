@@ -1,3 +1,4 @@
+import time
 import csv
 from sgrequests import SgRequests
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -47,6 +48,7 @@ def retry_error_callback(retry_state):
 @retry(stop=stop_after_attempt(3), retry_error_callback=retry_error_callback)
 def fetch_location(id):
     session = SgRequests()
+    time.sleep(5)
     url = f"https://www.ymca.net/y-profile/?id={id}"
     r = session.get(url, headers=headers)
     name = ""
