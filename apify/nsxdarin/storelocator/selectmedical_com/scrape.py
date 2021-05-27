@@ -57,7 +57,7 @@ def fetch_data():
             + str(x)
         )
         session = SgRequests()
-        time.sleep(3)
+        time.sleep(7)
         r2 = session.get(url2, headers=headers)
         if r2.encoding is None:
             r2.encoding = "utf-8"
@@ -135,7 +135,7 @@ def fetch_data():
                                 lng = "<MISSING>"
                             logger.info(lurl)
                             session = SgRequests()
-                            time.sleep(3)
+                            time.sleep(7)
                             r3 = session.get(lurl, headers=headers)
                             if r3.encoding is None:
                                 r3.encoding = "utf-8"
