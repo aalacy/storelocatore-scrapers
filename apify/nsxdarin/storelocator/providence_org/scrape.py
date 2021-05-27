@@ -160,6 +160,12 @@ def fetch_data():
                 infotext = mloc + "|" + name + "|" + newadd + "|" + phone
                 if infotext not in alllocs:
                     alllocs.append(infotext)
+                    r2 = session.get(mloc, headers=headers)
+                    for line2 in r2.iter_lines():
+                        line2 = str(line2.decode("utf-8"))
+                        if '"latitude" content="' in line2:
+                            lat = line2.split('"latitude" content="')[1].split('"')[0]
+                            lng = line2.split('"longitude" content="')[1].split('"')[0]
                     yield [
                         website,
                         mloc,
@@ -279,6 +285,16 @@ def fetch_data():
                             infotext = mloc + "|" + name + "|" + newadd + "|" + phone
                             if infotext not in alllocs:
                                 alllocs.append(infotext)
+                                r2 = session.get(mloc, headers=headers)
+                                for line2 in r2.iter_lines():
+                                    line2 = str(line2.decode("utf-8"))
+                                    if '"latitude" content="' in line2:
+                                        lat = line2.split('"latitude" content="')[
+                                            1
+                                        ].split('"')[0]
+                                        lng = line2.split('"longitude" content="')[
+                                            1
+                                        ].split('"')[0]
                                 yield [
                                     website,
                                     mloc,
@@ -392,6 +408,12 @@ def fetch_data():
                 infotext = mloc + "|" + name + "|" + newadd + "|" + phone
                 if infotext not in alllocs:
                     alllocs.append(infotext)
+                    r2 = session.get(mloc, headers=headers)
+                    for line2 in r2.iter_lines():
+                        line2 = str(line2.decode("utf-8"))
+                        if '"latitude" content="' in line2:
+                            lat = line2.split('"latitude" content="')[1].split('"')[0]
+                            lng = line2.split('"longitude" content="')[1].split('"')[0]
                     yield [
                         website,
                         mloc,
@@ -570,6 +592,19 @@ def fetch_data():
             infotext = loc + "|" + name + "|" + newadd + "|" + phone
             if infotext not in alllocs:
                 alllocs.append(infotext)
+                r2 = session.get(loc, headers=headers)
+                for line2 in r2.iter_lines():
+                    line2 = str(line2.decode("utf-8"))
+                    if '"latitude" content="' in line2:
+                        try:
+                            lat = line2.split('"latitude" content="')[1].split('"')[0]
+                        except:
+                            lat = "<MISSING>"
+                    if '"longitude" content="' in line2:
+                        try:
+                            lng = line2.split('"longitude" content="')[1].split('"')[0]
+                        except:
+                            lng = "<MISSING>"
                 yield [
                     website,
                     loc,
@@ -669,6 +704,12 @@ def fetch_data():
             infotext = loc + "|" + name + "|" + newadd + "|" + phone
             if infotext not in alllocs:
                 alllocs.append(infotext)
+                r2 = session.get(loc, headers=headers)
+                for line2 in r2.iter_lines():
+                    line2 = str(line2.decode("utf-8"))
+                    if '"latitude" content="' in line2:
+                        lat = line2.split('"latitude" content="')[1].split('"')[0]
+                        lng = line2.split('"longitude" content="')[1].split('"')[0]
                 yield [
                     website,
                     loc,
@@ -761,6 +802,12 @@ def fetch_data():
             infotext = loc + "|" + name + "|" + newadd + "|" + phone
             if infotext not in alllocs:
                 alllocs.append(infotext)
+                r2 = session.get(loc, headers=headers)
+                for line2 in r2.iter_lines():
+                    line2 = str(line2.decode("utf-8"))
+                    if '"latitude" content="' in line2:
+                        lat = line2.split('"latitude" content="')[1].split('"')[0]
+                        lng = line2.split('"longitude" content="')[1].split('"')[0]
                 yield [
                     website,
                     loc,

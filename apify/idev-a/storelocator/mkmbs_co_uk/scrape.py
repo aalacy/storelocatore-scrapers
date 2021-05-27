@@ -88,6 +88,7 @@ def fetch_data():
                     location_name=location_name,
                     street_address=street_address,
                     city=location["townOrCity"],
+                    state=location.get("county", ""),
                     zip_postal=location["postcode"],
                     country_code="uk",
                     latitude=link["latitude"],

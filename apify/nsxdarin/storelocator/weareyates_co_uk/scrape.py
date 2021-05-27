@@ -39,7 +39,7 @@ def write_output(data):
 
 def fetch_data():
     locs = []
-    url = "https://weareyates.co.uk/find-a-pub"
+    url = "https://www.greatukpubs.co.uk/find-a-pub"
     r = session.get(url, headers=headers)
     website = "weareyates.co.uk"
     typ = "<MISSING>"
@@ -49,7 +49,7 @@ def fetch_data():
         line = str(line.decode("utf-8"))
         if 'class="inner-item">' in line:
             locs.append(
-                "https://weareyates.co.uk/" + line.split("href=")[1].split(" ")[0]
+                "https://greatukpubs.co.uk/" + line.split("href=")[1].split(" ")[0]
             )
     for loc in locs:
         logger.info(loc)
@@ -89,13 +89,18 @@ def fetch_data():
                     city = h.split(">")[1].split("<")[0]
                     zc = i.split(">")[1].split("<")[0]
                 else:
-                    add = (
-                        g.split(">")[1].split("<")[0]
-                        + " "
-                        + h.split(">")[1].split("<")[0]
-                    )
-                    city = i.split(">")[1].split("<")[0]
-                    zc = j.split(">")[1].split("<")[0]
+                    try:
+                        add = (
+                            g.split(">")[1].split("<")[0]
+                            + " "
+                            + h.split(">")[1].split("<")[0]
+                        )
+                        city = i.split(">")[1].split("<")[0]
+                        zc = j.split(">")[1].split("<")[0]
+                    except:
+                        add = g.split(">")[1].split("<")[0]
+                        city = h.split(">")[1].split("<")[0]
+                        zc = j.split(">")[1].split("<")[0]
             if DFound and '<div class="address">' in line2:
                 DFound = False
             if DFound and "day: </span>" in line2:
