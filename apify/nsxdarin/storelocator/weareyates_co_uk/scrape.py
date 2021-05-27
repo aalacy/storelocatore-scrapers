@@ -89,13 +89,18 @@ def fetch_data():
                     city = h.split(">")[1].split("<")[0]
                     zc = i.split(">")[1].split("<")[0]
                 else:
-                    add = (
-                        g.split(">")[1].split("<")[0]
-                        + " "
-                        + h.split(">")[1].split("<")[0]
-                    )
-                    city = i.split(">")[1].split("<")[0]
-                    zc = j.split(">")[1].split("<")[0]
+                    try:
+                        add = (
+                            g.split(">")[1].split("<")[0]
+                            + " "
+                            + h.split(">")[1].split("<")[0]
+                        )
+                        city = i.split(">")[1].split("<")[0]
+                        zc = j.split(">")[1].split("<")[0]
+                    except:
+                        add = g.split(">")[1].split("<")[0]
+                        city = h.split(">")[1].split("<")[0]
+                        zc = j.split(">")[1].split("<")[0]
             if DFound and '<div class="address">' in line2:
                 DFound = False
             if DFound and "day: </span>" in line2:
