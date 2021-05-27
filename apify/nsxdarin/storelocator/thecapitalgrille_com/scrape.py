@@ -119,6 +119,16 @@ def fetch_location(loc, retry_count=0):
                 phone = "(248) 649-5300"
                 lat = "<MISSING>"
                 lng = "<MISSING>"
+            if "/il/rosemont/chicago-rosemont/8036" in loc:
+                name = "Chicago - Rosemont"
+                add = "5340 N River Road"
+                city = "Chicago"
+                state = "IL"
+                zc = "60018"
+                phone = "(847) 671-8125"
+                lat = "41.97486085"
+                lng = "-87.86304142"
+                hours = "Mon: 4:00PM - 9:00PM; Tue-Thu: 11:00AM - 9:00PM; Fri: 11:30AM - 10:00PM; Sat: 5:00PM - 10:00PM; Sun: 5:00 - 9:00PM"
             if "scottsdale/scottsdale/8024" in loc:
                 name = "Scottsdale"
                 add = "16489 North Scottsdale Rd"
