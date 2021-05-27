@@ -52,6 +52,7 @@ def fetch_data():
             if lurl.count("/") == 6:
                 locs.append(lurl)
     url = "https://locations.michaelkors.ca/sitemap.xml"
+    r = session.get(url, headers=headers)
     if r.encoding is None:
         r.encoding = "utf-8"
     for line in r.iter_lines(decode_unicode=True):
@@ -69,7 +70,7 @@ def fetch_data():
         city = ""
         state = ""
         zc = ""
-        if "/ca/" in loc:
+        if "locations.michaelkors.ca" in loc:
             country = "CA"
         if "/us/" in loc:
             country = "US"
