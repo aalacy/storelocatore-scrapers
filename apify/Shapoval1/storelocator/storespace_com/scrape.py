@@ -1,5 +1,4 @@
 import csv
-import usaddress
 from lxml import html
 from sgrequests import SgRequests
 from concurrent import futures
@@ -50,34 +49,6 @@ def get_data(url):
     if page_url.count("/") != 6:
         return
     session = SgRequests()
-    tag = {
-        "Recipient": "recipient",
-        "AddressNumber": "address1",
-        "AddressNumberPrefix": "address1",
-        "AddressNumberSuffix": "address1",
-        "StreetName": "address1",
-        "StreetNamePreDirectional": "address1",
-        "StreetNamePreModifier": "address1",
-        "StreetNamePreType": "address1",
-        "StreetNamePostDirectional": "address1",
-        "StreetNamePostModifier": "address1",
-        "StreetNamePostType": "address1",
-        "CornerOf": "address1",
-        "IntersectionSeparator": "address1",
-        "LandmarkName": "address1",
-        "USPSBoxGroupID": "address1",
-        "USPSBoxGroupType": "address1",
-        "USPSBoxID": "address1",
-        "USPSBoxType": "address1",
-        "BuildingName": "address2",
-        "OccupancyType": "address2",
-        "OccupancyIdentifier": "address2",
-        "SubaddressIdentifier": "address2",
-        "SubaddressType": "address2",
-        "PlaceName": "city",
-        "StateName": "state",
-        "ZipCode": "postal",
-    }
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:86.0) Gecko/20100101 Firefox/86.0",
     }
@@ -89,16 +60,13 @@ def get_data(url):
     )
     if location_name.find(",") != -1:
         location_name = location_name.split(",")[0].strip()
-    ad = tree.xpath('//td[@class="pt-2"]/text()')
-    ad = list(filter(None, [a.strip() for a in ad]))
-    ad = " ".join(ad)
-    a = usaddress.tag(ad, tag_mapping=tag)[0]
-    street_address = f"{a.get('address1')} {a.get('address2')}".replace(
-        "None", ""
-    ).strip()
-    city = a.get("city") or "<MISSING>"
-    state = a.get("state") or "<MISSING>"
-    postal = a.get("postal") or "<MISSING>"
+    ad = "".join(tree.xpath('//td[@class="pt-2"]/text()[2]')).replace("\n", "").strip()
+    street_address = (
+        "".join(tree.xpath('//td[@class="pt-2"]/text()[1]')).replace("\n", "").strip()
+    )
+    city = ad.split(",")[0].strip() or "<MISSING>"
+    state = ad.split(",")[1].split()[0].strip() or "<MISSING>"
+    postal = ad.split(",")[1].split()[1].strip() or "<MISSING>"
     country_code = "US"
     store_number = "<MISSING>"
     phone = (
