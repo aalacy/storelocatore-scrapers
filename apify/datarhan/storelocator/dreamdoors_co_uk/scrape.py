@@ -139,7 +139,7 @@ def fetch_data():
             if store_url not in scraped_items:
                 scraped_items.append(store_url)
                 items.append(item)
-        print(len(items))
+
     return items
 
 
