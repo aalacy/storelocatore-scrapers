@@ -140,6 +140,9 @@ def fetch_data():
         info = name + "|" + add
         if info not in addresses:
             addresses.append(info)
+            add = add.strip()
+            if add[-1:] == "\\" or add[-1:] == ",":
+                add = add[:-1]
             yield [
                 website,
                 loc,
