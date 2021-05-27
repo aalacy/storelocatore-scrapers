@@ -25,6 +25,7 @@ def write_output(data):
         writer.writerow(
             [
                 "locator_domain",
+                "page_url",
                 "location_name",
                 "street_address",
                 "city",
@@ -77,8 +78,6 @@ def fetch_data():
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36",
         }
         payload = {
-            "__EVENTTARGET": "",
-            "__EVENTARGUMENT": "",
             "__VIEWSTATE": VS,
             "__VIEWSTATEGENERATOR": VSG,
             "__EVENTVALIDATION": EV,
@@ -109,14 +108,11 @@ def fetch_data():
                 phone = ""
                 lat = ""
                 lng = ""
-                next(lines)
-                store = (
-                    next(lines)
-                    .replace("\t", "")
-                    .replace("\r", "")
-                    .replace("\t", "")
-                    .strip()
-                )
+                g = next(lines)
+                g = next(lines)
+                if "<font" in g:
+                    g = next(lines)
+                store = g.replace("\t", "").replace("\r", "").replace("\t", "").strip()
             if '<td align="left" valign="top" width="400px">' in line2:
                 next(lines)
                 name = (
@@ -137,9 +133,9 @@ def fetch_data():
             if "&sll=" in line2:
                 lat = line2.split("&sll=")[1].split(",")[0]
                 lng = line2.split("&sll=")[1].split(",")[1].split("'")[0]
-            if 'Expanded" style="width:235px;">' in line2:
+            if 'class="lblAddressExpanded">' in line2:
                 addfull = (
-                    line2.split('Expanded" style="width:235px;">')[1]
+                    line2.split('class="lblAddressExpanded">')[1]
                     .split("</span>")[0]
                     .replace("<br><br>", "<br>")
                 )
@@ -179,10 +175,14 @@ def fetch_data():
                     country = "CA"
                 else:
                     country = "US"
-                if store not in ids and store != "" and country == "CA":
+                if store not in ids and store != "":
                     ids.append(store)
+                    if "<" in lng and lng != "<MISSING>":
+                        lng = lng.split("<")[0].strip()
+                    loc = "https://branchlocator.kellyservices.com/default.aspx"
                     yield [
                         website,
+                        loc,
                         name,
                         add,
                         city,

@@ -75,6 +75,7 @@ def fetch_data():
         if not zip_code:
             zip_code = poi_html.xpath('.//td[@data-label="City/Province"]/p/text()')
             country_code = "CA"
+            state = "ON"
         zip_code = zip_code[0].split(",")[-1].split()[-1]
         map_url = poi_html.xpath(".//a/@href")[0]
         store_number = "<MISSING>"
@@ -92,6 +93,8 @@ def fetch_data():
             state = "<MISSING>"
         if "Canada" in zip_code:
             zip_code = "<MISSING>"
+        if "Cookstown" in city:
+            zip_code = "L0L 1L0"
 
         item = [
             domain,

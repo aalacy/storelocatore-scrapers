@@ -79,10 +79,16 @@ def fetch_data():
 
             try:
                 page_url = store["landingPageUrl"]
+                store_number = page_url.split("-")[-1]
             except:
-                page_url = "<MISSING>"
+                page_url = "https://locations.cfsc.com/"
+                try:
+                    store_number = store["c_alternateLanguageLandingPage"].split("-")[
+                        -1
+                    ]
+                except:
+                    store_number = "<MISSING>"
 
-            store_number = page_url.split("-")[-1]
             phone = store["mainPhone"]
 
             if phone not in found_poi:
@@ -136,21 +142,22 @@ def fetch_data():
             search.found_location_at(latitude, longitude)
 
             yield [
-                    locator_domain,
-                    page_url,
-                    location_name,
-                    street_address,
-                    city,
-                    state,
-                    zip_code,
-                    country_code,
-                    store_number,
-                    phone,
-                    location_type,
-                    latitude,
-                    longitude,
-                    hours_of_operation,
-                ]
+                locator_domain,
+                page_url,
+                location_name,
+                street_address,
+                city,
+                state,
+                zip_code,
+                country_code,
+                store_number,
+                phone,
+                location_type,
+                latitude,
+                longitude,
+                hours_of_operation,
+            ]
+
 
 def scrape():
     data = fetch_data()

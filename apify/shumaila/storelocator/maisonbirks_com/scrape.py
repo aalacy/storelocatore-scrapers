@@ -73,6 +73,7 @@ def fetch_data():
     r = r.text.split(":", 1)[1].split(',"is_last_page')[0]
     r = json.loads(r)
     for store in r:
+
         label = False
         try:
             if store["additional_attributes"]["type"]["label"] == "Store":
@@ -101,7 +102,7 @@ def fetch_data():
             phone = store["telephone"]
             hourd = store["opening_hours"]
             hourd = json.loads(hourd)
-            if ltype.lower().find("store") > -1:
+            if True:  # ltype.lower().find("store") > -1:
                 hours = ""
                 for hr in hourd:
                     opend = hr["open_formatted"]

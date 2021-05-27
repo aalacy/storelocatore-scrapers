@@ -55,11 +55,18 @@ def fetch_data():
             ).strip()
             location_type = "<MISSING>"
             store_number = "<MISSING>"
-            hours_of_operation = "".join(
-                store_sel.xpath(
-                    '//div[@class="clearfix text-formatted field field--name-field-office-hours field--type-text-long field--label-hidden f-office-hours field__item"]/p//text()'
-                )
-            ).strip()
+            hours_of_operation = ""
+            hours = store_sel.xpath(
+                '//div[@class="clearfix text-formatted field field--name-field-office-hours field--type-text-long field--label-hidden f-office-hours field__item"]/p'
+            )
+            hours_list = []
+            for hour in hours:
+                day = "".join(hour.xpath("strong/text()")).strip()
+                time = "".join(hour.xpath("text()")).strip()
+                if len(day) > 0 and len(time) > 0 and time != ".":
+                    hours_list.append(day + ":" + time)
+
+            hours_of_operation = "; ".join(hours_list).strip()
             latitude = ""
             longitude = ""
             map_link = "".join(

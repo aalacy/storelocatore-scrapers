@@ -63,78 +63,69 @@ def fetch_data():
     )
     cookies = {
         "mt.v": "2.765874924.1612788200341",
-        "rxVisitor": "1612788202644TAUC0BOSNAQRTRQ9RN1E7SDQDSIATT4I",
         "ftr_ncd": "6",
-        "sgh-desktop-facet-state-search": "",
-        "tealium_data_session_timeStamp": "1612788206482",
-        "userToken": "undefined",
-        "AMCVS_125138B3527845350A490D4C%40AdobeOrg": "1",
         "s_ecid": "MCMID%7C31837677145346142053689448579183674801",
-        "s_cc": "true",
-        "dtCookie": "v_4_srv_2_sn_552PDSCGB5458UPTRJQEOVUBVQ702JEP_app-3Ab359c07662f0b428_0_ol_0_perc_100000_mul_1",
         "CONSENTMGR": "consent:true%7Cts:1612788210096",
         "_scid": "2e7e007d-1be5-4c30-9f88-b35b9318763e",
-        "__utmc": "110589831",
         "__utmz": "110589831.1612788211.1.1.utmcsr=(direct)|utmccn=(direct)|utmcmd=(none)",
-        "WC_SESSION_ESTABLISHED": "true",
-        "SGPF": "3yVu5U0V1JDyx1r21C4VKtbi7OcadUCSnItYd8dOZNMA9sAh7EhH6zw",
         "_cs_c": "1",
         "_gcl_au": "1.1.205447344.1612788226",
-        "_CT_RS_": "Recording",
         "WRUIDAWS": "3157488901570697",
         "smc_uid": "1612788231161927",
         "smc_tag": "eyJpZCI6Njc4LCJuYW1lIjoic3VuZ2xhc3NodXQuY29tIn0=",
         "smc_refresh": "13169",
-        "smc_sesn": "1",
         "smc_not": "default",
-        "metroCode": "0",
-        "COUNTRY": "PK",
-        "COUNTRY_REDIRECT": "true",
-        "CATALOG_ASSORTMENT": "SGH",
         "_ga": "GA1.2.458204620.1612788211",
-        "tealium_data_tags_adobeAnalytics_trafficSourceCid_lastFirst": "yext_header",
-        "cookiePolicy": "true",
-        "WC_AUTHENTICATION_1448415594": "1448415594%2CXlhe7UOXgaMTEu8PTNKSmx%2BmrXY9WOTQSfB3%2BqAMdw8%3D",
-        "WC_USERACTIVITY_1448415594": "1448415594%2C10154%2Cnull%2Cnull%2C1612814297309%2Cnull%2Cnull%2Cnull%2Cnull%2Cnull%2C2140635307%2CNvKaMk3lqg0l%2BEpqKLmMqZC78KIqt4ZpvSZcFuF4lstJfOCpEft%2F6gJDhBbw0kaWZjPjXOuWcs%2Bve5z451wU5MyQ5EmYluXPq%2BhDTnVJVJcSc8VqpahXRin9AiKboDdK7WX8%2BX%2Fz76qUfMRms6cZGPn4Je5qHw4wHFBCP5fC67%2FwbxGK3aPqjPb0zo89%2Bw%2B50qSE86aiQHeRloKaRJwcGO9evZJrCK3zUR6Hb2cA9IMno1UAvUQVFc4m8QW%2B7qBTKXrjx9S0aPguyGGyLp%2FgnQ%3D%3D",
-        "WC_AUTHENTICATION_-1002": "-1002%2C5mduE4auFesN87pDyNccBg3A3LZom4jI7UYlAbvrvHg%3D",
-        "WC_USERACTIVITY_-1002": "-1002%2C10152%2Cnull%2Cnull%2Cnull%2Cnull%2Cnull%2Cnull%2Cnull%2Cnull%2C2140635307%2ClOiauND2AUi5bAkzrY0sroA1WcwKZSdUBG3%2F2xMtCdIUEd5v1cLz3mjtru%2B1aT7iYoUb1v5ThVHrrY6fMEpVFu%2FoBI9YdyI6Mt%2FZey92j01q0PC2d9sMFswVGTuqBGdqLfLC1wepYuNh3xaNnqaX0P47lz9zwzXvC%2BuZhAheNP8zGFZ8mEZlPOEzLQFh65fwMjB72cT2RQhfU42GpqilHRzKGeTRP1nme0OfQhBMc0aJMgSmmoWM%2BvfEKJWaQt3A",
-        "WC_GENERIC_ACTIVITYDATA": "[9287112477%3Atrue%3Afalse%3A0%3AWhUilObFz7Qpitz%2BLHUTjdX9%2Fv7klunKvoPWFd1J66w%3D][com.ibm.commerce.context.ExternalCartContext|null][com.ibm.commerce.context.entitlement.EntitlementContext|4000000000000000011%264000000000000000011%26null%26-2000%26null%26null%26null][com.ibm.commerce.store.facade.server.context.StoreGeoCodeContext|null%26null%26null%26null%26null%26null][com.ibm.commerce.catalog.businesscontext.CatalogContext|20602%26null%26false%26false%26false][CTXSETNAME|Store][com.ibm.commerce.context.base.BaseContext|10152%26-1002%26-1002%26-1][com.ibm.commerce.context.audit.AuditContext|1612788197221-654745][com.ibm.commerce.context.experiment.ExperimentContext|null][com.sgh.commerce.findinstore.context.FindInStoreDefaultStoreContext|null][com.ibm.commerce.giftcenter.context.GiftCenterContext|null%26null%26null][com.ibm.commerce.context.globalization.GlobalizationContext|-1%26USD%26-1%26USD]",
         "BVBRANDID": "e4520975-41c8-4088-8159-4a1205dafe36",
         "_pin_unauth": "dWlkPU5EaG1NelUzT0RFdE1XRmpPUzAwT1RBeUxXSTJaV1V0TmpaaFpEVmhNV1V4TlRReQ",
-        "_derived_epik": "dj0yJnU9ZmFoc3lOa1U0QU0wXzd6R3Uwa29NRmRGTUstbWktU2Qmbj1vQVE3M2lyUzkwMzg0VFpVbUVfa3dBJm09ZiZ0PUFBQUFBR0FuNnlZJnJtPWYmcnQ9QUFBQUFHQW42eVk",
-        "MGX_UC": "JTdCJTIyTUdYX1AlMjIlM0ElN0IlMjJ2JTIyJTNBJTIyNTc4NDkyYTMtZDdjZC00NzY2LTk5MWUtNzZkYzM4MzZiZTljJTIyJTJDJTIyZSUyMiUzQTE2MTM3NTQ0MzgwMTIlN0QlMkMlMjJNR1hfVSUyMiUzQSU3QiUyMnYlMjIlM0ElMjJmY2RkODRlZi03ZmU3LTRmNDMtYTdkOC0yMzc2ZDVmYTAwMDklMjIlMkMlMjJlJTIyJTNBMTYxMzc1NDQzODAyMCU3RCUyQyUyMk1HWF9QWCUyMiUzQSU3QiUyMnYlMjIlM0ElMjJjMjgwMGZmMi1lNGJmLTQ2ZTMtODVkYy03ZDE5ZWI2MGQyMDMlMjIlMkMlMjJzJTIyJTNBdHJ1ZSUyQyUyMmUlMjIlM0ExNjEzMjMwNjM4NzcyJTdEJTJDJTIyTUdYX0NJRCUyMiUzQSU3QiUyMnYlMjIlM0ElMjJmYTEyOWJkOC0yZTNiLTQ1NzYtOGViYS03MDM1YjQyMzRjYjYlMjIlMkMlMjJlJTIyJTNBMTYxMzc1NDQzODAyOCU3RCUyQyUyMk1HWF9WUyUyMiUzQSU3QiUyMnYlMjIlM0E0JTJDJTIycyUyMiUzQXRydWUlMkMlMjJlJTIyJTNBMTYxMzIzMDYzODc3MiU3RCUyQyUyMk1HWF9FSUQlMjIlM0ElN0IlMjJ2JTIyJTNBJTIybnNfc2VnXzAwMCUyMiUyQyUyMnMlMjIlM0F0cnVlJTJDJTIyZSUyMiUzQTE2MTMyMzA2Mzg3NzIlN0QlN0Q=",
-        "WC_ACTIVEPOINTER": "-24%2C11352",
-        "dtSa": "-",
-        "dtLatC": "546",
-        "ak_bmsc": "D858AF29E673997CA745F64F1340EB4BADDED2D5B2530000951034604939F73C~plkWyrfKY32Ncv41iGsgLLaHXCIkudcFFPbekbkSrOQwIPDQN6xg/B3K1Xy6MyRGkHENrFJ7QI9D+qfsMNzj6zJQCfcHterWjSQERlohMNFywnjsZ3VuDh0C4yg+xhYvnj1zNkbAiUItVTPyphd5a3/UgpVd7EOAq/co5wSVEUOwT0pGG3LujgceVuyNu8ipS1sypyim9CH2MmsAgbGhWnIV06OfWzyjabgMgMfkD6HVRaLKgrDZZcpLJ+WzmSZq5K",
-        "AMCV_125138B3527845350A490D4C%40AdobeOrg": "-1303530583%7CMCIDTS%7C18681%7CMCMID%7C31837677145346142053689448579183674801%7CMCAAMLH-1614629670%7C6%7CMCAAMB-1614629670%7CRKhpRz8krg2tLO6pguXWp5olkAcUniQYPHaMWWgdJ3xzPWQmdj0y%7CMCOPTOUT-1614032070s%7CNONE%7CMCAID%7CNONE%7CvVersion%7C3.3.0",
-        "__utma": "110589831.458204620.1612788211.1613501291.1614024871.8",
-        "WC_PERSISTENT": "M7hIAynwUQLlwJI8qQy%2BiVfnsQOZy9czwarpUlRm9zM%3D%3B2021-02-22+20%3A14%3A52.08_1612788197221-654745_11352_1448633648%2C-24%2CGBP_10154_1448415594%2C-25%2CCAD_10152_-1002%2C-1%2CUSD_11352",
-        "WC_AUTHENTICATION_1448633648": "1448633648%2CFzhIrD5nYaDVrIi8ViGfInZtWuE870lLqC%2By5OOYUJw%3D",
-        "WC_USERACTIVITY_1448633648": "1448633648%2C11352%2Cnull%2Cnull%2C1614024892083%2Cnull%2Cnull%2Cnull%2Cnull%2Cnull%2C2140635307%2C12LzZHwr43%2BHQltpKJ7VriJQCupRJ2bCwnUS%2Fbam%2BQPSJNV%2BZtEanOyiraGPJI5w2e%2F0Q03IEoqX262Kw2MsTdWXReDn8YkXwB50WDl%2FPo1QcQiYcofqqXjBluQ3VUhrlM30gWJpCzR30d156Dos0KhjaggKoM3ea9XYyQrDPP0vTh0CjaEHnsfvk8lnFZoPu8sn2HFBwPEsrXOI2RQ8AtAsxHXJI6TjA2cV%2F0lSDG3znJaBOQDWvG80%2BnuPu2eR8g9hYHFmsm3fRIY9RfV%2BXQ%3D%3D",
-        "JSESSIONID": "0000BP1gmUT9tks3UF46LUrFZPt:1c7qtq78c",
-        "aka-zp": "",
-        "rxvt": "1614030615186|1614028815186",
-        "_cs_mk": "0.9789336553336017_1614028836995",
-        "_sctr": "1|1614020400000",
-        "aka-cc": "GB",
-        "aka-ct": "LONDON",
-        "TS011f624f": "015966d2927d8dd021d5f5e59611ddee716f3d23536cf2b882af54aaa6d91b13eef2aa2d6062fd5c23bc4b8b7b2a3557c668aa87e49316bf15787f9e7e240a35edce5b09384c92802fbf8c1cc45f127fa2dd7d82ec52c057c99de6438530a0d523ffa07ded6c4db13cfa3c17473ae702ccbc5a752291624f5a40fe3924ceabf2653b333d0649eb82caa459b5f94933d69bf7b63fd2e50e04fde30aca509b0af7887b3094c4ee158f9cebb72217f014c5268e054eb2417221d10e7950ea51c8b2f45306033ca9689a2bb3695f073a5f485477ad5e955dd3a2e9983ad7a52859c6dc3e54df471ff15064276c2ad4dcc8f9e7de06a2ebd621cdab811e54601b983cd0014a6f0f64ad1b0f5e1ad9120b73325d514d614f2f968da6debab9539572847f042b8b1dc2a8c158ccf3bd29e8123081b809ac02caa47abc7f4ba2e6109221fc4e9c2f208a3b6ace1d098ba96c6c00f56bc66a4a2d82b4f0ade9b3f71b4409431b1a9e96183f1fc9f47a632044a6eb7af654b0a1ab559ab2666bc06e4883ba907d10e4d8ed54cda5769fd06223a7dec692f728397aeed82d602c21468097945ac4eb8d28045aa1f8faeb0e32e9dd7308266498eb4f5c65b2265f3dc0b6a0002b1ff4509d41b2b543bfa7a7640343d0ab04af53b341a6d327346174ae9ddf27c60d0d0625bf0c352361c5cae08211340279ad4b651f4ca15764ec8bafea8d8091e90a270551a7fe7bfc50a4aea57b0474278094454974ea78d68d7f269fb199272598549f",
-        "s_sq": "%5B%5BB%5D%5D",
+        "s_vi": "[CS]v1|3034E589F059B8AC-4000198793A3DF36[CE]",
+        "rxVisitor": "1621520236497Q19NCI2KOQPF4L2VS9LNB5TOJQ6D6IR2",
+        "sgh-desktop-facet-state-search": "",
+        "JSESSIONID": "0000VrOYtzuK_6S7wOxVAUqF426:1c7qtp224",
+        "ak_bmsc": "349C859658EE2EA6905EB0C1D2140013021555AFEA6C0000696FA660B2E78716~plcghQy7JbdriQ4PoIhlWw68ostXRMizjRqPQiCz2H2oWvp7KebWzGh5SSZNdFGZRMWOWWWoxzxwhIUfyIbC2xY4bmwPoSaIB/qPy61LGy/S2RepF+XqosV1RV5c7pF+SeM2uP7SIQzd0W6UpKdiffKp1ORJsT+5/kwiDIBC+u43TWWcthpXtFI/csrAIac/cbxpzRViek4No0G6zdaVi1/F5SQyFyrzoBEAmmDWR7R1WooxnmpW7DO/QkMWgRiFPZ",
+        "tealium_data_session_timeStamp": "1621520241337",
+        "userToken": "undefined",
+        "AMCVS_125138B3527845350A490D4C%40AdobeOrg": "1",
+        "AMCV_125138B3527845350A490D4C%40AdobeOrg": "-1303530583%7CMCIDTS%7C18768%7CMCMID%7C31837677145346142053689448579183674801%7CMCAAMLH-1622125041%7C3%7CMCAAMB-1622125041%7CRKhpRz8krg2tLO6pguXWp5olkAcUniQYPHaMWWgdJ3xzPWQmdj0y%7CMCOPTOUT-1621527441s%7CNONE%7CMCAID%7CNONE%7CvVersion%7C3.3.0",
+        "_cs_mk": "0.7991072550211658_1621520242394",
+        "s_cc": "true",
+        "__wid": "180405334",
+        "dtCookie": "v_4_srv_5_sn_ILDOQQQSJ75UEADO1EO86V9HNQHAPRDQ_app-3Ab359c07662f0b428_1_ol_0_perc_100000_mul_1",
+        "__utma": "110589831.458204620.1612788211.1617545831.1621520245.16",
+        "__utmc": "110589831",
         "__utmt": "1",
+        "dtSa": "true%7CC%7C-1%7CFIND%20A%20STORE%7C-%7C1621520249074%7C320236466_42%7Chttps%3A%2F%2Fwww.sunglasshut.com%2F%7CSunglass%20Hut%C2%AE%20Online%20Store%20%5Ep%20Sunglasses%20for%20Women%5Ec%20Men%20%26%20Kids%7C1621520244110%7C%7C%7C%2F%7C1621520232839",
+        "WRIgnore": "true",
+        "WC_SESSION_ESTABLISHED": "true",
+        "WC_AUTHENTICATION_-1002": "-1002%2C5mduE4auFesN87pDyNccBg3A3LZom4jI7UYlAbvrvHg%3D",
+        "SGPF": "3LgqVeXDO41XQ3zUHqg7qcRnpTy5up0f-Fuqp99NDR9Y_q2IPdTUJOA",
+        "_gid": "GA1.2.2041786321.1621520270",
+        "_sctr": "1|1621450800000",
+        "amp_f24a38": "otxvCgA0M7d8OZIu1lIv6c..1.1f6526eri.1f652853m.0.0.0",
+        "MGX_UC": "JTdCJTIyTUdYX1AlMjIlM0ElN0IlMjJ2JTIyJTNBJTIyMWJjNDM0NmItODIzNS00NTU2LTg2YzItNThlZmRmYjEwOWQyJTIyJTJDJTIyZSUyMiUzQTE2MjIwNDU4OTU5MzYlN0QlMkMlMjJNR1hfUFglMjIlM0ElN0IlMjJ2JTIyJTNBJTIyNjVlMDI1ZjQtODQ2NS00NTA5LTg0OTUtOWQ3NmVjYzIyYWQ2JTIyJTJDJTIycyUyMiUzQXRydWUlMkMlMjJlJTIyJTNBMTYyMTUyMjA5ODEwMCU3RCUyQyUyMk1HWF9DSUQlMjIlM0ElN0IlMjJ2JTIyJTNBJTIyMDIzOTE4MTItZWQzOS00NDFiLWE3NjItYzI0ZDExYWY1YjA1JTIyJTJDJTIyZSUyMiUzQTE2MjIwNDU4OTU5NDUlN0QlMkMlMjJNR1hfVlMlMjIlM0ElN0IlMjJ2JTIyJTNBNCUyQyUyMnMlMjIlM0F0cnVlJTJDJTIyZSUyMiUzQTE2MjE1MjIwOTgxMDAlN0QlMkMlMjJNR1hfRUlEJTIyJTNBJTdCJTIydiUyMiUzQSUyMm5zX3NlZ18wMDAlMjIlMkMlMjJzJTIyJTNBdHJ1ZSUyQyUyMmUlMjIlM0ExNjIxNTIyMDk4MTAwJTdEJTdE",
+        "_derived_epik": "dj0yJnU9V3h2R2hKbkY2UzY3RXlVb2tzV3hBWVFCLVRYVDd0eUombj1SZEhNLTl3VFRPRTJ1X3VtMmdnUl93Jm09ZiZ0PUFBQUFBR0NtYjZrJnJtPWYmcnQ9QUFBQUFHQ21iNms",
+        "outbrain_cid_fetch": "true",
+        "WC_PERSISTENT": "OtX0myJhoEu0Ct4H%2Be2Y9bP6G5QTkDoHV7jh3gqwQaI%3D%3B2021-05-20+14%3A18%3A30.078_1621520250665-12657_11352_-1002%2C-24%2CGBP_10152_-1002%2C-1%2CUSD_11352",
+        "WC_ACTIVEPOINTER": "-24%2C11352",
+        "TS011f624f": "015966d292060741251562055a6f950b33cb0df530454eca2a7cf3243d7fb569ba9842bc541248216daec04a8c98a19df5de40f90748e0550871ec7e33a7ac1786c8510ce11ee7e67a041bf4061ada7b5b3509b8d0b2f9aed1a93524691d5ac7dcb3d43581b9f26b846ca5958252c8db9b7320aa60c7f9e43b347a6b4e79614b3621eb6de1614c192b888e0023e2c3ec506a3e0d938c74aea38e62c6af0431e61fb8331f477bae8d052ed8622c715ad2265400fdbe",
         "_cs_cvars": "%7B%221%22%3A%5B%22Page%20Type%22%2C%22Clp%22%5D%2C%222%22%3A%5B%22Page%20Name%22%2C%22%3AClp%22%5D%2C%223%22%3A%5B%22Page%20Section%201%22%2C%22Home%22%5D%2C%224%22%3A%5B%22Action%22%2C%22GB%3AEN%3AD%3A%3AClp%20%22%5D%2C%228%22%3A%5B%22User%20Login%20Status%22%2C%22Guest%22%5D%7D",
-        "_cs_id": "f413445d-a8fc-ab37-e274-a45cad2ecd76.1612788228.16.1614029439.1614027186.1.1646952228991.Lax.0",
+        "_cs_id": "f413445d-a8fc-ab37-e274-a45cad2ecd76.1612788228.26.1621520320.1621520248.1.1646952228991.Lax.0",
         "_cs_s": "6.1",
-        "__CT_Data": "gpv=32&ckp=tld&dm=sunglasshut.com&apv_358_www06=31&cpv_358_www06=31&rpv_358_www06=9&apv_283_www06=4&cpv_283_www06=4&rpv_283_www06=4",
-        "smc_spv": "29",
-        "smc_tpv": "29",
-        "smct_session": '{"s":1612788234140,"l":1614029450255,"lt":1614029450259,"t":42356,"p":1692}',
+        "__CT_Data": "gpv=50&ckp=tld&dm=sunglasshut.com&apv_358_www06=45&cpv_358_www06=45&rpv_358_www06=9&apv_283_www06=8&cpv_283_www06=8&rpv_283_www06=4",
+        "smc_session_id": "4JOjWaAK8PHT7rthx78eAO2GmSWxAvIP",
+        "smc_spv": "1",
+        "smc_tpv": "43",
+        "smc_sesn": "5",
+        "smct_session": '{"s":1621520322595,"l":1621520331605,"lt":1621520331607,"t":9,"p":7}',
+        "cookiePolicy": "true",
+        "dtLatC": "134",
+        "rxvt": "1621522134911|1621520236505",
         "sgh-desktop-facet-state-plp": "categoryid:undefined|gender:true|brands:partial|polarized:true|price:true|frame-shape:partial|color:true|face-shape:false|fit:false|materials:false|lens-treatment:false",
-        "bm_sv": "67E971D66C7F4C964CBBAA4345EFA5DB~KAVwIzeqNad0+ewiXbK+8P2bOht0X/m5LJj0aBmh/eMx3L76IFBbOa7C7z61FWWjw+plNIwBh8RISgC/wuqVYWACq4QneVOODkJEm0WPm72bO2MyXf4ua2w22mG8kR9+NHjCnDhFlp7HhH2DG4AA1jGQJp23wwuIFdKNlKD1Fio=",
-        "__utmb": "110589831.6.10.1614024890",
-        "_uetsid": "934b0270754a11eb850c3fcb8d8eef30",
-        "_uetvid": "48eb4b906a0b11ebbceb7d2b2533b84e",
-        "forterToken": "ef237a866745434883cb62b601ec1bf0_1614029454535__UDF43_6",
+        "bm_sv": "4DED9EB495612FD9C3335C907777F269~0SEbUnoXeeHjHvmEvdej6veo1rifaf5uH21oah8vG6xG8nA28K1eIpqElAMRX87eZOLgtO7W880gMgU/RROuXj0JFbgDpZwoqIQiO4IDrr9e6bcdamC0+op4UbMPthkAkE3TNv26p1ez/F/gkP7jYxiIBgXSBmQr5cyz4L4nFCw=",
+        "s_sq": "%5B%5BB%5D%5D",
+        "__utmb": "110589831.9.10.1621520245",
+        "_uetsid": "1a4c5020b97611eb918efdad97a1be35",
+        "_uetvid": "1a4de840b97611ebab917bf83e7542b8",
     }
 
     headers = {
@@ -150,6 +141,7 @@ def fetch_data():
         "Accept-Language": "en-US,en-GB;q=0.9,en;q=0.8",
     }
 
+    store_id_list = []
     for lat, long in search:
         log.info(f"{(lat, long)}")
 
@@ -201,12 +193,15 @@ def fetch_data():
                 location_type = "<MISSING>"
 
                 store_number = store["id"]
+                if store_number in store_id_list:
+                    continue
+                store_id_list.append(store_number)
                 hours = store["hours"]
                 hours_list = []
                 for hour in hours:
                     day = hour["day"]
                     time = ""
-                    if len(hour["open"]) > 0 and len(hour["close"]) > 0:
+                    if len(hour["open"]) <= 0 and len(hour["close"]) <= 0:
                         time = "Closed"
                     else:
                         time = hour["open"] + "-" + hour["close"]
@@ -224,9 +219,9 @@ def fetch_data():
 
                 latitude = store["latitude"]
                 longitude = store["longitude"]
-                if latitude == "":
+                if latitude == "" or latitude == "0.00000":
                     latitude = "<MISSING>"
-                if longitude == "":
+                if longitude == "" or longitude == "0.00000":
                     longitude = "<MISSING>"
 
                 if hours_of_operation == "":

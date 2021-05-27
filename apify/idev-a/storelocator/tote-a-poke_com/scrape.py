@@ -14,20 +14,20 @@ def fetch_data():
     base_url = "http://www.tote-a-poke.com/locations/"
     with SgRequests() as session:
         soup = bs(session.get(base_url, headers=_headers).text, "lxml")
-        locations = soup.select(".et_pb_section.et_pb_section_1 .et_pb_row")
-        for _ in locations[1:]:
-            addr = parse_address_intl(_.p.text)
-            coord = _.a["href"].split("!3d")[1].split("!4d")
+        locations = soup.select("div.et_pb_section.et_pb_section_1 > div")[1:]
+        for _ in locations:
+            addr = parse_address_intl(_.p.text.strip())
+            coord = _.a["href"].split("/@")[1].split("z/data")[0].split(",")
             yield SgRecord(
                 page_url=base_url,
-                location_name=_.h4.text,
+                location_name=_.h4.text.strip(),
                 street_address=addr.street_address_1,
                 city=addr.city,
                 state=addr.state,
                 latitude=coord[0],
                 longitude=coord[1],
                 zip_postal=addr.postcode,
-                country_code=addr.country,
+                country_code="US",
                 locator_domain=locator_domain,
             )
 

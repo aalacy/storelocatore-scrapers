@@ -72,8 +72,14 @@ def paraThis(url):
                 if j.isdigit():
                     phone.append(j)
     rawa = " ".join(rawa)
+    rawa = rawa.replace(",", " ").replace(".", " ").replace("  ", " ")
     phone = "".join(phone)
     parsedAddress = parser.parse_address_usa(rawa)
+    if not parsedAddress.postcode:
+        backupParsed = parsedAddress
+        parsedAddress = parser.parse_address_intl(rawa)
+    if not parsedAddress.postcode:
+        parsedAddress = backupParsed
     k["parsed"]["address"] = parsedAddress.street_address_1
     if parsedAddress.street_address_2:
         k["parsed"]["address"] = (

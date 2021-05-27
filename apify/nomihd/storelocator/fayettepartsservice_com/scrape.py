@@ -31,9 +31,13 @@ def fetch_data():
         locator_domain = website
         location_name = "".join(store_sel.xpath("//h1/span/text()")).strip()
 
-        raw_address = "".join(
-            store_sel.xpath('//div[@data-type="inlineMap"]/@data-address')
-        ).strip()
+        raw_address = ""
+        if "/newpage7fe6dbf7" in page_url:
+            raw_address = "531 Rodi Rd, Pittsburgh, PA"
+        else:
+            raw_address = "".join(
+                store_sel.xpath('//div[@data-type="inlineMap"]/@data-address')
+            ).strip()
         formatted_addr = parser.parse_address_usa(raw_address)
         street_address = formatted_addr.street_address_1
         if formatted_addr.street_address_2:

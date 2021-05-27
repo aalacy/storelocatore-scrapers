@@ -2,6 +2,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
+import re
 
 _headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.182 Safari/537.36",
@@ -37,8 +38,7 @@ def fetch_data():
 
             page_url = locator_domain + _.a["href"]
             block = list(_.stripped_strings)
-            if len(block) == 5:
-                del block[0]
+            del block[0]
             state_zip = block[1].split(",")[1].strip().split(" ")
             soup1 = bs(session.get(page_url, headers=_headers).text, "lxml")
             coord = soup1.select_one('div[data-type="inlineMap"]')
@@ -50,7 +50,7 @@ def fetch_data():
                 state=state_zip[0],
                 zip_postal=state_zip[-1],
                 country_code="US",
-                phone=block[2].replace("ph:", "").strip(),
+                phone=soup1.find("a", href=re.compile(r"tel:")).text,
                 latitude=coord["lat"],
                 longitude=coord["lon"],
                 locator_domain=locator_domain,

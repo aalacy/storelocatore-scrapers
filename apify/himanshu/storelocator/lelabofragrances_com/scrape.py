@@ -40,6 +40,7 @@ def write_output(data):
 def fetch_data():
     # Your scraper here
     items = []
+    scraped_items = []
 
     start_url = "https://www.lelabofragrances.com/"
     domain = re.findall("://(.+?)/", start_url)[0].replace("www.", "")
@@ -53,9 +54,16 @@ def fetch_data():
         ).click()
         sleep(3)
         driver.find_element_by_xpath('//a[@data-label="Store Locator"]').click()
+        sleep(3)
+        driver.find_element_by_xpath(
+            '//a[contains(text(), "View all locations")]'
+        ).click()
+        sleep(3)
+        driver.find_element_by_xpath('//a[@data-country="US"]').click()
+        sleep(3)
         dom = etree.HTML(driver.page_source)
 
-    all_locations = dom.xpath('//ul[@class="list-locations"]/li')
+    all_locations = dom.xpath('//ul[contains(@class, "list-locations")]/li')
     for poi_html in all_locations:
         store_url = start_url
         location_name = poi_html.xpath(".//a/h4/text()")
@@ -75,7 +83,7 @@ def fetch_data():
         zip_code = zip_code if zip_code else "<MISSING>"
         country_code = addr.country
         country_code = country_code if country_code else "<MISSING>"
-        if country_code != "United Kingdom":
+        if country_code not in ["United Kingdom", "United States", "Canada"]:
             continue
         store_number = poi_html.xpath('.//div[@class="store-name"]/a/@id')[0]
         phone = poi_html.xpath('.//div[@class="store-number"]/a/text()')
@@ -91,6 +99,7 @@ def fetch_data():
         hours_of_operation = (
             " ".join(hoo).split("Available")[-1] if hoo else "<MISSING>"
         )
+        hours_of_operation = " ".join(hours_of_operation.split())
 
         item = [
             domain,
@@ -108,8 +117,9 @@ def fetch_data():
             longitude,
             hours_of_operation,
         ]
-
-        items.append(item)
+        if store_number not in scraped_items:
+            scraped_items.append(store_number)
+            items.append(item)
 
     return items
 

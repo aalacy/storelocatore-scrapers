@@ -4,7 +4,7 @@ from sgrequests import SgRequests
 from sglogging import SgLogSetup
 
 logger = SgLogSetup().get_logger("educationaloutfitters_com")
-session = SgRequests()
+session = SgRequests(retry_behavior=None)
 
 
 def log(*args, **kwargs):
@@ -44,7 +44,12 @@ def write_output(data):
 show_logs = True
 
 
+def fetch(url):
+    session.request()
+
+
 def fetch_data():
+    global session
     headers = {
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36"
     }
@@ -68,6 +73,7 @@ def fetch_data():
     hours_of_operation = "<MISSING>"
     page_url = "http://www.educationaloutfitters.com/states"
     for script in soup.find_all("li", {"class": "navList-item"}):
+        session = SgRequests(retry_behavior=None, proxy_rotation_failure_threshold=0)
         r1 = session.get(script.find("a")["href"], headers=headers)
         if not r1:
             continue
@@ -87,7 +93,13 @@ def fetch_data():
                 "shop.readsuniforms.net/educationnc" not in page_url
                 and "toledo.educationaloutfitters.com" not in page_url
             ):
-                r4 = session.get(page_url, timeout=(30, 30), headers=headers)
+                r4 = session.request(
+                    page_url,
+                    timeout=10,
+                    allow_redirects=False,
+                    verify=False,
+                    headers=headers,
+                )
                 if r4:
                     if r4.status_code == 200:
                         soup5 = BeautifulSoup(r4.text, "lxml")
