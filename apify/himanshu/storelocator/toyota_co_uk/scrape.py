@@ -1,6 +1,5 @@
 import csv
 from sgrequests import SgRequests
-from bs4 import BeautifulSoup as bs
 from sglogging import sglog
 
 log = sglog.SgLogSetup().get_logger(logger_name="toyota.co.uk")
