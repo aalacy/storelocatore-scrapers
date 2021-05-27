@@ -508,11 +508,19 @@ def fetch_data():
                     zc = addinfo.split("<br/>")[1].rsplit(" ", 1)[1]
                 else:
                     add = addinfo.split("<br/>")[0]
-                    city = addinfo.split("<br/>")[2].split(",")[0]
-                    state = (
-                        addinfo.split("<br/>")[2].split(",")[1].strip().split(" ")[0]
-                    )
-                    zc = addinfo.split("<br/>")[2].rsplit(" ", 1)[1]
+                    try:
+                        city = addinfo.split("<br/>")[2].split(",")[0]
+                        state = (
+                            addinfo.split("<br/>")[2]
+                            .split(",")[1]
+                            .strip()
+                            .split(" ")[0]
+                        )
+                        zc = addinfo.split("<br/>")[2].rsplit(" ", 1)[1]
+                    except:
+                        city = "<MISSING>"
+                        state = "<MISSING>"
+                        zc = "<MISSING>"
             if '<a id="main_0_rightpanel_0_hlAlternatePhone"' in line:
                 phone = line.split('"tel:')[1].split('"')[0]
         if hours == "":
