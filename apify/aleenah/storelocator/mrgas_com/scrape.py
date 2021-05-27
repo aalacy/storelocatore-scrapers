@@ -93,7 +93,7 @@ def fetch_data():
                 "<MISSING>",  # lat
                 "<MISSING>",  # long
                 tim.strip(),  # timing
-                "http://mrgas.com",
+                "<MISSING>",
             ]
         )
 

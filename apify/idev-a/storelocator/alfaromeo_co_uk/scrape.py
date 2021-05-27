@@ -43,6 +43,7 @@ def fetch_data():
                 phone=store["TEL_1"],
                 latitude=store["YCOORD"],
                 longitude=store["XCOORD"],
+                locator_domain=locator_domain,
                 hours_of_operation=hours_of_operation,
             )
 
