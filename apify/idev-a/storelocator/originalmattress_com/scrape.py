@@ -4,6 +4,11 @@ import json
 from bs4 import BeautifulSoup as bs
 from sgrequests import SgRequests
 from sgscrape.sgpostal import parse_address_intl
+import re
+
+
+def _p(val):
+    return val.strip().split(":")[-1].replace("Phone", "")
 
 
 def fetch_data():
@@ -11,30 +16,42 @@ def fetch_data():
     base_url = "https://www.originalmattress.com/find-a-store"
     with SgRequests() as session:
         store_list = json.loads(
-            session.get(base_url)
-            .text.split('type="hidden" data-mapmarkers="')[1]
-            .split('" />')[0]
+            bs(session.get(base_url).text, "lxml")
+            .select_one("input#mapMarkers")["data-mapmarkers"]
             .replace("&quot;", '"')
+            .replace("&gt;", ">")
+            .replace("&lt;", "<")
+            .replace("&#160;", " ")
+            .replace("&amp;", "&")
+            .replace("\xa0", " ")
         )
         for store in store_list:
             page_url = locator_domain + store["UrlSlug"]
-            location_name = store["Name"].replace("&amp;", "&")
+            location_name = store["Name"]
             location_type = (
                 "Factory & Store" if "Factory & Store" in location_name else "Store"
             )
 
             _ = bs(
                 store["ShortDescription"]
-                .replace("&gt;", ">")
-                .replace("&lt;", "<")
                 .replace("NOW OPEN:", "")
                 .replace("Next to Trader Joe’s", ""),
                 "lxml",
             )
-            _phone = _.select_one("div.store-phone a")
-            if _phone:
-                phone = _phone.text.strip()
             content = list(_.stripped_strings)
+            phone = ""
+            _phone = _.select_one(".store-phone")
+            if _phone and "hour" not in _phone.text.lower():
+                phone = _p(_phone.text)
+            else:
+                _phone = _.find("", string=re.compile(r"Phone"))
+                if _phone:
+                    phone = _p(_phone.find_parent().text)
+                else:
+                    for x, aa in enumerate(content):
+                        if "Phone" in aa:
+                            phone = content[x + 1]
+                            break
             hours = []
             for x, hh in enumerate(content):
                 if "Mon" in hh:
