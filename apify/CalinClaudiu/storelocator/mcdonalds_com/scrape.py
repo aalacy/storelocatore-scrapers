@@ -2,7 +2,7 @@ from sgscrape import simple_scraper_pipeline as sp
 from sglogging import sglog
 from typing import Any, Dict, Optional
 import configparser
-
+from csv import reader
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as b4
 
@@ -39,6 +39,33 @@ def readConfig(filename):
     )
     config.read(filename)
     return config
+
+
+class DataSource:
+    class CsvRecord:
+        def __init__(self, filename):
+            self._filename = filename
+            with open(filename, "r", encoding="utf-8") as csvFile:
+                file = reader(csvFile)
+                self._items_remaining = sum(1 for row in file) - 1
+
+        def items_remaining(self):
+            return self._items_remaining
+
+        def found_location_at(self, lat, lng):
+            pass
+
+        def __iter__(self):
+            with open(self._filename, "r", encoding="utf-8") as csvFile:
+                file = reader(csvFile)
+                keys = next(file)
+                for index, row in enumerate(file):
+                    row = zip(keys, row)
+                    row = dict(row)
+                    self._items_remaining -= 1
+                    #
+                    yield (row["latitude"], row["longitude"])
+                    # need to improve on this in config if I ever need it outside of testing
 
 
 class CleanRecord:
@@ -190,6 +217,11 @@ class getData(CrawlMethod):
     def EnableSGREQUESTS(self):
         self._session = SgRequests()
         # need to improve on that
+
+    def EnableDATASOURCE(self):
+        self._search = getattr(DataSource, self._config.get("DataSource"))(
+            self._config.get("SourceFileName")
+        )
 
     def Start(self):
         func = getattr(CrawlMethod, self._config.get("Method"))
