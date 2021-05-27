@@ -92,7 +92,9 @@ def fetch_data():
             latitude = latitude if latitude else "<MISSING>"
             longitude = poi["Longitude"]
             longitude = longitude if longitude else "<MISSING>"
-            hoo = loc_dom.xpath('//ul[@class="om-hours"]//text()')
+            hoo = loc_dom.xpath(
+                '//h4[contains(text(), "Lobby Hours")]/following-sibling::ul[1]//text()'
+            )
             hoo = [e.strip() for e in hoo if e.strip()]
             hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
 
