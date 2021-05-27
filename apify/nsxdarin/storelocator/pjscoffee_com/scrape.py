@@ -66,6 +66,7 @@ def fetch_data():
                         locs.append(line3.split('href="')[1].split('"')[0])
     for loc in locs:
         logger.info(loc)
+        CS = False
         name = ""
         add = ""
         city = ""
@@ -98,12 +99,16 @@ def fetch_data():
                 lng = line2.split('"longitude": "')[1].split('"')[0]
             if '"telephone": "' in line2:
                 phone = line2.split('"telephone": "')[1].split('"')[0]
+            if ">Coming Soon<" in line2:
+                CS = True
             if '"openingHours": "' in line2:
                 hours = line2.split('"openingHours": "')[1].split('"')[0].strip()
         if phone == "":
             phone = "<MISSING>"
         if hours == "":
             hours = "<MISSING>"
+        if CS:
+            name = name + " - Coming Soon"
         yield [
             website,
             loc,
