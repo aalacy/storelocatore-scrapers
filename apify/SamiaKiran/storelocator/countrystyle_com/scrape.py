@@ -23,7 +23,7 @@ def fetch_data():
         x = 0
         for loc in loclist:
             location_name = loc.find("location").text
-            store_number = loc.find("sortord").text
+            store_number = loc.find("storeId").text
             raw_address = loc.find("address").text
 
             raw_address = raw_address.replace(
