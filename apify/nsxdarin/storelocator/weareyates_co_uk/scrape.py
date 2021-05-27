@@ -90,11 +90,14 @@ def fetch_data():
                     zc = i.split(">")[1].split("<")[0]
                 else:
                     try:
-                        add = (
-                            g.split(">")[1].split("<")[0]
-                            + " "
-                            + h.split(">")[1].split("<")[0]
-                        )
+                        try:
+                            add = (
+                                g.split(">")[1].split("<")[0]
+                                + " "
+                                + h.split(">")[1].split("<")[0]
+                            )
+                        except:
+                            add = h.split(">")[1].split("<")[0]
                         city = i.split(">")[1].split("<")[0]
                         zc = j.split(">")[1].split("<")[0]
                     except:
