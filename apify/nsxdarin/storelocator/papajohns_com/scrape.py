@@ -49,7 +49,12 @@ def fetch_data():
         r.encoding = "utf-8"
     for line in r.iter_lines(decode_unicode=True):
         if "<loc>https://locations.papajohns.com/" in line:
-            lurl = line.split("<loc>")[1].split("<")[0]
+            lurl = (
+                line.split("<loc>")[1]
+                .split("<")[0]
+                .replace("&#39;", "'")
+                .replace("&amp;", "&")
+            )
             if lurl.count("/") > 5:
                 locs.append(lurl)
     for loc in locs:
