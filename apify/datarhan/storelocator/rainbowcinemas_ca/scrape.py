@@ -43,7 +43,7 @@ def fetch_data():
 
     items = []
 
-    start_url = "https://www.rainbowcinemas.ca/A/index.php?"
+    start_url = "https://www.rainbowcinemas.ca/A/contact.php?t=Aurora"
     domain = re.findall(r"://(.+?)/", start_url)[0].replace("www.", "")
     hdr = {
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
@@ -51,9 +51,7 @@ def fetch_data():
     response = session.get(start_url, headers=hdr)
     dom = etree.HTML(response.text)
 
-    all_locations = dom.xpath(
-        '//h3[@title="Magic Lantern Theatres"]/following-sibling::div[1]//a/@href'
-    )
+    all_locations = dom.xpath('//a[b[@style="font-size:13px"]]/@href')
     for url in all_locations:
         store_url = urljoin(start_url, url)
         loc_response = session.get(store_url)
