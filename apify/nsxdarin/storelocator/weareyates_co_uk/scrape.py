@@ -89,13 +89,21 @@ def fetch_data():
                     city = h.split(">")[1].split("<")[0]
                     zc = i.split(">")[1].split("<")[0]
                 else:
-                    add = (
-                        g.split(">")[1].split("<")[0]
-                        + " "
-                        + h.split(">")[1].split("<")[0]
-                    )
-                    city = i.split(">")[1].split("<")[0]
-                    zc = j.split(">")[1].split("<")[0]
+                    try:
+                        try:
+                            add = (
+                                g.split(">")[1].split("<")[0]
+                                + " "
+                                + h.split(">")[1].split("<")[0]
+                            )
+                        except:
+                            add = h.split(">")[1].split("<")[0]
+                        city = i.split(">")[1].split("<")[0]
+                        zc = j.split(">")[1].split("<")[0]
+                    except:
+                        add = g.split(">")[1].split("<")[0]
+                        city = h.split(">")[1].split("<")[0]
+                        zc = j.split(">")[1].split("<")[0]
             if DFound and '<div class="address">' in line2:
                 DFound = False
             if DFound and "day: </span>" in line2:
@@ -113,22 +121,23 @@ def fetch_data():
             if "center: { lng:" in line2:
                 lng = line2.split("center: { lng:")[1].split(",")[0].strip()
                 lat = line2.split("lat: ")[1].split("}")[0].strip()
-        yield [
-            website,
-            loc,
-            name,
-            add,
-            city,
-            state,
-            zc,
-            country,
-            store,
-            phone,
-            typ,
-            lat,
-            lng,
-            hours,
-        ]
+        if add != "":
+            yield [
+                website,
+                loc,
+                name,
+                add,
+                city,
+                state,
+                zc,
+                country,
+                store,
+                phone,
+                typ,
+                lat,
+                lng,
+                hours,
+            ]
 
 
 def scrape():
