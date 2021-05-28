@@ -45,6 +45,8 @@ class DataSource:
     class CsvRecord:
         def __init__(self, filename):
             self._filename = filename
+            self._row = None
+            self._lastSearch = None
             with open(filename, "r", encoding="utf-8") as csvFile:
                 file = reader(csvFile)
                 self._items_remaining = sum(1 for row in file) - 1
@@ -53,7 +55,14 @@ class DataSource:
             return self._items_remaining
 
         def found_location_at(self, lat, lng):
-            pass
+            with open("Found_location_at", mode="a", encoding="utf-8") as file:
+                if self._lastSearch != self._row:
+                    print(str(self._row + ",search"))
+                    file.write(str(self._row + ",search\n"))
+                    self._lastSearch = self._row
+
+                file.write(str(str(lat) + "," + str(lng) + ",found\n"))
+                print(str(str(lat) + "," + str(lng) + ",found"))
 
         def __iter__(self):
             with open(self._filename, "r", encoding="utf-8") as csvFile:
@@ -62,6 +71,7 @@ class DataSource:
                 for index, row in enumerate(file):
                     row = zip(keys, row)
                     row = dict(row)
+                    self._row = str(row["latitude"]) + "," + str(row["longitude"])
                     self._items_remaining -= 1
                     #
                     yield (row["latitude"], row["longitude"])
@@ -143,7 +153,7 @@ class CrawlMethod(CleanRecord):
                         str(record["latitude"])
                         + str(record["longitude"])
                         + str(record["phone"])
-                        + str(record["store_number"])
+                        # + str(record["store_number"])
                         + str(record["street_address1"])
                         + str(record["location_name"])
                     )
@@ -154,7 +164,7 @@ class CrawlMethod(CleanRecord):
                             str(record["latitude"])
                             + str(record["longitude"])
                             + str(record["phone"])
-                            + str(record["store_number"])
+                            # + str(record["store_number"])
                             + str(record["street_address1"])
                             + str(record["location_name"])
                         )
