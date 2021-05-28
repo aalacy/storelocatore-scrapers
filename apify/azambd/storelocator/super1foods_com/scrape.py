@@ -26,9 +26,7 @@ def get_driver(url, class_name, driver=None):
     if driver is not None:
         driver.quit()
 
-    user_agent = (
-        "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.77 Safari/537.36"
-    )
+    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.77 Safari/537.36"
     x = 0
     while True:
         x = x + 1
@@ -72,8 +70,15 @@ while True:
 
 
 for grid in grids:
-    name = grid.find("span", attrs={"ng-if": "!$ctrl.store._match.storeName"}).text.strip()
-    number = grid.find("span", attrs={"ng-if": ":: $ctrl.FEATURES.addStoreNumbers && !$ctrl.store._match.storeID"}).text.strip()
+    name = grid.find(
+        "span", attrs={"ng-if": "!$ctrl.store._match.storeName"}
+    ).text.strip()
+    number = grid.find(
+        "span",
+        attrs={
+            "ng-if": ":: $ctrl.FEATURES.addStoreNumbers && !$ctrl.store._match.storeID"
+        },
+    ).text.strip()
     page_url = (
         "https://www.super1foods.com/stores/"
         + name.split("\n")[0].replace(" ", "-").replace(".", "").lower()
