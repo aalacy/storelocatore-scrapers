@@ -84,7 +84,7 @@ def fetch_data():
             country_code = "US"
             phone_number = loc["Phone"]
             store_number = loc["storeNumber"]
-            location_type = loc["Service"]
+            location_type = "<MISSING>"
             lat = loc["Lat"]
             longit = loc["Long"]
 
