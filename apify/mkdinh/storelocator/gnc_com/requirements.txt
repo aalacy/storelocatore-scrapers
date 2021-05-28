@@ -1,6 +1,4 @@
-sgrequests
-requests_random_user_agent
-sglogging
-bs4
-sgzip
-numpy
+sgrequests==0.1.8
+sglogging==0.0.4
+beautifulsoup4==4.9.3
+sgzip==0.5.3
