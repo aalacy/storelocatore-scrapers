@@ -85,7 +85,8 @@ def fetch_data():
                 if "Online Ordering Coming Soon!" in temp[-1]:
                     phone = MISSING
                     location_type = "COMING SOON"
-
+                if "Coming soon!" in r.text:
+                    location_type = "COMING SOON"
                 if len(temp) == 3:
                     phone = MISSING
                 try:
