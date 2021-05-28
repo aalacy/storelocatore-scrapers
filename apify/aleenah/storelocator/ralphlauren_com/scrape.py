@@ -1,4 +1,5 @@
 import csv
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import json
 import re
@@ -43,12 +44,10 @@ def write_output(data):
 option = webdriver.ChromeOptions()
 option.add_argument("window-size=1280,800")
 option.add_argument("--headless")
+option.add_argument("--no-sandbox")
+option.add_argument("--disable-dev-shm-usage")
 
-driver = SgChrome(
-    is_headless=True,
-    executable_path=ChromeDriverManager().install(),
-    chrome_options=option,
-).driver()
+driver = SgChrome(is_headless=True, executable_path=ChromeDriverManager().install(), chrome_options=option).driver()
 driver.get("https://www.ralphlauren.com/stores")
 
 
