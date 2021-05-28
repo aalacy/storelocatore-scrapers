@@ -47,7 +47,11 @@ option.add_argument("--headless")
 option.add_argument("--no-sandbox")
 option.add_argument("--disable-dev-shm-usage")
 
-driver = SgChrome(is_headless=True, executable_path=ChromeDriverManager().install(), chrome_options=option).driver()
+driver = SgChrome(
+    is_headless=True,
+    executable_path=ChromeDriverManager().install(),
+    chrome_options=option,
+).driver()
 driver.get("https://www.ralphlauren.com/stores")
 
 
