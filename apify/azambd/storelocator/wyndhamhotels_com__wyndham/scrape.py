@@ -121,7 +121,6 @@ def fetchStores():
                     store_number = prop["propertyId"]
                     location_name = prop["propertyName"]
                     brand = prop["brand"]
-                    location_type = brand
                     brandId = prop["brandId"]
                     if brandId in brandMap:
                         brand = brandMap[brandId]
@@ -144,7 +143,6 @@ def fetchStores():
                             "page_url": page_url,
                             "countryCode": countryCode,
                             "state": stateName,
-                            "location_type": location_type,
                             "cityName": cityName,
                             "brandId": brandId,
                         }
@@ -211,19 +209,6 @@ def getScriptWithGeo(body):
     return None
 
 
-def getScriptVariable(body, varName):
-    scripts = body.xpath("//script/text()")
-    for script in scripts:
-        if f"{varName} = " in script:
-            data = script.split(f"{varName} = ", 1)[-1].rsplit(";", 1)[0].strip()
-            data = script.split(f"{varName} =")[1]
-            data = data.split(";")[0]
-
-            if len(data) > 0:
-                return json.loads(data)
-    return []
-
-
 def fetchData():
     stores = fetchStores()
     log.info(f"Total stores found = {len(stores)}")
@@ -239,13 +224,14 @@ def fetchData():
                 log.info(f"scrapped {count} pages ...")
 
             store_number = store["store_number"]
-            location_type = store["location_type"]
 
             if body is None or geoJSON is None:
                 failed = failed + 1
                 log.error(f"{count}. #failed {failed}  {store['page_url']} ...")
 
                 page_url = store["ex_page_url"]
+                urlParts = page_url.split("/")
+                location_type = urlParts[len(urlParts) - 4]
                 yield SgRecord(
                     locator_domain=website,
                     location_type=location_type,
@@ -268,6 +254,8 @@ def fetchData():
             latitude = f" {geoJSON['geo']['latitude']}"
             longitude = f" {geoJSON['geo']['longitude']}"
 
+            urlParts = page_url.split("/")
+            location_type = urlParts[len(urlParts) - 4]
             yield SgRecord(
                 locator_domain=website,
                 store_number=store_number,

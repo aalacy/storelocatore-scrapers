@@ -48,23 +48,41 @@ def fetch_data():
                     ).stripped_strings
                 )
             _contact = sp1.find("h2", string=re.compile(r"^Contact"))
-            phone = ""
-            if _contact:
-                for cc in list(_contact.find_parent().stripped_strings):
-                    if _p(cc).isdigit():
-                        phone = cc.split(":")[-1].strip()
-                        break
 
             _hr = sp1.find(
                 "h2", string=re.compile(r"^Lobby & Drive-up Hours", re.IGNORECASE)
             )
             hours = []
+            temp = []
+            if not _hr:
+                _hr = sp1.find("h2", string=re.compile(r"^Office Hours", re.IGNORECASE))
             if _hr:
                 temp = list(_hr.find_parent().stripped_strings)[1:]
                 for hh in temp:
                     if "drive" in hh.lower() or "lobby" in hh.lower():
                         break
                     hours.append(hh)
+
+            phone = ""
+            if _contact:
+                cont = list(_contact.find_parent().stripped_strings)
+                for cc in cont:
+                    if _p(cc).isdigit():
+                        phone = cc.split(":")[-1].strip()
+                        break
+                if not temp:
+                    for x, cc in enumerate(cont):
+                        if "Monday" in cc:
+                            temp = cont[x:]
+                            break
+                    for x, cc in enumerate(temp):
+                        if (
+                            "phone" in cc.lower()
+                            or "administration" in cc.lower()
+                            or "human" in cc.lower()
+                        ):
+                            break
+                        hours.append(cc)
 
             coord = sp1.iframe["src"].split("!1d")[1].split("!3f")[0].split("!2d")
             location_type = "branch"

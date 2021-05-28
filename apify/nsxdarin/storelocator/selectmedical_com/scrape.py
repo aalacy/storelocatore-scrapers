@@ -1,10 +1,10 @@
 import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
+import time
 
 logger = SgLogSetup().get_logger("selectmedical_com")
 
-session = SgRequests()
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36",
     "content-type": "application/json",
@@ -40,6 +40,7 @@ def write_output(data):
 
 
 def fetch_data():
+    session = SgRequests()
     url = "https://www.selectmedical.com//sxa/search/results/?s={648F4C3A-C9EA-4FCF-82A3-39ED2AC90A06}&itemid={94793D6A-7CC7-4A8E-AF41-2FB3EC154E1C}&sig=&autoFireSearch=true&v={D2D3D65E-3A18-43DD-890F-1328E992446A}&p=50&e=0&g=&o=Distance,Ascending"
     r = session.get(url, headers=headers)
     if r.encoding is None:
@@ -55,6 +56,8 @@ def fetch_data():
             "https://www.selectmedical.com//sxa/search/results/?s={648F4C3A-C9EA-4FCF-82A3-39ED2AC90A06}&itemid={94793D6A-7CC7-4A8E-AF41-2FB3EC154E1C}&sig=&autoFireSearch=true&v=%7BD2D3D65E-3A18-43DD-890F-1328E992446A%7D&p=8&g=&o=&e="
             + str(x)
         )
+        session = SgRequests()
+        time.sleep(7)
         r2 = session.get(url2, headers=headers)
         if r2.encoding is None:
             r2.encoding = "utf-8"
@@ -130,10 +133,13 @@ def fetch_data():
                             if lat == "":
                                 lat = "<MISSING>"
                                 lng = "<MISSING>"
+                            logger.info(lurl)
+                            session = SgRequests()
+                            time.sleep(7)
                             r3 = session.get(lurl, headers=headers)
                             if r3.encoding is None:
                                 r3.encoding = "utf-8"
-                            logger.info(lurl)
+
                             for line3 in r3.iter_lines(decode_unicode=True):
                                 if "PM</td></tr>" in line3:
                                     try:

@@ -183,6 +183,7 @@ def fetch_data():
             hours_of_operation.split("Parking")[0]
             .replace("\xa0", " ")
             .replace("–", "-")
+            .split("PARKING")[0]
             .strip()
         )
         hours_of_operation = (re.sub(" +", " ", hours_of_operation)).strip()

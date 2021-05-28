@@ -46,7 +46,7 @@ def fetch_data():
     r = session.get(url, headers=headers)
     website = "tesla.com"
     typ = "<MISSING>"
-    country = "US"
+    country = "<MISSING>"
     logger.info("Pulling Stores")
     Found = False
     for line in r.iter_lines():
@@ -240,8 +240,10 @@ def fetch_data():
             typ = "Store"
         if CS:
             name = name + " - Coming Soon"
-        if state == "":
+        if state == "" or state is None:
             state = "<MISSING>"
+        if zc == "" or zc is None:
+            zc = "<MISSING>"
         yield [
             website,
             loc,
@@ -430,6 +432,10 @@ def fetch_data():
             zc = "<MISSING>"
         if CS:
             name = name + " - Coming Soon"
+        if state == "" or state is None:
+            state = "<MISSING>"
+        if zc == "" or zc is None:
+            zc = "<MISSING>"
         yield [
             website,
             loc,
@@ -604,6 +610,10 @@ def fetch_data():
             typ = "Store"
         if CS:
             name = name + " - Coming Soon"
+        if state == "" or state is None:
+            state = "<MISSING>"
+        if zc == "" or zc is None:
+            zc = "<MISSING>"
         yield [
             website,
             loc,
@@ -807,6 +817,10 @@ def fetch_data():
             typ = "Store"
         if CS:
             name = name + " - Coming Soon"
+        if state == "" or state is None:
+            state = "<MISSING>"
+        if zc == "" or zc is None:
+            zc = "<MISSING>"
         yield [
             website,
             loc,
