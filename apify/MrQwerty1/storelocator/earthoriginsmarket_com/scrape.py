@@ -108,6 +108,9 @@ def fetch_data():
             "".join(d.xpath(".//div[@class='locations-address']/text()")).split()
         )
         street_address, city, state, postal = get_address(line)
+        if city == "S Sarasota":
+            street_address += " S"
+            city = city.replace("S ", "")
         country_code = "US"
         store_number = "<MISSING>"
         phone = (

@@ -63,6 +63,8 @@ def get_data(url):
     location_name = "".join(tree.xpath("//h1/text()")).strip()
     line = tree.xpath("//p[./a]/text()")
     line = list(filter(None, [l.strip() for l in line]))
+    if not line:
+        return
 
     street_address = line[0]
     line = line[1].replace(",", "")

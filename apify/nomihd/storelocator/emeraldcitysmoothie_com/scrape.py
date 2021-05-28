@@ -34,8 +34,9 @@ def fetch_records_for(zipcode):
 
     stores_req = session.get(search_url.format(zipcode), headers=headers)
     if "data" in stores_req.text:
-        stores = json.loads(stores_req.text.replace("\n", "").strip())["data"]
-        yield stores
+        if stores_req.status_code == 200:
+            stores = json.loads(stores_req.text.replace("\n", "").strip())["data"]
+            yield stores
 
 
 def process_record(raw_results_from_one_zipcode):

@@ -71,6 +71,8 @@ def fetch_data():
 
             location_name = loc["displayName"].strip()
             phone_number = loc["contactPhone"]
+            if not phone_number:
+                phone_number = "<MISSING>"
             page_url = "https://www.geico.com" + loc["url"]
 
             if page_url not in dup_tracker:

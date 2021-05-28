@@ -43,11 +43,11 @@ def fetch_data():
                 address = temp.text.split("\n")
                 phone = address[1].split("(")
                 address = address[0] + " " + phone[0].strip()
-                phone = "(" + phone[1]
+                phone = "(" + phone[1].replace("Call", "")
             else:
                 if len(address) > 3:
                     address = address[:-1]
-                phone = address[-1]
+                phone = address[-1].replace("Call", "")
                 address = address[0] + " " + address[1].strip()
                 address = address.replace(",", " ")
             address = usaddress.parse(address)
@@ -75,10 +75,10 @@ def fetch_data():
                 if temp[1].find("ZipCode") != -1:
                     zip_postal = zip_postal + " " + temp[0]
                 i += 1
-            latitude = (
+            longitude = (
                 soup.find_all("iframe")[2]["src"].split("!2d")[-1].split("!3d")[0]
             )
-            longitude = (
+            latitude = (
                 soup.find_all("iframe")[2]["src"]
                 .split("!2d")[-1]
                 .split("!3d")[1]
