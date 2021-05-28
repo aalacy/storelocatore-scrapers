@@ -51,7 +51,6 @@ def fetch_data():
 
     all_locations = dom.xpath('//div[@class="menu-footer-en-container"]//li/a/@href')
     for store_url in all_locations:
-        print(store_url)
         loc_response = session.get(store_url)
         loc_dom = etree.HTML(loc_response.text)
         if loc_dom.xpath('//h3[contains(text(), "TEMPORARILY CLOSED")]'):
