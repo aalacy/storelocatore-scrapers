@@ -123,8 +123,6 @@ def get_data(url):
         )
         or "<MISSING>"
     )
-    if phone.find("GOMAX") != -1 or phone.find("MAX") != -1:
-        phone = "<MISSING>"
     if phone.find("USA") != -1:
         phone = phone.split("1621")[0].strip()
     location_type = "<MISSING>"
