@@ -22,7 +22,6 @@ def fetch_data():
     if True:
         url = "https://bridgetowntrucking.com/contact/"
         r = session.get(url, headers=headers)
-        soup = BeautifulSoup(r.text, "html.parser")
         loclist = r.text.split('<script type="application/ld+json">')[1].split(
             "</script>"
         )[0]
