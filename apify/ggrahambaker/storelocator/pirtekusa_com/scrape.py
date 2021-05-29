@@ -125,6 +125,12 @@ def fetch_data():
             location_type = "<MISSING>"
             city, state, zip_code = addy_extractor(br[1].previousSibling)
 
+        city = (
+            city.replace("County Area", "County")
+            .split("Cape Coral")[0]
+            .split("Gainesville &")[0]
+            .strip()
+        )
         phone_number = br[2].previousSibling
         country_code = "US"
         store_number = "<MISSING>"
@@ -147,7 +153,12 @@ def fetch_data():
         trs = base.find(id="location_information").find_all("tr")
         for tr in trs:
             if "Hours:" in tr.text:
-                hours = " ".join(list(tr.stripped_strings))
+                hours = (
+                    " ".join(list(tr.stripped_strings))
+                    .split("Hours:")[1]
+                    .split("After Hours")[0]
+                    .strip()
+                )
                 hours = (re.sub(" +", " ", hours)).strip()
 
         store_data = [
