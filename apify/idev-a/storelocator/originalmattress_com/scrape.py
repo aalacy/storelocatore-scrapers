@@ -42,11 +42,11 @@ def fetch_data():
             phone = ""
             _phone = _.select_one(".store-phone")
             if _phone and "hour" not in _phone.text.lower():
-                phone = _p(_phone.text)
+                phone = _phone.text
             else:
                 _phone = _.find("", string=re.compile(r"Phone"))
                 if _phone:
-                    phone = _p(_phone.find_parent().text)
+                    phone = _phone.find_parent().text
                 else:
                     for x, aa in enumerate(content):
                         if "Phone" in aa:
@@ -62,9 +62,11 @@ def fetch_data():
                 if "Temporarily closed." in _.text.strip():
                     hours = ["Temporarily closed."]
 
+            if hours and "Phone" in hours[-1]:
+                del hours[-1]
             _addr = []
             for aa in content:
-                if "Phone" in aa or "Hours" in aa:
+                if "Phone" in aa or "hour" in aa.lower():
                     break
                 _addr.append(aa)
             addr = parse_address_intl(" ".join(_addr))
@@ -81,7 +83,7 @@ def fetch_data():
                 state=addr.state,
                 zip_postal=addr.postcode,
                 country_code="US",
-                phone=phone,
+                phone=_p(phone),
                 latitude=store["Latitude"],
                 longitude=store["Longitude"],
                 locator_domain=locator_domain,

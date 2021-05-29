@@ -121,22 +121,23 @@ def fetch_data():
             if "center: { lng:" in line2:
                 lng = line2.split("center: { lng:")[1].split(",")[0].strip()
                 lat = line2.split("lat: ")[1].split("}")[0].strip()
-        yield [
-            website,
-            loc,
-            name,
-            add,
-            city,
-            state,
-            zc,
-            country,
-            store,
-            phone,
-            typ,
-            lat,
-            lng,
-            hours,
-        ]
+        if add != "":
+            yield [
+                website,
+                loc,
+                name,
+                add,
+                city,
+                state,
+                zc,
+                country,
+                store,
+                phone,
+                typ,
+                lat,
+                lng,
+                hours,
+            ]
 
 
 def scrape():

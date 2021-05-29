@@ -53,20 +53,32 @@ def fetch_data():
     for store_url in all_locations:
         loc_response = session.get(store_url)
         loc_dom = etree.HTML(loc_response.text)
-        if loc_dom.xpath('//h3[contains(text(), "TEMPORARILY CLOSED")]'):
-            continue
 
-        location_name = loc_dom.xpath('//h2[@class="vc_custom_heading"]/text()')
+        location_name = loc_dom.xpath('//h1[@class="vc_custom_heading"]/text()')
+        if not location_name:
+            location_name = loc_dom.xpath('//h2[@class="vc_custom_heading"]/text()')
         location_name = location_name[0] if location_name else "<MISSING>"
         raw_data = loc_dom.xpath(
             '//div[@id="contact"]//div[@class="wpb_wrapper"]/p/text()'
         )
-        raw_data = [e.strip() for e in raw_data if e.strip()]
         if not raw_data:
-            continue
+            raw_data = loc_dom.xpath(
+                '//div[div[contains(text(), "Cine Starz")]]/div/text()'
+            )
+        raw_data = [e.strip() for e in raw_data if e.strip()]
+        if "cine starz" in raw_data[0].lower():
+            raw_data = raw_data[1:]
+        if "Unit" in raw_data[1]:
+            raw_data = [" ".join(raw_data[:2])] + raw_data[2:]
+        if len(raw_data) == 3:
+            raw_data = [raw_data[0]] + raw_data[1].split(", ") + raw_data[2:]
         street_address = raw_data[0]
+        if street_address.endswith(","):
+            street_address = street_address[:-1]
         city = raw_data[1].split(", ")[0].strip()
-        state = raw_data[1].split(", ")[-1].strip()
+        state = raw_data[1].split(", ")[-1].strip().split()[0]
+        if state.endswith("."):
+            state = state[:-1]
         zip_code = raw_data[2].strip()
         country_code = "<MISSING>"
         store_number = "<MISSING>"
@@ -75,8 +87,18 @@ def fetch_data():
         geo = (
             loc_dom.xpath("//iframe/@src")[0].split("ll=")[-1].split("&")[0].split(",")
         )
-        latitude = geo[0]
-        longitude = geo[1]
+        if len(geo) == 2:
+            latitude = geo[0]
+            longitude = geo[1]
+        else:
+            geo = (
+                loc_dom.xpath("//iframe/@src")[0]
+                .split("!2d")[-1]
+                .split("!2m")[0]
+                .split("!3d")
+            )
+            latitude = geo[1]
+            longitude = geo[0]
         hours_of_operation = "<MISSING>"
 
         item = [
