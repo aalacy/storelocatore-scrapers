@@ -1,9 +1,11 @@
 import re
 import csv
 import json
+from time import sleep
 from lxml import etree
 
 from sgrequests import SgRequests
+from sgselenium import SgFirefox
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 from sgscrape.sgpostal import parse_address_intl
 
@@ -76,13 +78,14 @@ def fetch_data():
             store_url = poi["url"]
             if store_url in scraped_items:
                 continue
+
             loc_response = session.get(store_url)
             loc_dom = etree.HTML(loc_response.text)
             location_name = poi["name"]
             location_name = location_name if location_name else "<MISSING>"
-            raw_address = loc_dom.xpath('//div[@class="address"]/text()')
+            raw_address = loc_dom.xpath('//div[@class="address"]//text()')
             raw_address = [elem.strip() for elem in raw_address if elem.strip()]
-            addr = parse_address_intl(" ".join(raw_address))
+            addr = parse_address_intl(" ".join(raw_address).replace("Address", ""))
             if addr.street_address_2:
                 street_address = f"{addr.street_address_2} {addr.street_address_1}"
             else:
@@ -105,6 +108,12 @@ def fetch_data():
             phone = loc_dom.xpath('//a[@id="showroom-phone"]/text()')
             phone = phone[0] if phone else "<MISSING>"
             location_type = "<MISSING>"
+            hoo = loc_dom.xpath('//div[@class="opening_times"]//text()')
+            hoo = [elem.strip() for elem in hoo if elem.strip()]
+            hours_of_operation = (
+                " ".join(hoo[2:]).split(" Call ")[0] if hoo else "<MISSING>"
+            )
+
             geo = re.findall(
                 r'.map_initialize\("map_canvas", ".+", (.+?)\)', loc_response.text
             )
@@ -114,11 +123,16 @@ def fetch_data():
                 geo = geo[0].split(", ")
                 latitude = geo[0]
                 longitude = geo[1]
-            hoo = loc_dom.xpath('//div[@class="opening_times"]//text()')
-            hoo = [elem.strip() for elem in hoo if elem.strip()]
-            hours_of_operation = (
-                " ".join(hoo[2:]).split(" Call ")[0] if hoo else "<MISSING>"
-            )
+            else:
+                with SgFirefox() as driver:
+                    driver.get(store_url)
+                    sleep(10)
+                    loc_dom = etree.HTML(driver.page_source)
+                    geo = loc_dom.xpath('//a[contains(@href, "maps/@")]/@href')
+                    if geo:
+                        geo = geo[0].split("maps/@")[-1].split(",")[:2]
+                        latitude = geo[0]
+                        longitude = geo[1]
 
             item = [
                 DOMAIN,
