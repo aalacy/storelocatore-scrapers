@@ -83,6 +83,15 @@ def fetch_data():
         hours = "; ".join(hours_list).strip()
         if "Opens" in hours:
             continue
+
+        latitude = "<MISSING>"
+        longitude = "<MISSING>"
+        if "maps/place" in store_resp:
+            map_link = store_resp.split("maps/place")[1].strip().split('"')[0].strip()
+            if "/@" in map_link:
+                latitude = map_link.split("/@")[1].strip().split(",")[0].strip()
+                longitude = map_link.split("/@")[1].strip().split(",")[1]
+
         output = []
         output.append(base_url)  # url
         output.append(location_name)  # location name
@@ -94,8 +103,8 @@ def fetch_data():
         output.append("<MISSING>")  # store_number
         output.append(phone)  # phone
         output.append("Restaurants")  # location type
-        output.append("<MISSING>")  # latitude
-        output.append("<MISSING>")  # longitude
+        output.append(latitude)  # latitude
+        output.append(longitude)  # longitude
         output.append(hours)  # opening hours
         output.append(page_url)
         yield output
