@@ -50,31 +50,29 @@ def fetch_data(locations):
     locations_data = []
     for location in locations:
         location_data = []
-        try:
-            location_url = url + location["url"]
-            session = SgRequests()
-            headers = {
-                "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
-            }
+        if location["url"] is None:
+            continue
+        location_url = url + location["url"]
+        session = SgRequests()
+        headers = {
+            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+        }
 
-            r = session.get(location_url, headers=headers)
-            hoo = ""
-            hours = r.text.split(
-                "Hours&quot;,&quot;times&quot;:[{&quot;title&quot;:&quot;", 1
-            )[1].split("&quot;}]}", 1)[0]
-            hours = hours.split("},{")
-            for hour in hours:
-                hour = hour.split("&quot;")
-                index = hour.index(",")
-                index2 = hour.index("content")
-                day = hour[index - 1]
-                time = hour[index2 + 2]
-                hour = day + " " + time
-                hour = hour.replace("&amp;amp;", "&")
-                hoo = hoo + hour + " "
-        except:
-            location_url = "<MISSING>"
-            hoo = "<MISSING>"
+        r = session.get(location_url, headers=headers)
+        hoo = ""
+        hours = r.text.split(
+            "Hours&quot;,&quot;times&quot;:[{&quot;title&quot;:&quot;", 1
+        )[1].split("&quot;}]}", 1)[0]
+        hours = hours.split("},{")
+        for hour in hours:
+            hour = hour.split("&quot;")
+            index = hour.index(",")
+            index2 = hour.index("content")
+            day = hour[index - 1]
+            time = hour[index2 + 2]
+            hour = day + " " + time
+            hour = hour.replace("&amp;amp;", "&")
+            hoo = hoo + hour + " "
         location_data.append(url)
         location_data.append(location_url)
         location_data.append(location["title"])
