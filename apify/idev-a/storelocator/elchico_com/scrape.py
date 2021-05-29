@@ -24,12 +24,12 @@ def fetch_data():
             if "dhabi" in page_url:
                 continue
             sp1 = bs(session.get(page_url).text, "lxml")
-            addr = list(sp1.select_one("div.address-header-up").stripped_strings)
-            if "UAE" in "".join(addr):
+            _addr = list(sp1.select_one("div.address-header-up").stripped_strings)
+            if "UAE" in "".join(_addr):
                 continue
             logger.info(page_url)
             hours = []
-            temp = list(sp1.select_one("div.hrs-header-up").stripped_strings)
+            temp = list(sp1.select_one("div.hrs-header-up p").stripped_strings)
             for x in range(0, len(temp), 2):
                 hours.append(f"{temp[x]} {temp[x+1]}")
             coord = (
@@ -41,16 +41,16 @@ def fetch_data():
             yield SgRecord(
                 page_url=page_url,
                 location_name=sp1.select_one("div.title-up").text.strip(),
-                street_address=" ".join(addr[:-1]),
-                city=addr[-1].split(",")[0].strip(),
-                state=addr[-1].split(",")[1].strip().split(" ")[0].strip(),
-                zip_postal=addr[-1].split(",")[1].strip().split(" ")[-1].strip(),
+                street_address=_addr[0],
+                city=_addr[-1].split(",")[0].strip(),
+                state=_addr[-1].split(",")[1].strip().split(" ")[0].strip(),
+                zip_postal=_addr[-1].split(",")[1].strip().split(" ")[-1].strip(),
                 phone=sp1.select_one("div.tel-header-up").text.strip(),
                 latitude=coord[0],
                 longitude=coord[1],
                 country_code="US",
                 locator_domain=locator_domain,
-                hours_of_operation="; ".join(hours),
+                hours_of_operation="; ".join(hours).replace("–", "-"),
             )
 
 
