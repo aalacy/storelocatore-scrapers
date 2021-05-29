@@ -43,10 +43,9 @@ def fetch_data():
             city = address["addressLocality"]
             state = address["addressRegion"]
             zip_postal = address["postalCode"]
-            countrt_code = address["addressCountry"]
+            country_code = address["addressCountry"]
             latitude = geo["latitude"]
             longitude = geo["longitude"]
-            country_code = "US"
             hours_of_operation = (
                 temp[-5]["dayOfWeek"]
                 + " "
