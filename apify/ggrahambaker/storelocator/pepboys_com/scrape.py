@@ -1,12 +1,23 @@
 import csv
 import json
+import os
 import re
 
 from bs4 import BeautifulSoup
 
+from sglogging import sglog
+
 from sgrequests import SgRequests
 
+log = sglog.SgLogSetup().get_logger("scrape_com")
+
 session = SgRequests()
+proxy_password = os.environ["PROXY_PASSWORD"]
+proxy_url = "http://groups-RESIDENTIAL,country-US:{}@proxy.apify.com:8000/".format(
+    proxy_password
+)
+proxies = {"http": proxy_url, "https": proxy_url}
+session.proxies = proxies
 
 
 def write_output(data):
@@ -59,6 +70,7 @@ def fetch_data():
         state_list.append(link)
 
     for state in state_list:
+        log.info(state)
         page = session.get(state, headers=headers)
         assert page.status_code == 200
         soup = BeautifulSoup(page.content, "html.parser")
@@ -69,10 +81,10 @@ def fetch_data():
             city_list.append(link)
 
     for city_link in city_list:
+        log.info(city_link)
         page = session.get(city_link, headers=headers)
         assert page.status_code == 200
         soup = BeautifulSoup(page.content, "html.parser")
-
         js = soup.main.find(id="mapDataArray").text.strip()
         locs = json.loads(js)
         for loc in locs:
