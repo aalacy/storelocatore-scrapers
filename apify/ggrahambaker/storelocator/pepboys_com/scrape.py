@@ -11,13 +11,27 @@ from sgrequests import SgRequests
 
 log = sglog.SgLogSetup().get_logger("scrape_com")
 
+DEFAULT_PROXY_URL = "http://groups-RESIDENTIAL,country-us:{}@proxy.apify.com:8000/"
+
+
+def set_proxies():
+    if "PROXY_PASSWORD" in os.environ and os.environ["PROXY_PASSWORD"].strip():
+
+        proxy_password = os.environ["PROXY_PASSWORD"]
+        url = (
+            os.environ["PROXY_URL"] if "PROXY_URL" in os.environ else DEFAULT_PROXY_URL
+        )
+        proxy_url = url.format(proxy_password)
+        proxies = {
+            "http://": proxy_url,
+        }
+        return proxies
+    else:
+        return None
+
+
 session = SgRequests()
-proxy_password = os.environ["PROXY_PASSWORD"]
-proxy_url = "http://groups-RESIDENTIAL,country-US:{}@proxy.apify.com:8000/".format(
-    proxy_password
-)
-proxies = {"http": proxy_url, "https": proxy_url}
-session.proxies = proxies
+session.proxies = set_proxies()
 
 
 def write_output(data):
