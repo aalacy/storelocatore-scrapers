@@ -81,6 +81,17 @@ def fetch_data():
         )[0]
         data = json.loads(data)
 
+        if tim == "<MISSING>":
+            tim = (
+                re.findall(r"Sunday.*pm", soup.text)[0]
+                .replace("M", " M")
+                .replace("S", " S")
+                .replace("W", " W")
+                .replace("T", " T")
+                .replace("F", " F")
+                .strip()
+            )
+
         all.append(
             [
                 "https://www.speedycash.com",

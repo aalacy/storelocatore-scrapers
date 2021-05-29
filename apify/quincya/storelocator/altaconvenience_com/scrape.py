@@ -89,12 +89,14 @@ def fetch_data():
                 " ".join(raw_data[3:])
                 .replace("Hours S", "S")
                 .replace("Hours:", "")
-                .replace("Hours", "")
                 .replace("\xa0", " ")
                 .replace("\u200b", " ")
                 .replace("  ", " ")
                 .strip()
             )
+
+            if "Hours" in hours_of_operation[:5]:
+                hours_of_operation = hours_of_operation[5:].strip()
 
             map_link = base.iframe["src"]
             lat_pos = map_link.rfind("!3d")

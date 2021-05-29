@@ -103,6 +103,8 @@ def fetch_data():
                 )
         if store not in ids:
             ids.append(store)
+            if phone == "":
+                phone = "<MISSING>"
             yield [
                 website,
                 loc,
