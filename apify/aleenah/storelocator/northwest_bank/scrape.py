@@ -110,6 +110,7 @@ def fetch_data():
             + statenow
             + "&key=AIzaSyCT4uvUVAv4U6-Lgeg94CIuxUg-iM2aA4s&components=country%3AUS"
         )
+
         r = session.get(gurl, headers=headers, verify=False).json()
         if r["status"] == "REQUEST_DENIED":
             pass
@@ -126,6 +127,7 @@ def fetch_data():
                 + str(lngnow)
                 + "&distance=1000&type=branch"
             )
+
             logger.info(link)
             r = session.get(link, headers=headers, verify=False)
             soup = BeautifulSoup(r.text, "html.parser")
@@ -178,19 +180,23 @@ def fetch_data():
                 try:
                     hours = (
                         loc.find("div", {"class": "info"})
-                        .text.lstrip()
+                        .text.replace("Hours: Mon", "Hours: \nMon")
+                        .lstrip()
                         .split("\n", 1)[1]
                         .split("Drive", 1)[0]
                         .replace("\n", " ")
                         .strip()
                     )
+
                 except:
                     hours = (
                         loc.find("div", {"class": "info"})
-                        .text.split("\n", 1)[1]
+                        .text.replace("Hours: Mon", "Hours: \nMon")
+                        .split("\n", 1)[1]
                         .replace("\n", " ")
                         .strip()
                     )
+
                 try:
                     hours = hours.split("Deposit")[0]
                 except:
