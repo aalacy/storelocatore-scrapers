@@ -60,11 +60,20 @@ def fetch_data():
                     del temp[-1]
                 if len(temp) > 3:
                     temp = temp[1:]
-                phone = temp[0].find("a")["href"].replace("tel:", "").replace("%20", "")
-                hours_of_operation = (
-                    temp[2].get_text(separator="|", strip=True).replace("|", " ")
-                ).replace("Opening hours:", "")
-                address = temp[1].get_text(separator="|", strip=True).split("|")[1:]
+                try:
+                    phone = (
+                        temp[0].find("a")["href"].replace("tel:", "").replace("%20", "")
+                    )
+                    hours_of_operation = (
+                        temp[2].get_text(separator="|", strip=True).replace("|", " ")
+                    ).replace("Opening hours:", "")
+                    address = temp[1].get_text(separator="|", strip=True).split("|")[1:]
+                except:
+                    phone = "<MISSING>"
+                    hours_of_operation = (
+                        temp[1].get_text(separator="|", strip=True).replace("|", " ")
+                    ).replace("Opening hours:", "")
+                    address = temp[0].get_text(separator="|", strip=True).split("|")[1:]
                 address = " ".join(
                     x.replace("\n", "").replace("    ", " ") for x in address
                 )
@@ -95,14 +104,11 @@ def fetch_data():
                     if temp[1].find("ZipCode") != -1:
                         zip_postal = zip_postal + " " + temp[0]
                     i += 1
-                longitude, latitude = (
-                    soup.select_one("iframe[src*=maps]")["src"]
-                    .split("!2d", 1)[1]
-                    .split("!3m", 1)[0]
-                    .split("!3d")
-                )
-                if "!2m" in latitude:
-                    latitude = latitude.split("!2m")[0]
+                coords = soup.select_one("iframe[src*=maps]")["src"]
+                r = session.get(coords, headers=headers)
+                coords = r.text.split("null,[null,null,")[2].split("],")[0].split(",")
+                latitude = coords[0]
+                longitude = coords[1]
                 yield SgRecord(
                     locator_domain="https://wahlburgers.com/",
                     page_url=page_url,
