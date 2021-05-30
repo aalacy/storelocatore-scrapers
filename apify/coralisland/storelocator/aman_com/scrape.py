@@ -107,7 +107,6 @@ def fetch_data():
                     location_name = handle_missing(
                         content.find("h3", {"class": "heading-h"}).text.strip()
                     )
-                    city = "<MISSING>"
                     if len(address) > 3:
                         if country == "Greece":
                             street_address = address[0]
@@ -137,10 +136,20 @@ def fetch_data():
                             ).text.strip()
                         )
 
+                    city = "<MISSING>"
+
                     if state == "London WK AL":
                         city = "London"
                         state = "<MISSING>"
                         zip_code = "W1K 2AL"
+
+                    if country_code == "US":
+                        city = (
+                            soup.find_all("a", {"aria-current": "page"})[-1]
+                            .find_all("span")[-1]
+                            .text.split(",")[0]
+                            .replace("HOLE", "")
+                        ).strip()
 
                     location_type = "<MISSING>"
                     hours_of_operation = "<MISSING>"
