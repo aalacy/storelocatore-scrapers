@@ -124,9 +124,24 @@ def fetch_data():
                         zip_code = re.sub(r"\D+", "", address[1].split("-")[0]).strip()
                     country_code = key
                     store_number = "<MISSING>"
-                    phone = handle_missing(
-                        content.find("a", {"href": re.compile(r"tel:.*")}).text.strip()
-                    )
+                    try:
+                        phone = handle_missing(
+                            content.find(
+                                "a", {"href": re.compile(r"tel:.*")}
+                            ).text.strip()
+                        )
+                    except:
+                        phone = handle_missing(
+                            soup.main.find(
+                                "a", {"href": re.compile(r"tel:.*")}
+                            ).text.strip()
+                        )
+
+                    if state == "London WK AL":
+                        city = "London"
+                        state = "<MISSING>"
+                        zip_code = "W1K 2AL"
+
                     location_type = "<MISSING>"
                     hours_of_operation = "<MISSING>"
                     latitude = "<MISSING>"
