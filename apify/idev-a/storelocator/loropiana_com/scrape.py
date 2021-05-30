@@ -42,7 +42,7 @@ def fetch_data():
                     hours.append(f"{day}: {hr['opens']}-{hr['closes']}")
 
                 zip_postal = _["address"]["postalCode"]
-                if zip_postal.lower() == "no zip":
+                if zip_postal.lower() == "no zip code":
                     zip_postal = ""
                 city = street_address = state = ""
                 if (
@@ -59,6 +59,7 @@ def fetch_data():
                 elif (
                     _["address"]["addressCountry"].lower() == "kr"
                     or _["address"]["addressCountry"].lower() == "korea"
+                    or _["address"]["addressCountry"].lower() == "hk"
                 ):
                     city = _["address"]["addressLocality"]
                     street_address = _["address"]["streetAddress"]
