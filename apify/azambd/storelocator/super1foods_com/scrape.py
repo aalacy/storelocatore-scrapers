@@ -26,7 +26,9 @@ def get_driver(url, class_name, driver=None):
     if driver is not None:
         driver.quit()
 
-    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.77 Safari/537.36"
+    user_agent = (
+        "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0"
+    )
     x = 0
     while True:
         x = x + 1

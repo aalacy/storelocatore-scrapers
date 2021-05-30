@@ -193,6 +193,16 @@ def fetch_data():
         else:
             map_link = "<>"
 
+        try:
+            hours_of_operation = hours_of_operation.split("; Drive-thru")[0].strip()
+        except:
+            pass
+
+        try:
+            hours_of_operation = hours_of_operation.split(", Drive-thru")[0].strip()
+        except:
+            pass
+
         latitude, longitude = get_latlng(map_link)
 
         raw_address = "<MISSING>"
