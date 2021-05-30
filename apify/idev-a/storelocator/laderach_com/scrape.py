@@ -2,20 +2,9 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
-from sgselenium import SgChrome
+from sgrequests import SgRequests
 from sgscrape.sgpostal import parse_address_intl
-import re
-import time
-import ssl
-
-try:
-    _create_unverified_https_context = (
-        ssl._create_unverified_context
-    )  # Legacy Python that doesn't verify HTTPS certificates by default
-except AttributeError:
-    pass
-else:
-    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
+import json
 
 logger = SgLogSetup().get_logger("laderach")
 
@@ -23,101 +12,67 @@ _headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
 }
 
+
+def _time(val):
+    val = str(val)
+    if len(val) == 3:
+        val = "0" + val
+    return val[:2] + ":" + val[2:]
+
+
 locator_domain = "https://laderach.com/"
 base_url = "https://us.laderach.com/our-locations/"
 
 
-def _p(val):
-    return (
-        val.replace("(", "")
-        .replace(")", "")
-        .replace("-", "")
-        .replace(" ", "")
-        .strip()
-        .isdigit()
-    )
-
-
-def _detail(_id, driver):
-    driver.switch_to.default_content()
-    time.sleep(1)
-    driver.switch_to.frame(driver.find_element_by_xpath(f'//div[@id="{_id}"]//iframe'))
-    sp1 = bs(driver.page_source, "lxml")
-    _addr = sp1.select_one("a.sk-google-business-profile-address-link").text.strip()
-    addr = parse_address_intl(_addr)
-    street_address = addr.street_address_1
-    if addr.street_address_2:
-        street_address += " " + addr.street_address_2
-    if street_address.isdigit() and len(_addr.split(",")) > 1:
-        street_address = _addr.split(",")[0]
-    country_code = addr.country
-    if not country_code and "Singapore" in _addr:
-        country_code = "Singapore"
-    hours = []
-    _hr = sp1.find("label", string=re.compile(r"Business Hours"))
-    if _hr:
-        _temp = sp1.select("table.sk-ww-google-business-profile-content-container")
-        if _temp:
-            temp = _temp[-1].select("tr")
-            if temp and "Business Hours" in temp[0]:
-                del temp[0]
-            if temp:
-                hours = [":".join(hh.stripped_strings) for hh in temp]
-    _phone = list(
-        sp1.select("table.sk-ww-google-business-profile-main-info tr")[
-            -1
-        ].stripped_strings
-    )
-    phone = ""
-    if _phone and _p(_phone[-1]):
-        phone = _phone[-1]
-    _url = sp1.select_one("td.sk-google-profile-website a")
-    page_url = ""
-    if _url:
-        page_url = _url.text.strip()
-    return SgRecord(
-        page_url=page_url,
-        location_name=sp1.select_one(".name").text.strip(),
-        store_number=_id.split("-")[-1],
-        street_address=street_address,
-        city=addr.city,
-        state=addr.state,
-        zip_postal=addr.postcode,
-        country_code=country_code,
-        phone=phone,
-        locator_domain=locator_domain,
-        latitude=sp1.select_one(".place_lat").text.strip(),
-        longitude=sp1.select_one(".place_lng").text.strip(),
-        hours_of_operation="; ".join(hours),
-    )
-
-
 def fetch_data():
-    with SgChrome() as driver:
-        driver.get(base_url)
-        soup = bs(driver.page_source, "lxml")
+    with SgRequests() as session:
+        soup = bs(session.get(base_url, headers=_headers).text, "lxml")
         stores = soup.select("div.store-row-container div.store-row")
         logger.info(f"{len(stores)} found")
-        missing = []
         for store in stores:
-            _id = store["id"]
-            logger.info(_id)
-            try:
-                yield _detail(_id, driver)
-            except Exception as err:
-                logger.warning(str(err))
-                logger.info(f"missing {_id}")
-                missing.append(_id)
-
-        logger.info(f"{len(missing)} missing")
-        if missing:
-            time.sleep(2)
-        for _id in missing:
-            try:
-                yield _detail(_id, driver)
-            except Exception as err:
-                logger.warning(str(err))
-                logger.info(f"missing {_id}")
+            url = f"https://data.accentapi.com/feed/{store.iframe['src'].split('/')[-1]}.json?nocache=1622049836522"
+            logger.info(url)
+            _ = session.get(url, headers=_headers).json()
+            _addr = _["content"]["location"]
+            addr = parse_address_intl(_addr)
+            city = addr.city
+            state = addr.state
+            zip_postal = addr.postcode
+            street_address = addr.street_address_1
+            if addr.street_address_2:
+                street_address += " " + addr.street_address_2
+            if street_address.isdigit() and len(_addr.split(",")) > 1:
+                street_address = _addr.split(",")[0]
+            country_code = addr.country
+            if not country_code and "Singapore" in _addr:
+                country_code = "Singapore"
+            if country_code == "United Arab Emirates":
+                street_address = " ".join(_addr.split("-")[:-3])
+                city = _addr.split("-")[-3]
+                state = _addr.split("-")[-2]
+                zip_postal = ""
+            hours = []
+            if _["content"]["open_hours"]:
+                for hh in json.loads(_["content"]["open_hours"]):
+                    if not hh["time_end"]:
+                        continue
+                    hours.append(
+                        f"{hh['day']} {_time(hh['time_start'])}-{_time(hh['time_end'])}"
+                    )
+            yield SgRecord(
+                page_url=_["content"]["website"],
+                location_name=_["content"]["place_name"],
+                store_number=store["id"].split("-")[-1],
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_postal,
+                country_code=country_code,
+                phone=_["content"]["phone"],
+                locator_domain=locator_domain,
+                location_type=_["content"]["place_type"],
+                hours_of_operation="; ".join(hours),
+            )
 
 
 if __name__ == "__main__":

@@ -6,7 +6,7 @@ import json
 
 session = SgRequests()
 headers = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+    "user-agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0"
 }
 
 logger = SgLogSetup().get_logger("boostmobile_com")
@@ -49,7 +49,7 @@ def fetch_data():
     ids = []
     for coord in search:
         try:
-            logger.info(coord)
+            logger.info(f"Zip Code: {coord}")
             url = (
                 "https://boostmobile.nearestoutlet.com/cgi-bin/jsonsearch-cs.pl?showCaseInd=false&brandId=bst&results=50&zipcode="
                 + coord
@@ -73,8 +73,8 @@ def fetch_data():
                 ]:
                     website = "boostmobile.com"
                     store = item["id"]
-                    name = "Boost Mobile"
-                    typ = item["storeName"]
+                    name = item["storeName"]  # Change Location Name as  we discussed
+                    typ = "Mobile Store"  # Change Location type as  we discussed
                     add = item["storeAddress"]["primaryAddressLine"]
                     city = item["storeAddress"]["city"]
                     state = item["storeAddress"]["state"]
@@ -91,6 +91,9 @@ def fetch_data():
                     hours = hours + "; Fri: " + item["storeHours"]["fri"]
                     hours = hours + "; Sat: " + item["storeHours"]["sat"]
                     hours = hours + "; Sun: " + item["storeHours"]["sun"]
+                    if lat and lng:
+                        search.found_location_at(lat, lng)
+                        logger.info(f"found loc at ({lat}, {lng})")
                     if lat == "":
                         lat = "<MISSING>"
                     if lng == "":
@@ -99,11 +102,11 @@ def fetch_data():
                         phone = "<MISSING>"
                     if "see store" in hours.lower():
                         hours = "<MISSING>"
-                    storeinfo = add + "|" + city + "|" + state
                     if loc == "" or loc is None:
                         loc = "<MISSING>"
-                    if storeinfo not in ids and store != "" and "Boost Mobile" in typ:
-                        ids.append(storeinfo)
+                    # store_number should be unique
+                    if store not in ids and store != "":
+                        ids.append(store)
                         yield [
                             website,
                             loc,

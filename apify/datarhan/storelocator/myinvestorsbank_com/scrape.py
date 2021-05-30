@@ -1,5 +1,6 @@
 import csv
 import json
+from lxml import etree
 from urllib.parse import urljoin
 
 from sgrequests import SgRequests
@@ -65,6 +66,9 @@ def fetch_data():
         for poi in data["offices"]:
             store_url = poi["NodeAliasPath"]
             store_url = urljoin(start_url, store_url) if store_url else "<MISSING>"
+            loc_response = session.get(store_url)
+            loc_dom = etree.HTML(loc_response.text)
+
             location_name = poi["Name"]
             location_name = location_name if location_name else "<MISSING>"
             street_address = poi["Address1"]
@@ -88,7 +92,11 @@ def fetch_data():
             latitude = latitude if latitude else "<MISSING>"
             longitude = poi["Longitude"]
             longitude = longitude if longitude else "<MISSING>"
-            hours_of_operation = "<MISSING>"
+            hoo = loc_dom.xpath(
+                '//h4[contains(text(), "Lobby Hours")]/following-sibling::ul[1]//text()'
+            )
+            hoo = [e.strip() for e in hoo if e.strip()]
+            hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
 
             item = [
                 DOMAIN,
