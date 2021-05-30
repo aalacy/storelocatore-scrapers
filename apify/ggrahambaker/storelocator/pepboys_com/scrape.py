@@ -30,10 +30,6 @@ def set_proxies():
         return None
 
 
-session = SgRequests()
-session.proxies = set_proxies()
-
-
 def write_output(data):
     with open("data.csv", mode="w") as output_file:
         writer = csv.writer(
@@ -69,6 +65,9 @@ def fetch_data():
     user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
     headers = {"User-Agent": user_agent}
 
+    session = SgRequests()
+    session.proxies = set_proxies()
+
     locator_domain = "https://www.pepboys.com"
     to_scrape = "https://stores.pepboys.com"
     page = session.get(to_scrape, headers=headers)
@@ -85,6 +84,8 @@ def fetch_data():
 
     for state in state_list:
         log.info(state)
+        session = SgRequests()
+        session.proxies = set_proxies()
         page = session.get(state, headers=headers)
         assert page.status_code == 200
         soup = BeautifulSoup(page.content, "html.parser")
@@ -96,6 +97,8 @@ def fetch_data():
 
     for city_link in city_list:
         log.info(city_link)
+        session = SgRequests()
+        session.proxies = set_proxies()
         page = session.get(city_link, headers=headers)
         assert page.status_code == 200
         soup = BeautifulSoup(page.content, "html.parser")

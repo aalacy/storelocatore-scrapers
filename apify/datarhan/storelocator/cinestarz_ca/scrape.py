@@ -3,6 +3,7 @@ import csv
 from lxml import etree
 
 from sgrequests import SgRequests
+from sgscrape.sgpostal import parse_address_intl
 
 
 def write_output(data):
@@ -66,20 +67,17 @@ def fetch_data():
                 '//div[div[contains(text(), "Cine Starz")]]/div/text()'
             )
         raw_data = [e.strip() for e in raw_data if e.strip()]
+        addr = parse_address_intl(" ".join(raw_data[:-1]))
         if "cine starz" in raw_data[0].lower():
             raw_data = raw_data[1:]
-        if "Unit" in raw_data[1]:
-            raw_data = [" ".join(raw_data[:2])] + raw_data[2:]
-        if len(raw_data) == 3:
-            raw_data = [raw_data[0]] + raw_data[1].split(", ") + raw_data[2:]
         street_address = raw_data[0]
         if street_address.endswith(","):
             street_address = street_address[:-1]
-        city = raw_data[1].split(", ")[0].strip()
-        state = raw_data[1].split(", ")[-1].strip().split()[0]
+        city = addr.city
+        state = addr.state
         if state.endswith("."):
             state = state[:-1]
-        zip_code = raw_data[2].strip()
+        zip_code = addr.postcode.split("PHONE")[0].strip()
         country_code = "<MISSING>"
         store_number = "<MISSING>"
         phone = raw_data[-1].split(":")[-1].strip()
@@ -99,7 +97,15 @@ def fetch_data():
             )
             latitude = geo[1]
             longitude = geo[0]
-        hours_of_operation = "<MISSING>"
+        hoo = loc_dom.xpath(
+            '//h3[strong[contains(text(), "Our doors")]]/following-sibling::p//text()'
+        )
+        if len(hoo) > 5:
+            hoo = hoo = loc_dom.xpath(
+                '//h1[@class="vc_custom_heading"]/following-sibling::div[2]//h3[strong[contains(text(), "Our doors")]]/following-sibling::p//text()'
+            )
+        hoo = [e.strip() for e in hoo]
+        hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
 
         item = [
             domain,
