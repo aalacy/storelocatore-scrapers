@@ -65,6 +65,7 @@ def write_output(data):
                 "location_type",
                 "latitude",
                 "longitude",
+                "page_url",
                 "hours_of_operation",
             ]
         )
@@ -91,6 +92,7 @@ def fetch_data():
         output.append("Han-Dee Hugo's")  # location type
         output.append(get_value(store["lat"]))  # latitude
         output.append(get_value(store["lng"]))  # longitude
+        output.append("<MISSING>")  # page URL Missing
         store_hours = ""
         if store["hours"]:
             store_hours = eliminate_space(etree.HTML(store["hours"]).xpath(".//text()"))
