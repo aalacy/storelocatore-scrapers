@@ -1,8 +1,7 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from lxml import etree
 import json
-
 import ssl
 
 try:
@@ -15,6 +14,7 @@ else:
     ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
 
 
+session = SgRequests()
 base_url = "https://hhugos.com"
 
 
@@ -75,7 +75,6 @@ def write_output(data):
 def fetch_data():
     output_list = []
     url = "https://hhugos.com/wp-admin/admin-ajax.php?action=store_search&lat=35.75957&lng=-79.0193&max_results=300&search_radius=500"
-    session = requests.Session()
     request = session.get(url)
     store_list = json.loads(request.text)
     for store in store_list:
