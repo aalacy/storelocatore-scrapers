@@ -43,6 +43,8 @@ def write_output(data):
 option = webdriver.ChromeOptions()
 option.add_argument("window-size=1280,800")
 option.add_argument("--headless")
+option.add_argument("--no-sandbox")
+option.add_argument("--disable-dev-shm-usage")
 
 driver = SgChrome(
     is_headless=True,
