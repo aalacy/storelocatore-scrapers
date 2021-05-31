@@ -66,7 +66,7 @@ def fetch_data():
         hourlist = hours.replace("\xa0", " ").strip().split("Day:")[1:]
         hours = ""
         for hr in hourlist:
-            print(hr)
+
             try:
                 hours = (
                     hours
