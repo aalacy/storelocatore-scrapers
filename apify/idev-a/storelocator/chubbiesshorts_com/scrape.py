@@ -50,12 +50,6 @@ def fetch_data():
             zip_postal = ""
             if data.select_one(".postal_zip"):
                 zip_postal = data.select_one(".postal_zip").text.strip()
-            elif phone.startswith("+82"):
-                country_code = "Korea"
-            if not state and addr.state:
-                state = addr.state
-            if not zip_postal and addr.postcode:
-                zip_postal = addr.postcode
             yield SgRecord(
                 page_url=base_url,
                 store_number=_["id"],
