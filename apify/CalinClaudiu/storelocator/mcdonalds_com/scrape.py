@@ -5,7 +5,7 @@ import configparser
 from csv import reader
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as b4
-
+from sgzip.utils import *
 import json
 import os
 
@@ -42,14 +42,38 @@ def readConfig(filename):
 
 
 class DataSource:
+    class ErrorRetry:
+        def __init__(self, errors):
+            self._errors = errors
+            self._items_remaining = len(self._errors)
+
+        def items_remaining(self):
+            return self._items_remaining
+
+        def found_location_at(self, lat, lng):
+            pass
+
+        def max_observed_distance(self):
+            pass
+
+        def __iter__(self):
+            for error in self._errors:
+                self._items_remaining -= 1
+                yield error["Point"]
+
     class CsvRecord:
         def __init__(self, filename):
             self._filename = filename
             self._row = None
             self._lastSearch = None
+            self.__max_distance_observed = -1
+            self.__cur_centroid = None
             with open(filename, "r", encoding="utf-8") as csvFile:
                 file = reader(csvFile)
                 self._items_remaining = sum(1 for row in file) - 1
+
+        def max_observed_distance(self):
+            return self.__max_distance_observed
 
         def items_remaining(self):
             return self._items_remaining
@@ -57,12 +81,11 @@ class DataSource:
         def found_location_at(self, lat, lng):
             with open("Found_location_at", mode="a", encoding="utf-8") as file:
                 if self._lastSearch != self._row:
-                    print(str(self._row + ",search"))
                     file.write(str(self._row + ",search\n"))
                     self._lastSearch = self._row
-
                 file.write(str(str(lat) + "," + str(lng) + ",found\n"))
-                print(str(str(lat) + "," + str(lng) + ",found"))
+            cur_dist = earth_distance((float(lat), float(lng)), self.__cur_centroid)
+            self.__max_distance_observed = max(self.__max_distance_observed, cur_dist)
 
         def __iter__(self):
             with open(self._filename, "r", encoding="utf-8") as csvFile:
@@ -74,6 +97,10 @@ class DataSource:
                     self._row = str(row["latitude"]) + "," + str(row["longitude"])
                     self._items_remaining -= 1
                     #
+                    self.__cur_centroid = (
+                        float(row["latitude"]),
+                        float(row["longitude"]),
+                    )
                     yield (row["latitude"], row["longitude"])
                     # need to improve on this in config if I ever need it outside of testing
 
@@ -139,38 +166,42 @@ class CrawlMethod(CleanRecord):
             return response.json()
 
         record_cleaner = getattr(CleanRecord, self._config.get("cleanupMethod"))
-        identities = set()
+        # identities = set()
         maxZ = self._search.items_remaining()
         total = 0
         for Point in self._search:
             found = 0
-            results = getPointChina(Point)
+            try:
+                results = getPointChina(Point)
+            except Exception as e:
+                self.Oopsie(Point, str(e))
+                continue
             for data in results[str(self._config.get("pathToResults"))]:
                 record = record_cleaner(data, self._config)
                 self._search.found_location_at(record["latitude"], record["longitude"])
-                if (
-                    str(
-                        str(record["latitude"])
-                        + str(record["longitude"])
-                        + str(record["phone"])
-                        # + str(record["store_number"])
-                        + str(record["street_address1"])
-                        + str(record["location_name"])
-                    )
-                    not in identities
-                ):
-                    identities.add(
-                        str(
-                            str(record["latitude"])
-                            + str(record["longitude"])
-                            + str(record["phone"])
-                            # + str(record["store_number"])
-                            + str(record["street_address1"])
-                            + str(record["location_name"])
-                        )
-                    )
-                    found += 1
-                    yield record
+                # if (
+                #    str(
+                #        str(record["latitude"])
+                #        + str(record["longitude"])
+                #        + str(record["phone"])
+                #        #+ str(record["store_number"])
+                #        + str(record["street_address1"])
+                #        + str(record["location_name"])
+                #    )
+                #    not in identities
+                # ):
+                #    identities.add(
+                #       str(
+                #            str(record["latitude"])
+                #           + str(record["longitude"])
+                #           + str(record["phone"])
+                #            #+ str(record["store_number"])
+                #           + str(record["street_address1"])
+                #           + str(record["location_name"])
+                #        )
+                #    )
+                #    found += 1
+                yield record
             progress = (
                 str(round(100 - (self._search.items_remaining() / maxZ * 100), 2)) + "%"
             )
@@ -196,6 +227,9 @@ class getData(CrawlMethod):
         self._search = None
         self._session = None
         self._driver = None
+        self._errors = None
+        self._Logger = None
+        self._errorRetries = self._config.getint("Error Retries")
         self.__init_state()
 
     def __init_state(self):
@@ -233,9 +267,34 @@ class getData(CrawlMethod):
             self._config.get("SourceFileName")
         )
 
+    def Oopsie(self, Point, exception):
+        if not self._errors:
+            self._errors = []
+        with open("errors.csv", mode="a", encoding="utf-8") as file:
+            file.write(
+                str(
+                    str(Point[0])
+                    + ","
+                    + str(Point[1])
+                    + ",error,"
+                    + str(exception)
+                    + "\n"
+                )
+            )
+            self._errors.append({"Point": Point, "error": str(exception)})
+
     def Start(self):
         func = getattr(CrawlMethod, self._config.get("Method"))
         return func(self)
+
+    def Done(self):
+        if self._errors:
+            func = getattr(CrawlMethod, self._config.get("Method"))
+            self._search = DataSource.ErrorRetry(self._errors)
+            attempted = 0
+            while attempted < self._errorRetries:
+                attempted += 1
+                yield func(self)
 
 
 def getTestCountries(session):
@@ -322,6 +381,13 @@ def fetch_data():
         results = getData(config=Country, ogProxy=ogProxy)
         for record in results.Start():
             yield record
+        newrec = 0
+        for attempt in results.Done():
+            logzilla.info("Tried to fix errors")  # noqa
+            for record in attempt:
+                newrec += 1
+                yield record
+        logzilla.info(f"New records found : {newrec}")  # noqa
 
     logzilla.info(f"Finished grabbing data!!")  # noqa
 
@@ -357,7 +423,9 @@ def scrape():
         zipcode=sp.MappingField(mapping=["zipcode"], is_required=False),
         country_code=sp.MappingField(mapping=["country_code"], is_required=False),
         phone=sp.MappingField(mapping=["phone"], is_required=False),
-        store_number=sp.MappingField(mapping=["store_number"], is_required=False),
+        store_number=sp.MappingField(
+            mapping=["store_number"], is_required=False, part_of_record_identity=True
+        ),
         hours_of_operation=sp.MappingField(
             mapping=["hours_of_operation"], is_required=False
         ),
