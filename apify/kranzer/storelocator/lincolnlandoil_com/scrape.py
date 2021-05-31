@@ -1,6 +1,6 @@
 import re
 import time
-import base
+import base #noqa
 from urllib.parse import urljoin
 from selenium import webdriver #noqa
 from selenium.webdriver.chrome.options import Options
