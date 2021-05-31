@@ -1,9 +1,11 @@
 import csv
+import time
 
-from lxml import html
 from datetime import datetime
+from lxml import html
 from sgrequests import SgRequests
 from sgscrape.sgpostal import parse_address, International_Parser
+from sgselenium import SgSelenium
 
 
 def write_output(data):
@@ -110,12 +112,13 @@ def fetch_data():
                 .strip()
             )
 
-            line = (
+            ad = (
                 "".join(d.xpath('.//div[@class="store-addr"]/text()'))
                 + " "
                 + "".join(d.xpath('.//div[@class="store-location"]/text()'))
-            )  # address_line
-            adr = parse_address(International_Parser(), line)
+            )
+
+            adr = parse_address(International_Parser(), ad)
             street_address = (
                 f"{adr.street_address_1} {adr.street_address_2 or ''}".replace(
                     "None", ""
@@ -179,6 +182,23 @@ def fetch_data():
                     or "<MISSING>"
                 )
             hours_of_operation = hours_of_operation.replace(": Monday", "Monday")
+            if hours_of_operation == "<MISSING>" and country_code == "US":
+                driver = SgSelenium().firefox()
+                driver.get(page_url)
+                time.sleep(5)
+                page_source = driver.page_source
+                a = html.fromstring(page_source)
+                hours_of_operation = (
+                    " ".join(
+                        a.xpath(
+                            "//div[@class='store-details-hours--full store-hours-details-js']/p/text()"
+                        )
+                    )
+                    .replace("\n", "")
+                    .strip()
+                    or "<MISSING>"
+                )
+
             latitude = (
                 "".join(tree.xpath('//div[@class="store-locator-map"]/@data-latitude'))
                 or "<MISSING>"
