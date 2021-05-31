@@ -20,7 +20,7 @@ MISSING = "<MISSING>"
 
 
 def fetch_data():
-    zips = static_zipcode_list(country_code=SearchableCountries.USA, radius=3)
+    zips = static_zipcode_list(country_code=SearchableCountries.USA, radius=5)
     identities = set()
     for zip in zips:
         log.info(("Pulling zip Code %s..." % zip))
@@ -46,7 +46,7 @@ def fetch_data():
             templist = temploc.split("<br>")[1:5]
             if "US" not in templist[2]:
                 continue
-            address_raw = templist[0] + " " + templist[2]
+            address_raw = templist[0] + " " + templist[1] + " " + templist[2]
 
             # Find the raw address
             address_raw = " ".join(address_raw.split())
@@ -55,7 +55,10 @@ def fetch_data():
             pa = parse_address_intl(address_raw)
 
             street_address = pa.street_address_1
-            street_address = street_address if street_address else MISSING
+            if street_address is None:
+                street_address = pa.street_address_2
+            if pa.street_address_2:
+                street_address = street_address + ", " + pa.street_address_2
 
             city = pa.city
             city = city.strip() if city else MISSING
@@ -96,6 +99,7 @@ def fetch_data():
                     latitude=latitude,
                     longitude=longitude,
                     hours_of_operation=MISSING,
+                    raw_address=address_raw,
                 )
 
 

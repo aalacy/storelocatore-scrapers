@@ -100,6 +100,10 @@ def fetch_data():
         hoo = loc_dom.xpath(
             '//h3[strong[contains(text(), "Our doors")]]/following-sibling::p//text()'
         )
+        if len(hoo) > 5:
+            hoo = hoo = loc_dom.xpath(
+                '//h1[@class="vc_custom_heading"]/following-sibling::div[2]//h3[strong[contains(text(), "Our doors")]]/following-sibling::p//text()'
+            )
         hoo = [e.strip() for e in hoo]
         hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
 
