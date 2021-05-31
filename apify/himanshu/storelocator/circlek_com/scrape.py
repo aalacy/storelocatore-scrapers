@@ -107,7 +107,6 @@ def fetch_details(store, session):
     try:
         store_req = session.get(page_url, headers=headers)
     except:
-        print(page_url)
         return
 
     store_sel = lxml.html.fromstring(store_req.text)
