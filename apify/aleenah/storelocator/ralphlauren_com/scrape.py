@@ -103,7 +103,6 @@ def fetch_data():
                 city = cities[js.index(j)]
                 state = states[js.index(j)]
                 country = countries[js.index(j)]
-                print(urls[js.index(j)])
                 lat = j["latitude"]
                 lon = j["longitude"]
                 phone = phones[js.index(j)]
