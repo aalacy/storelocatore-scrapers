@@ -77,7 +77,6 @@ def fetch_data():
         street = address[0]
         city, state = address[1].split(", ", 1)
         pcode = address[2]
-        print(link)
         r = session.get(link, headers=headers, verify=False)
         soup = BeautifulSoup(r.text, "html.parser")
         hours = soup.find("div", {"class": "amlocator-schedule-table"}).text.strip()
@@ -92,7 +91,7 @@ def fetch_data():
                 state,
                 pcode,
                 "US",
-                "<MISSING>",
+                store,
                 phone,
                 "<MISSING>",
                 lat,
