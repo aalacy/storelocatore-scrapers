@@ -5,6 +5,9 @@ from bs4 import BeautifulSoup as bs
 from sgrequests import SgRequests
 from sgscrape.sgpostal import parse_address_intl
 import re
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger("originalmattress")
 
 
 def _p(val):
@@ -27,6 +30,10 @@ def fetch_data():
         )
         for store in store_list:
             page_url = locator_domain + store["UrlSlug"]
+            sp1 = bs(session.get(page_url).text, "lxml")
+            if "coming soon" in sp1.select_one(".shop-full-description").text.lower():
+                continue
+            logger.info(page_url)
             location_name = store["Name"]
             location_type = (
                 "Factory & Store" if "Factory & Store" in location_name else "Store"

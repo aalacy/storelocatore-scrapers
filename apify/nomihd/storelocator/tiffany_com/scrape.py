@@ -94,11 +94,41 @@ def fetch_data():
                 if "Store" == json.loads(js)["@type"]:
                     json_data = json.loads(js)
                     location_name = json_data["name"]
-                    street_address = json_data["address"]["streetAddress"]
+                    street_address = (
+                        json_data["address"]["streetAddress"]
+                        .replace("Chinook Centre ,", "")
+                        .strip()
+                        .replace("West Edmonton Mall,", "")
+                        .strip()
+                        .replace(", Hato Rey", "")
+                        .strip()
+                        .replace(
+                            "Visit our New Location at Westfield Century City,", ""
+                        )
+                        .strip()
+                        .replace("Visit our beautifully renovated store,", "")
+                        .strip()
+                        .replace("Santa Monica Place,", "")
+                        .strip()
+                        .replace("Royal Hawaiian Center,", "")
+                        .strip()
+                        .replace("Northbrook Court,", "")
+                        .strip()
+                        .replace("The Shops at Hudson Yards,", "")
+                        .strip()
+                    )
                     city = json_data["address"]["addressLocality"]
                     state = json_data["address"]["addressRegion"]
                     zip = json_data["address"]["postalCode"]
                     country_code = json_data["address"]["addressCountry"]
+
+                    if (
+                        page_url
+                        == "https://www.tiffany.com/jewelry-stores/mall-of-san-juan/"
+                    ):
+                        street_address = "1000 Mall of San Juan Boulevard"
+                        zip = "00924"
+
                     phone = json_data["telephone"]
                     map_link = json_data["hasMap"]
                     location_type = json_data["brand"]
