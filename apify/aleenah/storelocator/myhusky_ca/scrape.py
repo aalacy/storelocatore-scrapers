@@ -79,7 +79,7 @@ def fetch_data():
             long.append(longi)
 
         ty = js[i]["brand_code"]  # types.append()
-        if ty == None or ty == "":
+        if ty is None or ty == "":
             types.append("<MISSING>")
         else:
             types.append(ty)
