@@ -3,7 +3,7 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import time
-from sgzip.dynamic import DynamicZipSearch, SearchableCountries, Grain_8
+from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 from sglogging import SgLogSetup
 
 logger = SgLogSetup().get_logger("rbcroyalbank_com")
@@ -80,7 +80,6 @@ def fetch_data():
     search = DynamicZipSearch(
         country_codes=[SearchableCountries.CANADA],
         max_search_results=100,
-        granularity=Grain_8(),
     )
 
     headers = {
@@ -123,6 +122,7 @@ def fetch_data():
             for i in range(len(script))[1:]:
                 latitude = script[i].split("lat:")[1].split(",")[0]
                 longitude = script[i].split("lat:")[1].split(",")[1].split("lng:")[1]
+                search.found_location_at(latitude, longitude)
                 id1 = script[i].split("locationId:'")[1].split("',t")[0]
                 page_url = (
                     "https://maps.rbcroyalbank.com/locator/locationDetails.php?l="
