@@ -52,10 +52,6 @@ def fetch_data():
             store = loc["id"]
             loc = loc["data"]
             title = loc["name"]
-            try:
-                street = street.split(pcode, 1)[0].strip()
-            except:
-                pass
             phone = loc["phone"]
             hours = loc["working_hours"]
             if i == 1:
