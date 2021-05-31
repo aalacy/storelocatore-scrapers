@@ -3,7 +3,7 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import time
-from sgzip.dynamic import DynamicZipSearch, SearchableCountries, Grain_8
+from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 from sglogging import SgLogSetup
 
 logger = SgLogSetup().get_logger("rbcroyalbank_com")
