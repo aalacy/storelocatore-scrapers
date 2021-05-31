@@ -27,9 +27,9 @@ def fetch_data():
                 hours = ["ATM Available 24/7"]
             location_type = ""
             if _["LocationHasAtm"]:
-                location_type += "atm"
+                location_type = "atm"
             if _["LocationManager"]:
-                location_type = ",branch"
+                location_type += ",branch"
             yield SgRecord(
                 page_url=page_url,
                 location_name=_["LocationName"],

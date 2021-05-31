@@ -29,6 +29,7 @@ def fetch_data():
             _ = json.loads(loc.split(");")[0])
             json_url = f"https://stores.boldapps.net/front-end/get_store_info.php?shop=psychobunny-com.myshopify.com&data=detailed&store_id={_['id']}&tm=2021-04-30%2010:13:06-17"
             data = bs(session.get(json_url, headers=_headers).json()["data"], "lxml")
+            logger.info(json_url)
             hours = []
             if data.select_one(".hours"):
                 temp = data.select_one(".hours").stripped_strings
@@ -64,6 +65,13 @@ def fetch_data():
                 state = addr.state
             if not zip_postal and addr.postcode:
                 zip_postal = addr.postcode
+            location_type = ""
+            if _["marker_colour"] == "map-pin-pink":
+                location_type = "store"
+            elif _["marker_colour"] == "map-pin-black":
+                location_type = "retailer"
+            elif _["marker_colour"] == "map-pin-grey":
+                location_type = "outlet"
             yield SgRecord(
                 page_url=base_url,
                 store_number=_["id"],
@@ -76,6 +84,7 @@ def fetch_data():
                 latitude=_["lat"],
                 longitude=_["lng"],
                 phone=phone,
+                location_type=location_type,
                 locator_domain=locator_domain,
                 hours_of_operation="; ".join(hours),
             )
