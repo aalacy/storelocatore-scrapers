@@ -2,7 +2,7 @@ import re
 import time
 import base
 from urllib.parse import urljoin
-from selenium import webdriver
+from selenium import webdriver #noqa
 from selenium.webdriver.chrome.options import Options
 from lxml import html
 from sglogging import SgLogSetup
