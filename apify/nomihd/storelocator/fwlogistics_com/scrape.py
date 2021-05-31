@@ -49,7 +49,13 @@ def fetch_data():
             )
         ).strip()
         if phone == "":
-            phone = "1-877-393-7483"
+            phone = "".join(
+                store.xpath(
+                    './/div[@class="state-item__address"]/p/a[contains(@href,"tel:")]/text()'
+                )
+            ).strip()
+            if phone == "" or phone == "1-877-FWDRIVE":
+                phone = "1-877-393-7483"
 
         hours_of_operation = "<MISSING>"
 
