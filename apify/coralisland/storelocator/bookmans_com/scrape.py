@@ -102,6 +102,8 @@ def fetch_data():
     hours += get_value(
         eliminate_space(response.xpath('//div[@class="footer-hours"]//text()'))
     )
+    hours = hours.split("open from")[1].split("Holiday")[0].strip()
+
     for store in store_list:
         title = get_value(store.xpath(".//span[@class='sh-accordion-title']//text()"))
         address_info = eliminate_space(

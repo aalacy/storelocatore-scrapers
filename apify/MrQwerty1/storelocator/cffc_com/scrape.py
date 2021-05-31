@@ -33,6 +33,20 @@ def write_output(data):
             writer.writerow(row)
 
 
+def get_coords_from_google_url(url):
+    try:
+        if url.find("ll=") != -1:
+            latitude = url.split("ll=")[1].split(",")[0]
+            longitude = url.split("ll=")[1].split(",")[1].split("&")[0]
+        else:
+            latitude = url.split("@")[1].split(",")[0]
+            longitude = url.split("@")[1].split(",")[1]
+    except IndexError:
+        latitude, longitude = "<MISSING>", "<MISSING>"
+
+    return latitude, longitude
+
+
 def get_coords():
     coords = dict()
     session = SgRequests()
@@ -69,9 +83,11 @@ def fetch_data():
     }
     r = session.get(page_url, headers=headers)
     tree = html.fromstring(r.text)
-    divs = tree.xpath("//table[.//a[@title='Map It']]")
+    ids = tree.xpath("//a[text()='Hours']/@href")
 
-    for d in divs:
+    for _id in ids:
+        i = _id.replace("#", "")
+        d = tree.xpath(f"//table[@id='{i}']")[0]
         location_name = "".join(d.xpath(".//h2/text()")).strip()
 
         line = "".join(d.xpath(".//h2/following-sibling::p/text()")).split("|")
@@ -90,8 +106,7 @@ def fetch_data():
             .strip()
             or "<MISSING>"
         )
-        if phone == "<MISSING>":
-            continue
+
         latitude = "<MISSING>"
         longitude = "<MISSING>"
 
@@ -99,6 +114,10 @@ def fetch_data():
             if location_name.lower() in k.lower():
                 latitude, longitude = v
                 break
+
+        if latitude == "<MISSING>":
+            text = "".join(d.xpath(".//a[text()='Map It']/@href"))
+            latitude, longitude = get_coords_from_google_url(text)
 
         location_type = "<MISSING>"
         hours_of_operation = (
@@ -109,6 +128,16 @@ def fetch_data():
             )
             or "<MISSING>"
         )
+
+        if hours_of_operation == "<MISSING>":
+            hours_of_operation = (
+                ";".join(
+                    d.xpath(
+                        ".//strong[contains(text(), 'Office')]/following-sibling::text()"
+                    )
+                )
+                or "<MISSING>"
+            )
 
         row = [
             locator_domain,

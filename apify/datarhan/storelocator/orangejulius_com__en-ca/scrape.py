@@ -1,5 +1,6 @@
 import csv
 import json
+from lxml import etree
 
 from sgrequests import SgRequests
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
@@ -60,6 +61,8 @@ def fetch_data():
         if poi["tempClosed"] or poi["comingSoon"]:
             continue
         store_url = "https://www.dairyqueen.com/en-ca" + poi["url"]
+        loc_response = session.get(store_url)
+        loc_dom = etree.HTML(loc_response.text)
         location_name = poi["title"]
         location_name = (
             location_name.split(":")[-1].strip() if location_name else "<MISSING>"
@@ -75,7 +78,8 @@ def fetch_data():
         country_code = poi["country"]
         country_code = country_code if country_code else "<MISSING>"
         store_number = poi["storeNo"]
-        phone = "<MISSING>"
+        phone = loc_dom.xpath('//a[contains(@href, "tel")]/text()')
+        phone = phone[0] if phone else "<MISSING>"
         location_type = poi["conceptType"]
         latitude = poi["latlong"].split(",")[0]
         longitude = poi["latlong"].split(",")[-1]

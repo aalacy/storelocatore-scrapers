@@ -54,11 +54,7 @@ def fetch_data():
         store_data = location_request.json()[0]
         store.append("https://www.fnb-online.com")
         store.append(store_data["name"])
-        store.append(
-            store_data["address"] + store_data["address2"]
-            if store_data["address2"] is not None
-            else store_data["address"]
-        )
+        store.append(store_data["address"])
         store.append(store_data["city"])
         store.append(store_data["state"])
         store.append(store_data["postalcode"])

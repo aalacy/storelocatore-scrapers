@@ -165,6 +165,17 @@ def fetch_data():
         if modified_loc_name in lat_lng_dict:
             latitude = lat_lng_dict[modified_loc_name][0]
             longitude = lat_lng_dict[modified_loc_name][1]
+
+        if street_address == "":
+            hours_of_operation = "<INACCESSIBLE>"
+            location_type = "<INACCESSIBLE>"
+            store_number = "<INACCESSIBLE>"
+            street_address = "<INACCESSIBLE>"
+            city = "<INACCESSIBLE>"
+            state = "<INACCESSIBLE>"
+            zip = "<INACCESSIBLE>"
+            phone = "<INACCESSIBLE>"
+
         yield SgRecord(
             locator_domain=locator_domain,
             page_url=page_url,

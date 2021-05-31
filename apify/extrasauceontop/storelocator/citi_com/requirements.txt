@@ -1,4 +1,4 @@
-pandas==1.1.5
-sgrequests==0.1.8
+webdriver_manager==3.4.1
 sgzip==0.5.3
-sgselenium==0.1.2
+pandas==1.1.5
+sgselenium==0.1.3
