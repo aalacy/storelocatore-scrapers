@@ -51,27 +51,21 @@ def fetch_data():
             location_type = "branch"
             if link.select("p.big")[-1].text.strip() != "No ATM":
                 location_type += ",atm"
-            try:
-                yield SgRecord(
-                    page_url=base_url,
-                    location_name="".join(link.h2.stripped_strings),
-                    street_address=addr[0],
-                    city=addr[1].split(",")[0].strip(),
-                    state=addr[1].split(",")[1].strip().split(" ")[0].strip(),
-                    zip_postal=addr[1].split(",")[1].strip().split(" ")[-1].strip(),
-                    country_code="US",
-                    locator_domain=locator_domain,
-                    latitude=coord[1],
-                    longitude=coord[0],
-                    phone=phone,
-                    location_type=location_type,
-                    hours_of_operation="; ".join(hours).replace("–", "-"),
-                )
-            except Exception as err:
-                print(err)
-                import pdb
-
-                pdb.set_trace()
+            yield SgRecord(
+                page_url=base_url,
+                location_name="".join(link.h2.stripped_strings),
+                street_address=addr[0],
+                city=addr[1].split(",")[0].strip(),
+                state=addr[1].split(",")[1].strip().split(" ")[0].strip(),
+                zip_postal=addr[1].split(",")[1].strip().split(" ")[-1].strip(),
+                country_code="US",
+                locator_domain=locator_domain,
+                latitude=coord[1],
+                longitude=coord[0],
+                phone=phone,
+                location_type=location_type,
+                hours_of_operation="; ".join(hours).replace("–", "-"),
+            )
 
 
 if __name__ == "__main__":
