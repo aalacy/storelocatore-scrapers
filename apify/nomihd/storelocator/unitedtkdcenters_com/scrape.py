@@ -29,7 +29,6 @@ def fetch_data():
             page_url = "https://unitedtkdcenters.com" + store_url
             log.info(page_url)
             store_req = session.get(page_url, headers=headers)
-            store_sel = lxml.html.fromstring(store_req.text)
             soup = BeautifulSoup(store_req.text, "lxml")
             location_name = ""
             try:
