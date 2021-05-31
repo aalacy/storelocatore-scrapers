@@ -77,6 +77,8 @@ def fetch_data():
             .strip()
         )
         location_type = "<MISSING>"
+        if loc_dom.xpath('//li[@class="rating"]/a[@name="Closed"]'):
+            location_type = "closed"
         latitude = "<MISSING>"
         longitude = "<MISSING>"
         hours_of_operation = "<MISSING>"
