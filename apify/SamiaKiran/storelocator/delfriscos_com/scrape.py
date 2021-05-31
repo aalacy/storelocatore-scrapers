@@ -52,6 +52,9 @@ def fetch_data():
                 hours_of_operation = hours_of_operation.split("Open for")[0]
             if "Happy Hour" in hours_of_operation:
                 hours_of_operation = hours_of_operation.split("Happy Hour")[0]
+            if "Dine In" in hours_of_operation:
+                hours_of_operation = hours_of_operation.split("Dine In")[0]
+            hours_of_operation = hours_of_operation.replace("</p>", "")
             yield SgRecord(
                 locator_domain=DOMAIN,
                 page_url=page_url,
