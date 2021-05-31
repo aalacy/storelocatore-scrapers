@@ -198,9 +198,8 @@ def fetch_details(store, session):
 
 
 def fetch_data():
-    tracker = []
-
     with ThreadPoolExecutor() as executor, SgRequests() as session:
+        tracker = []
         locations = fetch_locations(tracker, session)
         futures = [
             executor.submit(fetch_details, location, session) for location in locations
