@@ -35,7 +35,7 @@ def fetch_data():
         links = [
             link
             for link in soup.select("main div.col.sqs-col-5.span-5 .sqs-block")
-            if not "spacer-block" in link["class"]
+            if "spacer-block" not in link["class"]
         ]
         logger.info(f"{len(links)} found")
         with SgChrome() as driver:
