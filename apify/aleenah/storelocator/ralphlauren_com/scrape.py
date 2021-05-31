@@ -103,6 +103,7 @@ def fetch_data():
                 city = cities[js.index(j)]
                 state = states[js.index(j)]
                 country = countries[js.index(j)]
+                print(urls[js.index(j)])
                 lat = j["latitude"]
                 lon = j["longitude"]
                 phone = phones[js.index(j)]
@@ -148,7 +149,8 @@ def fetch_data():
                         lat,  # lat
                         lon,  # long
                         tim.strip(),  # timing
-                        url,
+                        "https://www.ralphlauren.com"
+                        + urls[js.index(j)].find("a").get("href"),
                     ]
                 )
         else:
