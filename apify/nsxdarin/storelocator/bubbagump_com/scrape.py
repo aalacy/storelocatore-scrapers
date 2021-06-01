@@ -45,7 +45,7 @@ def fetch_data():
         line = str(line.decode("utf-8"))
         if '{"name": "' in line:
             line = line.replace('"categories": [{"name":', "")
-            items = line.split('{"name": "')
+            items = line.split('"name": "')
             for item in items:
                 if '"slug": "' in item:
                     store = "<MISSING>"
