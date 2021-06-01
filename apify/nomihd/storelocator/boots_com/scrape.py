@@ -70,7 +70,7 @@ def fetch_data():
     search_url = "https://www.boots.com/store-a-z"
     stores_req = session.get(search_url, headers=headers)
     stores_sel = lxml.html.fromstring(stores_req.text)
-    stores = stores_sel.xpath('//div[@class="brand_list_viewer"]//ul/li/a/@href')[:100]
+    stores = stores_sel.xpath('//div[@class="brand_list_viewer"]//ul/li/a/@href')
 
     x = 0
     for store_url in stores:
