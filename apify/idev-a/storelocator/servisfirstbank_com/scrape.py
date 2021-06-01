@@ -34,9 +34,11 @@ def fetch_data():
                 if addr.street_address_2:
                     street_address += " " + addr.street_address_2
                 _hr = _.find("div", string=re.compile(r"Lobby Hours"))
-                hours = []
+                hours_of_operation = ""
                 if _hr:
-                    hours = " ".join(list(_hr.find_next_sibling().stripped_strings))
+                    hours_of_operation = " ".join(
+                        list(_hr.find_next_sibling().stripped_strings)
+                    )
                 location_type = "branch"
                 if _.select_one('img[alt="atm icon"]'):
                     location_type += ",atm"
@@ -54,7 +56,7 @@ def fetch_data():
                     phone=phone,
                     locator_domain=locator_domain,
                     location_type=location_type,
-                    hours_of_operation=hours.replace("–", "-"),
+                    hours_of_operation=hours_of_operation.replace("–", "-"),
                 )
 
 
