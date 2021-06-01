@@ -1,7 +1,5 @@
 from bs4 import BeautifulSoup
 import csv
-import string
-import re, time
 
 from sgrequests import SgRequests
 
@@ -44,8 +42,7 @@ def write_output(data):
 def fetch_data():
     data = []
     p = 0
-    pattern = re.compile(r"\s\s+")
-    cleanr = re.compile(r"<[^>]+>")
+
     url = "https://www.landmarkcinemas.com/showtimes/"
     r = session.get(url, headers=headers, verify=False)
     soup = BeautifulSoup(r.text, "html.parser")
