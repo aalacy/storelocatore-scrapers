@@ -40,6 +40,7 @@ def write_output(data):
 def fetch_data():
     url = "https://maceys.com/all"
     locs = []
+    hrlist = []
     r = session.get(url, headers=headers)
     website = "maceys.com/pharmacy"
     typ = "<MISSING>"
@@ -58,6 +59,35 @@ def fetch_data():
             Found = False
         if Found and 'href="' in line:
             locs.append("https://maceys.com" + line.split('href="')[1].split('"')[0])
+    url = "https://afsshareportal.com/lookUpFeatures.php?callback=jsonpcallbackHours&action=storeInfo&website_url=maceys.com&expandedHours=true"
+    r = session.get(url, headers=headers)
+    for line in r.iter_lines():
+        line = str(line.decode("utf-8"))
+        if '{"store_id":"' in line:
+            items = line.split('{"store_id":"')
+            for item in items:
+                if (
+                    '"store_department_name":"Store"' not in item
+                    and "jsonpcallbackHours" not in item
+                ):
+                    sname = (
+                        item.split('"store_name":"Macey\'s')[1].split('"')[0].strip()
+                    )
+                    shrs = "Sun: " + item.split('"Sunday":"')[1].split('"')[0]
+                    shrs = shrs + "; Mon: " + item.split('"Monday":"')[1].split('"')[0]
+                    shrs = shrs + "; Tue: " + item.split('"Tuesday":"')[1].split('"')[0]
+                    shrs = (
+                        shrs + "; Wed: " + item.split('"Wednesday":"')[1].split('"')[0]
+                    )
+                    shrs = (
+                        shrs + "; Thu: " + item.split('"Thursday":"')[1].split('"')[0]
+                    )
+                    shrs = shrs + "; Fri: " + item.split('"Friday":"')[1].split('"')[0]
+                    shrs = (
+                        shrs + "; Sat: " + item.split('"Saturday":"')[1].split('"')[0]
+                    )
+                    shrs = shrs.replace("Closed to Closed", "Closed")
+                    hrlist.append(sname + "|" + shrs)
     for loc in locs:
         logger.info(loc)
         r2 = session.get(loc, headers=headers)
@@ -88,6 +118,9 @@ def fetch_data():
                 zc = h.split(";")[1].split("<")[0].strip().replace("\t", "")
                 state = h.split("&")[0].strip().replace("\t", "")
         name = name.replace("Macey's - ", "")
+        for item in hrlist:
+            if item.split("|")[0] == name:
+                hours = item.split("|")[1]
         yield [
             website,
             loc,
