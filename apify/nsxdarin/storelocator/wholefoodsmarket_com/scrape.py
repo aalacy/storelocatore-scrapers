@@ -68,7 +68,6 @@ def fetch_data():
         name = "Whole Foods Market"
         website = "wholefoodsmarket.com"
         typ = "Store"
-        today = ""
         Online = False
         r2 = session.get(loc, headers=headers)
         if r2.encoding is None:
@@ -186,7 +185,6 @@ def fetch_data():
         name = "Whole Foods Market"
         website = "wholefoodsmarket.com"
         typ = "Store"
-        today = ""
         r2 = session.get(loc, headers=headers)
         if r2.encoding is None:
             r2.encoding = "utf-8"
@@ -304,7 +302,6 @@ def fetch_data():
         name = "Whole Foods Market"
         website = "wholefoodsmarket.com"
         typ = "Store"
-        today = ""
         r2 = session.get(loc, headers=headers)
         if r2.encoding is None:
             r2.encoding = "utf-8"
