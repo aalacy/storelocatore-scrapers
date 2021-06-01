@@ -47,7 +47,7 @@ def fetch_data():
     soup = BeautifulSoup(r.text, "html.parser")
     divlist = str(soup.find("div", {"class": "accordion-locations"}))
     divlist = divlist.split("<h3")[1:]
-    print(len(divlist))
+
     for div in divlist:
         div = "<h3" + div
         div = BeautifulSoup(div, "html.parser")
