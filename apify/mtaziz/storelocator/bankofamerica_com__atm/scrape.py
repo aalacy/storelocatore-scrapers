@@ -66,8 +66,6 @@ def fetch_data():
     # We must keep the radius at 1000 or less than 1000 miles
     # 'level' must be equal to 1000 or less than 1000
     start_url = "https://maps.bankofamerica.com/api/getAsyncLocations?template=search&radius=1000&limit=1000&level=search&search="
-    items = []
-    list_of_states = ["ny", "al"]
     s = set()
     for idx, zipcode in enumerate(zips):
         url = f"{start_url}{zipcode}"
