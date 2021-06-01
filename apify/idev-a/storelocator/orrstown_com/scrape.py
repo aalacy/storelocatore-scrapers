@@ -45,7 +45,13 @@ def fetch_data():
                 if hours == ["By appointment only"]:
                     hours = []
             try:
-                coord = link.iframe["src"].split("!2d")[1].split("!3m")[0].split("!3d")
+                coord = (
+                    link.iframe["src"]
+                    .split("!2d")[1]
+                    .split("!3m")[0]
+                    .split("!2m")[0]
+                    .split("!3d")
+                )
             except:
                 coord = ["", ""]
             location_type = "branch"
