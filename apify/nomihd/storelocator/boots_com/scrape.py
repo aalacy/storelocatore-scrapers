@@ -42,7 +42,6 @@ def write_output(data):
         # Body
         temp_list = []  # ignoring duplicates
         for row in data:
-            print(row)
             if row is None:
                 continue
             comp_list = [
