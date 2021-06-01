@@ -42,6 +42,7 @@ def write_output(data):
         # Body
         temp_list = []  # ignoring duplicates
         for row in data:
+            print(row)
             if row is None:
                 continue
             comp_list = [
@@ -55,8 +56,7 @@ def write_output(data):
             ]
             if comp_list not in temp_list:
                 temp_list.append(comp_list)
-                continue
-            writer.writerow(row)
+                writer.writerow(row)
 
         log.info(f"No of records being processed: {len(temp_list)}")
 
@@ -71,7 +71,7 @@ def fetch_data():
     search_url = "https://www.boots.com/store-a-z"
     stores_req = session.get(search_url, headers=headers)
     stores_sel = lxml.html.fromstring(stores_req.text)
-    stores = stores_sel.xpath('//div[@class="brand_list_viewer"]//ul/li/a/@href')
+    stores = stores_sel.xpath('//div[@class="brand_list_viewer"]//ul/li/a/@href')[:100]
 
     x = 0
     for store_url in stores:
