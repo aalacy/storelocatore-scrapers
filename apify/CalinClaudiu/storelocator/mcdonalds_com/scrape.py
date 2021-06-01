@@ -176,32 +176,38 @@ class CrawlMethod(CleanRecord):
             except Exception as e:
                 self.Oopsie(Point, str(e))
                 continue
-            for data in results[str(self._config.get("pathToResults"))]:
-                record = record_cleaner(data, self._config)
-                self._search.found_location_at(record["latitude"], record["longitude"])
-                # if (
-                #    str(
-                #        str(record["latitude"])
-                #        + str(record["longitude"])
-                #        + str(record["phone"])
-                #        #+ str(record["store_number"])
-                #        + str(record["street_address1"])
-                #        + str(record["location_name"])
-                #    )
-                #    not in identities
-                # ):
-                #    identities.add(
-                #       str(
-                #            str(record["latitude"])
-                #           + str(record["longitude"])
-                #           + str(record["phone"])
-                #            #+ str(record["store_number"])
-                #           + str(record["street_address1"])
-                #           + str(record["location_name"])
-                #        )
-                #    )
-                #    found += 1
-                yield record
+            try:
+                for data in results[str(self._config.get("pathToResults"))]:
+                    record = record_cleaner(data, self._config)
+                    self._search.found_location_at(
+                        record["latitude"], record["longitude"]
+                    )
+                    # if (
+                    #    str(
+                    #        str(record["latitude"])
+                    #        + str(record["longitude"])
+                    #        + str(record["phone"])
+                    #        #+ str(record["store_number"])
+                    #        + str(record["street_address1"])
+                    #        + str(record["location_name"])
+                    #    )
+                    #    not in identities
+                    # ):
+                    #    identities.add(
+                    #       str(
+                    #            str(record["latitude"])
+                    #           + str(record["longitude"])
+                    #           + str(record["phone"])
+                    #            #+ str(record["store_number"])
+                    #           + str(record["street_address1"])
+                    #           + str(record["location_name"])
+                    #        )
+                    #    )
+                    #    found += 1
+                    yield record
+            except Exception as e:
+                self.Oopsie(Point, str(e))
+                continue
             progress = (
                 str(round(100 - (self._search.items_remaining() / maxZ * 100), 2)) + "%"
             )
