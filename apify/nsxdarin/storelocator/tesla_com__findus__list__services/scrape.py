@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
@@ -96,6 +97,7 @@ def write_output(data):
                 "locator_domain",
                 "page_url",
                 "location_name",
+                "raw_address",
                 "street_address",
                 "city",
                 "state",
@@ -140,11 +142,16 @@ def fetch_data():
         lat = ""
         lng = ""
         HFound = True
+        locality = ""
         hours = ""
         r2 = session.get(loc, headers=headers)
         lines = r2.iter_lines()
         for line2 in lines:
             line2 = str(line2.decode("utf-8"))
+            if '<span class="locality">' in line2:
+                locality = (
+                    line2.split('<span class="locality">')[1].split("<")[0].strip()
+                )
             if '<span class="coming-soon">Coming Soon</span>' in line2:
                 CS = True
             if "<title>" in line2:
@@ -163,16 +170,6 @@ def fetch_data():
                 rawadd = rawadd + " " + g.split('ity">')[1].split("<")[0]
                 if "<br />" in g:
                     rawadd = rawadd + " " + g.split("<br />")[1].split("<")[0]
-                addr = parse_address_intl(rawadd)
-                city = addr.city
-                zc = addr.postcode
-                state = addr.state
-                country = addr.country
-                add = addr.street_address_1
-                if add is None:
-                    add = "<MISSING>"
-                else:
-                    add = add.strip()
             if '<span class="type">' in line2 and typ == "":
                 typ = typ + "; " + line2.split('<span class="type">')[1].split("<")[0]
                 if phone == "":
@@ -186,9 +183,9 @@ def fetch_data():
                     .split(",")[1]
                     .split('"')[0]
                 )
-            if "Hours</strong><br />" in line2 and "day" in line2 and HFound:
+            if "Hours</strong>" in line2 and "day" in line2 and HFound:
                 hours = (
-                    line2.split("Hours</strong><br />")[1]
+                    line2.split("Hours</strong>")[1]
                     .replace("<br />", "; ")
                     .replace("<br/>", "; ")
                     .replace("\r", "")
@@ -197,9 +194,9 @@ def fetch_data():
                     .strip()
                 )
                 HFound = False
-            if "Hours</strong><br/>" in line2 and "day" in line2 and HFound:
+            if "Hours</strong>" in line2 and "day" in line2 and HFound:
                 hours = (
-                    line2.split("Hours</strong><br/>")[1]
+                    line2.split("Hours</strong>")[1]
                     .replace("<br/>", "; ")
                     .replace("<br />", "; ")
                     .replace("\r", "")
@@ -208,7 +205,7 @@ def fetch_data():
                     .strip()
                 )
                 HFound = False
-            if "Hours</strong><br />" in line2 and "day" not in line2 and HFound:
+            if "Hours</strong>" in line2 and "day" not in line2 and HFound:
                 g = next(lines)
                 g = str(g.decode("utf-8"))
                 if "day" not in g:
@@ -239,7 +236,7 @@ def fetch_data():
                     g = next(lines)
                     g = str(g.decode("utf-8"))
                 HFound = False
-            if "Hours</strong><br/>" in line2 and "day" not in line2 and HFound:
+            if "Hours</strong>" in line2 and "day" not in line2 and HFound:
                 g = next(lines)
                 g = str(g.decode("utf-8"))
                 if "day" not in g:
@@ -275,6 +272,54 @@ def fetch_data():
         if hours == "":
             hours = "<MISSING>"
         hours = hours.replace(";;", ";")
+        if "aucklandponsonby" in loc:
+            rawadd = "501 Karangahape Road"
+        if "christchurch" in loc:
+            rawadd = "17 Avenger Crescent, Wigram"
+        if "macauservice" in loc:
+            rawadd = "The Venetian, Macao Level LG, Guest Car Park Estrada de Baia de N. Senhora da Esperanca"
+        if "beijingxueyuanroad" in loc:
+            rawadd = "Tesla Center, Xueyuan Road, Beijing"
+        if "qingdaoyinchuan" in loc:
+            rawadd = "Tesla Center, Yinchuan West Road, Qingdao"
+        if "APAC-CN-Tianjin-Wanggang" in loc:
+            rawadd = "<MISSING>"
+        if "wellington" in loc:
+            rawadd = "Wellington 6011"
+        if "wenzhoubinhai" in loc:
+            rawadd = "Wenzhou Binhai Service Center"
+        if "APAC-CN-Wenzhou-Binhai" in loc:
+            rawadd = "<MISSING>"
+        if "sendaiservice" in loc:
+            rawadd = "仙台市宮城野区"
+        if "taichungshizhengservice" in loc:
+            rawadd = "台中市政服務中心 台中市西屯區市政路638號"
+        if "taipeineihuservicecenter" in loc:
+            rawadd = "台北市內湖區舊宗路二段1號 賞車或試駕服務請從舊宗路2段1號入口前往"
+        if "osakatoyonaka" in loc:
+            rawadd = "豊中 大阪府豊中市上津島1丁目1-20"
+        if "aichinagoyaservice" in loc:
+            rawadd = "名古屋市南区星崎1-41"
+        if "tokyobay" in loc:
+            rawadd = "東京ベイ 東京都江東区東雲2丁目7-20"
+        if "kawasakitomei" in loc:
+            rawadd = "東名川崎 神奈川県川崎市宮前区土橋6-10-1"
+        if "yokohama" in loc:
+            rawadd = "横浜 神奈川県横浜市戸塚区上矢部町995-1"
+        if "fukuokaservice" in loc:
+            rawadd = "博多市"
+        if "gushankaohsiungservice" in loc:
+            rawadd = "高雄市鼓山區博愛一路437號"
+        if "busanteslacentre" in loc:
+            rawadd = "부산광역시 연제구 좌수영로 290"
+        if "seoulgangseo" in loc:
+            rawadd = "서울특별시 강서구 양천로 66길5"
+        if "seoulmunjeong" in loc:
+            rawadd = "서울특별시 송파구 동남로4길 36-1"
+        if "seoulseungsu" in loc:
+            rawadd = "서울특별시 성동구 광나루로 8길 6"
+        if "seongnambundang" in loc:
+            rawadd = "경기도 성남시 분당구 대왕판교로 316"
         if lat == "" or lng == "":
             lat = "<MISSING>"
             lng = "<MISSING>"
@@ -287,6 +332,16 @@ def fetch_data():
             typ = "Store"
         if CS:
             name = name + " - Coming Soon"
+        addr = parse_address_intl(rawadd)
+        city = addr.city
+        zc = addr.postcode
+        state = addr.state
+        country = addr.country
+        add = addr.street_address_1
+        if add is None:
+            add = "<MISSING>"
+        else:
+            add = add.strip()
         if state == "" or state is None:
             state = "<MISSING>"
         if state in usstates:
@@ -301,10 +356,24 @@ def fetch_data():
             country = "<MISSING>"
         if add == "" or add is None:
             add = "<MISSING>"
+        if country == "US":
+            try:
+                city = locality.split(",")[0].strip()
+                state = locality.split(",")[1].strip().split(" ")[0]
+                zc = locality.rsplit(" ", 1)[1]
+            except:
+                pass
+        hours = (
+            hours.replace(";Mon", "Mon")
+            .replace("<br>Mon", "Mon")
+            .replace("; Mon", "Mon")
+            .replace("<br> Mon", "Mon")
+        )
         yield [
             website,
             loc,
             name,
+            rawadd,
             add,
             city,
             state,
