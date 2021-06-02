@@ -71,7 +71,6 @@ def fetch_data():
         country = "US"
         zc = ""
         phone = ""
-        HFound = False
         logger.info("Pulling Location %s..." % loc)
         website = "smartstyle.com"
         typ = "Salon"
