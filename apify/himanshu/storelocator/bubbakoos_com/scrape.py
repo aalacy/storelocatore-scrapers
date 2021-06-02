@@ -26,7 +26,7 @@ def fetch_data():
         store_sel = lxml.html.fromstring(location_request.text)
         name = location.find("a").text
         phone = "<MISSING>"
-        if location_soup.find("a", {"href": re.compile("tel:")}) == None:
+        if location_soup.find("a", {"href": re.compile("tel:")}) is None:
             phone = "<MISSING>"
         else:
             phone = (
@@ -71,7 +71,7 @@ def fetch_data():
 
         latitude = ""
         longitude = ""
-        if location_soup.find("iframe") == None:
+        if location_soup.find("iframe") is None:
             latitude = "<MISSING>"
             longitude = "<MISSING>"
         else:
