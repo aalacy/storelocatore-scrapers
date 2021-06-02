@@ -18,7 +18,7 @@ def fetch_data():
     base_url = "https://www.bubbakoos.com/"
     r = session.get("https://www.bubbakoos.com/locations", headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
-    return_main_object = []
+
     for location in soup.find_all("div", {"class": "location_part my-3"}):
         page_url = base_url + location.find("a")["href"]
         log.info(page_url)
