@@ -67,7 +67,6 @@ def fetch_data():
 
             lat = loc["Latitude"]
             longit = loc["Longitude"]
-            # search.found_location_at(lat, longit)
 
             page_url = "https://www.ppgpaints.com" + loc["LocationUrl"]
             if page_url in dup_tracker:
