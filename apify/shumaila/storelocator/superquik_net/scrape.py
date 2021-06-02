@@ -56,19 +56,15 @@ def fetch_data():
         statelink = "http://www.superquik.net/" + div["href"]
         r = session.get(statelink, headers=headers, verify=False)
         soup = BeautifulSoup(r.text, "html.parser")
-        citylist = soup.findAll("p", {"class": "style9"})
-        if len(citylist) == 0:
-            citylist = soup.find("span", {"class": "style9"})
+        citylist = soup.find("div", {"class": "content"}).findAll("a")
         for city in citylist:
-            try:
-                link = "http://www.superquik.net/" + city.find("a")["href"]
-            except:
-                try:
-                    link = "http://www.superquik.net/" + city["href"]
-                except:
-                    break
+            link = "http://www.superquik.net/" + city["href"]
+
             content = city.text.strip().splitlines()
-            title = content[0] + " " + content[1].lstrip()
+            try:
+                title = content[0] + " " + content[1].lstrip()
+            except:
+                continue
             title = title.strip()
             store = content[1].split("#", 1)[1]
             try:

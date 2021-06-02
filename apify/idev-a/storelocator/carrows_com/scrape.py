@@ -20,6 +20,7 @@ def fetch_data():
                 street_address += " " + _["street2"]
             hours = []
             for hh in bs(_["website"], "lxml").stripped_strings:
+                hh = hh.split("Open")[0].strip()
                 if "Hours" in hh or "Delivery" in hh:
                     continue
                 hours.append(hh)
