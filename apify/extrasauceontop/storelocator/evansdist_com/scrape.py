@@ -1,5 +1,5 @@
 from sgrequests import SgRequests
-import PyPDF2 #noqa
+import PyPDF2  # noqa
 import unidecode
 from bs4 import BeautifulSoup as bs
 import pandas as pd
