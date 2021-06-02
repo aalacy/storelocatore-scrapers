@@ -92,12 +92,11 @@ def fetch_data():
                 except:
                     state = "PR"
                 city = line2.split('"town":"')[1].split('"')[0]
-                try:
-                    zc = line2.split('"postalCode":"')[1].split('"')[0]
-                except:
-                    zc = "<MISSING>"
+                zc = (
+                    line2.split('"line1":"')[1].split('"postalCode":"')[1].split('"')[0]
+                )
                 store = line2.split('},"name":"')[1].split('"')[0]
-                phone = line2.split('"phone":"')[1].split('"')[0]
+                phone = line2.split('"line1":"')[1].split('"phone":"')[1].split('"')[0]
                 lat = line2.split('"latitude":')[1].split(",")[0]
                 lng = line2.split('"longitude":')[1].split("}")[0]
                 days = (
@@ -126,6 +125,8 @@ def fetch_data():
                         else:
                             hours = hours + "; " + dname + ": " + hrs
         if SFound:
+            if phone == "":
+                phone = "<MISSING>"
             yield [
                 website,
                 surl,
