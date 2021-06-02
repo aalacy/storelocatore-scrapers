@@ -1,4 +1,6 @@
 import csv
+
+from concurrent import futures
 from lxml import html
 from sgrequests import SgRequests
 
@@ -32,87 +34,98 @@ def write_output(data):
             writer.writerow(row)
 
 
+def get_urls():
+    session = SgRequests()
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:86.0) Gecko/20100101 Firefox/86.0",
+    }
+    r = session.get("https://www.farmboy.ca/stores-sitemap.xml", headers=headers)
+    tree = html.fromstring(r.content)
+    return tree.xpath("//url/loc/text()")
+
+
+def get_data(page_url):
+    locator_domain = "https://www.farmboy.ca/"
+    if page_url == "https://www.farmboy.ca/stores/":
+        return
+    session = SgRequests()
+
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:86.0) Gecko/20100101 Firefox/86.0",
+    }
+    r = session.get(page_url, headers=headers)
+    tree = html.fromstring(r.text)
+
+    location_name = "".join(
+        tree.xpath('//div[@class="image__header single-store"]/h1/text()')
+    )
+    ad = (
+        "".join(
+            tree.xpath('//h2[text()="Store Info"]/following-sibling::div[1]/text()')
+        )
+        .replace("\n", "")
+        .strip()
+    )
+    street_address = " ".join(ad.split(",")[:-3]).strip()
+    csz = " ".join(ad.split(",")[-3:]).strip()
+
+    city = " ".join(csz.split()[:-3]).strip()
+    state = " ".join(csz.split()[-3:]).split()[0]
+    postal = " ".join(csz.split()[-2:]).strip()
+    country_code = "CA"
+    store_number = "<MISSING>"
+    phone = (
+        "".join(tree.xpath('//span[contains(text(), "Phone")]/text()'))
+        .replace("Phone:", "")
+        .strip()
+    )
+    location_type = "store"
+    hours_of_operation = (
+        " ".join(tree.xpath("//ul/li/span/text()")).replace("\n", "").strip()
+    )
+    latitude = (
+        "".join(tree.xpath('//script[contains(text(), "LatLng(")]/text()'))
+        .split("LatLng(")[1]
+        .split(",")[0]
+        .strip()
+    )
+    longitude = (
+        "".join(tree.xpath('//script[contains(text(), "LatLng(")]/text()'))
+        .split("LatLng(")[1]
+        .split(",")[1]
+        .split(")")[0]
+        .strip()
+    )
+
+    row = [
+        locator_domain,
+        page_url,
+        location_name,
+        street_address,
+        city,
+        state,
+        postal,
+        country_code,
+        store_number,
+        phone,
+        location_type,
+        latitude,
+        longitude,
+        hours_of_operation,
+    ]
+
+    return row
+
+
 def fetch_data():
     out = []
-    locator_domain = "https://www.farmboy.ca/"
-    api_url = "https://www.farmboy.ca/stores/"
-
-    session = SgRequests()
-    r = session.get(api_url)
-    tree = html.fromstring(r.text)
-    articles = tree.xpath("//article[contains(@class, 'all portfolio-item')]")
-
-    for a in articles:
-        location_name = "".join(a.xpath(".//h3/text()")).strip()
-        page_url = "".join(a.xpath(".//a[./img]/@href")) or "<MISSING>"
-        line = a.xpath(".//div[@id='sin']/*[1]//text()")
-        line = list(filter(None, [l.strip() for l in line]))
-
-        if line[0][0].isdigit():
-            street_address = line[0].replace(", 2", "")
-        else:
-            street_address = line[1]
-        if street_address.endswith(","):
-            street_address = street_address[:-1]
-        postal = line[-1]
-        line = line[-2].strip()
-        if line.find(",") != -1:
-            city = line.split(",")[0].strip()
-            state = line.split(",")[1].strip()
-        else:
-            city = line.split()[0]
-            state = line.split()[-1]
-        country_code = "CA"
-        store_number = "<MISSING>"
-        phone = (
-            "".join(
-                a.xpath(
-                    ".//*[contains(text(), 'Phone') or contains(text(), 'Tel')]/text()"
-                )
-            )
-            .replace("Phone", "")
-            .replace("Tel", "")
-            .replace(":", "")
-            .strip()
-            or "<MISSING>"
-        )
-        if phone.find("\n") != -1:
-            phone = phone.split("\n")[0].strip()
-
-        text = "".join(a.xpath(".//div[@id='mstore']/a[contains(@href, 'maps')]/@href"))
-        try:
-            latitude = text.split("@")[1].split(",")[0]
-            longitude = text.split("@")[1].split(",")[0]
-        except IndexError:
-            latitude, longitude = "<MISSING>", "<MISSING>"
-        location_type = "<MISSING>"
-
-        _tmp = []
-        tr = a.xpath(".//div[@id='sinfo']/table//tr")
-        for t in tr:
-            day = "".join(t.xpath("./td[1]/text()")).strip()
-            time = "".join(t.xpath("./td[2]/text()")).replace("*", "").strip()
-            _tmp.append(f"{day} {time}")
-
-        hours_of_operation = ";".join(_tmp) or "<MISSING>"
-
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
+    urls = get_urls()
+    with futures.ThreadPoolExecutor(max_workers=10) as executor:
+        future_to_url = {executor.submit(get_data, url): url for url in urls}
+        for future in futures.as_completed(future_to_url):
+            row = future.result()
+            if row:
+                out.append(row)
 
     return out
 

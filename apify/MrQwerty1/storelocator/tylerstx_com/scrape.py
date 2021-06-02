@@ -1,4 +1,5 @@
 import csv
+import usaddress
 
 from lxml import html
 from sgrequests import SgRequests
@@ -47,44 +48,75 @@ def get_coords_from_google_url(url):
     return latitude, longitude
 
 
+def get_address(line):
+    tag = {
+        "Recipient": "recipient",
+        "AddressNumber": "address1",
+        "AddressNumberPrefix": "address1",
+        "AddressNumberSuffix": "address1",
+        "StreetName": "address1",
+        "StreetNamePreDirectional": "address1",
+        "StreetNamePreModifier": "address1",
+        "StreetNamePreType": "address1",
+        "StreetNamePostDirectional": "address1",
+        "StreetNamePostModifier": "address1",
+        "StreetNamePostType": "address1",
+        "CornerOf": "address1",
+        "IntersectionSeparator": "address1",
+        "LandmarkName": "address1",
+        "USPSBoxGroupID": "address1",
+        "USPSBoxGroupType": "address1",
+        "USPSBoxID": "address1",
+        "USPSBoxType": "address1",
+        "BuildingName": "address2",
+        "OccupancyType": "address2",
+        "OccupancyIdentifier": "address2",
+        "SubaddressIdentifier": "address2",
+        "SubaddressType": "address2",
+        "PlaceName": "city",
+        "StateName": "state",
+        "ZipCode": "postal",
+    }
+
+    a = usaddress.tag(line, tag_mapping=tag)[0]
+    street_address = f"{a.get('address1')} {a.get('address2') or ''}".strip()
+    if street_address == "None":
+        street_address = "<MISSING>"
+    city = a.get("city") or "<MISSING>"
+    state = a.get("state") or "<MISSING>"
+    postal = a.get("postal") or "<MISSING>"
+
+    return street_address, city, state, postal
+
+
 def fetch_data():
     out = []
     locator_domain = "https://www.tylerstx.com/"
-    page_url = "https://www.tylerstx.com/storelocations"
+    page_url = "https://www.tylerstx.com/store-contacts"
 
     session = SgRequests()
     r = session.get(page_url)
     tree = html.fromstring(r.text)
     divs = tree.xpath(
-        "//div[@class='shg-c-lg-3 shg-c-md-3 shg-c-sm-3 shg-c-xs-6']|//div[@class='shg-c-lg-4 shg-c-md-4 shg-c-sm-4 shg-c-xs-4']"
+        "//div[@class='shg-c-lg-2 shg-c-md-2 shg-c-sm-2 shg-c-xs-12' and .//table]"
     )
 
     for d in divs:
-        location_name = "".join(d.xpath(".//div[last()]/div/p[1]/span/text()"))
-        line = d.xpath(".//p/a[contains(@href, 'google')]/span/text()")
-        line = list(filter(None, [l.strip() for l in line]))
+        location_name = "".join(d.xpath(".//h1/text()")).strip()
+        line = d.xpath(".//tr[1]//text()")
+        line = ", ".join(list(filter(None, [l.strip() for l in line])))
 
-        street_address = line[0]
-        line = line[-1]
-        city = line.split(",")[0].strip()
-        line = line.split(",")[1].strip()
-        state = line.split()[0]
-        postal = line.split()[-1]
+        street_address, city, state, postal = get_address(line)
         country_code = "US"
         store_number = "<MISSING>"
-        phone = "".join(d.xpath(".//p[last()]//text()")).strip() or "<MISSING>"
-        text = "".join(d.xpath(".//p/a[contains(@href, 'google')]/@href"))
+        phone = "".join(d.xpath(".//tr[2]//text()")).strip() or "<MISSING>"
+        text = "".join(d.xpath(".//tr[1]//a[contains(@href, 'google')]/@href"))
         latitude, longitude = get_coords_from_google_url(text)
         location_type = "<MISSING>"
 
-        _tmp = []
-        days = d.xpath(".//span[./span[@style='font-weight: bold;']]/span/text()")
-        times = d.xpath(".//span[./span[@style='font-weight: bold;']]/text()")
-
-        for date, t in zip(days, times):
-            _tmp.append(f"{date.strip()} {t.strip()}")
-
-        hours_of_operation = " ".join(_tmp) or "<MISSING>"
+        hours = d.xpath(".//tr[3]//text()")
+        hours = list(filter(None, [h.strip() for h in hours]))
+        hours_of_operation = ";".join(hours) or "<MISSING>"
 
         row = [
             locator_domain,

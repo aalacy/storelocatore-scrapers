@@ -53,8 +53,13 @@ def fetch_data():
 
     for item in items:
         location_name = item.p.text.strip()
-        location_type = item.find_all("p")[2].text.strip()
+        location_type = (
+            item.find_all("p")[2].text.replace(", delivery", " delivery").strip()
+        )
         raw_address = item.find_all("p")[3].text.strip()
+        if raw_address.replace(" ", "").isdigit():
+            raw_address = item.find_all("p")[1].text.strip()
+
         if ", " in location_type:
             raw_address = item.find_all("p")[2].text.strip()
             location_type = item.find_all("p")[1].text.strip()
@@ -78,10 +83,15 @@ def fetch_data():
         state = "<MISSING>"
         store_number = "<MISSING>"
         country_code = "GB"
+        location_type = "<MISSING>"
         try:
             phone = item.a.text.strip()
         except:
-            phone = item.span.text
+            try:
+                phone = item.span.text
+            except:
+                phone = item.find_all("p")[3].text.strip()
+
         hours_of_operation = " ".join(list(item.ul.stripped_strings))
 
         latitude = "<MISSING>"
@@ -93,7 +103,7 @@ def fetch_data():
                 "https://www.byron.co.uk/locations",
                 location_name,
                 street_address,
-                city,
+                city.replace(",", ""),
                 state,
                 zip_code,
                 country_code,
