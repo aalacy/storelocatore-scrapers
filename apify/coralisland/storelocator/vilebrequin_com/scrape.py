@@ -7,7 +7,7 @@ base_url = "https://www.vilebrequin.com"
 
 
 def validate(item):
-    if item == None:
+    if item is None:
         item = ""
     if type(item) == int or type(item) == float:
         item = str(item)
@@ -17,7 +17,7 @@ def validate(item):
 
 
 def get_value(item):
-    if item == None:
+    if item is None:
         item = "<MISSING>"
     item = validate(item)
     if item == "":
@@ -88,7 +88,7 @@ def fetch_data():
             if (
                 "outlet" not in store["name"].lower()
                 and " at " not in store["address1"].lower()
-                and check_duplicated(store["name"], store["address1"]) == False
+                and check_duplicated(store["name"], store["address1"]) is False
             ):
                 street = get_value(store["address1"] + " " + store["address2"])
             else:
