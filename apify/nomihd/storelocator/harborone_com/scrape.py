@@ -46,9 +46,7 @@ def fetch_data():
         log.info(page_url)
 
         store_res = session.get(page_url, headers=headers)
-        store_sel = lxml.html.fromstring(
-            store_res.text
-        )  #  phone or hours are different so grab from page.
+        store_sel = lxml.html.fromstring(store_res.text)
 
         json_res = json.loads(
             store_res.text.split('<script type="application/ld+json">')[1]
