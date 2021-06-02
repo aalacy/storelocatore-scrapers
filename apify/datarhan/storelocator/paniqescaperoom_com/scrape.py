@@ -75,7 +75,8 @@ def fetch_data():
         country_code = country_code if country_code else "<MISSING>"
         store_number = "<MISSING>"
         phone = poi["telephone"]
-        phone = phone if phone else "<MISSING>"
+        if not phone:
+            continue
         location_type = poi["@type"]
         latitude = poi["geo"]["latitude"]
         longitude = poi["geo"]["longitude"]
