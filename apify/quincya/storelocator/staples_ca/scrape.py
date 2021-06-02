@@ -59,7 +59,7 @@ def fetch_data():
     for i in stores:
         if i[0] != "{":
             i = "{" + i
-        i = i.replace('"{\\', '{\\').replace("\\", "").split(',"children')[0] + "}}"
+        i = i.replace('"{\\', "{\\").replace("\\", "").split(',"children')[0] + "}}"
         store = json.loads(i)
 
         locator_domain = "staples.ca"
