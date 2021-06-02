@@ -1,6 +1,5 @@
 import csv
 from sgrequests import SgRequests
-import re
 
 session = SgRequests()
 headers = {
