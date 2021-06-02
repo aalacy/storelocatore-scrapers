@@ -57,6 +57,7 @@ def fetch_data():
     for store_url in all_locations:
         store_url = urljoin(start_url, store_url)
         loc_response = session.get(store_url, headers=hdr)
+        print(store_url, loc_response.status_code)
         if loc_response.status_code != 200:
             continue
         loc_dom = etree.HTML(loc_response.text)
@@ -78,6 +79,11 @@ def fetch_data():
                 '//div[h3[contains(text(), "WE ARE OPEN")]]/p[1]/text()'
             )
         raw_address = [e.strip() for e in raw_address if e.strip()]
+        if not raw_address:
+            raw_address = loc_dom.xpath(
+                '//p[strong[contains(text(), "Location:")]]/a/text()'
+            )
+            raw_address = [e.strip() for e in raw_address if e.strip()]
         street_address = raw_address[0]
         city = raw_address[1].split(", ")[0]
         state = raw_address[1].split(", ")[-1].split()[0]
