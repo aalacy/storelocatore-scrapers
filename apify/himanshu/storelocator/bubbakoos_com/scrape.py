@@ -1,4 +1,3 @@
-import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
@@ -26,6 +25,7 @@ def fetch_data():
         location_soup = BeautifulSoup(location_request.text, "lxml")
         store_sel = lxml.html.fromstring(location_request.text)
         name = location.find("a").text
+        phone = "<MISSING>"
         if location_soup.find("a", {"href": re.compile("tel:")}) == None:
             phone = "<MISSING>"
         else:
