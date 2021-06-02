@@ -35,7 +35,6 @@ def write_output(data):
 
 
 def fetch_data():
-    coords = []
     url = "https://www.jgumbos.com/Locations"
     r = session.get(url, headers=headers)
     if r.encoding is None:
