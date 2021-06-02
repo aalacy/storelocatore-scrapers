@@ -48,13 +48,7 @@ def fetch_data():
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
     }
 
-    response = session.get(start_url, headers=hdr)
-    dom = etree.HTML(response.text)
-
-    all_locations = dom.xpath(
-        '//a[@aria-current="page"]/following-sibling::ul/li/a/@href'
-    )
-    for store_number in range(len(all_locations)):
+    for store_number in range(1, 100):
         url = f"https://plondex.com/wp/jsonquery/loadloc/9/{store_number}"
         loc_response = session.get(url, headers=hdr)
         if loc_response.status_code != 200 or not loc_response.text:
@@ -63,9 +57,7 @@ def fetch_data():
 
         raw_address = loc_dom.xpath('//div[@class="col-md-12 text-center"]/p/text()')
         city = raw_address[-1].split(", ")[0]
-        store_url = "https://surgefun.com/locations/{}/".format(
-            city.lower().replace(".", "").replace(" ", "")
-        )
+        store_url = "https://surgefun.com/locations/"
         state = raw_address[-1].split(", ")[-1].split()[0]
         location_name = f"{city.upper()}, {state.upper()}"
         location_name = location_name if location_name else "<MISSING>"
