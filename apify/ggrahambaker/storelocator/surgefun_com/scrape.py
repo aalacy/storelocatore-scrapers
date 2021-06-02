@@ -51,9 +51,6 @@ def fetch_data():
     response = session.get(start_url, headers=hdr)
     dom = etree.HTML(response.text)
 
-    all_locations = dom.xpath(
-        '//a[@aria-current="page"]/following-sibling::ul/li/a/@href'
-    )
     for store_number in range(1, 100):
         url = f"https://plondex.com/wp/jsonquery/loadloc/9/{store_number}"
         loc_response = session.get(url, headers=hdr)
