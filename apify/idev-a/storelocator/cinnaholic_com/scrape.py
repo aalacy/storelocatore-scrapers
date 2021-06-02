@@ -48,6 +48,15 @@ def fetch_data():
                     else:
                         continue
 
+                    hours = _["openingHours"]
+                    if not hours:
+                        hours = [
+                            ": ".join(
+                                soup4.select_one(
+                                    "div.hours-box .day-row"
+                                ).stripped_strings
+                            )
+                        ]
                     yield SgRecord(
                         page_url=page_url,
                         location_name=_["name"],
@@ -61,9 +70,7 @@ def fetch_data():
                         latitude=_["geo"]["latitude"],
                         longitude=_["geo"]["longitude"],
                         location_type=_["@type"],
-                        hours_of_operation="; ".join(_["openingHours"]).replace(
-                            "–", "-"
-                        ),
+                        hours_of_operation="; ".join(hours).replace("–", "-"),
                     )
 
 
