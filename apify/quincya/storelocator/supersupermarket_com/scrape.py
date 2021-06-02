@@ -2,11 +2,7 @@ import csv
 
 from bs4 import BeautifulSoup
 
-from sglogging import SgLogSetup
-
 from sgselenium import SgChrome
-
-logger = SgLogSetup().get_logger("supersupermarket_com")
 
 
 def write_output(data):
