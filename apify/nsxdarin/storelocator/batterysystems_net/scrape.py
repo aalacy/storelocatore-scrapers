@@ -63,6 +63,16 @@ def fetch_data():
             g = next(lines)
             g = str(g.decode("utf-8"))
             csz = g.split("<")[0].strip().replace("  ", " ")
+            if (
+                "a" not in csz
+                and "e" not in csz
+                and "i" not in csz
+                and "o" not in csz
+                and "u" not in csz
+            ):
+                g = next(lines)
+                g = str(g.decode("utf-8"))
+                csz = g.split("<")[0].strip().replace("  ", " ")
             if csz.count(" ") == 2:
                 city = csz.split(" ")[0]
                 state = csz.split(" ")[1]
