@@ -57,7 +57,6 @@ def fetch_data():
     for store_url in all_locations:
         store_url = urljoin(start_url, store_url)
         loc_response = session.get(store_url, headers=hdr)
-        print(store_url, loc_response.status_code)
         if loc_response.status_code != 200:
             continue
         loc_dom = etree.HTML(loc_response.text)
