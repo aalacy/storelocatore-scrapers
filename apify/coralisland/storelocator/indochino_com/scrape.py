@@ -19,7 +19,7 @@ def validate(item):
 
 
 def get_value(item):
-    if item == None:
+    if item is None:
         item = "<MISSING>"
     item = validate(item)
     if item == "":
@@ -123,10 +123,7 @@ def fetch_data():
             country = "CA"
         city_state = get_value(store.xpath('.//div[@class="city"]//text()'))
 
-        output = []
-        output.append(base_url)  # url
-        output.append(link)  # url
-        output.append(validate(store.xpath("./@name")))  # location name
+        output = [base_url, link, validate(store.xpath("./@name"))]
         address = (
             get_value(store.xpath('.//div[@class="street"]//text()'))
             .replace("\n", " ")
