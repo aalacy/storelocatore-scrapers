@@ -40,7 +40,7 @@ def write_output(data):
 
 def fetch_data():
     url = "https://www.earthwisepet.com/sitemap.xml"
-    locs = []
+    locs = ["https://earthwisepet.com/stores/view/yakima"]
     r = session.get(url, headers=headers, verify=False)
     for line in r.iter_lines():
         line = str(line.decode("utf-8"))
@@ -49,7 +49,10 @@ def fetch_data():
             for item in items:
                 if "</priority></url><url>" in item:
                     lurl = "https://earthwisepet.com/stores/view/" + item.split("<")[0]
-                    if lurl != "https://earthwisepet.com/stores/view/":
+                    if (
+                        lurl != "https://earthwisepet.com/stores/view/"
+                        and "yakima" not in lurl
+                    ):
                         locs.append(lurl)
     logger.info("Found %s Locations." % str(len(locs)))
     for loc in locs:
