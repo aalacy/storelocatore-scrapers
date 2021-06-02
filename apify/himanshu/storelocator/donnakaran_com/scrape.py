@@ -79,7 +79,6 @@ def fetch_data():
         location_soup = BeautifulSoup(location_request.text, "html5lib")
         for script in location_soup.find_all("script"):
             if 'location":' in script.text:
-                # logger.info(script.text.split('location":')[1].split('"longitude":')[1].split("}")[0])
                 store.append(
                     script.text.split('location":')[1]
                     .split('"latitude":')[1]
@@ -135,7 +134,6 @@ def fetch_data():
         location_soup = BeautifulSoup(location_request.text, "html5lib")
         for script in location_soup.find_all("script"):
             if 'location":' in script.text:
-                # logger.info(script.text.split('location":')[1].split('"longitude":')[1].split("}")[0])
                 store.append(
                     script.text.split('location":')[1]
                     .split('"latitude":')[1]
