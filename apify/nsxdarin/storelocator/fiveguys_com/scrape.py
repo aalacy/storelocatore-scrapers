@@ -104,29 +104,18 @@ def fetch_data():
                 lng = line2.split('<meta itemprop="longitude" content="')[1].split('"')[
                     0
                 ]
-            if hours == "" and '<div class="Hero-hoursToday"><span class=' in line2:
-                days = (
-                    line2.split('<div class="Hero-hoursToday"><span class=')[1]
-                    .split("data-days='[")[1]
-                    .split("data-utc-offsets=")[0]
-                    .split('"day":"')
-                )
+            if 'itemprop="openingHours" content="' in line2:
+                days = line2.split('itemprop="openingHours" content="')
+                dc = 0
                 for day in days:
-                    if '"intervals":' in day:
-                        if ',"isClosed":true' in day:
-                            hrs = day.split('"')[0] + ": Closed"
-                        else:
-                            hrs = (
-                                day.split('"')[0]
-                                + ": "
-                                + day.split('"start":')[1].split("}")[0]
-                                + "-"
-                                + day.split('"end":')[1].split(",")[0]
-                            )
-                        if hours == "":
-                            hours = hrs
-                        else:
-                            hours = hours + "; " + hrs
+                    if "<!doctype html>" not in day:
+                        dc = dc + 1
+                        if dc <= 7:
+                            hrs = day.split('"')[0]
+                            if hours == "":
+                                hours = hrs
+                            else:
+                                hours = hours + "; " + hrs
         if hours == "":
             hours = "<MISSING>"
         if "-" not in phone:
