@@ -181,17 +181,18 @@ def fetchStores():
 
     for store in getJSONObjectVariable(data, "Results", []):
         url, store = getBaseInfo(store)
-        if url == MISSING:
+        if url and store["location_name"] == MISSING:
             failedStores.append(store)
             log.error(
                 f"{len(failedStores)}. url is missing for=> {store['store_number']} : {store['location_name']}"
             )
-        stores.append(
-            {
-                "store": store,
-                "url": url,
-            }
-        )
+        else:
+            stores.append(
+                {
+                    "store": store,
+                    "url": url,
+                }
+            )
     log.error(f"Url is missing for {len(failedStores)} stores")
 
     return stores
@@ -215,6 +216,8 @@ def fetchData():
         latitude = store["latitude"]
         longitude = store["longitude"]
         raw_address = store["raw_address"]
+        if latitude and longitude is None:
+            continue
 
         yield SgRecord(
             locator_domain=website,

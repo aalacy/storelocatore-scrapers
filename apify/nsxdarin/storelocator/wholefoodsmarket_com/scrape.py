@@ -73,6 +73,8 @@ def fetch_data():
         if r2.encoding is None:
             r2.encoding = "utf-8"
         for line2 in r2.iter_lines(decode_unicode=True):
+            if '<wfm-store-selector store-id="' in line2:
+                store = line2.split('<wfm-store-selector store-id="')[1].split('"')[0]
             if "This is an online-only store" in line2:
                 Online = True
             if 'property="og:title" content="' in line2:
