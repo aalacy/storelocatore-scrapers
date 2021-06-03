@@ -139,6 +139,10 @@ def fetch_data():
         if phone == "":
             phone = "<MISSING>"
         phone = phone.replace("\t", "").strip()
+        if "Wizard number" in add:
+            add = "<MISSING>"
+        if add[-1] == ",":
+            add = add[:-1]
         yield [
             website,
             loc,

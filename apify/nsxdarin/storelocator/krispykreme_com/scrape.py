@@ -74,11 +74,26 @@ def fetch_data():
                     )
                     if phone == "":
                         phone = "<MISSING>"
-                    hdi = item.split('"hoursDescriptionDineIn":"')[1].split('"')[0]
-                    if "Temporary Closure" in hdi:
+                    days = (
+                        item.split('"hoursDineIn":[')[1].split("]")[0].split('"key":"')
+                    )
+                    for day in days:
+                        if '"value":"' in day:
+                            hrs = (
+                                day.split('"')[0]
+                                + ": "
+                                + day.split('"value":"')[1].split('"')[0]
+                            )
+                            if hours == "":
+                                hours = hrs
+                            else:
+                                hours = hours + "; " + hrs
+                    if "Temporary Closure" in hours:
                         hours = "Temporary Closure"
                     if "Coming Soon" in item:
                         name = name + " - Coming Soon"
+                    hours = hours.replace("Not Available at this Location; ; ", "")
+
                     yield [
                         website,
                         loc,
