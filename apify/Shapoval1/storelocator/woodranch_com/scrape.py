@@ -1,4 +1,5 @@
 import csv
+import usaddress
 from lxml import html
 from sgrequests import SgRequests
 from concurrent import futures
@@ -37,41 +38,74 @@ def get_urls():
     session = SgRequests()
 
     r = session.get("https://www.woodranch.com/restaurants/")
-    tree = html.fromstring(r.content)
-    return tree.xpath("//a[@class='tab']/@href")
+    tree = html.fromstring(r.text)
+    return tree.xpath('//a[contains(text(), "Info + Menu")]/@href')
 
 
 def get_data(url):
     locator_domain = "https://www.woodranch.com"
-    page_url = f"{locator_domain}{url}"
+    page_url = url
     session = SgRequests()
+    tag = {
+        "Recipient": "recipient",
+        "AddressNumber": "address1",
+        "AddressNumberPrefix": "address1",
+        "AddressNumberSuffix": "address1",
+        "StreetName": "address1",
+        "StreetNamePreDirectional": "address1",
+        "StreetNamePreModifier": "address1",
+        "StreetNamePreType": "address1",
+        "StreetNamePostDirectional": "address1",
+        "StreetNamePostModifier": "address1",
+        "StreetNamePostType": "address1",
+        "CornerOf": "address1",
+        "IntersectionSeparator": "address1",
+        "LandmarkName": "address1",
+        "USPSBoxGroupID": "address1",
+        "USPSBoxGroupType": "address1",
+        "USPSBoxID": "address1",
+        "USPSBoxType": "address1",
+        "BuildingName": "address2",
+        "OccupancyType": "address2",
+        "OccupancyIdentifier": "address2",
+        "SubaddressIdentifier": "address2",
+        "SubaddressType": "address2",
+        "PlaceName": "city",
+        "StateName": "state",
+        "ZipCode": "postal",
+    }
     r = session.get(page_url)
-    tree = html.fromstring(r.content)
-    street_address = tree.xpath('//span[@itemprop="streetAddress"]/text()')
-    if len(street_address) > 1:
-        street_address = "".join(street_address[1])
-    else:
-        street_address = "".join(street_address)
-    city = "".join(tree.xpath('//span[@itemprop="addressLocality"]/text()'))
-    if city.find("(") != -1:
-        city = city.split("(")[0].strip()
-    state = "".join(tree.xpath('//span[@itemprop="addressRegion"]/text()'))
-    postal = "".join(tree.xpath('//span[@itemprop="postalCode"]/text()'))
+    tree = html.fromstring(r.text)
+    ad = "".join(tree.xpath('//span[@class="wr-address"]/text()'))
+    a = usaddress.tag(ad, tag_mapping=tag)[0]
+    street_address = f"{a.get('address1')} {a.get('address2')}".replace(
+        "None", ""
+    ).strip()
+    city = a.get("city") or "<MISSING>"
+    state = a.get("state") or "<MISSING>"
+    postal = a.get("postal") or "<MISSING>"
     country_code = "US"
     store_number = "<MISSING>"
-    location_name = "".join(
-        tree.xpath('//h1[@class="reset-margin  no-thumbnail"]/text()')
+    location_name = "".join(tree.xpath("//h1/text()"))
+    phone = (
+        "".join(
+            tree.xpath(
+                '//div[@class="wr-location-info-intro wr-page-info-intro"]//a[contains(@href, "tel")]/text()'
+            )
+        )
+        or "<MISSING>"
     )
-    phone = "".join(tree.xpath('//p[@itemprop="telephone"]/text()'))
     latitude = "<MISSING>"
     longitude = "<MISSING>"
     location_type = "<MISSING>"
     hours_of_operation = (
         " ".join(
-            tree.xpath('//h3/following-sibling::p[contains(text(), "Open")]/text()')
+            tree.xpath(
+                '//h2[contains(text(), "Hours")]/following-sibling::ul/li/span/text()'
+            )
         )
-        .replace("/n", "")
-        .split("Holidays")[0]
+        .replace("\n", "")
+        .strip()
     )
 
     row = [
