@@ -86,10 +86,7 @@ def fetch_data():
         location_type = "<MISSING>"
 
         if raw_address != "Historic Downtown McKinney":
-            try:
-                if "coming soon" in str(raw_address).lower():
-                    continue
-            except:
+            if "coming soon" in str(raw_address).lower():
                 continue
             try:
                 street_address = raw_address[-3].strip() + " " + raw_address[-2].strip()
@@ -99,10 +96,7 @@ def fetch_data():
                 except:
                     street_address = "<MISSING>"
 
-            try:
-                city_line = raw_address[-1].split(",")
-            except:
-                continue
+            city_line = raw_address[-1].split(",")
             city = city_line[0].strip()
             if len(city) > 30:
                 continue
@@ -176,8 +170,8 @@ def fetch_data():
 
         hours_of_operation = hours_of_operation.replace("–", "-")
 
-        if "TBD" in hours_of_operation.upper():
-            continue
+        if "TBD" in phone.upper():
+            phone = "<MISSING>"
         if city.lower() == "city":
             continue
         if "purchase pops" in hours_of_operation.lower():
