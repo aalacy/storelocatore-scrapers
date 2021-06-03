@@ -91,11 +91,12 @@ def fetch_data():
         if "#" not in page_url:
             page_res = session.get(page_url, headers=headers)
             page_sel = lxml.html.fromstring(page_res.text)
-            hours_of_operation = "; ".join(
-                page_sel.xpath(
-                    '//div[@class="content_profile"]/div/p[@itemprop="openingHours"]/text()'
-                )
-            ).strip()
+            hours = page_sel.xpath(
+                '//div[@class="content_profile"]/div/p[@itemprop="openingHours"]/text()'
+            )
+            hours = list(filter(str, [x.strip() for x in hours]))
+            hours_of_operation = "; ".join(hours).strip()
+
         else:
             page_url = "<MISSING>"
 

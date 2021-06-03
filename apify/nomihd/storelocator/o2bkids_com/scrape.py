@@ -110,9 +110,9 @@ def fetch_data():
                         sec.xpath('span[@class="main-p-size list-title"]/strong/text()')
                     ).strip()
                 ):
-                    phone = "".join(
-                        sec.xpath('span[@class="main-p-size"][1]//text()')
-                    ).strip()
+                    phone = sec.xpath('span[@class="main-p-size"][1]//text()')[
+                        0
+                    ].strip()
 
                 if (
                     "Hours"
@@ -120,6 +120,7 @@ def fetch_data():
                         sec.xpath('span[@class="main-p-size list-title"]/strong/text()')
                     ).strip()
                 ):
+                    log.info("Present")
                     hours = sec.xpath("div")
 
             if len(address.split("\n")) > 1:
@@ -154,15 +155,14 @@ def fetch_data():
             store_number = "<MISSING>"
 
             location_type = "<MISSING>"
-            hours_list = []
+            hour_list = []
+            hours = store_sel.xpath('//div[contains(@class,"hours")]/div')
             for hour in hours:
-                day = "".join(hour.xpath("span[1]/strong/text()")).strip()
-                time_from = "".join(hour.xpath("span[2]/text()")).strip()
-                time_to = "".join(hour.xpath("span[3]/text()")).strip()
+                hour_list.append(
+                    "".join(list(filter(str, hour.xpath("./span//text()"))))
+                )
 
-                hours_list.append(day + ":" + time_from + time_to)
-
-            hours_of_operation = "; ".join(hours_list).strip()
+            hours_of_operation = "; ".join(hour_list).strip()
 
             latitude = "".join(
                 store_sel.xpath('//div[@class="marker"]/@data-lat')

@@ -84,7 +84,11 @@ def fetch_data():
             .replace("AM -    Su", "AM   Su")
             .replace("ySu", "y - Su")
         )
+
+        if "Thank you for another great season!" in tim:
+            tim = "<MISSING>"
         logger.info(tim)
+
         all.append(
             [
                 "https://grottopizza.com",

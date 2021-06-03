@@ -50,8 +50,6 @@ def fetch_data():
         postal = j.get("postal_zip") or "<MISSING>"
         country_code = j.get("country") or "<MISSING>"
         location_name = j.get("name")
-        if location_name.lower().find("closed") != -1:
-            continue
         store_number = location_name.split("#")[-1].split()[0]
         phone = j.get("phone") or "<MISSING>"
         latitude = j.get("lat") or "<MISSING>"

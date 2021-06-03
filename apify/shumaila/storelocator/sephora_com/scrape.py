@@ -48,15 +48,17 @@ def fetch_data():
     url = "https://www.sephora.com/happening/storelist"
     r = session.get(url, headers=headers, verify=False)
     soup = BeautifulSoup(r.text, "html.parser")
-    linklist = soup.findAll("a", {"class": "css-121wlog"})
+    linklist = soup.select("a[href*=happening]")[6:]
     for link in linklist:
         link = "https://www.sephora.com" + link["href"]
+
         r = session.get(link, headers=headers, verify=False)
         try:
-            r = r.text.split('"stores":[')[1].split("}],")[0]
+            r = r.text.split('"stores":[')[1].split('}],"thirdpartyImageHost"', 1)[0]
         except:
             continue
         r = r + "}"
+
         loc = json.loads(r)
         street = loc["address"]["address1"]
         try:
@@ -107,30 +109,29 @@ def fetch_data():
                 pcode = "0" + pcode
             if state == "NW":
                 state = "WA"
-            if store in datanow:
-                pass
-            else:
-                datanow.append(store)
-                data.append(
-                    [
-                        "https://www.sephora.com",
-                        link,
-                        title.rstrip().lstrip(),
-                        street.replace("\r", "").replace("\n", " ").rstrip().lstrip(),
-                        city.rstrip().lstrip(),
-                        state.rstrip().lstrip(),
-                        pcode.rstrip().lstrip(),
-                        ccode.rstrip().lstrip(),
-                        store,
-                        phone.rstrip().lstrip(),
-                        ltype,
-                        lat,
-                        longt,
-                        hours.rstrip(),
-                    ]
-                )
+        if store in datanow:
+            continue
+        datanow.append(store)
+        data.append(
+            [
+                "https://www.sephora.com",
+                link,
+                title.rstrip().lstrip(),
+                street.replace("\r", "").replace("\n", " ").rstrip().lstrip(),
+                city.rstrip().lstrip(),
+                state.rstrip().lstrip(),
+                pcode.rstrip().lstrip(),
+                ccode.rstrip().lstrip(),
+                store,
+                phone.rstrip().lstrip(),
+                ltype,
+                lat,
+                longt,
+                hours.rstrip(),
+            ]
+        )
 
-                p += 1
+        p += 1
     return data
 
 

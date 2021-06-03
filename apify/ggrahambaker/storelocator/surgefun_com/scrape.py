@@ -1,105 +1,107 @@
+import re
 import csv
+from lxml import etree
+
 from sgrequests import SgRequests
-from bs4 import BeautifulSoup
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('surgefun_com')
-
 
 
 def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+    with open("data.csv", mode="w", encoding="utf-8") as output_file:
+        writer = csv.writer(
+            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+        )
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
+        writer.writerow(
+            [
+                "locator_domain",
+                "page_url",
+                "location_name",
+                "street_address",
+                "city",
+                "state",
+                "zip",
+                "country_code",
+                "store_number",
+                "phone",
+                "location_type",
+                "latitude",
+                "longitude",
+                "hours_of_operation",
+            ]
+        )
         # Body
         for row in data:
             writer.writerow(row)
 
-def addy_ext(addy):
-    com_split = addy.split(',')
-    city = com_split[0]
-    state_zip = com_split[1].strip().split(' ')
-    state = state_zip[0]
-    zip_code = state_zip[1]
-    
-    return city, state, zip_code
 
 def fetch_data():
-    session = SgRequests()
-    HEADERS = { 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36' }
+    # Your scraper here
+    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
 
-    locator_domain = 'https://surgefun.com'
+    items = []
 
-    response = session.get(locator_domain, headers = HEADERS)
-    soup = BeautifulSoup(response.content, 'html.parser')
-    locs = soup.find_all('div', {'class': 'side-nav-link'})
+    start_url = "https://surgefun.com/locations/"
+    domain = re.findall(r"://(.+?)/", start_url)[0].replace("www.", "")
 
-    link_list = []
-    for loc in locs:
-        if "coming soon" not in str(loc).lower():
-            link = loc.find('a')['href']
-            link_list.append(locator_domain + link)
-        
-    all_store_data = []
-    for link in link_list:
-        
-        response = session.get(link + '/ContactUs/', headers = HEADERS)
-        soup = BeautifulSoup(response.content, 'html.parser')
-        # logger.info(link)
-        location_name = soup.find('span', {'id': 'header-location'}).text.strip()
-        
-        google_link = soup.find('div', {'class': 'google-map'}).find('iframe')['src']
-        start = google_link.find('!2d')
-        end = google_link.find('!2m')
-        
-        coords = google_link[start + 3 : end].split('!3d')
-        lat = coords[1]
-        longit = coords[0]
-        
-        conts = soup.find_all('div', {'class': 'footer-address'})
+    hdr = {
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
+    }
 
-        for i, c in enumerate(conts):
-            if i == 0:
-                addy = c.text.strip().split('\n')
-                street_address = addy[0].strip()
-                city, state, zip_code = addy_ext(addy[1].strip())
-                
-            elif i == 1:
-                phone_number = c.text.strip()
+    for store_number in range(1, 100):
+        url = f"https://plondex.com/wp/jsonquery/loadloc/9/{store_number}"
+        loc_response = session.get(url, headers=hdr)
+        if loc_response.status_code != 200 or not loc_response.text:
+            continue
+        loc_dom = etree.HTML(loc_response.text)
 
-            else:
-                continue
+        raw_address = loc_dom.xpath('//div[@class="col-md-12 text-center"]/p/text()')
+        city = raw_address[-1].split(", ")[0]
+        store_url = "https://surgefun.com/locations/"
+        state = raw_address[-1].split(", ")[-1].split()[0]
+        location_name = f"{city.upper()}, {state.upper()}"
+        location_name = location_name if location_name else "<MISSING>"
+        street_address = raw_address[0]
+        if street_address.endswith(","):
+            street_address = street_address[:-1]
+        zip_code = raw_address[-1].split(", ")[-1].split()[-1]
+        country_code = "<MISSING>"
+        phone = "<MISSING>"
+        location_type = "<MISSING>"
+        latitude = "<MISSING>"
+        longitude = "<MISSING>"
+        hoo = loc_dom.xpath(
+            '//h4[contains(text(), "Business Hours")]/following::text()'
+        )
+        hoo = [e.strip() for e in hoo if e.strip()]
+        hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
 
-        if "@" in phone_number:
-            phone_number = '<MISSING>'
-            
-        days = soup.find_all('div', {'class': 'Footer-Hours'})
-        
-        hours = ''
-        for d in days:
-            day = ' '.join(d.text.strip().split())
+        item = [
+            domain,
+            store_url,
+            location_name,
+            street_address,
+            city,
+            state,
+            zip_code,
+            country_code,
+            store_number,
+            phone,
+            location_type,
+            latitude,
+            longitude,
+            hours_of_operation,
+        ]
 
-            hours += day
+        items.append(item)
 
-        hours = hours.replace("PM","PM ").replace("Closed","Closed ").strip()
-        if not hours:
-            hours = '<MISSING>'
-        
-        country_code = '<MISSING>'
-        store_number = '<MISSING>'
-        location_type = '<MISSING>'
-        page_url = link
-        
-        store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
-                    store_number, phone_number, location_type, lat, longit, hours, page_url]
-        all_store_data.append(store_data)
+    return items
 
-    return all_store_data
 
 def scrape():
     data = fetch_data()
     write_output(data)
 
-scrape()
+
+if __name__ == "__main__":
+    scrape()

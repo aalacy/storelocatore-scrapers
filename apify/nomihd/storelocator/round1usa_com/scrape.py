@@ -70,9 +70,9 @@ def fetch_data():
         stores = json.loads(stores_req.text)["results"]["locations"]
 
         for store in stores:
-            page_url = "<MISSING>"
+            page_url = "https://round1usa.com/locations"
             locator_domain = website
-            location_name = store["name"]
+            location_name = store["name"].replace("<br>", "").strip()
             if location_name == "":
                 location_name = "<MISSING>"
 
@@ -107,7 +107,13 @@ def fetch_data():
             if "(" not in phone:
                 phone = "<MISSING>"
 
-            location_type = "<MISSING>"
+            if "Temporarily Closed" in location_name:
+                location_type = "Temporarily Closed"
+            elif "Coming Soon" in location_name:
+                location_type = "Coming Soon"
+            else:
+                location_type = "<MISSING>"
+
             hours_of_operation = ""
             hours_list = []
             if len(store["monday"]) > 0:
@@ -139,7 +145,14 @@ def fetch_data():
             else:
                 hours_list.append("sunday:" + "Closed")
 
-            hours_of_operation = "; ".join(hours_list).strip()
+            hours_of_operation = (
+                "; ".join(hours_list)
+                .strip()
+                .replace("<br>", "")
+                .replace("&nbsp", "")
+                .replace(" ;", ";")
+                .replace(":;", ":")
+            )
             latitude = store["loc_lat"]
             longitude = store["loc_long"]
 
