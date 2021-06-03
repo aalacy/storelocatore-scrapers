@@ -67,8 +67,8 @@ def fetch_data():
         lines = r2.iter_lines()
         for line2 in lines:
             line2 = str(line2.decode("utf-8"))
-            if "Call Now to Register</p><span>" in line2 and phone == "":
-                phone = line2.split("Call Now to Register</p><span>")[1].split("<")[0]
+            if '"telephone" : "' in line2:
+                phone = line2.split('"telephone" : "')[1].split('"')[0]
             if 'font-weight: bold; font-size: 1.4em;">' in line2:
                 items = line2.split('font-weight: bold; font-size: 1.4em;">')
                 for item in items:
