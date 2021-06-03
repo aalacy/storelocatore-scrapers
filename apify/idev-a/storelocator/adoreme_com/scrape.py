@@ -6,6 +6,16 @@ from sglogging import SgLogSetup
 import re
 from datetime import datetime
 from sgselenium import SgChrome
+import ssl
+
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
 
 logger = SgLogSetup().get_logger("adoreme")
 
@@ -59,19 +69,29 @@ def fetch_data():
                 if sp1.select("div.visit-hours ul li"):
                     for hh in sp1.select("div.visit-hours ul li"):
                         _hr = list(hh.stripped_strings)
-                        if _hr[0] == "We're Open:":
-                            _hr[0] = days[datetime.today().weekday()]
                         _hr[0] = _hr[0].split(",")[0]
+                        if (
+                            _hr[0] == "We're Open:"
+                            or _hr[0] not in days
+                            or _hr[0] == "Today's Hours:"
+                        ):
+                            _hr[0] = days[datetime.today().weekday()]
                         hours.append(": ".join(_hr))
+                    if not phone:
+                        phone = sp1.find("a", href=re.compile(r"tel:")).text.strip()
                 elif sp1.select("table.mabel-bhi-businesshours tr"):
                     hours = [
                         ":".join(hh.stripped_strings)
-                        for hh in sp1.select("table.mabel-bhi-businesshours tr")
+                        for hh in sp1.select("table.mabel-bhi-businesshours")[0].select(
+                            "tr"
+                        )
                     ]
-                elif sp1.select_one('button[data-child="hoo"]'):
-                    hours = list(
-                        sp1.select_one('button[data-child="hoo"]').stripped_strings
-                    )
+                elif sp1.select("article.cblHeaderTbl--dates dl"):
+                    hours = [
+                        ":".join(hh.stripped_strings)
+                        for hh in sp1.select("article.cblHeaderTbl--dates dl")
+                        if "hours" not in hh.text
+                    ]
                 try:
                     coord = link.a["href"].split("/@")[1].split("/data")[0].split(",")
                 except:
@@ -88,7 +108,9 @@ def fetch_data():
                     locator_domain=locator_domain,
                     latitude=coord[0],
                     longitude=coord[1],
-                    hours_of_operation="; ".join(hours).replace("–", "-"),
+                    hours_of_operation="; ".join(hours)
+                    .replace("–", "-")
+                    .replace("—", "-"),
                 )
 
 

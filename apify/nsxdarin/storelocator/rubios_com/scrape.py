@@ -65,10 +65,10 @@ def fetch_data():
         lines = r2.iter_lines()
         for line2 in lines:
             line2 = str(line2.decode("utf-8"))
-            if '<meta property="og:title" content="' in line2:
-                name = line2.split('<meta property="og:title" content="')[1].split('"')[
-                    0
-                ]
+            if "<title>" in line2:
+                name = line2.split("<title>")[1].split("<")[0]
+                if "|" in name:
+                    name = name.split("|")[0].strip()
             if 'store-address__address">' in line2:
                 g = next(lines)
                 h = next(lines)
