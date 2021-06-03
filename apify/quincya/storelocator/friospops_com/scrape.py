@@ -64,10 +64,9 @@ def fetch_data():
         base = BeautifulSoup(req.text, "lxml")
 
         locator_domain = "friospops.com"
-        location_name = (
-            "Frios Gourmet Pops - "
-            + base.find_all(class_="elementor-text-editor elementor-clearfix")[0].text
-        )
+        location_name = "Frios Gourmet Pops - " + base.find_all(
+            class_="elementor-text-editor elementor-clearfix"
+        )[0].text.replace("\t", "").replace("\n", "")
 
         try:
             raw_address = base.find_all(
@@ -77,6 +76,14 @@ def fetch_data():
             raw_address = base.find_all(
                 class_="elementor-text-editor elementor-clearfix"
             )[2].text
+
+        try:
+            if not raw_address.strip():
+                continue
+        except:
+            pass
+
+        location_type = "<MISSING>"
 
         if raw_address != "Historic Downtown McKinney":
             try:
@@ -135,12 +142,24 @@ def fetch_data():
         if "569 1st St" in street_address:
             zip_code = "35007"
 
+        if "241 W Main" in street_address:
+            street_address = "241 W Main St."
+
+        if street_address != "<MISSING>":
+            location_type = "The Frios Location"
+        if (
+            "The Frios Mobile" in street_address
+            or "Frios Cart" in street_address
+            or "we come to you" in base.text.lower()
+        ):
+            street_address = "<MISSING>"
+            location_type = "The Frios Mobile"
+
         street_address = street_address.replace(
             "TBD", "<MISSING>".replace("Frios Cart", "<MISSING>")
         )
         country_code = "US"
         store_number = "<MISSING>"
-        location_type = "<MISSING>"
         phone = base.find_all(class_="elementor-text-editor elementor-clearfix")[
             3
         ].text.strip()
@@ -157,6 +176,10 @@ def fetch_data():
 
         hours_of_operation = hours_of_operation.replace("–", "-")
 
+        if "TBD" in hours_of_operation.upper():
+            continue
+        if city.lower() == "city":
+            continue
         if "purchase pops" in hours_of_operation.lower():
             hours_of_operation = "<MISSING>"
 
