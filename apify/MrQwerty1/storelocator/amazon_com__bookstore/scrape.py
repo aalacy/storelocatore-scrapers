@@ -101,7 +101,7 @@ def get_urls():
     tree = html.fromstring(r.text)
 
     return tree.xpath(
-        "//div[@class='acsUxWidget' and .//h2[text()='AMAZON BOOKS']]//h3/following-sibling::p/a/@href"
+        "//div[@class='a-row' and .//h2[text()='AMAZON BOOKS']]/following-sibling::div[1]//h3/following-sibling::p/a/@href"
     )
 
 
