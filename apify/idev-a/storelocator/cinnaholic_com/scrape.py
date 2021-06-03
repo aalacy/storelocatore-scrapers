@@ -48,14 +48,11 @@ def fetch_data():
                     else:
                         continue
 
-                    hours = _["openingHours"]
-                    if not hours:
+                    hours = []
+                    if soup4.select("div.hours-box .day-row"):
                         hours = [
-                            ": ".join(
-                                soup4.select_one(
-                                    "div.hours-box .day-row"
-                                ).stripped_strings
-                            )
+                            ": ".join(hh.stripped_strings)
+                            for hh in soup4.select("div.hours-box .day-row")
                         ]
                     yield SgRecord(
                         page_url=page_url,
