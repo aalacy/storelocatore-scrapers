@@ -40,7 +40,7 @@ def fetch_data():
     r = session.get(
         "https://www.donnakaran.com/store-locator/all-stores.do?countryCode=US"
     )
-    soup = BeautifulSoup(r.text, "lxml")
+    soup = BeautifulSoup(r.text, "html.parser")
 
     for location in soup.find_all("div", {"class": "ml-storelocator-item-wrapper"}):
         store = []
@@ -95,7 +95,7 @@ def fetch_data():
     r = session.get(
         "https://www.donnakaran.com/store-locator/all-stores.do?countryCode=CA"
     )
-    soup = BeautifulSoup(r.text, "lxml")
+    soup = BeautifulSoup(r.text, "html.parser")
 
     for location in soup.find_all("div", {"class": "ml-storelocator-item-wrapper"}):
         store = []
