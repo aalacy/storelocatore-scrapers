@@ -39,8 +39,8 @@ def payload(address):
 
 
 search = DynamicZipSearch(
-    country_codes=[SearchableCountries.USA],
-    max_radius_miles=50,
+    country_codes=[SearchableCountries.CANADA],
+    max_radius_miles=None,
     max_search_results=None,
 )
 
