@@ -55,12 +55,10 @@ def fetch_data():
         phone = "<MISSING>"
         hours_of_operation = "<MISSING>"
         phone_list = re.findall(
-            re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str(i.text)
+            re.compile(r".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str(i.text)
         )
         if phone_list:
             phone = phone_list[-1]
-        # hours_of_operation = soup.find(lambda tag: (tag.name == "strong" ) and "Hours:" in tag.text.strip()).nextSibling
-        # logger.info(hours_of_operation)
         state = add[-1].strip().split()[0].replace("New", "NY")
         zipp = (
             " ".join(add[-1].strip().split()[1:])
@@ -114,14 +112,10 @@ def fetch_data():
         store.append(lng.strip() if lng.strip() else "<MISSING>")
         store.append(hours_of_operation)
         store.append("<MISSING>")
-        # store = [x.replace("–", "-") if type(x) ==
-        #          str else x for x in store]
         store = [
             x.encode("ascii", "ignore").decode("ascii").strip() if type(x) == str else x
             for x in store
         ]
-        # logger.info("data ===" + str(store))
-        # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~")
         yield store
 
 
