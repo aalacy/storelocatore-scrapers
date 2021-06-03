@@ -49,8 +49,8 @@ def fetch_data():
     data = json.loads(response.text)
 
     for poi in data:
-        hoo = etree.HTML(poi["info_popup"])
-        all_text = hoo.xpath('//div[@id="maps-popup"]//text()')
+        hoo_html = etree.HTML(poi["info_popup"])
+        all_text = hoo_html.xpath('//div[@id="maps-popup"]//text()')
         all_text = [elem.strip() for elem in all_text if elem.strip()]
 
         store_url = "https://eegees.com/locations/"
@@ -142,9 +142,17 @@ def fetch_data():
         longitude = poi["lng"]
         longitude = longitude if longitude else "<MISSING>"
 
-        hoo = hoo.xpath('//h3[contains(text(), "Store Hours")]/following::text()')
+        hoo = hoo_html.xpath('//h3[contains(text(), "Store Hours")]/following::text()')
         hoo = [elem.strip() for elem in hoo if elem.strip()][:2]
         hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
+        if hours_of_operation == "<MISSING>":
+            hoo = hoo_html.xpath(
+                '//*[contains(text(), "Store Hours")]/following-sibling::p/text()'
+            )
+            hoo = [elem.strip() for elem in hoo if elem.strip()]
+            hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
+
+        hours_of_operation = hours_of_operation.split("Drive")[0]
 
         if state == "<MISSING>":
             if "Arizona" in location_name:

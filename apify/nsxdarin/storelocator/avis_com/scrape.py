@@ -99,8 +99,16 @@ def fetch_data():
                 state = line2.split('"addressRegion": "')[1].split('"')[0]
             if '"postalCode": "' in line2:
                 zc = line2.split('"postalCode": "')[1].split('"')[0]
-            if '"streetAddress": "' in line2:
-                add = line2.split('"streetAddress": "')[1].split('"')[0]
+            if '"streetAddress">' in line2:
+                if add == "":
+                    add = line2.split('"streetAddress">')[1].split("<")[0].strip()
+                else:
+                    add = (
+                        add
+                        + " "
+                        + line2.split('"streetAddress">')[1].split("<")[0].strip()
+                    )
+                    add = add.strip()
             if '"telephone": "' in line2:
                 phone = line2.split('"telephone": "')[1].split('"')[0]
             if '"openingHours": "' in line2:
@@ -120,6 +128,16 @@ def fetch_data():
             lat = "<MISSING>"
         if lng == "":
             lng = "<MISSING>"
+        if city == "":
+            city = "<MISSING>"
+        if add == "":
+            add = "<MISSING>"
+        if zc == "":
+            zc = "<MISSING>"
+        if state == "":
+            state = "<MISSING>"
+        if phone == "":
+            phone = "<MISSING>"
         phone = phone.replace("\t", "").strip()
         yield [
             website,

@@ -81,8 +81,11 @@ def fetch_data():
             city = ad.split(",")[1].strip()
             location_name = city + " " + "Pizza Depot"
             store_number = "<MISSING>"
-            latitude = ll.split("ll=")[1].split(",")[0].strip()
-            longitude = ll.split("ll=")[1].split(",")[1].split("&")[0].strip()
+            try:
+                latitude = ll.split("ll=")[1].split(",")[0].strip()
+                longitude = ll.split("ll=")[1].split(",")[1].split("&")[0].strip()
+            except:
+                latitude, longitude = "<MISSING>", "<MISSING>"
 
             session = SgRequests()
             r = session.get(page_url, headers=headers)
