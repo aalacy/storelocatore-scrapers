@@ -76,7 +76,7 @@ def fetch_data():
             "div", {"class": "eslStore ml-storelocator-headertext"}
         ).find("a")["href"]
         location_request = session.get(base_url + url)
-        location_soup = BeautifulSoup(location_request.text, "html5lib")
+        location_soup = BeautifulSoup(location_request.text, "html.parser")
         for script in location_soup.find_all("script"):
             if 'location":' in script.text:
                 store.append(
@@ -131,7 +131,7 @@ def fetch_data():
             "div", {"class": "eslStore ml-storelocator-headertext"}
         ).find("a")["href"]
         location_request = session.get(base_url + url)
-        location_soup = BeautifulSoup(location_request.text, "html5lib")
+        location_soup = BeautifulSoup(location_request.text, "html.parser")
         for script in location_soup.find_all("script"):
             if 'location":' in script.text:
                 store.append(
