@@ -34,7 +34,7 @@ def fetch_data():
         page_sel = lxml.html.fromstring(page_res.text)
 
         stores_list = page_sel.xpath(
-            '//div[contains(@id,"Container")]//div[@class="_1Z_nJ" and ./h1[contains(@style,"font-size:23px")]/span[text()]]'
+            '//div[contains(@id,"Container")]//div[@data-testid="richTextElement" and ./h1[contains(@style,"font-size:23px")]/span[text()]]'
         )
 
         for store in stores_list:
