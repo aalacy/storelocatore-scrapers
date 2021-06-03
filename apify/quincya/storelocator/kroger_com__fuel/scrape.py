@@ -51,7 +51,6 @@ def fetch_data():
 
     items = base.find_all("loc")
 
-    data = []
     locator_domain = "kroger.com"
 
     log.info("Processing " + str(len(items)) + " links ...")
@@ -79,11 +78,9 @@ def fetch_data():
                 continue
 
             try:
-                script = (
-                    base.find("script", attrs={"type": "application/ld+json"})
-                    .text.replace("\n", "")
-                    .strip()
-                )
+                script = base.find(
+                    "script", attrs={"type": "application/ld+json"}
+                ).contents[0]
             except:
                 log.info(link)
                 raise
@@ -131,26 +128,22 @@ def fetch_data():
             longitude = store["geo"]["longitude"]
 
             # Store data
-            data.append(
-                [
-                    locator_domain,
-                    link,
-                    location_name,
-                    street_address,
-                    city,
-                    state,
-                    zip_code,
-                    country_code,
-                    store_number,
-                    phone,
-                    location_type,
-                    latitude,
-                    longitude,
-                    hours_of_operation,
-                ]
-            )
-
-    return data
+            yield [
+                locator_domain,
+                link,
+                location_name,
+                street_address,
+                city,
+                state,
+                zip_code,
+                country_code,
+                store_number,
+                phone,
+                location_type,
+                latitude,
+                longitude,
+                hours_of_operation,
+            ]
 
 
 def scrape():
