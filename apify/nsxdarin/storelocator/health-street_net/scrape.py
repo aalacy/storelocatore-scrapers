@@ -127,6 +127,21 @@ def fetch_data():
                 add = add.replace("&amp;", "&").replace("&amp", "&")
                 infotext = aname + "|" + add + "|" + city + "|" + state
                 hours = hours.replace("&#8211;", "-")
+                if aname == "":
+                    aname = (
+                        loc.split("/location/")[1]
+                        .replace("/", "")
+                        .replace("-", "")
+                        .title()
+                    )
+                if add == "":
+                    add = "<MISSING>"
+                if city == "":
+                    city = "<MISSING>"
+                if state == "":
+                    state = "<MISSING>"
+                if zc == "":
+                    zc = "<MISSING>"
                 if infotext not in locinfo:
                     locinfo.append(infotext)
                     yield [
