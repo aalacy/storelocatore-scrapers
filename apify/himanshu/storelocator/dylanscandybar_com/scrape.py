@@ -1,5 +1,5 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 import re
 from sglogging import SgLogSetup
@@ -38,9 +38,8 @@ def write_output(data):
 
 
 def fetch_data():
-    return_main_object = []
-    base_url = "https://www.dylanscandybar.com/pages/visit"
-    r = requests.get("https://www.dylanscandybar.com/pages/visit")
+    session = SgRequests()
+    r = session.get("https://www.dylanscandybar.com/pages/visit")
     soup = bs(r.text, "lxml")
     data = soup.find_all(
         "div", {"class": "map-section-content-wrapper desktop-3 tablet-2 mobile-3"}
@@ -80,7 +79,6 @@ def fetch_data():
             .replace(",", " ")
             .replace("      ", "")
         )
-        # logger.info("~~~~~~~~~~~~~~~~")
 
         lat = "<MISSING>"
         lng = "<MISSING>"
