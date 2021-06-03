@@ -1,5 +1,4 @@
 import csv
-import lxml
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 import re
