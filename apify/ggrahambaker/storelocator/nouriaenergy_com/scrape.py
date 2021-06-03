@@ -1,6 +1,9 @@
 import csv
+import json
 
-from sgselenium import SgChrome
+from bs4 import BeautifulSoup
+
+from sgrequests import SgRequests
 
 import usaddress
 
@@ -77,11 +80,15 @@ def fetch_data():
     locator_domain = "https://nouriaenergy.com/"
     ext = "store-locator/"
 
-    driver = SgChrome().chrome()
-    driver.get(locator_domain + ext)
+    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
+    headers = {"User-Agent": user_agent}
 
-    driver.implicitly_wait(20)
-    locs = driver.execute_script("return locations")
+    session = SgRequests()
+    req = session.get(locator_domain + ext, headers=headers)
+    base = BeautifulSoup(req.text, "lxml")
+
+    js = str(base).split("var locations =")[1].split("};\n")[0] + "}"
+    locs = json.loads(js)
 
     all_store_data = []
     for loc in locs:
@@ -94,8 +101,12 @@ def fetch_data():
         addy_info = addy["address"]
         street_address, city, state, zip_code = parse_address(addy_info)
 
-        lat = addy["lat"]
-        longit = addy["lng"]
+        try:
+            lat = addy["lat"]
+            longit = addy["lng"]
+        except:
+            lat = "<MISSING>"
+            longit = "<MISSING>"
 
         page_url = info["permalink"]
         phone_number = info["phone"]
@@ -105,14 +116,17 @@ def fetch_data():
 
         country_code = "US"
 
-        hours = ""
+        try:
+            hours = ""
 
-        h_obj = info["hours"][0]
+            h_obj = info["hours"][0]
 
-        hours += h_obj["header"] + " "
+            hours += h_obj["header"] + " "
 
-        for h in h_obj["hours"]:
-            hours += h_obj["hours"][h]["datetime"] + " "
+            for h in h_obj["hours"]:
+                hours += h_obj["hours"][h]["datetime"] + " "
+        except:
+            hours = "<MISSING>"
 
         location_type = "<MISSING>"
 
@@ -129,13 +143,12 @@ def fetch_data():
             location_type,
             lat,
             longit,
-            hours,
+            hours.strip(),
             page_url,
         ]
 
         all_store_data.append(store_data)
 
-    driver.quit()
     return all_store_data
 
 

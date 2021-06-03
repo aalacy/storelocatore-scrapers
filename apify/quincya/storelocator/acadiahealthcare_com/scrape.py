@@ -64,8 +64,11 @@ def fetch_data():
         country_code = "US"
         store_number = "<MISSING>"
         location_type = "<MISSING>"
-        phone = base.find(class_="phone").text.strip()
-        if not phone:
+        try:
+            phone = base.find(class_="phone").text.strip()
+            if not phone:
+                phone = "<MISSING>"
+        except:
             phone = "<MISSING>"
         hours_of_operation = "<MISSING>"
         latitude = "<MISSING>"

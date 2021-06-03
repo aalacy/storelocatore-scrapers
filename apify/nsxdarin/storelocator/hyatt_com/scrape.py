@@ -104,27 +104,26 @@ def fetch_data():
                                 phone = line2.split('"telephone":"')[1].split('"')[0]
                     except:
                         pass
-                    if country == "GB" or country == "CA" or country == "US":
-                        if "Club Maui, " in name:
-                            name = "Hyatt Residence Club Maui, Kaanapali Beach"
-                        if CS:
-                            name = name + " - Coming Soon"
-                        yield [
-                            website,
-                            loc,
-                            name,
-                            add,
-                            city,
-                            state,
-                            zc,
-                            country,
-                            store,
-                            phone,
-                            typ,
-                            lat,
-                            lng,
-                            hours,
-                        ]
+                    if "Club Maui, " in name:
+                        name = "Hyatt Residence Club Maui, Kaanapali Beach"
+                    if CS:
+                        name = name + " - Coming Soon"
+                    yield [
+                        website,
+                        loc,
+                        name,
+                        add,
+                        city,
+                        state,
+                        zc,
+                        country,
+                        store,
+                        phone,
+                        typ,
+                        lat,
+                        lng,
+                        hours,
+                    ]
 
 
 def scrape():

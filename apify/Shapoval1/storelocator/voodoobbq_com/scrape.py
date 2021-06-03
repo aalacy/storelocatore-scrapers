@@ -64,6 +64,15 @@ def fetch_data():
             " ".join(hours.xpath("//*/text()")).replace("\n", "").strip()
         )
 
+        session = SgRequests()
+        r = session.get(page_url, headers=headers)
+        tree = html.fromstring(r.text)
+        tmpclz = "".join(
+            tree.xpath('//span[contains(text(), "(TEMPORARILY CLOSED)")]/text()')
+        )
+        if tmpclz:
+            hours_of_operation = "TEMPORARILY CLOSED"
+
         row = [
             locator_domain,
             page_url,

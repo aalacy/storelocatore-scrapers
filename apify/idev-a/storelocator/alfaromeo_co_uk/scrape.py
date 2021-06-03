@@ -12,14 +12,6 @@ def fetch_data():
         res = session.get(base_url)
         store_list = json.loads(res.text[9:-1])["results"]
         for store in store_list:
-            page_url = store["WEBSITE"].strip()
-            location_name = store["COMPNAME2"]
-            zip = store["ZIPCODE"]
-            city = store["TOWN"]
-            street_address = store["ADDRESS"]
-            phone = store["TEL_1"]
-            latitude = store["XCOORD"]
-            longitude = store["YCOORD"]
             hours = store["ACTIVITY"][0]
             hours_of_operation = ""
             for x in hours:
@@ -41,18 +33,19 @@ def fetch_data():
                         else "Closed "
                     )
                 )
-            record = SgRecord(
-                page_url=page_url,
-                location_name=location_name,
-                street_address=street_address,
-                city=city,
-                zip_postal=zip,
-                phone=phone,
-                latitude=latitude,
-                longitude=longitude,
+            yield SgRecord(
+                page_url=store["WEBSITE"].strip(),
+                location_name=store["COMPNAME2"],
+                street_address=store["ADDRESS"],
+                city=store["TOWN"],
+                state=store["PROVINCE"],
+                zip_postal=store["ZIPCODE"],
+                phone=store["TEL_1"],
+                latitude=store["YCOORD"],
+                longitude=store["XCOORD"],
+                locator_domain=locator_domain,
                 hours_of_operation=hours_of_operation,
             )
-            yield record
 
 
 if __name__ == "__main__":
