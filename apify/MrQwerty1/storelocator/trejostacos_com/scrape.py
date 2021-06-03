@@ -72,7 +72,7 @@ def get_data(url):
     r = session.get(page_url, headers=headers)
     tree = html.fromstring(r.text)
 
-    location_name = tree.xpath("//h1/strong/text()")[0].strip()
+    location_name = tree.xpath("//title/text()")[0].strip()
     line = tree.xpath("//h2/a[not(contains(@href, 'tel'))]/text()")
     line = list(filter(None, [l.strip() for l in line]))
     if not line:
