@@ -64,17 +64,18 @@ def fetch_data():
         street_address, city, state, zip, country_code = split_fulladdress(full_address)
 
         store_number = "<MISSING>"
-        phone = "".join(
-            list(
-                filter(
-                    str,
-                    [
-                        x.strip()
-                        for x in store.xpath('.//p[contains(.//text(),"P:")]/text()')
-                    ],
-                )
+        phone = list(
+            filter(
+                str,
+                [
+                    x.strip()
+                    for x in store.xpath('.//p[contains(.//text(),"P:")]/text()')
+                ],
             )
-        ).strip()
+        )
+
+        if len(phone) > 0:
+            phone = phone[0].strip()
 
         if "ATM" in location_name:
             location_type = "ATM"
