@@ -61,7 +61,10 @@ def fetch_data():
                 if temp[1].find("ZipCode") != -1:
                     zip_postal = zip_postal + " " + temp[0]
                 i += 1
-            phone = loc.select_one("a[href*=tel]").text
+            try:
+                phone = loc.select_one("a[href*=tel]").text
+            except:
+                phone = MISSING
             country_code = "US"
             yield SgRecord(
                 locator_domain=DOMAIN,
