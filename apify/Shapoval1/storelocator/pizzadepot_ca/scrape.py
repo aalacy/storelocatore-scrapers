@@ -57,7 +57,7 @@ def fetch_data():
         location_type = "<MISSING>"
         tc = "".join(d.xpath(".//preceding::h2[1]/text()"))
         if tc.find("Opening Soon") != -1:
-            location_type = "Temporarily Closed"
+            location_type = "Coming Soon"
         cms = "".join(d.xpath(".//preceding::div[5]//text()")).replace("\n", "").strip()
         if cms.find("Temporarily Closed") != -1:
             location_type = "Temporarily Closed"
@@ -100,6 +100,7 @@ def fetch_data():
                 " ".join(hours_of_operation)
                 .replace("Thursday-Thursday", "Thursday")
                 .replace("Sunday-Sunday", "Sunday")
+                .replace("1:900", "19:00")
                 or "<MISSING>"
             )
             if page_url.find("vaughan") != -1:
