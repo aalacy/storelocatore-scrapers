@@ -43,7 +43,6 @@ def getdata():
         state = location["stateprovince"]
         country_code = location["country"]
         store_number = location["code"]
-
         if country_code == "United States":
             country_code = "US"
 
@@ -84,6 +83,66 @@ def getdata():
             address = "<MISSING>"
             zipp = "<MISSING>"
             phone = "<MISSING>"
+            locator_domains.append(locator_domain)
+            page_urls.append(page_url)
+            location_names.append(location_name)
+            street_addresses.append(address)
+            citys.append(city)
+            states.append(state)
+            zips.append(zipp)
+            country_codes.append(country_code)
+            store_numbers.append(store_number)
+            phones.append(phone)
+            location_types.append(location_type)
+            latitudes.append(latitude)
+            longitudes.append(longitude)
+            hours_of_operations.append(hours)
+            continue
+
+        if location_name == "Fort Stewart GA":
+            address = data_loc.split("SFC Paul R. Smith")[1].split("<br>")[2]
+            zipp = (
+                data_loc.split("SFC Paul R. Smith")[1].split("<br>")[3].split(" ")[-1]
+            )
+            phone = ""
+            phone_sect = data_loc.split("Phone")[1]
+            for character in phone_sect:
+                if bool(re.search(r"\d", character)) is True:
+                    phone = phone + character
+                    if len(phone) == 10:
+                        break
+
+            locator_domains.append(locator_domain)
+            page_urls.append(page_url)
+            location_names.append(location_name)
+            street_addresses.append(address)
+            citys.append(city)
+            states.append(state)
+            zips.append(zipp)
+            country_codes.append(country_code)
+            store_numbers.append(store_number)
+            phones.append(phone)
+            location_types.append(location_type)
+            latitudes.append(latitude)
+            longitudes.append(longitude)
+            hours_of_operations.append(hours)
+            continue
+
+        if location_name == "Hunter Army Airfield GA":
+            address = data_loc.split("<strong>Hunter Army Airfield")[1].split("<br>")[2]
+            zipp = (
+                data_loc.split("<strong>Hunter Army Airfield")[1]
+                .split("<br>")[3]
+                .split(" ")[-1]
+            )
+            phone_sect = data_loc.split("Phone")[2]
+            phone = ""
+            for character in phone_sect:
+                if bool(re.search(r"\d", character)) is True:
+                    phone = phone + character
+                    if len(phone) == 10:
+                        break
+
             locator_domains.append(locator_domain)
             page_urls.append(page_url)
             location_names.append(location_name)

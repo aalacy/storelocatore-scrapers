@@ -132,6 +132,22 @@ def process_record(raw_results_from_one_zipcode):
                 if phone == "":
                     phone = "<MISSING>"
 
+                hours_of_operation = (
+                    hours_of_operation.replace("PANYNJ certified", "")
+                    .strip()
+                    .replace(
+                        "Showroom available by appointment only  Please call to schedule appointments",
+                        "",
+                    )
+                    .strip()
+                )
+                if "Licensed" in hours_of_operation:
+                    hours_of_operation = hours_of_operation.split("Licensed")[0].strip()
+                if "C.L. #" in hours_of_operation:
+                    hours_of_operation = hours_of_operation.split("C.L. #")[0].strip()
+                if "Lic#" in hours_of_operation:
+                    hours_of_operation = hours_of_operation.split("Lic#")[0].strip()
+
                 yield SgRecord(
                     locator_domain=locator_domain,
                     page_url=page_url,

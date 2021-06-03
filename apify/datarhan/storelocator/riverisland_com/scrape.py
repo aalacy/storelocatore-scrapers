@@ -1,5 +1,5 @@
+import re
 import csv
-import json
 from lxml import etree
 
 from sgrequests import SgRequests
@@ -50,31 +50,36 @@ def fetch_data():
 
     for store_url in all_locations:
         loc_response = session.get(store_url)
-        loc_dom = etree.HTML(loc_response.text)
-        poi = loc_dom.xpath('//div[@id="storeLocatorJSONTemplate"]/script/text()')
-        poi = json.loads(poi[0])
+        if loc_response.status_code != 200:
+            continue
+        store_number = re.findall('storeId = "(.+)?";', loc_response.text)[0]
+        poi = session.get(
+            f"https://www.riverisland.com/api/stores/{store_number}"
+        ).json()
+        poi = poi["data"]
 
-        location_name = poi["name"]
-        street_address = poi["address"]["streetAddress"]
+        location_name = poi["storeDisplayName"]
+        street_address = poi["address"]["line1"]
+        if poi["address"]["line2"]:
+            street_address += ", " + poi["address"]["line2"]
+        if poi["address"]["line3"]:
+            street_address += ", " + poi["address"]["line3"]
         street_address = street_address if street_address else "<MISSING>"
-        city = poi["address"]["addressLocality"]
+        city = poi["address"]["city"]
         city = city if city else "<MISSING>"
-        state = poi["address"]["addressRegion"]
+        state = poi["address"]["stateCode"]
         state = state if state else "<MISSING>"
         zip_code = poi["address"]["postalCode"]
         zip_code = zip_code if zip_code else "<MISSING>"
-        country_code = "<MISSING>"
-        store_number = "<MISSING>"
+        country_code = poi["address"]["countryCode"]
         phone = poi["telephone"]
         phone = phone if phone.strip() else "<MISSING>"
-        location_type = poi["@type"]
-        latitude = poi["latitude"]
-        longitude = poi["longitude"]
-        hours_of_operation = (
-            poi["openingHours"] if poi["openingHours"][0] != "Mo " else "<MISSING>"
-        )
-        if hours_of_operation == "<MISSING>":
-            location_type = "Temporarily Closed"
+        location_type = "<MISSING>"
+        latitude = poi["location"]["latitude"]
+        longitude = poi["location"]["longitude"]
+        hoo = etree.HTML(poi["storeOpeningHoursHtml"]).xpath("//text()")
+        hoo = [e.strip() for e in hoo if e.strip()]
+        hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
 
         item = [
             DOMAIN,

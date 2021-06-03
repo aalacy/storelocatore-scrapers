@@ -62,10 +62,12 @@ def fetch_data():
         country_code = poi["country"]
         store_number = poi["branchId"]
         phone = poi["phone"]
+        phone = phone if phone else "<MISSING>"
         location_type = "<MISSING>"
         latitude = poi["latitude"]
         longitude = poi["longitude"]
-        hoo = etree.HTML(poi["workHour"]).xpath("//text()")
+        if poi.get("workHour"):
+            hoo = etree.HTML(poi["workHour"]).xpath("//text()")
         hoo = [e.strip() for e in hoo if e.strip()]
         hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
 

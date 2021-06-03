@@ -70,6 +70,9 @@ def get_data(url):
         or "<MISSING>"
     )
 
+    if street_address == "<MISSING>":
+        street_address = location_name
+
     city = adr.city or "<MISSING>"
     state = adr.state or "<MISSING>"
     postal = adr.postcode or "<MISSING>"

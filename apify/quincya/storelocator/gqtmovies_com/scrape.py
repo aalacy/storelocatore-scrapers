@@ -73,9 +73,12 @@ def fetch_data():
         location_name = page.text.strip()
         raw_address = (
             item.find(class_="cinAdress")
-            .text.split("|")[1]
+            .text.replace("tum) 590", "tum) | 590")
+            .split("|")[1]
             .strip()
             .replace("Tarentum ", "Tarentum,")
+            .replace("Eastdale Mall,", "")
+            .replace(" Montgomery ", "Montgomery,")
             .replace("Mills Cir ", "Mills Cir,")
             .replace("\n", "")
             .split(",")
@@ -91,11 +94,29 @@ def fetch_data():
             phone = (
                 item.find(class_="cinTel").text.replace("Office Phone: ", "").strip()
             )
+            if not phone:
+                phone = (
+                    item.find_all(class_="cinTel")[1]
+                    .text.replace("Showtimes Number:", "")
+                    .strip()
+                )
         except:
             phone = "<MISSING>"
+        if not phone:
+            phone = "<MISSING>"
+
         map_link = item.find("a", string="GET DIRECTIONS")["href"]
         latitude = map_link[map_link.rfind("=") + 1 : map_link.rfind(",")].strip()
         longitude = map_link[map_link.rfind(",") + 1 :].strip()
+
+        if "590 Pittsburgh" in street_address:
+            latitude = "40.572417"
+            longitude = "-79.799902"
+
+        if "1001 Eastdale Cir" in street_address:
+            latitude = "32.38598"
+            longitude = "-86.205642"
+
         hours_of_operation = "<MISSING>"
 
         data.append(
