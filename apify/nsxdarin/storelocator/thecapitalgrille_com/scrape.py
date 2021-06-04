@@ -74,7 +74,7 @@ def fetch_location(loc, retry_count=0):
     try:
         with SgChrome(is_headless=True) as driver:
             driver.get(loc)
-            sleep(randint(2, 3))
+            sleep(randint(5, 7))
 
             text = driver.page_source
 

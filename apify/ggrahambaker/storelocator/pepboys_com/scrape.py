@@ -1,12 +1,33 @@
 import csv
 import json
+import os
 import re
 
 from bs4 import BeautifulSoup
 
+from sglogging import sglog
+
 from sgrequests import SgRequests
 
-session = SgRequests()
+log = sglog.SgLogSetup().get_logger("scrape_com")
+
+DEFAULT_PROXY_URL = "http://groups-RESIDENTIAL,country-us:{}@proxy.apify.com:8000/"
+
+
+def set_proxies():
+    if "PROXY_PASSWORD" in os.environ and os.environ["PROXY_PASSWORD"].strip():
+
+        proxy_password = os.environ["PROXY_PASSWORD"]
+        url = (
+            os.environ["PROXY_URL"] if "PROXY_URL" in os.environ else DEFAULT_PROXY_URL
+        )
+        proxy_url = url.format(proxy_password)
+        proxies = {
+            "http://": proxy_url,
+        }
+        return proxies
+    else:
+        return None
 
 
 def write_output(data):
@@ -44,6 +65,9 @@ def fetch_data():
     user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
     headers = {"User-Agent": user_agent}
 
+    session = SgRequests()
+    session.proxies = set_proxies()
+
     locator_domain = "https://www.pepboys.com"
     to_scrape = "https://stores.pepboys.com"
     page = session.get(to_scrape, headers=headers)
@@ -59,6 +83,9 @@ def fetch_data():
         state_list.append(link)
 
     for state in state_list:
+        log.info(state)
+        session = SgRequests()
+        session.proxies = set_proxies()
         page = session.get(state, headers=headers)
         assert page.status_code == 200
         soup = BeautifulSoup(page.content, "html.parser")
@@ -69,10 +96,12 @@ def fetch_data():
             city_list.append(link)
 
     for city_link in city_list:
+        log.info(city_link)
+        session = SgRequests()
+        session.proxies = set_proxies()
         page = session.get(city_link, headers=headers)
         assert page.status_code == 200
         soup = BeautifulSoup(page.content, "html.parser")
-
         js = soup.main.find(id="mapDataArray").text.strip()
         locs = json.loads(js)
         for loc in locs:
