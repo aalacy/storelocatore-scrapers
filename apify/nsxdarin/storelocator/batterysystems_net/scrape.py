@@ -129,6 +129,9 @@ def fetch_data():
             if "Albuquerque New" in city:
                 city = "Albuquerque"
                 state = "New Mexico"
+            if "Charlotte North" in city or "Clayton North" in city:
+                city = city.replace(" North", "")
+                state = "North Carolina"
             if state == "York":
                 state = "New York"
                 city = city.replace(" New", "")
@@ -151,8 +154,8 @@ def fetch_data():
     for item in alllocs:
         for sitem in locinfo:
             if sitem.split("|")[0] == item[8]:
-                item[9] = sitem.split("|")[1]
-                item[10] = sitem.split("|")[2]
+                item[11] = sitem.split("|")[1]
+                item[12] = sitem.split("|")[2]
                 yield [
                     item[0],
                     item[1],
