@@ -66,7 +66,7 @@ def fetch_data():
                 driver.get(page_url)
                 sp1 = bs(driver.page_source, "lxml")
                 if not phone:
-                    _phone = sp1.find('a', href=re.compile(r"tel:"))
+                    _phone = sp1.find("a", href=re.compile(r"tel:"))
                     if _phone:
                         phone = _phone.text.strip()
                 hours = []
