@@ -47,13 +47,16 @@ def fetch_data():
     req = session.get(base_link, headers=headers)
     base = BeautifulSoup(req.text, "lxml")
 
-    stores = json.loads(base.find(class_="js-stores").text)["stores"]
+    stores = json.loads(base.find(class_="js-stores").contents[0])["stores"]
 
     data = []
     locator_domain = "halfords.com"
 
     for store in stores:
-        location_name = store["name"]
+        try:
+            location_name = store["name"].replace(" null", "")
+        except:
+            continue
         try:
             street_address = (store["address1"] + " " + store["address2"]).strip()
         except:
@@ -68,9 +71,17 @@ def fetch_data():
             state = "<MISSING>"
         zip_code = store["postalCode"]
         country_code = "UK"
-        phone = store["phone"]
+        try:
+            phone = store["phone"]
+        except:
+            phone = "<MISSING>"
         latitude = store["latitude"]
         longitude = store["longitude"]
+
+        if len(str(latitude)) < 3:
+            latitude = "<MISSING>"
+            longitude = "<MISSING>"
+
         store_number = store["ID"]
         link = store["storeDetailsLink"]
         location_type = store["storeType"]
@@ -80,18 +91,21 @@ def fetch_data():
             else:
                 location_type = "Halfords"
 
-        hours_of_operation = ""
-        raw_hours = store["storeHours"]["workingHours"][0]
-        for hour in raw_hours:
-            try:
-                time_str = (
-                    raw_hours[hour][0]["Start"] + "-" + raw_hours[hour][0]["Finish"]
-                )
-            except:
-                time_str = "Closed"
-            hours_of_operation = (
-                hours_of_operation + " " + hour + ": " + time_str
-            ).strip()
+        try:
+            hours_of_operation = ""
+            raw_hours = store["storeHours"]["workingHours"][0]
+            for hour in raw_hours:
+                try:
+                    time_str = (
+                        raw_hours[hour][0]["Start"] + "-" + raw_hours[hour][0]["Finish"]
+                    )
+                except:
+                    time_str = "Closed"
+                hours_of_operation = (
+                    hours_of_operation + " " + hour + ": " + time_str
+                ).strip()
+        except:
+            hours_of_operation = "<MISSING>"
         try:
             msg = str(store["custom"]["emergencyMessage"])
             if "now closed" in msg:

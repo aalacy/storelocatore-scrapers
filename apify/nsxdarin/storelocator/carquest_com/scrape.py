@@ -115,8 +115,12 @@ def fetch_loc_data(loc, allstores):
                 add = add.strip()
             except:
                 pass
-        if 'id="phone-main">' in line:
-            phone = line.split('id="phone-main">')[1].split("<")[0]
+        if ',"mainPhone":{"' in line:
+            phone = (
+                line.split(',"mainPhone":{"')[1].split('"display":"')[1].split('"')[0]
+            )
+        if 'itemprop="telephone" id="phone-main">' in line and phone == "":
+            phone = line.split('itemprop="telephone" id="phone-main">')[1].split("<")[0]
         if '<meta itemprop="latitude" content="' in line:
             lat = line.split('<meta itemprop="latitude" content="')[1].split('"')[0]
             lng = line.split('<meta itemprop="longitude" content="')[1].split('"')[0]
@@ -215,6 +219,11 @@ def fetch_loc_data(loc, allstores):
             zc = "<MISSING>"
         if phone == "":
             phone = "<MISSING>"
+        name = (
+            name.replace("\\u0026&amp;", "&")
+            .replace("\\u0026amp;", "&")
+            .replace("\\u0026#39;", "'")
+        )
         yield [
             website,
             loc,

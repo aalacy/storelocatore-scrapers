@@ -144,6 +144,8 @@ def fetch_data():
                     state = "PR"
                 if "-" in store:
                     store = "<MISSING>"
+                if state == "":
+                    state = "PR"
                 yield [
                     website,
                     loc,
