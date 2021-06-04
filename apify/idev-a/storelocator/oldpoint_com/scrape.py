@@ -90,10 +90,11 @@ def fetch_data():
                     phone=phone,
                     latitude=coord[1],
                     longitude=coord[2],
+                    location_type=location_type,
                     locator_domain=locator_domain,
                     hours_of_operation=hours_of_operation,
                 )
-                name = phone = hours_of_operation = ""
+                name = phone = hours_of_operation = location_type = ""
                 idx += 1
 
 
