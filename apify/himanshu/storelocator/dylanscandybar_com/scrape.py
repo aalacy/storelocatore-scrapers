@@ -58,6 +58,10 @@ def fetch_data():
         )
         if phone_list:
             phone = phone_list[-1]
+        closed = i.select_one('strong:contains("Closed due to the COVID-19")')
+        location_type = "<MISSING>"
+        if closed:
+            location_type = "closed"
         state = add[-1].strip().split()[0].replace("New", "NY")
         zipp = (
             " ".join(add[-1].strip().split()[1:])
@@ -105,7 +109,7 @@ def fetch_data():
             store.append("US")
         store.append("<MISSING>")
         store.append(phone if phone else "<MISSING>")
-        store.append("<MISSING>")
+        store.append(location_type)
         store.append(lat.strip() if lat.strip() else "<MISSING>")
         store.append(lng.strip() if lng.strip() else "<MISSING>")
         store.append(hours_of_operation)
