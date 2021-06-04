@@ -185,6 +185,8 @@ def fetch_data():
                 hours = dname + ": " + hrs
             else:
                 hours = hours + "; " + dname + ": " + hrs
+        if "/store/1422" in purl:
+            phone = "<MISSING>"
         yield [
             website,
             purl,

@@ -143,6 +143,10 @@ def fetch_data():
             add = "<MISSING>"
         if add[-1] == ",":
             add = add[:-1]
+        if ", (" in add:
+            add = add.split(", (")[0]
+        if "), " in add:
+            add = add.split("), ")[1]
         yield [
             website,
             loc,
