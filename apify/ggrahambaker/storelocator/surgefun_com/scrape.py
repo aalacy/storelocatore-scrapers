@@ -48,6 +48,14 @@ def fetch_data():
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
     }
 
+    response = session.get(start_url)
+    dom = etree.HTML(response.text)
+    all_locations = dom.xpath(
+        '//div[@data-widget_type="heading.default"]/div[1]/h2[@class="elementor-heading-title elementor-size-default"]/text()'
+    )
+    all_locations = list(set(all_locations))
+    all_locations = [e.lower() for e in all_locations if len(e.split(", ")) == 2]
+
     for store_number in range(1, 100):
         url = f"https://plondex.com/wp/jsonquery/loadloc/9/{store_number}"
         loc_response = session.get(url, headers=hdr)
@@ -60,7 +68,14 @@ def fetch_data():
         store_url = "https://surgefun.com/locations/"
         state = raw_address[-1].split(", ")[-1].split()[0]
         location_name = f"{city.upper()}, {state.upper()}"
-        location_name = location_name if location_name else "<MISSING>"
+        if location_name == "MONROE, LA":
+            continue
+        if location_name == "HOPE MILLS, NC":
+            location_name = "Fayetteville, NC".upper()
+        if location_name == "MARY ESTHER, FL":
+            location_name = "Ft. Walton, FL".upper()
+        if location_name == "EDMOND, OK":
+            location_name = "Oklahoma City, OK".upper()
         street_address = raw_address[0]
         if street_address.endswith(","):
             street_address = street_address[:-1]
@@ -92,6 +107,9 @@ def fetch_data():
             longitude,
             hours_of_operation,
         ]
+
+        if location_name.lower() not in all_locations:
+            continue
 
         items.append(item)
 
