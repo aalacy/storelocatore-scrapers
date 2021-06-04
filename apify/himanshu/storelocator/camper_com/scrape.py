@@ -95,7 +95,10 @@ def fetch_data():
                     if opens != "" and closes != "":
                         clean_hours = day + " " + opens + "-" + closes
                         hour = (hour + " " + clean_hours).strip()
-            if "temporarily closed" in soup2.find(class_="div_info_tienda").text.lower():
+            if (
+                "temporarily closed"
+                in soup2.find(class_="div_info_tienda").text.lower()
+            ):
                 hour = "Temporarily Closed"
 
             store = []
