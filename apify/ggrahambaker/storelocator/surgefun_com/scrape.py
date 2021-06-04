@@ -40,7 +40,6 @@ def fetch_data():
     session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
 
     items = []
-    scraped_items = []
 
     start_url = "https://surgefun.com/locations/"
     domain = re.findall(r"://(.+?)/", start_url)[0].replace("www.", "")
