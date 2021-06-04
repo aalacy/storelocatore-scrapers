@@ -48,7 +48,7 @@ def fetch_data():
             if "We are closed" in sp1.select("div.shg-row > div")[1].text:
                 hours = ["Closed"]
             else:
-                hh = list(sp1.select("div.shg-row > div")[1].p.stripped_strings)
+                hh = list(sp1.select("div.shg-row > div")[1].stripped_strings)[1:]
                 for x in range(0, len(hh), 2):
                     hours.append(f"{hh[x]} {hh[x+1]}")
             phone = (
