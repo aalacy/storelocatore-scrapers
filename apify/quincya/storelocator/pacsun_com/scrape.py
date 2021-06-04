@@ -1,18 +1,13 @@
 import csv
 import json
-import time
 
 from bs4 import BeautifulSoup
 
-from selenium.common.exceptions import NoSuchElementException
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support import expected_conditions as ec
-from selenium.webdriver.support.select import Select
-from selenium.webdriver.support.ui import WebDriverWait
-
 from sglogging import SgLogSetup
 
-from sgselenium import SgChrome
+from sgrequests import SgRequests
+
+from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 
 log = SgLogSetup().get_logger("pacsun.com")
 
@@ -49,92 +44,98 @@ def write_output(data):
 
 def fetch_data():
 
-    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
+    session = SgRequests()
+
     base_link = "https://www.pacsun.com/stores"
 
-    driver = SgChrome(user_agent=user_agent).driver()
-    time.sleep(2)
+    headers = {
+        "authority": "www.pacsun.com",
+        "method": "POST",
+        "path": "/stores",
+        "scheme": "https",
+        "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+        "accept-encoding": "gzip, deflate, br",
+        "accept-language": "en-US,en;q=0.9",
+        "content-length": "100",
+        "content-type": "application/x-www-form-urlencoded",
+        "origin": "https://www.pacsun.com",
+        "sec-fetch-dest": "document",
+        "sec-fetch-mode": "navigate",
+        "sec-fetch-site": "same-origin",
+        "sec-fetch-user": "?1",
+        "upgrade-insecure-requests": "1",
+        "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36",
+    }
 
-    data = []
+    search = DynamicZipSearch(
+        country_codes=[SearchableCountries.USA],
+        max_radius_miles=50,
+    )
+    log.info("Running sgzips ..")
 
-    for i in range(1, 60):
+    found = []
+    for zip_code in search:
 
-        driver.get(base_link)
-        WebDriverWait(driver, 100).until(
-            ec.presence_of_element_located((By.ID, "dwfrm_storelocator_state"))
-        )
-        time.sleep(2)
-
-        state_list = Select(driver.find_element_by_name("dwfrm_storelocator_state"))
-        try:
-            state_list.select_by_index(i)
-        except NoSuchElementException:
-            break
-
-        log.info(state_list.options[i].text)
-        time.sleep(1)
-        search = driver.find_element_by_name("dwfrm_storelocator_findbystate")
-        driver.execute_script("arguments[0].click();", search)
-        time.sleep(1)
-        try:
-            WebDriverWait(driver, 20).until(
-                ec.presence_of_element_located((By.CLASS_NAME, "sl-store"))
-            )
-        except:
-            pass
-        time.sleep(1)
-        base = BeautifulSoup(driver.page_source, "lxml")
-        stores = base.find_all(class_="sl-store")
-
-        if not stores:
-            continue
+        payload = {"postalCode": zip_code}
+        response = session.post(base_link, headers=headers, data=payload)
+        base = BeautifulSoup(response.text, "lxml")
 
         locator_domain = "pacsun.com"
 
-        all_scripts = base.find_all("script")
-        for script in all_scripts:
-            if "storeList" in str(script):
-                script = str(script)
-                break
-        js = script.split("=")[1].split("}]")[0] + "}]"
-        store_json = json.loads(js)
+        stores = base.find_all(class_="sl-store")
 
-        for store in stores:
-            location_name = store.h2.text.strip()
-            if "CLOSED" in location_name.upper():
-                continue
-
-            link = "https://www.pacsun.com/stores"
-
-            phone = store.find(class_="phone-number").text.strip()
-
-            street_address = store.find(class_="address-phone-info").div.text.strip()
-            city_line = (
-                store.find(class_="address-phone-info")
-                .find_all("div")[1]
-                .text.strip()
-                .replace("\t", "")
-                .split("\n")
-            )
-            city = city_line[0].replace(",", "")
-            state = city_line[1]
-            zip_code = city_line[2]
-            country_code = "US"
-            store_number = store["id"]
-            location_type = "<MISSING>"
-
-            hours_of_operation = store.find(class_="storehours").get_text(" ").strip()
-            latitude = "<MISSING>"
-            longitude = "<MISSING>"
-
-            for j in store_json:
-                if j["ID"] == store_number:
-                    latitude = j["lat"]
-                    longitude = j["long"]
+        if len(stores) > 0:
+            all_scripts = base.find_all("script")
+            for script in all_scripts:
+                if "storeList = " in str(script):
+                    store_json = json.loads(
+                        str(script).split("=")[1].split("var slS")[0]
+                    )
                     break
 
-            data.append(
-                [
+            for store in stores:
+                location_name = store.h2.text.strip()
+                if "CLOSED" in location_name.upper():
+                    continue
+
+                link = "https://www.pacsun.com/stores"
+
+                phone = store.find(class_="phone-number").text.strip()
+
+                street_address = store.find(
+                    class_="address-phone-info"
+                ).div.text.strip()
+                city_line = (
+                    store.find(class_="address-phone-info")
+                    .find_all("div")[1]
+                    .text.strip()
+                    .replace("\t", "")
+                    .split("\n")
+                )
+                city = city_line[0].replace(",", "")
+                state = city_line[1]
+                zip_code = city_line[2]
+                country_code = "US"
+                store_number = store["id"]
+                if store_number in found:
+                    continue
+                found.append(store_number)
+                location_type = "<MISSING>"
+
+                hours_of_operation = (
+                    store.find(class_="storehours").get_text(" ").strip()
+                )
+                latitude = "<MISSING>"
+                longitude = "<MISSING>"
+
+                for j in store_json:
+                    if j["ID"] == store_number:
+                        latitude = j["lat"]
+                        longitude = j["long"]
+                        search.found_location_at(latitude, longitude)
+                        break
+
+                yield [
                     locator_domain,
                     link,
                     location_name,
@@ -150,9 +151,6 @@ def fetch_data():
                     longitude,
                     hours_of_operation,
                 ]
-            )
-    driver.close()
-    return data
 
 
 def scrape():
