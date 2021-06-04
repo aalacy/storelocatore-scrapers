@@ -46,7 +46,7 @@ def fetch_data():
                     location_name=_.select_one("div.spot_title").text.strip(),
                     street_address=" ".join(addr[:-1]),
                     city=addr[-1].split(",")[0].strip(),
-                    state=addr[-1].split(",")[1].strip().split(" ")[0].strip(),
+                    state=" ".join(addr[-1].split(",")[1].strip().split(" ")[:-1]),
                     zip_postal=addr[-1].split(",")[1].strip().split(" ")[-1].strip(),
                     country_code="US",
                     phone=phone,
