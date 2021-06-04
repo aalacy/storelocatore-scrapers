@@ -40,16 +40,12 @@ def split_fulladdress(address_info):
 
 def fetch_data():
     # Your scraper here
-    search_url = "https://www.smythautoparts.com/stores.wws"
-    search_res = session.get(search_url, headers=headers)
 
-    search_sel = lxml.html.fromstring(search_res.text)
+    for store_id in range(1, 101):
 
-    store_list = list(set(search_sel.xpath('//a[contains(@href,"storenum=")]/@href')))
-
-    for store in store_list:
-
-        page_url = store.strip()
+        page_url = (
+            f"https://www.smythautoparts.com/pickupstoredisplay.wws?storenum={store_id}"
+        )
         locator_domain = website
         log.info(page_url)
         store_res = session.get(page_url, headers=headers)
@@ -66,6 +62,9 @@ def fetch_data():
                 ],
             )
         )
+
+        if (not location_name) and (len(full_address) <= 2):
+            continue
 
         if full_address[-2].lower() == "phone":
             address = full_address[:-2]
