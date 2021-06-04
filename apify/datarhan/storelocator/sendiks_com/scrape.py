@@ -41,9 +41,14 @@ def fetch_data():
     items = []
 
     DOMAIN = "sendiks.com"
-    start_url = "https://api.freshop.com/1/stores?app_key=sendiks&has_address=true&limit=-1&token=997a6cef7ed99a2aff7d5d58915da03c"
+    start_url = "https://api.freshop.com/1/stores?app_key=sendiks&has_address=true&limit=-1&token={}"
 
-    response = session.get(start_url)
+    response = session.get(
+        "https://api.freshop.com/2/sessions/0eea009c14f38a08a2c321c36faa0926?app_key=sendiks"
+    ).json()
+    token = response["token"]
+
+    response = session.get(start_url.format(token))
     data = json.loads(response.text)
 
     for poi in data["items"]:

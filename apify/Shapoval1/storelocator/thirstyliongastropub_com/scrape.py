@@ -36,7 +36,7 @@ def write_output(data):
 def fetch_data():
     out = []
     locator_domain = "https://www.thirstyliongastropub.com"
-    page_url = "https://www.thirstyliongastropub.com/addresses"
+    page_url = "https://www.thirstyliongastropub.com/locations-addresses"
 
     session = SgRequests()
     tag = {
@@ -87,7 +87,7 @@ def fetch_data():
         ).strip()
         country_code = "US"
         store_number = "<MISSING>"
-        location_name = "<MISSING>"
+        location_name = "".join(b.xpath(".//h2//text()"))
         latitude = "<MISSING>"
         longitude = "<MISSING>"
         location_type = "<MISSING>"

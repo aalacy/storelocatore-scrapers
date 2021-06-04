@@ -12,7 +12,7 @@ headers = {
 
 
 def write_output(data):
-    with open("data.csv", mode="w") as output_file:
+    with open("data.csv", newline="", mode="w") as output_file:
         writer = csv.writer(
             output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
         )
@@ -46,7 +46,7 @@ def fetch_data():
     data = []
     url = "https://airbornesports.com/"
     r = session.get(url, headers=headers, verify=False)
-    soup = BeautifulSoup(r.text, "html.parser")
+    soup = BeautifulSoup(r.text, "lxml")
     divlist = soup.find("div", {"id": "choose-location"}).findAll(
         "a", {"class": "fusion-button"}
     )

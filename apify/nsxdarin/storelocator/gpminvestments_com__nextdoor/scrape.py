@@ -68,6 +68,11 @@ def fetch_data():
                     store = item.split('"')[0]
                     rawadd = item.split(',"address":"')[1].split('"')[0]
                     rawadd = rawadd.replace(",", "").replace("\\t", " ")
+                    rawadd = rawadd.replace(" S. ", " South ")
+                    rawadd = rawadd.replace(" N. ", " North ")
+                    rawadd = rawadd.replace(" E. ", " East ")
+                    rawadd = rawadd.replace(" W. ", " West ")
+                    rawadd = rawadd.replace(" Hwy ", " Highway ")
                     name = item.split('"title":"')[1].split('"')[0].replace("\\t", "")
                     lat = item.split('"lat":"')[1].split('"')[0]
                     lng = item.split('"lng":"')[1].split('"')[0]
