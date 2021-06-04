@@ -68,7 +68,11 @@ def fetch_data():
         for line2 in lines:
             line2 = str(line2.decode("utf-8"))
             if '"telephone" : "' in line2:
-                phone = line2.split('"telephone" : "')[1].split('"')[0]
+                if len(line2.split('"telephone" : "')[1].split('"')[0]) >= 3:
+                    phone = line2.split('"telephone" : "')[1].split('"')[0]
+            if 'class="contact-us-span">(' in line2:
+                if len(line2.split('">')[1].split("<")[0].strip()) >= 3:
+                    phone = line2.split('">')[1].split("<")[0].strip()
             if 'font-weight: bold; font-size: 1.4em;">' in line2:
                 items = line2.split('font-weight: bold; font-size: 1.4em;">')
                 for item in items:
