@@ -39,7 +39,6 @@ def fetch_data():
         locator_domain = DOMAIN
         id_ = data["id"]
         page_url = f"https://www.canadacomputers.com/location_details.php?loc={id_}"
-        # 'Unit 36 - 201 Chain Lake Dr., Halifax, NS B3S 1C8, Canada
         address = data["address"]
         a1 = address.split(",")
         street_address = a1[0] or MISSING
