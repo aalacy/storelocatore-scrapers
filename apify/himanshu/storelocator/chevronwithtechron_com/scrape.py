@@ -74,7 +74,7 @@ def process_record(raw_results_from_one_coordinate):
                 street_address=street_address,
                 city=city,
                 state=state,
-                zip_postal=zip,
+                zip_postal=zipp,
                 country_code=country_code,
                 store_number=store_number,
                 phone=phone,
