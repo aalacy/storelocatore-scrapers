@@ -68,13 +68,32 @@ def fetch_data():
             req = session.get(link, headers=headers)
             base = BeautifulSoup(req.text, "lxml")
 
+            got_services = False
             try:
-                if (
-                    "gas"
-                    not in base.find(class_="StoreServices-wrapper table").text.lower()
-                ):
-                    continue
+                services = (
+                    base.find(class_="StoreServices-wrapper table")
+                    .get_text(" ")
+                    .lower()
+                )
+                got_services = True
             except:
+                try:
+                    session = SgRequests()
+                    req = session.get(link, headers=headers)
+                    base = BeautifulSoup(req.text, "lxml")
+                    services = (
+                        base.find(class_="StoreServices-wrapper table")
+                        .get_text(" ")
+                        .lower()
+                    )
+                    got_services = True
+                except:
+                    pass
+
+            if got_services:
+                if ("gas" not in services) and ("diesel" not in services):
+                    continue
+            else:
                 continue
 
             try:
