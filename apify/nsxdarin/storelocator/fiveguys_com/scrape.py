@@ -86,6 +86,8 @@ def fetch_data():
         r2 = session.get(loc, headers=headers)
         for line2 in r2.iter_lines():
             line2 = str(line2.decode("utf-8"))
+            if 'ntityType":"restaurant","id":"' in line2:
+                store = line2.split('ntityType":"restaurant","id":"')[1].split('"')[0]
             if name == "" and '<span class="LocationName-geo">' in line2:
                 name = line2.split('<span class="LocationName-geo">')[1].split("<")[0]
             if 'itemprop="streetAddress" content="' in line2:

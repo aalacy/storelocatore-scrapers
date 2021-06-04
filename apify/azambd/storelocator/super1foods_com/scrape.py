@@ -103,7 +103,7 @@ for grid in grids:
 
     location_soup = bs(driver.page_source, "html.parser")
 
-    locator_domain = "spring-market.com"
+    locator_domain = "super1foods.com"
     location_name = location_soup.find("meta", attrs={"property": "og:title"})[
         "content"
     ]
