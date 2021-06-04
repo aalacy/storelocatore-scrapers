@@ -15,7 +15,7 @@ _headers = {
 def fetch_data():
     locator_domain = "https://www.shinola.com/"
     base_url = "https://www.shinola.com/store-locator/"
-    json_url = "https://www.shinola.com/rest/all/V1/bedrock/storeLocator/search/0/1/%5B%5D/1/%5B%5D"
+    json_url = "https://www.shinola.com/rest/all/V1/bedrock/storeLocator/search/0/1/%5B%5D/1/%5B%5D/1"
     with SgChrome() as driver:
         driver.get(base_url)
         with SgRequests() as session:
