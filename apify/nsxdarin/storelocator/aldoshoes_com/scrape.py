@@ -127,6 +127,8 @@ def fetch_data():
         if SFound:
             if phone == "":
                 phone = "<MISSING>"
+            if "/store/1422" in surl:
+                phone = "<MISSING>"
             yield [
                 website,
                 surl,
