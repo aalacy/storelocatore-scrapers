@@ -135,8 +135,6 @@ def fetch_data():
         phone = phone if phone else "<MISSING>"
         location_type = poi.get("category_name")
         location_type = location_type if location_type else "<MISSING>"
-        if location_type == city:
-            location_type = "<MISSING>"
         latitude = poi["lat"]
         latitude = latitude if latitude else "<MISSING>"
         longitude = poi["lng"]
