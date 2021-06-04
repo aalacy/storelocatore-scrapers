@@ -13,14 +13,10 @@ Please also add page_url column to this crawl.
 ## after rewrite: 
 - Got 1900 locations 
 
-The missing 12 rows which are invalid
+Missing 08 rows which are invalid b/c Lat/Lon=0
 
 | id                                   | location name                                                           |
 | ------------------------------------ | ----------------------------------------------------------------------- |
-| dc1914cf-af90-448a-87cd-c4eaecc8b3c2 | SSM Health Rehab Lake Saint Louis                                       |
-| 1667e6b8-256c-4a8e-8553-a4d932375dea | Banner Baywood Medical Center - John J. Rhodes Rehabilitation Institute |
-| 20524c8f-ad6f-43af-b1f0-c879d8e4be34 | Banner Rehabilitation Hospital West                                     |
-| fe3353ff-cadd-4aa5-b7fe-89933080d7f8 | Banner Rehabilitation Hospital Phoenix                                  |
 | 22ec8bcf-8a22-4984-b10d-38d70026894a | MISSING                                                                 |
 | 53a8b5ed-64e3-4cdf-82f3-07994e6bfb76 | MISSING                                                                 |
 | 0f7004b6-a09d-4e63-9305-d46b46145bfa | MISSING                                                                 |

@@ -121,6 +121,12 @@ def fetch_data():
         for item in hrlist:
             if item.split("|")[0] == name:
                 hours = item.split("|")[1]
+        if "santaquin" in loc:
+            hours = "Mon-Fri: 9 AM to 7 PM; Saturday: 9 AM to 6 PM; Sunday: Closed"
+        if "west_jordan" in loc:
+            hours = (
+                "Mon-Fri: 8 AM to 8 PM; Saturday: 9 AM to 7 PM; Sunday: 10 AM to 4 PM"
+            )
         yield [
             website,
             loc,

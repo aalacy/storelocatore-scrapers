@@ -113,7 +113,9 @@ def fetch_data():
                             hrs = day.split('"')[0] + ": Closed"
                         else:
                             hrs = (
-                                day.split('"start":')[1].split("}")[0]
+                                day.split('"')[0]
+                                + ": "
+                                + day.split('"start":')[1].split("}")[0]
                                 + "-"
                                 + day.split('"end":')[1].split(",")[0]
                             )

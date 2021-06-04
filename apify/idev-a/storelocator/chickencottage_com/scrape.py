@@ -26,7 +26,7 @@ def fetch_data():
                 page_url=store["website"],
                 location_name=store["title"],
                 street_address=store["street"],
-                city=store["city"],
+                city=store["city"].replace("LShepherd", "Shepherd"),
                 zip_postal=store["postal_code"],
                 state=store["state"],
                 phone=store["phone"],
