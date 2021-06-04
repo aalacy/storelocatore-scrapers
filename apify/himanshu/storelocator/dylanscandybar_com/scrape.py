@@ -1,4 +1,5 @@
 import csv
+from lxml import etree
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 import re
@@ -52,7 +53,10 @@ def fetch_data():
             del add[-1]
         name = " ".join(list(i.find("h2").stripped_strings))
         phone = "<MISSING>"
-        hours_of_operation = "<MISSING>"
+        hoo_html = etree.HTML(str(i))
+        hoo = hoo_html.xpath('.//p[strong[contains(text(), "Hours:")]]/text()')
+        hoo = [e.strip() for e in hoo if e.strip()]
+        hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
         phone_list = re.findall(
             re.compile(r".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str(i.text)
         )
@@ -89,15 +93,6 @@ def fetch_data():
         store = []
         store.append("https://www.dylanscandybar.com/")
         store.append(name.replace("|", "").strip())
-        if "52 Main Street" in street_address:
-            hours_of_operation = "Mon-Thur: 12pm - 6pm Fri-Sun: 11am - 7pm"
-
-        if "231 Hudson Street" in street_address:
-            hours_of_operation = "Open 24 hours a day, 7 days a week"
-        if "127 S. Ocean Road" in street_address:
-            hours_of_operation = "Mon - Sun: 10am - 6pm"
-        if "5501 Josh Birmingham Pkwy" in street_address:
-            hours_of_operation = "Mon - Sun: 7am - 8pm"
         store.append(street_address.strip().replace("- Terminal B", ""))
         store.append(city.strip())
         store.append(state.strip())
