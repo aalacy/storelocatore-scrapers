@@ -57,20 +57,26 @@ def fetch_data():
         req = session.get(link, headers=headers)
         base = BeautifulSoup(req.text, "lxml")
 
-        location_name = " ".join(
-            list(base.find_all(class_="_1Z_nJ")[1].stripped_strings)
-        )
+        location_name = "DON CUCO MEXICAN RESTAURANT: " + base.find_all("h2")[1].text
 
         raw_address = (
-            base.find_all(class_="_1Z_nJ")[2]
-            .text.split("\u200b")[1]
-            .replace("ADDRESS", "")
+            base.find(id="SITE_PAGES")
+            .find("a", attrs={"target": "_blank"})
+            .text.replace("ADDRESS", "")
             .replace("Ave.", "Ave.\n")
             .strip()
             .split("\n")
         )
         street_address = raw_address[0]
-        city_line = raw_address[1].strip().split(",")
+        try:
+            city_line = raw_address[1].strip().split(",")
+        except:
+            city_line = (
+                base.find(id="SITE_PAGES")
+                .find_all("a", attrs={"target": "_blank"})[1]
+                .text.strip()
+                .split(",")
+            )
         city = city_line[0].strip()
         state = city_line[-1].strip().split()[0].strip()
         zip_code = city_line[-1].strip().split()[1].strip()
@@ -79,16 +85,14 @@ def fetch_data():
         location_type = "<MISSING>"
 
         phone = (
-            base.find_all(class_="_1Z_nJ")[2]
-            .text.split("\u200b")[2]
-            .replace("\n", " ")
-            .split(":")[1]
-            .split()[0]
-            .strip()
+            base.find(id="SITE_PAGES")
+            .find_all("span", attrs={"style": "text-decoration:underline"})[-1]
+            .text
         )
         try:
             hours_of_operation = (
-                base.find_all(class_="_1Z_nJ")[2]
+                base.find(id="SITE_PAGES")
+                .find_all("div", attrs={"data-testid": "richTextElement"})[1]
                 .text.split("\u200b")[0]
                 .replace("HOURS", "")
                 .replace("\n", " ")
@@ -97,7 +101,9 @@ def fetch_data():
         except:
             hours_of_operation = "<MISSING>"
 
-        map_str = base.find_all(class_="_1Z_nJ")[2].a["href"]
+        map_str = base.find(id="SITE_PAGES").find("a", attrs={"target": "_blank"})[
+            "href"
+        ]
         geo = re.findall(r"[0-9]{2}\.[0-9]+,-[0-9]{2,3}\.[0-9]+", map_str)[0].split(",")
         latitude = geo[0]
         longitude = geo[1]

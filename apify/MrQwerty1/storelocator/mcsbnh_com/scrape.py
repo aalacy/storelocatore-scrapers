@@ -41,38 +41,37 @@ def fetch_data():
     session = SgRequests()
     r = session.get(page_url)
     tree = html.fromstring(r.text)
-    global_divs = tree.xpath("//h3/following-sibling::div[.//div[@class='grid-50']]")
+    global_divs = tree.xpath("//li[@class='col-md-15 col-sm-4 col-12']")
 
     for gd in global_divs:
-        city = "".join(gd.xpath("./preceding-sibling::h3[1]/a/text()")).strip()
-        divs = gd.xpath(".//div[.//div[@class='grid-50']]")
+        city = "".join(gd.xpath(".//h2/text()")).strip()
+        divs = gd.xpath(".//span[@class='d-block pl-3 pr-3']")
 
         for d in divs:
             location_name = "".join(d.xpath(".//p/strong/text()")).strip()
 
-            street_address = "".join(d.xpath(".//p/text()")).strip() or "<MISSING>"
-            if "(" in street_address:
-                street_address = street_address.split("(")[0].strip()
+            street_address = (
+                "".join(
+                    d.xpath(".//p[@class='mb-0']/following-sibling::p/text()")
+                ).strip()
+                or "<MISSING>"
+            )
             if "-" in street_address:
                 street_address = street_address.split("-")[0].strip()
+
             state = "<MISSING>"
             postal = "<MISSING>"
             country_code = "US"
             store_number = "<MISSING>"
-            phone = (
-                "".join(d.xpath(".//li[@class='phone first']/text()"))
-                .replace("Phone:", "")
-                .strip()
-                or "<MISSING>"
-            )
-            if "·" in phone:
-                phone = phone.split("·")[0].strip()
+            phone = "<MISSING>"
             latitude = "<MISSING>"
             longitude = "<MISSING>"
             location_type = "<MISSING>"
-            hours = d.xpath(".//div[@class='grid-50 lobby']/p[last()]/text()")
+            hours = d.xpath(".//div[contains(@id, '-lobby')]//text()")
             hours = list(filter(None, [h.strip() for h in hours]))
-            hours_of_operation = ";".join(hours) or "Temporarily Closed"
+            hours_of_operation = ";".join(hours) or "<MISSING>"
+            if "closed" in hours_of_operation:
+                hours_of_operation = "Temporarily Closed"
 
             row = [
                 locator_domain,

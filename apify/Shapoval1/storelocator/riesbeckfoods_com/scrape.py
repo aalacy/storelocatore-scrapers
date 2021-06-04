@@ -34,7 +34,8 @@ def write_output(data):
 def fetch_data():
     out = []
     locator_domain = "https://www.riesbeckfoods.com"
-    api_url = "https://api.freshop.com/1/stores?app_key=riesbeck&has_address=true&limit=-1&token=78e05aaed9d8ca6f32aab783af3bd527"
+    api_url = "https://api.freshop.com/1/stores?app_key=riesbeck&has_address=true&is_selectable=true&limit=100&token=ae8f3d6b0547f4e109ace6508687ccba"
+
     session = SgRequests()
     r = session.get(api_url)
     js = r.json()
