@@ -76,13 +76,17 @@ def fetch_data():
             filter(
                 str,
                 address_sel.xpath(
-                    '//div[contains(@class,"pop-up-body")]//*[contains(text(),"HOURS")]/following::p//text()'
+                    '//div[contains(@class,"pop-up-body")]//*[contains(text(),"HOURS")]/following::p/text()'
                 ),
             )
         )
 
         if hours:
-            hours_of_operation = "; ".join(hours)
+            hours_list = []
+            for hour in hours:
+                if len("".join(hour).strip()) > 0:
+                    hours_list.append("".join(hour).strip())
+            hours_of_operation = "; ".join(hours_list)
         else:
             hours = list(
                 filter(

@@ -22,13 +22,25 @@ def fetch_data():
             "script", string=re.compile(r"function initialize()")
         ).string.strip()
         store_number = 1
-        coords = []
+        coords = {}
         while True:
             _marker = script.split(f"var store_{store_number}=new google.maps.LatLng(")
-            if len(_marker) == 1:
+            _marker_next = script.split(
+                f"var store_{store_number+1}=new google.maps.LatLng("
+            )
+            logger.info(f"store_number {store_number}")
+            if len(_marker) == 1 and len(_marker_next) == 1:
                 break
-            coords.append(_marker[1].split(");")[0].split(","))
+            if len(_marker) == 1:
+                store_number += 1
+                continue
+            _info = script.split(
+                f"var infowindow_{store_number} = new google.maps.InfoWindow("
+            )
+            phone = _info[1].split("});")[0].split("Ph:")[1].strip()[:-1].strip()
+            coords[phone] = _marker[1].split(");")[0].split(",")
             store_number += 1
+
         logger.info(f"{len(coords)} coords found")
 
         locations = soup.select("div.mapListingContainer .col-25-percent")
@@ -39,6 +51,7 @@ def fetch_data():
             street_address = addr.street_address_1
             if addr.street_address_2:
                 street_address += " " + addr.street_address_2
+            phone = block[4].split(":")[-1].replace("Ph", "").strip()
             yield SgRecord(
                 page_url=base_url,
                 location_name=block[0],
@@ -49,8 +62,8 @@ def fetch_data():
                 country_code="US",
                 phone=block[4].split(":")[-1].replace("Ph", "").strip(),
                 locator_domain=locator_domain,
-                latitude=coords[x][0],
-                longitude=coords[x][1],
+                latitude=coords[phone][0],
+                longitude=coords[phone][1],
             )
 
 
