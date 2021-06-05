@@ -109,7 +109,7 @@ def fetch_data():
                 pcode = "0" + pcode
             if state == "NW":
                 state = "WA"
-        if store in datanow:
+        if store in datanow or "SOON" in hours:
             continue
         datanow.append(store)
         data.append(
