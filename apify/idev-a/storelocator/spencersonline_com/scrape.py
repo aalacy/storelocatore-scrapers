@@ -106,7 +106,13 @@ def fetchData():
         location_type = MISSING
         street_address = al1
         if al2 != MISSING:
-             if al1 == MISSING or location_name.lower() in al1.lower() or 'MALL' in al1 or 'MILL' in al1 or 'SQUARE' in al1:
+            if (
+                al1 == MISSING
+                or location_name.lower() in al1.lower()
+                or "MALL" in al1
+                or "MILL" in al1
+                or "SQUARE" in al1
+            ):
                 street_address = al2
             else:
                 street_address = street_address.strip() + " " + al2.strip()
