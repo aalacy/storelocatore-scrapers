@@ -64,6 +64,8 @@ def fetch_data():
 
         line = d.xpath(".//div[@class='stores-menu__address']/text()")
         line = list(filter(None, [l.strip() for l in line]))
+        if not line:
+            continue
         street_address = ", ".join(line[:-1]).replace("Westfield, ", "")
         line = line[-1]
         city = line.split(",")[0].strip()
