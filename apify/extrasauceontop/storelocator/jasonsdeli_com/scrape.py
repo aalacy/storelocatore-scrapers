@@ -70,7 +70,9 @@ for location in json_objects[0]["leaflet"][0]["features"][:-1]:
 
     page_url = "https://www.jasonsdeli.com" + popup_soup.find("a")["href"]
     location_name = popup_soup.find("strong").text.strip().split(": ")[1]
-    address = popup_soup.text.strip().split(location_name)[1].split("\n")[0]
+    address = (
+        popup_soup.text.strip().split(location_name)[1].split("\n")[0].replace("\r", "")
+    )
 
     city_state_parts = (
         popup_soup.find("strong")
