@@ -2,9 +2,9 @@ import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 from sgselenium import SgChrome
+from sglogging import SgLogSetup
 import time
 import re
-from sglogging import SgLogSetup
 
 logger = SgLogSetup().get_logger("awaytravel_com")
 
