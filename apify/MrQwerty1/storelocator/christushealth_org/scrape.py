@@ -57,6 +57,8 @@ def fetch_data():
             store_number = "<MISSING>"
             page_url = f'https://christushealth.org{l.get("detailLink")}'
             location_name = l.get("name") or "<MISSING>"
+            if "-" in location_name:
+                location_name = location_name.split("-")[0].strip()
             phone = l.get("phone") or "<MISSING>"
             latitude = j.get("lat") or "<MISSING>"
             longitude = j.get("lng") or "<MISSING>"

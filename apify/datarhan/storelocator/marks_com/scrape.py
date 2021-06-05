@@ -45,7 +45,11 @@ def fetch_data():
 
     DOMAIN = "marks.com"
 
-    all_codes = []
+    all_codes = [
+        "T0H 1Z0",
+        "V0B 1G6",
+        "V8G 1R5",
+    ]
     ca_zips = DynamicZipSearch(
         country_codes=[SearchableCountries.CANADA],
         max_radius_miles=25,
@@ -54,9 +58,22 @@ def fetch_data():
     for zip_code in ca_zips:
         all_codes.append(zip_code)
 
-    start_url = "https://api.marks.com/hy/v1/marks/storelocators/bopis/nearLocation/filtered?location={}&pageSize=500"
+    hdr = {
+        "accept": "application/json, text/javascript, */*; q=0.01",
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.114 Safari/537.36",
+        "x-web-host": "www.marks.com",
+        "x-xsrf-token": "efe961be-c68a-44d6-a844-d18021f76f66",
+    }
+
+    start_url = "https://api.marks.com/hy/v1/marks/storelocators/bopis/nearLocation/filtered?location={}&pageSize=50"
     for code in all_codes:
-        response = session.get(start_url.format(code.replace(" ", "+")))
+        code = code + " 1A0"
+        try:
+            response = session.get(
+                start_url.format(code.replace(" ", "+")), headers=hdr
+            )
+        except:
+            pass
         if response.status_code != 200:
             continue
         data = json.loads(response.text)
@@ -115,9 +132,9 @@ def fetch_data():
                 longitude,
                 hours_of_operation,
             ]
-
-            if store_number not in scraped_items:
-                scraped_items.append(store_number)
+            check = f"{location_name} {street_address}"
+            if check not in scraped_items:
+                scraped_items.append(check)
                 items.append(item)
 
     return items

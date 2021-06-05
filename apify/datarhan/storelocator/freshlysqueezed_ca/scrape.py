@@ -67,9 +67,8 @@ def fetch_data():
         store_url = start_url
         location_name = loc_dom.xpath("//a/text()")
         location_name = location_name[0] if location_name else "<MISSING>"
-        addr = parse_address_intl(
-            loc_dom.xpath('//div[@class="details_infos"]/text()')[0]
-        )
+        raw_address = " ".join(loc_dom.xpath('//div[@class="details_infos"]/text()'))
+        addr = parse_address_intl(raw_address)
         street_address = addr.street_address_1
         if addr.street_address_2:
             street_address += " " + addr.street_address_2
@@ -79,15 +78,33 @@ def fetch_data():
         city = addr.city
         city = city if city else "<MISSING>"
         state = addr.state
+        if not state and "," in raw_address:
+            state = raw_address.split(",")[-1].split()[0]
         state = state if state else "<MISSING>"
         zip_code = addr.postcode
+        if not zip_code and "," in raw_address:
+            zip_code = " ".join(raw_address.split(",")[-1].split()[1:])
         zip_code = zip_code.replace("…", "") if zip_code else "<MISSING>"
         country_code = "CA"
         phone = "<MISSING>"
         location_type = "<MISSING>"
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
+        geo = re.findall("{}', (.+?), '', map_id".format(store_number), response.text)[
+            0
+        ].split(",")
+        latitude = geo[0]
+        longitude = geo[1]
         hours_of_operation = "<MISSING>"
+
+        if "NOVA" in zip_code:
+            zip_code = "<MISSING>"
+        if "UNIT" in zip_code:
+            zip_code = "<MISSING>"
+        if "Unit" in zip_code:
+            zip_code = zip_code.replace("Unit", "").strip()
+        zip_code = zip_code if zip_code else "<MISSING>"
+
+        if state == "HALIFAX":
+            state = "<MISSING>"
 
         item = [
             domain,

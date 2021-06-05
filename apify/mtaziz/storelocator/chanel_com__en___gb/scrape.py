@@ -1,19 +1,18 @@
-from sgscrape import simple_scraper_pipeline as sp
-from sglogging import sglog
-
-from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
-
-
-import json
-
-from sgselenium import SgFirefox
 import time
+import json
+from ast import literal_eval
+from sgscrape import simple_scraper_pipeline as sp
+from sglogging import SgLogSetup
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
+from sgselenium import SgChrome
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as EC
 
 
 def fetch_data():
-    logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
+    logzilla = SgLogSetup().get_logger(logger_name="chanel_com__en___gb")
     url = "https://services.chanel.com/en_GB/storelocator/crp/@{lat},{lng},10z/?"
-
     search = DynamicGeoSearch(
         country_codes=[SearchableCountries.BRITAIN],
         max_radius_miles=15,
@@ -22,15 +21,19 @@ def fetch_data():
     identities = set()
     maxZ = search.items_remaining()
     total = 0
-    with SgFirefox() as driver:
+    with SgChrome() as driver:
         for lat, lng in search:
             if search.items_remaining() > maxZ:
                 maxZ = search.items_remaining()
             found = 0
-
             driver.get(url.format(lat=lat, lng=lng))
-
-            timeout = 25
+            search_box_xpath = (
+                '//input[@aria-label="Search - Enter an address or city"]'
+            )
+            WebDriverWait(driver, 40).until(
+                EC.element_to_be_clickable((By.XPATH, search_box_xpath))
+            )
+            timeout = 40
             waited = 0
             found = False
             son = {"stores": []}
@@ -39,16 +42,17 @@ def fetch_data():
                     if "getStoreList" in r.path:
                         timeout2 = 5
                         waited2 = 0
+                        if not r.response:
+                            continue
+
                         while not r.response.body and waited2 < timeout2:
                             time.sleep(1)
                             waited2 += 1
-
-                        son = r.response.body
+                        son = json.loads(r.response.body)
                         found = True
                 if not found:
                     time.sleep(1)
                     waited += 1
-            son = json.loads(son)
             for i in son["stores"]:
                 search.found_location_at(i["latitude"], i["longitude"])
                 if str(i["id"] + i["latitude"] + i["longitude"]) not in identities:
@@ -58,13 +62,7 @@ def fetch_data():
                         raise i
                     yield i
 
-            progress = (
-                str(round(100 - (search.items_remaining() / maxZ * 100), 2)) + "%"
-            )
             total += found
-            logzilla.info(
-                f"{lat} {lng} | found: {str(found)} | total: {total} | progress: {progress}"
-            )
         logzilla.info(f"Finished grabbing data!!")  # noqa
 
 
@@ -77,6 +75,21 @@ def fix_comma(x):
         return ", ".join(h)
     except Exception:
         return x
+
+
+def hoo_transform(hoo_raw):
+    hoo = []
+    if hoo_raw:
+        data = literal_eval(hoo_raw)
+        for i in data:
+            days = i["day"]
+            opening = i["opening"]
+            daystime = days + " " + opening
+            hoo.append(daystime)
+        hoo = "; ".join(hoo)
+        return hoo
+    else:
+        return "<MISSING>"
 
 
 def scrape():
@@ -121,6 +134,7 @@ def scrape():
         ),
         hours_of_operation=sp.MappingField(
             mapping=["openinghours"],
+            value_transform=hoo_transform,
         ),
         location_type=sp.MultiMappingField(
             mapping=[["postypename"], ["translations", 0, "division_name"]],

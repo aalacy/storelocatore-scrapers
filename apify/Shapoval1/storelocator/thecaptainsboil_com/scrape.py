@@ -72,6 +72,21 @@ def fetch_data():
         hours_of_operation = " ".join(hours.xpath('//*[contains(text(), ":")]/text()'))
         phone = "".join(hours.xpath('//*[contains(text(), "+")]/text()'))
         postal = a.postcode or "<MISSING>"
+        if street_address.find("2051") != -1:
+            aa = "".join(j.get("desc"))
+            aa = html.fromstring(aa)
+            aa = aa.xpath("//*/text()")
+            aa = "".join(aa[2])
+            aa = parse_address(International_Parser(), aa)
+            postal = aa.postcode
+        if street_address.find("290") != -1:
+            aa = "".join(j.get("desc"))
+            aa = html.fromstring(aa)
+            aa = aa.xpath("//*/text()")
+            aa = "".join(aa[1])
+            aa = parse_address(International_Parser(), aa)
+            postal = aa.postcode
+
         row = [
             locator_domain,
             page_url,

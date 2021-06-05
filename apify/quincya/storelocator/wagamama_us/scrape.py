@@ -37,7 +37,7 @@ def write_output(data):
 
 def fetch_data():
 
-    base_link = "https://www.wagamama.us/restaurants"
+    base_link = "https://www.wagamama.us/restaurants/index.html"
 
     user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
     headers = {"User-Agent": user_agent}
@@ -47,40 +47,47 @@ def fetch_data():
     base = BeautifulSoup(req.text, "lxml")
 
     data = []
+    all_links = []
 
     locator_domain = "wagamama.us"
 
-    items = base.find(class_="restaurant-hub__results-list").find_all("li")
+    main_links = base.find_all(class_="Directory-listLink")
 
-    for item in items:
-
-        location_name = "Wagamama " + item.h2.text.title()
-        raw_address = list(item.find(class_="restaurant-hub__address").stripped_strings)
-        street_address = (
-            " ".join(raw_address[:-3])
-            .title()
-            .replace("Quincy Market Building", "")
-            .strip()
-        )
-        city = raw_address[-3].title()
-        state = raw_address[-2].upper()
-        zip_code = raw_address[-1].title()
-        country_code = "US"
-        store_number = item["data-id"]
-        phone = item.find(class_="restaurant-hub__phone").text.strip()
-        latitude = item["data-lat"]
-        longitude = item["data-lng"]
-
-        link = "https://www.wagamama.us" + item.find_all("a")[-1]["href"]
-        req = session.get(link, headers=headers)
+    for main_link in main_links:
+        next_link = "https://www.wagamama.us/restaurants/" + main_link["href"]
+        req = session.get(next_link, headers=headers)
         base = BeautifulSoup(req.text, "lxml")
+
+        items = base.find_all(class_="Teaser-cta")
+
+        for item in items:
+            all_links.append("https://www.wagamama.us/restaurants/" + item["href"])
+
+    for link in all_links:
+        req = session.get(link, headers=headers)
+        item = BeautifulSoup(req.text, "lxml")
+
+        location_name = "Wagamama " + item.h1.text.title()
+        try:
+            street_address = (
+                item.find(class_="c-address-street-1").text.title()
+                + " "
+                + item.find(class_="c-address-street-2").text.title()
+            )
+        except:
+            street_address = item.find(class_="c-address-street-1").text.title()
+        street_address = street_address.replace("Quincy Market Building", "").strip()
+        city = item.find(class_="c-address-city").text.title()
+        state = item.find(class_="c-address-state").text.upper()
+        zip_code = item.find(class_="c-address-postal-code").text.strip()
+        country_code = "US"
+        store_number = "<MISSING>"
+        phone = item.find(id="phone-main").text.strip()
+        latitude = item.find("meta", attrs={"itemprop": "latitude"})["content"]
+        longitude = item.find("meta", attrs={"itemprop": "longitude"})["content"]
         location_type = "<MISSING>"
         hours_of_operation = " ".join(
-            list(
-                base.find(
-                    class_="restaurant-find-us__opening-times-inner"
-                ).table.stripped_strings
-            )
+            list(item.find(class_="c-hours-details").tbody.stripped_strings)
         )
 
         data.append(

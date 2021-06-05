@@ -67,25 +67,26 @@ def fetch_data():
         )
         content = json.loads(content)
         content = content["location"]
-        title = content["addressTitle"].replace("&amp;", "&")
+        title = r.text.split('"fullSiteTitle":"', 1)[1].split("\\u2014 ", 1)[0]
         street = content["addressLine1"]
         city, state = content["addressLine2"].split(",", 1)
-        state, pcode = state.split(" ", 1)
+        state, pcode = state.lstrip().split(" ", 1)
         lat = content["markerLat"]
         longt = content["markerLng"]
         hours, phone = soup.text.split("Monday", 1)[1].split("\n", 1)[0].split("(")
         hours = "Monday " + hours.replace("PM", "PM ")
         phone = "(" + phone
-
+        if "1335 E Whitestone" in street:
+            street = street + "  Suite 100"
         data.append(
             [
                 "https://www.mightyfineburgers.com/",
                 link,
-                title,
-                street,
-                city.replace(",", ""),
-                state.replace(",", ""),
-                pcode.replace(",", ""),
+                title.strip(),
+                street.strip(),
+                city.replace(",", "").strip(),
+                state.replace(",", "").strip(),
+                pcode.replace(",", "").strip(),
                 "US",
                 "<MISSING>",
                 phone.replace("\xa0", ""),

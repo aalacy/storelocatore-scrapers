@@ -85,7 +85,7 @@ def specialheaders():
     with SgChrome() as driver:
         driver.get(url)
         try:
-            accept = WebDriverWait(driver, 50).until(
+            accept = WebDriverWait(driver, 120).until(
                 EC.visibility_of_element_located(
                     (By.XPATH, '//*[@id="uc-btn-accept-banner"]')
                 )
@@ -99,7 +99,7 @@ def specialheaders():
         logzilla.info("switch_to frame with SUCCESS")
 
         byname_xpath = '//button[text()="Search by name"]'
-        byname = WebDriverWait(driver, 50).until(
+        byname = WebDriverWait(driver, 120).until(
             EC.visibility_of_element_located((By.XPATH, byname_xpath))
         )
 

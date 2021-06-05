@@ -102,6 +102,13 @@ def get_data(url):
     if hours_of_operation.count("Temporarily Closed") == 7:
         hours_of_operation = "Temporarily Closed"
 
+    if (
+        street_address == "<MISSING>"
+        and phone == "<MISSING>"
+        and hours_of_operation == "<MISSING>"
+    ):
+        return
+
     row = [
         locator_domain,
         page_url,

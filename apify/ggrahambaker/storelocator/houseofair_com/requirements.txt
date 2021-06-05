@@ -1,4 +1,4 @@
 lxml==4.3.4
-sgselenium
+sgselenium==0.0.15
 usaddress==0.5.10
-sglogging
+sglogging==0.0.4

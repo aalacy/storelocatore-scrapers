@@ -8,10 +8,12 @@ import json
 from requests import exceptions  # noqa
 from sglogging import sglog
 from sgrequests import SgRequests
+from tenacity import retry, stop_after_attempt
 
 logzilla = sglog.SgLogSetup().get_logger(logger_name="Radisson fam")
 
 
+@retry(stop=stop_after_attempt(5))
 def para(tup):
     k = {}
     headers = {
@@ -51,6 +53,7 @@ def para(tup):
                 k = {}
                 k["STATUS"] = False
             else:
+                logzilla.info(tup[1])
                 logzilla.info(f"Exception: {e}")
                 raise Exception
     except StopIteration:

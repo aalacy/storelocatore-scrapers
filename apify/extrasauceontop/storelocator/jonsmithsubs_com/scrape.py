@@ -54,14 +54,6 @@ response_text = response.replace("\n", "")
 
 
 json_objects = extract_json(response_text)
-with open("file.txt", "w", encoding="utf-8") as output:
-    json.dump(
-        json_objects[1]["preloadQueries"][4]["data"]["restaurant"]["pageContent"][
-            "sections"
-        ][2]["sectionColumns"],
-        output,
-        indent=2,
-    )
 
 for location in json_objects[1]["preloadQueries"][4]["data"]["restaurant"][
     "pageContent"

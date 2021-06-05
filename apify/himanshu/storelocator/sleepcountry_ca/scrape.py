@@ -7,26 +7,30 @@ base_url = "https://www.sleepcountry.ca/"
 
 def fetch_data():
     url = "https://www.sleepcountry.ca/ccstorex/custom/v1/stores/?locale=en"
-    json_data = session.get(url).json()
+    json_data = session.get(url).json()["result"]
     addresses = []
-    for val in json_data["result"]:
+    for val in json_data:
         store = []
         store.append(base_url)
         store.append(val["name"] if val["name"] else "<MISSING>")
         store.append(val["address1"] if val["address1"] else "<MISSING>")
         store.append(val["city"] if val["city"] else "<MISSING>")
-        store.append(val["stateAddress"] if val["stateAddress"] else "<MISSING>")
+        store.append(
+            val["stateAddress"].replace("PEI", "Prince Edward Island")
+            if val["stateAddress"]
+            else "<MISSING>"
+        )
         store.append(val["postalCode"] if val["postalCode"] else "<MISSING>")
-        store.append(val["country"] if val["country"] else "<MISSING>")
+        store.append(val["country"] if val["country"] else "CA")
         store.append(
             val["externalLocationId"] if val["externalLocationId"] else "<MISSING>"
         )
         store.append(val["phoneNumber"] if val["phoneNumber"] else "<MISSING>")
-        store.append("Sleep Country Stores")
+        store.append("<MISSING>")
         store.append(val["latitude"] if val["latitude"] else "<MISSING>")
         store.append(val["longitude"] if val["longitude"] else "<MISSING>")
         if "Temporarily closed" in val["hours"]:
-            store.append("<MISSING>")
+            store.append("Temporarily closed")
         else:
             store.append(
                 val["hours"]

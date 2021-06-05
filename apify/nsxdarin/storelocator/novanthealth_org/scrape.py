@@ -1,3 +1,4 @@
+import re
 import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
@@ -38,8 +39,14 @@ def write_output(data):
             writer.writerow(row)
 
 
+MISSING = "<MISSING>"
+
+
+def get(entity, key):
+    return entity.get(key, MISSING) or MISSING
+
+
 def fetch_data():
-    ids = []
     url = "https://www.novanthealth.org/DesktopModules/NHLocationFinder/API/Location/ByType"
     payload = {
         "LocationGroupId": "1",
@@ -52,70 +59,52 @@ def fetch_data():
         "MaxLocations": "2500",
         "MapBounds": "",
     }
-    r = session.post(url, headers=headers, data=payload)
-    website = "novanthealth.org"
-    country = "US"
-    loc = "<MISSING>"
-    store = "<MISSING>"
-    hours = "<MISSING>"
-    lat = "<MISSING>"
-    lng = "<MISSING>"
-    logger.info("Pulling Stores")
-    for line in r.iter_lines():
-        line = str(line.decode("utf-8"))
-        if '{"Id":' in line:
-            items = line.split('{"Id":')
-            for item in items:
-                if '"StoreCode":"' in item:
-                    name = item.split('"BusinessName":"')[1].split('"')[0]
-                    store = item.split('"StoreCode":"')[1].split('"')[0]
-                    lat = item.split('"Latitude":')[1].split(",")[0]
-                    lng = item.split('"Longitude":')[1].split(",")[0]
-                    try:
-                        loc = item.split('"WebsiteUrl":"')[1].split('"')[0]
-                    except:
-                        loc = "<MISSING>"
-                    add = item.split('"AddressLine":"')[1].split('"')[0]
-                    city = item.split('"City":"')[1].split('"')[0]
-                    state = item.split('"State":"')[1].split('"')[0]
-                    try:
-                        zc = item.split('"PostalCode":"')[1].split('"')[0]
-                    except:
-                        zc = "<MISSING>"
-                    typ = "<MISSING>"
-                    try:
-                        phone = item.split('"PrimaryPhone":"')[1].split('"')[0]
-                    except:
-                        phone = "<MISSING>"
-                    hours = (
-                        item.split('"Display":{')[1]
-                        .split("}")[0]
-                        .replace('"', "")
-                        .replace(",", "; ")
-                    )
-                    if "Breast Imaging Center" in name and "Greensboro" in name:
-                        loc = "https://www.novanthealthimaging.com/locations/greensboro/greensboro-breast-center/"
-                    if hours == "":
-                        hours = "<MISSING>"
-                    addinfo = name
-                    if addinfo not in ids:
-                        ids.append(addinfo)
-                        yield [
-                            website,
-                            loc,
-                            name,
-                            add,
-                            city,
-                            state,
-                            zc,
-                            country,
-                            store,
-                            phone,
-                            typ,
-                            lat,
-                            lng,
-                            hours,
-                        ]
+    data = session.post(url, headers=headers, data=payload).json()
+    locations = data["Locations"]
+
+    for location in locations:
+        locator_name = "novanthealth.org"
+        page_url = get(location, "WebsiteUrl")
+        store_number = get(location, "StoreCode")
+        location_name = get(location, "BusinessName")
+        location_type = MISSING
+
+        street_name = get(location, "AddressLine")
+        city = get(location, "City")
+        state = get(location, "State")
+        postal = get(location, "PostalCode")
+        country_code = "US"
+
+        lat = get(location, "Latitude")
+        lng = get(location, "Longitude")
+
+        phone = get(location, "PrimaryPhone")
+
+        hours = []
+        for day, hour in location["HoursInfo"]["Display"].items():
+            if re.search("open 24 hours", hour, re.IGNORECASE):
+                hours.append(hour)
+            else:
+                hours.append(f"{day}: {hour}")
+
+        hours_of_operation = ",".join(hours) or MISSING
+
+        yield [
+            locator_name,
+            page_url,
+            location_name,
+            street_name,
+            city,
+            state,
+            postal,
+            country_code,
+            store_number,
+            phone,
+            location_type,
+            lat,
+            lng,
+            hours_of_operation,
+        ]
 
 
 def scrape():

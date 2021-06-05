@@ -64,6 +64,8 @@ def fetch_data():
         address_raw = loc_dom.xpath(
             '//div[@class="views-field views-field-field-postaladdress-postal-code"]/div/text()'
         )
+        if not address_raw:
+            continue
         street_address = address_raw[0]
         street_address = street_address if street_address else "<MISSING>"
         city = address_raw[1].split(" - ")[0]
@@ -105,6 +107,15 @@ def fetch_data():
         )
         if location_type == "coming soon":
             hours_of_operation = "<MISSING>"
+        hours_of_operation = hours_of_operation.replace(
+            "Open For To-Go & Limited Dine-in ", ""
+        )
+        hours_of_operation = hours_of_operation.replace(
+            " Closed: Christmas, Thanksgiving", ""
+        )
+        hours_of_operation = hours_of_operation.replace(
+            " Closed: Christmas Day, Thanksgiving Day", ""
+        )
 
         item = [
             DOMAIN,

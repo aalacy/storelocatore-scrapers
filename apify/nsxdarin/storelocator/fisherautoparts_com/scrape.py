@@ -49,7 +49,7 @@ def write_output(data):
 
 def fetch_data():
     ids = []
-    url = "https://fisherautoparts.com/Fisher-Store-Locator.aspx/GetLocations"
+    url = "https://www.fisherautoparts.com/Fisher-Store-Locator.aspx/GetLocations"
     for lat, lng in search:
         x = lat
         y = lng

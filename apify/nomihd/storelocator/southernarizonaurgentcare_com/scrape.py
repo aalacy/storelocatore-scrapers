@@ -34,7 +34,8 @@ def fetch_data():
         location_name = "".join(
             store_sel.xpath('//div[@class="row location-info"]/div[1]/h1/text()')
         ).strip()
-
+        if "Virtual" in location_name:
+            continue
         address = store_sel.xpath(
             '//div[@class="row location-info"]/div[1]/p[@class="mt-4"]/text()'
         )

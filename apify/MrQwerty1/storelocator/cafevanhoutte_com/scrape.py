@@ -72,7 +72,7 @@ def fetch_data():
             postal = line.split(",")[-1].replace(state, "").strip()
 
         country_code = "CA"
-        location_name = "".join(i.xpath("./location/text()"))
+        location_name = "".join(i.xpath("./location/text()")).replace("&#39;", "'")
         store_number = "".join(i.xpath("./storeid/text()")) or "<MISSING>"
         phone = "".join(i.xpath("./telephone/text()")) or "<MISSING>"
         latitude = "".join(i.xpath("./latitude/text()")) or "<MISSING>"

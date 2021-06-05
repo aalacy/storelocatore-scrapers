@@ -50,6 +50,7 @@ def fetch_data():
             "".join(i.xpath("./address/text()"))
             .replace("&#39;", "'")
             .replace("&#44;", ",")
+            .replace("  ", " ")
         )
         adr = parse_address(International_Parser(), line)
         street_address = (
@@ -59,6 +60,8 @@ def fetch_data():
             or "<MISSING>"
         )
         city = adr.city or "<MISSING>"
+        if city == "Chambly":
+            street_address += " Périgny"
         state = adr.state or "<MISSING>"
         postal = adr.postcode or "<MISSING>"
         country_code = "CA"
