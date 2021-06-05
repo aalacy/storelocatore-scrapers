@@ -68,6 +68,7 @@ def fetch_data():
             (store["address_1"] + " " + store["address_2"])
             .replace("u00e9", "e")
             .replace("u00e7", "c")
+            .replace("u00f4", "o")
             .strip()
         )
         city = store["city"]
