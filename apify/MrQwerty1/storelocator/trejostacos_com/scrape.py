@@ -89,7 +89,11 @@ def get_data(url):
     country_code = "US"
     store_number = "<MISSING>"
     phone = (
-        "".join(tree.xpath("//h2/a[contains(@href, 'tel')]/text()")).strip()
+        "".join(
+            tree.xpath(
+                "//h2/a[contains(@href, 'tel')]/text()|//h2[./a[contains(@href, 'google.com')]]/text()"
+            )
+        ).strip()
         or "<MISSING>"
     )
     text = "".join(tree.xpath("//h2/a[not(contains(@href, 'tel'))]/@href"))
