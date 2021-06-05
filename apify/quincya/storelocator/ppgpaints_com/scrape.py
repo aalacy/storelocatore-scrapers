@@ -4,7 +4,8 @@ from bs4 import BeautifulSoup
 
 from sgrequests import SgRequests
 
-from sgzip.dynamic import DynamicZipSearch, SearchableCountries
+from sgzip.dynamic import SearchableCountries
+from sgzip.static import static_zipcode_list
 
 
 def write_output(data):
@@ -46,17 +47,15 @@ def fetch_data():
 
     dup_tracker = []
 
-    max_results = 10
-    max_distance = 40
+    zipps = static_zipcode_list(radius=30, country_code=SearchableCountries.USA)
+    all_zips = []
 
-    search = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA],
-        max_radius_miles=max_distance,
-        max_search_results=max_results,
-    )
+    for postcode in zipps:
+        all_zips.append(postcode)
 
-    for postcode in search:
+    all_zips.extend(["00921", "00957", "00961"])
 
+    for postcode in all_zips:
         base_link = (
             "https://www.ppgpaints.com/store-locator/search?value=%s&latitude=&longitude=&filter=Store"
             % postcode
@@ -107,7 +106,6 @@ def fetch_data():
                     )
                 except:
                     hours = "<MISSING>"
-                hours = "<INACCESSIBLE>"
 
             yield [
                 locator_domain,

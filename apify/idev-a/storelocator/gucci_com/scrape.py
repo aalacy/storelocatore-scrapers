@@ -59,11 +59,17 @@ def fetch_data():
                 or "UAE" in street_address
             ):
                 addr = parse_address_intl(street_address)
-                street_address = addr.street_address_1
+                street_address = addr.street_address_1 or ""
                 if addr.street_address_2:
                     street_address += " " + addr.street_address_2
                 if not country_code:
                     country_code = addr.country
+
+            addr = parse_address_intl(f'{aa["addressLocality"]} {state} {zip_postal}')
+            state = addr.state
+            if state:
+                state = " ".join(list(set(state.split(" "))))
+            zip_postal = addr.postcode
             phone = loc["telephone"].split("(x")[0]
             if phone == "n/a":
                 phone = ""
@@ -76,9 +82,9 @@ def fetch_data():
                 street_address=street_address,
                 city=aa["addressLocality"],
                 state=state,
+                zip_postal=zip_postal,
                 latitude=_["data-latitude"],
                 longitude=_["data-longitude"],
-                zip_postal=zip_postal,
                 country_code=country_code,
                 phone=phone,
                 locator_domain=locator_domain,

@@ -130,9 +130,11 @@ def fetch_data():
                     if hours == "":
                         hours = "<MISSING>"
                     state = state.replace("&nbsp;", "")
-                    stub = loc.rsplit("/")[1].split(".html")[0]
+                    stub = loc.rsplit("/", 1)[1].split(".html")[0]
                     if stub not in stubs:
                         stubs.append(stub)
+                        if "0" not in hours and "3" not in hours and "1" not in hours:
+                            hours = "Sun-Sat: Closed"
                         yield [
                             website,
                             loc,

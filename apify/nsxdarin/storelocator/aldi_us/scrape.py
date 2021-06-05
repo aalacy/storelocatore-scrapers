@@ -8,7 +8,7 @@ logger = SgLogSetup().get_logger("aldi_us")
 
 search = DynamicZipSearch(
     country_codes=[SearchableCountries.USA],
-    max_radius_miles=None,
+    max_radius_miles=10,
     max_search_results=None,
 )
 

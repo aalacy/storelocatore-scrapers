@@ -67,8 +67,12 @@ def fetch_data():
         lines = r2.iter_lines()
         for line2 in lines:
             line2 = str(line2.decode("utf-8"))
-            if "Call Now to Register</p><span>" in line2 and phone == "":
-                phone = line2.split("Call Now to Register</p><span>")[1].split("<")[0]
+            if '"telephone" : "' in line2:
+                if len(line2.split('"telephone" : "')[1].split('"')[0]) >= 3:
+                    phone = line2.split('"telephone" : "')[1].split('"')[0]
+            if 'class="contact-us-span">(' in line2:
+                if len(line2.split('">')[1].split("<")[0].strip()) >= 3:
+                    phone = line2.split('">')[1].split("<")[0].strip()
             if 'font-weight: bold; font-size: 1.4em;">' in line2:
                 items = line2.split('font-weight: bold; font-size: 1.4em;">')
                 for item in items:
@@ -127,6 +131,21 @@ def fetch_data():
                 add = add.replace("&amp;", "&").replace("&amp", "&")
                 infotext = aname + "|" + add + "|" + city + "|" + state
                 hours = hours.replace("&#8211;", "-")
+                if aname == "":
+                    aname = (
+                        loc.split("/location/")[1]
+                        .replace("/", "")
+                        .replace("-", "")
+                        .title()
+                    )
+                if add == "":
+                    add = "<MISSING>"
+                if city == "":
+                    city = "<MISSING>"
+                if state == "":
+                    state = "<MISSING>"
+                if zc == "":
+                    zc = "<MISSING>"
                 if infotext not in locinfo:
                     locinfo.append(infotext)
                     yield [
