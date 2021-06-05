@@ -70,7 +70,6 @@ x = 0
 while True:
     x = x + 1
     class_name = "store-preview__info"
-    # url = "https://www.smartandfinal.com/stores/?coordinates=36.01301919805139,-124.22992541516308&zoom=1"
     url = "https://www.weismarkets.com/stores/?coordinates=40.81497341528596,-74.29365999999999&zoom=6"
     if x == 1:
         driver = get_driver(url, class_name)
