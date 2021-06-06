@@ -88,7 +88,9 @@ def fetch_data():
         hoo = [e.strip() for e in hoo if e.strip()]
         hoo = " ".join(hoo).split("(Covid-19 Temporary Hours)")
         hoo = [e.strip() for e in hoo if e.strip()]
-        hours_of_operation = hoo[i].split("HOURS:")[-1].split("Last seating")[0].strip()
+        hours_of_operation = (
+            hoo[i - 1].split("HOURS:")[-1].split("Last seating")[0].strip()
+        )
 
         item = [
             domain,
