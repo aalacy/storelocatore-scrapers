@@ -83,6 +83,8 @@ def fetch_data():
         hours = d.xpath(".//p[@class='stores-hours_copy']/text()")
         hours = list(filter(None, [h.strip() for h in hours]))
         hours_of_operation = ";".join(hours) or "<MISSING>"
+        if "Hours;" in hours_of_operation:
+            hours_of_operation = hours_of_operation.split("Hours;")[-1].strip()
 
         row = [
             locator_domain,
