@@ -37,7 +37,7 @@ def fetch_data():
                 .split("|")
             )
             location_name = soup.find("h1").text
-            street_address = address[0]
+            street_address = address[0].replace(",", "")
             phone = address[-1]
             address = address[1].split(",")
             city = address[0]
