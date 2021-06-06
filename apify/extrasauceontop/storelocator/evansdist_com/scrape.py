@@ -70,7 +70,8 @@ for grid in grids:
         country_code = "US"
 
         store_number = "<MISSING>"
-        phone = "<MISSING>"
+        phone = address_parts[2].strip().replace(".", "-")
+        print(phone)
         location_type = "<MISSING>"
         latitude = "<MISSING>"
         longitude = "<MISSING>"
