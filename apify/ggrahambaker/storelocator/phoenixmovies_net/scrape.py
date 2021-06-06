@@ -96,7 +96,9 @@ def fetch_data():
         location_name = main.find("h1").text
 
         a_tag = loc.find(class_="address")
-        street_address, city, state, zip_code = parse_address(a_tag.get_text(" ").strip())
+        street_address, city, state, zip_code = parse_address(
+            a_tag.get_text(" ").strip()
+        )
         if street_address == "17310 Laurel Park Drive":
             street_address = "17310 Laurel Park Drive North"
         phone_number = (
