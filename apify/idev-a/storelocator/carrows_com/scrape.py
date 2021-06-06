@@ -21,7 +21,7 @@ def fetch_data():
             hours = []
             for hh in bs(_["website"], "lxml").stripped_strings:
                 hh = hh.split("Open")[0].strip()
-                if "Hours" in hh or "Delivery" in hh:
+                if "Hours" in hh or "Delivery" in hh or not hh:
                     continue
                 hours.append(hh)
             yield SgRecord(

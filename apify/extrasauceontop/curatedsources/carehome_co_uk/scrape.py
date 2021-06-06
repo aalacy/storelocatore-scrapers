@@ -177,6 +177,9 @@ for location_url in location_urls:
     locator_domain = "carehome.co.uk"
     page_url = location_url
     location_name = soup.find("h1", attrs={"class": "mb-0 card-title"}).text.strip()
+    if len(location_name.split("\n")) > 1:
+        continue
+
     address_parts = soup.find("meta", attrs={"property": "og:title"})["content"].split(
         ","
     )
@@ -200,16 +203,18 @@ for location_url in location_urls:
     longitude = geo_json["longitude"]
     hours = "<MISSING>"
 
-    location_type_text = (
-        soup.find("div", attrs={"class": "row profile-row"})
-        .find_all("div", attrs={"class": "col-md-4"})[1]
-        .find("ul")
-        .text.strip()
-        .split("\n")
-    )
-    if "Owner" in location_type_text[0]:
-        location_type = location_type_text[-1].replace("\r", "").replace("\t", "")
-    else:
+    try:
+        location_type = [
+            item.strip()
+            for item in soup.find("div", attrs={"class": "row profile-row"})
+            .text.strip()
+            .split("Good to Know")[1]
+            .split("Owner")[1]
+            .split("\n")
+            if len(item) > 2
+        ][0]
+
+    except Exception:
         location_type = "<MISSING>"
 
     all_rows.append(

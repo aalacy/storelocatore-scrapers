@@ -40,7 +40,7 @@ def write_output(data):
 
 def fetch_data():
     url = "https://www.earthwisepet.com/sitemap.xml"
-    locs = []
+    locs = ["https://earthwisepet.com/stores/view/yakima"]
     r = session.get(url, headers=headers, verify=False)
     for line in r.iter_lines():
         line = str(line.decode("utf-8"))
@@ -49,7 +49,10 @@ def fetch_data():
             for item in items:
                 if "</priority></url><url>" in item:
                     lurl = "https://earthwisepet.com/stores/view/" + item.split("<")[0]
-                    if lurl != "https://earthwisepet.com/stores/view/":
+                    if (
+                        lurl != "https://earthwisepet.com/stores/view/"
+                        and "yakima" not in lurl
+                    ):
                         locs.append(lurl)
     logger.info("Found %s Locations." % str(len(locs)))
     for loc in locs:
@@ -58,8 +61,8 @@ def fetch_data():
         city = ""
         state = ""
         store = "<MISSING>"
-        lat = ""
-        lng = ""
+        lat = "<MISSING>"
+        lng = "<MISSING>"
         hours = ""
         country = "US"
         zc = ""
@@ -71,10 +74,10 @@ def fetch_data():
         r2 = session.get(loc, headers=headers)
         for line2 in r2.iter_lines():
             line2 = str(line2.decode("utf-8"))
-            if '<h3 tabindex="0" class="desc-store">' in line2:
-                name = line2.split('<h3 tabindex="0" class="desc-store">')[1].split(
-                    "<"
-                )[0]
+            if "<title>" in line2:
+                name = line2.split("<title>")[1].split("<")[0]
+                if "|" in name:
+                    name = name.split("|")[0].strip()
             if '<a tabindex="0" href="https://maps.google.com/?q=' in line2:
                 acount = acount + 1
                 if acount == 2:
@@ -111,6 +114,10 @@ def fetch_data():
                     hours = hours + "; " + line2.split('week-nm">')[1].split("<")[0]
             if 'timing">' in line2:
                 hours = hours + ": " + line2.split('timing">')[1].split("<")[0]
+            if 'var latitude = "' in line2:
+                lat = line2.split('var latitude = "')[1].split('"')[0]
+            if 'var longitude = "' in line2:
+                lng = line2.split('var longitude = "')[1].split('"')[0]
         if phone == "":
             phone = "<MISSING>"
         if hours == "":
