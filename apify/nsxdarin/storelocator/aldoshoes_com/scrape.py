@@ -127,6 +127,8 @@ def fetch_data():
         if SFound:
             if phone == "":
                 phone = "<MISSING>"
+            if "/store/1422" in surl:
+                phone = "<MISSING>"
             yield [
                 website,
                 surl,
@@ -183,6 +185,8 @@ def fetch_data():
                 hours = dname + ": " + hrs
             else:
                 hours = hours + "; " + dname + ": " + hrs
+        if "/store/1422" in purl:
+            phone = "<MISSING>"
         yield [
             website,
             purl,
