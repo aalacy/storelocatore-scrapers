@@ -1,5 +1,7 @@
 from bs4 import BeautifulSoup
 import csv
+import string
+import re, time
 
 from sgrequests import SgRequests
 
@@ -42,12 +44,14 @@ def write_output(data):
 def fetch_data():
     data = []
     p = 0
-
+    pattern = re.compile(r"\s\s+")
+    cleanr = re.compile(r"<[^>]+>")
     url = "https://www.landmarkcinemas.com/showtimes/"
     r = session.get(url, headers=headers, verify=False)
     soup = BeautifulSoup(r.text, "html.parser")
     linklist = soup.select("a[href*=showtimes]")
     for link in linklist:
+
         title = link.text
         link = link["href"]
         if link == "/showtimes/":
@@ -55,9 +59,16 @@ def fetch_data():
         link = "https://www.landmarkcinemas.com" + link
         r = session.get(link, headers=headers, verify=False)
         soup = BeautifulSoup(r.text, "html.parser")
-        hours = soup.find("div", {"class": "cinenote"}).find("p").text.split(".", 1)[0]
+        try:
+            hours = (
+                soup.find("div", {"class": "cinenote"}).find("p").text.split(".", 1)[0]
+            )
+        except:
+            hours = "<MISSING>"
         if "permanently CLOSED" in hours:
             continue
+        if "In compliance" in hours or len(hours) < 3:
+            hours = "<MISSING>"
         streetlist = soup.findAll("span", {"itemprop": "streetAddress"})
         street = ""
         for st in streetlist:
