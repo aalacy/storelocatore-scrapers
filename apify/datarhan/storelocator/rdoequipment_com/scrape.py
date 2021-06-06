@@ -67,7 +67,6 @@ def fetch_data():
         country_code = poi["Address"]["CountryCode"]
         country_code = country_code if country_code else "<MISSING>"
         store_number = poi["BranchId"]
-        print(poi)
         try:
             phone = json.loads(poi["PhoneNumbers"])[0]["value"]
         except Exception:
