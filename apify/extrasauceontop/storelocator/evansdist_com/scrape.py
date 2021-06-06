@@ -71,7 +71,6 @@ for grid in grids:
 
         store_number = "<MISSING>"
         phone = address_parts[2].strip().replace(".", "-")
-        print(phone)
         location_type = "<MISSING>"
         latitude = "<MISSING>"
         longitude = "<MISSING>"
