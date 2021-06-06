@@ -164,7 +164,7 @@ def fetch_data():
                     + " "
                     + line2.split('<span class="extended-address">')[1].split("<")[0]
                 )
-                rawadd = add.strip()
+                rawadd = rawadd.strip()
             if '<span class="locality">' in line2:
                 g = line2.replace("  ", " ").replace("  ", " ")
                 rawadd = rawadd + " " + g.split('ity">')[1].split("<")[0]

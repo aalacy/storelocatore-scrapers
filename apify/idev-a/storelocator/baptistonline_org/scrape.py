@@ -15,8 +15,41 @@ base_url = "https://www.baptistonline.org/locations"
 data = []
 
 
-def _detail(link, location_type):
-    page_url = locator_domain + link.a["href"]
+def _h(v):
+    _v = v.split("(")[0].replace("–", "-").replace("Visitor Hours", "")
+    if "24 hour" in _v:
+        return "open 24 hour"
+    else:
+        return _v
+
+
+def _detail(link, location_type, session):
+    page_url = link.a["href"]
+    if "google.com" in page_url or "tel:" in page_url:
+        page_url = ""
+    elif not page_url.startswith("http"):
+        page_url = locator_domain + link.a["href"]
+    hours = []
+    if page_url:
+        logger.info(page_url)
+        sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
+        if sp1.select_one("div.location-details-holiday-notes"):
+            temp = list(
+                sp1.select_one("div.location-details-holiday-notes").stripped_strings
+            )
+            for x in range(0, len(temp), 2):
+                if x == len(temp) - 1:
+                    break
+                _tt = temp[x].lower()
+                if (
+                    "fax" in _tt
+                    or "call" in _tt
+                    or "phone" in _tt
+                    or "tel" in _tt
+                    or "baptist" in _tt
+                ):
+                    break
+                hours.append(f"{_h(temp[x])} {_h(temp[x+1])}")
     addr = list(link.select_one("p.location-address").stripped_strings)
     phone = ""
     if link.select_one(".location-phone"):
@@ -38,6 +71,7 @@ def _detail(link, location_type):
         locator_domain=locator_domain,
         latitude=link.select_one('input[name="location-lat"]').get("value"),
         longitude=link.select_one('input[name="location-lng"]').get("value"),
+        hours_of_operation=_h("; ".join(hours)),
     )
 
 
@@ -45,21 +79,21 @@ def fetch_data():
     with SgRequests() as session:
         soup = bs(session.get(base_url, headers=_headers).text, "lxml")
         links = soup.select("div#hospitals ul li")
-        logger.info(f"{len(links)} found")
+        logger.info(f"hospital {len(links)} found")
         for link in links:
-            yield _detail(link, "hospital")
+            yield _detail(link, "hospital", session)
         links = soup.select("div#minormedicalcenters ul li")
-        logger.info(f"{len(links)} found")
+        logger.info(f"medical center {len(links)} found")
         for link in links:
-            yield _detail(link, "medical center")
+            yield _detail(link, "medical center", session)
         links = soup.select("div#clinics ul li")
-        logger.info(f"{len(links)} found")
+        logger.info(f"clinic {len(links)} found")
         for link in links:
-            yield _detail(link, "clinic")
+            yield _detail(link, "clinic", session)
         links = soup.select("div#specialtyfacilities ul li")
-        logger.info(f"{len(links)} found")
+        logger.info(f"specialty facility {len(links)} found")
         for link in links:
-            yield _detail(link, "specialty facility")
+            yield _detail(link, "specialty facility", session)
 
 
 if __name__ == "__main__":
