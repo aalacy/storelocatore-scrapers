@@ -43,7 +43,7 @@ def fetch_data():
     items = []
 
     DOMAIN = "seacoastbank.com"
-    start_url = "https://www.seacoastbank.com/locations/viera-suntree"
+    start_url = "https://www.seacoastbank.com/locations"
 
     response = session.get(start_url)
     dom = etree.HTML(response.text)

@@ -65,9 +65,16 @@ def fetch_data():
 
         locator_domain = website
 
-        location_name = json_res["name"].strip()
+        location_name = "".join(
+            store_sel.xpath('//div[@class="location-detail"]//h1/text()')
+        ).strip()
 
-        street_address = json_res["address"]["streetAddress"].strip()
+        street_address = (
+            json_res["address"]["streetAddress"]
+            .strip()
+            .replace(", Hospital lower level, across from cafeteria", "")
+            .strip()
+        )
 
         city = json_res["address"]["addressLocality"].strip()
         state = json_res["address"]["addressRegion"].strip()
