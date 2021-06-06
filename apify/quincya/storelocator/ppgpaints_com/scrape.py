@@ -106,7 +106,6 @@ def fetch_data():
                     )
                 except:
                     hours = "<MISSING>"
-                hours = "<INACCESSIBLE>"
 
             yield [
                 locator_domain,
