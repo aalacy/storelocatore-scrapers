@@ -1,66 +1,127 @@
-import csv
-from sgrequests import SgRequests
-from bs4 import BeautifulSoup
 import re
-import json
+import csv
+from lxml import etree
 
+from sgrequests import SgRequests
+from sgscrape.sgpostal import parse_address_intl
 
-session = SgRequests()
 
 def write_output(data):
-    with open('data.csv', mode='w',encoding="utf-8") as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+    with open("data.csv", mode="w", encoding="utf-8") as output_file:
+        writer = csv.writer(
+            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+        )
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(
+            [
+                "locator_domain",
+                "page_url",
+                "location_name",
+                "street_address",
+                "city",
+                "state",
+                "zip",
+                "country_code",
+                "store_number",
+                "phone",
+                "location_type",
+                "latitude",
+                "longitude",
+                "hours_of_operation",
+            ]
+        )
         # Body
         for row in data:
             writer.writerow(row)
 
+
 def fetch_data():
-    headers = {
-    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
+    # Your scraper here
+    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
+
+    items = []
+
+    start_url = "https://prettykittywax.com/"
+    domain = re.findall(r"://(.+?)/", start_url)[0].replace("www.", "")
+    hdr = {
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
     }
-    base_url = "https://prettykittywax.com"
-    r = session.get("https://prettykittywax.com/locations/",headers=headers)
-    soup = BeautifulSoup(r.text,"lxml")
-    return_main_object = []
-    address = []
-    for location in soup.find("div",{"class":"popup"}).find_all("a"):
-        if len(location['href'].split("/")[-2]) == 2:
+    response = session.get(start_url, headers=hdr)
+    dom = etree.HTML(response.text)
+    all_states = dom.xpath(
+        '//div[div[h2[contains(text(), "Locations")]]]/following-sibling::div//h2/a/@href'
+    )
+    all_locations = []
+    for url in all_states:
+        response = session.get(url, headers=hdr)
+        dom = etree.HTML(response.text)
+        all_locations += dom.xpath('//div[@class="elementor-button-wrapper"]/a/@href')
+
+    for store_url in all_locations:
+        loc_response = session.get(store_url, headers=hdr)
+        if loc_response.status_code != 200:
             continue
-        location_request = session.get(location["href"],headers=headers)
-        location_soup = BeautifulSoup(location_request.text,'lxml')
-        location_details = []
-        for details in location_soup.find_all("div",{"class":"vc_column_container vc_col-sm-4"}):
-            location_details.extend(list(details.stripped_strings))
-        if "CALL TO BOOK APPOINTMENT:" == location_details[3]:
-            location_details[0] = location_details[0:2]
-            del location_details[1]
-        phone = location_soup.find("a",{"href":re.compile("tel:")}).text
-        store = []
-        store.append("https://prettykittywax.com")
-        store.append(location["href"].split("/")[-2])
-        store.append(location_details[0])
-        store.append(location_details[1].split(",")[0])
-        store.append(location_details[1].split(",")[-1].split(" ")[-2])
-        store.append(location_details[1].split(",")[-1].split(" ")[-1])
-        store.append("US")
-        store.append("<MISSING>")
-        store.append(phone)
-        store.append("pretty kitty wax")
-        for script in location_soup.find_all("script"):
-            if "new google.maps.LatLng(" in script.text:
-                lat = script.text.split("new google.maps.LatLng(")[1].split(",")[0]
-                lng = script.text.split("new google.maps.LatLng(")[1].split(",")[1].split(")")[0]
-        store.append(lat)
-        store.append(lng)
-        store.append(" ".join(location_details[3:]))
-        return_main_object.append(store)
-    return return_main_object
+        loc_dom = etree.HTML(loc_response.text)
+
+        raw_adr = loc_dom.xpath("//iframe/@title")[0]
+        addr = parse_address_intl(raw_adr)
+        location_name = loc_dom.xpath(
+            '//h2[@class="elementor-heading-title elementor-size-default"]/text()'
+        )
+        location_name = location_name[0].strip() if location_name else "<MISSING>"
+        street_address = addr.street_address_1
+        if addr.street_address_2:
+            street_address += " " + addr.street_address_2
+        street_address = street_address if street_address else "<MISSING>"
+        city = addr.city
+        city = city if city else "<MISSING>"
+        state = addr.state
+        state = state if state else "<MISSING>"
+        zip_code = addr.postcode
+        zip_code = zip_code if zip_code else "<MISSING>"
+        country_code = addr.country
+        country_code = country_code if country_code else "<MISSING>"
+        store_number = "<MISSING>"
+        phone = loc_dom.xpath('//a[contains(@href, "tel")]/text()')
+        phone = phone[0] if phone else "<MISSING>"
+        location_type = "<MISSING>"
+        latitude = "<MISSING>"
+        longitude = "<MISSING>"
+        hoo = loc_dom.xpath('//h2[contains(text(), "MON")]/text()')
+        hoo = [e.strip() for e in hoo if e.strip()]
+        hours_of_operation = (
+            " ".join(hoo).split("92880 ")[-1].split(", CA ")[-1] if hoo else "<MISSING>"
+        )
+        if "DIAMOND 5095" in hours_of_operation:
+            hours_of_operation = "<MISSING>"
+
+        item = [
+            domain,
+            store_url,
+            location_name,
+            street_address,
+            city,
+            state,
+            zip_code,
+            country_code,
+            store_number,
+            phone,
+            location_type,
+            latitude,
+            longitude,
+            hours_of_operation,
+        ]
+
+        items.append(item)
+
+    return items
+
 
 def scrape():
     data = fetch_data()
     write_output(data)
 
-scrape()
+
+if __name__ == "__main__":
+    scrape()

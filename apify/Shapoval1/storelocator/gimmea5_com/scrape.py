@@ -1,4 +1,5 @@
 import csv
+import usaddress
 from lxml import html
 from sgrequests import SgRequests
 
@@ -39,6 +40,34 @@ def fetch_data():
 
     page_url = "https://gimmea5.com/locations/"
     session = SgRequests()
+    tag = {
+        "Recipient": "recipient",
+        "AddressNumber": "address1",
+        "AddressNumberPrefix": "address1",
+        "AddressNumberSuffix": "address1",
+        "StreetName": "address1",
+        "StreetNamePreDirectional": "address1",
+        "StreetNamePreModifier": "address1",
+        "StreetNamePreType": "address1",
+        "StreetNamePostDirectional": "address1",
+        "StreetNamePostModifier": "address1",
+        "StreetNamePostType": "address1",
+        "CornerOf": "address1",
+        "IntersectionSeparator": "address1",
+        "LandmarkName": "address1",
+        "USPSBoxGroupID": "address1",
+        "USPSBoxGroupType": "address1",
+        "USPSBoxID": "address1",
+        "USPSBoxType": "address1",
+        "BuildingName": "address2",
+        "OccupancyType": "address2",
+        "OccupancyIdentifier": "address2",
+        "SubaddressIdentifier": "address2",
+        "SubaddressType": "address2",
+        "PlaceName": "city",
+        "StateName": "state",
+        "ZipCode": "postal",
+    }
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
     }
@@ -52,24 +81,20 @@ def fetch_data():
             .strip()
         )
         location_type = "<MISSING>"
-        street_address = (
-            "".join(
+        line = (
+            " ".join(
                 b.xpath(
-                    './/p[.//a[contains(@href, "tel")]]/text()[1] | .//p[contains(text(), "Coming Soon!")]/following-sibling::p[1]/text()[1]'
+                    './/p[.//a[contains(@href, "tel")]]/text() | .//p[contains(text(), "Coming Soon!")]/following-sibling::p[1]/text()'
                 )
             )
             .replace("\n", "")
             .strip()
         )
-        ad = (
-            "".join(
-                b.xpath(
-                    './/p[.//a[contains(@href, "tel")]]/text()[2] | .//p[contains(text(), "Coming Soon!")]/following-sibling::p[1]//text()[2]'
-                )
-            )
-            .replace("\n", "")
-            .strip()
-        )
+        a = usaddress.tag(line, tag_mapping=tag)[0]
+
+        street_address = f"{a.get('address1')} {a.get('address2')}".replace(
+            "None", ""
+        ).strip()
 
         country_code = "US"
         phone = (
@@ -78,19 +103,9 @@ def fetch_data():
             .strip()
             or "<MISSING>"
         )
-        state = ad.split(",")[1].split()[0].strip()
-        postal = ad.split(",")[1].split()[-1].strip()
-        city = ad.split(",")[0].strip()
-        if location_name.find("Owensboro") != -1:
-            postal = (
-                "".join(
-                    b.xpath(
-                        './/p[contains(text(), "Coming Soon!")]/following-sibling::p[1]/strong/text()'
-                    )
-                )
-                .replace("\n", "")
-                .strip()
-            )
+        state = a.get("state") or "<MISSING>"
+        postal = a.get("postal") or "<MISSING>"
+        city = a.get("city") or "<MISSING>"
         store_number = "<MISSING>"
         comsoon = "".join(b.xpath('.//p[contains(text(), "Coming Soon!")]/text()'))
         hours_of_operation = (

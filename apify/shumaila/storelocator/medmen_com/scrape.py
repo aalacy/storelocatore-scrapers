@@ -63,12 +63,9 @@ def fetch_data():
             location_id = store["securityId"]
             title = store["name"]
             street = store["address"]
-            city = store["county"]
-            try:
-                pcode = store["address2"].split(" ")[-1]
-            except:
-                pcode = "<MISSING>"
-            state = store["state"]
+            city, state = store["address2"].split(", ", 1)
+            state, pcode = state.lstrip().split(" ", 1)
+
             phone = store["phoneNumber"]
             lat = store["location"]["lat"]
             longt = store["location"]["lon"]
