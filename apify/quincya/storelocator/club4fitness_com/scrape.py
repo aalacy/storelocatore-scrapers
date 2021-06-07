@@ -82,9 +82,13 @@ def fetch_data():
             .strip()
         )
         location_type = "<MISSING>"
-        hours_of_operation = " ".join(
-            list(item.find(class_="dce-acf-repater-list").stripped_strings)
-        )
+
+        try:
+            hours_of_operation = " ".join(
+                list(item.find(class_="dce-acf-repater-list").stripped_strings)
+            )
+        except:
+            hours_of_operation = "<MISSING>"
         latitude = "<INACCESSIBLE>"
         longitude = "<INACCESSIBLE>"
 
