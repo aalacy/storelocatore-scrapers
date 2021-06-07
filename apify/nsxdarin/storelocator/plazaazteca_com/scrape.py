@@ -136,6 +136,8 @@ def fetch_data():
             if "<" in name:
                 name = name.split("<")[0]
         if "Coming Soon" not in name:
+            if hours == "":
+                hours = "<MISSING>"
             yield [
                 website,
                 purl,
