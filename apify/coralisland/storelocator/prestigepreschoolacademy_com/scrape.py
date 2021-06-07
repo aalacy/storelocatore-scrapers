@@ -1,5 +1,5 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from lxml import etree
 import json
 
@@ -58,9 +58,9 @@ def write_output(data):
 def fetch_data():
     output_list = []
     url = "https://www.prestigepreschoolacademy.com/wp-admin/admin-ajax.php?action=store_search&lat=37.09024&lng=-95.71289&max_results=10&search_radius=50&autoload=1"
-    session = requests.Session()
+    session = SgRequests()
     request = session.get(url)
-    store_list = json.loads(request.text)
+    store_list = request.json()
     for store in store_list:
         output = []
         output.append(base_url)  # url
