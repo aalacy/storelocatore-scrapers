@@ -1,33 +1,21 @@
 import csv
 import json
-import os
 import re
 
 from bs4 import BeautifulSoup
-
 from sglogging import sglog
-
 from sgrequests import SgRequests
 
-log = sglog.SgLogSetup().get_logger("scrape_com")
+log = sglog.SgLogSetup().get_logger("pepboys.com")
 
-DEFAULT_PROXY_URL = "http://groups-RESIDENTIAL,country-us:{}@proxy.apify.com:8000/"
+user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.77 Safari/537.36"
+
+headers = {"User-Agent": user_agent}
 
 
-def set_proxies():
-    if "PROXY_PASSWORD" in os.environ and os.environ["PROXY_PASSWORD"].strip():
-
-        proxy_password = os.environ["PROXY_PASSWORD"]
-        url = (
-            os.environ["PROXY_URL"] if "PROXY_URL" in os.environ else DEFAULT_PROXY_URL
-        )
-        proxy_url = url.format(proxy_password)
-        proxies = {
-            "http://": proxy_url,
-        }
-        return proxies
-    else:
-        return None
+def getPage(url):
+    session = SgRequests()
+    return session.get(url, headers=headers)
 
 
 def write_output(data):
@@ -61,16 +49,9 @@ def write_output(data):
 
 
 def fetch_data():
-
-    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
-    headers = {"User-Agent": user_agent}
-
-    session = SgRequests()
-    session.proxies = set_proxies()
-
     locator_domain = "https://www.pepboys.com"
-    to_scrape = "https://stores.pepboys.com"
-    page = session.get(to_scrape, headers=headers)
+    to_scrape = "https://pepboys.com/stores"
+    page = getPage(to_scrape)
     assert page.status_code == 200
     soup = BeautifulSoup(page.content, "html.parser")
     main = soup.find("div", {"class": "store-locator__home-browse-location"})
@@ -78,15 +59,15 @@ def fetch_data():
 
     state_list = []
     city_list = []
+    page_list = []
     for state in states:
         link = locator_domain + state["href"]
         state_list.append(link)
 
     for state in state_list:
         log.info(state)
-        session = SgRequests()
-        session.proxies = set_proxies()
-        page = session.get(state, headers=headers)
+        page = getPage(state)
+        log.info(f"Status Code: {page.status_code}")
         assert page.status_code == 200
         soup = BeautifulSoup(page.content, "html.parser")
         main = soup.find("div", {"class": "store-locator__home-browse-location"})
@@ -97,9 +78,7 @@ def fetch_data():
 
     for city_link in city_list:
         log.info(city_link)
-        session = SgRequests()
-        session.proxies = set_proxies()
-        page = session.get(city_link, headers=headers)
+        page = getPage(city_link)
         assert page.status_code == 200
         soup = BeautifulSoup(page.content, "html.parser")
         js = soup.main.find(id="mapDataArray").text.strip()
@@ -116,54 +95,77 @@ def fetch_data():
             location_type = "<MISSING>"
             lat = loc["Lat"]
             longit = loc["Long"]
+            page_links = (
+                "https://www.pepboys.com/stores/"
+                + state
+                + "/"
+                + city.replace(" ", "-")
+                + "/"
+                + street_address.replace(" ", "-").replace("#", "-")
+                + "?storeCode="
+                + store_number
+            )
+            page_list.append(
+                {
+                    "page_url": page_links,
+                    "location_name": location_name,
+                    "street_address": street_address,
+                    "city": city,
+                    "state": state,
+                    "zip_code": zip_code,
+                    "country_code": country_code,
+                    "phone_number": phone_number,
+                    "store_number": store_number,
+                    "latitude": lat,
+                    "longitude": longit,
+                }
+            )
+    log.info(f"Total Locations: {len(page_list)}")
+    for pl in page_list:
+        location_name = pl["location_name"]
+        street_address = pl["street_address"]
+        city = pl["city"]
+        state = pl["state"]
+        zip_code = pl["zip_code"]
+        country_code = pl["country_code"]
+        phone_number = pl["phone_number"]
+        store_number = pl["store_number"]
+        page_url = pl["page_url"]
+        lat = pl["latitude"]
+        longit = pl["longitude"]
 
-            try:
-                page_url = (
-                    "https://www.pepboys.com/stores/"
-                    + state
-                    + "/"
-                    + city
-                    + "/"
-                    + street_address.replace(" ", "-")
-                    + "?storeCode="
-                    + store_number
+        log.info(page_url)
+        page = getPage(page_url)
+        assert page.status_code == 200
+        soup = BeautifulSoup(page.content, "html.parser")
+        hours = (
+            " ".join(
+                list(
+                    soup.find(class_="weekly-time").find_previous("ul").stripped_strings
                 )
-                page = session.get(page_url, headers=headers)
-                assert page.status_code == 200
-                soup = BeautifulSoup(page.content, "html.parser")
-                hours = (
-                    " ".join(
-                        list(
-                            soup.find(class_="weekly-time")
-                            .find_previous("ul")
-                            .stripped_strings
-                        )
-                    )
-                    .replace("\xa0", " ")
-                    .replace("\t", "")
-                    .replace("\n", " ")
-                )
-                hours = (re.sub(" +", " ", hours)).strip()
-            except:
-                page_url = city_link
-                hours = "<INACCESSIBLE>"
+            )
+            .replace("\xa0", " ")
+            .replace("\t", "")
+            .replace("\n", " ")
+        )
+        hours = (re.sub(" +", " ", hours)).strip()
 
-            yield [
-                locator_domain,
-                location_name,
-                street_address,
-                city,
-                state,
-                zip_code,
-                country_code,
-                store_number,
-                phone_number,
-                location_type,
-                lat,
-                longit,
-                hours,
-                page_url,
-            ]
+        yield [
+            locator_domain,
+            location_name,
+            street_address,
+            city,
+            state,
+            zip_code,
+            country_code,
+            store_number,
+            phone_number,
+            location_type,
+            lat,
+            longit,
+            hours,
+            page_url,
+        ]
 
 
 def scrape():
