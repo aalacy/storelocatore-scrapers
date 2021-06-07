@@ -126,7 +126,6 @@ def fetch_data():
     out = []
     urls = get_urls()
 
-    
     for url in urls:
         data_stuff = get_data(url)
         out.append(data_stuff)
