@@ -6,8 +6,6 @@ from bs4 import BeautifulSoup
 from sglogging import sglog
 from sgrequests import SgRequests
 
-session = SgRequests()
-
 log = sglog.SgLogSetup().get_logger("pepboys.com")
 
 user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.77 Safari/537.36"
@@ -16,6 +14,7 @@ headers = {"User-Agent": user_agent}
 
 
 def getPage(url):
+    session = SgRequests()
     return session.get(url, headers=headers)
 
 
@@ -68,6 +67,7 @@ def fetch_data():
     for state in state_list:
         log.info(state)
         page = getPage(state)
+        log.info(f"Status Code: {page.status_code}")
         assert page.status_code == 200
         soup = BeautifulSoup(page.content, "html.parser")
         main = soup.find("div", {"class": "store-locator__home-browse-location"})
