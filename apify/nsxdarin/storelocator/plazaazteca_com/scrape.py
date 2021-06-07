@@ -37,7 +37,7 @@ def write_output(data):
 def fetch_data():
     locs = []
     url = "https://plazaazteca.com/locations/"
-    r = session.get(url, headers=headers)
+    r = session.get(url, headers=headers, verify=False)
     website = "plazaazteca.com"
     country = "US"
     linesone = r.iter_lines()
@@ -103,7 +103,7 @@ def fetch_data():
         lng = "<MISSING>"
         hours = ""
         typ = "<MISSING>"
-        r2 = session.get(purl, headers=headers)
+        r2 = session.get(purl, headers=headers, verify=False)
         lines = r2.iter_lines()
         for line2 in lines:
             line2 = str(line2.decode("utf-8"))
