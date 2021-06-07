@@ -36,7 +36,6 @@ def write_output(data):
 
 def fetch_data():
     url = "https://www.puccinispizzapasta.com/locations/"
-    Found = False
     r = session.get(url, headers=headers, verify=False)
     if r.encoding is None:
         r.encoding = "utf-8"
