@@ -71,7 +71,8 @@ def fetch_data():
         except:
             pass
         hours = content.split("Hours", 1)[1].replace("\n", " ").replace(":", "").strip()
-
+        if hours.find("Winter") != -1:
+            hours = hours.split("Winter")[0].strip()
         address = address.replace("\n", " ").strip()
         address = usaddress.parse(address)
         i = 0
