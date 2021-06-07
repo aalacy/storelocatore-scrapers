@@ -52,6 +52,7 @@ def fetch_data():
     locator_domain = "https://www.pepboys.com"
     to_scrape = "https://pepboys.com/stores"
     page = getPage(to_scrape)
+    assert page.status_code == 200
     soup = BeautifulSoup(page.content, "html.parser")
     main = soup.find("div", {"class": "store-locator__home-browse-location"})
     states = main.find_all("a", {"class": "btn-link"})
@@ -66,6 +67,8 @@ def fetch_data():
     for state in state_list:
         log.info(state)
         page = getPage(state)
+        log.info(f"Status Code: {page.status_code}")
+        assert page.status_code == 200
         soup = BeautifulSoup(page.content, "html.parser")
         main = soup.find("div", {"class": "store-locator__home-browse-location"})
         cities = main.find_all("a", {"class": "btn-link"})
@@ -76,6 +79,7 @@ def fetch_data():
     for city_link in city_list:
         log.info(city_link)
         page = getPage(city_link)
+        assert page.status_code == 200
         soup = BeautifulSoup(page.content, "html.parser")
         js = soup.main.find(id="mapDataArray").text.strip()
         locs = json.loads(js)
@@ -132,6 +136,7 @@ def fetch_data():
 
         log.info(page_url)
         page = getPage(page_url)
+        assert page.status_code == 200
         soup = BeautifulSoup(page.content, "html.parser")
         hours = (
             " ".join(
