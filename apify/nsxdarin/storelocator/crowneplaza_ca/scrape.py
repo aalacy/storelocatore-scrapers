@@ -9,6 +9,7 @@ headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
 
+
 def write_output(data):
     with open("data.csv", mode="w") as output_file:
         writer = csv.writer(
@@ -45,7 +46,10 @@ def fetch_data():
         if r.encoding is None:
             r.encoding = "utf-8"
         for line in r.iter_lines(decode_unicode=True):
-            if 'href="https://www.ihg.com/crowneplaza/destinations/us/en/canada/' in line:
+            if (
+                'href="https://www.ihg.com/crowneplaza/destinations/us/en/canada/'
+                in line
+            ):
                 surl = line.split('href="')[1].split('"')[0]
                 if surl not in states:
                     states.append(surl)
@@ -53,9 +57,14 @@ def fetch_data():
             cities = []
             logger.info(("Pulling State %s..." % state))
             r2 = session.get(state, headers=headers)
-            if r2.encoding is None: r2.encoding = 'utf-8'
+            if r2.encoding is None:
+                r2.encoding = "utf-8"
             for line2 in r2.iter_lines(decode_unicode=True):
-                if 'href="https://www.ihg.com/crowneplaza/destinations/us/en/canada/' in line2 and '<span>' in line2:
+                if (
+                    'href="https://www.ihg.com/crowneplaza/destinations/us/en/canada/'
+                    in line2
+                    and "<span>" in line2
+                ):
                     curl = line2.split('href="')[1].split('"')[0]
                     if curl not in cities:
                         cities.append(curl)
