@@ -95,7 +95,7 @@ def fetch_data():
 
     for count, coord in enumerate(ziplist, 1):
 
-        if count % 200 == False:
+        if count % 200 is False:
             logger.info(f"next 200 zip -- {count} checked/searched! Now Waiting")
             time.sleep(10)
 
@@ -267,7 +267,7 @@ def fetch_data():
                 store.append(page_url if page_url else "<MISSING>")
 
                 yield store
-                if len(addressess) % 50 == False:
+                if len(addressess) % 50 is False:
                     logger.info("50 more scraped! Now Waiting")
                     time.sleep(5)
     logger.info(f">>> Total zip searched : {len(ziplist)}")
