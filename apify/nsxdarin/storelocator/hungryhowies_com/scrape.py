@@ -18,6 +18,7 @@ def write_output(data):
         writer.writerow(
             [
                 "locator_domain",
+                "page_url",
                 "location_name",
                 "street_address",
                 "city",
@@ -45,6 +46,14 @@ def fetch_data():
     for line in r.iter_lines(decode_unicode=True):
         if "href=\\u0022\\/store\\/" in line:
             items = line.split("href=\\u0022\\/store\\/")
+            for item in items:
+                if "jQuery.extend(Drupal.settings" not in item:
+                    loc = item.split("\\u0022")[0]
+                    lurl = "https://www.hungryhowies.com/store/" + loc
+                    if lurl not in locs:
+                        locs.append(lurl)
+        if "href=\\u0022\\/STORE\\/" in line:
+            items = line.split("href=\\u0022\\/STORE\\/")
             for item in items:
                 if "jQuery.extend(Drupal.settings" not in item:
                     loc = item.split("\\u0022")[0]
@@ -102,8 +111,15 @@ def fetch_data():
         if lng == "":
             lng = "<MISSING>"
         store = name.split("#")[1]
+        if len(phone) < 3:
+            phone = "<MISSING>"
+        if "5555 Con" in add:
+            phone = "<MISSING>"
+        if "0000000" in phone:
+            name = name + " - Coming Soon"
         yield [
             website,
+            loc,
             name,
             add,
             city,

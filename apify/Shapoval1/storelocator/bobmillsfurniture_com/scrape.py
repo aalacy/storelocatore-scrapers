@@ -1,6 +1,8 @@
 import csv
+import json
 from lxml import html
 from sgrequests import SgRequests
+from concurrent import futures
 
 
 def write_output(data):
@@ -32,99 +34,129 @@ def write_output(data):
             writer.writerow(row)
 
 
-def fetch_data():
-    out = []
+def get_urls():
+    session = SgRequests()
+    r = session.get("https://www.bobmillsfurniture.com/api/rest/pages/")
+    jsblock = r.text.replace("['", "").replace("']", "")
+    js = json.loads(jsblock)
+    slugs = []
+    for j in js:
+        sl = "".join(j.get("request_url"))
+        if sl == "home":
+            continue
+        if sl.find("locations") == -1:
+            continue
+        sl = sl.split("/")[1]
+        slugs.append(sl)
+    return slugs
+
+
+def get_data(slug):
 
     locator_domain = "https://www.bobmillsfurniture.com"
-    api_url = "https://www.bobmillsfurniture.com/findastore.inc"
+
+    api_url = f"https://www.bobmillsfurniture.com/api/rest/pages/locations%2F{slug}"
+
     session = SgRequests()
 
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
-    }
-    r = session.get(api_url, headers=headers)
-    tree = html.fromstring(r.text)
-
-    div = tree.xpath('//div[@class="findastorerow"]')
-    for d in div:
-
-        location_type = "<MISSING>"
-        store_number = "<MISSING>"
-
-        ad = (
-            "".join(d.xpath('.//div[@class="grid-33 tablet-grid-33"][1]/p/text()[2]'))
+    r = session.get(api_url)
+    div = (
+        r.text.split(
+            "<!-- ==================== Contact Block (block-1) ==================== -->"
+        )[1]
+        .replace("\\r", "")
+        .replace("\\n", "")
+        .replace("\\t", "")
+        .replace("\\", "")
+    )
+    tree = html.fromstring(div)
+    street_address = (
+        "".join(
+            tree.xpath(
+                '//div[@class="avb-typography__paragraph dsg-tools-main-paragraph dsg-tools-color-dark dsg-contact-1__address"]/span[@class="dsg-contact-1__address-line"][1]/text()'
+            )
+        )
+        .replace("\n", "")
+        .strip()
+    )
+    ad = (
+        "".join(
+            tree.xpath(
+                '//div[@class="avb-typography__paragraph dsg-tools-main-paragraph dsg-tools-color-dark dsg-contact-1__address"]/span[@class="dsg-contact-1__address-line"][2]/text()'
+            )
+        )
+        .replace("\n", "")
+        .strip()
+    )
+    page_url = f"https://www.bobmillsfurniture.com/locations/{slug}"
+    city = ad.split(",")[0].strip()
+    state = ad.split(",")[1].split()[0].strip()
+    postal = ad.split(",")[1].split()[1].strip()
+    country_code = "US"
+    store_number = "<MISSING>"
+    location_name = "".join(tree.xpath("//h1/text()"))
+    phone = "".join(tree.xpath('//avb-link[contains(@data-href, "tel")]/text()'))
+    text = "".join(tree.xpath('//avb-link[contains(@data-href, "/maps/")]/@data-href'))
+    try:
+        if text.find("ll=") != -1:
+            latitude = text.split("ll=")[1].split(",")[0]
+            longitude = text.split("ll=")[1].split(",")[1].split("&")[0]
+        else:
+            latitude = text.split("@")[1].split(",")[0]
+            longitude = text.split("@")[1].split(",")[1]
+    except IndexError:
+        latitude, longitude = "<MISSING>", "<MISSING>"
+    location_type = "<MISSING>"
+    hours_of_operation = (
+        " ".join(
+            tree.xpath(
+                '//h2[contains(text(), "Store Hours")]/following-sibling::ul/li/text()'
+            )
+        )
+        .replace("\n", "")
+        .strip()
+        or "<MISSING>"
+    )
+    if hours_of_operation == "<MISSING>":
+        hours_of_operation = (
+            " ".join(
+                tree.xpath(
+                    '//h2[contains(text(), "Pickup")]/following-sibling::ul/li/text()'
+                )
+            )
             .replace("\n", "")
             .strip()
         )
-        street_address = "".join(
-            d.xpath('.//div[@class="grid-33 tablet-grid-33"][1]/p/text()[1]')
-        )
-        city = ad.split(",")[0].strip()
-        state = ad.split(",")[1].split()[0].strip()
-        postal = ad.split(",")[1].split()[-1].strip()
-        if postal.find("-") != -1:
-            postal = postal.split("-")[0].strip()
-        country_code = "US"
 
-        phone = "".join(
-            d.xpath('.//div[@class="grid-33 tablet-grid-33"][1]/p/strong/text()')
-        )
+    row = [
+        locator_domain,
+        page_url,
+        location_name,
+        street_address,
+        city,
+        state,
+        postal,
+        country_code,
+        store_number,
+        phone,
+        location_type,
+        latitude,
+        longitude,
+        hours_of_operation,
+    ]
 
-        slug = "".join(
-            d.xpath('.//a[contains(text(), "view map & more information")]/@href')
-        )
-        page_url = f"{locator_domain}{slug}"
-        location_name = "".join(d.xpath(".//div/h2/a/text()"))
-        if location_name.find("Distribution") != -1:
-            page_url = "https://www.bobmillsfurniture.com/findastore.inc"
+    return row
 
-        text = "".join(
-            d.xpath('.//a[contains(text(), "view map & more information")]/@href')
-        )
-        try:
-            if text.find("ll=") != -1:
-                latitude = text.split("ll=")[1].split(",")[0]
-                longitude = text.split("ll=")[1].split(",")[1].split("&")[0]
-            else:
-                latitude = text.split("@")[1].split(",")[0]
-                longitude = text.split("@")[1].split(",")[1]
-        except IndexError:
-            latitude, longitude = "<MISSING>", "<MISSING>"
 
-        hours_of_operation = (
-            " ".join(d.xpath('.//div[@class="grid-33 tablet-grid-33"][3]//p//text()'))
-            .replace("\n", "")
-            .strip()
-        )
-        hours_of_operation = (
-            hours_of_operation.split(" Hours:")[1].replace("  ", " ").strip()
-        )
-
-        if page_url != "https://www.bobmillsfurniture.com/findastore.inc":
-            session = SgRequests()
-            r = session.get(page_url, headers=headers)
-            tree = html.fromstring(r.text)
-            map_link = "".join(tree.xpath("//iframe/@src"))
-            latitude = map_link.split("!3d")[1].strip().split("!")[0].strip()
-            longitude = map_link.split("!2d")[1].strip().split("!")[0].strip()
-
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
+def fetch_data():
+    out = []
+    urls = get_urls()
+    with futures.ThreadPoolExecutor(max_workers=10) as executor:
+        future_to_url = {executor.submit(get_data, url): url for url in urls}
+        for future in futures.as_completed(future_to_url):
+            row = future.result()
+            if row:
+                out.append(row)
 
     return out
 

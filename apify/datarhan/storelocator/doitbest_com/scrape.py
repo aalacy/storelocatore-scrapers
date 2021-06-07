@@ -70,9 +70,7 @@ def fetch_data():
 
     all_locations = []
     all_codes = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA],
-        max_radius_miles=50,
-        max_search_results=None,
+        country_codes=[SearchableCountries.USA], max_radius_miles=50
     )
     for code in all_codes:
         body = {
@@ -115,11 +113,6 @@ def fetch_data():
         except TypeError:
             continue
         location_name = location_name if location_name else "<MISSING>"
-        passed = False
-        if "do it best" in location_name.lower():
-            passed = True
-        if "doitbest" not in store_url.lower() and not passed:
-            continue
         street_address = poi["Address1"]
         if poi["Address2"]:
             street_address += ", " + poi["Address2"]
@@ -128,9 +121,8 @@ def fetch_data():
         city = city if city else "<MISSING>"
         state = poi["State"]
         state = state if state else "<MISSING>"
-        zip_code = poi["ZipCode"]
-        if not zip_code:
-            continue
+        zip_code = poi.get("ZipCode")
+        zip_code = zip_code if zip_code else "<MISSING>"
         country_code = "<MISSING>"
         store_number = poi["ID"]
         store_number = store_number if store_number else "<MISSING>"

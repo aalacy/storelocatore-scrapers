@@ -108,10 +108,12 @@ def get_data(_id):
     hours = tree.xpath("//span[@class='store-hours']//text()")
     hours = list(filter(None, [h.strip() for h in hours]))
     hours_of_operation = (
-        ";".join(hours).replace(
+        ";".join(hours)
+        .replace(
             "due to covid restrictions this store is temporarily closed, please visit www.gap.co.uk;",
             "",
         )
+        .replace("p>;", "")
         or "<MISSING>"
     )
 
