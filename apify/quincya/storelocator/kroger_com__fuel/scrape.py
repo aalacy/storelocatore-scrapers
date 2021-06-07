@@ -91,6 +91,7 @@ def fetch_data():
                     pass
 
             if got_services:
+                # Filter fuel locations
                 if ("gas" not in services) and ("diesel" not in services):
                     continue
             else:
