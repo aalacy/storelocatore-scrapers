@@ -1,7 +1,6 @@
 import csv
 from sgrequests import SgRequests
 from lxml import etree
-import json
 
 
 base_url = "https://www.prestigepreschoolacademy.com"
