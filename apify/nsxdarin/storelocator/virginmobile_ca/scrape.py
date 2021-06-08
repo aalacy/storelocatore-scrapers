@@ -43,7 +43,7 @@ def fetch_data():
     search = DynamicGeoSearch(
         country_codes=[SearchableCountries.CANADA],
         max_radius_miles=None,
-        max_search_results=20,
+        max_search_results=None,
     )
     for lat, lng in search:
         session = SgRequests()

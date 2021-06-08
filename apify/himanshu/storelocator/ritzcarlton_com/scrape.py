@@ -1,124 +1,122 @@
-import csv
-from sgrequests import SgRequests
-from bs4 import BeautifulSoup
 import re
+import csv
 import json
-import unicodedata
-import html5lib
-session = SgRequests()
+from lxml import etree
+
+from sgrequests import SgRequests
+
+
 def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+    with open("data.csv", mode="w", encoding="utf-8") as output_file:
+        writer = csv.writer(
+            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+        )
 
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
-
+        # Header
+        writer.writerow(
+            [
+                "locator_domain",
+                "page_url",
+                "location_name",
+                "street_address",
+                "city",
+                "state",
+                "zip",
+                "country_code",
+                "store_number",
+                "phone",
+                "location_type",
+                "latitude",
+                "longitude",
+                "hours_of_operation",
+            ]
+        )
+        # Body
         for row in data:
             writer.writerow(row)
+
+
 def fetch_data():
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36'
+    # Your scraper here
+    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
+
+    items = []
+
+    start_url = "https://www.ritzcarlton.com/en/hotels"
+    domain = re.findall(r"://(.+?)/", start_url)[0].replace("www.", "")
+    hdr = {
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
     }
-    addressess = []
-    base_url = "https://ritzcarlton.com"
-    r = session.get("https://www.ritzcarlton.com/en/hotels",headers=headers)
-    soup = BeautifulSoup(r.text,'lxml')
-    rm = ["https://www.ritzcarlton.com/en/hotels/arizona/paradise-valley",
-    "https://www.ritzcarlton.com/en/hotels/california",
-    "https://www.ritzcarlton.com/en/hotels/colorado",
-    "https://www.ritzcarlton.com/en/hotels/florida",
-    "https://www.ritzcarlton.com/en/hotels/georgia",
-    "https://www.ritzcarlton.com/en/hotels/hawaii",
-    "https://www.ritzcarlton.com/en/hotels/new-york",
-    "https://www.ritzcarlton.com/en/hotels/washington-dc",
-    "https://www.ritzcarlton.com/en/hotels/canada/toronto"]
-    for i in soup.find("div",{"class":"region"}).find_all("a"):
-        page_url = i['href']
-        if page_url in rm:
+    response = session.get(start_url, headers=hdr)
+    dom = etree.HTML(response.text)
+
+    all_locations = dom.xpath('//li[h2[contains(text(), "USA & Canada")]]//a/@href')
+    for store_url in all_locations:
+        loc_response = session.get(store_url + ".headeronly.html", headers=hdr)
+        if loc_response.status_code != 200:
             continue
-        r1 = session.get(page_url,headers=headers)
-        soup1 = BeautifulSoup(r1.text,'html5lib')
-        jd = json.loads(soup1.find_all("script",{"type":"application/ld+json"})[1].text.replace('"City by the Bay"',''))
-        location_name = jd['name']
-        street_address = jd['address']['streetAddress']
-        city = jd['address']['addressLocality'].strip(",")
-        state = jd['address']['addressRegion']
-        zipp = jd['address']['postalCode']
-        temp_phone = jd['telephone'].replace("+1","")
-        phone = "("+temp_phone[:3]+")"+temp_phone[3:6]+"-"+temp_phone[6:]
-        location_type = "Ritz-Carlton Hotels"
-        try:
-            coord = json.loads(soup1.find("div",{"id":"poimap-canvas"})['data-map-settings'])
-            latitude = coord['mapCenter']['latitude']
-            longitude = coord['mapCenter']['latitude']
-        except:
-            latitude = "<MISSING>"
-            longitude = "<MISSING>"
-        store = []
-        store.append(base_url if base_url else '<MISSING>')
-        store.append(location_name if location_name else '<MISSING>')
-        store.append(street_address if street_address else '<MISSING>')
-        store.append(city if city else '<MISSING>')
-        store.append(state if state else '<MISSING>')
-        store.append(zipp if zipp else '<MISSING>')
-        store.append("US")
-        store.append('<MISSING>')
-        store.append(phone if phone else '<MISSING>')
-        store.append(location_type)
-        store.append(latitude if latitude else '<MISSING>')
-        store.append(longitude if longitude else '<MISSING>')
-        store.append('<MISSING>')
-        store.append(page_url)
-        store = [x.strip() if type(x) == str else x for x in store]
-        if store[2] in addressess:
+        loc_dom = etree.HTML(loc_response.text)
+        poi = loc_dom.xpath('//script[contains(text(), "address")]/text()')
+        if not poi:
             continue
-        addressess.append(store[2])
-        yield store
-    ca_r = session.get("https://www.ritzcarlton.com/en/hotels/canada",headers=headers)
-    ca_soup = BeautifulSoup(ca_r.text, 'lxml')
-    for i in ca_soup.find_all("div",{"class":"card-content"}):
-        page_url = i.find("a")['href']
-        r1 = session.get(page_url,headers=headers)
-        soup1 = BeautifulSoup(r1.text,'html5lib')
-        jd = json.loads(soup1.find_all("script",{"type":"application/ld+json"})[1].text.replace('"City by the Bay"',''))
-        location_name = jd['name'].replace("Montréal","Montreal")
-        street_address = jd['address']['streetAddress']
-        city = jd['address']['addressLocality'].strip(",").replace("Montréal","Montreal")
-        if city == "Toronto":
-            state = "ON"
-        else:
-            state = "QC"
-        zipp = jd['address']['postalCode'].replace("ON","").strip()
-        temp_phone = jd['telephone'].replace("+1","")
-        phone = "("+temp_phone[:3]+")"+temp_phone[3:6]+"-"+temp_phone[6:]
-        location_type = "Ritz-Carlton Hotels"
-        try:
-            coord = json.loads(soup1.find("div",{"id":"poimap-canvas"})['data-map-settings'])
-            latitude = coord['mapCenter']['latitude']
-            longitude = coord['mapCenter']['latitude']
-        except:
-            latitude = "<MISSING>"
-            longitude = "<MISSING>"
-        store = []
-        store.append(base_url if base_url else '<MISSING>')
-        store.append(location_name if location_name else '<MISSING>')
-        store.append(street_address if street_address else '<MISSING>')
-        store.append(city if city else '<MISSING>')
-        store.append(state if state else '<MISSING>')
-        store.append(zipp if zipp else '<MISSING>')
-        store.append("CA")
-        store.append('<MISSING>')
-        store.append(phone if phone else '<MISSING>')
-        store.append(location_type)
-        store.append(latitude if latitude else '<MISSING>')
-        store.append(longitude if longitude else '<MISSING>')
-        store.append('<MISSING>')
-        store.append(page_url)
-        store = [x.strip() if type(x) == str else x for x in store]
-        if store[2] in addressess:
+        poi = json.loads(poi[0].replace('"City by the Bay"', "City by the Bay"))
+
+        location_name = poi["name"]
+        location_name = location_name if location_name else "<MISSING>"
+        street_address = poi["address"]["streetAddress"]
+        street_address = street_address if street_address else "<MISSING>"
+        city = poi["address"]["addressLocality"]
+        if city.endswith(","):
+            city = city[:-1]
+        state = poi["address"].get("addressRegion")
+        state = state if state else "<MISSING>"
+        zip_code = poi["address"]["postalCode"]
+        zip_code = zip_code if zip_code else "<MISSING>"
+        if len(zip_code.split()) == 3:
+            state = zip_code.split()[0]
+            zip_code = " ".join(zip_code.split()[1:])
+        country_code = "<MISSING>"
+        store_number = "<MISSING>"
+        phone = poi["telephone"]
+        phone = phone if phone else "<MISSING>"
+        location_type = poi["@type"]
+
+        geo_response = session.get(store_url, headers=hdr)
+        geo_dom = etree.HTML(geo_response.text)
+        geo = geo_dom.xpath("//@data-map-settings")
+        if not geo:
             continue
-        addressess.append(store[2])
-        yield store
+        geo = json.loads(geo[0])
+        latitude = geo["mapCenter"]["latitude"]
+        longitude = geo["mapCenter"]["longitude"]
+        hours_of_operation = "<MISSING>"
+
+        item = [
+            domain,
+            store_url,
+            location_name,
+            street_address,
+            city,
+            state,
+            zip_code,
+            country_code,
+            store_number,
+            phone,
+            location_type,
+            latitude,
+            longitude,
+            hours_of_operation,
+        ]
+
+        items.append(item)
+
+    return items
+
+
 def scrape():
     data = fetch_data()
     write_output(data)
-scrape()
+
+
+if __name__ == "__main__":
+    scrape()

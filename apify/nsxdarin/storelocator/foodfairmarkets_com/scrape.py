@@ -39,7 +39,7 @@ def write_output(data):
 
 
 def fetch_data():
-    url = "https://api.freshop.com/1/stores?app_key=foodfair_market&has_address=true&limit=-1&token=c72377d6afbdea7fdebdf15fb0eedfb6"
+    url = "https://api.freshop.com/1/stores?app_key=foodfair_market&has_address=true&limit=-1&token=7ef808ec0aa226391feac9e87749ac3f"
     r = session.get(url, headers=headers)
     website = "foodfairmarkets.com"
     typ = "<MISSING>"

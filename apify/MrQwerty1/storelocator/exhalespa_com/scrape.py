@@ -63,6 +63,8 @@ def get_data(url):
     ).strip()
     line = tree.xpath("//div[@class='address']/p/text()")
     line = list(filter(None, [l.strip() for l in line]))
+    if not line:
+        return
 
     street_address = ", ".join(line[:-1]).strip() or "<MISSING>"
     line = line[-1]

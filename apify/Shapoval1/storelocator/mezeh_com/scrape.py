@@ -38,11 +38,21 @@ def fetch_data():
     locator_domain = "https://mezeh.com"
     page_url = "https://mezeh.com/locations/"
 
-    session = SgRequests()
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:84.0) Gecko/20100101 Firefox/84.0"
+    cookies = {
+        "visid_incap_2515619": "/J/3KrpARHyb1/hxT/2tIpJmaGAAAAAAQUIPAAAAAAAU+YXsXdDFPyV0odDvd6fx",
+        "incap_ses_1344_2515619": "fkxYcPO4byiUdNguBNmmEsgZamAAAAAARXCq/1CxURJnxhMUj5pqnw==",
     }
-    r = session.get(page_url, headers=headers)
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+        "Accept-Language": "ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3",
+        "Connection": "keep-alive",
+        "Referer": "https://mezeh.com/",
+        "Upgrade-Insecure-Requests": "0",
+        "TE": "Trailers",
+    }
+    session = SgRequests()
+    r = session.get(page_url, headers=headers, cookies=cookies)
     tree = html.fromstring(r.text)
     tag = {
         "Recipient": "recipient",

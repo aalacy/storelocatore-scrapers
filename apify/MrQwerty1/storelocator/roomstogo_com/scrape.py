@@ -58,11 +58,11 @@ def fetch_data():
         state_url = states.get(state)
         name = j.get("storeName") or ""
         if name:
-            location_name = f"{city} - {name} {location_type}"
+            location_name = f"Rooms To Go {location_type}"
             name = name.lower().replace(" ", "-")
             page_url = f"https://www.roomstogo.com/stores/{state_url}/{city_url}-{name}-{location_type.lower()}-{store_number}"
         else:
-            location_name = f"{city} {location_type}"
+            location_name = f"Rooms To Go {location_type}"
             page_url = f"https://www.roomstogo.com/stores/{state_url}/{city_url}-{location_type.lower()}-{store_number}"
         phone = j.get("phoneNumber") or "<MISSING>"
         loc = j.get("location")

@@ -85,7 +85,9 @@ def extract(location, store_number):
         page_url = f"https://nomnom-prod-api.blazepizza.com/restaurants/{store_number}"
         location_name = location.get("name", MISSING)
         location_type = MISSING
-        street_address = location.get("streetaddress")
+        street_address = location.get("streetaddress").replace(
+            " (Debit / Credit Only)", ""
+        )
         city = location.get("city")
         state = location.get("state")
         page_url = "https://www.blazepizza.com/locations/" + state + "/" + city

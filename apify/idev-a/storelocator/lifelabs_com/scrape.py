@@ -5,7 +5,7 @@ from sglogging import SgLogSetup
 from requests import exceptions  # noqa
 from urllib3 import exceptions as urllibException
 
-logger = SgLogSetup().get_logger("mycarecompass")
+logger = SgLogSetup().get_logger("lifelabs")
 
 headers = {
     "Accept": "application/json, text/plain, */*",
@@ -39,7 +39,7 @@ def payload(address):
 
 
 search = DynamicZipSearch(
-    country_codes=[SearchableCountries.USA],
+    country_codes=[SearchableCountries.CANADA, SearchableCountries.USA],
     max_radius_miles=None,
     max_search_results=None,
 )

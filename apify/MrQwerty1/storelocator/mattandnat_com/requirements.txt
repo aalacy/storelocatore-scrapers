@@ -1,0 +1,2 @@
+sgselenium==0.0.15
+lxml==4.6.2

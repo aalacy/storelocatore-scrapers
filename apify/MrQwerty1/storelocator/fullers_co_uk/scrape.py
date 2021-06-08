@@ -1,5 +1,6 @@
 import csv
 from sgrequests import SgRequests
+import cloudscraper
 
 
 def write_output(data):
@@ -38,6 +39,7 @@ def fetch_data():
     api_url = "https://www.fullers.co.uk/api/sitecore/findpubs?id=%7B07DC99EB-8AA2-42F4-B9A6-9D3648ABD465%7D&mode=LocationPub&filters=-1%2CStanding%2C&myPosition=(51.507351%2C+-0.127758)&position=(51.507351%2C+-0.127758)&nePosition=(52.68834732924637%2C+3.56090166796875)&swPosition=(50.29492984990391%2C+-3.81641766796875)&defaultRadius=&zoomLevel=8&findNearMe=false&pageHeading="
 
     session = SgRequests()
+    session = cloudscraper.create_scraper(sess=session)
     r = session.get(api_url)
     js = r.json()["pubs"]
 

@@ -66,9 +66,15 @@ def fetch_data():
         if not line:
             continue
 
-        street_address = line[0][:-1]
-        phone = line[-1]
-        line = line[1]
+        phone = "<MISSING>"
+        if line[-1][0].isdigit():
+            phone = line.pop()
+
+        street_address = ", ".join(line[:-1])
+        if street_address.endswith(","):
+            street_address = street_address[:-1]
+
+        line = line[-1]
         city = line.split(",")[0].strip()
         line = line.split(",")[1].strip()
         state = line.split()[0]
@@ -76,7 +82,7 @@ def fetch_data():
         country_code = "US"
         store_number = "<MISSING>"
 
-        text = "".join(d.xpath(".//strong/a/@href"))
+        text = "".join(d.xpath("./strong/a/@href"))
         latitude, longitude = get_coords_from_google_url(text)
         location_type = "<MISSING>"
 

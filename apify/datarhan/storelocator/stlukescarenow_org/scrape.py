@@ -79,6 +79,8 @@ def fetch_data():
         hoo = loc_dom.xpath('//div[label[contains(text(), "Hours")]]//text()')
         hoo = [e.strip() for e in hoo if e.strip()]
         hours_of_operation = " ".join(hoo[1:]) if hoo else "<MISSING>"
+        if hours_of_operation == "<MISSING>":
+            location_type = "Temporarily Closed"
 
         item = [
             domain,

@@ -5,6 +5,18 @@ from sglogging import sglog
 import us
 import lxml.html
 from sgselenium import SgChrome
+import time
+import ssl
+from sgscrape import sgpostal as parser
+
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
 
 website = "gloriajeans.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -44,13 +56,13 @@ def write_output(data):
         temp_list = []  # ignoring duplicates
         for row in data:
             comp_list = [
-                row[2].strip(),
-                row[3].strip(),
-                row[4].strip(),
-                row[5].strip(),
-                row[6].strip(),
-                row[8].strip(),
-                row[10].strip(),
+                row[2],
+                row[3],
+                row[4],
+                row[5],
+                row[6],
+                row[8],
+                row[10],
             ]
             if comp_list not in temp_list:
                 temp_list.append(comp_list)
@@ -61,21 +73,20 @@ def write_output(data):
 
 def fetch_data():
     # Your scraper here
-    loc_list = []
-
     with SgChrome() as driver:
         driver.get("https://www.gloriajeans.com/pages/store-locator")
+        time.sleep(60)
         stores_sel = lxml.html.fromstring(driver.page_source)
         stores = stores_sel.xpath('//div[@class="item thumbnail"]')
         for store in stores:
             page_url = "".join(
                 store.xpath(
-                    'div/div[@class="item-content"]/a[@class="linkdetailstore"]/@href'
+                    './/div[@class="item-content"]/a[contains(@class,"linkdetailstore")]/@href'
                 )
             ).strip()
             locator_domain = website
             location_name = "".join(
-                store.xpath('div/div[@class="item-content"]/label/strong/text()')
+                store.xpath('.//div[@class="item-content"]/label/strong/text()')
             ).strip()
             if location_name == "":
                 location_name = "<MISSING>"
@@ -86,17 +97,35 @@ def fetch_data():
                 )
             ).strip()
 
+            formatted_addr = parser.parse_address_usa(address)
+            street_address = formatted_addr.street_address_1
+            if formatted_addr.street_address_2:
+                street_address = street_address + ", " + formatted_addr.street_address_2
+
+            city = formatted_addr.city
+            city = city.split(",")[0].strip()
+            state = address.split(",")[-3].strip()
+            zip = address.split(",")[-2].strip()
+
             country_code = ""
             if "USA" in address or "United States" in address:
                 country_code = "US"
 
-            street_address = address.split(",")[0].strip()
-            city = "<MISSING>"
-            state = address.split(",")[-3].strip()
-            zip = address.split(",")[-2].strip()
+            if city:
+                street_address = address.title().split(f"{city},")[0].strip()
+
+            if city == state:
+                if "Center" in street_address:
+                    city = street_address.split("Center")[1].strip(", ").strip()
+                    street_address = street_address.split(f"{city},")[0].strip()
+                else:
+                    city = street_address.split(" ")[-1].strip(", ").strip()
+                    street_address = street_address.split(f"{city},")[0].strip()
+            street_address = street_address.strip(",")
+
             phone = "".join(
                 store.xpath(
-                    'div/div[@class="item-content"]/a[contains(@href,"tel:")]/text()'
+                    'div/div[@class="item-content"]//a[contains(@class,"phone-no")]/text()'
                 )
             ).strip()
 
@@ -132,6 +161,11 @@ def fetch_data():
 
             if len(page_url) > 0:
                 page_url = "https://www.gloriajeans.com" + page_url
+                if (
+                    page_url
+                    == "https://www.gloriajeans.com/apps/store-locator/chicago-ridge-mall.html"
+                ):
+                    state = "Illinois"
                 log.info(page_url)
                 store_req = session.get(page_url, headers=headers)
                 store_sel = lxml.html.fromstring(store_req.text)
@@ -150,8 +184,8 @@ def fetch_data():
                 hours_list = []
                 for hour in hours:
                     day = "".join(hour.xpath('th[@class="dayname"]/text()')).strip()
-                    time = "".join(hour.xpath("td/text()")).strip()
-                    hours_list.append(day + ":" + time)
+                    timee = "".join(hour.xpath("td/text()")).strip()
+                    hours_list.append(day + ":" + timee)
 
                 hours_of_operation = "; ".join(hours_list).strip()
 
@@ -177,8 +211,7 @@ def fetch_data():
                 longitude,
                 hours_of_operation,
             ]
-            loc_list.append(curr_list)
-    return loc_list
+            yield curr_list
 
 
 def scrape():

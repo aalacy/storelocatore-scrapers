@@ -72,10 +72,17 @@ def fetch_data():
                         )[0]
                         hours = (
                             hours.replace(',\n        "', "; ")
-                            .replace('"')[0]
+                            .replace("\\n", "")
+                            .replace("\\t", "")
+                            .replace('"', "'")
                             .replace("\\", "")
                             .replace("[", "")
                             .replace("]", "")
+                            .replace("'", "")
+                            .replace("{", "")
+                            .replace("  ", " ")
+                            .replace("  ", " ")
+                            .replace("\t", "")
                             .strip()
                         )
                         hours = (
@@ -136,10 +143,17 @@ def fetch_data():
                         )[0]
                         hours = (
                             hours.replace(',\n        "', "; ")
-                            .replace('"')[0]
+                            .replace("\\n", "")
+                            .replace("\\t", "")
+                            .replace('"', "'")
                             .replace("\\", "")
                             .replace("[", "")
                             .replace("]", "")
+                            .replace("'", "")
+                            .replace("{", "")
+                            .replace("  ", " ")
+                            .replace("  ", " ")
+                            .replace("\t", "")
                             .strip()
                         )
                         hours = (

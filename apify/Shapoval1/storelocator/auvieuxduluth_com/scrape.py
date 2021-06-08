@@ -51,7 +51,7 @@ def fetch_data():
 
         page_url = j.get("url")
         street_address = f"{j.get('address')} {j.get('address2')}".strip()
-        city = j.get("city")
+        city = "".join(j.get("city")).replace(",", "").strip()
         state = j.get("state")
         postal = j.get("zip")
         store_number = "<MISSING>"
