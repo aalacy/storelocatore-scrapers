@@ -5,6 +5,10 @@ from lxml import etree
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 from sgrequests import SgRequests
 
+from sglogging import sglog
+
+log = sglog.SgLogSetup().get_logger("doitbest.com")
+
 
 def write_output(data):
     with open("data.csv", mode="w", encoding="utf-8") as output_file:
@@ -73,6 +77,7 @@ def fetch_data():
         country_codes=[SearchableCountries.USA], max_radius_miles=50
     )
     for code in all_codes:
+        log.info(f"Fetching location for: {code}")
         body = {
             "StoreLocatorForm": {
                 "Location": code,
@@ -133,6 +138,7 @@ def fetch_data():
         latitude = latitude if latitude else "<MISSING>"
         longitude = poi["Longitude"]
         longitude = longitude if longitude else "<MISSING>"
+        all_codes.found_location_at(latitude, longitude)
         hours_of_operation = "<MISSING>"
 
         item = [

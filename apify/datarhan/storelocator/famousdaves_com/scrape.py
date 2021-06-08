@@ -73,6 +73,8 @@ def fetch_data():
             .split()[-1]
         )
         zip_code = zip_code if zip_code else "<MISSING>"
+        if len(zip_code) < 3:
+            zip_code = "<MISSING>"
         country_code = "<MISSING>"
         store_number = "<MISSING>"
         phone = poi_html.xpath('.//span[@class="location-store-phone-number"]/text()')
@@ -87,17 +89,32 @@ def fetch_data():
             '//div[@class="row location-store-hours"]//text()'
         )
         hours_of_operation = [
-            elem.strip().replace("\xa0", "")
+            elem.strip().replace("\xa0", " ")
             for elem in hours_of_operation
             if elem.strip()
         ]
         hours_of_operation = (
             " ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
         )
-        if not hours_of_operation.endswith("pm"):
-            hours_of_operation = " ".join(hours_of_operation.split()[:-1])
         if "SorryFolks!" in hours_of_operation:
             hours_of_operation = "<MISSING>"
+        if not hours_of_operation:
+            hours_of_operation = " ".join(
+                loc_dom.xpath('//div[@class="row location-store-hours"]/p/text()')[
+                    0
+                ].split()
+            )
+        hours_of_operation = (
+            hours_of_operation.split("-->")[-1]
+            .split("Go is available.")[-1]
+            .split("WE")[0]
+            .split("We've")[0]
+            .split("Opening on")[-1]
+            .split("Tax ")[0]
+            .split("To Go")[0]
+            .split("Temporarily closed")[0]
+            .split("Dining Room: ")[-1]
+        )
 
         item = [
             DOMAIN,

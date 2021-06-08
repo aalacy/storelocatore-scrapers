@@ -1,9 +1,19 @@
 import csv
+import ssl
+import time
 
 from datetime import datetime
 from lxml import html
 from sgrequests import SgRequests
 from sgscrape.sgpostal import parse_address, International_Parser
+from sgselenium import SgSelenium
+
+try:
+    _create_unverified_https_context = ssl._create_unverified_context
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context
 
 
 def write_output(data):
@@ -95,64 +105,26 @@ def fetch_data():
         session = SgRequests()
         r = session.get(apis_url, headers=headers)
         country_code = i
+        if country_code == "JP":
+            continue
         tree = html.fromstring(r.text)
-        divs = tree.xpath('//div[@class="store-name"]/a')
+        divs = tree.xpath('//div[@class="store-info"]')
         for d in divs:
-            page_url = "https://www.patagonia.com" + "".join(d.xpath(".//@href"))
-            if (
-                page_url.find(
-                    "https://www.patagonia.com/fcd-surfboards/store_1160244746.html"
-                )
-                != -1
-            ):
-                continue
-            if (
-                page_url.find(
-                    "https://www.patagonia.com/on/demandware.store/Sites-patagonia-us-Site/en_US/Page-Show?cid=store_206469445"
-                )
-                != -1
-            ):
-                continue
-            if (
-                page_url.find(
-                    "https://www.patagonia.com/on/demandware.store/Sites-patagonia-us-Site/en_US/Page-Show?cid=store_Patagonia-Tu-Cheng-Outlet"
-                )
-                != -1
-            ):
-                continue
-            session = SgRequests()
-            r = session.get(page_url, headers=headers)
-            tree = html.fromstring(r.text)
 
+            page_url = "https://www.patagonia.com" + "".join(
+                d.xpath('.//div[@class="store-name"]/a/@href')
+            )
             location_name = (
-                "".join(tree.xpath('//h1[@class="hero-main__headline  "]/text()'))
+                "".join(d.xpath('.//div[@class="store-name"]//text()'))
                 .replace("\n", "")
                 .strip()
-                or "<MISSING>"
             )
 
             ad = (
-                " ".join(tree.xpath('//div[@class="store-info-address"]//text()'))
-                .replace("\n", "")
-                .strip()
-                or "<MISSING>"
+                "".join(d.xpath('.//div[@class="store-addr"]/text()'))
+                + " "
+                + "".join(d.xpath('.//div[@class="store-location"]/text()'))
             )
-            if ad == "<MISSING>":
-                ad = (
-                    " ".join(
-                        tree.xpath(
-                            '//strong[contains(text(), "Address")]/following-sibling::text()[position()<3]'
-                        )
-                    )
-                    .replace("\n", "")
-                    .strip()
-                )
-            if ad == "":
-                continue
-            if ad.find("Phone") != -1:
-                ad = ad.split("Phone")[0].strip()
-            if ad.find("Tel") != -1:
-                ad = ad.split("Tel")[0].strip()
 
             adr = parse_address(International_Parser(), ad)
             street_address = (
@@ -165,33 +137,36 @@ def fetch_data():
             city = adr.city or "<MISSING>"
             state = adr.state or "<MISSING>"
             postal = adr.postcode or "<MISSING>"
-            store_number = "<MISSING>"
 
+            store_number = "<MISSING>"
+            stn = page_url.split("store_")[1].split(".html")[0].strip()
+            if stn.isdigit():
+                store_number = stn
             phone = (
-                "".join(tree.xpath('//div[@class="store-info-phone"]/a/text()'))
+                "".join(d.xpath('.//a[contains(@href, "tel")]/text()'))
+                .replace("p:", "")
+                .strip()
                 or "<MISSING>"
             )
-            if phone == "<MISSING>":
-                phone = (
-                    " ".join(
-                        tree.xpath(
-                            '//strong[contains(text(), "Address")]/following-sibling::text()'
-                        )
-                    )
-                    .replace("\n", "")
-                    .strip()
-                )
-            if phone.find("Phone") != -1:
-                phone = phone.split("Phone")[1].split("E")[0].replace(":", "").strip()
-            if phone.find("Tel") != -1:
-                phone = phone.split("Tel")[1].split("E")[0].replace(":", "").strip()
-            phone = phone.replace("email", "").replace("ephone", "").strip()
-            if phone.find("|") != -1:
-                phone = phone.split("|")[0].strip()
-            if phone.find("p:") != -1:
-                phone = phone.split("p:")[1].split("E")[0].strip()
-
             location_type = "Patagonia Retail Stores"
+            if (
+                page_url.find(
+                    "https://www.patagonia.com/on/demandware.store/Sites-patagonia-us-Site/en_US/Page-Show?cid=store_206469445"
+                )
+                != -1
+            ):
+                page_url = apis_url
+            if (
+                page_url.find(
+                    "https://www.patagonia.com/on/demandware.store/Sites-patagonia-us-Site/en_US/Page-Show?cid=store_Patagonia-Tu-Cheng-Outlet"
+                )
+                != -1
+            ):
+                page_url = apis_url
+
+            session = SgRequests()
+            r = session.get(page_url, headers=headers)
+            tree = html.fromstring(r.text)
 
             hours_of_operation = (
                 " ".join(
@@ -215,6 +190,22 @@ def fetch_data():
                     or "<MISSING>"
                 )
             hours_of_operation = hours_of_operation.replace(": Monday", "Monday")
+            if hours_of_operation == "<MISSING>" and country_code == "US":
+                driver = SgSelenium().firefox()
+                driver.get(page_url)
+                time.sleep(5)
+                page_source = driver.page_source
+                a = html.fromstring(page_source)
+                hours_of_operation = (
+                    " ".join(
+                        a.xpath(
+                            "//div[@class='store-details-hours--full store-hours-details-js']/p/text()"
+                        )
+                    )
+                    .replace("\n", "")
+                    .strip()
+                    or "<MISSING>"
+                )
 
             latitude = (
                 "".join(tree.xpath('//div[@class="store-locator-map"]/@data-latitude'))

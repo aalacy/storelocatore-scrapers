@@ -43,7 +43,6 @@ def fetch_data():
         "Connection": "keep-alive",
         "Content-Length": "65",
         "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
-        "Cookie": "PHPSESSID=e2cba0763a7db882913827a366d2ad57; _gcl_au=1.1.1726074005.1609905050; _ga=GA1.2.1727258516.1609905050; _gid=GA1.2.919295008.1609905050; _fbp=fb.1.1609905051574.1605161732; nmstat=1609905115034; _hjTLDTest=1; _hjid=a9fff4d2-9609-490d-a539-ec2f2014f1d5; _hjFirstSeen=1; _hjIncludedInPageviewSample=1; _hjAbsoluteSessionInProgress=0; _hjIncludedInSessionSample=0; _gat_UA-1757587-27=1; PHPSESSID_2=6CSHS4VeqFdNnLcYzrsD96MszsJ3j1JkZkg%2F6Nytxz4u6uQLGPlx%2FREyIOKhxsDQzEvrbuZ1EISqNQPDH1j06Q%3D%3D",
         "Host": "www.snapfitness.com",
         "Origin": "https://www.snapfitness.com",
         "Referer": "https://www.snapfitness.com/us/gyms/",
@@ -59,8 +58,9 @@ def fetch_data():
     base_link = "https://www.snapfitness.com/us/gyms/relevantLocations"
 
     payload = {
-        "lat": "40.3649407",
-        "long": "-108.9700938",
+        "lat": "44.977753",
+        "limitToCountry": "true",
+        "long": "-93.265015",
         "radius": "4236.899793572078",
         "search": "",
     }
@@ -68,8 +68,8 @@ def fetch_data():
     res_json = session.post(base_link, headers=headers, data=payload).json()
 
     data = []
-    for loc in res_json:
-
+    for i in res_json:
+        loc = res_json[i]
         location_name = "Snap Fitness " + loc["Name"].strip()
 
         phone_number = loc["PhoneNumber"]

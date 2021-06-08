@@ -74,11 +74,11 @@ def fetch_data():
             for d in days:
                 days = d
                 time = j.get(f"{d}Hours")
-                line = f"{days} {time}".replace("NO DATA", "Closed")
+                line = f"{days} {time}".replace("NO DATA", "<MISSING>")
                 tmp.append(line)
             hours_of_operation = ";".join(tmp) or "<MISSING>"
-            if hours_of_operation.count("Closed") == 7:
-                hours_of_operation = "Closed"
+            if hours_of_operation.count("<MISSING>") == 7:
+                hours_of_operation = "<MISSING>"
 
             row = [
                 locator_domain,
