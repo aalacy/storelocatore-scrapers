@@ -41,7 +41,7 @@ def fetch_data():
     urls = ["https://www.carquest.com/stores/canada"]
     states = []
     cities = []
-    locs = []
+    locs = ["https://www.carquest.com/stores/on/brampton/15641"]
     allstores = []
     website = "carquest.ca"
     typ = "<MISSING>"

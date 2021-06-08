@@ -88,6 +88,7 @@ def fetch_data():
             "".join(js.get("body"))
             .split("__Store Hours:__")[1]
             .replace("\n", "")
+            .replace("<br>", "")
             .split("Now")[0]
             .strip()
         )
