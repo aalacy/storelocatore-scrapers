@@ -64,19 +64,35 @@ def fetch_data():
         lat = soup.find("div", {"class": "marker"})["data-lat"]
         longt = soup.find("div", {"class": "marker"})["data-lng"]
         hourlist = hours.replace("\xa0", " ").strip().split("Day:")[1:]
-        hours = ""
-        for hr in hourlist:
 
-            try:
-                hours = (
-                    hours
-                    + hr.split("Lobby", 1)[0]
-                    + " "
-                    + hr.split("Lobby Hours:", 1)[1].split("Drive", 1)[0].strip()
-                    + " "
-                )
-            except:
-                hours = "<MISSING>"
+        if "Drive-Up" in title:
+            hours = ""
+            for hr in hourlist:
+
+                try:
+                    hours = (
+                        hours
+                        + hr.split("Drive", 1)[0]
+                        + " "
+                        + hr.split("Drive", 1)[1].split("Hours:", 1)[1].strip()
+                        + " "
+                    )
+                except:
+                    hours = "<MISSING>"
+        else:
+            hours = ""
+            for hr in hourlist:
+
+                try:
+                    hours = (
+                        hours
+                        + hr.split("Lobby", 1)[0]
+                        + " "
+                        + hr.split("Lobby Hours:", 1)[1].split("Drive", 1)[0].strip()
+                        + " "
+                    )
+                except:
+                    hours = "<MISSING>"
         data.append(
             [
                 "https://www.epnb.com/",
@@ -92,7 +108,7 @@ def fetch_data():
                 ltype,
                 lat,
                 longt,
-                hours,
+                hours.strip(),
             ]
         )
 
