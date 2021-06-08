@@ -70,9 +70,12 @@ def fetch_data():
                 },
             }
         }
+        # print(state,session.post(url, headers=headers, verify=False, json=myobj).json()['response']["collectioncount"])
+        # continue
         loclist = session.post(url, headers=headers, verify=False, json=myobj).json()[
             "response"
         ]["collection"]
+
         for loc in loclist:
 
             title = loc["name"]
@@ -116,7 +119,7 @@ def fetch_data():
             if link in titlelist:
                 continue
             titlelist.append(link)
-            if "OPEN" in loc["status"]:
+            if True:
                 data.append(
                     [
                         "https://www.crossroadstreatmentcenters.com/",
