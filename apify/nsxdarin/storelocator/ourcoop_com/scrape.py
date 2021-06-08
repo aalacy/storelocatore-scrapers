@@ -78,7 +78,7 @@ def fetch_data():
                 add = line2.split(
                     '<span class="fa fa-location-pin m-location-info__icon"></span>'
                 )[1].split("<")[0]
-                addinfo = line2.split("<br/>")[1].split("<")[0].strip()
+                addinfo = line2.split("<br />")[1].split("<")[0].strip()
                 city = addinfo.split(",")[0]
                 state = addinfo.split(",")[1].strip().split(" ")[0]
                 zc = addinfo.rsplit(" ", 1)[1]
