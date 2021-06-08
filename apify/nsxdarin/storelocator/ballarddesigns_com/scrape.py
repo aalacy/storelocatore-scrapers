@@ -97,10 +97,11 @@ def fetch_data():
                     )
                 except:
                     hours = (
-                        line2.split("<!--<p>")[1]
-                        .split("</p> -->")[0]
-                        .replace("<br />", "; ")
-                        .replace("<br>", "; ")
+                        line2.split("Regular Store Hours:</h5>")[1]
+                        .split("</div>")[0]
+                        .strip()
+                        .replace("<p>", "")
+                        .replace("</p>", "")
                     )
                 hours = (
                     hours.replace("  ", " ")
@@ -111,6 +112,8 @@ def fetch_data():
                     .replace("  ", " ")
                     .replace("  ", " ")
                     .replace("\t", "")
+                    .replace("<br />", "; ")
+                    .replace("<br>", "; ")
                 )
         if "</p></div>" in hours:
             hours = hours.split("</p></div>")[0]
