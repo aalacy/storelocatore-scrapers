@@ -88,17 +88,14 @@ def fetch_data():
             )
         if hours_of_operation.find("Check back for updates!") != -1:
             hours_of_operation = "Coming Soon"
-        if hours_of_operation.find("Physical & Hand Therapy") != -1:
-            hours_of_operation = (
-                hours_of_operation.split("Primary Care:")[1]
-                .split("Physical & Hand Therapy")[0]
-                .strip()
-            )
         hours_of_operation = (
             hours_of_operation.replace("Urgent Care:", "")
             .replace("Primary Care:", "")
+            .replace("Physical & Hand Therapy:", "")
             .strip()
         )
+        if hours_of_operation.find("This location is closed") != -1:
+            hours_of_operation = hours_of_operation.split(".")[2].strip()
 
         row = [
             locator_domain,
