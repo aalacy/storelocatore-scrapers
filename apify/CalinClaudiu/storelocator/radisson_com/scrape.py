@@ -1,10 +1,11 @@
 from sgscrape import simple_scraper_pipeline as sp
 from sglogging import sglog
-from sgrequests import SgRequests
 from bs4 import BeautifulSoup as b4
 import asyncio
-import httpx
 import os
+
+os.environ["HTTPX_LOG_LEVEL"] = "trace"
+import httpx
 import json
 import time
 
@@ -32,33 +33,93 @@ def set_proxies():
 proxies = set_proxies()
 
 
-async def fetch_data(index: int, url: str) -> dict:
-    headers = {
-        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
-    }
-    timeout = httpx.Timeout(60.0, connect=120.0)
+async def get_main(url, headers):
+    async with httpx.AsyncClient(
+        proxies=proxies, headers=headers, timeout=60
+    ) as client:
+        response = None
+        response = await client.get(url)
+        return response.json()
+
+
+def no_json(soup):
+    soup = b4(soup, "lxml")
+    k = {}
+    k["mainEntity"] = {}
+    k["mainEntity"]["address"] = {}
+    try:
+        address = soup.find(
+            "span",
+            {"class": lambda x: x and all(i in x for i in ["item-info", "t-address"])},
+        ).text.strip()
+    except Exception:
+        address = "<MISSING>"
+
+    try:
+        telephone = soup.find(
+            "span",
+            {"class": lambda x: x and all(i in x for i in ["item-info", "t-phone"])},
+        ).text.strip()
+    except Exception:
+        telephone = "<MISSING>"
+
+    try:
+        city = soup.find("span", {"class": "t-city"})
+    except Exception:
+        city = "<MISSING>"
+
+    try:
+        state = soup.find("span", {"class": "t-state"})
+    except Exception:
+        state = "<MISSING>"
+
+    try:
+        zipcode = soup.find("span", {"class": "t-zip"})
+    except Exception:
+        zipcode = "<MISSING>"
+
+    try:
+        country = soup.find("span", {"class": "t-country"})
+    except Exception:
+        country = "<MISSING>"
+
+    k["mainEntity"]["address"]["streetAddress"] = address
+    k["mainEntity"]["address"]["telephone"] = []
+    k["mainEntity"]["address"]["telephone"].append(telephone)
+    k["mainEntity"]["address"]["addressLocality"] = city
+    k["mainEntity"]["address"]["addressRegion"] = state
+    k["mainEntity"]["address"]["postalCode"] = zipcode
+    k["mainEntity"]["address"]["addressCountry"] = country
+    return k
+
+
+async def fetch_data(index: int, url: str, headers) -> dict:
     data = {}
     if len(url) > 0:
         async with httpx.AsyncClient(
-            proxies=proxies, headers=headers, timeout=timeout
+            proxies=proxies, headers=headers, timeout=None
         ) as client:
             response = await client.get(url)
             soup = b4(response.text, "lxml")
             logzilla.info(f"URL\n{url}\nLen:{len(response.text)}\n")
-            logzilla.info(f"Content\n{response.text}\n\n")
-            data = json.loads(
-                str(
-                    soup.find(
-                        "script",
-                        {"type": "application/ld+json", "id": "schema-webpage"},
-                    ).text
+            if len(response.text) < 400:
+                logzilla.info(f"Content\n{response.text}\n\n")
+            try:
+                data = json.loads(
+                    str(
+                        soup.find(
+                            "script",
+                            {"type": "application/ld+json", "id": "schema-webpage"},
+                        ).text
+                    )
+                    .replace("\u0119", "e")
+                    .replace("\u011f", "g")
+                    .replace("\u0144", "n")
+                    .replace("\u0131", "i"),
+                    strict=False,
                 )
-                .replace("\u0119", "e")
-                .replace("\u011f", "g")
-                .replace("\u0144", "n")
-                .replace("\u0131", "i"),
-                strict=False,
-            )
+            except Exception:
+                data = no_json(response.text)
             data["index"] = index
             data["requrl"] = url
             data["STATUS"] = True
@@ -70,18 +131,17 @@ async def fetch_data(index: int, url: str) -> dict:
     return data
 
 
-async def get_brand(brand_code, brand_name, url):
-    url = url + brand_code
+async def get_brand(brand_code, brand_name, url, url2):
 
     headers = {}
-    headers["authority"] = "www.radissonhotels.com"
+    headers["authority"] = str(url).replace("https://", "")
     headers["method"] = "GET"
     headers["path"] = "/zimba-api/destinations/hotels?brand=" + brand_code
     headers["scheme"] = "https"
     headers["accept"] = "application/json, text/plain, */*"
     headers["accept-encoding"] = "gzip, deflate, br"
     headers["accept-language"] = "en-us"
-    headers["referer"] = "https://www.radissonhotels.com/en-us/destination"
+    headers["referer"] = str("{}/en-us/destination").format(url)
     headers["sec-fetch-dest"] = "empty"
     headers["sec-fetch-mode"] = "cors"
     headers["sec-fetch-site"] = "same-origin"
@@ -89,8 +149,7 @@ async def get_brand(brand_code, brand_name, url):
         "user-agent"
     ] = "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.66 Safari/537.36"
 
-    session = SgRequests()
-    son = session.get(url, headers=headers).json()
+    son = await get_main(str(url + url2 + brand_code), headers)
     task_list = []
     results = []
     chunk_size = 10
@@ -100,7 +159,7 @@ async def get_brand(brand_code, brand_name, url):
     global EXPECTED_TOTAL
     EXPECTED_TOTAL += total_records
     for index, record in enumerate(son["hotels"]):
-        task_list.append(fetch_data(index, record["overviewPath"]))
+        task_list.append(fetch_data(index, record["overviewPath"], headers))
         if index % chunk_size == 0 and last_chunk != index:
             last_tick = time.monotonic()
             last_chunk = index
@@ -247,9 +306,10 @@ def clean_record(k):
 
 def start():
     urls = [
-        "https://www.radissonhotelsamericas.com/zimba-api/destinations/hotels?brand=",
-        "https://www.radissonhotels.com/zimba-api/destinations/hotels?brand=",
+        "https://www.radissonhotelsamericas.com",
+        "https://www.radissonhotels.com",
     ]
+    url2 = "/zimba-api/destinations/hotels?brand="
     brands = [
         {"code": "pii", "name": "Park Inn by Radisson"},
         {"code": "rdb", "name": "Radisson Blu"},
@@ -271,7 +331,8 @@ def start():
                 get_brand(
                     brand["code"],
                     brand["name"],
-                    "https://www.radissonhotels.com/zimba-api/destinations/hotels?brand=",
+                    url,
+                    url2,
                 )
             )
             for i in data:
