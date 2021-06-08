@@ -1,4 +1,3 @@
-import json
 from sglogging import sglog
 from bs4 import BeautifulSoup
 from sgrequests import SgRequests
@@ -24,26 +23,19 @@ def fetch_data():
         url = "https://www.firsthorizon.com/Support/Contact-Us/Location-Listing"
         r = session.get(url, headers=headers)
         soup = BeautifulSoup(r.text, "html.parser")
-        loclist = soup.findAll(
-            "section",
-            {"class": "ftb-accordion-listing-item js-accordion js-location-list"},
-        )
+        loclist = soup.findAll("section", {"class": "ftb-accordion-listing-item js-accordion js-location-list"})
         for loc in loclist:
             location_name = loc.find("h2").text
             log.info(location_name)
-            address = (
-                loc.find("div", {"class": "ftb-listing-item__content"})
-                .get_text(separator="|", strip=True)
-                .split("|")
-            )
+            address = loc.find("div", {"class": "ftb-listing-item__content"}).get_text(separator='|', strip=True).split('|')
             phone = address[-1]
             street_address = address[0]
             address = address[1].split(",")
             city = address[0]
-            address = address[1].split()
+            address= address[1].split()
             state = address[0]
-            zip_postal = address[1]
-            country_code = "US"
+            zip_postal= address[1]
+            country_code="US"
             hours_of_operation = " ".join(x.text for x in loc.findAll("li"))
             identity = (
                 str(zip_postal)
