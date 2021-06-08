@@ -40,7 +40,6 @@ def write_output(data):
 
 
 def fetch_data():
-    locs = []
     url = "https://www.bimart.com/api/commerce/storefront/locationUsageTypes/SP/locations/?filter=tenant~siteId%20eq%2049677%20and%20locationType.Code+eq+MS%20and%20geo+near(45.6401259685065,-122.6413462660265,16000934)"
     r = session.get(url, headers=headers)
     website = "bimart.com"
