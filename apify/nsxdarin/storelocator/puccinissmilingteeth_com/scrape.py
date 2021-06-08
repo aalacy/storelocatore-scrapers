@@ -39,6 +39,37 @@ def fetch_data():
     r = session.get(url, headers=headers, verify=False)
     if r.encoding is None:
         r.encoding = "utf-8"
+    website = "puccinissmilingteeth.com"
+    lat = "<MISSING>"
+    country = "US"
+    lng = "<MISSING>"
+    hours = "<MISSING>"
+    store = "<MISSING>"
+    typ = "<MISSING>"
+    lurl = "https://www.puccinispizzapasta.com/locations"
+    zc = "<MISSING>"
+    name = "West Lafayette"
+    add = "300 Brown St"
+    city = "West Lafayette"
+    state = "IN"
+    zc = "47906"
+    phone = "7657465000"
+    yield [
+        website,
+        lurl,
+        name,
+        add,
+        city,
+        state,
+        zc,
+        country,
+        store,
+        phone,
+        typ,
+        lat,
+        lng,
+        hours,
+    ]
     for line in r.iter_lines(decode_unicode=True):
         if "INDIANAPOLIS, IN<br /></strong>" in line:
             line = line.replace("</a>Oaklandon", "</a><strong>Oaklandon")
@@ -54,12 +85,20 @@ def fetch_data():
                     hours = "<MISSING>"
                     store = "<MISSING>"
                     typ = "<MISSING>"
-                    lurl = "<MISSING>"
-                    zc = "<MISSING>"
-                    add = item.split('target="_blank">')[1].split("<")[0]
+                    lurl = "https://www.puccinispizzapasta.com/locations"
+                    rawadd = (
+                        item.split('target="_blank">')[1]
+                        .split("tel:")[1]
+                        .split(">")[3]
+                        .split("<")[0]
+                    )
+                    add = rawadd.split(",")[0]
+                    zc = rawadd.rsplit(" ", 1)[1]
                     phone = item.split('href="tel:')[1].split('"')[0]
                     country = "US"
                     name = name.replace(" at ", "")
+                    if "86th St" in add:
+                        name = "Greenbriar"
                     yield [
                         website,
                         lurl,
@@ -89,12 +128,20 @@ def fetch_data():
                     hours = "<MISSING>"
                     store = "<MISSING>"
                     typ = "<MISSING>"
-                    lurl = "<MISSING>"
-                    zc = "<MISSING>"
-                    add = item.split('target="_blank">')[1].split("<")[0]
+                    lurl = "https://www.puccinispizzapasta.com/locations"
+                    rawadd = (
+                        item.split('target="_blank">')[1]
+                        .split("tel:")[1]
+                        .split(">")[3]
+                        .split("<")[0]
+                    )
+                    add = rawadd.split(",")[0]
+                    zc = rawadd.rsplit(" ", 1)[1]
                     phone = item.split('href="tel:')[1].split('"')[0]
                     country = "US"
                     add = add.replace("&rsquo;", "'")
+                    if "86th St" in add:
+                        name = "Greenbriar"
                     yield [
                         website,
                         lurl,
@@ -124,8 +171,15 @@ def fetch_data():
                     hours = "<MISSING>"
                     store = "<MISSING>"
                     typ = "<MISSING>"
-                    lurl = "<MISSING>"
-                    zc = "<MISSING>"
+                    lurl = "https://www.puccinispizzapasta.com/locations"
+                    rawadd = (
+                        item.split('target="_blank">')[1]
+                        .split("tel:")[1]
+                        .split(">")[3]
+                        .split("<")[0]
+                    )
+                    add = rawadd.split(",")[0]
+                    zc = rawadd.rsplit(" ", 1)[1]
                     add = item.split('target="_blank">')[1].split("<")[0]
                     phone = item.split('href="tel:')[1].split('"')[0]
                     country = "US"
