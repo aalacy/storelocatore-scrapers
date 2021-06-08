@@ -1,7 +1,6 @@
 import csv
 from sglogging import sglog
 from sgrequests import SgRequests
-from bs4 import BeautifulSoup
 
 session = SgRequests()
 website = "americanfreight_com"
