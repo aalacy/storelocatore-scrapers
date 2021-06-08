@@ -71,37 +71,54 @@ def fetch_data():
 
         location_name = " ".join(list(base.h1.stripped_strings))
         base.find("h4", attrs={"data-uialign": "center"})
-        raw_data = list(
-            base.find_all("h4", attrs={"data-uialign": "center"})[-1].stripped_strings
-        )
 
         city = location_name.split(" in")[1].split(",")[0].strip()
         state = location_name.split(" in")[1].split(",")[1].strip()
-        street_address = raw_data[0].split(city + ",")[0].strip()
 
-        if state in raw_data[0]:
-            zip_code = raw_data[0].split(state)[-1].strip()
-        elif state in raw_data[1]:
-            zip_code = raw_data[1].split(state)[-1].strip()
+        raw_data = list(
+            base.find_all("h4", attrs={"data-uialign": "center"})[-1].stripped_strings
+        )
+        if len(raw_data) > 1:
+            street_address = raw_data[0].split(city + ",")[0].strip()
+
+            if state in raw_data[0]:
+                zip_code = raw_data[0].split(state)[-1].strip()
+            elif state in raw_data[1]:
+                zip_code = raw_data[1].split(state)[-1].strip()
+            else:
+                zip_code = "<MISSING>"
+
+            phone = raw_data[-2]
+
+            try:
+                hours_of_operation = " ".join(
+                    list(base.find(id="main").stripped_strings)
+                )
+            except:
+                hours_of_operation = "<MISSING>"
         else:
-            zip_code = "<MISSING>"
+            raw_data = base.find(class_="m-font-size-11 font-size-14").text.strip()
+            street_address = raw_data.split(city + ",")[0].replace(",", "").strip()
+
+            if state in raw_data:
+                zip_code = raw_data.split(state)[-1].strip()
+            elif state in raw_data:
+                zip_code = raw_data.split(state)[-1].strip()
+            else:
+                zip_code = "<MISSING>"
+
+            phone = base.find(class_="m-font-size-14 font-size-18").text.strip()
+            hours_of_operation = base.find_all(class_="dmNewParagraph")[3].get_text(" ")
 
         country_code = "US"
         store_number = "<MISSING>"
         location_type = "<MISSING>"
-
-        phone = raw_data[-2]
 
         geo = re.findall(r"[0-9]{2}\.[0-9]+,-[0-9]{2,3}\.[0-9]+", str(base))[0].split(
             ","
         )
         latitude = geo[0]
         longitude = geo[1]
-
-        try:
-            hours_of_operation = " ".join(list(base.find(id="main").stripped_strings))
-        except:
-            hours_of_operation = "<MISSING>"
 
         data.append(
             [

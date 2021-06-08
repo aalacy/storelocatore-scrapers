@@ -1,1 +1,1 @@
---ignore StreetAddressHasNumber --ignore CentroidValidator (['OK' 'IL'] not found)
+--ignore StreetAddressHasNumber --ignore StateLevelCountValidator (['OK' 'IL'] not found)

@@ -41,7 +41,7 @@ def fetch_data():
     urls = ["https://www.carquest.com/stores/canada"]
     states = []
     cities = []
-    locs = []
+    locs = ["https://www.carquest.com/stores/on/brampton/15641"]
     allstores = []
     website = "carquest.ca"
     typ = "<MISSING>"
@@ -51,19 +51,19 @@ def fetch_data():
         if r.encoding is None:
             r.encoding = "utf-8"
         for line in r.iter_lines(decode_unicode=True):
-            if '<a class="Directory-listLink" href="../' in line:
-                items = line.split('<a class="Directory-listLink" href="../')
+            if '<a class="Directory-listLink" href="' in line:
+                items = line.split('<a class="Directory-listLink" href="')
                 for item in items:
                     if 'data-ya-track="todirectory"' in item:
                         count = item.split('data-count="(')[1].split(")")[0]
                         if count != "1":
                             states.append(
-                                "https://www.carquest.com/"
+                                "https://www.carquest.com/stores/"
                                 + item.split('"')[0].replace("..", "")
                             )
                         else:
                             locs.append(
-                                "https://www.carquest.com/"
+                                "https://www.carquest.com/stores/"
                                 + item.split('"')[0]
                                 .replace("..", "")
                                 .replace("&#39;", "'")
@@ -81,12 +81,12 @@ def fetch_data():
                         count = item.split('data-count="(')[1].split(")")[0]
                         if count != "1":
                             cities.append(
-                                "https://www.carquest.com/"
+                                "https://www.carquest.com/stores/"
                                 + item.split('"')[0].replace("..", "")
                             )
                         else:
                             locs.append(
-                                "https://www.carquest.com/"
+                                "https://www.carquest.com/stores/"
                                 + item.split('"')[0]
                                 .replace("..", "")
                                 .replace("&#39;", "'")
@@ -103,7 +103,7 @@ def fetch_data():
                 for item in items:
                     if "Store Details" in item:
                         locs.append(
-                            "https://www.carquest.com/"
+                            "https://www.carquest.com/stores"
                             + item.split('"')[0].replace("&#39;", "'")
                         )
     for loc in locs:

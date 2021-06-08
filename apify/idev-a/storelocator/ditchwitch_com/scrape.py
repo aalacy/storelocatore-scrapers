@@ -1,6 +1,7 @@
 from sgscrape import simple_scraper_pipeline as sp
 from sgrequests import SgRequests
-from sgzip.dynamic import DynamicZipSearch, SearchableCountries
+from sgzip.dynamic import SearchableCountries
+from sgzip.static import static_zipcode_list
 from sglogging import SgLogSetup
 
 logger = SgLogSetup().get_logger("ditchwitch")
@@ -12,31 +13,26 @@ headers = {
 locator_domain = "https://www.ditchwitch.com"
 base_url = "https://www.ditchwitch.com/find-a-dealer"
 
-search = DynamicZipSearch(
-    country_codes=[SearchableCountries.USA],
-    max_radius_miles=None,
-    max_search_results=None,
+search = static_zipcode_list(
+    country_code=SearchableCountries.USA,
+    radius=3,
 )
 
 
 def fetch_data():
     # Need to add dedupe. Added it in pipeline.
     session = SgRequests(proxy_rotation_failure_threshold=20)
-    maxZ = search.items_remaining()
     total = 0
     for zip in search:
-        if search.items_remaining() > maxZ:
-            maxZ = search.items_remaining()
         logger.info(("Pulling zip Code %s..." % zip))
         url = f"https://www.ditchwitch.com/wtgi.php?ajaxPage&ajaxAddress={zip}"
-        locations = session.get(url, headers=headers, timeout=15).json()
+        res = session.get(url, headers=headers, timeout=15)
+        if res.status_code != 200:
+            continue
+        locations = res.json()
         if "dealers" in locations:
             total += len(locations["dealers"])
             for loc in locations["dealers"]:
-                search.found_location_at(
-                    loc["latitude"],
-                    loc["longitude"],
-                )
                 try:
                     mon = "Mon " + loc["mon_open"] + "-" + loc["mon_close"]
                     tue = "; Tue " + loc["tue_open"] + "-" + loc["tue_close"]
@@ -50,15 +46,11 @@ def fetch_data():
                     hours_of_operation = "<MISSING>"
 
                 loc["hours_of_operation"] = hours_of_operation
+                loc["state"] = loc["state"] or "<MISSING>"
                 loc["street_address"] = loc["address1"] + " " + loc.get("address2", "")
                 yield loc
-            progress = (
-                str(round(100 - (search.items_remaining() / maxZ * 100), 2)) + "%"
-            )
 
-            logger.info(
-                f"found: {len(locations['dealers'])} | total: {total} | progress: {progress}"
-            )
+            logger.info(f"found: {len(locations['dealers'])} | total: {total}")
 
 
 def scrape():

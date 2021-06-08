@@ -63,6 +63,10 @@ def fetchData():
             country_code = MISSING
         try:
             zip_postal = data["Zipcode"]
+            if zip_postal == "-":
+                zip_postal = MISSING
+            elif zip_postal == "NA":
+                zip_postal = MISSING
         except:
             zip_postal = MISSING
         try:
@@ -70,10 +74,14 @@ def fetchData():
         except:
             city = MISSING
         try:
-            state = data["ProvinceState"]
+            state = data["ProvinceState"].replace("0", MISSING)
+            if state == "-":
+                state = MISSING
         except:
             try:
-                state = data["ProvinceStateExt"]
+                state = data["ProvinceStateExt"].replace("0", MISSING)
+                if state == "-":
+                    state = MISSING
             except:
                 state = MISSING
         try:
