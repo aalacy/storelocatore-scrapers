@@ -89,6 +89,8 @@ def fetch_data():
                 else:
                     hours = hours + "; " + hrs
         country = "US"
+        if "denver-international-airport" in loc:
+            phone = "303-342-6612"
         yield [
             website,
             loc,
