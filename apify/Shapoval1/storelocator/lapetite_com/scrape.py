@@ -211,7 +211,7 @@ def fetch_data():
     }
     session = SgRequests()
     r = session.get(
-        f"https://www.lapetite.com/locations/search-results-other-brands-paged-json/?location=NY&range=40&skip=0&top=1000",
+        "https://www.lapetite.com/locations/search-results-other-brands-paged-json/?location=NY&range=40&skip=0&top=1000",
         headers=headers,
     )
     js = r.json()["Items"]
