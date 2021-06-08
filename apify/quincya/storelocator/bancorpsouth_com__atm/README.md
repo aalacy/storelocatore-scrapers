@@ -1,1 +1,1 @@
---ignore StateLevelCountValidator (Confirmed on website)
+--ignore LatLngDuplicationValidator (Confirmed on website)
