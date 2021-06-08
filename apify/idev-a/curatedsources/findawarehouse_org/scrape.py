@@ -31,6 +31,7 @@ def write_output(data):
                 "longitude",
                 "hours_of_operation",
                 "brand_website",
+                "raw_address",
             ]
         )
         # Body
@@ -118,7 +119,7 @@ def _detail(_, json_locations, session):
         locator_domain,
         page_url,
         name,
-        street_address,
+        street_address or "<MISSING>",
         addr.city,
         addr.state,
         addr.postcode,
@@ -130,6 +131,7 @@ def _detail(_, json_locations, session):
         longitude,
         "<MISSING>",
         brand_website,
+        " ".join(_addr[:2]),
     ]
 
 
