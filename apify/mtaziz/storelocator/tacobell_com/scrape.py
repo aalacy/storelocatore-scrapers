@@ -54,12 +54,12 @@ def get_hoo(data_hrs):
 # The following settings for Dynamic Search produces 6989 stores
 # which looks like expected results as far as the store count in the US is concerned
 
-# search = DynamicGeoSearch(
-#             country_codes=[SearchableCountries.USA],
-#             max_radius_miles=20,
-#             max_search_results=50,
-#             granularity=Grain_4(),
-#         )
+search = DynamicGeoSearch(
+    country_codes=[SearchableCountries.USA],
+    max_radius_miles=20,
+    max_search_results=50,
+    granularity=Grain_4(),
+)
 
 
 def fetch_data():
