@@ -52,7 +52,7 @@ def _hours_phone(temp, city, state):
 def fetch_data():
     locator_domain = "https://www.newportcreamery.com/"
     page_url = "https://www.newportcreamery.com/locations"
-    base_url = "https://siteassets.parastorage.com/pages/pages/thunderbolt?beckyExperiments=specs.thunderbolt.stylableCssPerComponent%3Atrue%2Cspecs.thunderbolt.addressInputAtlasProvider"
+    base_url = "https://siteassets.parastorage.com/pages/pages/thunderbolt?beckyExperiments=specs.thunderbolt.addressInputAtlasP"
     with SgChrome() as driver:
         driver.get(page_url)
         exist = False
@@ -75,6 +75,8 @@ def fetch_data():
                     blocks = []
                     store = []
                     for x, tt in enumerate(temp):
+                        if x == len(temp) - 1:
+                            store.append(tt)
                         if tt == "\u200b" or x == len(temp) - 1:
                             if store:
                                 blocks.append(store)
@@ -82,7 +84,6 @@ def fetch_data():
                             continue
                         store.append(tt)
                     logger.info(f"{len(blocks)} blocks found")
-
                     logger.info(f"{len(locations)} locations found")
                     for key, value in locations.items():
                         if not key.startswith("comp-"):
