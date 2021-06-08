@@ -1,7 +1,9 @@
 import re
 import csv
+
+from bs4 import BeautifulSoup
+
 from lxml import etree
-from urllib.parse import urljoin
 
 from sgrequests import SgRequests
 from sgscrape.sgpostal import parse_address_intl
@@ -39,27 +41,23 @@ def write_output(data):
 
 def fetch_data():
     # Your scraper here
-    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
+    session = SgRequests()
 
     items = []
 
-    start_url = "https://www.prezzorestaurants.co.uk/find-and-book/search/?s=london&lng=-0.1277583&lat=51.5073509&f=&of=0&command=book&dist=5000&p=1&X-Requested-With=XMLHttpRequest"
-    domain = re.findall("://(.+?)/", start_url)[0].replace("www.", "")
-    hdr = {
-        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
-    }
-    response = session.get(start_url, headers=hdr)
-    dom = etree.HTML(response.text)
-    all_locations = dom.xpath('//a[contains(text(), "View restaurant")]/@href')
-    next_page = dom.xpath("//a/@data-load")
-    while next_page:
-        response = session.get(next_page[0], headers=hdr)
-        dom = etree.HTML(response.text)
-        all_locations += dom.xpath('//a[contains(text(), "View restaurant")]/@href')
-        next_page = dom.xpath("//a/@data-load")
+    domain = "https://www.prezzorestaurants.co.uk/"
+
+    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
+    headers = {"User-Agent": user_agent}
+
+    session = SgRequests()
+    req = session.get(domain, headers=headers)
+    base = BeautifulSoup(req.text, "lxml")
+
+    all_locations = base.find(id="visit-restaurant").find_all("option")[1:]
 
     for url in all_locations:
-        store_url = urljoin(start_url, url)
+        store_url = domain + url["value"].split("?")[0]
         loc_response = session.get(store_url)
         loc_dom = etree.HTML(loc_response.text)
 
