@@ -47,7 +47,7 @@ def fetch_data():
             r.encoding = "utf-8"
         for line in r.iter_lines(decode_unicode=True):
             if (
-                'href="https://www.ihg.com/crowneplaza/destinations/us/en/canada/'
+                'href="https://www.ihg.com/staybridge/destinations/us/en/united-states/'
                 in line
             ):
                 surl = line.split('href="')[1].split('"')[0]
@@ -61,7 +61,7 @@ def fetch_data():
                 r2.encoding = "utf-8"
             for line2 in r2.iter_lines(decode_unicode=True):
                 if (
-                    'href="https://www.ihg.com/crowneplaza/destinations/us/en/canada/'
+                    'href="https://www.ihg.com/staybridge/destinations/us/en/united-states/'
                     in line2
                     and "<span>" in line2
                 ):
@@ -94,7 +94,7 @@ def fetch_data():
                             except:
                                 state = "<MISSING>"
                             zc = line3.split('"postalCode":"')[1].split('"')[0]
-                            if "canada-hotels" in url:
+                            if "canada" in url:
                                 country = "CA"
                             else:
                                 country = "US"
