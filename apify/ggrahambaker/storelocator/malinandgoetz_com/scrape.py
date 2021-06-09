@@ -64,7 +64,6 @@ def fetch_data():
         longit = store["lng"]
 
         r = session.get(page_url, headers=HEADERS)
-        print(page_url)
         soup = BeautifulSoup(r.content, "html.parser")
         try:
             phone_number = store["phone"]
