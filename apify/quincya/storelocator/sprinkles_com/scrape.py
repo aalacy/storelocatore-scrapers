@@ -1,111 +1,126 @@
-from sgrequests import SgRequests
-from bs4 import BeautifulSoup
 import csv
-import time
-from random import randint
-import re
+
+from bs4 import BeautifulSoup
+
 from sglogging import SgLogSetup
 
-logger = SgLogSetup().get_logger('sprinkles_com')
+from sgrequests import SgRequests
 
+logger = SgLogSetup().get_logger("sprinkles_com")
 
 
 def write_output(data):
-	with open('data.csv', mode='w') as output_file:
-		writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+    with open("data.csv", mode="w") as output_file:
+        writer = csv.writer(
+            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+        )
 
-		# Header
-		writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-		# Body
-		for row in data:
-			writer.writerow(row)
+        # Header
+        writer.writerow(
+            [
+                "locator_domain",
+                "page_url",
+                "location_name",
+                "street_address",
+                "city",
+                "state",
+                "zip",
+                "country_code",
+                "store_number",
+                "phone",
+                "location_type",
+                "latitude",
+                "longitude",
+                "hours_of_operation",
+            ]
+        )
+        # Body
+        for row in data:
+            writer.writerow(row)
+
 
 def fetch_data():
-	
-	base_link = "https://sprinkles.com/sprinkles-cupcakes-bakery-ice-cream-and-atm-locations"
 
-	user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36'
-	HEADERS = {'User-Agent' : user_agent}
+    base_link = "https://sprinkles.com/pages/locations"
 
-	session = SgRequests()
-	req = session.get(base_link, headers = HEADERS)
-	time.sleep(randint(1,2))
-	try:
-		base = BeautifulSoup(req.text,"lxml")
-		logger.info("Got today page")
-	except (BaseException):
-		logger.info('[!] Error Occured. ')
-		logger.info('[?] Check whether system is Online.')
+    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36"
+    headers = {"User-Agent": user_agent}
 
-	items = base.find_all(class_="location-teaser column large-4 small-12")
-	
-	data = []
-	for item in items:
-		locator_domain = "sprinkles.com"
+    session = SgRequests()
+    req = session.get(base_link, headers=headers)
+    base = BeautifulSoup(req.text, "lxml")
 
-		location_name = item.find("h4").text.strip()
-		logger.info(location_name)
+    items = base.main.find_all(class_="item")
 
-		street_address = item.find(class_="address-line1").text.strip()
-		try:
-			street_address = street_address + " " + item.find(class_="address-line2").text.strip()
-			street_address = street_address.strip()
-		except:
-			pass
+    data = []
+    for item in items:
+        locator_domain = "sprinkles.com"
 
-		if "New Locations Coming" in street_address:
-			street_address = "<MISSING>"
+        location_name = item.h3.text.strip()
+        logger.info(location_name)
 
-		city = item.find(class_="locality").text.strip()
-		state = item.find(class_="administrative-area").text.strip()
-		zip_code = item.find(class_="postal-code").text.strip()
-		country_code = "US"
-		store_number = "<MISSING>"
-		
-		location_type = "<MISSING>"
+        raw_address = list(item.p.stripped_strings)
+        street_address = " ".join(raw_address[:-2]).strip()
+        if not street_address:
+            street_address = "<MISSING>"
+        city_line = raw_address[-2].strip().split(",")
+        city = city_line[0].strip()
+        state = city_line[-1].strip().split()[0].strip()
+        zip_code = city_line[-1].strip().split()[1].strip()
+        country_code = "US"
+        store_number = "<MISSING>"
+        location_type = "<MISSING>"
+        phone = item.find(class_="tel").text.strip()
+        latitude = "<MISSING>"
+        longitude = "<MISSING>"
 
-		try:
-			phone = item.find_all('a')[-1].text.strip()
-			if "ATM" in phone:
-				phone = "<MISSING>"
-		except:
-			phone = "<MISSING>"
+        page_link = "https://sprinkles.com" + item.a["href"]
+        page_req = session.get(page_link, headers=headers)
+        page = BeautifulSoup(page_req.text, "lxml")
 
-		latitude = item.find(class_="location-teaser-geofield")["data-lat"]
-		longitude = item.find(class_="location-teaser-geofield")["data-lng"]
+        hours_of_operation = ""
+        raw_hours = page.find(class_="addr-hours")
+        raw_hours = raw_hours.find_all("p")
 
-		page_link = "https://sprinkles.com" + item.find('a')['href']
-		page_req = session.get(page_link, headers = HEADERS)
-		time.sleep(randint(1,2))
-		try:
-			page = BeautifulSoup(page_req.text,"lxml")
-		except (BaseException):
-			logger.info('[!] Error Occured. ')
-			logger.info('[?] Check whether system is Online.')
+        for hour in raw_hours:
+            if "hours" in hour.text.lower():
+                hours_of_operation = (
+                    " ".join(list(hour.stripped_strings))
+                    .split("hours:")[1]
+                    .split("The hours above")[0]
+                    .replace("The SIMON Fashion Valley Mall ATM is open", "")
+                    .replace("Hollywood & Highland ATM is open", "")
+                    .strip()
+                )
 
-		hours_of_operation = ""
-		raw_hours = page.find(class_="field-wrapper field field-with-icon field-node--field-hours field-name-field-hours field-type-text-long field-label-hidden")
-		raw_hours = raw_hours.find_all("p")
+        if not hours_of_operation:
+            hours_of_operation = "<MISSING>"
 
-		hours = ""
-		hours_of_operation = ""
+        data.append(
+            [
+                locator_domain,
+                page_link,
+                location_name,
+                street_address,
+                city,
+                state,
+                zip_code,
+                country_code,
+                store_number,
+                phone,
+                location_type,
+                latitude,
+                longitude,
+                hours_of_operation,
+            ]
+        )
 
-		try:
-			for hour in raw_hours:
-				if "Below are our" not in hour.text.strip():
-					hours = hours + " " + hour.text.strip()
-			hours_of_operation = (re.sub(' +', ' ', hours)).strip()
-		except:
-			pass
-		if not hours_of_operation:
-			hours_of_operation = "<MISSING>"
+    return data
 
-		data.append([locator_domain, base_link, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
-
-	return data
 
 def scrape():
-	data = fetch_data()
-	write_output(data)
+    data = fetch_data()
+    write_output(data)
+
 
 scrape()
