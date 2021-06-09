@@ -2,14 +2,17 @@ from sgscrape import simple_scraper_pipeline as sp
 from sglogging import sglog
 from typing import Any, Dict, Optional
 import configparser
+import asyncio
 from csv import reader
 from sgrequests import SgRequests
+import httpx
 from bs4 import BeautifulSoup as b4
-from sgzip.utils import *
+from sgzip.utils import earth_distance
 import json
 import os
 
 logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
+os.environ["HTTPX_LOG_LEVEL"] = "trace"
 
 
 def set_proxies():
@@ -30,6 +33,9 @@ def set_proxies():
         return None
 
 
+proxies = set_proxies()
+
+
 def readConfig(filename):
     config = configparser.ConfigParser(
         allow_no_value=True,
@@ -46,10 +52,11 @@ class DataSource:
         def __init__(self, config):
             self._config = config
             self._filename = config.get("Country")
+
         def write(self, string):
-            with open(self._filename, mode = 'a', encoding = "utf-8") as file:
+            with open(self._filename, mode="a", encoding="utf-8") as file:
                 file.write(string)
-                file.write('\n')
+                file.write("\n")
 
     class ErrorRetry:
         def __init__(self, errors):
@@ -192,6 +199,7 @@ class CleanRecord:
             cleanRecord["locator_domain"], country, locale, identifier
         )
         return cleanRecord
+
     def DEDUPE(badRecord):
         cleanRecord = {}
         cleanRecord["locator_domain"] = badRecord["locator_domain"]
@@ -213,7 +221,7 @@ class CleanRecord:
         cleanRecord["location_type"] = badRecord["location_type"]
         cleanRecord["raw_address"] = badRecord["raw_address"]
         return cleanRecord
-        
+
     def __PLACEHOLDER(badRecord, config):
         cleanRecord = {}
         cleanRecord["locator_domain"] = config.get("Domain")
@@ -238,6 +246,80 @@ class CleanRecord:
 
 
 class CrawlMethod(CleanRecord):
+    def AsyncChina(self):
+        async def getPointChina(Point):
+            url = (
+                self._config.get("PostUrl")
+                .format(*json.loads(self._config.get("PostUrlFormat")))
+                .format(*Point)
+            )
+            headers = str(self._config.get("Headers"))
+            headers = json.loads(headers)
+            data = (
+                self._config.get("urlencodedData")
+                .format(*json.loads(self._config.get("dataFormat")))
+                .format(*Point)
+            )
+            async with httpx.AsyncClient(
+                proxies=proxies, headers=headers, timeout=None
+            ) as client:
+                response = await client.post(url, headers=headers, data=data)
+                return response.json()
+
+        record_cleaner = getattr(CleanRecord, self._config.get("cleanupMethod"))
+        maxZ = self._search.items_remaining()
+        total = 0
+        chunk_size = self._config.getint("Concurrency")
+        task_list = []
+        points_list = []
+
+        async def search(task_list):
+            z = await asyncio.gather(*task_list)
+            return z
+
+        for Point in self._search:
+            data = None
+            if len(task_list) == chunk_size:
+                data = asyncio.run(search(task_list))
+                task_list = []
+                task_list.append(getPointChina(Point))
+            else:
+                task_list.append(getPointChina(Point))
+                points_list.append(Point)
+                continue
+            if data:
+                found = 0
+                for results in data:
+                    for records in results[str(self._config.get("pathToResults"))]:
+                        record = record_cleaner(records, self._config)
+                        self._search.found_location_at(
+                            record["latitude"], record["longitude"]
+                        )
+                        found += 1
+                        yield record
+            remaining = self._search.items_remaining()
+            if remaining == 0:
+                remaining = 1
+            if maxZ < remaining:
+                maxZ = remaining
+            found = 0
+            progress = str(round(100 - (remaining / maxZ * 100), 2)) + "%"
+            total += found
+            logzilla.info(
+                f"{[*points_list]}\n | found: {found} | total: {total} | progress: {progress} | Concurrency: {chunk_size}\n"
+            )
+            points_list = []
+            points_list.append(Point)
+        if len(task_list) != 0:
+            data = asyncio.run(search(task_list))
+            for results in data:
+                for records in results[str(self._config.get("pathToResults"))]:
+                    record = record_cleaner(records, self._config)
+                    yield record
+            logzilla.info(
+                f"{[*points_list]}\n | found: {found} | total: {total} | progress: {progress} | Concurrency: {len(task_list)}\n"
+            )
+
     def China(self):
         def getPointChina(Point):
             url = (
@@ -263,7 +345,7 @@ class CrawlMethod(CleanRecord):
             remaining = self._search.items_remaining()
             if remaining == 0:
                 remaining = 1
-            if maxZ<remaining:
+            if maxZ < remaining:
                 maxZ = remaining
             found = 0
             try:
@@ -303,9 +385,7 @@ class CrawlMethod(CleanRecord):
             except Exception as e:
                 self.Oopsie(Point, str(e))
                 continue
-            progress = (
-                str(round(100 - (remaining / maxZ * 100), 2)) + "%"
-            )
+            progress = str(round(100 - (remaining / maxZ * 100), 2)) + "%"
             total += found
             logzilla.info(
                 f"{[*Point]} | found: {found} | total: {total} | progress: {progress}"
@@ -345,13 +425,13 @@ class CrawlMethod(CleanRecord):
         for data in results[str(self._config.get("pathToResults"))]:
             record = record_cleaner(data, self._config, country, locale)
             yield record
-            
+
     def QuickDedupe(self):
         record_cleaner = CleanRecord.DEDUPE
         files = str(self._config.get("DedupeFiles"))
         files = json.loads(files)
         for file in files:
-            with open (file, mode = 'r', encoding = 'utf-8') as doc:
+            with open(file, mode="r", encoding="utf-8") as doc:
                 csvFile = reader(doc)
                 keys = next(csvFile)
                 for index, row in enumerate(csvFile):
@@ -359,9 +439,7 @@ class CrawlMethod(CleanRecord):
                     row = dict(row)
                     record = record_cleaner(row)
                     yield record
-                
-        
-        
+
 
 class getData(CrawlMethod):
     def __init__(
@@ -385,9 +463,12 @@ class getData(CrawlMethod):
         for action in json.loads(self._config.get("Using")):
             func = getattr(getData, action)
             func(self)
+
     def EnableMaintenanceRecord(self):
-        self._Logger = getattr(DataSource, self._config.get("MaintenanceLogger"))(self._config)
-        
+        self._Logger = getattr(DataSource, self._config.get("MaintenanceLogger"))(
+            self._config
+        )
+
     def EnableSGZIP(self):
         module = __import__(str("sgzip." + self._config.get("sgzip")), fromlist=[None])
         search = getattr(module, self._config.get("sgzipType"))
@@ -417,7 +498,7 @@ class getData(CrawlMethod):
         self._search = getattr(DataSource, self._config.get("DataSource"))(
             self._config.get("SourceFileName")
         )
-        
+
     def Oopsie(self, Point, exception):
         if not self._errors:
             self._errors = []
@@ -541,11 +622,11 @@ def fetch_data():
                 yield record
         logzilla.info(f"New records found : {newrec}")  # noqa
         logzilla.info(f"Finished : {Country}")
-    logzilla.info(f"Crawler pulled these countries:")
+    logzilla.info(f"Crawler pulled these countries:")  # noqa
 
     configuredCountries = todoCountries(config)
     for Country in configuredCountries:
-        logzilla.info(f"{Country}")
+        logzilla.info(f"{Country}")  # noqa
 
     logzilla.info(f"Finished grabbing data!!")  # noqa
 
@@ -556,9 +637,9 @@ def fix_comma(x):
         for i in x.split(","):
             if len(i.strip()) >= 1:
                 h.append(i)
-        return ", ".join(h).replace("  "," ")
+        return ", ".join(h).replace("  ", " ")
     except Exception:
-        return x.replace("  "," ")
+        return x.replace("  ", " ")
 
 
 def scrape():
@@ -567,12 +648,21 @@ def scrape():
             mapping=["locator_domain"],
         ),
         page_url=sp.MappingField(mapping=["page_url"], is_required=False),
-        location_name=sp.MappingField(mapping=["location_name"], is_required=False,
-            part_of_record_identity=True,),
-        latitude=sp.MappingField(mapping=["latitude"], is_required=False,
-            part_of_record_identity=True,),
-        longitude=sp.MappingField(mapping=["longitude"], is_required=False,
-            part_of_record_identity=True,),
+        location_name=sp.MappingField(
+            mapping=["location_name"],
+            is_required=False,
+            part_of_record_identity=True,
+        ),
+        latitude=sp.MappingField(
+            mapping=["latitude"],
+            is_required=False,
+            part_of_record_identity=True,
+        ),
+        longitude=sp.MappingField(
+            mapping=["longitude"],
+            is_required=False,
+            part_of_record_identity=True,
+        ),
         street_address=sp.MultiMappingField(
             mapping=[["street_address1"], ["street_address2"]],
             multi_mapping_concat_with=", ",
@@ -583,10 +673,14 @@ def scrape():
         state=sp.MappingField(mapping=["state"], is_required=False),
         zipcode=sp.MappingField(mapping=["zipcode"], is_required=False),
         country_code=sp.MappingField(mapping=["country_code"], is_required=False),
-        phone=sp.MappingField(mapping=["phone"], is_required=False,
-            part_of_record_identity=True,),
+        phone=sp.MappingField(
+            mapping=["phone"],
+            is_required=False,
+            part_of_record_identity=True,
+        ),
         store_number=sp.MappingField(
-            mapping=["store_number"], is_required=False,
+            mapping=["store_number"],
+            is_required=False,
         ),
         hours_of_operation=sp.MappingField(
             mapping=["hours_of_operation"], is_required=False
