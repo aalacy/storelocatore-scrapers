@@ -81,9 +81,9 @@ def fetch_data():
         soup = BeautifulSoup(r.text, "html.parser")
         hours = soup.find("div", {"class": "amlocator-schedule-table"}).text.strip()
         try:
-            phone = soup.select("a[href*=tel]")[1].text
+            phone = soup.findAll("a", {"class": "amlocator-link"})[1].text
         except:
-            phone = soup.select("a[href*=tel]")[0].text
+            phone = "<MISSING>"
         data.append(
             [
                 "https://www.qcsupply.com/",
