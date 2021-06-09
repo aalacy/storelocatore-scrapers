@@ -29,13 +29,12 @@ def fetch_data():
     for store in store_json['items']:
         if store['country_id'] != 'US':
             continue
-            
+        
         country_code = 'US'
         location_name = store['name']
         store_number = store['region_id']
         state = store['region']
-        city = store['city']
-        phone_number = store['phone']
+        city = store['city']        
         street_address = store['street']
         zip_code = store['postal_code']
         page_url = store['website']
@@ -43,8 +42,14 @@ def fetch_data():
         longit = store['lng']
         
         r = session.get(page_url, headers = HEADERS)
+        print(page_url)
         soup = BeautifulSoup(r.content, 'html.parser')
-
+        try:
+            phone_number = store['phone']
+        except:
+            phone_number = soup.text.split('phone.',1)[1].split('email',1)[0].replace('\n','').strip()
+        
+            
         strong_h = soup.find(text=re.compile("(Store Hours|shop hours.)"))
         hours_p = strong_h.parent.parent.parent.find_all('p')
         hours = ''
