@@ -24,8 +24,6 @@ headers = {
     "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.77 Safari/537.36",
 }
 
-session = SgRequests()
-
 
 def get_hoo(data_hrs):
     hours = []
@@ -65,6 +63,7 @@ search = DynamicGeoSearch(
 
 @retry(stop=stop_after_attempt(7))
 def fetch_records_for(coords):
+    session = SgRequests()
     lat = coords[0]
     lng = coords[1]
     logger.info(f"Pulling records for coordinates: {lat,lng}")
