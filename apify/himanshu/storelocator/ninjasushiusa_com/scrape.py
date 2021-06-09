@@ -67,7 +67,7 @@ def fetch_data():
         store.append("<MISSING>")
         store.append(location_details[3].split(",")[0])
         store.append("<MISSING>")
-        if location.find("a", {"href": re.compile("/@")}) != None:
+        if location.find("a", {"href": re.compile("/@")}):
             geo_location = location.find("a", {"href": re.compile("/@")})["href"]
             store.append(geo_location.split("/@")[1].split(",")[0])
             store.append(geo_location.split("/@")[1].split(",")[1])
