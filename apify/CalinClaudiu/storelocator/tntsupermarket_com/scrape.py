@@ -93,9 +93,7 @@ def para(k):
             k["address"] = k["address"].rsplit(",", 1)[0]
             k["town"] = k["address"].rsplit(" ", 1)[1]
             k["address"] = k["address"].replace(k["town"], "").replace("  ", " ")
-        except Exception as e:
-            print(e)
-            print(k)
+        except Exception:
             k["address"] = addressbackup
             k["town"] = "<INACCESSIBLE>"
     return k
