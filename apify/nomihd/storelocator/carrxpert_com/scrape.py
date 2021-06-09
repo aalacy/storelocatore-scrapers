@@ -31,7 +31,12 @@ def fetch_data():
     search_url = "https://www.carrxpert.com/en/find-a-collision-repair-centre/page/{}"
     page_no = 1
     data = {}
-    urls_list = []
+    data["page"] = str(page_no)
+    log.info(f"pulling info from page_no: {page_no}")
+    json_req = session.post(search_url.format(str(page_no)), data=data, headers=headers)
+    json_data = json.loads(json_req.text)
+    page_no = json_data["maxPages"]
+
     while True:
         data["page"] = str(page_no)
         log.info(f"pulling info from page_no: {page_no}")
@@ -47,10 +52,6 @@ def fetch_data():
             page_url = (
                 "https://www.carrxpert.com/en/dealer/" + store_json["details"]["slug"]
             )
-            if page_url in urls_list:
-                continue
-
-            urls_list.append(page_url)
             locator_domain = website
             location_name = store_json["details"]["nomCentre"]
             street_address = store_json["details"]["adresse"]

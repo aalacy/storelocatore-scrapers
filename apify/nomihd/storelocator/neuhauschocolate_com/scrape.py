@@ -39,12 +39,16 @@ def fetch_data():
         if store["address2"] is not None and len(store["address2"]) > 0:
             street_address = street_address + ", " + store["address2"]
         city = store["city"]
-        state = store["stateCode"]
+        state = "<MISSING>"
         zip = store["postalCode"]
         country_code = store["countryCode"]
-        page_url = "<MISSING>"
-        phone = store["phone"]
-        store_number = "<MISSING>"
+        page_url = (
+            "https://www.neuhauschocolates.com/en_US/stores/detail?store=" + store["ID"]
+        )
+        phone = ""
+        if "phone" in store:
+            phone = store["phone"]
+        store_number = store["ID"]
         location_type = "<MISSING>"
 
         latitude = store["latitude"]
@@ -52,39 +56,35 @@ def fetch_data():
         hours_list = []
         hours_of_operation = ""
         for key in store.keys():
-            if "openingHours" in key:
+            if "openingHours" in key and isinstance(store[key], dict):
                 day = key.replace("openingHours", "").strip()
-                hour_json = store[key].replace("\n", "").replace('\\"', '"').strip()
-                time = ""
-                if "CLOSED" in hour_json.upper():
-                    time = "CLOSED"
+                hour_json = store[key]
+                if "open" in hour_json:
+                    time = hour_json["open"] + "-" + hour_json["close"]
                 else:
-                    time = (
-                        json.loads(hour_json)["open"]
-                        + "-"
-                        + json.loads(hour_json)["close"]
-                    )
+                    time = "CLOSED"
 
                 hours_list.append(day + ":" + time)
 
         hours_of_operation = "; ".join(hours_list).strip()
 
-        yield SgRecord(
-            locator_domain=locator_domain,
-            page_url=page_url,
-            location_name=location_name,
-            street_address=street_address,
-            city=city,
-            state=state,
-            zip_postal=zip,
-            country_code=country_code,
-            store_number=store_number,
-            phone=phone,
-            location_type=location_type,
-            latitude=latitude,
-            longitude=longitude,
-            hours_of_operation=hours_of_operation,
-        )
+        if country_code == "US" or country_code == "GB":
+            yield SgRecord(
+                locator_domain=locator_domain,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
 
 
 def scrape():

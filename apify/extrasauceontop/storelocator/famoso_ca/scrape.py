@@ -112,6 +112,28 @@ for grid in grids:
             hours = hours + day + " " + start_time + "-" + end_time + ", "
 
         hours = hours[:-2]
+        if hours == "":
+            new_sess = reset_sessions(page_url)
+            s = new_sess[0]
+            headers = new_sess[1]
+            hours_data = new_sess[2]
+
+            hours_soup = bs(hours_data, "html.parser")
+
+            days = hours_soup.find_all("span", attrs={"class": "day-name"})
+            start_times = hours_soup.find_all("span", attrs={"class": "time-from"})
+            end_times = hours_soup.find_all("span", attrs={"class": "time-to"})
+
+            hours = ""
+            for x in range(len(days)):
+                day = days[x].text.strip()
+                start_time = start_times[x].text.strip()
+                end_time = end_times[x].text.strip()
+
+                hours = hours + day + " " + start_time + "-" + end_time + ", "
+
+            hours = hours[:-2]
+
         locator_domains.append(locator_domain)
         page_urls.append(page_url)
         location_names.append(location_name)
@@ -126,6 +148,7 @@ for grid in grids:
         latitudes.append(latitude)
         longitudes.append(longitude)
         hours_of_operations.append(hours)
+
 
 df = pd.DataFrame(
     {
