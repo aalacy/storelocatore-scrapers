@@ -1,4 +1,7 @@
 import csv
+import json
+
+from lxml import html
 from sgrequests import SgRequests
 
 
@@ -33,28 +36,38 @@ def write_output(data):
 
 def fetch_data():
     out = []
-    locator_domain = "https://www.riesbeckfoods.com"
-    api_url = "https://api.freshop.com/1/stores?app_key=riesbeck&has_address=true&is_selectable=true&limit=100&token=01e7769903e517c138afc3c908a82e3e"
+    locator_domain = "https://www.enterprisebanking.com/"
+    api_url = "https://www.enterprisebanking.com/locations"
 
     session = SgRequests()
     r = session.get(api_url)
-    js = r.json()
-    for j in js["items"]:
-        location_name = j.get("name")
-        street_address = j.get("address_1")
-        phone = "".join(j.get("phone_md")).replace("\n", "")
-        if phone.find("Pharmacy") != -1:
-            phone = phone.split("Pharmacy")[0].strip()
-        city = j.get("city")
-        state = j.get("state")
+    tree = html.fromstring(r.text)
+    text = "".join(
+        tree.xpath("//script[contains(text(), 'var raw_locations = ')]/text()")
+    )
+    text = text.split("var raw_locations = ")[1].split(";")[0]
+    js = json.loads(text)
+
+    for j in js:
+        street_address = (
+            f"{j.get('address')} {j.get('address2') or ''}".strip() or "<MISSING>"
+        )
+        city = j.get("city") or "<MISSING>"
+        state = j.get("state") or "<MISSING>"
+        postal = j.get("zip") or "<MISSING>"
         country_code = "US"
-        store_number = j.get("store_number")
-        latitude = j.get("latitude")
-        longitude = j.get("longitude")
-        location_type = "<MISSING>"
-        hours_of_operation = j.get("hours_md")
-        page_url = j.get("url")
-        postal = j.get("postal_code")
+        store_number = j.get("id") or "<MISSING>"
+        page_url = f'https://www.enterprisebanking.com{j.get("detail_link")}'
+        location_name = j.get("title")
+        phone = j.get("phone") or "<MISSING>"
+        latitude = j.get("lat") or "<MISSING>"
+        longitude = j.get("lng") or "<MISSING>"
+        location_type = j.get("type") or "<MISSING>"
+        if location_type == "ATM":
+            continue
+        hours = j.get("branch_hours") or []
+        hours_of_operation = ";".join(hours) or "<MISSING>"
+
         row = [
             locator_domain,
             page_url,
