@@ -1,4 +1,5 @@
 import csv
+import ssl
 import time
 
 from datetime import datetime
@@ -6,6 +7,13 @@ from lxml import html
 from sgrequests import SgRequests
 from sgscrape.sgpostal import parse_address, International_Parser
 from sgselenium import SgSelenium
+
+try:
+    _create_unverified_https_context = ssl._create_unverified_context
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context
 
 
 def write_output(data):

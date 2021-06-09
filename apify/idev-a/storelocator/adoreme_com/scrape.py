@@ -47,7 +47,7 @@ def fetch_data():
             for link in soup.select("main div.col.sqs-col-5.span-5 .sqs-block")
             if "spacer-block" not in link["class"]
         ]
-        logger.info(f"{len(links)} found")
+        logger.info(f"{len(links)/3} found")
         with SgChrome() as driver:
             for x in range(0, len(links), 3):
                 link = links[x + 2]
@@ -65,6 +65,10 @@ def fetch_data():
                 logger.info(page_url)
                 driver.get(page_url)
                 sp1 = bs(driver.page_source, "lxml")
+                if not phone:
+                    _phone = sp1.find("a", href=re.compile(r"tel:"))
+                    if _phone:
+                        phone = _phone.text.strip()
                 hours = []
                 if sp1.select("div.visit-hours ul li"):
                     for hh in sp1.select("div.visit-hours ul li"):
@@ -80,12 +84,16 @@ def fetch_data():
                     if not phone:
                         phone = sp1.find("a", href=re.compile(r"tel:")).text.strip()
                 elif sp1.select("table.mabel-bhi-businesshours tr"):
-                    hours = [
+                    temp = [
                         ":".join(hh.stripped_strings)
                         for hh in sp1.select("table.mabel-bhi-businesshours")[0].select(
                             "tr"
                         )
                     ]
+                    for hh in temp:
+                        if hh[:3] not in days:
+                            break
+                        hours.append(hh)
                 elif sp1.select("article.cblHeaderTbl--dates dl"):
                     hours = [
                         ":".join(hh.stripped_strings)
