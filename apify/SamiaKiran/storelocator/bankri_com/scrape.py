@@ -34,7 +34,6 @@ def fetch_data():
                 .get_text(separator="|", strip=True)
                 .split("|")
             )
-            print(address)
             phone = address[2]
             street_address = address[0]
             address = address[1].split(",")
