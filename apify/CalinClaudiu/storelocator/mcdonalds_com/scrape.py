@@ -42,6 +42,15 @@ def readConfig(filename):
 
 
 class DataSource:
+    class GenericRawOutput:
+        def __init__(self, config):
+            self._config = config
+            self._filename = config.get("Country")
+        def write(self, string):
+            with open(self._filename, mode = 'a', encoding = "utf-8") as file:
+                file.write(string)
+                file.write('\n')
+
     class ErrorRetry:
         def __init__(self, errors):
             self._errors = errors
@@ -92,16 +101,19 @@ class DataSource:
                 file = reader(csvFile)
                 keys = next(file)
                 for index, row in enumerate(file):
-                    row = zip(keys, row)
-                    row = dict(row)
-                    self._row = str(row["latitude"]) + "," + str(row["longitude"])
-                    self._items_remaining -= 1
-                    #
-                    self.__cur_centroid = (
-                        float(row["latitude"]),
-                        float(row["longitude"]),
-                    )
-                    yield (row["latitude"], row["longitude"])
+                    try:
+                        row = zip(keys, row)
+                        row = dict(row)
+                        self._row = str(row["latitude"]) + "," + str(row["longitude"])
+                        self._items_remaining -= 1
+                        #
+                        self.__cur_centroid = (
+                            float(row["latitude"]),
+                            float(row["longitude"]),
+                        )
+                        yield (row["latitude"], row["longitude"])
+                    except Exception:
+                        continue
                     # need to improve on this in config if I ever need it outside of testing
 
 
@@ -115,6 +127,8 @@ class CleanRecord:
         cleanRecord["longitude"] = badRecord["location"]["lng"]
         cleanRecord["street_address1"] = badRecord["address"]
         cleanRecord["street_address2"] = ""
+        cleanRecord["street_address3"] = ""
+        cleanRecord["street_address4"] = ""
         cleanRecord["city"] = badRecord["city"]
         cleanRecord["state"] = badRecord["province"]
         cleanRecord["zipcode"] = badRecord["district"]
@@ -126,7 +140,81 @@ class CleanRecord:
         cleanRecord["raw_address"] = ""
         return cleanRecord
 
-    def USA(badRecord, config):
+    def USA(badRecord, config, country, locale):
+        cleanRecord = {}
+        cleanRecord["locator_domain"] = config.get("Domain")
+        try:
+            cleanRecord["location_name"] = badRecord["properties"]["name"]
+        except Exception:
+            cleanRecord["location_name"] = None
+        cleanRecord["latitude"] = badRecord["geometry"]["coordinates"][1]
+        cleanRecord["longitude"] = badRecord["geometry"]["coordinates"][0]
+        cleanRecord["street_address1"] = badRecord["properties"]["addressLine1"]
+        if not cleanRecord["location_name"]:
+            cleanRecord["location_name"] = badRecord["properties"]["addressLine2"]
+            cleanRecord["street_address2"] = ""
+        else:
+            cleanRecord["street_address2"] = badRecord["properties"]["addressLine2"]
+        cleanRecord["street_address3"] = ""
+        cleanRecord["street_address4"] = ""
+        cleanRecord["city"] = badRecord["properties"]["addressLine3"]
+        cleanRecord["state"] = badRecord["properties"]["subDivision"]
+        cleanRecord["zipcode"] = badRecord["properties"]["postcode"]
+        cleanRecord["country_code"] = badRecord["properties"]["addressLine4"]
+        try:
+            cleanRecord["phone"] = badRecord["properties"]["telephone"]
+        except Exception:
+            cleanRecord["phone"] = ""
+        cleanRecord["store_number"] = badRecord["properties"]["id"]
+        try:
+            cleanRecord["hours_of_operation"] = (
+                str(list(badRecord["properties"]["restauranthours"].items()))
+                .replace("'", "")
+                .replace("(", "")
+                .replace(")", "")
+                .replace("[", "")
+                .replace("]", "")
+                .replace("hours", "")
+            )
+        except Exception:
+            cleanRecord["hours_of_operation"] = ""
+        cleanRecord["location_type"] = (
+            badRecord["properties"]["filterType"]
+            if "OPEN" in badRecord["properties"]["openstatus"]
+            else badRecord["properties"]["openstatus"]
+        )
+        cleanRecord["raw_address"] = ""
+        identifier = None
+        for dent in badRecord["properties"]["identifiers"]["storeIdentifier"]:
+            if dent["identifierType"] == "NSN":
+                identifier = dent["identifierValue"]
+        cleanRecord["page_url"] = "https://{}/{}/{}/location/{}.html".format(
+            cleanRecord["locator_domain"], country, locale, identifier
+        )
+        return cleanRecord
+    def DEDUPE(badRecord):
+        cleanRecord = {}
+        cleanRecord["locator_domain"] = badRecord["locator_domain"]
+        cleanRecord["page_url"] = badRecord["page_url"]
+        cleanRecord["location_name"] = badRecord["location_name"]
+        cleanRecord["latitude"] = badRecord["latitude"]
+        cleanRecord["longitude"] = badRecord["longitude"]
+        cleanRecord["street_address1"] = badRecord["street_address"]
+        cleanRecord["street_address2"] = ""
+        cleanRecord["street_address3"] = ""
+        cleanRecord["street_address4"] = ""
+        cleanRecord["city"] = badRecord["city"]
+        cleanRecord["state"] = badRecord["state"]
+        cleanRecord["zipcode"] = badRecord["zip"]
+        cleanRecord["country_code"] = badRecord["country_code"]
+        cleanRecord["phone"] = badRecord["phone"]
+        cleanRecord["store_number"] = badRecord["store_number"]
+        cleanRecord["hours_of_operation"] = badRecord["hours_of_operation"]
+        cleanRecord["location_type"] = badRecord["location_type"]
+        cleanRecord["raw_address"] = badRecord["raw_address"]
+        return cleanRecord
+        
+    def __PLACEHOLDER(badRecord, config):
         cleanRecord = {}
         cleanRecord["locator_domain"] = config.get("Domain")
         cleanRecord["page_url"] = badRecord["xxx"]
@@ -134,7 +222,9 @@ class CleanRecord:
         cleanRecord["latitude"] = badRecord["xxx"]
         cleanRecord["longitude"] = badRecord["xxx"]
         cleanRecord["street_address1"] = badRecord["xxx"]
-        cleanRecord["street_address2"] = badRecord["xxx"]
+        cleanRecord["street_address2"] = ""
+        cleanRecord["street_address3"] = ""
+        cleanRecord["street_address4"] = ""
         cleanRecord["city"] = badRecord["xxx"]
         cleanRecord["state"] = badRecord["xxx"]
         cleanRecord["zipcode"] = badRecord["xxx"]
@@ -170,6 +260,11 @@ class CrawlMethod(CleanRecord):
         maxZ = self._search.items_remaining()
         total = 0
         for Point in self._search:
+            remaining = self._search.items_remaining()
+            if remaining == 0:
+                remaining = 1
+            if maxZ<remaining:
+                maxZ = remaining
             found = 0
             try:
                 results = getPointChina(Point)
@@ -203,22 +298,70 @@ class CrawlMethod(CleanRecord):
                     #           + str(record["location_name"])
                     #        )
                     #    )
-                    #    found += 1
+                    found += 1
                     yield record
             except Exception as e:
                 self.Oopsie(Point, str(e))
                 continue
             progress = (
-                str(round(100 - (self._search.items_remaining() / maxZ * 100), 2)) + "%"
+                str(round(100 - (remaining / maxZ * 100), 2)) + "%"
             )
             total += found
             logzilla.info(
                 f"{[*Point]} | found: {found} | total: {total} | progress: {progress}"
             )
 
-    def USA():
-        pass
+    def USA(self):
+        def getAllData(headers, country, locale):
+            if self._config.get("apiCountry"):
+                country = self._config.get("apiCountry")
+            api = "https://www.mcdonalds.com/googleapps/GoogleRestaurantLocAction.do?method=searchLocation&latitude=0&longitude=0&radius=100000&maxResults=25000&country={}&language={}"
+            api = api.format(country, locale)
+            return self._session.get(api, headers=headers).json()
 
+        def getLocale(headers):
+            link = headers["referer"]
+            return link.split("/")[3:5]
+
+        def getReferer(url):
+            soup = b4(self._session.get(url).text, "lxml")
+            link = url.split("/")[:3]
+            link = "/".join(link)
+            link = (
+                link
+                + soup.find("a", {"href": lambda x: x and "restaurant-locator" in x})[
+                    "href"
+                ]
+            )
+            return link
+
+        record_cleaner = getattr(CleanRecord, self._config.get("cleanupMethod"))
+        headers = {}
+        headers["referer"] = getReferer(self._config.get("Url"))
+        country, locale = getLocale(headers)
+        results = getAllData(headers, country, locale)
+        if self._Logger:
+            self._Logger.write(json.dumps(results))
+        for data in results[str(self._config.get("pathToResults"))]:
+            record = record_cleaner(data, self._config, country, locale)
+            yield record
+            
+    def QuickDedupe(self):
+        record_cleaner = CleanRecord.DEDUPE
+        files = str(self._config.get("DedupeFiles"))
+        files = json.loads(files)
+        for file in files:
+            with open (file, mode = 'r', encoding = 'utf-8') as doc:
+                csvFile = reader(doc)
+                keys = next(csvFile)
+                for index, row in enumerate(csvFile):
+                    row = zip(keys, row)
+                    row = dict(row)
+                    record = record_cleaner(row)
+                    yield record
+                
+        
+        
 
 class getData(CrawlMethod):
     def __init__(
@@ -242,7 +385,9 @@ class getData(CrawlMethod):
         for action in json.loads(self._config.get("Using")):
             func = getattr(getData, action)
             func(self)
-
+    def EnableMaintenanceRecord(self):
+        self._Logger = getattr(DataSource, self._config.get("MaintenanceLogger"))(self._config)
+        
     def EnableSGZIP(self):
         module = __import__(str("sgzip." + self._config.get("sgzip")), fromlist=[None])
         search = getattr(module, self._config.get("sgzipType"))
@@ -272,7 +417,7 @@ class getData(CrawlMethod):
         self._search = getattr(DataSource, self._config.get("DataSource"))(
             self._config.get("SourceFileName")
         )
-
+        
     def Oopsie(self, Point, exception):
         if not self._errors:
             self._errors = []
@@ -325,6 +470,7 @@ def getTestCountries(session):
                         "page": link["href"],
                     }
                 )
+
     return countries
 
 
@@ -334,12 +480,11 @@ def todoCountries(config):
         if config[section[0]].getboolean("Considered"):
             config.set(str(section[0]), "Country", str(section[0]))
             todo.append(config[section[0]])
-
-        if config[section[0]].getboolean("Do Only"):
+        if config[section[0]].getboolean("Do OOOOOOOOnly"):
             todo = []
             config.set(str(section[0]), "Country", str(section[0]))
             todo.append(config[section[0]])
-            return todo
+            break
 
     for section in todo:
         yield section
@@ -352,7 +497,7 @@ def checkFail(countries, fromConfig):
     for Country in countries:
         if Country["text"] not in to_check:
             logzilla.error(
-                "This country: {}\n is missing from mcconfig.ini\n Please add it like this at the end of mcconfig.ini to ignore:\n\n[{}]\nUrl = {}\n\n".format(
+                "\n\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\nThis country: {}\n is missing from mcconfig.ini\n Please add it like this at the end of mcconfig.ini to ignore:\n\n[{}]\nUrl = {}\n\n".format(
                     Country["text"], Country["text"], Country["page"]
                 )
             )
@@ -384,6 +529,7 @@ def fetch_data():
         # Verifies if there's any new countries McDonalds has launched that this crawl isn't aware of.
 
     for Country in configuredCountries:
+        logzilla.info(f"Starting : {Country}")
         results = getData(config=Country, ogProxy=ogProxy)
         for record in results.Start():
             yield record
@@ -394,6 +540,12 @@ def fetch_data():
                 newrec += 1
                 yield record
         logzilla.info(f"New records found : {newrec}")  # noqa
+        logzilla.info(f"Finished : {Country}")
+    logzilla.info(f"Crawler pulled these countries:")
+
+    configuredCountries = todoCountries(config)
+    for Country in configuredCountries:
+        logzilla.info(f"{Country}")
 
     logzilla.info(f"Finished grabbing data!!")  # noqa
 
@@ -404,9 +556,9 @@ def fix_comma(x):
         for i in x.split(","):
             if len(i.strip()) >= 1:
                 h.append(i)
-        return ", ".join(h)
+        return ", ".join(h).replace("  "," ")
     except Exception:
-        return x
+        return x.replace("  "," ")
 
 
 def scrape():
@@ -415,9 +567,12 @@ def scrape():
             mapping=["locator_domain"],
         ),
         page_url=sp.MappingField(mapping=["page_url"], is_required=False),
-        location_name=sp.MappingField(mapping=["location_name"], is_required=False),
-        latitude=sp.MappingField(mapping=["latitude"], is_required=False),
-        longitude=sp.MappingField(mapping=["longitude"], is_required=False),
+        location_name=sp.MappingField(mapping=["location_name"], is_required=False,
+            part_of_record_identity=True,),
+        latitude=sp.MappingField(mapping=["latitude"], is_required=False,
+            part_of_record_identity=True,),
+        longitude=sp.MappingField(mapping=["longitude"], is_required=False,
+            part_of_record_identity=True,),
         street_address=sp.MultiMappingField(
             mapping=[["street_address1"], ["street_address2"]],
             multi_mapping_concat_with=", ",
@@ -428,9 +583,10 @@ def scrape():
         state=sp.MappingField(mapping=["state"], is_required=False),
         zipcode=sp.MappingField(mapping=["zipcode"], is_required=False),
         country_code=sp.MappingField(mapping=["country_code"], is_required=False),
-        phone=sp.MappingField(mapping=["phone"], is_required=False),
+        phone=sp.MappingField(mapping=["phone"], is_required=False,
+            part_of_record_identity=True,),
         store_number=sp.MappingField(
-            mapping=["store_number"], is_required=False, part_of_record_identity=True
+            mapping=["store_number"], is_required=False,
         ),
         hours_of_operation=sp.MappingField(
             mapping=["hours_of_operation"], is_required=False
@@ -443,7 +599,7 @@ def scrape():
         scraper_name="pipeline",
         data_fetcher=fetch_data,
         field_definitions=field_defs,
-        log_stats_interval=5,
+        log_stats_interval=5000,
     )
 
     pipeline.run()
