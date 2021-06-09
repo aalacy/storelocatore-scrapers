@@ -114,7 +114,7 @@ def fetch_data():
         hours = hours.replace("day", "day:").replace("::", "")
         if "Bedford Moore Farmers" in name:
             name = "Bedford Moore Farmers"
-        if "guntown" in loc or 'Guntown' in loc:
+        if "guntown" in loc or "Guntown" in loc:
             hours = "Monday - Friday 7:30 a.m. - 4:30 p.m."
         if "weakley-farmers-greenfield" in loc:
             hours = "Monday - Friday 7:30 am - 4:30 pm; Saturday 7:30 am - 12:00 pm"
