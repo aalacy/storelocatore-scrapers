@@ -13,6 +13,13 @@ _headers = {
 }
 
 
+def _h(val):
+    if not val:
+        return []
+    else:
+        return val
+
+
 def fetch_data():
     locator_domain = "https://us.loropiana.com"
     base_url = "https://us.loropiana.com/en/stores"
@@ -20,9 +27,9 @@ def fetch_data():
         soup = bs(session.get(base_url, headers=_headers).text, "lxml")
         links = soup.select("p.t-product-copy a")
         logger.info(f"{len(links)} found")
-        for link in links:
+        for kk, link in enumerate(links):
             page_url = locator_domain + link["href"]
-            logger.info(page_url)
+            logger.info(f"[{kk}] {page_url}")
             sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
             for script in sp1.find_all("script", type="application/ld+json"):
                 _ = json.loads(script.string.strip())
@@ -33,18 +40,28 @@ def fetch_data():
                     if type(hh["dayOfWeek"]) != list:
                         days = [hh["dayOfWeek"]]
                     for day in days:
-                        temp[day] = temp.get(day, {})
+                        temp[day] = temp.get(day, {"opens": [], "closes": []})
                         if hh["opens"]:
-                            temp[day]["opens"] = hh["opens"]
+                            temp[day]["opens"].append(hh["opens"])
                         if hh["closes"]:
-                            temp[day]["closes"] = hh["closes"]
+                            temp[day]["closes"].append(hh["closes"])
                 for day, hr in temp.items():
-                    hours.append(f"{day}: {hr['opens']}-{hr['closes']}")
+                    times = []
+                    for x in range(len(_h(hr["opens"]))):
+                        times.append(f"{hr['opens'][x]}-{hr['closes'][x]}")
+                    try:
+                        hours.append(f"{day}: {','.join(times)}")
+                    except:
+                        import pdb
+
+                        pdb.set_trace()
 
                 zip_postal = _["address"]["postalCode"]
-                if zip_postal.lower() == "no zip":
+                if zip_postal.lower() == "no zip code":
                     zip_postal = ""
-                city = street_address = state = ""
+                city = _["address"]["addressLocality"]
+                street_address = _["address"]["streetAddress"]
+                state = _["address"]["addressRegion"]
                 if (
                     _["address"]["addressCountry"].lower() == "jp"
                     or _["address"]["addressCountry"].lower() == "japan"
@@ -59,9 +76,10 @@ def fetch_data():
                 elif (
                     _["address"]["addressCountry"].lower() == "kr"
                     or _["address"]["addressCountry"].lower() == "korea"
+                    or _["address"]["addressCountry"].lower() == "hk"
+                    or _["address"]["addressCountry"].lower() == "gb"
                 ):
-                    city = _["address"]["addressLocality"]
-                    street_address = _["address"]["streetAddress"]
+                    pass
                 else:
                     addr = parse_address_intl(
                         f'{_["address"]["streetAddress"]} {_["address"]["addressLocality"]} {_["address"]["addressRegion"]} {zip_postal} {_["address"]["addressCountry"]}'

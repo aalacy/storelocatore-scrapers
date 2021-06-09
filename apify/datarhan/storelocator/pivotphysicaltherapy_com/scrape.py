@@ -78,17 +78,17 @@ def fetch_data():
         for poi in data["markers"]:
             store_url_html = etree.HTML(poi["list_format"])
             store_url = store_url_html.xpath(".//a/@href")[0]
-            store_response = session.get(store_url, headers=headers)
-            store_dom = etree.HTML(store_response.text)
+            loc_response = session.get(store_url)
+            loc_dom = etree.HTML(loc_response.text)
             location_name = poi["name"]
             location_name = location_name if location_name else "<MISSING>"
-            street_data = store_dom.xpath("//address//text()")
-            street_data = [elem.strip() for elem in street_data]
+            street_data = loc_dom.xpath("//address//text()")
+            street_data = [elem.strip() for elem in street_data if elem.strip()]
             addr = parse_address_intl(" ".join(street_data))
             street_address = addr.street_address_1.strip()
             if addr.street_address_2:
                 street_address += " " + addr.street_address_2.strip()
-            if street_address.startswith(","):
+            if street_address[0] == ",":
                 street_address = street_address[1:].strip()
             city = addr.city
             city = city if city else "<MISSING>"
@@ -99,14 +99,14 @@ def fetch_data():
             country_code = "<MISSING>"
             store_number = poi["id"]
             store_number = store_number if store_number else "<MISSING>"
-            phone = store_dom.xpath('//div[@class="location-phone"]/text()')
-            phone = phone[0].strip().replace("Phone ", "") if phone else "<MISSING>"
+            phone = loc_dom.xpath('//div[@class="location-phone"]/text()')
+            phone = phone[1].strip().replace("Phone ", "") if phone else "<MISSING>"
             location_type = "<MISSING>"
             latitude = poi["lat"]
             latitude = latitude if latitude else "<MISSING>"
             longitude = poi["lng"]
             longitude = longitude if longitude else "<MISSING>"
-            hours_of_operation = store_dom.xpath(
+            hours_of_operation = loc_dom.xpath(
                 '//h2[contains(text(), "HOURS")]/following-sibling::div/table//td/text()'
             )
             hours_of_operation = (

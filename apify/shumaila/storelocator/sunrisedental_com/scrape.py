@@ -58,7 +58,10 @@ def fetch_data():
             address = soup.find("iframe")["title"].replace("United States", "").strip()
         except:
             continue
-        phone = soup.find("small").text.strip()
+        try:
+            phone = soup.find("small").text.strip()
+        except:
+            phone = soup.select_one("a[href*=tel]").text
         try:
             hours = soup.text.split("Monday:", 1)[1].splitlines()[0:7]
             hours = "Monday:" + " ".join(hours)
