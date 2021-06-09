@@ -4,6 +4,7 @@ from sglogging import SgLogSetup
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import ssl
+from tenacity import retry, stop_after_attempt
 
 try:
     _create_unverified_https_context = (
@@ -23,7 +24,7 @@ headers = {
     "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.77 Safari/537.36",
 }
 
-session = SgRequests().requests_retry_session(retries=0)
+session = SgRequests()
 
 
 def get_hoo(data_hrs):
@@ -62,14 +63,24 @@ search = DynamicGeoSearch(
 )
 
 
+@retry(stop=stop_after_attempt(7))
+def fetch_records_for(coords):
+    lat = coords[0]
+    lng = coords[1]
+    logger.info(f"Pulling records for coordinates: {lat,lng}")
+    url = f"https://www.tacobell.com/store-finder/findStores?latitude={lat}&longitude={lng}&_=1623006716881"
+    data_json = session.get(url, headers=headers, timeout=30).json()
+    stores = data_json["nearByStores"]
+    return stores
+
+
 def fetch_data():
     s = set()
     total = 0
-    for lat, lng in search:
-        url = f"https://www.tacobell.com/store-finder/findStores?latitude={lat}&longitude={lng}&_=1623006716881"
-        data_json = session.get(url, headers=headers, timeout=15).json()
-        total += len(data_json["nearByStores"])
-        for idx, data in enumerate(data_json["nearByStores"]):
+    for coordinates in search:
+        data_loc = fetch_records_for(coordinates)
+        total += len(data_loc)
+        for idx, data in enumerate(data_loc):
             page_url = data["url"]
             page_url = page_url if page_url else MISSING
             logger.info(f"Pulling the data from {idx}: {page_url}")
@@ -139,7 +150,7 @@ def fetch_data():
                 raw_address=raw_address,
             )
 
-        logger.info(f"found: {len(data_json['nearByStores'])} | total: {total}")
+        logger.info(f"found: {len(data_loc)} | total: {total}")
 
 
 def scrape():
