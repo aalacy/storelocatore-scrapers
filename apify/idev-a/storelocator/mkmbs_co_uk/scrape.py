@@ -44,45 +44,34 @@ def _h(temp):
 
 
 def _ah(sp1, driver, idx=0):
-    try:
-        addr = []
-        hours = []
-        if len(sp1.select("div#address-box")):
-            addr = [el.text for el in sp1.select("div#address-box")[idx].select("p")]
-            hours = [
-                hh.text.strip()
-                for hh in sp1.select("div.opening-hours-section")[idx].select("p")
-            ]
-    except Exception as err:
-        print(err, "===")
-        import pdb
+    addr = []
+    hours = []
+    if len(sp1.select("div#address-box")):
+        addr = [el.text for el in sp1.select("div#address-box")[idx].select("p")]
+        hours = [
+            hh.text.strip()
+            for hh in sp1.select("div.opening-hours-section")[idx].select("p")
+        ]
+    if not addr:
+        while True:
+            time.sleep(1)
+            logger.info("-- sleep --")
+            if len(driver.find_elements_by_xpath('//div[@id="address-box"]')):
+                addr = [
+                    el.text
+                    for el in driver.find_elements_by_xpath('//div[@id="address-box"]')[
+                        idx
+                    ].find_elements_by_xpath(".//p")
+                ]
+                hours = [
+                    hh.text.strip()
+                    for hh in driver.find_elements_by_xpath(
+                        '//div[@class="opening-hours-section"]'
+                    )[idx].find_elements_by_xpath(".//p")
+                ]
+            if addr:
+                break
 
-        pdb.set_trace()
-    try:
-        if not addr:
-            while True:
-                time.sleep(1)
-                logger.info("-- sleep --")
-                if len(driver.find_elements_by_xpath('//div[@id="address-box"]')):
-                    addr = [
-                        el.text
-                        for el in driver.find_elements_by_xpath(
-                            '//div[@id="address-box"]'
-                        )[idx].find_elements_by_xpath(".//p")
-                    ]
-                    hours = [
-                        hh.text.strip()
-                        for hh in driver.find_elements_by_xpath(
-                            '//div[@class="opening-hours-section"]'
-                        )[idx].find_elements_by_xpath(".//p")
-                    ]
-                if addr:
-                    break
-    except Exception as err:
-        print(err, "--")
-        import pdb
-
-        pdb.set_trace()
     return addr, _h(hours)
 
 
