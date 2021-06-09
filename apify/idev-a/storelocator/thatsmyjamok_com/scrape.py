@@ -21,13 +21,18 @@ def fetch_data():
         locations = soup.select("div.location-list div.card")
         for _ in locations:
             addr = parse_address_intl(_.address.p.text.strip())
+            street_address = addr.street_address_1
+            if addr.street_address_2:
+                street_address += " " + addr.street_address_2
             sp = bs(session.get(_.h2.a["href"], headers=_headers).text, "lxml")
             hours = [hh.text.replace("|", ":") for hh in sp.select("p.hours")]
+            if "coming soon" in "".join(hours).lower():
+                continue
             logger.info(_.h2.a["href"])
             yield SgRecord(
                 page_url=_.h2.a["href"],
                 location_name=_.h2.text,
-                street_address=addr.street_address_1,
+                street_address=street_address,
                 city=addr.city,
                 state=addr.state,
                 zip_postal=addr.postcode,

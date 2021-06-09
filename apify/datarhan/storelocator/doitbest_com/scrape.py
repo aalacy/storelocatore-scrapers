@@ -5,6 +5,10 @@ from lxml import etree
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 from sgrequests import SgRequests
 
+from sglogging import sglog
+
+log = sglog.SgLogSetup().get_logger("doitbest.com")
+
 
 def write_output(data):
     with open("data.csv", mode="w", encoding="utf-8") as output_file:
@@ -70,11 +74,10 @@ def fetch_data():
 
     all_locations = []
     all_codes = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA],
-        max_radius_miles=50,
-        max_search_results=None,
+        country_codes=[SearchableCountries.USA], max_radius_miles=50
     )
     for code in all_codes:
+        log.info(f"Fetching location for: {code}")
         body = {
             "StoreLocatorForm": {
                 "Location": code,
@@ -115,11 +118,6 @@ def fetch_data():
         except TypeError:
             continue
         location_name = location_name if location_name else "<MISSING>"
-        passed = False
-        if "do it best" in location_name.lower():
-            passed = True
-        if "doitbest" not in store_url.lower() and not passed:
-            continue
         street_address = poi["Address1"]
         if poi["Address2"]:
             street_address += ", " + poi["Address2"]
@@ -128,9 +126,8 @@ def fetch_data():
         city = city if city else "<MISSING>"
         state = poi["State"]
         state = state if state else "<MISSING>"
-        zip_code = poi["ZipCode"]
-        if not zip_code:
-            continue
+        zip_code = poi.get("ZipCode")
+        zip_code = zip_code if zip_code else "<MISSING>"
         country_code = "<MISSING>"
         store_number = poi["ID"]
         store_number = store_number if store_number else "<MISSING>"
@@ -141,6 +138,7 @@ def fetch_data():
         latitude = latitude if latitude else "<MISSING>"
         longitude = poi["Longitude"]
         longitude = longitude if longitude else "<MISSING>"
+        all_codes.found_location_at(latitude, longitude)
         hours_of_operation = "<MISSING>"
 
         item = [
