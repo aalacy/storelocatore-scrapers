@@ -78,7 +78,11 @@ def fetch_data():
         SFound = False
         for line2 in r2.iter_lines(decode_unicode=True):
             if '<title data-react-helmet="true">' in line2:
-                name = line2.split('<title data-react-helmet="true">')[1].split(" |")[0]
+                name = line2.split('<title data-react-helmet="true">')[1].split(
+                    "</title>"
+                )[0]
+                if "|" in name:
+                    name = name.split("|")[0].strip()
             if 'span class="c-markdown">Store details</span>' in line2:
                 SFound = True
             if '"line1":"' in line2:
