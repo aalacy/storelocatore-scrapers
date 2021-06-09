@@ -39,7 +39,6 @@ def fetch_data():
             state = address[0]
             zip_postal = address[1]
             country_code = "US"
-            coords = soup.find("div", {"class": "js-map-infowindow map__infowindow"})
             latitude = r.text.split('data-lat="')[1].split('"')[0]
             longitude = r.text.split('data-lng="')[1].split('"')[0]
             store_number = r.text.split('data-id="')[1].split('"')[0]
