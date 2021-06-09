@@ -50,7 +50,7 @@ def fetch_data():
     datanow.append("none")
     url = "https://www.sephora.com/happening/storelist"
     log.info(f"storelist: {url}")
-    r = session.get(url, headers=headers, verify=False)
+    r = session.get(url, headers=headers, timeout=180, verify=False)
     soup = BeautifulSoup(r.text, "html.parser")
     linklist = soup.select("a[href*=happening]")[6:]
     for link in linklist:
