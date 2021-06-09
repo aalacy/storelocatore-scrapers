@@ -50,11 +50,11 @@ def fetch_data():
             r.encoding = "utf-8"
         for line in r.iter_lines(decode_unicode=True):
             if (
-                'href="https://www.ihg.com/crowneplaza/destinations/us/en/united-states-hotels/'
+                'href="https://www.ihg.com/crowneplaza/destinations/us/en/united-states/'
                 in line
             ):
                 surl = line.split('href="')[1].split('"')[0]
-                if surl not in states:
+                if surl not in states and "washington" in surl:
                     states.append(surl)
         for state in states:
             cities = []
@@ -64,7 +64,7 @@ def fetch_data():
                 r2.encoding = "utf-8"
             for line2 in r2.iter_lines(decode_unicode=True):
                 if (
-                    'href="https://www.ihg.com/crowneplaza/destinations/us/en/united-states-hotels/'
+                    'href="https://www.ihg.com/crowneplaza/destinations/us/en/united-states/'
                     in line2
                     and "<span>" in line2
                 ):
@@ -82,10 +82,7 @@ def fetch_data():
                         and '{"@context":"https://www.schema.org"' in line3
                     ):
                         lurl = line3.split('"url":"')[1].split('"')[0]
-                        if (
-                            lurl not in alllocs
-                            and "NoImageAvailable_RoomRates" not in line3
-                        ):
+                        if lurl not in alllocs:
                             alllocs.append(lurl)
                             website = "crowneplaza.com"
                             typ = "Hotel"
@@ -100,7 +97,7 @@ def fetch_data():
                             except:
                                 state = "<MISSING>"
                             zc = line3.split('"postalCode":"')[1].split('"')[0]
-                            if "canada-hotels" in url:
+                            if "canada" in url:
                                 country = "CA"
                             else:
                                 country = "US"
@@ -112,6 +109,10 @@ def fetch_data():
                             lng = line3.split('"longitude":')[1].split("}")[0]
                             store = lurl.replace("/hoteldetail", "").rsplit("/", 1)[1]
                             if country == "US":
+                                if "/chish/" in lurl:
+                                    phone = "1-312-829-5000"
+                                if "/nycmh/" in lurl:
+                                    phone = "1-212-977-4000"
                                 yield [
                                     website,
                                     lurl,

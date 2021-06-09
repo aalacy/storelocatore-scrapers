@@ -1,8 +1,11 @@
-from bs4 import BeautifulSoup
 import csv
 import json
-
+from bs4 import BeautifulSoup
 from sgrequests import SgRequests
+
+from sglogging import sglog
+
+log = sglog.SgLogSetup().get_logger("sephora.com")
 
 session = SgRequests()
 headers = {
@@ -46,10 +49,12 @@ def fetch_data():
     datanow = []
     datanow.append("none")
     url = "https://www.sephora.com/happening/storelist"
-    r = session.get(url, headers=headers, verify=False)
+    log.info(f"storelist: {url}")
+    r = session.get(url, headers=headers, timeout=180, verify=False)
     soup = BeautifulSoup(r.text, "html.parser")
     linklist = soup.select("a[href*=happening]")[6:]
     for link in linklist:
+        log.info(f" Scraping data from: {link}")
         link = "https://www.sephora.com" + link["href"]
 
         r = session.get(link, headers=headers, verify=False)
@@ -132,12 +137,15 @@ def fetch_data():
         )
 
         p += 1
+    log.info(f"Total Locations: {p}")
     return data
 
 
 def scrape():
+    log.info("Started")
     data = fetch_data()
     write_output(data)
+    log.info("Finished grabbing locations")
 
 
 scrape()
