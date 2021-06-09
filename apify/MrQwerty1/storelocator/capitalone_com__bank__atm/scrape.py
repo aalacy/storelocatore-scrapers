@@ -68,7 +68,6 @@ def get_data(coord):
         "https://api.capitalone.com/locations", headers=headers, data=json.dumps(data)
     )
     js = r.json()["data"]["geoSearch"]
-    print(coord, ":", len(js))
 
     for j in js:
         a = j.get("address")
