@@ -94,6 +94,8 @@ def fetch_data():
         page_url = row["link"]
         data = pull_content(page_url)
         content = data.find("div", {"class": "store-detail"})
+        if not content:
+            continue
         locator_domain = DOMAIN
         location_name = handle_missing(
             content.find("h1").get_text(strip=True, separator=" - ")
