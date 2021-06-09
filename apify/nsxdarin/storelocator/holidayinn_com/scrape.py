@@ -70,6 +70,14 @@ def fetch_data():
         hours = "<MISSING>"
         lat = ""
         lng = ""
+        add2 = ""
+        city2 = ""
+        zc2 = ""
+        state2 = ""
+        phone2 = ""
+        country2 = ""
+        lat2 = ""
+        lng2 = ""
         store = loc.split("/hoteldetail")[0].rsplit("/", 1)[1]
         for line2 in r2.iter_lines():
             line2 = str(line2.decode("utf-8"))
