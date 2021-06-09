@@ -36,6 +36,7 @@ def write_output(data):
         writer.writerow(
             [
                 "locator_domain",
+                "page_url",
                 "location_name",
                 "street_address",
                 "city",
@@ -63,6 +64,10 @@ def fetch_data():
     for store in store_list:
         output = []
         output.append(base_url)  # url
+        page_url = store["url"]
+        if "https://www.prestigepreschoolacademy.com" not in page_url:
+            page_url = f"https://www.prestigepreschoolacademy.com{page_url}"
+        output.append(page_url)  # page_url
         output.append(store["store"])  # location name
         output.append(get_value(store["address"] + " " + store["address2"]))  # address
         output.append(store["city"])  # city
