@@ -28,10 +28,14 @@ def parse_detail(sp2, detail, page_url):
         )
     else:
         hours = [sp2.select("div.blockInnerContent p")[1].text]
+
+    street_address = addr.street_address_1
+    if addr.street_address_2:
+        street_address += ", " + addr.street_address_2
     return SgRecord(
         page_url=page_url,
         location_name=detail.text,
-        street_address=addr.street_address_1,
+        street_address=street_address,
         city=addr.city,
         state=addr.state,
         zip_postal=addr.postcode,

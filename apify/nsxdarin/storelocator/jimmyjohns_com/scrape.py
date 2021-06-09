@@ -40,15 +40,17 @@ def write_output(data):
 def fetch_data():
     url = "https://locations.jimmyjohns.com/sitemap.xml"
     locs = []
-    r = session.get(url, headers=headers)
-    if r.encoding is None:
-        r.encoding = "utf-8"
-    for line in r.iter_lines(decode_unicode=True):
-        if ".html</loc>" in line and "/sandwiches-" in line:
-            lurl = line.split("<loc>")[1].split("<")[0]
-            locs.append(lurl)
+    while len(locs) < 2500:
+        r = session.get(url, headers=headers)
+        if r.encoding is None:
+            r.encoding = "utf-8"
+        for line in r.iter_lines(decode_unicode=True):
+            if ".html</loc>" in line and "/sandwiches-" in line:
+                lurl = line.split("<loc>")[1].split("<")[0]
+                locs.append(lurl)
     logger.info(("Found %s Locations." % str(len(locs))))
     for loc in locs:
+        logger.info(loc)
         url = loc
         add = ""
         city = ""

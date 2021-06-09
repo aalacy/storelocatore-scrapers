@@ -42,11 +42,10 @@ def fetch_data():
     scraped_items = []
 
     DOMAIN = "hugoboss.com"
-    start_url = "https://production-na01-hugoboss.demandware.net/s/US/dw/shop/v16_9/stores?client_id=871c988f-3549-4d76-b200-8e33df5b45ba&latitude=36.18382034838561&longitude=-95.71289100000001&count=100&maxDistance=3670.4097048657495&distanceUnit=mi&start=0"
+    start_url = "https://production-web-hugo.demandware.net/s/GLOBAL/dw/shop/v20_10/stores?client_id=871c988f-3549-4d76-b200-8e33df5b45ba&latitude=19.864474419903953&longitude=-53.17345318782168&count=200&maxDistance=100000&distanceUnit=km&start=0"
 
     all_locations = []
-    response = session.get(start_url)
-    data = json.loads(response.text)
+    data = session.get(start_url, verify=False).json()
     all_locations += data["data"]
     next_page = data["next"]
     while next_page:
@@ -69,8 +68,6 @@ def fetch_data():
         zip_code = zip_code if zip_code else "<MISSING>"
         country_code = poi.get("country_code")
         country_code = country_code if country_code else "<MISSING>"
-        if country_code not in ["US", "CA"]:
-            continue
         poi_number = poi["id"]
         poi_number = poi_number if poi_number else "<MISSING>"
         phone = poi.get("phone")
@@ -114,8 +111,9 @@ def fetch_data():
             longitude,
             hoo,
         ]
-        if poi_number not in scraped_items:
-            scraped_items.append(poi_number)
+        check = f"{poi_name} {street}"
+        if check not in scraped_items:
+            scraped_items.append(check)
             items.append(item)
 
     return items

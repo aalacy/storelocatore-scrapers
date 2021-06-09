@@ -1,6 +1,6 @@
 from sgscrape import simple_scraper_pipeline as sp
 from sgrequests import SgRequests
-from sgzip.dynamic import DynamicZipSearch, SearchableCountries
+from sgzip.dynamic import DynamicZipSearch, SearchableCountries, Grain_2
 from sglogging import SgLogSetup
 from requests import exceptions  # noqa
 from urllib3 import exceptions as urllibException
@@ -14,9 +14,7 @@ headers = {
 }
 
 search = DynamicZipSearch(
-    country_codes=[SearchableCountries.USA],
-    max_radius_miles=100,
-    max_search_results=10,
+    country_codes=[SearchableCountries.USA], granularity=Grain_2()
 )
 
 
@@ -126,6 +124,23 @@ def fetch_data():
                             "page_url"
                         ] = f"https://locations.comerica.com/location/{store['type'].lower()}-{store['cma_id'].lower()}"
 
+                    else:
+                        continue
+                    store["hours"] = human_hours(store["open_hours_formatted"])
+                    if "page_url" in store:
+                        soup1 = bs(
+                            session.get(
+                                store["page_url"], headers=headers, timeout=15
+                            ).text,
+                            "lxml",
+                        )
+                        h3_tag = soup1.select_one('h3[property="name"]')
+                        try:
+                            if h3_tag.find_next_sibling("p"):
+                                store["hours"] = "Temporarily closed"
+                        except:
+                            pass
+
                     yield store
                     found += 1
             total += found
@@ -211,9 +226,7 @@ def scrape():
             mapping=["id"],
             part_of_record_identity=True,
         ),
-        hours_of_operation=sp.MappingField(
-            mapping=["open_hours_formatted"], raw_value_transform=human_hours
-        ),
+        hours_of_operation=sp.MappingField(mapping=["hours"]),
         location_type=sp.MappingField(
             mapping=["type"],
             part_of_record_identity=True,

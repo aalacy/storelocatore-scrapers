@@ -15,7 +15,7 @@ headers = {
 
 def fetch_data():
     if True:
-        url = "https://api.freshop.com/1/stores?app_key=king_cash_saver&has_address=true&limit=-1&token=fc1d4518e9a0955984a266645faa55ba"
+        url = "https://api.freshop.com/1/stores?app_key=king_cash_saver&has_address=true&limit=-1"
         loclist = session.get(url, headers=headers).json()["items"]
         for loc in loclist:
             location_name = loc["name"]
@@ -31,7 +31,7 @@ def fetch_data():
             zip_postal = loc["postal_code"]
             state = loc["state"]
             yield SgRecord(
-                locator_domain="https://www.gretchenscottdesigns.com/",
+                locator_domain="https://www.kingcashsaver.com/",
                 page_url=page_url,
                 location_name=location_name,
                 street_address=street_address.strip(),
