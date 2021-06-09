@@ -47,7 +47,7 @@ def get_data(coord):
     rows = []
     lat, lng = coord
     locator_domain = "https://ecoatm.com"
-    api = f"https://locations.ecoatm.com"
+    api = "https://locations.ecoatm.com"
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:89.0) Gecko/20100101 Firefox/89.0",
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
