@@ -23,24 +23,21 @@ def fetch_data():
             street_address = addr.street_address_1
             if addr.street_address_2:
                 street_address += " " + addr.street_address_2
-            page_url = "https://" + _["website"]
-            if not _["website"]:
-                continue
-                page_url = (
-                    "https://equipmentshare.com/locations/"
-                    + _["name"].strip().replace(" ", "-").lower()
-                )
-            logger.info(page_url)
+
             hours = []
-            try:
-                ss = json.loads(
-                    bs(session.get(page_url, headers=_headers).text, "lxml")
-                    .find("script", type="application/ld+json")
-                    .string
-                )
-                hours = ss["openingHoursSpecification"]["dayOfWeek"]["name"]
-            except:
-                pass
+            page_url = ""
+            if _["website"]:
+                page_url = "https://" + _["website"]
+                logger.info(page_url)
+                try:
+                    ss = json.loads(
+                        bs(session.get(page_url, headers=_headers).text, "lxml")
+                        .find("script", type="application/ld+json")
+                        .string
+                    )
+                    hours = ss["openingHoursSpecification"]["dayOfWeek"]["name"]
+                except:
+                    pass
             yield SgRecord(
                 page_url=page_url,
                 location_name=_["name"],
