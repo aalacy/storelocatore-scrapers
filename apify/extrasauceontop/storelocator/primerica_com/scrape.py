@@ -94,8 +94,6 @@ def fetch_data():
         if sec == 1:
             ccode = "CA"
         rep_list = mainsection[sec].findAll("a")
-        cleanr = re.compile("<.*?>")
-        pattern = re.compile(r"\s\s+")
         for rep in rep_list:
 
             link = "http://www.primerica.com/public/" + rep["href"]
