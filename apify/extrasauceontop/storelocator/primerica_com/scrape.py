@@ -175,7 +175,7 @@ def fetch_data():
                                 if alink in linklist:
                                     continue
                                 linklist.append(alink)
-                                print(alink)
+
                                 try:
                                     page3 = session.get(
                                         alink, headers=headers, verify=False
@@ -215,12 +215,6 @@ def fetch_data():
                                         address[-1].split(", ")[-1].split(" ")[-2]
                                         + address[-1].split(", ")[-1].split(" ")[-1]
                                     )
-
-                                print(street)
-                                print(city)
-                                print(state)
-                                print(pcode)
-                                print("")
 
                                 phone = soup3.find(
                                     "div", {"class": "telephoneLabel"}
