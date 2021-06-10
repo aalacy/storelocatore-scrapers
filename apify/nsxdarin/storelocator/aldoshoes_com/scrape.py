@@ -133,6 +133,8 @@ def fetch_data():
                 phone = "<MISSING>"
             if "/store/1422" in surl:
                 phone = "<MISSING>"
+            if "store/2522" in surl:
+                name = add
             yield [
                 website,
                 surl,
@@ -191,6 +193,8 @@ def fetch_data():
                 hours = hours + "; " + dname + ": " + hrs
         if "/store/1422" in purl:
             phone = "<MISSING>"
+        if "store/2522" in surl:
+            name = add
         yield [
             website,
             purl,
