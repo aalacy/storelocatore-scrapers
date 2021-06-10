@@ -64,6 +64,8 @@ def fetch_data():
 
         line = d.xpath(".//div[@class='stores-menu__address']/text()")
         line = list(filter(None, [l.strip() for l in line]))
+        if not line:
+            continue
         street_address = ", ".join(line[:-1]).replace("Westfield, ", "")
         line = line[-1]
         city = line.split(",")[0].strip()
@@ -81,6 +83,8 @@ def fetch_data():
         hours = d.xpath(".//p[@class='stores-hours_copy']/text()")
         hours = list(filter(None, [h.strip() for h in hours]))
         hours_of_operation = ";".join(hours) or "<MISSING>"
+        if "Hours;" in hours_of_operation:
+            hours_of_operation = hours_of_operation.split("Hours;")[-1].strip()
 
         row = [
             locator_domain,

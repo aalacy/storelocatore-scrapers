@@ -67,7 +67,9 @@ def fetch_data():
         lines = r2.iter_lines()
         for line2 in lines:
             line2 = str(line2.decode("utf-8"))
-            if '"telephone" : "' in line2:
+            if 'class="contact-us-span">(' in line2 and '<a href="tel:' in line:
+                phone = line2.split('<a href="tel:')[1].split('"')[0]
+            if '"telephone" : "' in line2 and phone == "":
                 phone = line2.split('"telephone" : "')[1].split('"')[0]
             if 'font-weight: bold; font-size: 1.4em;">' in line2:
                 items = line2.split('font-weight: bold; font-size: 1.4em;">')
@@ -142,6 +144,8 @@ def fetch_data():
                     state = "<MISSING>"
                 if zc == "":
                     zc = "<MISSING>"
+                if phone == "":
+                    phone = "<MISSING>"
                 if infotext not in locinfo:
                     locinfo.append(infotext)
                     yield [
