@@ -18,7 +18,7 @@ def fetch_data():
             "section.elementor-section.elementor-section-content-middle"
         )
         for _ in locations:
-            location_name = _.select("h2.elementor-heading-title")[1].text
+            location_name = _.select_one("h2.elementor-heading-title").text
             block = list(_.select_one("div.elementor-text-editor p").stripped_strings)
             phone = _.find("a", href=re.compile(r"tel:")).text
             hours = []

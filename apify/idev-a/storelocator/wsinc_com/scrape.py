@@ -22,6 +22,8 @@ def fetch_data():
             page_url = locator_domain + link["link"]
             if not link["link"]:
                 continue
+            if link["address"].strip().startswith("21700 Mark"):
+                page_url = "https://www.wsinc.com/locations/chicago-il-3/"
             logger.info(page_url)
             res = session.get(page_url, headers=_headers)
             _addr = link["address"]

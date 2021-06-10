@@ -50,14 +50,15 @@ def fetch_data():
     datanow.append("none")
     url = "https://www.sephora.com/happening/storelist"
     log.info(f"storelist: {url}")
-    r = session.get(url, headers=headers, verify=False)
+    r = session.get(url, headers=headers, timeout=180, verify=False)
+    log.info(f"Res Code: {r.status_code}")
     soup = BeautifulSoup(r.text, "html.parser")
     linklist = soup.select("a[href*=happening]")[6:]
     for link in linklist:
-        log.info(f" Scraping data from: {link}")
         link = "https://www.sephora.com" + link["href"]
-
-        r = session.get(link, headers=headers, verify=False)
+        log.info(f"Scraping data from: {link}")
+        r = session.get(link, headers=headers, timeout=180, verify=False)
+        log.info(f"Status Code: {r.status_code}")
         try:
             r = r.text.split('"stores":[')[1].split('}],"thirdpartyImageHost"', 1)[0]
         except:
@@ -137,7 +138,7 @@ def fetch_data():
         )
 
         p += 1
-    log.info(f"Total Locations: {p}")
+    log.info(f"Total Locations added: {p}")
     return data
 
 
