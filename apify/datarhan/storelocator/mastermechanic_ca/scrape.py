@@ -1,6 +1,4 @@
-import re
 import csv
-import json
 
 from sgrequests import SgRequests
 
@@ -41,39 +39,36 @@ def fetch_data():
 
     items = []
 
-    start_url = "https://kent.ca/store/locator/ajaxlist/?loadedAll=true"
-    domain = re.findall(r"://(.+?)/", start_url)[0].replace("www.", "")
+    start_url = "https://www.mastermechanic.ca/locations/data/locations.php?origAddress=554+Lansdowne+St%2C+Peterborough%2C+ON+K9J+3R8%2C+%D0%9A%D0%B0%D0%BD%D0%B0%D0%B4%D0%B0"
+    domain = "mastermechanic.ca"
     hdr = {
-        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36",
-        "x-requested-with": "XMLHttpRequest",
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
     }
-    data = session.get(start_url, headers=hdr).json()
+    all_locations = session.get(start_url, headers=hdr).json()
 
-    for poi in data["list"]:
-        store_url = poi["additional_attributes"]["url_key"]
+    for poi in all_locations:
+        store_url = "https://www.mastermechanic.ca/locations/"
         location_name = poi["name"]
-        location_name = location_name if location_name else "<MISSING>"
-        street_address = poi["address"][0]
+        street_address = poi["address"]
         city = poi["city"]
-        state = poi["region"]
-        zip_code = poi["postcode"]
-        country_code = poi["country_id"]
-        store_number = poi["entity_id"]
-        phone = poi["telephone"]
+        state = poi["state"]
+        zip_code = poi["postal"]
+        country_code = "<MISSING>"
+        store_number = poi["store_id"]
+        phone = poi["phone"]
         phone = phone if phone else "<MISSING>"
         location_type = "<MISSING>"
-        latitude = poi["latitude"]
-        longitude = poi["longitude"]
+        latitude = poi["lat"]
+        longitude = poi["lng"]
         hoo = []
-        hoo_data = json.loads(poi["opening_hours"])
-        for e in hoo_data:
-            day = e["dayLabel"]
-            opens = e["open_formatted"]
-            closes = e["close_formatted"]
-            if opens.strip():
-                hoo.append(f"{day} {opens} - {closes}")
-            else:
-                hoo.append(f"{day} closed")
+        for d, h in poi.items():
+            if d in ["hours_today", "hours_note"]:
+                continue
+            if "hours_" in d:
+                day = d.split("_")[-1]
+                hours = h.strip()
+                hoo.append(f"{day} {hours}")
+        hoo = [e.strip() for e in hoo if e.strip()]
         hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
 
         item = [

@@ -94,7 +94,7 @@ def fetchSingleZip(zip_code):
 
 def fetchData():
     # Optimized the radius that pull maximum locations
-    zips = static_zipcode_list(radius=35, country_code=SearchableCountries.USA)
+    zips = static_zipcode_list(radius=20, country_code=SearchableCountries.USA)
     log.info(f"Total zip codes = {len(zips)}")
     countZip = 0
     count = 0

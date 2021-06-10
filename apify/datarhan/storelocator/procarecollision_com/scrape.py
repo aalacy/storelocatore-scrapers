@@ -1,6 +1,6 @@
 import re
 import csv
-import json
+from lxml import etree
 
 from sgrequests import SgRequests
 
@@ -41,39 +41,32 @@ def fetch_data():
 
     items = []
 
-    start_url = "https://kent.ca/store/locator/ajaxlist/?loadedAll=true"
+    start_url = "https://www.procarecollision.com/wp-admin/admin-ajax.php?action=store_search&lat=31.9686&lng=-99.90181&max_results=50&search_radius=50&autoload=1"
     domain = re.findall(r"://(.+?)/", start_url)[0].replace("www.", "")
     hdr = {
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36",
         "x-requested-with": "XMLHttpRequest",
     }
-    data = session.get(start_url, headers=hdr).json()
 
-    for poi in data["list"]:
-        store_url = poi["additional_attributes"]["url_key"]
-        location_name = poi["name"]
-        location_name = location_name if location_name else "<MISSING>"
-        street_address = poi["address"][0]
+    all_locations = session.get(start_url, headers=hdr).json()
+
+    for poi in all_locations:
+        store_url = poi["url"]
+        location_name = poi["store"].replace("&#8211;", "-")
+        street_address = poi["address"]
         city = poi["city"]
-        state = poi["region"]
-        zip_code = poi["postcode"]
-        country_code = poi["country_id"]
-        store_number = poi["entity_id"]
-        phone = poi["telephone"]
+        state = poi["state"]
+        zip_code = poi["zip"]
+        country_code = poi["country"]
+        country_code = country_code if country_code else "<MISSING>"
+        store_number = poi["id"]
+        phone = poi["phone"]
         phone = phone if phone else "<MISSING>"
         location_type = "<MISSING>"
-        latitude = poi["latitude"]
-        longitude = poi["longitude"]
-        hoo = []
-        hoo_data = json.loads(poi["opening_hours"])
-        for e in hoo_data:
-            day = e["dayLabel"]
-            opens = e["open_formatted"]
-            closes = e["close_formatted"]
-            if opens.strip():
-                hoo.append(f"{day} {opens} - {closes}")
-            else:
-                hoo.append(f"{day} closed")
+        latitude = poi["lat"]
+        longitude = poi["lng"]
+        hoo = etree.HTML(poi["hours"]).xpath("//text()")
+        hoo = [e.strip() for e in hoo if e.strip()]
         hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
 
         item = [
