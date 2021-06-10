@@ -1,13 +1,16 @@
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
+import json
+from bs4 import BeautifulSoup as bs
+from sglogging import SgLogSetup
 from sgscrape.sgpostal import parse_address_intl
+
+logger = SgLogSetup().get_logger("equipmentshare")
 
 _headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
 }
-
-days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 
 
 def fetch_data():
@@ -21,9 +24,23 @@ def fetch_data():
             if addr.street_address_2:
                 street_address += " " + addr.street_address_2
             page_url = "https://" + _["website"]
+            if not _["website"]:
+                continue
+                page_url = (
+                    "https://equipmentshare.com/locations/"
+                    + _["name"].strip().replace(" ", "-").lower()
+                )
+            logger.info(page_url)
             hours = []
-            for day in days:
-                hours.append(f"{day}: {_[day.lower()]}")
+            try:
+                ss = json.loads(
+                    bs(session.get(page_url, headers=_headers).text, "lxml")
+                    .find("script", type="application/ld+json")
+                    .string
+                )
+                hours = ss["openingHoursSpecification"]["dayOfWeek"]["name"]
+            except:
+                pass
             yield SgRecord(
                 page_url=page_url,
                 location_name=_["name"],
@@ -37,7 +54,7 @@ def fetch_data():
                 country_code="US",
                 phone=_["phone"],
                 locator_domain=locator_domain,
-                hours_of_operation="; ".join(hours),
+                hours_of_operation=hours,
             )
 
 
