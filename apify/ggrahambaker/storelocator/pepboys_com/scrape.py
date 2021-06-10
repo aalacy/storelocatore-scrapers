@@ -33,6 +33,7 @@ def set_proxies():
     else:
         return None
 
+
 def write_output(data):
     with open("data.csv", mode="w") as output_file:
         writer = csv.writer(
