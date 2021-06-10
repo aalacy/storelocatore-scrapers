@@ -31,9 +31,12 @@ def fetch_data():
                     soup1.select_one("div.store-details__content").stripped_strings
                 )[1:]
                 for hh in temp:
-                    if "RE-OPENING" in hh:
+                    if "re-open" in hh.lower():
                         continue
-                    if hh.split("-")[0].strip() not in days:
+                    if (
+                        hh != "TEMPORARILY CLOSED"
+                        and hh.split("-")[0].strip() not in days
+                    ):
                         break
                     hours.append(hh)
             addr = _["address"].replace("\r\n", ",").split(",")

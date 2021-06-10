@@ -82,10 +82,7 @@ def fetch_data():
                         and '{"@context":"https://www.schema.org"' in line3
                     ):
                         lurl = line3.split('"url":"')[1].split('"')[0]
-                        if (
-                            lurl not in alllocs
-                            and "NoImageAvailable_RoomRates" not in line3
-                        ):
+                        if lurl not in alllocs:
                             alllocs.append(lurl)
                             website = "crowneplaza.com"
                             typ = "Hotel"
@@ -112,6 +109,10 @@ def fetch_data():
                             lng = line3.split('"longitude":')[1].split("}")[0]
                             store = lurl.replace("/hoteldetail", "").rsplit("/", 1)[1]
                             if country == "US":
+                                if "/chish/" in lurl:
+                                    phone = "1-312-829-5000"
+                                if "/nycmh/" in lurl:
+                                    phone = "1-212-977-4000"
                                 yield [
                                     website,
                                     lurl,
