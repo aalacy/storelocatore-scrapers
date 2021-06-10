@@ -44,7 +44,7 @@ def fetch_data():
             zip_postal = address[1]
             country_code = "US"
             latitude = r.text.split("lat&quot;:")[1].split(",")[0]
-            longitude = r.text.split("lng&quot;:-")[1].split("}")[0]
+            longitude = "-" + r.text.split("lng&quot;:-")[1].split("}")[0]
             yield SgRecord(
                 locator_domain=DOMAIN,
                 page_url=page_url,

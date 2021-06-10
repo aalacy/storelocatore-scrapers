@@ -99,7 +99,7 @@ def fetch_data():
                 lng = line2.split('"longitude": "')[1].split('"')[0]
             if '"telephone": "' in line2:
                 phone = line2.split('"telephone": "')[1].split('"')[0]
-            if ">Coming Soon<" in line2:
+            if '<div class="hours-status red mb-10">Coming Soon</div>' in line2:
                 CS = True
             if '"openingHours": "' in line2:
                 hours = line2.split('"openingHours": "')[1].split('"')[0].strip()

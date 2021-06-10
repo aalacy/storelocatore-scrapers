@@ -159,6 +159,9 @@ def fetch_data():
             street_address = street_address.replace(
                 "Stars Recreation Center - ", ""
             ).strip()
+        if street_address.find("(") != -1:
+            street_address = street_address.split("(")[0].strip()
+        street_address = street_address.replace(",", "").strip()
         country_code = "US"
         try:
             ll = b[1]
@@ -208,6 +211,21 @@ def fetch_data():
         phone = "".join(phone_list) or "<MISSING>"
         if phone.find("0988832") != -1:
             phone = phone.split("0988")[0] + "0988"
+
+        session = SgRequests()
+        r = session.get(page_url, headers=headers)
+        tree = html.fromstring(r.text)
+        cms = (
+            "".join(
+                tree.xpath(
+                    f'//div[contains(text(), "{location_name}")]/a[1]/div/strong/text()'
+                )
+            )
+            .replace("\n", "")
+            .strip()
+        )
+        if cms == "Coming soon":
+            location_type = "Coming soon"
 
         row = [
             locator_domain,

@@ -1,11 +1,43 @@
-from sgscrape.sgrecord import SgRecord
-from sgscrape.sgwriter import SgWriter
+import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
 import dirtyjson as json
 import re
 from sgscrape.sgpostal import parse_address_intl
+
+
+def write_output(data):
+    with open("data.csv", mode="w") as output_file:
+        writer = csv.writer(
+            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+        )
+
+        # Header
+        writer.writerow(
+            [
+                "locator_domain",
+                "page_url",
+                "location_name",
+                "street_address",
+                "city",
+                "state",
+                "zip",
+                "country_code",
+                "store_number",
+                "phone",
+                "location_type",
+                "latitude",
+                "longitude",
+                "hours_of_operation",
+                "brand_website",
+                "raw_address",
+            ]
+        )
+        # Body
+        for row in data:
+            writer.writerow(row)
+
 
 logger = SgLogSetup().get_logger("findawarehouse")
 
@@ -80,22 +112,31 @@ def _detail(_, json_locations, session):
     street_address = addr.street_address_1
     if addr.street_address_2:
         street_address += " " + addr.street_address_2
-    return SgRecord(
-        page_url=page_url,
-        location_name=name,
-        street_address=street_address,
-        city=addr.city,
-        state=addr.state,
-        zip_postal=addr.postcode,
-        country_code=get_country_by_code(addr.state),
-        phone=phone,
-        locator_domain=locator_domain,
-        latitude=latitude,
-        longitude=longitude,
-    )
+    brand_website = ""
+    if _addr[-1].startswith("http"):
+        brand_website = _addr[-1]
+    return [
+        locator_domain,
+        page_url,
+        name,
+        street_address or "<MISSING>",
+        addr.city,
+        addr.state,
+        addr.postcode,
+        get_country_by_code(addr.state),
+        "<MISSING>",
+        phone,
+        "<MISSING>",
+        latitude,
+        longitude,
+        "<MISSING>",
+        brand_website,
+        " ".join(_addr[:2]),
+    ]
 
 
 def fetch_data():
+    _data = []
     with SgRequests() as session:
         total = 0
         res = session.get(base_url, headers=_header1).text
@@ -105,7 +146,7 @@ def fetch_data():
         total += len(locations)
         logger.info(f"[total {total}] {len(locations)} found")
         for _ in locations:
-            yield _detail(_, json_locations, session)
+            _data.append(_detail(_, json_locations, session))
         while True:
             __VIEWSTATE = soup.select_one("input#__VIEWSTATE")["value"]
             __VIEWSTATEGENERATOR = soup.select_one("input#__VIEWSTATEGENERATOR")[
@@ -151,11 +192,14 @@ def fetch_data():
             total += len(locations)
             logger.info(f"[total {total}] {len(locations)} found")
             for _ in locations:
-                yield _detail(_, json_locations, session)
+                _data.append(_detail(_, json_locations, session))
+
+        return _data
+
+
+def scrape():
+    write_output(fetch_data())
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
-        results = fetch_data()
-        for rec in results:
-            writer.write_row(rec)
+    scrape()
