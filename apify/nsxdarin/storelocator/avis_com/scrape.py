@@ -146,6 +146,7 @@ def fetch_data():
             add = add.split(", (")[0]
         if "), " in add:
             add = add.split("), ")[1]
+        name = name.replace("&amp;", "&").replace("&quot;", "'")
         yield [
             website,
             loc,
