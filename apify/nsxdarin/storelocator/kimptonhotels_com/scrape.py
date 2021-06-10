@@ -54,7 +54,7 @@ def fetch_data():
         if 'hreflang="en" rel="alternate">' in line:
             lurl = line.split('href="')[1].split('"')[0]
             if lurl not in locs:
-                locs.append(lurl.replace('localhost:4503',''))
+                locs.append(lurl.replace("localhost:4503", ""))
     for loc in locs:
         logger.info(loc)
         r2 = session.get(loc, headers=headers)
@@ -70,46 +70,56 @@ def fetch_data():
         hours = "<MISSING>"
         lat = ""
         lng = ""
-        rawadd = ''
+        rawadd = ""
         store = loc.split("/hoteldetail")[0].rsplit("/", 1)[1]
         for line2 in r2.iter_lines():
             line2 = str(line2.decode("utf-8"))
             if 'property="og:title" content="' in line2 and name == "":
                 name = line2.split('property="og:title" content="')[1].split('"')[0]
-            if '<span class="visible-content">' in line2 and rawadd == '':
-                rawadd = line2.split('<span class="visible-content">')[1].split('</span>')[0]
-                country = rawadd.rsplit('<br/>',1)[1]
-                add = rawadd.split('<br/>')[0]
-                if rawadd.count('<br/>') == 3:
-                    add = add + ' ' + rawadd.split('<br/>')[1]
-                    city = rawadd.split('<br/>')[2].rsplit(' ',1)[0]
+            if '<span class="visible-content">' in line2 and rawadd == "":
+                rawadd = line2.split('<span class="visible-content">')[1].split(
+                    "</span>"
+                )[0]
+                country = rawadd.rsplit("<br/>", 1)[1]
+                add = rawadd.split("<br/>")[0]
+                if rawadd.count("<br/>") == 3:
+                    add = add + " " + rawadd.split("<br/>")[1]
+                    city = rawadd.split("<br/>")[2].rsplit(" ", 1)[0]
                     state = "<MISSING>"
-                    zc = rawadd.split('<br/>')[2].rsplit(' ',1)[1]
+                    zc = rawadd.split("<br/>")[2].rsplit(" ", 1)[1]
                 else:
-                    zc = rawadd.split('<br/>')[1].rsplit(' ',1)[1]
-                    city = rawadd.split('<br/>')[1].rsplit(' ',1)[0]
+                    zc = rawadd.split("<br/>")[1].rsplit(" ", 1)[1]
+                    city = rawadd.split("<br/>")[1].rsplit(" ", 1)[0]
             if 'property="place:location:latitude"' in line2:
-                lat = line2.split('property="place:location:latitude')[1].split('content="')[1].split('"')[0]
+                lat = (
+                    line2.split('property="place:location:latitude')[1]
+                    .split('content="')[1]
+                    .split('"')[0]
+                )
             if 'property="place:location:longitude"' in line2:
-                lng = line2.split('property="place:location:longitude"')[1].split('content="')[1].split('"')[0]
+                lng = (
+                    line2.split('property="place:location:longitude"')[1]
+                    .split('content="')[1]
+                    .split('"')[0]
+                )
             if phone == "" and '<a href="tel:' in line2:
                 phone = line2.split('<a href="tel:')[1].split('"')[0]
         if " Hotels" not in name and name != "":
-            if country == 'United States':
-                state = city.rsplit(' ',1)[1]
-                city = city.rsplit(' ',1)[0]
-            if state == '':
+            if country == "United States":
+                state = city.rsplit(" ", 1)[1]
+                city = city.rsplit(" ", 1)[0]
+            if state == "":
                 state = "<MISSING>"
-            if country == 'United Kingdom':
+            if country == "United Kingdom":
                 state = "<MISSING>"
-            if country == 'Canada':
-                state = city.split(' ')[1]
-                zc = city.rsplit(' ',1)[1] + ' ' + zc
-                city = city.split(' ')[1]
-            if country == 'United Kingdom':
+            if country == "Canada":
+                state = city.split(" ")[1]
+                zc = city.rsplit(" ", 1)[1] + " " + zc
+                city = city.split(" ")[1]
+            if country == "United Kingdom":
                 state = "<MISSING>"
-                zc = city.rsplit(' ',1)[1] + ' ' + zc
-                city = city.split(' ')[1]
+                zc = city.rsplit(" ", 1)[1] + " " + zc
+                city = city.split(" ")[1]
             yield [
                 website,
                 loc,
