@@ -27,7 +27,6 @@ headers = {
 
 def fetch_data():
     # Your scraper here
-    base = "https://classiccollision.net"
     api_url = "https://classiccollision.net/wp-admin/admin-ajax.php?action=store_search&lat=21.958&lng=-114.388&max_results=50000&search_radius=1000&autoload=1"
     api_res = session.get(api_url, headers=headers)
 
@@ -44,10 +43,8 @@ def fetch_data():
 
         location_name = store["store"].strip()
         street_address = store["address"].strip()
-        if "address2" in store and store["address2"]:
-            street_address = (
-                (street_address + ", " + store["address2"]).strip(", ").strip()
-            )
+        if "," in street_address:
+            street_address = street_address.split(",")[0].strip()
 
         city = store["city"].strip()
         state = store["state"].strip()
