@@ -70,6 +70,7 @@ def fetch_data():
             street_address += " " + poi["address"]["address3"]
         if poi["address"].get("address4"):
             street_address += " " + poi["address"]["address4"]
+        street_address = street_address.replace(", Frontier Mall", "")
         city = poi["address"]["cityOrTown"]
         state = poi["address"]["stateOrProvince"]
         zip_code = poi["address"]["postalOrZipCode"]
