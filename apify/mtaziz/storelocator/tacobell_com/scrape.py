@@ -1,5 +1,5 @@
 from sgrequests import SgRequests
-from sgzip.dynamic import DynamicGeoSearch, SearchableCountries, Grain_4
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries, Grain_2
 from sglogging import SgLogSetup
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
@@ -55,9 +55,9 @@ def get_hoo(data_hrs):
 
 search = DynamicGeoSearch(
     country_codes=[SearchableCountries.USA],
-    max_radius_miles=20,
+    max_radius_miles=10,
     max_search_results=50,
-    granularity=Grain_4(),
+    granularity=Grain_2(),
 )
 
 
