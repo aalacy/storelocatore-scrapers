@@ -42,7 +42,7 @@ def fetch_data():
     }
 
     r = session.get(
-        "https://www.optimum.net/api/map/services/v1//map/store/marker/search?area.maxLat=41.574418900097534&area.maxLon=-71.4052424587429&area.minLat=40.01505331678458&area.minLon=-75.6645501412571&byType=Optimum%20Store&pageSize=8&sortBy=distance",
+        "https://www.optimum.net/api/map/services/v1//map/store/marker/search?byType=Optimum%20Store&distance=1000&near.lat=40.8117484&near.lon=-73.1785672&pageSize=100&sortBy=distance",
         headers=headers,
     )
     js = r.json()["_embedded"]["results"]
@@ -55,7 +55,7 @@ def fetch_data():
         location_name = j.get("name")
         location_type = j.get("type")
         street_address = j.get("street")
-        phone = j.get("phone")
+        phone = j.get("phone") or "<MISSING>"
         state = j.get("state")
         postal = j.get("zip")
         country_code = "US"
