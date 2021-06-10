@@ -42,32 +42,32 @@ def fetch_data():
     start_url = "https://www.mastermechanic.ca/locations/data/locations.php?origAddress=554+Lansdowne+St%2C+Peterborough%2C+ON+K9J+3R8%2C+%D0%9A%D0%B0%D0%BD%D0%B0%D0%B4%D0%B0"
     domain = "mastermechanic.ca"
     hdr = {
-        'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36'
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
     }
     all_locations = session.get(start_url, headers=hdr).json()
 
     for poi in all_locations:
-        store_url = 'https://www.mastermechanic.ca/locations/'
-        location_name = poi['name']
-        street_address = poi['address']
-        city = poi['city']
-        state = poi['state']
-        zip_code = poi['postal']
-        country_code = '<MISSING>'
-        store_number = poi['store_id']
-        phone = poi['phone']
-        phone = phone if phone else '<MISSING>'
-        location_type = '<MISSING>'
-        latitude = poi['lat']
-        longitude = poi['lng']
+        store_url = "https://www.mastermechanic.ca/locations/"
+        location_name = poi["name"]
+        street_address = poi["address"]
+        city = poi["city"]
+        state = poi["state"]
+        zip_code = poi["postal"]
+        country_code = "<MISSING>"
+        store_number = poi["store_id"]
+        phone = poi["phone"]
+        phone = phone if phone else "<MISSING>"
+        location_type = "<MISSING>"
+        latitude = poi["lat"]
+        longitude = poi["lng"]
         hoo = []
         for d, h in poi.items():
-            if d in ['hours_today', 'hours_note']:
+            if d in ["hours_today", "hours_note"]:
                 continue
-            if 'hours_' in d:
-                day = d.split('_')[-1]
+            if "hours_" in d:
+                day = d.split("_")[-1]
                 hours = h.strip()
-                hoo.append(f'{day} {hours}')
+                hoo.append(f"{day} {hours}")
         hoo = [e.strip() for e in hoo if e.strip()]
         hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
 
@@ -85,7 +85,7 @@ def fetch_data():
             location_type,
             latitude,
             longitude,
-            hours_of_operation
+            hours_of_operation,
         ]
 
         items.append(item)
