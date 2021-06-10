@@ -70,7 +70,10 @@ def fetch_data():
             day = e["dayLabel"]
             opens = e["open_formatted"]
             closes = e["close_formatted"]
-            hoo.append(f"{day} {opens} - {closes}")
+            if opens.strip():
+                hoo.append(f"{day} {opens} - {closes}")
+            else:
+                hoo.append(f"{day} closed")
         hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
 
         item = [
