@@ -39,16 +39,18 @@ def _hours_phone(temp, street, state):
     hours = []
     phone = ""
     postcode = ""
+    name = ""
     _street = street.split(" ")[0].strip()
     for tt in temp:
         if state.lower() in tt[0].lower() and _street in tt[-4]:
             postcode = tt[-4].split(" ")[-1].strip()
+            name = tt[0]
             for x, hh in enumerate(tt):
                 if _phone(hh):
                     hours = tt[x + 1 :]
                     phone = hh
                     break
-    return hours, phone, postcode
+    return hours, phone, postcode, name
 
 
 def fetch_data():
@@ -101,15 +103,17 @@ def fetch_data():
                                 street_address += " " + addr.street_address_2
                             if "181 Bellevue Avenue" in street_address:
                                 street_address = "7679 Post Road"
-                            hours, phone, zip_postal = _hours_phone(
+                            hours, phone, zip_postal, name = _hours_phone(
                                 blocks, street_address, addr.state
                             )
+                            city = name.split(",")[0]
+                            state = name.split(",")[-1].strip()
                             yield SgRecord(
                                 page_url=page_url,
-                                location_name=f"{addr.city}, {addr.state}",
+                                location_name=f"{name}",
                                 street_address=street_address,
-                                city=addr.city,
-                                state=addr.state,
+                                city=city,
+                                state=state,
                                 zip_postal=zip_postal,
                                 country_code="US",
                                 phone=phone,
