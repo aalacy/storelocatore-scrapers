@@ -11,12 +11,11 @@ log = sglog.SgLogSetup().get_logger(logger_name=website)
 session = SgRequests()
 headers = {
     "Connection": "keep-alive",
-    "sec-ch-ua": '" Not A;Brand";v="99", "Chromium";v="90", "Google Chrome";v="90"',
+    "sec-ch-ua": '" Not;A Brand";v="99", "Google Chrome";v="91", "Chromium";v="91"',
     "Accept": "*/*",
     "X-Requested-With": "XMLHttpRequest",
     "sec-ch-ua-mobile": "?0",
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.212 Safari/537.36",
-    "X-WPGMZA-Action-Nonce": "0ba742e607",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.77 Safari/537.36",
     "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
     "Origin": "https://www.americold.com",
     "Sec-Fetch-Site": "same-origin",
@@ -29,20 +28,26 @@ headers = {
 def fetch_data():
     # Your scraper here
 
-    search_url = "https://www.americold.com/wp-admin/admin-ajax.php?fields%5B%5D=id&filter=%7B%22map_id%22%3A%2223%22%2C%22center%22%3A%7B%22lat%22%3A40.75368539999999%2C%22lng%22%3A-73.9991637%7D%2C%22radius%22%3A%223000000%22%2C%22mashupIDs%22%3A%5B%5D%2C%22customFields%22%3A%5B%5D%7D&route=%2Fmarkers&action=wpgmza_rest_api_request"
+    search_url = (
+        "https://www.americold.com/what-we-do/supply-chain-solutions/facilities/"
+    )
     search_req = session.get(search_url, headers=headers)
-    store_ids = json.loads(search_req.text)
-    ID_LIST = []
-    for ids in store_ids:
-        ID_LIST.append(ids["id"])
+    nonce_token = "295611408a"
+    try:
+        nonce_token = (
+            search_req.text.split('"\\/marker-listing\\/":"')[1]
+            .strip()
+            .split('"')[0]
+            .strip()
+        )
+    except:
+        pass
+
+    headers["X-WPGMZA-Action-Nonce"] = nonce_token
+
     data = {
         "phpClass": "WPGMZA\\MarkerListing\\Carousel",
         "map_id": "23",
-        "overrideMarkerIDs": ",".join(ID_LIST),
-        "filteringParams[map_id]": "23",
-        "filteringParams[center][lat]": "40.75368539999999",
-        "filteringParams[center][lng]": "-73.9991637",
-        "filteringParams[radius]": "300000",
         "route": "/marker-listing/",
         "action": "wpgmza_rest_api_request",
     }
