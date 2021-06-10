@@ -264,7 +264,11 @@ class CrawlMethod(CleanRecord):
                 proxies=proxies, headers=headers, timeout=None
             ) as client:
                 response = await client.post(url, headers=headers, data=data)
-                return response.json()
+                try:
+                    response = response.json()
+                    return response
+                except Exception as e:
+                    self.Oopsie(Point, str(e))
 
         record_cleaner = getattr(CleanRecord, self._config.get("cleanupMethod"))
         maxZ = self._search.items_remaining()
