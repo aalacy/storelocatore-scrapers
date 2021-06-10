@@ -155,7 +155,10 @@ def fetch_data():
             latitude = store["latitude"]
             longitude = store["longitude"]
 
-            location_type = "<MISSING>"
+            if "atm" in location_name.lower():
+                location_type = "ATM"
+            else:
+                location_type = "ATM, Branch"
 
             all_store_data.append(
                 [
