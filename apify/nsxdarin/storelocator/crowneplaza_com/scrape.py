@@ -54,7 +54,7 @@ def fetch_data():
                 in line
             ):
                 surl = line.split('href="')[1].split('"')[0]
-                if surl not in states and "washington" in surl:
+                if surl not in states:
                     states.append(surl)
         for state in states:
             cities = []
