@@ -294,6 +294,16 @@ def fetch_data():
                         add = "80 Premium Outlets Blvd."
                     if "nike-by-santana-row" in loc:
                         phone = "<MISSING>"
+                    if zc == "" or "null" in zc:
+                        zc = "<MISSING>"
+                    if add == "" or "null" in add:
+                        add = "<MISSING>"
+                    if phone == "" or "null" in phone:
+                        phone = "<MISSING>"
+                    if hours.count("Sun:") > 1:
+                        hours = "<INACCESSIBLE>"
+                    if "Sun:" in hours and "Mon" not in hours:
+                        hours = "<INACCESSIBLE>"
                     yield [
                         website,
                         loc,

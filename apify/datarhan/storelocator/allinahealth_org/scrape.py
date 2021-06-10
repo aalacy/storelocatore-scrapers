@@ -65,7 +65,7 @@ def fetch_data():
         loc_url = urljoin(start_url, url)
         address_raw = poi_html.xpath(".//address/text()")
         address_raw = [elem.strip() for elem in address_raw if elem.strip()]
-        addr = parse_address_intl(" ".join(address_raw))
+        addr = parse_address_intl(" ".join(address_raw).replace(",", " "))
         location_name = poi_html.xpath(".//h5/text()")
         location_name = (
             location_name[0].split("-")[0].strip().split("–")[0].strip()
@@ -75,6 +75,9 @@ def fetch_data():
         street_address = addr.street_address_1
         if addr.street_address_2:
             street_address += " " + addr.street_address_2
+        street_address = street_address.split("Inside")[0].split("Emergency")[0].strip()
+        if street_address == "611":
+            street_address += " " + "E Fairview"
         city = addr.city
         city = city if city else "<MISSING>"
         state = addr.state

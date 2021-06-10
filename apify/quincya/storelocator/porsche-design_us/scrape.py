@@ -149,7 +149,7 @@ def fetch_data():
 
         item = base.find(class_="container mt-5")
         location_name = item.find("h1").text.strip()
-        if "Santa Fe" in location_name:
+        if "Santa Fe" in location_name or "Le West Indies" in location_name:
             continue
         logger.info(link)
 
@@ -183,6 +183,14 @@ def fetch_data():
             city = "Santa Clarita"
             state = "CA"
             zip_code = "91355"
+        elif "3333 Bristol Street" in street_address:
+            city = "Costa Mesa"
+            state = "CA"
+            zip_code = "92626"
+        elif "Rodeo Drive" in street_address:
+            city = "Beverly Hills"
+            state = "CA"
+            zip_code = "90210"
         else:
             try:
                 raw_city = re.findall(r'"city":"[a-zA-Z]+"', script)[0]

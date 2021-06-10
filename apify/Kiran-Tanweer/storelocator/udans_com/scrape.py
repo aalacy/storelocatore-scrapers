@@ -93,6 +93,9 @@ def fetch_data():
         state = parsed.state if parsed.state else "<MISSING>"
         pcode = parsed.postcode if parsed.postcode else "<MISSING>"
 
+        if street == "599 W Glen Bay Ave":
+            street = "599 W Glen Bay Ave Bayshore Town Center"
+            city = "Glendale"
         data.append(
             [
                 "https://udans.com/",

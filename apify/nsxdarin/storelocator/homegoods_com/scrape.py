@@ -71,6 +71,8 @@ def fetch_data():
                 if "<" not in g:
                     g = h
                     h = next(lines)
+                if "," not in h:
+                    h = next(lines)
                 add = g.split("<")[0].strip().replace("\t", "")
                 city = h.split(",")[0].strip().replace("\t", "")
                 state = h.split(",")[1].strip().split(" ")[0]

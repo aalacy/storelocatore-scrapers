@@ -81,7 +81,7 @@ def fetch_data():
         hoo = loc_dom.xpath('//ul[@class="hours ui-repeater"]//text()')
         hoo = [e.strip() for e in hoo if e.strip()]
         hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
-        if hoo == "<MISSING>":
+        if hours_of_operation == "<MISSING>":
             location_type = "Coming Soon"
 
         item = [

@@ -22,7 +22,7 @@ def fetch_data():
 
         for _ in locations["results"]:
             logger.info(_["clickUri"])
-            page_url = _["clickUri"].replace(":443", "")
+            page_url = str(_["clickUri"]).replace(":443", "")
             logger.info(page_url)
             sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
             addr = parse_address_intl(
@@ -39,6 +39,8 @@ def fetch_data():
                 .split("&z")[0]
                 .split(",")
             )
+            if "443" in page_url:
+                raise
             yield SgRecord(
                 page_url=page_url,
                 location_name=_["Title"],
