@@ -1,6 +1,5 @@
 from bs4 import BeautifulSoup
 import csv
-import re
 from sgrequests import SgRequests
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
