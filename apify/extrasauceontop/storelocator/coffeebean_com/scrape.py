@@ -126,6 +126,10 @@ for loc in locs:
         if us.states.lookup(state):
             country = "USA"
 
+    if add == "<MISSING>":
+        add = website.split("/")[-1].replace("-", " ")
+        print(add)
+
     x = x + 1
     if country == "USA":
         locator_domains.append("coffeebean.com")
