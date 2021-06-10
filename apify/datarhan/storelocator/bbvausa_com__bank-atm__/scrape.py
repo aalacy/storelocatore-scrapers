@@ -132,8 +132,8 @@ def fetch_data():
             hours_of_operation,
         ]
 
-        if location_name not in scraped_items:
-            scraped_items.append(location_name)
+        if store_number not in scraped_items:
+            scraped_items.append(store_number)
             items.append(item)
 
     return items
