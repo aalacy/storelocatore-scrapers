@@ -39,6 +39,9 @@ def fetch_data():
             state = address[0]
             zip_postal = address[1]
             country_code = "US"
+            latitude = r.text.split('data-lat="')[1].split('"')[0]
+            longitude = r.text.split('data-lng="')[1].split('"')[0]
+            store_number = r.text.split('data-id="')[1].split('"')[0]
             yield SgRecord(
                 locator_domain=DOMAIN,
                 page_url=url,
@@ -48,11 +51,11 @@ def fetch_data():
                 state=state.strip(),
                 zip_postal=zip_postal.strip(),
                 country_code=country_code,
-                store_number=MISSING,
+                store_number=store_number,
                 phone=phone.strip(),
                 location_type=MISSING,
-                latitude=MISSING,
-                longitude=MISSING,
+                latitude=latitude,
+                longitude=longitude,
                 hours_of_operation=MISSING,
             )
 
