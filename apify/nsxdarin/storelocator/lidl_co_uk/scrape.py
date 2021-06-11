@@ -93,6 +93,24 @@ def fetch_data():
                                 hours = "<MISSING>"
                             if name == "":
                                 name = city
+                            if (
+                                "1" in city
+                                or "2" in city
+                                or "3" in city
+                                or "4" in city
+                                or "5" in city
+                                or "6" in city
+                                or "7" in city
+                                or "8" in city
+                                or "9" in city
+                                or "0" in city
+                            ):
+                                temp = zc
+                                zc = city
+                                city = temp
+                            if "; *" in hours:
+                                hours = hours.split("; *")[0]
+                            hours = hours.replace("*", "")
                             yield [
                                 website,
                                 loc,
