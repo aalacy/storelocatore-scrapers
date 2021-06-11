@@ -47,7 +47,11 @@ def fetch_data():
             )
             hours_of_operation = hours_of_operation.replace("MonThurs", "Mon–Thurs")
             try:
-                location_type = loc.find("div", {"class": "services"}).text
+                location_type = loc.find("div", {"class": "services"}).text.replace(
+                    "24/7 ATM Only;", ""
+                )
+                if "Non-Branch" not in location_type:
+                    location_type = "Branch"
             except:
                 location_type = MISSING
             yield SgRecord(
