@@ -57,7 +57,6 @@ def fetch_data():
 
     for url in all_locations:
         store_url = domain + url["value"].split("?")[0]
-        print(store_url)
         loc_response = session.get(store_url)
         loc_dom = etree.HTML(loc_response.text)
 
