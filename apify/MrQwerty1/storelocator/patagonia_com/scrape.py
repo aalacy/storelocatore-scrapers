@@ -2,7 +2,6 @@ from sgscrape.sgpostal import parse_address_intl
 from lxml import html
 import re
 import time
-import datetime
 import json
 
 from sgrequests import SgRequests
@@ -66,6 +65,7 @@ def getAddress(raw_address):
                 postcode = MISSING
             return street_address, city, state, postcode
     except Exception as e:
+        log.info(f"Address Err: {e}")
         pass
     return MISSING, MISSING, MISSING, MISSING
 
@@ -219,7 +219,7 @@ def fetchLxmlText(body, xpath, delimiter=" "):
         element = (
             element.replace("\r", "").replace("\n", "").replace("&nbsp; ", "").strip()
         )
-        element = re.sub("\s+", " ", element)
+        element = re.sub(r"\s+", " ", element)
         if len(element):
             if len(value):
                 value = value + delimiter + element
