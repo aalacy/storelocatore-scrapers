@@ -59,6 +59,7 @@ def getAddress(raw_address):
                 street_address = street_address + " " + data.street_address_2
             return street_address, data.city, data.state, data.postcode
     except Exception as e:
+        log.info(f"Error: {e}")
         pass
     return MISSING, MISSING, MISSING, MISSING
 
