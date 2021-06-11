@@ -111,9 +111,12 @@ def fetch_data():
                     zc = line2.split('<span itemprop="zipCode">')[1].split("<")[0]
                 except:
                     zc = "<MISSING>"
-                country = line2.split('<span itemprop="addressCountry">')[1].split("<")[
-                    0
-                ]
+                try:
+                    country = line2.split('<span itemprop="addressCountry">')[1].split(
+                        "<"
+                    )[0]
+                except:
+                    country = "<MISSING>"
             if '"addressLocality": "' in line2 and city == "":
                 city = line2.split('"addressLocality": "')[1].split('"')[0]
             if lat == "" and '<meta itemprop="latitude" content="' in line2:
@@ -188,6 +191,8 @@ def fetch_data():
             phone = "<MISSING>"
         if city == "":
             city = "<MISSING>"
+        if "/en/macao/" in loc:
+            country = "China"
         state = state.replace("&nbsp;", "")
         city = city.replace("&nbsp;", "")
         if " Hotels" not in name and name != "":
