@@ -40,7 +40,7 @@ def write_output(data):
 def fetch_data():
     urls = ["https://www.carquest.com/stores/united-states"]
     states = []
-    cities = []
+    cities = ["https://www.carquest.com/stores/dc/washington"]
     locs = []
     website = "carquest.com"
     typ = "<MISSING>"
