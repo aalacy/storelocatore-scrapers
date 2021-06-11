@@ -63,6 +63,19 @@ def fetch_data():
         lng = ""
         hours = ""
         phone = ""
+        rll = session.get(loc, headers=headers)
+        for line2 in rll.iter_lines():
+            line2 = str(line2.decode("utf-8"))
+            if "lat:" in line2:
+                try:
+                    lat = line2.split("lat:")[1].split(",")[0].strip()
+                except:
+                    lat = "<MISSING>"
+            if "lng:" in line2:
+                try:
+                    lng = line2.split("lng:")[1].split("}")[0].strip()
+                except:
+                    lng = "<MISSING>"
         r2 = session.get(loc, headers=headers)
         lines = r2.iter_lines()
         for line2 in lines:
@@ -92,16 +105,6 @@ def fetch_data():
                         except:
                             pass
                         names.append(cname + "|" + hours)
-            if "lat:" in line2:
-                try:
-                    lat = line2.split("lat:")[1].split(",")[0].strip()
-                except:
-                    lat = "<MISSING>"
-            if "lng:" in line2:
-                try:
-                    lng = line2.split("lng:")[1].split("}")[0].strip()
-                except:
-                    lng = "<MISSING>"
             if '<span itemprop="streetaddress">' in line2:
                 add = (
                     line2.split('"streetaddress">')[1]
