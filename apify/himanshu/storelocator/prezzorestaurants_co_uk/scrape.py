@@ -1,10 +1,12 @@
 import csv
+import re
 
 from bs4 import BeautifulSoup
 
 from lxml import etree
 
 from sgrequests import SgRequests
+
 from sgscrape.sgpostal import parse_address_intl
 
 
@@ -42,9 +44,7 @@ def fetch_data():
     # Your scraper here
     session = SgRequests()
 
-    items = []
-
-    domain = "https://www.prezzorestaurants.co.uk/"
+    domain = "https://www.prezzorestaurants.co.uk"
 
     user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
     headers = {"User-Agent": user_agent}
@@ -69,33 +69,44 @@ def fetch_data():
         )
         raw_address = [" ".join(e.split()) for e in raw_address][0]
         addr = parse_address_intl(raw_address)
-        street_address = ", ".join(raw_address.split(", ")[:-2])
+        street_address = ", ".join(raw_address.split(", ")[:-2]).strip()
         city = addr.city
-        city = city if city else "<MISSING>"
-        if city in street_address:
-            street_address = street_address.split(f", {city}")[0]
+        if not city:
+            city = raw_address.split(",")[-2].strip()
+        if street_address.split(",")[-1].strip() in city:
+            street_address = " ".join(street_address.split(",")[:-1]).strip()
+        street_address = street_address.replace(" , ", ", ")
+        street_address = (re.sub(" +", " ", street_address)).strip()
+
         state = addr.state
         state = state if state else "<MISSING>"
         zip_code = addr.postcode
-        zip_code = zip_code if zip_code else "<MISSING>"
-        country_code = addr.country
-        country_code = country_code if country_code else "<MISSING>"
+        if not zip_code:
+            zip_code = raw_address.split(",")[-1].strip()
+        country_code = "UK"
         store_number = "<MISSING>"
         phone = loc_dom.xpath('//a[contains(@href, "tel")]/text()')
         phone = phone[0] if phone else "<MISSING>"
         location_type = "<MISSING>"
         latitude = "<MISSING>"
         longitude = "<MISSING>"
-        if "/@" in loc_dom.xpath('//a[contains(@href, "maps")]/@href')[0]:
-            geo = (
-                loc_dom.xpath('//a[contains(@href, "maps")]/@href')[0]
-                .split("/@")[-1]
-                .split(",")[:2]
-            )
+
+        try:
+            map_link = loc_dom.xpath('//a[contains(@href, "maps")]/@href')[0]
+            geo = re.findall(r"[0-9]{2}\.[0-9]+.{1,2}[0-9]{1,3}\.[0-9]+", map_link)[
+                0
+            ].split(",")
             latitude = geo[0]
-            longitude = geo[1]
+            longitude = geo[1].split("&")[0]
+        except:
+            req = session.get(map_link, headers=headers)
+            map_link = req.url
+            if "@" in map_link:
+                latitude = map_link.split("@")[1].split(",")[0]
+                longitude = map_link.split("@")[1].split(",")[1]
 
         loc_response = session.get(store_url + "?X-Requested-With=XMLHttpRequest")
+        loc_dom = etree.HTML(loc_response.text)
         hoo = loc_dom.xpath(
             '//div[h4[contains(text(), "Opening times")]]/following-sibling::div//text()'
         )
@@ -119,9 +130,7 @@ def fetch_data():
             hours_of_operation,
         ]
 
-        items.append(item)
-
-    return items
+        yield item
 
 
 def scrape():
