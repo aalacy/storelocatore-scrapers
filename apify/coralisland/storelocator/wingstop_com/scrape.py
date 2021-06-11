@@ -10,7 +10,7 @@ from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 
 import usaddress
 
-log = sglog.SgLogSetup().get_logger(logger_name="wingstop.com")
+log = sglog.SgLogSetup().get_logger(logger_name="wingstop_com")
 
 base_url = "https://www.wingstop.com"
 page_url = "https://www.wingstop.com/order"
@@ -158,7 +158,7 @@ def fetch_data():
             + "&long="
             + str(lng)
             + "&radius="
-            + str(100)
+            + str(max_distance)
             + "&limit=100&nomnom=calendars&nomnom_calendars_from="
             + start_datetime
             + "&nomnom_calendars_to="
@@ -212,9 +212,6 @@ def fetch_data():
             or "closed!" in get_value(store["name"]).lower()
         ):
             continue
-        latitude = get_value(store["latitude"])
-        longitude = get_value(store["longitude"])
-        search.found_location_at(latitude, longitude)
 
         if get_value(store["id"]) in history:
             continue
