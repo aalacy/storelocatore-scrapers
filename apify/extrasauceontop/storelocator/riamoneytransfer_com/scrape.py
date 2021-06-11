@@ -221,7 +221,7 @@ def parallel_run(lat, lng, country):
                 else:
                     pois.append(poi)
 
-    except Exception as e:
+    except Exception:
         return
         # logger.error(f"error fetching data for {lat} {lng} {country}: {e}")
 
