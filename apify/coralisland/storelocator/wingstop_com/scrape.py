@@ -10,7 +10,7 @@ from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 
 import usaddress
 
-log = sglog.SgLogSetup().get_logger(logger_name="wingstop.com")
+log = sglog.SgLogSetup().get_logger(logger_name="wingstop_com")
 
 base_url = "https://www.wingstop.com"
 page_url = "https://www.wingstop.com/order"
