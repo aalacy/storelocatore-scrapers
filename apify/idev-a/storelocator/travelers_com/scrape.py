@@ -6,8 +6,6 @@ from sglogging import SgLogSetup
 from urllib.parse import urljoin
 import math
 from concurrent.futures import ThreadPoolExecutor
-from xml.etree import ElementTree as ET
-import time
 
 logger = SgLogSetup().get_logger("travelers")
 
