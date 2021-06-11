@@ -3,6 +3,7 @@ from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
 from sgscrape.sgpostal import parse_address_intl
+from bs4 import BeautifulSoup as bs
 
 logger = SgLogSetup().get_logger("wsinc")
 
@@ -19,7 +20,17 @@ def fetch_data():
         logger.info(f"{len(links)} found")
         for link in links:
             page_url = locator_domain + link["link"]
-            addr = parse_address_intl(link["address"])
+            if not link["link"]:
+                continue
+            if link["address"].strip().startswith("21700 Mark"):
+                page_url = "https://www.wsinc.com/locations/chicago-il-3/"
+            logger.info(page_url)
+            res = session.get(page_url, headers=_headers)
+            _addr = link["address"]
+            if res.status_code == 200:
+                sp1 = bs(res.text, "lxml")
+                _addr = sp1.select_one("article.hero-copy--location p").text
+            addr = parse_address_intl(_addr)
             street_address = addr.street_address_1
             if addr.street_address_2:
                 street_address += " " + addr.street_address_2
@@ -37,7 +48,7 @@ def fetch_data():
                 location_name=location_name,
                 street_address=street_address,
                 city=addr.city,
-                state=addr.state,
+                state=addr.state or link["category"],
                 zip_postal=addr.postcode,
                 country_code="US",
                 phone=phone,

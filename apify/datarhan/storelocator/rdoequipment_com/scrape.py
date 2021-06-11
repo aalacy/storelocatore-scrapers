@@ -95,9 +95,12 @@ def fetch_data():
         }
         for elem in hoo_data:
             day = days_dict[elem["weekday"]]
-            opens = elem["from"]
-            closes = elem["to"]
-            hoo.append(f"{day} {opens} - {closes}")
+            if elem["from"].strip():
+                opens = elem["from"]
+                closes = elem["to"]
+                hoo.append(f"{day} {opens} - {closes}")
+            else:
+                hoo.append(f"{day} - Closed")
         hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
 
         item = [

@@ -112,9 +112,9 @@ def get_data(url):
             "//h3[./strong[contains(text(), 'Telephone')]]/following-sibling::p[1]//text()"
         )
     )
-    ll = "".join(tree.xpath("//iframe/@data-lazy-src"))
-    latitude = ll.split("!3d")[1].strip().split("!")[0].strip()
-    longitude = ll.split("!2d")[1].strip().split("!")[0].strip()
+    map_link = "".join(tree.xpath("//iframe/@src"))
+    latitude = map_link.split("!3d")[1].strip().split("!")[0].strip()
+    longitude = map_link.split("!2d")[1].strip().split("!")[0].strip()
     location_type = "<MISSING>"
     hours_of_operation = (
         " ".join(
