@@ -16,7 +16,6 @@ _headers = {
 def fetch_data():
     locator_domain = "https://www.shelterinsurance.com"
     base_url = "https://www.shelterinsurance.com/CA/agent/search"
-    url = "https://www.shelterinsurance.com/CA/agent/search?Page={}"
     with SgRequests() as session:
         states = (
             bs(session.get(base_url, headers=_headers).text, "lxml")
@@ -52,7 +51,6 @@ def fetch_data():
                             locator_domain + link.select_one("div.agentName a")["href"]
                         )
                         logger.info(page_url)
-                        sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
                         addr = list(
                             link.select(
                                 "div.agentResults div.result div.three.columns"
