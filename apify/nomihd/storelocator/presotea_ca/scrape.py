@@ -27,7 +27,6 @@ headers = {
 
 def fetch_data():
     # Your scraper here
-    base = "https://presotea.ca/locations/"
     api_url = "https://api.storepoint.co/v1/15cd0621f2cb2c/locations?lat=21.958&long=-114.388&radius=31100"
     api_res = session.get(api_url, headers=headers)
 
