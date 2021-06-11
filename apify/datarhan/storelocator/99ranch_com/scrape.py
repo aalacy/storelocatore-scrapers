@@ -49,7 +49,7 @@ def fetch_data():
     data = json.loads(response.text)
 
     for poi in data["items"]:
-        store_url = poi["url"]
+        store_url = poi.get("url")
         store_url = store_url if store_url else "<MISSING>"
         location_name = poi["name"]
         location_name = location_name if location_name else "<MISSING>"
