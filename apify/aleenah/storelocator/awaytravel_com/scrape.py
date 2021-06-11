@@ -2,9 +2,19 @@ import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 from sgselenium import SgChrome
-from sglogging import SgLogSetup
 import time
 import re
+from sglogging import SgLogSetup
+import ssl
+
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
 
 logger = SgLogSetup().get_logger("awaytravel_com")
 
@@ -56,6 +66,7 @@ def fetch_data():
                 con = "UK"
             else:
                 con = "US"
+
             driver.get(url)
             time.sleep(3)
             soup = BeautifulSoup(driver.page_source, "html.parser")
