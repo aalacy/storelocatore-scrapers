@@ -48,8 +48,14 @@ def fetch_data():
                 loc.find("div", {"class": "is__medium"})
                 .get_text(separator="|", strip=True)
                 .replace("|", " ")
+                .replace("Lobby Hours", "")
+                .replace("Lobby and Drive Up Hours", "")
+                .replace("Lobby Hours", "")
+                .replace("Lobby & Drive Up Hours", "")
             )
-            location_type = loc.find("li").text
+            if "Now Offering" in hours_of_operation:
+                hours_of_operation = hours_of_operation.split("Now Offering")[0]
+            location_type = "branch"
             coords = loc.find("div", {"class": "visually-hidden"}).findAll("div")
             latitude = coords[0].text
             longitude = coords[1].text
@@ -68,7 +74,7 @@ def fetch_data():
                 location_type=location_type,
                 latitude=latitude,
                 longitude=longitude,
-                hours_of_operation=hours_of_operation,
+                hours_of_operation=hours_of_operation.strip(),
             )
 
 
