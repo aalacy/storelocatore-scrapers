@@ -31,9 +31,9 @@ def fetch_data():
             r = session.get(page_url, headers=headers)
             soup = BeautifulSoup(r.text, "html.parser")
             loclist = soup.findAll("div", {"class": "location-main"})
+            location_name = soup.find("h1").text
             for loc in loclist:
                 raw_address = loc.find("h4").text
-                location_name = raw_address
                 formatted_addr = parser.parse_address_intl(raw_address)
                 street_address = formatted_addr.street_address_1
                 if street_address is None:
