@@ -85,6 +85,12 @@ def fetch_data():
                 lat = line2.split("api=1&destination=")[1].split(",")[0]
                 lng = line2.split("api=1&destination=")[1].split(",")[1].split('"')[0]
         name = name.replace("&#8211;", "-")
+        hours = (
+            hours.replace(" (Alt weeks 9:00AM - 6:00PM)", "")
+            .replace("  VARIES ", "")
+            .replace("  (Alt weeks 8:00AM - 5:00PM)", "")
+            .replace("  (Alt weeks 8:00AM - 5:00PM)", "")
+        )
         yield [
             website,
             loc,

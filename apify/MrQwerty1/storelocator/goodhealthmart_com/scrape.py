@@ -77,7 +77,6 @@ def fetch_data():
     out = []
     urls = get_locations()
     locator_domain = "https://goodhealthmart.com/"
-    page_url = "https://goodhealthmart.com/"
     session = SgRequests()
     headers = {
         "Accept-Encoding": "gzip, deflate",
@@ -89,6 +88,10 @@ def fetch_data():
         r = session.get(url, headers=headers)
         location_name = url.split("!2s")[1].split("!3m2")[0].replace("+", " ")
         d = eval(r.text.split(")]}'\n")[-1].replace("null", '""'))[1]
+        if "Good Health Mart" not in str(d):
+            continue
+
+        page_url = d[11][0]
         latitude, longitude = d[0][2]
         street_address = d[2][0]
         line = d[2][1].replace("Ontario", "Ontario, ON ")

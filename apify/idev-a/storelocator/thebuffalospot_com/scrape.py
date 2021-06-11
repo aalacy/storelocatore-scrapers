@@ -2,9 +2,10 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
-import json
+import bs4
 import re
 from sglogging import SgLogSetup
+from sgscrape.sgpostal import parse_address_intl
 
 logger = SgLogSetup().get_logger("thebuffalospot")
 
@@ -20,89 +21,131 @@ _headers = {
 locator_domain = "https://thebuffalospot.com"
 
 
-def _valid(val):
-    return (
-        val.strip()
-        .replace("–", "-")
-        .replace("-", "-")
-        .encode("unicode-escape")
-        .decode("utf8")
-        .replace("\\xa", "")
-        .replace("\\xa0", "")
-        .replace("\\xa0\\xa", "")
-        .replace("\\xae", "")
-    )
-
-
-def _url(blocks, name):
-    url = phone = ""
-    for block in blocks:
-        if block.h3 and block.h3.text.strip() == name.strip():
-            url = locator_domain + block.find("a", href=re.compile(r"/locations"))[
-                "href"
-            ].replace("/locations", "")
-            _phone = block.find("a", href=re.compile(r"tel"))
-            if _phone:
-                phone = _phone.text
-            break
-    return url, phone
-
-
 def fetch_data():
     with SgRequests() as session:
         base_url = "https://thebuffalospot.com/our-spots/"
-        res = session.get(base_url, headers=_headers).text
-        soup = bs(res, "lxml")
-        blocks = soup.select("div.wpb-column.wpb-col")
-        locations = json.loads(
-            res.split('var map1 = $("#map1").maps(')[1]
-            .strip()
-            .split(').data("wpgmp_maps");')[0]
+        soup = bs(session.get(base_url, headers=_headers).text, "lxml")
+        states = (
+            soup.find("a", href=re.compile(r"https://thebuffalospot.com/our-spots/"))
+            .find_next_sibling("ul")
+            .select("a")
         )
-        logger.info(f'{len(locations["places"])} found')
-        for _ in locations["places"]:
-            page_url, phone = _url(blocks, _["title"])
-            hours = []
-            try:
-                street_address = " ".join(_["address"].split(",")[:-1])
-                res1 = session.get(page_url, headers=_headers)
-                logger.info(page_url)
-                if res1.status_code == 200:
-                    sp1 = bs(res1.text, "lxml")
-                    street_address = " ".join(
-                        list(
-                            sp1.find("h3", string=re.compile(r"^ADDRESS"))
-                            .find_next_sibling()
-                            .stripped_strings
-                        )[:-1]
-                    )
-                    _hours = [
-                        hh.text
-                        for hh in sp1.find(
-                            "h3", string=re.compile(r"^HOURS OF OPERATION")
-                        ).find_next_siblings()
+        for state in states:
+            sp0 = bs(session.get(state["href"], headers=_headers).text, "lxml")
+            rows = sp0.select("section.wpb-section-container div.wpb-row")[2:]
+            for row in rows:
+                if "coming soon" in row.text.strip().lower():
+                    break
+                blocks = row.select("div.wpb-column.wpb-col")
+                for block in blocks:
+                    if not block.text.strip():
+                        continue
+                    groups = [
+                        cc for cc in block.children if isinstance(cc, bs4.element.Tag)
                     ]
-                    if len(_hours) % 2 == 0:
-                        for x in range(0, len(_hours), 2):
-                            hours.append(f"{_hours[x]}: {_hours[x+1]}")
-                    else:
-                        hours = _hours
-            except:
-                pass
-            yield SgRecord(
-                page_url=page_url,
-                location_name=_["title"],
-                street_address=street_address,
-                city=_["location"]["city"],
-                state=_["location"]["state"],
-                zip_postal=_["location"]["postal_code"],
-                country_code=_["location"]["country"],
-                phone=phone,
-                latitude=_["location"]["lat"],
-                longitude=_["location"]["lng"],
-                locator_domain=locator_domain,
-                hours_of_operation="; ".join(hours).replace("–", "-").replace("’", "'"),
-            )
+                    locations = []
+                    loc = []
+                    for x, group in enumerate(groups):
+                        if loc and group.name == "h3":
+                            locations.append(loc)
+                            loc = []
+                        loc.append(group)
+                        if x == len(groups) - 1:
+                            locations.append(loc)
+                    for loc in locations:
+                        _addr = list(loc[1].stripped_strings)
+                        if len(loc) == 3:
+                            _addr += list(loc[2].stripped_strings)
+                        addr = parse_address_intl(" ".join(_addr[2:]))
+                        street_address = addr.street_address_1
+                        if addr.street_address_2:
+                            street_address += " " + addr.street_address_2
+                        city = addr.city
+                        state = addr.state
+                        zip_postal = addr.postcode
+                        latitude = longitude = ""
+                        phone = ""
+                        _phone = loc[1].find("a", href=re.compile(r"tel"))
+                        if not _phone and len(loc) == 3:
+                            _phone = loc[2].find("a", href=re.compile(r"tel"))
+                        if _phone:
+                            phone = _phone.text
+                        page_url = ""
+                        _url = loc[1].find("a", href=re.compile(r"/locations"))
+                        if not _url and len(loc) == 3:
+                            _url = loc[2].find("a", href=re.compile(r"/locations"))
+                        if _url:
+                            page_url = locator_domain + _url["href"].replace(
+                                "/locations", ""
+                            )
+                            logger.info(page_url)
+                            res1 = session.get(page_url, headers=_headers)
+                            hours_of_operation = ""
+                            if res1.status_code == 200:
+                                sp1 = bs(res1.text, "lxml")
+                                if "COMING SOON!" in sp1.h2.text:
+                                    continue
+                                addr = list(
+                                    sp1.find("h3", string=re.compile(r"^ADDRESS"))
+                                    .find_next_sibling("p")
+                                    .stripped_strings
+                                )
+                                street_address = " ".join(addr[:-1])
+                                city = addr[-1].split(",")[0].strip()
+                                state = (
+                                    addr[-1]
+                                    .replace("\xa0", " ")
+                                    .split(",")[1]
+                                    .strip()
+                                    .split(" ")[0]
+                                    .strip()
+                                )
+                                zip_postal = (
+                                    addr[-1]
+                                    .replace("\xa0", " ")
+                                    .split(",")[1]
+                                    .strip()
+                                    .split(" ")[-1]
+                                    .strip()
+                                )
+                                coord = (
+                                    sp1.iframe["src"]
+                                    .split("!2d")[1]
+                                    .split("!2m")[0]
+                                    .split("!3d")
+                                )
+                                latitude = coord[1]
+                                longitude = coord[0]
+                                hours_of_operation = "; ".join(
+                                    [
+                                        "; ".join(hh.stripped_strings)
+                                        for hh in sp1.find(
+                                            "h3",
+                                            string=re.compile(r"HOURS OF OPERATION"),
+                                        ).find_next_siblings("p")
+                                    ]
+                                )
+                                if not phone:
+                                    _phone = sp1.find("a", href=re.compile(r"tel"))
+                                    if _phone:
+                                        phone = _phone.text
+
+                        yield SgRecord(
+                            page_url=page_url,
+                            location_name=loc[0].text.strip(),
+                            street_address=street_address,
+                            city=city,
+                            state=state,
+                            zip_postal=zip_postal,
+                            country_code="US",
+                            phone=phone,
+                            latitude=latitude,
+                            longitude=longitude,
+                            locator_domain=locator_domain,
+                            hours_of_operation=hours_of_operation.replace(
+                                "–", "-"
+                            ).replace("’", "'"),
+                        )
 
 
 if __name__ == "__main__":

@@ -1,1 +1,1 @@
---ignore CountryCodeFillRateChecker (Not US or CA)
+--ignore CountryCodeFillRateChecker --ignore StoreNumberColumnValidator (UK)

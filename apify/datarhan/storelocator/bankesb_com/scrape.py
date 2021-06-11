@@ -1,6 +1,5 @@
 import re
 import csv
-import json
 from lxml import etree
 from urllib.parse import urljoin
 
@@ -51,51 +50,31 @@ def fetch_data():
     response = session.get(start_url, headers=hdr)
     dom = etree.HTML(response.text)
 
-    all_locations = dom.xpath('//a[@class="btn ghost-btn"]/@href')
-    for store_url in all_locations:
+    all_locations = dom.xpath('//article[@class="branch-list-item linkbox"]')
+    for poi_html in all_locations:
+        store_url = poi_html.xpath('.//a[contains(text(), "View Details")]/@href')[0]
         store_url = urljoin(start_url, store_url)
         loc_response = session.get(store_url)
         loc_dom = etree.HTML(loc_response.text)
-        poi = loc_dom.xpath('//script[@type="application/ld+json"]/text()')[0]
-        poi = json.loads(poi)
 
-        location_name = loc_dom.xpath('//p[@class="branch-name"]/text()')
+        location_name = poi_html.xpath('.//h2[@class="f-h3-strong"]/a/text()')
         location_name = location_name[0] if location_name else "<MISSING>"
-        if poi.get("address"):
-            street_address = poi["address"]["streetAddress"]
-            street_address = street_address if street_address else "<MISSING>"
-            city = poi["address"]["addressLocality"]
-            city = city if city else "<MISSING>"
-            state = poi["address"]["addressRegion"]
-            state = state if state else "<MISSING>"
-            zip_code = poi["address"]["postalCode"]
-            zip_code = zip_code if zip_code else "<MISSING>"
-            country_code = poi["address"]["addressCountry"]
-            country_code = country_code if country_code else "<MISSING>"
-            store_number = "<MISSING>"
-            phone = poi["telephone"]
-            phone = phone if phone else "<MISSING>"
-            location_type = poi["@type"]
-        else:
-            poi = loc_dom.xpath('//script[@type="application/ld+json"]/text()')[0]
-            poi = json.loads(poi)
-            raw_address = loc_dom.xpath('//p[@class="branch-address"]/text()')
-            street_address = raw_address[0]
-            city = raw_address[-1].split(", ")[0]
-            state = raw_address[-1].split(", ")[-1].split()[0]
-            zip_code = raw_address[-1].split(", ")[-1].split()[-1]
-            country_code = "<MISSING>"
-            store_number = "<MISSING>"
-            phone = loc_dom.xpath('//span[@class="phone"]/text()')
-            phone = phone[0] if phone else "<MISSING>"
-            location_type = poi["@type"]
+        raw_address = poi_html.xpath(
+            './/h2[@class="f-h3-strong"]/following-sibling::p/text()'
+        )[0].split(", ")
+        street_address = raw_address[0]
+        city = raw_address[1]
+        state = raw_address[-1].split(" ")[0]
+        zip_code = raw_address[-1].split(" ")[-1]
+        country_code = "<MISSING>"
+        store_number = poi_html.xpath("@data-id")[0]
+        phone = loc_dom.xpath('//span[@class="phone"]/text()')
+        phone = phone[0] if phone else "<MISSING>"
+        location_type = "<MISSING>"
         latitude = "<MISSING>"
         longitude = "<MISSING>"
-        hoo = loc_dom.xpath(
-            '//div[@class="branch_hours_set"]//div[@class="branch_hours_days clearfix"]//text()'
-        )
-        hoo = [e.strip() for e in hoo if e.strip()]
-        hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
+        hoo = loc_dom.xpath('//div[@class="branch-hours"]/div[1]//text()')
+        hours_of_operation = " ".join(hoo[1:]) if hoo else "<MISSING>"
 
         item = [
             domain,

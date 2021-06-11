@@ -102,11 +102,10 @@ def fetch_data():
         hours_of_operation = "<MISSING>"
         latitude = store["latitude"]
         longitude = store["longitude"]
-        link = "<MISSING>"
         data.append(
             [
                 locator_domain,
-                link,
+                "<MISSING>",
                 location_name,
                 street_address,
                 city,
