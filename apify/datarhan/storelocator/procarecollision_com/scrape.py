@@ -52,6 +52,9 @@ def fetch_data():
 
     for poi in all_locations:
         store_url = poi["url"]
+        loc_response = session.get(store_url, headers=hdr)
+        loc_dom = etree.HTML(loc_response.text)
+
         location_name = poi["store"].replace("&#8211;", "-")
         street_address = poi["address"]
         city = poi["city"]
@@ -65,9 +68,8 @@ def fetch_data():
         location_type = "<MISSING>"
         latitude = poi["lat"]
         longitude = poi["lng"]
-        hoo = etree.HTML(poi["hours"]).xpath("//text()")
-        hoo = [e.strip() for e in hoo if e.strip()]
-        hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
+        hoo = loc_dom.xpath('//b[contains(text(), "Hours:")]/following::text()')
+        hours_of_operation = hoo[0].strip() if hoo else "<MISSING>"
 
         item = [
             domain,
