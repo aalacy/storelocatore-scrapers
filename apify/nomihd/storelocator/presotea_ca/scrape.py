@@ -4,14 +4,14 @@ from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import json
-import lxml.html
+from sgscrape import sgpostal as parser
 
 
-website = "classiccollision.net"
+website = "presotea.ca"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 session = SgRequests()
 headers = {
-    "authority": "classiccollision.net",
+    "authority": "presotea.ca",
     "sec-ch-ua": '" Not A;Brand";v="99", "Chromium";v="90", "Google Chrome";v="90"',
     "sec-ch-ua-mobile": "?0",
     "upgrade-insecure-requests": "1",
@@ -27,59 +27,59 @@ headers = {
 
 def fetch_data():
     # Your scraper here
-    api_url = "https://classiccollision.net/wp-admin/admin-ajax.php?action=store_search&lat=21.958&lng=-114.388&max_results=50000&search_radius=1000&autoload=1"
+    api_url = "https://api.storepoint.co/v1/15cd0621f2cb2c/locations?lat=21.958&long=-114.388&radius=31100"
     api_res = session.get(api_url, headers=headers)
 
     json_res = json.loads(api_res.text)
 
-    stores_list = json_res
+    stores_list = json_res["results"]["locations"]
 
     for store in stores_list:
 
-        page_url = store["permalink"]
+        page_url = "https://presotea.ca/locations/"
 
         store_number = store["id"]
         locator_domain = website
 
-        location_name = store["store"].strip()
-        street_address = store["address"].strip()
-        if "," in street_address:
-            street_address = street_address.split(",")[0].strip()
+        location_name = store["name"].split("<img")[0].strip()
 
-        city = store["city"].strip()
-        state = store["state"].strip()
+        raw_address = store["streetaddress"].strip()
 
-        zip = store["zip"].strip()
+        formatted_addr = parser.parse_address_intl(raw_address)
+        street_address = formatted_addr.street_address_1
+        if formatted_addr.street_address_2:
+            street_address = street_address + ", " + formatted_addr.street_address_2
 
-        country_code = store["country"]
+        city = formatted_addr.city
+        state = formatted_addr.state
+        zip = formatted_addr.postcode
+
+        country_code = "CA"
+
         phone = store["phone"]
 
         if not phone:
-            log.info(page_url)
-            page_res = session.get(page_url, headers=headers)
-            page_sel = lxml.html.fromstring(page_res.text)
+            log.info(f"Phone is missing for {location_name}")
+            log.info(f"Description is : {store['description']}")
 
-            phone = (
-                "".join(page_sel.xpath('//*[contains(text(),"Phone")]//text()'))
-                .replace("Phone:", "")
-                .strip()
-            )
-
-        phone = phone.split("(call hours")[0]
         location_type = "<MISSING>"
+        days = [
+            "monday",
+            "tuesday",
+            "wednesday",
+            "thursday",
+            "friday",
+            "saturday",
+            "sunday",
+        ]
+        hours = []
+        for day in days:
+            hours.append(f'{day} : {store.get(day,"CLOSED")}')
 
-        if store["hours"]:
-            hours_info = store["hours"]
-            hours_sel = lxml.html.fromstring(hours_info)
+        hours_of_operation = "; ".join(hours).replace("day; ", "day: ").strip()
+        latitude = store["loc_lat"]
+        longitude = store["loc_long"]
 
-            hours = list(filter(str, [x.strip() for x in hours_sel.xpath("//text()")]))
-
-            hours_of_operation = "; ".join(hours).replace("day; ", "day: ")
-
-        latitude = store["lat"]
-        longitude = store["lng"]
-
-        raw_address = "<MISSING>"
         yield SgRecord(
             locator_domain=locator_domain,
             page_url=page_url,
