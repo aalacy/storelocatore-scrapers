@@ -134,6 +134,7 @@ def fetch_data():
     headers = {"User-Agent": user_agent}
 
     history = []
+    data = []
 
     today = datetime.datetime.utcnow()
     start_datetime = today.strftime("%Y%m%d")
@@ -182,10 +183,11 @@ def fetch_data():
 
             if get_value(store["id"]) in history:
                 continue
-            history.append(get_value(store["id"]))
+            else:
+                history.append(get_value(store["id"]))
 
-            output = get_info(store)
-            yield output
+                output = get_info(store)
+                data.append(output)
 
     # Get GUAM locations
     url = (
@@ -215,10 +217,13 @@ def fetch_data():
 
         if get_value(store["id"]) in history:
             continue
-        history.append(get_value(store["id"]))
+        else:
+            history.append(get_value(store["id"]))
 
-        output = get_info(store)
-        yield output
+            output = get_info(store)
+            data.append(output)
+
+    return data
 
 
 def scrape():
