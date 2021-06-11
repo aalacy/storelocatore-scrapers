@@ -169,7 +169,8 @@ def scrape_loc_urls(country, coordinates):
                 logger.info(f'{country}: {count}/{len(coordinates)}')
                 record = future.result()
                 if record:
-                    results.append(record)
+                    for poi in record:
+                        results.append(poi)
             except Exception:
                 pass
 
@@ -197,6 +198,7 @@ def fetch_data():
     return results
 
 def parallel_run(lat, lng, country):
+    pois = []
     try:
         locations = fetch(lat, lng, country)
 
@@ -211,11 +213,13 @@ def parallel_run(lat, lng, country):
                 if not poi:
                     pass
                 else:
-                    return poi
-
+                    pois.append(poi)
+    
     except Exception as e:
-        pass
+        return
         # logger.error(f"error fetching data for {lat} {lng} {country}: {e}")
+    
+    return pois
 
 
 def scrape():
@@ -223,6 +227,5 @@ def scrape():
     data = fetch_data()
     write_output(data)
     logger.info(f'duration: {dt.now() - start}')
-
 
 scrape()
