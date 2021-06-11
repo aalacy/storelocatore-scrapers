@@ -111,6 +111,10 @@ def fetch_data():
                             if "; *" in hours:
                                 hours = hours.split("; *")[0]
                             hours = hours.replace("*", "")
+                            if ";Bank" in hours:
+                                hours = hours.split(";Bank")[0]
+                            if "; Bank" in hours:
+                                hours = hours.split("; Bank")[0]
                             yield [
                                 website,
                                 loc,
