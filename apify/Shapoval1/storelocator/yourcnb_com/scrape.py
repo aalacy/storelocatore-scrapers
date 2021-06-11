@@ -88,8 +88,20 @@ def fetch_data():
         location_name = "".join(d.xpath(".//text()")).strip()
         country_code = "US"
         store_number = "<MISSING>"
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
+        text = "".join(
+            d.xpath(
+                ".//following-sibling::div[1]//a[text()='View location on map']/@href"
+            )
+        )
+        try:
+            if text.find("ll=") != -1:
+                latitude = text.split("ll=")[1].split(",")[0]
+                longitude = text.split("ll=")[1].split(",")[1].split("&")[0]
+            else:
+                latitude = text.split("@")[1].split(",")[0]
+                longitude = text.split("@")[1].split(",")[1]
+        except IndexError:
+            latitude, longitude = "<MISSING>", "<MISSING>"
         location_type = "Branch"
         hours_of_operation = d.xpath(".//following-sibling::div[2]/p[2]/text()")
         hours_of_operation = list(filter(None, [a.strip() for a in hours_of_operation]))
