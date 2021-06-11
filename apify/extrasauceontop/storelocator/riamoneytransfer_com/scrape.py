@@ -166,7 +166,7 @@ def scrape_loc_urls(country, coordinates):
         for future in as_completed(futures):
             try:
                 count += 1
-                logger.info(f'{country}: {count}/{len(coordinates)}')
+                logger.info(f"{country}: {count}/{len(coordinates)}")
                 record = future.result()
                 if record:
                     for poi in record:
@@ -176,10 +176,15 @@ def scrape_loc_urls(country, coordinates):
 
     return results
 
+
 SEARCH_RADIUS = 10
+
+
 def fetch_data():
     all_coordinates = {}
-    us_search = static_coordinate_list(radius=SEARCH_RADIUS, country_code=SearchableCountries.USA)
+    us_search = static_coordinate_list(
+        radius=SEARCH_RADIUS, country_code=SearchableCountries.USA
+    )
     ca_search = static_coordinate_list(
         radius=SEARCH_RADIUS, country_code=SearchableCountries.CANADA
     )
@@ -196,6 +201,7 @@ def fetch_data():
         results.append(data)
 
     return results
+
 
 def parallel_run(lat, lng, country):
     pois = []
@@ -214,11 +220,11 @@ def parallel_run(lat, lng, country):
                     pass
                 else:
                     pois.append(poi)
-    
+
     except Exception as e:
         return
         # logger.error(f"error fetching data for {lat} {lng} {country}: {e}")
-    
+
     return pois
 
 
@@ -226,6 +232,7 @@ def scrape():
     start = dt.now()
     data = fetch_data()
     write_output(data)
-    logger.info(f'duration: {dt.now() - start}')
+    logger.info(f"duration: {dt.now() - start}")
+
 
 scrape()
