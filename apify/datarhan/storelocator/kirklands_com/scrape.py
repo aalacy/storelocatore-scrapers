@@ -40,7 +40,6 @@ def fetch_data():
     session = SgRequests()
 
     items = []
-    scraped_stores = []
 
     DOMAIN = "kirklands.com"
 
