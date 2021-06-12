@@ -50,7 +50,7 @@ def fetch_data():
     response = session.get(start_url, headers=hdr)
     dom = etree.HTML(response.text)
     data = dom.xpath("""//*[contains(text(), '"places":')]/text()""")[0]
-    data = re.findall(".maps\((.+)\).data", data)[0]
+    data = re.findall(r".maps\((.+)\).data", data)[0]
     data = json.loads(data)
 
     all_locations = data["places"]
