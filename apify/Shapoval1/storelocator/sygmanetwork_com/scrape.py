@@ -68,14 +68,21 @@ def fetch_data():
         country_code = "US"
         location_type = "Sygma Network"
         phone = j.get("phone")[0].get("main")
-        hours = j.get("hours")[0].get("building")
         tmp = []
-        for h in hours:
-            hours_of_operation = h.get("time")
-            tmp.append(hours_of_operation)
+        try:
+            hours = j.get("hours")[1].values()
+        except:
+            hours = "<MISSING>"
+        if hours != "<MISSING>":
+            for h in hours:
+                for a in h:
+                    times = a.get("time")
+                    line = f"{times}"
+                    tmp.append(line)
+
         hours_of_operation = (
             " ; ".join(tmp).replace("Business Office Hours ;", "").strip()
-        )
+        ) or "<MISSING>"
 
         row = [
             locator_domain,
