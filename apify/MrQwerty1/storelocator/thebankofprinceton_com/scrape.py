@@ -1,4 +1,6 @@
 import csv
+
+from lxml import html
 from sgrequests import SgRequests
 
 
@@ -33,34 +35,44 @@ def write_output(data):
 
 def fetch_data():
     out = []
-    locator_domain = "https://www.mycountrymart.com"
-    api_url = "https://api.freshop.com/1/stores?app_key=mycountrymart&has_address=true&limit=100&token=94cc5d3743b783147d8df8809d02b61a"
+    locator_domain = "https://thebankofprinceton.com/"
+    api_url = (
+        "https://thebankofprinceton.com/_/api/branches/40.3558542/-74.6695045/5000"
+    )
+
     session = SgRequests()
-
     r = session.get(api_url)
-    js = r.json()
+    js = r.json()["branches"]
 
-    for j in js["items"]:
-
-        street_address = f"{j.get('address_1')} {j.get('address_2')}".replace(
-            "None", ""
-        ).strip()
-        city = j.get("city")
-        postal = j.get("postal_code")
-        state = j.get("state")
+    for j in js:
+        street_address = j.get("address") or "<MISSING>"
+        city = j.get("city") or "<MISSING>"
+        state = j.get("state") or "<MISSING>"
+        postal = j.get("zip") or "<MISSING>"
         country_code = "US"
-        store_number = j.get("store_number")
+        store_number = "<MISSING>"
+        page_url = "https://thebankofprinceton.com/contact/locations-and-hours"
         location_name = j.get("name")
-        latitude = j.get("latitude")
-        longitude = j.get("longitude")
+        phone = j.get("phone") or "<MISSING>"
+        latitude = j.get("lat") or "<MISSING>"
+        longitude = j.get("long") or "<MISSING>"
         location_type = "<MISSING>"
-        page_url = j.get("url")
-        phone = j.get("phone_md")
-        hours_of_operation = (
-            "".join(j.get("hours_md")).replace("Open", "").replace("\n", ", ").strip()
-        )
-        if hours_of_operation.find("First") != -1:
-            hours_of_operation = hours_of_operation.split("First")[0].strip()
+
+        _tmp = []
+        text = j.get("description") or "<html></html>"
+        tree = html.fromstring(text)
+        divs = tree.xpath("//text()")
+        for d in divs:
+            if "Temporarily Closed" in d:
+                _tmp.append("Temporarily Closed")
+                break
+            if "Drive" in d:
+                break
+            if not d.strip() or "Hours" in d or "Safe" in d:
+                continue
+            _tmp.append(d.replace("\xa0", " ").replace("\n", "").strip())
+
+        hours_of_operation = ";".join(_tmp) or "<MISSING>"
 
         row = [
             locator_domain,

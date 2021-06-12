@@ -1,5 +1,8 @@
+import re
 import csv
+import json
 from lxml import etree
+from urllib.parse import urljoin
 
 from sgrequests import SgRequests
 
@@ -36,50 +39,46 @@ def write_output(data):
 
 def fetch_data():
     # Your scraper here
-    session = SgRequests().requests_retry_session(retries=1, backoff_factor=0.3)
+    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
 
     items = []
 
-    DOMAIN = "splendid.com"
-    start_url = "https://www.splendid.com/store-locations"
+    start_url = "https://www.cityelectricsupply.ca/branchlocator"
+    domain = re.findall(r"://(.+?)/", start_url)[0].replace("www.", "")
+    hdr = {
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
+    }
+    response = session.get(start_url, headers=hdr)
+    data = re.findall("jsonAllBranches = (.+);", response.text)[0]
+    all_locations = json.loads(data)
 
-    response = session.get(start_url)
-    dom = etree.HTML(response.text)
-    all_locations = dom.xpath('//div[@class="spl-store-locator__store"]')
-
-    for poi_html in all_locations:
-        store_url = poi_html.xpath(
-            './/a[@class="spl-store-locator__store__directions"]/@href'
-        )[0]
+    for poi in all_locations:
+        store_url = urljoin(
+            "https://www.cityelectricsupply.ca/branch/", poi["BranchId"]
+        )
         loc_response = session.get(store_url)
         loc_dom = etree.HTML(loc_response.text)
 
-        location_name = poi_html.xpath("@data-store")
-        location_name = location_name[0] if location_name else "<MISSING>"
-        raw_address = poi_html.xpath(
-            './/span[@class="spl-store-locator__store__address-line"]/text()'
-        )
-        street_address = raw_address[0]
-        city = raw_address[1].split(", ")[0]
-        state = raw_address[1].split(", ")[-1].split()[0]
-        zip_code = raw_address[1].split(", ")[-1].split()[-1]
-        country_code = "<MISSING>"
-        if "United States" in loc_dom.xpath("//address/text()")[-1]:
-            country_code = "United States"
-        store_number = "<MISSING>"
-        phone = loc_dom.xpath('//li[@class="phone"]/a/text()')
-        phone = phone[0] if phone else "<MISSING>"
+        location_name = poi["BranchName"]
+        street_address = poi["Address1"]
+        if poi["Address2"]:
+            street_address += " " + poi["Address2"]
+        city = poi["City"]
+        state = poi["State"]
+        zip_code = poi["ZipCode"]
+        country_code = "CA"
+        store_number = poi["BranchId"]
+        phone = poi["Phone"]
+        phone = phone if phone else "<MISSING>"
         location_type = "<MISSING>"
-        latitude = loc_dom.xpath("//@data-lat")[0]
-        longitude = loc_dom.xpath("//@data-long")[0]
-        hoo = loc_dom.xpath(
-            '//aside[@class="store-workhours"]//div[@data-role="content"]//text()'
-        )
-        hoo = [elem.strip() for elem in hoo if elem.strip()]
+        latitude = poi["Latitude"]
+        longitude = poi["Longitude"]
+        hoo = loc_dom.xpath('//ul[@class="branch-store-hours-details"]//text()')
+        hoo = [e.strip() for e in hoo if e.strip()]
         hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
 
         item = [
-            DOMAIN,
+            domain,
             store_url,
             location_name,
             street_address,
