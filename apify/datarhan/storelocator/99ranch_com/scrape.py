@@ -81,7 +81,9 @@ def fetch_data():
         longitude = longitude if longitude else "<MISSING>"
         hoo = poi["hours_md"].split("\n")
         hoo = [elem for elem in hoo if "am -" in elem]
-        hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
+        hours_of_operation = (
+            " ".join(hoo).split("Special")[0].strip() if hoo else "<MISSING>"
+        )
 
         item = [
             DOMAIN,
