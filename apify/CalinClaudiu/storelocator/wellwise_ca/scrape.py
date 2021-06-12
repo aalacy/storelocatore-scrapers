@@ -449,9 +449,9 @@ def do_everything(k):
 
 def url_fix(url):
     url = url.split("StartIndex")[0] + "StartIndex" + "=0"
-    url = "Radius=200".join(url.split("Radius="))
-    url = "MaxResults=100".join(url.split("MaxResults="))
-    url = "PageSize=100".join(url.split("PageSize="))
+    url = "Radius=200".join(url.split("Radius="))  # (means 20020)
+    url = "MaxResults=100".join(url.split("MaxResults="))  # (means 10010)
+    url = "PageSize=100".join(url.split("PageSize="))  # (means 10010)
     return url
 
 
@@ -541,6 +541,12 @@ def defuzz(record):
     # use the testing area in fetch_data()
 
 
+def fix_phone(record):
+    for attribute in record["Attributes"]:
+        if "Phone" in attribute["AttributeName"]:
+            return attribute["AttributeValue"]
+
+
 def fetch_data():
     logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
     # https://ws2.bullseyelocations.com/RestSearch.svc/ # noqa
@@ -569,12 +575,23 @@ def fetch_data():
     # ======== # noqa
 
     url = "https://www.joefresh.com/ca/store-locator"
-
+    # url entrypoint to get all loblaws data
     logzilla.info(f"Figuring out bullseye url and headers with selenium")  # noqa
-    url, headers = get_api_call(url)
+
+    def retry_starting():
+        try:
+            return get_api_call(url)
+        except Exception as e:
+            logzilla.info(f"Handling this:\n{e}")
+            retry_starting()
+            # shouldn't be to worried,
+            # worst case if their API changes crawl will timeout
+            # rather than just pull from the other (worse) data source
+
+    url, headers = retry_starting()
     logzilla.info(f"Found out this bullseye url:\n{url}\n\n& headers:\n{headers}")
 
-    logzilla.info(f"Fixing up URL")  # noqa
+    logzilla.info(f"Fixing up URL,")  # noqa
     url = url_fix(url)
     logzilla.info(f"New URL:\n{url}\n\n")
 
@@ -596,6 +613,12 @@ def fetch_data():
     #        print('definitely megafailed') # noqa
     #        megafails.append(res) # noqa
     for i in lize:
+        if (
+            not i["PhoneNumber"]
+            or i["PhoneNumber"] == "null"
+            or i["PhoneNumber"] == "none"
+        ):
+            i["PhoneNumber"] = fix_phone(i)
         if i["megaFailed"]:
             megafails.append(i)  # noqa
             yield defuzz(i)

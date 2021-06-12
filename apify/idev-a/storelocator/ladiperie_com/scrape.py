@@ -18,15 +18,18 @@ def _headers():
 
 
 def _phone(val):
-    return (
+    _val = (
         val.split(":")[-1]
         .replace("-", "")
         .replace(")", "")
         .replace("(", "")
         .replace(" ", "")
         .strip()
-        .isdigit()
     )
+    return _val.isdigit() and len(_val) >= 9
+
+
+days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun", "Everyday"]
 
 
 def fetch_data():
@@ -56,16 +59,37 @@ def fetch_data():
                 for ss in _[5][1][1][0].replace("  ", "#").split("#")
                 if ss.strip()
             ]
+            if "Opening soon" in " ".join(sharp):
+                continue
             hours = []
-            idx = 2
+            idx = 1
+            phone = ""
             for x, ss in enumerate(sharp):
                 if x >= idx and _phone(ss):
                     phone = ss.split(":")[-1]
                     idx = x + 1
                     break
-            address = " ".join(sharp[: idx - 1])
+            if not phone:
+                idx = 1
+                for x, ss in enumerate(sharp):
+                    _s1 = ss.split(" ")[0].split("-")[0].split(":")[0]
+                    if _s1 in days:
+                        idx = x + 1
+                        break
+
             for hh in sharp[idx:]:
+                if "Closed for the season" in hh:
+                    hh = "Temporary Closed"
+                hh = (
+                    hh.replace("/Tous les jours:", "")
+                    .replace("- Tous les jours:", "")
+                    .replace("fermé -", "")
+                    .replace("Fermé -", "")
+                    .replace("Fermé/", "")
+                    .replace("fermé/", "")
+                )
                 hours.append(hh)
+            address = " ".join(sharp[: idx - 1])
             addr = parse_address_intl(address)
             street_address = addr.street_address_1
             if addr.street_address_2:

@@ -158,6 +158,7 @@ def fetch_data():
         hours_of_operation = "<MISSING>"
         store_number = "<MISSING>"
 
+        location_name = "MSC " + location_type.replace("-", " ").strip().capitalize()
         if location_name == "":
             location_name = "<MISSING>"
 

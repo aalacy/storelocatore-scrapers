@@ -156,6 +156,7 @@ def extract_value(key, html):
 
 @retry(reraise=True, stop=stop_after_attempt(3))
 def get_basic_info(id, page_schema, location, session):
+    address = None
     try:
         data = {"storeId": id}
         result = session.post(
@@ -164,7 +165,7 @@ def get_basic_info(id, page_schema, location, session):
         ).json()
 
         info = result["atgResponse"]["sm"]
-        return {
+        address = {
             "street_address": info["ad"].strip(),
             "city": info["ci"].strip(),
             "state": info["st"].strip(),
@@ -177,7 +178,7 @@ def get_basic_info(id, page_schema, location, session):
             node = location.find("cvs-store-details")
             props = json.loads(node["sd-props"])
             store = props["cvsMyStoreDetailsProps"]["store"]
-            return {
+            address = {
                 "street_address": store["addressLine"].strip(),
                 "city": store["addressCityDescriptionText"].strip(),
                 "state": store["addressState"].strip(),
@@ -186,15 +187,21 @@ def get_basic_info(id, page_schema, location, session):
                 "country_code": "US",
             }
         except:
-            address = page_schema["address"]
-            return {
-                "street_address": address["streetAddress"].strip(),
-                "city": address["addressLocality"].strip(),
-                "state": address["addressRegion"].strip(),
-                "postal": address["postalCode"].strip(),
-                "phone": address["telephone"].strip(),
-                "country_code": address["addressCountry"].strip(),
+            addr = page_schema["address"]
+            address = {
+                "street_address": addr["streetAddress"].strip(),
+                "city": addr["addressLocality"].strip(),
+                "state": addr["addressRegion"].strip(),
+                "postal": addr["postalCode"].strip(),
+                "phone": addr["telephone"].strip(),
+                "country_code": addr["addressCountry"].strip(),
             }
+    # parsing directional data from street address
+    if "," in address["street_address"]:
+        street_address, *others = re.split(",", address["street_address"])
+        address["street_address"] = street_address
+
+    return address
 
 
 def get_geolocation(location, page_schema):
