@@ -43,7 +43,7 @@ def write_output(data):
 def fetch_data():
     data = []
     storelist = []
-    p = 0
+
     states = [
         "AL",
         "AK",
@@ -97,7 +97,7 @@ def fetch_data():
         "WI",
         "WY",
     ]
-    count = 0
+
     for statenow in states:
         url = (
             "https://api.searshometownstores.com/lps-mygofer/api/v1/mygofer/store/getStoreDetailsByState?state="
