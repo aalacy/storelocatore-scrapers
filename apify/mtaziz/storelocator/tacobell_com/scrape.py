@@ -3,7 +3,6 @@ from sglogging import SgLogSetup
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from lxml import html
-import json
 
 import ssl
 
