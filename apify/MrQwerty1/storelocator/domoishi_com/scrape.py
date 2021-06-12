@@ -49,14 +49,22 @@ def fetch_data():
         location_name = "".join(d.xpath(".//h2/text()")).strip()
         hours_of_operation = "<MISSING>"
         line = d.xpath(
-            ".//div[@class='elementor-text-editor elementor-clearfix']//text()"
+            ".//div[contains(@class, 'elementor-widget elementor-widget-text-editor')]//text()"
         )
         line = list(filter(None, [l.strip() for l in line]))
         if "Coming Soon" in line:
             hours_of_operation = "Coming Soon"
             line = line[: line.index("Coming Soon")]
 
-        phone = line.pop().replace("Phone:", "").strip()
+        if line[-1].startswith("Phone"):
+            phone = line.pop().replace("Phone:", "").strip()
+        else:
+            phone = line[-1].split("Phone:")[-1].strip()
+            line[-1] = line[-1].split("Phone:")[0].strip()
+
+        if len(line) == 1:
+            line = "".join(line).split("\n")
+
         street_address = line[0]
         line = line[-1]
         city = line.split(",")[0].strip()
