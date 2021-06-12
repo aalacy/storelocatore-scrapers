@@ -49,7 +49,7 @@ def write_output(data):
 
 def pull_content(url):
     log.info("Pull content => " + url)
-    soup = bs(session.get(url, headers=HEADERS).content, "lxml")
+    soup = bs(session.get(url, headers=HEADERS).content, "html.parser")
     return soup
 
 
@@ -96,6 +96,8 @@ def fetch_data():
     page_urls = fetch_store_urls()
     locations = []
     for page_url in page_urls:
+        if page_url == "https://www.childtime.com/1511":
+            continue
         soup = pull_content(page_url)
         locator_domain = DOMAIN
         location_name = handle_missing(

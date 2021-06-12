@@ -18,6 +18,7 @@ def write_output(data):
         writer.writerow(
             [
                 "locator_domain",
+                "page_url",
                 "location_name",
                 "street_address",
                 "city",
@@ -92,6 +93,7 @@ def fetch_data():
         country = "US"
         typ = "Store"
         zc = item["zipcode"]
+        loc = "https://www.southernstates.com/farm-store/store-locations/" + store
         hours = (
             "Mon: "
             + item["storeOpenMonday"].split(" ")[1].rsplit(":", 1)[0]
@@ -148,22 +150,22 @@ def fetch_data():
         )
         if phone == "":
             phone = "<MISSING>"
-        if "Southern States" in name:
-            yield [
-                website,
-                name,
-                add,
-                city,
-                state,
-                zc,
-                country,
-                store,
-                phone,
-                typ,
-                lat,
-                lng,
-                hours,
-            ]
+        yield [
+            website,
+            loc,
+            name,
+            add,
+            city,
+            state,
+            zc,
+            country,
+            store,
+            phone,
+            typ,
+            lat,
+            lng,
+            hours,
+        ]
 
 
 def scrape():
