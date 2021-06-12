@@ -4,7 +4,7 @@ from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import json
-
+import lxml.html
 
 website = "learningrx.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -37,6 +37,9 @@ def fetch_data():
     for store in stores_list:
 
         page_url = base + store["Path"]
+        log.info(page_url)
+        store_req = session.get(page_url, headers=headers)
+        store_sel = lxml.html.fromstring(store_req.text)
 
         store_number = store["FranchiseLocationID"]
         locator_domain = website
@@ -48,6 +51,10 @@ def fetch_data():
                 (street_address + ", " + store["Address2"]).strip(", ").strip()
             )
 
+        street_address = street_address.replace(
+            ", Mary Savio Medical Plaza, Newtown Square", ""
+        ).strip()
+
         city = store["City"].strip()
         state = store["State"].strip()
 
@@ -57,26 +64,37 @@ def fetch_data():
         phone = store["Phone"]
         location_type = "<MISSING>"
 
-        if store["LocationHours"]:
-            hours_info = store["LocationHours"].split("][")
-            hours = []
+        hours_list = []
+        hours_of_operation = "<MISSING>"
+        hours = store_sel.xpath('//ul[@class="hours-block"]/li')
+        for hour in hours:
+            day = "".join(hour.xpath('span[@class="interval"]/text()')).strip()
+            time = "".join(hour.xpath("text()")).strip()
+            if len(time) <= 0:
+                time = "".join(hour.xpath('span[@class="cls"]/text()')).strip()
+            hours_list.append(day + ":" + time)
 
-            for hour in hours_info:
-                json_str = "{" + hour.strip("[] ") + "}"
-                json_obj = json.loads(json_str)
-                interval = json_obj["Interval"]
+        if len(hours_list) <= 0:
+            if store["LocationHours"]:
+                hours_info = store["LocationHours"].split("][")
+                hours = []
 
-                if json_obj["Closed"] == "1":
-                    hours.append(f"{interval} : CLOSED")
-                else:
-                    hours.append(
-                        f"{interval} : {json_obj['OpenTime']} - {json_obj['CloseTime']}"
-                    )
+                for hour in hours_info:
+                    json_str = "{" + hour.strip("[] ") + "}"
+                    json_obj = json.loads(json_str)
+                    interval = json_obj["Interval"]
 
-                hours_of_operation = "; ".join(hours)
+                    if json_obj["Closed"] == "1":
+                        hours.append(f"{interval} : CLOSED")
+                    else:
+                        hours.append(
+                            f"{interval} : {json_obj['OpenTime']} - {json_obj['CloseTime']}"
+                        )
+
+                    hours_of_operation = "; ".join(hours)
 
         else:
-            hours_of_operation = "<MISSING>"
+            hours_of_operation = "; ".join(hours_list).strip()
 
         latitude = store["Latitude"]
         longitude = store["Longitude"]

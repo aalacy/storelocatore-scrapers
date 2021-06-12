@@ -65,6 +65,7 @@ def fetch_data():
                 .strip()
             )
 
+        phone = phone.split("(call hours")[0]
         location_type = "<MISSING>"
 
         if store["hours"]:
