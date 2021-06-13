@@ -46,7 +46,9 @@ def fetch_data():
                     for link in links:
                         phone = ""
                         if link.find("a", href=re.compile(r"tel:")):
-                            phone = link.find("a", href=re.compile(r"tel:")).text
+                            phone = link.find(
+                                "a", href=re.compile(r"tel:")
+                            ).text.strip()
                         page_url = (
                             locator_domain + link.select_one("div.agentName a")["href"]
                         )
