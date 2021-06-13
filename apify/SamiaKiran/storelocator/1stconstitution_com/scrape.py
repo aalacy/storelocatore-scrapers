@@ -26,7 +26,6 @@ def fetch_data():
         for loc in loclist:
             location_name = loc["store"]
             store_number = loc["id"]
-            page_url = loc["url"]
             log.info(location_name)
             phone = loc["phone"]
             hours_of_operation = loc["hours"]
