@@ -44,6 +44,8 @@ def fetch_data():
             location_type = ""
             if sp1 and "authorized retailer" in sp1.text.lower():
                 location_type = "authorized retailer"
+            else:
+                location_type = "boutique"
             yield SgRecord(
                 page_url=_["url"],
                 location_name=_["name"],
