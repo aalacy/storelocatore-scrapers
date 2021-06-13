@@ -57,7 +57,7 @@ def fetch_data():
         page_url = j.get("url")
         phone = j.get("phone_md")
         hours_of_operation = (
-            "".join(j.get("hours_md")).replace("Open", "").replace("\n", "").strip()
+            "".join(j.get("hours_md")).replace("Open", "").replace("\n", ", ").strip()
         )
         if hours_of_operation.find("First") != -1:
             hours_of_operation = hours_of_operation.split("First")[0].strip()

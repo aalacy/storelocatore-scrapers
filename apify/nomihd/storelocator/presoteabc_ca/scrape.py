@@ -117,14 +117,10 @@ def fetch_data():
         hours_of_operation = "; ".join(hours).replace("day;", "day:").strip()
 
         latitude = (
-            "".join(store.xpath("//*[@data-locations]/@data-locations"))
-            .split(",")[0]
-            .strip('[" ')
+            "".join(store.xpath(".//div/@data-locations")).split(",")[0].strip('[" ')
         )
         longitude = (
-            "".join(store.xpath("//*[@data-locations]/@data-locations"))
-            .split(",")[1]
-            .strip('[" ')
+            "".join(store.xpath(".//div/@data-locations")).split(",")[1].strip('[" ')
         )
 
         yield SgRecord(
