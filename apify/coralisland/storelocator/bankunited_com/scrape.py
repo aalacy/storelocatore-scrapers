@@ -13,7 +13,7 @@ def validate(item):
 
 
 def get_value(item):
-    if item == None:
+    if item is None:
         item = "<MISSING>"
     item = validate(item)
     if item == "":
@@ -78,9 +78,7 @@ def fetch_data():
     response = etree.HTML(request.text)
     store_list = response.xpath('//div[contains(@class, "row marker-row")]')
     for store in store_list:
-        output = []
-        output.append(base_url)  # url
-        output.append("https://www.bankunited.com/contact-us/find-a-branch-atm")
+        output = [base_url, "https://www.bankunited.com/contact-us/find-a-branch-atm"]
         location_name = get_value(store.xpath('.//span[@itemprop="name"]//text()'))
         output.append(location_name)  # location name
         address = get_value(store.xpath('.//span[@itemprop="streetAddress"]//text()'))
