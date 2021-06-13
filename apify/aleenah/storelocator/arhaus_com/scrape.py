@@ -1,5 +1,5 @@
 import csv
-from sgselenium import SgSelenium
+from sgselenium import SgChrome
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
@@ -10,7 +10,6 @@ from sglogging import SgLogSetup
 
 logger = SgLogSetup().get_logger("arhaus_com")
 
-driver = SgSelenium().chrome()
 session = SgRequests()
 
 
@@ -63,53 +62,57 @@ def fetch_data():
 
     for sl in statel:
         page_url.append("https://www.arhaus.com" + sl)
+    with SgChrome() as driver:
+        for url in page_url:
+            logger.info(url)
+            try:
+                driver.get(url)
+            except:
+                driver.get(url)
 
-    for url in page_url:
-        logger.info(url)
-        try:
-            driver.get(url)
-        except:
-            driver.get(url)
-
-        WebDriverWait(driver, 190).until(
-            EC.presence_of_element_located(
-                (By.CLASS_NAME, "store-details__header-heading")
+            WebDriverWait(driver, 190).until(
+                EC.presence_of_element_located(
+                    (By.CLASS_NAME, "store-details__header-heading")
+                )
             )
-        )
-        soup = BeautifulSoup(driver.page_source, "html.parser")
+            soup = BeautifulSoup(driver.page_source, "html.parser")
 
-        locs.append(soup.find("h1", {"class": "store-details__header-heading"}).text)
-        street.append(
-            soup.find("span", {"class": "store-details__street-address-1"}).text
-        )
-        cities.append(
-            soup.find("span", {"class": "store-details__street-city"}).text.strip()
-        )
-        states.append(
-            soup.find("span", {"class": "store-details__street-state"}).text.strip()
-        )
-        zips.append(
-            soup.find("span", {"class": "store-details__street-zip"}).text.strip()
-        )
-        timing.append(
-            soup.find_all("div", {"class": "store-details__info-section"})[1]
-            .text.strip()
-            .replace("\n", " ")
-            .replace("Instagram Icon       Follow us on Instagram", "")
-            .replace("Location Hours ", "")
-            .strip()
-        )
-        phones.append(soup.find("div", {"class": "store-details__phone"}).text.strip())
-        lati = re.findall(r'"latitude": (-?[\d\.]+)', str(soup))
-        if lati:
-            lat.append(lati[0])
-        else:
-            lat.append("<MISSING>")
-        longi = re.findall(r'"longitude": (-?[\d\.]+)', str(soup))
-        if longi:
-            long.append(longi[0])
-        else:
-            long.append("<MISSING>")
+            locs.append(
+                soup.find("h1", {"class": "store-details__header-heading"}).text
+            )
+            street.append(
+                soup.find("span", {"class": "store-details__street-address-1"}).text
+            )
+            cities.append(
+                soup.find("span", {"class": "store-details__street-city"}).text.strip()
+            )
+            states.append(
+                soup.find("span", {"class": "store-details__street-state"}).text.strip()
+            )
+            zips.append(
+                soup.find("span", {"class": "store-details__street-zip"}).text.strip()
+            )
+            timing.append(
+                soup.find_all("div", {"class": "store-details__info-section"})[1]
+                .text.strip()
+                .replace("\n", " ")
+                .replace("Instagram Icon       Follow us on Instagram", "")
+                .replace("Location Hours ", "")
+                .strip()
+            )
+            phones.append(
+                soup.find("div", {"class": "store-details__phone"}).text.strip()
+            )
+            lati = re.findall(r'"latitude": (-?[\d\.]+)', str(soup))
+            if lati:
+                lat.append(lati[0])
+            else:
+                lat.append("<MISSING>")
+            longi = re.findall(r'"longitude": (-?[\d\.]+)', str(soup))
+            if longi:
+                long.append(longi[0])
+            else:
+                long.append("<MISSING>")
 
     all = []
     for i in range(0, len(locs)):
