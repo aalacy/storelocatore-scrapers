@@ -22,6 +22,7 @@ latitudes = []
 longitudes = []
 hours_of_operations = []
 
+
 def get_driver(url, driver=None):
     if driver is not None:
         driver.quit()
@@ -40,7 +41,6 @@ def get_driver(url, driver=None):
             ).driver()
             driver.get(url)
 
-
             break
         except Exception:
             driver.quit()
@@ -50,6 +50,7 @@ def get_driver(url, driver=None):
                 )
             continue
     return driver
+
 
 class_name = "location-view"
 url = "https://api.sonnysbbq.com/api/v1/locations.bystate"
@@ -65,18 +66,22 @@ search_states = response.keys()
 for search_state in search_states:
     for location in response[search_state]:
         locator_domain = "sonnysbbq.com"
-        page_url = "https://www.sonnysbbq.com/locations/" + location["post_title"].lower().replace(".", "").replace(" - ", " ").replace(" ", "-").replace(",", "")
+        page_url = "https://www.sonnysbbq.com/locations/" + location[
+            "post_title"
+        ].lower().replace(".", "").replace(" - ", " ").replace(" ", "-").replace(
+            ",", ""
+        )
         location_name = location["post_title"]
 
-        if len(location["acf"]["address"]["address"].split(",")) < 3 :
+        if len(location["acf"]["address"]["address"].split(",")) < 3:
             address_parts = location["acf"]["address"]["address"].replace(",", "")
             address_parts = address_parts.split(" ")[:-3]
             address = ""
             for part in address_parts:
                 address = address + part + " "
-            
+
             address = address[:-1]
-        
+
             city = address_parts = location["acf"]["address"]["address"].split(" ")[-3]
             state = address_parts = location["acf"]["address"]["address"].split(" ")[-2]
             zipp = address_parts = location["acf"]["address"]["address"].split(" ")[-1]
@@ -87,11 +92,15 @@ for search_state in search_states:
             try:
                 state = location["acf"]["address"]["address"].split(", ")[2]
                 zipp = location["acf"]["address"]["address"].split(", ")[3]
-            
+
             except Exception:
-                state = location["acf"]["address"]["address"].split(", ")[2].split(" ")[0]
-                zipp = location["acf"]["address"]["address"].split(", ")[2].split(" ")[1]
-            
+                state = (
+                    location["acf"]["address"]["address"].split(", ")[2].split(" ")[0]
+                )
+                zipp = (
+                    location["acf"]["address"]["address"].split(", ")[2].split(" ")[1]
+                )
+
             if len(state.split(" ")) == 2:
                 zipp = state.split(" ")[1]
                 state = state.split(" ")[0]
@@ -106,7 +115,13 @@ for search_state in search_states:
         latitude = location["address"]["lat"]
         longitude = location["address"]["lng"]
 
-        hours = location["store_hours"].replace("Open for dine-in, takeout & delivery:<br />\r\n<br />\r\n", "").replace("<br />\r\n", ", ").replace("Open for dine-in, takeout and delivery:, , ", "").replace("Open for dine-in, takeout or delivery:, , ", "")
+        hours = (
+            location["store_hours"]
+            .replace("Open for dine-in, takeout & delivery:<br />\r\n<br />\r\n", "")
+            .replace("<br />\r\n", ", ")
+            .replace("Open for dine-in, takeout and delivery:, , ", "")
+            .replace("Open for dine-in, takeout or delivery:, , ", "")
+        )
 
         locator_domains.append(locator_domain)
         page_urls.append(page_url)
@@ -122,7 +137,7 @@ for search_state in search_states:
         latitudes.append(latitude)
         longitudes.append(longitude)
         hours_of_operations.append(hours)
-    
+
 df = pd.DataFrame(
     {
         "locator_domain": locator_domains,
