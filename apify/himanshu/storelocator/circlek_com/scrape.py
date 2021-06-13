@@ -104,7 +104,6 @@ def fetch_locations(tracker, session, locations=[], page=0):
         return locations
 
 
-unfetchtable_locations = []
 retryer = Retrying(stop=stop_after_attempt(3), reraise=True)
 
 
