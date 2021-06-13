@@ -40,9 +40,8 @@ def write_output(data):
 def fetch_data():
     urls = ["https://www.carquest.com/stores/united-states"]
     states = []
-    cities = []
+    cities = ["https://www.carquest.com/stores/dc/washington"]
     locs = []
-    allstores = []
     website = "carquest.com"
     typ = "<MISSING>"
     country = "<MISSING>"
@@ -244,33 +243,31 @@ def fetch_data():
                     )
                 except:
                     hours = "Sun-Sat: Closed"
-        if store not in allstores:
-            allstores.append(store)
-            if state == "":
-                state = "PR"
-            name = name.replace("\\u0026#39;", "'")
-            hours = (
-                hours.replace("00", ":00")
-                .replace("30", ":30")
-                .replace("1:000AM", "10:00AM")
-                .replace("2:000PM", "20:00PM")
-            )
-            yield [
-                website,
-                loc,
-                name,
-                add,
-                city,
-                state,
-                zc,
-                country,
-                store,
-                phone,
-                typ,
-                lat,
-                lng,
-                hours,
-            ]
+        if state == "":
+            state = "PR"
+        name = name.replace("\\u0026#39;", "'")
+        hours = (
+            hours.replace("00", ":00")
+            .replace("30", ":30")
+            .replace("1:000AM", "10:00AM")
+            .replace("2:000PM", "20:00PM")
+        )
+        yield [
+            website,
+            loc,
+            name,
+            add,
+            city,
+            state,
+            zc,
+            country,
+            store,
+            phone,
+            typ,
+            lat,
+            lng,
+            hours,
+        ]
 
 
 def scrape():

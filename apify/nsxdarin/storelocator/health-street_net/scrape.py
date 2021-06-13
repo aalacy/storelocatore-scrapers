@@ -63,16 +63,27 @@ def fetch_data():
         lng = ""
         hours = ""
         phone = ""
+        rll = session.get(loc, headers=headers)
+        for line2 in rll.iter_lines():
+            line2 = str(line2.decode("utf-8"))
+            if "lat:" in line2:
+                try:
+                    lat = line2.split("lat:")[1].split(",")[0].strip()
+                except:
+                    lat = "<MISSING>"
+            if "lng:" in line2:
+                try:
+                    lng = line2.split("lng:")[1].split("}")[0].strip()
+                except:
+                    lng = "<MISSING>"
         r2 = session.get(loc, headers=headers)
         lines = r2.iter_lines()
         for line2 in lines:
             line2 = str(line2.decode("utf-8"))
-            if '"telephone" : "' in line2:
-                if len(line2.split('"telephone" : "')[1].split('"')[0]) >= 3:
-                    phone = line2.split('"telephone" : "')[1].split('"')[0]
-            if 'class="contact-us-span">(' in line2:
-                if len(line2.split('">')[1].split("<")[0].strip()) >= 3:
-                    phone = line2.split('">')[1].split("<")[0].strip()
+            if 'class="contact-us-span">(' in line2 and '<a href="tel:' in line:
+                phone = line2.split('<a href="tel:')[1].split('"')[0]
+            if '"telephone" : "' in line2 and phone == "":
+                phone = line2.split('"telephone" : "')[1].split('"')[0]
             if 'font-weight: bold; font-size: 1.4em;">' in line2:
                 items = line2.split('font-weight: bold; font-size: 1.4em;">')
                 for item in items:
@@ -94,16 +105,6 @@ def fetch_data():
                         except:
                             pass
                         names.append(cname + "|" + hours)
-            if "lat:" in line2:
-                try:
-                    lat = line2.split("lat:")[1].split(",")[0].strip()
-                except:
-                    lat = "<MISSING>"
-            if "lng:" in line2:
-                try:
-                    lng = line2.split("lng:")[1].split("}")[0].strip()
-                except:
-                    lng = "<MISSING>"
             if '<span itemprop="streetaddress">' in line2:
                 add = (
                     line2.split('"streetaddress">')[1]
@@ -146,6 +147,8 @@ def fetch_data():
                     state = "<MISSING>"
                 if zc == "":
                     zc = "<MISSING>"
+                if phone == "":
+                    phone = "<MISSING>"
                 if infotext not in locinfo:
                     locinfo.append(infotext)
                     yield [

@@ -295,8 +295,7 @@ def fetch_data():
     state_urls = []
     city_urls = []
 
-    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.103 Safari/537.36"
-    with SgChrome(is_headless=True, user_agent=user_agent).driver() as driver:
+    with SgChrome(is_headless=True, seleniumwire_auto_config=False).driver() as driver:
         load_initial_page(driver)
 
         html = get("https://www.napaonline.com/en/auto-parts-stores-near-me", driver)

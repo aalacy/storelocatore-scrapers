@@ -75,8 +75,11 @@ def fetch_data():
                 name = line2.split('page-header hidden-mobile">')[1].split(
                     " Information"
                 )[0]
+            if '<p><a href="tel:+' in line2:
+                phone = line2.split('<p><a href="tel:+')[1].split('"')[0]
             if '"telephone": "' in line2:
-                phone = line2.split('"telephone": "')[1].split('"')[0]
+                if phone != "":
+                    phone = line2.split('"telephone": "')[1].split('"')[0]
                 lat = line2.split('"latitude":')[1].split(",")[0].strip()
                 lng = line2.split('"longitude":')[1].split("}")[0].strip()
                 city = line2.split('"addressLocality": "')[1].split('"')[0]
@@ -121,6 +124,7 @@ def fetch_data():
             phone = "<MISSING>"
         if CS:
             hours = "Coming Soon"
+        hours = hours.replace("<!--", "").replace("-->", "")
         yield [
             website,
             loc,
