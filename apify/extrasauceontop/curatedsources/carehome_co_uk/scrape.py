@@ -201,9 +201,9 @@ with open("data.csv", mode="w") as output_file:
         if len(location_name.split("\n")) > 1:
             continue
 
-        address_parts = soup.find("meta", attrs={"property": "og:title"})["content"].split(
-            ","
-        )
+        address_parts = soup.find("meta", attrs={"property": "og:title"})[
+            "content"
+        ].split(",")
         address = address_parts[1].strip()
         city = address_parts[-2].strip()
         state_zipp_parts = address_parts[-1].split(" |")[0].split(" ")
@@ -217,7 +217,7 @@ with open("data.csv", mode="w") as output_file:
 
         country_code = "UK"
         store_number = location_url.split("/")[-1]
-    
+
         try:
             phone_link = soup.find("button", attrs={"id": "brochure_phone"})["href"]
             phone_response = s.get(phone_link, headers=headers).text
@@ -244,21 +244,39 @@ with open("data.csv", mode="w") as output_file:
                 .split("Type of Service")[1]
                 .split("\n")
                 if len(item) > 2
-            ][0] + [item.strip()
+            ][0] + [
+                item.strip()
                 for item in soup.find("div", attrs={"class": "row profile-row"})
                 .text.strip()
                 .split("Care Provided")[1]
                 .split("Type of Service")[1]
                 .split("\n")
                 if len(item) > 2
-            ][1]
+            ][
+                1
+            ]
 
         except Exception:
             location_type = "<MISSING>"
 
-        row = [locator_domain, page_url, location_name, location_type, store_number, address, city, state, zipp, country_code, latitude, longitude, phone, hours]
-        
+        row = [
+            locator_domain,
+            page_url,
+            location_name,
+            location_type,
+            store_number,
+            address,
+            city,
+            state,
+            zipp,
+            country_code,
+            latitude,
+            longitude,
+            phone,
+            hours,
+        ]
+
         writer.writerow(row)
-        
+
         if x == 100:
             break
