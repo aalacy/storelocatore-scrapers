@@ -53,7 +53,7 @@ def handle_missing(field):
 
 def fetch_data():
     soup = bs(session.get(LOCATION_URL, headers=HEADERS).content, "lxml")
-    div = soup.find("div", {"class": "lm-left"})
+    div = soup.find("section", {"class": "rows-of-3"})
     contents = div.find_all("p")
     locations = []
     for row in contents:

@@ -58,18 +58,20 @@ def fetch_data():
 
         hours_of_operation = details_info[-1].strip()
 
-        lat_lng_href = "".join(
-            page_sel.xpath('//p[contains(.//@href, "maps/")]//@href')
+        lat_lng_info = (
+            page_res.text.split("var position = {")[1].split("markerlink")[0].strip()
         )
-
-        if "z/data" in lat_lng_href:
-            lat_lng = lat_lng_href.split("@")[1].split("z/data")[0]
-            latitude = lat_lng.split(",")[0].strip()
-            longitude = lat_lng.split(",")[1].strip()
-        else:
-
-            latitude = "<MISSING>"
-            longitude = "<MISSING>"
+        latitude = (
+            lat_lng_info.split(",")[0].replace("latitude", "").strip(" :").strip()
+        )
+        longitude = (
+            lat_lng_info.split(",")[1]
+            .replace("longitude", "")
+            .strip(" :")
+            .strip()
+            .replace(":", "")
+            .strip()
+        )
 
         raw_address = "<MISSING>"
         yield SgRecord(

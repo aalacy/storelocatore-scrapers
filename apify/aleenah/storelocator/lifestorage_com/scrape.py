@@ -82,11 +82,7 @@ def fetch_data():
             )
 
             js = json.loads(data)["@graph"][0]
-            if (
-                "coming soon" in js["image"]["name"].lower()
-                or "opening soon" in js["image"]["name"].lower()
-            ):
-                continue
+
             page_url.append(url)
             locs.append(js["alternateName"])
             ids.append(js["branchCode"])

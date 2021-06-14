@@ -80,6 +80,9 @@ def fetch_data():
         req = session.get(link, headers=headers)
         base = BeautifulSoup(req.text, "lxml")
 
+        if "coming soon" in base.find(class_="Core").text:
+            continue
+
         location_name = "Wagamama " + base.h1.text.title()
         street_address = base.find(itemprop="streetAddress")["content"]
         city = base.find(class_="c-address-city").text.strip()
