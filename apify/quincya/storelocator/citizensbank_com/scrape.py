@@ -52,17 +52,20 @@ def fetch_data():
     base = BeautifulSoup(req.text, "lxml")
 
     main_links = []
+    final_links = []
+
     main_items = base.find_all(class_="c-directory-list-content-item-link")
     for main_item in main_items:
         main_link = base_link + main_item["href"]
-        main_links.append(main_link)
+        if main_link.count("/") == 5:
+            final_links.append(main_link)
+        else:
+            main_links.append(main_link)
 
-    final_links = []
     for next_link in main_links:
         logger.info("Processing: " + next_link)
         req = session.get(next_link, headers=headers)
         base = BeautifulSoup(req.text, "lxml")
-
         next_items = base.find_all(class_="c-directory-list-content-item")
         for next_item in next_items:
             count = (

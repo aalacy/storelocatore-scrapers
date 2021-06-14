@@ -52,8 +52,8 @@ def get_data(url):
     session = SgRequests()
     r = session.get(api_url)
     tree = html.fromstring(r.text)
-    text = "".join(tree.xpath("//script[contains(text(), 'var data=')]/text()"))
-    text = text.split("var data={data:")[1].split("}\n")[0]
+    text = "".join(tree.xpath("//script[contains(text(), 'var data =')]/text()"))
+    text = text.split("var data = { data:")[1].split(" }")[0]
     js = json.loads(text)
 
     for j in js:
@@ -74,7 +74,9 @@ def get_data(url):
         country_code = "US"
         store_number = j.get("store_num") or "<MISSING>"
         slug = j.get("store_url") or ""
-        page_url = f"https://www.mrsfields.com{slug}"
+        page_url = "<MISSING>"
+        if slug:
+            page_url = f"https://www.mrsfields.com{slug}"
 
         phone = j.get("phone") or "<MISSING>"
         if phone == "0000000000":
@@ -83,9 +85,12 @@ def get_data(url):
         longitude = j.get("lng") or "<MISSING>"
         location_type = "<MISSING>"
         hours_of_operation = j.get("store_hours") or "<MISSING>"
-        if not slug:
-            page_url = "<MISSING>"
-            hours_of_operation = "Coming soon"
+
+        status = j.get("store_status") or ""
+        if "temp" in status:
+            hours_of_operation = "Temporarily Closed"
+        elif "coming" in status:
+            hours_of_operation = "Coming Soon"
 
         row = [
             locator_domain,

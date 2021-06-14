@@ -53,8 +53,8 @@ def fetch_data():
         r = session.get(url, headers=headers)
         for line in r.iter_lines():
             line = str(line.decode("utf-8"))
-            if '<div class="subhead-h3"><a href="' in line:
-                stub = line.split('<div class="subhead-h3"><a href="')[1].split('"')[0]
+            if '<h2><a href="/locations/' in line:
+                stub = line.split('<a href="')[1].split('"')[0]
                 if "http" not in stub:
                     lurl = "https://www.providence.org" + stub
                     if lurl not in locs:
