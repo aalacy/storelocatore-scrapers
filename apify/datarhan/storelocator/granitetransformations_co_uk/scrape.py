@@ -57,12 +57,14 @@ def fetch_data():
         )[0].strip()
         addr = parse_address_intl(raw_address)
         location_name = loc_dom.xpath('//strong[@class="brand"]/text()')
-        location_name = location_name[0] if location_name else "<MISSING>"
+        location_name = location_name[0].strip() if location_name else "<MISSING>"
         street_address = addr.street_address_1
         if addr.street_address_2:
             street_address = "{} {}".format(
                 addr.street_address_2, addr.street_address_1
             )
+        if "We Are Currently Running" in street_address:
+            street_address = "<MISSING>"
         location_type = "<MISSING>"
         city = addr.city
         city = city if city else "<MISSING>"
@@ -70,6 +72,9 @@ def fetch_data():
         state = state if state else "<MISSING>"
         zip_code = addr.postcode
         zip_code = zip_code if zip_code else "<MISSING>"
+        if "Ph1 5Js" in street_address:
+            zip_code = "PH1 5JS"
+            street_address = street_address.replace(" Ph1 5Js", "")
         country_code = addr.country
         country_code = country_code if country_code else "<MISSING>"
         store_number = "<MISSING>"

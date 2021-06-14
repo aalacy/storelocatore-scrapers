@@ -1,10 +1,14 @@
 import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
+import json
 
 session = SgRequests()
 headers = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36",
+    "x-hasura-admin-secret": "takeda",
+    "content-type": "application/json",
+    "authorization": "Bearer null",
 }
 
 logger = SgLogSetup().get_logger("biolifeplasma_com")
@@ -39,16 +43,27 @@ def write_output(data):
 
 def fetch_data():
     locs = []
-    url = "https://www.biolifeplasma.com/sitemap.xml"
-    r = session.get(url, headers=headers)
+    url = "https://api-graphql.biolifeplasma.com/v1/graphql"
+    payload = {
+        "query": "query getCenters {\n  salesforce_donation_center__c {\n    id\n    sfid\n    city__c\n    state__c\n    zipcode__c\n    name\n    publication_date__c\n    __typename\n  }\n}\n",
+        "operationName": "getCenters",
+        "variables": {},
+    }
+    r = session.post(url, headers=headers, data=json.dumps(payload))
     website = "biolifeplasma.com"
     typ = "<MISSING>"
     country = "US"
     logger.info("Pulling Stores")
     for line in r.iter_lines():
         line = str(line.decode("utf-8"))
-        if "<loc>https://www.biolifeplasma.com/locations/" in line:
-            locs.append(line.split("<loc>")[1].split("<")[0])
+        if '"state__c":"' in line:
+            items = line.split('"state__c":"')
+            for item in items:
+                if '{"data":' not in item:
+                    st = item.split('"')[0]
+                    nt = item.split('"name":"')[1].split('"')[0]
+                    lurl = "https://www.biolifeplasma.com/locations/" + st + "/" + nt
+                    locs.append(lurl)
     for loc in locs:
         logger.info(loc)
         st = (
@@ -103,6 +118,10 @@ def fetch_data():
                             hours = hrs
                         else:
                             hours = hours + "; " + hrs
+                if hours == "":
+                    hours = "<MISSING>"
+                if "8702 Staples Mill Rd" in add:
+                    add = "8702 Staples Mill Rd"
                 yield [
                     website,
                     loc,

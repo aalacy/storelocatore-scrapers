@@ -94,7 +94,19 @@ def fetch_data():
                 if len("".join(hours[index].xpath("@class")).strip()) <= 0:
                     hours_list.append("".join(hours[index].xpath(".//text()")).strip())
 
+        hour2 = "".join(
+            store_sel.xpath(
+                '//section[@id="section_2"]//ul[./li[@class="icon-hours"]]/text()'
+            )
+        )
+        if hour2:
+            hours_list.append(hour2)
+
         hours_of_operation = "; ".join(hours_list).strip()
+        if "; We are open for delivery" in hours_of_operation:
+            hours_of_operation = hours_of_operation.split("; We are open for delivery")[
+                0
+            ].strip()
 
         latitude = "<MISSING>"
         longitude = "<MISSING>"

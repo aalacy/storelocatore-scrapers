@@ -54,6 +54,7 @@ def fetch_data():
     tree = html.fromstring(r.text)
     text = tree.xpath("//p[./a[contains(text(), 'Amazon Fresh store - ')]]//text()")
     text = list(filter(None, [t.strip() for t in text]))
+    text.remove("Coming soon:")
     rows = chunks(text, 4)
 
     for r in rows:

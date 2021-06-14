@@ -32,7 +32,9 @@ def fetch_data():
                     continue
                 if "**" in hh.text:
                     continue
-                hours.append(hh.text.strip().split("(")[0])
+                hours.append(
+                    "-".join([ho.split("(")[0] for ho in hh.text.strip().split("-")])
+                )
             yield SgRecord(
                 page_url=page_url,
                 store_number=_["storelocator_id"],

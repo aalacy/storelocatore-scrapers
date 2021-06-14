@@ -10,65 +10,47 @@ _headers = {
 
 logger = SgLogSetup().get_logger("tommyguns.com")
 
+days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+
 
 def fetch_data():
     locator_domain = "https://www.tommyguns.com"
-    base_url = "https://www.tommyguns.com/ca/location/"
+    base_url = "https://ca.tommyguns.com/blogs/locations?view=json"
     with SgRequests() as session:
-        soup = bs(session.get(base_url, headers=_headers).text, "lxml")
-        locations = soup.select("div.container article")
+        locations = session.get(base_url, headers=_headers).json()["locations"]
         logger.info(f"{len(locations)} found!")
         for _ in locations:
-            location_name = _.select_one("div h1").text.replace("*NOW OPEN*", "")
-            page_url = _.select_one("div.store-location-link a")["href"]
-            soup1 = bs(session.get(page_url, headers=_headers).text, "lxml")
-            hours = list(soup1.select_one("div.location-hours p").stripped_strings)
-            if hours[0].startswith("WE HAVE MERGED WITH"):
+            if not _["check_in_url"] and not _["address"]:
                 continue
-            if hours[0] == "OPENING SOON!":
-                hours = ["OPENING SOON!"]
-            else:
-                del hours[0]
-            phone = _.select_one("p.store-location-phone a").text
-            street_address = soup1.select_one(
-                "div.location-details .street-address"
-            ).text
-            city_state = soup1.select_one("div.location-details .mailing").text
-            city = city_state.split(",")[0]
-            state = city_state.split(",")[1].strip().split(" ")[0]
-            zip_postal = " ".join(city_state.split(",")[1].strip().split(" ")[1:])
-
+            page_url = "https://ca.tommyguns.com" + _["url"]
+            soup1 = bs(session.get(page_url, headers=_headers).text, "lxml")
             logger.info(page_url)
-            coord = ["", ""]
-            try:
-                coord = (
-                    soup1.select_one("div.location-map-col a")["href"]
-                    .split("!3d")[1]
-                    .split("!4d")
-                )
-            except:
-                try:
-                    coord = (
-                        soup1.select_one("div.location-map-col a")["href"]
-                        .split("/@")[1]
-                        .split("z/")[0]
-                        .split(",")
-                    )
-                except:
-                    pass
-
+            hours = []
+            if soup1.select_one("div.store-details__content"):
+                temp = list(
+                    soup1.select_one("div.store-details__content").stripped_strings
+                )[1:]
+                for hh in temp:
+                    if "re-open" in hh.lower():
+                        continue
+                    if (
+                        hh != "TEMPORARILY CLOSED"
+                        and hh.split("-")[0].strip() not in days
+                    ):
+                        break
+                    hours.append(hh)
+            addr = _["address"].replace("\r\n", ",").split(",")
             yield SgRecord(
                 page_url=page_url,
-                store_number=_["id"].split("-")[-1],
-                location_name=location_name,
-                street_address=street_address,
-                city=city,
-                state=state,
-                zip_postal=zip_postal,
-                latitude=coord[0],
-                longitude=coord[1],
-                country_code="US",
-                phone=phone,
+                location_name=_["name"].replace("–", "-"),
+                street_address=" ".join(addr[:-2]),
+                city=addr[-2].strip(),
+                state=_["province"],
+                zip_postal=addr[-1].replace(_["province"], "").strip(),
+                latitude=_["location"]["lat"],
+                longitude=_["location"]["lng"],
+                country_code="CA",
+                phone=_.get("phone_number"),
                 locator_domain=locator_domain,
                 hours_of_operation="; ".join(hours),
             )

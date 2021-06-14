@@ -77,7 +77,7 @@ def fetch_data():
     for d in div:
         location_name = " ".join(
             d.xpath(
-                './/following-sibling::div[1][@class="sqs-block html-block sqs-block-html"]/div/h3[1]//text() | .//preceding-sibling::div[@class="col sqs-col-7 span-7"]/div//h3//text()'
+                './/following-sibling::div[1][@class="sqs-block html-block sqs-block-html"]/div/h3[1]//text() | .//preceding-sibling::div[@class="col sqs-col-7 span-7"]/div//h3[1]//text()'
             )
         )
         location_name = location_name.lower().capitalize().replace(" beac h", " beach")
@@ -113,9 +113,18 @@ def fetch_data():
         except IndexError:
             latitude, longitude = "<MISSING>", "<MISSING>"
         hours_of_operation = "".join(
-            d.xpath(".//preceding::h2[contains(text(), 'errr')]/text()")
-        )
-
+            d.xpath(
+                './/following-sibling::div[1][@class="sqs-block html-block sqs-block-html"]/div/h3[2]//text() | .//preceding-sibling::div[@class="col sqs-col-7 span-7"]/div//h3[last()]//text() | .//following-sibling::div[1][@class="sqs-block html-block sqs-block-html"]/div/h3[3]//text()'
+            )
+        ).strip()
+        if hours_of_operation.find("DIAMOND JAMBOREE") != -1:
+            hours_of_operation = hours_of_operation.split("DIAMOND JAMBOREE")[1].strip()
+        if hours_of_operation.find("IRVINE SPECTRUM CENTER") != -1:
+            hours_of_operation = hours_of_operation.split("IRVINE SPECTRUM CENTER")[
+                1
+            ].strip()
+        if hours_of_operation.find("inside annex") != -1:
+            hours_of_operation = hours_of_operation.split("inside annex")[1].strip()
         row = [
             locator_domain,
             page_url,
