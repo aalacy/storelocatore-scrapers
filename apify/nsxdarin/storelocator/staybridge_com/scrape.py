@@ -87,30 +87,30 @@ def fetch_data():
                 '"@type":"Hotel","' in line
                 and "https://www.ihg.com/staybridge/hotels/" in line
             ):
-                lurl = line3.split('"url":"')[1].split('"')[0]
+                lurl = line.split('"url":"')[1].split('"')[0]
                 if lurl not in alllocs:
                     alllocs.append(lurl)
                     website = "staybridge.com"
                     typ = "Hotel"
                     hours = "<MISSING>"
-                    name = line3.split('"name":"')[1].split('"')[0]
-                    add = line3.split('"streetAddress":"')[1].split('"')[0]
-                    city = line3.split('"addressLocality":"')[1].split('"')[0]
+                    name = line.split('"name":"')[1].split('"')[0]
+                    add = line.split('"streetAddress":"')[1].split('"')[0]
+                    city = line.split('"addressLocality":"')[1].split('"')[0]
                     try:
-                        state = line3.split('"addressRegion":"')[1].split('"')[0]
+                        state = line.split('"addressRegion":"')[1].split('"')[0]
                     except:
                         state = "<MISSING>"
-                    zc = line3.split('"postalCode":"')[1].split('"')[0]
+                    zc = line.split('"postalCode":"')[1].split('"')[0]
                     if "canada" in url:
                         country = "CA"
                     else:
                         country = "US"
                     try:
-                        phone = line3.split('"telephone":"')[1].split('"')[0]
+                        phone = line.split('"telephone":"')[1].split('"')[0]
                     except:
                         phone = "<MISSING>"
-                    lat = line3.split(',"latitude":')[1].split(",")[0]
-                    lng = line3.split('"longitude":')[1].split("}")[0]
+                    lat = line.split(',"latitude":')[1].split(",")[0]
+                    lng = line.split('"longitude":')[1].split("}")[0]
                     store = lurl.replace("/hoteldetail", "").rsplit("/", 1)[1]
                     yield [
                         website,
