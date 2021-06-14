@@ -42,73 +42,48 @@ def write_output(data):
 def fetch_data():
     data = []
     name = []
-    name.append("none")
-    statelist = []
-    url = "https://www.loanmaxtitleloans.net/Locations"
+    p = 0
+
+    url = "https://www.loanmaxtitleloans.net/SiteMap.xml"
     r = session.get(url, headers=headers, verify=False)
     soup = BeautifulSoup(r.text, "html.parser")
-    state_list = soup.findAll("li", {"class": "state_item"})
-    p = 0
-    for states in state_list:
-        states = states.find("a")
-        states = "https://www.loanmaxtitleloans.net" + states["href"]
-        if states in statelist:
+    linklist = soup.findAll("loc")
+    for link in linklist:
+        link = link.text
+        if len(link.split("/")) < 5:
             continue
-        statelist.append(states)
-        r = session.get(states, headers=headers, verify=False)
+        r = session.get(link, headers=headers, verify=False)
         soup = BeautifulSoup(r.text, "html.parser")
-        city_list = soup.find(
-            "div", {"class": "location_list_container second"}
-        ).findAll("a")
-        for cities in city_list:
-            cities = "https://www.loanmaxtitleloans.net" + cities["href"]
-            r = session.get(cities, headers=headers, verify=False)
-            soup = BeautifulSoup(r.text, "html.parser")
-            branch_list = soup.findAll("div", {"id": "nd_locationStores"})
+        street = soup.find("span", {"itemprop": "streetAddress"}).text
+        city = soup.find("span", {"itemprop": "addressLocality"}).text
+        state = soup.find("span", {"itemprop": "addressRegion"}).text
+        pcode = soup.find("span", {"itemprop": "postalCode"}).text
+        title = "Loanmax - " + city + ", " + state
+        phone = soup.find("span", {"itemprop": "telephone"}).text
+        hours = soup.find("div", {"class": "store_hours"}).text.replace("\n", " ")
+        if street in name:
+            continue
+        name.append(street)
+        data.append(
+            [
+                "https://www.loanmaxtitleloans.net",
+                link,
+                title,
+                street,
+                city,
+                state,
+                pcode,
+                "US",
+                "<MISSING>",
+                phone,
+                "<MISSING>",
+                "<MISSING>",
+                "<MISSING>",
+                hours,
+            ]
+        )
 
-            for branch in branch_list:
-                branch = branch.find("a", {"class": "flex"})
-                if branch["href"] == "":
-                    pass
-                else:
-                    link = "https://www.loanmaxtitleloans.net" + branch["href"]
-
-                    r = session.get(link, headers=headers, verify=False)
-
-                    soup = BeautifulSoup(r.text, "html.parser")
-                    street = soup.find("span", {"itemprop": "streetAddress"}).text
-                    city = soup.find("span", {"itemprop": "addressLocality"}).text
-                    state = soup.find("span", {"itemprop": "addressRegion"}).text
-                    pcode = soup.find("span", {"itemprop": "postalCode"}).text
-                    title = "Loanmax - " + city + ", " + state
-                    phone = soup.find("span", {"itemprop": "telephone"}).text
-                    hours = soup.find("div", {"class": "store_hours"}).text.replace(
-                        "\n", " "
-                    )
-                    if street in name:
-                        pass
-                    else:
-                        name.append(street)
-                        data.append(
-                            [
-                                "https://www.loanmaxtitleloans.net",
-                                link,
-                                title,
-                                street,
-                                city,
-                                state,
-                                pcode,
-                                "US",
-                                "<MISSING>",
-                                phone,
-                                "<MISSING>",
-                                "<MISSING>",
-                                "<MISSING>",
-                                hours,
-                            ]
-                        )
-
-                        p += 1
+        p += 1
     return data
 
 

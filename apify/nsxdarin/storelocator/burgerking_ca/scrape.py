@@ -170,7 +170,7 @@ def fetch_data():
                     lat = "<MISSING>"
                     lng = "<MISSING>"
                 if "4967 Clifton Hill" in add:
-                    "Mon: Closed; Tue: Closed; Wed: Closed; Thu: Closed; Fri: 12:00 p.m. - 8:00 p.m.; Sat: 12:00 p.m. - 8:00 p.m.; Sun: 12:00 p.m. - 7:00 p.m."
+                    hours = "Mon: Closed; Tue: Closed; Wed: Closed; Thu: Closed; Fri: 12:00 p.m. - 8:00 p.m.; Sat: 12:00 p.m. - 8:00 p.m.; Sun: 12:00 p.m. - 7:00 p.m."
                 yield [
                     website,
                     loc,
