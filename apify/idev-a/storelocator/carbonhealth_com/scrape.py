@@ -27,7 +27,7 @@ def fetch_data():
             hours = []
             temp = []
             for k, _hr in _["specialties"].items():
-                if _hr["name"] == "Primary Care":
+                if _hr["name"].lower() == "urgent care":
                     for hh in _hr["hours"]:
                         temp.append((hh["day"], f"{hh['from']}-{hh['to']}"))
 

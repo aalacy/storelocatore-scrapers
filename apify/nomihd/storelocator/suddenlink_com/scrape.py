@@ -6,7 +6,7 @@ from sgscrape.sgwriter import SgWriter
 import lxml.html
 
 
-website = "suddenlink_com"
+website = "suddenlink.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 session = SgRequests()
 headers = {
