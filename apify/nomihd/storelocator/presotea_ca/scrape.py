@@ -59,8 +59,6 @@ def fetch_data():
         phone = store["phone"]
 
         if not phone:
-            # log.info(f"Phone is missing for {location_name}")
-            # log.info(f"Description is : {store['description']}")
             try:
                 phone = (
                     "+1" + store["description"].split("\n")[1].split("+1")[1].strip()
