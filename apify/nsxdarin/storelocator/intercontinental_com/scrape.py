@@ -130,7 +130,11 @@ def fetch_data():
             if '"addressRegion": "' in line2 and state == "":
                 state = line2.split('"addressRegion": "')[1].split('"')[0]
             if phone == "" and 'itemprop="telephone">' in line2:
-                phone = line2.split('itemprop="telephone">')[1].split("<")[0]
+                phone = line2.split('<span itemprop="telephone">')[1].split(
+                    "<span>", ""
+                )
+                if "tel:" in phone:
+                    phone = phone.split("tel:")[1].split('"')[0]
             if '"addressCountry": "' in line2 and country == "":
                 country = line2.split('"addressCountry": "')[1].split('"')[0]
             if '"latitude": "' in line2 and lat == "":
