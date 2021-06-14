@@ -24,6 +24,12 @@ def fetch_data():
                 "".join(hh.stripped_strings)
                 for hh in sp1.select("table.display-hours")[0].select("tr")
             ]
+            location_type = []
+            for service in [ss.text for ss in sp1.select("h4.service-title")]:
+                if "bank services" in service.lower():
+                    location_type.append("branch")
+                if "atm services" in service.lower():
+                    location_type.append("atm")
             yield SgRecord(
                 page_url=page_url,
                 store_number=_["storeCode"],
@@ -37,6 +43,7 @@ def fetch_data():
                 country_code="US",
                 phone=_["branchPhone"],
                 locator_domain=locator_domain,
+                location_type=",".join(location_type),
                 hours_of_operation="; ".join(hours),
             )
 

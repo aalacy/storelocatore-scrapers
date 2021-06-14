@@ -46,7 +46,9 @@ def fetch_data():
                     for link in links:
                         phone = ""
                         if link.find("a", href=re.compile(r"tel:")):
-                            phone = link.find("a", href=re.compile(r"tel:")).text
+                            phone = link.find(
+                                "a", href=re.compile(r"tel:")
+                            ).text.strip()
                         page_url = (
                             locator_domain + link.select_one("div.agentName a")["href"]
                         )
@@ -60,9 +62,9 @@ def fetch_data():
                         yield SgRecord(
                             page_url=page_url,
                             store_number=link["data-agent-index"],
-                            location_name=link.select_one(
-                                "div.agentName a"
-                            ).text.strip(),
+                            location_name=link.select_one("div.agentName a")
+                            .text.split(".")[-1]
+                            .strip(),
                             street_address=addr[0],
                             city=addr[1].split(",")[0].strip(),
                             state=addr[1].split(",")[1].strip().split(" ")[0].strip(),
