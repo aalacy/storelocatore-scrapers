@@ -15,7 +15,7 @@ user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Ge
 
 headers = {"User-Agent": user_agent}
 
-DEFAULT_PROXY_URL = "http://groups-RESIDENTIAL,country-us:{}@proxy.apify.com:8000/"
+DEFAULT_PROXY_URL = "https://groups-RESIDENTIAL,country-us:{}@proxy.apify.com:8000/"
 
 
 def set_proxies():
@@ -27,7 +27,7 @@ def set_proxies():
         )
         proxy_url = url.format(proxy_password)
         proxies = {
-            "http://": proxy_url,
+            "https://": proxy_url,
         }
         return proxies
     else:
@@ -65,11 +65,11 @@ def write_output(data):
 
 
 def fetch_data():
-    session = SgRequests()
-    session.proxies = set_proxies()
 
     locator_domain = "https://www.pepboys.com"
     to_scrape = "https://pepboys.com/stores"
+    session = SgRequests()
+    session.proxies = set_proxies()
     page = session.get(to_scrape, headers=headers)
     session.close()
     assert page.status_code == 200
@@ -86,6 +86,8 @@ def fetch_data():
 
     for state in state_list:
         log.info(f"State: {state}")
+        session = SgRequests()
+        session.proxies = set_proxies()
         page = session.get(state, headers=headers)
         session.close()
         assert page.status_code == 200
