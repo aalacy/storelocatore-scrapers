@@ -40,6 +40,7 @@ def write_output(data):
 def fetch_data():
     locs = []
     sms = []
+    locinfo = []
     url = "https://www.health-street.net/sitemap_index.xml"
     r = session.get(url, headers=headers)
     website = "health-street.net"
@@ -62,12 +63,27 @@ def fetch_data():
         lng = ""
         hours = ""
         phone = ""
+        rll = session.get(loc, headers=headers)
+        for line2 in rll.iter_lines():
+            line2 = str(line2.decode("utf-8"))
+            if "lat:" in line2:
+                try:
+                    lat = line2.split("lat:")[1].split(",")[0].strip()
+                except:
+                    lat = "<MISSING>"
+            if "lng:" in line2:
+                try:
+                    lng = line2.split("lng:")[1].split("}")[0].strip()
+                except:
+                    lng = "<MISSING>"
         r2 = session.get(loc, headers=headers)
         lines = r2.iter_lines()
         for line2 in lines:
             line2 = str(line2.decode("utf-8"))
-            if "Call Now to Register</p><span>" in line2:
-                phone = line2.split("Call Now to Register</p><span>")[1].split("<")[0]
+            if 'class="contact-us-span">(' in line2 and '<a href="tel:' in line:
+                phone = line2.split('<a href="tel:')[1].split('"')[0]
+            if '"telephone" : "' in line2 and phone == "":
+                phone = line2.split('"telephone" : "')[1].split('"')[0]
             if 'font-weight: bold; font-size: 1.4em;">' in line2:
                 items = line2.split('font-weight: bold; font-size: 1.4em;">')
                 for item in items:
@@ -89,61 +105,80 @@ def fetch_data():
                         except:
                             pass
                         names.append(cname + "|" + hours)
-            if " = new google.maps.Marker(" in line2:
-                next(lines)
-                next(lines)
-                next(lines)
-                g = next(lines)
-                h = next(lines)
-                g = str(g.decode("utf-8"))
-                h = str(h.decode("utf-8"))
-                try:
-                    lat = g.split(":")[1].split(",")[0]
-                    lng = h.split(":")[1].split("}")[0].strip().replace("\t", "")
-                except:
-                    lat = "<MISSING>"
-                    lng = "<MISSING>"
-            if 'openInfoWindow( \'<span itemprop="streetaddress">' in line2:
-                add = (
-                    line2.split('"streetaddress">')[1]
-                    .split("<span")[0]
-                    .replace("<br>", " ")
-                    .strip()
-                    .replace("</span>", "")
-                )
-                city = line2.split('<span itemprop="addresslocality">')[1].split("<")[0]
-                state = line2.split('"addressregion">')[1].split("<")[0]
-                zc = line2.split('<span itemprop="postalcode">')[1].split("<")[0]
-                aname = line2.split('<span itemprop="streetaddress">')[1].split("<")[0]
-                for pname in names:
-                    if aname == pname.split("|")[0]:
-                        hours = pname.split("|")[1]
-                if hours == "":
-                    hours = "<MISSING>"
-                store = "<MISSING>"
-                hours = hours.replace("&#8211;", "-")
-                if lat == "":
-                    lat = "<MISSING>"
-                if lng == "":
-                    lng = "<MISSING>"
-                aname = aname.replace("&amp;", "&").replace("&amp", "&")
-                add = add.replace("&amp;", "&").replace("&amp", "&")
-                yield [
-                    website,
-                    loc,
-                    aname,
-                    add,
-                    city,
-                    state,
-                    zc,
-                    country,
-                    store,
-                    phone,
-                    typ,
-                    lat,
-                    lng,
-                    hours,
-                ]
+            if "position:" in line2 and "lat:" in line2:
+                lat = line2.split("lat:")[1].split(",")[0].strip()
+                lng = line2.split("lng:")[1].split("}")[0].strip()
+            if '<span itemprop="streetaddress">' in line2:
+                stores = line2.split('<span itemprop="streetaddress">')
+                for sitem in stores:
+                    if '<span itemprop="addresslocality">' in sitem:
+                        add = (
+                            line2.split('"streetaddress">')[1]
+                            .split("<span")[0]
+                            .replace("<br>", " ")
+                            .strip()
+                            .replace("</span>", "")
+                        )
+                        city = line2.split('<span itemprop="addresslocality">')[
+                            1
+                        ].split("<")[0]
+                        state = line2.split('"addressregion">')[1].split("<")[0]
+                        zc = line2.split('<span itemprop="postalcode">')[1].split("<")[
+                            0
+                        ]
+                        aname = line2.split('<span itemprop="streetaddress">')[1].split(
+                            "<"
+                        )[0]
+                        for pname in names:
+                            if aname == pname.split("|")[0]:
+                                hours = pname.split("|")[1]
+                        if hours == "":
+                            hours = "<MISSING>"
+                        store = "<MISSING>"
+                        hours = hours.replace("&#8211;", "-")
+                        if lat == "":
+                            lat = "<MISSING>"
+                        if lng == "":
+                            lng = "<MISSING>"
+                        aname = aname.replace("&amp;", "&").replace("&amp", "&")
+                        add = add.replace("&amp;", "&").replace("&amp", "&")
+                        infotext = aname + "|" + add + "|" + city + "|" + state
+                        hours = hours.replace("&#8211;", "-")
+                        if aname == "":
+                            aname = (
+                                loc.split("/location/")[1]
+                                .replace("/", "")
+                                .replace("-", "")
+                                .title()
+                            )
+                        if add == "":
+                            add = "<MISSING>"
+                        if city == "":
+                            city = "<MISSING>"
+                        if state == "":
+                            state = "<MISSING>"
+                        if zc == "":
+                            zc = "<MISSING>"
+                        if phone == "":
+                            phone = "<MISSING>"
+                        if infotext not in locinfo:
+                            locinfo.append(infotext)
+                            yield [
+                                website,
+                                loc,
+                                aname,
+                                add,
+                                city,
+                                state,
+                                zc,
+                                country,
+                                store,
+                                phone,
+                                typ,
+                                lat,
+                                lng,
+                                hours,
+                            ]
 
 
 def scrape():

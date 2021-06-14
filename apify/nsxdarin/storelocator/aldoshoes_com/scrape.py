@@ -78,7 +78,11 @@ def fetch_data():
         SFound = False
         for line2 in r2.iter_lines(decode_unicode=True):
             if '<title data-react-helmet="true">' in line2:
-                name = line2.split('<title data-react-helmet="true">')[1].split(" |")[0]
+                name = line2.split('<title data-react-helmet="true">')[1].split(
+                    "</title>"
+                )[0]
+                if "|" in name:
+                    name = name.split("|")[0].strip()
             if 'span class="c-markdown">Store details</span>' in line2:
                 SFound = True
             if '"line1":"' in line2:
@@ -92,12 +96,11 @@ def fetch_data():
                 except:
                     state = "PR"
                 city = line2.split('"town":"')[1].split('"')[0]
-                try:
-                    zc = line2.split('"postalCode":"')[1].split('"')[0]
-                except:
-                    zc = "<MISSING>"
+                zc = (
+                    line2.split('"line1":"')[1].split('"postalCode":"')[1].split('"')[0]
+                )
                 store = line2.split('},"name":"')[1].split('"')[0]
-                phone = line2.split('"phone":"')[1].split('"')[0]
+                phone = line2.split('"line1":"')[1].split('"phone":"')[1].split('"')[0]
                 lat = line2.split('"latitude":')[1].split(",")[0]
                 lng = line2.split('"longitude":')[1].split("}")[0]
                 days = (
@@ -126,6 +129,12 @@ def fetch_data():
                         else:
                             hours = hours + "; " + dname + ": " + hrs
         if SFound:
+            if phone == "":
+                phone = "<MISSING>"
+            if "/store/1422" in surl:
+                phone = "<MISSING>"
+            if "store/2522" in surl:
+                name = add
             yield [
                 website,
                 surl,
@@ -182,6 +191,10 @@ def fetch_data():
                 hours = dname + ": " + hrs
             else:
                 hours = hours + "; " + dname + ": " + hrs
+        if "/store/1422" in purl:
+            phone = "<MISSING>"
+        if "store/2522" in surl:
+            name = add
         yield [
             website,
             purl,
