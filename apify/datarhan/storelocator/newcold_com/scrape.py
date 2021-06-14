@@ -103,6 +103,9 @@ def fetch_data():
             else "<MISSING>"
         )
 
+        if location_name == "NewCold Wakefield":
+            zip_code = "WF3 4FE"
+
         item = [
             domain,
             store_url,
