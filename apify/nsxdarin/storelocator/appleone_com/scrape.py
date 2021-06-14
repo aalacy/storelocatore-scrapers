@@ -85,7 +85,7 @@ def fetch_location(zipcode, EV, VSG, VS, ids, url):
                 name = line.split('<dd class="accordion-navigation" data-officename="')[
                     1
                 ].split('"')[0]
-            if '<span class="addr-details">' in line2:
+            if '<span class="addr-details">' in line:
                 g = next(lines)
                 h = next(lines)
                 i = next(lines)
