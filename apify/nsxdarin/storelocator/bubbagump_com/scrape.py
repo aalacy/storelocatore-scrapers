@@ -45,7 +45,7 @@ def fetch_data():
         line = str(line.decode("utf-8"))
         if '{"name": "' in line:
             line = line.replace('"categories": [{"name":', "")
-            items = line.split('{"name": "')
+            items = line.split('"name": "')
             for item in items:
                 if '"slug": "' in item:
                     store = "<MISSING>"
@@ -84,6 +84,10 @@ def fetch_data():
                         and state != "JL"
                         and city != "Bali"
                     ):
+                        if "Baltimore" in city:
+                            hours = "Sunday - Thursday: 11:30 AM - 9:00 PM; Friday - Saturday: 11:30 AM - 10:00 PM"
+                        if "Orlando" in city:
+                            hours = "SUN - SAT: 11:00 AM - 11:00 PM"
                         if "china" not in purl and "cancun" not in purl:
                             yield [
                                 website,

@@ -1,150 +1,174 @@
-import csv
 import json
-
-from concurrent import futures
 from lxml import html
+from sglogging import SgLogSetup
 from sgrequests import SgRequests
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+
+logger = SgLogSetup().get_logger("1800packrat_com")
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+DOMAIN = "https://www.1800packrat.com"
+URL_LOCATION = "https://www.1800packrat.com/locations"
+MISSING = "<MISSING>"
 
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
 
-        for row in data:
-            writer.writerow(row)
+headers_custom_for_location_url = {
+    "authority": "www.1800packrat.com",
+    "method": "GET",
+    "path": "/locations",
+    "scheme": "https",
+    "accept": "application/json, text/plain, */*",
+    "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.114 Safari/537.36",
+    "upgrade-insecure-requests": "1",
+}
+
+session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
 
 
 def get_urls():
     geo = dict()
-    urls = set()
-    session = SgRequests()
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:85.0) Gecko/20100101 Firefox/85.0"
-    }
-    r = session.get("https://www.1800packrat.com/locations", headers=headers)
-    tree = html.fromstring(r.text)
-    text = (
-        "".join(tree.xpath("//script[contains(text(), 'markers:')]/text()"))
-        .split("markers:")[1]
-        .split("]")[0]
-        .strip()[:-1]
-        + "]"
+    urls = []
+    r = session.get(
+        "https://www.1800packrat.com/locations",
+        headers=headers_custom_for_location_url,
+        timeout=180,
     )
-    js = json.loads(text)
-    for j in js:
-        url = j.get("Link").replace(
-            "/sites/packrat/home", "https://www.1800packrat.com"
+    tree = html.fromstring(r.text)
+    logger.info(f"Raw Page Source: {r.text}")
+    r_text = r.text
+    test_incapsula = r_text.split("div")
+
+    if len(test_incapsula) > 2:
+        text = (
+            "".join(tree.xpath("//script[contains(text(), 'markers:')]/text()"))
+            .split("markers:")[1]
+            .split("]")[0]
+            .strip()[:-1]
+            + "]"
         )
-        urls.add(url)
-        slug = url.split("/")[-1]
-        lat = j.get("Latitude") or "<MISSING>"
-        lng = j.get("Longitude") or "<MISSING>"
-        geo[slug] = {"lat": lat, "lng": lng}
+        js = json.loads(text)
+        for j in js:
+            slug = j.get("Link")
+            url = f"{DOMAIN}{slug}"
+            urls.append(url)
+            lat = j.get("Latitude") or MISSING
+            lng = j.get("Longitude") or MISSING
+            geo[slug] = {"lat": lat, "lng": lng}
+            logger.info(f"Latitude & Longitude: {geo}")
 
-    return urls, geo
-
-
-def get_data(page_url, geo):
-    rows = []
-    locator_domain = "https://www.1800packrat.com/"
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:84.0) Gecko/20100101 Firefox/84.0"
-    }
-    key = page_url.split("/")[-1]
-    session = SgRequests()
-    r = session.get(page_url, headers=headers)
-    tree = html.fromstring(r.text)
-
-    location_name = "".join(tree.xpath("//h1/text()")).strip()
-    country_code = "US"
-    store_number = "<MISSING>"
-    latitude = geo[key].get("lat")
-    longitude = geo[key].get("lng")
-    location_type = "<MISSING>"
-    hours_of_operation = (
-        ";".join(tree.xpath("//p[contains(text(), 'CUSTOMER SERVICE HOURS')]/text()"))
-        .replace("\n", "")
-        .replace("CUSTOMER SERVICE HOURS;", "")
-        or "<MISSING>"
-    )
-
-    lines = tree.xpath(
-        "//p[contains(text(), 'CUSTOMER SERVICE HOURS')]/preceding-sibling::p"
-    )
-    for l in lines:
-        line = l.xpath(".//text()")
-        line = list(filter(None, [li.strip() for li in line]))
-        street_address = ", ".join(line[:-2])
-        phone = line[-1]
-        line = line[-2]
-        city = line.split(",")[0].strip()
-        line = line.split(",")[1].strip()
-        state = line.split()[0]
-        try:
-            postal = line.split()[1]
-        except IndexError:
-            postal = "<MISSING>"
-
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-
-        rows.append(row)
-
-    return rows
+        return urls, geo
+    else:
+        raise Exception(
+            'Incapsula is active - Please try with residential proxy: "{}"'.format(
+                r_text
+            )
+        )
 
 
 def fetch_data():
-    out = []
+    s = set()
     urls, geo = get_urls()
+    logger.info(f"Number of Page URLs: {len(urls)}")
+    for pnum, purl in enumerate(urls):
+        logger.info(f"Pulling the data from {pnum}: {purl}")
+        slug2 = purl.replace(DOMAIN, "")
+        headers_custom_with_url_path = {
+            "authority": "www.1800packrat.com",
+            "method": "GET",
+            "path": slug2,
+            "scheme": "https",
+            "accept": "application/json, text/plain, */*",
+            "referer": "https://www.1800packrat.com/locations",
+            "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.114 Safari/537.36",
+            "upgrade-insecure-requests": "1",
+        }
+        r = session.get(purl, headers=headers_custom_with_url_path, timeout=180)
+        tree = html.fromstring(r.text, "lxml")
+        r_text = r.text
+        test_incapsula = r_text.split("div")
+        logger.info(f"Page Source: {r_text}")
+        if len(test_incapsula) > 2:
+            logger.info("Incapsula is not active yet")
+            page_url = purl
 
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
-        future_to_url = {executor.submit(get_data, url, geo): url for url in urls}
-        for future in futures.as_completed(future_to_url):
-            rows = future.result()
-            for row in rows:
-                out.append(row)
+            # Make sure Duplicates removed
+            if page_url in s:
+                continue
+            s.add(page_url)
 
-    return out
+            location_name = "".join(tree.xpath("//h1/text()")).strip()
+            country_code = "US"
+            store_number = MISSING
+            latitude = geo[slug2].get("lat")
+            longitude = geo[slug2].get("lng")
+            location_type = MISSING
+            hours_of_operation = (
+                ";".join(
+                    tree.xpath("//p[contains(text(), 'CUSTOMER SERVICE HOURS')]/text()")
+                )
+                .replace("\n", "")
+                .replace("CUSTOMER SERVICE HOURS;", "")
+                or MISSING
+            )
+
+            lines = tree.xpath(
+                "//p[contains(text(), 'CUSTOMER SERVICE HOURS')]/preceding-sibling::p"
+            )
+            for l in lines:
+                raw_line = l.xpath(".//text()")
+                raw_line = list(filter(None, [li.strip() for li in raw_line]))
+                line = raw_line
+                logger.info(f"Addressline Raw: {line}")
+                street_address = ", ".join(line[:-2])
+                phone = line[-1]
+                line = line[-2]
+                city = line.split(",")[0].strip()
+                line = line.split(",")[1].strip()
+                state = line.split()[0]
+                try:
+                    postal = line.split()[1]
+                except IndexError:
+                    postal = MISSING
+                raw_address = ", ".join(raw_line[:-1])
+                raw_address = raw_address if raw_address else MISSING
+                logger.info(f"Raw Address: {raw_address}")
+                yield SgRecord(
+                    locator_domain=DOMAIN,
+                    page_url=page_url,
+                    location_name=location_name,
+                    street_address=street_address,
+                    city=city,
+                    state=state,
+                    zip_postal=postal,
+                    country_code=country_code,
+                    store_number=store_number,
+                    phone=phone,
+                    location_type=location_type,
+                    latitude=latitude,
+                    longitude=longitude,
+                    hours_of_operation=hours_of_operation,
+                    raw_address=raw_address,
+                )
+            else:
+                raise Exception(
+                    'Incapsula is active - Please try with residential proxy: "{}"'.format(
+                        r_text
+                    )
+                )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    logger.info("Started")
+    count = 0
+    with SgWriter() as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+
+    logger.info(f"No of records being processed: {count}")
+    logger.info("Finished")
 
 
 if __name__ == "__main__":
