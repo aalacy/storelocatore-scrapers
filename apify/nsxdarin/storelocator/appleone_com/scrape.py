@@ -85,17 +85,21 @@ def fetch_location(zipcode, EV, VSG, VS, ids, url):
                 name = line.split('<dd class="accordion-navigation" data-officename="')[
                     1
                 ].split('"')[0]
-                addinfo = line.split('address="')[1].split('"')[0]
-                if addinfo.count(",") == 3:
-                    add = addinfo.split(",")[0] + " " + addinfo.split(",")[1].strip()
-                    city = addinfo.split(",")[2].strip()
-                    state = addinfo.split(",")[3].strip().split(" ")[0]
-                    zc = addinfo.rsplit(" ", 1)[1]
-                else:
-                    add = addinfo.split(",")[0]
-                    city = addinfo.split(",")[1].strip()
-                    state = addinfo.split(",")[2].strip().split(" ")[0]
-                    zc = addinfo.rsplit(" ", 1)[1]
+            if '<span class="addr-details">' in line2:
+                g = next(lines)
+                h = next(lines)
+                i = next(lines)
+                g = str(g.decode("utf-8"))
+                h = str(h.decode("utf-8"))
+                i = str(i.decode("utf-8"))
+                add = g.split("<")[0].strip().replace("\t", "")
+                try:
+                    add = add + " " + h.split("<")[0].strip().replace("\t", "")
+                except:
+                    pass
+                city = i.split(",")[0]
+                state = i.split(",")[1].strip().split(" ")[0]
+                zc = i.split("<")[0].strip().rsplit(" ", 1)[1]
             if '<a href="tel:+' in line:
                 phone = line.split('">')[1].split("<")[0]
             if "day</span>" in line:
