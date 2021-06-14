@@ -504,7 +504,6 @@ def fetch_type_urgent(soup, page_url):
     addr = data["address"]
     location_name = data["name"]
     street_address = addr["streetAddress"].rstrip(", ")
-    print(street_address)
     city = addr["addressLocality"]
     state = addr["addressRegion"]
     zip_code = addr["postalCode"]
