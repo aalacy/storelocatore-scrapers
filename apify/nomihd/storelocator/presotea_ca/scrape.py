@@ -59,8 +59,12 @@ def fetch_data():
         phone = store["phone"]
 
         if not phone:
-            log.info(f"Phone is missing for {location_name}")
-            log.info(f"Description is : {store['description']}")
+            try:
+                phone = (
+                    "+1" + store["description"].split("\n")[1].split("+1")[1].strip()
+                )
+            except:
+                pass
 
         location_type = "<MISSING>"
         days = [
@@ -74,7 +78,10 @@ def fetch_data():
         ]
         hours = []
         for day in days:
-            hours.append(f'{day} : {store.get(day,"CLOSED")}')
+            time = store.get(day)
+            if time == "":
+                time = "CLOSED"
+            hours.append(f"{day} : {time}")
 
         hours_of_operation = "; ".join(hours).replace("day; ", "day: ").strip()
         latitude = store["loc_lat"]
