@@ -105,6 +105,9 @@ def fetch_data():
                         except:
                             pass
                         names.append(cname + "|" + hours)
+            if "position:" in line2 and "lat:" in line2:
+                lat = line2.split("lat:")[1].split(",")[0].strip()
+                lng = line2.split("lng:")[1].split("}")[0].strip()
             if '<span itemprop="streetaddress">' in line2:
                 stores = line2.split('<span itemprop="streetaddress">')
                 for sitem in stores:
@@ -133,12 +136,6 @@ def fetch_data():
                             hours = "<MISSING>"
                         store = "<MISSING>"
                         hours = hours.replace("&#8211;", "-")
-                        try:
-                            lat = line2.split("lat:")[1].split(",")[0].strip()
-                            lng = line2.split("lng:")[1].split("}")[0].strip()
-                        except:
-                            lat = ""
-                            lng = ""
                         if lat == "":
                             lat = "<MISSING>"
                         if lng == "":
