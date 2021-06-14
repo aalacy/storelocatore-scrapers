@@ -32,7 +32,6 @@ for page_url in loc_urls:
 
     response = session.get(page_url).text
     soup = bs(response, "html.parser")
-    print(page_url)
     locator_domain = "vitalitybowls.com"
     location_name = soup.find("h2", attrs={"class": "et_pb_slide_title"}).text.strip()
     if "What Are Our Customers Saying?" in location_name:
