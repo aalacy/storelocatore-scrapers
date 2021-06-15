@@ -49,7 +49,6 @@ def fetch_data():
         "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
     }
     base_url = "https://www.lcbo.com"
-    r_store_id = session.get(base_url, headers=headers)
 
     search = static_zipcode_list(country_code=SearchableCountries.CANADA, radius=5)
 
