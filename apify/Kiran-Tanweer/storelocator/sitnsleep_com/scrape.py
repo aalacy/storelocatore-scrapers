@@ -46,7 +46,7 @@ def fetch_data():
             loc = loc.split("address:")[1].split(",reviews:")[0]
             location_name = loc.split(',name:"')[1].split('",')[0]
             street_address = loc.split(',street:"')[1].split('",')[0]
-            street = street_address.replace("<br/>", " ")
+            street_address = street_address.replace("<br/>", " ")
             city = loc.split('{city:"')[1].split('",')[0]
             state = loc.split(',state:"')[1].split('",')[0]
             zip_postal = loc.split(',zip:"')[1].split('"}')[0]
