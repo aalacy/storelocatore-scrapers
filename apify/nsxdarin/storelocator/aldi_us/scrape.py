@@ -1,4 +1,3 @@
-
 import time
 from concurrent.futures import ThreadPoolExecutor
 from sgzip.static import static_zipcode_list, SearchableCountries
@@ -57,9 +56,9 @@ def fetchSingleZip(zip_code):
             phone = line.split('itemprop="telephone" href="tel:')[1].split('"')[0]
         if 'class="resultItem-City" data-city="' in line:
             try:
-                city = line.split('class="resultItem-City" data-city="')[1].split(
-                    ","
-                )[0]
+                city = line.split('class="resultItem-City" data-city="')[1].split(",")[
+                    0
+                ]
                 state = (
                     line.split('class="resultItem-City" data-city="')[1]
                     .split(",")[1]
@@ -81,9 +80,7 @@ def fetchSingleZip(zip_code):
                     + ": "
                 )
         if '<td class="open openingTime">' in line:
-            hours = (
-                hours + line.split('<td class="open openingTime">')[1].split("<")[0]
-            )
+            hours = hours + line.split('<td class="open openingTime">')[1].split("<")[0]
         if '<div class="onlyMobile resultItem-Arrow">' in line:
 
             location_info = {
@@ -99,24 +96,25 @@ def fetchSingleZip(zip_code):
                 if hours == "":
                     hours = "<MISSING>"
                 if state != "<MISSING>":
-                    result.append({
-                        'locator_domain': website,
-                        'page_url': purl,
-                        'location_name':name,
-                        'street_address': add,
-                        'city': city,
-                        'state': state,
-                        'zip_postal':zc,
-                        'country_code': country,
-                        'store_number':store,
-                        'phone': phone,
-                        'location_type': typ,
-                        'latitude': lat,
-                        'longitude': lng,
-                        'hours_of_operation': hours,
-                    })
-                        
-    
+                    result.append(
+                        {
+                            "locator_domain": website,
+                            "page_url": purl,
+                            "location_name": name,
+                            "street_address": add,
+                            "city": city,
+                            "state": state,
+                            "zip_postal": zc,
+                            "country_code": country,
+                            "store_number": store,
+                            "phone": phone,
+                            "location_type": typ,
+                            "latitude": lat,
+                            "longitude": lng,
+                            "hours_of_operation": hours,
+                        }
+                    )
+
     return zip_code, result, None
 
 
@@ -127,7 +125,9 @@ def fetchData():
     count = 0
 
     storeNumbers = []
-    with ThreadPoolExecutor(max_workers=max_workers, thread_name_prefix='fetcher') as executor:
+    with ThreadPoolExecutor(
+        max_workers=max_workers, thread_name_prefix="fetcher"
+    ) as executor:
         for zip_code, result, error in executor.map(fetchSingleZip, zips):
             if countZip % 100 == 0:
                 logger.info(f"total zip code = {countZip} total stores = {count}")
@@ -138,25 +138,25 @@ def fetchData():
 
             for details in result:
                 raw_address = f"{details['street_address']}, {details['city']}, {details['state']} {details['zip_postal']}"
-                if details['store_number'] in storeNumbers:
+                if details["store_number"] in storeNumbers:
                     continue
-                storeNumbers.append(details['store_number'])
+                storeNumbers.append(details["store_number"])
                 count = count + 1
                 yield SgRecord(
-                    locator_domain=details['locator_domain'],
-                    store_number=details['store_number'],
-                    page_url=details['page_url'],
-                    location_name=details['location_name'],
-                    location_type=details['location_type'],
-                    street_address=details['street_address'],
-                    city=details['city'],
-                    zip_postal=details['zip_postal'],
-                    state=details['state'],
-                    country_code=details['country_code'],
-                    phone=details['phone'],
-                    latitude=details['latitude'],
-                    longitude=details['longitude'],
-                    hours_of_operation=details['hours_of_operation'],
+                    locator_domain=details["locator_domain"],
+                    store_number=details["store_number"],
+                    page_url=details["page_url"],
+                    location_name=details["location_name"],
+                    location_type=details["location_type"],
+                    street_address=details["street_address"],
+                    city=details["city"],
+                    zip_postal=details["zip_postal"],
+                    state=details["state"],
+                    country_code=details["country_code"],
+                    phone=details["phone"],
+                    latitude=details["latitude"],
+                    longitude=details["longitude"],
+                    hours_of_operation=details["hours_of_operation"],
                     raw_address=raw_address,
                 )
 
@@ -175,8 +175,7 @@ def scrape():
     logger.info(f"Total row added = {count}")
     logger.info(f"Scrape took {end-start} seconds.")
 
+
 session.close()
 if __name__ == "__main__":
     scrape()
-
-
