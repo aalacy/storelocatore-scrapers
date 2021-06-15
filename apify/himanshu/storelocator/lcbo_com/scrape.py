@@ -71,8 +71,6 @@ def fetch_data():
                 time.sleep(10)
                 continue
 
-        with open("file.txt", "w", encoding="utf-8") as output:
-            print(r.text, file=output)
         soup = BeautifulSoup(r.text, "html.parser")
 
         for script in soup.find_all(
@@ -101,9 +99,7 @@ def fetch_data():
             city = script["data-city"]
             latitude = script["data-lat"]
             longitude = script["data-long"]
-            # search.found_location_at(latitude, longitude)
             location_name = script.find("div", {"class": "store-name"}).text.strip()
-            print(location_name)
             phone = script.find("div", {"class": "store-phone"}).text.strip()
             zipp = script.find("div", {"class": "store-postal"}).text.strip()
             hours_json_str = (
@@ -172,9 +168,7 @@ def fetch_data():
             city = script["data-city"]
             latitude = script["data-lat"]
             longitude = script["data-long"]
-            # search.found_location_at(latitude, longitude)
             location_name = script.find("div", {"class": "store-name"}).text.strip()
-            print(location_name)
             phone = script.find("div", {"class": "store-phone"}).text.strip()
             zipp = script.find("div", {"class": "store-postal"}).text.strip()
             hours_json_str = (
@@ -246,9 +240,7 @@ def fetch_data():
             city = script["data-city"]
             latitude = script["data-lat"]
             longitude = script["data-long"]
-            # search.found_location_at(latitude, longitude)
             location_name = script.find("div", {"class": "store-name"}).text.strip()
-            print(location_name)
             phone = script.find("div", {"class": "store-phone"}).text.strip()
             zipp = script.find("div", {"class": "store-postal"}).text.strip()
             hours_json_str = (
