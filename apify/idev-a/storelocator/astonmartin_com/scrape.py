@@ -1,9 +1,6 @@
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger("astonmartin")
 
 base_url = "https://www.astonmartin.com/api/v1/dealers?latitude=35.6729793&longitude=139.72310400000003&cultureName=en-us&take=2600"
 
@@ -13,7 +10,6 @@ def fetch_data():
     data = []
     with SgRequests() as session:
         locations = session.get(base_url).json()
-        logger.info(f"{len(locations)} found")
         for store in locations:
             page_url = (
                 locator_domain + store["DealerPageUrl"]
