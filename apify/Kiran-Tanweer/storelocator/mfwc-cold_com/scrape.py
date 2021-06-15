@@ -82,7 +82,6 @@ def fetch_data():
             lng = "<MISSING>"
         phone = str(phone)
         phone = phone.split("',")[0].lstrip("['")
-        print(phone)
 
         data.append(
             [
