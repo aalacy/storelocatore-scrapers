@@ -1,4 +1,3 @@
-import re
 import usaddress
 from sglogging import sglog
 from bs4 import BeautifulSoup
@@ -18,7 +17,6 @@ headers = {
 DOMAIN = "https://www.tasteofphilly.biz/locations/"
 MISSING = "<MISSING>"
 
-
 def fetch_data():
     if True:
         url = "https://www.tasteofphilly.biz/locations/"
@@ -26,35 +24,26 @@ def fetch_data():
         soup = BeautifulSoup(r.text, "html.parser")
         loclist = soup.findAll("div", {"class": "et_pb_text_inner"})[:-2]
         for loc in loclist:
-            page_url = "https://www.tasteofphilly.biz" + loc.find("a")["href"]
+            page_url = "https://www.tasteofphilly.biz"+loc.find("a")['href']
             log.info(page_url)
             r = session.get(page_url, headers=headers)
             soup = BeautifulSoup(r.text, "html.parser")
             temp = soup.findAll("div", {"class": "et_pb_text_inner"})
             location_name = temp[0].text
             if "Having lunch or dinner at one of our restaurants" in temp[1].text:
-                temp = soup.findAll("div", {"class": "et_pb_text_inner"})[6]
-                hours_of_operation = (
-                    r.text.split("Every Day")[1]
-                    .split("</p>")[0]
-                    .replace("</strong>", "")
-                )
-                hours_of_operation = "Every Day" + hours_of_operation
+                temp =  soup.findAll("div", {"class": "et_pb_text_inner"})[6]
+                hours_of_operation = r.text.split("Every Day")[1].split("</p>")[0].replace("</strong>","")
+                hours_of_operation = "Every Day"+hours_of_operation
                 if "</div>" in hours_of_operation:
                     hours_of_operation = hours_of_operation.split("</div>")[0]
-                temp = temp.get_text(separator="|", strip=True).split("|")
-                address = temp[0] + " " + temp[1]
+                temp = temp.get_text(separator='|', strip=True).split('|')
+                address = temp[0] +" "+temp[1]
                 phone = temp[2]
-            else:
+            else:   
                 temp = temp[1].findAll("p")
-                address = temp[0].get_text(separator="|", strip=True).replace("|", " ")
+                address = temp[0].get_text(separator='|', strip=True).replace('|'," ")
                 phone = temp[1].find("a").text
-                hours_of_operation = (
-                    temp[2]
-                    .get_text(separator="|", strip=True)
-                    .replace("|", " ")
-                    .replace("Hours", "")
-                )
+                hours_of_operation = temp[2].get_text(separator='|', strip=True).replace('|'," ").replace("Hours","")
             address = address.replace(",", " ")
             address = usaddress.parse(address)
             i = 0
