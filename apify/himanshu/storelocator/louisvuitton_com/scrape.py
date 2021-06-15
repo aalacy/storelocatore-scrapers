@@ -65,7 +65,7 @@ def fetch_data():
         store_url = poi["url"]
         location_name = poi["name"].replace("&#039;", "'")
         street_address = poi["street"]
-        street_address = street_address if street_address else '<MISSING>'
+        street_address = street_address if street_address else "<MISSING>"
         city = poi["city"]
         city = city if city else "<MISSING>"
         state = poi["state"]
