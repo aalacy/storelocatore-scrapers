@@ -102,6 +102,14 @@ def fetch_data():
                 lat = line2.split('data-center-lat="')[1].split('"')[0]
                 lng = line2.split('lng="')[1].split('"')[0]
         if add != "":
+            if "arlo-nomad" in loc:
+                phone = "212.806.7000"
+            if "arlo-soho" in loc:
+                phone = "212.342.7000"
+            if "nautilus-miami-beach" in loc:
+                phone = "305.503.5700"
+            if "arlo-midtown" in loc:
+                phone = "212.343.7000"
             yield [
                 website,
                 loc,

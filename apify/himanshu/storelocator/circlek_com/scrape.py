@@ -1,12 +1,28 @@
 import csv
 import json
+import threading
 import lxml.html
 from sglogging import SgLogSetup
 from sgrequests import SgRequests
 from sgscrape import sgpostal as parser
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from tenacity import Retrying, stop_after_attempt
+from time import sleep
+from random import randint
 
 logger = SgLogSetup().get_logger("circlek_com")
+
+local = threading.local()
+
+
+def get_session(reset):
+    if not hasattr(local, "session") or local.count > 5 or reset:
+        local.session = SgRequests()
+        local.count = 0
+
+    local.count += 1
+    sleep(randint(2, 5))
+    return local.session
 
 
 def write_output(data):
@@ -58,9 +74,9 @@ headers = {
 def fetch_page(page, session):
     url = "https://www.circlek.com/stores_new.php"
     params = {
-        "lat": 35.7796,
-        "lng": -78.6382,
-        "distance": 50000,
+        "lat": 43.5890,
+        "lng": -79.6441,
+        "distance": 5000,
         "services": "",
         "region": "global",
         "page": page,
@@ -88,7 +104,10 @@ def fetch_locations(tracker, session, locations=[], page=0):
         return locations
 
 
-def fetch_details(store, session):
+retryer = Retrying(stop=stop_after_attempt(3), reraise=True)
+
+
+def fetch_details(store, retry=False):
     locator_domain = "https://www.circlek.com"
     location_name = ""
     street_address = ""
@@ -104,16 +123,23 @@ def fetch_details(store, session):
     hours_of_operation = ""
     page_url = "https://www.circlek.com" + store["url"]
 
-    try:
-        store_req = session.get(page_url, headers=headers)
-    except:
-        return
+    with get_session(retry) as session:
+        store_req = session.get(
+            page_url,
+            headers=headers,
+        )
+
+    if store_req.status_code not in (500, 404, 200):
+        return retryer(fetch_details, store, True)
 
     store_sel = lxml.html.fromstring(store_req.text)
     json_list = store_sel.xpath('//script[@type="application/ld+json"]/text()')
     for js in json_list:
         if "LocalBusiness" in js:
-            store_json = json.loads(js)
+            try:
+                store_json = json.loads(js)
+            except:
+                return retryer(fetch_details, store, True)
             location_name = (
                 store.get("display_brand")
                 or store.get("store_brand")
@@ -179,6 +205,13 @@ def fetch_details(store, session):
             if phone == "" or phone is None:
                 phone = "<MISSING>"
 
+            if (
+                street_address == "<MISSING>"
+                and city == "<MISSING>"
+                and state == "<MISSING>"
+            ):
+                return retryer(fetch_details, store, True)
+
             return [
                 locator_domain,
                 location_name,
@@ -201,11 +234,11 @@ def fetch_data():
     with ThreadPoolExecutor() as executor, SgRequests() as session:
         tracker = []
         locations = fetch_locations(tracker, session)
-        futures = [
-            executor.submit(fetch_details, location, session) for location in locations
-        ]
+
+        futures = [executor.submit(fetch_details, location) for location in locations]
         for future in as_completed(futures):
             poi = future.result()
+
             if poi:
                 yield poi
 
