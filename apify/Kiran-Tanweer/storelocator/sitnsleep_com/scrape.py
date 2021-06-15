@@ -7,20 +7,6 @@ from sgscrape.sgwriter import SgWriter
 from selenium.webdriver.support.ui import WebDriverWait
 from lxml import html
 
-##
-##
-##URL_LOCATION = "https://www.sitnsleep.com/storelocator"
-##DOMAIN = "https://www.sitnsleep.com"
-##
-##
-##try:
-##    _create_unverified_https_context = (
-##        ssl._create_unverified_context
-##    )  # Legacy Python that doesn't verify HTTPS certificates by default
-##except AttributeError:
-##    pass
-##else:
-##    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
 
 session = SgRequests()
 website = "sitnsleep_com"
@@ -73,7 +59,8 @@ def fetch_data():
                 .replace("&lt;/p&gt;", "")
             )
             hours_of_operation = (
-                hours_of_operation.replace('class="location__hours-saturday"&gt;', "")
+                hours_of_operation.replace("pm", "pm ")
+                .replace('class="location__hours-saturday"&gt;', "")
                 .replace('class="location__hours-sunday"&gt;', "")
                 .replace("&lt;strong ", "")
             )
