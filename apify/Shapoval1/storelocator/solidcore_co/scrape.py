@@ -43,23 +43,28 @@ def fetch_data():
     }
     r = session.get(api_url, headers=headers)
     tree = html.fromstring(r.text)
+    jsblock = tree.xpath('//script[contains(text(), "var locations =")]/text()')
+    jsblock = list(filter(None, [a.strip() for a in jsblock]))
+
     jsblock = (
-        "".join(tree.xpath('//script[contains(text(), "var locations =")]/text()'))
+        "".join(jsblock)
         .split("var locations =")[1]
-        .split(";")[0]
+        .split("];")[0]
         .replace("[", "")
         .replace("]", "")
         .strip()
     )
+
     jsblock = (
         jsblock.replace("lat", '"lat"')
         .replace("lng", '"lng"')
         .replace("icon", '"icon"')
         .replace("infoWindow", '"infoWindow"')
         .replace("content", '"content"')
-        .replace("\n", "")
     )
+    jsblock = "[" + jsblock + "]"
     jsb = eval(jsblock)
+
     for i in jsb:
         latitude = i.get("lat")
         longitude = i.get("lng")

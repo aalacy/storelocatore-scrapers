@@ -82,6 +82,8 @@ def fetch_data():
             '//div[@class="clearfix"]//div[contains(@class,"loc")]'
         )
         for store in stores:
+            if "Coming Soon" in "".join(store.xpath("p/text()")).strip():
+                continue
             temp_page_url = "".join(store.xpath("h4/a/@href")).strip()
 
             locator_domain = website

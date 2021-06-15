@@ -1,5 +1,6 @@
 import csv
 import json
+from lxml import etree
 
 from sgrequests import SgRequests
 
@@ -42,6 +43,20 @@ def fetch_data():
 
     DOMAIN = "tedbaker.com"
     start_url = "https://www.tedbaker.com/uk/json/stores/for-country?isocode=GB"
+
+    hdr = {
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.212 Safari/537.36"
+    }
+    response = session.get("https://www.tedbaker.com/uk/store-finder", headers=hdr)
+    dom = etree.HTML(response.text)
+    token = dom.xpath('//input[@name="CSRFToken"]/@value')[0]
+
+    hdr = {
+        "Accept": "application/json, text/plain, */*",
+        "Accept-Encoding": "gzip, deflate, br",
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.212 Safari/537.36",
+        "X-XSRF-TOKEN": token,
+    }
 
     response = session.get(start_url)
     data = json.loads(response.text)

@@ -72,13 +72,15 @@ def get_data(url):
     country_code = "US"
     store_number = "<MISSING>"
     phone = (
-        "".join(tree.xpath("//a[@class='store-details__phone-line']/text()")).strip()
+        "".join(
+            tree.xpath(
+                "//div[@class='store-details__contact-holder']/a[contains(@href, 'tel:')]/text()"
+            )
+        ).strip()
         or "<MISSING>"
     )
 
-    text = "".join(
-        tree.xpath("//a[@class='btn btn-primary store-details__location-link']/@href")
-    )
+    text = "".join(tree.xpath("//a[contains(@class, 'location-link')]/@href"))
     if text:
 
         latitude = text.split("@")[1].split(",")[0]
