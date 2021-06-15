@@ -5,6 +5,8 @@ from lxml import etree
 from urllib.parse import urljoin
 
 from sgrequests import SgRequests
+from sgselenium import SgFirefox
+from sgscrape.sgpostal import parse_address_intl
 
 
 def write_output(data):
@@ -39,9 +41,13 @@ def write_output(data):
 
 def fetch_data():
     # Your scraper here
-    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
+    session = SgRequests(proxy_rotation_failure_threshold=0).requests_retry_session(
+        retries=2, backoff_factor=0.3
+    )
 
     items = []
+    scraped_items = []
+    scraped_urls = []
 
     DOMAIN = "mylapels.com"
     start_url = "https://mylapels.com/store-locator/"
@@ -57,122 +63,127 @@ def fetch_data():
         if "http" not in poi["locationUrl"]:
             store_url = "https://mylapels.com/location{}".format(poi["locationUrl"])
         store_url = store_url.replace("/ww.", "/www.")
-        loc_response = session.get(store_url)
-        loc_dom = etree.HTML(loc_response.text)
-
-        location_name = poi["title"]
-        location_name = location_name if location_name else "<MISSING>"
-        address_raw = loc_dom.xpath('//div[@id="MapAddress"]/p/text()')
-        if not address_raw:
-            address_raw = loc_dom.xpath('//div[@id="MapDescription"]/p/text()')
-        if not address_raw:
-            address_raw = loc_dom.xpath(
-                '//p[a[contains(@href, "tel")]]/following-sibling::p[1]/text()'
-            )
-        if len(address_raw) == 1:
-            address_raw = address_raw[0].split(", ")
-        if len(address_raw) == 4:
-            address_raw = [" ".join(address_raw[:2])] + address_raw[2:]
-        address_raw = [elem.strip() for elem in address_raw if elem.strip()]
-        if not address_raw:
-            address_raw = etree.HTML(poi["description"])
-            address_raw = address_raw.xpath('.//div[@class="address"]/p/text()')
-            address_raw = [elem.strip() for elem in address_raw if elem.strip()]
-            if len(address_raw) == 1:
-                address_raw = address_raw[0].split(", ")
-        if address_raw:
-            for elem in [
-                "Lapels Dry Cleaning",
-                "1036",
-                "12623",
-                "1581",
-                "150 ",
-                "8240 ",
-                "395 ",
-                "446 ",
-                "209 ",
-                "3038 ",
-                "277 ",
-            ]:
-                if elem in address_raw[0]:
-                    address_raw = address_raw[1:]
-        if address_raw[-1] == "United States":
-            address_raw = address_raw[:-1]
-        if len(address_raw) == 1:
-            address_raw = address_raw[0].split(", ")
-        if len(address_raw) > 1:
-            if "Suit" in address_raw[1]:
-                address_raw = [", ".join(address_raw)[:2]] + address_raw[2:]
-        if not address_raw:
-            street_address = "<MISSING>"
-            city = "<MISSING>"
-            state = location_name.split(", ")[-1]
-            zip_code = "<MISSING>"
+        if store_url in scraped_urls:
+            continue
+        with SgFirefox() as driver:
+            driver.get(store_url)
+            loc_dom = etree.HTML(driver.page_source)
+        if loc_dom.xpath('//div[@id="error-404"]'):
+            store_url = store_url.replace("/locations/", "/location/")
+            with SgFirefox() as driver:
+                driver.get(store_url)
+                loc_dom = etree.HTML(driver.page_source)
+        poi_page = loc_dom.xpath('//script[contains(text(), "StreetAddress")]/text()')
+        if poi_page:
+            poi_page = json.loads(poi_page[0])
+            location_name = poi_page["Name"]
+            location_name = location_name if location_name else "<MISSING>"
+            street_address = poi_page["Address"]["StreetAddress"]
+            city = poi_page["Address"]["AddressLocality"]
+            state = poi_page["Address"]["AddressRegion"]
+            zip_code = poi_page["Address"]["PostalCode"]
+            country_code = poi_page["Address"]["AddressCountry"]
+            location_type = poi_page["@type"]
         else:
-            street_address = address_raw[0]
-            city = address_raw[1]
-            state = location_name.split(", ")[-1]
-            zip_code = "<MISSING>"
-            if len(address_raw) > 2:
-                zip_code = address_raw[2]
-        country_code = "<MISSING>"
+            location_name = poi["title"]
+            location_name = location_name if location_name else "<MISSING>"
+            if poi["address"]:
+                raw_address = etree.HTML(poi["address"]).xpath("//text()")
+            else:
+                raw_address = loc_dom.xpath('//div[@id="MapDescription"]/p/text()')
+                raw_address = [e.strip() for e in raw_address]
+            addr = parse_address_intl(" ".join(raw_address))
+            street_address = addr.street_address_1
+            if addr.street_address_2:
+                street_address += " " + addr.street_address_2
+            city = addr.city
+            city = city if city else "<MISSING>"
+            state = addr.state
+            state = state if state else "<MISSING>"
+            zip_code = addr.postcode
+            zip_code = zip_code if zip_code else "<MISSING>"
+            country_code = addr.country
+            country_code = country_code if country_code else "<MISSING>"
+            location_type = "<MISSING>"
         store_number = "<MISSING>"
         poi_html = etree.HTML(poi["description"])
         phone = poi_html.xpath('//a[contains(@href, "tel")]/text()')
         phone = " ".join(phone[0].split()[1:]) if phone else "<MISSING>"
-        location_type = "<MISSING>"
+        if phone == "<MISSING>":
+            phone = loc_dom.xpath('//p[contains(text(), "please call")]/strong/text()')
+            phone = phone[0] if phone else "<MISSING>"
+        if phone == "<MISSING>":
+            phone = loc_dom.xpath(
+                '//h1[contains(text(), "{}")]/following-sibling::p[1]/a/text()'.format(
+                    location_name
+                )
+            )
+            phone = phone[0] if phone else "<MISSING>"
+        if phone == "<MISSING>":
+            phone = loc_dom.xpath(
+                '//p[span[contains(text(), "{}")]]/following-sibling::p[1]//a/text()'.format(
+                    street_address
+                )
+            )
+            phone = phone[0] if phone else "<MISSING>"
+        if phone == "<MISSING>":
+            phone = loc_dom.xpath('//a[contains(@href, "tel")]/text()')
+            phone = phone[0] if phone else "<MISSING>"
+        if phone == "<MISSING>":
+            phone = loc_dom.xpath(
+                '//p[contains(text(), "{}")]/text()'.format(street_address)
+            )
+            phone = [e.strip() for e in phone if "(" in e]
+            phone = phone[0] if phone else "<MISSING>"
+        if phone == "<MISSING>":
+            phone = loc_dom.xpath(
+                '//p[contains(text(), "{}")]/text()'.format(street_address)
+            )
+            phone = phone[-1].strip() if phone and "-" in phone[-1] else "<MISSING>"
+        if phone == "<MISSING>":
+            phone = loc_dom.xpath('//p[contains(text(), "{}")]/text()'.format(city))
+            phone = phone[-1].strip() if phone and "-" in phone[-1] else "<MISSING>"
+        if phone == "<MISSING>":
+            phone = loc_dom.xpath(
+                '//p[contains(text(), "{}")]/preceding-sibling::div[1]/a/text()'.format(
+                    city
+                )
+            )
+            phone = phone[0].strip() if phone else "<MISSING>"
         latitude = poi["latitude"]
         latitude = latitude if latitude else "<MISSING>"
         longitude = poi["longitude"]
         longitude = longitude if longitude else "<MISSING>"
         hours_of_operation = "<MISSING>"
 
-        if "Lapels Dry" in state:
-            if len(zip_code.split()) == 2:
-                state = zip_code.split()[0]
-                zip_code = zip_code.split()[-1]
-        if len(city.split(", ")) == 2:
-            state = city.split(", ")[-1].split()[0]
-            zip_code = city.split(", ")[-1].split()[-1]
-            city = city.split(", ")[0]
-        if "Lapels Dry" in state:
-            state = "<MISSING>"
-        state = state.split()[0]
-        if city.split()[-1].isdigit():
-            zip_code = city.split()[-1]
-            city = city.split()[0].replace(",", "").strip()
-        if street_address.endswith(","):
-            street_address = street_address[:-1]
-        city = city.split(",")[0]
-        zip_code = zip_code.split()[-1]
-        if not zip_code.isdigit():
-            zip_code = "<MISSING>"
-        if state.isdigit():
-            state = "<MISSING>"
-            if ", " in street_address:
-                state = street_address.split(", ")[-1]
-        if city.isdigit():
-            city = location_name.split(",")[0].split("Cleaning")[-1]
+        add_address = loc_dom.xpath(
+            '//div[@class=" uavc-icons-center uavc-icons "]/preceding-sibling::p[1]/text()'
+        )
+        if add_address:
+            addr = parse_address_intl(add_address[0])
+            if zip_code == "<MISSING>":
+                zip_code = addr.postcode
+                zip_code = zip_code if zip_code else "<MISSING>"
+            if city == "<MISSING>":
+                city = addr.city
+                city = city if city else "<MISSING>"
+            if country_code == "<MISSING>":
+                country_code = addr.country
+                country_code = country_code if country_code else "<MISSING>"
+        if state == "<MISSING>":
+            if "," in location_name:
+                state = location_name.split(",")[-1].split("(")[0].strip()
 
-        street_address = street_address.split("\n")[0]
-        if ", " in location_name:
-            state = location_name.split(",")[-1].strip()
-            city = (
-                location_name.split(",")[0].strip().replace("Lapels Dry Cleaning ", "")
-            )
-        state = state.split()[0]
-        city = city.split("(")[0].strip()
-        if len(city) == 2:
-            if "Tampa" in street_address:
-                city = "Tampa"
-                street_address = street_address.replace(city, "")
-                state = "FL"
-        if len(street_address.strip()) == 2:
-            street_address = ", ".join(
-                loc_dom.xpath(
-                    '//div[a[contains(@href, "tel")]]/following-sibling::p[1]/text()'
-                )[0].split(", ")[:2]
-            )
+        if street_address == "277 W Reynolds St 277 West Reynolds Street":
+            street_address = "277 West Reynolds Street"
+
+        if state == "<MISSING>" and "Boston" in location_name:
+            state = "MA"
+        if city == "<MISSING>" and "Westwood" in location_name:
+            city = "Westwood"
+        if city == "<MISSING>" and "Cohasset" in street_address:
+            city = "Cohasset"
+            street_address = street_address.replace("Cohasset", "")
 
         item = [
             DOMAIN,
@@ -190,8 +201,13 @@ def fetch_data():
             longitude,
             hours_of_operation,
         ]
+        if store_url not in scraped_urls:
+            scraped_urls.append(store_url)
 
-        items.append(item)
+        check = f"{location_name} {street_address}"
+        if check not in scraped_items:
+            scraped_items.append(check)
+            items.append(item)
 
     return items
 

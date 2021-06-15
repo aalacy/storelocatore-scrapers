@@ -28,7 +28,7 @@ def getdata():
     for search_lat, search_lon in search:
 
         x = x + 1
-        coords = []
+
         url = f"https://www.key.com/loc/DirectorServlet?action=getEntities&entity=BRCH&entity=MCD&lat={search_lat}&lng={search_lon}&distance=1000&callback=myJsonpCallback"
 
         response = session.get(url).text
@@ -37,7 +37,6 @@ def getdata():
         try:
             response = json.loads(response)
         except Exception:
-            search.mark_found(coords)
             continue
 
         for location in response:
@@ -125,9 +124,7 @@ def getdata():
             longitudes.append(longitude)
             hours_of_operations.append(hours)
 
-            current_coords = [latitude, longitude]
-            coords.append(current_coords)
-        search.mark_found(coords)
+            search.found_location_at(latitude, longitude)
 
     df = pd.DataFrame(
         {

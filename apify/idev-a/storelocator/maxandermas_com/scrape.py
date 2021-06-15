@@ -3,7 +3,6 @@ from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 from sgscrape.sgpostal import parse_address_intl
-import json
 
 _headers = {
     "accept": "*/*",
@@ -28,11 +27,14 @@ def _valid(val):
     )
 
 
+days = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN", "DINE-IN"]
+
+
 def _filter(blocks, hours):
     for block in blocks:
-        if "SUN" in block.text:
+        if block.text.strip().split(" ")[0].upper() in days:
             for _ in block.stripped_strings:
-                if "DINE" in _valid(_):
+                if "DINE" in _valid(_).upper():
                     continue
                 hours += _valid(_).split("|")
 
@@ -41,21 +43,17 @@ def fetch_data():
     with SgRequests() as session:
         locator_domain = "https://www.maxandermas.com/locations/"
         base_url = "https://www.maxandermas.com/wp-json/wpgmza/v1/features/base64eJyrVkrLzClJLVKyUqqOUcpNLIjPTIlRsopRMopR0gEJFGeUFni6FAPFomOBAsmlxSX5uW6ZqTkpELFapVoABXgWuw"
-        res = session.get(base_url, headers=_headers)
-        locations = json.loads(res.text)["markers"]
+        locations = session.get(base_url, headers=_headers).json()["markers"]
         for location in locations:
             location_type = "<MISSING>"
             r1 = session.get(location["link"], headers=_headers)
             soup = bs(r1.text, "lxml")
             hours = []
-            try:
-                blocks = soup.select("div.et_pb_text_inner h2")
+            blocks = soup.select("div.et_pb_text_inner h2")
+            _filter(blocks, hours)
+            if not hours:
+                blocks = soup.select("div.et_pb_text_inner p")
                 _filter(blocks, hours)
-                if not hours:
-                    blocks = soup.select("div.et_pb_text_inner p")
-                    _filter(blocks, hours)
-            except:
-                pass
             if (
                 soup.select_one('span[color="#808080"]')
                 and "TEMPORARILY CLOSED"

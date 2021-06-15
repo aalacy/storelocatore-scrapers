@@ -48,14 +48,16 @@ def fetch_data():
 
     for j in js:
         street_address = (
-            f"{j.get('fran_address')} {j.get('fran_address_2') or ''}".strip()
+            f"{j.get('fran_address') or ''} {j.get('fran_address_2') or ''}".strip()
             or "<MISSING>"
         )
         city = j.get("fran_city") or "<MISSING>"
         state = j.get("fran_state") or "<MISSING>"
-        if len(state) > 2:
+        if len(state) > 2 and state != "<MISSING>":
             state = "TX"
         postal = j.get("fran_zip") or "<MISSING>"
+        if street_address == "<MISSING>" and postal == "<MISSING>":
+            continue
         country_code = "US"
         store_number = j.get("id") or "<MISSING>"
         page_url = j.get("fran_web_address") or "<MISSING>"

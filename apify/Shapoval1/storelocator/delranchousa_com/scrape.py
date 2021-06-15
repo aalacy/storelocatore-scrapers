@@ -104,6 +104,18 @@ def fetch_data():
             state = a.get("state")
             postal = a.get("postal")
             phone = "".join(tree.xpath("//p[./b]/text()"))
+        if page_url == "https://www.delranchousa.com/locations/":
+            session = SgRequests()
+            r = session.get("https://www.delranchousa.com/locations/")
+            tree = html.fromstring(r.text)
+            block = tree.xpath('//p[./a[contains(text(), "Read More")]]')
+            for b in block:
+                slug = "".join(b.xpath("./text()")).replace("\n", "").split()[0].strip()
+                if street_address.find(slug) != -1:
+                    page_url = "".join(
+                        b.xpath('./a[contains(text(), "Read More")]/@href')
+                    )
+
         row = [
             locator_domain,
             page_url,

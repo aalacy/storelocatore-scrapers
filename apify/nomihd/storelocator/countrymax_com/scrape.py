@@ -47,7 +47,10 @@ def fetch_data():
         address = ""
         phone = ""
         temp_hours_list = []
+        raw_list = []
         for index in range(0, len(sections)):
+            if len("".join(sections[index].xpath("text()")).strip()) > 0:
+                raw_list.append("".join(sections[index].xpath("text()")).strip())
             if "Location" in "".join(sections[index].xpath(".//strong/text()")).strip():
                 address = sections[index].xpath(".//text()")
                 if len(address) <= 0 or (len(address) == 1):
@@ -127,8 +130,16 @@ def fetch_data():
             street_address = street_address + ", " + formatted_addr.street_address_2
 
         city = formatted_addr.city
+        if city is None:
+            city = raw_list[1].split(",")[0].strip()
         state = formatted_addr.state
+        if state is None:
+            state = raw_list[1].split(",")[1].strip().split(" ")[0].strip()
         zip = formatted_addr.postcode
+        if zip is None:
+            zip = raw_list[1].split(",")[1].strip().split(" ")[-1].strip()
+
+        zip = zip.replace("Z", "").strip()
         country_code = formatted_addr.country
 
         hours = store_sel.xpath(
@@ -192,6 +203,7 @@ def fetch_data():
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=hours_of_operation,
+            raw_address=raw_address,
         )
 
 

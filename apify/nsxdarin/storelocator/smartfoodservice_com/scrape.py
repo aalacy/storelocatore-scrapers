@@ -66,8 +66,13 @@ def fetch_data():
         r2 = session.get(loc, headers=headers)
         for line2 in r2.iter_lines():
             line2 = str(line2.decode("utf-8"))
-            if '<h1 class="page-title">' in line2:
-                name = line2.split('<h1 class="page-title">')[1].split("<")[0]
+            if "<h1" in line2:
+                name = (
+                    line2.split("<h1")[1]
+                    .split('">')[1]
+                    .split("</h2>")[0]
+                    .replace("<sup>&reg;</sup>", "")
+                )
             if 'name = "latitude"' in line2:
                 lat = line2.split('value = "')[1].split('"')[0]
             if 'name = "longitude"' in line2:

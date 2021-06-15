@@ -16,6 +16,7 @@ def write_output(data):
         writer.writerow(
             [
                 "locator_domain",
+                "page_url",
                 "location_name",
                 "street_address",
                 "city",
@@ -91,6 +92,7 @@ def fetch_data():
             name = location.find("h3").text
             address = list(location.find("p", {"class": "address"}).stripped_strings)
             address = " ".join(address)
+            a = usaddress.tag(address, tag_mapping=tag)[0]
             store_id = location["data-id"]
             phone = location["data-phone"]
             hours = (
@@ -98,6 +100,7 @@ def fetch_data():
                 .replace("\n", "")
                 .strip()
             )
+
             hours = (
                 hours.replace("Appointments Encouraged", "")
                 .replace("By Appointment", "")
@@ -112,16 +115,22 @@ def fetch_data():
                 hours = hours.split("Design Center Hours")[1].strip()
             if hours.find("For Delivery") != -1:
                 hours = hours.split("For Delivery")[0].strip()
-            a = usaddress.tag(address, tag_mapping=tag)[0]
+            city = a.get("city")
+            street_address = f"{a.get('address1')} {a.get('address2')}".replace(
+                "None", ""
+            ).strip()
+            if street_address.find("Chadds Ford") != -1:
+                ad = street_address
+                street_address = " ".join(ad.split()[:3]).strip()
+                city = " ".join(ad.split()[3:]).strip()
             store = []
             store.append("https://www.ethanallen.com")
+            store.append("https://www.ethanallen.com/en_US/store-locator")
             store.append(name)
-            store.append(
-                f"{a.get('address1')} {a.get('address2')}".replace("None", "").strip()
-            )
-            store.append(a.get("city"))
+            store.append(street_address)
+            store.append(city)
             store.append(a.get("state"))
-            store.append(a.get("postal"))
+            store.append(a.get("postal") or "<MISSING>")
             store.append("US")
             store.append(store_id)
             store.append(phone if phone != "" else "<MISSING>")
