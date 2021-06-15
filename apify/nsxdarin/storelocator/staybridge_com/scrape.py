@@ -101,10 +101,10 @@ def fetch_data():
                     except:
                         state = "<MISSING>"
                     zc = line.split('"postalCode":"')[1].split('"')[0]
-                    if "canada" in url:
-                        country = "CA"
-                    else:
-                        country = "US"
+                    try:
+                        country = line.split('"addressCountry": "')[1].split('"')[0]
+                    except:
+                        country = "<MISSING>"
                     try:
                         phone = line.split('"telephone":"')[1].split('"')[0]
                     except:
