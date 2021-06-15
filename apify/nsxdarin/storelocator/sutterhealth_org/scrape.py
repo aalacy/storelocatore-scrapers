@@ -126,19 +126,12 @@ def fetch_data():
                 if "Holidays</div>" in line2 or "Other<" in line2:
                     hrs = "XXX"
                 if '"detail-block--hours">' in line2 and hrs != "XXX":
-                    hrs = (
-                        hrs
-                        + ": "
-                        + line2.split('"detail-block--hours">')[1]
-                        .split("</div")[0]
-                        .replace("<br />", ", ")
-                    )
+                    hrs = line2.split('content="')[1].split('"')[0]
+                    hrs = hrs.replace("0:00-23:59", "Open 24 Hours")
                     if hours == "":
                         hours = hrs
                     else:
                         hours = hours + "; " + hrs
-                    hours = hours.replace("–", "-")
-                    hours = hours.replace(" ", " ")
             if hours == "":
                 hours = "<MISSING>"
             if "-" not in hours:

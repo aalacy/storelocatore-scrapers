@@ -99,25 +99,26 @@ def fetch_data():
                 zc = csz.rsplit(";", 1)[1]
             if 'href="tel:' in line2:
                 phone = line2.split('href="tel:')[1].split('"')[0]
-            if '<span id="officeHour' in line2:
-                if hours == "":
-                    hours = (
-                        line2.split('<span id="officeHour')[1]
-                        .split(">")[1]
-                        .split("<")[0]
-                        .strip()
-                    )
-                else:
-                    hours = (
-                        hours
-                        + "; "
-                        + line2.split('<span id="officeHour')[1]
-                        .split(">")[1]
-                        .split("<")[0]
-                        .strip()
-                    )
             if '<a href="https://www.statefarm.com/agent/us/' in line2:
                 loc = line2.split('href="')[1].split('"')[0]
+                r3 = session.get(loc, headers=headers)
+                HFound = False
+                for line3 in r3.iter_lines():
+                    line3 = str(line3.decode("utf-8"))
+                    if '">Office Hours' in line3:
+                        HFound = True
+                    if HFound and '<div class="' in line3:
+                        HFound = False
+                    if 'data-latitude="' in line3:
+                        lat = line3.split('data-latitude="')[1].split('"')[0]
+                    if 'data-longitude="' in line3:
+                        lng = line3.split('data-longitude="')[1].split('"')[0]
+                    if '-oneX-body--primary">' in line3 and HFound:
+                        hrs = line3.split('-oneX-body--primary">')[1].split("<")[0]
+                        if hours == "":
+                            hours = hrs
+                        else:
+                            hours = hours + "; " + hrs
             if "Email agent</a>" in line2:
                 store = line2.split('id="')[1].split('"')[0]
                 if phone == "":

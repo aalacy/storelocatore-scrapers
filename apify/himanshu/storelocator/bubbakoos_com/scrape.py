@@ -55,7 +55,14 @@ def fetch_data():
                     )
                     break
 
-        hours = " ".join(hours.split("\n")).strip()
+        hours = (
+            " ".join(hours.split("\n"))
+            .strip()
+            .replace("\r", "")
+            .strip()
+            .replace("   ", " ")
+            .strip()
+        )
         address = " ".join(list(location.find_all("p")[0].stripped_strings))
         store_zip = " ".join(list(location.find_all("p")[2].stripped_strings))
         if store_zip == "":
