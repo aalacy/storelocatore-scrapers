@@ -66,7 +66,7 @@ def get_hours(table):
 
 
 def fetch_data():
-    store_info = session.get(LOCATION_URL, headers=HEADERS).json()
+    store_info = session.get(LOCATION_URL, headers=HEADERS, timeout=15).json()
     locations = []
     for row in store_info:
         page_url = row["permalink"]
