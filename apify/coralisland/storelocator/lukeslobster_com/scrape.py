@@ -81,10 +81,14 @@ def fetch_data():
         output.append("US")  # country code
         output.append(get_value(store["id"]))  # store_number
         output.append(get_value(store["phone"]))  # phone
-        output.append("<MISSING>")  # location type
+        location_type = "<MISSING>"
+        store_hours = store["description"].replace("\n", "; ").strip()
+        if "closed until further" in store_hours:
+            store_hours = "<MISSING>"
+            location_type = "Temporarily Closed"
+        output.append(location_type)  # location type
         output.append(get_value(store["latitude"]))  # latitude
         output.append(get_value(store["longitude"]))  # longitude
-        store_hours = store["description"].replace("\n", " ").strip()
         output.append(get_value(store_hours))  # opening hours
         output.append(store["website"])
         output_list.append(output)
