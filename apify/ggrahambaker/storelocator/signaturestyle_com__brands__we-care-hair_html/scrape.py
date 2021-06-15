@@ -1,6 +1,5 @@
 import csv
 from sgrequests import SgRequests
-from bs4 import BeautifulSoup
 import json
 import sgzip
 
@@ -49,7 +48,6 @@ def fetch_data():
     search.initialize(country_codes=["us", "ca"])
 
     MAX_DISTANCE = 25
-    MAX_RESULTS = 50
 
     coord = search.next_coord()
     all_store_data = []
