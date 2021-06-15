@@ -50,7 +50,6 @@ def fetch_data():
     }
     base_url = "https://www.lcbo.com"
     r_store_id = session.get(base_url, headers=headers)
-    store_id = r_store_id.text.split('"storeId":\'')[1].split("'")[0]
 
     search = static_zipcode_list(country_code=SearchableCountries.CANADA, radius=5)
 
