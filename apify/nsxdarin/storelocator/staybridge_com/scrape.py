@@ -129,56 +129,59 @@ def fetch_data():
                         hours,
                     ]
     for city in cities:
-        logger.info(("Pulling City %s..." % city))
-        r3 = session.get(city, headers=headers)
-        if r3.encoding is None:
-            r3.encoding = "utf-8"
-        for line3 in r3.iter_lines(decode_unicode=True):
-            if (
-                "https://www.ihg.com/staybridge/hotels/" in line3
-                and '{"@context":"https://www.schema.org"' in line3
-            ):
-                lurl = line3.split('"url":"')[1].split('"')[0]
-                if lurl not in alllocs:
-                    alllocs.append(lurl)
-                    website = "staybridge.com"
-                    typ = "Hotel"
-                    hours = "<MISSING>"
-                    name = line3.split('"name":"')[1].split('"')[0]
-                    add = line3.split('"streetAddress":"')[1].split('"')[0]
-                    city = line3.split('"addressLocality":"')[1].split('"')[0]
-                    try:
-                        state = line3.split('"addressRegion":"')[1].split('"')[0]
-                    except:
-                        state = "<MISSING>"
-                    zc = line3.split('"postalCode":"')[1].split('"')[0]
-                    if "canada" in url:
-                        country = "CA"
-                    else:
-                        country = "US"
-                    try:
-                        phone = line3.split('"telephone":"')[1].split('"')[0]
-                    except:
-                        phone = "<MISSING>"
-                    lat = line3.split(',"latitude":')[1].split(",")[0]
-                    lng = line3.split('"longitude":')[1].split("}")[0]
-                    store = lurl.replace("/hoteldetail", "").rsplit("/", 1)[1]
-                    yield [
-                        website,
-                        lurl,
-                        name,
-                        add,
-                        city,
-                        state,
-                        zc,
-                        country,
-                        store,
-                        phone,
-                        typ,
-                        lat,
-                        lng,
-                        hours,
-                    ]
+        try:
+            logger.info(("Pulling City %s..." % city))
+            r3 = session.get(city, headers=headers)
+            if r3.encoding is None:
+                r3.encoding = "utf-8"
+            for line3 in r3.iter_lines(decode_unicode=True):
+                if (
+                    "https://www.ihg.com/staybridge/hotels/" in line3
+                    and '{"@context":"https://www.schema.org"' in line3
+                ):
+                    lurl = line3.split('"url":"')[1].split('"')[0]
+                    if lurl not in alllocs:
+                        alllocs.append(lurl)
+                        website = "staybridge.com"
+                        typ = "Hotel"
+                        hours = "<MISSING>"
+                        name = line3.split('"name":"')[1].split('"')[0]
+                        add = line3.split('"streetAddress":"')[1].split('"')[0]
+                        city = line3.split('"addressLocality":"')[1].split('"')[0]
+                        try:
+                            state = line3.split('"addressRegion":"')[1].split('"')[0]
+                        except:
+                            state = "<MISSING>"
+                        zc = line3.split('"postalCode":"')[1].split('"')[0]
+                        if "canada" in url:
+                            country = "CA"
+                        else:
+                            country = "US"
+                        try:
+                            phone = line3.split('"telephone":"')[1].split('"')[0]
+                        except:
+                            phone = "<MISSING>"
+                        lat = line3.split(',"latitude":')[1].split(",")[0]
+                        lng = line3.split('"longitude":')[1].split("}")[0]
+                        store = lurl.replace("/hoteldetail", "").rsplit("/", 1)[1]
+                        yield [
+                            website,
+                            lurl,
+                            name,
+                            add,
+                            city,
+                            state,
+                            zc,
+                            country,
+                            store,
+                            phone,
+                            typ,
+                            lat,
+                            lng,
+                            hours,
+                        ]
+        except:
+            pass
 
 
 def scrape():
