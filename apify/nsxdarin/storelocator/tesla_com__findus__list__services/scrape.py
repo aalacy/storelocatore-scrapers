@@ -369,6 +369,11 @@ def fetch_data():
             .replace("; Mon", "Mon")
             .replace("<br> Mon", "Mon")
         )
+        hours = (
+            hours.replace("<br >", "").replace("; Sunday", "Sunday").replace("; ;", ";")
+        )
+        if city == "" or city is None:
+            city = "<MISSING>"
         yield [
             website,
             loc,

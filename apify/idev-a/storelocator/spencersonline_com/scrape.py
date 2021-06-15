@@ -21,7 +21,7 @@ session = SgRequests().requests_retry_session()
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 
 
-max_workers = 1
+max_workers = 2
 
 
 def fetchConcurrentSingle(data):
@@ -104,16 +104,16 @@ def fetchData():
         zip_postal = getJSObject(response, "store.ZIP_CODE")
 
         location_type = MISSING
-        street_address = al1
-        if al2 != MISSING:
-            street_address = street_address + " " + al2
+        street_address = al2.strip() or MISSING
+        if street_address == MISSING:
+            street_address = al1.strip()
 
         hours_of_operation = MISSING
         if "CL" in status:
             hours_of_operation = "Closed"
         raw_address = f"{street_address}, {city}, {state} {zip_postal}"
 
-        if "X X" in raw_address:
+        if "X, X," in raw_address:
             street_address = MISSING
             city = MISSING
             raw_address = MISSING
@@ -148,5 +148,6 @@ def scrape():
     log.info(f"Scrape took {end-start} seconds.")
 
 
+session.close()
 if __name__ == "__main__":
     scrape()
