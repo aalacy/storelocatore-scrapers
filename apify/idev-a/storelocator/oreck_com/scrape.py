@@ -9,16 +9,6 @@ _headers = {
 }
 
 
-def _hours(temp, name):
-    hours = []
-    for key, hh in temp.items():
-        if key == name.strip():
-            for day, times in hh.items():
-                hours.append(f"{day}: {times}")
-
-    return hours
-
-
 def fetch_data():
     locator_domain = "https://oreck.com/"
     base_url = "https://oreck.com/pages/find-your-local-store"
@@ -28,21 +18,21 @@ def fetch_data():
             .find_all("script", type="application/json")[-1]
             .string.strip()
         )
-        for _ in data["authorizedStores"] + data["exclusiveStores"]:
-            yield SgRecord(
-                page_url=base_url,
-                location_name=_["n"],
-                street_address=_["a1"],
-                city=_["c"],
-                state=_["s"],
-                zip_postal=_["z"],
-                latitude=_["lat"],
-                longitude=_["lng"],
-                country_code="US",
-                phone=_["p"],
-                locator_domain=locator_domain,
-                hours_of_operation="; ".join(_hours(data["storeHours"], _["n"])),
-            )
+        for x, group in data["storeGroups"].items():
+            for _ in group:
+                yield SgRecord(
+                    page_url=base_url,
+                    location_name=_["n"].strip(),
+                    street_address=_["a1"],
+                    city=_["c"],
+                    state=_["s"],
+                    zip_postal=_["z"],
+                    latitude=_["lat"],
+                    longitude=_["lng"],
+                    country_code="US",
+                    phone=_["p"],
+                    locator_domain=locator_domain,
+                )
 
 
 if __name__ == "__main__":

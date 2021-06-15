@@ -88,13 +88,16 @@ def fetch_data():
             latitude, longitude = "<MISSING>", "<MISSING>"
 
         if store_url:
-            store_url = store_url + "/?p=contact"
+            store_url = (
+                store_url.strip().replace("smithfalls.", "smithsfalls.") + "/?p=contact"
+            )
+            page_url = store_url
+
             log.info(store_url)
 
             store_res = session.get(store_url.strip(), headers=headers)
             store_sel = lxml.html.fromstring(store_res.text)
             if "var locations =" in store_res.text:
-                page_url = store_url
                 store_json_str = (
                     store_res.text.split("var locations =")[1]
                     .split("}];")[0]
@@ -110,7 +113,7 @@ def fetch_data():
                 state = store_json["province"].upper()
                 zip = store_json["zip"]
                 store_number = store_json["id"]
-                phone = store_json["phone"]
+                phone = store_json["phone"].split(";")[0].strip()
                 latitude, longitude = store_json["latitude"], store_json["longitude"]
 
                 hours = store_sel.xpath('//li[contains(@id,"li_open_")]')
@@ -130,23 +133,24 @@ def fetch_data():
 
         location_type = "<MISSING>"
 
-        yield SgRecord(
-            locator_domain=locator_domain,
-            page_url=page_url,
-            location_name=location_name,
-            street_address=street_address,
-            city=city,
-            state=state,
-            zip_postal=zip,
-            country_code=country_code,
-            store_number=store_number,
-            phone=phone,
-            location_type=location_type,
-            latitude=latitude,
-            longitude=longitude,
-            hours_of_operation=hours_of_operation,
-            raw_address=raw_address,
-        )
+        if street_address != "<MISSING>":
+            yield SgRecord(
+                locator_domain=locator_domain,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+                raw_address=raw_address,
+            )
 
 
 def scrape():

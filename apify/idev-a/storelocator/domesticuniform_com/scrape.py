@@ -3,6 +3,7 @@ from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
+from sgscrape.sgpostal import parse_address_intl
 
 logger = SgLogSetup().get_logger("domesticuniform")
 
@@ -19,17 +20,16 @@ def fetch_data():
         links = soup.select("div#two_column p")
         logger.info(f"{len(links)} found")
         for link in links:
-            addr = list(link.stripped_strings)
-            zip_postal = addr[-1].split(",")[-1].strip().split(" ")[-1].strip()
-            if not zip_postal.replace("-", "").strip().isdigit():
-                zip_postal = ""
+            _addr = list(link.stripped_strings)
+            addr = parse_address_intl(" ".join(_addr[1:]))
+            street_address = " ".join(_addr[1:-1])
             yield SgRecord(
                 page_url=base_url,
-                location_name=addr[0],
-                street_address=" ".join(addr[1:-1]),
-                city="".join(addr[-1].split(",")[:-1]).replace(",", ""),
-                state=addr[-1].split(",")[-1].strip().split(" ")[0].strip(),
-                zip_postal=zip_postal,
+                location_name=_addr[0],
+                street_address=street_address,
+                city=addr.city,
+                state=addr.state,
+                zip_postal=addr.postcode,
                 country_code="US",
                 locator_domain=locator_domain,
             )
