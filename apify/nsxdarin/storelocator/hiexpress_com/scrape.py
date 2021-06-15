@@ -91,18 +91,21 @@ def fetch_data():
                     if "holidayinnexpress" in curl:
                         locs.append(curl)
     for url in cities:
-        logger.info(url)
-        r = session.get(url, headers=headers)
-        lines = r.iter_lines()
-        for line in lines:
-            line = str(line.decode("utf-8"))
-            if '"@type":"Hotel","' in line:
-                curl = (
-                    line.split('"@type":"Hotel","')[1].split('"url":"')[1].split('"')[0]
-                )
-                if curl not in locs:
-                    if "holidayinnexpress" in curl:
-                        locs.append(curl)
+        if "-gerau-" not in url:
+            logger.info(url)
+            r = session.get(url, headers=headers)
+            lines = r.iter_lines()
+            for line in lines:
+                line = str(line.decode("utf-8"))
+                if '"@type":"Hotel","' in line:
+                    curl = (
+                        line.split('"@type":"Hotel","')[1]
+                        .split('"url":"')[1]
+                        .split('"')[0]
+                    )
+                    if curl not in locs:
+                        if "holidayinnexpress" in curl:
+                            locs.append(curl)
     for loc in locs:
         logger.info(loc)
         r2 = session.get(loc, headers=headers)
