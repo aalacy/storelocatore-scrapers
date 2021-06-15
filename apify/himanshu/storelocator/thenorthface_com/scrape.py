@@ -110,7 +110,8 @@ def fetch_data():
                 location_type = "the north face outletstore"
             store.append(
                 store_data["postalcode"]
-                if store_data["postalcode"] != "" and store_data["postalcode"] != None
+                if store_data["postalcode"] != ""
+                and store_data["postalcode"] is not None
                 else "<MISSING>"
             )
             store.append(store_data["country"])
@@ -127,12 +128,12 @@ def fetch_data():
             store.append(location_type)
             store.append(
                 store_data["latitude"]
-                if store_data["latitude"] != "" and store_data["latitude"] != None
+                if store_data["latitude"] != "" and store_data["latitude"] is not None
                 else "<MISSING>"
             )
             store.append(
                 store_data["longitude"]
-                if store_data["longitude"] != "" and store_data["longitude"] != None
+                if store_data["longitude"] != "" and store_data["longitude"] is not None
                 else "<MISSING>"
             )
             hours = ""
