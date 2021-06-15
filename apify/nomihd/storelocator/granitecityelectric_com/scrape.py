@@ -60,7 +60,6 @@ def write_output(data):
 
 def fetch_data():
     # Your scraper here
-    loc_list = []
 
     search_url = "https://www.granitecityelectric.com/locations-showrooms"
     stores_req = session.get(search_url, headers=headers)
@@ -129,6 +128,7 @@ def fetch_data():
             '//div[@class="storeInfoLeft"]/div[@class="storeInfo"]/p'
         )
         phone = ""
+        hours = []
         for temp_text in raw_text:
             if "Phone" in "".join(temp_text.xpath("text()")).strip():
                 if len(phone) <= 0:
@@ -144,8 +144,14 @@ def fetch_data():
 
             if "Monday" in "".join(temp_text.xpath("text()")).strip():
                 if len(hours_of_operation) <= 0:
+                    hours = temp_text.xpath("text()")
+                    hours_list = []
+                    for hour in hours:
+                        if len("".join(hour).strip()) > 0 and "Hours" not in hour:
+                            hours_list.append("".join(hour).strip())
+
                     hours_of_operation = (
-                        "; ".join(temp_text.xpath("text()"))
+                        "; ".join(hours_list)
                         .strip()
                         .encode("ascii", "replace")
                         .decode("utf-8")
@@ -198,9 +204,7 @@ def fetch_data():
             longitude,
             hours_of_operation,
         ]
-        loc_list.append(curr_list)
-
-    return loc_list
+        yield curr_list
 
 
 def scrape():

@@ -56,10 +56,24 @@ def fetch_data():
         address = (
             soup.find("div", {"class": "directions"}).text.strip().split("\n", 1)[0]
         )
-        hours = soup.find("div", {"class": "card-info"}).find("ul").text
-        hours, phone = hours.split("TEL", 1)
-        hours = re.sub(pattern, " ", hours).replace("\n", " ").strip()
-        phone = phone.split("\n", 1)[0].split(": ", 1)[1]
+        try:
+            lat, longt = (
+                soup.find("div", {"class": "directions"})
+                .find("a")["href"]
+                .split("@", 1)[1]
+                .split("data", 1)[0]
+                .split(",", 1)
+            )
+            longt = longt.split(",", 1)[0]
+        except:
+            lat = longt = "<MISSING>"
+        try:
+            hours = soup.find("div", {"class": "card-info"}).find("ul").text
+            hours, phone = hours.split("TEL", 1)
+            hours = re.sub(pattern, " ", hours).replace("\n", " ").strip()
+            phone = phone.split("\n", 1)[0].split(": ", 1)[1]
+        except:
+            continue
         ltype = "Store"
         if "Outlet" in title:
             ltype = "Outlet"
@@ -75,6 +89,7 @@ def fetch_data():
                 temp[1].find("Address") != -1
                 or temp[1].find("Street") != -1
                 or temp[1].find("Recipient") != -1
+                or temp[1].find("Occupancy") != -1
                 or temp[1].find("BuildingName") != -1
                 or temp[1].find("USPSBoxType") != -1
                 or temp[1].find("USPSBoxID") != -1
@@ -100,8 +115,8 @@ def fetch_data():
                 "<MISSING>",
                 phone.rstrip(),
                 ltype,
-                "<MISSING>",
-                "<MISSING>",
+                lat,
+                longt,
                 hours.strip(),
             ]
         )
