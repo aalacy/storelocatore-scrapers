@@ -53,7 +53,7 @@ def fetch_data():
 
         country_code = store["country_id"]
         location_name = store["name"]
-        store_number = store["region_id"]
+        store_number = "<MISSING>"
         try:
             state = store["region"]
         except:
@@ -82,9 +82,10 @@ def fetch_data():
         for h in hours_p:
             if "Store Hours" in h.text:
                 continue
-            hours += h.text.replace(",", "") + ", "
+            hours += h.text.replace(",", "") + " "
         hours = hours.replace("shop hours., ", "")
-
+        if "Please" in hours:
+            hours = "<MISSING>"
         location_type = "<MISSING>"
 
         store_data = [
@@ -100,7 +101,7 @@ def fetch_data():
             location_type,
             lat,
             longit,
-            hours,
+            hours.strip(),
             page_url,
         ]
 
