@@ -3,7 +3,6 @@ from sgzip.dynamic import DynamicGeoSearch, SearchableCountries, Grain_8
 from sglogging import SgLogSetup
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
-from sgscrape.sgpostal import parse_address_intl
 import json
 import ssl
 
@@ -160,7 +159,7 @@ def fetch_data():
             addinfo = f"{add}, {city}, {zip_postal}, {country_code}"
             raw_address = addinfo
             yield SgRecord(
-                locator_domain=DOMAIN,
+                locator_domain=locator_domain,
                 page_url=page_url,
                 location_name=location_name,
                 street_address=street_address,
