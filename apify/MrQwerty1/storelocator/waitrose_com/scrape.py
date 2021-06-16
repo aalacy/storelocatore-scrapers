@@ -90,7 +90,7 @@ def get_data(page_url):
         city = j.get("city") or "<MISSING>"
         state = j.get("state") or "<MISSING>"
         postal = j.get("postCode") or "<MISSING>"
-        location_name = j.get("branchName")
+        location_name = j.get("branchName") or "<MISSING>"
         phone = j.get("phoneNumber") or "<MISSING>"
         location_type = j.get("branchDesc") or "<MISSING>"
     else:
