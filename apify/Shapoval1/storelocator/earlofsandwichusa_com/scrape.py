@@ -218,6 +218,8 @@ def get_data(url):
         or page_url.find("okeechobee/florida") != -1
     ):
         page_url = "".join(url)
+    if page_url == "https://locations.earlofsandwichusa.com/ca":
+        return
 
     session = SgRequests()
 
@@ -243,13 +245,11 @@ def get_data(url):
         .replace("\n", "")
         .strip()
     )
+
     a = parse_address(International_Parser(), line)
 
-    location_name = "".join(
-        tree.xpath(
-            '//h1[@id="location-name"]//span[@class="LocationName-brand"]/text()'
-        )
-    ) or "".join(tree.xpath("//h1/span/text()"))
+    location_name = "".join(tree.xpath("//h1//text()")).split("®")[1].strip()
+
     street_address = f"{a.street_address_1} {a.street_address_2}".replace(
         "None", ""
     ).strip()
@@ -264,15 +264,22 @@ def get_data(url):
             '//span[@id="telephone"]/text() | //h2[contains(text(), "PHONE")]/following-sibling::p/text()'
         )
     )
-    ll = "".join(tree.xpath('//div[@id="map"]/iframe/@src | //noscript/img/@src'))
-    if ll.find("center") != -1:
-        ll = ll.split("center=")[1].split("&")[0].replace("%2C", ",")
-    else:
-        ll = ll.split("coord=")[1].split("&q")[0]
+    ll = (
+        "".join(tree.xpath('//script[contains(text(), "latitude")]/text()'))
+        .replace("\n", "")
+        .strip()
+        or "<MISSING>"
+    )
+    if ll == "<MISSING>":
+        ll = "".join(tree.xpath("//iframe/@src"))
 
-    latitude = ll.split(",")[0]
-    longitude = ll.split(",")[1]
-    location_type = "<MISSING>"
+    try:
+        latitude = ll.split('latitude":')[1].split(",")[0]
+        longitude = ll.split('longitude":')[1].split(",")[0]
+    except:
+        latitude = ll.split("coord=")[1].split(",")[0].strip()
+        longitude = ll.split("coord=")[1].split(",")[1].split("&")[0].strip()
+    location_type = "Earl of Sandwich®"
 
     day = tree.xpath('//table[@class="c-location-hours-details"]/tbody/tr/td[1]/text()')
     td = tree.xpath(
@@ -298,7 +305,13 @@ def get_data(url):
     hours_of_operation = ";".join(tmp) or hours2 or "Closed"
     if hours_of_operation.count("Closed") == 7:
         hours_of_operation = "Closed"
-
+    hours_of_operation = hours_of_operation.replace(
+        "Closed Closed Closed Closed",
+        "Monday Closed Tuesday Closed Wednesday Closed Thursday Closed",
+    )
+    hours_of_operation = hours_of_operation.replace(
+        "Closed Closed Closed", "Monday Closed Tuesday Closed Wednesday Closed"
+    )
     row = [
         locator_domain,
         page_url,

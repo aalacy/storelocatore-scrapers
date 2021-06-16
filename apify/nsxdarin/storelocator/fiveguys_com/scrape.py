@@ -56,6 +56,7 @@ def fetch_data():
             "<loc>https://restaurants.fiveguys.com/" in line
             and Found
             and "concourse-b-gate-b71-dulles" not in line
+            and "7100-foundry-row" in line
         ):
             locs.append(line.split("<loc>")[1].split("<")[0].replace("&#39;", "'"))
     url = "https://restaurants.fiveguys.ca/sitemap.xml"
@@ -124,6 +125,9 @@ def fetch_data():
             phone = "<MISSING>"
         if "{: Closed; MONDAY: Closed" in hours:
             hours = "Sun-Sat: Closed"
+        name = name.replace("&#39;", "'")
+        add = add.replace("&#39;", "'")
+        city = city.replace("&#39;", "'")
         yield [
             website,
             loc,
