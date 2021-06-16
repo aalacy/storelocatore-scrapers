@@ -111,7 +111,7 @@ for loc in locs:
                 hours = hours + "; " + hrs
     if hours == "":
         hours = "<MISSING>"
-    
+
     if "temporarily closed" in r.text.lower():
         hours = "Temporarily Closed"
     if lat == "":
