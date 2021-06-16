@@ -42,7 +42,7 @@ def write_output(data):
 def fetch_data():
 
     data = []
-
+    titlelist = []
     url = "https://southstatebank.com/Global/About/CRA/Locations-Listing"
     r = session.get(url, headers=headers, verify=False)
     soup = BeautifulSoup(r.text, "html.parser")
@@ -54,6 +54,9 @@ def fetch_data():
             link = link["href"]
         else:
             link = "https://southstatebank.com/" + link["href"]
+        if link in titlelist:
+            continue
+        titlelist.append(link)
         r = session.get(link, headers=headers, verify=False)
         soup = BeautifulSoup(r.text, "html.parser")
         title = soup.find("h1").text.strip()
@@ -91,6 +94,12 @@ def fetch_data():
             hours = hours.split("Branch Features", 1)[0]
         except:
             pass
+        street = city
+        city = state.replace(",", "")
+        state, pcode = pcode.split(" ", 1)
+        if len(state) > 3:
+            city = city + " " + state.replace(",", "")
+            state, pcode = pcode.split(" ", 1)
         store = link.split("/")[-2]
         data.append(
             [
