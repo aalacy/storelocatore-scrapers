@@ -72,7 +72,6 @@ def get_store_urls_from_google_map():
     ) as driver:
         driver.get(URL_LOCATION_GOOGLE)
         driver.implicitly_wait(30)
-        xpath_to_store_url = '//div[div[label[contains(text(), "Essendant Locations")]]]/div[3]/div[contains(@index, "0")]/div[2]/div'
         load_more = driver.find_element_by_xpath('//span[contains(text(), "more")]')
         driver.execute_script("arguments[0].scrollIntoView();", load_more)
         driver.execute_script("arguments[0].click();", load_more)
