@@ -83,7 +83,12 @@ def fetch_data():
             if "Store Hours" in h.text:
                 continue
             hours += h.text.replace(",", "") + " "
-        hours = hours.replace("shop hours., ", "")
+        hours = (
+            hours.replace("shop hours.", "")
+            .replace(",", "")
+            .replace("day", "day ")
+            .strip()
+        )
         if "Please" in hours:
             hours = "<MISSING>"
         location_type = "<MISSING>"
