@@ -85,7 +85,10 @@ def fetch_data():
             ).strip()
 
             location_type = "<MISSING>"
-
+            if "Coming soon" in store_sel.xpath(
+                '//span[@class="Core-heroPromoHeading"]/text()'
+            ):
+                continue
             hours_of_operation = "; ".join(
                 store_sel.xpath('//*[contains(@itemprop,"openingHours")]/@content')
             )
