@@ -138,6 +138,8 @@ def fetch_data():
         zip = formatted_addr.postcode
         if zip is None:
             zip = raw_list[1].split(",")[1].strip().split(" ")[-1].strip()
+
+        zip = zip.replace("Z", "").strip()
         country_code = formatted_addr.country
 
         hours = store_sel.xpath(
@@ -201,6 +203,7 @@ def fetch_data():
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=hours_of_operation,
+            raw_address=raw_address,
         )
 
 

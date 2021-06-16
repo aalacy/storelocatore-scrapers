@@ -3,6 +3,7 @@ from bs4 import BeautifulSoup
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
+from sgscrape import sgpostal as parser
 
 
 website = "wahlburgers_com"
@@ -44,6 +45,10 @@ def fetch_data():
                         continue
                     soup = BeautifulSoup(r.text, "html.parser")
                     temp = soup.find("div", {"class": "insideThing"}).findAll("div")
+                    if "We are currently closed" in r.text:
+                        location_type = "Temporarily Closed"
+                    else:
+                        location_type = "<MISSING>"
                 except:
                     continue
                 log.info(page_url)
@@ -59,22 +64,39 @@ def fetch_data():
                     del temp[-1]
                 if len(temp) > 3:
                     temp = temp[1:]
-                phone = temp[0].find("a")["href"].replace("tel:", "")
-                address = temp[1].get_text(separator="|", strip=True).split("|")[1:]
-                hours_of_operation = (
-                    temp[2].get_text(separator="|", strip=True).replace("|", " ")
+                try:
+                    phone = (
+                        temp[0].find("a")["href"].replace("tel:", "").replace("%20", "")
+                    )
+                    hours_of_operation = (
+                        temp[2].get_text(separator="|", strip=True).replace("|", " ")
+                    ).replace("Opening hours:", "")
+                    address = temp[1].get_text(separator="|", strip=True).split("|")[1:]
+                except:
+                    phone = "<MISSING>"
+                    hours_of_operation = (
+                        temp[1].get_text(separator="|", strip=True).replace("|", " ")
+                    ).replace("Opening hours:", "")
+                    address = temp[0].get_text(separator="|", strip=True).split("|")[1:]
+                address = " ".join(
+                    x.replace("\n", "").replace("    ", " ") for x in address
                 )
-                street_address = address[0]
-                address = address[1].split("\n")
-                city = address[0].replace(",", "")
-                state = address[1]
-                zip_postal = address[2]
-                longitude, latitude = (
-                    soup.select_one("iframe[src*=maps]")["src"]
-                    .split("!2d", 1)[1]
-                    .split("!3m", 1)[0]
-                    .split("!3d")
-                )
+                formatted_addr = parser.parse_address_intl(address)
+                street_address = formatted_addr.street_address_1
+                if street_address is None:
+                    street_address = formatted_addr.street_address_2
+                if formatted_addr.street_address_2:
+                    street_address = (
+                        street_address + ", " + formatted_addr.street_address_2
+                    )
+                city = formatted_addr.city
+                state = formatted_addr.state if formatted_addr.state else "<MISSING>"
+                zip_postal = formatted_addr.postcode
+                coords = soup.select_one("iframe[src*=maps]")["src"]
+                r = session.get(coords, headers=headers)
+                coords = r.text.split("null,[null,null,")[2].split("],")[0].split(",")
+                latitude = coords[0]
+                longitude = coords[1]
                 yield SgRecord(
                     locator_domain="https://wahlburgers.com/",
                     page_url=page_url,
@@ -86,10 +108,11 @@ def fetch_data():
                     country_code=country_code,
                     store_number="<MISSING>",
                     phone=phone,
-                    location_type="<MISSING>",
+                    location_type=location_type,
                     latitude=latitude.strip(),
                     longitude=longitude.strip(),
                     hours_of_operation=hours_of_operation.strip(),
+                    raw_address=address,
                 )
 
 

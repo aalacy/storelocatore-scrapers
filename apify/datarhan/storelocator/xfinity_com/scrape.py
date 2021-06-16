@@ -2,6 +2,23 @@ import csv
 from lxml import etree
 
 from sgrequests import SgRequests
+from tenacity import retry, stop_after_attempt
+from sglogging import sglog
+
+session = SgRequests()
+
+DOMAIN = "xfinity.com"
+website = "https://www.xfinity.com"
+log = sglog.SgLogSetup().get_logger(logger_name=website)
+
+headers = {
+    "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.67 Safari/537.36"
+}
+
+
+@retry(stop=stop_after_attempt(3))
+def request_with_retries(url):
+    return session.get(url, headers=headers, timeout=10)
 
 
 def write_output(data):
@@ -36,17 +53,11 @@ def write_output(data):
 
 def fetch_data():
     # Your scraper here
-    session = SgRequests()
-
+    log.info("Started")
     items = []
-
-    DOMAIN = "xfinity.com"
     start_url = "https://www.xfinity.com/local/index.html"
-    headers = {
-        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.67 Safari/537.36"
-    }
 
-    response = session.get(start_url, headers=headers)
+    response = request_with_retries(start_url)
     dom = etree.HTML(response.text)
     all_locations = []
     all_directories = dom.xpath('//a[@data-ya-track="directory_links"]/@href')
@@ -54,14 +65,16 @@ def fetch_data():
         if len(url.split("/")) == 3:
             all_locations.append(url)
             continue
-        dir_response = session.get("https://www.xfinity.com/local/" + url)
+        dir_response = request_with_retries("https://www.xfinity.com/local/" + url)
         dir_dom = etree.HTML(dir_response.text)
         all_dir_urls = dir_dom.xpath('//a[@data-ya-track="directory_links"]/@href')
         for dir_url in all_dir_urls:
             if len(dir_url.split("/")) == 3:
                 all_locations.append(dir_url)
                 continue
-            sub_dir_response = session.get("https://www.xfinity.com/local/" + dir_url)
+            sub_dir_response = request_with_retries(
+                "https://www.xfinity.com/local/" + dir_url
+            )
             sub_dir_dom = etree.HTML(sub_dir_response.text)
             all_sub_urls = sub_dir_dom.xpath(
                 '//a[@data-ya-track="directory_links"]/@href'
@@ -74,13 +87,21 @@ def fetch_data():
 
     for loc_url in list(set(all_locations)):
         store_url = "https://www.xfinity.com/local/" + loc_url.replace("../", "")
-        store_response = session.get(store_url, headers=headers)
+        log.info(f"Scraping : {store_url}")
+        store_response = request_with_retries(store_url)
         store_dom = etree.HTML(store_response.text)
 
         location_name = store_dom.xpath('//meta[@itemprop="name"]/@content')
         location_name = location_name[0] if location_name else "<MISSING>"
-        street_address = store_dom.xpath('//span[@class="c-address-street-1"]/text()')
-        street_address = street_address[0] if street_address else "<MISSING>"
+        try:
+            street_address = store_dom.xpath(
+                '//span[@class="c-address-street-1"]/text()'
+            )
+            street_address = street_address[0]
+        except Exception:
+            log.info(f"Street address err: {street_address}")
+            raise Exception("Please check street address issue")
+
         city = store_dom.xpath('//span[@itemprop="addressLocality"]/text()')
         city = city[0] if city else "<MISSING>"
         state = store_dom.xpath('//abbr[@itemprop="addressRegion"]/text()')

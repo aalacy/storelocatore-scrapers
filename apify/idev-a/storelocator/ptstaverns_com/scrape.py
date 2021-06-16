@@ -13,7 +13,7 @@ _headers = {
 
 
 def _v(val):
-    return val.replace("’", "'").strip()
+    return val.replace("’", "'").replace("\\", "").strip()
 
 
 def fetch_data():

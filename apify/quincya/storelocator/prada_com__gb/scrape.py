@@ -70,7 +70,7 @@ def fetch_data():
             req = session.get(link, headers=headers)
             base = BeautifulSoup(req.text, "lxml")
 
-            js = base.find(id="jsonldLocalBusiness").text
+            js = base.find(id="jsonldLocalBusiness").contents[0]
             try:
                 store = json.loads(js)
             except:
@@ -78,16 +78,29 @@ def fetch_data():
 
             country_code = store["address"]["addressCountry"]
             location_name = store["name"].strip()
-            street_address = store["address"]["streetAddress"].strip()
+            street_address = (
+                store["address"]["streetAddress"].split(", Mancheste")[0].strip()
+            )
             city = store["address"]["addressLocality"]
             state = "<MISSING>"
             zip_code = store["address"]["postalCode"]
             store_number = link.split(".")[-2]
             location_type = "<MISSING>"
             phone = store["telephone"].strip()
+            if not phone:
+                phone = base.find(class_="singleStore__phone").a.text.strip()
             hours_of_operation = (
                 store["openingHours"].strip().replace("  ", " ").replace("--", "Closed")
             )
+            if not hours_of_operation:
+                raw_hours = item["workingSchedule"]
+                for raw_day in raw_hours:
+                    opens = raw_hours[raw_day].replace(";", "")
+                    clean_hours = raw_day.replace("prnux_", "").title() + " " + opens
+                    hours_of_operation = (
+                        hours_of_operation + " " + clean_hours
+                    ).strip()
+
             latitude = store["geo"]["latitude"]
             longitude = store["geo"]["longitude"]
 

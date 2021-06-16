@@ -158,7 +158,21 @@ def fetch_data():
                 ],
             )
         )
-        hours_of_operation = "; ".join(hours)
+        hours_list = []
+        for hour in hours:
+            if (
+                "Sunday" in hour
+                or "Monday" in hour
+                or "Tuesday" in hour
+                or "Wednesday" in hour
+                or "Thursday" in hour
+                or "Friday" in hour
+                or "Saturday" in hour
+                or "Everyday" in hour
+            ):
+                hours_list.append(hour)
+
+        hours_of_operation = "; ".join(hours_list)
         if hours_of_operation == "" or "Opening" in hours_of_operation:
             hours_of_operation = "<MISSING>"
 

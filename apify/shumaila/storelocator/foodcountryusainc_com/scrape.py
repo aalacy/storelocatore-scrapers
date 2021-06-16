@@ -39,7 +39,7 @@ def write_output(data):
 
 def fetch_data():
     data = []
-    url = "https://api.freshop.com/1/stores?app_key=food_country_usa&has_address=true&is_selectable=true&limit=-1&token=8a5a56855fb91652152aa223fbbb0ab6"
+    url = "https://api.freshop.com/1/stores?app_key=food_country_usa&has_address=true&limit=-1&token=712f62e284872cbdc687934d33227e51"
     loclist = session.get(url, headers=headers, verify=False).json()["items"]
     for loc in loclist:
         title = loc["name"]
