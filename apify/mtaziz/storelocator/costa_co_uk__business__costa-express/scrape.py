@@ -51,7 +51,6 @@ def fetch_data():
         logger.info(f"Pulling the data for (latitude, longitude) : ({lat, lng}) ")
         r = session.get(url, headers=headers, verify=False, timeout=500)
         logger.info(f"Pulling the data from : {url} ")
-        # print(r.content)
         total += len(json.loads(r.content)["stores"])
         for item in json.loads(r.content)["stores"]:
             locator_domain = DOMAIN
