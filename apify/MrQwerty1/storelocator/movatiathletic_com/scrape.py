@@ -1,5 +1,4 @@
 import csv
-import json
 
 from concurrent import futures
 from lxml import html
