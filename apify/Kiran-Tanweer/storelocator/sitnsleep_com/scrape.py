@@ -1,3 +1,4 @@
+import ssl
 from bs4 import BeautifulSoup
 from sgrequests import SgRequests
 from sglogging import sglog
@@ -7,6 +8,12 @@ from sgscrape.sgwriter import SgWriter
 from selenium.webdriver.support.ui import WebDriverWait
 from lxml import html
 
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
 
 session = SgRequests()
 website = "sitnsleep_com"
