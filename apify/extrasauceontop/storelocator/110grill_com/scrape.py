@@ -1,144 +1,115 @@
-from sgrequests import SgRequests
-import cloudscraper
+from bs4 import BeautifulSoup
+import csv
 import json
-import pandas as pd
-from bs4 import BeautifulSoup as bs
 
 
-def extract_json(html_string):
-    json_objects = []
-    count = 0
+from sgselenium import SgSelenium
 
-    brace_count = 0
-    for element in html_string:
-
-        if element == "{":
-            brace_count = brace_count + 1
-            if brace_count == 1:
-                start = count
-
-        elif element == "}":
-            brace_count = brace_count - 1
-            if brace_count == 0:
-                end = count
-                try:
-                    json_objects.append(json.loads(html_string[start : end + 1]))
-                except Exception:
-                    pass
-        count = count + 1
-
-    return json_objects
+driver = SgSelenium().chrome()
 
 
-locator_domains = []
-page_urls = []
-location_names = []
-street_addresses = []
-citys = []
-states = []
-zips = []
-country_codes = []
-store_numbers = []
-phones = []
-location_types = []
-latitudes = []
-longitudes = []
-hours_of_operations = []
-
-session = SgRequests()
-
-scraper = cloudscraper.create_scraper(sess=session)
-
-base_url = "https://www.110grill.com"
-response = scraper.get(base_url).text
-
-json_objects = extract_json(response)
-
-locations = json_objects[1]["preloadQueries"][0]["data"]["restaurant"]["homePage"][
-    "sections"
-][3]["locations"]
-
-for location in locations:
-    locator_domain = "110grill.com"
-    try:
-        page_url = (
-            base_url
-            + bs(
-                location["customLocationContent"].replace("\t", "").replace("\n", ""),
-                "html.parser",
-            ).find("a")["href"]
+def write_output(data):
+    with open("data.csv", mode="w") as output_file:
+        writer = csv.writer(
+            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
         )
-    except Exception:
-        page_url = base_url
 
-    location_name = location["name"]
-    address = location["streetAddress"]
-    city = location["city"]
-    state = location["state"]
-    zipp = location["postalCode"]
-    country_code = location["country"]
-    store_number = location["id"]
-    phone = location["phone"]
-    location_type = "<MISSING>"
-    latitude = location["lat"]
-    longitude = location["lng"]
-    hours = ""
-    try:
-        for item in location["schemaHours"]:
-            hours = hours + item + ", "
+        # Header
+        writer.writerow(
+            [
+                "locator_domain",
+                "page_url",
+                "location_name",
+                "street_address",
+                "city",
+                "state",
+                "zip",
+                "country_code",
+                "store_number",
+                "phone",
+                "location_type",
+                "latitude",
+                "longitude",
+                "hours_of_operation",
+            ]
+        )
+        # Body
+        for row in data:
+            writer.writerow(row)
 
-        hours = hours[:-2]
-    except Exception:
-        hours = "<MISSING>"
 
-    locator_domains.append(locator_domain)
-    page_urls.append(page_url)
-    location_names.append(location_name)
-    street_addresses.append(address)
-    citys.append(city)
-    states.append(state)
-    zips.append(zipp)
-    country_codes.append(country_code)
-    phones.append(phone)
-    location_types.append(location_type)
-    latitudes.append(latitude)
-    longitudes.append(longitude)
-    store_numbers.append(store_number)
-    hours_of_operations.append(hours)
+def fetch_data():
+    p = 0
+    data = []
+    url = "https://www.110grill.com/locations"
+    driver.get(url)
+    divlist = driver.page_source.split(',"fullAddress":')[1:]
+    linklist = []
+    for div in divlist:
+        div = div.split(',"openingRanges"', 1)[0]
+        div = '{"fullAddress":' + div + "}"
+        div = json.loads(div)
+        title = div["name"]
+        street = div["streetAddress"]
+        city = title.split(",", 1)[0]
+        state = div["state"]
+        link = "https://www.110grill.com/" + div["slug"]
+        lat = div["lat"]
+        longt = div["lng"]
+        hourlist = div["schemaHours"]
+        hours = ""
 
-df = pd.DataFrame(
-    {
-        "locator_domain": locator_domains,
-        "page_url": page_urls,
-        "location_name": location_names,
-        "street_address": street_addresses,
-        "city": citys,
-        "state": states,
-        "zip": zips,
-        "store_number": store_numbers,
-        "phone": phones,
-        "latitude": latitudes,
-        "longitude": longitudes,
-        "country_code": country_codes,
-        "location_type": location_types,
-        "hours_of_operation": hours_of_operations,
-    }
-)
+        try:
+            phone = div["phone"]
+            phone = phone[0:3] + "-" + phone[3:6] + "-" + phone[6:10]
+            for hr in hourlist:
+                temp = (int)(hr.split("-", 1)[1].split(":", 1)[0])
+                if temp > 12:
+                    temp = temp - 12
+                hours = (
+                    hours
+                    + hr.split("-", 1)[0]
+                    + " am - "
+                    + str(temp)
+                    + ":"
+                    + hr.split("-", 1)[1].split(":", 1)[1]
+                    + " pm "
+                )
+        except:
+            hours = "Temporarily Closed"
+            phone = "<MISSING>"
+        pcode = div["postalCode"]
+        if link in linklist:
+            continue
+        linklist.append(link)
 
-df = df.fillna("<MISSING>")
-df = df.replace(r"^\s*$", "<MISSING>", regex=True)
+        data.append(
+            [
+                "https://www.110grill.com/",
+                link,
+                title,
+                street,
+                city,
+                state,
+                pcode,
+                "US",
+                "<MISSING>",
+                phone,
+                "<MISSING>",
+                lat,
+                longt,
+                hours,
+            ]
+        )
 
-df["dupecheck"] = (
-    df["location_name"]
-    + df["street_address"]
-    + df["city"]
-    + df["state"]
-    + df["location_type"]
-)
+        p += 1
+    return data
 
-df = df.drop_duplicates(subset=["dupecheck"])
-df = df.drop(columns=["dupecheck"])
-df = df.replace(r"^\s*$", "<MISSING>", regex=True)
-df = df.fillna("<MISSING>")
 
-df.to_csv("data.csv", index=False)
+def scrape():
+
+    data = fetch_data()
+    write_output(data)
+
+
+scrape()
