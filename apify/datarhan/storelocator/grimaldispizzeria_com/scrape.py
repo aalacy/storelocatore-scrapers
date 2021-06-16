@@ -59,6 +59,8 @@ def fetch_data():
         location_name = location_name[0] if location_name else "<MISSING>"
         street_address = poi["address"]["streetAddress"]
         location_type = poi["@type"]
+        if loc_dom.xpath('//div[@class="store_copy coming_soon_status"]'):
+            continue
         state = poi["address"]["addressRegion"]
         city = poi["address"]["addressLocality"]
         zip_code = poi["address"]["postalCode"]

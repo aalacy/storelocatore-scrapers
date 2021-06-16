@@ -89,6 +89,8 @@ def fetch_data():
 
             hours_of_operation = ";".join(_tmp) or "<MISSING>"
 
+            if "coming soon" in location_name.lower():
+                hours_of_operation = "Coming Soon"
             if hours_of_operation.count("Closed") == 7:
                 continue
 
