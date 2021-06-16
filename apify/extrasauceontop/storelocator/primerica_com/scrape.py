@@ -1,6 +1,5 @@
 from bs4 import BeautifulSoup
 import csv
-import re
 from sgrequests import SgRequests
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -94,8 +93,6 @@ def fetch_data():
         if sec == 1:
             ccode = "CA"
         rep_list = mainsection[sec].findAll("a")
-        cleanr = re.compile("<.*?>")
-        pattern = re.compile(r"\s\s+")
         for rep in rep_list:
 
             link = "http://www.primerica.com/public/" + rep["href"]
@@ -184,56 +181,38 @@ def fetch_data():
                                     continue
 
                                 soup3 = BeautifulSoup(page3.text, "html.parser")
-                                address = soup3.find(
-                                    "div", {"class": "officeInfoDataWidth"}
-                                )
-                                cleanr = re.compile(r"<[^>]+>")
-                                address = cleanr.sub(" ", str(address))
-                                address = re.sub(pattern, "\n", address).lstrip()
-                                address = address.splitlines()
-
-                                city = ""
-                                state = ""
-                                i = 0
-                                street = address[i]
-                                i += 1
                                 try:
-                                    if address[i].find(",") == -1:
-                                        street = street + " " + address[i]
-                                        i += 1
-                                    else:
-                                        city, state = address[i].split(", ")
-                                except:
-                                    data.append(
-                                        [
-                                            "http://www.primerica.com/",
-                                            alink,
-                                            title,
-                                            "<MISSING>",
-                                            "<MISSING>",
-                                            "<MISSING>",
-                                            "<MISSING>",
-                                            "<MISSING>",
-                                            "<MISSING>",
-                                            "<MISSING>",
-                                            "<MISSING>",
-                                            "<MISSING>",
-                                            "<MISSING>",
-                                            "<MISSING>",
-                                        ]
+                                    address = soup3.find(
+                                        "div", {"class": "officeInfoDataWidth"}
+                                    ).text.strip()
+                                except Exception:
+                                    continue
+
+                                address = address.split("\n")
+
+                                if len(address) > 2:
+                                    street = ""
+                                    for num in range(len(address) - 1):
+                                        part = address[num].strip()
+                                        street = street + part + " "
+
+                                    street = street.strip().replace("  ", " ")
+
+                                else:
+                                    street = address[0].strip()
+
+                                city = address[-1].split(",")[0]
+                                state = address[-1].split(", ")[-1].split(" ")[0]
+
+                                if ccode == "US":
+                                    pcode = address[-1].split(", ")[-1].split(" ")[-1]
+
+                                else:
+                                    pcode = (
+                                        address[-1].split(", ")[-1].split(" ")[-2]
+                                        + address[-1].split(", ")[-1].split(" ")[-1]
                                     )
 
-                                    p += 1
-                                    continue
-                                if address[i].find(",") > -1:
-                                    city, state = address[i].split(", ")
-                                i += 1
-                                pcode = address[i]
-                                if len(state) > 4:
-                                    street = address[0] + " " + address[1]
-                                    city, state = address[2].split(",", 1)
-                                    state = state.lstrip()
-                                    pcode = address[3]
                                 phone = soup3.find(
                                     "div", {"class": "telephoneLabel"}
                                 ).text
@@ -256,15 +235,7 @@ def fetch_data():
                                 street = street.lstrip().replace(",", "")
                                 city = city.lstrip().replace(",", "")
                                 state = state.lstrip().replace(",", "")
-                                pcode = pcode.lstrip().replace(",", "").rstrip()
 
-                                if (
-                                    pcode.find("-") == -1
-                                    and sec == 0
-                                    and pcode != "<MISSING>"
-                                    and len(pcode) > 6
-                                ):
-                                    pcode = pcode[0:5] + "-" + pcode[5 : len(pcode)]
                                 if state == "NF":
                                     state = "NL"
                                 if state == "PQ":
@@ -279,7 +250,7 @@ def fetch_data():
                                             street,
                                             city,
                                             state,
-                                            pcode.rstrip(),
+                                            pcode,
                                             ccode,
                                             "<MISSING>",
                                             phone,

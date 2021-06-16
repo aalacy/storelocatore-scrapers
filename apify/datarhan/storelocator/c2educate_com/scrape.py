@@ -78,8 +78,8 @@ def fetch_data():
         latitude = latitude if latitude else "<MISSING>"
         longitude = store_data["geo"]["longitude"]
         longitude = longitude if longitude else "<MISSING>"
-        hours_of_operation = store_data["openingHours"]
-        hours_of_operation = hours_of_operation if hours_of_operation else "<MISSING>"
+        hoo = store_dom.xpath('//li[@class="li-hours icon-clock-o"]//li//text()')
+        hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
 
         item = [
             DOMAIN,
