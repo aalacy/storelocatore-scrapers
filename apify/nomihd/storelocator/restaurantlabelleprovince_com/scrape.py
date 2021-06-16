@@ -19,58 +19,67 @@ headers = {
 
 def fetch_data():
     # Your scraper here
-    search_url = "http://restaurantlabelleprovince.com/fr/les-succursales/"
+    search_url = "https://restaurantlabelleprovince.com/succursales/"
     search_res = session.get(search_url, headers=headers)
     search_sel = lxml.html.fromstring(search_res.text)
+    json_text = (
+        "".join(search_sel.xpath("//div/@data-points"))
+        .strip()
+        .replace("&quot;", '"')
+        .strip()
+    )
+    restaurants_list = json.loads(json_text)
 
-    api_url = "http://restaurantlabelleprovince.com/ext/loadAllMarkers.php"
-    api_res = session.get(api_url, headers=headers)
-    json_res = json.loads(api_res.text)
-
-    restaurants_list = json_res["obFin"]
     for restaurant in restaurants_list:
 
         page_url = search_url
         locator_domain = website
+        location_name = restaurant["title"]
+        raw_address = search_sel.xpath(
+            f'//td/strong[text()="{location_name}"]/parent::node()/text()'
+        )
 
-        raw_address = restaurant["address"]
+        if len(raw_address) <= 0:
+            if "(Henri-Bourassa)" in location_name:
+                location_name = location_name.split("(")[0].strip()
+
+            if "St-Basile" == location_name:
+                location_name = "St-Basile Le Grand"
+
+            if "Saint-Eustache" == location_name:
+                location_name = "St-Eustache"
+
+            raw_address = search_sel.xpath(
+                f'//td/strong[text()="{location_name}"]/parent::node()/text()'
+            )
+
+        raw_address = ", ".join(raw_address[:-1]).strip().replace(",,", ",").strip()
+        if raw_address[0] == ",":
+            raw_address = "".join(raw_address[1:]).strip()
 
         formatted_addr = parser.parse_address_intl(raw_address)
         street_address = formatted_addr.street_address_1
         if formatted_addr.street_address_2:
             street_address = street_address + ", " + formatted_addr.street_address_2
 
-        raw_street1 = raw_address.split(",", 2)[0]
-        city = restaurant["city"].strip()
-
-        location_name = "".join(
-            search_sel.xpath(
-                f'//table[@id="tblMenu"]//p[contains(text(),"{raw_street1}")]/parent::node()//h3/text()'
-            )
-        ).strip()
-
-        if location_name == "":
-            location_name = "".join(
-                search_sel.xpath(
-                    f'//table[@id="tblMenu"]//node()[contains(text(),"{city}")]/parent::node()//h3/text()'
-                )
-            ).strip()
-
+        city = formatted_addr.city
+        if city is None:
+            city = location_name
         state = formatted_addr.state
-        zip = formatted_addr.postcode
+        zip = raw_address.split(",")[-1].strip()
+        if len(zip) != 7:
+            zip = formatted_addr.postcode
+
+        street_address = street_address.replace(zip, "").strip()
+        street_address = street_address.replace(zip.split(" ")[0], "").strip()
 
         country_code = "CA"
 
-        store_number = restaurant["id"]
+        store_number = "<MISSING>"
 
         phone = search_sel.xpath(
-            f'//table[@id="tblMenu"]//p[contains(text(),"{raw_street1}")]/text()'
+            f'//td/strong[text()="{location_name}"]/parent::node()/text()'
         )
-
-        if not phone:
-            phone = search_sel.xpath(
-                f'//table[@id="tblMenu"]//node()[contains(text(),"{city}")]/parent::node()//p/text()'
-            )
 
         if phone:
             phone = phone[-1].strip()
@@ -79,8 +88,8 @@ def fetch_data():
 
         hours_of_operation = "<MISSING>"
 
-        latitude = restaurant["lat"]
-        longitude = restaurant["lng"]
+        latitude = restaurant["coordinates"]["latitude"]
+        longitude = restaurant["coordinates"]["longitude"]
 
         yield SgRecord(
             locator_domain=locator_domain,
@@ -97,8 +106,9 @@ def fetch_data():
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=hours_of_operation,
-            raw_address=", ".join(raw_address.split("\n")),
+            raw_address=raw_address,
         )
+        # break
 
 
 def scrape():
