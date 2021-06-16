@@ -50,12 +50,14 @@ def fetch_data():
 
     all_store_data = []
     for store in store_json["items"]:
-        if store["country_id"] != "US":
-            continue
-        country_code = "US"
+
+        country_code = store["country_id"]
         location_name = store["name"]
         store_number = store["region_id"]
-        state = store["region"]
+        try:
+            state = store["region"]
+        except:
+            state = "<MISSING>"
         city = store["city"]
         street_address = store["street"]
         zip_code = store["postal_code"]
