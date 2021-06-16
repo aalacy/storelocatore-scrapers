@@ -249,7 +249,7 @@ def fetchStores():
             continue
         stores = stores + fetchCountry(driver, country_code)
 
-    if driver != None:
+    if driver is not None:
         driver.close()
     return stores
 
@@ -273,7 +273,7 @@ def fetchLxmlText(body, xpath, delimiter=" "):
 
 
 def initiateDriver(driver=None):
-    if driver != None:
+    if driver is not None:
         driver.close()
 
     return SgChrome(
