@@ -64,19 +64,22 @@ def fetch_data():
                         .strip()
                         .replace("\t", "")
                     )
-                    city = item.split(
-                        '<div class=\\\\\\"store-name store-locator-store-addr\\\\\\">\\\\n'
-                    )[2].split(",")[0]
-                    state = (
+                    city = (
                         item.split(
                             '<div class=\\\\\\"store-name store-locator-store-addr\\\\\\">\\\\n'
                         )[2]
-                        .split("\\\\n                        \\\\n")[1]
+                        .split("\\")[0]
+                        .strip()
+                    )
+                    state = (
+                        item.split(
+                            '<div class=\\\\\\"store-name store-locator-store-addr\\\\\\">\\\\n'
+                        )[3]
                         .split("<")[0]
                         .strip()
                         .replace("\t", "")
                     )
-                    zc = item.split("<span> </span>")[1].split("\\")[0]
+                    zc = item.split("<span>,</span>")[1].split("\\")[0]
                     phone = item.split('storelocator-phone\\\\\\" href=\\\\\\"tel:')[
                         1
                     ].split("\\")[0]

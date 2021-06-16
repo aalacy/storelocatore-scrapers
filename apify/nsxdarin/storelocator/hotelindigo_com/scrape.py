@@ -101,11 +101,22 @@ def fetch_data():
                     .split("<")[0]
                     .strip()
                 )
-                state = line2.split('<span itemprop="addressRegion">')[1].split("<")[0]
-                zc = line2.split('<span itemprop="postalCode">')[1].split("<")[0]
-                country = line2.split('<span itemprop="addressCountry">')[1].split("<")[
-                    0
-                ]
+                try:
+                    state = line2.split('<span itemprop="addressRegion">')[1].split(
+                        "<"
+                    )[0]
+                except:
+                    state = "<MISSING>"
+                try:
+                    zc = line2.split('<span itemprop="postalCode">')[1].split("<")[0]
+                except:
+                    zc = "<MISSING>"
+                try:
+                    country = line2.split('<span itemprop="addressCountry">')[1].split(
+                        "<"
+                    )[0]
+                except:
+                    country = "<MISSING>"
             if '"addressLocality": "' in line2 and city == "":
                 city = line2.split('"addressLocality": "')[1].split('"')[0]
             if lat == "" and '<meta itemprop="latitude" content="' in line2:
