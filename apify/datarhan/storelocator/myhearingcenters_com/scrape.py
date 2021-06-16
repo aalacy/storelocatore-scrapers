@@ -59,6 +59,8 @@ def fetch_data():
             location_name.replace("&#8211;", "-") if location_name else "<MISSING>"
         )
         street_address = poi["address"]
+        if poi["address2"]:
+            street_address += " " + poi["address2"]
         street_address = street_address if street_address else "<MISSING>"
         city = poi["city"]
         city = city if city else "<MISSING>"

@@ -5,6 +5,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import lxml.html
 import re
+import us
 
 website = "goodfeet.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -57,6 +58,8 @@ def fetch_data():
         location_name = "".join(page_sel.xpath("//h4/text()"))
 
         page_url = "".join(page_sel.xpath("//a[@onclick]/@href")).split("?")[0]
+        if page_url.split("/")[-1] == "test":
+            continue
 
         phone = "".join(page_sel.xpath("//a[@href and not(./@onclick)]/text()"))
 
@@ -67,10 +70,12 @@ def fetch_data():
         state = address_info[1].strip().split(" ")[0].strip()
         zip = address_info[1].strip().split(" ")[-1].strip()
 
-        if re.search("[A-Za-z]", zip):
-            country_code = "CA"
-        else:
-            country_code = "US"
+        country_code = "US"
+        if not us.states.lookup(state):
+            if re.search("[A-Za-z]", zip):
+                country_code = "CA"
+            else:
+                country_code = "AU"
 
         location_type = "<MISSING>"
 

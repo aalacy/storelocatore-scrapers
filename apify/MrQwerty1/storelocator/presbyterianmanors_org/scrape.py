@@ -98,6 +98,7 @@ def fetch_data():
         line = ", ".join(list(filter(None, [l.strip() for l in line])))
 
         street_address, city, state, postal = get_address(line)
+        street_address = street_address.replace("Â", "").strip()
         country_code = "US"
         store_number = "<MISSING>"
         phone = (
@@ -107,6 +108,9 @@ def fetch_data():
         latitude = "<MISSING>"
         longitude = "<MISSING>"
         location_type = "<MISSING>"
+        if d.xpath("./preceding-sibling::div//em"):
+            location_type = "Coming Soon"
+
         hours_of_operation = "<MISSING>"
 
         row = [

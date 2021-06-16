@@ -33,9 +33,9 @@ def write_output(data):
 
 def fetch_data():
     out = []
-    locator_domain = "http://www.gristedessupermarkets.com/"
-    page_url = "http://www.gristedessupermarkets.com/store-locator/"
-    api_url = "http://www.gristedessupermarkets.com/wp-admin/admin-ajax.php"
+    locator_domain = "https://www.gristedessupermarkets.com/"
+    page_url = "https://www.gristedessupermarkets.com/store-locator/"
+    api_url = "https://www.gristedessupermarkets.com/wp-admin/admin-ajax.php"
     data = {"lat": "37.09024", "lng": "-95.712891", "action": "csl_ajax_onload"}
 
     session = SgRequests()

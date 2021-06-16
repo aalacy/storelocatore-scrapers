@@ -89,6 +89,9 @@ def fetch_data():
             continue
         s.add(store_number)
 
+        if j.get("status") == "comingsoon":
+            continue
+
         row = [
             locator_domain,
             page_url,

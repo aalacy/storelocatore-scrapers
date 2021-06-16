@@ -97,8 +97,6 @@ def fetch_data():
         "WV",
         "WY",
     ]
-    url = "https://order.capriottis.com/sitemap.xml"
-    r = session.get(url, headers=headers)
     website = "nutrishopusa.com"
     typ = "<MISSING>"
     country = "US"

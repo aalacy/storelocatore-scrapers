@@ -3,7 +3,7 @@ from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
-from sgscrape.sgpostal import parse_address_intl
+import json
 
 logger = SgLogSetup().get_logger("mondou")
 
@@ -30,27 +30,31 @@ def fetch_data():
                 page_url = link.select_one("a.btn")["href"]
                 logger.info(page_url)
                 sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
-                addr = parse_address_intl(
-                    " ".join(list(link.select_one("address").stripped_strings)[:-1])
-                )
-                street_address = addr.street_address_1
-                if addr.street_address_2:
-                    street_address += " " + addr.street_address_2
+                addr = list(sp1.select_one("address").stripped_strings)[:-1]
+                street_address = " ".join(addr[:-1])
                 hours = []
                 for hh in sp1.select("div.store-open-hour"):
                     hours.append(
                         f"{hh.select('div')[0].text.strip()}: {hh.select_one('div.open-times').text.strip()}"
                     )
+                data = json.loads(
+                    sp1.select_one('div[data-oc-controller="Store.Details"]')[
+                        "data-context"
+                    ]
+                )
                 yield SgRecord(
                     page_url=page_url,
+                    store_number=page_url.split("/")[-1],
                     location_name=link.h6.strong.text.strip(),
                     street_address=street_address,
-                    city=addr.city,
-                    state=addr.state,
-                    zip_postal=addr.postcode,
+                    city=addr[-1].split(",")[0].strip(),
+                    state=addr[-1].split(",")[1].strip(),
+                    zip_postal=addr[-1].split(",")[2].strip(),
                     country_code="CA",
                     phone=link.select_one("span.store-phone").text.strip(),
                     locator_domain=locator_domain,
+                    latitude=data["latitude"],
+                    longitude=data["longitude"],
                     hours_of_operation="; ".join(hours).replace("–", "-"),
                 )
 

@@ -21,10 +21,9 @@ def fetch_data():
         locations = soup.select("div.entry-content ul li")
         logger.info(f"{len(locations)} found")
         for _ in locations:
-            addr = parse_address_intl(" ".join(list(_.h2.stripped_strings)[1:-1]))
-            street_address = addr.street_address_1
-            if addr.street_address_2:
-                street_address += " " + addr.street_address_2
+            _addr = list(_.h2.stripped_strings)[1:-1]
+            addr = parse_address_intl(" ".join(_addr))
+            street_address = " ".join(_addr[:-2])
             yield SgRecord(
                 page_url=base_url,
                 store_number=_["data-store-id"],

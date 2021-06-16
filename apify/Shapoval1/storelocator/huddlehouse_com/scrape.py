@@ -107,7 +107,11 @@ def get_data(url):
     ):
         hours_of_operation = "Closed"
     if hours_of_operation.count("0: - 0:") == 7:
-        hours_of_operation = "Closed"
+        hours_of_operation = "Open 24 Hours"
+
+    cms = j.get("customByName").get("Coming Soon")
+    if cms:
+        hours_of_operation = "Coming Soon"
 
     row = [
         locator_domain,

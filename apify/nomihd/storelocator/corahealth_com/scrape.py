@@ -87,7 +87,10 @@ def fetch_data():
             if location_name == "":
                 location_name = "<MISSING>"
 
-            street_address = store_json["address"]["streetAddress"]
+            street_address = ""
+            temp_address = store_sel.xpath('//div[@class="two-thirds first"]/text()')
+            if len(temp_address) > 0:
+                street_address = "".join(temp_address[0]).strip()
             city = store_json["address"]["addressLocality"]
             state = store_json["address"]["addressRegion"]
             zip = store_json["address"]["postalCode"]

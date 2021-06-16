@@ -301,9 +301,9 @@ def fetch_data():
                     if phone == "" or "null" in phone:
                         phone = "<MISSING>"
                     if hours.count("Sun:") > 1:
-                        hours = "<MISSING>"
+                        hours = "<INACCESSIBLE>"
                     if "Sun:" in hours and "Mon" not in hours:
-                        hours = "<MISSING>"
+                        hours = "<INACCESSIBLE>"
                     yield [
                         website,
                         loc,

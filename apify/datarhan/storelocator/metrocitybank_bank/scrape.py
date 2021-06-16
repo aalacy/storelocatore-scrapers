@@ -42,7 +42,7 @@ def fetch_data():
     items = []
 
     start_url = (
-        "https://www.metrocitybank.bank/_/api/branches/33.8921433/-84.2851129/500"
+        "https://www.metrocitybank.bank/_/api/branches/33.8921433/-84.2851129/50000"
     )
     domain = re.findall(r"://(.+?)/", start_url)[0].replace("www.", "")
     hdr = {
@@ -74,7 +74,9 @@ def fetch_data():
         hoo = poi_html.xpath("//text()")[1:]
         hoo = [e.strip() for e in hoo if e.strip()]
         hours_of_operation = (
-            " ".join(hoo).replace("(Drive thru only)", "") if hoo else "<MISSING>"
+            " ".join(hoo).replace("(Drive thru only)", "").split("Hours ")[-1]
+            if hoo
+            else "<MISSING>"
         )
 
         item = [

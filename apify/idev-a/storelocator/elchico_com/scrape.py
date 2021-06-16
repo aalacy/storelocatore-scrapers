@@ -1,106 +1,61 @@
-import csv
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
+from sglogging import SgLogSetup
+import re
 
-from util import Util  # noqa: I900
+logger = SgLogSetup().get_logger("elchico")
 
-myutil = Util()
-
-
-session = SgRequests()
-
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+}
 
 
 def fetch_data():
-    locator_domain = "https://www.elchico.com/locations/"
-    r = session.get(locator_domain)
-    soup = bs(r.text, "lxml")
-    locations = soup.select(".all-loc-1 .single-location")
-    data = []
-    for location in locations:
-        page_url = location.a["href"]
-        location_name = location.a.text.strip()
-        address = location.select_one(".location-address").text.split("\r\n")
-        country_code = "US"
-        street_address = "<MISSING>"
-        city = "<MISSING>"
-        state = "<MISSING>"
-        zip = "<MISSING>"
-        if address[-1].split(",")[1].strip() == "UAE":
-            continue
-        else:
-            zip = address[-1].split(",")[1].strip().split(" ")[1]
-            state = address[-1].split(",")[1].strip().split(" ")[0]
-            city = address[-1].split(",")[0]
-            street_address = " ".join(address[:-1])
-        phone = myutil._valid(location.select_one(".tel a").text)
-        store_number = "<MISSING>"
-        location_type = "<MISSING>"
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
-        hours_of_operation = ""
-        hours = [_ for _ in location.select_one(".my-hours p").stripped_strings]
-        for x, hour in enumerate(hours):
-            if x % 2 == 0:
-                hours_of_operation += hour + ":"
-            else:
-                hours_of_operation += hour + ";"
-
-        hours_of_operation = myutil._valid(hours_of_operation)
-        _item = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        data.append(_item)
-
-    return data
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+    locator_domain = "https://www.elchico.com"
+    base_url = "https://www.elchico.com/locations/"
+    with SgRequests() as session:
+        soup = bs(session.get(base_url).text, "lxml")
+        locations = soup.select("div.wpb_wrapper a.state-child")
+        logger.info(f"{len(locations)} found")
+        for link in locations:
+            page_url = link["href"]
+            if "dhabi" in page_url:
+                continue
+            sp1 = bs(session.get(page_url).text, "lxml")
+            _addr = list(sp1.select_one("div.address-header-up").stripped_strings)
+            if "UAE" in "".join(_addr):
+                continue
+            logger.info(page_url)
+            hours = []
+            temp = list(sp1.select_one("div.hrs-header-up p").stripped_strings)
+            for x in range(0, len(temp), 2):
+                hours.append(f"{temp[x]} {temp[x+1]}")
+            coord = (
+                sp1.find("div", string=re.compile(r"Driving Direction"))
+                .find_parent()["href"]
+                .split("/")[-1]
+                .split(",")
+            )
+            yield SgRecord(
+                page_url=page_url,
+                location_name=sp1.select_one("div.title-up").text.strip(),
+                street_address=_addr[0],
+                city=_addr[-1].split(",")[0].strip(),
+                state=_addr[-1].split(",")[1].strip().split(" ")[0].strip(),
+                zip_postal=_addr[-1].split(",")[1].strip().split(" ")[-1].strip(),
+                phone=sp1.select_one("div.tel-header-up").text.strip(),
+                latitude=coord[0],
+                longitude=coord[1],
+                country_code="US",
+                locator_domain=locator_domain,
+                hours_of_operation="; ".join(hours).replace("–", "-"),
+            )
 
 
 if __name__ == "__main__":
-    scrape()
+    with SgWriter() as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
