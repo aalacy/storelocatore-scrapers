@@ -109,20 +109,22 @@ def fetch_data():
             latitude = (
                 "".join(
                     tree.xpath(
-                        '//script[contains(text(), "www.google.com\/maps\/place\/Coolgreens+-+Downtown\/@")]/text()'
+                        '//script[contains(text(), "Coolgreens+-+Downtown")]/text()'
                     )
                 )
-                .split("Coolgreens+-+Downtown\/@")[1]
+                .replace("\\", "")
+                .split("Coolgreens+-+Downtown/@")[1]
                 .split(",")[0]
                 .strip()
             )
             longitude = (
                 "".join(
                     tree.xpath(
-                        '//script[contains(text(), "www.google.com\/maps\/place\/Coolgreens+-+Downtown\/@")]/text()'
+                        '//script[contains(text(), "Coolgreens+-+Downtown")]/text()'
                     )
                 )
-                .split("Coolgreens+-+Downtown\/@")[1]
+                .replace("\\", "")
+                .split("Coolgreens+-+Downtown/@")[1]
                 .split(",")[1]
                 .strip()
             )
