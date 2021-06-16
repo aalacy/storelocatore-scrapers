@@ -49,18 +49,19 @@ vpd = var_page_data.split("pageData = ")[-1].split(";")[0]
 data_json = json.loads(vpd)
 data_json = json.loads(data_json)
 data_str = str(data_json[1:])
-essendant_locs = data_str.split("Business Offices & Call Centers")[0]
+essendant_locs1 = data_str.split("Business Offices & Call Centers")[0]
 
 # Business office and Call Centers
 business_office_and_call_centers_locs = data_str.split(
     "Business Offices & Call Centers"
 )[1]
-essendant_locs = essendant_locs.split(
+
+essendant_locs2 = essendant_locs1.split(
     "https://mt.googleapis.com/vt/icon/name=icons/onion/SHARED-mymaps-pin-container"
 )
 
 # Essendant Locations
-essendant_locs = essendant_locs[:-2]
+essendant_locs3 = essendant_locs2[:-2]
 
 
 def get_store_urls_from_google_map():
@@ -144,7 +145,7 @@ def fetch_data():
     # The URL is pulled from Google map
     store_urls = get_store_urls_from_google_map()
     session = SgRequests()
-    for idx, item in enumerate(essendant_locs[0:]):
+    for idx, item in enumerate(essendant_locs3[0:]):
         latlng_plus_location_name = str(item).split("'0', None")[-1]
         location_name_pattern = r"\[\[(.*?)\]\]"
         locname_found = re.findall(location_name_pattern, latlng_plus_location_name)
