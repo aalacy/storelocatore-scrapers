@@ -45,7 +45,9 @@ def fetch_data():
     }
     r = session.get(api, headers=headers)
     tree = html.fromstring(r.text)
-    divs = tree.xpath("//div[contains(@class, 'locationCard js-location-card')]")
+    divs = tree.xpath(
+        "//div[contains(@class, 'locationCard js-location-card') and not(@data-mb-layer='atm')]"
+    )
 
     for d in divs:
         location_name = "".join(
