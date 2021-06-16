@@ -38,6 +38,7 @@ def write_output(data):
 
 
 def fetch_data():
+    alllocs = []
     url = "https://www.hyatt.com/explore-hotels/service/hotels"
     r = session.get(url, headers=headers, timeout=60, stream=True)
     website = "alilahotels.com"
@@ -108,22 +109,24 @@ def fetch_data():
                         name = "Hyatt Residence Club Maui, Kaanapali Beach"
                     if CS:
                         name = name + " - Coming Soon"
-                    yield [
-                        website,
-                        loc,
-                        name,
-                        add,
-                        city,
-                        state,
-                        zc,
-                        country,
-                        store,
-                        phone,
-                        typ,
-                        lat,
-                        lng,
-                        hours,
-                    ]
+                    if loc not in alllocs:
+                        alllocs.append(loc)
+                        yield [
+                            website,
+                            loc,
+                            name,
+                            add,
+                            city,
+                            state,
+                            zc,
+                            country,
+                            store,
+                            phone,
+                            typ,
+                            lat,
+                            lng,
+                            hours,
+                        ]
 
 
 def scrape():

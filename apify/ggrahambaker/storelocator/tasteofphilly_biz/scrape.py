@@ -1,176 +1,121 @@
-import csv
-from sgrequests import SgRequests
-from bs4 import BeautifulSoup
 import usaddress
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('tasteofphilly_biz')
-
+from sglogging import sglog
+from bs4 import BeautifulSoup
+from sgrequests import SgRequests
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
 
 session = SgRequests()
-headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
-           }
+website = "tasteofphilly_biz"
+log = sglog.SgLogSetup().get_logger(logger_name=website)
+session = SgRequests()
+headers = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.66 Safari/537.36",
+    "Accept": "application/json",
+}
 
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-
-        # Header
-        writer.writerow(["locator_domain","page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-        # Body
-        for row in data:
-            writer.writerow(row)
+DOMAIN = "https://www.tasteofphilly.biz/locations/"
+MISSING = "<MISSING>"
 
 
 def fetch_data():
-    data = []
-    p = 0    
-    url = 'https://www.tasteofphilly.biz/locations/'   
-    r = session.get(url, headers=headers, verify=False)
-    soup = BeautifulSoup(r.text,'html.parser')
-    stores = soup.findAll('div',{'class':'top-menu-lr'})
-   
-    for store in stores:
-        title = store.find('a').text
-        link = 'https://www.tasteofphilly.biz'+store.find('a')['href']
-        #logger.info(p,link)
-        r = session.get(link, headers=headers, verify=False)
-        #logger.info(link)
-        '''if 'famous' in r.url:
-            continue'''
-        soup = BeautifulSoup(r.text,'html.parser')
-        try:
-            flag = 0
-            content = soup.find('meta',{'property':'og:description'})['content']
-            #logger.info(content)
-            if content.find('thanks!') > -1:
-                det = content.split('thanks! ',1)[1]
-            elif content.find(']') > -1:
-                det = content.split('] ',1)[1]
-            elif content.find('DRIVERS! ') > -1:
-                det = content.split('DRIVERS! ')[1]
-            elif content.find('OPEN! ',1) > -1:
-                det = content.split('OPEN! ',1)[1]
+    if True:
+        url = "https://www.tasteofphilly.biz/locations/"
+        r = session.get(url, headers=headers)
+        soup = BeautifulSoup(r.text, "html.parser")
+        loclist = soup.findAll("div", {"class": "et_pb_text_inner"})[:-2]
+        for loc in loclist:
+            page_url = "https://www.tasteofphilly.biz" + loc.find("a")["href"]
+            log.info(page_url)
+            r = session.get(page_url, headers=headers)
+            soup = BeautifulSoup(r.text, "html.parser")
+            temp = soup.findAll("div", {"class": "et_pb_text_inner"})
+            location_name = temp[0].text
+            if "Having lunch or dinner at one of our restaurants" in temp[1].text:
+                temp = soup.findAll("div", {"class": "et_pb_text_inner"})[6]
+                hours_of_operation = (
+                    r.text.split("Every Day")[1]
+                    .split("</p>")[0]
+                    .replace("</strong>", "")
+                )
+                hours_of_operation = "Every Day" + hours_of_operation
+                if "</div>" in hours_of_operation:
+                    hours_of_operation = hours_of_operation.split("</div>")[0]
+                temp = temp.get_text(separator="|", strip=True).split("|")
+                address = temp[0] + " " + temp[1]
+                phone = temp[2]
             else:
-                det = content
-            det = det.split('Contact Us')[0]
-            try:
-                det = det.split(' WE DELIVER')[0]
-                flag = 1
-            except:
-                pass
-            try:
-                det = det.split('(Email')[0]
-            except:
-                pass
-            try:
-                det = det.split('Hours')[0]
-            except:
-                pass
-                    
-          
-            address= 'N/A'
-            if len(det.rstrip().split(' ')[-1]) > 5:
-                if det.find('(') > -1:
-                    phone= det.rstrip().split('(')[1]
-                    phone = '('+phone
-                else:
-                    phone= det.rstrip().split(' ')[-1]
-                
-            else:               
-               phone= det.rstrip().split(' ')[0]
-               
-            address = det.replace(phone,'')
-            
+                temp = temp[1].findAll("p")
+                address = temp[0].get_text(separator="|", strip=True).replace("|", " ")
+                phone = temp[1].find("a").text
+                hours_of_operation = (
+                    temp[2]
+                    .get_text(separator="|", strip=True)
+                    .replace("|", " ")
+                    .replace("Hours", "")
+                )
+            address = address.replace(",", " ")
             address = usaddress.parse(address)
             i = 0
-            street = ""
+            street_address = ""
             city = ""
             state = ""
-            pcode = ""
+            zip_postal = ""
             while i < len(address):
                 temp = address[i]
-                if temp[1].find("Address") != -1 or temp[1].find("Street") != -1 or temp[1].find('Occupancy') != -1 or temp[1].find("Recipient") != -1 or temp[1].find("BuildingName") != -1 or temp[1].find("USPSBoxType") != -1 or temp[1].find("USPSBoxID") != -1:
-                    street = street + " " + temp[0]
+                if (
+                    temp[1].find("Address") != -1
+                    or temp[1].find("Street") != -1
+                    or temp[1].find("Recipient") != -1
+                    or temp[1].find("Occupancy") != -1
+                    or temp[1].find("BuildingName") != -1
+                    or temp[1].find("USPSBoxType") != -1
+                    or temp[1].find("USPSBoxID") != -1
+                ):
+                    street_address = street_address + " " + temp[0]
                 if temp[1].find("PlaceName") != -1:
                     city = city + " " + temp[0]
                 if temp[1].find("StateName") != -1:
                     state = state + " " + temp[0]
                 if temp[1].find("ZipCode") != -1:
-                    pcode = pcode + " " + temp[0]
+                    zip_postal = zip_postal + " " + temp[0]
                 i += 1
+            country_code = "US"
+            coords = soup.find("iframe")["src"]
+            r = session.get(coords, headers=headers)
+            coords = r.text.split("],0,1")[0].rsplit("[null,null,", 1)[1].split(",")
+            latitude = coords[0]
+            longitude = coords[1]
+            yield SgRecord(
+                locator_domain=DOMAIN,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address.strip(),
+                city=city.strip(),
+                state=state.strip(),
+                zip_postal=zip_postal.strip(),
+                country_code=country_code,
+                store_number=MISSING,
+                phone=phone.strip(),
+                location_type=MISSING,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation.strip(),
+            )
 
-            street = street.lstrip().replace(',','')
-            city = city.lstrip().replace(',','')
-            state = state.lstrip().replace(',','')
-            pcode = pcode.lstrip().replace(',','')            
-            try:
-                street =street.split('!')[1]
-            except:
-                pass
-            hours = '<MISSING>'
-            try:
-                hours = soup.text.split('Hours')[1]
-                try:
-                    hours = hours.split('Other')[0]
-                except:
-                    pass
-                try:
-                    hours = hours.split('ORDER')[0]
-                except:
-                    pass
-                try:
-                    hours = hours.split('We')[0]
-                except:
-                    pass
-                try:
-                    hours = hours.split('Contact')[0]
-                except:
-                    pass
-
-                hours = hours.replace('\n',' ').lstrip().rstrip()
-            except:
-                pass
-            lat = '<MISSING>'
-            longt = '<MISSING>'
-            
-            try:
-                coord = soup.find('iframe')['src']
-                #logger.info(coord)
-                
-                lat,longt = coord.split('sll=',1)[1].split('&',1)[0].split(',')
-                
-            except:
-                if link.find('parker') > -1:
-                    lat = '39.518112'
-                    longt = '-104.735327'
-            data.append([
-                        'https://www.tasteofphilly.biz',
-                        link,                   
-                        title,
-                        street,
-                        city,
-                        state,
-                        pcode,
-                        'US',
-                        '<MISSING>',
-                        phone,
-                        '<MISSING>',
-                        lat,
-                        longt,
-                        hours
-                    ])
-            #logger.info(p,data[p])
-            p += 1
-                
-        except:
-            pass
-        
-    
-    return data
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    log.info("Started")
+    count = 0
+    with SgWriter() as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
 
-scrape()
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
+
+
+if __name__ == "__main__":
+    scrape()
