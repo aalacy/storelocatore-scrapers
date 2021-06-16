@@ -30,7 +30,7 @@ def fetch_data():
             log.info(page_url)
             soup = BeautifulSoup(r.text, "html.parser")
             temp = soup.findAll("div", {"class": "location-card-section"})
-            raw_address = temp[0].text.replace("Address", "")
+            raw_address = temp[0].findAll("p")[1].text
             hours_of_operation = (
                 temp[1]
                 .get_text(separator="|", strip=True)
@@ -72,8 +72,8 @@ def fetch_data():
                 store_number=MISSING,
                 phone=phone.strip(),
                 location_type=MISSING,
-                latitude=MISSING,
-                longitude=MISSING,
+                latitude=latitude,
+                longitude=longitude,
                 hours_of_operation=hours_of_operation.strip(),
                 raw_address=raw_address,
             )
