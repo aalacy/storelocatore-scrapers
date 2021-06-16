@@ -1,6 +1,5 @@
 from bs4 import BeautifulSoup
-import csv
-import re
+import csv, re
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -67,14 +66,11 @@ def fetch_data():
             r = session.get(link, headers=headers, verify=False)
             soup = BeautifulSoup(r.text, "html.parser")
             title = soup.find("h1").text
-            try:
-                phone = soup.find("li", {"class", "phone"}).text.strip()
-            except:
-                phone = (
-                    soup.find("div", {"class", "address"})
-                    .select_one("a[href*=tel]")
-                    .text.strip()
-                )
+            phone = (
+                soup.find("div", {"class", "address"})
+                .select_one("a[href*=tel]")
+                .text.strip()
+            )
             street = soup.find("span", {"class": "street-address"}).text
             city = soup.find("em", {"class": "locality"}).text
             state = soup.find("abbr", {"class": "region"}).text
