@@ -66,11 +66,14 @@ def fetch_data():
             r = session.get(link, headers=headers, verify=False)
             soup = BeautifulSoup(r.text, "html.parser")
             title = soup.find("h1").text
-            phone = (
-                soup.find("div", {"class", "address"})
-                .select_one("a[href*=tel]")
-                .text.strip()
-            )
+            try:
+                phone = soup.find("address").find("strong", {"class", "tel"}).text
+            except:
+                phone = (
+                    soup.find("div", {"class", "address"})
+                    .select_one("a[href*=tel]")
+                    .text.strip()
+                )
             street = soup.find("span", {"class": "street-address"}).text
             city = soup.find("em", {"class": "locality"}).text
             state = soup.find("abbr", {"class": "region"}).text
