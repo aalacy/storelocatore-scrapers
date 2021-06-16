@@ -38,7 +38,12 @@ def write_output(data):
 
 
 def fetch_data():
-    locs = []
+    locs = [
+        "https://www.ihg.com/holidayinn/hotels/us/en/mcallen/mfehd/hoteldetail",
+        "https://www.ihg.com/holidayinn/hotels/us/en/baltimore/balwb/hoteldetail",
+        "https://www.ihg.com/holidayinn/hotels/us/en/spartanburg/spart/hoteldetail",
+        "https://www.ihg.com/holidayinn/hotels/us/en/cookeville/cjewa/hoteldetail",
+    ]
     url = "https://www.ihg.com/bin/sitemapindex.xml"
     r = session.get(url, headers=headers)
     brand = "holidayinn"
@@ -168,9 +173,21 @@ def fetch_data():
             phone = "<MISSING>"
         if state == "":
             state = "<MISSING>"
-        state = state.replace("&nbsp;", "")
+        if add == "":
+            add = "<MISSING>"
+        if lat == "":
+            lat = "<MISSING>"
+        if lng == "":
+            lng = "<MISSING>"
+        if zc == "":
+            zc = "<MISSING>"
+        if phone == "":
+            phone = "<MISSING>"
+        if city == "":
+            city = "<MISSING>"
+        state = state.replace("&nbsp;", "").replace(",", "")
         city = city.replace("&nbsp;", "")
-        if " Hotels" not in name:
+        if " Hotels" not in name and name != "":
             yield [
                 website,
                 loc,
