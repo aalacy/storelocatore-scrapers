@@ -115,7 +115,9 @@ for page_url in loc_urls:
                 phone_part = soup.text.strip().split("STORE INFO")[1].split("Phone:")[1]
             except Exception:
                 try:
-                    phone_part = soup.text.strip().split("CONTACT")[1].split("phone:")[1]
+                    phone_part = (
+                        soup.text.strip().split("CONTACT")[1].split("phone:")[1]
+                    )
                 except Exception:
                     phone_part = "<MISSING>"
 
