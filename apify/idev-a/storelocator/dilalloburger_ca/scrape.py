@@ -34,8 +34,8 @@ def fetch_data():
                 .split("z/data")[0]
                 .split(",")
             )
-            location_name=names[x]
-            if location_name.endswith(':'):
+            location_name = names[x]
+            if location_name.endswith(":"):
                 location_name = location_name[:-1]
             yield SgRecord(
                 page_url=base_url,
