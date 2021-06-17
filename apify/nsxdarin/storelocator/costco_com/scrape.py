@@ -135,12 +135,17 @@ def fetch_data():
     session = SgRequests()
     url = "https://www.costco.com"
     r = session.get(url, headers=headers)
+    CFound = False
     for line in r.iter_lines():
         line = str(line.decode("utf-8"))
-        if '<div><a href="https://www.costco.' in line and ".uk" not in line:
+        if "Select country/region:</div>" in line:
+            CFound = True
+        if '<li><a href="https://www.costco.' in line and ".uk" not in line and CFound:
             countries.append(
                 line.split('href="')[1].split('"')[0] + "/store-finder/search?q=&page=0"
             )
+        if CFound and "</ul>" in line:
+            CFound = False
     for co in countries:
         logger.info(co)
         website = "costco.com"
