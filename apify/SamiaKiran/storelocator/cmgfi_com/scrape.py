@@ -83,7 +83,7 @@ def fetch_data():
             loclist = json.loads(loclist)["items"]
             for loc in loclist:
                 page_url = "https://www.cmgfi.com" + loc["branchUrl"]
-                # log.info(page_url)
+                log.info(page_url)
                 location_name = loc["name"]
                 address = loc["address"]
                 address = address.replace(",", " ")
@@ -162,14 +162,12 @@ def dedupe(dataset):
     k = copy - z  # set of duplicates
     z = list(z)  # list without duplicates
     k = list(k)  # list of duplicates
-    # print("\n\n\n\n",z)
     i = 0
     while i < len(copy):
         if i < len(z):
             rec = json.loads(z[i])
             yield remakeSgRecord(rec)
         else:
-            # print(k[i-len(z)])
             rec = json.loads(k[i - len(z)])
             rec.pop(-1)
             rec.append("<DUPLICATE>")
