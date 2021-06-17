@@ -86,23 +86,22 @@ def fetch_data():
                         phone = "<MISSING>"
                     if hours == "":
                         hours = "<MISSING>"
-                    if country == "CA" or country == "US":
-                        yield [
-                            website,
-                            loc,
-                            name,
-                            add,
-                            city,
-                            state,
-                            zc,
-                            country,
-                            store,
-                            phone,
-                            typ,
-                            lat,
-                            lng,
-                            hours,
-                        ]
+                    yield [
+                        website,
+                        loc,
+                        name,
+                        add,
+                        city,
+                        state,
+                        zc,
+                        country,
+                        store,
+                        phone,
+                        typ,
+                        lat,
+                        lng,
+                        hours,
+                    ]
 
 
 def scrape():
