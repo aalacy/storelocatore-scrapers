@@ -66,7 +66,6 @@ def fetch_data():
             logger.info("%s - %s..." % (str(x), str(y)))
             session = SgRequests()
             r = session.post(url, headers=headers, data=payload)
-            print(r.content)
             for item in json.loads(r.content)["features"]:
                 store = item["properties"]["LocID"]
                 name = item["properties"]["LocName"]
