@@ -22,8 +22,6 @@ def api_get(start_url, headers, timeout, attempts, maxRetries):
     session = SgRequests()
     try:
         results = session.get(start_url, headers=headers, timeout=timeout)
-    except:
-        pass
 
     except urllibException.SSLError as urlException:
         if "BAD_RECORD_MAC" in str(urlException):
