@@ -9,6 +9,8 @@ from sgrequests import SgRequests
 
 log = SgLogSetup().get_logger("kroger.com")
 
+session = SgRequests()
+
 
 def write_output(data):
     with open("data.csv", mode="w") as output_file:
@@ -39,12 +41,10 @@ def write_output(data):
 
 def fetch_data():
 
-    base_link = "https://www.kroger.com/storelocator-sitemap.xml"
+    base_link = "http://www.kroger.com/storelocator-sitemap.xml"
 
     user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
     headers = {"User-Agent": user_agent}
-
-    session = SgRequests()
 
     req = session.get(base_link, headers=headers)
     base = BeautifulSoup(req.text, "lxml")
@@ -57,14 +57,7 @@ def fetch_data():
     for i, item in enumerate(items):
         link = item.text
         if "stores/details" in link:
-
-            # New session every 20
-            if i % 20 == 0:
-                if i > 0:
-                    log.info("Getting next 20 ..")
-                    log.info(link)
-                    session = SgRequests()
-
+            log.info(f"Fetching data from: {link}")
             req = session.get(link, headers=headers)
             base = BeautifulSoup(req.text, "lxml")
 
@@ -78,7 +71,6 @@ def fetch_data():
                 got_services = True
             except:
                 try:
-                    session = SgRequests()
                     req = session.get(link, headers=headers)
                     base = BeautifulSoup(req.text, "lxml")
                     services = (
@@ -171,4 +163,5 @@ def scrape():
     write_output(data)
 
 
+session.closed()
 scrape()

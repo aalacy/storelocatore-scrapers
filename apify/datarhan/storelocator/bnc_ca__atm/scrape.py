@@ -53,7 +53,7 @@ def fetch_data():
     all_locations = json.loads(data)
 
     for store_number, poi in all_locations.items():
-        if poi["categoryIndex"] != "branch":
+        if poi["categoryIndex"] != "atm":
             continue
         store_url = poi["permalink"]
         location_name = poi["name"]
@@ -63,7 +63,7 @@ def fetch_data():
         zip_code = poi["postcode"]
         country_code = poi["country"]
         country_code = country_code if country_code else "<MISSING>"
-        store_number = poi["corporateId"]
+        store_number = poi["corporateId"].split(";")[0]
         phone = poi["phone"]
         phone = phone if phone else "<MISSING>"
         location_type = poi["categoryIndex"]
@@ -72,6 +72,8 @@ def fetch_data():
         hoo = etree.HTML(poi["storeHours"]).xpath("//text()")
         hoo = [e.strip() for e in hoo if e.strip()]
         hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
+        if hours_of_operation == "Non disponible":
+            hours_of_operation = "<MISSING>"
 
         item = [
             domain,
