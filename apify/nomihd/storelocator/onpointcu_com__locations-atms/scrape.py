@@ -542,7 +542,7 @@ def process_record(raw_results_from_one_zipcode):
         ):
             location_type = location_type + ", Surcharge-Free ATMs"
 
-        if store["is_cu_branch"] == True:
+        if store["is_cu_branch"] is True:
             location_type = location_type + ", CU BRANCH"
 
         days = [
