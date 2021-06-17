@@ -9,6 +9,8 @@ from sgrequests import SgRequests
 
 log = SgLogSetup().get_logger("kroger.com")
 
+session = SgRequests()
+
 
 def write_output(data):
     with open("data.csv", mode="w") as output_file:
@@ -43,8 +45,6 @@ def fetch_data():
 
     user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
     headers = {"User-Agent": user_agent}
-
-    session = SgRequests()
 
     req = session.get(base_link, headers=headers)
     base = BeautifulSoup(req.text, "lxml")
