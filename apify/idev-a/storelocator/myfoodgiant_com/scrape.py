@@ -23,9 +23,9 @@ def fetch_data():
                 if rr.url.startswith(json_url) and rr.response:
                     exist = True
                     driver.get(rr.url)
-                    locations = json.loads(
-                        bs(driver.page_source, "lxml").text.strip()
-                    )["meta"]
+                    locations = json.loads(bs(driver.page_source, "lxml").text.strip())[
+                        "meta"
+                    ]
                     for _ in locations:
                         addr = _["address"].split(",")
                         yield SgRecord(
