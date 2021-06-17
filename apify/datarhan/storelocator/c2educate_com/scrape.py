@@ -48,9 +48,10 @@ def fetch_data():
     dom = etree.HTML(response.text)
 
     all_poi_urls = dom.xpath('//div[@id="state-locations"]//a/@href')
-    for poi_url in all_poi_urls:
-        store_url = poi_url
+    for store_url in all_poi_urls:
         store_response = session.get(store_url)
+        if "virtual" in store_response.url:
+            continue
         store_dom = etree.HTML(store_response.text)
         store_data = store_dom.xpath('//script[@type="application/ld+json"]/text()')[0]
         store_data = json.loads(store_data)
@@ -77,8 +78,8 @@ def fetch_data():
         latitude = latitude if latitude else "<MISSING>"
         longitude = store_data["geo"]["longitude"]
         longitude = longitude if longitude else "<MISSING>"
-        hours_of_operation = store_data["openingHours"]
-        hours_of_operation = hours_of_operation if hours_of_operation else "<MISSING>"
+        hoo = store_dom.xpath('//li[@class="li-hours icon-clock-o"]//li//text()')
+        hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
 
         item = [
             DOMAIN,

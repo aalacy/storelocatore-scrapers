@@ -16,6 +16,12 @@ us_url = "https://www.passporthealthusa.com/locations/"
 locator_domain = "https://www.passporthealthglobal.com"
 
 
+def _c(val):
+    if val.strip().endswith(","):
+        return val[:-1]
+    return val
+
+
 def fetch_data():
     with SgRequests() as session:
         soup = bs(session.get(us_url, headers=_headers).text, "lxml")
@@ -32,9 +38,9 @@ def fetch_data():
                 logger.info(f"[US] {page_url}")
                 yield SgRecord(
                     page_url=page_url,
-                    location_name=_.select_one('span[itemprop="name"]').text,
+                    location_name=_.select_one('span[itemprop="name"]').text.strip(),
                     street_address=_.select_one('span[itemprop="streetAddress"]').text,
-                    city=_.select("span.streetAddress span")[1].text,
+                    city=_c(_.select("span.streetAddress span")[1].text),
                     state=_.select_one('span[itemprop="addressRegion"]').text,
                     zip_postal=_.select_one('span[itemprop="postalCode"]').text,
                     country_code="US",
@@ -52,9 +58,11 @@ def fetch_data():
             sp = bs(session.get(page_url, headers=_headers).text, "lxml")
             yield SgRecord(
                 page_url=page_url,
-                location_name=sp.select_one('div[itemprop="name"]').text,
+                location_name=sp.select_one('div[itemprop="name"]')
+                .text.replace("\n", "")
+                .strip(),
                 street_address=sp.select_one('span[itemprop="streetAddress"]').text,
-                city=sp.select_one('span[itemprop="addressLocality"]').text,
+                city=_c(sp.select_one('span[itemprop="addressLocality"]').text),
                 zip_postal=sp.select_one('span[itemprop="postalCode"]').text,
                 country_code="UK",
                 latitude=sp.select_one('meta[itemprop="latitude"]')["content"],
@@ -71,7 +79,10 @@ def fetch_data():
             sp = bs(session.get(page_url, headers=_headers).text, "lxml")
             yield SgRecord(
                 page_url=page_url,
-                location_name=sp.select_one('div[itemprop="name"]').text,
+                location_name=sp.select_one('div[itemprop="name"]')
+                .text.replace("\n", "")
+                .strip(),
+                state=sp.select_one('span[itemprop="addressRegion"]').text,
                 street_address=sp.select_one('span[itemprop="streetAddress"]').text,
                 city=sp.select_one('span[itemprop="addressLocality"]').text,
                 zip_postal=sp.select_one('span[itemprop="postalCode"]').text,

@@ -40,7 +40,6 @@ def fetch_data():
     website = "krispykreme.com"
     typ = "<MISSING>"
     country = "US"
-    alllocs = []
     for line in r.iter_lines():
         line = str(line.decode("utf-8"))
         if '{"siteId":' in line:
@@ -75,24 +74,42 @@ def fetch_data():
                     )
                     if phone == "":
                         phone = "<MISSING>"
-                    if loc not in alllocs:
-                        alllocs.append(loc)
-                        yield [
-                            website,
-                            loc,
-                            name,
-                            add,
-                            city,
-                            state,
-                            zc,
-                            country,
-                            store,
-                            phone,
-                            typ,
-                            lat,
-                            lng,
-                            hours,
-                        ]
+                    days = (
+                        item.split('"hoursDineIn":[')[1].split("]")[0].split('"key":"')
+                    )
+                    for day in days:
+                        if '"value":"' in day:
+                            hrs = (
+                                day.split('"')[0]
+                                + ": "
+                                + day.split('"value":"')[1].split('"')[0]
+                            )
+                            if hours == "":
+                                hours = hrs
+                            else:
+                                hours = hours + "; " + hrs
+                    if "Temporary Closure" in hours:
+                        hours = "Temporary Closure"
+                    if "Coming Soon" in item:
+                        name = name + " - Coming Soon"
+                    hours = hours.replace("Not Available at this Location; ; ", "")
+
+                    yield [
+                        website,
+                        loc,
+                        name,
+                        add,
+                        city,
+                        state,
+                        zc,
+                        country,
+                        store,
+                        phone,
+                        typ,
+                        lat,
+                        lng,
+                        hours,
+                    ]
 
 
 def scrape():

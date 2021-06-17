@@ -44,46 +44,59 @@ def fetch_data():
     user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
     headers = {"User-Agent": user_agent}
 
-    session = SgRequests()
+    session = SgRequests(proxy_rotation_failure_threshold=0).requests_retry_session(
+        retries=1,
+        backoff_factor=0.3,
+        status_forcelist=[403, 418, 429, 500, 502, 503, 504],
+    )
 
     req = session.get(base_link, headers=headers)
     base = BeautifulSoup(req.text, "lxml")
 
     items = base.find_all("loc")
 
-    data = []
     locator_domain = "kroger.com"
 
     log.info("Processing " + str(len(items)) + " links ...")
     for i, item in enumerate(items):
         link = item.text
         if "stores/details" in link:
-
-            # New session every 20
-            if i % 20 == 0:
-                if i > 0:
-                    log.info("Getting next 20 ..")
-                    log.info(link)
-                    session = SgRequests()
-
+            log.info(f"Fetching data from: {link}")
             req = session.get(link, headers=headers)
             base = BeautifulSoup(req.text, "lxml")
 
+            got_services = False
             try:
-                if (
-                    "gas"
-                    not in base.find(class_="StoreServices-wrapper table").text.lower()
-                ):
-                    continue
+                services = (
+                    base.find(class_="StoreServices-wrapper table")
+                    .get_text(" ")
+                    .lower()
+                )
+                got_services = True
             except:
+                try:
+                    req = session.get(link, headers=headers)
+                    base = BeautifulSoup(req.text, "lxml")
+                    services = (
+                        base.find(class_="StoreServices-wrapper table")
+                        .get_text(" ")
+                        .lower()
+                    )
+                    got_services = True
+                except:
+                    pass
+
+            if got_services:
+                # Filter fuel locations
+                if ("gas" not in services) and ("diesel" not in services):
+                    continue
+            else:
                 continue
 
             try:
-                script = (
-                    base.find("script", attrs={"type": "application/ld+json"})
-                    .text.replace("\n", "")
-                    .strip()
-                )
+                script = base.find(
+                    "script", attrs={"type": "application/ld+json"}
+                ).contents[0]
             except:
                 log.info(link)
                 raise
@@ -131,26 +144,22 @@ def fetch_data():
             longitude = store["geo"]["longitude"]
 
             # Store data
-            data.append(
-                [
-                    locator_domain,
-                    link,
-                    location_name,
-                    street_address,
-                    city,
-                    state,
-                    zip_code,
-                    country_code,
-                    store_number,
-                    phone,
-                    location_type,
-                    latitude,
-                    longitude,
-                    hours_of_operation,
-                ]
-            )
-
-    return data
+            yield [
+                locator_domain,
+                link,
+                location_name,
+                street_address,
+                city,
+                state,
+                zip_code,
+                country_code,
+                store_number,
+                phone,
+                location_type,
+                latitude,
+                longitude,
+                hours_of_operation,
+            ]
 
 
 def scrape():
