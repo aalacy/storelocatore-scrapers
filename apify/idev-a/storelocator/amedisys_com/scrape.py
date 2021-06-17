@@ -15,6 +15,7 @@ _headers = {
 def fetch_data():
     locator_domain = "https://www.amedisys.com/"
     base_url = "https://locations.amedisys.com/"
+    numbers = []
     with SgRequests() as session:
         states = bs(session.get(base_url, headers=_headers).text, "lxml").select(
             "ul#bowse-content a"
@@ -44,6 +45,9 @@ def fetch_data():
                             .string.strip()
                         )
                         for script in ss:
+                            if _["data-lid"] in numbers:
+                                continue
+                            numbers.append(_["data-lid"])
                             yield SgRecord(
                                 page_url=page_url,
                                 store_number=_["data-lid"],
@@ -71,6 +75,9 @@ def fetch_data():
                             .strip()[:-1]
                         )
                         for script in data:
+                            if script["lid"] in numbers:
+                                continue
+                            numbers.append(script["lid"])
                             info = json.loads(bs(script["info"], "lxml").text.strip())
                             street_address = info["address_1"]
                             if info["address_2"]:

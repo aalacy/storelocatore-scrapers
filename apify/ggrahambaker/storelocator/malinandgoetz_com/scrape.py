@@ -50,12 +50,14 @@ def fetch_data():
 
     all_store_data = []
     for store in store_json["items"]:
-        if store["country_id"] != "US":
-            continue
-        country_code = "US"
+
+        country_code = store["country_id"]
         location_name = store["name"]
-        store_number = store["region_id"]
-        state = store["region"]
+        store_number = "<MISSING>"
+        try:
+            state = store["region"]
+        except:
+            state = "<MISSING>"
         city = store["city"]
         street_address = store["street"]
         zip_code = store["postal_code"]
@@ -80,9 +82,15 @@ def fetch_data():
         for h in hours_p:
             if "Store Hours" in h.text:
                 continue
-            hours += h.text.replace(",", "") + ", "
-        hours = hours.replace("shop hours., ", "")
-
+            hours += h.text.replace(",", "") + " "
+        hours = (
+            hours.replace("shop hours.", "")
+            .replace(",", "")
+            .replace("day", "day ")
+            .strip()
+        )
+        if "Please" in hours:
+            hours = "<MISSING>"
         location_type = "<MISSING>"
 
         store_data = [
@@ -98,7 +106,7 @@ def fetch_data():
             location_type,
             lat,
             longit,
-            hours,
+            hours.strip(),
             page_url,
         ]
 
