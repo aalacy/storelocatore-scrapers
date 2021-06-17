@@ -32,13 +32,16 @@ def fetch_data():
             phone = ""
             if _.b:
                 phone = _.b.text
+            zip_postal = _.add2.text.split(",")[1].strip().split(" ")[-1].strip()
+            if phone:
+                zip_postal = zip_postal.replace(phone, "")
             yield SgRecord(
                 page_url="",
                 location_name=_.title.text,
                 street_address=_.add1.text,
                 city=_.add2.text.split(",")[0].strip(),
                 state=_.add2.text.split(",")[1].strip().split(" ")[0].strip(),
-                zip_postal=_.add2.text.split(",")[1].strip().split(" ")[-1].strip(),
+                zip_postal=zip_postal,
                 latitude=_["lat"],
                 longitude=_["lng"],
                 country_code="US",

@@ -81,7 +81,7 @@ def fetch_data():
             if location_name == "":
                 location_name = "<MISSING>"
 
-            if "COMING SOON" in location_name:
+            if "COMING SOON" in location_name or "coming-soon" in page_url:
                 continue
             street_address = store["address"]["line1"]
             if "line2" in store:
