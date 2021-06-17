@@ -163,5 +163,4 @@ def scrape():
     write_output(data)
 
 
-session.closed()
 scrape()
