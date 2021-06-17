@@ -1,5 +1,4 @@
 import csv
-from lxml import html
 from sgrequests import SgRequests
 
 
@@ -35,74 +34,65 @@ def write_output(data):
 def fetch_data():
     out = []
     locator_domain = "https://cafezupas.com/"
-    api_url = "https://cafezupas.com/locations.html"
+    page_url = "https://cafezupas.com/locations"
+    api_url = "https://dev.cafezupas.com/server.php?url=https://api.devcontrolcenter.zupas.com/api/markets/listing"
 
     session = SgRequests()
     r = session.get(api_url)
-    tree = html.fromstring(r.text)
-    divs = tree.xpath("//div[contains(@class,'grid-item')]")
+    locations = r.json()["data"]["data"]
 
-    for d in divs:
-        line = d.xpath(
-            ".//p[@class='text-small text-extra-dark-gray margin-5px-top']/text()"
-        )
-        if not line:
-            continue
-        line = list(filter(None, [l.strip() for l in line]))
-        street_address = line[0]
-        line = line[-1]
-        city = line.split(",")[0].strip()
-        line = line.split(",")[1].strip()
-        state = line.split()[0]
-        try:
-            postal = line.split()[1]
-        except IndexError:
-            postal = "<MISSING>"
-        country_code = "US"
-        store_number = "<MISSING>"
-        page_url = "https://cafezupas.com/locations.html"
-        location_name = "".join(
-            d.xpath(".//a[contains(@class,'popup-youtube post-title')]/text()")
-        ).strip()
-        phone = (
-            " ".join(
-                "".join(d.xpath(".//a[contains(@href,'tel')]/text()")).split()
-            ).replace("Layton ", "")
-            or "<MISSING>"
-        )
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
-        location_type = "<MISSING>"
-        hours_of_operation = (
-            " ".join(
-                "".join(
-                    d.xpath(".//p[@class='text-small text-extra-dark-gray']/text()")
+    for location in locations:
+        js = location["locations"]
+        for j in js:
+            street_address = j.get("address") or "<MISSING>"
+            city = j.get("city").replace(" WI", "") or "<MISSING>"
+            state = j.get("state") or "<MISSING>"
+            postal = j.get("zip") or "<MISSING>"
+            country_code = "US"
+            store_number = j.get("id") or "<MISSING>"
+            location_name = j.get("name")
+            phone = j.get("phone") or "<MISSING>"
+            latitude = j.get("lat") or "<MISSING>"
+            longitude = j.get("long") or "<MISSING>"
+            location_type = "<MISSING>"
+
+            _tmp = []
+            if j.get("mon_thurs_timings_open"):
+                _tmp.append(
+                    f'Mon-Thu: {j.get("mon_thurs_timings_open")} - {j.get("mon_thurs_timings_close")}'
                 )
-                .strip()
-                .replace("\n", ";")
-                .split()
-            )
-            or "<MISSING>"
-        )
+            else:
+                _tmp.append(f'Mon-Thu: {j.get("mon_thurs_timings")}')
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
+            if j.get("fri_sat_timings_open"):
+                _tmp.append(
+                    f'Fri-Sat: {j.get("fri_sat_timings_open")} - {j.get("fri_sat_timings_close")}'
+                )
+            else:
+                _tmp.append(f'Fri-Sat: {j.get("fri_sat_timings")}')
 
-        out.append(row)
+            if j.get("sunday_timings"):
+                _tmp.append(f'Sun: {j.get("sunday_timings")}')
+
+            hours_of_operation = ";".join(_tmp) or "<MISSING>"
+
+            row = [
+                locator_domain,
+                page_url,
+                location_name,
+                street_address,
+                city,
+                state,
+                postal,
+                country_code,
+                store_number,
+                phone,
+                location_type,
+                latitude,
+                longitude,
+                hours_of_operation,
+            ]
+            out.append(row)
 
     return out
 

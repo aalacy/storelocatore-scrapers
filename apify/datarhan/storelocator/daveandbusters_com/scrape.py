@@ -72,7 +72,6 @@ def fetch_data():
                 headers=hdr,
             )
         poi = json.loads(response.text)
-
         location_name = poi["DisplayName"]
         location_name = location_name if location_name else "<MISSING>"
         street_address = poi["Address"]
@@ -90,6 +89,8 @@ def fetch_data():
         phone = poi["Phone"]
         phone = phone if phone else "<MISSING>"
         location_type = "<MISSING>"
+        if poi["OpeningSoon"]:
+            location_type = "coming soon"
         latitude = poi["Latitude"]
         latitude = latitude if latitude else "<MISSING>"
         longitude = poi["Longitude"]

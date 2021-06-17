@@ -60,10 +60,10 @@ def fetch_data():
             try:
                 driver.execute_script("window.scrollBy(0, -400);")
                 poi.click()
-            except:
+            except Exception:
                 driver.execute_script("window.scrollBy(0, -200);")
                 poi.click()
-            sleep(20)
+            sleep(30)
             poi_html = etree.HTML(driver.page_source)
             raw_data = poi_html.xpath(
                 '//div[@class="animating-screenIn-exit"]//div[@data-testid="mesh-container-content"]/div[3]//text()'

@@ -67,6 +67,8 @@ def fetch_data():
         streetlist = soup.findAll("span", {"itemprop": "streetAddress"})
         street = ""
         for st in streetlist:
+            if st.text in street:
+                continue
             street = street + st.text + " "
         city = soup.find("span", {"itemprop": "addressLocality"}).text
         state = soup.find("span", {"itemprop": "addressRegion"}).text
@@ -80,7 +82,7 @@ def fetch_data():
                 "https://www.landmarkcinemas.com/",
                 link,
                 title,
-                street,
+                street.strip(),
                 city,
                 state,
                 pcode,
