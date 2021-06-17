@@ -19,16 +19,17 @@ MISSING = "<MISSING>"
 
 def fetch_data():
     if True:
-        identities = set()
         url = "https://www.firsthorizon.com/Support/Contact-Us/Location-Listing"
         r = session.get(url, headers=headers)
         soup = BeautifulSoup(r.text, "html.parser")
         loclist = soup.findAll(
-            "section",
-            {"class": "ftb-accordion-listing-item js-accordion js-location-list"},
+            "div",
+            {"class": "ftb-accordion-listing__item js-location-list__item"},
         )
         for loc in loclist:
-            location_name = loc.find("h2").text
+            location_name = loc.find(
+                "div", {"class": "ftb-listing-item__title ftb-color--abbey"}
+            ).text
             log.info(location_name)
             address = (
                 loc.find("div", {"class": "ftb-listing-item__content"})
@@ -44,33 +45,22 @@ def fetch_data():
             zip_postal = address[1]
             country_code = "US"
             hours_of_operation = " ".join(x.text for x in loc.findAll("li"))
-            identity = (
-                str(zip_postal)
-                + ","
-                + str(city)
-                + ","
-                + str(street_address)
-                + ","
-                + str(phone)
+            yield SgRecord(
+                locator_domain=DOMAIN,
+                page_url=url,
+                location_name=location_name.strip(),
+                street_address=street_address.strip(),
+                city=city.strip(),
+                state=state.strip(),
+                zip_postal=zip_postal.strip(),
+                country_code=country_code,
+                store_number=MISSING,
+                phone=phone.strip(),
+                location_type=MISSING,
+                latitude=MISSING,
+                longitude=MISSING,
+                hours_of_operation=hours_of_operation.strip(),
             )
-            if identity not in identities:
-                identities.add(identity)
-                yield SgRecord(
-                    locator_domain=DOMAIN,
-                    page_url=url,
-                    location_name=location_name.strip(),
-                    street_address=street_address.strip(),
-                    city=city.strip(),
-                    state=state.strip(),
-                    zip_postal=zip_postal.strip(),
-                    country_code=country_code,
-                    store_number=MISSING,
-                    phone=phone.strip(),
-                    location_type=MISSING,
-                    latitude=MISSING,
-                    longitude=MISSING,
-                    hours_of_operation=hours_of_operation.strip(),
-                )
 
 
 def scrape():

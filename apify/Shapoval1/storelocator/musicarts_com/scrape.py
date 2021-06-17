@@ -96,7 +96,7 @@ def fetch_data():
                 postal = adr.split(",")[1].split()[1].strip()
                 state = adr.split(",")[1].split()[0].strip()
                 country_code = "US"
-                store_number = "<MISSING>"
+                store_number = page_url.split("-")[-1].split(".")[0].strip()
                 hours_of_operation = tree.xpath(
                     '//div[@class="day-hour-row"]/span//text()'
                 )
