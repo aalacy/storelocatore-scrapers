@@ -22,7 +22,7 @@ def api_get(start_url, headers, timeout, attempts, maxRetries):
     session = SgRequests()
     try:
         results = session.get(start_url, headers=headers, timeout=timeout)
-    except exceptions.RequestException as requestsException:
+    except:
         if "ProxyError" in str(requestsException):
             attempts += 1
             error = True
