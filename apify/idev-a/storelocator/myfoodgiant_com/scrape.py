@@ -16,35 +16,34 @@ def fetch_data():
     page_url = "https://myfoodgiant.com/find-your-store/"
     json_url = "https://myfoodgiant.com/wp-json/wpgmza/v1/marker-listing/"
     with SgChrome() as driver:
-        with SgRequests() as session:
-            driver.get(page_url)
-            exist = False
-            while not exist:
-                time.sleep(1)
-                for rr in driver.requests:
-                    if rr.url.startswith(json_url) and rr.response:
-                        exist = True
-                        driver.get(rr.url)
-                        locations = json.loads(
-                            bs(driver.page_source, "lxml").text.strip()
-                        )["meta"]
-                        for _ in locations:
-                            addr = _["address"].split(",")
-                            yield SgRecord(
-                                page_url=page_url,
-                                store_number=_["id"],
-                                location_name=_["title"],
-                                street_address=addr[0].strip(),
-                                city=addr[1].strip(),
-                                state=addr[2].strip().split(" ")[0].strip(),
-                                zip_postal=addr[2].strip().split(" ")[-1].strip(),
-                                latitude=_["lat"],
-                                longitude=_["lng"],
-                                country_code="US",
-                                locator_domain=locator_domain,
-                            )
+        driver.get(page_url)
+        exist = False
+        while not exist:
+            time.sleep(1)
+            for rr in driver.requests:
+                if rr.url.startswith(json_url) and rr.response:
+                    exist = True
+                    driver.get(rr.url)
+                    locations = json.loads(
+                        bs(driver.page_source, "lxml").text.strip()
+                    )["meta"]
+                    for _ in locations:
+                        addr = _["address"].split(",")
+                        yield SgRecord(
+                            page_url=page_url,
+                            store_number=_["id"],
+                            location_name=_["title"],
+                            street_address=addr[0].strip(),
+                            city=addr[1].strip(),
+                            state=addr[2].strip().split(" ")[0].strip(),
+                            zip_postal=addr[2].strip().split(" ")[-1].strip(),
+                            latitude=_["lat"],
+                            longitude=_["lng"],
+                            country_code="US",
+                            locator_domain=locator_domain,
+                        )
 
-                        break
+                    break
 
 
 if __name__ == "__main__":
