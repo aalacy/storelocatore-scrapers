@@ -1,8 +1,7 @@
 from sgscrape import simple_scraper_pipeline as sp
-from sgrequests import SgRequests
+from sgrequests import SgRequests, exceptions
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 from sglogging import SgLogSetup
-from requests import exceptions
 from urllib3 import exceptions as urllibException
 
 logger = SgLogSetup().get_logger("walmart_com/auto")
