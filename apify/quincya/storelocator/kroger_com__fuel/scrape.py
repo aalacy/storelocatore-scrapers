@@ -162,5 +162,6 @@ def scrape():
     data = fetch_data()
     write_output(data)
 
+
 session.closed()
 scrape()
