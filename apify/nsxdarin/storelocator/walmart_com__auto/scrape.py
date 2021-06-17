@@ -23,11 +23,7 @@ def api_get(start_url, headers, timeout, attempts, maxRetries):
     try:
         results = session.get(start_url, headers=headers, timeout=timeout)
     except:
-        if "ProxyError" in str(requestsException):
-            attempts += 1
-            error = True
-        else:
-            raise requestsException
+        pass
 
     except urllibException.SSLError as urlException:
         if "BAD_RECORD_MAC" in str(urlException):
