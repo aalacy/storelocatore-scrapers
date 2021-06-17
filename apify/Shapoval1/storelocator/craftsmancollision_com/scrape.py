@@ -1,4 +1,5 @@
 import csv
+import json
 from lxml import html
 from sgrequests import SgRequests
 
@@ -35,60 +36,45 @@ def write_output(data):
 def fetch_data():
     out = []
 
-    locator_domain = "https://keyes.com/"
-    api_url = "https://offices.keyes.com/"
+    locator_domain = "https://craftsmancollision.com/"
+    api_url = "https://craftsmancollision.com/booking-shop-locator/"
     session = SgRequests()
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
     }
     r = session.get(api_url, headers=headers)
     tree = html.fromstring(r.text)
-
     jsblock = (
-        "".join(tree.xpath('//script[contains(text(), "defaultListData ")]/text()'))
-        .split("$config.defaultListData = '")[1]
-        .split("';")[0]
-        .replace("\\", "")
+        "".join(tree.xpath('//script[contains(text(), "var jsonShopList = ")]/text()'))
+        .split("var jsonShopList = ")[1]
+        .split(";")[0]
     )
-    jsblock = jsblock.replace(
-        '"hours_sets:primary":"', '"hours_sets:primary":\''
-    ).replace('","more_info_button"', '\',"more_info_button"')
-
-    js = eval(jsblock)
-
+    js = json.loads(jsblock)
     for j in js:
 
-        page_url = j.get("url")
-        if page_url == "https://offices.keyes.com/fl/miami/keyes-offices-v001.html":
-            continue
-        location_name = j.get("location_name")
-        location_type = "Keyes Office"
-        street_address = f"{j.get('address_1')} {j.get('address_2') or ''}".replace(
-            ", Seabranch Square Plaza", ""
-        ).strip()
-        phone = j.get("local_phone")
-        state = j.get("region")
-        postal = j.get("post_code")
-        country_code = j.get("country")
-        city = j.get("city")
-        store_number = j.get("fid")
-        latitude = j.get("lat")
-        longitude = j.get("lng")
+        page_url = "https://craftsmancollision.com/booking-shop-locator/"
+        location_name = j.get("Name")
+        location_type = "Craftsman Collision"
+        street_address = j.get("Addr1")
+        state = j.get("Region")
+        postal = j.get("PostalCode")
+        country_code = "CA"
+        city = j.get("City")
+        store_number = "".join(j.get("CompanyId")).replace("C", "").strip()
+        latitude = j.get("Latitude")
+        longitude = j.get("Longitude")
+        phone = j.get("Phone")
+        session = SgRequests()
+        r = session.get(api_url, headers=headers)
+        tree = html.fromstring(r.text)
         hours_of_operation = (
-            "".join(j.get("hours_sets:primary"))
-            .split('"days":')[1]
-            .split(',"timezone"')[0]
-            .replace('"', "")
-            .replace("{", "")
-            .replace("}", "")
-            .replace("[", "")
-            .replace("]", "")
+            " ".join(
+                tree.xpath(
+                    '//h2[text()="Hours of Operation"]/following-sibling::table[1]//tr/td//text()'
+                )
+            )
+            .replace("\n", "")
             .strip()
-        )
-        hours_of_operation = (
-            hours_of_operation.replace("open:", "")
-            .replace(",close:", " - ")
-            .replace("day:", "day ")
         )
 
         row = [
