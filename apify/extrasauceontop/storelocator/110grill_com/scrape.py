@@ -7,6 +7,7 @@ import json
 import pandas as pd
 from bs4 import BeautifulSoup as bs
 
+
 def get_driver(url, driver=None):
     if driver is not None:
         driver.quit()
@@ -35,6 +36,7 @@ def get_driver(url, driver=None):
                 )
             continue
     return driver
+
 
 def extract_json(html_string):
     json_objects = []
@@ -86,7 +88,9 @@ with open("file.txt", "w", encoding="utf-8") as output:
 json_objects = extract_json(response.split("preloadQueries")[1])
 
 with open("json.txt", "w", encoding="utf-8") as output:
-    json.dump(json_objects[0]["data"]["restaurant"]["homePage"]["sections"], output, indent=4)
+    json.dump(
+        json_objects[0]["data"]["restaurant"]["homePage"]["sections"], output, indent=4
+    )
 
 location_contenders = json_objects[0]["data"]["restaurant"]["homePage"]["sections"]
 
