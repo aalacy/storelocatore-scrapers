@@ -59,19 +59,20 @@ def fetch_data():
             hours_of_operation = (
                 "Mon: "
                 + loc["mon"]
-                + "Tue: "
+                + " Tue: "
                 + loc["tue"]
-                + "Wed: "
+                + " Wed: "
                 + loc["wed"]
-                + "Thu: "
+                + " Thu: "
                 + loc["thu"]
-                + "Fri: "
+                + " Fri: "
                 + loc["fri"]
-                + "Sat: "
+                + " Sat: "
                 + loc["sat"]
-                + "Sun: "
+                + " Sun: "
                 + loc["sun"]
             )
+
             latitude = loc["lat"]
             longitude = loc["lng"]
             yield SgRecord(
