@@ -77,6 +77,8 @@ def fetch_data():
             street_address = street_address + ", " + formatted_addr.street_address_2
 
         city = formatted_addr.city
+        if city is not None:
+            city = city.replace("Building E", "").strip()
         state = formatted_addr.state
         zip = formatted_addr.postcode
         country_code = "US"
