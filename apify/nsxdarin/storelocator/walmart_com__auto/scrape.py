@@ -62,7 +62,7 @@ def fetch_data():
         )
         try:
             r2 = session.get(url, headers=headers, timeout=15).json()
-        except Exception:
+        except:
             r2 = api_get(url, headers, 15, 0, 15).json()
         if r2["payload"]["nbrOfStores"]:
             if int(r2["payload"]["nbrOfStores"]) > 0:
