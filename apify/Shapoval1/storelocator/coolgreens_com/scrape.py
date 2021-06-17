@@ -44,7 +44,7 @@ def fetch_data():
     r = session.get(api_url, headers=headers)
     tree = html.fromstring(r.text)
     div = tree.xpath('//div[./div/a[contains(text(), "Explore")]]')
-
+    s = set()
     for d in div:
 
         page_url = "".join(d.xpath('.//a[contains(text(), "Explore")]/@href'))
@@ -53,11 +53,13 @@ def fetch_data():
         loc = " ".join(d.xpath(".//div[2]//text()")).replace("\n", "").strip()
         text = "".join(d.xpath('.//a[contains(@href, "/maps/")]/@href'))
         location_type = "restaurant"
-        street_address = "".join(d.xpath(".//div[3]//a/text()[1]"))
+        street_address = "".join(d.xpath(".//div[3]//p//text()[1]"))
+
         ad = (
-            "".join(d.xpath(".//div[3]//a/text()[2]")).replace("\n", "").strip()
+            "".join(d.xpath(".//div[3]//p//text()[2]")).replace("\n", "").strip()
             or "<MISSING>"
         )
+
         state = "<MISSING>"
         postal = "<MISSING>"
         country_code = "US"
@@ -66,6 +68,7 @@ def fetch_data():
             city = ad.split(",")[0].strip()
             state = ad.split(",")[1].split()[0].strip()
             postal = ad.split(",")[1].split()[1].strip()
+
         store_number = "<MISSING>"
         try:
             if text.find("ll=") != -1:
@@ -81,6 +84,51 @@ def fetch_data():
         r = session.get(page_url, headers=headers)
         tree = html.fromstring(r.text)
         location_name = "".join(tree.xpath("//h2/text()")).replace("•", "").strip()
+        if location_name == "Coolgreens  Downtown OKC":
+            street_address = "".join(tree.xpath("//h1/span[1]/text()"))
+            city = (
+                "".join(tree.xpath("//h1/span[2]/text()"))
+                .replace("\n", "")
+                .split(",")[0]
+                .strip()
+            )
+            state = (
+                "".join(tree.xpath("//h1/span[2]/text()"))
+                .replace("\n", "")
+                .split(",")[1]
+                .split()[0]
+                .strip()
+            )
+            postal = (
+                "".join(tree.xpath("//h1/span[2]/text()"))
+                .replace("\n", "")
+                .split(",")[1]
+                .split()[1]
+                .strip()
+            )
+            latitude = (
+                "".join(
+                    tree.xpath(
+                        '//script[contains(text(), "Coolgreens+-+Downtown")]/text()'
+                    )
+                )
+                .replace("\\", "")
+                .split("Coolgreens+-+Downtown/@")[1]
+                .split(",")[0]
+                .strip()
+            )
+            longitude = (
+                "".join(
+                    tree.xpath(
+                        '//script[contains(text(), "Coolgreens+-+Downtown")]/text()'
+                    )
+                )
+                .replace("\\", "")
+                .split("Coolgreens+-+Downtown/@")[1]
+                .split(",")[1]
+                .strip()
+            )
+
         if street_address == "Explore":
             street_address = "".join(tree.xpath("//h1/span[1]/text()"))
             ad = "".join(tree.xpath("//h1/span[2]/text()")) or "<MISSING>"
@@ -89,6 +137,7 @@ def fetch_data():
                 state = ad.split(",")[1].split()[0].strip()
                 postal = ad.split(",")[1].split()[1].strip()
         fa = tree.xpath("//div[./div/h1]/following-sibling::div//p/span/text()")
+
         hours_of_operation = (
             " ".join(
                 tree.xpath(
@@ -105,6 +154,11 @@ def fetch_data():
             phone = "".join(fa[-1]).strip()
         except:
             phone = "<MISSING>"
+
+        line = street_address
+        if line in s:
+            continue
+        s.add(line)
 
         row = [
             locator_domain,

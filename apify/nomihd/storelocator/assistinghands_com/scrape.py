@@ -47,9 +47,13 @@ def fetch_data():
             if formatted_addr.street_address_2:
                 street_address = street_address + ", " + formatted_addr.street_address_2
 
-            street_address = street_address.replace("Ste", "Suite")
+            if street_address is not None:
+                street_address = street_address.replace("Ste", "Suite")
             city = formatted_addr.city
-            state = formatted_addr.state.replace(", Usa", "").strip()
+
+            if formatted_addr.state is not None:
+                state = formatted_addr.state.replace(", Usa", "").strip()
+
             zip = formatted_addr.postcode
 
             country_code = "US"
