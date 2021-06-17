@@ -1,6 +1,3 @@
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
 from sgselenium.sgselenium import SgChrome
 from webdriver_manager.chrome import ChromeDriverManager
 import json
@@ -26,9 +23,7 @@ def get_driver(url, driver=None):
             ).driver()
             driver.get(url)
             break
-        except Exception as e:
-            print(e)
-
+        except Exception:
             driver.quit()
             if x == 10:
                 raise Exception(
@@ -82,15 +77,7 @@ base_url = "https://www.110grill.com/locations"
 driver = get_driver(base_url)
 response = driver.page_source
 
-with open("file.txt", "w", encoding="utf-8") as output:
-    print(response, file=output)
-
 json_objects = extract_json(response.split("preloadQueries")[1])
-
-with open("json.txt", "w", encoding="utf-8") as output:
-    json.dump(
-        json_objects[0]["data"]["restaurant"]["homePage"]["sections"], output, indent=4
-    )
 
 location_contenders = json_objects[0]["data"]["restaurant"]["homePage"]["sections"]
 
