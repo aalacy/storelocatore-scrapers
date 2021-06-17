@@ -119,7 +119,7 @@ def fetch_data():
             lng,
             hours,
         ]
-        time.sleep(5)
+        time.sleep(15)
 
 
 def scrape():

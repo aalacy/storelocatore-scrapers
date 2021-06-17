@@ -56,9 +56,14 @@ def fetch_data():
         locator_domain = "ewingirrigation.com"
         location_name = "Ewing " + item.find(class_="store_content").a.text.strip()
 
+        if "coming soon" in location_name.lower():
+            continue
+
         raw_address = (
             item.find(class_="address")
             .text.replace(" CO 80", " CO, 80")
+            .replace(" CO. 80", " CO, 80")
+            .replace("Knoxville TN 3792", "Knoxville, TN, 3792")
             .replace("\r\n\r\n", "\n")
             .split("\n")
         )

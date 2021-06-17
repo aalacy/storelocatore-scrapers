@@ -118,6 +118,8 @@ def fetch_data():
             location_name = base.h1.get_text(" ").strip()
 
             for base in bases:
+                if "COMING SOON" in base.text.upper():
+                    continue
                 raw_address = list(base.find(class_="address").stripped_strings)
                 street_address = raw_address[0].strip()
                 city_line = raw_address[1].split(",")
@@ -151,6 +153,10 @@ def fetch_data():
                 except:
                     latitude = "<MISSING>"
                     longitude = "<MISSING>"
+
+                if "3975 Tyler St" in street_address:
+                    latitude = "33.914379"
+                    longitude = "-117.463129"
 
                 data.append(
                     [
