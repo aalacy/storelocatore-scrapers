@@ -1,5 +1,5 @@
 from sgscrape import simple_scraper_pipeline as sp
-from sgrequests import SgRequests, exceptions
+from sgrequests import SgRequests
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 from sglogging import SgLogSetup
 from urllib3 import exceptions as urllibException
