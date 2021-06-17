@@ -87,7 +87,7 @@ def fetch_data():
         )
         hours_of_operation = (
             hours_of_operation.replace("open:", "")
-            .replace("close:", "")
+            .replace(",close:", " - ")
             .replace("day:", "day ")
         )
 
