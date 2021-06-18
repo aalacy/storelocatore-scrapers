@@ -50,7 +50,6 @@ def fetch_data():
     }
     r = session.get(api_url, headers=headers)
     js = r.json()
-    print(js)
 
     for j in js:
 
