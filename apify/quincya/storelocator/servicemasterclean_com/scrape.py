@@ -1,11 +1,14 @@
 import csv
 import re
+import time
 
 from bs4 import BeautifulSoup
 
 from sglogging import SgLogSetup
 
 from sgrequests import SgRequests
+
+from sgselenium import SgChrome
 
 logger = SgLogSetup().get_logger("servicemasterclean_com")
 
@@ -47,9 +50,14 @@ def fetch_data():
     user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
     headers = {"User-Agent": user_agent}
 
+    driver = SgChrome(user_agent=user_agent).driver()
+
+    driver.get(base_link)
+    time.sleep(10)
+
+    base = BeautifulSoup(driver.page_source, "lxml")
+
     session = SgRequests()
-    req = session.get(base_link, headers=headers)
-    base = BeautifulSoup(req.text, "lxml")
 
     all_links = []
     found_poi = []
@@ -151,6 +159,7 @@ def fetch_data():
                 longitude,
                 hours_of_operation,
             ]
+    driver.close()
 
 
 def scrape():
