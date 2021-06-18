@@ -1,5 +1,5 @@
 from sgscrape import simple_scraper_pipeline as sp
-from sgrequests import SgRequests, exceptions
+from sgrequests import SgRequests
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 from sglogging import SgLogSetup
 from urllib3 import exceptions as urllibException
@@ -22,12 +22,6 @@ def api_get(start_url, headers, timeout, attempts, maxRetries):
     session = SgRequests()
     try:
         results = session.get(start_url, headers=headers, timeout=timeout)
-    except exceptions.RequestException as requestsException:
-        if "ProxyError" in str(requestsException):
-            attempts += 1
-            error = True
-        else:
-            raise requestsException
 
     except urllibException.SSLError as urlException:
         if "BAD_RECORD_MAC" in str(urlException):
@@ -66,7 +60,7 @@ def fetch_data():
         )
         try:
             r2 = session.get(url, headers=headers, timeout=15).json()
-        except Exception:
+        except:
             r2 = api_get(url, headers, 15, 0, 15).json()
         if r2["payload"]["nbrOfStores"]:
             if int(r2["payload"]["nbrOfStores"]) > 0:
