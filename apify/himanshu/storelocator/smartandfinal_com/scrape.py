@@ -1,117 +1,207 @@
-import csv
-from sgrequests import SgRequests
-from requests_toolbelt.utils import dump
-import re
-import json
-from sglogging import SgLogSetup
+from bs4 import BeautifulSoup as bs
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from sgselenium.sgselenium import SgChrome
+from webdriver_manager.chrome import ChromeDriverManager
+from sglogging import sglog
+import pandas as pd
+import ssl
 
-logger = SgLogSetup().get_logger('smartandfinal_com')
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
+
+log = sglog.SgLogSetup().get_logger(logger_name="smartandfinal.com")
+
+locator_domains = []
+page_urls = []
+location_names = []
+street_addresses = []
+citys = []
+states = []
+zips = []
+country_codes = []
+store_numbers = []
+phones = []
+location_types = []
+latitudes = []
+longitudes = []
+hours_of_operations = []
 
 
+def get_driver(url, class_name, driver=None):
+    if driver is not None:
+        driver.quit()
+
+    user_agent = (
+        "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:89.0) Gecko/20100101 Firefox/89.0"
+    )
+    x = 0
+    while True:
+        x = x + 1
+        try:
+            driver = SgChrome(
+                executable_path=ChromeDriverManager().install(),
+                user_agent=user_agent,
+                is_headless=True,
+            ).driver()
+            driver.get(url)
+
+            WebDriverWait(driver, 30).until(
+                EC.presence_of_element_located((By.CLASS_NAME, class_name))
+            )
+            break
+        except Exception:
+            driver.quit()
+            if x == 10:
+                raise Exception(
+                    "Make sure this ran with a Proxy, will fail without one"
+                )
+            continue
+    return driver
 
 
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',',
-                            quotechar='"', quoting=csv.QUOTE_ALL)
-
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
-def debug(response):
-    data = dump.dump_all(response)
-    logger.info(data.decode('utf-8'))
-
-
-def setCookie(session, domain, name, value):
-  if domain is None:
-    cookie_obj = session.cookies.set(name=name, value=value)
-  else:
-    cookie_obj = session.cookies.set(domain=domain, name=name, value=value)
-  session.cookies.set_cookie(cookie_obj)
+x = 0
+while True:
+    x = x + 1
+    class_name = "store-preview__info"
+    url = "https://www.smartandfinal.com/stores/?coordinates=36.01301919805139,-124.22992541516308&zoom=1"
+    if x == 1:
+        driver = get_driver(url, class_name)
+    else:
+        driver = get_driver(url, class_name, driver=driver)
+    soup = bs(driver.page_source, "lxml")
+    grids = soup.find("div", class_="store-list__scroll-container").find_all("li")
+    if len(grids) == 0:
+        continue
+    else:
+        break
 
 
-def fetch_data():
+for grid in grids:
+    name = grid.find("span", {"class": "store-name"}).text.strip()
+    number = grid.find(
+        "span",
+        attrs={"ng-if": "$ctrl.showStoreNumber && $ctrl.store.store_number"},
+    ).text.strip()
+    page_url = (
+        "https://www.smartandfinal.com/stores/"
+        + name.split("\n")[0].replace(" ", "-").replace(".", "").lower()
+        + "-"
+        + number.split("\n")[0].split("#")[-1]
+        + "/"
+        + grid["id"].split("-")[-1]
+    )
+    try:
+        driver.get(page_url)
+        log.info("Pull content => " + page_url)
+        WebDriverWait(driver, 20).until(
+            EC.presence_of_element_located(
+                (By.CLASS_NAME, "store-details-store-hours__content")
+            )
+        )
+    except Exception:
+        driver = get_driver(
+            page_url, "store-details-store-hours__content", driver=driver
+        )
 
-    addresses = []
+    location_soup = bs(driver.page_source, "lxml")
 
-    headers = {
-        'accept': 'application/json, text/plain, */*',
-        'accept-encoding': 'gzip, deflate, br',
-        'accept-language': 'en-US,en;q=0.9,la;q=0.8',
-        'cache-control': 'no-cache',
-        'pragma': 'no-cache',
-        'referer': 'https://www.smartandfinal.com/stores/?coordinates=34.62683229277248,-95.16241099999999&zoom=3',
-        'sec-fetch-dest': 'empty',
-        'sec-fetch-mode': 'cors',
-        'sec-fetch-site': 'same-origin',
-        'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36',
+    locator_domain = "smartandfinal.com"
+    location_name = location_soup.find("meta", attrs={"property": "og:title"})[
+        "content"
+    ]
+    address = location_soup.find("meta", attrs={"property": "og:street-address"})[
+        "content"
+    ]
+    city = location_soup.find("meta", attrs={"property": "og:locality"})["content"]
+    state = location_soup.find("meta", attrs={"property": "og:region"})["content"]
+    zipp = location_soup.find("meta", attrs={"property": "og:postal-code"})["content"]
+    country_code = location_soup.find("meta", attrs={"property": "og:country-name"})[
+        "content"
+    ]
+    store_number = location_name.split("#")[-1]
+    phone = location_soup.find("meta", attrs={"property": "og:phone_number"})
+    if not phone:
+        phone = "<MISSING>"
+    else:
+        phone = phone["content"]
+    location_type = "<MISSING>"
+    latitude = location_soup.find("meta", attrs={"property": "og:location:latitude"})[
+        "content"
+    ]
+    longitude = location_soup.find("meta", attrs={"property": "og:location:longitude"})[
+        "content"
+    ]
+
+    hours = ""
+    days = location_soup.find("dl", attrs={"aria-label": "Store Hours"}).find_all("dt")
+    hours_list = location_soup.find("dl", attrs={"aria-label": "Store Hours"}).find_all(
+        "dd"
+    )
+
+    for x in range(len(days)):
+        day = days[x].text.strip()
+        hour = hours_list[x].text.strip()
+        hours = hours + day + " " + hour + ", "
+
+    hours = hours[:-2]
+
+    locator_domains.append(locator_domain)
+    page_urls.append(page_url)
+    location_names.append(location_name)
+    street_addresses.append(address)
+    citys.append(city)
+    states.append(state)
+    zips.append(zipp)
+    country_codes.append(country_code)
+    store_numbers.append(store_number)
+    phones.append(phone)
+    location_types.append(location_type)
+    latitudes.append(latitude)
+    longitudes.append(longitude)
+    hours_of_operations.append(hours)
+    log.info("Append {} => {}".format(location_name, address))
+
+df = pd.DataFrame(
+    {
+        "locator_domain": locator_domains,
+        "page_url": page_urls,
+        "location_name": location_names,
+        "street_address": street_addresses,
+        "city": citys,
+        "state": states,
+        "zip": zips,
+        "store_number": store_numbers,
+        "phone": phones,
+        "latitude": latitudes,
+        "longitude": longitudes,
+        "hours_of_operation": hours_of_operations,
+        "country_code": country_codes,
+        "location_type": location_types,
     }
+)
 
-    session = SgRequests()
+df = df.fillna("<MISSING>")
+df = df.replace(r"^\s*$", "<MISSING>", regex=True)
 
-    init_url = "https://www.smartandfinal.com/api/m_user/sessioninit"
-    r = session.post(init_url, headers=headers)
-    csrf_token = r.json()[0]
+df["dupecheck"] = (
+    df["location_name"]
+    + df["street_address"]
+    + df["city"]
+    + df["state"]
+    + df["location_type"]
+)
 
-    setCookie(session.get_session(), 'www.smartandfinal.com', 'has_js', '1')
-    setCookie(session.get_session(), 'www.smartandfinal.com',
-              'XSRF-TOKEN', csrf_token)
-    headers['x-csrf-token'] = csrf_token
+df = df.drop_duplicates(subset=["dupecheck"])
+df = df.drop(columns=["dupecheck"])
+df = df.replace(r"^\s*$", "<MISSING>", regex=True)
+df = df.fillna("<MISSING>")
 
-    url = "https://www.smartandfinal.com/api/m_store_location?store_type_ids=1,2,3"
-    r = session.get(url, headers=headers)
-
-    data = r.json()
-
-    for loc in data['stores']:
-        store_number = loc['store_number']
-        location_type = ''
-        country_code = ''
-        hours_of_operation = ''
-        locator_domain = 'https://www.smartandfinal.com/'
-        phone = ''
-        dictionary = {}
-        weekday = ['Sunday', 'Monday', 'Tuesday',
-                   'Wednesday', 'Thursday', 'Friday', 'Saturday']
-        for day, h in enumerate(loc['store_hours']):
-
-            dictionary[weekday[day]] = h['open']+'-'+h['close']
-        hours_of_operation = ''
-        for h1 in dictionary:
-            hours_of_operation = hours_of_operation + \
-                ' ' + h1 + ' ' + dictionary[h1]
-
-        phone = loc['phone']
-        name = loc['storeName'].replace("-", "").replace(".", "")
-        page_url = "https://www.smartandfinal.com/stores/" + \
-            str(name.replace(" ", "-").lower())+"-" + \
-            str(store_number)+"/"+str(loc['locationID'])
-
-        store = [locator_domain, loc['storeName'].capitalize(), loc['address'].capitalize(), loc['city'].capitalize(), loc['state'].capitalize(), loc['zip'], country_code,
-                 store_number, phone, location_type, loc['latitude'], loc['longitude'], hours_of_operation, page_url]
-
-        if str(store[2]) + str(store[-3]) not in addresses:
-            addresses.append(str(store[2]) + str(store[-3]))
-
-            store = [str(x).encode('ascii', 'ignore').decode(
-                'ascii').strip() if x else "<MISSING>" for x in store]
-
-            # logger.info("data = " + str(store))
-            # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-            yield store
-            # logger.info("-----------------------------------",store)
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
-
+df.to_csv("data.csv", index=False)

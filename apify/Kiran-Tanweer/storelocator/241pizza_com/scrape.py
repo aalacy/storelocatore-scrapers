@@ -39,7 +39,7 @@ headers_stores = {
 
 
 def store_data(loc):
-    location_name = loc["location"]
+    location_name = loc["location"].replace("&amp;", "")
     store_number = loc["store_number"]
     latitude = loc["latitude"]
     longitude = loc["longitude"]
@@ -92,7 +92,6 @@ def fetch_data():
                     statelist.append(state)
             else:
                 statelist.append(state)
-
         for loc, state in zip(loclist, statelist):
             page_url = (
                 "https://241pizza.com/restaurant-locator/#!/province/"
@@ -103,12 +102,40 @@ def fetch_data():
             )
             log.info(page_url)
             payload = {"city": loc}
-            loc = session.post(url, data=payload, headers=headers_stores).json()[
-                "response"
-            ]["city"]["store"]
-            if type(loc) is list:
-                stores = loc
-                for store in stores:
+            loc = session.post(url, data=payload, headers=headers_stores).json()
+            if type(loc) is not bool:
+                loc = loc["response"]["city"]["store"]
+                if type(loc) is list:
+                    stores = loc
+                    for store in stores:
+                        (
+                            location_name,
+                            store_number,
+                            latitude,
+                            longitude,
+                            phone,
+                            hours_of_operation,
+                            street_address,
+                            city,
+                            zip_postal,
+                        ) = store_data(store)
+                        yield SgRecord(
+                            locator_domain="https://241pizza.com/",
+                            page_url=page_url,
+                            location_name=location_name,
+                            street_address=street_address.strip(),
+                            city=city.strip(),
+                            state=state,
+                            zip_postal=zip_postal.strip(),
+                            country_code="CA",
+                            store_number=store_number,
+                            phone=phone,
+                            location_type="<MISSING>",
+                            latitude=latitude,
+                            longitude=longitude,
+                            hours_of_operation=hours_of_operation.strip(),
+                        )
+                else:
                     (
                         location_name,
                         store_number,
@@ -119,7 +146,7 @@ def fetch_data():
                         street_address,
                         city,
                         zip_postal,
-                    ) = store_data(store)
+                    ) = store_data(loc)
                     yield SgRecord(
                         locator_domain="https://241pizza.com/",
                         page_url=page_url,
@@ -136,34 +163,6 @@ def fetch_data():
                         longitude=longitude,
                         hours_of_operation=hours_of_operation.strip(),
                     )
-            else:
-                (
-                    location_name,
-                    store_number,
-                    latitude,
-                    longitude,
-                    phone,
-                    hours_of_operation,
-                    street_address,
-                    city,
-                    zip_postal,
-                ) = store_data(loc)
-                yield SgRecord(
-                    locator_domain="https://241pizza.com/",
-                    page_url=page_url,
-                    location_name=location_name,
-                    street_address=street_address.strip(),
-                    city=city.strip(),
-                    state=state,
-                    zip_postal=zip_postal.strip(),
-                    country_code="CA",
-                    store_number=store_number,
-                    phone=phone,
-                    location_type="<MISSING>",
-                    latitude=latitude,
-                    longitude=longitude,
-                    hours_of_operation=hours_of_operation.strip(),
-                )
 
 
 def scrape():
@@ -174,7 +173,6 @@ def scrape():
         for rec in results:
             writer.write_row(rec)
             count = count + 1
-
     log.info(f"No of records being processed: {count}")
     log.info("Finished")
 
