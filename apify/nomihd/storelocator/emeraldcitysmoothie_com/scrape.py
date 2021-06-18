@@ -5,7 +5,7 @@ import json
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgzip.dynamic import SearchableCountries
-from sgzip.dynamic import DynamicZipSearch, Grain_2
+from sgzip.dynamic import DynamicZipSearch, Grain_1_KM
 
 website = "emeraldcitysmoothie.com"
 logger = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -15,7 +15,7 @@ search = DynamicZipSearch(
     country_codes=[SearchableCountries.USA],
     max_radius_miles=None,
     max_search_results=None,
-    granularity=Grain_2(),
+    granularity=Grain_1_KM(),
 )
 
 
