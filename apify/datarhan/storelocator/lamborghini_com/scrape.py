@@ -1,6 +1,8 @@
 import csv
 import json
+
 from sgrequests import SgRequests
+from sgscrape.sgpostal import parse_address_intl
 
 
 def write_output(data):
@@ -46,20 +48,20 @@ def fetch_data():
     data = json.loads(response.text)
 
     for poi in data["item"]:
-        if poi["address"]["country"] not in [
-            "United States",
-            "Canada",
-            "United Kingdom",
-        ]:
-            continue
         store_url = "<MISSING>"
         location_name = poi["description"]
         location_name = location_name if location_name else "<MISSING>"
         street_address = poi["address"]["address"]
         street_address = street_address if street_address else "<MISSING>"
-        city = poi["address"]["city"].split(",")[0]
+        addr = parse_address_intl(street_address)
+        street_address = addr.street_address_1
+        if addr.street_address_2:
+            street_address += " " + addr.street_address_2
+        city = poi["address"].get("city")
+        city = city.split(",")[0] if city else "<MISSING>"
         state = "<MISSING>"
-        zip_code = poi["address"]["zip"]
+        zip_code = poi["address"].get("zip")
+        zip_code = zip_code if zip_code else "<MISSING>"
         country_code = poi["address"]["countryCode"]
         if country_code == "US":
             zip_code = zip_code.split()[-1]

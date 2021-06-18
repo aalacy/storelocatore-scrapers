@@ -38,7 +38,11 @@ def fetch_data():
                 .replace("\xa0", " ")
             )
             state_zip = state_zip.split(" ")
-
+            hours = []
+            for hh in block[:-1][::-1]:
+                if hh.startswith("Ph"):
+                    break
+                hours.append(hh)
             yield SgRecord(
                 page_url=page_url,
                 location_name=_[0],
@@ -51,7 +55,7 @@ def fetch_data():
                 longitude=_[2],
                 phone=addr[-1],
                 locator_domain=locator_domain,
-                hours_of_operation=block[-2],
+                hours_of_operation="; ".join(hours),
             )
 
 

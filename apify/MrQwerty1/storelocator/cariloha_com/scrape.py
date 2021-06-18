@@ -55,7 +55,6 @@ def get_address(line):
         "USPSBoxGroupType": "address1",
         "USPSBoxID": "address1",
         "USPSBoxType": "address1",
-        "BuildingName": "address2",
         "OccupancyType": "address2",
         "OccupancyIdentifier": "address2",
         "SubaddressIdentifier": "address2",
@@ -79,56 +78,27 @@ def get_address(line):
 
 
 def get_urls():
-    coords = dict()
     session = SgRequests()
     r = session.get("https://www.cariloha.com/stores.html")
     tree = html.fromstring(r.text)
 
-    urls = tree.xpath(
-        "//h3[@class='store-region' and not(contains(text(), 'MEXICO')) and not(contains(text(), 'CARIBBEAN'))]/following-sibling::ul[@class='region-list'][1]/li/a/@href"
+    return tree.xpath(
+        "//h3[@class='store-region' and ./span[not(contains(text(), 'MEXICO'))] and ./span[not(contains(text(), 'CARIBBEAN'))]]/following-sibling::p/a/@href"
     )
-    text = "".join(tree.xpath("//script[contains(text(),'var markers1=')]/text()"))
-    text = text.split("var markers1=")[1].split("var messages1=")[0][1:-2].split("},{")
-
-    for t in text:
-        lat = t.split("lat:")[1].split(",")[0]
-        lng = t.split("lng:")[1].split(",")[0]
-        slug = (
-            t.split('storeurl:"')[1].split('"')[0].split("/")[-2].replace("stores-", "")
-        )
-        coords[slug] = (lat, lng)
-
-    return coords, urls
 
 
-def get_data(url, coords):
+def get_data(page_url):
     locator_domain = "https://www.cariloha.com/"
-    slug = url.replace("/stores/", "")
-    page_url = f"https://www.cariloha.com{url}"
 
     session = SgRequests()
     r = session.get(page_url)
     tree = html.fromstring(r.text)
 
-    location_name = (
-        "".join(tree.xpath("//h1/span/text()|//div[@id='scottsdale-info']/text()"))
-        .replace("Visit", "")
-        .strip()
+    location_name = "".join(tree.xpath("//h1/text()")).strip()
+    line = tree.xpath("//h3[contains(text(), 'Address')]/following-sibling::p//text()")
+    line = ", ".join(list(filter(None, [l.strip() for l in line]))).replace(
+        ", Poipu Shopping Village", ""
     )
-    line = tree.xpath(
-        "//p[contains(text(), 'Address')]/following-sibling::p[1]/text()|//h4[contains(text(), 'Address')]/following-sibling::p[1]/text()"
-    )
-    line = list(filter(None, [l.strip() for l in line]))
-    cnt = 0
-    for l in line:
-        if l[0].isdigit():
-            break
-        cnt += 1
-
-    if cnt == len(line) - 1:
-        line = ", ".join(line[1:])
-    else:
-        line = ", ".join(line[cnt:]).replace(", Poipu Shopping Village", "")
 
     street_address, city, state, postal = get_address(line)
     country_code = "US"
@@ -136,28 +106,25 @@ def get_data(url, coords):
     phone = (
         "".join(
             tree.xpath(
-                "//p[contains(text(), 'Phone')]/text()|//p[contains(text(), 'Phone')]/a[contains(@href,'tel')]/text()"
+                "//h3[contains(text(), 'Contact')]/following-sibling::a[not(contains(@href, '@'))]/@href"
             )
-        ).strip()
+        ).replace("tel:", "")
         or "<MISSING>"
     )
-    phone = phone.replace("Phone", "").replace("Email", "").replace(":", "").strip()
-    if "F" in phone:
-        phone = phone.split("F")[0].strip()
-    latitude, longitude = coords.get(slug) or ["<MISSING>", "<MISSING>"]
+    latitude = (
+        "".join(tree.xpath("//div[@data-latitude]/@data-latitude")) or "<MISSING>"
+    )
+    longitude = (
+        "".join(tree.xpath("//div[@data-latitude]/@data-longitude")) or "<MISSING>"
+    )
     location_type = "<MISSING>"
 
     _tmp = []
-    hours = tree.xpath(
-        "//p[contains(text(), 'Hours')]/following-sibling::p/text()|//h4[contains(text(), 'Hours')]/following-sibling::p/text()|//p[@class='store-info-p' and contains(text(), 'Mon')]/text()"
-    )
-    hours = list(filter(None, [h.strip() for h in hours]))
-    for h in hours:
-        if "Sea" in h:
-            continue
-        if "Contact" in h or "Located" in h or "Follow" in h or "Store" in h:
-            break
-        _tmp.append(h)
+    tr = tree.xpath("//tr[@class='hours-row']")
+    for t in tr:
+        day = "".join(t.xpath("./td[1]//text()")).strip()
+        time = "".join(t.xpath("./td[2]//text()")).strip()
+        _tmp.append(f"{day}: {time}")
 
     hours_of_operation = ";".join(_tmp) or "<MISSING>"
 
@@ -183,10 +150,10 @@ def get_data(url, coords):
 
 def fetch_data():
     out = []
-    coords, urls = get_urls()
+    urls = get_urls()
 
     with futures.ThreadPoolExecutor(max_workers=10) as executor:
-        future_to_url = {executor.submit(get_data, url, coords): url for url in urls}
+        future_to_url = {executor.submit(get_data, url): url for url in urls}
         for future in futures.as_completed(future_to_url):
             row = future.result()
             if row:

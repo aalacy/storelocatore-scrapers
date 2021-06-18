@@ -34,7 +34,8 @@ def write_output(data):
 def fetch_data():
     out = []
     locator_domain = "https://www.riesbeckfoods.com"
-    api_url = "https://api.freshop.com/1/stores?app_key=riesbeck&has_address=true&limit=-1&token=78e05aaed9d8ca6f32aab783af3bd527"
+    api_url = "https://api.freshop.com/1/stores?app_key=riesbeck&has_address=true&is_selectable=true&limit=100&token=01e7769903e517c138afc3c908a82e3e"
+
     session = SgRequests()
     r = session.get(api_url)
     js = r.json()
@@ -52,7 +53,9 @@ def fetch_data():
         longitude = j.get("longitude")
         location_type = "<MISSING>"
         hours_of_operation = j.get("hours_md")
-        page_url = j.get("url")
+        page_url = (
+            j.get("url") or "https://www.riesbeckfoods.com/my-store/store-locator"
+        )
         postal = j.get("postal_code")
         row = [
             locator_domain,

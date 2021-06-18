@@ -6,7 +6,13 @@ from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
 
-session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
+session = SgRequests().requests_retry_session(
+    retries=2,
+    backoff_factor=0.3,
+    status_forcelist=[
+        404,
+    ],
+)
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36",
     "IsoCode": "",
@@ -139,13 +145,13 @@ def fetch_data():
     searched = []
     all_coordinates = {}
     us_search = DynamicGeoSearch(
-        country_codes=[SearchableCountries.USA], max_radius_miles=50
+        country_codes=[SearchableCountries.USA], max_radius_miles=10
     )
     ca_search = DynamicGeoSearch(
-        country_codes=[SearchableCountries.CANADA], max_radius_miles=50
+        country_codes=[SearchableCountries.CANADA], max_radius_miles=100
     )
     uk_search = DynamicGeoSearch(
-        country_codes=[SearchableCountries.BRITAIN], max_radius_miles=50
+        country_codes=[SearchableCountries.BRITAIN], max_radius_miles=100
     )
     all_coordinates = {"CA": ca_search, "UK": uk_search, "US": us_search}
 
@@ -156,7 +162,7 @@ def fetch_data():
             try:
                 locations = fetch(lat, lng, country)
             except Exception as e:
-                logger.error(f"error fetching data for {lat} {lng}: {e}")
+                logger.error(f"error fetching data for {lat} {lng} {country}: {e}")
                 continue
             if len(locations) == 1:
                 set_jwt_token_header(session)

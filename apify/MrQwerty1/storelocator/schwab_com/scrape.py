@@ -35,12 +35,23 @@ def write_output(data):
 
 
 def get_urls():
+    urls = []
     session = SgRequests()
-    r = session.get(
-        "https://client.schwab.com/Public/BranchLocator/ViewAllBranches_abc.aspx?"
-    )
-    tree = html.fromstring(r.content)
-    return tree.xpath("//a[@class='popup']/@href")
+
+    start = [
+        "https://client.schwab.com/Public/BranchLocator/ViewAllBranches_abc.aspx?",
+        "https://client.schwab.com/Public/BranchLocator/ViewAllBranches_defghil.aspx?",
+        "https://client.schwab.com/Public/BranchLocator/ViewAllBranches_mn.aspx?",
+        "https://client.schwab.com/Public/BranchLocator/ViewAllBranches_opqrstuvw.aspx?",
+    ]
+
+    for s in start:
+        r = session.get(s)
+        tree = html.fromstring(r.content)
+        links = tree.xpath("//a[@class='popup']/@href")
+        urls += links
+
+    return urls
 
 
 def get_data(page_url):
@@ -49,6 +60,8 @@ def get_data(page_url):
     locator_domain = "https://www.schwab.com/"
 
     r = session.get(page_url)
+    if r.status_code == 404:
+        return
     tree = html.fromstring(r.text)
     location_name = "".join(
         tree.xpath(

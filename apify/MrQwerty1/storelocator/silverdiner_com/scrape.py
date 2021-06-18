@@ -64,6 +64,8 @@ def fetch_data():
         ).strip()
         if location_name.find("(") != -1:
             location_name = location_name.split("(")[0].strip()
+        if not location_name:
+            continue
 
         phone = "".join(d.xpath(".//div[@class='phone']/text()")).strip()
         try:

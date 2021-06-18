@@ -75,14 +75,19 @@ def fetch_data():
         country_code = d["country"]
         country_code_UK = "UK"
         country_code_CA = "CA"
-        if country_code == country_code_UK or country_code == country_code_CA:
+        country_code_US = "US"
+        if (
+            country_code == country_code_UK
+            or country_code == country_code_CA
+            or country_code == country_code_US
+        ):
             locator_domain = locator_domain_url
             location_name = d["addresses"]["marketing"]["name"]
             url_store = locations.xpath('//a[contains(., "%s")]/@href' % location_name)[
                 0
             ]
             if url_store:
-                page_url = "https://www.anthropologie.com/" + url_store
+                page_url = "https://www.anthropologie.com" + url_store
             else:
                 page_url = MISSING
 
@@ -97,27 +102,47 @@ def fetch_data():
             except KeyError:
                 phone = "<MISSING>"
 
-            location_type = d["storeType"] if d["storeType"] else MISSING
-            latitude = d["loc"][1] if d["loc"][1] else MISSING
-            longitude = d["loc"][0] if d["loc"][0] else MISSING
+            try:
+                location_type = d["storeType"]
+            except KeyError:
+                location_type = MISSING
+            try:
+                latitude = d["loc"][1]
+            except:
+                latitude = MISSING
+            try:
+                longitude = d["loc"][0]
+            except:
+                longitude = MISSING
+
             hours_of_operation = get_hoo(d["hours"])
-            row = [
-                locator_domain,
-                page_url,
-                location_name,
-                street_address,
-                city,
-                state,
-                zip,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
-            items.append(row)
+            if (
+                page_url == "https://www.anthropologie.com/stores"
+                and street_address == MISSING
+            ):
+                continue
+            else:
+                if page_url == "https://www.anthropologie.com/stores":
+                    page_url = MISSING
+
+                row = [
+                    locator_domain,
+                    page_url,
+                    location_name,
+                    street_address,
+                    city,
+                    state,
+                    zip,
+                    country_code,
+                    store_number,
+                    phone,
+                    location_type,
+                    latitude,
+                    longitude,
+                    hours_of_operation,
+                ]
+
+                items.append(row)
         else:
             continue
     return items
