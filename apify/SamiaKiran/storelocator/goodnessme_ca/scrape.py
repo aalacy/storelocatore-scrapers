@@ -43,7 +43,8 @@ def fetch_data():
                 .get_text(separator="|", strip=True)
                 .replace("|", " ")
                 .replace("Orders: 24 / 7, 365 Call Centre:", "")
-                .replace("*see in-store for eatery hours", "").replace("EST","")
+                .replace("*see in-store for eatery hours", "")
+                .replace("EST", "")
             )
             for coords in coord_list:
                 if location_name in coords:
