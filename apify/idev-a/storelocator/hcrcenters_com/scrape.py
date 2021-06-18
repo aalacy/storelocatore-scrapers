@@ -45,7 +45,7 @@ def fetch_data():
                 hours.append(hh)
             yield SgRecord(
                 page_url=page_url,
-                location_name=ss["name"],
+                location_name=" ".join(bs(ss["name"], "lxml").stripped_strings),
                 street_address=ss["address"]["streetAddress"],
                 city=ss["address"]["addressLocality"],
                 state=ss["address"]["addressRegion"],

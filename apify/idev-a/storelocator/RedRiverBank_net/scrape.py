@@ -21,6 +21,8 @@ def fetch_data():
             location_type = ["branch"]
             if _["atm"]:
                 location_type.append(_["atm"])
+            if "ATM" in _["name"]:
+                location_type = ["atm"]
             hours = []
             if _["hours1"]:
                 hours += list(bs(_["hours1"], "lxml").stripped_strings)
