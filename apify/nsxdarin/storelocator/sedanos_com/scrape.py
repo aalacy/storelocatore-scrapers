@@ -82,6 +82,7 @@ def fetch_data():
         if "day" in line or "24 hours" in line:
             if "datepicker" not in line:
                 hours = line.split('">')[1].split("<")[0].strip().replace("\t", "")
+                loc = "https://sedanos.com/stores/"
                 yield [
                     website,
                     loc,
