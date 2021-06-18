@@ -34,7 +34,6 @@ def fetch_data():
         ).find_elements_by_class_name("subsection")
         del ls[0]
         del ls[0]
-        print(len(ls))
 
         for l in ls:
 
