@@ -1,8 +1,8 @@
 import json
-import csv
 import os
-from typing import NamedTuple
 from sgrequests import SgRequests
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
 
 # The URL being crawled
 URL = "https://www.cellularplus.com/locations/"
@@ -15,27 +15,6 @@ __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file
 locations_variable_name = "page.locations = "
 # The entry where the user's location data is stored
 location_variable_name = "page.location = "
-
-
-class Store(NamedTuple):
-    """
-    The class defining objects that represent each store
-    """
-
-    locator_domain: str
-    page_url: str
-    location_name: str
-    street_address: str
-    city: str
-    state: str
-    zip: str
-    country_code: str
-    store_number: str
-    phone: str
-    location_type: str
-    latitude: float
-    longitude: float
-    hours_of_operations: str
 
 
 def make_request():
@@ -57,21 +36,21 @@ def store_of_json(elt):
     """
     Returns the relevant info for any given CP store
     """
-    return Store(
+    return SgRecord(
         locator_domain="https://www.cellularplus.com/locations/",
         page_url="https://www.cellularplus.com/locations/",
         location_name=elt["Name"],
         street_address=elt["Address"],
         city=elt["City"],
         state=elt["ProvinceAbbrev"],
-        zip=elt["PostalCode"],
+        zip_postal=elt["PostalCode"],
         country_code=elt["CountryCode"],
         store_number=elt["LocationId"],
         phone=elt["Phone"],
         location_type="<MISSING>",
         latitude=elt["Google_Latitude"],
         longitude=elt["Google_Longitude"],
-        hours_of_operations=elt["HoursOfOperation"],
+        hours_of_operation=elt["HoursOfOperation"],
     )
 
 
@@ -79,28 +58,9 @@ def csv_of_storelist(storelst):
     """
     Takes a list of python CP stores and writes to [data.csv]
     """
-    with open((os.path.join(__location__, "data.csv")), "w", encoding="utf8") as file:
-        writer = csv.writer(file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL)
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
+    with SgWriter() as writer:
         for store in storelst:
-            writer.writerow(store)
+            writer.write_row(store)
 
 
 def scrape():
