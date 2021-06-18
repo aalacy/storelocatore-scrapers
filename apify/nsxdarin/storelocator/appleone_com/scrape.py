@@ -39,7 +39,7 @@ search = static_zipcode_list(10, SearchableCountries.USA)
 session = SgRequests()
 headers = {
     "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.108 Safari/537.36",
-    "Cookie": "statePreference=; statePreference=; preferredLocal=city=&countrycode=UK, GB&latitude=0&longitude=0; PretAManger-UK_Language=en-gb; _ga=GA1.3.682867871.1588958973; _gid=GA1.3.711697636.1588958973; _fbp=fb.2.1588958973219.1726351087; _y2=1%3AeyJjIjp7IjEyNDc2NiI6LTE0NzM5ODQwMDAsIjEyNTIxOCI6LTE0NzM5ODQwMDAsIjEyOTQ4NiI6LTE0NzM5ODQwMDAsIjEzMDIxNiI6LTE0NzM5ODQwMDAsIjEzMTc5NCI6LTE0NzM5ODQwMDAsIjEzMjUwOSI6LTE0NzM5ODQwMDAsIm8iOi0xNDczOTg0MDAwfX0%3D%3ALTE0NzEzNjMxNjg%3D%3A99; newsletterPageReferrer=https://www.pret.co.uk/en-gb/find-a-pret/London; OptanonConsent=isIABGlobal=false&datestamp=Fri+May+08+2020+12%3A30%3A37+GMT-0500+(Central+Daylight+Time)&version=5.9.0&landingPath=NotLandingPage&groups=1%3A1%2C2%3A1%2C3%3A1%2C4%3A1%2C0_48371%3A1%2C0_48370%3A1%2C0_94508%3A1%2C0_94507%3A1%2C0_48372%3A1%2C0_48365%3A1%2C0_48367%3A1%2C0_48366%3A1%2C0_48369%3A1%2C0_48368%3A1%2C8%3A0&AwaitingReconsent=false; newsletterAction=dwell; newsletterDwellTime=56; _yi=1%3AeyJsaSI6bnVsbCwic2UiOnsiYyI6MSwibGEiOjE1ODg5NTkxMjEzNzgsInAiOjUsInNjIjoxMjN9LCJ1Ijp7ImlkIjoiZDA1MDIzNTctZWYxZC00OTlhLThmODAtOWIxMmI5MzVkYmVjIiwiZmwiOiIwIn19%3ALTE0MzE4NDYxMTI%3D%3A99; lastTimestamp=1588959122; preferredLocal=city=&countrycode=UK, GB&latitude=0&longitude=0; PretAManger-UK_Language=en-gb",
+    "Cookie": "_mkto_trk=id:815-TMY-864&token:_mch-appleone.com-1623683464541-85817; _ga=GA1.2.2031496430.1623683465; _fbp=fb.1.1623683464658.1694829143; OptanonAlertBoxClosed=2021-06-14T15:11:13.413Z; NSC_ofx_JEFW_xxx.bqqmfpof.dpn_iuuqt=ffffffff09cb1fa845525d5f4f58455e445a4a423660; _gid=GA1.2.813993892.1623857444; _gat_gtag_UA_3402201_1=1; OptanonConsent=isIABGlobal=false&datestamp=Wed+Jun+16+2021+10%3A31%3A29+GMT-0500+(Central+Daylight+Time)&version=5.12.0&landingPath=NotLandingPage&groups=C0001%3A1%2CC0002%3A1%2CC0004%3A1%2CBG1%3A1&hosts=&geolocation=US%3BMN&AwaitingReconsent=false",
 }
 
 
@@ -85,17 +85,21 @@ def fetch_location(zipcode, EV, VSG, VS, ids, url):
                 name = line.split('<dd class="accordion-navigation" data-officename="')[
                     1
                 ].split('"')[0]
-                addinfo = line.split('address="')[1].split('"')[0]
-                if addinfo.count(",") == 3:
-                    add = addinfo.split(",")[0] + " " + addinfo.split(",")[1].strip()
-                    city = addinfo.split(",")[2].strip()
-                    state = addinfo.split(",")[3].strip().split(" ")[0]
-                    zc = addinfo.rsplit(" ", 1)[1]
-                else:
-                    add = addinfo.split(",")[0]
-                    city = addinfo.split(",")[1].strip()
-                    state = addinfo.split(",")[2].strip().split(" ")[0]
-                    zc = addinfo.rsplit(" ", 1)[1]
+            if '<span class="addr-details">' in line:
+                g = next(lines)
+                h = next(lines)
+                i = next(lines)
+                g = str(g.decode("utf-8"))
+                h = str(h.decode("utf-8"))
+                i = str(i.decode("utf-8"))
+                add = g.split("<")[0].strip().replace("\t", "")
+                try:
+                    add = add + " " + h.split("<")[0].strip().replace("\t", "")
+                except:
+                    pass
+                city = i.split(",")[0]
+                state = i.split(",")[1].strip().split(" ")[0]
+                zc = i.split("<")[0].strip().rsplit(" ", 1)[1]
             if '<a href="tel:+' in line:
                 phone = line.split('">')[1].split("<")[0]
             if "day</span>" in line:
@@ -111,7 +115,13 @@ def fetch_location(zipcode, EV, VSG, VS, ids, url):
                 else:
                     hours = hours + "; " + hrs
             if 'div id="gmap-display-' in line:
+                city = city.strip().replace("\t", "")
                 info = name + "|" + add
+                if "10151 Deerwood Park Blvd" in add:
+                    add = "10151 Deerwood Park Blvd Suite 110, Building 100"
+                    city = "Jacksonville"
+                    state = "FL"
+                    zc = "32256"
                 if info not in ids:
                     ids.append(info)
                     return [

@@ -7,7 +7,7 @@ headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
 
-logger = SgLogSetup().get_logger("house_hyatt_com")
+logger = SgLogSetup().get_logger("hyatt_com__brands__unbound-collection")
 
 
 def write_output(data):
@@ -40,8 +40,9 @@ def write_output(data):
 def fetch_data():
     url = "https://www.hyatt.com/explore-hotels/service/hotels"
     r = session.get(url, headers=headers, timeout=60, stream=True)
-    website = "house.hyatt.com"
+    website = "hyatt.com/brands/unbound-collection"
     hours = "<MISSING>"
+    locs = []
     logger.info("Pulling Stores")
     for line in r.iter_lines():
         line = str(line.decode("utf-8"))
@@ -108,22 +109,24 @@ def fetch_data():
                         name = "Hyatt Residence Club Maui, Kaanapali Beach"
                     if CS:
                         name = name + " - Coming Soon"
-                    yield [
-                        website,
-                        loc,
-                        name,
-                        add,
-                        city,
-                        state,
-                        zc,
-                        country,
-                        store,
-                        phone,
-                        typ,
-                        lat,
-                        lng,
-                        hours,
-                    ]
+                    if loc not in locs:
+                        locs.append(loc)
+                        yield [
+                            website,
+                            loc,
+                            name,
+                            add,
+                            city,
+                            state,
+                            zc,
+                            country,
+                            store,
+                            phone,
+                            typ,
+                            lat,
+                            lng,
+                            hours,
+                        ]
 
 
 def scrape():
