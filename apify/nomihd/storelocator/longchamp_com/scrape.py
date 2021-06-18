@@ -6,7 +6,7 @@ from sgscrape.simple_utils import parallelize
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgzip.dynamic import SearchableCountries
-from sgzip.static import static_coordinate_list
+from sgzip.dynamic import DynamicGeoSearch
 from sgzip.utils import country_names_by_code
 
 website = "longchamp.com"
@@ -31,10 +31,13 @@ headers = {
 id_list = []
 
 
-def fetch_records_for(coords):
+def fetch_records_for(tup):
+    coords, CurrentCountry, countriesRemaining = tup
     lat = coords[0]
     lng = coords[1]
-    log.info(f"pulling records for coordinates: {lat,lng}")
+    log.info(
+        f"pulling records for Country-{CurrentCountry} Country#:{countriesRemaining},\n coordinates: {lat,lng}"
+    )
     search_url = "https://www.longchamp.com/on/demandware.store/Sites-Longchamp-OC-Site/en_US/Stores-FindStores"
     params = (
         ("showMap", "true"),
@@ -121,15 +124,25 @@ def scrape():
     log.info("Started")
     count = 0
     with SgWriter() as writer:
-        countries = country_names_by_code().keys()
-        print(countries)
+        countries = (
+            SearchableCountries.WITH_ZIPCODE_AND_COORDS
+            + SearchableCountries.WITH_COORDS_ONLY
+        )
+        totalCountries = len(countries)
+        currentCountryCount = 0
         for country in countries:
-            log.info(f"checking {country}")
+            # log.info(f"checking {country}")
             try:
+                search = DynamicGeoSearch(max_radius_miles=300, country_codes=[country])
                 results = parallelize(
-                    search_space=static_coordinate_list(
-                        radius=200, country_code=country
-                    ),
+                    search_space=[
+                        (
+                            coord,
+                            search.current_country(),
+                            str(f"{currentCountryCount}/{totalCountries}"),
+                        )
+                        for coord in search
+                    ],
                     fetch_results_for_rec=fetch_records_for,
                     processing_function=process_record,
                     max_threads=20,  # tweak to see what's fastest
@@ -137,8 +150,10 @@ def scrape():
                 for rec in results:
                     writer.write_row(rec)
                     count = count + 1
-            except:
-                log.error(f"{country}: not found")
+                currentCountryCount += 1
+            except Exception as e:
+                log.error(f"{country}: not found\n{e}")
+                currentCountryCount += 1
                 pass
 
     log.info(f"No of records being processed: {count}")
