@@ -20,18 +20,14 @@ def fetch_data():
         driver.get(base_url)
         driver.get(base_url)
         logger.info("selecting option")
-        radius_option = (
-            WebDriverWait(driver, 10)
-            .until(
-                EC.presence_of_element_located(
-                    (
-                        By.XPATH,
-                        "//select[@id='store-locator-by-radius-store-locator']/option[@value='999999']",
-                    )
+        WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located(
+                (
+                    By.XPATH,
+                    "//select[@id='store-locator-by-radius-store-locator']/option[@value='999999']",
                 )
             )
-            .click()
-        )
+        ).click()
         driver.find_element_by_css_selector("input.store-locator__zip").send_keys(
             "35244", Keys.ENTER
         )
