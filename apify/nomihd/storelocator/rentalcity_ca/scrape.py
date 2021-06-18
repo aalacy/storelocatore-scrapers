@@ -63,7 +63,7 @@ def fetch_data():
 
         full_address = store_info[:sep]
 
-        street_address = " ".join(full_address[:-3]).strip()
+        street_address = " ".join(full_address[:-3]).strip().split("(")[0].strip()
         city = " ".join(full_address[-3].split(" ")[:-1]).strip(", ").strip()
         state = full_address[-3].split(" ")[-1].upper()
         zip = full_address[-2].strip()
