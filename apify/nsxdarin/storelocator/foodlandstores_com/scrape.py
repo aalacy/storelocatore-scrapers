@@ -35,9 +35,7 @@ def write_output(data):
 
 
 def fetch_data():
-    url = "https://api.freshop.com/2/sessions/bdadcc58770f187e56d7e61b72ce93ed?app_key=foodland_unfi"
-    r = session.get(url, headers=headers)
-    url = "https://api.freshop.com/1/stores?app_key=foodland_unfi&has_address=true&limit=-1&token=bdadcc58770f187e56d7e61b72ce93ed"
+    url = "https://api.freshop.com/1/stores?app_key=foodland_unfi&has_address=true&limit=-1&token=cab8ebe90e8c8987e7ccb8733bb382cf"
     r = session.get(url, headers=headers)
     website = "foodlandstores.com"
     country = "US"

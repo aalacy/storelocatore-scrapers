@@ -82,6 +82,9 @@ def fetch_data():
             or "Closed"
         )
 
+        if l.xpath(".//font[contains(text(), 'Coming Soon')]"):
+            hours_of_operation = "Coming Soon"
+
         row = [
             locator_domain,
             page_url,

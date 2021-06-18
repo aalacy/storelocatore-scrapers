@@ -19,7 +19,7 @@ def fetch_data():
     base_url = "https://csncollision.com/all-locations/"
     with SgRequests() as session:
         soup = bs(session.get(base_url, headers=_headers).text, "lxml")
-        links = soup.select("div.shopProvince div.shopLocal")
+        links = soup.select("div.container div.col-6.col-lg-4.my-4")
         logger.info(f"{len(links)} found")
         for link in links:
             page_url = link.a["href"]
@@ -27,7 +27,7 @@ def fetch_data():
             res = session.get(page_url, headers=_headers).text
             sp1 = bs(res, "lxml")
             script = json.loads(
-                res.split("var csn_location =")[1].split("/*")[0].strip()[:-1]
+                res.split("var csn_location =")[1].split("</script>")[0].strip()[:-1]
             )
             addr = parse_address_intl(script["address"])
             street_address = addr.street_address_1

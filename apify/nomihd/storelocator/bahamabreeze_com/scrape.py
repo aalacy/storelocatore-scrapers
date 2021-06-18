@@ -114,6 +114,17 @@ def fetch_data():
 
             hours_of_operation = "; ".join(hours_list).strip()
 
+        if len(hours_of_operation) <= 0:
+            hours_list = []
+            hours = store_sel.xpath('//div[contains(@class,"week-schedule")]/div')
+            for hour in hours:
+                day = "".join(hour.xpath("ul/li[1]/text()")).strip()
+                if "(" in day:
+                    day = day.split("(")[1].strip().replace(")", "").strip()
+                time = "".join(hour.xpath("ul/li[2]//text()")).strip()
+                hours_list.append(day + ":" + time)
+            hours_of_operation = "; ".join(hours_list).strip()
+
         yield SgRecord(
             locator_domain=locator_domain,
             page_url=page_url,

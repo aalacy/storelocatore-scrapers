@@ -46,7 +46,7 @@ def fetch_data():
     r = session.get(url, headers=headers)
     website = "tesla.com"
     typ = "<MISSING>"
-    country = "GB"
+    country = "<MISSING>"
     logger.info("Pulling Stores")
     Found = False
     for line in r.iter_lines():
@@ -118,7 +118,14 @@ def fetch_data():
                 zc = addr.postcode
                 state = addr.state
                 add = addr.street_address_1
-                add = add.strip()
+                if add is None:
+                    add = "<MISSING>"
+                else:
+                    add = add.strip()
+                if "prsanjuan" in loc:
+                    add = "381 Calle Juan Calaf"
+                    state = "PR"
+                    country = "US"
             if '<span class="type">' in line2 and typ == "":
                 typ = typ + "; " + line2.split('<span class="type">')[1].split("<")[0]
                 if phone == "":
@@ -233,6 +240,10 @@ def fetch_data():
             typ = "Store"
         if CS:
             name = name + " - Coming Soon"
+        if state == "" or state is None:
+            state = "<MISSING>"
+        if zc == "" or zc is None:
+            zc = "<MISSING>"
         yield [
             website,
             loc,
@@ -421,6 +432,10 @@ def fetch_data():
             zc = "<MISSING>"
         if CS:
             name = name + " - Coming Soon"
+        if state == "" or state is None:
+            state = "<MISSING>"
+        if zc == "" or zc is None:
+            zc = "<MISSING>"
         yield [
             website,
             loc,
@@ -595,6 +610,10 @@ def fetch_data():
             typ = "Store"
         if CS:
             name = name + " - Coming Soon"
+        if state == "" or state is None:
+            state = "<MISSING>"
+        if zc == "" or zc is None:
+            zc = "<MISSING>"
         yield [
             website,
             loc,
@@ -798,6 +817,10 @@ def fetch_data():
             typ = "Store"
         if CS:
             name = name + " - Coming Soon"
+        if state == "" or state is None:
+            state = "<MISSING>"
+        if zc == "" or zc is None:
+            zc = "<MISSING>"
         yield [
             website,
             loc,
