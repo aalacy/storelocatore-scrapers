@@ -72,7 +72,6 @@ def fetch_data():
             )[0]
         except:
             phone = "<MISSING>"
-        print(phone)
 
         row = [
             locator_domain,
