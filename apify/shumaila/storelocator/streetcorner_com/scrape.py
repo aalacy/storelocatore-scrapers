@@ -101,6 +101,7 @@ def fetch_data():
             else:
                 if len(pcode) == 4:
                     pcode = "0" + pcode
+            hours =  hours.encode('ascii', 'ignore').decode('ascii')
             if title.find("Coming Soon") == -1:
                 data.append(
                     [
@@ -117,7 +118,7 @@ def fetch_data():
                         "<MISSING>",
                         lat.strip(),
                         longt,
-                        hours.replace("â€“", "-").replace("â€“", "-"),
+                        hours.replace("am", "am-"),
                     ]
                 )
 
