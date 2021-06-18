@@ -156,7 +156,6 @@ def fetch_data():
                 continue
             s.add(store_number)
 
-            addinfo = f"{add}, {city}, {zip_postal}, {country_code}"
             raw_address = str(time.monotonic())
             yield SgRecord(
                 locator_domain=locator_domain,
