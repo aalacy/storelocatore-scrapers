@@ -7,7 +7,6 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 import time
-from sgscrape.sgpostal import parse_address_intl
 from sglogging import SgLogSetup
 
 logger = SgLogSetup().get_logger("oreck")
@@ -58,10 +57,10 @@ def fetch_data():
                 sp1.select_one("div.store-details__address div").stripped_strings
             )
             raw_address = " ".join(_addr[1:-1])
-            addr = parse_address_intl(raw_address)
-            street_address = addr.street_address_1
-            if addr.street_address_2:
-                street_address += " " + addr.street_address_2
+            addr = _addr[1:-1]
+            street_address = addr[0]
+            if street_address.endswith(","):
+                street_address = street_address[:-1]
             hours = [
                 ":".join(hh.stripped_strings)
                 for hh in sp1.select("div.store-details__hours div p")
@@ -70,9 +69,9 @@ def fetch_data():
                 page_url=base_url,
                 location_name=_addr[0],
                 street_address=street_address,
-                city=addr.city,
-                state=addr.state,
-                zip_postal=addr.postcode,
+                city=addr[-1].split(",")[0].strip(),
+                state=addr[-1].split(",")[1].strip().split(" ")[0].strip(),
+                zip_postal=addr[-1].split(",")[1].strip().split(" ")[-1].strip(),
                 country_code="us",
                 phone=_addr[-1],
                 locator_domain=locator_domain,
@@ -87,17 +86,14 @@ def fetch_data():
         logger.info(f"{len(authorized_stores)} authorized_stores found")
         for store in authorized_stores:
             _addr = list(store.stripped_strings)
-            addr = parse_address_intl(_addr[1])
-            street_address = addr.street_address_1
-            if addr.street_address_2:
-                street_address += " " + addr.street_address_2
+            addr = _addr[1].split(",")
             yield SgRecord(
                 page_url=base_url,
                 location_name=_addr[0],
-                street_address=street_address,
-                city=addr.city,
-                state=addr.state,
-                zip_postal=addr.postcode,
+                street_address=" ".join(addr[:-3]),
+                city=addr[-3].strip(),
+                state=addr[-2].strip(),
+                zip_postal=addr[-1].strip(),
                 country_code="us",
                 phone=_addr[-1],
                 locator_domain=locator_domain,
