@@ -56,7 +56,6 @@ def fetch_data():
             "<loc>https://restaurants.fiveguys.com/" in line
             and Found
             and "concourse-b-gate-b71-dulles" not in line
-            and "7100-foundry-row" in line
         ):
             locs.append(line.split("<loc>")[1].split("<")[0].replace("&#39;", "'"))
     url = "https://restaurants.fiveguys.ca/sitemap.xml"
