@@ -2,11 +2,9 @@
 from sgrequests import SgRequests
 from sglogging import sglog
 import json
-from sgscrape.simple_utils import parallelize
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgzip.dynamic import SearchableCountries
-from sgzip.static import static_zipcode_list
 from sgzip.dynamic import DynamicZipSearch, Grain_2
 
 website = "emeraldcitysmoothie.com"
