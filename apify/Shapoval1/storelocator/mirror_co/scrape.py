@@ -46,7 +46,7 @@ def fetch_data():
     block = block.split('"more_locations":')[1].split(',"locations_filter"')[0]
 
     js = json.loads(block)
-
+    s = set()
     for j in js:
 
         ad = "".join(j.get("location")).split("\r\n")
@@ -80,6 +80,11 @@ def fetch_data():
             hours_of_operation = hours_of_operation.split("ONLY")[1].strip()
         if hours_of_operation.find("See") != -1:
             hours_of_operation = "<MISSING>"
+
+        line = street_address
+        if line in s and line != "7014 East Camelback Rd":
+            continue
+        s.add(line)
 
         row = [
             locator_domain,
