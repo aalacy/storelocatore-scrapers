@@ -263,8 +263,8 @@ class CrawlMethod(CleanRecord):
             async with httpx.AsyncClient(
                 proxies=proxies, headers=headers, timeout=None
             ) as client:
-                response = await client.post(url, headers=headers, data=data)
                 try:
+                    response = await client.post(url, headers=headers, data=data)
                     response = response.json()
                     return response
                 except Exception as e:
