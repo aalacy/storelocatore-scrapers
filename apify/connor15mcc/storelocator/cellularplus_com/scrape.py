@@ -1,4 +1,6 @@
-import json, csv, os
+import json
+import csv
+import os
 from typing import NamedTuple
 from sgrequests import SgRequests
 
