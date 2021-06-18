@@ -1,6 +1,4 @@
-import re
 import csv
-from lxml import etree
 
 from sgrequests import SgRequests
 
