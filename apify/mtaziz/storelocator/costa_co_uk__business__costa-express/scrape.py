@@ -1,10 +1,11 @@
 from sgrequests import SgRequests
-from sgzip.dynamic import DynamicGeoSearch, SearchableCountries, Grain_8
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries, Grain_4
 from sglogging import SgLogSetup
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import json
 import ssl
+import time
 
 try:
     _create_unverified_https_context = (
@@ -22,9 +23,9 @@ MISSING = "<MISSING>"
 
 search = DynamicGeoSearch(
     country_codes=[SearchableCountries.BRITAIN],
-    max_radius_miles=5,
-    max_search_results=500,
-    granularity=Grain_8(),
+    max_radius_miles=None,
+    max_search_results=None,
+    granularity=Grain_4(),
 )
 
 
@@ -155,8 +156,7 @@ def fetch_data():
                 continue
             s.add(store_number)
 
-            addinfo = f"{add}, {city}, {zip_postal}, {country_code}"
-            raw_address = addinfo
+            raw_address = str(time.monotonic())
             yield SgRecord(
                 locator_domain=locator_domain,
                 page_url=page_url,

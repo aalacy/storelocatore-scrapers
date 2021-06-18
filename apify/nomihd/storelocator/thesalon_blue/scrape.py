@@ -44,6 +44,7 @@ def fetch_data():
         location_name = store["location_name"].strip()
         street_address = (
             store["location_address"]["street_number"]
+            + " "
             + store["location_address"]["street_name"]
         ).strip()
 
