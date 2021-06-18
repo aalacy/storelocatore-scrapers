@@ -65,6 +65,17 @@ def fetch_data():
                 lng = line2.split('itemprop="longitude" content="')[1].split('"')[0]
             if '<span class="c-address-street-1 ">' in line2:
                 add = line2.split('<span class="c-address-street-1 ">')[1].split("<")[0]
+                try:
+                    add = (
+                        add
+                        + " "
+                        + line2.split('<span class="c-address-street-2 ">')[1].split(
+                            "<"
+                        )[0]
+                    )
+                except:
+                    pass
+                add = add.strip()
                 city = line2.split('<span itemprop="addressLocality">')[1].split("<")[0]
                 state = line2.split('itemprop="addressRegion">')[1].split("<")[0]
                 zc = line2.split('itemprop="postalCode">')[1].split("<")[0].strip()
@@ -123,6 +134,8 @@ def fetch_data():
                             hours = hours + "; " + hrs
         if hours == "":
             hours = "<MISSING>"
+        if "blytheville/3910" in loc or "marion/1900" in loc:
+            hours = "Mon-Sun: Open 24 hours"
         yield [
             website,
             loc,

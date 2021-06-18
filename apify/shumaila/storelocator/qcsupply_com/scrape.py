@@ -84,6 +84,10 @@ def fetch_data():
             phone = soup.findAll("a", {"class": "amlocator-link"})[1].text
         except:
             phone = "<MISSING>"
+        try:
+            phone = phone.split("/", 1)[0]
+        except:
+            pass
         data.append(
             [
                 "https://www.qcsupply.com/",
