@@ -8,6 +8,18 @@ _headers = {
 }
 
 
+def _s(val):
+    return (
+        val.split("(")[0]
+        .replace("Crest Industries", "")
+        .replace("Cabrini Hospital", "")
+        .replace("Rapides Parish Courthouse, 3rd floor", "")
+        .replace("England Airpark", "")
+        .replace("Scott's Ace Hardware", "")
+        .strip()
+    )
+
+
 def fetch_data():
     locator_domain = "https://www.redriverbank.net/"
     page_url = "https://www.redriverbank.net/locations/#bh-sl-loc-list"
@@ -16,7 +28,7 @@ def fetch_data():
         locations = session.get(base_url, headers=_headers).json()
         for _ in locations:
             street_address = _["address"]
-            if _["address2"]:
+            if _["address2"] and _["address2"] not in street_address:
                 street_address += " " + _["address2"]
             location_type = ["branch"]
             if _["atm"]:
@@ -26,11 +38,15 @@ def fetch_data():
             hours = []
             if _["hours1"]:
                 hours += list(bs(_["hours1"], "lxml").stripped_strings)
+            elif _["hours2"]:
+                hours += list(bs(_["hours2"], "lxml").stripped_strings)
+            elif _["hours3"]:
+                hours += list(bs(_["hours3"], "lxml").stripped_strings)
             yield SgRecord(
                 page_url=page_url,
                 location_name=_["name"],
                 store_number=_["id"],
-                street_address=street_address,
+                street_address=_s(street_address),
                 city=_["city"],
                 state=_["state"],
                 zip_postal=_["postal"],
