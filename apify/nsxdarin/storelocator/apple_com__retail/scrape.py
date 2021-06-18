@@ -88,22 +88,69 @@ def fetch_data():
                     .split('longitude":')[1]
                     .split("}")[0]
                 )
-            if '<td class="store-open-hours-day">' in line2:
-                days = line2.split('<td class="store-open-hours-day">')
-                for day in days:
-                    if '"store-open-hours-span' in day:
-                        hrs = (
-                            day.split("<")[0]
-                            + ": "
-                            + day.split('"store-open-hours-span')[1]
-                            .split('">')[1]
-                            .split("<")[0]
-                            .strip()
-                        )
-                        if hours == "":
-                            hours = hrs
-                        else:
-                            hours = hours + "; " + hrs
+            if '{"name":"Sunday","openTime":"' in line2:
+                hours = (
+                    "Sun: "
+                    + line2.split('{"name":"Sunday","openTime":"')[1].split('"')[0]
+                    + "-"
+                    + line2.split('{"name":"Sunday","openTime":"')[1]
+                    .split('"closeTime":"')[1]
+                    .split('"')[0]
+                )
+                hours = (
+                    hours
+                    + "; Mon: "
+                    + line2.split('{"name":"Monday","openTime":"')[1].split('"')[0]
+                    + "-"
+                    + line2.split('{"name":"Monday","openTime":"')[1]
+                    .split('"closeTime":"')[1]
+                    .split('"')[0]
+                )
+                hours = (
+                    hours
+                    + "; Tue: "
+                    + line2.split('{"name":"Tuesday","openTime":"')[1].split('"')[0]
+                    + "-"
+                    + line2.split('{"name":"Tuesday","openTime":"')[1]
+                    .split('"closeTime":"')[1]
+                    .split('"')[0]
+                )
+                hours = (
+                    hours
+                    + "; Wed: "
+                    + line2.split('{"name":"Wednesday","openTime":"')[1].split('"')[0]
+                    + "-"
+                    + line2.split('{"name":"Wednesday","openTime":"')[1]
+                    .split('"closeTime":"')[1]
+                    .split('"')[0]
+                )
+                hours = (
+                    hours
+                    + "; Thu: "
+                    + line2.split('{"name":"Thursday","openTime":"')[1].split('"')[0]
+                    + "-"
+                    + line2.split('{"name":"Thursday","openTime":"')[1]
+                    .split('"closeTime":"')[1]
+                    .split('"')[0]
+                )
+                hours = (
+                    hours
+                    + "; Fri: "
+                    + line2.split('{"name":"Friday","openTime":"')[1].split('"')[0]
+                    + "-"
+                    + line2.split('{"name":"Friday","openTime":"')[1]
+                    .split('"closeTime":"')[1]
+                    .split('"')[0]
+                )
+                hours = (
+                    hours
+                    + "; Sat: "
+                    + line2.split('{"name":"Saturday","openTime":"')[1].split('"')[0]
+                    + "-"
+                    + line2.split('{"name":"Saturday","openTime":"')[1]
+                    .split('"closeTime":"')[1]
+                    .split('"')[0]
+                )
         if hours == "":
             hours = "<MISSING>"
         daylist = [

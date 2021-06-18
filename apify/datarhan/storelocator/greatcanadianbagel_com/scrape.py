@@ -56,6 +56,8 @@ def fetch_data():
         street_address = poi_html.xpath("./td[2]/text()")
         street_address = [e.strip() for e in street_address if e.strip()]
         street_address = " ".join(street_address) if street_address else "<MISSING>"
+        if "Eglinton Subway" in street_address:
+            street_address += " 2200 Yonge Street Subway Level Suite FC08"
         city = poi_html.xpath(".//*/strong/text()")
         city = city[0].split(", ")[0]
         state = poi_html.xpath(".//*/strong/text()")[0].split(", ")[-1]

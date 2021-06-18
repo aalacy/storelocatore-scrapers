@@ -1,5 +1,7 @@
 import csv
 import json
+import time
+from sgselenium import SgSelenium
 from lxml import html
 from sgrequests import SgRequests
 
@@ -57,6 +59,7 @@ def fetch_data():
             + "".join(tree.xpath('//script[contains(text(), "telephone")]/text()'))
             + "]"
         )
+        hoosoo = "".join(tree.xpath('//span[@class="store-opening-soon"]/text()'))
         js = json.loads(jsblock)
         for j in js:
             location_name = j.get("name")
@@ -66,12 +69,32 @@ def fetch_data():
             country_code = "CA"
             phone = j.get("telephone")
             state = j.get("address").get("addressRegion")
-            postal = "<MISSING>"
+
             city = j.get("address").get("addressLocality")
             store_number = "<MISSING>"
-            hours_of_operation = (
-                " ".join(j.get("openingHours")).replace("[", "").replace("]", "")
-            )
+            try:
+                hours_of_operation = (
+                    " ".join(j.get("openingHours")).replace("[", "").replace("]", "")
+                )
+            except:
+                hours_of_operation = "<MISSING>"
+            if hoosoo:
+                hours_of_operation = "Temporarily Closed"
+            driver = SgSelenium().firefox()
+
+            driver.get(page_url)
+            iframe = driver.find_element_by_xpath("//div[@id='map']/iframe")
+            driver.switch_to.frame(iframe)
+            time.sleep(5)
+
+            s = driver.find_element_by_xpath(
+                "//div[@class='place-desc-large']/div[@class='address']"
+            ).text
+
+            time.sleep(5)
+            driver.switch_to.default_content()
+            postal = " ".join("".join(s).split(",")[-2].split()[1:])
+
             latitude = "<MISSING>"
             longitude = "<MISSING>"
 

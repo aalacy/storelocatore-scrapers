@@ -1,103 +1,101 @@
-from bs4 import BeautifulSoup
-import csv
 import usaddress
+from sglogging import sglog
+from bs4 import BeautifulSoup
 from sgrequests import SgRequests
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
 
 session = SgRequests()
+website = "stopandgostores.com"
+log = sglog.SgLogSetup().get_logger(logger_name=website)
+session = SgRequests()
 
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+headers = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.66 Safari/537.36",
+    "Accept": "application/json",
+}
 
 
 def fetch_data():
-    data = []
-
     url = "https://www.stopandgostores.com/locations"
     r = session.get(url)
     soup = BeautifulSoup(r.text, "html.parser")
     stores = soup.find_all("div", {"role": "gridcell"})
     for store in stores:
-        loc = store.find("h2").text
-        ps = store.find_all("p")
-
-        if len(ps) >= 3:
-            if "phone" not in ps[1].text.lower():
-                street = ps[0].text.strip()
-                csz = ps[1].text.strip()
-                phone = ps[2].text.lower().replace("phone", "").replace("x", "").strip()
-            else:
-                phone = ps[1].text.lower().replace("phone", "").replace("x", "").strip()
-                ps = ps[0].text.split("\n")
-                street = ps[0]
-                csz = ps[1].strip()
-
+        location_name = store.find("h2").text
+        log.info(location_name)
+        temp_list = store.find_all("p")
+        if len(temp_list) > 3:
+            temp_list = temp_list[:-1]
+            phone = temp_list[-1].text
+            address = " ".join(x.text for x in temp_list[:-1])
+        elif len(temp_list) == 3:
+            phone = temp_list[-1].text
+            address = " ".join(x.text for x in temp_list[:-1])
+        elif len(temp_list) == 2:
+            temp_list = store.findAll("p")
+            address = temp_list[0].get_text(separator="|", strip=True).replace("|", " ")
+            phone = temp_list[-1].text
         else:
-            ps = ps[0].text.split("\n")
-            street = ps[0]
-            csz = ps[1].strip()
-            phone = ps[2].lower().replace("phone", "").replace("x", "").strip()
-
-        csz = usaddress.tag(csz.replace("\xa0", " "))[0]
-        city = csz["PlaceName"]
-        state = csz["StateName"]
-        zip = csz["ZipCode"]
-
-        if len(phone) < 10:
-            phone = "<MISSING>"
-
-        data.append(
-            [
-                "https://www.stopandgostores.com/",
-                "https://www.stopandgostores.com/locations",
-                loc,
-                street.replace("\xa0", "").replace("S t", "St"),
-                city,
-                state,
-                zip,
-                "US",
-                loc.split("#")[-1],
-                phone,
-                "<MISSING>",
-                "<MISSING>",
-                "<MISSING>",
-                "<MISSING>",
-            ]
+            temp_list = store.find("p").get_text(separator="|", strip=True).split("|")
+            phone = temp_list[-1]
+            address = " ".join(x for x in temp_list[:-1])
+        address = address.replace(",", " ")
+        address = usaddress.parse(address)
+        i = 0
+        street_address = ""
+        city = ""
+        state = ""
+        zip_postal = ""
+        while i < len(address):
+            temp = address[i]
+            if (
+                temp[1].find("Address") != -1
+                or temp[1].find("Street") != -1
+                or temp[1].find("Recipient") != -1
+                or temp[1].find("Occupancy") != -1
+                or temp[1].find("BuildingName") != -1
+                or temp[1].find("USPSBoxType") != -1
+                or temp[1].find("USPSBoxID") != -1
+            ):
+                street_address = street_address + " " + temp[0]
+            if temp[1].find("PlaceName") != -1:
+                city = city + " " + temp[0]
+            if temp[1].find("StateName") != -1:
+                state = state + " " + temp[0]
+            if temp[1].find("ZipCode") != -1:
+                zip_postal = zip_postal + " " + temp[0]
+            i += 1
+        yield SgRecord(
+            locator_domain="https://stopandgostores.com/",
+            page_url="https://www.stopandgostores.com/locations",
+            location_name=location_name.strip(),
+            street_address=street_address.strip(),
+            city=city.strip(),
+            state=state.strip(),
+            zip_postal=zip_postal.strip(),
+            country_code="US",
+            store_number="<MISSING>",
+            phone=phone.strip(),
+            location_type="<MISSING>",
+            latitude="<MISSING>",
+            longitude="<MISSING>",
+            hours_of_operation="<MISSING>",
         )
-
-    return data
 
 
 def scrape():
+    log.info("Started")
+    count = 0
+    with SgWriter() as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
 
-    data = fetch_data()
-    write_output(data)
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()

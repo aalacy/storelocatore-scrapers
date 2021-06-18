@@ -65,11 +65,13 @@ def fetch_data():
         street_address = raw_address[0]
         city = raw_address[-1].split(", ")[0]
         state = raw_address[-1].split(", ")[-1].split()[0]
-        zip_code = raw_address[-1].split(", ")[-1].split()[-1]
+        zip_code = " ".join(raw_address[-1].split(", ")[-1].split()[1:])
         country_code = "<MISSING>"
         store_number = "<MISSING>"
         phone = loc_dom.xpath('//p[@class="res-number"]/a/text()')
         phone = phone[0] if phone else "<MISSING>"
+        if "Please use email" in phone:
+            phone = "<MISSING>"
         location_type = "<MISSING>"
         geo = loc_dom.xpath('//div[@class="media item"]/a/@href')[0]
         if "/@" in geo:

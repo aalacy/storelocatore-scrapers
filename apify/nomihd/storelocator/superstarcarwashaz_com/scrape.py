@@ -4,7 +4,6 @@ from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import json
-import re
 from sgscrape import sgpostal as parser
 
 website = "superstarcarwashaz.com"
@@ -25,10 +24,7 @@ def fetch_data():
     stores_list = json_res["results"]["locations"]
     for store in stores_list:
         if "coming soon" not in store["tags"].strip():
-            page_url = store["website"].strip()
-
-            if re.search(".com/$", page_url) or re.search(".com$", page_url):
-                page_url = "<MISSING>"
+            page_url = "https://www.superstarcarwashaz.com/locations/"
 
             locator_domain = website
             location_name = store["name"].strip()
