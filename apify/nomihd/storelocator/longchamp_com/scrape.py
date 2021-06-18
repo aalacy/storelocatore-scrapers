@@ -7,7 +7,6 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgzip.dynamic import SearchableCountries
 from sgzip.dynamic import DynamicGeoSearch
-from sgzip.utils import country_names_by_code
 
 website = "longchamp.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -54,11 +53,12 @@ def fetch_records_for(tup):
     )
     stores_req = session.get(search_url, headers=headers, params=params)
     stores = json.loads(stores_req.text)["stores"]
-    return stores
+    return stores, CurrentCountry
 
 
 def process_record(raw_results_from_one_coordinate):
-    for store in raw_results_from_one_coordinate:
+    stores, current_country = raw_results_from_one_coordinate
+    for store in stores:
         if store["type"] != "BTQ":
             continue
         if store["ID"] in id_list:
@@ -77,6 +77,8 @@ def process_record(raw_results_from_one_coordinate):
         state = store.get("stateCode", "<MISSING>")
         zip = store.get("postalCode", "<MISSING>")
         country_code = store["countryCode"]
+        if country_code == "" or country_code is None:
+            country_code = current_country
 
         store_number = store["ID"]
         phone = store.get("phone", "<MISSING>")
@@ -133,7 +135,7 @@ def scrape():
         for country in countries:
             # log.info(f"checking {country}")
             try:
-                search = DynamicGeoSearch(max_radius_miles=300, country_codes=[country])
+                search = DynamicGeoSearch(max_radius_miles=100, country_codes=[country])
                 results = parallelize(
                     search_space=[
                         (
