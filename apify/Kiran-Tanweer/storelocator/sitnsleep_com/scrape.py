@@ -1,3 +1,4 @@
+import ssl
 from bs4 import BeautifulSoup
 from sgrequests import SgRequests
 from sglogging import sglog
@@ -5,8 +6,16 @@ from sgselenium import SgChrome
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from selenium.webdriver.support.ui import WebDriverWait
+from webdriver_manager.chrome import ChromeDriverManager
+
 from lxml import html
 
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
 
 session = SgRequests()
 website = "sitnsleep_com"
@@ -22,9 +31,11 @@ MISSING = "<MISSING>"
 
 
 def fetch_data():
-    with SgChrome(executable_path="C:/webdrivers/chromedriver.exe") as driver:
+    with SgChrome(
+        executable_path=ChromeDriverManager().install(), is_headless=True
+    ) as driver:
         driver.get("https://www.sitnsleep.com/storelocator")
-        WebDriverWait(driver, 15)
+        WebDriverWait(driver, 40)
         response_text = driver.page_source
         data = html.fromstring(response_text, "lxml")
         js_app_slug = data.xpath('//link[contains(@href, "/js/app")]/@href')
