@@ -42,9 +42,9 @@ def make_request():
     """
     Returns a JSON object corresponding to Cellular Plus store info
     """
-    session = SgRequests()
-    page = session.get(URL)
-    page.raise_for_status()
+    with SgRequests() as http:
+        page = http.get(URL)
+        page.raise_for_status()
     entireStr = page.text
     begin = entireStr.find(locations_variable_name)
     end = entireStr.find(location_variable_name, begin + len(locations_variable_name))
