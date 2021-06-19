@@ -20,12 +20,11 @@ MISSING = "<MISSING>"
 
 
 def strip_accents(text):
-    
-    text = unicodedata.normalize('NFD', text)\
-           .encode('ascii', 'ignore')\
-           .decode("utf-8")
+
+    text = unicodedata.normalize("NFD", text).encode("ascii", "ignore").decode("utf-8")
 
     return str(text)
+
 
 def fetch_data():
     if True:
@@ -44,16 +43,23 @@ def fetch_data():
         loclist = r.text.split('"markers":')[1].split(',"type"')[0]
         loclist = json.loads(loclist)
         for loc in loclist:
-            page_url = loc['url']
-            store_number = loc['id']
-            location_name = loc['name']
+            page_url = loc["url"]
+            store_number = loc["id"]
+            location_name = loc["name"]
             location_name = strip_accents(location_name)
             log.info(page_url)
             r = session.get(page_url, headers=headers)
             soup = BeautifulSoup(r.text, "html.parser")
             phone = soup.find("span", {"itemprop": "telephone"}).find("a").text
-            hours_of_operation = soup.find("meta", {"itemprop": "openingHours"})['content']
-            address = soup.find("div", {"class": "address"}).find("span").get_text(separator='|', strip=True).split('|')
+            hours_of_operation = soup.find("meta", {"itemprop": "openingHours"})[
+                "content"
+            ]
+            address = (
+                soup.find("div", {"class": "address"})
+                .find("span")
+                .get_text(separator="|", strip=True)
+                .split("|")
+            )
             street_address = address[0]
             address = address[1].split(",")
             city = address[0]
@@ -61,11 +67,11 @@ def fetch_data():
             street_address = strip_accents(street_address)
             city = strip_accents(city)
             state = strip_accents(state)
-            zip_postal= address[2]
+            zip_postal = address[2]
             country_code = "CA"
-            latitude = soup.find("meta", {"itemprop": "latitude"})['content']
-            longitude = soup.find("meta", {"itemprop": "longitude"})['content']
-            hour_list = loc['schedule']['openingHours']
+            latitude = soup.find("meta", {"itemprop": "latitude"})["content"]
+            longitude = soup.find("meta", {"itemprop": "longitude"})["content"]
+            hour_list = loc["schedule"]["openingHours"]
             yield SgRecord(
                 locator_domain=DOMAIN,
                 page_url=page_url,
