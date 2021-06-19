@@ -60,7 +60,6 @@ def write_output(data):
 
 def fetch_data():
     # Your scraper here
-    loc_list = []
 
     search_url = "https://substationii.com/locations/"
     stores_req = session.get(search_url, headers=headers)
