@@ -102,7 +102,10 @@ def find_node(entityNum, soup):
     return node
 
 
-@retry(stop=stop_after_attempt(3))
+def retry_error_callback(retry_state):
+    return []
+
+@retry(stop=stop_after_attempt(3), retry_error_callback=retry_error_callback)
 def search_zip(postal, tracker):
     url = "https://www.gnc.com/on/demandware.store/Sites-GNC2-Site/default/Stores-FindStores"
     payload = {
