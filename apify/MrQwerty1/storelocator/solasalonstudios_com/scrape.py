@@ -81,7 +81,7 @@ def get_data(page_url):
         location_name = location_name.split("(")[0].strip()
     if "ONLY" in location_name:
         location_name = location_name.split("ONLY")[0].strip()
-    location_name = location_name.replace("&amp;", "&")
+    location_name = location_name.replace("&amp;", "&").replace("&#39;", "'")
     a = j.get("address")
     street_address = a.get("streetAddress") or "<MISSING>"
     if street_address.endswith(","):
