@@ -71,6 +71,7 @@ def fetch_data():
                 break
 
         if not main_status:
+            logger.info("Unexpected error here!")
             raise
 
         for next_item in next_items:
