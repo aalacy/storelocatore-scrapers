@@ -28,15 +28,6 @@ def strip_accents(text):
 
 def fetch_data():
     if True:
-        daylist = {
-            0: "Sunday",
-            1: "Monday",
-            2: "Tuesday",
-            3: "Wednesday",
-            4: "Thursday",
-            5: "Friday",
-            6: "Saturday",
-        }
         url = "https://www.patrickmorin.com/fr/magasins"
         r = session.get(url, headers=headers)
         soup = BeautifulSoup(r.text, "html.parser")
@@ -71,7 +62,6 @@ def fetch_data():
             country_code = "CA"
             latitude = soup.find("meta", {"itemprop": "latitude"})["content"]
             longitude = soup.find("meta", {"itemprop": "longitude"})["content"]
-            hour_list = loc["schedule"]["openingHours"]
             yield SgRecord(
                 locator_domain=DOMAIN,
                 page_url=page_url,
