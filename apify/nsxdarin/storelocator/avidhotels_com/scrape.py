@@ -91,7 +91,7 @@ def fetch_data():
                     if "avidhotels" in curl:
                         locs.append(curl)
     for url in cities:
-        if "-gerau-" not in url:
+        try:
             logger.info(url)
             r = session.get(url, headers=headers)
             lines = r.iter_lines()
@@ -106,6 +106,8 @@ def fetch_data():
                     if curl not in locs:
                         if "avidhotels" in curl:
                             locs.append(curl)
+        except:
+            pass
     for loc in locs:
         logger.info(loc)
         r2 = session.get(loc, headers=headers)

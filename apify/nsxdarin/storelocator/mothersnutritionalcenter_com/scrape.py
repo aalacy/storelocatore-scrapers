@@ -54,6 +54,7 @@ def fetch_data():
             lng = line.split("</p>',")[1].split(",")[1].strip()
             phone = "<MISSING>"
             loc = "https://mothersnc.com/pages/stores"
+            zc = zc.replace("\\", "").replace("/", "").strip()
             yield [
                 website,
                 loc,
