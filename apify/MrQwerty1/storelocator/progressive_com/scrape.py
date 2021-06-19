@@ -101,7 +101,6 @@ def get_page(city):
 
 def get_urls():
     states = get_states()[:1]
-    print(states)
     cities = []
     urls = []
 
@@ -111,14 +110,12 @@ def get_urls():
             rows = future.result()
             cities += rows
 
-    print(cities)
     with futures.ThreadPoolExecutor(max_workers=10) as executor:
         future_to_url = {executor.submit(get_page, city): city for city in cities}
         for future in futures.as_completed(future_to_url):
             rows = future.result()
             urls += rows
 
-    print(urls)
     return urls
 
 
@@ -133,7 +130,6 @@ def get_data(page_url):
     line = "".join(
         tree.xpath("//dt[text()='Address:']/following-sibling::dd/text()")
     ).strip()
-    print(page_url, ":", line)
 
     street_address, city, state, postal = get_address(line)
     country_code = "US"
