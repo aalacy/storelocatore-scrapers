@@ -502,8 +502,11 @@ def fetch_data():
                     page_url,
                 )
                 yield store
-            elif "facelogicspawaco.com" in link["href"]:
-                page_url = "https://facelogicspawaco.com/contact-us/"
+            elif (
+                "facelogicspawaco.com" in link["href"]
+                or "puravidafacelogicspa.com" in link["href"]
+            ):
+                page_url = "https://puravidafacelogicspa.com/contact-us/"
                 r2 = session.get(page_url, headers=headers)
                 soup2 = BeautifulSoup(r2.text, "lxml")
 
