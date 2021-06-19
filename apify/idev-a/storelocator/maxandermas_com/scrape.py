@@ -37,7 +37,7 @@ def _filter(blocks, hours):
         for _ in block.stripped_strings:
             if "DINE" in _valid(_).upper():
                 continue
-            if _.text.split(" ")[0].split("–")[0].split("&")[0].strip().upper() in days:
+            if _.split(" ")[0].split("–")[0].split("&")[0].strip().upper() in days:
                 hours += _valid(_).split("|")
 
 
