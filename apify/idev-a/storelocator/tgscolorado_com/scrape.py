@@ -42,7 +42,9 @@ def fetch_data():
                 page_url=page_url,
                 store_number=_["field_store_id"],
                 location_name=_["title"].strip(),
-                street_address=_["field_store_address_address_line1"].replace('&amp;', '&').strip(),
+                street_address=_["field_store_address_address_line1"]
+                .replace("&amp;", "&")
+                .strip(),
                 city=_["field_store_address_locality"],
                 state=_["field_store_address_administrative_area"],
                 zip_postal=_["field_store_address_postal_code"],
