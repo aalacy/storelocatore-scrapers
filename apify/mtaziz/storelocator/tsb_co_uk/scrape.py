@@ -175,7 +175,7 @@ def fetch_data():
         )
         raw_address = raw_address if raw_address else MISSING
         yield SgRecord(
-            locator_domain=DOMAIN,
+            locator_domain=locator_domain,
             page_url=page_url,
             location_name=location_name,
             street_address=street_address,
