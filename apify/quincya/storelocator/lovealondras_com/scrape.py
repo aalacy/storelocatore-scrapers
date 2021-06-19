@@ -1,4 +1,5 @@
 import csv
+import json
 
 from bs4 import BeautifulSoup
 
@@ -46,10 +47,14 @@ def fetch_data():
     req = session.get(base_link, headers=headers)
     base = BeautifulSoup(req.text, "lxml")
 
+    raw_data = base.find(class_="js-react-on-rails-component").contents[0]
+    js = raw_data.split('locations":')[-1].split(',"menus')[0]
+    store_data = json.loads(js)
+
     items = base.find(class_="pm-location-search-list").find_all("section")
 
     data = []
-    for item in items:
+    for i, item in enumerate(items):
         locator_domain = "lovealondras.com"
         location_name = item.h4.text
         street_address = item.p.span.text.replace("\xa0", " ").strip()
@@ -58,17 +63,19 @@ def fetch_data():
         state = city_line[-1].strip().split()[0].strip()
         zip_code = city_line[-1].strip().split()[1].strip()
         country_code = "US"
-        store_number = "<MISSING>"
+        store_number = store_data[i]["id"]
         location_type = "<MISSING>"
         phone = item.find_all("p")[1].text.strip()
         hours_of_operation = " ".join(list(item.find(class_="hours").stripped_strings))
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
-
+        latitude = store_data[i]["lat"]
+        longitude = store_data[i]["lng"]
+        link = (
+            "https://www.lovealondras.com" + item.find("a", string="View Menu")["href"]
+        )
         data.append(
             [
                 locator_domain,
-                base_link,
+                link,
                 location_name,
                 street_address,
                 city,
