@@ -1,5 +1,7 @@
 import csv
 import re
+import ssl
+import time
 
 from bs4 import BeautifulSoup
 
@@ -14,6 +16,15 @@ from sgrequests import SgRequests
 from sgselenium import SgChrome
 
 logger = SgLogSetup().get_logger("members1st_org")
+
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
 
 
 def write_output(data):
@@ -103,16 +114,18 @@ def fetch_data():
 
         map_link = base.find(class_="b_map_img")["src"]
         driver.get(map_link)
-        WebDriverWait(driver, 50).until(
-            ec.presence_of_element_located((By.TAG_NAME, "a"))
-        )
+        time.sleep(4)
         try:
+            WebDriverWait(driver, 50).until(
+                ec.presence_of_element_located((By.TAG_NAME, "a"))
+            )
+            time.sleep(4)
             raw_gps = driver.find_element_by_tag_name("a").get_attribute("href")
             latitude = raw_gps[raw_gps.find("=") + 1 : raw_gps.find(",")].strip()
             longitude = raw_gps[raw_gps.find(",") + 1 : raw_gps.find("&")].strip()
         except:
-            latitude = "<MISSING>"
-            longitude = "<MISSING>"
+            latitude = "<INACCESSIBLE>"
+            longitude = "<INACCESSIBLE>"
 
         yield [
             locator_domain,

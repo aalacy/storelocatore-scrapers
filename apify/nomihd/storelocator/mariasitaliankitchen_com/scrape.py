@@ -40,6 +40,10 @@ def fetch_data():
             address = store_sel.xpath(
                 '//div[@class="organic-column one-half"]/p[1]/text()'
             )
+            if len("".join(address).strip()) <= 0:
+                address = store_sel.xpath(
+                    '//div[@class="panel-layout"]/div/div[1]//p[1]/text()'
+                )
         add_list = []
         for add in address:
             if len("".join(add).strip()) > 0:

@@ -74,9 +74,24 @@ def fetch_data():
     log.info("Running sgzips ..")
 
     found = []
+    i = 1
     for zip_code in search:
 
+        if len(str(zip_code)) == 3:
+            zip_code = "00" + str(zip_code)
+        if len(str(zip_code)) == 4:
+            zip_code = "0" + str(zip_code)
+
         payload = {"postalCode": zip_code}
+
+        # New session every 100
+        if i % 100 == 0:
+            log.info("Getting next 100 ..")
+            log.info(zip_code)
+            session = SgRequests()
+
+        i += 1
+
         response = session.post(base_link, headers=headers, data=payload)
         base = BeautifulSoup(response.text, "lxml")
 
@@ -116,7 +131,16 @@ def fetch_data():
                 state = city_line[1]
                 zip_code = city_line[2]
                 country_code = "US"
+                latitude = "<MISSING>"
+                longitude = "<MISSING>"
                 store_number = store["id"]
+
+                for j in store_json:
+                    if j["ID"] == store_number:
+                        latitude = j["lat"]
+                        longitude = j["long"]
+                        search.found_location_at(latitude, longitude)
+                        break
                 if store_number in found:
                     continue
                 found.append(store_number)
@@ -125,15 +149,6 @@ def fetch_data():
                 hours_of_operation = (
                     store.find(class_="storehours").get_text(" ").strip()
                 )
-                latitude = "<MISSING>"
-                longitude = "<MISSING>"
-
-                for j in store_json:
-                    if j["ID"] == store_number:
-                        latitude = j["lat"]
-                        longitude = j["long"]
-                        search.found_location_at(latitude, longitude)
-                        break
 
                 yield [
                     locator_domain,
