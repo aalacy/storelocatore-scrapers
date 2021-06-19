@@ -2,7 +2,6 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
-from sgscrape.sgpostal import parse_address_intl
 
 _headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
@@ -33,7 +32,6 @@ def fetch_data():
                 if bb != "MAKE APPOINTMENT"
                 and "Opening" not in bb
                 and "More Information" not in bb
-                and "appointment" not in bb
             ]
             phone = ""
             if "Phone" in block[3]:
@@ -44,17 +42,24 @@ def fetch_data():
             hours = []
             if len(block) >= 5:
                 hours = block[4:]
-            addr = parse_address_intl(" ".join(block[1:3]))
+            city_state = block[2].split(",")
+            city = state = zip_postal = ""
             country = "US"
-            if len(addr.postcode) > 5:
+            if len(city_state) == 1:
                 country = "UK"
+                city = block[2].split(" ")[0].strip()
+                zip_postal = " ".join(block[2].split(" ")[1:])
+            else:
+                city = city_state[0]
+                state = city_state[1].strip().split(" ")[0].strip()
+                zip_postal = city_state[1].strip().split(" ")[1].strip()
             yield SgRecord(
                 page_url=page_url,
                 location_name=block[0],
                 street_address=block[1],
-                city=addr.city,
-                state=addr.state,
-                zip_postal=addr.postcode,
+                city=city,
+                state=state,
+                zip_postal=zip_postal,
                 country_code=country,
                 phone=phone,
                 locator_domain=locator_domain,
