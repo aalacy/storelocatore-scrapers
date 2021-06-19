@@ -50,8 +50,6 @@ def fetch_data():
     req = session.get(base_link, headers=headers)
     base = BeautifulSoup(req.text, "lxml")
 
-    data = []
-
     locator_domain = "wagamama.com"
 
     main_links = []
@@ -106,26 +104,22 @@ def fetch_data():
             list(base.find(class_="c-hours-details").tbody.stripped_strings)
         )
 
-        data.append(
-            [
-                locator_domain,
-                link,
-                location_name,
-                street_address,
-                city,
-                state,
-                zip_code,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
-        )
-
-    return data
+        yield [
+            locator_domain,
+            link,
+            location_name,
+            street_address,
+            city,
+            state,
+            zip_code,
+            country_code,
+            store_number,
+            phone,
+            location_type,
+            latitude,
+            longitude,
+            hours_of_operation,
+        ]
 
 
 def scrape():

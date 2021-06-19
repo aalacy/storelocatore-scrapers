@@ -15,6 +15,7 @@ _headers = {
 def fetch_data():
     locator_domain = "https://www.amedisys.com/"
     base_url = "https://locations.amedisys.com/"
+    numbers = []
     with SgRequests() as session:
         states = bs(session.get(base_url, headers=_headers).text, "lxml").select(
             "ul#bowse-content a"
@@ -38,12 +39,21 @@ def fetch_data():
                     )
                     res = session.get(page_url, headers=_headers)
                     if res.url == page_url:
+                        sp1 = bs(res.text, "lxml")
                         ss = json.loads(
-                            bs(res.text, "lxml")
-                            .find("script", type="application/ld+json")
-                            .string.strip()
+                            sp1.find(
+                                "script", type="application/ld+json"
+                            ).string.strip()
                         )
                         for script in ss:
+                            if _["data-lid"] in numbers:
+                                continue
+                            numbers.append(_["data-lid"])
+                            hours = []
+                            for hh in sp1.select("div.hours-wrapper div.day-hour-row"):
+                                hours.append(
+                                    f"{hh.select_one('span.daypart').text.strip()}: {''.join(hh.select_one('span.time').stripped_strings)}"
+                                )
                             yield SgRecord(
                                 page_url=page_url,
                                 store_number=_["data-lid"],
@@ -60,9 +70,7 @@ def fetch_data():
                                 locator_domain=locator_domain,
                                 latitude=script["geo"]["latitude"],
                                 longitude=script["geo"]["longitude"],
-                                hours_of_operation=script["openingHours"].replace(
-                                    "–", "-"
-                                ),
+                                hours_of_operation="; ".join(hours),
                             )
                     else:
                         data = json.loads(
@@ -70,7 +78,11 @@ def fetch_data():
                             .split('"locationSpecialties"')[0]
                             .strip()[:-1]
                         )
+                        sp1 = bs(res.text, "lxml")
                         for script in data:
+                            if script["lid"] in numbers:
+                                continue
+                            numbers.append(script["lid"])
                             info = json.loads(bs(script["info"], "lxml").text.strip())
                             street_address = info["address_1"]
                             if info["address_2"]:
@@ -88,6 +100,7 @@ def fetch_data():
                                 zip_postal=info["post_code"],
                                 country_code="US",
                                 locator_domain=locator_domain,
+                                phone=sp1.select_one("a.phone").text.strip(),
                                 latitude=script["lat"],
                                 longitude=script["lng"],
                             )

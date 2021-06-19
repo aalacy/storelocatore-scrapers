@@ -46,13 +46,24 @@ def fetch_data():
     block = block.split('"more_locations":')[1].split(',"locations_filter"')[0]
 
     js = json.loads(block)
-
+    s = set()
     for j in js:
 
         ad = "".join(j.get("location")).split("\r\n")
-        street_address = " ".join(ad[:-1]).strip()
+        street_address = (
+            " ".join(ad[:-1])
+            .replace("Northpark", "")
+            .replace("Soho Broadway", "")
+            .replace("Waterside Shops", "")
+            .replace("Georgetown", "")
+            .replace(",", "")
+            .strip()
+        )
         adr = "".join(ad[-1]).replace("Minneapolis, MN, US", "Minneapolis, MN")
         city = adr.split(",")[0] or "<MISSING>"
+        if city.find("900B") != -1:
+            city = city.replace("900B", "").strip()
+            street_address = street_address + " " + "900B"
         postal = adr.split(",")[1].split()[-1].strip() or "<MISSING>"
         state = adr.split(",")[1].split()[0].strip() or "<MISSING>"
         country_code = j.get("country")
@@ -69,6 +80,11 @@ def fetch_data():
             hours_of_operation = hours_of_operation.split("ONLY")[1].strip()
         if hours_of_operation.find("See") != -1:
             hours_of_operation = "<MISSING>"
+
+        line = street_address
+        if line in s and line != "7014 East Camelback Rd":
+            continue
+        s.add(line)
 
         row = [
             locator_domain,
