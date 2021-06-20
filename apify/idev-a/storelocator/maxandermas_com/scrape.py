@@ -5,6 +5,16 @@ from sgscrape.sgpostal import parse_address_intl
 from sgselenium import SgChrome
 import time
 import json
+import ssl
+
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
 
 
 def _valid(val):
@@ -27,7 +37,7 @@ def _filter(blocks, hours):
         for _ in block.stripped_strings:
             if "DINE" in _valid(_).upper():
                 continue
-            if _.text.split(" ")[0].split("–")[0].split("&")[0].strip().upper() in days:
+            if _.split(" ")[0].split("–")[0].split("&")[0].strip().upper() in days:
                 hours += _valid(_).split("|")
 
 
