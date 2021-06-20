@@ -62,7 +62,9 @@ def fetch_data():
     weeklist = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"]
 
     url = "https://sperry.locally.com/stores/conversion_data?has_data=true&company_id=1566&store_mode=&style=&color=&upc=&category=&inline=1&show_links_in_list=&parent_domain=&map_center_lat=40.73218673716792&map_center_lng=-73.98935000000014&map_distance_diag=5000&sort_by=proximity&no_variants=0&only_retailer_id=&dealers_company_id=&only_store_id=false&uses_alt_coords=false&q=false&zoom_level=.json"
-    loclist = session.get(url, headers=headers, verify=False).json()["markers"]
+    url = "https://sperry.locally.com/stores/conversion_data?has_data=true&company_id=1566&store_mode=&style=&color=&upc=&category=&inline=1&show_links_in_list=&parent_domain=&map_center_lat=40.73218673716792&map_center_lng=-73.98935000000014&map_distance_diag=5000&sort_by=proximity&no_variants=0&only_retailer_id=&dealers_company_id=&only_store_id=false&uses_alt_coords=false&q=false&zoom_level=.json"
+    loclist = session.get(url, headers=headers, verify=False)
+    loclist = loclist.json()["markers"]
 
     for loc in loclist:
 
@@ -76,15 +78,14 @@ def fetch_data():
         phone = loc["phone"]
         ccode = loc["country"]
         pcode = loc["zip"]
-        if title in titlelist:
+        if store in titlelist:
             continue
-        titlelist.append(title)
+        titlelist.append(store)
         if "Sperry" in title:
             ltype = "Store"
         else:
             ltype = "Dealer"
-        link = "https://www.sperry.com/en/content?caid=locally"
-
+        link = "https://sperry.locally.com/store/" + str(store)
         hours = ""
         try:
             for day in weeklist:
@@ -105,21 +106,18 @@ def fetch_data():
             [
                 "https://www.sperry.com/",
                 link,
-                title.replace("\u010d", " ")
-                .replace("\u200b", " ")
-                .replace("\u200e", "")
-                .strip(),
-                street.replace("\u010d", " ").replace("\u200b", " ").strip(),
-                city.replace("\u010d", " ").replace("\u200b", " ").strip(),
-                state.replace("\u010d", " ").replace("\u200b", " ").strip(),
+                title.encode("ascii", "ignore").decode("ascii").strip(),
+                street.encode("ascii", "ignore").decode("ascii").strip(),
+                city.encode("ascii", "ignore").decode("ascii").strip(),
+                state.encode("ascii", "ignore").decode("ascii").strip(),
                 pcode,
-                ccode.replace("\u010d", " ").replace("\u200b", " ").strip(),
+                ccode.encode("ascii", "ignore").decode("ascii").strip(),
                 store,
-                phone.replace("\u010d", " ").replace("\u200b", " ").strip(),
-                ltype.replace("\u010d", " ").replace("\u200b", " ").strip(),
-                lat.replace("\u010d", " ").replace("\u200b", " ").strip(),
-                longt.replace("\u010d", " ").replace("\u200b", " ").strip(),
-                hours.replace("\u010d", " ").replace("\u200b", " ").strip(),
+                phone.encode("ascii", "ignore").decode("ascii").strip(),
+                ltype.encode("ascii", "ignore").decode("ascii").strip(),
+                lat.encode("ascii", "ignore").decode("ascii").strip(),
+                longt.encode("ascii", "ignore").decode("ascii").strip(),
+                hours.encode("ascii", "ignore").decode("ascii").strip(),
             ]
         )
 

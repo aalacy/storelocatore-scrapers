@@ -34,23 +34,32 @@ def fetch_data():
                 for hh in temp:
                     if "re-open" in hh.lower():
                         continue
+                    if "open" in hh.lower():
+                        continue
                     if (
                         hh != "TEMPORARILY CLOSED"
                         and hh.split("-")[0].strip() not in days
                     ):
                         break
                     hours.append(hh)
-            addr = parse_address_intl(_["address"].strip())
+            addr = parse_address_intl(_["address"] + ", Canada")
             street_address = addr.street_address_1
             if addr.street_address_2:
                 street_address += " " + addr.street_address_2
+            city = addr.city
+            zip_postal = addr.postcode
+            _addr = _["address"].split(",")
+            if len(_addr) == 3:
+                if len(_addr[-1].strip().split(" ")) == 2:
+                    city = _addr[-2].strip()
+                    zip_postal = _addr[-1].strip()
             yield SgRecord(
                 page_url=page_url,
                 location_name=_["name"].replace("–", "-"),
                 street_address=street_address,
-                city=addr.city,
+                city=city,
                 state=addr.state,
-                zip_postal=addr.postcode,
+                zip_postal=zip_postal,
                 latitude=_["location"]["lat"],
                 longitude=_["location"]["lng"],
                 country_code="CA",

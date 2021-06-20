@@ -103,7 +103,6 @@ def find_node(entityNum, soup):
 
 
 def retry_error_callback(retry_state):
-    logger.error(f"error fetching {retry_state.args[0]}")
     return []
 
 
@@ -114,7 +113,7 @@ def search_zip(postal, tracker):
         "dwfrm_storelocator_countryCode": "US",
         "dwfrm_storelocator_distanceUnit": "mi",
         "dwfrm_storelocator_postalCode": postal,
-        "dwfrm_storelocator_maxdistance": "20",
+        "dwfrm_storelocator_maxdistance": "15",
         "dwfrm_storelocator_findbyzip": "Search",
     }
 
