@@ -61,8 +61,10 @@ def fetch_data():
         longitude = "<MISSING>"
         location_type = "<MISSING>"
         hours_of_operation = (
-            store.find(class_="horarios").text.replace("\n", " ").strip()
-        ).split("Break")[0].strip()
+            (store.find(class_="horarios").text.replace("\n", " ").strip())
+            .split("Break")[0]
+            .strip()
+        )
 
         # Store data
         data.append(
