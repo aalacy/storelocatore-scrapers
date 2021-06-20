@@ -54,13 +54,14 @@ def fetch_data():
         postal = a.get("postal_code") or "<MISSING>"
         country_code = a.get("country") or "<MISSING>"
         store_number = j.get("id") or "<MISSING>"
-        page_url = f'https://candidco.com/studios/{city.replace(" ", "-").lower()}/{j.get("slug")}'
+        page_url = (
+            f'https://candidco.com/studios/{j["studio_region"]["slug"]}/{j.get("slug")}'
+        )
         location_name = j.get("name")
         phone = j.get("phone") or "<MISSING>"
         latitude = a.get("latitude") or "<MISSING>"
         longitude = a.get("longitude") or "<MISSING>"
-        hours_of_operation = j.get("hours") or "<MISSING>"
-        hours_of_operation = hours_of_operation.replace("pm", "pm;").replace("/", " ")
+        hours_of_operation = "<MISSING>"
 
         row = [
             locator_domain,
