@@ -58,7 +58,9 @@ for store_number in locations:
     location = data[0]["result"]["value"]["results"][str(store_number)]
 
     locator_domain = "maccosmetics.com"
-    page_url = "https://www.maccosmetics.com/rpc/jsonrpc.tmpl?dbgmethod=locator.doorsandevents"
+    page_url = (
+        "https://www.maccosmetics.com/rpc/jsonrpc.tmpl?dbgmethod=locator.doorsandevents"
+    )
     location_name = html.unescape(location["DOORNAME"]) + " " + location["SUB_HEADING"]
     address = location["ADDRESS"]
     city = location["CITY"]
@@ -77,13 +79,13 @@ for store_number in locations:
     for section in hours_sections:
         try:
             hours = hours + section["day"] + " " + section["hours"] + ", "
-        
+
         except Exception:
             pass
-    
+
     if len(hours) > 1:
         hours = hours[:-2]
-    
+
     if country_code != "United States":
         locator_domains.append(locator_domain)
         page_urls.append(page_url)
@@ -136,5 +138,3 @@ df = df.replace(r"^\s*$", "<MISSING>", regex=True)
 df = df.fillna("<MISSING>")
 
 df.to_csv("data.csv", index=False)
-
-
