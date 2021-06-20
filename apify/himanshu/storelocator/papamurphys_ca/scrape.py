@@ -60,6 +60,7 @@ def fetch_data():
             " ".join(list(dt.stripped_strings)[5:])
             .replace("(587) 619-1172 Get Directions ", "")
             .split("Order")[0]
+            .split("delivery")[0]
             .replace("*", "")
         )
         page_url = dt.find("a", {"class": "button portalbtn"})["href"].strip()
