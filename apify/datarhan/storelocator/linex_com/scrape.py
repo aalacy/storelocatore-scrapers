@@ -74,7 +74,7 @@ def fetch_data():
         driver.get(start_url)
         driver.implicitly_wait(5)
         driver.find_element_by_xpath('//button[@title="United States"]').click()
-        logger.info(f"Dropdown Clicked!...")
+        logger.info("Dropdown Clicked!...")
         driver.find_element_by_xpath(
             '//span[contains(text(), "United States")]'
         ).click()
