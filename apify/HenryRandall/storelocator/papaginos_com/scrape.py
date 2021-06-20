@@ -39,23 +39,24 @@ def fetch_data():
         long = loc["longitude"]
         r = session.get(sublink, headers=headers)
         r = r.text
-        street = r.split('<span class="c-address-street-1 ">', 1)[1].split(
+        street = r.split('itemprop="streetAddress">', 1)[1].split("</span> </span>", 1)[
+            0
+        ]
+        try:
+            street1 = street.split('"c-address-street-1 ">', 1)[1].split("</span>", 1)[
+                0
+            ]
+            street2 = street.split('"c-address-street-2 break-before">', 1)[1]
+            street = street1 + " " + street2
+        except:
+            street = street.split('"c-address-street-1 ">', 1)[1]
+        city = r.split('<span itemprop="addressLocality">', 1)[1].split("</span>", 1)[0]
+        state = r.split('itemprop="addressRegion">', 1)[1].split("</span>", 1)[0]
+        zip_code = r.split('itemprop="postalCode">', 1)[1].split("</span>", 1)[0][1:]
+        country = r.split('itemprop="addressCountry">', 1)[1].split("</abbr>", 1)[0]
+        phone = r.split('itemprop="telephone" id="telephone">', 1)[1].split(
             "</span>", 1
         )[0]
-        city = r.split('<span itemprop="addressLocality">', 1)[1].split("</span>", 1)[0]
-        state = r.split('<span class="c-address-state " itemprop="addressRegion">', 1)[
-            1
-        ].split("</span>", 1)[0]
-        zip_code = r.split(
-            '<span class="c-address-postal-code " itemprop="postalCode">', 1
-        )[1].split("</span>", 1)[0][1:]
-        country = r.split(
-            'class="c-address-country-name c-address-country-us break-before" itemprop="addressCountry">',
-            1,
-        )[1].split("</abbr>", 1)[0]
-        phone = r.split(
-            '<span class="c-phone-number-span c-phone-main-number-span">', 1
-        )[1].split("</span>", 1)[0]
         store_type = "<MISSING>"
         if title == "":
             title = "<MISSING>"

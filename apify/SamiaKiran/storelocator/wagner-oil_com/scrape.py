@@ -19,34 +19,35 @@ def fetch_data():
         url = "https://www.wagner-oil.com/wagner-sites"
         r = session.get(url, headers=headers)
         soup = BeautifulSoup(r.text, "html.parser")
-        loclist = soup.find("section", {"id": "comp-kk48oayk"}).findAll(
-            "div", {"data-testid": "mesh-container-content"}
-        )
-        for loc in loclist[2:]:
+        loclist = soup.findAll("div", {"data-testid": "mesh-container-content"})
+        for loc in loclist:
             if not loc.text:
                 continue
-            location_name = loc.find("h2").find("span").text
-            log.info(location_name)
-            temp_list = loc.findAll("div", {"data-testid": "richTextElement"})
             try:
-                latitude, longitude = (
-                    temp_list[1]
-                    .find("a")["href"]
-                    .split("[")[3]
-                    .split("]]", 1)[0]
-                    .strip()
-                    .split(",")
-                )
+                location_name = loc.find("h2").find("span").text
+                log.info(location_name)
+                temp_list = loc.findAll("div", {"data-testid": "richTextElement"})
+                try:
+                    latitude, longitude = (
+                        temp_list[1]
+                        .find("a")["href"]
+                        .split("[")[3]
+                        .split("]]", 1)[0]
+                        .strip()
+                        .split(",")
+                    )
+                except:
+                    latitude = "<MISSING>"
+                    longitude = "<MISSING>"
+                temp_list = temp_list[1].findAll("p")
+                street_address = temp_list[0].find("span").text
+                phone = temp_list[1].find("span").text
+                address = location_name.split(",")
+                city = address[0]
+                state = address[1]
+                page_url = "https://www.wagner-oil.com/wagner-sites"
             except:
-                latitude = "<MISSING>"
-                longitude = "<MISSING>"
-            temp_list = temp_list[1].findAll("p")
-            street_address = temp_list[0].find("span").text
-            phone = temp_list[1].find("span").text
-            address = location_name.split(",")
-            city = address[0]
-            state = address[1]
-            page_url = "https://www.wagner-oil.com/wagner-sites"
+                continue
             yield SgRecord(
                 locator_domain="https://www.wagner-oil.com/",
                 page_url=page_url,

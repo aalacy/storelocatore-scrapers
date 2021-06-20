@@ -53,7 +53,9 @@ def fetch_data():
         longitude = j.get("longitude")
         location_type = "<MISSING>"
         hours_of_operation = j.get("hours_md")
-        page_url = j.get("url")
+        page_url = (
+            j.get("url") or "https://www.riesbeckfoods.com/my-store/store-locator"
+        )
         postal = j.get("postal_code")
         row = [
             locator_domain,
