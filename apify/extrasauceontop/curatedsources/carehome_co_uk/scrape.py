@@ -60,6 +60,7 @@ def reset_sessions(data_url):
                 return [s, headers, response_text]
 
         except Exception:
+            driver.quit()
             continue
 
 
