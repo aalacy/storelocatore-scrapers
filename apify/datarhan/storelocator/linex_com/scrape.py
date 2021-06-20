@@ -3,7 +3,22 @@ from lxml import etree
 
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 from sgrequests import SgRequests
-from sgselenium import SgFirefox
+from sgselenium import SgChrome
+from webdriver_manager.chrome import ChromeDriverManager
+from sglogging import SgLogSetup
+import ssl
+
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
+
+
+logger = SgLogSetup().get_logger("minex_com")
 
 
 def write_output(data):
@@ -53,14 +68,19 @@ def fetch_data():
         max_search_results=None,
     )
 
-    with SgFirefox() as driver:
+    with SgChrome(
+        executable_path=ChromeDriverManager().install(), is_headless=True
+    ) as driver:
         driver.get(start_url)
-        driver.find_element_by_xpath('//button[@title="International"]').click()
+        driver.implicitly_wait(5)
+        driver.find_element_by_xpath('//button[@title="United States"]').click()
+        logger.info("Dropdown Clicked!...")
         driver.find_element_by_xpath(
             '//span[contains(text(), "United States")]'
         ).click()
         for code in all_codes:
             try:
+                logger.info(f"Pulling the data for ({code})")
                 driver.find_element_by_xpath('//input[@name="location"]').send_keys(
                     code
                 )
@@ -95,6 +115,8 @@ def fetch_data():
 
         location_name = loc_html.xpath(".//h4/text()")
         location_name = location_name[0] if location_name else "<MISSING"
+        logger.info(f"Location Name: {location_name}")
+
         address_raw = loc_html.xpath(".//address/text()")
         address_raw = [elem.strip() for elem in address_raw if elem.strip()]
         if len(address_raw[0]) == 1:
@@ -134,6 +156,7 @@ def fetch_data():
 
         if "coming soon" in location_name.lower() or street_address == "<MISSING>":
             continue
+        logger.info(f"Hours of Operation: {hours_of_operation}")
 
         item = [
             DOMAIN,
@@ -160,7 +183,9 @@ def fetch_data():
 
 
 def scrape():
+    logger.info("Scraping started! ")
     data = fetch_data()
+    logger.info(f"Number of items scraped and processed: {len(data)}")
     write_output(data)
 
 
