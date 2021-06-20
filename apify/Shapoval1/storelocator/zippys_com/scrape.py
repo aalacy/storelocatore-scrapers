@@ -74,6 +74,16 @@ def fetch_data():
             for d, t in zip(days, times):
                 _tmp.append(f"{d.strip()}: {t.strip()}")
             hours_of_operation = ";".join(_tmp)
+        if (
+            page_url == "https://www.zippys.com/locations/zippys-pearlridge/"
+            and hours_of_operation == "<MISSING>"
+        ):
+            hours_of_operation = "Closed"
+        if (
+            page_url == "https://www.zippys.com/locations/zippys-waimalu/"
+            and hours_of_operation == "<MISSING>"
+        ):
+            hours_of_operation = "Temporarily closed"
 
         row = [
             locator_domain,
