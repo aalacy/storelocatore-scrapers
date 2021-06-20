@@ -36,7 +36,7 @@ def write_output(data):
 
 def get_data(coord):
     rows = []
-    locator_domain = "https://www.wetzels.com"
+    locator_domain = "https://www.mechanicsbank.com"
     lat, lng = coord
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:88.0) Gecko/20100101 Firefox/88.0",
