@@ -178,6 +178,20 @@ def fetch_data():
             hours_of_operation = hours_of_operation.replace("Office Hours", "").strip()
             if hours_of_operation.find("CLOSURE") != -1:
                 hours_of_operation = "Closed"
+            if hours_of_operation.find("COVID-19") != -1:
+                hours_of_operation = "<MISSING>"
+            hours_of_operation = (
+                hours_of_operation.replace("Heures de travail", "")
+                .replace("Lundi", "Monday")
+                .replace("Mardi", "Tuesday")
+                .replace("Mercredi", "Wednesday")
+                .replace("Jeudi", "Thursday")
+                .replace("Vendredi", "Friday")
+                .replace("Samedi", "Saturday")
+                .replace("Dimanche", "Sunday")
+                .replace("Ferme", "Closed")
+                .strip()
+            )
 
             row = [
                 locator_domain,
