@@ -274,16 +274,17 @@ def get_hours(location, page_schema):
 
     hours = []
     for hour in location_hours:
-        day = hour["day"]
-        day_hours = hour["hours"]
+        day = hour["titleText"]
         if re.search("today", day, re.IGNORECASE):
             continue
 
-        if isinstance(day_hours, list):
-            starttime, endtime = day_hours
-            timerange = f"{starttime} - {endtime}"
-        else:
-            timerange = day_hours
+        startTime = hour["startTime"]
+        endTime = hour["endTime"]
+        timerange = (
+            startTime
+            if re.search("open 24 hours", startTime, re.IGNORECASE)
+            else f"{startTime}-{endTime}"
+        )
 
         hours.append(f"{day}: {timerange}")
 
@@ -300,52 +301,57 @@ def get(entity, key):
 
 @retry(reraise=True, stop=stop_after_attempt(5))
 def get_location(page_url):
-    session = get_session()
-    r = session.get(page_url, headers=headers)
-    location = BeautifulSoup(r.text, "lxml")
+    try:
+        session = get_session()
+        r = session.get(page_url, headers=headers)
+        location = BeautifulSoup(r.text, "lxml")
 
-    if not is_valid(location):
-        raise Exception(f"Unable to extract data from {page_url}")
+        if not is_valid(location):
+            raise Exception(f"Unable to extract data from {page_url}")
 
-    script = location.select_one("#structured-data-block")
-    if not script:
-        raise Exception(f"Unable to extract data from {page_url}")
+        script = location.select_one("#structured-data-block")
+        if not script:
+            raise Exception(f"Unable to extract data from {page_url}")
 
-    structured_data = script.string
-    store_number = re.search(r"(storeid=|details-directions\/)(\d+)", page_url).group(2)
-    page_schema = json.loads(structured_data)[0]
-    basic_info = get_basic_info(store_number, page_schema, location, session)
-    geolocation = get_geolocation(location, page_schema)
-    hours_of_operation = get_hours(location, page_schema)
+        structured_data = script.string
+        store_number = re.search(
+            r"(storeid=|details-directions\/)(\d+)", page_url
+        ).group(2)
+        page_schema = json.loads(structured_data)[0]
+        basic_info = get_basic_info(store_number, page_schema, location, session)
+        geolocation = get_geolocation(location, page_schema)
+        hours_of_operation = get_hours(location, page_schema)
 
-    locator_domain = "csv.com"
-    location_name = get(page_schema, "name")
-    location_type = get(page_schema, "@type")
-    street_address = get(basic_info, "street_address")
-    city = get(basic_info, "city")
-    state = get(basic_info, "state")
-    postal = get(basic_info, "postal")
-    phone = get(basic_info, "phone")
-    country_code = get(basic_info, "country_code")
-    latitude = get(geolocation, "latitude")
-    longitude = get(geolocation, "longitude")
+        locator_domain = "csv.com"
+        location_name = get(page_schema, "name")
+        location_type = get(page_schema, "@type")
+        street_address = get(basic_info, "street_address")
+        city = get(basic_info, "city")
+        state = get(basic_info, "state")
+        postal = get(basic_info, "postal")
+        phone = get(basic_info, "phone")
+        country_code = get(basic_info, "country_code")
+        latitude = get(geolocation, "latitude")
+        longitude = get(geolocation, "longitude")
 
-    return [
-        locator_domain,
-        page_url,
-        location_name,
-        location_type,
-        store_number,
-        street_address,
-        city,
-        state,
-        postal,
-        country_code,
-        latitude,
-        longitude,
-        phone,
-        hours_of_operation,
-    ]
+        return [
+            locator_domain,
+            page_url,
+            location_name,
+            location_type,
+            store_number,
+            street_address,
+            city,
+            state,
+            postal,
+            country_code,
+            latitude,
+            longitude,
+            phone,
+            hours_of_operation,
+        ]
+    except Exception as e:
+        logger.error(e)
 
 
 def scrape_loc_urls(loc_urls):
