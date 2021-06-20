@@ -1,9 +1,6 @@
 import json
-import re
 import csv
-import demjson
 from urllib.parse import urljoin
-from lxml import etree
 
 from sgrequests import SgRequests
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
