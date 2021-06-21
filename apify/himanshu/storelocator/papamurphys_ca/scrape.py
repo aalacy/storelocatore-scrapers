@@ -42,7 +42,7 @@ def write_output(data):
 def fetch_data():
 
     headers = {
-        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.79 Safari/537.36",
+        "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36",
     }
 
     location_url = "https://papa-murphys-order-online-locations.securebrygid.com/zgrid/themes/13097/portal/index.jsp"
@@ -60,9 +60,10 @@ def fetch_data():
             " ".join(list(dt.stripped_strings)[5:])
             .replace("(587) 619-1172 Get Directions ", "")
             .split("Order")[0]
+            .split("delivery")[0]
             .replace("*", "")
         )
-        page_url = dt.find("a", {"class": "button portalbtn"})["href"]
+        page_url = dt.find("a", {"class": "button portalbtn"})["href"].strip()
         r1 = session.get(page_url, headers=headers)
         soup1 = BeautifulSoup(r1.text, "lxml")
         log = soup1.find_all("iframe")[-1]["src"].split("!2d")[1].split("!3d")[0]

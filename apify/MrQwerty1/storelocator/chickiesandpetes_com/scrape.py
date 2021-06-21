@@ -98,20 +98,27 @@ def get_exception_locations():
     }
     r = session.get(page_url, headers=headers)
     tree = html.fromstring(r.text)
-    divs = tree.xpath("//div[@class='col-md-6']/p[not(@style) and not(./iframe)]")
+    divs = tree.xpath("//p[./iframe]/following-sibling::p[contains(text(), ',')]")
 
     for d in divs:
         location_name = "".join(d.xpath("./preceding-sibling::h4/text()")).strip()
         line = "".join(d.xpath("./text()")).strip()
-        adr = line.split("–")[0].strip()
+        adr = line.split(" – ")[0].strip()
 
         street_address, city, state, postal = get_address(adr)
         country_code = "US"
         store_number = "<MISSING>"
-        phone = line.split("–")[1].strip()
+        phone = line.split("–")[-1].strip()
         latitude, longitude = "<MISSING>", "<MISSING>"
         location_type = "<MISSING>"
         hours_of_operation = "<MISSING>"
+
+        if city == "Wildwood":
+            hours_of_operation = ";".join(
+                tree.xpath(
+                    "//p[@data-pm-slice and ./em/strong[contains(text(), 'Summer')]]/following-sibling::p/text()"
+                )
+            )
 
         row = [
             locator_domain,
@@ -158,7 +165,7 @@ def get_data(page_url):
     location_name = "".join(tree.xpath("//title/text()")).split("|")[0].strip()
     line = tree.xpath("//div[@class='wpsl-location-address']//text()")
     line = list(filter(None, [l.strip() for l in line]))
-    if not line:
+    if not line or "coming soon" in location_name.lower():
         return
 
     street_address = ", ".join(line[:-1])
