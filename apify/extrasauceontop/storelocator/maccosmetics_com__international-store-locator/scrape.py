@@ -47,7 +47,11 @@ for search_latitude, search_longitude in coordinates_list:
         },
         "referrer": "https://www.maccosmetics.com/international-store-locator",
         "referrerPolicy": "strict-origin-when-cross-origin",
-        "body": "JSONRPC=%5B%7B%22method%22%3A%22locator.doorsandevents%22%2C%22id%22%3A3%2C%22params%22%3A%5B%7B%22fields%22%3A%22DOOR_ID%2C+DOORNAME%2C+EVENT_NAME%2C+SUB_HEADING%2C+EVENT_START_DATE%2C+EVENT_END_DATE%2C+EVENT_IMAGE%2C+EVENT_FEATURES%2C+EVENT_TIMES%2C+SERVICES%2C+STORE_HOURS%2C+ADDRESS%2C+ADDRESS2%2C+STATE_OR_PROVINCE%2C+CITY%2C+REGION%2C+COUNTRY%2C+ZIP_OR_POSTAL%2C+PHONE1%2C+PHONE2%2C+STORE_TYPE%2C+LONGITUDE%2C+LATITUDE%2C+COMMENTS%22%2C%22country%22%3A%22United+States%22%2C%22latitude%22%3A""" + str(search_latitude) + """%2C%22longitude%22%3A""" + str(search_longitude) + """%2C%22uom%22%3A%22mile%22%2C%22region_id%22%3A0%2C%22radius%22%3A100000%7D%5D%7D%5D",
+        "body": "JSONRPC=%5B%7B%22method%22%3A%22locator.doorsandevents%22%2C%22id%22%3A3%2C%22params%22%3A%5B%7B%22fields%22%3A%22DOOR_ID%2C+DOORNAME%2C+EVENT_NAME%2C+SUB_HEADING%2C+EVENT_START_DATE%2C+EVENT_END_DATE%2C+EVENT_IMAGE%2C+EVENT_FEATURES%2C+EVENT_TIMES%2C+SERVICES%2C+STORE_HOURS%2C+ADDRESS%2C+ADDRESS2%2C+STATE_OR_PROVINCE%2C+CITY%2C+REGION%2C+COUNTRY%2C+ZIP_OR_POSTAL%2C+PHONE1%2C+PHONE2%2C+STORE_TYPE%2C+LONGITUDE%2C+LATITUDE%2C+COMMENTS%22%2C%22country%22%3A%22United+States%22%2C%22latitude%22%3A"""
+        + str(search_latitude)
+        + """%2C%22longitude%22%3A"""
+        + str(search_longitude)
+        + """%2C%22uom%22%3A%22mile%22%2C%22region_id%22%3A0%2C%22radius%22%3A100000%7D%5D%7D%5D",
         "method": "POST",
         "mode": "cors",
         "credentials": "include"
@@ -63,7 +67,9 @@ for search_latitude, search_longitude in coordinates_list:
 
         locator_domain = "maccosmetics.com"
         page_url = "<MISSING>"
-        location_name = html.unescape(location["DOORNAME"]) + " " + location["SUB_HEADING"]
+        location_name = (
+            html.unescape(location["DOORNAME"]) + " " + location["SUB_HEADING"]
+        )
         address = location["ADDRESS"]
         city = location["CITY"]
         state = location["STATE_OR_PROVINCE"]
@@ -88,7 +94,11 @@ for search_latitude, search_longitude in coordinates_list:
         if len(hours) > 1:
             hours = hours[:-2]
 
-        if country_code != "United States" and country_code != "US" and country_code != "USA":
+        if (
+            country_code != "United States"
+            and country_code != "US"
+            and country_code != "USA"
+        ):
             locator_domains.append(locator_domain)
             page_urls.append(page_url)
             location_names.append(location_name)
