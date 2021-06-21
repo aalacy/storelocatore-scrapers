@@ -55,17 +55,14 @@ def write_output(data):
 def get_session():
     # give each thread its own session object.
     # when using proxy, each thread's session will have a unique IP, and we'll switch IPs every 6 requests
-    if not hasattr(thread_local, "session") or thread_local.request_count > 5:
+    if not hasattr(thread_local, "session") or thread_local.request_count > 3:
         thread_local.session = SgRequests(
             retry_behavior=None, proxy_rotation_failure_threshold=3
         )
         thread_local.request_count = 0
 
-    return thread_local.session
-
-
-def increment_request_count():
     thread_local.request_count += 1
+    return thread_local.session
 
 
 def get_json_data(html):
@@ -106,7 +103,6 @@ def find_node(entityNum, soup):
 
 
 def retry_error_callback(retry_state):
-    logger.error(f"error fetching {retry_state.args[0]}")
     return []
 
 
@@ -117,7 +113,7 @@ def search_zip(postal, tracker):
         "dwfrm_storelocator_countryCode": "US",
         "dwfrm_storelocator_distanceUnit": "mi",
         "dwfrm_storelocator_postalCode": postal,
-        "dwfrm_storelocator_maxdistance": "30",
+        "dwfrm_storelocator_maxdistance": "15",
         "dwfrm_storelocator_findbyzip": "Search",
     }
 
@@ -199,7 +195,7 @@ def extract(loc):
 def fetch_data():
     dedup_tracker = []
     zip_searched = 0
-    zips = static_zipcode_list(10, SearchableCountries.USA)
+    zips = static_zipcode_list(20, SearchableCountries.USA)
 
     logger.info(f"total zips: {len(zips)}")
 
