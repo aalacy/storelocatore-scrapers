@@ -54,6 +54,7 @@ def fetch_data():
     all_locations = dom.xpath(
         '//h3[@title="Magic Lantern Theatres"]/following-sibling::div[1]//a/@href'
     )
+    all_locations.append("https://www.rainbowcinemas.ca/A/?theatre=Regina&")
     for url in all_locations:
         store_url = urljoin(start_url, url)
         loc_response = session.get(store_url)
@@ -77,6 +78,8 @@ def fetch_data():
             .strip()
         )
         location_type = "<MISSING>"
+        if loc_dom.xpath('//li[@class="rating"]/a[@name="Closed"]'):
+            location_type = "closed"
         latitude = "<MISSING>"
         longitude = "<MISSING>"
         hours_of_operation = "<MISSING>"

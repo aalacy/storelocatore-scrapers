@@ -44,7 +44,7 @@ def fetch_data():
     scraped_items = []
 
     DOMAIN = "atriumhealth.org"
-    start_url = "https://atriumhealth.org/mobileDataApI/MobileserviceAPi/LocationSearch?cityName=&locationType=All+Locations&community=All+Communities&locationName=&pageNumber=1&pageSize=5&sortBy=&childrensLocationOnly=false&latitude=35.2270869&longitude=-80.8431267"
+    start_url = "https://atriumhealth.org/mobileDataApI/MobileserviceAPi/LocationSearch?cityName=&locationType=&locationName=&pageNumber=&pageSize=5&latitude=35.2270869&longitude=-80.8431267&sortBy=&datasource=f829e711-f2ef-4b46-98d6-a268f958a2d0&childrensLocationOnly=false&community=All+Communities"
 
     headers = {
         "Accept": "application/json",
@@ -52,7 +52,7 @@ def fetch_data():
         "Accept-Language": "ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7,pt;q=0.6",
         "Connection": "keep-alive",
         "Host": "atriumhealth.org",
-        "Referer": "https://atriumhealth.org/locations?cityName=&locationType=All_Locations&community=All_Communities&locationName=&pageNumber=1&pageSize=5&sortBy=&childrensLocationOnly=false&latitude=35.2270869&longitude=-80.8431267&datasource=f829e711-f2ef-4b46-98d6-a268f958a2d0",
+        "Referer": "https://atriumhealth.org/locations?cityName=&locationType=&locationName=&pageNumber=&pageSize=5&latitude=35.2270869&longitude=-80.8431267&sortBy=&datasource=f829e711-f2ef-4b46-98d6-a268f958a2d0&childrensLocationOnly=false&community=All_Communities",
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.67 Safari/537.36",
     }
 
@@ -69,7 +69,8 @@ def fetch_data():
             headers=headers,
         )
         page_data = json.loads(page_response.text)
-        all_poi += page_data["Locations"]
+        if page_data.get("Locations"):
+            all_poi += page_data["Locations"]
 
     for poi in all_poi:
         store_url = "https://atriumhealth.org" + poi["ClickableUri"]

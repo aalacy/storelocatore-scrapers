@@ -91,59 +91,79 @@ def fetch_data():
             store_sel = lxml.html.fromstring(store_req.text)
             json_list = store_sel.xpath('//script[@type="application/ld+json"]/text()')
             for js in json_list:
-                if "Store" == json.loads(js)["@type"]:
-                    json_data = json.loads(js)
-                    location_name = json_data["name"]
-                    street_address = json_data["address"]["streetAddress"]
-                    city = json_data["address"]["addressLocality"]
-                    state = json_data["address"]["addressRegion"]
-                    zip = json_data["address"]["postalCode"]
-                    country_code = json_data["address"]["addressCountry"]
-                    phone = json_data["telephone"]
-                    map_link = json_data["hasMap"]
-                    location_type = json_data["brand"]
-                    try:
-                        latitude = (
-                            map_link.split("sll=")[1].strip().split(",")[0].strip()
-                        )
-                        longitude = (
-                            map_link.split("sll=")[1]
+                try:
+                    if "Store" == json.loads(js)["@type"]:
+                        json_data = json.loads(js)
+                        location_name = json_data["name"]
+                        street_address = (
+                            json_data["address"]["streetAddress"]
+                            .replace("Chinook Centre ,", "")
                             .strip()
-                            .split(",")[1]
+                            .replace("West Edmonton Mall,", "")
                             .strip()
-                            .replace("'", "")
+                            .replace(", Hato Rey", "")
+                            .strip()
+                            .replace(
+                                "Visit our New Location at Westfield Century City,", ""
+                            )
+                            .strip()
+                            .replace("Visit our beautifully renovated store,", "")
+                            .strip()
+                            .replace("Santa Monica Place,", "")
+                            .strip()
+                            .replace("Royal Hawaiian Center,", "")
+                            .strip()
+                            .replace("Northbrook Court,", "")
+                            .strip()
+                            .replace("The Shops at Hudson Yards,", "")
                             .strip()
                         )
-                    except:
-                        pass
+                        city = json_data["address"]["addressLocality"]
+                        state = json_data["address"]["addressRegion"]
+                        zip = json_data["address"]["postalCode"]
+                        country_code = json_data["address"]["addressCountry"]
 
-                    if (
-                        "permanently closed"
-                        in json_data["openingHours"]
-                        + " "
-                        + json_data["specialOpeningHoursSpecification"]
-                    ):
-                        hours_of_operation = "permanently closed"
-                    elif (
-                        "temporarily closed"
-                        in json_data["openingHours"]
-                        + " "
-                        + json_data["specialOpeningHoursSpecification"]
-                    ):
-                        hours_of_operation = "temporarily closed"
-                    else:
-                        temp_hours = json_data["openingHours"]
-                        temp_hours = (
-                            temp_hours.split("Holiday ")[0]
-                            .split("urbside ")[0]
-                            .split("Café Hours")[0]
-                        )
-                        hours = list(filter(validhour, temp_hours.split("<br>")))
-                        hours_of_operation = "; ".join(hours).strip("; ").strip()
-                        if not hours_of_operation:
+                        if (
+                            page_url
+                            == "https://www.tiffany.com/jewelry-stores/mall-of-san-juan/"
+                        ):
+                            street_address = "1000 Mall of San Juan Boulevard"
+                            zip = "00924"
 
-                            temp_hours = json_data["specialOpeningHoursSpecification"]
+                        phone = json_data["telephone"]
+                        map_link = json_data["hasMap"]
+                        location_type = json_data["brand"]
+                        try:
+                            latitude = (
+                                map_link.split("sll=")[1].strip().split(",")[0].strip()
+                            )
+                            longitude = (
+                                map_link.split("sll=")[1]
+                                .strip()
+                                .split(",")[1]
+                                .strip()
+                                .replace("'", "")
+                                .strip()
+                            )
+                        except:
+                            pass
 
+                        if (
+                            "permanently closed"
+                            in json_data["openingHours"]
+                            + " "
+                            + json_data["specialOpeningHoursSpecification"]
+                        ):
+                            hours_of_operation = "permanently closed"
+                        elif (
+                            "temporarily closed"
+                            in json_data["openingHours"]
+                            + " "
+                            + json_data["specialOpeningHoursSpecification"]
+                        ):
+                            hours_of_operation = "temporarily closed"
+                        else:
+                            temp_hours = json_data["openingHours"]
                             temp_hours = (
                                 temp_hours.split("Holiday ")[0]
                                 .split("urbside ")[0]
@@ -151,32 +171,52 @@ def fetch_data():
                             )
                             hours = list(filter(validhour, temp_hours.split("<br>")))
                             hours_of_operation = "; ".join(hours).strip("; ").strip()
+                            if not hours_of_operation:
 
-                        hours_of_operation = hours_of_operation.replace(
-                            "<b>", ""
-                        ).replace("<BR>", "")
-                        hours_of_operation = (
-                            hours_of_operation.split("e-mail from")[1].strip()
-                            if "e-mail from" in hours_of_operation
-                            else hours_of_operation
+                                temp_hours = json_data[
+                                    "specialOpeningHoursSpecification"
+                                ]
+
+                                temp_hours = (
+                                    temp_hours.split("Holiday ")[0]
+                                    .split("urbside ")[0]
+                                    .split("Café Hours")[0]
+                                )
+                                hours = list(
+                                    filter(validhour, temp_hours.split("<br>"))
+                                )
+                                hours_of_operation = (
+                                    "; ".join(hours).strip("; ").strip()
+                                )
+
+                            hours_of_operation = hours_of_operation.replace(
+                                "<b>", ""
+                            ).replace("<BR>", "")
+                            hours_of_operation = (
+                                hours_of_operation.split("e-mail from")[1].strip()
+                                if "e-mail from" in hours_of_operation
+                                else hours_of_operation
+                            )
+
+                        yield SgRecord(
+                            locator_domain=locator_domain,
+                            page_url=page_url,
+                            location_name=location_name,
+                            street_address=street_address,
+                            city=city,
+                            state=state,
+                            zip_postal=zip,
+                            country_code=country_code,
+                            store_number=store_number,
+                            phone=phone,
+                            location_type=location_type,
+                            latitude=latitude,
+                            longitude=longitude,
+                            hours_of_operation=hours_of_operation,
                         )
 
-                    yield SgRecord(
-                        locator_domain=locator_domain,
-                        page_url=page_url,
-                        location_name=location_name,
-                        street_address=street_address,
-                        city=city,
-                        state=state,
-                        zip_postal=zip,
-                        country_code=country_code,
-                        store_number=store_number,
-                        phone=phone,
-                        location_type=location_type,
-                        latitude=latitude,
-                        longitude=longitude,
-                        hours_of_operation=hours_of_operation,
-                    )
+                except:
+                    pass
 
 
 def scrape():
