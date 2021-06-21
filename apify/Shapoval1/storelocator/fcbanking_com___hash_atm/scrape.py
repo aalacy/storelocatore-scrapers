@@ -70,7 +70,7 @@ def fetch_data():
             tmp.append(line)
         hours_of_operation = ";".join(tmp) or "<MISSING>"
 
-        line = street_address
+        line = (street_address, location_name)
         if line in s:
             continue
         s.add(line)
