@@ -1,5 +1,4 @@
 import csv
-import json
 from lxml import html
 from sgrequests import SgRequests
 
@@ -51,7 +50,7 @@ def fetch_data():
         .split("jsonLocations:")[1]
         .split("imageLocations:")[0]
         .replace('"currentStoreId":"1"},', '"currentStoreId":"1"}')
-        .replace('<\/div> "},', '<\/div> "}')
+        .replace('/div> "},', '/div> "}')
     )
 
     jsblock = (
