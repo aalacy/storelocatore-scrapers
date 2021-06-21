@@ -208,7 +208,7 @@ def getScriptWithGeo(body):
             try:
                 return json.loads(script, strict=False)
             except Exception as e:
-                log.error("Can't able to fetch json Error={e}")
+                log.error("Can not able to fetch json Error= {e}")
     return None
 
 
