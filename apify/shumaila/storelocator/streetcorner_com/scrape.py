@@ -115,7 +115,7 @@ def fetch_data():
                         "US",
                         "<MISSING>",
                         phone,
-                        "<MISSING>",
+                        "Gas Station, Mall",
                         lat.strip(),
                         longt,
                         hours.replace("am", "am-"),
