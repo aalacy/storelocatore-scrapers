@@ -81,7 +81,7 @@ def fetch_data():
                             if lurl not in locs:
                                 locs.append(lurl)
         for loc in locs:
-            loc = loc.replace("&amp;", "&")
+            loc = loc.replace("&amp;", "&").replace("&#39;", "'")
             r3 = session.get(loc, headers=headers)
             if r3.encoding is None:
                 r3.encoding = "utf-8"

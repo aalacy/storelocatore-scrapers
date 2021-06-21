@@ -81,6 +81,8 @@ def fetch_data():
             if location_name == "":
                 location_name = "<MISSING>"
 
+            if "COMING SOON" in location_name or "coming-soon" in page_url:
+                continue
             street_address = store["address"]["line1"]
             if "line2" in store:
                 if store["line2"] is not None and len(store["line2"]) > 0:
@@ -106,7 +108,9 @@ def fetch_data():
                 zip = "<MISSING>"
 
             store_number = store["meta"]["id"]
-            phone = store["mainPhone"]
+            phone = ""
+            if "mainPhone" in store:
+                phone = store["mainPhone"]
 
             location_type = "open"
 
@@ -114,7 +118,8 @@ def fetch_data():
                 if store["closed"] is True:
                     location_type = "closed"
 
-            hours = store["hours"]
+            if "hours" in store:
+                hours = store["hours"]
             hours_of_operation = ""
             for day, time in hours.items():
                 if "openIntervals" in time:

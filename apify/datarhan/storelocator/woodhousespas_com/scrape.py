@@ -1,6 +1,5 @@
 import csv
 import json
-from urllib.parse import urljoin
 
 from sgrequests import SgRequests
 
@@ -48,10 +47,12 @@ def fetch_data():
     data = json.loads(response.text)
 
     for poi in data["results"]["locations"]:
-        store_url = urljoin("https://www.woodhousespas.com", poi["website"])
+        store_url = "https://" + poi["website"]
         location_name = poi["name"]
         location_name = location_name if location_name else "<MISSING>"
         raw_address = poi["streetaddress"].split(",")
+        if len(raw_address) == 5:
+            raw_address = raw_address[:2] + raw_address[3:]
         if len(raw_address) == 4:
             raw_address = raw_address[:-1]
         street_address = raw_address[0]

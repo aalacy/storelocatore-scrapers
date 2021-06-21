@@ -5,7 +5,6 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import lxml.html
 from sgscrape import sgpostal as parser
-import json
 
 website = "tradefairny.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -25,8 +24,6 @@ def fetch_data():
     stores_req = session.get(search_url, headers=headers)
     stores_sel = lxml.html.fromstring(stores_req.text)
     stores = stores_sel.xpath('//section[@data-aid="CONTACT_INFO_CONTAINER_REND"]')
-
-    coord_list = stores_req.text.split('JSON.parse("{\\"lat\\"')
 
     for index in range(0, len(stores)):
         page_url = search_url
@@ -64,12 +61,8 @@ def fetch_data():
 
         location_type = "<MISSING>"
 
-        json_text = '{"lat"' + coord_list[index + 1].split('"),JSON.parse')[
-            0
-        ].strip().replace('\\"', '"')
-        coord_json = json.loads(json_text)
-        latitude = coord_json["lat"]
-        longitude = coord_json["lon"]
+        latitude = "<MISSING>"
+        longitude = "<MISSING>"
 
         yield SgRecord(
             locator_domain=locator_domain,

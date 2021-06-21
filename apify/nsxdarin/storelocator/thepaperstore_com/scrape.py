@@ -1,8 +1,8 @@
 import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
+import time
 
-session = SgRequests()
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
@@ -40,6 +40,7 @@ def write_output(data):
 def fetch_data():
     locs = []
     url = "https://locations.thepaperstore.com"
+    session = SgRequests()
     r = session.get(url, headers=headers)
     website = "thepaperstore.com"
     typ = "<MISSING>"
@@ -55,6 +56,7 @@ def fetch_data():
                         "https://locations.thepaperstore.com/" + item.split('"')[0]
                     )
     for loc in locs:
+        time.sleep(5)
         logger.info(loc)
         name = "The Paper Store"
         add = ""
@@ -66,6 +68,7 @@ def fetch_data():
         lat = ""
         lng = ""
         hours = ""
+        session = SgRequests()
         r2 = session.get(loc, headers=headers)
         for line2 in r2.iter_lines():
             line2 = str(line2.decode("utf-8"))
@@ -93,6 +96,7 @@ def fetch_data():
             if '"province":"' in line2:
                 state = line2.split('"province":"')[2].split('"')[0]
         if "435 Boston" not in add:
+            add = add.replace(", null", "")
             yield [
                 website,
                 loc,

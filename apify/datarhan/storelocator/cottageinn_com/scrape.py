@@ -74,7 +74,7 @@ def fetch_data():
         country_code = country_code if country_code else "<MISSING>"
         store_number = poi["meta"]["id"]
         store_number = store_number if store_number else "<MISSING>"
-        phone = poi["localPhone"]
+        phone = poi.get("localPhone")
         phone = phone if phone else "<MISSING>"
         location_type = poi["meta"]["entityType"]
         latitude = poi["geocodedCoordinate"]["latitude"]
@@ -82,15 +82,16 @@ def fetch_data():
         longitude = poi["geocodedCoordinate"]["longitude"]
         longitude = longitude if longitude else "<MISSING>"
         hours_of_operation = []
-        for day, hours in poi["hours"].items():
-            if "holiday" in day:
-                continue
-            if hours.get("openIntervals"):
-                opens = hours["openIntervals"][0]["start"]
-                closes = hours["openIntervals"][0]["end"]
-                hours_of_operation.append(f"{day} {opens} - {closes}")
-            else:
-                hours_of_operation.append(f"{day} closed")
+        if poi.get("hours"):
+            for day, hours in poi["hours"].items():
+                if "holiday" in day:
+                    continue
+                if hours.get("openIntervals"):
+                    opens = hours["openIntervals"][0]["start"]
+                    closes = hours["openIntervals"][0]["end"]
+                    hours_of_operation.append(f"{day} {opens} - {closes}")
+                else:
+                    hours_of_operation.append(f"{day} closed")
         hours_of_operation = (
             " ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
         )
