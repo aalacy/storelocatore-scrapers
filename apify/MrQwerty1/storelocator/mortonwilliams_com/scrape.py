@@ -37,6 +37,7 @@ def write_output(data):
 def fetch_data():
     out = []
     c = "<MISSING>"
+    locations = []
     locator_domain = "https://www.mortonwilliams.com/"
     page_url = "https://www.mortonwilliams.com/our-locations"
 
@@ -46,11 +47,20 @@ def fetch_data():
     }
     r = session.get(page_url, headers=headers)
     tree = html.fromstring(r.text)
-    divs = reversed(tree.xpath("//div[@class='_1lRal']")[:-2])
+    divs = reversed(tree.xpath("//div[@class='_2bafp']")[2:-2])
 
     for d in divs:
         lines = d.xpath(".//text()")
-        lines = list(filter(None, [l.replace("\u200b", "").strip() for l in lines]))
+        lines = list(
+            filter(
+                None,
+                [l.replace("\u200b", "").replace("\xa0", "").strip() for l in lines],
+            )
+        )
+        for line in lines:
+            if line.startswith("(") and line.endswith(")"):
+                lines.remove(line)
+
         if len(lines) == 1:
             c = lines[0]
             continue
@@ -60,17 +70,26 @@ def fetch_data():
             for k, group in groupby(lines, lambda x: "Manager" in x)
             if not k
         ]
-        for loc in locations:
-            hours_of_operation = loc.pop()
-            phone = loc.pop()
-            if loc[-1][0] == "(":
-                loc.pop()
 
-            street_address = loc.pop()
+        for loc in locations:
+            street_address = loc.pop(0)
+            if "(" in street_address:
+                street_address = street_address.split("(")[0].strip()
+            if loc[0].startswith("New"):
+                csz = loc.pop(0)
+                city = csz.split(",")[0].strip()
+                csz = csz.split(",")[1].strip()
+                state = csz.split()[0]
+                postal = csz.split()[-1]
+            else:
+                city = c
+                state = "<MISSING>"
+                postal = "<MISSING>"
+
+            phone = loc.pop(0)
+            hours_of_operation = ";".join(loc)
             location_name = street_address
-            city = c
-            state = "<MISSING>"
-            postal = "<MISSING>"
+
             country_code = "US"
             store_number = "<MISSING>"
             latitude = "<MISSING>"

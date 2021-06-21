@@ -84,9 +84,9 @@ def fetch_data():
 
         payload = {"postalCode": zip_code}
 
-        # New session every 100
-        if i % 100 == 0:
-            log.info("Getting next 100 ..")
+        # New session every 50
+        if i % 50 == 0:
+            log.info("New session for next 50 zips..")
             log.info(zip_code)
             session = SgRequests()
 

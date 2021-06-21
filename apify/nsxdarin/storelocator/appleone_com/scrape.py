@@ -117,6 +117,11 @@ def fetch_location(zipcode, EV, VSG, VS, ids, url):
             if 'div id="gmap-display-' in line:
                 city = city.strip().replace("\t", "")
                 info = name + "|" + add
+                if "10151 Deerwood Park Blvd" in add:
+                    add = "10151 Deerwood Park Blvd Suite 110, Building 100"
+                    city = "Jacksonville"
+                    state = "FL"
+                    zc = "32256"
                 if info not in ids:
                     ids.append(info)
                     return [
