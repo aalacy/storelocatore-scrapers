@@ -46,42 +46,6 @@ def fetch_data():
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36"
     }
 
-    # base_url = "https://www.bmw.com/"
-    # r = session.get("https://www.bmwusa.com/api/dealers/41501/1000", headers=headers)
-    # for store_data in r.json()["Dealers"]:
-    #     store = []
-    #     store.append(base_url)
-    #     store.append(store_data["DefaultService"]["Name"])
-    #     store.append(store_data["DefaultService"]["Address"])
-    #     if store[-1] in addresses:
-    #         continue
-    #     addresses.append(store[-1])
-    #     store.append(store_data["DefaultService"]["City"])
-    #     store.append(store_data["DefaultService"]["State"])
-    #     store.append(store_data["DefaultService"]["ZipCode"])
-    #     store.append("US")
-    #     store.append(store_data["CenterId"])
-    #     store.append(
-    #         store_data["DefaultService"]["FormattedPhone"]
-    #         if store_data["DefaultService"]["FormattedPhone"] != ""
-    #         and store_data["DefaultService"]["FormattedPhone"] is not None
-    #         else "<MISSING>"
-    #     )
-    #     store.append("bmw us")
-    #     store.append(store_data["DefaultService"]["LonLat"]["Lat"])
-    #     store.append(store_data["DefaultService"]["LonLat"]["Lon"])
-    #     hours = " ".join(
-    #         list(
-    #             BeautifulSoup(
-    #                 store_data["DefaultService"]["FormattedHours"], "lxml"
-    #             ).stripped_strings
-    #         )
-    #     )
-    #     store.append(hours if hours != "" else "<MISSING>")
-    #     store.append("<MISSING>")
-    #     logger.info(store)
-    #     yield store
-
     countries = SearchableCountries.WITH_COORDS_ONLY
     countries.extend(SearchableCountries.WITH_ZIPCODE_AND_COORDS)
     countries.sort()
