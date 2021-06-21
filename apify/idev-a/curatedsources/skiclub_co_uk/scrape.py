@@ -37,6 +37,8 @@ def fetch_data():
                     city = _addr[-3]
                 elif street_address != _addr[-2]:
                     city = _addr[-2]
+            if not street_address:
+                street_address = _["Name"]
             yield SgRecord(
                 page_url=_["Url"],
                 location_name=_["Name"],

@@ -5,12 +5,14 @@ import csv
 from urllib.parse import urlparse
 from lxml import html
 import ssl
-
+from bs4 import BeautifulSoup as bs
+from webdriver_manager.chrome import ChromeDriverManager
 from sgselenium import SgChrome
 from sgrequests import SgRequests
 from sglogging import sglog
 
 ssl._create_default_https_context = ssl._create_unverified_context
+
 
 DOMAIN = "daynurseries.co.uk"
 
@@ -42,7 +44,9 @@ COLUMNS = [
 
 session = SgRequests().requests_retry_session()
 log = sglog.SgLogSetup().get_logger(logger_name=website)
-driver = SgChrome(is_headless=True).driver()
+driver = SgChrome(
+    is_headless=True, executable_path=ChromeDriverManager().install()
+).driver()
 
 
 def fetchStores():
@@ -63,32 +67,47 @@ def fetchSinglePage(data_url, findRedirect=False):
     incap_url = website + incap_str
     session.get(incap_url)
 
-    for request in driver.requests:
-        headers = request.headers
-        try:
-            response = session.get(data_url, headers=headers)
-            response_text = response.text
+    x = 0
+    while True:
+        x = x + 1
+        if x == 10:
+            break
+        for request in driver.requests:
+            headers = request.headers
+            try:
+                response = session.get(data_url, headers=headers)
+                response_text = response.text
 
-            test_html = response_text.split("div")
+                test_html = response_text.split("div")
 
-            if findRedirect and response_text.find("window.location.replace") > -1:
-                try:
-                    return response_text.split("window.location.replace('")[1].split(
-                        "')"
-                    )[0]
-                except Exception:
+                if findRedirect and response_text.find("window.location.replace") > -1:
+
+                    try:
+                        return [
+                            session,
+                            headers,
+                            response_text.split("window.location.replace('")[1].split(
+                                "')"
+                            )[0],
+                        ]
+                    except Exception:
+                        continue
+                elif len(test_html) < 2:
                     continue
-            elif len(test_html) < 2:
-                continue
-            else:
-                return {
-                    "response": response_text,
-                    "hours_of_operation": getHoursOfOperation(),
-                    "phone": getPhone(),
-                }
+                else:
 
-        except Exception:
-            continue
+                    return [
+                        session,
+                        headers,
+                        {
+                            "response": response_text,
+                            "hours_of_operation": getHoursOfOperation(),
+                            "phone": getPhone(session, headers, response_text),
+                        },
+                    ]
+
+            except Exception:
+                continue
 
 
 def getHoursOfOperation():
@@ -115,17 +134,21 @@ def getHoursOfOperation():
     return MISSING
 
 
-def getPhone():
+def getPhone(session, headers, response_text):
     try:
-        driver.find_element_by_xpath("//a[@id='brochure_phone']").click()
-        phones = driver.find_elements_by_xpath(
-            "//div[@id='contacts_telephone_general']/p/strong/a"
+        phone_soup = bs(response_text, "html.parser")
+        phone_link = phone_soup.find("a", attrs={"id": "brochure_phone"})["href"]
+        phone_response = session.get(phone_link, headers=headers).text
+        response_soup = bs(phone_response, "html.parser")
+        phone = (
+            response_soup.find("div", attrs={"class": "contacts_telephone"})
+            .find("a")
+            .text.strip()
         )
-        for phone in phones:
-            return phone.get_attribute("innerHTML")
+        return phone
     except Exception as e:
         log.error("error loading phone", e)
-    return MISSING
+        return "broken"
 
 
 def getScriptWithGeo(body):
@@ -136,55 +159,116 @@ def getScriptWithGeo(body):
     return None
 
 
-def fetchSingleStore(page_url):
+def getVarName(value):
+    try:
+        return int(value)
+    except ValueError:
+        pass
+    return value
+
+
+def getJSONObjectVariable(Object, varNames, noVal=MISSING):
+    value = noVal
+    for varName in varNames.split("."):
+        varName = getVarName(varName)
+        try:
+            value = Object[varName]
+            Object = Object[varName]
+        except Exception:
+            return noVal
+    return value
+
+
+def fetchSingleStore(page_url, session=None, headers=None):
+
     split_url = page_url.split("/")
     if len(split_url) != 6:
         log.error(f"Ignored {page_url} ...")
         return None
     log.info(f"Scrapping {page_url} ...")
     store_number = split_url[5]
-    store_response = fetchSinglePage(page_url)
 
-    hours_of_operation = store_response["hours_of_operation"]
-    phone = store_response["phone"].strip()
+    if session is None:
+        store_response_session = fetchSinglePage(page_url)
+        session = store_response_session[0]
+        headers = store_response_session[1]
+        store_response = store_response_session[2]
+
+    else:
+        response_text = session.get(page_url, headers=headers).text
+        test_html = test_html = response_text.split("div")
+
+        if len(test_html) < 2:
+            store_response_session = fetchSinglePage(page_url)
+            session = store_response_session[0]
+            headers = store_response_session[1]
+            store_response = store_response_session[2]
+
+        else:
+            store_response = {
+                "response": response_text,
+                "hours_of_operation": getHoursOfOperation(),
+                "phone": getPhone(session, headers, response_text),
+            }
+
+    hours_of_operation = getJSONObjectVariable(store_response, "hours_of_operation")
+    phone = getJSONObjectVariable(store_response, "phone").strip()
     body = html.fromstring(store_response["response"], "lxml")
 
     geoJSON = getScriptWithGeo(body)
-    location_name = geoJSON["name"].strip().split(" at ")[0]
+    location_name = getJSONObjectVariable(geoJSON, "name").strip().split(" at ")[0]
 
-    street_address = geoJSON["address"]["streetAddress"].strip()
-    city = geoJSON["address"]["addressLocality"].strip()
-    state = geoJSON["address"]["addressRegion"].strip()
-    zip_postal = geoJSON["address"]["postalCode"].strip()
+    address = {}
+    if "address" in geoJSON:
+        address = geoJSON["address"]
 
-    latitude = str(geoJSON["geo"]["latitude"])
-    longitude = str(geoJSON["geo"]["longitude"])
+    street_address = getJSONObjectVariable(address, "streetAddress").strip()
+    city = getJSONObjectVariable(address, "addressLocality").strip()
+    state = getJSONObjectVariable(address, "addressRegion").strip()
+    zip_postal = getJSONObjectVariable(address, "postalCode").strip()
+
+    latitude = str(getJSONObjectVariable(geoJSON, "geo.latitude"))
+    longitude = str(getJSONObjectVariable(geoJSON, "geo.longitude"))
 
     redirect_urls = body.xpath('//a[contains(@class, "button-website")]/@href')
     if len(redirect_urls) > 0:
-        brand_website = fetchSinglePage(redirect_urls[0], True)
-        brand_website = (urlparse(brand_website).netloc).replace("www.", "")
+
+        url_text = session.get(redirect_urls[0], headers=headers).text
+
+        try:
+            brand_website = url_text.split("window.location.replace(")[1].split(")")[0]
+        except Exception:
+            brand_website_session = fetchSinglePage(redirect_urls[0], True)
+            brand_website = brand_website_session[2]
+            session = brand_website_session[0]
+            headers = brand_website_session[1]
+
+            brand_website = (urlparse(brand_website).netloc).replace("www.", "")
 
     else:
         brand_website = MISSING
 
-    return {
-        "page_url": page_url,
-        "store_number": store_number,
-        "location_name": location_name,
-        "locator_domain": DOMAIN,
-        "street_address": street_address,
-        "city": city,
-        "state": state,
-        "zip_postal": zip_postal,
-        "latitude": latitude,
-        "longitude": longitude,
-        "hours_of_operation": hours_of_operation,
-        "brand_website": brand_website,
-        "phone": phone,
-        "country_code": "UK",
-        "location_type": MISSING,
-    }
+    return [
+        session,
+        headers,
+        {
+            "page_url": page_url,
+            "store_number": store_number,
+            "location_name": location_name,
+            "locator_domain": DOMAIN,
+            "street_address": street_address,
+            "city": city,
+            "state": state,
+            "zip_postal": zip_postal,
+            "latitude": latitude,
+            "longitude": longitude,
+            "hours_of_operation": hours_of_operation,
+            "brand_website": brand_website,
+            "phone": phone,
+            "country_code": "UK",
+            "location_type": MISSING,
+        },
+    ]
 
 
 def fetchData():
@@ -195,13 +279,38 @@ def fetchData():
     writer = csv.writer(file)
     writer.writerow(COLUMNS)
 
+    x = 0
+    data = "x"
     for page_url in stores:
-        data = fetchSingleStore(page_url)
-        if data is None:
+        x = x + 1
+        if x == 1:
             continue
+
+        if x == 2:
+            try:
+                data_session_headers = fetchSingleStore(page_url)
+                data = data_session_headers[2]
+                session = data_session_headers[0]
+                headers = data_session_headers[1]
+            except Exception as e:
+                log.error(f"Error fetching data {page_url}", e)
+            if data == "x":
+                continue
+
+        else:
+            try:
+                data_session_headers = fetchSingleStore(page_url, session, headers)
+                data = data_session_headers[2]
+                session = data_session_headers[0]
+                headers = data_session_headers[1]
+            except Exception as e:
+                log.error(f"Error fetching data {page_url}", e)
+            if data is None:
+                continue
 
         row = []
         for column in COLUMNS:
+
             if column in data and data[column] != "":
                 row.append(data[column])
             else:

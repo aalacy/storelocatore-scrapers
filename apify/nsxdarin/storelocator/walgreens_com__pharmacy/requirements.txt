@@ -1,4 +1,10 @@
 sglogging==0.0.4
+<<<<<<< HEAD
 sgrequests==0.1.12
 sgzip==0.5.3
 beautifulsoup4==4.9.3
+=======
+sgrequests==0.1.8
+sgzip==0.5.2
+beautifulsoup4==4.9.3
+>>>>>>> 464341b4ef4ce2a4262920a6223ef4f1bc43ca0a

@@ -46,27 +46,30 @@ def fetch_data():
     logger.info("Pulling Stores")
     for line in r.iter_lines():
         line = str(line.decode("utf-8"))
-        if '{"name": "' in line:
-            items = line.split('{"name": "')
+        if '{"id": ' in line:
+            items = line.split('{"id": ')
             for item in items:
-                if 'slug": "' in item:
+                if '"url": "' in item:
                     loc = (
-                        "https://www.landrysseafood.com/location/"
-                        + item.split('slug": "')[1].split('"')[0]
+                        "https://www.landrysseafood.com"
+                        + item.split('"url": "')[1].split('"')[0]
                     )
-                    name = item.split('"')[0]
+                    name = item.split('"name": "')[1].split('"')[0]
+                    hours = item.split('"hours": "\\u003cp\\u003e')[1].split("u003ch4")[
+                        0
+                    ]
+                    hours = hours.replace("\\u003cbr/\\u003e", "; ")
+                    add = item.split('"street": "')[1].split('"')[0]
+                    city = item.split('"city": "')[1].split('"')[0]
+                    state = item.split('"state": "')[1].split('"')[0]
+                    zc = item.split('"postal_code": "')[1].split('"')[0]
                     lat = item.split('"lat": "')[1].split('"')[0]
                     lng = item.split('"lng": "')[1].split('"')[0]
-                    add = item.split('"street": "')[1].split('"')[0]
-                    state = item.split('"state": "')[1].split('"')[0]
-                    city = item.split('"city": "')[1].split('"')[0]
-                    zc = item.split('"postal_code": "')[1].split('"')[0]
                     phone = item.split('"phone_number": "')[1].split('"')[0]
-                    hours = item.split('"hours": "\\u003cp\\u003e')[1].split(
-                        "\\u003cbr/\\u003e\\u003ch4\\u003ePick Up"
-                    )[0]
-                    hours = hours.replace("\\u003cbr/\\u003e", "; ")
                     store = "<MISSING>"
+                    hours = hours.replace("\\u0026amp;", "&")
+                    hours = hours.replace("\\u0026nbsp;", "")
+                    hours = hours.replace("; \\", "")
                     yield [
                         website,
                         loc,

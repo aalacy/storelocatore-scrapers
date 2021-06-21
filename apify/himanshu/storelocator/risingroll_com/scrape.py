@@ -35,13 +35,27 @@ def fetch_data():
                 .get_text(separator="|", strip=True)
                 .split("|")[1:]
             )
+            for i, s in enumerate(temp):
+                if "Owner:" in s:
+                    indice = i
+                elif "Owners:" in s:
+                    indice = i
+            address = temp[:indice]
+            temp_address = address[-1].split()
+            if temp_address[-1].isdigit() and len(temp_address[-1]) == 5:
+                if "University" in address[1]:
+                    address = address[2:]
+            else:
+                del address[-1]
+            address = " ".join(x for x in address)
             latitude, longitude = (
                 soup.find("iframe", {"src": re.compile("mapquest.com")})["src"]
                 .split("center=", 1)[1]
                 .split("&zoom=", 1)[0]
                 .split(",")
             )
-            temp = " ".join(x for x in temp)
+            indice = indice + 1
+            temp = " ".join(x for x in temp[indice:])
             try:
                 hours_of_operation = temp.split("Open:", 1)[1]
                 if "We are following" in hours_of_operation:
@@ -59,11 +73,6 @@ def fetch_data():
 
             except:
                 hours_of_operation = "<MISSING>"
-
-            if "Owner:" in temp:
-                address = temp.split("Owner:", 1)[0]
-            else:
-                address = temp.split("Owners:", 1)[0]
             try:
                 phone = temp.split("P:", 1)[1].split()[0]
             except:
@@ -74,8 +83,8 @@ def fetch_data():
                         phone = temp.split("P :")[1]
                     except:
                         phone = "<MISSING>"
-            raw_address = address.replace(",", " ")
-            address = usaddress.parse(raw_address)
+            address = address.replace(",", " ")
+            address = usaddress.parse(address)
             i = 0
             street_address = ""
             city = ""
@@ -116,7 +125,6 @@ def fetch_data():
                 latitude=latitude.strip(),
                 longitude=longitude.strip(),
                 hours_of_operation=hours_of_operation.strip(),
-                raw_address=raw_address,
             )
 
 
