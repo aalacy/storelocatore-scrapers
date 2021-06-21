@@ -94,7 +94,6 @@ def getJsonObj(html_string):
 
 def fetch_data():
     out = []
-    url = "https://unitedrentals.com/"
     api_url = "https://www.unitedrentals.com/api/v2/branches"
 
     driver = get_driver(api_url)
