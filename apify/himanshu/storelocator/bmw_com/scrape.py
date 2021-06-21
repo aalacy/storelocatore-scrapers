@@ -109,7 +109,6 @@ def fetch_data():
 
 
 def scrape():
-    # fetch_data()
     data = fetch_data()
     write_output(data)
 
