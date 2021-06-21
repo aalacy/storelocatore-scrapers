@@ -10,20 +10,20 @@ search = DynamicGeoSearch(country_codes=[SearchableCountries.BRITAIN])
 session = SgRequests(retry_behavior=False)
 
 # There are two functions that get data (get_urls, and get_data). 1# means the data point is grabbed in the first function, 2#'s in the second function
-locator_domains = []  #
-page_urls = []  #
-location_names = []  #
-street_addresses = []  ##
-citys = []  #
-states = []  ##
-zips = []  ##
-country_codes = []  #
-store_numbers = []  #
-phones = []  ##
-location_types = []  ##
-latitudes = []  #
-longitudes = []  #
-hours_of_operations = []  ##
+locator_domains = []
+page_urls = []
+location_names = []
+street_addresses = []
+citys = []
+states = []
+zips = []
+country_codes = []
+store_numbers = []
+phones = []
+location_types = []
+latitudes = []
+longitudes = []
+hours_of_operations = [] 
 
 headers_list = [
     {
