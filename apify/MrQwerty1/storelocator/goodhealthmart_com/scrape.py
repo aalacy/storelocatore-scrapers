@@ -91,7 +91,10 @@ def fetch_data():
         if "Good Health Mart" not in str(d):
             continue
 
-        page_url = d[11][0]
+        try:
+            page_url = d[11][0]
+        except IndexError:
+            page_url = "<MISSING>"
         latitude, longitude = d[0][2]
         street_address = d[2][0]
         line = d[2][1].replace("Ontario", "Ontario, ON ")

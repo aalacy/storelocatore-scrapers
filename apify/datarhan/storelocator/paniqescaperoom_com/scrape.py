@@ -57,6 +57,7 @@ def fetch_data():
         store_url = urljoin(start_url, url)
         loc_response = session.get(store_url)
         loc_dom = etree.HTML(loc_response.text)
+
         poi = loc_dom.xpath('//script[contains(text(), "GeoCoordinates")]/text()')[0]
         poi = json.loads(poi)
         if loc_dom.xpath('//div[contains(text(), "OPENING SOON")]'):
@@ -101,7 +102,8 @@ def fetch_data():
         if poi.get("telephone"):
             phone = poi["telephone"]
         else:
-            phone = loc_dom.xpath('//a[contains(@href, "tel")]/text()')[0]
+            phone = loc_dom.xpath('//a[contains(@href, "tel")]/text()')
+            phone = phone[0] if phone else "<MISSING>"
         location_type = poi["@type"]
         latitude = poi["geo"]["latitude"]
         longitude = poi["geo"]["longitude"]

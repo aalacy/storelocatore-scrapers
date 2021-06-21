@@ -124,6 +124,9 @@ def fetch_data():
             phone = "<MISSING>"
         if "{: Closed; MONDAY: Closed" in hours:
             hours = "Sun-Sat: Closed"
+        name = name.replace("&#39;", "'")
+        add = add.replace("&#39;", "'")
+        city = city.replace("&#39;", "'")
         yield [
             website,
             loc,

@@ -1,10 +1,10 @@
 from sgrequests import SgRequests
-from sgzip.dynamic import DynamicGeoSearch, SearchableCountries, Grain_2
 from sglogging import SgLogSetup
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
+from lxml import html
+
 import ssl
-from tenacity import retry, stop_after_attempt
 
 try:
     _create_unverified_https_context = (
@@ -19,137 +19,156 @@ else:
 logger = SgLogSetup().get_logger("tacobell_com")
 MISSING = "<MISSING>"
 DOMAIN = "https://www.tacobell.com"
+URL_LOCATION = "https://locations.tacobell.com/"
+
 headers = {
     "accept": "application/json, text/plain, */*",
     "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.77 Safari/537.36",
 }
 
 
-def get_hoo(data_hrs):
-    hours = []
-    if "openingHours" in data_hrs:
-        week_day_opening_list = data_hrs["openingHours"]["weekDayOpeningList"]
-        for k in range(len(week_day_opening_list)):
-            if week_day_opening_list[k]["closed"] is True:
-                hrs_formatted = week_day_opening_list[k]["weekDay"] + " " + "closed"
-                hours.append(hrs_formatted)
-            else:
-                weekday = week_day_opening_list[k]["weekDay"]
-                opening_time = week_day_opening_list[k]["openingTime"][
-                    "storeDetailsFormattedHour"
-                ]
-                closing_time = week_day_opening_list[k]["closingTime"][
-                    "storeDetailsFormattedHour"
-                ]
-                hrs_formatted = f"{weekday} {opening_time} - {closing_time}"
-                hours.append(hrs_formatted)
-    if hours:
-        hours = "; ".join(hours)
-    else:
-        hours = MISSING
-    return hours
-
-
-# The following settings for Dynamic Search produces 6989 stores
-# which looks like expected results as far as the store count in the US is concerned
-
-search = DynamicGeoSearch(
-    country_codes=[SearchableCountries.USA],
-    max_radius_miles=10,
-    max_search_results=50,
-    granularity=Grain_2(),
-)
-
-
-@retry(stop=stop_after_attempt(7))
-def fetch_records_for(coords):
+def get_page_urls():
     session = SgRequests()
-    lat = coords[0]
-    lng = coords[1]
-    logger.info(f"Pulling records for coordinates: {lat,lng}")
-    url = f"https://www.tacobell.com/store-finder/findStores?latitude={lat}&longitude={lng}&_=1623006716881"
-    data_json = session.get(url, headers=headers, timeout=30).json()
-    stores = data_json["nearByStores"]
-    return stores
+    r1 = session.get(URL_LOCATION, headers=headers)
+    sel1 = html.fromstring(r1.text, "lxml")
+    state_urls = sel1.xpath('//a[contains(@data-ya-track, "directory_links")]/@href')
+    state_urls = [f"{URL_LOCATION}{url}" for url in state_urls]
+    city_urls_2 = []
+    page_urls_1 = []
+    for idx2, surl in enumerate(state_urls):
+        logger.info(f"Pulling from the State: {idx2}: {surl} ")
+        r2 = session.get(surl, headers=headers)
+        sel2 = html.fromstring(r2.text, "lxml")
+        city_urls = sel2.xpath('//a[span[@class="Directory-listLinkText"]]/@href')
+        # Identify if the URL is city-based URL or page URL
+        for url in city_urls:
+            url_s = url.split("/")
+            if len(url_s) == 2:
+                city_urls_2.append(url)
+            else:
+                page_urls_1.append(url)
+
+    city_urls_2 = [f"{URL_LOCATION}{url}" for url in city_urls_2]
+    page_urls_1 = [f"{URL_LOCATION}{url}" for url in page_urls_1]
+    for idx3, curl in enumerate(city_urls_2[0:]):
+        logger.info(f"Crawling at {idx3} out of {len(city_urls_2)} cities || {curl} ")
+        r3 = session.get(curl, headers=headers)
+        sel3 = html.fromstring(r3.text, "lxml")
+        page_urls_from_city_url = sel3.xpath('//a[@data-ya-track="visit_site"]/@href')
+        page_urls_from_city_url = [
+            f'{URL_LOCATION}{url.replace("../", "")}' for url in page_urls_from_city_url
+        ]
+        page_urls_1.extend(page_urls_from_city_url)
+    logger.info(f"Total Store Count: {len(page_urls_1)}")
+    return page_urls_1
 
 
 def fetch_data():
+    all_urls = get_page_urls()
+    session = SgRequests()
     s = set()
-    total = 0
-    for coordinates in search:
-        data_loc = fetch_records_for(coordinates)
-        total += len(data_loc)
-        for idx, data in enumerate(data_loc):
-            page_url = data["url"]
-            page_url = page_url if page_url else MISSING
-            logger.info(f"Pulling the data from {idx}: {page_url}")
-            locator_domain = DOMAIN
-            location_name = ""
-            address = data["address"]
-            street_address = address["line1"]
-            street_address = street_address if street_address else MISSING
+    for idx4, url in enumerate(all_urls[0:]):
+        r4 = session.get(url, headers=headers)
+        sel4 = html.fromstring(r4.text, "lxml")
+        locator_domain = DOMAIN
+        page_url = url
+        logger.info(f"Pulling the data from {idx4} of {len(all_urls)}: {url} ")
+        location_name = ""
 
-            city = address["town"]
-            city = city if city else MISSING
+        street_address = sel4.xpath(
+            '//div[@class="Core-address"]/address/div/span[@class="c-address-street-1"]/text()'
+        )
+        street_address = "".join(street_address)
+        street_address = street_address if street_address else MISSING
 
-            state = address["region"]["isocodeShort"]
-            state = state if state else MISSING
+        city = sel4.xpath(
+            '//div[@class="Core-address"]/address/div/span[@class="c-address-city"]/text()'
+        )
+        city = "".join(city)
+        city = city if city else MISSING
 
-            zip_postal = address["postalCode"]
-            zip_postal = zip_postal if zip_postal else MISSING
+        state = sel4.xpath(
+            '//div[@class="Core-address"]/address/div/abbr[@class="c-address-state"]/text()'
+        )
+        state = "".join(state)
+        state = state if state else MISSING
 
-            country_code = address["country"]["isocode"]
-            country_code = country_code if country_code else MISSING
+        zip_postal = sel4.xpath(
+            '//div[@class="Core-address"]/address/div/span[@class="c-address-postal-code"]/text()'
+        )
+        zip_postal = "".join(zip_postal)
+        zip_postal = zip_postal if zip_postal else MISSING
 
-            store_number = ""
-            store_number = data["storeNumber"]
-            if store_number in s:
-                continue
-            s.add(store_number)
-            store_number = store_number if store_number else MISSING
+        country_code = sel4.xpath('//address[@itemprop="address"]/@data-country')
+        country_code = "".join(country_code)
+        country_code = country_code if country_code else MISSING
+        logger.info(
+            f"Street Address: {street_address} | City: {city} | State: {state} | Zip: {zip_postal} | Country: {country_code}"
+        )
 
-            phone = address["phone"]
-            phone = phone if phone else MISSING
+        store_number = sel4.xpath('//div[@id="Core"]/@data-code')
+        store_number = "".join(store_number)
 
-            location_type = MISSING
-            if store_number:
-                location_name = f"Taco Bell {store_number}"
-            else:
-                location_name = "Taco Bell"
+        if store_number in s:
+            continue
+        s.add(store_number)
+        store_number = store_number if store_number else MISSING
 
-            latitude = data["latitude"]
-            latitude = latitude if latitude else MISSING
+        phone = sel4.xpath(
+            '//div[@class="Core-phones Core-phones--single"]/div/div/div[@itemprop="telephone"]/text()'
+        )
+        phone = "".join(phone)
+        phone = phone if phone else MISSING
 
-            longitude = data["longitude"]
-            longitude = longitude if longitude else MISSING
+        location_type = MISSING
 
-            # Found Location at
-            if MISSING not in str(latitude) and MISSING not in str(longitude):
-                search.found_location_at(latitude, longitude)
+        if store_number:
+            location_name = f"Taco Bell {store_number}"
+        else:
+            location_name = "Taco Bell"
 
-            hours_of_operation = get_hoo(data)
-            raw_address = address["formattedAddress"]
-            raw_address = raw_address if raw_address else MISSING
+        latitude = sel4.xpath('//meta[@itemprop="latitude"]/@content')
+        latitude = "".join(latitude)
+        latitude = latitude if latitude else MISSING
 
-            yield SgRecord(
-                locator_domain=locator_domain,
-                page_url=page_url,
-                location_name=location_name,
-                street_address=street_address,
-                city=city,
-                state=state,
-                zip_postal=zip_postal,
-                country_code=country_code,
-                store_number=store_number,
-                phone=phone,
-                location_type=location_type,
-                latitude=latitude,
-                longitude=longitude,
-                hours_of_operation=hours_of_operation,
-                raw_address=raw_address,
-            )
+        longitude = sel4.xpath('//meta[@itemprop="longitude"]/@content')
+        longitude = "".join(longitude)
+        longitude = longitude if longitude else MISSING
+        logger.info(f"(Latitude, Longitude): ({latitude}, {longitude})")
 
-        logger.info(f"found: {len(data_loc)} | total: {total}")
+        hours_of_operation = ""
+        hoo = []
+        c_hours_details = sel4.xpath(
+            '//div[@class="Core-hours"]/div[h2[contains(text(), "Dine-In Hours")]]/div/table[@class="c-hours-details"]/tbody/tr'
+        )
+        for tr in c_hours_details:
+            hrs_details = tr.xpath(".//td//text()")
+            hrs_details = " ".join(hrs_details)
+            hrs_details = hrs_details.replace("  -  ", " - ")
+            hoo.append(hrs_details)
+        hours_of_operation = "; ".join(hoo)
+        hours_of_operation = hours_of_operation if hours_of_operation else MISSING
+        logger.info(f"Hours of Operation: {hours_of_operation}")
+        raw_address = ""
+        raw_address = raw_address if raw_address else MISSING
+
+        yield SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=zip_postal,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=location_type,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+            raw_address=raw_address,
+        )
 
 
 def scrape():

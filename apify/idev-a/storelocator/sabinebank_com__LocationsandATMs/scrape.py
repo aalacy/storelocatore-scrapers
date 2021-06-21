@@ -26,8 +26,10 @@ def fetch_data():
             ):
                 hours_of_operation = ""
             zip_postal = addr[-2].split(",")[1].strip().split(" ")[-1].strip()
-            if not zip_postal.strip().isdigit():
-                zip_postal = ""
+            if not zip_postal.isdigit():
+                zip_postal = addr[-2].split(",")[-1].strip()
+                if not zip_postal.isdigit():
+                    zip_postal = ""
             yield SgRecord(
                 page_url=base_url,
                 location_name=addr[0],
@@ -52,8 +54,10 @@ def fetch_data():
             if not addr:
                 continue
             zip_postal = addr[-1].split(",")[1].strip().split(" ")[-1].strip()
-            if not zip_postal.strip().isdigit():
-                zip_postal = ""
+            if not zip_postal.isdigit():
+                zip_postal = addr[-2].split(",")[-1].strip()
+                if not zip_postal.isdigit():
+                    zip_postal = ""
             yield SgRecord(
                 page_url=base_url,
                 location_name=addr[0],
