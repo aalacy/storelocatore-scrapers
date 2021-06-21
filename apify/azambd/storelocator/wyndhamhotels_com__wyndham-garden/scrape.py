@@ -205,7 +205,10 @@ def getScriptWithGeo(body):
     scripts = body.xpath("//script/text()")
     for script in scripts:
         if '"geo":{' in script:
-            return json.loads(script, strict=False)
+            try:
+                return json.loads(script, strict=False)
+            except Exception as e:
+                log.error(f"Can not able to fetch json Error= {e}")
     return None
 
 

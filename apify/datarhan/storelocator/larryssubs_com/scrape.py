@@ -84,10 +84,13 @@ def fetch_data():
         longitude = str(poi["latlng"][-1])
         hoo_html = etree.HTML(poi["tooltipContent"])
         hours_of_operation = hoo_html.xpath("//text()")[-1].split("Open")[-1].strip()
-        splitter = re.findall(r"(#\d+)", location_name)[0]
-        hours_of_operation = " ".join(
-            [e.strip() for e in hours_of_operation.split()]
-        ).split(splitter)[-1]
+
+        splitter = re.findall(r"(#\d+)", location_name)
+        hours_of_operation = " ".join([e.strip() for e in hours_of_operation.split()])
+        if splitter:
+            hours_of_operation = hours_of_operation.split(splitter[0])[-1]
+        else:
+            hours_of_operation = hours_of_operation.split(location_name)[-1].strip()
         if "OPEN SEASONALLY" in hours_of_operation:
             hours_of_operation = "<MISSING>"
 
