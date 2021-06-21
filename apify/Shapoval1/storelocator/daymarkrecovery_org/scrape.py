@@ -131,10 +131,17 @@ def fetch_data():
         street_address = f"{a.get('address1')} {a.get('address2')}".replace(
             "None", ""
         ).strip()
+        if street_address.find("815 Sanford Road") != -1:
+            page_url = "https://www.daymarkrecovery.org/locations/psr-chatham-center"
+        if street_address.find("211 Webb Street") != -1:
+            page_url = "https://www.daymarkrecovery.org/locations/psr-person-center"
         state = a.get("state") or "<MISSING>"
         postal = a.get("postal") or "<MISSING>"
         country_code = "US"
         city = a.get("city") or "<MISSING>"
+        if city.find("South Buies Creek") != -1:
+            street_address = street_address + " " + city.split()[0].strip()
+            city = " ".join(city.split()[1:])
         store_number = "<MISSING>"
         hours_of_operation = (
             tree.xpath(
@@ -155,10 +162,13 @@ def fetch_data():
             .strip()
         )
         if hours_of_operation == "24/7":
-            hours_of_operation = "<MISSING>"
-        hours_of_operation = (
-            hours_of_operation.replace("24/7", "").replace("730PM", "7:30PM").strip()
-        )
+            hours_of_operation = "24/7"
+        if hours_of_operation != "24/7":
+            hours_of_operation = (
+                hours_of_operation.replace("24/7", "")
+                .replace("730PM", "7:30PM")
+                .strip()
+            )
 
         row = [
             locator_domain,
