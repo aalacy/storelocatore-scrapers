@@ -41,36 +41,35 @@ def fetch_data():
     items = []
 
     DOMAIN = "coffeeculturecafe.com"
-    start_url = "https://www.coffeeculturecafe.com/find-your-location/"
+    start_url = "https://www.coffeeculturecafe.com/locations/"
 
     response = session.get(start_url)
     dom = etree.HTML(response.text)
 
-    all_locations = dom.xpath('//div[contains(@id, "cc-location")]')
+    all_locations = dom.xpath(
+        '//section[contains(@data-settings, "ekit_has_onepagescroll_dot")]/div/div[@data-element_type="column"]'
+    )
     for poi_html in all_locations:
-        store_url = "https://www.coffeeculturecafe.com/find-your-location/"
-        store_url = store_url if store_url else "<MISSING>"
-        location_name = poi_html.xpath('.//div[@class="store-name"]/text()')
+        store_url = start_url
+        location_name = poi_html.xpath(".//p/span/strong/text()")
         location_name = location_name[0] if location_name else "<MISSING>"
-        street_address = poi_html.xpath('.//div[@class="store-address"]/text()')
-        street_address = street_address[0] if street_address else "<MISSING>"
-        city = poi_html.xpath('.//div[@class="store-city"]/text()')[0].split(", ")[0]
-        state = poi_html.xpath('.//div[@class="store-city"]/text()')[0].split(", ")[1]
+        raw_data = poi_html.xpath(
+            './/div[@class="elementor-text-editor elementor-clearfix"]/p[2]/text()'
+        )
+        raw_data = [e.strip() for e in raw_data if e.strip()]
+        if not raw_data:
+            continue
+        street_address = raw_data[0]
+        city = location_name.split(",")[0].strip()
+        state = location_name.split(",")[-1].strip()
         zip_code = "<MISSING>"
         country_code = "<MISSING>"
-        if (
-            "USA"
-            in poi_html.xpath('.//div[@class="store-city"]/text()')[0].split(", ")[-1]
-        ):
-            country_code = "USA"
-        store_number = poi_html.xpath("@id")[0].split("-")[-1]
-        phone = poi_html.xpath('.//div[@class="store-phone"]/text()')[0].split(": ")[-1]
+        store_number = "<MISSING>"
+        phone = raw_data[1].split(":")[-1].strip()
         location_type = "<MISSING>"
         latitude = "<MISSING>"
         longitude = "<MISSING>"
-        hoo = poi_html.xpath('.//div[@class="store-hours"]/text()')
-        hoo = [elem.strip() for elem in hoo if elem.strip()]
-        hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
+        hours_of_operation = raw_data[-1]
 
         item = [
             DOMAIN,

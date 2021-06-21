@@ -35,7 +35,7 @@ def parsedata(response_json, data_url):
         page_url = data_url
         location_name = location["Title"]
 
-        address = location["Address"][0]
+        address = location["Address"][0] + " " + location["Address"][1]
 
         city = location["Address"][2].split(",")[0]
         state = location["Address"][2].split(" ")[-2]
@@ -212,4 +212,4 @@ df = df.drop(columns=["dupecheck"])
 df = df.replace(r"^\s*$", "<MISSING>", regex=True)
 df = df.fillna("<MISSING>")
 
-df.to_csv("data.csv", index=True)
+df.to_csv("data.csv", index=False)

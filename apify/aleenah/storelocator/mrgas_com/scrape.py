@@ -1,9 +1,6 @@
 import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger("mrgas_com")
 
 
 def write_output(data):
@@ -38,14 +35,28 @@ def write_output(data):
 
 session = SgRequests()
 
+import ssl
+
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
+
 
 def fetch_data():
 
     all = []
+
     res = session.get("http://mrgas.com")
+
     soup = BeautifulSoup(res.text, "html.parser")
+
     stores = soup.find("section", {"id": "comp-keeh2c47"}).find_all(
-        "div", {"class": "_1Z_nJ"}
+        "div", {"class": "_2bafp"}
     )
 
     del stores[0]  # Location title
@@ -82,7 +93,7 @@ def fetch_data():
                 "<MISSING>",  # lat
                 "<MISSING>",  # long
                 tim.strip(),  # timing
-                "http://mrgas.com",
+                "<MISSING>",
             ]
         )
 

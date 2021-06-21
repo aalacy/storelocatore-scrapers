@@ -37,7 +37,6 @@ def write_output(data):
 def fetch_data():
     out = []
     s = set()
-    coords = static_coordinate_list(radius=200, country_code=SearchableCountries.USA)
     session = SgRequests()
     page_url = "<MISSING>"
     location_type = "<MISSING>"
@@ -51,98 +50,106 @@ def fetch_data():
         "Sec-Fetch-Dest": "empty",
     }
 
-    for c in coords:
-        lat, lon = c
+    countries = [SearchableCountries.USA, SearchableCountries.CANADA]
+    for c in countries:
+        coords = static_coordinate_list(radius=100, country_code=c)
+        for coord in coords:
+            lat, lon = coord
 
-        dog = f"Authorization=R8-Gateway%20App%3Dr8connect%2C%20key%3D4k2wIG8pFMUXvQnpRNmnAq%2C%20Type%3DSameOrigin&X-Domain-Id=eddiebauer&Geo-Position={lat}%3B{lon}&X-Device-Id=c650e12d-1fe7-0de9-4238-b44f60b8cb78&X-Request-Tag=zlZyUt2%2Bn0GaBoE07w7mtI4Dpaymj570o9dLxXZNY9kLc8qDuY4xigPU3CnEfA0aWNKF7BIxdIo%2BjWMKM7aEbw%3D%3D%23MTcxODM5&"
-        hdog = base64.b64encode(dog.encode("utf8")).decode("utf8")
-        params = (("lat", lat), ("radius", "200"), ("lng", lon), ("hdog", hdog))
+            dog = f"Authorization=R8-Gateway%20App%3Dr8connect%2C%20key%3D4k2wIG8pFMUXvQnpRNmnAq%2C%20Type%3DSameOrigin&X-Domain-Id=eddiebauer&Geo-Position={lat}%3B{lon}&X-Device-Id=c650e12d-1fe7-0de9-4238-b44f60b8cb78&X-Request-Tag=zlZyUt2%2Bn0GaBoE07w7mtI4Dpaymj570o9dLxXZNY9kLc8qDuY4xigPU3CnEfA0aWNKF7BIxdIo%2BjWMKM7aEbw%3D%3D%23MTcxODM5&"
+            hdog = base64.b64encode(dog.encode("utf8")).decode("utf8")
+            params = (("lat", lat), ("radius", "200"), ("lng", lon), ("hdog", hdog))
 
-        r = session.get(
-            "https://platform.radius8.com/api/v1/streams/stores",
-            headers=headers,
-            params=params,
-        )
-        js = r.json()["results"]
-
-        for j in js:
-            _id = j.get("store_code")
-            if _id in s:
-                continue
-
-            location_name = j.get("name") or "<MISSING>"
-            if location_name.find("not real") != -1:
-                continue
-
-            a = j.get("address", {}) or {}
-            street_address = (
-                f'{a.get("address1")} {a.get("address2") or ""}'.strip() or "<MISSING>"
+            r = session.get(
+                "https://platform.radius8.com/api/v1/streams/stores",
+                headers=headers,
+                params=params,
             )
-            city = a.get("city") or "<MISSING>"
-            state = a.get("state") or "<MISSING>"
-            postal = a.get("postal_code") or "<MISSING>"
-            if len(postal) == 4:
-                postal = f"0{postal}"
+            js = r.json()["results"]
 
-            country = a.get("country") or "<MISSING>"
-            if country == "USA":
-                country_code = "US"
-            else:
-                country_code = "CA"
+            for j in js:
+                _id = j.get("store_code")
+                if _id in s:
+                    continue
 
-            store_number = _id
-            phone = j.get("contact_info", {}).get("phone") or "<MISSING>"
-            g = j.get("geo_point", {}) or {}
-            latitude = g.get("lat") or "<MISSING>"
-            longitude = g.get("lng") or "<MISSING>"
-
-            _tmp = []
-            days = [
-                "Monday",
-                "Tuesday",
-                "Wednesday",
-                "Thursday",
-                "Friday",
-                "Saturday",
-                "Sunday",
-            ]
-            h = j.get("hours", {}) or {}
-
-            for d in days:
-                key = d[:3].lower()
-                start = h[key][0]
-                close = h[key][1]
-
-                if start.lower().find("closed") != -1:
-                    _tmp.append(f"{d}: Closed")
+                location_name = j.get("name") or "<MISSING>"
+                if location_name.find("not real") != -1:
+                    continue
+                if "outlet" in location_name.lower():
+                    location_name = "Eddie Bauer Outlet"
                 else:
-                    _tmp.append(
-                        f"{d}: {start[:2]}:{start[2:]} - {close[:2]}:{close[2:]}"
-                    )
+                    location_name = "Eddie Bauer"
 
-            hours_of_operation = ";".join(_tmp) or "<MISSING>"
-            if hours_of_operation.count("Closed") == 7:
-                hours_of_operation = "Closed"
+                a = j.get("address", {}) or {}
+                street_address = (
+                    f'{a.get("address1")} {a.get("address2") or ""}'.strip()
+                    or "<MISSING>"
+                )
+                city = a.get("city") or "<MISSING>"
+                state = a.get("state") or "<MISSING>"
+                postal = a.get("postal_code") or "<MISSING>"
+                if len(postal) == 4:
+                    postal = f"0{postal}"
 
-            row = [
-                locator_domain,
-                page_url,
-                location_name,
-                street_address,
-                city,
-                state,
-                postal,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
+                country = a.get("country") or "<MISSING>"
+                if country == "USA":
+                    country_code = "US"
+                else:
+                    country_code = "CA"
 
-            out.append(row)
-            s.add(_id)
+                store_number = _id
+                phone = j.get("contact_info", {}).get("phone") or "<MISSING>"
+                g = j.get("geo_point", {}) or {}
+                latitude = g.get("lat") or "<MISSING>"
+                longitude = g.get("lng") or "<MISSING>"
+
+                _tmp = []
+                days = [
+                    "Monday",
+                    "Tuesday",
+                    "Wednesday",
+                    "Thursday",
+                    "Friday",
+                    "Saturday",
+                    "Sunday",
+                ]
+                h = j.get("hours", {}) or {}
+
+                for d in days:
+                    key = d[:3].lower()
+                    start = h[key][0]
+                    close = h[key][1]
+
+                    if start.lower().find("closed") != -1:
+                        _tmp.append(f"{d}: Closed")
+                    else:
+                        _tmp.append(
+                            f"{d}: {start[:2]}:{start[2:]} - {close[:2]}:{close[2:]}"
+                        )
+
+                hours_of_operation = ";".join(_tmp) or "<MISSING>"
+                if hours_of_operation.count("Closed") == 7:
+                    hours_of_operation = "Closed"
+
+                row = [
+                    locator_domain,
+                    page_url,
+                    location_name,
+                    street_address,
+                    city,
+                    state,
+                    postal,
+                    country_code,
+                    store_number,
+                    phone,
+                    location_type,
+                    latitude,
+                    longitude,
+                    hours_of_operation,
+                ]
+
+                out.append(row)
+                s.add(_id)
 
     return out
 

@@ -1,3 +1,1 @@
-## python validate.py data.csv --ignore CentroidValidator --ignore CountryValidator --ignore LatLngDuplicationValidator
-
-Had a look over the errors, spotted issues with their API 
+Failing due to mild duplicate data which has same address but multiple types (Checked to be correct)

@@ -50,7 +50,7 @@ def fetch_data():
     base_url = "https://actionkarate.net/"
     total = 0
     idx = 1
-    with SgChrome(executable_path=r"/mnt/g/work/mia/chromedriver.exe") as driver:
+    with SgChrome() as driver:
         driver.get(base_url)
         _close(driver)
         toggle(driver)
