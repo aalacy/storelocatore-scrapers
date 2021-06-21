@@ -112,7 +112,6 @@ def get_data(df):
     # Iterate through the URLs
     for url in page_url_list:
         x = x + 1
-        y = 0
 
         try:
 
