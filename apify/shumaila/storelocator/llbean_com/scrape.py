@@ -68,7 +68,7 @@ def fetch_data():
             soup = BeautifulSoup(r.text, "html.parser")
             title = soup.find("h1").text
             try:
-                phone = soup.find("li", {"class", "phone"}).text.strip()
+                phone = soup.find("address").find("strong", {"class", "tel"}).text
             except:
                 phone = (
                     soup.find("div", {"class", "address"})
