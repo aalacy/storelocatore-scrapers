@@ -23,7 +23,7 @@ phones = []
 location_types = []
 latitudes = []
 longitudes = []
-hours_of_operations = [] 
+hours_of_operations = []
 
 headers_list = [
     {
