@@ -82,7 +82,7 @@ def fetch_data():
         output.append(get_value(store["id"]))  # store_number
         output.append(get_value(store["phone"]))  # phone
         location_type = "<MISSING>"
-        store_hours = store["description"].replace("\n", " ").strip()
+        store_hours = store["description"].replace("\n", "; ").strip()
         if "closed until further" in store_hours:
             store_hours = "<MISSING>"
             location_type = "Temporarily Closed"
