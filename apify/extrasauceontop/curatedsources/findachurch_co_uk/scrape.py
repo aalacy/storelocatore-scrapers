@@ -32,6 +32,7 @@ headers_list = [
     {"User-Agent": "PostmanRuntime/7.19.0"},
 ]
 
+
 # Here use SgZip to get a list of all location URLs, and other data points
 def get_urls():
     x = 0
