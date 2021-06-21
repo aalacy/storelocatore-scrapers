@@ -43,9 +43,6 @@ def fetch_data():
     driver = get_driver(url, class_name)
     soup = bs(driver.page_source, "html.parser")
 
-    with open("file.txt", "w", encoding="utf-8") as output:
-        print(soup, file=output)
-
     grids = soup.find("div", class_="store-list__scroll-container").find_all("li")
 
     return grids, driver
