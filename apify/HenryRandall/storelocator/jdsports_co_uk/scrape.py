@@ -49,7 +49,7 @@ def fetch_data():
         coor = soup.find("div", {"class": "storeContentRight"})
         city = coor.find("img", {"id": "staticMapImage"})
         city = city.attrs["src"].split("&zoom=15", 1)[0]
-        city = city.split(',')[-1]
+        city = city.split(",")[-1]
         coor = coor.find("div", {"id": "staticMap"})
         coor = coor.attrs["data-staticmapmarkers"].split("|", 1)[1].split('"', 1)[0]
         [lat, long] = coor.split(",")
