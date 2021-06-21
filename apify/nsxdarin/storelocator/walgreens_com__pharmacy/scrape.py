@@ -2,9 +2,13 @@ import csv
 import json
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
-from sgzip.static import static_zipcode_list, SearchableCountries
+from sgzip.static import (
+    static_coordinate_list,
+    SearchableCountries,
+)
 from bs4 import BeautifulSoup
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from tenacity import retry, stop_after_attempt
 
 logger = SgLogSetup().get_logger("walgreens_com__pharmacy")
 
@@ -36,29 +40,32 @@ def write_output(data):
             writer.writerows(rows)
 
 
-search = static_zipcode_list(10, SearchableCountries.USA)
-
+search = static_coordinate_list(10, SearchableCountries.USA)
 session = SgRequests()
-headers = {
-    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.108 Safari/537.36",
-    "content-type": "application/json; charset=UTF-8",
-}
 
 
-def fetch_locations(code, ids):
-    logger.info(("Pulling Postal Code %s..." % code))
+@retry(stop=stop_after_attempt(3), reraise=True)
+def fetch(url):
+    return session.get(url).text
+
+
+@retry(stop=stop_after_attempt(3), reraise=True)
+def fetch_page(coord):
+    lat, lng = coord
     url = "https://www.walgreens.com/locator/v1/stores/search?requestor=search"
     payload = {
         "r": "50",
         "requestType": "dotcom",
         "s": "20",
         "p": 1,
-        "q": code,
-        "lat": "",
-        "lng": "",
-        "zip": code,
+        "lat": lat,
+        "lng": lng,
     }
-    data = session.post(url, headers=headers, data=json.dumps(payload)).json()
+    return session.post(url, json=payload).json()
+
+
+def fetch_locations(coord, ids):
+    data = fetch_page(coord)
     website = "walgreens.com/pharmacy"
 
     locations = []
@@ -85,7 +92,11 @@ def fetch_locations(code, ids):
             + item["store"]["phone"]["number"].strip()
         )
         typ = "<MISSING>"
-        hours_of_operation = get_hours(loc, session)
+        try:
+            hours_of_operation = get_hours(loc)
+        except Exception as e:
+            logger.error(f"{store} >>> {e}")
+            hours_of_operation = "<MISSING>"
 
         locations.append(
             [
@@ -109,8 +120,8 @@ def fetch_locations(code, ids):
     return locations
 
 
-def get_hours(url, session):
-    page = session.get(url, headers=headers).text
+def get_hours(url):
+    page = fetch(url)
     soup = BeautifulSoup(page, "html.parser")
     script = soup.select_one("#jsonLD")
 
@@ -135,7 +146,7 @@ def fetch_data():
     ids = []
 
     with ThreadPoolExecutor() as executor:
-        futures = [executor.submit(fetch_locations, code, ids) for code in search]
+        futures = [executor.submit(fetch_locations, coord, ids) for coord in search]
         for future in as_completed(futures):
             locations = future.result()
             yield locations
