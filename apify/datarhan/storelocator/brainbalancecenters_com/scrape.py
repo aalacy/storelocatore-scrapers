@@ -78,6 +78,16 @@ def fetch_data():
         hoo = loc_dom.xpath(
             '//p[contains(text(), "Hours")]/following-sibling::p/text()'
         )
+        if not hoo:
+            response = session.get(
+                f"https://www.brainbalancecenters.com/locations?zip={zip_code}"
+            )
+            dom = etree.HTML(response.text)
+            hoo = dom.xpath(
+                '//div[div[h2[a[contains(text(), "{}")]]]]/following-sibling::div//h4[contains(text(), "Hours")]/following-sibling::*//text()'.format(
+                    location_name
+                )
+            )
         hoo = [e.strip().replace("\n", " ") for e in hoo if e.strip()]
         hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
 
