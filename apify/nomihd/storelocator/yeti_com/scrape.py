@@ -61,18 +61,14 @@ def fetch_data():
         store_res = session.get(page_url, headers=headers)
         store_sel = lxml.html.fromstring(store_res.text)
 
-        location_name = "".join(
-            store_sel.xpath('//title/text()')
-        )
+        location_name = "".join(store_sel.xpath("//title/text()"))
 
         store_info = list(
             filter(
                 str,
                 [
                     x.strip()
-                    for x in store_sel.xpath(
-                        '//p[./a[contains(@href,"tel")]]//text()'
-                    )
+                    for x in store_sel.xpath('//p[./a[contains(@href,"tel")]]//text()')
                 ],
             )
         )
@@ -81,9 +77,9 @@ def fetch_data():
             if bool(re.search("^[0-9-() ]{1,15}$", x)):
                 break
 
-        full_address = store_info[:phn_idx] + store_info[phn_idx+1:]
+        full_address = store_info[:phn_idx] + store_info[phn_idx + 1 :]
 
-        raw_address = " ".join(full_address).replace('\n',' ').split("(")[0]
+        raw_address = " ".join(full_address).replace("\n", " ").split("(")[0]
 
         formatted_addr = parser.parse_address_usa(raw_address)
         street_address = formatted_addr.street_address_1
@@ -101,7 +97,7 @@ def fetch_data():
         phone = store_info[phn_idx].strip()
 
         location_type = "<MISSING>"
-        
+
         hours = list(
             filter(
                 str,
