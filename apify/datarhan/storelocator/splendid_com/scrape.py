@@ -68,7 +68,11 @@ def fetch_data():
             country_code = "United States"
         store_number = "<MISSING>"
         phone = loc_dom.xpath('//li[@class="phone"]/a/text()')
-        phone = phone[0] if phone else "<MISSING>"
+        if not phone:
+            phone = poi_html.xpath(
+                './/div[@class="spl-store-locator__store__tel"]/a/text()'
+            )
+        phone = phone[0].replace(".", "") if phone else "<MISSING>"
         location_type = "<MISSING>"
         latitude = loc_dom.xpath("//@data-lat")[0]
         longitude = loc_dom.xpath("//@data-long")[0]

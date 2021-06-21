@@ -36,7 +36,7 @@ def fetch_data():
 
     for store in stores_list:
 
-        page_url = "<MISSING>"
+        page_url = "https://www.thefreshgrocer.com/sm/pickup/rsid/2000/store"
         locator_domain = website
 
         location_name = store["name"]
@@ -70,7 +70,10 @@ def fetch_data():
         location_type = "<MISSING>"
 
         hours_of_operation = store["openingHours"]
-
+        try:
+            hours_of_operation = hours_of_operation.split("Senior Shop")[0].strip()
+        except:
+            pass
         latitude = store["location"]["latitude"]
         longitude = store["location"]["longitude"]
 

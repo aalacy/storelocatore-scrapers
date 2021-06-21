@@ -11,7 +11,7 @@ headers = {
 
 
 def write_output(data):
-    with open("data.csv", mode="w") as output_file:
+    with open("data.csv", mode="w", encoding="utf-8") as output_file:
         writer = csv.writer(
             output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
         )
@@ -44,10 +44,7 @@ def fetch_data():
     if r.encoding is None:
         r.encoding = "utf-8"
     for line in r.iter_lines(decode_unicode=True):
-        if (
-            "<loc>https://locations.michaelkors.com/us/" in line
-            or "<loc>https://locations.michaelkors.com/united-kingdom/" in line
-        ):
+        if "<loc>https://locations.michaelkors.com/" in line and "/fr_ca/" not in line:
             lurl = line.split("<loc>")[1].split("<")[0]
             if lurl.count("/") == 6:
                 locs.append(lurl)
@@ -60,12 +57,14 @@ def fetch_data():
             lurl = line.split("<loc>")[1].split("<")[0]
             if lurl.count("/") == 5:
                 locs.append(lurl)
+    logger.info(len(locs))
     for loc in locs:
         logger.info("Pulling Location %s..." % loc)
         website = "michaelkors.com"
         typ = "<MISSING>"
         hours = ""
         name = ""
+        country = ""
         add = ""
         city = ""
         state = ""
@@ -92,6 +91,9 @@ def fetch_data():
                 )[0]
                 name = typ
             if '"dimension4":"' in line2:
+                country = line2.split('temprop="address" data-country="')[1].split('"')[
+                    0
+                ]
                 add = line2.split('"dimension4":"')[1].split('"')[0]
                 zc = line2.split('"dimension5":"')[1].split('"')[0]
                 city = line2.split('"dimension3":"')[1].split('"')[0]
@@ -129,6 +131,10 @@ def fetch_data():
                             hours = hours + "; " + hrs
         if hours == "":
             hours = "<MISSING>"
+        if zc == "":
+            zc = "<MISSING>"
+        if phone == "":
+            phone = "<MISSING>"
         yield [
             website,
             loc,

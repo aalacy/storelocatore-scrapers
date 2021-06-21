@@ -1,4 +1,5 @@
 import csv
+import usaddress
 from lxml import html
 from sgrequests import SgRequests
 
@@ -38,48 +39,82 @@ def fetch_data():
     locator_domain = "https://www.rocknjoe.com"
     page_url = "https://www.rocknjoe.com/locations"
     session = SgRequests()
+    tag = {
+        "Recipient": "recipient",
+        "AddressNumber": "address1",
+        "AddressNumberPrefix": "address1",
+        "AddressNumberSuffix": "address1",
+        "StreetName": "address1",
+        "StreetNamePreDirectional": "address1",
+        "StreetNamePreModifier": "address1",
+        "StreetNamePreType": "address1",
+        "StreetNamePostDirectional": "address1",
+        "StreetNamePostModifier": "address1",
+        "StreetNamePostType": "address1",
+        "CornerOf": "address1",
+        "IntersectionSeparator": "address1",
+        "LandmarkName": "address1",
+        "USPSBoxGroupID": "address1",
+        "USPSBoxGroupType": "address1",
+        "USPSBoxID": "address1",
+        "USPSBoxType": "address1",
+        "BuildingName": "address2",
+        "OccupancyType": "address2",
+        "OccupancyIdentifier": "address2",
+        "SubaddressIdentifier": "address2",
+        "SubaddressType": "address2",
+        "PlaceName": "city",
+        "StateName": "state",
+        "ZipCode": "postal",
+    }
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
     }
     r = session.get(page_url, headers=headers)
     tree = html.fromstring(r.text)
-    div = tree.xpath('//div[./a[contains(@href, "facebook")]]')
+    div = tree.xpath('//div[./h6//span[text()="Hours"]]')
 
     for d in div:
 
-        location_type = "<MISSING>"
-        street_address = "".join(d.xpath(".//preceding-sibling::div[./p]/p[1]//text()"))
-        ad = "".join(d.xpath(".//preceding-sibling::div[./p]/p[2]//text()"))
-        phone = "".join(d.xpath(".//preceding-sibling::div[./p]/p[3]//text()"))
-        city = ad.split(",")[0].strip()
-        state = ad.split(",")[1].split()[0].strip()
-        postal = ad.split(",")[1].split()[-1].strip()
+        location_type = "Rock 'n' Joe Coffee"
+        adr = d.xpath('.//preceding-sibling::div[./p[@class="font_8"]]/p//text()')
+        ad = (
+            " ".join(adr)
+            .replace("7:00am - 3:00pm 7:00am - 3:00pm 7:00am - 3:00pm", "")
+            .replace("Lincoln VA Clinic", "")
+            .strip()
+        )
+        if ad.find("(") != -1:
+            ad = ad.split("(")[0].strip()
+        a = usaddress.tag(ad, tag_mapping=tag)[0]
+        phone = "".join(adr[-1])
+        if "".join(adr).find("420") != -1:
+            phone = "<MISSING>"
+        street_address = f"{a.get('address1')} {a.get('address2')}".replace(
+            "None", ""
+        ).strip()
+        city = a.get("city") or "<MISSING>"
+        state = a.get("state") or "<MISSING>"
+        postal = a.get("postal") or "<MISSING>"
         country_code = "US"
-        location_name = "".join(d.xpath(".//preceding-sibling::div/h6//text()"))
+        location_name = (
+            "".join(d.xpath(".//preceding-sibling::div[5]/h6//text()")) or "<MISSING>"
+        )
+        if location_name == "<MISSING>":
+            location_name = "".join(d.xpath(".//preceding-sibling::div[3]/h6//text()"))
         store_number = "<MISSING>"
         latitude = "<MISSING>"
         longitude = "<MISSING>"
-        tmpcls = "".join(
-            d.xpath(
-                './/following-sibling::div[5]/p/span[contains(text(), "Temporarily Closed")]/text()'
-            )
-        )
-        _tmp = []
-        days = "<MISSING>"
-        times = "<MISSING>"
-        if not tmpcls:
-            days = d.xpath(".//following-sibling::div[4]/p//text()")
-            days = list(filter(None, [a.strip() for a in days]))
+        days = d.xpath(".//following-sibling::div[1]/p/span/text()")
 
-            times = d.xpath(".//following-sibling::div[5]/p//text()")
-            times = list(filter(None, [a.strip() for a in times]))
+        times = d.xpath(".//following-sibling::div[2]/p/span/text()") or "<MISSING>"
+        if times == "<MISSING>":
+            times = d.xpath(".//following::div[2]/p/span/text()")
+        _tmp = []
         if days != "<MISSING>" and times != "<MISSING>":
             for d, t in zip(days, times):
                 _tmp.append(f"{d.strip()}: {t.strip()}")
-
-        hours_of_operation = " ".join(_tmp)
-        if tmpcls:
-            hours_of_operation = "Temporarily Closed"
+        hours_of_operation = " ".join(_tmp) or "<MISSING>"
 
         row = [
             locator_domain,
