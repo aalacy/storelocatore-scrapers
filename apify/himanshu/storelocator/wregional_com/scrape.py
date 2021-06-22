@@ -69,9 +69,9 @@ def parse_json(soup):
     return data
 
 
-def is_multiple(street_address, locations):
+def is_multiple(street_address, location_name, locations):
     for row in locations:
-        if street_address in row:
+        if street_address in row and location_name in row:
             log.info("Found multiple address => " + street_address)
             return True
     return False
@@ -126,11 +126,14 @@ def get_hoo(link):
 
 
 def fetch_data():
+    except_link = ["https://www.wregional.com/hospice/willard-walker-hospice-home.aspx"]
     log.info("Fetching store_locator data")
     store_urls = fetch_store_urls()
     locations = []
     for row in store_urls:
         page_url = row["url"]
+        if page_url in except_link:
+            continue
         soup = pull_content(page_url)
         if "dialysis-centers-locations" in page_url:
             contents = soup.find("div", {"class": "page-content"}).find_all("strong")
@@ -162,7 +165,7 @@ def fetch_data():
                     location_type = "<MISSING>"
                 latitude = "<MISSING>"
                 longitude = "<MISSING>"
-                if not is_multiple(street_address, locations):
+                if not is_multiple(street_address, location_name, locations):
                     locations.append(
                         [
                             DOMAIN,
@@ -184,11 +187,11 @@ def fetch_data():
         elif "springdale-center-for-health" in page_url or "medical-plaza" in page_url:
             content = soup.find("div", {"class": "page-content"})
             location = fetch_type_b(content, page_url, row["type"], row["name"])
-            if not is_multiple(location[3], locations):
+            if not is_multiple(location[3], location[2], locations):
                 locations.append(location)
         elif "urgentteam.com" in page_url:
             location = fetch_type_urgent(soup, page_url)
-            if not is_multiple(location[3], locations):
+            if not is_multiple(location[3], location[2], locations):
                 locations.append(location)
         elif soup.find("div", {"class": "clinics"}) and soup.find(
             "div", {"class": "clinics"}
@@ -197,10 +200,10 @@ def fetch_data():
             location = fetch_type_a(content, page_url, row["type"], row["name"])
             for val in location:
                 if isinstance(val, list):
-                    if not is_multiple(val[3], locations):
+                    if not is_multiple(val[3], val[2], locations):
                         locations.append(val)
                 else:
-                    if not is_multiple(location[3], locations):
+                    if not is_multiple(location[3], location[2], locations):
                         locations.append(location)
                     break
     return locations
