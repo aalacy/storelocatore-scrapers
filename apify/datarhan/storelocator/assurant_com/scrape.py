@@ -62,15 +62,20 @@ def fetch_data():
             0
         ]
         addr = parse_address_intl(raw_address)
-        city = addr.city
-        if not city:
-            city = location_name
+        city = poi_html.xpath('.//div[@class="office-description-city"]/text()')[
+            0
+        ].split(",")[0]
         state = addr.state
         state = state if state else "<MISSING>"
         zip_code = addr.postcode
         zip_code = zip_code if zip_code else "<MISSING>"
-        country_code = addr.country
-        country_code = country_code if country_code else "<MISSING>"
+        country_code = poi_html.xpath(".//parent::div[1]/@class")[0].split("office")[-1]
+        if country_code.startswith("-"):
+            country_code = country_code[1:]
+        if country_code == "Argentina":
+            zip_code = poi_html.xpath(
+                './/div[@class="office-description-city"]/text()'
+            )[0].split()[-1]
         store_number = "<MISSING>"
         phone = poi_html.xpath('.//p[@class="office-description-phone"]/a/text()')
         phone = phone[0].strip() if phone else "<MISSING>"
