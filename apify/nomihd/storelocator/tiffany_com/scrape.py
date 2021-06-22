@@ -21,13 +21,15 @@ def validhour(x):
         ("AM" in x.upper() and "PM" in x.upper())
         or (re.search("\\d *[AP]M", x.upper()))
         or ("DAILY" in x.upper())
-        or ("MON" in x.upper() and ":" in x.upper())
-        or ("TUE" in x.upper() and ":" in x.upper())
+        or ("M" in x.upper() and ":" in x.upper())
+        or ("TU" in x.upper() and ":" in x.upper())
         or ("WED" in x.upper() and ":" in x.upper())
-        or ("THU" in x.upper() and ":" in x.upper())
-        or ("FRI" in x.upper() and ":" in x.upper())
-        or ("SAT" in x.upper() and ":" in x.upper())
-        or ("SUN" in x.upper() and ":" in x.upper())
+        or ("TH" in x.upper() and ":" in x.upper())
+        or ("F" in x.upper() and ":" in x.upper())
+        or ("SA" in x.upper() and ":" in x.upper())
+        or ("SU" in x.upper() and ":" in x.upper())
+        or ("～" in x.upper())
+        or ("-" in x.upper())
     ):
 
         if (
@@ -43,6 +45,12 @@ def validhour(x):
             or "OCT" in x.upper()
             or "NOV" in x.upper()
             or "DEC" in x.upper()
+            or "HOLIDAY" in "".join(x.upper()[:7])  # Extra check for Holiday
+            or "E-MAIL." in x.upper()
+            or "E-MAIL:" in x.upper()
+            or "PRIOR TO YOUR VISIT." in x.upper()
+            or "IN-PERSON" in x.upper()
+            or "IN-STORE" in x.upper()
         ):
             return False
         return True
@@ -123,6 +131,13 @@ def fetch_data():
                         zip = json_data["address"]["postalCode"]
                         country_code = json_data["address"]["addressCountry"]
 
+                        try:
+                            int(state)
+                            state = json_data["address"]["postalCode"]  # Error in DATA
+                            zip = json_data["address"]["addressRegion"]
+                        except ValueError:
+                            pass
+
                         if (
                             page_url
                             == "https://www.tiffany.com/jewelry-stores/mall-of-san-juan/"
@@ -169,7 +184,12 @@ def fetch_data():
                                 .split("urbside ")[0]
                                 .split("Café Hours")[0]
                             )
-                            hours = list(filter(validhour, temp_hours.split("<br>")))
+                            hours = [
+                                x.strip()
+                                for x in list(
+                                    filter(validhour, temp_hours.split("<br>"))
+                                )
+                            ]
                             hours_of_operation = "; ".join(hours).strip("; ").strip()
                             if not hours_of_operation:
 
@@ -182,19 +202,24 @@ def fetch_data():
                                     .split("urbside ")[0]
                                     .split("Café Hours")[0]
                                 )
-                                hours = list(
-                                    filter(validhour, temp_hours.split("<br>"))
-                                )
+                                hours = [
+                                    x.strip()
+                                    for x in list(
+                                        filter(validhour, temp_hours.split("<br>"))
+                                    )
+                                ]
                                 hours_of_operation = (
                                     "; ".join(hours).strip("; ").strip()
                                 )
 
-                            hours_of_operation = hours_of_operation.replace(
-                                "<b>", ""
-                            ).replace("<BR>", "")
                             hours_of_operation = (
-                                hours_of_operation.split("e-mail from")[1].strip()
-                                if "e-mail from" in hours_of_operation
+                                hours_of_operation.replace("<b>", "")
+                                .replace("<BR>", "")
+                                .replace("-", " to ")
+                            )
+                            hours_of_operation = (
+                                hours_of_operation.split("e to mail from")[1].strip()
+                                if "e to mail from" in hours_of_operation
                                 else hours_of_operation
                             )
 
