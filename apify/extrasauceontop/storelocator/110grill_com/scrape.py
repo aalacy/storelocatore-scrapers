@@ -1,3 +1,6 @@
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 from sgselenium.sgselenium import SgChrome
 from webdriver_manager.chrome import ChromeDriverManager
 import json
@@ -50,6 +53,7 @@ def extract_json(html_string):
             if brace_count == 0:
                 end = count
                 try:
+
                     json_objects.append(json.loads(html_string[start : end + 1]))
                 except Exception:
                     pass
@@ -78,7 +82,6 @@ driver = get_driver(base_url)
 response = driver.page_source
 
 json_objects = extract_json(response.split("preloadQueries")[1])
-
 location_contenders = json_objects[0]["data"]["restaurant"]["homePage"]["sections"]
 
 for item in location_contenders:
