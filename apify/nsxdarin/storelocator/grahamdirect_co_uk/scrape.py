@@ -102,7 +102,7 @@ def fetch_data():
                     hours = hours + "; " + hrs
         store = "<MISSING>"
         add = add.replace(",</span>", "")
-        city = city.replace(",","")
+        city = city.replace(",", "")
         yield [
             website,
             loc,
