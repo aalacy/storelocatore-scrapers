@@ -96,6 +96,8 @@ def fetch_data():
                                 and "Opening 20" in line2
                             ):
                                 CS = True
+                            if ">Coming Soon<" in line2:
+                                CS = True
                             if (
                                 "and beyond" in line2
                                 and "Now accepting reservations" in line2
@@ -108,7 +110,7 @@ def fetch_data():
                     if "Club Maui, " in name:
                         name = "Hyatt Residence Club Maui, Kaanapali Beach"
                     if CS:
-                        name = name + " - Coming Soon"
+                        hours = "Coming Soon"
                     if loc not in alllocs:
                         alllocs.append(loc)
                         yield [
