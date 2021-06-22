@@ -36,7 +36,7 @@ def write_output(data):
 
 def get_data(coord):
     rows = []
-    locator_domain = "https://www.mechanicsbank.com"
+    locator_domain = "https://www.wetzels.com"
     lat, lng = coord
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:88.0) Gecko/20100101 Firefox/88.0",
@@ -88,9 +88,11 @@ def get_data(coord):
             hours_of_operation = (
                 hours_of_operation.split("Hours:")[1].split("Services")[0].strip()
             )
-        hours_of_operation = hours_of_operation.replace(
-            "pmClosed", "pm Closed"
-        ).replace("pmFriday", "pm Friday")
+        hours_of_operation = (
+            hours_of_operation.replace("pmClosed", "pm Closed")
+            .replace("pmFriday", "pm Friday")
+            .replace("pmSaturday", "pm Saturday")
+        )
 
         row = [
             locator_domain,
