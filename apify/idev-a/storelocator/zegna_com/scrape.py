@@ -22,7 +22,7 @@ def fetch_data():
     base_url = "https://storelocator-webservice.zegna.com/ws/REST/V8/storeList.php?country_id=US&r=5000000&displayCountry=US&language=EN"
     with SgRequests() as session:
         locations = session.get(base_url, headers=_headers).json()
-        for key, _ in locations.items():
+        for _ in locations:
             _city = "-".join(_["CITY"].strip().split(" "))
             _address = "-".join(_["ADDRESS"].strip().split(" ")).replace("#", "")
             page_url = f"https://www.zegna.com/us-en/store-locator/store-detail/united-states/{_city}/{_address}.{_['STORE_ID']}/"
