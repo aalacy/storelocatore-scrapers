@@ -68,8 +68,6 @@ def write_output(data):
 
 def fetch_data():
     # Your scraper here
-    loc_list = []
-
     search_url = "https://pservices.desjardins.com/proxy/001/index_ps_en.json"
     stores_req = session.get(search_url, headers=headers)
     stores = json.loads(stores_req.text)["entrees"]
@@ -192,10 +190,9 @@ def fetch_data():
                 longitude,
                 hours_of_operation,
             ]
-            loc_list.append(curr_list)
+            yield curr_list
         except:
             pass
-    return loc_list
 
 
 def scrape():
