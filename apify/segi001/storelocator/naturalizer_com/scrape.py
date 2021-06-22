@@ -108,7 +108,10 @@ def fetch_data():
             else:
                 state = address_list[1].text.split(" ")[-2]
                 zipc = address_list[1].text.split(" ")[-1]
-            store_num = l.find("input")["value"]
+            try:
+                store_num = l.find("input")["value"]
+            except TypeError:
+                store_num = "<MISSING>"
             phone = address_list[-1].text
             timeArray = []
             if r.find("strong", {"class": "store-hours"}):

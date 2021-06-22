@@ -50,7 +50,10 @@ def fetch_data():
             j = j.get("store")
             a = j.get("address")
             street_address = (
-                f"{a.get('address1')} {a.get('address2') or ''}".strip() or "<MISSING>"
+                f"{a.get('address1')} {a.get('address2') or ''}".replace(
+                    "None", ""
+                ).strip()
+                or "<MISSING>"
             )
             city = a.get("city") or "<MISSING>"
             state = a.get("province") or "<MISSING>"

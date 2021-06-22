@@ -24,7 +24,7 @@ def fetch_data():
             location_name = loc.find("a").text
             log.info(location_name)
             temp_list = loc.findAll("p")
-            if "Opening spring 2021" in temp_list[1].text:
+            if "Opening June 2021 " in temp_list[1].text:
                 continue
             try:
                 coords = temp_list[0].find("a")["href"].split("/")[6].split(",")

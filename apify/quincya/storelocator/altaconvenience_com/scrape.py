@@ -1,16 +1,10 @@
 import csv
-import re
-import time
-
-from random import randint
 
 from bs4 import BeautifulSoup
 
 from sglogging import SgLogSetup
 
 from sgrequests import SgRequests
-
-from sgselenium import SgChrome
 
 log = SgLogSetup().get_logger("altaconvenience.com")
 
@@ -56,16 +50,15 @@ def fetch_data():
     req = session.get(base_link, headers=headers)
     base = BeautifulSoup(req.text, "lxml")
 
-    driver = SgChrome().chrome()
-
-    data = []
-
     items = base.find_all(class_="location")
 
     locator_domain = "altaconvenience.com"
 
     for item in items:
-        link = "http://altaconvenience.com" + item.a["href"]
+        if "http" not in item.a["href"]:
+            link = "http://altaconvenience.com" + item.a["href"]
+        else:
+            link = item.a["href"]
         log.info(link)
         req = session.get(link, headers=headers)
         base = BeautifulSoup(req.text, "lxml")
@@ -90,18 +83,32 @@ def fetch_data():
                 state = city_line[-1].replace(".", "").strip()
                 zip_code = "<MISSING>"
             country_code = "US"
-            phone = raw_data[2].replace("Phone:", "").strip()
+            try:
+                phone = raw_data[2].replace("Phone:", "").strip()
+                if "-" not in phone:
+                    phone = list(item.stripped_strings)[-1]
+            except:
+                phone = "<MISSING>"
             store_number = location_name.split("#")[1].strip()
             location_type = "<MISSING>"
-            hours_of_operation = (
-                " ".join(raw_data[3:])
-                .replace("Hours S", "S")
-                .replace("Hours:", "")
-                .replace("\xa0", " ")
-                .replace("\u200b", " ")
-                .replace("  ", " ")
-                .strip()
-            )
+
+            try:
+                hours_of_operation = (
+                    " ".join(raw_data[3:])
+                    .replace("Hours S", "S")
+                    .replace("Hours:", "")
+                    .replace("\xa0", " ")
+                    .replace("\u200b", " ")
+                    .replace("  ", " ")
+                    .strip()
+                )
+            except:
+                hours_of_operation = "<MISSING>"
+
+            if not hours_of_operation:
+                hours_of_operation = "<MISSING>"
+            if "Hours" in hours_of_operation[:5]:
+                hours_of_operation = hours_of_operation[5:].strip()
 
             map_link = base.iframe["src"]
             lat_pos = map_link.rfind("!3d")
@@ -121,28 +128,9 @@ def fetch_data():
                     ].strip()
                     longitude = raw_gps[raw_gps.find("-") : raw_gps.find("&")].strip()
                 except:
-                    latitude = "<MISSING>"
-                    longitude = "<MISSING>"
-            if not latitude[-3:].isdigit():
-                driver.get(link)
-                time.sleep(4)
+                    latitude = "<INACCESSIBLE>"
+                    longitude = "<INACCESSIBLE>"
 
-                try:
-                    map_frame = driver.find_elements_by_tag_name("iframe")[0]
-                    driver.switch_to.frame(map_frame)
-                    time.sleep(randint(1, 2))
-                    map_str = driver.page_source
-                    geo = re.findall(r"[0-9]{2}\.[0-9]+,-[0-9]{2,3}\.[0-9]+", map_str)[
-                        0
-                    ].split(",")
-                    latitude = geo[0]
-                    longitude = geo[1]
-                except:
-                    latitude = "<MISSING>"
-                    longitude = "<MISSING>"
-
-            if "-" not in phone:
-                phone = list(item.stripped_strings)[-1]
             if "hours" in phone.lower():
                 hours_of_operation = (
                     phone.replace("Hours:", "") + " " + hours_of_operation
@@ -172,26 +160,22 @@ def fetch_data():
             store_number = "6008"
             location_name = "Alta Convenience Store #6008"
 
-        data.append(
-            [
-                locator_domain,
-                link,
-                location_name,
-                street_address,
-                city,
-                state,
-                zip_code,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
-        )
-    driver.close()
-    return data
+        yield [
+            locator_domain,
+            link,
+            location_name,
+            street_address,
+            city,
+            state.replace(",", ""),
+            zip_code,
+            country_code,
+            store_number,
+            phone,
+            location_type,
+            latitude,
+            longitude,
+            hours_of_operation,
+        ]
 
 
 def scrape():

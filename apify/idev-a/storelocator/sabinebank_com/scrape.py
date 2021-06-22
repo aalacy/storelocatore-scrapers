@@ -31,7 +31,7 @@ def fetch_data():
             yield SgRecord(
                 page_url=base_url,
                 location_name=addr[0],
-                street_address=addr[1],
+                street_address=addr[-3],
                 city=addr[-2].split(",")[0].strip(),
                 state=addr[-2].split(",")[1].strip().split(" ")[0].strip(),
                 zip_postal=zip_postal,

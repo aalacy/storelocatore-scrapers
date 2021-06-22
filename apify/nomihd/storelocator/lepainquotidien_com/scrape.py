@@ -86,6 +86,8 @@ def fetch_data():
                 except:
                     pass
 
+                if page_url == "http://www.lepainquotidien.us":
+                    page_url = "<MISSING>"
                 locator_domain = website
                 location_name = store["name"]
 
@@ -115,15 +117,20 @@ def fetch_data():
                 if zip == "":
                     zip = "<MISSING>"
 
-                phone = store["mainPhone"]
+                phone = ""
+                if "mainPhone" in store:
+                    phone = store["mainPhone"]
 
                 location_type = "<MISSING>"
                 if "-" in location_name:
                     location_name = store["name"].split("-")[0].strip()
                     location_type = store["name"].split("-")[1].strip()
 
-                latitude = store["geocodedCoordinate"]["latitude"]
-                longitude = store["geocodedCoordinate"]["longitude"]
+                latitude = ""
+                longitude = ""
+                if "geocodedCoordinate" in store:
+                    latitude = store["geocodedCoordinate"]["latitude"]
+                    longitude = store["geocodedCoordinate"]["longitude"]
 
                 if latitude == "" or latitude is None:
                     latitude = "<MISSING>"
