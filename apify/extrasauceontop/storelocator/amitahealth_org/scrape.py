@@ -17,8 +17,6 @@ latitudes = []
 longitudes = []
 hours_of_operations = []
 
-page_url_tracker = {}
-
 
 def extract_json(html_string):
     json_objects = []
