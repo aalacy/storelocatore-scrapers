@@ -1,6 +1,6 @@
 from sgscrape import simple_scraper_pipeline as sp
 from sglogging import sglog
-from sgzip.dynamic import DynamicGeoSearch
+from sgzip.dynamic import DynamicGeoSearch, Grain_8
 from sgzip.utils import country_names_by_code
 from fuzzywuzzy import process
 from sgrequests import SgRequests
@@ -10,6 +10,8 @@ import json
 
 
 logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
+known_empties = set()
+known_empties.add("cf")
 
 
 def get_Start(session, headers):
@@ -54,7 +56,7 @@ def determine_country(country):
         return resultCode[-1][0]
 
 
-def get_country(search, country, session, headers):
+def get_country(search, country, session, headers, SearchableCountry):
     def getPoint(point, session, locale, headers):
         url = "https://locate.apple.com{locale}sales/?pt=all&lat={lat}&lon={lon}&address=".format(
             locale=locale, lat=point[0], lon=point[1]
@@ -76,6 +78,7 @@ def get_country(search, country, session, headers):
         locs = json.loads(thescript)
         return locs["results"]
 
+    maxZ = None
     maxZ = search.items_remaining()
     total = 0
     for Point in search:
@@ -90,13 +93,14 @@ def get_country(search, country, session, headers):
         progress = str(round(100 - (search.items_remaining() / maxZ * 100), 2)) + "%"
         total += found
         logzilla.info(
-            f"{str(Point).replace('(','').replace(')','')}|found: {found}|total: {total}|prog: {progress}"
+            f"{str(Point).replace('(','').replace(')','')}|found: {found}|total: {total}|prog: {progress}|\nRemaining: {search.items_remaining()} Searchable: {SearchableCountry}"
         )
     if total == 0:
         logzilla.error(
-            f"Found a total of 0 results for country {country}\n this is unacceptable and possibly a country/search space mismatch"
+            f"Found a total of 0 results for country {country}\n this is unacceptable and possibly a country/search space mismatch\n Matched to: {SearchableCountry}"
         )
-        raise
+        if SearchableCountry not in known_empties:
+            raise
 
 
 def fetch_data():
@@ -116,13 +120,16 @@ def fetch_data():
                         country_codes=[SearchableCountry],
                         max_radius_miles=50,
                         max_search_results=None,
+                        granularity=Grain_8(),
                     )
                 except Exception as e:
                     logzilla.info(
                         f"Issue with sgzip and country code: {SearchableCountry}\n{e}"
                     )
                 if search:
-                    for record in get_country(search, country, session, headers):
+                    for record in get_country(
+                        search, country, session, headers, SearchableCountry
+                    ):
                         yield record
     logzilla.info(f"Finished grabbing data!!")  # noqa
 
@@ -206,7 +213,7 @@ def scrape():
         scraper_name="pipeline",
         data_fetcher=fetch_data,
         field_definitions=field_defs,
-        log_stats_interval=5,
+        log_stats_interval=25,
     )
 
     pipeline.run()
