@@ -51,18 +51,29 @@ def fetch_data():
     dom = etree.HTML(response.text)
 
     all_locations = []
-    all_cities = dom.xpath('//div[@id="div_articleid_262"]//h4[a[@class="link"]]')
+    all_cities = dom.xpath(
+        '//div[@id="div_articleid_262"]//h4[a[contains(@class, "link")]]'
+    )
     for city_state in all_cities:
-        city = city_state.xpath(".//a/text()")[0].split("-")[-1].strip()
+        city = city_state.xpath(".//a/text()")[0].split("-")[-1].strip().split(",")[0]
+        if city in ["JFK", "LaGuardia"]:
+            city = "New York"
         state = city_state.xpath(".//a/text()")[0].split("-")[0].strip()
-        all_locations += city_state.xpath(".//following-sibling::div[1]/div/ul/li")
+        if state == "United Arab Emirates":
+            state = "<MISSING>"
+            country_code = "United Arab Emirates"
 
+        all_locations = city_state.xpath(".//following-sibling::div[1]//ul/li")
         for poi_html in all_locations:
             store_url = start_url
             location_name = poi_html.xpath(".//a/b/text()")[0].strip()
             street_address = poi_html.xpath("text()")[0].strip()
             zip_code = "<MISSING>"
             country_code = "<MISSING>"
+            if city == "Netherlands":
+                city = "Amsterdam"
+                state = "<MISSING>"
+                country_code = "Netherlands"
             store_number = "<MISSING>"
             all_txt = poi_html.xpath(".//text()")
             phone = [e.strip() for e in all_txt if "Tel" in e]
@@ -71,7 +82,11 @@ def fetch_data():
             latitude = "<MISSING>"
             longitude = "<MISSING>"
             hoo = [e.strip() for e in all_txt if "Hours" in e]
-            hours_of_operation = hoo[0].split(":")[-1].strip() if hoo else "<MISSING>"
+            hours_of_operation = (
+                hoo[0].split("Hours:")[-1].split("*")[0].strip() if hoo else "<MISSING>"
+            )
+            if city == "Amsterdam":
+                country_code = "Netherlands"
 
             item = [
                 domain,
@@ -89,7 +104,7 @@ def fetch_data():
                 longitude,
                 hours_of_operation,
             ]
-            check = f"{location_name} {street_address}"
+            check = f"{location_name} {street_address} {city}"
             if check not in scraped_items:
                 scraped_items.append(check)
                 items.append(item)
