@@ -1,7 +1,6 @@
 from sgrequests import SgRequests
 import json
 import pandas as pd
-from bs4 import BeautifulSoup as bs
 
 locator_domains = []
 page_urls = []
