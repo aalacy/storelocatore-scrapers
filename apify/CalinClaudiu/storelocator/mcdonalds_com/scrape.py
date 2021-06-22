@@ -266,6 +266,7 @@ class CrawlMethod(CleanRecord):
                 try:
                     response = await client.post(url, headers=headers, data=data)
                     response = response.json()
+                    response["SEARCHPOINT"] = Point
                     return response
                 except Exception as e:
                     self.Oopsie(Point, str(e))
@@ -294,13 +295,17 @@ class CrawlMethod(CleanRecord):
             if data:
                 found = 0
                 for results in data:
-                    for records in results[str(self._config.get("pathToResults"))]:
-                        record = record_cleaner(records, self._config)
-                        self._search.found_location_at(
-                            record["latitude"], record["longitude"]
-                        )
-                        found += 1
-                        yield record
+                    try:
+                        for records in results[str(self._config.get("pathToResults"))]:
+                            record = record_cleaner(records, self._config)
+                            self._search.found_location_at(
+                                record["latitude"], record["longitude"]
+                            )
+                            found += 1
+                            yield record
+                    except Exception as e:
+                        self.Oopsie(results["SEARCHPOINT"], str(e))
+
             remaining = self._search.items_remaining()
             if remaining == 0:
                 remaining = 1
