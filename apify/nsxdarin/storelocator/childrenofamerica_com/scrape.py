@@ -47,7 +47,7 @@ def fetch_data():
     logger.info("Pulling Stores")
     for line in r.iter_lines():
         line = str(line.decode("utf-8"))
-        if 'title="Daycare in ' in line:
+        if 'title="Preschools in' in line and 'target="_self">' in line:
             lurl = (
                 "https://www.childrenofamerica.com/"
                 + line.split('href="')[1].split('"')[0]
@@ -109,7 +109,7 @@ def fetch_data():
         if lat == "":
             lat = "<MISSING>"
             lng = "<MISSING>"
-        name = name.replace("Daycare in ", "")
+        name = name.replace("Daycare in ", "").replace("Preschool in ", "")
         yield [
             website,
             loc,

@@ -5,7 +5,7 @@ from sglogging import SgLogSetup
 from requests import exceptions  # noqa
 from urllib3 import exceptions as urllibException
 
-logger = SgLogSetup().get_logger("mycarecompass")
+logger = SgLogSetup().get_logger("lifelabs")
 
 headers = {
     "Accept": "application/json, text/plain, */*",
@@ -39,8 +39,8 @@ def payload(address):
 
 
 search = DynamicZipSearch(
-    country_codes=[SearchableCountries.USA],
-    max_radius_miles=50,
+    country_codes=[SearchableCountries.CANADA, SearchableCountries.USA],
+    max_radius_miles=None,
     max_search_results=None,
 )
 
@@ -96,7 +96,10 @@ def fetch_data():
                 url, headers=headers, json=payload(code), timeout=15
             ).json()
         except Exception:
-            res = api_post(url, headers, payload(code), 15, 0, 15).json()
+            try:
+                res = api_post(url, headers, payload(code), 15, 0, 15).json()
+            except:
+                continue
 
         if not res or not res["entity"]:
             continue

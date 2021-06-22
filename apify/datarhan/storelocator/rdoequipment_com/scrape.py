@@ -1,5 +1,6 @@
 import csv
 import json
+from lxml import etree
 
 from sgrequests import SgRequests
 
@@ -66,8 +67,15 @@ def fetch_data():
         country_code = poi["Address"]["CountryCode"]
         country_code = country_code if country_code else "<MISSING>"
         store_number = poi["BranchId"]
-        phone = json.loads(poi["PhoneNumbers"])[0]["value"]
-        phone = phone if phone else "<MISSING>"
+        try:
+            phone = json.loads(poi["PhoneNumbers"])[0]["value"]
+        except Exception:
+            phone = (
+                etree.HTML(poi["PhoneNumbers"])
+                .xpath("//text()")[0]
+                .split("Phone:")[-1]
+                .strip()
+            )
         location_type = "<MISSING>"
         latitude = poi["Address"]["Latitude"]
         latitude = latitude if latitude else "<MISSING>"
@@ -87,9 +95,12 @@ def fetch_data():
         }
         for elem in hoo_data:
             day = days_dict[elem["weekday"]]
-            opens = elem["from"]
-            closes = elem["to"]
-            hoo.append(f"{day} {opens} - {closes}")
+            if elem["from"].strip():
+                opens = elem["from"]
+                closes = elem["to"]
+                hoo.append(f"{day} {opens} - {closes}")
+            else:
+                hoo.append(f"{day} - Closed")
         hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
 
         item = [

@@ -2,9 +2,6 @@ from bs4 import BeautifulSoup
 import csv
 import json
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger("cinebistro_com")
 
 
 session = SgRequests()
@@ -78,6 +75,7 @@ def fetch_data():
                     link = (
                         "https://www.cmxcinemas.com/Locationdetail/" + city["slugname"]
                     )
+
                     r = session.get(link, headers=headers, verify=False)
                     try:
                         longt, lat = (
@@ -86,8 +84,10 @@ def fetch_data():
                     except:
                         lat = "<MISSING>"
                         longt = "<MISSING>"
-                    phone = r.text.split("Contact Us: ")[1].split("</p>")[0]
-
+                    try:
+                        phone = r.text.split("Contact Us: ")[1].split("</p>")[0]
+                    except:
+                        phone = "<MISSING>"
                     data.append(
                         [
                             "https://www.cmxcinemas.com",
