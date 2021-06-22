@@ -57,7 +57,7 @@ def fetch_data():
         response = session.get(urljoin(start_url, url))
         dom = etree.HTML(response.text)
         all_locations = re.findall(
-            '(http://www.usacashservices.com/APPS/Home.nsf/LocationInfo\?Openform.+?)",',
+            r'(http://www.usacashservices.com/APPS/Home.nsf/LocationInfo\?Openform.+?)",',
             response.text,
         )
 
