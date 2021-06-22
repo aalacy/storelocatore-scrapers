@@ -42,7 +42,7 @@ session = SgRequests()
 
 
 def handle_missing(field):
-    if field == None or (type(field) == type("x") and len(field.strip()) == 0):
+    if field is None or (isinstance(field, str) and len(field.strip()) == 0):
         return "<MISSING>"
     return field
 
