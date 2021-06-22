@@ -100,6 +100,11 @@ def fetch_data():
         if len(state) > 3:
             city = city + " " + state.replace(",", "")
             state, pcode = pcode.split(" ", 1)
+        if pcode.isdigit():
+            pass
+        else:
+            city = city + " " + state
+            state, pcode = pcode.split(" ", 1)
         store = link.split("/")[-2]
         data.append(
             [
@@ -107,7 +112,7 @@ def fetch_data():
                 link,
                 title,
                 street,
-                city,
+                city.replace(",", ""),
                 state,
                 pcode,
                 "US",
