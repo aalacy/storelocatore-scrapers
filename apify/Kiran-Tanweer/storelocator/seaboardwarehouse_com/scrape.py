@@ -3,7 +3,6 @@ import csv
 import time
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
-from sgscrape import sgpostal as parser
 
 logger = SgLogSetup().get_logger("seaboardwarehouse_com")
 
@@ -68,17 +67,16 @@ def fetch_data():
         phone = address.split("Ph.")[1].strip()
         phone = phone.split("\n")[0].strip()
         address = address.split("Ph. ")[0].strip()
-        address = address.replace("\n", " ").strip()
-        parsed = parser.parse_address_usa(address)
-        street1 = parsed.street_address_1 if parsed.street_address_1 else "<MISSING>"
-        street = (
-            (street1 + ", " + parsed.street_address_2)
-            if parsed.street_address_2
-            else street1
-        )
-        city = parsed.city if parsed.city else "<MISSING>"
-        state = parsed.state if parsed.state else "<MISSING>"
-        pcode = parsed.postcode if parsed.postcode else "<MISSING>"
+
+        if len(address.split("\n")) > 2:
+            street = address.split("\n")[0] + " " + address.split("\n")[1]
+
+        else:
+            street = address.split("\n")[0]
+        city = address.split("\n")[-1].split(", ")[0]
+        state = address.split("\n")[-1].split(", ")[1].split(" ")[0]
+        pcode = address.split("\n")[-1].split(", ")[1].split(" ")[1]
+
         coords = loc.find("a")["href"]
         coords = coords.split("C=")[1].split("&A")[0]
         lat, lng = coords.split(",")
