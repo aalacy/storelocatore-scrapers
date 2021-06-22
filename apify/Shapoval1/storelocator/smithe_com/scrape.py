@@ -51,14 +51,17 @@ def get_urls():
         "https://www.smithe.com/store-locator-arlington-heights-il.inc", headers=headers
     )
     tree = html.fromstring(r.text)
-
-    return tree.xpath('//a[text()="Select Location "]/following-sibling::ul/li/a/@href')
+    aa = tree.xpath('//a[text()="Select Location "]/following-sibling::ul/li')
+    urls = []
+    for a in aa:
+        urll = "".join(a.xpath(".//a/@href"))
+        urls.append(urll)
+    return urls
 
 
 def get_data(url):
     locator_domain = "https://www.smithe.com"
     page_url = f"{locator_domain}{url}"
-
     session = SgRequests()
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:86.0) Gecko/20100101 Firefox/86.0",
@@ -110,7 +113,7 @@ def get_data(url):
     line = ad.split("-")[0]
     a = usaddress.tag(line, tag_mapping=tag)[0]
     street_address = f"{a.get('address1')} {a.get('address2')}".replace(
-        "\n", ""
+        "None", ""
     ).strip()
     city = a.get("city")
     state = a.get("state")
@@ -157,7 +160,7 @@ def get_data(url):
 def fetch_data():
     out = []
     urls = get_urls()
-    urls = urls[1:]
+
     with futures.ThreadPoolExecutor(max_workers=10) as executor:
         future_to_url = {executor.submit(get_data, url): url for url in urls}
         for future in futures.as_completed(future_to_url):
