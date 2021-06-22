@@ -75,10 +75,16 @@ def fetch_data():
             page_url = "https://www.jackjones.com/nl/en/stores"
             locator_domain = DOMAIN
             location_name = handle_missing(row["storeName"])
+            street_address = ""
             if "address2" in row and len(row["address2"]) > 0:
                 street_address = "{}, {}".format(row["address1"], row["address2"])
             else:
                 street_address = row["address1"]
+            if "houseNumber" in row:
+                street_address = street_address + " " + row["houseNumber"]
+            elif "houseNumberExtension" in row:
+                street_address = street_address + " " + row["houseNumberExtension"]
+            street_address = street_address.strip()
             city = handle_missing(row["city"])
             state = "<MISSING>" if "state" not in row else row["state"]
             zip_code = handle_missing(row["postalCode"])

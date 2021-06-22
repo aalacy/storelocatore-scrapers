@@ -57,6 +57,10 @@ def fetch_data():
     )
 
     for zip_code in search:
+        if len(str(zip_code)) == 4:
+            zip_code = "0" + str(zip_code)
+        if len(str(zip_code)) == 3:
+            zip_code = "00" + str(zip_code)
         log.info(
             "Searching: %s | Items remaining: %s" % (zip_code, search.items_remaining())
         )

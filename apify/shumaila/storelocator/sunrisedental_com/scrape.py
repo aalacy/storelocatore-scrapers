@@ -1,6 +1,7 @@
 from bs4 import BeautifulSoup
 import csv
 import usaddress
+
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -53,17 +54,56 @@ def fetch_data():
         if link.find("http") == -1:
             link = "https://sunrisedental.com" + link
         r = session.get(link, headers=headers, verify=False)
-        soup = BeautifulSoup(r.text, "html.parser")
+        soup = BeautifulSoup(r.text, "lxml")
         try:
-            address = soup.find("iframe")["title"].replace("United States", "").strip()
+            phone = soup.find("small").text.strip()
         except:
-            continue
-        phone = soup.find("small").text.strip()
+            try:
+                phone = soup.select_one("a[href*=tel]").text
+            except:
+                try:
+                    phone = soup.select_one("a[href*=tel]").find("span").text
+                except:
+                    continue
         try:
             hours = soup.text.split("Monday:", 1)[1].splitlines()[0:7]
             hours = "Monday:" + " ".join(hours)
         except:
             hours = "<MISSING>"
+        try:
+            addresslink = soup.find("iframe")["src"]
+            r = session.get(addresslink, headers=headers, verify=False)
+            address = (
+                r.text.split("]],", 1)[1]
+                .split(',"', 1)[1]
+                .split('",', 1)[0]
+                .replace(" USA", "")
+            )
+            if "DDS" in address:
+                address = (
+                    r.text.split("]],", 1)[1]
+                    .split(',"', 1)[1]
+                    .split("DDS, ", 1)[1]
+                    .split('",', 1)[0]
+                )
+        except:
+
+            try:
+
+                address = (
+                    soup.text.split("Sunrise Dental " + title, 1)[1]
+                    .split("Call", 1)[0]
+                    .replace("\n", " ")
+                    .strip()
+                )
+                hours = (
+                    soup.text.split("Business Hours:", 1)[1]
+                    .split("General Dentistry", 1)[0]
+                    .replace("\n", " ")
+                    .strip()
+                )
+            except:
+                continue
         address = usaddress.parse(address)
 
         i = 0

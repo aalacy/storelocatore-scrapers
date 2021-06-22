@@ -65,19 +65,16 @@ def fetch_data():
     stores_req = session.get(search_url, headers=headers)
     stores = json.loads(stores_req.text)
     for store in stores:
-        page_url = store["gym"]["website"]
+        page_url = "https://www.thegymgroup.com" + store["moreInfoUrl"]
         locator_domain = website
         location_name = store["gym"]["name"]
         if location_name == "":
             location_name = "<MISSING>"
 
         street_address = (
-            store["gym"]["address"]["address1"]
-            .replace("\r\n", ", ")
-            .replace("\n", ", ")
-            .strip()
+            store["gym"]["address1"].replace("\r\n", ", ").replace("\n", ", ").strip()
         )
-        address2 = store["gym"]["address"]["address2"]
+        address2 = store["gym"]["address2"]
         if address2 is not None and len(address2) > 0:
             street_address = (
                 street_address
@@ -85,24 +82,13 @@ def fetch_data():
                 + address2.replace("\r\n", ", ").replace("\n", ", ").strip()
             )
 
-        address3 = store["gym"]["address"]["address3"]
-        if address3 is not None and len(address3) > 0:
-            street_address = (
-                street_address
-                + ", "
-                + address3.replace("\r\n", ", ").replace("\n", ", ").strip()
-            )
-
         city = ""
-        if store["gym"]["address"]["city"] is not None:
+        if store["gym"]["city"] is not None:
             city = (
-                store["gym"]["address"]["city"]
-                .replace("\r\n", ", ")
-                .replace("\n", ", ")
-                .strip()
+                store["gym"]["city"].replace("\r\n", ", ").replace("\n", ", ").strip()
             )
         state = "<MISSING>"
-        zip = store["gym"]["address"]["postcode"]
+        zip = store["gym"]["postcode"]
         country_code = "GB"
 
         if country_code == "" or country_code is None:
@@ -121,9 +107,9 @@ def fetch_data():
             zip = "<MISSING>"
 
         store_number = "<MISSING>"
-        phone = store["gym"]["phoneNumber"]
+        phone = "<MISSING>"
 
-        location_type = store["gym"]["status"]
+        location_type = "<MISSING>"
 
         hours_of_operation = "<MISSING>"
         latitude = store["gym"]["latitude"]

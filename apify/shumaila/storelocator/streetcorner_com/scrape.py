@@ -3,6 +3,7 @@ import csv
 import re
 from sgrequests import SgRequests
 
+
 session = SgRequests()
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
@@ -44,13 +45,18 @@ def fetch_data():
     data = []
     p = 0
     url = "https://www.streetcorner.com/consumer/"
-    page = session.get(url, headers=headers, verify=False)
+    page = session.get(url, headers=headers)
     cleanr = re.compile("<.*?>")
     loclist = page.text.split('<a href="https://www.streetcorner.com/store/')
+
     for loc in loclist:
         if loc.find("!DOCTYPE html>") == -1:
             link = "https://www.streetcorner.com/store/" + loc.split('"', 1)[0]
-            page = session.get(link, headers=headers, verify=False)
+
+            try:
+                page = session.get(link, headers=headers)
+            except:
+                continue
             try:
                 coord = str(page.text).split("center: {lat:")[2]
             except:
@@ -95,6 +101,7 @@ def fetch_data():
             else:
                 if len(pcode) == 4:
                     pcode = "0" + pcode
+            hours = hours.encode("ascii", "ignore").decode("ascii")
             if title.find("Coming Soon") == -1:
                 data.append(
                     [
@@ -108,10 +115,10 @@ def fetch_data():
                         "US",
                         "<MISSING>",
                         phone,
-                        "<MISSING>",
+                        "Gas Station, Mall",
                         lat.strip(),
                         longt,
-                        hours.replace("â€“", "-"),
+                        hours.replace("am", "am-"),
                     ]
                 )
 

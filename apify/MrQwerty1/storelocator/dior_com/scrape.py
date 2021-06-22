@@ -39,9 +39,7 @@ def get_ids():
     r = session.get("https://www.dior.com/store/json/posG.json")
     js = r.json()["items"]
     for j in js:
-        country = j[4]
-        if country == "US" or country == "CA":
-            ids.append(j[0])
+        ids.append(j[0])
 
     return ids
 
@@ -69,7 +67,10 @@ def get_data(url):
 
     session = SgRequests()
     r = session.get(url)
-    js = r.json()["Items"]
+    try:
+        js = r.json()["Items"]
+    except:
+        return []
 
     for j in js:
         page_url = "<MISSING>"
@@ -158,7 +159,7 @@ def fetch_data():
     ids = get_ids()
     urls = generate_urls(ids)
 
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
+    with futures.ThreadPoolExecutor(max_workers=5) as executor:
         future_to_url = {executor.submit(get_data, url): url for url in urls}
         for future in futures.as_completed(future_to_url):
             rows = future.result()
