@@ -11,7 +11,9 @@ import json
 
 logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
 known_empties = set()
-known_empties.add("cf")
+known_empties.add("xxxxxxx")
+
+errorz = []
 
 
 def get_Start(session, headers):
@@ -100,7 +102,11 @@ def get_country(search, country, session, headers, SearchableCountry):
             f"Found a total of 0 results for country {country}\n this is unacceptable and possibly a country/search space mismatch\n Matched to: {SearchableCountry}"
         )
         if SearchableCountry not in known_empties:
-            raise
+            errorz.append(
+                str(
+                    f"Found a total of 0 results for country {country}\n this is unacceptable and possibly a country/search space mismatch\n Matched to: {SearchableCountry}"
+                )
+            )
 
 
 def fetch_data():
@@ -221,3 +227,6 @@ def scrape():
 
 if __name__ == "__main__":
     scrape()
+    for i in errorz:
+        logzilla.info(i)
+    raise
