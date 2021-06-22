@@ -118,7 +118,7 @@ def fetch_location(zipcode, EV, VSG, VS, ids, url):
                 city = city.strip().replace("\t", "")
                 info = name + "|" + add
                 if "10151 Deerwood Park Blvd" in add:
-                    add = add + " Suite 110, Building 100"
+                    add = "10151 Deerwood Park Blvd Suite 110, Building 100"
                     city = "Jacksonville"
                     state = "FL"
                     zc = "32256"

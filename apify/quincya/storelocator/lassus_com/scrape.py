@@ -48,9 +48,16 @@ def fetch_data():
 
     items = base.find_all(class_="single-location col-3")
 
+    all_scripts = base.find_all("script")
+    for script in all_scripts:
+        if "var stores" in str(script):
+            script = str(script).replace("\\", "")
+            break
+    store_data = script.split("Directions")
+
     data = []
     for item in items:
-        locator_domain = "hopcat.com"
+        locator_domain = "lassus.com"
         location_name = item.h3.text
         street_address = item.p.text.strip()
         city_line = item.find(class_="h5 location-link").text.strip().split(",")
@@ -69,6 +76,13 @@ def fetch_data():
         hours_of_operation = item.header.find_all("p")[-1].text.strip()
         latitude = "<MISSING>"
         longitude = "<MISSING>"
+
+        for store in store_data:
+            num = store.split('store_number":')[1].split('",')[0][1:]
+            if num == store_number:
+                latitude = store.split('latitude":')[1].split(",")[0]
+                longitude = store.split('longitude":')[1].split(",")[0]
+                break
 
         data.append(
             [
