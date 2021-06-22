@@ -108,7 +108,9 @@ def fetch_data():
                 city = "Pawleys Island"
                 state = "SC"
                 zc = "<MISSING>"
-                hours = "Mon, Wed & Thurs 4pm-8pm; Fri, Sat & Sun: 11am-9pm"
+                hours = (
+                    "Tue: Closed; Mon, Wed & Thurs: 4pm-8pm; Fri, Sat & Sun: 11am-9pm"
+                )
             yield [
                 website,
                 loc,
