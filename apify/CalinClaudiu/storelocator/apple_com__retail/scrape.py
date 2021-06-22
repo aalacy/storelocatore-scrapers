@@ -11,7 +11,7 @@ import json
 
 logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
 known_empties = set()
-# known_empties.add("cf")
+known_empties.add("xxxxxxx")
 
 errorz = []
 
