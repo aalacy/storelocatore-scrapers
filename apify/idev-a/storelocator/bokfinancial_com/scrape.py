@@ -68,11 +68,11 @@ def fetch_data():
                                 if _["sa_open"]:
                                     hours.append(f"Sa: {_['sa_open']}-{_['sa_close']}")
                                 else:
-                                    hours.append(f"Sa: closed")
+                                    hours.append("Sa: closed")
                                 if _["su_open"]:
                                     hours.append(f"Su: {_['su_open']}-{_['su_close']}")
                                 else:
-                                    hours.append(f"Su: closed")
+                                    hours.append("Su: closed")
 
                                 yield SgRecord(
                                     page_url=page_url,
