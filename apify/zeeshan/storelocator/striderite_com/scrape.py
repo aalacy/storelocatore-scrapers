@@ -8,7 +8,6 @@ def write_output(data):
             output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
         )
 
-        # Header
         writer.writerow(
             [
                 "locator_domain",
@@ -27,7 +26,7 @@ def write_output(data):
                 "hours_of_operation",
             ]
         )
-        # Body
+
         for row in data:
             writer.writerow(row)
 
@@ -40,13 +39,6 @@ HEADERS = {
 URL = "https://storerocket.global.ssl.fastly.net/api/user/wjN49rzJGy/locations?lat=37.7802277&lng=-122.40416580000002&radius=500000"
 
 session = SgRequests()
-##proxy_password = os.environ["PROXY_PASSWORD"]
-##proxy_url = "http://auto:{}@proxy.apify.com:8000/".format(proxy_password)
-##proxies = {
-##    'http': proxy_url,
-##    'https': proxy_url
-##}
-##session.proxies = proxies
 
 
 def handle_missing(field):
