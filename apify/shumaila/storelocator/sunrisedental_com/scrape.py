@@ -1,6 +1,7 @@
 from bs4 import BeautifulSoup
 import csv
 import usaddress
+
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -53,7 +54,7 @@ def fetch_data():
         if link.find("http") == -1:
             link = "https://sunrisedental.com" + link
         r = session.get(link, headers=headers, verify=False)
-        soup = BeautifulSoup(r.text, "html.parser")
+        soup = BeautifulSoup(r.text, "lxml")
         try:
             phone = soup.find("small").text.strip()
         except:
