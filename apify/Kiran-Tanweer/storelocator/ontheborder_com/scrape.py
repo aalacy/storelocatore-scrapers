@@ -90,6 +90,17 @@ def fetch_data():
         city = parsed.city if parsed.city else "<MISSING>"
         state = parsed.state if parsed.state else "<MISSING>"
         pcode = parsed.postcode if parsed.postcode else "<MISSING>"
+        hours = str(hours)
+        hours = hours.replace("'", "")
+        hours = hours.replace(",", "")
+        hours = hours.replace("[", "")
+        hours = hours.replace("]", "")
+        hours = hours.replace("{", "")
+        hours = hours.replace("}", "")
+        hours = hours.replace(":", "")
+        hours = hours.replace("day_or_day_range", "")
+        hours = hours.replace("hour_range", "")
+        hours = hours.replace("  ", " ").strip()
 
         data.append(
             [
