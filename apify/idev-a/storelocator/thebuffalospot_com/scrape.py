@@ -27,6 +27,8 @@ def fetch_data():
         )
         for _ in locations:
             page_url = locator_domain + _["url"]
+            if "Coming Soon" in _["hours"]:
+                continue
             hours = []
             temp = list(bs(_["hours"], "lxml").stripped_strings)
             if temp:
@@ -47,8 +49,9 @@ def fetch_data():
                 phone=_["phone_number"],
                 locator_domain=locator_domain,
                 hours_of_operation="; ".join(hours)
+                .replace("–", "-")
                 .replace("&ndash;", "-")
-                .replace("–", "-"),
+                .replace("’til", "-"),
                 raw_address=_["address"],
             )
 
