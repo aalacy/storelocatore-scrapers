@@ -48,13 +48,28 @@ def get_urls():
     r = session.get("https://groundround.com/menu-location/", headers=headers)
 
     tree = html.fromstring(r.text)
-
-    return tree.xpath("//div[@class='pm-staff-item-img-container']/a/@href")
+    urls = tree.xpath("//div[@class='pm-staff-item-img-container']/a/@href")
+    urls[1] = "https://mygroundround.com/specials/"
+    urls[6] = "https://mygroundround.com/bar/"
+    return urls
 
 
 def get_data(url):
     locator_domain = "https://groundround.com"
-    page_url = f"https://groundround.com{url}"
+    page_url = "".join(url)
+    if page_url.find("https") == -1:
+        page_url = f"https://groundround.com{url}"
+    if page_url.find("/Gift-Cards") != -1:
+        return
+    if page_url.find("/Employment") != -1:
+        return
+    if page_url.find("http://www.grkitchenandtaps.com") != -1:
+        return
+    if page_url.find("neenah") != -1:
+        page_url = "https://groundroundfoxcities.com/neenah/"
+    if page_url.find("oshkosh") != -1:
+        page_url = "https://groundroundfoxcities.com/oshkosh/"
+
     session = SgRequests()
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:86.0) Gecko/20100101 Firefox/86.0",
@@ -187,6 +202,163 @@ def get_data(url):
         latitude = text.split(",")[0]
         longitude = text.split(",")[1]
     location_type = "<MISSING>"
+    if page_url.find("https://groundroundfoxcities") != -1:
+        ad = "".join(tree.xpath('//p[@class="footer-contact"]/a[1]/text()'))
+        street_address = ad.split(",")[0].strip()
+        city = ad.split(",")[1].strip()
+        state = ad.split(",")[2].split()[0].strip()
+        postal = ad.split(",")[2].split()[1].strip()
+        phone = "".join(tree.xpath('//p[@class="footer-contact"]/a[2]/text()'))
+        hours_of_operation = "<MISSING>"
+        location_name = f"{city}, {state}"
+    if page_url.find("neenah") != -1:
+        session = SgRequests()
+        r = session.get("https://groundroundfoxcities.com/neenah/hours/")
+        tree = html.fromstring(r.text)
+        hours_of_operation = (
+            " ".join(tree.xpath('//div[@class="twelve"]/p//text()'))
+            .replace("\n", "")
+            .strip()
+        )
+    if page_url == "https://mygroundround.com/specials/":
+        page_url = "https://mygroundround.com/locations/"
+        session = SgRequests()
+        r = session.get(page_url)
+        tree = html.fromstring(r.text)
+        location_name = "".join(
+            tree.xpath(
+                '//span[@id="MainContentArea_ContentModule11_CMSContentLabel"]/a[1]//text()'
+            )
+        )
+        street_address = (
+            "".join(
+                tree.xpath(
+                    '//span[@id="MainContentArea_ContentModule11_CMSContentLabel"]/a[1]/following-sibling::text()[1]'
+                )
+            )
+            .replace("\n", "")
+            .strip()
+        )
+        ad = (
+            "".join(
+                tree.xpath(
+                    '//span[@id="MainContentArea_ContentModule11_CMSContentLabel"]/a[1]/following-sibling::text()[2]'
+                )
+            )
+            .replace("\n", "")
+            .strip()
+        )
+        city = ad.split(",")[0].strip()
+        state = ad.split(",")[1].split()[0].strip()
+        postal = ad.split(",")[1].split()[1].strip()
+        phone = (
+            "".join(
+                tree.xpath(
+                    '//span[@id="MainContentArea_ContentModule11_CMSContentLabel"]/a[1]/following-sibling::a[1]/text()'
+                )
+            )
+            .replace("\n", "")
+            .strip()
+        )
+        hours_of_operation = (
+            "".join(
+                tree.xpath(
+                    '//span[@id="MainContentArea_ContentModule11_CMSContentLabel"]/a[1]/following-sibling::strong[1]/following-sibling::text()[1]'
+                )
+            )
+            .replace("\n", "")
+            .strip()
+            + " "
+            + "".join(
+                tree.xpath(
+                    '//span[@id="MainContentArea_ContentModule11_CMSContentLabel"]/a[1]/following-sibling::strong[1]/following-sibling::text()[2]'
+                )
+            )
+            .replace("\n", "")
+            .strip()
+        )
+        hours_of_operation = (
+            hours_of_operation.replace("(we serve food until 11pm)", "")
+            .replace("(we serve food in the lounge until 12am)", "")
+            .strip()
+        )
+        ll = "".join(
+            tree.xpath(
+                '//span[@id="MainContentArea_ContentModule11_CMSContentLabel"]/a[1]/@href'
+            )
+        )
+        latitude = ll.split("@")[1].split(",")[0].strip()
+        longitude = ll.split("@")[1].split(",")[1].strip()
+    if page_url == "https://mygroundround.com/bar/":
+        page_url = "https://mygroundround.com/locations/"
+        session = SgRequests()
+        r = session.get(page_url)
+        tree = html.fromstring(r.text)
+        location_name = "".join(
+            tree.xpath(
+                '//span[@id="MainContentArea_ContentModule11_CMSContentLabel"]/a[4]//text()'
+            )
+        )
+        street_address = (
+            "".join(
+                tree.xpath(
+                    '//span[@id="MainContentArea_ContentModule11_CMSContentLabel"]/a[4]/following-sibling::text()[1]'
+                )
+            )
+            .replace("\n", "")
+            .strip()
+        )
+        ad = (
+            "".join(
+                tree.xpath(
+                    '//span[@id="MainContentArea_ContentModule11_CMSContentLabel"]/a[4]/following-sibling::text()[2]'
+                )
+            )
+            .replace("\n", "")
+            .strip()
+        )
+        city = ad.split(",")[0].strip()
+        state = ad.split(",")[1].split()[0].strip()
+        postal = ad.split(",")[1].split()[1].strip()
+        phone = (
+            "".join(
+                tree.xpath(
+                    '//span[@id="MainContentArea_ContentModule11_CMSContentLabel"]/a[4]/following-sibling::a[1]/text()'
+                )
+            )
+            .replace("\n", "")
+            .strip()
+        )
+        hours_of_operation = (
+            "".join(
+                tree.xpath(
+                    '//span[@id="MainContentArea_ContentModule11_CMSContentLabel"]/a[4]/following-sibling::strong[1]/following-sibling::text()[1]'
+                )
+            )
+            .replace("\n", "")
+            .strip()
+            + " "
+            + "".join(
+                tree.xpath(
+                    '//span[@id="MainContentArea_ContentModule11_CMSContentLabel"]/a[1]/following-sibling::strong[1]/following-sibling::text()[2]'
+                )
+            )
+            .replace("\n", "")
+            .strip()
+        )
+        hours_of_operation = (
+            hours_of_operation.replace("(we serve food until 11pm)", "")
+            .replace("(we serve food in the lounge until 12am)", "")
+            .replace("(we serve food 11pm)", "")
+            .strip()
+        )
+        ll = "".join(
+            tree.xpath(
+                '//span[@id="MainContentArea_ContentModule11_CMSContentLabel"]/a[4]/@href'
+            )
+        )
+        latitude = ll.split("@")[1].split(",")[0].strip()
+        longitude = ll.split("@")[1].split(",")[1].strip()
 
     row = [
         locator_domain,
