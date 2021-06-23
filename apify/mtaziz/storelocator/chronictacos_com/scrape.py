@@ -45,7 +45,6 @@ def fetch_data():
     data = []
     p = 0
     pattern = re.compile(r"\s\s+")
-    cleanr = re.compile(r"<[^>]+>")
     urllist = [
         "https://www.chronictacos.com/us-locations",
         "https://www.chronictacos.com/canada-locations",
