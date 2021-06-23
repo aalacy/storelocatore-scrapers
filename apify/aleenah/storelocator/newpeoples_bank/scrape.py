@@ -103,7 +103,7 @@ def fetch_data():
                     tim += tds[0].text + ": " + tds[2].text + " "
                 elif len(tds) == 2:
                     tim += tds[0].text + ": " + tds[1].text + " "
-            print(tim)
+
             tim = tim.strip()
             phone = phone.strip()
             loc = l.find_element_by_tag_name("h2").text.strip()
