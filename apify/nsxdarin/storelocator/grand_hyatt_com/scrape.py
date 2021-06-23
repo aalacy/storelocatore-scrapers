@@ -86,6 +86,7 @@ def fetch_data():
                         zc = "<MISSING>"
                     if typ == "":
                         typ = "<MISSING>"
+                    hours = "<MISSING>"
                     logger.info(loc)
                     try:
                         r2 = session.get(loc, headers=headers)
@@ -95,6 +96,8 @@ def fetch_data():
                                 '<span class="opening-date' in line2
                                 and "Opening 20" in line2
                             ):
+                                CS = True
+                            if ">Coming Soon<" in line2:
                                 CS = True
                             if (
                                 "and beyond" in line2
@@ -108,7 +111,7 @@ def fetch_data():
                     if "Club Maui, " in name:
                         name = "Hyatt Residence Club Maui, Kaanapali Beach"
                     if CS:
-                        name = name + " - Coming Soon"
+                        hours = "Coming Soon"
                     if loc not in locs:
                         locs.append(loc)
                         yield [
