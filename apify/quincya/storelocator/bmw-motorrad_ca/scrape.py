@@ -108,7 +108,7 @@ def fetch_data():
 
     locator_domain = "bmw-motorrad.ca"
 
-    js = base.find(class_="module dealerlocator nosection")["data-nsc-dealers"]
+    js = base.find(class_="module dealerlocator")["data-nsc-dealers"]
 
     stores = json.loads(js)["dealers"]
 
@@ -143,7 +143,7 @@ def fetch_data():
                 req = session.get(link, headers=headers)
                 base = BeautifulSoup(req.text, "lxml")
                 hours_of_operation = " ".join(
-                    list(base.find(class_="dealerheader__items").stripped_strings)
+                    list(base.find(class_="dealercontact__items").stripped_strings)
                 )
             else:
                 link = "<MISSING>"
@@ -236,7 +236,7 @@ def fetch_data():
                 req = session.get(link, headers=headers)
                 base = BeautifulSoup(req.text, "lxml")
                 hours_of_operation = " ".join(
-                    list(base.find(class_="dealerheader__items").stripped_strings)
+                    list(base.find(class_="dealercontact__items").stripped_strings)
                 )
                 row[-1] = hours_of_operation
             data.append(row)
