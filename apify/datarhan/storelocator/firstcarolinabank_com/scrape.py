@@ -1,6 +1,5 @@
 import re
 import csv
-import json
 from lxml import etree
 
 from sgrequests import SgRequests
@@ -42,43 +41,37 @@ def fetch_data():
 
     items = []
 
-    start_url = "https://www.actiongatortire.com/locations/"
+    start_url = (
+        "https://www.firstcarolinabank.com/_/api/branches/35.9656707/-77.8489891/250"
+    )
     domain = re.findall(r"://(.+?)/", start_url)[0].replace("www.", "")
     hdr = {
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
     }
-    response = session.get(start_url, headers=hdr)
-    dom = etree.HTML(response.text)
+    data = session.get(start_url, headers=hdr).json()
 
-    all_locations = dom.xpath(
-        '//div[@class="row collapse locations-search-grid"]//a[contains(text(), "View Location")]/@href'
-    )
-    for store_url in all_locations:
-        loc_response = session.get(store_url)
-        loc_dom = etree.HTML(loc_response.text)
-        poi = loc_dom.xpath('//script[contains(text(), "streetAddress")]/text()')[0]
-        poi = json.loads(poi)
-
-        location_name = loc_dom.xpath(
-            '//div[contains(@class, "location_contact_info")]/div[1]/text()'
-        )[0].strip()
-        street_address = poi["address"]["streetAddress"]
-        city = poi["address"]["addressLocality"]
-        state = poi["address"]["addressRegion"]
-        state = state if state else "<MISSING>"
-        zip_code = poi["address"]["postalCode"]
-        zip_code = zip_code if zip_code else "<MISSING>"
+    all_locations = data["branches"]
+    for poi in all_locations:
+        store_url = "https://www.firstcarolinabank.com/locator"
+        location_name = poi["name"]
+        street_address = poi["address"]
+        city = poi["city"]
+        state = poi["state"]
+        zip_code = poi["zip"]
         country_code = "<MISSING>"
         store_number = "<MISSING>"
-        phone = poi["telephone"]
+        phone = poi["phone"]
         phone = phone if phone else "<MISSING>"
-        location_type = loc_dom.xpath(
-            '//div[contains(@class, "location_contact_info")]/strong/text()'
-        )[0].strip()
-        latitude = poi["geo"]["latitude"]
-        longitude = poi["geo"]["longitude"]
-        hoo = poi["openingHours"]
-        hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
+        location_type = "branch"
+        latitude = poi["lat"]
+        longitude = poi["long"]
+        hoo = etree.HTML(poi["description"]).xpath("//text()")
+        hoo = [e.strip() for e in hoo if e.strip()]
+        hours_of_operation = (
+            " ".join(hoo).split("Drive Through")[0].split("Lobby Hours:")[-1].strip()
+            if hoo
+            else "<MISSING>"
+        )
 
         item = [
             domain,
