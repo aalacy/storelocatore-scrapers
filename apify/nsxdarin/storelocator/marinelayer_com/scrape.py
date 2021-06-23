@@ -35,7 +35,6 @@ def write_output(data):
 
 
 def fetch_data():
-    locs = []
     url = "https://www.marinelayer.com/pages/stores"
     Found = True
     r = session.get(url, headers=headers)
@@ -55,7 +54,6 @@ def fetch_data():
             g = next(lines)
             g = str(g.decode("utf-8"))
             if '<a href="http://maps.google.com/?q' in g:
-                print(g)
                 addinfo = g.split('">')[1].split("</a>")[0]
                 if addinfo.count("<br/>") == 2:
                     add = (
