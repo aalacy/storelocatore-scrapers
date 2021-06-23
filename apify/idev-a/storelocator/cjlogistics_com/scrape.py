@@ -55,7 +55,7 @@ def _d(link, _addr, page_url, location_name="", latitude="", longitude=""):
         city=addr.city,
         state=addr.state,
         zip_postal=addr.postcode,
-        country_code=link.a.text.strip(),
+        country_code=link.a.text.split("(")[0].strip(),
         phone=_p(phone),
         locator_domain=locator_domain,
         latitude=latitude,

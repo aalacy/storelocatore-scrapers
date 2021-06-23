@@ -14,14 +14,13 @@ def fetch_data():
     base_url = "https://yumyumdonuts.com/maps_xml"
     page_url = "https://yumyumdonuts.com/locations"
     with SgRequests() as session:
-        locations = bs(session.get(base_url, headers=_headers).text, "lxml").select(
-            "marker"
-        )
-        for _ in locations:
+        locs = bs(session.get(base_url, headers=_headers).text, "lxml").select("marker")
+        for _ in locs:
             addr = parse_address_intl(_["address"])
             street_address = addr.street_address_1
             if addr.street_address_2:
                 street_address += " " + addr.street_address_2
+
             yield SgRecord(
                 page_url=page_url,
                 store_number=_["uuid"],
@@ -34,8 +33,8 @@ def fetch_data():
                 longitude=_["xcoord"],
                 country_code="US",
                 phone=_["phone"],
-                locator_domain=locator_domain,
                 hours_of_operation=list(bs(_["desc"], "lxml").stripped_strings)[0],
+                locator_domain=locator_domain,
             )
 
 

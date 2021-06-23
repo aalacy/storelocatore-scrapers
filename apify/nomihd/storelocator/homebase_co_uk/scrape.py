@@ -84,7 +84,14 @@ def fetch_data():
                 store_sel.xpath('//*[contains(@itemprop,"telephone")]//text()')
             ).strip()
 
-            location_type = "<MISSING>"
+            location_type = store_sel.xpath(
+                '//span[@class="Core-heroPromoHeading"]/text()'
+            )
+
+            if len(location_type) > 0:
+                location_type = location_type[0].strip()
+                if "Click & Collect at this store" in location_type:
+                    location_type = "<MISSING>"
 
             hours_of_operation = "; ".join(
                 store_sel.xpath('//*[contains(@itemprop,"openingHours")]/@content')

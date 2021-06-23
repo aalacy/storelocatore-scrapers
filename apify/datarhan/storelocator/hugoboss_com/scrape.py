@@ -30,8 +30,13 @@ def write_output(data):
             ]
         )
         # Body
+        dupes = []
         for row in data:
-            writer.writerow(row)
+            if row[8] in dupes:
+                pass
+            else:
+                writer.writerow(row)
+                dupes.append(row[8])
 
 
 def fetch_data():
