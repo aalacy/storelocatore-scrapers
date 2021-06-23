@@ -5,6 +5,9 @@ from bs4 import BeautifulSoup as bs
 import re
 import pandas as pd
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
+from sglogging import sglog
+
+log = sglog.SgLogSetup().get_logger(logger_name="findchurch")
 
 search = DynamicGeoSearch(country_codes=[SearchableCountries.BRITAIN])
 session = SgRequests(retry_behavior=False)
@@ -112,6 +115,7 @@ def get_data(df):
 
     # Iterate through the URLs
     for url in page_url_list:
+        log.info(url)
         x = x + 1
 
         try:
