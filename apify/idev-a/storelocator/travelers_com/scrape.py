@@ -14,12 +14,12 @@ _headers = {
 }
 session = SgRequests().requests_retry_session()
 
-max_workers = 2
+max_workers = 8
 
 
 def fetchConcurrentSingle(data):
     response = request_with_retries(data)
-    return data, bs(response.text, "lxml")
+    return data, bs(response.text, "lxml"), response.text
 
 
 def fetchConcurrentList(list, occurrence=max_workers):
@@ -67,7 +67,7 @@ def fetch_data():
                         session.get(city_url, headers=_headers).text, "lxml"
                     ).select("li.Directory-listTeaser")
                 ]
-                for page_url, sp1 in fetchConcurrentList(locations):
+                for page_url, sp1, res in fetchConcurrentList(locations):
                     logger.info(f"[{state.text}] [{city.text}] {page_url}")
                     street_address = sp1.select_one(".c-address-street-1").text
                     if sp1.select_one(".c-address-street-2"):
@@ -77,8 +77,14 @@ def fetch_data():
                     phone = ""
                     if sp1.select_one("#phone-main"):
                         phone = sp1.select_one("#phone-main").text.strip()
+                    coord = sp1.select_one('meta[name="geo.position"]')[
+                        "content"
+                    ].split(";")
                     yield SgRecord(
                         page_url=page_url,
+                        store_number=res.split('{"ids":')[1]
+                        .split(',"pageSetId"')[0]
+                        .strip(),
                         location_name=sp1.select_one("h1.Core-name").text.strip(),
                         street_address=street_address,
                         city=sp1.select_one(".c-address-city").text,
@@ -86,6 +92,8 @@ def fetch_data():
                         zip_postal=sp1.select_one(".c-address-postal-code").text,
                         country_code="US",
                         phone=phone,
+                        latitude=coord[0],
+                        longitude=coord[1],
                         locator_domain=locator_domain,
                     )
 

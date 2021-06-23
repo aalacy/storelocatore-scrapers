@@ -4,7 +4,7 @@ from sglogging import sglog
 
 from sgrequests import SgRequests
 
-from sgzip.dynamic import DynamicZipSearch, SearchableCountries
+from sgzip.dynamic import DynamicZipSearch, Grain_8, SearchableCountries
 
 log = sglog.SgLogSetup().get_logger(logger_name="kroger.com")
 
@@ -55,6 +55,7 @@ def fetch_data():
 
     search = DynamicZipSearch(
         country_codes=[SearchableCountries.USA],
+        granularity=Grain_8(),
         max_radius_miles=max_distance,
         max_search_results=max_results,
     )
