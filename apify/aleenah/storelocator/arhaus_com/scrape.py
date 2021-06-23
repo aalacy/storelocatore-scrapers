@@ -76,7 +76,6 @@ def fetch_data():
         page_url.append("https://www.arhaus.com" + sl)
     with SgChrome() as driver:
         for url in page_url:
-            url = "https://www.arhaus.com/store/fredericksburg/"
             logger.info(url)
             try:
                 driver.get(url)
