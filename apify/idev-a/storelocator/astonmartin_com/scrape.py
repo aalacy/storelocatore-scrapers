@@ -36,6 +36,10 @@ def fetch_data():
                     store["Address"]["Longitude"],
                 ]
             )
+            zip_postal = store["Address"]["Zip"].strip()
+            country_code = store["Address"]["CountryCode"]
+            if country_code == "United States" and zip_postal:
+                zip_postal = zip_postal.split(" ")[-1]
             yield SgRecord(
                 page_url=page_url,
                 locator_domain=locator_domain,
@@ -43,9 +47,9 @@ def fetch_data():
                 street_address=store["Address"]["Street"],
                 city=store["Address"]["City"],
                 state=store["Address"]["StateCode"],
-                zip_postal=store["Address"]["Zip"],
+                zip_postal=zip_postal,
                 phone=phone,
-                country_code=store["Address"]["CountryCode"],
+                country_code=country_code,
                 store_number=store["DCSId"],
                 latitude=store["Address"]["Latitude"],
                 longitude=store["Address"]["Longitude"],

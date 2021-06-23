@@ -56,9 +56,11 @@ def getHOO(hours):
 
 
 def fetchSingleZip(zip_code):
-    page_url = f"{searchUrl}{zip_code}"
+    page = "https://woodforest.com/Home/About-Us/Contact-Us/Locations/SearchResults.aspx#address=&city=&state=&distance=999&zipCode="
+    page_url = f"{page}{zip_code}"
+    page_url_api = f"{searchUrl}{zip_code}"
     try:
-        r = session.post(page_url)
+        r = session.post(page_url_api)
     except Exception as e:
         return zip_code, [], e
     locations = getJSONObjectVariable(r.json(), "locations", [])
@@ -69,6 +71,12 @@ def fetchSingleZip(zip_code):
     for location in locations:
         address = getJSONObjectVariable(location, "address", {})
         coordinates = getJSONObjectVariable(address, "coordinates", {})
+        services = getJSONObjectVariable(location, "services", {})
+        location_type = getJSONObjectVariable(location, "type.displayAs")
+        # Adding Service Type in location_type to identify ATM
+        service_type = getJSONObjectVariable(services, "0.name")
+        if "ATM" in service_type:
+            location_type = "ATM, " + location_type
 
         result.append(
             {
@@ -84,7 +92,7 @@ def fetchSingleZip(zip_code):
                 "location_name": getJSONObjectVariable(location, "institution.name"),
                 "store_number": getJSONObjectVariable(location, "number"),
                 "phone": getJSONObjectVariable(location, "phone"),
-                "location_type": getJSONObjectVariable(location, "type.displayAs"),
+                "location_type": location_type,
                 "hours_of_operation": getHOO(getJSONObjectVariable(location, "lobby")),
             }
         )
