@@ -90,15 +90,19 @@ def fetch_data():
             city = tagged["PlaceName"]
             state = tagged["StateName"]
             zip = tagged["ZipCode"]
-
-            trs = l.find_elements_by_tag_name("tbody")[1].find_elements_by_tag_name(
+            trs = l.find_elements_by_tag_name("tbody")[2].find_elements_by_tag_name(
                 "tr"
             )
-            del trs[-1]
+            if "ITM" in trs[-1].text:
+                del trs[-1]
+
             tim = ""
             for tr in trs:
                 tds = tr.find_elements_by_tag_name("td")
-                tim += tds[0].text + ": " + tds[2] + " "
+                if len(tds) >= 3:
+                    tim += tds[0].text + ": " + tds[2].text + " "
+                elif len(tds) == 2:
+                    tim += tds[0].text + ": " + tds[1].text + " "
 
             tim = tim.strip()
             phone = phone.strip()
