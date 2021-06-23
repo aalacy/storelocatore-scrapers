@@ -109,9 +109,10 @@ def fetch_data():
                     break
 
             for store in stores:
+                location_type = "<MISSING>"
                 location_name = store.h2.text.strip()
                 if "CLOSED" in location_name.upper():
-                    continue
+                    location_type = "Closed"
 
                 link = "https://www.pacsun.com/stores"
 
@@ -144,7 +145,6 @@ def fetch_data():
                 if store_number in found:
                     continue
                 found.append(store_number)
-                location_type = "<MISSING>"
 
                 hours_of_operation = (
                     store.find(class_="storehours").get_text(" ").strip()

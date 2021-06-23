@@ -124,7 +124,8 @@ def scrape():
         location_name=sp.MappingField(
             mapping=["storeType", "name"],
             value_transform=add_walmart,
-        ),
+        )
+        + " - Fuel",
         latitude=sp.MappingField(
             mapping=["geoPoint", "latitude"],
             part_of_record_identity=True,
@@ -159,7 +160,10 @@ def scrape():
         ),
         hours_of_operation=sp.MappingField(
             mapping=["operationalHours"], raw_value_transform=human_hours
-        ),
+        )
+        .replace("Montofrihrs", "Mon-Fri")
+        .replace("hrs:", ":")
+        .replace("; Temporaryhours: <MISSING>", ""),
         location_type=sp.MappingField(
             mapping=["storeType", "displayName"],
             part_of_record_identity=True,

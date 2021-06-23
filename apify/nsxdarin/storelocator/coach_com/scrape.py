@@ -130,8 +130,11 @@ def fetch_data():
                             hours = "<MISSING>"
                         hours = hours.replace("<br/>", "; ")
                         add = add.replace("&amp;", "&")
+                        if ", TIER" in city:
+                            city = city.split(", TIER")[0].strip()
                         if phone == "":
                             phone = "<MISSING>"
+                        phone = phone.replace("&#40;", "(").replace("&#41;", ")")
                         yield [
                             website,
                             loc,
@@ -271,6 +274,9 @@ def fetch_data():
                                     stinfo = name + "|" + add + "|" + city + "|" + state
                                     if stinfo not in alllocs and add != "":
                                         alllocs.append(stinfo)
+                                        phone = phone.replace("&#40;", "(").replace(
+                                            "&#41;", ")"
+                                        )
                                         yield [
                                             website,
                                             loc,
@@ -403,6 +409,9 @@ def fetch_data():
                                 stinfo = name + "|" + add + "|" + city + "|" + state
                                 if stinfo not in alllocs:
                                     alllocs.append(stinfo)
+                                    phone = phone.replace("&#40;", "(").replace(
+                                        "&#41;", ")"
+                                    )
                                     yield [
                                         website,
                                         loc,

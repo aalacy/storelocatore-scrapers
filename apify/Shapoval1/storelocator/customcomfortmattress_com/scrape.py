@@ -58,7 +58,7 @@ def fetch_data():
         page_url = j.get("staticlink")
         location_name = j.get("name")
         location_type = "Custom Comfort Mattress"
-        street_address = j.get("address")
+        street_address = f"{j.get('address')} {j.get('address2') or ''}".strip()
         phone = j.get("phone")
         state = j.get("state")
         postal = j.get("postalcode")

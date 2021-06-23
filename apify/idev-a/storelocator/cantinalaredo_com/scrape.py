@@ -37,6 +37,13 @@ def fetch_data():
                 street_address += " " + addr.street_address_2
             sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
             coord = sp1.select_one("div.address a")["href"].split("/")[-1].split(",")
+            hours_of_operation = (
+                location.select_one(".hours p")
+                .text.replace("\n", ";")
+                .replace("–", "-")
+            )
+            if "flight" in hours_of_operation or "departure" in hours_of_operation:
+                hours_of_operation = ""
             yield SgRecord(
                 page_url=page_url,
                 location_name=location_name,
@@ -49,9 +56,7 @@ def fetch_data():
                 locator_domain=locator_domain,
                 latitude=coord[0],
                 longitude=coord[1],
-                hours_of_operation=location.select_one(".hours p")
-                .text.replace("\n", ";")
-                .replace("–", "-"),
+                hours_of_operation=hours_of_operation,
             )
 
 
