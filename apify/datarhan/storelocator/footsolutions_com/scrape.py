@@ -105,7 +105,13 @@ def fetch_data():
             hoo = loc_dom.xpath(
                 '//h1[contains(text(), "Hours")]/following-sibling::div/p/text()'
             )
-        hoo = [e.strip() for e in hoo if e.strip()]
+        hoo = [
+            " - ".join(
+                [s.strip() for s in e.strip().split("-") if "april" not in s.lower()]
+            )
+            for e in hoo
+            if e.strip()
+        ]
         hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
 
         item = [
