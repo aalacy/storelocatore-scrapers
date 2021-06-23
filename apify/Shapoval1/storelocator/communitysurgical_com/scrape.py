@@ -82,8 +82,18 @@ def fetch_data():
         store_number = "<MISSING>"
         latitude = "".join(i).split("lat")[1].split(",")[0].strip()
         longitude = "".join(i).split("lng")[1].split(",")[0].strip()
-        phone = "<MISSING>"
         hours_of_operation = "<MISSING>"
+        session = SgRequests()
+        r = session.get(
+            "https://communitysurgical.com/pages/servicing-locations", headers=headers
+        )
+        tree = html.fromstring(r.text)
+        phone = (
+            "".join(tree.xpath('//h1[contains(text(),"Phone")]/text()'))
+            .split("Phone:")[1]
+            .split("Fax")[0]
+            .strip()
+        )
 
         row = [
             locator_domain,

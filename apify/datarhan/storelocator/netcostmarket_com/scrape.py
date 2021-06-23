@@ -2,6 +2,7 @@ import re
 import csv
 import json
 from lxml import etree
+from time import sleep
 from urllib.parse import urljoin
 
 from sgselenium import SgFirefox
@@ -54,6 +55,7 @@ def fetch_data():
         store_url = urljoin(start_url, url)
         with SgFirefox() as driver:
             driver.get(store_url)
+            sleep(20)
             loc_dom = etree.HTML(driver.page_source)
         poi = loc_dom.xpath('//script[contains(text(), "latitude")]/text()')
         if poi:
@@ -114,8 +116,13 @@ def fetch_data():
                 phone = loc_dom.xpath('//a[contains(@href, "tel")]/text()')
             phone = phone[0] if phone else "<MISSING>"
             location_type = "<MISSING>"
+            geo = loc_dom.xpath('//iframe[contains(@src, "/maps/embed")]/@src')
             latitude = "<MISSING>"
             longitude = "<MISSING>"
+            if geo:
+                geo = geo[0].split("!2d")[-1].split("!2m")[0].split("!3d")
+                latitude = geo[-1].split("!")[0]
+                longitude = geo[0].split("!")[0]
             hoo = loc_dom.xpath(
                 '//div[p[contains(text(), "Monday – Sunday")]]/p//text()'
             )[:2]

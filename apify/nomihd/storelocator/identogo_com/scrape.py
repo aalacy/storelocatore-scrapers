@@ -107,7 +107,6 @@ def process_record(raw_results_from_one_zipcode):
         location_type = "<MISSING>"
         if "-" in location_name:
             location_type = location_name.split("-")[1].strip()
-            location_name = location_name.split("-")[0].strip()
 
         hours_of_operation = store["properties"]["info"]["hours"]
         latitude = store["geometry"]["coordinates"][1]
