@@ -1,6 +1,7 @@
 import csv
 import json
 from lxml import etree
+from urllib.parse import urljoin
 
 from sgrequests import SgRequests
 
@@ -53,9 +54,11 @@ def fetch_data():
         dom = etree.HTML(response.text)
         country_urls = dom.xpath('//div[@id="location-title"]/a/@href')
         for poi_url in country_urls:
-            store_url = "https://aerotek.com" + poi_url
-            strore_response = session.get(store_url)
-            store_dom = etree.HTML(strore_response.text)
+            store_url = urljoin(url, poi_url)
+            store_response = session.get(store_url)
+            if store_response.status_code != 200:
+                continue
+            store_dom = etree.HTML(store_response.text)
 
             location_name = store_dom.xpath('//div[@id="location-title"]/a/text()')[0]
             location_name = location_name if location_name else "<MISSING>"

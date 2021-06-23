@@ -59,7 +59,7 @@ def write_output(data):
 
 def fetch_data():
     data = []
-    url = "https://www.zoomcare.com/schedule"
+    url = "https://www.zoomcare.com/locations"
     stores_req = session.get(url, headers=headers)
     soup = BeautifulSoup(stores_req.text, "html.parser")
     loc_link = soup.findAll("a", {"class": "modal__location-link"})

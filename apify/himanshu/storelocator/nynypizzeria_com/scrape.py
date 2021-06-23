@@ -1,126 +1,112 @@
-import csv
-import json
 import re
-
+import unicodedata
 from bs4 import BeautifulSoup
-
 from sgrequests import SgRequests
+from sglogging import SgLogSetup
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+from sgscrape import sgpostal as parser
 
-
+website = "nynypizzeria_com"
+log = SgLogSetup().get_logger(logger_name=website)
 session = SgRequests()
+headers = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.66 Safari/537.36",
+    "Accept": "application/json",
+}
+DOMAIN = "https://nynypizzeria.com/"
+MISSING = "<MISSING>"
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+def strip_accents(text):
 
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-                "page_url",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+    text = unicodedata.normalize("NFD", text).encode("ascii", "ignore").decode("utf-8")
+
+    return str(text)
 
 
 def fetch_data():
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36"
-    }
-    base_url = "https://nynypizzeria.com/locations/"
-    r = session.get(base_url, headers=headers)
-    soup = BeautifulSoup(r.text, "lxml")
-
-    for div in soup.find("div", {"class": "middle_inner"}).find_all(
-        "div", recursive=False
-    ):
-        if div.find("h1") is None:
-            continue
-        if div.find_next_sibling("div").find("iframe") is None:
-            continue
-        name = div.find("h1").text.strip()
-        geo_request = session.get(
-            div.find_next_sibling("div").find("iframe")["src"], headers=headers
+    if True:
+        pattern = re.compile(r"\s\s+")
+        url = "https://nynypizzeria.com/locations/"
+        r = session.get(url, headers=headers)
+        soup = BeautifulSoup(r.text, "html.parser")
+        loclist = soup.find(
+            "div",
+            {
+                "class": "fusion-fullwidth fullwidth-box fusion-builder-row-2 fusion-flex-container nonhundred-percent-fullwidth non-hundred-percent-height-scrolling"
+            },
         )
-        geo_soup = BeautifulSoup(geo_request.text, "lxml")
-        for script in geo_soup.find_all("script"):
-            if "initEmbed" in str(script):
-                geo_data = json.loads(
-                    script.contents[0].split("initEmbed(")[1].split(");")[0]
-                )[21][3][0][1]
-                lat = json.loads(str(script).split("initEmbed(")[1].split(");")[0])[21][
-                    3
-                ][0][2][0]
-                lng = json.loads(str(script).split("initEmbed(")[1].split(");")[0])[21][
-                    3
-                ][0][2][1]
-                break
-        street_address = geo_data.split(",")[1].strip()
-        city = geo_data.split(",")[2].strip()
-        store_zip_split = re.findall(
-            re.compile(r"\b[0-9]{5}(?:-[0-9]{4})?\b"), geo_data
-        )
-        if store_zip_split:
-            store_zip = store_zip_split[-1]
-        else:
-            store_zip = "<MISSING>"
-        state_split = re.findall("([A-Z]{2})", geo_data)
-        if state_split:
-            state = state_split[-1]
-        else:
-            state = "<MISSING>"
-
-        if "Airside" in city:
-            street_address = street_address + "-" + city
-            city = "Tampa"
-
-        try:
-            phone = (
-                div.find_next_sibling("div")
-                .find("a", {"href": re.compile("tel:")})["href"]
-                .replace("tel:", "")
+        loclist = loclist.findAll("a")
+        for loc in loclist:
+            page_url = loc["href"]
+            log.info(page_url)
+            location_name = loc.text
+            r = session.get(page_url, headers=headers)
+            soup = BeautifulSoup(r.text, "html.parser")
+            try:
+                phone = (
+                    soup.find("div", {"class": "fusion-column-content"}).find("a").text
+                )
+                hours_of_operation = r.text.split("Hours of Operation")[1].split(
+                    '*Due"/>'
+                )[0]
+                hours_of_operation = re.sub(pattern, "\n", hours_of_operation).replace(
+                    "\n", " "
+                )
+                hours_of_operation = strip_accents(hours_of_operation)
+                if '"/>' in hours_of_operation:
+                    hours_of_operation = hours_of_operation.split('"/>')[0]
+            except:
+                phone = MISSING
+                hours_of_operation = MISSING
+            raw_address = (
+                soup.find("iframe")["src"]
+                .split("language=en&q=")[1]
+                .split("&maptype")[0]
+                .replace("+", " ")
             )
-        except:
-            phone = "<MISSING>"
-
-        store = []
-        store.append("https://nynypizzeria.com")
-        store.append(name.strip())
-        store.append(street_address.strip())
-        store.append(city.strip())
-        store.append(state.strip())
-        store.append(store_zip.strip())
-        store.append("US")
-        store.append("<MISSING>")
-        store.append(phone)
-        store.append("<MISSING>")
-        store.append(lat)
-        store.append(lng)
-        store.append("<MISSING>")
-        store.append("https://nynypizzeria.com/locations")
-        yield store
+            formatted_addr = parser.parse_address_intl(raw_address)
+            street_address = formatted_addr.street_address_1
+            if street_address is None:
+                street_address = formatted_addr.street_address_2
+            if formatted_addr.street_address_2:
+                street_address = street_address + ", " + formatted_addr.street_address_2
+            city = formatted_addr.city.replace("Tamps", "Tampa")
+            state = formatted_addr.state if formatted_addr.state else "<MISSING>"
+            zip_postal = formatted_addr.postcode
+            country_code = "US"
+            yield SgRecord(
+                locator_domain=DOMAIN,
+                page_url=page_url,
+                location_name=location_name.strip(),
+                street_address=street_address.strip(),
+                city=city.strip(),
+                state=state.strip(),
+                zip_postal=zip_postal.strip(),
+                country_code=country_code,
+                store_number=MISSING,
+                phone=phone,
+                location_type=MISSING,
+                latitude=MISSING,
+                longitude=MISSING,
+                hours_of_operation=hours_of_operation.strip(),
+                raw_address=raw_address,
+            )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    log.info("Started")
+    count = 0
+    with SgWriter() as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()

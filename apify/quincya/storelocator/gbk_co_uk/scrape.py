@@ -1,22 +1,9 @@
 import csv
 import json
-import re
-import time
 
 from bs4 import BeautifulSoup
 
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support import expected_conditions as ec
-from selenium.webdriver.support.ui import WebDriverWait
-
-from sglogging import SgLogSetup
-
 from sgrequests import SgRequests
-
-from sgselenium import SgChrome
-
-logger = SgLogSetup().get_logger("gbk_co_uk")
 
 
 def write_output(data):
@@ -55,54 +42,37 @@ def fetch_data():
 
     user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
     headers = {"User-Agent": user_agent}
-    options = Options()
-
-    driver = SgChrome(
-        user_agent=user_agent,
-        chrome_options=options.add_argument("--ignore-certificate-errors"),
-    ).driver()
-    driver.get(base_link)
-    WebDriverWait(driver, 50).until(
-        ec.presence_of_element_located((By.CLASS_NAME, "restaurant_card"))
-    )
-    time.sleep(2)
-    base = BeautifulSoup(driver.page_source, "lxml")
 
     session = SgRequests()
+
+    req = session.get(base_link, headers=headers)
+    base = BeautifulSoup(req.text, "lxml")
 
     data = []
 
     locator_domain = "https://gbk.co.uk"
 
-    stores = base.find_all(class_="restaurant_card")
+    js = (
+        str(base)
+        .replace("&quot;", '"')
+        .split('restaurants="')[1]
+        .split('"></find-page')[0]
+    )
+    stores = json.loads(js)
 
-    for store in stores:
-        link = locator_domain + store.find(class_="restaurant_link")["href"]
-        logger.info(link)
-
-        location_name = store.h3.text
-        raw_address = store.address.text.split(",")
-        street_address = " ".join(raw_address[:-2]).strip()
-        street_address = (re.sub(" +", " ", street_address)).strip()
-        city = city = raw_address[-2].strip()
-        state = "<MISSING>"
-        zip_code = raw_address[-1].strip()
+    for store_data in stores:
+        link = store_data["permalink"]
+        location_name = store_data["title"]
+        street_address = store_data["address_lines"][0]["address_line"]
+        city = store_data["city"]
+        if city in street_address.strip()[-len(city) :]:
+            street_address = " ".join(street_address.split(",")[:-1])
+        state = store_data["county_region"]
+        if not state:
+            state = "<MISSING>"
+        zip_code = store_data["zip_postal_code"]
         country_code = "GB"
         location_type = "<MISSING>"
-
-        req = session.get(link, headers=headers)
-        base = BeautifulSoup(req.text, "lxml")
-
-        js = (
-            str(base)
-            .replace("&quot;", '"')
-            .replace('restaurant-data="', "restaurant-data='")
-            .replace('"><', "'><")
-            .split("restaurant-data='")[1]
-            .split("'><")[0]
-        )
-        store_data = json.loads(js)
-
         store_number = store_data["restaurant_id"]
         if not store_number:
             store_number = "<MISSING>"
@@ -146,7 +116,6 @@ def fetch_data():
                 hours_of_operation,
             ]
         )
-    driver.close()
     return data
 
 

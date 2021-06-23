@@ -38,20 +38,17 @@ def write_output(data):
 
 
 def fetch_data():
-    url = "https://www.hungryhowies.com/locations"
+    url = "https://www.hungryhowies.com/sitemap.xml"
     locs = []
     r = session.get(url, headers=headers)
     if r.encoding is None:
         r.encoding = "utf-8"
     for line in r.iter_lines(decode_unicode=True):
-        if "href=\\u0022\\/store\\/" in line:
-            items = line.split("href=\\u0022\\/store\\/")
-            for item in items:
-                if "jQuery.extend(Drupal.settings" not in item:
-                    loc = item.split("\\u0022")[0]
-                    lurl = "https://www.hungryhowies.com/store/" + loc
-                    if lurl not in locs:
-                        locs.append(lurl)
+        if (
+            "<url><loc>https://www.hungryhowies.com/store/" in line
+            or "https://www.hungryhowies.com/STORE/" in line
+        ):
+            locs.append(line.split("<loc>")[1].split("<")[0])
     for loc in locs:
         logger.info(("Pulling Location %s..." % loc))
         r2 = session.get(loc, headers=headers)
