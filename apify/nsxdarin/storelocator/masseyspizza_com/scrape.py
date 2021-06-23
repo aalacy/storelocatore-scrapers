@@ -111,6 +111,8 @@ def fetch_data():
                 hours = (
                     "Tue: Closed; Mon, Wed & Thurs: 4pm-8pm; Fri, Sat & Sun: 11am-9pm"
                 )
+            if "261 Lincoln" in add:
+                hours = "Sun-Thu: 11am-10pm; Fri-Sat: 11am-MIDNIGHT"
             yield [
                 website,
                 loc,
