@@ -1,6 +1,4 @@
 import csv
-import json
-from lxml import html
 from sgrequests import SgRequests
 
 
@@ -36,44 +34,46 @@ def write_output(data):
 def fetch_data():
     out = []
 
-    locator_domain = "https://customcomfortmattress.com"
-    api_url = "https://code.metalocator.com/index.php?option=com_locator&view=directory&layout=combined_bootstrap&Itemid=14258&tmpl=component&framed=1&source=js"
+    locator_domain = "https://www.frankandoak.com"
+    api_url = "https://api.frankandoak.com/v3/cms/api/collections/get/retailLocations/?token=41a3f635cc5bfdfc22a744e3215215&fieldsFilter[]&countryAvailability=USA&lang=en"
     session = SgRequests()
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:89.0) Gecko/20100101 Firefox/89.0",
+        "Accept": "application/json",
+        "Accept-Language": "ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3",
+        "Content-Type": "application/json",
+        "Authorization": "Bearer xgqj2svoTVR7DNcy5PjHjNNLYoacUWf3gQFo2fI2",
+        "Origin": "https://www.frankandoak.com",
+        "Connection": "keep-alive",
+        "TE": "Trailers",
     }
-    r = session.get(api_url, headers=headers)
-    tree = html.fromstring(r.text)
-    jsblock = (
-        "".join(tree.xpath('//script[contains(text(), "var location_data")]/text()'))
-        .split("var location_data =")[1]
-        .split("[]}];")[0]
-        .strip()
-        + "[]}]"
-    )
-    js = json.loads(jsblock)
+    data = '{"filter":{"active":true},"language":"en"}'
+    r = session.post(api_url, headers=headers, data=data)
+    js = r.json()["entries"]
 
     for j in js:
-
-        page_url = j.get("staticlink")
+        page_url = f"https://www.frankandoak.com/stores/{j.get('url')}"
         location_name = j.get("name")
-        location_type = "Custom Comfort Mattress"
-        street_address = f"{j.get('address')} {j.get('address2') or ''}".strip()
+        location_type = j.get("storeType")
+        street_address = j.get("address")
         phone = j.get("phone")
-        state = j.get("state")
-        postal = j.get("postalcode")
-        country_code = "US"
+        state = j.get("province")
+        postal = j.get("zip")
+        country_code = j.get("country")
         city = j.get("city")
-        store_number = j.get("id")
+        store_number = "<MISSING>"
         latitude = j.get("lat")
         longitude = j.get("lng")
-        hours_of_operation = (
-            "".join(j.get("hours"))
-            .replace("{", "")
-            .replace("}", " ")
-            .replace("|", " ")
-            .strip()
-        )
+        days = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"]
+        tmp = []
+        for d in days:
+            day = d
+            time = j.get("hours").get(f"{d}")
+            line = f"{day} {time}"
+            tmp.append(line)
+        hours_of_operation = "; ".join(tmp)
+        if hours_of_operation.count("closed") == 7:
+            hours_of_operation = "Closed"
 
         row = [
             locator_domain,
