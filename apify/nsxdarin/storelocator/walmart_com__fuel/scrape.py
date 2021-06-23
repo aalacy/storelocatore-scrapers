@@ -122,10 +122,9 @@ def scrape():
             part_of_record_identity=True,
         ),
         location_name=sp.MappingField(
-            mapping=["storeType", "name"],
+            mapping=["storeType", "name"] + " - Fuel",
             value_transform=add_walmart,
-        )
-        + " - Fuel",
+        ),
         latitude=sp.MappingField(
             mapping=["geoPoint", "latitude"],
             part_of_record_identity=True,
