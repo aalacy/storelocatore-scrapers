@@ -42,7 +42,6 @@ def fetch_data():
     locs = []
     url = "https://www.cariboucoffee.com/around-the-world/"
     r = session.get(url, headers=headers)
-    Found = False
     for line in r.iter_lines():
         line = str(line.decode("utf-8"))
         if '{"countries":' in line:
