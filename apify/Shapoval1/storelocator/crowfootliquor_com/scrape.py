@@ -1,5 +1,4 @@
 import csv
-import json
 from lxml import html
 from sgrequests import SgRequests
 
@@ -36,42 +35,52 @@ def write_output(data):
 def fetch_data():
     out = []
 
-    locator_domain = "https://customcomfortmattress.com"
-    api_url = "https://code.metalocator.com/index.php?option=com_locator&view=directory&layout=combined_bootstrap&Itemid=14258&tmpl=component&framed=1&source=js"
-    session = SgRequests()
+    locator_domain = "https://crowfootliquor.com"
+    page_url = "https://crowfootliquor.com/locations/"
+
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
     }
-    r = session.get(api_url, headers=headers)
+    session = SgRequests()
+    r = session.get(page_url, headers=headers)
     tree = html.fromstring(r.text)
-    jsblock = (
-        "".join(tree.xpath('//script[contains(text(), "var location_data")]/text()'))
-        .split("var location_data =")[1]
-        .split("[]}];")[0]
-        .strip()
-        + "[]}]"
-    )
-    js = json.loads(jsblock)
+    div = tree.xpath('//div[@class="entry"]/section[position()>1]')
 
-    for j in js:
+    for d in div:
 
-        page_url = j.get("staticlink")
-        location_name = j.get("name")
-        location_type = "Custom Comfort Mattress"
-        street_address = f"{j.get('address')} {j.get('address2') or ''}".strip()
-        phone = j.get("phone")
-        state = j.get("state")
-        postal = j.get("postalcode")
-        country_code = "US"
-        city = j.get("city")
-        store_number = j.get("id")
-        latitude = j.get("lat")
-        longitude = j.get("lng")
+        location_name = "".join(d.xpath(".//h3/text()")).strip()
+        if location_name.find("Aspen Wine & Spirits") != -1:
+            continue
+
+        location_type = "Crowfoot Wine & Spirits"
+        street_address = " ".join(
+            d.xpath('.//p[./a[contains(@href, "goo")]]/a/text()')
+        ).strip()
+        ad = (
+            " ".join(d.xpath('.//p[./a[contains(@href, "goo")]]/text()'))
+            .replace("\n", "")
+            .strip()
+        )
+        if location_name.find("Altadore") != -1:
+            ad = "Calgary, AB T2T 3W2"
+        phone = (
+            "".join(d.xpath('.//p[contains(text(), "Phone")]/text()'))
+            .replace("Phone:", "")
+            .strip()
+        )
+        state = ad.split(",")[1].split()[0].strip()
+        postal = " ".join(ad.split(",")[1].split()[1:]).strip()
+        country_code = "CA"
+        city = ad.split(",")[0].strip()
+        store_number = "<MISSING>"
+        map_link = "".join(d.xpath(".//iframe/@src"))
+        latitude = map_link.split("!3d")[1].strip().split("!")[0].strip()
+        longitude = map_link.split("!2d")[1].strip().split("!")[0].strip()
         hours_of_operation = (
-            "".join(j.get("hours"))
-            .replace("{", "")
-            .replace("}", " ")
-            .replace("|", " ")
+            " ".join(
+                d.xpath('.//p[contains(text(), "Phone")]/following-sibling::p//text()')
+            )
+            .replace("\n", " ")
             .strip()
         )
 

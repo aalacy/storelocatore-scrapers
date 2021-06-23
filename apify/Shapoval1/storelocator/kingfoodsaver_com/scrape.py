@@ -1,6 +1,4 @@
 import csv
-import json
-from lxml import html
 from sgrequests import SgRequests
 
 
@@ -36,44 +34,34 @@ def write_output(data):
 def fetch_data():
     out = []
 
-    locator_domain = "https://customcomfortmattress.com"
-    api_url = "https://code.metalocator.com/index.php?option=com_locator&view=directory&layout=combined_bootstrap&Itemid=14258&tmpl=component&framed=1&source=js"
+    locator_domain = "https://www.kingfoodsaver.com"
+    api_url = "https://api.freshop.com/1/stores?app_key=king_food_saver&has_address=true&limit=-1&token=c9dbb9696ab2ad0447217ebc0b82450f"
     session = SgRequests()
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
     }
     r = session.get(api_url, headers=headers)
-    tree = html.fromstring(r.text)
-    jsblock = (
-        "".join(tree.xpath('//script[contains(text(), "var location_data")]/text()'))
-        .split("var location_data =")[1]
-        .split("[]}];")[0]
-        .strip()
-        + "[]}]"
-    )
-    js = json.loads(jsblock)
+    js = r.json()
 
-    for j in js:
+    for j in js["items"]:
 
-        page_url = j.get("staticlink")
+        page_url = j.get("url")
         location_name = j.get("name")
-        location_type = "Custom Comfort Mattress"
-        street_address = f"{j.get('address')} {j.get('address2') or ''}".strip()
-        phone = j.get("phone")
+        location_type = j.get("site_name")
+        street_address = j.get("address_1")
         state = j.get("state")
-        postal = j.get("postalcode")
-        country_code = "US"
+        postal = j.get("postal_code")
+        country_code = "USA"
         city = j.get("city")
-        store_number = j.get("id")
-        latitude = j.get("lat")
-        longitude = j.get("lng")
-        hours_of_operation = (
-            "".join(j.get("hours"))
-            .replace("{", "")
-            .replace("}", " ")
-            .replace("|", " ")
-            .strip()
-        )
+        store_number = j.get("store_number")
+        latitude = j.get("latitude")
+        longitude = j.get("longitude")
+        phone = "".join(j.get("phone_md"))
+        if phone.find("\n") != -1:
+            phone = phone.split("\n")[0].replace(")4", ") 4").strip()
+        hours_of_operation = "".join(j.get("hours_md")).replace("\n", " ").strip()
+        if hours_of_operation.find("Market") != -1:
+            hours_of_operation = hours_of_operation.split("Market")[0].strip()
 
         row = [
             locator_domain,

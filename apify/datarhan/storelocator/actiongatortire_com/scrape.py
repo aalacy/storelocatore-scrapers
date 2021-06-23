@@ -59,7 +59,9 @@ def fetch_data():
         poi = loc_dom.xpath('//script[contains(text(), "streetAddress")]/text()')[0]
         poi = json.loads(poi)
 
-        location_name = poi["name"]
+        location_name = loc_dom.xpath(
+            '//div[contains(@class, "location_contact_info")]/div[1]/text()'
+        )[0].strip()
         street_address = poi["address"]["streetAddress"]
         city = poi["address"]["addressLocality"]
         state = poi["address"]["addressRegion"]
@@ -70,7 +72,9 @@ def fetch_data():
         store_number = "<MISSING>"
         phone = poi["telephone"]
         phone = phone if phone else "<MISSING>"
-        location_type = poi["@type"]
+        location_type = loc_dom.xpath(
+            '//div[contains(@class, "location_contact_info")]/strong/text()'
+        )[0].strip()
         latitude = poi["geo"]["latitude"]
         longitude = poi["geo"]["longitude"]
         hoo = poi["openingHours"]
