@@ -84,7 +84,7 @@ def fetch_data():
                 else:
                     _tmp.append(f"{d}: Closed")
 
-        hours_of_operation = ";".join(_tmp) or "<MISSING>"
+        hours_of_operation = ";".join(_tmp).replace(",", "-") or "<MISSING>"
         if store_number in s:
             continue
         s.add(store_number)

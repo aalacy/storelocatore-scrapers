@@ -75,8 +75,10 @@ def fetch_data():
         country_code = poi["country"]
         country_code = country_code if country_code else "<MISSING>"
         store_number = poi["storeId"]
-        phone = poi["phone"]
-        phone = phone if phone else "<MISSING>"
+        phone = (
+            poi["phone"].replace("(Client Services)", "").replace("(Kundenservice)", "")
+        )
+        phone = phone.strip() if phone else "<MISSING>"
         location_type = "<MISSING>"
         latitude = poi["latitude"]
         longitude = poi["longitude"]
@@ -87,6 +89,11 @@ def fetch_data():
             hoo.append(f"{day} {hours}")
         hoo = [e.strip() for e in hoo if e.strip()]
         hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
+        if (
+            hours_of_operation
+            == "Monday Tuesday Wednesday Thursday Friday Saturday Sunday"
+        ):
+            hours_of_operation = "<MISSING>"
 
         item = [
             domain,
