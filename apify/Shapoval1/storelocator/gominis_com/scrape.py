@@ -46,8 +46,7 @@ def fetch_data():
     for j in js:
 
         page_url = "https://www.gominis.com" + "".join(j.get("Path"))
-        if "dealer" in page_url:
-            continue
+
         location_name = j.get("FriendlyName")
         phone = j.get("Phone")
         street_address = f"{j.get('Address1')} {j.get('Address2') or ''}".replace(
