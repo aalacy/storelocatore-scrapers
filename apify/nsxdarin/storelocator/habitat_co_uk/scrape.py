@@ -44,8 +44,8 @@ def fetch_data():
     if r.encoding is None:
         r.encoding = "utf-8"
     for line in r.iter_lines(decode_unicode=True):
-        if '<a target="_self" href="//www.habitat.co.uk/stores/' in line:
-            items = line.split('<a target="_self" href="//www.habitat.co.uk/stores/')
+        if 'target="_self" href="//www.habitat.co.uk/stores/' in line:
+            items = line.split('target="_self" href="//www.habitat.co.uk/stores/')
             for item in items:
                 if "More information<" in item:
                     locs.append(
@@ -78,17 +78,13 @@ def fetch_data():
                     "\\u003C\\u002Fp\\u003E", ""
                 )
                 hours = hours.replace("\\u003Cp\\u003E", "")
-            if 'Address</h3><div class="cms-rich-text"><p>' in line2:
+            if "Address</h3><div" in line2:
                 add = (
-                    line2.split('Address</h3><div class="cms-rich-text"><p>')[1]
-                    .split("<")[0]
+                    line2.split("Address</h3><div")[1]
+                    .split('text"><p>')[0]
                     .replace(",&nbsp;", "")
                 )
-                city = (
-                    line2.split('Address</h3><div class="cms-rich-text"><p>')[1]
-                    .split("<br />")[1]
-                    .split(",")[0]
-                )
+                city = line2.split("Address</h3>")[1].split("<br />")[1].split(",")[0]
             if "<strong>0" in line2:
                 phone = "0" + line2.split("<strong>0")[1].split("<")[0]
         if hours == "":
