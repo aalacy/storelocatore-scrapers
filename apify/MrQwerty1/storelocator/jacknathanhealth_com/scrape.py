@@ -59,6 +59,7 @@ def getAddress(raw_address):
 
         return street_address, city, state, zip_postal
     except Exception as e:
+        log.error(f"Address Err: {e}")
         pass
     return MISSING, MISSING, MISSING, MISSING
 
@@ -100,6 +101,7 @@ def driverSleep(driver, time=60):
             EC.presence_of_element_located((By.ID, MISSING))
         )
     except Exception as e1:
+        log.error(f"Driver Sleep Err: {e1}")
         pass
 
 
