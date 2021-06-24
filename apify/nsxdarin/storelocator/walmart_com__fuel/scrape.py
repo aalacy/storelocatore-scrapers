@@ -104,7 +104,12 @@ def human_hours(k):
                             h.append("Temporary hours: " + str(k[day].items()))
                 else:
                     h.append(str(day).capitalize() + ": <MISSING>")
-        return "; ".join(h)
+        return (
+            "; ".join(h)
+            .replace("Montofrihrs", "Mon-Fri")
+            .replace("hrs:", ":")
+            .replace("; Temporaryhours: <MISSING>", "")
+        )
     else:
         return "24/7"
 
@@ -122,7 +127,7 @@ def scrape():
             part_of_record_identity=True,
         ),
         location_name=sp.MappingField(
-            mapping=["storeType", "name"] + " - Fuel",
+            mapping=["storeType", "name" + " - Fuel"],
             value_transform=add_walmart,
         ),
         latitude=sp.MappingField(
@@ -159,10 +164,7 @@ def scrape():
         ),
         hours_of_operation=sp.MappingField(
             mapping=["operationalHours"], raw_value_transform=human_hours
-        )
-        .replace("Montofrihrs", "Mon-Fri")
-        .replace("hrs:", ":")
-        .replace("; Temporaryhours: <MISSING>", ""),
+        ),
         location_type=sp.MappingField(
             mapping=["storeType", "displayName"],
             part_of_record_identity=True,

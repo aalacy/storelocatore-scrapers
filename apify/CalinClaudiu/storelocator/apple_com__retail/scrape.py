@@ -60,6 +60,8 @@ def determine_country(country):
 
 def get_country(search, country, session, headers, SearchableCountry):
     def getPoint(point, session, locale, headers):
+        if locale[-1] != "/":
+            locale = locale + "/"
         url = "https://locate.apple.com{locale}sales/?pt=all&lat={lat}&lon={lon}&address=".format(
             locale=locale, lat=point[0], lon=point[1]
         )
@@ -77,8 +79,15 @@ def get_country(search, country, session, headers, SearchableCountry):
                 .rsplit("if(", 1)[0]
                 .rsplit(";", 1)[0]
             )
-        locs = json.loads(thescript)
-        return locs["results"]
+        try:
+            locs = json.loads(thescript)
+            return locs["results"]
+        except Exception as e:
+            errorz.append(
+                str(
+                    f"had some issues with this country and point  {country}\n{point}{url} \n Matched to: {SearchableCountry}\nIssue was\n{str(e)}"
+                )
+            )
 
     maxZ = None
     maxZ = search.items_remaining()
