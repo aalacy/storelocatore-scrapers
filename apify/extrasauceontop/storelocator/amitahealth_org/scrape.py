@@ -55,6 +55,13 @@ locations = extract_json(data[0]["EntityJsonData"])
 for location in locations:
     locator_domain = "amitahealth.org"
     page_url = "https://www.amitahealth.org/location/" + location["DirectUrl"]
+
+    if (
+        page_url == "https://www.amitahealth.org/location/amita-health-medical-group"
+        or page_url == "https://www.amitahealth.org/location/er-wait-times"
+    ):
+        continue
+
     location_name = location["Name"]
 
     if location_name == "Provider Locations":
