@@ -448,7 +448,7 @@ class CrawlMethod(CleanRecord):
             return response.json()
 
         record_cleaner = getattr(CleanRecord, self._config.get("cleanupMethod"))
-        # identities = set()
+        # identities = set() # noqa
         maxZ = self._search.items_remaining()
         total = 0
         for Point in self._search:
