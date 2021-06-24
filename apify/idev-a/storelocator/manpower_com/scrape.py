@@ -68,8 +68,10 @@ def fetch_data():
             if store["street"] == "-":
                 store["street"] = "<MISSING>"
             store["name"] = _[0]
-            store["city"] = _[3].replace("&#039;", "'")
             store["state"] = _[5].split(",")[1].strip().split(" ")[0].strip()
+            store["city"] = (
+                _[3].replace("&#039;", "'").replace(store["state"], "").strip()
+            )
             store["zip_postal"] = _[5].split(",")[1].strip().split(" ")[1].strip()
             store["country"] = _[4]
             store["phone"] = _[6].strip() or "<MISSING>"
