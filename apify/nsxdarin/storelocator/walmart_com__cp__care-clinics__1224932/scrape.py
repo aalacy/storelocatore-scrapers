@@ -88,6 +88,8 @@ def fetch_data():
                     if "4221 Atlanta" in add:
                         add = add + " Suite 101"
                         city = "Loganville"
+                        state = "GA"
+                        zc = "30052"
                     if "494 W" in add:
                         city = "Royse City"
                     yield [

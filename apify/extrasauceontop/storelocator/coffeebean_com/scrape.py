@@ -4,6 +4,7 @@ from bs4 import BeautifulSoup as bs
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 import us
 import re
+import html
 
 locator_domains = []
 websites = []
@@ -134,6 +135,8 @@ for loc in locs:
 
         if add.isdigit() is True:
             add = "<MISSING>"
+
+    name = html.unescape(name)
 
     x = x + 1
     if country == "USA":
