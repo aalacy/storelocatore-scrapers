@@ -338,7 +338,6 @@ class CrawlMethod(CleanRecord):
                 for records in drill_down_into(
                     data, str(self._config.get("pathToResults"))
                 ):
-                    print(records)
                     record = record_cleaner(records, self._config)
                     yield record
             except Exception as e:
