@@ -36,12 +36,24 @@ def fetch_data():
     out = []
 
     locator_domain = "https://nbtc.com"
-    api_url = "https://nbtc.com/_nuxt/static/1624482021/locations/payload.js"
+
+    session = SgRequests()
+    r = session.get("https://nbtc.com/locations/")
+    tree = html.fromstring(r.text)
+    key = (
+        "".join(tree.xpath('//link[@rel="preload"]/@href'))
+        .split("static/")[1]
+        .split("/")[0]
+        .strip()
+    )
+
+    api_url = f"https://nbtc.com/_nuxt/static/{key}/locations/payload.js"
     session = SgRequests()
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
     }
     r = session.get(api_url, headers=headers)
+
     block = (
         r.text.split("branches:")[1].split(",fetch:[]")[0].replace("}]}]", "}]").strip()
     )
