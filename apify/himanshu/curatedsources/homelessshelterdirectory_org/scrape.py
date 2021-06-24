@@ -25,7 +25,7 @@ def sleep(min=0.5, max=2.5):
 
 
 def log(*args, **kwargs):
-    if show_logs == True:
+    if show_logs is True:
         logger.info(" ".join(map(str, args)), **kwargs)
         logger.info("")
 
@@ -36,12 +36,12 @@ def get_session(reset=False):
     if (
         (not hasattr(thread_local, "session"))
         or (hasattr(thread_local, "request_count") and thread_local.request_count == 10)
-        or (reset == True)
+        or (reset is True)
     ):
         thread_local.session = SgRequests()
         reset_request_count()
         # print out what the new IP is ...
-        if show_logs == True:
+        if show_logs is True:
             r = thread_local.session.get("https://jsonip.com/")
             log(
                 f"new IP for thread id {threading.current_thread().ident}: {r.json()['ip']}"
@@ -258,7 +258,7 @@ def fetch_data():
 
     r = get(base_url)
     if not r:
-        logger.info(f"could not get initial locator page. giving up")
+        logger.info("could not get initial locator page. giving up")
         raise SystemExit
 
     soup = bs(r.content, "lxml")
