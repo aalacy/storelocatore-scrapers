@@ -44,14 +44,14 @@ def fetch_data():
     items = []
     scraped_items = []
 
-    start_url = "https://www.goretailgroup.com/wp-admin/admin-ajax.php?action=store_search&lat={}&lng={}&max_results=100&search_radius=200"
+    start_url = "https://www.goretailgroup.com/wp-admin/admin-ajax.php?action=store_search&lat={}&lng={}&max_results=100&search_radius=500"
     domain = re.findall("://(.+?)/", start_url)[0].replace("www.", "")
     hdr = {
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
     }
     all_locations = []
     all_coords = DynamicGeoSearch(
-        country_codes=[SearchableCountries.USA], max_radius_miles=100
+        country_codes=[SearchableCountries.USA], max_radius_miles=50
     )
     for lat, lng in all_coords:
         response = session.get(start_url.format(lat, lng), headers=hdr)

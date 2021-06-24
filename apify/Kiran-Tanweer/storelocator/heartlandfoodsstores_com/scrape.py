@@ -70,8 +70,18 @@ def fetch_data():
         title = title.text
         title = title.split("Gene's")[1]
         title = "Gene's" + " " + title
-        address = loc.find("div", {"class": "site-loc-address-wrapper"}).text
+        address = loc.find("div", {"class": "site-loc-address-wrapper"})
+        address = str(address)
         address = address.replace("\n", "").strip()
+        address = address.lstrip(
+            '<div class="site-loc-address-wrapper"><div class="site-loc-address">'
+        )
+        address = address.replace(
+            '</div><div class="site-loc-address2"></div><div class="site-city-state-zip">',
+            " ",
+        )
+        address = address.rstrip("</div></div>")
+        address = address.strip()
         phone = loc.find("div", {"class": "site-loc-phone"}).text
         hours = loc.find("div", {"class": "site-loc-hours"}).text
         phone = phone.split(":")[1].strip()

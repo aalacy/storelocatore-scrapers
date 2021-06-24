@@ -76,16 +76,21 @@ def fetch_data():
                 phone = details[-4]
         hoo = hoo.lstrip("Hours: Open Daily ").strip()
         hoo = hoo.replace("PEN DAILY ", "").strip()
-        hoo = "Mon - Sun: " + hoo
+        hoo = "Mon - Sat: " + hoo
         phone = phone.lstrip("Store Phone:").strip()
-        title = div.findAll("div", {"class": "_3Mgpu"})[2]
+        title = div.findAll("div", {"class": "_2bafp"})[2]
         for t in title:
             allspan = t.findAll("span")
-            title = allspan[0].text
-            address = allspan[4].text + " " + allspan[5].text
-            address = address.replace("\n", " ")
-            address = address.split("Store Phone")[0].strip()
-            street = address.replace("  ", "").strip()
+            title = allspan[3].text
+            info = div.findAll("div", {"class": "_2bafp"})[3].text
+            info = info.split("\n")
+            if len(info) == 5:
+                street = info[0] + " " + info[1] + " " + info[2]
+            if len(info) == 4:
+                street = info[0] + " " + info[1]
+            if len(info) == 6:
+                street = info[0] + " " + info[1] + " " + info[2] + " " + info[3]
+            street = street.split("Phone")[0].strip()
 
             data.append(
                 [

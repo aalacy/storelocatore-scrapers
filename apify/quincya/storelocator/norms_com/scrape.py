@@ -61,11 +61,17 @@ def fetch_data():
         phone = re.findall(r"tel:[0-9]+", str(store))[0].replace("tel:", "")
 
         hours_of_operation = ""
-        raw_hours = store["hours"]
-        for day in raw_hours:
-            hours_of_operation = (
-                hours_of_operation + " " + day + " " + raw_hours[day]
-            ).strip()
+        try:
+            raw_hours = store["hours"]
+            for day in raw_hours:
+                hours_of_operation = (
+                    hours_of_operation + " " + day + " " + raw_hours[day]
+                ).strip()
+        except:
+            if "Open 24/7" in str(store["fields"]):
+                hours_of_operation = "Open 24/7"
+            else:
+                hours_of_operation = "<MISSING>"
         latitude = store["lat"]
         longitude = store["lng"]
         link = BeautifulSoup(store["phone"], "lxml").a["href"]

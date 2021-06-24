@@ -71,7 +71,21 @@ def fetch_data():
 
         location_name = base.h1.text.strip()
 
-        zip_code = base.find("a", string="Get Directions")["href"][-5:]
+        try:
+            zip_code = (
+                base.find("a", string="Get Directions")
+                .find_previous("span")
+                .text.split()[-1]
+            )
+        except:
+            zip_code = (
+                base.find("a", string="Get directions")
+                .find_previous("span")
+                .text.split()[-1]
+            )
+
+        if len(zip_code) == 4:
+            zip_code = "0" + zip_code
 
         try:
             raw_types = base.find_all(class_="section section--featureGrid")[
@@ -89,6 +103,8 @@ def fetch_data():
             .find_all(class_="flex items-start")[1]
             .text.strip()
         )
+        if len(phone) > 40:
+            phone = "<MISSING>"
         try:
             hours_of_operation = " ".join(
                 list(base.find(class_="w-full lg:w-3/4 pt-2").stripped_strings)

@@ -1,6 +1,8 @@
 import csv
-from sgrequests import SgRequests
+
 from sglogging import SgLogSetup
+
+from sgrequests import SgRequests
 
 session = SgRequests()
 headers = {
@@ -42,74 +44,99 @@ def fetch_data():
     r = session.get(url, headers=headers)
     website = "elephantcastle.com"
     typ = "<MISSING>"
-    country = "US"
     loc = "<MISSING>"
+    locs = []
+    ids = []
     logger.info("Pulling Stores")
     for line in r.iter_lines():
         line = str(line.decode("utf-8"))
-        if '"city": "' in line:
-            country = "US"
-            city = line.split('"city": "')[1].split('"')[0]
-            state = ""
-            loc = ""
-            name = ""
-            lat = ""
-            lng = ""
-            phone = ""
-            add = ""
-            zc = ""
-            hours = ""
-        if '"province": "' in line:
-            state = line.split('"province": "')[1].split('"')[0]
-        if '"slug": "' in line:
-            loc = (
-                "https://elephantcastle.com/home/"
-                + line.split('"slug": "')[1].split('"')[0]
+        if 'spreadsheetID: "' in line:
+            sid = line.split(': "')[1].split('"')[0].replace("\\u002D", "-")
+            locs.append(
+                "https://spreadsheets.google.com/feeds/list/"
+                + sid
+                + "/1/public/values?alt=json"
             )
-        if '"Title": "' in line:
-            name = line.split('"Title": "')[1].split('"')[0]
-        if '"geo": "' in line:
-            lat = line.split('"geo": "')[1].split(",")[0]
-            lng = line.split(",")[1].strip().split('"')[0]
-        if '"telephone": "' in line:
-            phone = line.split('"telephone": "')[1].split('"')[0]
-        if '"postalCode": "' in line:
-            zc = line.split('"postalCode": "')[1].split('"')[0]
-        if '"CCID": "' in line:
-            store = line.split('"CCID": "')[1].split('"')[0]
-        if '"streetAddress": "' in line:
-            add = line.split('"streetAddress": "')[1].split('"')[0]
-        if '"days": "Temporarily Closed' in line:
-            hours = "Temporarily Closed"
-        if '"days": "' in line and "-" in line:
-            day = line.split('"days": "')[1].split('"')[0]
-        if '"times": "' in line and "PM" in line:
-            hrs = day + ": " + line.split('"times": "')[1].split('"')[0]
-            if hours == "":
-                hours = hrs
-            else:
-                hours = hours + "; " + hrs
-        if '"holidayHours":' in line and city != "" and city != "undefined":
-            if state == "Ontario" or state == "Manitoba":
-                country = "CA"
-            if "wabash" in loc:
-                hours = "SUN-WED: 11AM-12AM; THURS-SAT: 11AM-1AM"
-            yield [
-                website,
-                loc,
-                name,
-                add,
-                city,
-                state,
-                zc,
-                country,
-                store,
-                phone,
-                typ,
-                lat,
-                lng,
-                hours,
-            ]
+    for loc in locs:
+        name = ""
+        add = ""
+        city = ""
+        state = ""
+        zc = ""
+        store = ""
+        phone = ""
+        lat = ""
+        lng = ""
+        hours = ""
+        r2 = session.get(loc, headers=headers)
+        for line2 in r2.iter_lines():
+            line2 = str(line2.decode("utf-8"))
+            if '"type":"text","$t":"storename:' in line2:
+                items = line2.split('"type":"text","$t":"storename:')
+                for item in items:
+                    if "latitude:" in item:
+                        lat = item.split("latitude:")[1].split(",")[0].strip()
+                        lng = item.split("longitude:")[1].split(",")[0].strip()
+                        add = item.split("streetnumber:")[1].split(",")[0].strip()
+                        add = add + " " + item.split("street:")[1].split(",")[0].strip()
+                        city = item.split("city: ")[1].split(",")[0]
+                        store = item.split('"gsx$storenumber":{"$t":"')[1].split('"')[0]
+                        name = item.split('"gsx$storename":{"$t":"')[1].split('"')[0]
+                        state = (
+                            item.split("province: ")[1]
+                            .split(",")[0]
+                            .replace("Washington", "WA")
+                        )
+                        country = "US"
+                        if state == "Ontario" or state == "Manitoba":
+                            country = "CA"
+                        zc = item.split("postalcode: ")[1].split(",")[0]
+                        if len(zc) == 4:
+                            zc = "0" + zc
+                        try:
+                            phone = item.split("phonenumber: ")[1].split(",")[0]
+                        except:
+                            phone = "<MISSING>"
+                        try:
+                            hours = (
+                                item.split("hours: ")[1]
+                                .split(", emaila")[0]
+                                .strip()
+                                .replace("|", "")
+                                .replace("\\n", "; ")
+                                .replace("  ", " ")
+                                .replace("; ", "")
+                                .replace("\\u003cbr\\u003e", " ")
+                                .replace("  ", " ")
+                            )
+                        except:
+                            hours = "<MISSING>"
+                        if "; , storenotice" in hours:
+                            hours = hours.split("; , storenotice")[0].strip()
+                        if ", storenotice" in hours:
+                            hours = hours.split(", storenotice")[0].strip()
+                        if "HAPPY" in hours:
+                            hours = hours.split("HAPPY")[0].strip()
+                        hours = hours.split(", minors")[0].strip()
+
+                        if store not in ids:
+                            ids.append(store)
+                            yield [
+                                website,
+                                "https://elephantcastle.com/en/locations.html",
+                                name,
+                                add,
+                                city,
+                                state,
+                                zc,
+                                country,
+                                store,
+                                phone,
+                                typ,
+                                lat,
+                                lng,
+                                hours,
+                            ]
 
 
 def scrape():

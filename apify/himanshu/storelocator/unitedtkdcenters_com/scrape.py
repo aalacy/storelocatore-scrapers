@@ -3,9 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import sglog
 
 
 session = SgRequests()
+log = sglog.SgLogSetup().get_logger(logger_name="unitedtkdcenters.com")
 
 
 def write_output(data):
@@ -50,7 +52,7 @@ def fetch_data():
     base_url = "https://unitedtkdcenters.com"
     location_url = "https://www.unitedtkdcenters.com/locations"
 
-    r = session.get(location_url, headers=headers)
+    r = session.get(location_url)
     soup = BeautifulSoup(r.text, "lxml")
 
     div = soup.find_all("div", {"data-ux": "ContentCard"})[0:30]
@@ -80,8 +82,11 @@ def fetch_data():
                 hours_of_operation = "<MISSING>"
                 link = "<MISSING>"
             else:
+                temp_url = i.find("a", {"data-ux": "ContentCardButton"})["href"]
+                if "http" in temp_url:
+                    continue
+                link = base_url + temp_url
 
-                link = base_url + i.find("a", {"data-ux": "ContentCardButton"})["href"]
                 if link == "https://unitedtkdcenters.com/jackson-heights-roosevelt":
                     name = "Jackson Heights (Roosevelt)"
                     street_address = "85-15 Roosevelt Ave"
@@ -94,6 +99,7 @@ def fetch_data():
                     hours_of_operation = "<MISSING>"
                     link = "<MISSING>"
                 else:
+                    log.info(link)
                     r1 = session.get(link, headers=headers)
                     soup1 = BeautifulSoup(r1.text, "lxml")
                     try:
