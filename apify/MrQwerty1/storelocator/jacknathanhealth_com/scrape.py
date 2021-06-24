@@ -85,7 +85,7 @@ def getLatLongFromMapUrl(page_url):
 
 
 def initiateDriver(driver=None):
-    if driver != None:
+    if driver is not None:
         driver.quit()
 
     return SgChrome(
