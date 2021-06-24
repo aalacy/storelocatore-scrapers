@@ -97,6 +97,11 @@ def fetch_data():
                 state = city.split(" ")[-1]
                 city = city.replace(" " + state, "")
                 title = city
+            if (
+                len(pcode) < 3
+                and '<span itemprop="addressLocality">Coming Soon</span>' in r.text
+            ):
+                continue
             data.append(
                 [
                     "https://www.chronictacos.com",

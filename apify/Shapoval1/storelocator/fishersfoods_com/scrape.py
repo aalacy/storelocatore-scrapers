@@ -35,7 +35,7 @@ def fetch_data():
     out = []
 
     locator_domain = "https://www.fishersfoods.com/"
-    api_url = "https://api.freshop.com/1/stores?app_key=fishers_foods&has_address=true&is_selectable=true&token=0dd94e5c5b05730a150f2ae72756fcc5"
+    api_url = "https://api.freshop.com/1/stores?app_key=fishers_foods&has_address=true&is_selectable=true&token=8c62535b686dd8570bb3864c18268bfb"
     session = SgRequests()
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",

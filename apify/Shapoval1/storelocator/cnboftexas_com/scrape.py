@@ -79,7 +79,9 @@ def get_data(url):
         '//strong[text()="Lobby Hours "]/following-sibling::text()'
     )
     hours_of_operation = list(filter(None, [a.strip() for a in hours_of_operation]))
-    hours_of_operation = " ".join(hours_of_operation)
+    hours_of_operation = (
+        " ".join(hours_of_operation).replace("Closed for Lunch 12 - 1", "").strip()
+    )
     latitude = (
         "".join(tree.xpath('//script[contains(text(), "Latitude")]/text()'))
         .split("Latitude =")[1]
