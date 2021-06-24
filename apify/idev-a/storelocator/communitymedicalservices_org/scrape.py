@@ -38,7 +38,6 @@ def fetch_data():
                     .split(":")[-1]
                     .replace("Phone", "")
                 )
-            loc = _["location"]["address"]
             addr = list(
                 sp1.find("h4", string=re.compile(r"Location:"))
                 .find_next_sibling("p")
