@@ -67,77 +67,90 @@ def fetch_data():
                     if len(ccode) > 1:
                         countries.append(ccode)
     for ccode in countries:
-        url = (
-            "https://www.coach.com/stores-edit-country?dwfrm_storelocator_address_international="
-            + ccode
-            + "&dwfrm_storelocator_findbycountry=Search"
-        )
-        country = ccode
-        logger.info(ccode)
-        loc = "<MISSING>"
-        r2 = session.get(url, headers=headers)
-        allinfo = ""
-        for line2 in r2.iter_lines():
-            line2 = str(line2.decode("utf-8"))
-            allinfo = allinfo + line2.replace("\r", "").replace("\n", "").replace(
-                "\t", ""
+        CFound = True
+        start = -10
+        while CFound:
+            CFound = False
+            start = start + 10
+            url = (
+                "https://www.coach.com/stores-edit-search?country="
+                + ccode
+                + "&start="
+                + str(start)
+                + "&sz=10&format=ajax"
             )
-        if "<h2>" in allinfo:
-            items = allinfo.split("<h2>")
-            for item in items:
-                if '<div class="store-info">' in item:
-                    name = item.split("</h2>")[0].replace("&amp;", "&")
-                    add = (
-                        item.split('span itemprop="streetAddress">')[1]
-                        .split("</span>")[0]
-                        .replace("<br />", "")
-                        .replace("  ", " ")
-                        .replace("  ", " ")
-                    )
-                    website = "coach.com"
-                    typ = "<MISSING>"
-                    store = "<MISSING>"
-                    city = item.split('<span itemprop="addressLocality">')[1].split(
-                        "</span>"
-                    )[0]
-                    state = "<MISSING>"
-                    try:
-                        zc = item.split('<span itemprop="postalCode">')[1].split("<")[0]
-                    except:
-                        zc = "<MISSING>"
-                    phone = item.split('itemprop="telephone">')[1].split("<")[0]
-                    lat = "<MISSING>"
-                    lng = "<MISSING>"
-                    try:
-                        hours = (
-                            item.split('<span itemprop="openingHours">')[1]
+            country = ccode
+            logger.info(ccode)
+            loc = "<MISSING>"
+            r2 = session.get(url, headers=headers)
+            allinfo = ""
+            for line2 in r2.iter_lines():
+                line2 = str(line2.decode("utf-8"))
+                allinfo = allinfo + line2.replace("\r", "").replace("\n", "").replace(
+                    "\t", ""
+                )
+            if "<h2>" in allinfo:
+                CFound = True
+                items = allinfo.split("<h2>")
+                for item in items:
+                    if '<div class="store-info">' in item:
+                        name = item.split("</h2>")[0].replace("&amp;", "&")
+                        add = (
+                            item.split('span itemprop="streetAddress">')[1]
                             .split("</span>")[0]
                             .replace("<br />", "")
                             .replace("  ", " ")
                             .replace("  ", " ")
                         )
-                    except:
-                        hours = "<MISSING>"
-                    hours = hours.replace("<br/>", "; ")
-                    add = add.replace("&amp;", "&")
-                    if phone == "":
-                        phone = "<MISSING>"
-                    yield [
-                        website,
-                        loc,
-                        name,
-                        add,
-                        city,
-                        state,
-                        zc,
-                        country,
-                        store,
-                        phone,
-                        typ,
-                        lat,
-                        lng,
-                        hours,
-                    ]
+                        website = "coach.com"
+                        typ = "<MISSING>"
+                        store = "<MISSING>"
+                        city = item.split('<span itemprop="addressLocality">')[1].split(
+                            "</span>"
+                        )[0]
+                        state = "<MISSING>"
+                        try:
+                            zc = item.split('<span itemprop="postalCode">')[1].split(
+                                "<"
+                            )[0]
+                        except:
+                            zc = "<MISSING>"
+                        phone = item.split('itemprop="telephone">')[1].split("<")[0]
+                        lat = "<MISSING>"
+                        lng = "<MISSING>"
+                        try:
+                            hours = (
+                                item.split('<span itemprop="openingHours">')[1]
+                                .split("</span>")[0]
+                                .replace("<br />", "")
+                                .replace("  ", " ")
+                                .replace("  ", " ")
+                            )
+                        except:
+                            hours = "<MISSING>"
+                        hours = hours.replace("<br/>", "; ")
+                        add = add.replace("&amp;", "&")
+                        if ", TIER" in city:
+                            city = city.split(", TIER")[0].strip()
+                        if phone == "":
+                            phone = "<MISSING>"
+                        phone = phone.replace("&#40;", "(").replace("&#41;", ")")
+                        yield [
+                            website,
+                            loc,
+                            name,
+                            add,
+                            city,
+                            state,
+                            zc,
+                            country,
+                            store,
+                            phone,
+                            typ,
+                            lat,
+                            lng,
+                            hours,
+                        ]
     for state in states:
         storetypes = [
             "storeType-R",
@@ -261,6 +274,9 @@ def fetch_data():
                                     stinfo = name + "|" + add + "|" + city + "|" + state
                                     if stinfo not in alllocs and add != "":
                                         alllocs.append(stinfo)
+                                        phone = phone.replace("&#40;", "(").replace(
+                                            "&#41;", ")"
+                                        )
                                         yield [
                                             website,
                                             loc,
@@ -393,6 +409,9 @@ def fetch_data():
                                 stinfo = name + "|" + add + "|" + city + "|" + state
                                 if stinfo not in alllocs:
                                     alllocs.append(stinfo)
+                                    phone = phone.replace("&#40;", "(").replace(
+                                        "&#41;", ")"
+                                    )
                                     yield [
                                         website,
                                         loc,

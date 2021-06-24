@@ -111,7 +111,10 @@ def fetch_data():
                 add = g.split(",")[0]
                 g = g.replace(",Massac", "- Massac")
                 city = g.split(",")[1].strip().split(" - ")[0]
-                state = g.split(",")[1].strip().split(" - ")[1]
+                try:
+                    state = g.split(",")[1].strip().split(" - ")[1]
+                except:
+                    state = "<MISSING>"
                 if "United States" in g:
                     zc = g.rsplit(",", 1)[0].rsplit(" ", 1)[1]
                     state = state.rsplit(" ", 1)[0]

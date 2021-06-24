@@ -40,7 +40,7 @@ def fetch_data():
 
     items = []
 
-    start_url = "https://www.carolinabank.net/_/api/atms/34.1975328/-79.7679955/50000"
+    start_url = "https://www.carolinabank.net/_/api/atms/34.1975328/-79.7679955/500"
     domain = re.findall(r"://(.+?)/", start_url)[0].replace("www.", "")
 
     data = session.get(start_url).json()
