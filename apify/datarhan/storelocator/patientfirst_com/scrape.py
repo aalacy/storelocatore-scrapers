@@ -70,12 +70,6 @@ def fetch_data():
         latitude = geo[0]
         longitude = geo[1]
         hours_of_operation = poi["openingHours"]
-        # hours_of_operation = hours_of_operation.replace(
-        #     "Regular and after hours medical care, ", ""
-        # )
-        # hours_of_operation = hours_of_operation.replace(
-        #     ", including weekends and holidays", ""
-        # )
 
         item = [
             DOMAIN,
