@@ -10,6 +10,7 @@ from bs4 import BeautifulSoup as b4
 from sgzip.utils import earth_distance
 import json
 import os
+from sgscrape import sgpostal as parser
 
 logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
 os.environ["HTTPX_LOG_LEVEL"] = "trace"
@@ -123,7 +124,12 @@ class DataSource:
                         continue
                     # need to improve on this in config if I ever need it outside of testing
 
-
+def drill_down_into(data,path):
+    path = json.loads(path)
+    for i in path:
+        data = data[i]
+    return data
+        
 class CleanRecord:
     def China(badRecord, config):
         cleanRecord = {}
@@ -221,7 +227,74 @@ class CleanRecord:
         cleanRecord["location_type"] = badRecord["location_type"]
         cleanRecord["raw_address"] = badRecord["raw_address"]
         return cleanRecord
-
+    
+    def Ecuador(badRecord, config):
+        copy = badRecord["name"]
+        if "<" and ">" in copy:
+            copy = copy.replace("<","<?<")
+            copy = copy.split("<?")
+            newdata = []
+            for string in copy:
+                topop = []
+                i = 0
+                while i < len(string):
+                    if string[i] == "<":
+                        topop.append(i)
+                        i += 1
+                        while string[i]!= ">" and i<len(string):
+                            topop.append(i)
+                            i+= 1
+                        topop.append(i)
+                    i +=1
+                string = list(string)
+                for i in reversed(topop):
+                    string.pop(i)
+                string = ''.join(string)
+                if len(string)>0:
+                    newdata.append(string.strip())
+            cleanRecord = {}
+            cleanRecord["locator_domain"] = config.get("Domain")
+            cleanRecord["page_url"] = ""
+            cleanRecord["location_name"] = newdata[0] 
+            cleanRecord["latitude"] = badRecord["latitude"]
+            cleanRecord["longitude"] = badRecord["longitude"]
+            cleanRecord["street_address1"] = newdata[1]
+            cleanRecord["street_address2"] = ""
+            cleanRecord["street_address3"] = ""
+            cleanRecord["street_address4"] = ""
+            cleanRecord["city"] = ""
+            cleanRecord["state"] = ""
+            cleanRecord["zipcode"] = ""
+            cleanRecord["country_code"] = ""
+            cleanRecord["phone"] = ""
+            cleanRecord["store_number"] = badRecord["id"]
+            cleanRecord["hours_of_operation"] = ""
+            cleanRecord["location_type"] = badRecord["services"]
+            cleanRecord["raw_address"] = ""
+        else:
+            newdata = copy
+            parsed = parser.parse_address_intl(newdata.replace(","," ").replace("\r","").replace("\n",""))
+            cleanRecord = {}
+            cleanRecord["locator_domain"] = config.get("Domain")
+            cleanRecord["page_url"] = ""
+            cleanRecord["location_name"] = "" 
+            cleanRecord["latitude"] = badRecord["latitude"]
+            cleanRecord["longitude"] = badRecord["longitude"]
+            cleanRecord["street_address1"] = parsed.street_address_1
+            cleanRecord["street_address2"] = parsed.street_address_2
+            cleanRecord["street_address3"] = ""
+            cleanRecord["street_address4"] = ""
+            cleanRecord["city"] = parsed.city
+            cleanRecord["state"] = parsed.state
+            cleanRecord["zipcode"] = parsed.postcode
+            cleanRecord["country_code"] = parsed.country
+            cleanRecord["phone"] = ""
+            cleanRecord["store_number"] = badRecord["id"]
+            cleanRecord["hours_of_operation"] = ""
+            cleanRecord["location_type"] = badRecord["services"]
+            cleanRecord["raw_address"] = newdata
+        return cleanRecord
+    
     def __PLACEHOLDER(badRecord, config):
         cleanRecord = {}
         cleanRecord["locator_domain"] = config.get("Domain")
@@ -246,6 +319,29 @@ class CleanRecord:
 
 
 class CrawlMethod(CleanRecord):
+    def OneLink(self):
+        def getPage():
+            url =self._config.get("GetUrl")
+            headers = str(self._config.get("Headers"))
+            headers = json.loads(headers)
+            response = self._session.post(url, headers=headers)
+            return response.json()
+        
+        record_cleaner = getattr(CleanRecord, self._config.get("cleanupMethod"))
+        data = getPage()
+        if data:
+            try:
+                for records in drill_down_into(data,str(self._config.get("pathToResults"))):
+                    print(records)
+                    record = record_cleaner(records, self._config)
+                    yield record
+            except Exception as e:
+                logzilla.info(
+                f"Had issues, issue:\n{str(e)}"
+            )
+                
+            
+        
     def AsyncChina(self):
         async def getPointChina(Point):
             url = (
@@ -264,10 +360,12 @@ class CrawlMethod(CleanRecord):
                 proxies=proxies, headers=headers, timeout=None
             ) as client:
                 try:
+                    data = {}
                     response = await client.post(url, headers=headers, data=data)
                     response = response.json()
-                    response["SEARCHPOINT"] = Point
-                    return response
+                    data["response"] = response
+                    data["SEARCHPOINT"] = Point
+                    return data
                 except Exception as e:
                     self.Oopsie(Point, str(e))
 
@@ -296,7 +394,7 @@ class CrawlMethod(CleanRecord):
                 found = 0
                 for results in data:
                     try:
-                        for records in results[str(self._config.get("pathToResults"))]:
+                        for records in results["response"][str(self._config.get("pathToResults"))]:
                             record = record_cleaner(records, self._config)
                             self._search.found_location_at(
                                 record["latitude"], record["longitude"]
@@ -472,11 +570,21 @@ class getData(CrawlMethod):
         for action in json.loads(self._config.get("Using")):
             func = getattr(getData, action)
             func(self)
-
+    def Close(self):
+        for action in json.loads(self._config.get("Using")):
+            try:
+                func = getattr(getData, str(str(action)+"close"))
+                func(self)
+            except AttributeError:
+                pass
+            
     def EnableMaintenanceRecord(self):
         self._Logger = getattr(DataSource, self._config.get("MaintenanceLogger"))(
             self._config
         )
+    def EnableSGSELENIUM(self):
+        pass
+        
 
     def EnableSGZIP(self):
         module = __import__(str("sgzip." + self._config.get("sgzip")), fromlist=[None])
@@ -501,8 +609,10 @@ class getData(CrawlMethod):
 
     def EnableSGREQUESTS(self):
         self._session = SgRequests()
-        # need to improve on that
-
+        
+    def EnableSGREQUESTSclose(self):
+        self._session.close()
+        
     def EnableDATASOURCE(self):
         self._search = getattr(DataSource, self._config.get("DataSource"))(
             self._config.get("SourceFileName")
@@ -530,13 +640,13 @@ class getData(CrawlMethod):
 
     def Done(self):
         if self._errors:
-            func = getattr(CrawlMethod, self._config.get("Method"))
+            func = getattr(CrawlMethod, self._config.get("ErrorMethod"))
             self._search = DataSource.ErrorRetry(self._errors)
             attempted = 0
             while attempted < self._errorRetries:
                 attempted += 1
                 yield func(self)
-
+        getData.Close(self)
 
 def getTestCountries(session):
     url = "https://corporate.mcdonalds.com/corpmcd/our-company/where-we-operate.html"
@@ -629,7 +739,7 @@ def fetch_data():
             for record in attempt:
                 newrec += 1
                 yield record
-        logzilla.info(f"New records found : {newrec}")  # noqa
+        logzilla.info(f"New records found (when fixing errors) : {newrec}")  # noqa
         logzilla.info(f"Finished : {Country}")
     logzilla.info(f"Crawler pulled these countries:")  # noqa
 
