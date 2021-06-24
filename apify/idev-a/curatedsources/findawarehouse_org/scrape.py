@@ -147,7 +147,8 @@ def _detail(_, json_locations, session):
         brand_website = "<MISSING>"
         if _.select_one("p a.website"):
             brand_website = _.select_one("p a.website").text.strip()
-    except:
+    except Exception as err:
+        print(err)
         import pdb
 
         pdb.set_trace()
