@@ -84,7 +84,8 @@ def fetch_data():
                             and "TEMPORARILY CLOSED"
                             in soup.select_one('span[color="#808080"]').text
                         ):
-                            hours = ["Closed"]
+                            hours = ["TEMPORARILY CLOSED"]
+                            location_type = "TEMPORARILY CLOSED"
 
                         addr = parse_address_intl(location["address"])
                         phone = [
@@ -102,8 +103,8 @@ def fetch_data():
                         location_name = _valid(location["title"])
                         if "TEMPORARILY CLOSED" in location_name:
                             location_name = location_name.split("-")[0].strip()
-                            location_type = "Closed"
-                            hours = ["Closed"]
+                            location_type = "TEMPORARILY CLOSED"
+                            hours = ["TEMPORARILY CLOSED"]
 
                         yield SgRecord(
                             page_url=location["link"],

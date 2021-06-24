@@ -19,10 +19,14 @@ def fetch_data():
             hours = []
             is_coming_soon = False
             for day, hh in json.loads(_["open_hours"]).items():
+                times = hh[0]
                 if hh[0] == "0":
-                    is_coming_soon = True
-                    break
-                hours.append(f"{day}: {hh[0]}")
+                    if day == "mon":
+                        is_coming_soon = True
+                        break
+                    else:
+                        times = "closed"
+                hours.append(f"{day}: {times}")
             if is_coming_soon:
                 continue
             yield SgRecord(
