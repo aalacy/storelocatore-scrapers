@@ -72,6 +72,8 @@ def fetch_data():
         hoo = etree.HTML(poi["storeHours"]).xpath("//text()")
         hoo = [e.strip() for e in hoo if e.strip()]
         hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
+        if hours_of_operation == "Non disponible":
+            hours_of_operation = "<MISSING>"
 
         item = [
             domain,

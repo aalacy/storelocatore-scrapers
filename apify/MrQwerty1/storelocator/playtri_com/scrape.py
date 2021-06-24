@@ -58,7 +58,9 @@ def fetch_data():
 
     for d, j in zip(divs, js_list):
         location_name = d.xpath(".//h3//text()")[0].strip()
-        street_address = j.get("addressLine1")
+        street_address = "".join(
+            d.xpath(".//h3/following-sibling::p[1]/text()")
+        ).strip()
         line = j.get("addressLine2").replace(",", "")
         postal = line.split()[-1]
         state = line.split()[-2]

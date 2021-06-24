@@ -102,6 +102,8 @@ def get_data(page_url):
         else:
             location_type = "Standard Branch"
         location_name = location_name.split("Welcome to")[-1].strip()
+        if not location_name:
+            location_name = "<MISSING>"
         line = tree.xpath("//div[@class='col branch-details']/p/text()")
         line = list(filter(None, [l.strip() for l in line]))
         if not line:

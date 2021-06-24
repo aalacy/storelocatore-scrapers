@@ -4,7 +4,7 @@ from bs4 import BeautifulSoup as bs
 from urllib.parse import urljoin
 import json
 from sglogging import SgLogSetup
-from sgselenium import SgChrome
+from sgselenium import SgFirefox
 import time
 import ssl
 
@@ -63,7 +63,7 @@ def _ah(sp1, driver, idx=0):
         ]
     if not addr:
         while True:
-            time.sleep(1)
+            time.sleep(2)
             logger.info("-- sleep --")
             if len(driver.find_elements_by_xpath('//div[@id="address-box"]')):
                 addr = [
@@ -85,7 +85,7 @@ def _ah(sp1, driver, idx=0):
 
 
 def fetch_data():
-    with SgChrome() as driver:
+    with SgFirefox() as driver:
         driver.get(base_url)
         links = json.loads(
             bs(driver.page_source, "lxml")
