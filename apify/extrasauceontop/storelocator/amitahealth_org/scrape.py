@@ -47,7 +47,6 @@ session = SgRequests()
 url = "https://www.amitahealth.org/find-a-location/?page=1&count=5000"
 
 response = session.get(url).text
-
 json_objects = extract_json(response)
 data = extract_json(json_objects[-1]["SettingsData"])
 locations = extract_json(data[0]["EntityJsonData"])
