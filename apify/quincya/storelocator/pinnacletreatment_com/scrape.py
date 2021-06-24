@@ -162,8 +162,10 @@ def fetch_data():
                 .replace("Medication", "")
                 .replace("Methadone:", "")
                 .replace("Dosing", "")
+                .replace("Business:", "")
                 .replace(": Mon", "Mon")
                 .replace("  ", " ")
+                .split("Groups:")[0]
             ).strip()
 
             if "Hours " in hours_of_operation:
