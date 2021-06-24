@@ -469,27 +469,27 @@ class CrawlMethod(CleanRecord):
                     self._search.found_location_at(
                         record["latitude"], record["longitude"]
                     )
-                    # if (
+                    # if ( # noqa
                     #    str(
-                    #        str(record["latitude"])
-                    #        + str(record["longitude"])
-                    #        + str(record["phone"])
-                    #        #+ str(record["store_number"])
-                    #        + str(record["street_address1"])
-                    #        + str(record["location_name"])
-                    #    )
-                    #    not in identities
-                    # ):
-                    #    identities.add(
-                    #       str(
-                    #            str(record["latitude"])
-                    #           + str(record["longitude"])
-                    #           + str(record["phone"])
-                    #            #+ str(record["store_number"])
-                    #           + str(record["street_address1"])
-                    #           + str(record["location_name"])
-                    #        )
-                    #    )
+                    #        str(record["latitude"]) # noqa
+                    #        + str(record["longitude"]) # noqa
+                    #        + str(record["phone"]) # noqa
+                    #        #+ str(record["store_number"]) # noqa
+                    #        + str(record["street_address1"]) # noqa
+                    #        + str(record["location_name"]) # noqa
+                    #    ) # noqa
+                    #    not in identities # noqa
+                    # ): # noqa
+                    #    identities.add( # noqa
+                    #       str( # noqa
+                    #            str(record["latitude"]) # noqa
+                    #           + str(record["longitude"]) # noqa
+                    #           + str(record["phone"]) # noqa
+                    #            #+ str(record["store_number"]) # noqa
+                    #           + str(record["street_address1"]) # noqa
+                    #           + str(record["location_name"]) # noqa
+                    #        ) # noqa
+                    #    ) # noqa
                     found += 1
                     yield record
             except Exception as e:
