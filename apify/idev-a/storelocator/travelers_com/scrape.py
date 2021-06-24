@@ -12,14 +12,14 @@ logger = SgLogSetup().get_logger("travelers")
 _headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
 }
-session = SgRequests().requests_retry_session()
+session = SgRequests(proxy_rotation_failure_threshold=10).requests_retry_session()
 
 max_workers = 2
 
 
 def fetchConcurrentSingle(data):
     response = request_with_retries(data)
-    return data, bs(response.text, "lxml")
+    return data, bs(response.text, "lxml"), response.text
 
 
 def fetchConcurrentList(list, occurrence=max_workers):
@@ -48,7 +48,7 @@ def request_with_retries(url):
 def fetch_data():
     locator_domain = "https://www.travelers.com/"
     base_url = "https://agent.travelers.com/"
-    with SgRequests() as session:
+    with SgRequests(proxy_rotation_failure_threshold=10) as session:
         states = bs(session.get(base_url, headers=_headers).text, "lxml").select(
             "li.Directory-listItem a"
         )
@@ -67,7 +67,7 @@ def fetch_data():
                         session.get(city_url, headers=_headers).text, "lxml"
                     ).select("li.Directory-listTeaser")
                 ]
-                for page_url, sp1 in fetchConcurrentList(locations):
+                for page_url, sp1, res in fetchConcurrentList(locations):
                     logger.info(f"[{state.text}] [{city.text}] {page_url}")
                     street_address = sp1.select_one(".c-address-street-1").text
                     if sp1.select_one(".c-address-street-2"):
@@ -77,8 +77,14 @@ def fetch_data():
                     phone = ""
                     if sp1.select_one("#phone-main"):
                         phone = sp1.select_one("#phone-main").text.strip()
+                    coord = sp1.select_one('meta[name="geo.position"]')[
+                        "content"
+                    ].split(";")
                     yield SgRecord(
                         page_url=page_url,
+                        store_number=res.split('{"ids":')[1]
+                        .split(',"pageSetId"')[0]
+                        .strip(),
                         location_name=sp1.select_one("h1.Core-name").text.strip(),
                         street_address=street_address,
                         city=sp1.select_one(".c-address-city").text,
@@ -86,6 +92,8 @@ def fetch_data():
                         zip_postal=sp1.select_one(".c-address-postal-code").text,
                         country_code="US",
                         phone=phone,
+                        latitude=coord[0],
+                        longitude=coord[1],
                         locator_domain=locator_domain,
                     )
 

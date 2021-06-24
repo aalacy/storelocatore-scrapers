@@ -84,6 +84,7 @@ def fetch_data():
                 except:
                     state = "<MISSING>"
                 store = item["upsc"]
+                zc = zc.replace("Cheshire", "").strip()
                 if store not in ids:
                     ids.append(store)
                     yield [

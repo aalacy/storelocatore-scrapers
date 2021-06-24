@@ -51,8 +51,10 @@ def fetch_data():
         if poi["country"] != "United States":
             continue
         store_url = poi["url"]
-        loc_response = session.get(store_url)
-        loc_dom = etree.HTML(loc_response.text)
+        store_url = store_url if store_url else "<MISSING>"
+        if store_url != "<MISSING>":
+            loc_response = session.get(store_url)
+            loc_dom = etree.HTML(loc_response.text)
 
         location_name = poi["store"]
         location_name = location_name if location_name else "<MISSING>"
@@ -70,17 +72,16 @@ def fetch_data():
             location_type = "coming soon"
         latitude = poi["lat"]
         longitude = poi["lng"]
-        hours_of_operation = ""
+        hoo = ""
         if poi["hours"]:
-            hours_of_operation = etree.HTML(poi["hours"])
-            hours_of_operation = hours_of_operation.xpath("//text()")
-        if not hours_of_operation:
-            hours_of_operation = loc_dom.xpath(
+            hoo = etree.HTML(poi["hours"])
+            hoo = hoo.xpath("//text()")
+        if not hoo and store_url != "<MISSING>":
+            hoo = loc_dom.xpath(
                 '//div[@class="single-detail club-open-hours"]//div[@class="the-content"]/p/text()'
             )[:-1]
-        hours_of_operation = (
-            " ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
-        )
+        hoo = [e.strip() for e in hoo if e.strip()]
+        hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
 
         item = [
             DOMAIN,
