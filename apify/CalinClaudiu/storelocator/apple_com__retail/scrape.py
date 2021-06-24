@@ -60,6 +60,8 @@ def determine_country(country):
 
 def get_country(search, country, session, headers, SearchableCountry):
     def getPoint(point, session, locale, headers):
+        if locale[-1] != "/":
+            locale = locale + "/"
         url = "https://locate.apple.com{locale}sales/?pt=all&lat={lat}&lon={lon}&address=".format(
             locale=locale, lat=point[0], lon=point[1]
         )
