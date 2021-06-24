@@ -46,8 +46,10 @@ def fetch_data():
         if search.items_remaining() > maxZ:
             maxZ = search.items_remaining()
         logger.info(("Pulling Geo Code %s..." % lat, lng))
+        page_url = f"{url}?id={lat},{lng}"
+        logger.info(page_url)
         locations = json.loads(
-            session.get(f"{url}?id={lat},{lng}", headers=_headers)
+            session.get(page_url, headers=_headers)
             .text.split("function setMap(){")[1]
             .split("locations1=")[1]
             .split("var mapOptions")[0]
@@ -66,12 +68,14 @@ def fetch_data():
             if store["street"] == "-":
                 store["street"] = "<MISSING>"
             store["name"] = _[0]
-            store["city"] = _[3].replace("&#039;", "'")
             store["state"] = _[5].split(",")[1].strip().split(" ")[0].strip()
+            store["city"] = (
+                _[3].replace("&#039;", "'").replace(store["state"], "").strip()
+            )
             store["zip_postal"] = _[5].split(",")[1].strip().split(" ")[1].strip()
             store["country"] = _[4]
             store["phone"] = _[6].strip() or "<MISSING>"
-            if store["phone"] == "-" or "x":
+            if store["phone"] == "-" or store["phone"] == "x":
                 store["phone"] = "<MISSING>"
             store["phone"] = store["phone"].split("x")[0]
             yield store
