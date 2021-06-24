@@ -543,7 +543,6 @@ def fetch_data():
                 zc_raw_5 = ""
 
             country_code_raw_6 = poi["countryCode"]
-            raw_address_temp = ""
             raw_address_concat = f"{st1_raw_1}, {st2_raw_2}, {city_raw_3}, {state_raw_4}, {zc_raw_5}, {country_code_raw_6}"
             raw_address_concat = raw_address_concat.split(",")
             raw_address_concat = [" ".join(i.split()) for i in raw_address_concat if i]
