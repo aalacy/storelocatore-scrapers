@@ -3,6 +3,7 @@ from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
+from datetime import datetime
 
 logger = SgLogSetup().get_logger("softrontax")
 
@@ -19,12 +20,14 @@ def fetch_data():
         for _ in locations:
             page_url = _["website"]
             logger.info(page_url)
-            hours = [
-                hh.text.strip()
-                for hh in bs(
-                    session.get(page_url, headers=_headers).text, "lxml"
-                ).select("ul.sloc_hours_list li")
-            ]
+            sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
+            hours = [hh.text.strip() for hh in sp1.select("ul.sloc_hours_list li")]
+            cnt = 0
+            for hh in hours:
+                if "closed" in hh.split(":")[-1].lower():
+                    cnt += 1
+            if cnt == 7:
+                hours = ["Closed"]
             yield SgRecord(
                 page_url=page_url,
                 location_name=_["locname"],
