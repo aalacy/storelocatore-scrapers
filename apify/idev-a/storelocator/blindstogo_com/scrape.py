@@ -58,14 +58,10 @@ def fetch_data():
             address = sp1.select("address")
             if not address[-1].text.strip():
                 del address[-1]
-            addr = [aa.replace("\xa0", " ") for aa in address[-1].stripped_strings][
-                1:
-            ]
+            addr = [aa.replace("\xa0", " ") for aa in address[-1].stripped_strings][1:]
             if addr[-1] == "Get Directions":
                 del addr[-1]
-            zip_postal = " ".join(
-                addr[-1].split(",")[1].strip().split(" ")[1:]
-            ).strip()
+            zip_postal = " ".join(addr[-1].split(",")[1].strip().split(" ")[1:]).strip()
             country_code = "US"
             if len(zip_postal) > 5:
                 country_code = "CA"
