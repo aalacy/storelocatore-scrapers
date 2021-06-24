@@ -175,16 +175,20 @@ def get_data(df):
         found_address = "No"
         found_zip = "No"
         for part in address_parts:
-            if part[0].isdigit() is True and found_address == "No":
-                address = part
-                found_address = "Yes"
+            try:
+                if part[0].isdigit() is True and found_address == "No":
+                    address = part
+                    found_address = "Yes"
 
-            elif bool(re.search(r"\d", part)) is True and found_zip == "No":
-                zipp = part
-                found_zip = "Yes"
+                elif bool(re.search(r"\d", part)) is True and found_zip == "No":
+                    zipp = part
+                    found_zip = "Yes"
 
-                index = address_parts.index(part)
-                state = address_parts[index - 1]
+                    index = address_parts.index(part)
+                    state = address_parts[index - 1]
+            
+            except Exception:
+                pass
 
         if found_address == "No":
             address = address_parts[0]
