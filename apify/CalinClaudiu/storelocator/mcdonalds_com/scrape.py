@@ -373,7 +373,7 @@ class CrawlMethod(CleanRecord):
         record_cleaner = getattr(CleanRecord, self._config.get("cleanupMethod"))
         maxZ = self._search.items_remaining()
         total = 0
-        chunk_size = self._config.getint("Concurrency")  # noqa
+        chunk_size = self._config.getint("Concurrency")  # type: ignore
         task_list = []
         points_list = []
 
@@ -566,7 +566,7 @@ class getData(CrawlMethod):
         self._driver = None
         self._errors = None
         self._Logger = None
-        self._errorRetries = self._config.getint("Error Retries")  # noqa
+        self._errorRetries = self._config.getint("Error Retries")  # type: ignore
         self.__init_state()
 
     def __init_state(self):
@@ -602,11 +602,11 @@ class getData(CrawlMethod):
         ]
         self._search = search(
             country_codes=Countries,
-            max_radius_miles=self._config.getint("sgzipmax_radius_miles")  # noqa
-            if self._config.getint("sgzipmax_radius_miles")  # noqa
+            max_radius_miles=self._config.getint("sgzipmax_radius_miles")  # type: ignore
+            if self._config.getint("sgzipmax_radius_miles")  # type: ignore
             else None,
-            max_search_results=self._config.getint("sgzipmax_search_results")  # noqa
-            if self._config.getint("sgzipmax_search_results")  # noqa
+            max_search_results=self._config.getint("sgzipmax_search_results")  # type: ignore
+            if self._config.getint("sgzipmax_search_results")  # type: ignore
             else None,
             granularity=granularity(),
         )
