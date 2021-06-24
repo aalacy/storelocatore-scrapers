@@ -77,8 +77,15 @@ def get_country(search, country, session, headers, SearchableCountry):
                 .rsplit("if(", 1)[0]
                 .rsplit(";", 1)[0]
             )
-        locs = json.loads(thescript)
-        return locs["results"]
+        try:
+            locs = json.loads(thescript)
+            return locs["results"]
+        except Exception as e:
+            errorz.append(
+                str(
+                    f"had some issues with this country and point  {country}\n{point}{url} \n Matched to: {SearchableCountry}\nIssue was\n{str(e)}"
+                )
+            )
 
     maxZ = None
     maxZ = search.items_remaining()
