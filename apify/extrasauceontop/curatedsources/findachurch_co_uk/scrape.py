@@ -186,7 +186,7 @@ def get_data(df):
 
                     index = address_parts.index(part)
                     state = address_parts[index - 1]
-            
+
             except Exception:
                 pass
 
