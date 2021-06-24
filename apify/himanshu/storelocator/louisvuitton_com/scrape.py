@@ -89,6 +89,11 @@ def fetch_data():
             hoo.append(f"{day} {hours}")
         hoo = [e.strip() for e in hoo if e.strip()]
         hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
+        if (
+            hours_of_operation
+            == "Monday Tuesday Wednesday Thursday Friday Saturday Sunday"
+        ):
+            hours_of_operation = "<MISSING>"
 
         item = [
             domain,
