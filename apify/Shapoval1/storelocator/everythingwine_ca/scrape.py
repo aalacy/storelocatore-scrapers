@@ -74,7 +74,10 @@ def fetch_data():
             .strip()
         )
         hours_of_operation = (
-            hours_of_operation.replace("am,", "am :").replace("  ", " ").strip()
+            hours_of_operation.replace("am,", "am -")
+            .replace("  ", " ")
+            .replace("pm,", "pm; ")
+            .strip()
         )
 
         row = [
