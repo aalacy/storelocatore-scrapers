@@ -7,7 +7,6 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries, Grain_4
 
-
 from sgselenium.sgselenium import SgChrome
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.support.ui import WebDriverWait
@@ -27,9 +26,7 @@ website = "https://www.lmcu.org"
 
 MISSING = "<MISSING>"
 
-
 log = sglog.SgLogSetup().get_logger(logger_name=website)
-
 
 search = DynamicZipSearch(
     country_codes=[SearchableCountries.USA],
@@ -203,7 +200,7 @@ def fetchData():
             f"{totalZip}. zip {zipCode} => {len(data)} stores; total store = {count}"
         )
 
-    if driver != None:
+    if driver is not None:
         driver.close()
     log.info(f"Total stores = {count}")
 
