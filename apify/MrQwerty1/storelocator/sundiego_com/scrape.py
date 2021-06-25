@@ -1,4 +1,5 @@
 import csv
+import ssl
 import time
 import usaddress
 
@@ -153,4 +154,5 @@ def scrape():
 
 
 if __name__ == "__main__":
+    ssl._create_default_https_context = ssl._create_unverified_context
     scrape()
