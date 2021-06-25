@@ -85,7 +85,7 @@ def fetch_data():
             len(hours_of_operation) <= 0
             or "The Original Location" in hours_of_operation
         ):
-            sections = store_sel.xpath('//div[@class="organic-column one-half"]/p')
+            sections = store_sel.xpath("//div/p")
             for index in range(0, len(sections)):
                 if (
                     "HOURS"

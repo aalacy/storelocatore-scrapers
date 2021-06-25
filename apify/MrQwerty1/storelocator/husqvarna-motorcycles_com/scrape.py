@@ -33,7 +33,7 @@ def write_output(data):
 
 def fetch_data():
     out = []
-    locator_domain = "https://impark.com/"
+    locator_domain = "https://www.husqvarna-motorcycles.com/"
     api_url = "https://www.husqvarna-motorcycles.com/content/websites/husqvarna-motorcycles-com/north-america/us/en/dealer-search/jcr:content/root/responsivegrid_1_col/dealersearch.dealers.json?latitude=33.0218117&longitude=-97.12516989999999&country=&qualification=&distance=5000"
 
     session = SgRequests()
@@ -54,12 +54,17 @@ def fetch_data():
         longitude = j.get("geoCodeLongitude") or "<MISSING>"
         location_type = "<MISSING>"
         hours_of_operation = j.get("openingHour") or "<MISSING>"
-        hours_of_operation = (
+        hours_of_operation = " ".join(
             hours_of_operation.replace("\n\n", ";")
             .replace("\n", ";")
             .replace("<br/>", ";")
+            .replace("STORE HOURS;", "")
+            .replace("; ;", ";")
+            .replace(";;", ";")
             .split()
         )
+        if ");" in hours_of_operation:
+            hours_of_operation = hours_of_operation.split(");")[-1].strip()
 
         row = [
             locator_domain,

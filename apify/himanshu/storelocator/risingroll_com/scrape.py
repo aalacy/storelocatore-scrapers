@@ -21,9 +21,11 @@ def fetch_data():
         url = "https://risingroll.com/locations/"
         r = session.get(url, headers=headers)
         soup = BeautifulSoup(r.text, "html.parser")
-        loclist = soup.findAll("div", {"id": "locdesc"})
+        loclist = soup.findAll("div", {"class": "et_pb_blurb_content"})
         for loc in loclist:
-            page_url = "https://risingroll.com" + loc.find("a")["href"]
+            if "coming soon" in loc.text.lower():
+                continue
+            page_url = loc.find("a")["href"]
             log.info(page_url)
             r = session.get(page_url, headers=headers)
             soup = BeautifulSoup(r.text, "html.parser")
@@ -33,12 +35,13 @@ def fetch_data():
             temp = (
                 soup.findAll("div", {"class": "et_pb_text_inner"})[1]
                 .get_text(separator="|", strip=True)
+                .replace("30308,", "30308")
                 .split("|")[1:]
             )
+            if "Georgia Institute" in temp[0]:
+                temp.pop(0)
             for i, s in enumerate(temp):
-                if "Owner:" in s:
-                    indice = i
-                elif "Owners:" in s:
+                if "Owner:" in s or "Owners:" in s or "States" in s:
                     indice = i
             address = temp[:indice]
             temp_address = address[-1].split()
