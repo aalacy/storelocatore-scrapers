@@ -48,6 +48,8 @@ def fetch_data():
     text = text.split("var mlist =")[1].split("];")[0] + "]"
 
     for t in eval(text):
+        if type(t[2]) == int:
+            continue
         d = html.fromstring(t[2])
         location_name = (
             "".join(d.xpath("//div[@class='name']/text()"))
