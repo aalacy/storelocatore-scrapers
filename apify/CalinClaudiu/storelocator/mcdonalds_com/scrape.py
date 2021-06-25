@@ -745,6 +745,7 @@ def fetch_data():
     configuredCountries = todoCountries(config)
     ogProxy = fix_proxy(config["DEFAULT"].getboolean("StripProxyCountry"))
     logzilla.info(f"Crawler pulled these countries:")  # noqa
+<<<<<<< Updated upstream
     configuredCountries = todoCountries(config)
     for Country in configuredCountries:
         logzilla.info(f"{Country}")  # noqa
@@ -752,6 +753,15 @@ def fetch_data():
     logzilla.info(f"Crawler did not pull these countries:")  # noqa
     configuredCountries = notdoneCountries(config)
     for Country in configuredCountries:
+=======
+    configuredCountrie = todoCountries(config)
+    for Country in configuredCountrie:
+        logzilla.info(f"{Country}")  # noqa
+
+    logzilla.info(f"Crawler did not pull these countries:")  # noqa
+    configuredCountrie = notdoneCountries(config)
+    for Country in configuredCountrie:
+>>>>>>> Stashed changes
         logzilla.info(f"{Country}")  # noqa
     with SgRequests() as session:
         countries = getTestCountries(session)
