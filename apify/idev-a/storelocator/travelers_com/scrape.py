@@ -12,9 +12,9 @@ logger = SgLogSetup().get_logger("travelers")
 _headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
 }
-session = SgRequests().requests_retry_session()
+session = SgRequests(proxy_rotation_failure_threshold=10).requests_retry_session()
 
-max_workers = 8
+max_workers = 2
 
 
 def fetchConcurrentSingle(data):
@@ -48,7 +48,7 @@ def request_with_retries(url):
 def fetch_data():
     locator_domain = "https://www.travelers.com/"
     base_url = "https://agent.travelers.com/"
-    with SgRequests() as session:
+    with SgRequests(proxy_rotation_failure_threshold=10) as session:
         states = bs(session.get(base_url, headers=_headers).text, "lxml").select(
             "li.Directory-listItem a"
         )
