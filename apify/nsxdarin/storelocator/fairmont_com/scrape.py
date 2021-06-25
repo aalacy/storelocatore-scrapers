@@ -155,6 +155,12 @@ def fetch_data():
         if "British Columbia" in state:
             zc = state.split("Columbia")[1].strip()
             state = "British Columbia"
+        if lat == "":
+            lat = "<MISSING>"
+        if lng == "":
+            lng = "<MISSING>"
+        if "windsor-park" in loc:
+            zc = "TW20 0YL"
         yield [
             website,
             purl,
