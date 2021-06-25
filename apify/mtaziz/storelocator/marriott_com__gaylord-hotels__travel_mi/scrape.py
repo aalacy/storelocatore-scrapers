@@ -161,7 +161,7 @@ def fetch_data():
             data_json = "".join(data_json)
             data_json = data_json.split("var dataLayer =")[-1].strip()
             data_json = json.loads(data_json)
-            # logger.info(f"Data: {data_json}")
+
             locator_domain = DOMAIN
             location_name = data_json["prop_name"]
             logger.info(f"Location Name: {location_name}")
@@ -175,7 +175,6 @@ def fetch_data():
             )
             logger.info(f"Address Raw: {address_raw}")
 
-            # address = "".join(address).strip()
             pai = parse_address_intl(address_raw)
 
             street_address = pai.street_address_1
