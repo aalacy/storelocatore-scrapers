@@ -80,6 +80,8 @@ def fetch_data():
                 pass
             try:
                 phone = r.text.split('data.trackNumber = ["')[1].split('"')[0]
+                if "999-999-9999" in phone:
+                    phone = soup.find("span", {"class": "phone"}).text
             except:
                 try:
                     phone = soup.find("span", {"class": "phone"}).text

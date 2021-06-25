@@ -32,13 +32,24 @@ def _valid(val):
 days = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN", "DINE-IN"]
 
 
-def _filter(blocks, hours):
+def _filter(blocks):
+    hours = []
     for block in blocks:
         for _ in block.stripped_strings:
             if "DINE" in _valid(_).upper():
                 continue
-            if _.split(" ")[0].split("–")[0].split("&")[0].strip().upper() in days:
+            if (
+                _.split(" ")[0]
+                .split("-")[0]
+                .split("–")[0]
+                .split("&")[0]
+                .strip()
+                .upper()
+                in days
+            ):
                 hours += _valid(_).split("|")
+
+    return hours
 
 
 def fetch_data():
@@ -63,18 +74,18 @@ def fetch_data():
                         location_type = "<MISSING>"
                         driver.get(location["link"])
                         soup = bs(driver.page_source, "lxml")
-                        hours = []
                         blocks = soup.select("div.et_pb_text_inner h2")
-                        _filter(blocks, hours)
+                        hours = _filter(blocks)
                         if not hours:
                             blocks = soup.select("div.et_pb_text_inner p")
-                            _filter(blocks, hours)
+                            hours = _filter(blocks)
                         if (
                             soup.select_one('span[color="#808080"]')
                             and "TEMPORARILY CLOSED"
                             in soup.select_one('span[color="#808080"]').text
                         ):
-                            hours = ["Closed"]
+                            hours = ["TEMPORARILY CLOSED"]
+                            location_type = "TEMPORARILY CLOSED"
 
                         addr = parse_address_intl(location["address"])
                         phone = [
@@ -92,8 +103,8 @@ def fetch_data():
                         location_name = _valid(location["title"])
                         if "TEMPORARILY CLOSED" in location_name:
                             location_name = location_name.split("-")[0].strip()
-                            location_type = "Closed"
-                            hours = ["Closed"]
+                            location_type = "TEMPORARILY CLOSED"
+                            hours = ["TEMPORARILY CLOSED"]
 
                         yield SgRecord(
                             page_url=location["link"],
