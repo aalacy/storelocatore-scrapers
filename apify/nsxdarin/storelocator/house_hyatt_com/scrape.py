@@ -59,6 +59,7 @@ def fetch_data():
                     )
                     lat = item.split('"latitude":')[1].split(",")[0]
                     lng = item.split('"longitude":')[1].split("}")[0]
+                    hours = "<MISSING>"
                     typ = (
                         item.split('"brand":{"key":"')[1]
                         .split('"label":"')[1]

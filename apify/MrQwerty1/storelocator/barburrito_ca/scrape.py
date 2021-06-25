@@ -51,7 +51,7 @@ def fetch_data():
         postal = j.get("zip") or "<MISSING>"
         country_code = "CA"
         store_number = j.get("id") or "<MISSING>"
-        location_name = j.get("store") or "<MISSING>"
+        location_name = j.get("store").replace("&#8211;", "-") or "<MISSING>"
         phone = j.get("phone") or "<MISSING>"
         latitude = j.get("lat") or "<MISSING>"
         longitude = j.get("lng") or "<MISSING>"
