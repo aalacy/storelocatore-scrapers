@@ -109,7 +109,7 @@ def fetch_data():
     logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
     with SgRequests(
         retry_behavior=Retry(total=3, connect=3, read=3, backoff_factor=0.1),
-        proxy_rotation_failure_threshold=-1,
+        proxy_rotation_failure_threshold=0,
     ) as session:
         search = DynamicGeoSearch(
             country_codes=[SearchableCountries.CANADA],

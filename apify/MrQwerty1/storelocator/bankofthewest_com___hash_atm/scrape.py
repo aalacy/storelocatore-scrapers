@@ -53,10 +53,7 @@ def fetch_data():
         state = j.get("State") or "<MISSING>"
         postal = j.get("Zipcode") or "<MISSING>"
         country_code = "US"
-        if page_url == "<MISSING>":
-            store_number = location_name.split("#")[-1]
-        else:
-            store_number = page_url.split("/")[-1].split("-")[0]
+        store_number = "<MISSING>"
         phone = j.get("PhoneNumber") or "<MISSING>"
         latitude = j.get("Latitude") or "<MISSING>"
         longitude = j.get("Longitude") or "<MISSING>"
