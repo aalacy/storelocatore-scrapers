@@ -87,7 +87,6 @@ def get_all_store_urls():
         logger.info(" Apply Button Clicked with Success")
         sleep(50)
 
-        pgsrc = driver.page_source
         dom = html.fromstring(driver.page_source, "lxml")
         all_locations = dom.xpath('//a[@class="t-alt-link analytics-click"]/@href')
         logger.info(f"All Loctions: {all_locations}")
@@ -113,6 +112,7 @@ def fetch_data():
         loc_dom = html.fromstring(loc_response.text, "lxml")
         poi = loc_dom.xpath('//script[@data-component-name="schemaOrg"]/text()')
         if poi:
+            locator_domain = DOMAIN
             poi = json.loads(poi[0])
             poi = [e for e in poi["@graph"] if e["@type"] == "Hotel"][0]
             location_name = poi["name"]
