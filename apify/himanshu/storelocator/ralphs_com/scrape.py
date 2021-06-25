@@ -65,7 +65,6 @@ def fetch_data():
         r = session.post(
             "https://www.ralphs.com/stores/api/graphql", headers=headers, data=data
         )
-        print(zip_code)
         try:
             datas = r.json()["data"]["storeSearch"]["stores"]
         except:
