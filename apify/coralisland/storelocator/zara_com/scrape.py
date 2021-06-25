@@ -79,7 +79,6 @@ def search_country(session,search,hdr,SearchableCountry):
     def getPoint(point,session,hdr):
         url = "https://www.zara.com/uk/en/stores-locator/search?lat={}&lng={}&isGlobalSearch=true&showOnlyPickup=false&isDonationOnly=false&ajax=true".format(*point)
         data = session.get(url,headers=hdr)
-        print(data.text)
         return data.json()
     for Point in search:
         found = 0
