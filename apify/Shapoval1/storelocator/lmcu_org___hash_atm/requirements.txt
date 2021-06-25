@@ -5,3 +5,7 @@ sgrequests==0.1.12
 sglogging==0.0.4
 sgselenium==0.0.15
 sgscrape==0.0.23
+webdriver_manager.chrome
+selenium.webdriver.support.ui
+selenium.webdriver.support
+selenium.webdriver.common.by

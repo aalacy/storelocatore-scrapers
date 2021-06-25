@@ -125,15 +125,14 @@ def fetchSingleZip(driver, zip):
 
     try:
         WebDriverWait(driver, 30).until(EC.presence_of_element_located((By.ID, "map")))
-    except Exception as e:
-        log.info(f"No Location for this ZIP in lmcu.org")
+    except:
         pass
 
     try:
         data = getJSObject(driver.page_source, "jsonlist")
         data = json.loads(data)
         return data["Data"]
-    except Exception as e:
+    except:
         return []
 
 
