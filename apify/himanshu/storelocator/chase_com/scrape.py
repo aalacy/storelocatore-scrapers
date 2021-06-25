@@ -82,7 +82,7 @@ def fetch_data():
         zip_code = zip_code if zip_code else "<MISSING>"
         country_code = poi["profile"]["address"]["countryCode"]
         country_code = country_code if country_code else "<MISSING>"
-        store_number = poi["distance"]["id"]
+        store_number = poi["distance"]["id"].split("-")[-1]
         phone = poi["profile"]["mainPhone"]["display"]
         phone = phone if phone else "<MISSING>"
         location_type = poi["profile"]["c_bankLocationType"]

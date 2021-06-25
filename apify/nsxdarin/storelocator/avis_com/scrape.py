@@ -113,14 +113,13 @@ def fetch_data():
                 phone = line2.split('"telephone": "')[1].split('"')[0]
             if '"openingHours": "' in line2:
                 hours = line2.split('"openingHours": "')[1].split('"')[0]
-            if '"description":"' in line2:
-                name = (
-                    line2.split('"description":"')[1].split('"')[0]
-                    + " ("
-                    + line2.split('"locationCode":"')[1].split('"')[0]
-                    + ")"
-                )
+            if '<span class="breadcrumb-view" itemprop="name">' in line2:
+                name = line2.split('<span class="breadcrumb-view" itemprop="name">')[
+                    1
+                ].split("<")[0]
+            if '"latitude":"' in line2:
                 lat = line2.split('"latitude":"')[1].split('"')[0]
+            if '"longitude":"' in line2:
                 lng = line2.split('"longitude":"')[1].split('"')[0]
         if hours == "":
             hours = "<MISSING>"
@@ -147,6 +146,7 @@ def fetch_data():
             add = add.split(", (")[0]
         if "), " in add:
             add = add.split("), ")[1]
+        name = name.replace("&amp;", "&").replace("&quot;", "'")
         yield [
             website,
             loc,

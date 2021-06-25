@@ -71,6 +71,7 @@ def fetch_data():
                 break
 
         if not main_status:
+            logger.info("Unexpected error here!")
             raise
 
         for next_item in next_items:
@@ -78,7 +79,10 @@ def fetch_data():
 
             next_status = False
             for i in range(10):
-                next_req = session.get(next_link, headers=headers)
+                try:
+                    next_req = session.get(next_link, headers=headers)
+                except:
+                    break
                 next_base = BeautifulSoup(next_req.text, "lxml")
                 final_items = next_base.find_all(class_="store-info__inner")
                 if len(final_items) > 0:
@@ -86,7 +90,7 @@ def fetch_data():
                     break
 
             if not next_status:
-                raise
+                continue
 
             for item in final_items:
                 final_link = (locator_domain + item.a["href"]).replace("//loc", "/loc")

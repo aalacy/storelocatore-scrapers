@@ -3,6 +3,7 @@ from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
+from sgscrape.sgpostal import parse_address_intl
 
 _headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
@@ -31,19 +32,34 @@ def fetch_data():
                     soup1.select_one("div.store-details__content").stripped_strings
                 )[1:]
                 for hh in temp:
-                    if "RE-OPENING" in hh:
+                    if "re-open" in hh.lower():
                         continue
-                    if hh.split("-")[0].strip() not in days:
+                    if "open" in hh.lower():
+                        continue
+                    if (
+                        hh != "TEMPORARILY CLOSED"
+                        and hh.split("-")[0].strip() not in days
+                    ):
                         break
                     hours.append(hh)
-            addr = _["address"].replace("\r\n", ",").split(",")
+            addr = parse_address_intl(_["address"] + ", Canada")
+            street_address = addr.street_address_1
+            if addr.street_address_2:
+                street_address += " " + addr.street_address_2
+            city = addr.city
+            zip_postal = addr.postcode
+            _addr = _["address"].split(",")
+            if len(_addr) == 3:
+                if len(_addr[-1].strip().split(" ")) == 2:
+                    city = _addr[-2].strip()
+                    zip_postal = _addr[-1].strip()
             yield SgRecord(
                 page_url=page_url,
                 location_name=_["name"].replace("–", "-"),
-                street_address=" ".join(addr[:-2]),
-                city=addr[-2].strip(),
-                state=_["province"],
-                zip_postal=addr[-1].replace(_["province"], "").strip(),
+                street_address=street_address,
+                city=city,
+                state=addr.state,
+                zip_postal=zip_postal,
                 latitude=_["location"]["lat"],
                 longitude=_["location"]["lng"],
                 country_code="CA",
