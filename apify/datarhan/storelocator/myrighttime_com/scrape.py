@@ -46,9 +46,7 @@ def fetch_data():
 
     response = session.get(start_url)
     dom = etree.HTML(response.text)
-    all_locations = dom.xpath('//div[@id="pm2020"]//p/a/@href')
-    all_locations += dom.xpath('//div[@id="pm2021"]//p/a/@href')
-    all_locations += dom.xpath('//div[@id="pm2022"]//p/a/@href')
+    all_locations = dom.xpath("//li/b/a/@href")
 
     for url in all_locations:
         store_url = urljoin(start_url, url)
@@ -75,7 +73,11 @@ def fetch_data():
         location_type = "<MISSING>"
         latitude = "<MISSING>"
         longitude = "<MISSING>"
-        hoo = loc_dom.xpath('//p[contains(text(), "am - ")]/text()')
+        hoo = loc_dom.xpath('//h4/span[contains(text(), "am ")]/text()')
+        if not hoo:
+            hoo = loc_dom.xpath('//h4[contains(text(), "am ")]/text()')
+        if not hoo:
+            hoo = loc_dom.xpath('//h4/b[contains(text(), "am ")]/text()')
         hoo = [elem.strip() for elem in hoo]
         hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
 
