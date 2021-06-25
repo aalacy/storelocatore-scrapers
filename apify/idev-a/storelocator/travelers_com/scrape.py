@@ -73,48 +73,38 @@ def fetch_data():
 
                 if locations:
                     for page_url, sp1, res in fetchConcurrentList(locations):
-                        try:
-                            logger.info(f"[{state.text}] [{city.text}] {page_url}")
-                            street_address = sp1.select_one(".c-address-street-1").text
-                            if sp1.select_one(".c-address-street-2"):
-                                street_address += (
-                                    " " + sp1.select_one(".c-address-street-2").text
-                                )
-                            zip_postal = ""
-                            if sp1.select_one(".c-address-postal-code"):
-                                zip_postal = sp1.select_one(
-                                    ".c-address-postal-code"
-                                ).text
-                            phone = ""
-                            if sp1.select_one("#phone-main"):
-                                phone = sp1.select_one("#phone-main").text.strip()
-                            coord = sp1.select_one('meta[name="geo.position"]')[
-                                "content"
-                            ].split(";")
-
-                            yield SgRecord(
-                                page_url=page_url,
-                                store_number=res.split('{"ids":')[1]
-                                .split(',"pageSetId"')[0]
-                                .strip(),
-                                location_name=sp1.select_one(
-                                    "h1.Core-name"
-                                ).text.strip(),
-                                street_address=street_address,
-                                city=city.text.strip(),
-                                state=state.text.strip(),
-                                zip_postal=zip_postal,
-                                country_code="us",
-                                phone=phone,
-                                latitude=coord[0],
-                                longitude=coord[1],
-                                locator_domain=locator_domain,
+                        logger.info(f"[{state.text}] [{city.text}] {page_url}")
+                        street_address = sp1.select_one(".c-address-street-1").text
+                        if sp1.select_one(".c-address-street-2"):
+                            street_address += (
+                                " " + sp1.select_one(".c-address-street-2").text
                             )
-                        except Exception as err:
-                            print(err)
-                            import pdb
+                        zip_postal = ""
+                        if sp1.select_one(".c-address-postal-code"):
+                            zip_postal = sp1.select_one(".c-address-postal-code").text
+                        phone = ""
+                        if sp1.select_one("#phone-main"):
+                            phone = sp1.select_one("#phone-main").text.strip()
+                        coord = sp1.select_one('meta[name="geo.position"]')[
+                            "content"
+                        ].split(";")
 
-                            pdb.set_trace()
+                        yield SgRecord(
+                            page_url=page_url,
+                            store_number=res.split('{"ids":')[1]
+                            .split(',"pageSetId"')[0]
+                            .strip(),
+                            location_name=sp1.select_one("h1.Core-name").text.strip(),
+                            street_address=street_address,
+                            city=city.text.strip(),
+                            state=state.text.strip(),
+                            zip_postal=zip_postal,
+                            country_code="us",
+                            phone=phone,
+                            latitude=coord[0],
+                            longitude=coord[1],
+                            locator_domain=locator_domain,
+                        )
                 else:
                     locations = sp0.select(
                         "ul.Directory-listTeasers li.Directory-listTeaser"
