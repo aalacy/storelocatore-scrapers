@@ -200,12 +200,23 @@ class CleanRecord:
         )
         cleanRecord["raw_address"] = ""
         identifier = None
+
         for dent in badRecord["properties"]["identifiers"]["storeIdentifier"]:
             if dent["identifierType"] == "NSN":
                 identifier = dent["identifierValue"]
-        cleanRecord["page_url"] = "https://{}/{}/{}/location/{}.html".format(
-            cleanRecord["locator_domain"], country, locale, identifier
-        )
+        if identifier:
+            cleanRecord["page_url"] = "https://{}/{}/{}/location/{}.html".format(
+                cleanRecord["locator_domain"], country, locale, identifier
+            )
+        else:
+            cleanRecord["page_url"] = "https://{}/{}/{}/location/{}.html".format(
+                cleanRecord["locator_domain"],
+                country,
+                locale,
+                badRecord["properties"]["identifiers"]["storeIdentifier"][1][
+                    "identifierValue"
+                ],
+            )
         return cleanRecord
 
     def DEDUPE(badRecord):
