@@ -92,10 +92,12 @@ def get_data(url):
     if len(postal) == 4:
         postal = f"0{postal}"
     country_code = "US"
-    store_number = "<MISSING>"
+    store_number = "".join(tree.xpath("//body/@data-location")) or "<MISSING>"
     try:
         phone = (
-            tree.xpath("//a[@id='LocalFooter_3']/@href")[0].replace("tel:", "").strip()
+            tree.xpath("//a[@id='LocalFooter_3']/@href|//a[@class='phone']/@href")[0]
+            .replace("tel:", "")
+            .strip()
         )
     except IndexError:
         phone = "<MISSING>"

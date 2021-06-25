@@ -73,6 +73,7 @@ def split_fulladdress(address_info):
     )
 
     city = " ".join(city_state_zip.split(" ")[:-2]).strip()
+    street_address = street_address.replace(city, "").strip()
     state = city_state_zip.split(" ")[-2].strip()
     zip = city_state_zip.split(" ")[-1].strip()
     country_code = "US"
