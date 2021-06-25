@@ -64,8 +64,12 @@ def fetch_data():
                 sp0 = bs(session.get(city_url, headers=_headers).text, "lxml")
                 locations = []
                 for _ in sp0.select("li.Directory-listTeaser"):
-                    if _.select_one('a.Teaser-titleLink'):
-                        locations.append(urljoin(base_url, _.select_one('a.Teaser-titleLink')["href"]))
+                    if _.select_one("a.Teaser-titleLink"):
+                        locations.append(
+                            urljoin(
+                                base_url, _.select_one("a.Teaser-titleLink")["href"]
+                            )
+                        )
 
                 if locations:
                     for page_url, sp1, res in fetchConcurrentList(locations):
@@ -76,9 +80,11 @@ def fetch_data():
                                 street_address += (
                                     " " + sp1.select_one(".c-address-street-2").text
                                 )
-                            zip_postal = ''
+                            zip_postal = ""
                             if sp1.select_one(".c-address-postal-code"):
-                                zip_postal=sp1.select_one(".c-address-postal-code").text
+                                zip_postal = sp1.select_one(
+                                    ".c-address-postal-code"
+                                ).text
                             phone = ""
                             if sp1.select_one("#phone-main"):
                                 phone = sp1.select_one("#phone-main").text.strip()
@@ -88,14 +94,17 @@ def fetch_data():
 
                             yield SgRecord(
                                 page_url=page_url,
-                                store_number=res.split('{"ids":')[1].split(',"pageSetId"')[0]
+                                store_number=res.split('{"ids":')[1]
+                                .split(',"pageSetId"')[0]
                                 .strip(),
-                                location_name=sp1.select_one("h1.Core-name").text.strip(),
+                                location_name=sp1.select_one(
+                                    "h1.Core-name"
+                                ).text.strip(),
                                 street_address=street_address,
                                 city=city.text.strip(),
                                 state=state.text.strip(),
                                 zip_postal=zip_postal,
-                                country_code='us',
+                                country_code="us",
                                 phone=phone,
                                 latitude=coord[0],
                                 longitude=coord[1],
@@ -103,18 +112,22 @@ def fetch_data():
                             )
                         except Exception as err:
                             print(err)
-                            import pdb; pdb.set_trace()           
+                            import pdb
+
+                            pdb.set_trace()
                 else:
-                    locations = sp0.select('ul.Directory-listTeasers li.Directory-listTeaser')
+                    locations = sp0.select(
+                        "ul.Directory-listTeasers li.Directory-listTeaser"
+                    )
                     for _ in locations:
                         street_address = _.select_one(".c-address-street-1").text
                         if _.select_one(".c-address-street-2"):
                             street_address += (
                                 " " + _.select_one(".c-address-street-2").text
                             )
-                        zip_postal = ''
+                        zip_postal = ""
                         if _.select_one(".c-address-postal-code"):
-                            zip_postal=_.select_one(".c-address-postal-code").text
+                            zip_postal = _.select_one(".c-address-postal-code").text
                         phone = ""
                         if _.select_one("#phone-main"):
                             phone = _.select_one("#phone-main").text.strip()
@@ -125,11 +138,10 @@ def fetch_data():
                             city=city.text.strip(),
                             state=state.text.strip(),
                             zip_postal=zip_postal,
-                            country_code='US',
+                            country_code="US",
                             phone=phone,
                             locator_domain=locator_domain,
                         )
-         
 
 
 if __name__ == "__main__":
