@@ -169,7 +169,7 @@ def fetchData():
             state = getJSONObjectVariable(store, "State")
             latitude = str(getJSONObjectVariable(store, "Latitude"))
             longitude = str(getJSONObjectVariable(store, "Longitude"))
-            # Search location found at
+
             search.found_location_at(latitude, longitude)
 
             raw_address = f"{street_address} {city}, {state} {zip_postal}"
