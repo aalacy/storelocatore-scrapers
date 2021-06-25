@@ -6,8 +6,6 @@ from sgrequests import SgRequests
 
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 
-session = SgRequests()
-
 
 def write_output(data):
     with open("data.csv", mode="w", newline="") as output_file:
@@ -40,6 +38,9 @@ def write_output(data):
 
 
 def fetch_data():
+
+    session = SgRequests()
+
     locator_domain = "https://www.ralphs.com/"
     addresses = []
 
@@ -52,6 +53,7 @@ def fetch_data():
         max_search_results=max_results,
     )
 
+    i = 1
     for zip_code in search:
         headers = {
             "User-Agent": "PostmanRuntime/7.19.0",
@@ -62,6 +64,13 @@ def fetch_data():
             + str(zip_code)
             + '","filters":[]},"operationName":"storeSearch"}'
         )
+
+        # New session every 50
+        if i % 50 == 0:
+            session = SgRequests()
+
+        i += 1
+
         r = session.post(
             "https://www.ralphs.com/stores/api/graphql", headers=headers, data=data
         )
