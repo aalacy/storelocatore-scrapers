@@ -73,16 +73,21 @@ def fetch_data():
                 fin_script = str(script)
                 break
 
-        store_data = json.loads(fin_script.split(">")[1].split("<")[0])
-        street_address = store_data["address"]["streetAddress"]
-        city = store_data["address"]["addressLocality"]
-        state = store_data["address"]["addressRegion"]
-        zip_code = store_data["address"]["postalCode"]
-        phone = store_data["telephone"]
-        latitude = store_data["geo"]["latitude"]
-        longitude = store_data["geo"]["longitude"]
+        try:
+            store_data = json.loads(fin_script.split(">")[1].split("<")[0])
+            street_address = store_data["address"]["streetAddress"]
+            city = store_data["address"]["addressLocality"]
+            state = store_data["address"]["addressRegion"]
+            zip_code = store_data["address"]["postalCode"]
+            phone = store_data["telephone"]
+            latitude = store_data["geo"]["latitude"]
+            longitude = store_data["geo"]["longitude"]
+        except:
+            pass
 
-        if "855 W" in street_address and location_name != "Grandview":
+        if (
+            "855 W" in street_address and location_name != "Grandview"
+        ) or not fin_script:
             raw_address = base.find(class_="sqs-block map-block sqs-block-map")
             store_data = json.loads(raw_address["data-block-json"])["location"]
             street_address = store_data["addressLine1"]
