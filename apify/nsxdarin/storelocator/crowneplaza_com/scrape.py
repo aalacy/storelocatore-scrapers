@@ -38,23 +38,76 @@ def write_output(data):
 
 
 def fetch_data():
+    states = []
+    cities = []
     locs = []
-    url = "https://www.ihg.com/bin/sitemapindex.xml"
-    r = session.get(url, headers=headers)
-    brand = "crowneplaza"
-    brand_string = brand + ".en.hoteldetail.xml"
-    smurl = ""
+    url_home = "https://www.ihg.com/destinations/us/en/explore"
+    r = session.get(url_home, headers=headers)
+    Found = False
+    cities = []
     for line in r.iter_lines():
         line = str(line.decode("utf-8"))
-        if brand_string in line:
-            smurl = line.split("<loc>")[1].split("<")[0]
-    r = session.get(smurl, headers=headers)
-    for line in r.iter_lines():
-        line = str(line.decode("utf-8"))
-        if 'hreflang="en" rel="alternate">' in line:
+        if '-hotels"><span>' in line:
+            if (
+                'href="https://www.ihg.com/destinations/us/en/mexico/' in line
+                or 'href="https://www.ihg.com/destinations/us/en/canada/' in line
+                or 'href="https://www.ihg.com/destinations/us/en/united-states/' in line
+            ):
+                lurl = line.split('href="')[1].split('"')[0]
+                if lurl not in states:
+                    states.append(lurl)
+        if 'algeria-hotels">' in line:
+            Found = True
+        if (
+            Found
+            and '-hotels"><span>' in line
+            and "united-states/" not in line
+            and "/mexico/" not in line
+            and "/canada/" not in line
+        ):
             lurl = line.split('href="')[1].split('"')[0]
-            if lurl not in locs:
-                locs.append(lurl)
+            if lurl not in states:
+                states.append(lurl)
+    for url in states:
+        logger.info(url)
+        r = session.get(url, headers=headers)
+        lines = r.iter_lines()
+        for line in lines:
+            line = str(line.decode("utf-8"))
+            if '<li class="listingItem"><a' in line:
+                g = next(lines)
+                g = str(g.decode("utf-8"))
+                if 'href="' not in g:
+                    g = next(lines)
+                    g = str(g.decode("utf-8"))
+                curl = g.split('href="')[1].split('"')[0]
+                if curl not in cities:
+                    cities.append(curl)
+            if '"@type":"Hotel","' in line:
+                curl = (
+                    line.split('"@type":"Hotel","')[1].split('"url":"')[1].split('"')[0]
+                )
+                if curl not in locs:
+                    if "crowneplaza" in curl:
+                        locs.append(curl)
+    for url in cities:
+        try:
+            logger.info(url)
+            r = session.get(url, headers=headers)
+            lines = r.iter_lines()
+            for line in lines:
+                line = str(line.decode("utf-8"))
+                if '"@type":"Hotel","' in line:
+                    curl = (
+                        line.split('"@type":"Hotel","')[1]
+                        .split('"url":"')[1]
+                        .split('"')[0]
+                    )
+                    if curl not in locs:
+                        if "crowneplaza" in curl:
+                            locs.append(curl)
+        except:
+            pass
     logger.info(len(locs))
     for loc in locs:
         logger.info(loc)

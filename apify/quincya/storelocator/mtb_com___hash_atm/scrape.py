@@ -52,6 +52,8 @@ def fetch_data():
 
     locator_domain = "mtb.com"
 
+    found = []
+
     state_links = []
     states = base.find(id="map-container").find_all(class_="mapListItem")
     for state in states:
@@ -90,6 +92,9 @@ def fetch_data():
             if not phone:
                 phone = "<MISSING>"
             store_number = link.split("-")[-1].split(".")[0]
+            if store_number in found:
+                continue
+            found.append(store_number)
 
             req = session.get(link, headers=headers)
             base = BeautifulSoup(req.text, "lxml")

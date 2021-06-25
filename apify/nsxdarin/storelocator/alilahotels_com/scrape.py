@@ -38,6 +38,7 @@ def write_output(data):
 
 
 def fetch_data():
+    alllocs = []
     url = "https://www.hyatt.com/explore-hotels/service/hotels"
     r = session.get(url, headers=headers, timeout=60, stream=True)
     website = "alilahotels.com"
@@ -95,6 +96,8 @@ def fetch_data():
                                 and "Opening 20" in line2
                             ):
                                 CS = True
+                            if ">Coming Soon<" in line2:
+                                CS = True
                             if (
                                 "and beyond" in line2
                                 and "Now accepting reservations" in line2
@@ -107,23 +110,25 @@ def fetch_data():
                     if "Club Maui, " in name:
                         name = "Hyatt Residence Club Maui, Kaanapali Beach"
                     if CS:
-                        name = name + " - Coming Soon"
-                    yield [
-                        website,
-                        loc,
-                        name,
-                        add,
-                        city,
-                        state,
-                        zc,
-                        country,
-                        store,
-                        phone,
-                        typ,
-                        lat,
-                        lng,
-                        hours,
-                    ]
+                        hours = "Coming Soon"
+                    if loc not in alllocs:
+                        alllocs.append(loc)
+                        yield [
+                            website,
+                            loc,
+                            name,
+                            add,
+                            city,
+                            state,
+                            zc,
+                            country,
+                            store,
+                            phone,
+                            typ,
+                            lat,
+                            lng,
+                            hours,
+                        ]
 
 
 def scrape():

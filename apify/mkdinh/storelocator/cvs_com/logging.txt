@@ -1,0 +1,11 @@
+[2021-06-18 17:08:47,753] [cvs_com] [INFO] number of locations: 9945
+[2021-06-18 17:18:51,012] [cvs_com] [ERROR] 'NoneType' object is not subscriptable >>> https://www.cvs.com/store-locator/cvs-pharmacy-address/3+Post+Office+Square-Boston-MA-02109/storeid=226
+[2021-06-18 17:20:38,403] [cvs_com] [ERROR] ('Connection broken: IncompleteRead(0 bytes read)', IncompleteRead(0 bytes read)) >>> https://www.cvs.com/store-locator/cvs-pharmacy-address/6665+Taft+St-Hollywood-FL-33024/storeid=327
+[2021-06-18 17:23:19,110] [cvs_com] [ERROR] ('Connection broken: IncompleteRead(0 bytes read)', IncompleteRead(0 bytes read)) >>> https://www.cvs.com/store-locator/cvs-pharmacy-address/10420+Grand+Ave+-Franklin+Park-IL-60131/storeid=7761
+[2021-06-18 17:24:26,407] [cvs_com] [ERROR] ('Connection broken: IncompleteRead(5329 bytes read, 4911 more expected)', IncompleteRead(5329 bytes read, 4911 more expected)) >>> https://www.cvs.com/store-locator/cvs-pharmacy-address/17700+Ne+76th+St-Redmond-WA-98052/storeid=16387
+[2021-06-18 17:26:02,529] [cvs_com] [ERROR] 'NoneType' object is not subscriptable >>> https://www.cvs.com/store-locator/cvs-pharmacy-address/1929+Oleander+Dr-Wilmington-NC-28403/storeid=5760
+[2021-06-18 17:26:12,655] [cvs_com] [ERROR] 'NoneType' object is not subscriptable >>> https://www.cvs.com/store-locator/cvs-pharmacy-address/2571+Forest+Drive-Columbia-SC-29204/storeid=4399
+[2021-06-18 17:30:16,923] [cvs_com] [ERROR] Unable to extract data from https://www.cvs.com/store-locator/cvs-pharmacy-address/2444+West+Beverly+Blvd+Suite+2-Montebello-CA-90640/storeid=11350 >>> https://www.cvs.com/store-locator/cvs-pharmacy-address/2444+West+Beverly+Blvd+Suite+2-Montebello-CA-90640/storeid=11350
+[2021-06-18 17:34:45,725] [cvs_com] [ERROR] ('Connection broken: IncompleteRead(0 bytes read)', IncompleteRead(0 bytes read)) >>> https://www.cvs.com/store-locator/cvs-pharmacy-address/12027+Town+Square+Street-Reston-VA-20190/storeid=10361
+[2021-06-18 17:35:29,248] [cvs_com] [ERROR] 'NoneType' object is not subscriptable >>> https://www.cvs.com/store-locator/cvs-pharmacy-address/6100+Penn+Ave+-Pittsburgh-PA-15206/storeid=4085
+[2021-06-18 17:41:22,417] [cvs_com] [INFO] --------------------

@@ -82,6 +82,7 @@ def fetch_data():
                 location_name=sp.select_one('div[itemprop="name"]')
                 .text.replace("\n", "")
                 .strip(),
+                state=sp.select_one('span[itemprop="addressRegion"]').text,
                 street_address=sp.select_one('span[itemprop="streetAddress"]').text,
                 city=sp.select_one('span[itemprop="addressLocality"]').text,
                 zip_postal=sp.select_one('span[itemprop="postalCode"]').text,

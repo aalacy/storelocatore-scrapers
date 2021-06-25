@@ -42,8 +42,13 @@ def write_output(data):
             ]
         )
         # Body
+        id_dupes = []
         for row in data:
-            writer.writerow(row)
+            if row[8] in id_dupes:
+                pass
+            else:
+                id_dupes.append(row[8])
+                writer.writerow(row)
 
 
 def validate(item):
