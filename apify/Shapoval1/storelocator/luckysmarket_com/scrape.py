@@ -84,14 +84,18 @@ def fetch_data():
             .replace("\n", "")
             .strip()
         )
-        if hours_of_operation.find("Daily") != -1:
-            hours_of_operation = hours_of_operation.split("Daily")[1].strip()
+        hours_of_operation = (
+            hours_of_operation.replace("Open Daily", "")
+            .replace("Take Out & Indoor Dining Daily", "")
+            .replace("Daily", "")
+            .strip()
+        )
         phone = "".join(
             tree.xpath(
                 '//p[.//span[contains(text(), "PHONE")]]/following-sibling::p[1]//text()'
             )
         )
-        api_url2 = "https://api.freshop.com/1/stores?app_key=luckys_market&has_address=true&limit=10&token=697fa5ec06c7d44dc5ac93d07b4ab5ac"
+        api_url2 = "https://api.freshop.com/1/stores?app_key=luckys_market&has_address=true&limit=10&token=ffb339b6b8130b794d7ff50aef5abf20"
         session = SgRequests()
         r = session.get(api_url2, headers=headers)
         js = r.json()["items"]
