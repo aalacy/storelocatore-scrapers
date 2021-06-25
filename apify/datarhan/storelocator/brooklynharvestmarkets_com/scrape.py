@@ -1,8 +1,9 @@
 import re
 import csv
-import json
+from lxml import etree
+from time import sleep
 
-from sgrequests import SgRequests
+from sgselenium import SgFirefox
 
 
 def write_output(data):
@@ -37,35 +38,36 @@ def write_output(data):
 
 def fetch_data():
     # Your scraper here
-    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
-
     items = []
 
-    start_url = "https://lesmoulinslafayette.com/trouvez-votre-moulin/"
+    start_url = "https://www.brooklynharvestmarkets.com/my-store/store-locator"
     domain = re.findall(r"://(.+?)/", start_url)[0].replace("www.", "")
-    hdr = {
-        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
-    }
-    response = session.get(start_url, headers=hdr)
-    data = re.findall("locations = (.+);", response.text)[0]
-    all_locations = json.loads(data)
 
-    for poi in all_locations:
+    with SgFirefox() as driver:
+        driver.get(start_url)
+        sleep(20)
+        dom = etree.HTML(driver.page_source)
+
+    all_locations = dom.xpath("//li[@data-store-number]")
+    for poi_html in all_locations:
         store_url = start_url
-        location_name = poi["title"]
-        street_address = poi["general"]["address"]
-        city = poi["general"]["city"]
-        state = poi["general"]["state"]
-        zip_code = poi["general"]["zip"]
-        country_code = poi["general"]["country"]
-        country_code = country_code if country_code else "<MISSING>"
+        location_name = poi_html.xpath('.//div[@class="fp-store-title"]//a/text()')[0]
+        raw_address = poi_html.xpath('.//div[@class="fp-store-address"]/text()')
+        raw_address = [e.strip() for e in raw_address if e.strip()]
+        street_address = raw_address[0]
+        city = raw_address[1].split(", ")[0]
+        state = raw_address[1].split(", ")[-1].split()[0]
+        zip_code = raw_address[1].split(", ")[-1].split()[-1]
+        country_code = "<MISSING>"
         store_number = "<MISSING>"
-        phone = poi["general"]["phone"]
-        phone = phone if phone else "<MISSING>"
+        phone = poi_html.xpath('.//div[@class="fp-store-phone"]/p/text()')
+        phone = phone[0].strip() if phone else "<MISSING>"
         location_type = "<MISSING>"
-        latitude = poi["coordinates"]["lat"]
-        longitude = poi["coordinates"]["lng"]
-        hours_of_operation = "<MISSING>"
+        latitude = "<MISSING>"
+        longitude = "<MISSING>"
+        hoo = poi_html.xpath('.//div[@class="fp-panel-store-hours"]/p/text()')
+        hoo = [e.strip() for e in hoo if e.strip()]
+        hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
 
         item = [
             domain,

@@ -1,6 +1,6 @@
 import re
 import csv
-import json
+from lxml import etree
 
 from sgrequests import SgRequests
 
@@ -41,31 +41,33 @@ def fetch_data():
 
     items = []
 
-    start_url = "https://lesmoulinslafayette.com/trouvez-votre-moulin/"
+    start_url = "https://busybeaver.com/wp-admin/admin-ajax.php?action=store_search&lat=40.5230452&lng=-79.8632834&max_results=25&search_radius=50&autoload=1"
     domain = re.findall(r"://(.+?)/", start_url)[0].replace("www.", "")
     hdr = {
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
     }
-    response = session.get(start_url, headers=hdr)
-    data = re.findall("locations = (.+);", response.text)[0]
-    all_locations = json.loads(data)
+    all_locations = session.get(start_url, headers=hdr).json()
 
     for poi in all_locations:
-        store_url = start_url
-        location_name = poi["title"]
-        street_address = poi["general"]["address"]
-        city = poi["general"]["city"]
-        state = poi["general"]["state"]
-        zip_code = poi["general"]["zip"]
-        country_code = poi["general"]["country"]
-        country_code = country_code if country_code else "<MISSING>"
-        store_number = "<MISSING>"
-        phone = poi["general"]["phone"]
+        store_url = poi["permalink"]
+        location_name = poi["store"]
+        street_address = poi["address"]
+        city = poi["city"]
+        state = poi["state"]
+        zip_code = poi["zip"]
+        country_code = poi["country"]
+        store_number = poi["id"]
+        phone = poi["phone"]
         phone = phone if phone else "<MISSING>"
+        if phone == "Coming Soon!":
+            continue
         location_type = "<MISSING>"
-        latitude = poi["coordinates"]["lat"]
-        longitude = poi["coordinates"]["lng"]
-        hours_of_operation = "<MISSING>"
+        latitude = poi["lat"]
+        longitude = poi["lng"]
+        if poi["hours"]:
+            hoo = etree.HTML(poi["hours"]).xpath("//text()")
+        hoo = [e.strip() for e in hoo if e.strip()]
+        hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
 
         item = [
             domain,
