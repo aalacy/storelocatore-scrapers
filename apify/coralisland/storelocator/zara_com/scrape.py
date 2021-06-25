@@ -2,8 +2,10 @@ import csv
 from sglogging import sglog
 from sgrequests import SgRequests
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
+
 logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
 identities = set()
+
 
 def write_output(data):
     with open("data.csv", mode="w", encoding="utf-8") as output_file:
@@ -33,7 +35,8 @@ def write_output(data):
         # Body
         for row in data:
             writer.writerow(row)
-            
+
+
 def record_transformer(poi):
     DOMAIN = "zara.com"
     store_url = "<MISSING>"
@@ -56,47 +59,51 @@ def record_transformer(poi):
     hours_of_operation = "<MISSING>"
 
     item = [
-            DOMAIN,
-            store_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip_code,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-    return (item,latitude,longitude)
-    
-def search_country(session,search,hdr,SearchableCountry):
+        DOMAIN,
+        store_url,
+        location_name,
+        street_address,
+        city,
+        state,
+        zip_code,
+        country_code,
+        store_number,
+        phone,
+        location_type,
+        latitude,
+        longitude,
+        hours_of_operation,
+    ]
+    return (item, latitude, longitude)
+
+
+def search_country(session, search, hdr, SearchableCountry):
     total = 0
     maxZ = search.items_remaining()
-    def getPoint(point,session,hdr):
-        url = "https://www.zara.com/uk/en/stores-locator/search?lat={}&lng={}&isGlobalSearch=true&showOnlyPickup=false&isDonationOnly=false&ajax=true".format(*point)
-        data = session.get(url,headers=hdr)
+
+    def getPoint(point, session, hdr):
+        url = "https://www.zara.com/uk/en/stores-locator/search?lat={}&lng={}&isGlobalSearch=true&showOnlyPickup=false&isDonationOnly=false&ajax=true".format(
+            *point
+        )
+        data = session.get(url, headers=hdr)
         return data.json()
+
     for Point in search:
         found = 0
         for poi in getPoint(Point, session, hdr):
-            record,foundLat,foundLng = record_transformer(poi)
-            search.found_location_at(
-                foundLat, foundLng
-            )
+            record, foundLat, foundLng = record_transformer(poi)
+            search.found_location_at(foundLat, foundLng)
             if str(record) not in identities:
                 identities.add(str(record))
-                found +=1
+                found += 1
                 yield record
         progress = str(round(100 - (search.items_remaining() / maxZ * 100), 2)) + "%"
         total += found
         logzilla.info(
             f"{str(Point).replace('(','').replace(')','')}|found: {found}|total: {total}|prog: {progress}|\nRemaining: {search.items_remaining()} Searchable: {SearchableCountry}"
         )
-        
+
+
 def fetch_data():
     # Your scraper here
     hdr = {
@@ -107,12 +114,12 @@ def fetch_data():
             search = None
             try:
                 search = DynamicGeoSearch(
-        country_codes=[SearchableCountry], max_radius_miles=30
-    )
+                    country_codes=[SearchableCountry], max_radius_miles=30
+                )
             except KeyError:
                 continue
             if search:
-                for item in search_country(session,search,hdr,SearchableCountry):
+                for item in search_country(session, search, hdr, SearchableCountry):
                     yield item
 
 
