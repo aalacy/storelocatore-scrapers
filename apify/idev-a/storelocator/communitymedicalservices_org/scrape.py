@@ -28,53 +28,47 @@ def fetch_data():
             page_url = _["link"]
             if not _["title"] or not page_url:
                 continue
-            try:
-                logger.info(page_url)
-                sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
-                _pp = sp1.find("h4", string=re.compile(r"Phone:"))
-                phone = ""
-                if _pp:
-                    phone = (
-                        list(_pp.find_next_sibling().stripped_strings)[0]
-                        .split(":")[-1]
-                        .replace("Phone", "")
-                    )
-                loc = _["location"]["address"]
-                street_address = f"{loc.get('street_number','')} {loc.get('route','')}"
-                if loc.get("subpremise", "").isdigit():
-                    street_address += f" #{loc.get('subpremise','')}"
-                else:
-                    street_address += f" {loc.get('subpremise','')}"
-                _hr = sp1.find(
-                    "script",
-                    src=re.compile(r"https://knowledgetags.yextpages.net/embed"),
+            logger.info(page_url)
+            sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
+            _pp = sp1.find("h4", string=re.compile(r"Phone:"))
+            phone = ""
+            if _pp:
+                phone = (
+                    list(_pp.find_next_sibling().stripped_strings)[0]
+                    .split(":")[-1]
+                    .replace("Phone", "")
                 )
-                if _hr:
-                    hours = json.loads(
-                        session.get(_hr["src"], headers=_headers)
-                        .text.split("Yext._embed(")[1][:-1]
-                        .strip()
-                    )["entities"][0]["attributes"]["hours"]
-                yield SgRecord(
-                    page_url=page_url,
-                    store_number=_["id"],
-                    location_name=_["title"],
-                    street_address=street_address.strip(),
-                    city=_["location"]["address"]["locality"],
-                    state=_["location"]["address"]["administrative_area_level_1_short"],
-                    zip_postal=_["location"]["address"].get("postal_code"),
-                    country_code=_["location"]["address"].get("country_short"),
-                    phone=phone,
-                    locator_domain=locator_domain,
-                    latitude=_["location"]["lat"],
-                    longitude=_["location"]["lng"],
-                    hours_of_operation="; ".join(hours).replace("–", "-"),
-                    raw_address=_["location"]["address"]["formatted"],
-                )
-            except:
-                import pdb
-
-                pdb.set_trace()
+            addr = list(
+                sp1.find("h4", string=re.compile(r"Location:"))
+                .find_next_sibling("p")
+                .stripped_strings
+            )
+            _hr = sp1.find(
+                "script",
+                src=re.compile(r"https://knowledgetags.yextpages.net/embed"),
+            )
+            if _hr:
+                hours = json.loads(
+                    session.get(_hr["src"], headers=_headers)
+                    .text.split("Yext._embed(")[1][:-1]
+                    .strip()
+                )["entities"][0]["attributes"]["hours"]
+            yield SgRecord(
+                page_url=page_url,
+                store_number=_["id"],
+                location_name=_["title"],
+                street_address=" ".join(addr[:-1]),
+                city=addr[-1].split(",")[0].strip(),
+                state=addr[-1].split(",")[1].strip().split(" ")[0].strip(),
+                zip_postal=addr[-1].split(",")[1].strip().split(" ")[-1].strip(),
+                country_code=_["location"]["address"].get("country_short"),
+                phone=phone,
+                locator_domain=locator_domain,
+                latitude=_["location"]["lat"],
+                longitude=_["location"]["lng"],
+                hours_of_operation="; ".join(hours).replace("–", "-"),
+                raw_address=_["location"]["address"]["formatted"],
+            )
 
 
 if __name__ == "__main__":

@@ -1,4 +1,5 @@
 import csv
+import ssl
 
 from lxml import html
 from selenium.webdriver.common.by import By
@@ -158,4 +159,5 @@ def scrape():
 
 
 if __name__ == "__main__":
+    ssl._create_default_https_context = ssl._create_unverified_context
     scrape()

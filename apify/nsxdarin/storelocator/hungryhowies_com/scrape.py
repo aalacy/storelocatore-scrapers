@@ -38,17 +38,27 @@ def write_output(data):
 
 
 def fetch_data():
-    url = "https://www.hungryhowies.com/sitemap.xml"
     locs = []
-    r = session.get(url, headers=headers)
-    if r.encoding is None:
-        r.encoding = "utf-8"
-    for line in r.iter_lines(decode_unicode=True):
-        if (
-            "<url><loc>https://www.hungryhowies.com/store/" in line
-            or "https://www.hungryhowies.com/STORE/" in line
-        ):
-            locs.append(line.split("<loc>")[1].split("<")[0])
+    for x in range(0, 101):
+        logger.info("Pulling Page %s..." % str(x))
+        url = "https://www.hungryhowies.com/locations?page=" + str(x)
+        r = session.get(url, headers=headers)
+        if r.encoding is None:
+            r.encoding = "utf-8"
+        for line in r.iter_lines(decode_unicode=True):
+            if '<div class="details roundButton"><a href="/store/' in line:
+                lurl = (
+                    "https://www.hungryhowies.com/"
+                    + line.split('href="')[1].split('"')[0]
+                )
+                locs.append(lurl)
+            if '<div class="details roundButton"><a href="/STORE/' in line:
+                lurl = (
+                    "https://www.hungryhowies.com/"
+                    + line.split('href="')[1].split('"')[0]
+                )
+                locs.append(lurl)
+        logger.info("Found %s Locations..." % str(len(locs)))
     for loc in locs:
         logger.info(("Pulling Location %s..." % loc))
         r2 = session.get(loc, headers=headers)

@@ -55,10 +55,8 @@ def fetch_data():
         else:
             store_url = "<MISSING>"
 
-        location_name = poi["title"]
-        location_name = location_name if location_name else "<MISSING>"
+        location_name = poi["title"].replace("&reg;", "")
         street_address = poi["street"]
-        street_address = street_address if street_address else "<MISSING>"
         city = poi["city"]
         city = city if city else "<MISSING>"
         state = poi["state"]
@@ -79,7 +77,11 @@ def fetch_data():
                 '//h4[span[contains(text(), "hours")]]/following-sibling::div[1]//text()'
             )
         hoo = [e.strip() for e in hoo if e.strip()]
-        hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
+        hours_of_operation = (
+            " ".join(hoo).replace("dine in ", "").split(" car")[0]
+            if hoo
+            else "<MISSING>"
+        )
 
         item = [
             domain,
