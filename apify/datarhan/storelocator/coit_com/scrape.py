@@ -56,7 +56,6 @@ def fetch_data():
         store_url = urljoin(start_url, url)
         if "coming-soon" in store_url:
             continue
-        print(store_url)
         loc_response = session.get(store_url)
         loc_dom = etree.HTML(loc_response.text)
         poi = loc_dom.xpath('//script[contains(text(), "postalCode")]/text()')
