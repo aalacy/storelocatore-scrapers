@@ -1,7 +1,6 @@
 from sgrequests import SgRequests
 import pandas as pd
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
-import json
 
 locator_domains = []
 page_urls = []
