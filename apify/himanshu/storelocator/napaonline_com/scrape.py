@@ -1,6 +1,8 @@
 import re
 import csv
 import json
+from time import sleep
+from random import randint
 from bs4 import BeautifulSoup as bs
 from datetime import datetime
 from sglogging import SgLogSetup
@@ -46,7 +48,8 @@ def write_output(data):
             writer.writerow(row)
 
 
-def get(url, driver):
+def fetch(url, driver):
+    sleep(randint(2, 3))
     return driver.execute_async_script(
         f"""
         var done = arguments[0]
@@ -59,7 +62,7 @@ def get(url, driver):
 
 def crawl_state_url(state_url, driver):
     city_urls = []
-    html = get(state_url, driver)
+    html = fetch(state_url, driver)
     state_soup = bs(html, "lxml")
     for url in state_soup.find("div", {"class": "store-browse-content"}).find_all("a"):
         city_urls.append(url)
@@ -131,76 +134,114 @@ def get_store_key(store):
     return f"{store[-1]}".lower()
 
 
+def get_details(soup):
+    for tag in soup.find_all("script", type="application/ld+json"):
+        if "BreadcrumbList" not in tag.string:
+            return json.loads(tag.string)
+    return {}
+
+
+MISSING = "<MISSING>"
+
+
+def get(entity, key, default=MISSING):
+    return entity.get(key, default)
+
+
 def scrape_html(soup, page_url):
-    name_elem = soup.find(id="location-name")
-    location_name = name_elem.text if name_elem else "<MISSING>"
+    try:
+        details = get_details(soup)
 
-    addr_elem = soup.find(itemprop="streetAddress")
-    street_address = addr_elem["content"] if addr_elem else "<MISSING>"
+        name_elem = soup.find(id="location-name")
+        location_name = name_elem.text if name_elem else get(details, "name")
 
-    city_elem = soup.find(itemprop="addressLocality")
-    city = city_elem["content"] if city_elem else "<MISSING>"
+        address = get(details, "address", {})
+        addr_elem = soup.find(itemprop="streetAddress")
+        street_address = (
+            addr_elem["content"] if addr_elem else get(address, "streetAddress")
+        )
 
-    state_elem = soup.find(itemprop="addressRegion")
-    state = state_elem.text if state_elem else "<MISSING>"
+        city_elem = soup.find(itemprop="addressLocality")
+        city = city_elem["content"] if city_elem else get(address, "addressLocality")
 
-    zipp_elem = soup.find(itemprop="postalCode")
-    zipp = zipp_elem.text if zipp_elem else "<MISSING>"
+        state_elem = soup.find(itemprop="addressRegion")
+        state = state_elem.text if state_elem else get(address, "addressRegion")
 
-    country_elem = soup.find(itemprop="addressCountry")
-    country_code = country_elem.text if country_elem else "<MISSING>"
+        zipp_elem = soup.find(itemprop="postalCode")
+        zipp = zipp_elem.text if zipp_elem else get(address, "postalCode")
 
-    phone_elem = soup.find(itemprop="telephone")
-    phone = phone_elem.text if phone_elem else "<MISSING>"
+        country_elem = soup.find(itemprop="addressCountry")
+        country_code = (
+            country_elem.text if country_elem else get(address, "addressCountry")
+        )
 
-    main_elem = soup.find(id="main")
-    location_type = (
-        main_elem["itemtype"].replace("http://schema.org/", "")
-        if main_elem
-        else "<MISSING>"
-    )
+        phone_elem = soup.find(itemprop="telephone")
+        phone = phone_elem.text if phone_elem else get(address, "telephone")
 
-    lat_elem = soup.find(itemprop="latitude")
-    latitude = lat_elem["content"] if lat_elem else "<MISSING>"
+        main = soup.find("main", id="main")
+        location_type = (
+            re.sub(
+                "http://schema.org/",
+                "",
+                main["itemscope"] if hasattr(main, "itemscope") else "",
+            )
+            or get(details, "@type", MISSING)
+        )
 
-    lng_elem = soup.find(itemprop="longitude")
-    longitude = lng_elem["content"] if lng_elem else "<MISSING>"
+        geo = get(details, "geo", {})
+        lat_elem = soup.find(itemprop="latitude")
+        latitude = lat_elem["content"] if lat_elem else get(geo, "latitude")
 
-    hours = ""
-    hours_table = soup.find(class_="c-hours-details")
-    if hours_table:
-        hours = " ".join(list(hours_table.find("tbody").stripped_strings))
-        hours = re.sub("PM ", "PM, ", hours)
+        lng_elem = soup.find(itemprop="longitude")
+        longitude = lng_elem["content"] if lng_elem else get(geo, "longitude")
 
-    store_number = scrape_store_number(soup)
+        hours = ""
+        hours_table = soup.find(class_="c-hours-details")
+        if hours_table:
+            hours = " ".join(list(hours_table.find("tbody").stripped_strings))
+            hours = re.sub("PM ", "PM, ", hours)
+        else:
+            hours = "".join(
+                f'{day["dayOfWeek"][0]}: {day["opens"]}-{day["closes"]}'
+                for day in get(details, "openingHoursSpecification", [])
+            )
+            if not hours:
+                hours = MISSING
 
-    store = [
-        base_url,
-        location_name,
-        street_address,
-        city,
-        state,
-        zipp,
-        country_code,
-        store_number,
-        phone,
-        location_type,
-        latitude,
-        longitude,
-        hours.strip(),
-        page_url,
-    ]
-    store = [
-        str(x).encode("ascii", "ignore").decode("ascii").strip() if x else "<MISSING>"
-        for x in store
-    ]
+        store_number = scrape_store_number(soup) or get(details, "@id")
 
-    return store
+        store = [
+            base_url,
+            location_name,
+            street_address,
+            city,
+            state,
+            zipp,
+            country_code,
+            store_number,
+            phone,
+            location_type,
+            latitude,
+            longitude,
+            hours.strip(),
+            page_url,
+        ]
+        store = [
+            str(x).encode("ascii", "ignore").decode("ascii").strip()
+            if x
+            else "<MISSING>"
+            for x in store
+        ]
+
+        return store
+    except Exception as e:
+        logger.error(e)
+        pass
 
 
 def scrape_one_in_city(url, driver):
     link_url = base_url + url["href"]
-    html = get(link_url, driver)
+    html = fetch(link_url, driver)
     soup = bs(html, "lxml")
 
     # make sure we're on a store detail page and not a listing page ...
@@ -239,22 +280,24 @@ def scrape_one_in_city(url, driver):
 
 def scrape_multiple_in_city(url, driver):
     stores = []
-    html = get(base_url + url["href"], driver)
+    html = fetch(base_url + url["href"], driver)
     if not html:
         return stores
     soup = bs(html, "lxml")
     for link in soup.find_all("div", {"class": "store-browse-store-detail"}):
 
         link_url = base_url + link.a["href"].replace("https://www.napaonline.com", "")
-        html = get(link_url, driver)
+        html = fetch(link_url, driver)
         soup = bs(html, "lxml")
 
         data = None
         try:
             data = json.loads(
                 soup.find(
-                    lambda tag: (tag.name == "script" and '"streetAddress"' in tag.text)
-                ).text
+                    lambda tag: (
+                        tag.name == "script" and '"streetAddress"' in tag.string
+                    )
+                ).string
             )
         except:
             logger.info(f">>> json data not found for {link_url}")
@@ -298,7 +341,7 @@ def fetch_data():
     with SgChrome(is_headless=True, seleniumwire_auto_config=False).driver() as driver:
         load_initial_page(driver)
 
-        html = get("https://www.napaonline.com/en/auto-parts-stores-near-me", driver)
+        html = fetch("https://www.napaonline.com/en/auto-parts-stores-near-me", driver)
         soup = bs(html, "lxml")
 
         for link in soup.find("div", {"class": "store-browse-content"}).find_all("a"):

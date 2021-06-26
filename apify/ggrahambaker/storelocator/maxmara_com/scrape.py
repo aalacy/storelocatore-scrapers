@@ -58,7 +58,7 @@ def fetch_data():
         data = session.get(start_url.format(e.alpha_2), headers=hdr).json()
         all_locations = data["features"]
         for poi in all_locations:
-            store_url = "https://us.maxmara.com/store-locator"
+            store_url = f"https://us.maxmara.com/store/{poi['properties']['name']}"
             location_name = poi["properties"]["displayName"]
             street_address = (
                 poi["properties"]["formattedAddress"].split(",")[0].split("Outlet")[-1]
@@ -72,7 +72,7 @@ def fetch_data():
             zip_code = zip_code if zip_code else "<MISSING>"
             country_code = poi["properties"]["country"]
             country_code = country_code if country_code else "<MISSING>"
-            store_number = "<MISSING>"
+            store_number = poi["properties"]["name"]
             phone = poi["properties"]["phone1"]
             phone = phone if phone else "<MISSING>"
             location_type = "<MISSING>"

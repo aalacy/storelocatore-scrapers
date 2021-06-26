@@ -1,17 +1,15 @@
-import time
 import csv
+import time
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
-from bs4 import BeautifulSoup
 from sgscrape import sgpostal as parser
 
-
-logger = SgLogSetup().get_logger("breauxmart_com")
-
+logger = SgLogSetup().get_logger("ontheborder_com")
 
 session = SgRequests()
+
 headers = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.141 Safari/537.36",
 }
 
 
@@ -48,7 +46,7 @@ def write_output(data):
                 row[4].strip(),
                 row[5].strip(),
                 row[6].strip(),
-                row[8].strip(),
+                row[8],
                 row[10].strip(),
             ]
             if comp_list not in temp_list:
@@ -59,32 +57,29 @@ def write_output(data):
 
 def fetch_data():
     data = []
-    url = "https://api.freshop.com/1/stores?app_key=breaux_mart&distance=10&fields=id%2Cname&has_address=true&q=LA&token=b9d5ebe8311a1e8691c9e16d0740383e"
-    stores = session.get(url, headers=headers, verify=False).json()
-    for loc in stores["items"]:
-        storeid = loc["id"]
+    search_url = "https://www.ontheborder.com/wp-admin/admin-ajax.php?searchFallback=false&page=1&sort%5B0%5D%5Bfield%5D=name&sort%5B0%5D%5Border%5D=asc&perpage=0&action=mapsvg_data_get_all&map_id=405&table=database"
+    stores_req = session.get(search_url, headers=headers).json()
+    for loc in stores_req["objects"]:
+        address = loc["location"]["address"]["formatted"]
+        lat = loc["location"]["lat"]
+        lng = loc["location"]["lng"]
         title = loc["name"]
-        title2 = title.replace(" - ", "-")
-        title2 = title2.replace(" ", "-")
-        link = "https://www.breauxmart.com/stores/" + title2
-        req = session.get(link, headers=headers, verify=False)
-        soup = BeautifulSoup(req.text, "html.parser")
-        address = soup.find("div", {"class": "fp-store-address"}).text
-        address = address.lstrip(title)
-        information = soup.find(
-            "div", {"class": "stores-landing-left col-md-6"}
-        ).findAll("div")
-        if len(information) == 19:
-            hours = information[12].find("p").text
-            phone = information[14].find("p").text
+        isloc = loc["post"]
+        if isloc is not None:
+            link = loc["post"]["guid"]
+            hours = loc["post"]["acf"]["hours"]
+            hoo = ""
+            for hr in hours:
+                day = hr["day_or_day_range"]
+                time = hr["hour_range"]
+                hoo = hoo + " " + day + " " + time
+            phone = loc["post"]["acf"]["phone_number"]
+            storeid = loc["post"]["ID"]
         else:
-            hours = information[9].find("p").text
-            phone = information[11].find("p").text
-        phone = phone.split("Fax")[0].strip()
-        phone = phone.strip()
-        hours = hours.strip()
-        lat = soup.find("meta", {"property": "place:location:latitude"})["content"]
-        lng = soup.find("meta", {"property": "place:location:longitude"})["content"]
+            link = "<MISSING>"
+            hours = "<MISSING>"
+            phone = "<MISSING>"
+            storeid = "540"
         parsed = parser.parse_address_usa(address)
         street1 = parsed.street_address_1 if parsed.street_address_1 else "<MISSING>"
         street = (
@@ -95,10 +90,21 @@ def fetch_data():
         city = parsed.city if parsed.city else "<MISSING>"
         state = parsed.state if parsed.state else "<MISSING>"
         pcode = parsed.postcode if parsed.postcode else "<MISSING>"
+        hours = str(hours)
+        hours = hours.replace("'", "")
+        hours = hours.replace(",", "")
+        hours = hours.replace("[", "")
+        hours = hours.replace("]", "")
+        hours = hours.replace("{", "")
+        hours = hours.replace("}", "")
+        hours = hours.replace(":", "")
+        hours = hours.replace("day_or_day_range", "")
+        hours = hours.replace("hour_range", "")
+        hours = hours.replace("  ", " ").strip()
 
         data.append(
             [
-                "https://www.breauxmart.com/",
+                "https://www.ontheborder.com/",
                 link,
                 title,
                 street,
