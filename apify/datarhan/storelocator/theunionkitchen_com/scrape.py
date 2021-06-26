@@ -51,8 +51,15 @@ def fetch_data():
     for poi in all_locations:
         poi = json.loads(poi)
         store_url = start_url
-        location_name = poi["address"]["addressLocality"]
         street_address = poi["address"]["streetAddress"].replace("\n", " ")
+        poi_html = dom.xpath(
+            '//section[p[a[span[contains(text(), "{}")]]]]'.format(
+                " ".join(street_address.split()[:2])
+            )
+        )[0]
+        if street_address.endswith(","):
+            street_address = street_address[:-1]
+        location_name = poi_html.xpath(".//h4/text()")[0]
         city = poi["address"]["addressLocality"]
         state = poi["address"]["addressRegion"]
         zip_code = poi["address"]["postalCode"]
@@ -62,7 +69,7 @@ def fetch_data():
         location_type = poi["@type"]
         latitude = "<MISSING>"
         longitude = "<MISSING>"
-        hoo = poi["openingHours"]
+        hoo = poi_html.xpath('.//div[@class="hours"]//text()')
         hoo = [e.strip() for e in hoo if e.strip()]
         hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
 

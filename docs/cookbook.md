@@ -5,6 +5,7 @@
 ## Table of Contents
 
 ### Templates
+
 - [Experimental Live Realtime Templating Engine](./cookbook/crawly_web.md)
 - [Template types and uses](./cookbook/templates.md)
 
@@ -14,6 +15,7 @@
 - [Directory & File Skeleton](./cookbook/dir_skeleton.md)
 - [Generating a Python requirements file](./cookbook/reqfile.md)
 - [External Logging documentation](https://docs.google.com/document/d/1I-1Atok4pd1RKW_ZfRzv7rMnuYTV0R_yo8QMnCSdwdE/view).
+- [Pausing and Resuming a Long-Running Crawl](./cookbook/pause_resume.md)
 
 ### Fetching data
 
