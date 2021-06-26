@@ -60,28 +60,27 @@ def fetch_data():
     search_url = "https://www.primohoagies.com/sitemap.php"
     stores_req = session.get(search_url, headers=headers)
     soup = BeautifulSoup(stores_req.text, "html.parser")
-    locations = soup.findAll("ul", {"class": "list"})[1].findAll('a')
+    locations = soup.findAll("ul", {"class": "list"})[1].findAll("a")
     for loc in locations:
         title = loc.text
-        link = loc['href']
+        link = loc["href"]
         stores_req = session.get(link, headers=headers)
         soup = BeautifulSoup(stores_req.text, "html.parser")
         details = soup.findAll("div", {"class": "row"})[1]
-        address = details.find("div", {"class":"p-street-address"})
+        address = details.find("div", {"class": "p-street-address"})
         if address is not None:
-            street = address.find('span', {'itemprop':'streetAddress'}).text
-            city = address.find('span', {'itemprop':'addressLocality'}).text
-            state = address.find('span', {'itemprop':'addressRegion'}).text
-            pcode = address.find('span', {'itemprop':'postalCode'}).text
-            lat = soup.find("meta", {"itemprop":"latitude"})['content']
-            lng = soup.find("meta", {"itemprop":"longitude"})['content']
-            phone = details.find("h4", {"itemprop":"telephone"}).text
-            hours = details.find("div", {"class":"hours"}).text
-            hours = hours.replace('day', 'day ')
-            hours = hours.replace('pm', 'pm ')
+            street = address.find("span", {"itemprop": "streetAddress"}).text
+            city = address.find("span", {"itemprop": "addressLocality"}).text
+            state = address.find("span", {"itemprop": "addressRegion"}).text
+            pcode = address.find("span", {"itemprop": "postalCode"}).text
+            lat = soup.find("meta", {"itemprop": "latitude"})["content"]
+            lng = soup.find("meta", {"itemprop": "longitude"})["content"]
+            phone = details.find("h4", {"itemprop": "telephone"}).text
+            hours = details.find("div", {"class": "hours"}).text
+            hours = hours.replace("day", "day ")
+            hours = hours.replace("pm", "pm ")
             hours = hours.strip()
-            street = street.replace('\n', ' ').strip()
-
+            street = street.replace("\n", " ").strip()
 
             data.append(
                 [
