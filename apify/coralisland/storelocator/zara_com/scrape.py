@@ -44,7 +44,8 @@ def record_transformer(poi):
     street_address = poi["addressLines"][0]
     city = poi["city"]
     city = city if city else "<MISSING>"
-    state = poi["state"]
+    state = poi.get("state")
+    state = state if state else '<MISSING>'
     zip_code = poi["zipCode"]
     zip_code = zip_code if zip_code else "<MISSING>"
     country_code = poi["countryCode"]
@@ -82,8 +83,8 @@ def search_country(session, search, hdr, SearchableCountry):
     maxZ = search.items_remaining()
 
     def getPoint(point, session, hdr):
-        url = "https://www.zara.com/uk/en/stores-locator/search?lat={}&lng={}&isGlobalSearch=true&showOnlyPickup=false&isDonationOnly=false&ajax=true".format(
-            *point
+        url = "https://www.zara.com/{}/en/stores-locator/search?lat={}&lng={}&isGlobalSearch=true&showOnlyPickup=false&isDonationOnly=false&ajax=true".format(
+            SearchableCountry, *point
         )
         data = session.get(url, headers=hdr)
         return data.json()
