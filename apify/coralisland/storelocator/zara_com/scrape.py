@@ -45,7 +45,7 @@ def record_transformer(poi):
     city = poi["city"]
     city = city if city else "<MISSING>"
     state = poi.get("state")
-    state = state if state else '<MISSING>'
+    state = state if state else "<MISSING>"
     zip_code = poi["zipCode"]
     zip_code = zip_code if zip_code else "<MISSING>"
     country_code = poi["countryCode"]
