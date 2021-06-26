@@ -16,6 +16,7 @@ _headers = {
 def fetch_data():
     locator_domain = "https://www.era.com"
     base_url = "https://www.era.com/real-estate-agents"
+    streets = []
     with SgRequests() as session:
         states = bs(session.get(base_url, headers=_headers).text, "lxml").select(
             "ul.hide-list-bullets a"
@@ -49,10 +50,14 @@ def fetch_data():
                         .strip()[:-1]
                     )
 
+                    street_address = ss["address"]["streetAddress"]
+                    if street_address in streets:
+                        continue
+                    streets.append(street_address)
                     yield SgRecord(
                         page_url=ss["url"],
                         location_name=ss["name"],
-                        street_address=ss["address"]["streetAddress"],
+                        street_address=street_address,
                         city=ss["address"]["addressLocality"],
                         state=ss["address"]["addressRegion"],
                         zip_postal=ss["address"]["postalCode"],
