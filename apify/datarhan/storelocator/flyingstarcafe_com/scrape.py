@@ -52,7 +52,7 @@ def fetch_data():
     dom = etree.HTML(response.text)
 
     all_locations = all_locations = re.findall(
-        "location_data.push\((.+?)\);",
+        r"location_data.push\((.+?)\);",
         response.text.replace("\n", "").replace("\t", ""),
     )
     for poi in all_locations:
