@@ -39,7 +39,7 @@ def write_output(data):
 
 
 def fetch_data():
-    url = "https://api.freshop.com/1/stores?app_key=kirby_foods_iga&has_address=true&is_selectable=true&limit=50&token=57701bf01e371bcec77bec3b61bfc444"
+    url = "https://api.freshop.com/1/stores?app_key=kirby_foods_iga&has_address=true&limit=-1&token=3a658b6871a82024745d0a0f193e6738"
     r = session.get(url, headers=headers)
     website = "kirbyfoodsiga.com"
     typ = "<MISSING>"
