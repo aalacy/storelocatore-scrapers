@@ -23,7 +23,7 @@ def fetch_data():
 
     for store in stores_list:
 
-        page_url = "<MISSING>"
+        page_url = store["5"]
         locator_domain = website
 
         location_name = store["name"]

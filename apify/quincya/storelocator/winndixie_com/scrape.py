@@ -86,9 +86,14 @@ def fetch_data():
         )
 
     fuel_link = "https://www.winndixie.com/V2/storelocator/getFuelStores"
-
-    js = {"search": "jacksonville, fl", "strDefaultMiles": "200"}
-    fuel_stores = session.post(fuel_link, headers=headers, json=js).json()["locations"]
+    fuel_stores = []
+    try:
+        js = {"search": "jacksonville, fl", "strDefaultMiles": "200"}
+        fuel_stores = session.post(fuel_link, headers=headers, json=js).json()[
+            "locations"
+        ]
+    except:
+        pass
     for store in fuel_stores:
         location_name = store["name"]
         street_address = store["address"]["street1"].strip()

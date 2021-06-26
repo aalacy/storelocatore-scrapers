@@ -57,13 +57,36 @@ def fetch_data():
                     for line2 in r2.iter_lines():
                         line2 = str(line2.decode("utf-8"))
                         if '"HoursOutlook":{"' in line2:
-                            hours = (
-                                line2.split('"HoursOutlook":{"')[1]
-                                .split('"},"Hours":')[0]
-                                .replace('","', "; ")
-                                .replace('":"Open', ":")
-                                .replace('":"Abierto', ":")
-                            )
+                            days = line2.split('StartDaysOfWeekAbbreviation":"')
+                            for day in days:
+                                if '"HoursOutlook"' not in day:
+                                    hrs = (
+                                        day.split('"')[0]
+                                        + "-"
+                                        + day.split('EndDaysOfWeekAbbreviation":"')[
+                                            1
+                                        ].split('"')[0]
+                                        + ": "
+                                    )
+                                    hrs = (
+                                        hrs
+                                        + day.split('"OpenTimeDescription":"')[1].split(
+                                            '"'
+                                        )[0]
+                                        + "-"
+                                        + day.split('"CloseTimeDescription":"')[
+                                            1
+                                        ].split('"')[0]
+                                    )
+                                    if hours == "":
+                                        hours = hrs
+                                    else:
+                                        hours = hours + "; " + hrs
+                            hours = hours.replace("Sun-Sun", "Sun")
+                            hours = hours.replace("Sat-Sat", "Sat")
+                            hours = hours.replace("Fri-Fri", "Fri")
+                            if hours.count(";") == 3:
+                                hours = hours.rsplit(";", 1)[0].strip()
                     store = item.split('"Id":')[1].split(",")[0]
                     country = item.split('"CountryName":"')[1].split('"')[0]
                     if country == "CANADA":
@@ -86,23 +109,22 @@ def fetch_data():
                         phone = "<MISSING>"
                     if hours == "":
                         hours = "<MISSING>"
-                    if country == "CA" or country == "US":
-                        yield [
-                            website,
-                            loc,
-                            name,
-                            add,
-                            city,
-                            state,
-                            zc,
-                            country,
-                            store,
-                            phone,
-                            typ,
-                            lat,
-                            lng,
-                            hours,
-                        ]
+                    yield [
+                        website,
+                        loc,
+                        name,
+                        add,
+                        city,
+                        state,
+                        zc,
+                        country,
+                        store,
+                        phone,
+                        typ,
+                        lat,
+                        lng,
+                        hours,
+                    ]
 
 
 def scrape():
