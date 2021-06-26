@@ -138,7 +138,6 @@ def fetch_data():
         latitude = latitude if latitude else "<MISSING>"
         longitude = poi["Longitude"]
         longitude = longitude if longitude else "<MISSING>"
-        all_codes.found_location_at(latitude, longitude)
         hours_of_operation = "<MISSING>"
 
         item = [
