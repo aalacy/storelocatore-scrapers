@@ -82,7 +82,6 @@ def fetch_data():
     )
 
     for d in divs:
-        _tmp = []
         cnt = 0
         line = d.xpath(".//text()")
         line = list(filter(None, [l.strip() for l in line]))
