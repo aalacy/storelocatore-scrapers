@@ -57,9 +57,10 @@ def fetch_data():
             .replace(".", "")
             .replace("(", "")
             .replace(")", "")
-            .replace(".", "")
             .replace("&", "and")
         )
+        if "St-Mary-Mercy-Hospital-Livonia" in store_url:
+            store_url = store_url.replace("St-Mary-Mercy-Hospital-Livonia", "St-Mary")
         loc_response = session.get(store_url)
         loc_dom = etree.HTML(loc_response.text)
 

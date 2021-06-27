@@ -93,7 +93,7 @@ def fetch_data():
 
         hours = store_info[phn_idx + 1 :]
 
-        hours_of_operation = "; ".join(hours)
+        hours_of_operation = "; ".join(hours).replace(":;", ":").strip()
 
         map_link = "".join(store.xpath('.//*[contains(@map-loc,"maps")]/@map-loc'))
 

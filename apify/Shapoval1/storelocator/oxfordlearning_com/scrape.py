@@ -60,7 +60,7 @@ def fetch_data():
             tree = html.fromstring(r.text)
 
             location_name = (
-                " ".join(tree.xpath('//h1[@itemprop="name"]/text()'))
+                " ".join(tree.xpath('//h1[@itemprop="name"]/text()[1]'))
                 .replace("\n", "")
                 .strip()
             )
@@ -168,9 +168,6 @@ def fetch_data():
                 country_code = "US"
 
             store_number = "<MISSING>"
-            latitude = "<MISSING>"
-            longitude = "<MISSING>"
-            location_type = "GradePower Learning"
             phone = (
                 "".join(tree.xpath('//p[./a[contains(@href, "tel")]]//text()'))
                 .replace("\n", "")
@@ -186,6 +183,38 @@ def fetch_data():
                 )
             if phone.find(" ") != -1:
                 phone = phone.split()[0].strip()
+            ll = "".join(
+                tree.xpath('//script[contains(text(), "var olc_elements =")]/text()')
+            )
+            try:
+                latitude = (
+                    ll.split(f"{phone}")[1]
+                    .split('"latitude":"')[1]
+                    .split('"')[0]
+                    .strip()
+                )
+                longitude = (
+                    ll.split(f"{phone}")[1]
+                    .split('"longitude":"')[1]
+                    .split('"')[0]
+                    .strip()
+                )
+            except:
+                latitude = (
+                    ll.split("450.510.LIRE (5473)")[1]
+                    .split('"latitude":"')[1]
+                    .split('"')[0]
+                    .strip()
+                )
+                longitude = (
+                    ll.split("450.510.LIRE (5473)")[1]
+                    .split('"longitude":"')[1]
+                    .split('"')[0]
+                    .strip()
+                )
+
+            location_type = "GradePower Learning"
+
             hours_of_operation = tree.xpath("//dl//div//text()")
             hours_of_operation = list(
                 filter(None, [a.strip() for a in hours_of_operation])
