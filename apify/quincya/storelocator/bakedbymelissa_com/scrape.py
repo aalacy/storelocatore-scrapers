@@ -84,7 +84,7 @@ def fetch_data():
             zip_code = store["postal_code"]
 
             country_code = "US"
-            store_number = "<MISSING>"
+            store_number = store["position"]
 
             location_type = "<MISSING>"
             phone = store["phone"]
