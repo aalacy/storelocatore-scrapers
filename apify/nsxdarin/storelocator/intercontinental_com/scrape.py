@@ -130,7 +130,9 @@ def fetch_data():
             if '"addressRegion": "' in line2 and state == "":
                 state = line2.split('"addressRegion": "')[1].split('"')[0]
             if phone == "" and 'itemprop="telephone">' in line2:
-                phone = line2.split('itemprop="telephone">')[1].split("<")[0]
+                phone = line2.split('<span itemprop="telephone">')[1].split("<span>")[0]
+                if "tel:" in phone:
+                    phone = phone.split("tel:")[1].split('"')[0]
             if '"addressCountry": "' in line2 and country == "":
                 country = line2.split('"addressCountry": "')[1].split('"')[0]
             if '"latitude": "' in line2 and lat == "":
@@ -195,6 +197,18 @@ def fetch_data():
             country = "China"
         state = state.replace("&nbsp;", "")
         city = city.replace("&nbsp;", "")
+        if len(phone) <= 5:
+            phone = "<MISSING>"
+        if (
+            "1" not in phone
+            and "2" not in phone
+            and "3" not in phone
+            and "4" not in phone
+            and "5" not in phone
+            and "6" not in phone
+            and "7" not in phone
+        ):
+            phone = "<MISSING>"
         if " Hotels" not in name and name != "":
             yield [
                 website,

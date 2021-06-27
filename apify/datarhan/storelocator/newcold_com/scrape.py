@@ -4,6 +4,7 @@ import json
 from lxml import etree
 
 from sgrequests import SgRequests
+from sgscrape.sgpostal import parse_address_intl
 
 
 def write_output(data):
@@ -58,13 +59,26 @@ def fetch_data():
         store_url = etree.HTML(poi["content"]).xpath("//a/@href")[0]
         loc_response = session.get(store_url)
         loc_dom = etree.HTML(loc_response.text)
+        raw_address = loc_dom.xpath('//p[strong[contains(text(), "Address")]]/text()')[
+            :2
+        ]
+        if not raw_address:
+            raw_address = loc_dom.xpath(
+                '//header[h3[contains(text(), "Address")]]/following-sibling::div[1]/p/text()'
+            )[:3]
+        raw_address = [e.strip() for e in raw_address if "+" not in e]
+        addr = parse_address_intl(" ".join(raw_address))
 
         location_name = poi["title"]
         street_address = poi["address"]
         city = poi["location"]["city"]
         state = poi["location"].get("state")
+        if not state:
+            state = addr.state
         state = state if state else "<MISSING>"
         zip_code = poi["location"].get("postal_code")
+        if not zip_code:
+            zip_code = addr.postcode
         zip_code = zip_code if zip_code else "<MISSING>"
         country_code = poi["location"]["country"]
         country_code = country_code if country_code else "<MISSING>"
@@ -88,6 +102,9 @@ def fetch_data():
             if hoo
             else "<MISSING>"
         )
+
+        if location_name == "NewCold Wakefield":
+            zip_code = "WF3 4FE"
 
         item = [
             domain,

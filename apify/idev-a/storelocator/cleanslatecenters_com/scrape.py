@@ -13,6 +13,22 @@ _headers = {
 }
 
 
+def _h(temp):
+    hours = []
+    for hh in temp:
+        if "call" in hh.lower() or "hour" in hh.lower():
+            break
+        hours.append(
+            hh.split("(")[0]
+            .strip()
+            .replace("–", "-")
+            .replace("\xa0", "")
+            .replace("    ", " ")
+        )
+
+    return hours
+
+
 def fetch_data():
     locator_domain = "https://www.cleanslatecenters.com/"
     base_url = "https://www.cleanslatecenters.com/our-location"
@@ -38,10 +54,16 @@ def fetch_data():
             hours = []
             if _hr:
                 hours = [
-                    hh.text.split("(")[0].strip()
+                    "; ".join(hh.stripped_strings)
                     for hh in _hr.find_parent().find_next_siblings("p")
-                    if "call" not in hh.text.lower() or "hour" not in hh.text.lower()
                 ]
+            else:
+                _hr = sp1.find_all("strong", string=re.compile(r"ADDRESS"))
+                if len(_hr) > 1:
+                    hours = [
+                        "; ".join(hh.stripped_strings)
+                        for hh in _hr[1].find_parent().find_next_siblings("p")
+                    ]
             try:
                 coord = (
                     sp1.select_one("div.locations-map-responsive iframe")["src"]
@@ -64,10 +86,7 @@ def fetch_data():
                 locator_domain=locator_domain,
                 latitude=coord[1],
                 longitude=coord[0],
-                hours_of_operation="; ".join(hours)
-                .replace("–", "-")
-                .replace("\xa0", "")
-                .replace("    ", " "),
+                hours_of_operation="; ".join(_h(hours)),
             )
 
 

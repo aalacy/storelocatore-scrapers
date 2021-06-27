@@ -82,17 +82,25 @@ def fetch_data():
         longitude = store["geo"]["lng"]
         hours_of_operation = ""
         days = store["regularHours"]
-        for day in days:
-            hours_of_operation = (
-                hours_of_operation + " " + day + " " + days[day]["label"]
-            ).strip()
-        if "tuesday wednesday thursday friday saturday" in hours_of_operation:
+        for key, value in days.items():
+            value = str(value)
+            value = value.split("{'label': '")
+            if len(value) == 2:
+                value = value[1].split("'")[0]
+            hours_of_operation = hours_of_operation + " " + key + " " + str(value)
+        if "tuesday  wednesday  thursday  friday  saturday" in hours_of_operation:
             hours_of_operation = (
                 hours_of_operation.replace("monday", "monday - saturday")
                 .replace("~", "-")
                 .split("tuesday")[0]
+                .replace("  ", " ")
                 .strip()
             )
+        hours_of_operation = hours_of_operation.replace(
+            "timeZone ['Central Standard Time']", ""
+        )
+        hours_of_operation = hours_of_operation.replace("AM-", " am -")
+        hours_of_operation = hours_of_operation.replace("PM", " pm").strip()
 
         data.append(
             [

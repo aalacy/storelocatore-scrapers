@@ -23,7 +23,7 @@ def fetch_data():
 
     for store in stores_list:
 
-        page_url = "<MISSING>"
+        page_url = "https://www.ernest.ca/apps/store-locator"
         locator_domain = website
 
         location_name = store["name"]

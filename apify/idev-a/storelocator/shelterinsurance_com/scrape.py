@@ -62,9 +62,9 @@ def fetch_data():
                         yield SgRecord(
                             page_url=page_url,
                             store_number=link["data-agent-index"],
-                            location_name=link.select_one(
-                                "div.agentName a"
-                            ).text.strip(),
+                            location_name=link.select_one("div.agentName a")
+                            .text.split(".")[-1]
+                            .strip(),
                             street_address=addr[0],
                             city=addr[1].split(",")[0].strip(),
                             state=addr[1].split(",")[1].strip().split(" ")[0].strip(),
