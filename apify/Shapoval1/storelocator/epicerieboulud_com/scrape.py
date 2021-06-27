@@ -84,12 +84,10 @@ def fetch_data():
                 )
             )
         )
-        hours_of_operation = (
-            hours_of_operation.replace("Daily", "").strip() or "<MISSING>"
-        )
+
         cms = "".join(tree.xpath('//strong[text()="REOPENING SOON"]/text()'))
         if cms:
-            hours_of_operation = "Coming Soon"
+            hours_of_operation = "Temporarily closed"
 
         row = [
             locator_domain,
