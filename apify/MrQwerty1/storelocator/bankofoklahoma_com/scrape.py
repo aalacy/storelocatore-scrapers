@@ -97,6 +97,7 @@ def fetch_data():
             start = j.get(f"{part}_open")
             end = j.get(f"{part}_close")
             if not start:
+                _tmp.append(f"{d}: Closed")
                 continue
             _tmp.append(f"{d}: {start} - {end}")
 
