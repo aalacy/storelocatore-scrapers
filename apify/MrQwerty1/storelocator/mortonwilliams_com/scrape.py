@@ -37,7 +37,6 @@ def write_output(data):
 def fetch_data():
     out = []
     c = "<MISSING>"
-    locations = []
     locator_domain = "https://www.mortonwilliams.com/"
     page_url = "https://www.mortonwilliams.com/our-locations"
 
@@ -48,6 +47,7 @@ def fetch_data():
     r = session.get(page_url, headers=headers)
     tree = html.fromstring(r.text)
     divs = reversed(tree.xpath("//div[@class='_2bafp']")[2:-2])
+    cnt = 0
 
     for d in divs:
         lines = d.xpath(".//text()")
@@ -57,9 +57,6 @@ def fetch_data():
                 [l.replace("\u200b", "").replace("\xa0", "").strip() for l in lines],
             )
         )
-        for line in lines:
-            if line.startswith("(") and line.endswith(")"):
-                lines.remove(line)
 
         if len(lines) == 1:
             c = lines[0]
@@ -73,6 +70,11 @@ def fetch_data():
 
         for loc in locations:
             street_address = loc.pop(0)
+            location_name = street_address
+
+            if loc[0].startswith("(") and loc[0].endswith(")"):
+                location_name += f" {loc.pop(0)}"
+
             if "(" in street_address:
                 street_address = street_address.split("(")[0].strip()
             if loc[0].startswith("New"):
@@ -85,10 +87,17 @@ def fetch_data():
                 city = c
                 state = "<MISSING>"
                 postal = "<MISSING>"
+                if city == "New Jersey":
+                    city = "Jersey City"
+                    state = c
+
+                if city == "Bronx":
+                    cnt += 1
+                    if cnt > 1:
+                        city = "Manhattan"
 
             phone = loc.pop(0)
             hours_of_operation = ";".join(loc)
-            location_name = street_address
 
             country_code = "US"
             store_number = "<MISSING>"
