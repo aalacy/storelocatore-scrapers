@@ -37,7 +37,6 @@ def fetch_data():
     states = search_sel.xpath(
         '//div[@class="locations"]//div[@class="col-xs-4"]/a/@href'
     )
-
     for state in states:
         state_url = base + state
         stores_req = session.get(state_url, headers=headers)
@@ -74,7 +73,28 @@ def fetch_data():
                     )
                 ).strip()
                 if len(location_name) <= 0:
-                    continue
+                    log.info("NO  NAAAAAMEE")
+
+                    page_url = (
+                        "https://www.boydautobody.com"
+                        + "".join(
+                            store.xpath(
+                                './/div[@class="col-md-9 col-sm-6 data"]/h3/a/@href'
+                            )
+                        ).strip()
+                    )
+                    log.info(page_url)
+                    store_req = session.get(page_url, headers=headers)
+                    store_sel = lxml.html.fromstring(store_req.text)
+
+                    location_name = "".join(
+                        store_sel.xpath(
+                            '//div[@class="location-info"]/div[@class="location_name"]/text()'
+                        )
+                    ).strip()
+                    if len(location_name) <= 0:
+                        log.info("NO  NAAAAAMEE2222222")
+
                 street_address = "".join(
                     store_sel.xpath(
                         '//div[@class="location-info"]/div[@class="address"]//span[@itemprop="streetAddress"]/text()'
@@ -105,9 +125,9 @@ def fetch_data():
                         '//div[@class="location-info"]//span[@itemprop="telephone"]/text()'
                     )
                 ).strip()
-
                 if len(phone) <= 0:
                     continue
+
                 location_type = "<MISSING>"
 
                 hours = store_sel.xpath(

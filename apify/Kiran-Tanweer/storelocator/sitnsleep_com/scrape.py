@@ -60,6 +60,10 @@ def fetch_data():
             location_name = loc.split(',name:"')[1].split('",')[0]
             street_address = loc.split(',street:"')[1].split('",')[0]
             street_address = street_address.replace("<br/>", " ")
+            if "(" in street_address:
+                street_address = street_address.split("(")[0]
+            if "&" in street_address:
+                street_address = street_address.split("&")[0]
             city = loc.split('{city:"')[1].split('",')[0]
             state = loc.split(',state:"')[1].split('",')[0]
             zip_postal = loc.split(',zip:"')[1].split('"}')[0]
@@ -79,7 +83,7 @@ def fetch_data():
             )
             latitude = loc.split('latitude:"')[1].split('",')[0]
             longitude = loc.split('longitude:"')[1].split('",')[0]
-            phone = loc.split(',phone:"')[1].split('",')[0]
+            phone = loc.split(',phone:"')[1].split('",')[0].replace('"', "")
             yield SgRecord(
                 locator_domain=DOMAIN,
                 page_url=page_url,
