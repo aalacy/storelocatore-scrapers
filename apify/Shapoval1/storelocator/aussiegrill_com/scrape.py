@@ -49,20 +49,30 @@ def fetch_data():
         location_name = j.get("Name")
         location_type = "<MISSING>"
         ad = "".join(j.get("Address"))
-        if not ad:
+        locinfo = "".join(j.get("LocationInfo"))
+        if locinfo.find("Coming") != -1:
             continue
         phone = "".join(j.get("Phone")).replace("Call:", "").strip() or "<MISSING>"
-        street_address = ad.split(",")[0].strip()
-        state = ad.split(",")[2].split()[0].strip()
-        postal = ad.split(",")[2].split()[-1].strip()
-        city = ad.split(",")[1].strip()
-        if ad.count(",") == 3:
-            street_address = ad.split(",")[0].strip() + " " + ad.split(",")[1].strip()
-            state = ad.split(",")[3].split()[0].strip()
-            postal = ad.split(",")[3].split()[-1].strip()
-            city = ad.split(",")[2].strip()
+        street_address = "<MISSING>"
+        state = "<MISSING>"
+        postal = "<MISSING>"
+        city = "<MISSING>"
+        if ad:
+            street_address = ad.split(",")[0].strip()
+            state = ad.split(",")[2].split()[0].strip()
+            postal = ad.split(",")[2].split()[-1].strip()
+            city = ad.split(",")[1].strip()
+            if ad.count(",") == 3:
+                street_address = (
+                    ad.split(",")[0].strip() + " " + ad.split(",")[1].strip()
+                )
+                state = ad.split(",")[3].split()[0].strip()
+                postal = ad.split(",")[3].split()[-1].strip()
+                city = ad.split(",")[2].strip()
         country_code = "US"
-
+        if city == "<MISSING>":
+            city = "".join(location_name).split(",")[0].capitalize().strip()
+            state = "".join(location_name).split(",")[1].strip()
         store_number = "<MISSING>"
         text = "".join(j.get("DirectionsURL"))
         try:
