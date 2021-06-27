@@ -3,6 +3,7 @@ from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
 import json
+from bs4 import BeautifulSoup as bs
 
 logger = SgLogSetup().get_logger("millersfresh")
 
@@ -24,6 +25,18 @@ def fetch_data():
         logger.info(f"{len(links)} found")
         for _ in links:
             page_url = f"https://www.compactpowerrents.com/location/{_['StoreId']}/{_['City']}/{_['State']}/{_['Zip']}"
+            country_code = _["Country"]
+            if country_code == "US" and len(_["Zip"].replace(" ", "")) == 6:
+                country_code = "CA"
+            phone = _["Phone"].strip()
+            if phone == "(000)000-0000" or phone == "Rock Hill, SC 29730":
+                session = SgRequests()
+                logger.info(page_url)
+                _phone = bs(
+                    session.get(page_url, headers=_headers).text, "lxml"
+                ).select_one("a.lv-link-phone.lv-text-gray-dark")
+                if _phone:
+                    phone = _phone.text.strip()
             yield SgRecord(
                 page_url=page_url,
                 store_number=_["StoreGeo"]["StoreId"],
@@ -32,9 +45,9 @@ def fetch_data():
                 city=_["City"],
                 state=_["State"],
                 zip_postal=_["Zip"],
-                country_code=_["Country"],
+                country_code=country_code,
                 location_type=_["HDStoreType"],
-                phone=_["Phone"],
+                phone=phone,
                 locator_domain=locator_domain,
                 latitude=_["StoreGeo"]["Lat"],
                 longitude=_["StoreGeo"]["Lon"],

@@ -4,7 +4,7 @@ from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import json
-
+import lxml.html
 
 website = "advhomehealth.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -33,6 +33,9 @@ def fetch_data():
     json_res = json.loads(api_res.text)
 
     store_list = json_res["data"]["locations"]
+
+    stores_req = session.get(base, headers=headers)
+    stores_sel = lxml.html.fromstring(stores_req.text)
 
     for store in store_list:
 
@@ -67,6 +70,20 @@ def fetch_data():
         location_type = "<MISSING>"
 
         hours_of_operation = "<MISSING>"
+        raw_text = stores_sel.xpath('//div[@class="heading"]/p')
+        for raw in raw_text:
+            if "All offices are open " in "".join(raw.xpath("text()")).strip():
+                try:
+                    hours_of_operation = (
+                        "".join(raw.xpath("text()"))
+                        .strip()
+                        .split("All offices are open")[1]
+                        .strip()
+                        .split("(")[0]
+                        .strip()
+                    )
+                except:
+                    pass
 
         latitude, longitude = store["latitude"], store["longitude"]
         raw_address = "<MISSING>"
