@@ -85,6 +85,9 @@ def fetch_data():
         hours = hours.replace("<p><span></span>", "")
         hours = hours.replace("</p>", "")
         hours = hours.replace("<br/>", " ")
+        coords = soup.find("div", {"id": "p7-club-map"})
+        lat = coords["data-lat"]
+        lng = coords["data-lon"]
 
         data.append(
             [
@@ -99,8 +102,8 @@ def fetch_data():
                 "<MISSING>",
                 phone,
                 "<MISSING>",
-                "<MISSING>",
-                "<MISSING>",
+                lat,
+                lng,
                 hours,
             ]
         )
