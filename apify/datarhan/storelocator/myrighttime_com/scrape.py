@@ -69,6 +69,10 @@ def fetch_data():
         country_code = "<MISSING>"
         store_number = "<MISSING>"
         phone = loc_dom.xpath('//a[contains(@href, "tel")]/text()')
+        if not phone:
+            phone = loc_dom.xpath('//font[contains(text(), "please call")]/text()')
+            if phone:
+                phone = [phone[0].split()[-1][:-1]]
         phone = phone[0] if phone else "<MISSING>"
         location_type = "<MISSING>"
         latitude = "<MISSING>"

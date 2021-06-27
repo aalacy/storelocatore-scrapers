@@ -1,5 +1,6 @@
 import re
 import csv
+import demjson
 from lxml import etree
 
 from sgrequests import SgRequests
@@ -40,6 +41,7 @@ def fetch_data():
     session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
 
     items = []
+    scraped_items = []
 
     start_url = "https://www.flyingstarcafe.com/find-us/"
     domain = re.findall(r"://(.+?)/", start_url)[0].replace("www.", "")
@@ -47,27 +49,36 @@ def fetch_data():
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
     }
     response = session.get(start_url, headers=hdr)
-    dom = etree.HTML(response.text)
 
-    all_locations = dom.xpath('//div[h5[@class="et_pb_toggle_title"]]')
-    for poi_html in all_locations:
-        store_url = start_url
-        location_name = poi_html.xpath(".//h5/text()")[0]
+    all_locations = all_locations = re.findall(
+        r"location_data.push\((.+?)\);",
+        response.text.replace("\n", "").replace("\t", ""),
+    )
+    for poi in all_locations:
+        poi = demjson.decode(poi)
+        store_url = poi["self_url"]
+        if store_url in scraped_items:
+            continue
+        loc_response = session.get(store_url)
+        loc_dom = etree.HTML(loc_response.text)
+
+        location_name = poi["name"]
+        poi_html = etree.HTML(poi["address"])
         street_address = " ".join(
             poi_html.xpath('.//div[@class="street-address"]/text()')
-        )
+        ).strip()
         if street_address.endswith(","):
             street_address = street_address[:-1]
         city = poi_html.xpath('.//span[@class="locality"]/text()')[0].strip()
         state = poi_html.xpath('.//span[@class="region"]/text()')[0]
         zip_code = poi_html.xpath('.//span[@class="postal-code"]/text()')[0]
-        country_code = "<MISSING>"
+        country_code = poi["country"].split("(")[-1][:-1]
         store_number = "<MISSING>"
-        phone = poi_html.xpath('.//a[@class="tel"]/span/text()')[0]
+        phone = poi["phone"]
         location_type = "<MISSING>"
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
-        hoo = poi_html.xpath('.//div[@id="hours-list"]//text()')
+        latitude = poi["lat"]
+        longitude = poi["long"]
+        hoo = loc_dom.xpath('//table[@class="wpseo-opening-hours"]//text()')
         hoo = [e.strip() for e in hoo if e.strip()]
         hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
 
@@ -87,8 +98,9 @@ def fetch_data():
             longitude,
             hours_of_operation,
         ]
-
-        items.append(item)
+        if store_url not in scraped_items:
+            scraped_items.append(store_url)
+            items.append(item)
 
     return items
 
