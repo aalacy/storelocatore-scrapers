@@ -44,7 +44,7 @@ def get_data(coord):
     session = SgRequests()
     r = session.get(api_url)
     try:
-        js = r.json()["js_data"]["stores"].values()
+        js = r.json()["stores"].values()
     except KeyError:
         return []
 
