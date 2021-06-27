@@ -72,7 +72,7 @@ def fetch_data():
     div = tree.xpath('//p[./strong[contains(text(), "Alpine Sho")]]')
     for d in div:
 
-        page_url = "https://www.alpineshop.com/locations-and-hours"
+        page_url = "https://www.alpineshop.com/info/locations-and-hours"
         location_name = "".join(d.xpath(".//strong/text()")).replace("\n", "").strip()
         location_type = "<MISSING>"
         ad = (
@@ -88,6 +88,8 @@ def fetch_data():
         street_address = f"{a.get('address1')} {a.get('address2')}".replace(
             "None", ""
         ).strip()
+        if street_address.find("(") != -1:
+            street_address = street_address.split("(")[0].strip()
         phone = (
             "".join(
                 d.xpath(
