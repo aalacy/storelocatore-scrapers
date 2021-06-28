@@ -39,6 +39,7 @@ def write_output(data):
 
 def fetch_data():
     locs = []
+    alllocs = []
     for x in range(0, 101):
         logger.info("Pulling Page %s..." % str(x))
         url = "https://www.hungryhowies.com/locations?page=" + str(x)
@@ -48,13 +49,13 @@ def fetch_data():
         for line in r.iter_lines(decode_unicode=True):
             if '<div class="details roundButton"><a href="/store/' in line:
                 lurl = (
-                    "https://www.hungryhowies.com/"
+                    "https://www.hungryhowies.com"
                     + line.split('href="')[1].split('"')[0]
                 )
                 locs.append(lurl)
             if '<div class="details roundButton"><a href="/STORE/' in line:
                 lurl = (
-                    "https://www.hungryhowies.com/"
+                    "https://www.hungryhowies.com"
                     + line.split('href="')[1].split('"')[0]
                 )
                 locs.append(lurl)
@@ -116,22 +117,26 @@ def fetch_data():
             phone = "<MISSING>"
         if "0000000" in phone:
             name = name + " - Coming Soon"
-        yield [
-            website,
-            loc,
-            name,
-            add,
-            city,
-            state,
-            zc,
-            country,
-            store,
-            phone,
-            typ,
-            lat,
-            lng,
-            hours,
-        ]
+        if phone == "0000000000":
+            phone = "<MISSING>"
+        if loc not in alllocs:
+            alllocs.append(loc)
+            yield [
+                website,
+                loc,
+                name,
+                add,
+                city,
+                state,
+                zc,
+                country,
+                store,
+                phone,
+                typ,
+                lat,
+                lng,
+                hours,
+            ]
 
 
 def scrape():

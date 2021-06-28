@@ -77,6 +77,7 @@ def fetch_data():
             .replace("\n", " ")
             .replace("\r", "")
             .split("Phone:")[-1]
+            .split("Fax:")[0]
             .strip()
         )
         location_type = "<MISSING>"
@@ -87,6 +88,12 @@ def fetch_data():
             .replace("&nbsp;", " ")
             .replace("\r\n", " ")
         )
+        if not hoo:
+            hoo = (
+                remove_tags(unquote(poi["Lobby"]))
+                .replace("&nbsp;", " ")
+                .replace("\r\n", " ")
+            )
         hours_of_operation = hoo if hoo else "<MISSING>"
 
         item = [
