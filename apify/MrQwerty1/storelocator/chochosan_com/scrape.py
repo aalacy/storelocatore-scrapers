@@ -55,7 +55,7 @@ def get_coords_hours():
                 tree = html.fromstring(source)
                 text = tree.xpath(".//text()")
                 for t in text:
-                    if not t.strip() or "Teppan" in t:
+                    if not t.strip() or "Teppan" in t or t[0].isdigit():
                         continue
                     if ":" in t:
                         if "(" in t:
@@ -64,6 +64,8 @@ def get_coords_hours():
 
                 hours.append(";".join(_tmp))
 
+    coords[1], coords[2] = coords[2], coords[1]
+    hours[1], hours[2] = hours[2], hours[1]
     return coords, hours
 
 
@@ -82,6 +84,7 @@ def fetch_data():
     )
 
     for d in divs:
+        _tmp = []
         cnt = 0
         line = d.xpath(".//text()")
         line = list(filter(None, [l.strip() for l in line]))
