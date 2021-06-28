@@ -1,7 +1,6 @@
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 import re
-import html
 import pandas as pd
 
 locator_domains = []
