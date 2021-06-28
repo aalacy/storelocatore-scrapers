@@ -420,7 +420,6 @@ def scrape():
         }
     )
 
-    final_df = pd.DataFrame()
     atm_office_df = pd.DataFrame()
 
     office_rows = []
