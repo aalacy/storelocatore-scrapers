@@ -1,3 +1,4 @@
+import re
 import csv
 from lxml import etree
 
@@ -36,50 +37,41 @@ def write_output(data):
 
 def fetch_data():
     # Your scraper here
-    session = SgRequests()
+    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
 
     items = []
 
-    DOMAIN = "leesfamousrecipe.com"
-    start_url = "https://www.leesfamousrecipe.com/locations/all"
-    headers = {
-        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.193 Safari/537.36"
+    start_url = "http://franksdiners.com/"
+    domain = re.findall(r"://(.+?)/", start_url)[0].replace("www.", "")
+    hdr = {
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
     }
-    response = session.get(start_url, headers=headers)
+    response = session.get(start_url, headers=hdr)
     dom = etree.HTML(response.text)
 
     all_locations = dom.xpath(
-        '//div[@class="region region-content"]//div[@class="field-content"]/a/@href'
-    )
-    for url in all_locations:
-        store_url = url
-        loc_response = session.get(store_url, headers=headers)
-        loc_dom = etree.HTML(loc_response.text)
-
-        location_name = loc_dom.xpath('//h1[@class="node-title"]/text()')
-        location_name = location_name[0] if location_name else "<MISSING>"
-        street_address = loc_dom.xpath('//div[@class="street-address"]/text()')
-        street_address = street_address[0].strip() if street_address else "<MISSING>"
-        city = loc_dom.xpath('//span[@class="locality"]/text()')
-        city = city[0] if city else "<MISSING>"
-        state = loc_dom.xpath('//span[@class="region"]/text()')
-        state = state[0] if state else "<MISSING>"
-        zip_code = loc_dom.xpath('//span[@class="postal-code"]/text()')
-        zip_code = zip_code[0] if zip_code else "<MISSING>"
+        '//div[@id="footer-widgets"]/div[@class="footer-widget"]'
+    )[:2]
+    for poi_html in all_locations:
+        store_url = start_url
+        location_name = poi_html.xpath(".//h4/text()")[0]
+        raw_data = poi_html.xpath('.//div[@class="textwidget"]/text()')[0].split("\r\n")
+        street_address = raw_data[1]
+        city = raw_data[-1].split(", ")[0]
+        state = raw_data[-1].split(", ")[-1]
+        zip_code = "<MISSING>"
         country_code = "<MISSING>"
         store_number = "<MISSING>"
-        phone = loc_dom.xpath('//div[@class="tel"]/text()')
-        phone = phone[0].strip() if phone and phone[0].strip() != "-" else "<MISSING>"
+        phone = raw_data[0]
         location_type = "<MISSING>"
         latitude = "<MISSING>"
         longitude = "<MISSING>"
-        hoo = loc_dom.xpath('//div[@class="group-hours"]//text()')
-        hoo = [e.strip() for e in hoo if e.strip() and "Lobby" not in e]
-        hoo = [e for e in hoo if "Drive" not in e]
+        hoo = dom.xpath('//span[strong[contains(text(), "Hours of Operation")]]/text()')
+        hoo = [e.strip() for e in hoo if e.strip()]
         hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
 
         item = [
-            DOMAIN,
+            domain,
             store_url,
             location_name,
             street_address,
