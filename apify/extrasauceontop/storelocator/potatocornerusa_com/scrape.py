@@ -3,6 +3,31 @@ import pandas as pd
 from sgrequests import SgRequests
 import json
 
+
+def extract_json(html_string):
+    json_objects = []
+    count = 0
+
+    brace_count = 0
+    for element in html_string:
+
+        if element == "{":
+            brace_count = brace_count + 1
+            if brace_count == 1:
+                start = count
+
+        elif element == "}":
+            brace_count = brace_count - 1
+            if brace_count == 0:
+                end = count
+                try:
+                    json_objects.append(json.loads(html_string[start : end + 1]))
+                except Exception:
+                    pass
+        count = count + 1
+    return json_objects
+
+
 locator_domains = []
 page_urls = []
 location_names = []
@@ -25,12 +50,27 @@ headers = {
 
 url = "https://www.potatocornerusa.com"
 response = session.get(url, headers=headers).text
+
 soup = bs(response, "html.parser")
+state_urls = []
+state_location_urls = (
+    soup.find("li", attrs={"id": "DrpDwnMn03"}).find("ul").find_all("li")
+)
+for li in state_location_urls:
+    state_urls.append(li.find("a")["href"])
 
-script = soup.find("script", attrs={"id": "wix-viewer-model"}).text.strip()
-data = json.loads(script)
+state_urls = state_urls[1:]
 
-for key in data["siteFeaturesConfigs"]["router"]["routes"]:
+response = response.split("routes")[1]
+
+json_objects = extract_json(response)
+data = json_objects[0]
+with open("file.txt", "w", encoding="utf-8") as output:
+    json.dump(json_objects, output, indent=4)
+
+data["./galleria-at-sunset"] = {"type": "Static", "pageId": "oki4j"}
+
+for key in data:
     route = key[1:]
     location_url = url + route
     location_data = session.get(location_url).text
@@ -47,10 +87,12 @@ for key in data["siteFeaturesConfigs"]["router"]["routes"]:
         hours = "<MISSING>"
 
         location_name = soup.find("span", attrs={"class": "color_28"}).text.strip()
+
         full_address_and_phone = soup.find_all(
             attrs={"style": "font-family:montserrat,sans-serif"}
         )
 
+        phone = "<MISSING>"
         for item in full_address_and_phone:
             if item.text.strip() == "Store Address:":
                 full_address = (
@@ -107,6 +149,20 @@ for key in data["siteFeaturesConfigs"]["router"]["routes"]:
         latitudes.append(latitude)
         longitudes.append(longitude)
         hours_of_operations.append(hours)
+
+for url in state_urls:
+    state_response = session.get(url).text
+    state_soup = bs(state_response, "html.parser")
+    grids = state_soup.find_all("div", attrs={"class": "_2bafp"})
+    for grid in grids:
+        if "coming soon" in str(grid.text.strip().encode("utf-8").lower()):
+            grid_text = str(grid.text.strip().encode("utf-8").lower())
+
+            x = 0
+            for location_name in location_names:
+                if location_name.lower() in grid_text:
+                    hours_of_operations[x] = "Coming Soon"
+                x = x + 1
 
 df = pd.DataFrame(
     {

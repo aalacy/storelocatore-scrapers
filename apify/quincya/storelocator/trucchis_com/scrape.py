@@ -38,7 +38,7 @@ def write_output(data):
 
 def fetch_data():
 
-    base_link = "https://www.trucchis.com/"
+    base_link = "https://www.trucchis.com"
 
     user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36"
     headers = {"User-Agent": user_agent}
@@ -46,13 +46,20 @@ def fetch_data():
     session = SgRequests()
     req = session.get(base_link, headers=headers)
     base = BeautifulSoup(req.text, "lxml")
-    data = []
 
-    items = base.find(class_="site-nav").find_all(class_="dropdown")[-2].find_all("a")
+    data = []
+    all_links = []
+
     locator_domain = "trucchis.com"
 
-    for i, item in enumerate(items):
+    items = base.find(class_="site-nav").find_all(class_="dropdown")[-2].find_all("a")
+
+    for item in items:
         link = base_link + item["href"]
+        if "pages" in link:
+            all_links.append(link)
+
+    for i, link in enumerate(all_links):
         req = session.get(link, headers=headers)
         base = BeautifulSoup(req.text, "lxml")
 
@@ -81,6 +88,7 @@ def fetch_data():
         hours_of_operation = (
             " ".join(list(base.find(class_="collection-container").p.stripped_strings))
             .replace("Store Hours", "")
+            .split("Senior")[0]
             .strip()
         )
 

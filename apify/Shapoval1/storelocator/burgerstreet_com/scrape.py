@@ -57,6 +57,8 @@ def fetch_data():
             .replace("Zip :", "")
             .strip()
         )
+        if postal.find("US") != -1:
+            postal = "<MISSING>"
         phone = (
             "".join(b.xpath('.//*[contains(text(), "Phone")]/text()'))
             .replace("Phone :", "")
@@ -73,7 +75,7 @@ def fetch_data():
         hours_of_operation = (
             " ".join(
                 b.xpath(
-                    './/*[contains(text(), "pm")]/text() | .//p[contains(text(), "Temporarily")]/text()'
+                    './/*[contains(text(), "pm")]/text() | .//p[contains(text(), "Temporarily")]/text() | .//p[contains(text(), "Closed on")]/text()'
                 )
             )
             .replace("Time :", "")

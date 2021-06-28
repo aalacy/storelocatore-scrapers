@@ -1,16 +1,17 @@
 from bs4 import BeautifulSoup
 from sglogging import SgLogSetup
 from sgrequests import SgRequests
+from sgselenium import SgChrome
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as EC
 from lxml import html
 import csv
-import re
+import time
 
 logger = SgLogSetup().get_logger("kmart_com")
 
 session = SgRequests()
-headers = {
-    "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.90 Safari/537.36"
-}
 DOMAIN = "https://www.kmart.com/"
 
 
@@ -44,10 +45,60 @@ def write_output(data):
             writer.writerow(row)
 
 
+def special_cookie():
+    with SgChrome() as driver:
+        url_cookie = "https://www.kmart.com/stores.html"
+        headers = {}
+        headers["cookie"] = ""
+        headers[
+            "user-agent"
+        ] = "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.66 Safari/537.36"
+        driver.get(url_cookie)
+        xapth_cookie_acceptance = '//*[@id="onetrust-accept-btn-handler"]'
+        try:
+            accept = WebDriverWait(driver, 50).until(
+                EC.visibility_of_element_located((By.XPATH, xapth_cookie_acceptance))
+            )
+            driver.execute_script("arguments[0].click();", accept)
+            logger.info("cookie accepted")
+
+        except Exception:
+            headers["cookie"] = ""
+        time.sleep(20)
+        logger.info("First webdriverwait:%s" % headers["cookie"])
+        for r in driver.requests:
+            if "/stores.html" in r.path:
+                logger.info("Found Path URL: /stores.html")
+                try:
+                    headers["cookie"] = r.headers["cookie"]
+                except Exception:
+                    try:
+                        headers["cookie"] = r.response.headers["cookie"]
+                    except Exception:
+                        headers["cookie"] = headers["cookie"]
+        logger.info("Headers: %s\n" % headers)
+        return headers
+
+
+def get_hoo(res):
+    data_raw = html.fromstring(res.text, "lxml")
+    hoo_obj = data_raw.xpath(
+        '//table[contains(@itemprop, "department")=False]//tr[@itemprop="openingHoursSpecification"]'
+    )
+    hoo_data = [" ".join(th.xpath("./td/text()")) for th in hoo_obj]
+    hoo_clean = "; ".join(hoo_data)
+    if hoo_clean:
+        return hoo_clean
+    else:
+        return "<MISSING>"
+
+
 def fetch_data():
     # Your scraper here
     data = []
-    pattern = re.compile(r"\s\s+")
+
+    headers = special_cookie()
+    logger.info(f"Headers:{headers}")
     url = "https://www.kmart.com/stores.html/"
     r_base = session.get(url, headers=headers)
     r_base_data = html.fromstring(r_base.text, "lxml")
@@ -90,18 +141,7 @@ def fetch_data():
             location_type = "<MISSING>"
             latitude = r.text.split("lat = ", 1)[1].split(",", 1)[0]
             longitude = r.text.split("lon = ", 1)[1].split(",", 1)[0]
-            hoo = soup.text.split("Hours")[1].split("Holiday", 1)[0]
-            hoo = re.sub(pattern, "", hoo).replace("pm", "pm ").replace("\n", " ")
-            hoo = hoo.replace("day", "day ").replace("  ", " ")
-            try:
-                hours_of_operation = hoo.split("In-Store", 1)[0]
-            except:
-                pass
-            try:
-                hours_of_operation = hoo.split("Nearby", 1)[0]
-            except:
-                pass
-
+            hours_of_operation = get_hoo(r)
             data.append(
                 [
                     locator_domain,
@@ -125,7 +165,11 @@ def fetch_data():
 
 
 def scrape():
+    logger.info("Scraping Started")
     data = fetch_data()
+    logger.info(
+        f"[Scraping Finished | Total Stores Count:{len(data)}| Writing it in CSV]"
+    )
     write_output(data)
 
 

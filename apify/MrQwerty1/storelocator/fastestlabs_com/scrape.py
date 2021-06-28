@@ -61,7 +61,11 @@ def fetch_data():
 
         _tmp = []
         text = j.get("LocationHours")
-        text = "[" + text.replace("[", "{").replace("]", "},")[:-1] + "]"
+        try:
+            text = "[" + text.replace("[", "{").replace("]", "},")[:-1] + "]"
+        except AttributeError:
+            text = "[]"
+
         hours = json.loads(text)
         for h in hours:
             day = h.get("Interval")
@@ -74,7 +78,7 @@ def fetch_data():
             else:
                 _tmp.append(f"{day}: {start} - {close}")
 
-        hours_of_operation = ";".join(_tmp) or "<MISSING>"
+        hours_of_operation = ";".join(_tmp) or "Coming Soon"
 
         row = [
             locator_domain,

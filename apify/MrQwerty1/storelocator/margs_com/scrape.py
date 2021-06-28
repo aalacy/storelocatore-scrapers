@@ -49,17 +49,11 @@ def get_coords_from_google_url(url):
 
 
 def get_urls():
-    urls = []
     session = SgRequests()
     r = session.get("https://www.margs.com/locations")
     tree = html.fromstring(r.text)
-    states = tree.xpath("//h2/a/@href")
-    for state in states:
-        r = session.get(state)
-        root = html.fromstring(r.text)
-        urls += root.xpath("//a[./span[contains(text(),'INFO & ORDER NOW')]]/@href")
 
-    return urls
+    return tree.xpath("//div[@id='SITE_PAGES']//a/@href")
 
 
 def get_data(page_url):
@@ -70,26 +64,23 @@ def get_data(page_url):
     tree = html.fromstring(r.text)
 
     location_name = "".join(tree.xpath("//title/text()")).split("|")[0].strip()
-    line = tree.xpath(
-        "//h2[.//span[contains(text(), 'Phone')] or ./span[contains(text(), 'Phone')]]/preceding-sibling::h2/span//text()"
-    )
-    street_address = line[0]
-    line = line[-1].replace("\xa0", " ")
-    city = line.split(",")[0].strip()
-    line = line.split(",")[1].strip()
-    postal = line.split()[-1]
-    state = line.replace(postal, "").strip()
+    line = "".join(tree.xpath("//div[./h1]/following-sibling::div[1]//text()"))
+    line = line.split(",")
+    street_address = line[0].strip()
+    city = line[1].strip()
+    if len(line) == 3:
+        postal = line[-1].split()[-1].strip()
+        state = line[-1].replace(postal, "").strip()
+    else:
+        postal = line[-1].strip()
+        state = line[-2].strip()
     country_code = "US"
     store_number = "<MISSING>"
     phone = (
-        "".join(
-            tree.xpath(
-                "//h2[.//span[contains(text(), 'Phone')] or ./span[contains(text(), 'Phone')]]//text()"
-            )
-        )
-        .replace("Phone:", "")
-        .strip()
+        "".join(tree.xpath("//div[./h1]/following-sibling::div[2]//text()")).strip()
+        or "<MISSING>"
     )
+
     try:
         text = tree.xpath("//a[contains(@href, 'google')]/@href")[0]
         latitude, longitude = get_coords_from_google_url(text)
@@ -99,7 +90,7 @@ def get_data(page_url):
 
     _tmp = []
     h2 = tree.xpath(
-        "//h2[.//span[contains(text(), 'Sunday')]]|//h2[.//span[contains(text(), 'Sunday')]]/following-sibling::h2|//p[.//span[contains(text(), 'Sunday')]]|//p[.//span[contains(text(), 'Sunday')]]/following-sibling::h2"
+        "//p[.//span[contains(text(), 'Sunday')]]|//p[.//span[contains(text(), 'Sunday')]]/following-sibling::p"
     )[:7]
 
     for h in h2:

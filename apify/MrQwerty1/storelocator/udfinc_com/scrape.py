@@ -39,7 +39,7 @@ def get_data(coord):
     rows = []
     lat, lon = coord
     locator_domain = "https://www.udfinc.com/"
-    api_url = f"https://www.udfinc.com/wp-admin/admin-ajax.php?action=store_search&lat={lat}&lng={lon}"
+    api_url = f"https://www.udfinc.com/wp-admin/admin-ajax.php?action=store_search&lat={lat}&lng={lon}&max_results=100&search_radius=200"
 
     session = SgRequests()
     r = session.get(api_url)
@@ -97,7 +97,7 @@ def get_data(coord):
 def fetch_data():
     out = []
     s = set()
-    coords = static_coordinate_list(radius=10, country_code=SearchableCountries.USA)
+    coords = static_coordinate_list(radius=200, country_code=SearchableCountries.USA)
 
     with futures.ThreadPoolExecutor(max_workers=10) as executor:
         future_to_url = {executor.submit(get_data, coord): coord for coord in coords}

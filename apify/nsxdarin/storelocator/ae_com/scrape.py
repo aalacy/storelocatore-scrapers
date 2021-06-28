@@ -39,7 +39,7 @@ def write_output(data):
 
 
 def fetch_data():
-    locs = []
+    locs = ["https://storelocations.ae.com/us/ky/louisville/4801/c564-outer-loop.html"]
     url = "https://storelocations.ae.com/sitemap.xml"
     r = session.get(url, headers=headers)
     for line in r.iter_lines():
@@ -123,7 +123,7 @@ def fetch_data():
         if "Aerie" in name and "American Eagle" not in name:
             typ = "Aerie"
         store = "<MISSING>"
-        if city != "" and hours != "CLOSED":
+        if city != "":
             yield [
                 website,
                 loc,

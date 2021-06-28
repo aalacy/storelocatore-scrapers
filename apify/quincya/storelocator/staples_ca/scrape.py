@@ -1,111 +1,124 @@
-from sgrequests import SgRequests
-from bs4 import BeautifulSoup
 import csv
-import time
-from random import randint
 import json
-from sglogging import SgLogSetup
 
-logger = SgLogSetup().get_logger('staples_ca')
+from bs4 import BeautifulSoup
 
+from sgrequests import SgRequests
 
 
 def write_output(data):
-	with open('data.csv', mode='w', encoding="utf-8") as output_file:
-		writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+    with open("data.csv", mode="w", encoding="utf-8") as output_file:
+        writer = csv.writer(
+            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+        )
 
-		# Header
-		writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-		# Body
-		for row in data:
-			writer.writerow(row)
+        # Header
+        writer.writerow(
+            [
+                "locator_domain",
+                "page_url",
+                "location_name",
+                "street_address",
+                "city",
+                "state",
+                "zip",
+                "country_code",
+                "store_number",
+                "phone",
+                "location_type",
+                "latitude",
+                "longitude",
+                "hours_of_operation",
+            ]
+        )
+        # Body
+        for row in data:
+            writer.writerow(row)
+
 
 def fetch_data():
-	
-	base_link = "https://stores.staples.ca/"
 
-	user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36'
-	HEADERS = {'User-Agent' : user_agent}
+    base_link = "https://maps.stores.staples.ca/api/getAsyncLocations?template=search&level=search&search=&lat=62.454674&lng=-114.405169&radius=5000"
 
-	session = SgRequests()
-	req = session.get(base_link, headers = HEADERS)
-	time.sleep(randint(1,2))
-	try:
-		base = BeautifulSoup(req.text,"lxml")
-		logger.info("Got today page")
-	except (BaseException):
-		logger.info('[!] Error Occured. ')
-		logger.info('[?] Check whether system is Online.')
+    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36"
+    headers = {"User-Agent": user_agent}
 
-	all_scripts = base.find_all('script')
-	for script in all_scripts:
-		if "coordinates" in str(script):
-			script = script.text.replace('\n', '').strip()
-			break
+    session = SgRequests()
+    raw_data = session.get(base_link, headers=headers).json()["maplist"]
 
-	js_data = script[script.find('FeatureCollection')+30:script.rfind('}}]},')+3]
-	js_data = json.loads(js_data)
+    item = BeautifulSoup(raw_data, "lxml")
+    stores = (
+        str(item.contents[0])
+        .split('list">')[1]
+        .split(",</div>")[0]
+        .replace("\r\n", "")
+        .split(",{   ")
+    )
 
-	links = []
-	for i in js_data: 
-		link = "https://stores.staples.ca/" + i['properties']['slug']
-		links.append(link)
+    data = []
+    for i in stores:
+        if i[0] != "{":
+            i = "{" + i
+        i = i.replace('"{\\', "{\\").replace("\\", "").split(',"children')[0] + "}}"
+        store = json.loads(i)
 
-	data = []
-	for i, link in enumerate(links):
-		logger.info("Link %s of %s" %(i+1,len(links)))
-		req = session.get(link, headers = HEADERS)
-		time.sleep(randint(1,2))
-		try:
-			item = BeautifulSoup(req.text,"lxml")
-			logger.info(link)
-		except (BaseException):
-			logger.info('[!] Error Occured. ')
-			logger.info('[?] Check whether system is Online.')
+        locator_domain = "staples.ca"
+        location_name = store["location_name"] + " " + store["fid"]
+        street_address = (
+            (store["address_1"] + " " + store["address_2"])
+            .replace("u00e9", "e")
+            .replace("u00e7", "c")
+            .replace("u00f4", "o")
+            .strip()
+        )
+        city = store["city"]
+        state = store["region"]
+        zip_code = store["post_code"]
+        country_code = store["country"]
+        store_number = store["fid"].replace("CA-", "").strip()
+        location_type = "<MISSING>"
+        phone = store["local_phone"]
 
-		all_scripts = item.find_all('script', attrs={'type': "application/ld+json"})
-		for script in all_scripts:
-			if "latitude" in str(script):
-				script = script.text.replace('\n', '').strip()
-				break
+        hours_of_operation = ""
+        raw_hours = store["hours_sets:primary"]["days"]
+        for day in raw_hours:
+            if raw_hours[day] == "closed":
+                clean_hours = day + " closed"
+            else:
+                opens = raw_hours[day][0]["open"]
+                closes = raw_hours[day][0]["close"]
+                clean_hours = day + " " + opens + "-" + closes
+            hours_of_operation = (hours_of_operation + " " + clean_hours).strip()
 
-		store = json.loads(script)
+        latitude = store["lat"]
+        longitude = store["lng"]
+        link = store["url"]
 
-		locator_domain = "stores.staples.ca"
-		location_name = store['name'] + " " + store['branchCode']
-		street_address = store['address']['streetAddress'].replace(',','').strip()
-		if "475 Grand Blvd" in street_address:
-			city = "L'Ile Perrot"
-		else:
-			city = store['address']['addressLocality']
-		title = item.title.text
-		state = title[title.find("|")-4:title.find("|")].strip()
-		zip_code = store['address']['postalCode']
+        data.append(
+            [
+                locator_domain,
+                link,
+                location_name,
+                street_address,
+                city,
+                state,
+                zip_code,
+                country_code,
+                store_number,
+                phone,
+                location_type,
+                latitude,
+                longitude,
+                hours_of_operation,
+            ]
+        )
 
-		country_code = "CA"
-		store_number = store['branchCode'].replace("CA-","").strip()
-		
-		location_type = "<MISSING>"
-		phone = store['telephone']
+    return data
 
-		hours_of_operation = ""
-		raw_hours = store['openingHoursSpecification']
-		for hours in raw_hours:
-			day = hours['dayOfWeek']
-			opens = hours['opens']
-			closes = hours['closes']
-			clean_hours = day + " " + opens + "-" + closes
-			hours_of_operation = (hours_of_operation + " " + clean_hours).strip()
-
-		latitude = store['geo']['latitude']
-		longitude = store['geo']['longitude']
-
-		data.append([locator_domain, link, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
-
-	return data
 
 def scrape():
-	data = fetch_data()
-	write_output(data)
+    data = fetch_data()
+    write_output(data)
+
 
 scrape()
