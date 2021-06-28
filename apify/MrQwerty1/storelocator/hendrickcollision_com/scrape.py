@@ -81,6 +81,8 @@ def get_data(url):
     for d in days:
         day = "".join(d.xpath("./span[1]/text()")).strip()
         time = "".join(d.xpath("./span[2]/text()")).strip()
+        if "(" in time:
+            time = time.split("(")[0].strip()
         _tmp.append(f"{day}: {time}")
 
     hours_of_operation = ";".join(_tmp) or "<MISSING>"

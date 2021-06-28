@@ -69,8 +69,10 @@ def fetch_data():
         city = addr.city
         state = addr.state
         zip_code = addr.postcode
-        country_code = addr.country
-        country_code = country_code if country_code else "<MISSING>"
+        if len(zip_code) == 5:
+            country_code = "US"
+        else:
+            country_code = "CA"
         store_number = "<MISSING>"
         phone = loc_dom.xpath('//a[contains(@href, "tel")]/text()')
         phone = phone[0] if phone else "<MISSING>"

@@ -99,7 +99,7 @@ def fetch_data():
             if len(ad) < 3:
                 adr = " ".join(ad)
             a = usaddress.tag(adr, tag_mapping=tag)[0]
-            location_type = "ATM"
+            location_type = "Branch and ATM"
             street_address = f"{a.get('address1')} {a.get('address2')}".replace(
                 "None", ""
             ).strip()
@@ -127,10 +127,12 @@ def fetch_data():
                 .strip()
                 or "<MISSING>"
             )
-            if hours_of_operation.find("This") != -1:
-                hours_of_operation = "<MISSING>"
+
             if hours_of_operation.find("The lobby") != -1:
                 hours_of_operation = hours_of_operation.split("The lobby")[0].strip()
+            if "office" in hours_of_operation:
+                location_type = "Office"
+                hours_of_operation = "<MISSING>"
 
             row = [
                 locator_domain,
