@@ -38,6 +38,7 @@ def fetch_data():
                 locator_domain=locator_domain,
                 latitude=_["latitude"],
                 longitude=_["longitude"],
+                phone=_.get("phone"),
                 hours_of_operation=" ".join(hours),
             )
 
