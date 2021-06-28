@@ -26,7 +26,6 @@ headers = {
 
 def fetch_data():
     # Your scraper here
-    # base = "https://www.java-u.com"
     api_url = "https://www.java-u.com/wp-admin/admin-ajax.php?action=store_search&lat=45.501689&lng=-73.567256&max_results=5000&radius=50&autoload=1"
     api_res = session.get(api_url, headers=headers)
 
