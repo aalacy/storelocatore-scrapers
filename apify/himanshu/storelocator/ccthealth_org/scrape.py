@@ -118,7 +118,7 @@ def fetch_data():
         except:
             latitude = ""
             longitude = ""
-        print(latitude)
+
         store = []
         store.append(base_url)
         store.append(location_name)
