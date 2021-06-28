@@ -3,6 +3,7 @@ from bs4 import BeautifulSoup as bs
 import re
 import pandas as pd
 
+
 def scrape():
     locator_domains = []
     page_urls = []
@@ -511,5 +512,6 @@ def scrape():
     df = df.fillna("<MISSING>")
 
     df.to_csv("data.csv", index=False)
+
 
 scrape()
