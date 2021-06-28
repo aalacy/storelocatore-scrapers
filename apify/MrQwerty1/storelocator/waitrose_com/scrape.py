@@ -137,7 +137,7 @@ def get_data(page_url):
         locator_domain,
         page_url,
         location_name,
-        street_address,
+        street_address.replace("&#039;", "'"),
         city,
         state,
         postal,

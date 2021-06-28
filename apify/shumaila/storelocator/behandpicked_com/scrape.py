@@ -103,7 +103,10 @@ def fetch_data():
         city = city.lstrip().replace(",", "")
         state = state.lstrip().replace(",", "")
         pcode = pcode.lstrip().replace(",", "")
-
+        try:
+            street = street.split("located", 1)[0]
+        except:
+            pass
         data.append(
             [
                 "https://behandpicked.com/",

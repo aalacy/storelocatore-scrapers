@@ -59,6 +59,7 @@ def fetch_data():
                 sp1.select_one("div.wpb_map_wraper iframe")["src"]
                 .split("!2d")[1]
                 .split("!3m")[0]
+                .split("!2m")[0]
                 .split("!3d")
             )
             yield SgRecord(
@@ -66,7 +67,7 @@ def fetch_data():
                 location_name=" ".join(_.h4.stripped_strings),
                 street_address=addr[0],
                 city=addr[-1].split(",")[0].strip(),
-                state=addr[-1].split(",")[1].strip().split(" ")[0].strip(),
+                state=" ".join(addr[-1].split(",")[1].strip().split(" ")[:-1]),
                 zip_postal=addr[-1].split(",")[1].strip().split(" ")[-1].strip(),
                 country_code="US",
                 phone=phone,

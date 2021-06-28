@@ -13,9 +13,9 @@ def fetch_data():
     with SgRequests() as session:
         locations = session.get(base_url, headers=_headers).json()
         for _ in locations:
-            if _["country"] not in ["US", "CA"]:
+            if _["address"]["country"] not in ["US", "CA"]:
                 continue
-            page_url = f"https://www.eq3.com/us/en/shopwithus/eq3-locations/{_['id']}/{_['city']}/{_['slug']}"
+            page_url = f"https://www.eq3.com/us/en/shopwithus/eq3-locations/{_['id']}/{_['address']['city']}/{_['slug']}"
             hours = []
             for hh in _["hours"]["store"]:
                 time = "closed"
@@ -25,15 +25,15 @@ def fetch_data():
             yield SgRecord(
                 page_url=page_url,
                 location_name=_["name"],
-                street_address=_["streetAddress"],
-                city=_["city"],
-                state=_["province"],
+                street_address=_["address"]["streetAddress"],
+                city=_["address"]["city"],
+                state=_["address"]["province"],
                 latitude=_["lat"],
                 longitude=_["lng"],
-                zip_postal=_["postalCode"],
-                country_code=_["country"],
+                zip_postal=_["address"]["postalCode"],
+                country_code=_["address"]["country"],
                 location_type=_["type"],
-                phone=_["phone"],
+                phone=_["address"]["phoneNumbers"][0],
                 locator_domain=locator_domain,
                 hours_of_operation="; ".join(hours),
             )
