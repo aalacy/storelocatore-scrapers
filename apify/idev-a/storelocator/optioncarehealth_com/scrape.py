@@ -26,7 +26,7 @@ def fetch_data():
             yield SgRecord(
                 page_url=page_url,
                 location_name=link.h5.text.strip(),
-                street_address=" ".join(addr[:-1]),
+                street_address=" ".join(addr[:-1]).replace('Benton Business Park',''),
                 city=addr[-1].split(",")[0].strip(),
                 state=" ".join(addr[-1].split(",")[1].strip().split(" ")[:-1]),
                 zip_postal=addr[-1].split(",")[1].strip().split(" ")[-1].strip(),
