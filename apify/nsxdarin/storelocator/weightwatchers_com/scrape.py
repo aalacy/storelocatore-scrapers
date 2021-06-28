@@ -1,10 +1,13 @@
 import csv
 from sgrequests import SgRequests
+from sglogging import SgLogSetup
 
 session = SgRequests()
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
+
+logger = SgLogSetup().get_logger("weightwatchers_com")
 
 
 def write_output(data):
@@ -36,15 +39,19 @@ def write_output(data):
 
 def fetch_data():
     locs = []
+    locinfo = []
     url = "https://www.weightwatchers.com/us/sitemap-location.xml"
     r = session.get(url, headers=headers, stream=True)
     for line in r.iter_lines():
         line = str(line.decode("utf-8"))
         if "<loc>https://www.weightwatchers.com/us/find-a-workshop/" in line:
-            locs.append(line.split("<loc>")[1].split("<")[0])
+            lurl = line.split("<loc>")[1].split("<")[0]
+            if lurl not in locs:
+                locs.append(lurl)
     website = "weightwatchers.com"
     country = "US"
     for loc in locs:
+        logger.info(loc)
         name = ""
         typ = "<MISSING>"
         add = ""
@@ -97,22 +104,29 @@ def fetch_data():
                             hours = hours + "; " + hrs
         if hours == "":
             hours = "<MISSING>"
-        yield [
-            website,
-            loc,
-            name,
-            add,
-            city,
-            state,
-            zc,
-            country,
-            store,
-            phone,
-            typ,
-            lat,
-            lng,
-            hours,
-        ]
+        info = add + "|" + city
+        if info not in locinfo and city != "":
+            locinfo.append(info)
+            if "Zoom.com" in add:
+                add = "<MISSING>"
+            if "1162350/ww-studio--virtual-palmyra" in loc:
+                add = "<MISSING>"
+            yield [
+                website,
+                loc,
+                name,
+                add,
+                city,
+                state,
+                zc,
+                country,
+                store,
+                phone,
+                typ,
+                lat,
+                lng,
+                hours,
+            ]
 
 
 def scrape():

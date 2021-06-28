@@ -1,7 +1,6 @@
 import csv
 import json
 
-from concurrent import futures
 from lxml import html
 from sgrequests import SgRequests
 
@@ -32,7 +31,8 @@ def write_output(data):
         )
 
         for row in data:
-            writer.writerow(row)
+            if row is not None:
+                writer.writerow(row)
 
 
 def clean_phone(text):
@@ -81,7 +81,7 @@ def get_data(page_url):
         location_name = location_name.split("(")[0].strip()
     if "ONLY" in location_name:
         location_name = location_name.split("ONLY")[0].strip()
-    location_name = location_name.replace("&amp;", "&")
+    location_name = location_name.replace("&amp;", "&").replace("&#39;", "'")
     a = j.get("address")
     street_address = a.get("streetAddress") or "<MISSING>"
     if street_address.endswith(","):
@@ -124,25 +124,11 @@ def get_data(page_url):
 
 def fetch_data():
     out = []
-    exc = []
     urls = get_urls()
 
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
-        future_to_url = {executor.submit(get_data, url): url for url in urls}
-        for future in futures.as_completed(future_to_url):
-            row = future.result()
-            if row:
-                out.append(row)
-            else:
-                url = future_to_url[future].replace(".com", ".ca")
-                exc.append(url)
-
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
-        future_to_url = {executor.submit(get_data, e): e for e in exc}
-        for future in futures.as_completed(future_to_url):
-            row = future.result()
-            if row:
-                out.append(row)
+    for url in urls:
+        data_stuff = get_data(url)
+        out.append(data_stuff)
 
     return out
 

@@ -38,6 +38,18 @@ def try_again_addr(soup, soup1, raw_addr, k):
             return x
 
 
+def determine_coords(scripts):
+    lat = "<MISSING>"
+    lon = "<MISSING>"
+    data = scripts[-2].text.split(",")
+    for i, val in enumerate(data):
+        if all(j.isdigit() or j == "-" or j == "." for j in val):
+            lon = data[i] if data[i][0] == "-" or data[i][1] == "-" else data[i + 1]
+            lat = data[i] if data[i] != lon else data[i + 1]
+            return (lat, lon)
+    return (lat, lon)
+
+
 def fetch_data():
     logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
     url = "https://www.superecono.com/tiendas"
@@ -179,6 +191,9 @@ def fetch_data():
                     )
                 except Exception:
                     k["latitude"], k["longitude"] = ["<MISSING>", "<MISSING>"]
+            if k["latitude"] == "<MISSING>":
+                scripts = soup1.find_all("script", {"nonce": True})
+                k["latitude"], k["longitude"] = determine_coords(scripts)
             if k["street_address"] == "<MISSING>":
                 k["street_address"] = try_again_addr(soup, soup1, raw_addr, k)
             yield k

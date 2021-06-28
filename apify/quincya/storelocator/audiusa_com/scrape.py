@@ -46,7 +46,7 @@ def fetch_data():
     locator_domain = "audiusa.com"
 
     for store in stores:
-        location_name = store["chainName"]
+        location_name = store["name"]
         street_address = store["address"]["display"][0].split(",")[0].strip()
         city = store["address"]["city"]
         state = store["address"]["region"]

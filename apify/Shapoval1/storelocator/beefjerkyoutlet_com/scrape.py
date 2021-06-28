@@ -44,7 +44,7 @@ def fetch_data():
     r = session.get(api_url, headers=headers)
     tree = html.fromstring(r.text)
     div = tree.xpath('//div[@class="location-content"]')
-
+    s = set()
     for d in div:
         slug = "".join(d.xpath('.//a[@class="btn-yellow"]/@href'))
         page_url = f"{locator_domain}{slug}"
@@ -100,6 +100,15 @@ def fetch_data():
         if hours_of_operation.find("Temporarily Closed") != -1:
             hours_of_operation = "Temporarily Closed"
 
+        line = page_url
+        if (
+            line in s
+            and line.find("110") == -1
+            and line.find("209") == -1
+            and line.find("20") == -1
+        ):
+            continue
+        s.add(line)
         row = [
             locator_domain,
             page_url,

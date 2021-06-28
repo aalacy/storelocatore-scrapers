@@ -38,9 +38,12 @@ def write_output(data):
 
 
 def fetch_data():
-    locs = []
+    locs = [
+        "https://locations.panerabread.com/fl/odessa/16034-preserve-marketplace-blvd.html"
+    ]
     states = []
     cities = []
+    alllocs = []
     url = "https://locations.panerabread.com/index.html"
     r = session.get(url, headers=headers)
     website = "panerabread.com"
@@ -169,22 +172,24 @@ def fetch_data():
                             hours = hrs
                         else:
                             hours = hours + "; " + hrs
-        yield [
-            website,
-            loc,
-            name,
-            add,
-            city,
-            state,
-            zc,
-            country,
-            store,
-            phone,
-            typ,
-            lat,
-            lng,
-            hours,
-        ]
+        if loc not in alllocs:
+            alllocs.append(loc)
+            yield [
+                website,
+                loc,
+                name,
+                add,
+                city,
+                state,
+                zc,
+                country,
+                store,
+                phone,
+                typ,
+                lat,
+                lng,
+                hours,
+            ]
 
 
 def scrape():

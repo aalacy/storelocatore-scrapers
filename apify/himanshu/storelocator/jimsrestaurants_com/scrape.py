@@ -1,78 +1,109 @@
-import csv
-from sgrequests import SgRequests
-from bs4 import BeautifulSoup
 import re
-import json
+import csv
+from lxml import etree
 
+from sgrequests import SgRequests
 
-
-session = SgRequests()
 
 def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+    with open("data.csv", mode="w", encoding="utf-8") as output_file:
+        writer = csv.writer(
+            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+        )
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(
+            [
+                "locator_domain",
+                "page_url",
+                "location_name",
+                "street_address",
+                "city",
+                "state",
+                "zip",
+                "country_code",
+                "store_number",
+                "phone",
+                "location_type",
+                "latitude",
+                "longitude",
+                "hours_of_operation",
+            ]
+        )
         # Body
         for row in data:
             writer.writerow(row)
 
+
 def fetch_data():
-    header = {'User-agent' : 'Mozilla/5.0 (Windows; U; Windows NT 5.1; de; rv:1.9.1.5) Gecko/20091102 Firefox/3.5.5'}
-    return_main_object = []
-    base_url = "https://www.jimsrestaurants.com/"
-    location_url  = 'https://www.jimsrestaurants.com/locations/locations/json'
-    r = session.get(location_url ,headers = header).json()
-    for idx, val in enumerate(r):
-       
-        locator_domain = base_url
-        location_name = val['name']
-        vc = BeautifulSoup(val['address'],"lxml")
-       
-        street_address = vc.find('span',{'class':'address-line1'}).text.strip()
-        city = vc.find('span',{'class':'locality'}).text.strip()
-        state = vc.find('span',{'class':'administrative-area'}).text.strip()
-        zip = vc.find('span',{'class':'postal-code'}).text.strip()
-        store_number = '<MISSING>'
-        country_code = 'US'
-        phone = val['field_phone']
-        location_type = 'jimsrestaurants'
-        vb = val['field_location_coordinates']
-       
-        gg = str(vb).replace('[{"coordinates":["','')
-        vn = gg.replace('"]}]','')
-        
+    # Your scraper here
+    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
 
-        latitude = vn.split(',')[0].replace('"','')
-        
-        longitude = vn.split(',')[1].replace('"','')
-        hours_of_operation = val['field_hours']
+    items = []
 
-        store=[]
-        store.append(locator_domain if locator_domain else '<MISSING>')
-        store.append(location_name if location_name else '<MISSING>')
-        store.append(street_address if street_address else '<MISSING>')
-        store.append(city if city else '<MISSING>')
-        store.append(state if state else '<MISSING>')
-        store.append(zip if zip else '<MISSING>')
-        store.append(country_code if country_code else '<MISSING>')
-        store.append(store_number if store_number else '<MISSING>')
-        store.append(phone if phone else '<MISSING>')
-        store.append(location_type if location_type else '<MISSING>')
-        store.append(latitude if latitude else '<MISSING>')
-        store.append(longitude if longitude else '<MISSING>')
-        
-        store.append(hours_of_operation  if hours_of_operation else '<MISSING>')
-        
+    start_url = "https://www.jimsrestaurants.com/locations"
+    domain = re.findall(r"://(.+?)/", start_url)[0].replace("www.", "")
+    hdr = {
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
+    }
+    response = session.get(start_url, headers=hdr)
+    dom = etree.HTML(response.text)
 
-        return_main_object.append(store)
-    return return_main_object
+    all_locations = dom.xpath('//tr[td[@headers="view-address-langcode-table-column"]]')
+    for poi_html in all_locations:
+        store_url = start_url
+        location_name = poi_html.xpath(
+            './/td[@headers="view-name-table-column"]/text()'
+        )
+        location_name = location_name[0].strip() if location_name else "<MISSING>"
+        street_address = poi_html.xpath('.//span[@class="address-line1"]/text()')
+        street_address = street_address[0].strip() if street_address else "<MISSING>"
+        city = poi_html.xpath('.//span[@class="locality"]/text()')
+        city = city[0].strip() if city else "<MISSING>"
+        state = poi_html.xpath('.//span[@class="administrative-area"]/text()')
+        state = state[0].strip() if state else "<MISSING>"
+        zip_code = poi_html.xpath('.//span[@class="postal-code"]/text()')
+        zip_code = zip_code[0].strip() if zip_code else "<MISSING>"
+        country_code = poi_html.xpath('.//span[@class="country"]/text()')
+        country_code = country_code[0].strip() if country_code else "<MISSING>"
+        store_number = "<MISSING>"
+        phone = poi_html.xpath(
+            './/td[@headers="view-field-phone-table-column"]/a/text()'
+        )
+        phone = phone[0].strip() if phone else "<MISSING>"
+        location_type = "<MISSING>"
+        latitude = "<MISSING>"
+        longitude = "<MISSING>"
+        hoo = poi_html.xpath('.//td[@headers="view-field-hours-table-column"]/text()')
+        hoo = [e.strip() for e in hoo if e.strip()]
+        hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
+
+        item = [
+            domain,
+            store_url,
+            location_name,
+            street_address,
+            city,
+            state,
+            zip_code,
+            country_code,
+            store_number,
+            phone,
+            location_type,
+            latitude,
+            longitude,
+            hours_of_operation,
+        ]
+
+        items.append(item)
+
+    return items
 
 
 def scrape():
     data = fetch_data()
-
     write_output(data)
 
-scrape()
+
+if __name__ == "__main__":
+    scrape()

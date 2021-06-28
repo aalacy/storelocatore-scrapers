@@ -75,26 +75,41 @@ def fetch_data():
     lines = r.iter_lines()
     for line in lines:
         line = str(line.decode("utf-8"))
-        if 'style="text-align: center;"><span class="Style45">' in line:
-            add = line.split('<span class="Style45">')[1].split("<")[0].replace(",", "")
-            g1 = next(lines)
-            g2 = next(lines)
-            g3 = next(lines)
-            g4 = next(lines)
-            g1 = str(g1.decode("utf-8"))
-            g2 = str(g2.decode("utf-8"))
-            g3 = str(g3.decode("utf-8"))
-            g4 = str(g4.decode("utf-8"))
-            city = g1.split('">')[1].split(",")[0]
-            state = g1.split('">')[1].split(",")[1].strip().split(" ")[0]
-            zc = g1.split('">')[1].split("<")[0].rsplit(" ", 1)[1]
-            phone = g2.split('">')[1].split("<")[0]
-            hours = g3.split('">')[1].split("<")[0]
-            name = city.title()
-            try:
-                hours = hours + "; " + g4.split('">')[1].split("<")[0]
-            except:
-                hours = hours + "; " + g4.split("<")[0]
+        if (
+            'style="text-align: center;"><span class="Style45">' in line
+            or '<p style="text-align: center; --fontsize: 30; line-height: 1.4;"><span class="Style45">'
+            in line
+        ):
+            if "11419 Stagecoach Rd" in line:
+                add = "11419 Stagecoach Rd"
+            else:
+                add = line.rsplit('">', 1)[1].split("<")[0].replace(",", "")
+                g1 = next(lines)
+                g2 = next(lines)
+                g3 = next(lines)
+                g4 = next(lines)
+                g1 = str(g1.decode("utf-8"))
+                g2 = str(g2.decode("utf-8"))
+                g3 = str(g3.decode("utf-8"))
+                g4 = str(g4.decode("utf-8"))
+            if "11419 Stagecoach Rd" not in add:
+                city = g1.rsplit('">', 1)[1].split(",")[0]
+                state = g1.rsplit('">', 1)[1].split(",")[1].strip().split(" ")[0]
+                zc = g1.rsplit('">', 1)[1].split("<")[0].rsplit(" ", 1)[1]
+                phone = g2.rsplit('">', 1)[1].split("<")[0]
+                hours = g3.rsplit('">', 1)[1].split("<")[0]
+                name = city.title()
+                try:
+                    hours = hours + "; " + g4.split('">')[1].split("<")[0]
+                except:
+                    hours = hours + "; " + g4.split("<")[0]
+            else:
+                city = "Little Rock"
+                state = "AR"
+                zc = "72210"
+                hours = "M-F 8:00-5:00; Closed Saturday"
+                phone = "(501) 407-8110"
+                name = city.title()
             yield [
                 website,
                 loc,
