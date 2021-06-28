@@ -3,6 +3,7 @@ from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
+from sgscrape.sgpostal import parse_address_intl
 
 _headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
@@ -10,65 +11,59 @@ _headers = {
 
 logger = SgLogSetup().get_logger("tommyguns.com")
 
+days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+
 
 def fetch_data():
     locator_domain = "https://www.tommyguns.com"
-    base_url = "https://www.tommyguns.com/ca/location/"
+    base_url = "https://ca.tommyguns.com/blogs/locations?view=json"
     with SgRequests() as session:
-        soup = bs(session.get(base_url, headers=_headers).text, "lxml")
-        locations = soup.select("div.container article")
+        locations = session.get(base_url, headers=_headers).json()["locations"]
         logger.info(f"{len(locations)} found!")
         for _ in locations:
-            location_name = _.select_one("div h1").text.replace("*NOW OPEN*", "")
-            page_url = _.select_one("div.store-location-link a")["href"]
-            soup1 = bs(session.get(page_url, headers=_headers).text, "lxml")
-            hours = list(soup1.select_one("div.location-hours p").stripped_strings)
-            if hours[0].startswith("WE HAVE MERGED WITH"):
+            if not _["check_in_url"] and not _["address"]:
                 continue
-            if hours[0] == "OPENING SOON!":
-                hours = ["OPENING SOON!"]
-            else:
-                del hours[0]
-            phone = _.select_one("p.store-location-phone a").text
-            street_address = soup1.select_one(
-                "div.location-details .street-address"
-            ).text
-            city_state = soup1.select_one("div.location-details .mailing").text
-            city = city_state.split(",")[0]
-            state = city_state.split(",")[1].strip().split(" ")[0]
-            zip_postal = " ".join(city_state.split(",")[1].strip().split(" ")[1:])
-
+            page_url = "https://ca.tommyguns.com" + _["url"]
+            soup1 = bs(session.get(page_url, headers=_headers).text, "lxml")
             logger.info(page_url)
-            coord = ["", ""]
-            try:
-                coord = (
-                    soup1.select_one("div.location-map-col a")["href"]
-                    .split("!3d")[1]
-                    .split("!4d")
-                )
-            except:
-                try:
-                    coord = (
-                        soup1.select_one("div.location-map-col a")["href"]
-                        .split("/@")[1]
-                        .split("z/")[0]
-                        .split(",")
-                    )
-                except:
-                    pass
-
+            hours = []
+            if soup1.select_one("div.store-details__content"):
+                temp = list(
+                    soup1.select_one("div.store-details__content").stripped_strings
+                )[1:]
+                for hh in temp:
+                    if "re-open" in hh.lower():
+                        continue
+                    if "open" in hh.lower():
+                        continue
+                    if (
+                        hh != "TEMPORARILY CLOSED"
+                        and hh.split("-")[0].strip() not in days
+                    ):
+                        break
+                    hours.append(hh)
+            addr = parse_address_intl(_["address"] + ", Canada")
+            street_address = addr.street_address_1
+            if addr.street_address_2:
+                street_address += " " + addr.street_address_2
+            city = addr.city
+            zip_postal = addr.postcode
+            _addr = _["address"].split(",")
+            if len(_addr) == 3:
+                if len(_addr[-1].strip().split(" ")) == 2:
+                    city = _addr[-2].strip()
+                    zip_postal = _addr[-1].strip()
             yield SgRecord(
                 page_url=page_url,
-                store_number=_["id"].split("-")[-1],
-                location_name=location_name,
+                location_name=_["name"].replace("–", "-"),
                 street_address=street_address,
                 city=city,
-                state=state,
+                state=addr.state,
                 zip_postal=zip_postal,
-                latitude=coord[0],
-                longitude=coord[1],
-                country_code="US",
-                phone=phone,
+                latitude=_["location"]["lat"],
+                longitude=_["location"]["lng"],
+                country_code="CA",
+                phone=_.get("phone_number"),
                 locator_domain=locator_domain,
                 hours_of_operation="; ".join(hours),
             )

@@ -1,15 +1,19 @@
 import csv
 from sgrequests import SgRequests
 import json
-import sgzip
+from sgzip.static import static_zipcode_list, SearchableCountries
 from sglogging import SgLogSetup
+import cloudscraper
 
 logger = SgLogSetup().get_logger("forever21_com")
 
 session = SgRequests()
+session = cloudscraper.create_scraper(sess=session)
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
+
+search = static_zipcode_list(country_code=SearchableCountries.USA, radius=50)
 
 
 def write_output(data):
@@ -35,22 +39,32 @@ def write_output(data):
                 "hours_of_operation",
             ]
         )
+        dupes = []
         for row in data:
-            writer.writerow(row)
+            x = 0
+            for item in row:
+                if item == "":
+                    row[x] = "<MISSING>"
+                x = x + 1
+            if row[8] in dupes:
+                pass
+            else:
+                writer.writerow(row)
+                dupes.append(row[8])
 
 
 def fetch_data():
     ids = []
-    for code in sgzip.for_radius(200):
+    for code in search:
         if code != "00794":
             try:
                 logger.info("Pulling Zip Code %s..." % code)
                 url = (
                     "https://locations.forever21.com/modules/multilocation/?near_location="
                     + code
-                    + "&limit=100&services__in=&published=1&within_business=true&threshold=20000"
+                    + "&services__in=&published=1&within_business=true"
                 )
-                r = session.get(url, headers=headers, timeout=90, stream=True)
+                r = session.get(url, timeout=90, stream=True)
                 for item in json.loads(r.content)["objects"]:
                     if (
                         item["country_name"] == "US"

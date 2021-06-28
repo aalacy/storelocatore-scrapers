@@ -1,6 +1,8 @@
 import csv
-from sgrequests import SgRequests
+
 from sglogging import SgLogSetup
+
+from sgrequests import SgRequests
 
 session = SgRequests()
 headers = {
@@ -47,10 +49,8 @@ def fetch_data():
     logger.info("Pulling Stores")
     for line in r.iter_lines():
         line = str(line.decode("utf-8"))
-        if 'locationcols"><a target="_blank" href="' in line:
-            locs.append(
-                line.split('locationcols"><a target="_blank" href="')[1].split('"')[0]
-            )
+        if "location-bottom-link" in line:
+            locs.append(line.split('href="')[1].split('"')[0])
     for loc in locs:
         logger.info(loc)
         name = ""
@@ -61,12 +61,12 @@ def fetch_data():
         store = "<MISSING>"
         phone = ""
         hours = ""
-        CS = False
+        cs = False
         r2 = session.get(loc, headers=headers)
         for line2 in r2.iter_lines():
             line2 = str(line2.decode("utf-8"))
             if 'class="coming-soon">coming soon' in line2:
-                CS = True
+                cs = True
             if '"name": "' in line2:
                 name = line2.split('"name": "')[1].split('"')[0]
             if '"addressLocality": "' in line2:
@@ -74,7 +74,12 @@ def fetch_data():
             if '"addressRegion": "' in line2:
                 state = line2.split('"addressRegion": "')[1].split('"')[0]
             if '"streetAddress": "' in line2:
-                add = line2.split('"streetAddress": "')[1].split('"')[0]
+                add = (
+                    line2.split('"streetAddress": "')[1]
+                    .split('"')[0]
+                    .replace("Guilford Commons,", "")
+                    .strip()
+                )
             if '"postalCode":"' in line2:
                 zc = line2.split('"postalCode":"')[1].split('"')[0]
             if '"telephone": "' in line2:
@@ -85,9 +90,22 @@ def fetch_data():
                     hours = hrs
                 else:
                     hours = hours + "; " + hrs
-        lng = "<MISSING>"
-        lat = "<MISSING>"
-        if CS is False:
+            if '"latitude": ' in line2:
+                lat = (
+                    line2.split('"latitude": ')[1]
+                    .split(",")[0]
+                    .replace("Move up", "")
+                    .strip()
+                )
+            if '"longitude": ' in line2:
+                lng = line2.split('"longitude": ')[1].split("}")[0]
+        if lng == "":
+            lng = "<MISSING>"
+        if "-" in lat:
+            old_lng = lat
+            lat = lng
+            lng = old_lng
+        if cs is False:
             yield [
                 website,
                 loc,

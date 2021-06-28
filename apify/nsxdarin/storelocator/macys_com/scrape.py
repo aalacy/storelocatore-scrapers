@@ -94,11 +94,24 @@ def fetch_data():
                     .split('"')[0]
                     .replace("+", "")
                 )
-            if 'itemprop="openingHours" content="' in line2:
-                days = line2.split('itemprop="openingHours" content="')
+            if hours == "" and "data-days='[" in line2:
+                days = (
+                    line2.split("data-days='[")[1]
+                    .split("]' data-timezone=")[0]
+                    .split('"day":"')
+                )
                 for day in days:
-                    if "<!doctype html>" not in day:
-                        hrs = day.split('"')[0]
+                    if "isClosed" in day:
+                        if 'isClosed":true' in day:
+                            hrs = day.split('"')[0] + ": Closed"
+                        else:
+                            hrs = (
+                                day.split('"')[0]
+                                + ": "
+                                + day.split('"start":')[1].split("}")[0]
+                                + "-"
+                                + day.split('"end":')[1].split(",")[0]
+                            )
                         if hours == "":
                             hours = hrs
                         else:

@@ -113,6 +113,8 @@ def fetch_data():
         if phone == "":
             phone = "<MISSING>"
         if Fuel is True and add != "":
+            if city == "Columbus" and "5448" in add:
+                add = "5448 'A' Whittlesey Blvd"
             yield [
                 website,
                 loc,

@@ -1,6 +1,7 @@
 import re
 import csv
 from lxml import etree
+from urllib.parse import urljoin
 
 from sgrequests import SgRequests
 from sgscrape.sgpostal import parse_address_intl
@@ -56,6 +57,7 @@ def fetch_data():
         if country not in ["USA", "United Kingdom"]:
             continue
         store_url = poi_html.xpath(".//a/@href")[0]
+        store_url = urljoin(start_url, store_url)
         loc_response = session.get(store_url)
         loc_dom = etree.HTML(loc_response.text)
 

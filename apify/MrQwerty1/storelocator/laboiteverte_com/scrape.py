@@ -45,7 +45,7 @@ def fetch_data():
     tree = html.fromstring(r.text)
     divs = tree.xpath(
         "//div[@class='elementor-text-editor elementor-clearfix' and ./h1]"
-    )
+    )[2:]
 
     for d in divs:
         location_name = "".join(d.xpath("./h1/strong/text()")).strip()
@@ -54,7 +54,8 @@ def fetch_data():
 
         s.add(location_name)
         line = "".join(d.xpath("./h1/following-sibling::p[1]/text()")).strip()
-        adr = parse_address(International_Parser(), line)
+        postal = " ".join(line.split()[-2:])
+        adr = parse_address(International_Parser(), line, postcode=postal)
         street_address = (
             f"{adr.street_address_1} {adr.street_address_2 or ''}".replace(
                 "None", ""

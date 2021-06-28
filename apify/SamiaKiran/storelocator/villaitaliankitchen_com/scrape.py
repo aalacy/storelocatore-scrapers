@@ -1,188 +1,129 @@
-from bs4 import BeautifulSoup
-import csv
-import usaddress
-from sgrequests import SgRequests
 from sglogging import sglog
+from bs4 import BeautifulSoup
+from sgrequests import SgRequests
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
 
-website = "villaitaliankitchen_com"
+session = SgRequests()
+website = "villaitaliankitchen.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 session = SgRequests()
-
-session = SgRequests()
 headers = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+    "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.66 Safari/537.36",
+    "Accept": "application/json",
 }
 
 
-def write_output(data):
-    with open("data.csv", mode="w", newline="", encoding="utf8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
-        log.info(f"No of records being processed: {len(data)}")
-
-
 def fetch_data():
-    data = []
-    url = "https://www.villaitaliankitchen.com/"
+    linklist = []
+    url = "https://locations.villaitaliankitchen.com/US.html"
     r = session.get(url, headers=headers, verify=False)
     soup = BeautifulSoup(r.text, "html.parser")
-    loclist = soup.findAll("div")
+    loclist = soup.find("ul", {"class": "c-directory-list-content"}).findAll("li")
     for loc in loclist:
-        try:
-            if (
-                "flex" in loc["id"]
-                and "flexContainer" in loc["class"]
-                and loc.find("h4").text
-            ):
-                templist = loc.findAll("div", {"class", "row js-group-row"})
+        no = loc.find("span", {"class": "c-directory-list-content-item-count"}).text
+        page_url = loc.find("a")["href"]
+        page_url = "https://locations.villaitaliankitchen.com/" + page_url
+        if no == "(1)":
+            linklist.append(page_url)
+        else:
 
-                if len(templist) > 5:
-                    i = 1
-                    while i < len(templist):
-                        title = templist[i].text
-                        title = title.split("Less", 1)[0].strip()
-                        phone = templist[i + 2]
-                        phone = phone.find("p", {"class": "fp-el"}).text
-                        phone = phone.split("Call", 1)[1].split("for", 1)[0].strip()
-                        address = templist[i + 1]
-                        address = address.find("p", {"class": "fp-el"}).text.strip()
-                        j = 0
-                        street = ""
-                        city = ""
-                        state = ""
-                        pcode = ""
-                        address = address.replace(",", " ")
-                        address = usaddress.parse(address)
-                        while j < len(address):
-                            temp = address[j]
-                            if (
-                                temp[1].find("Address") != -1
-                                or temp[1].find("Street") != -1
-                                or temp[1].find("Recipient") != -1
-                                or temp[1].find("Occupancy") != -1
-                                or temp[1].find("BuildingName") != -1
-                                or temp[1].find("USPSBoxType") != -1
-                                or temp[1].find("USPSBoxID") != -1
-                            ):
-                                street = street + " " + temp[0]
-                            if temp[1].find("PlaceName") != -1:
-                                city = city + " " + temp[0]
-                            if temp[1].find("StateName") != -1:
-                                state = state + " " + temp[0]
-                            if temp[1].find("ZipCode") != -1:
-                                pcode = pcode + " " + temp[0]
-                            j += 1
-                        city = city.strip()
-                        state = state.strip()
-                        data.append(
-                            [
-                                "https://www.villaitaliankitchen.com/",
-                                "<MISSING>",
-                                title,
-                                street,
-                                city,
-                                state,
-                                pcode,
-                                "US",
-                                "<MISSING>",
-                                phone,
-                                "<MISSING>",
-                                "<MISSING>",
-                                "<MISSING>",
-                                "<MISSING>",
-                            ]
-                        )
-                        i += 3
+            r = session.get(page_url, headers=headers)
+            soup = BeautifulSoup(r.text, "html.parser")
+            try:
+                temp_list = soup.find(
+                    "ul", {"class": "c-directory-list-content"}
+                ).findAll("li")
+            except:
+                temp_list = soup.findAll("div", {"class": "c-location-grid-item"})
+            for temp in temp_list:
+                try:
+                    no = temp.find(
+                        "span", {"class": "c-directory-list-content-item-count"}
+                    ).text
+                except:
+                    no = "(1)"
+                try:
+                    page_url = temp.find("a")["href"]
+                except:
+                    page_url = temp.find("a", {"class": "c-location-grid-item-link"})[
+                        "href"
+                    ]
+                page_url = (
+                    "https://locations.villaitaliankitchen.com"
+                    + page_url.replace("..", "")
+                )
+                if no == "(1)":
+                    linklist.append(page_url)
                 else:
-                    title = templist[1].text
-                    title = title.split("Less", 1)[0]
-                    address = templist[2]
-                    address = address.find("p", {"class": "fp-el"}).text.strip()
-                    phone = templist[3]
-                    try:
-                        phone = phone.find("p", {"class": "fp-el"}).text
-                        phone = phone.split("Call", 1)[1].split("for", 1)[0].strip()
-                    except:
-                        phone = "<MISSING>"
-                    i = 0
-                    street = ""
-                    city = ""
-                    state = ""
-                    pcode = ""
-                    address = address.replace(",", " ")
-                    address = usaddress.parse(address)
-                    while i < len(address):
-                        temp = address[i]
-                        if (
-                            temp[1].find("Address") != -1
-                            or temp[1].find("Street") != -1
-                            or temp[1].find("Recipient") != -1
-                            or temp[1].find("Occupancy") != -1
-                            or temp[1].find("BuildingName") != -1
-                            or temp[1].find("USPSBoxType") != -1
-                            or temp[1].find("USPSBoxID") != -1
-                        ):
-                            street = street + " " + temp[0]
-                        if temp[1].find("PlaceName") != -1:
-                            city = city + " " + temp[0]
-                        if temp[1].find("StateName") != -1:
-                            state = state + " " + temp[0]
-                        if temp[1].find("ZipCode") != -1:
-                            pcode = pcode + " " + temp[0]
-                        i += 1
-                    city = city.strip()
-                    state = state.strip()
-                    data.append(
-                        [
-                            "https://www.villaitaliankitchen.com/",
-                            "<MISSING>",
-                            title,
-                            street,
-                            city,
-                            state,
-                            pcode,
-                            "US",
-                            "<MISSING>",
-                            phone,
-                            "<MISSING>",
-                            "<MISSING>",
-                            "<MISSING>",
-                            "<MISSING>",
+                    r = session.get(page_url, headers=headers)
+                    soup = BeautifulSoup(r.text, "html.parser")
+                    for x in soup.find(
+                        "div", {"class": "container location-list-container"}
+                    ).findAll("div", {"class": "c-location-grid-col col-sm-4"}):
+                        page_url = x.find("a", {"class": "c-location-grid-item-link"})[
+                            "href"
                         ]
-                    )
-        except:
-            pass
-    return data
+                        page_url = (
+                            "https://locations.villaitaliankitchen.com/"
+                            + page_url.replace("../", "")
+                        )
+                        linklist.append(page_url)
+
+    for link in linklist:
+        log.info(link)
+        r = session.get(link, headers=headers)
+        soup = BeautifulSoup(r.text, "html.parser")
+        location_name = soup.find(
+            "span", {"class": "location-name-geomodifier uppercase"}
+        ).text
+        street_address = soup.find(
+            "span", {"class": "c-address-street c-address-street-1"}
+        ).text
+        city = soup.find("span", {"class": "c-address-city"}).text.replace(",", "")
+        state = soup.find("abbr", {"class": "c-address-state"}).text
+        zip_postal = soup.find("span", {"class": "c-address-postal-code"}).text
+        phone = soup.find("span", {"itemprop": "telephone"}).text
+        hour_list = soup.find("table", {"class": "c-location-hours-details"}).findAll(
+            "tr"
+        )
+        hours_of_operation = " ".join(
+            hour.get_text(separator="|", strip=True).replace("|", " ")
+            for hour in hour_list
+        )
+        coords = soup.find("span", {"class": "coordinates"})
+        latitude = coords.find("meta", {"itemprop": "latitude"})["content"]
+        longitude = coords.find("meta", {"itemprop": "longitude"})["content"]
+        yield SgRecord(
+            locator_domain="https://villaitaliankitchen.com/",
+            page_url=link,
+            location_name=location_name.strip(),
+            street_address=street_address.strip(),
+            city=city.strip(),
+            state=state.strip(),
+            zip_postal=zip_postal.strip(),
+            country_code="US",
+            store_number="<MISSING>",
+            phone=phone.strip(),
+            location_type="<MISSING>",
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation.strip(),
+        )
 
 
 def scrape():
     log.info("Started")
-    data = fetch_data()
-    write_output(data)
+    count = 0
+    with SgWriter() as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+
+    log.info(f"No of records being processed: {count}")
     log.info("Finished")
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()

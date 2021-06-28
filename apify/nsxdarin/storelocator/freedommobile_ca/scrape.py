@@ -84,7 +84,13 @@ def fetch_data():
                 a2 = additem.split('"city": "')[1].split('"')[0]
                 a3 = additem.split('"province": "')[1].split('"')[0]
                 a4 = additem.split('"postalCode": "')[1].split('"')[0]
-                addarray.append(aid + "|" + a1 + "|" + a2 + "|" + a3 + "|" + a4)
+                try:
+                    a5 = additem.split('"nearestIntersection": "')[1].split('"')[0]
+                except:
+                    a5 = ""
+                addarray.append(
+                    aid + "|" + a1 + "|" + a2 + "|" + a3 + "|" + a4 + "|" + a5
+                )
         items = allinfo.split('"locationNumber": "')
         for item in items:
             if '"total":' not in item:
@@ -147,6 +153,9 @@ def fetch_data():
                         city = aitem.split("|")[2]
                         state = aitem.split("|")[3]
                         zc = aitem.split("|")[4]
+                        ni = aitem.split("|")[5]
+                        if ni != "":
+                            name = name + " - " + ni
                 for hitem in dayarray:
                     if hitem.split("|")[0] == suhrs:
                         h1 = "Sunday: " + hitem.split("|")[1]
@@ -184,6 +193,7 @@ def fetch_data():
                         purl = lurl
                     else:
                         purl = "<MISSING>"
+                    zc = zc[:3] + " " + zc[3:]
                     if add != "":
                         yield [
                             website,

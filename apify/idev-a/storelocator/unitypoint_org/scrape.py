@@ -2,13 +2,21 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
-from sgselenium import SgFirefox
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.common.by import By
+from sglogging import SgLogSetup
 
+logger = SgLogSetup().get_logger("unitypoint")
 
 _headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.182 Safari/537.36",
+}
+
+_header1 = {
+    "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+    "accept-encoding": "gzip, deflate, br",
+    "accept-language": "en-US,en;q=0.9,ko;q=0.8",
+    "content-type": "application/x-www-form-urlencoded",
+    "origin": "https://www.unitypoint.org",
+    "referer": "https://www.unitypoint.org/quadcities/find-a-location.aspx",
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.182 Safari/537.36",
 }
 
@@ -31,28 +39,27 @@ def _valid(val):
 
 
 def fetch_data():
-    with SgFirefox() as driver:
-        driver.get(base_url)
-        search_btn = WebDriverWait(driver, 10).until(
-            EC.presence_of_element_located(
-                (By.XPATH, "//div[contains(@class, 'search-btn')]//a")
-            )
-        )
-        driver.execute_script("arguments[0].click();", search_btn)
-        WebDriverWait(driver, 10).until(
-            EC.presence_of_element_located(
-                (
-                    By.XPATH,
-                    "//div[contains(@class, 'flex-module-list')]//div[contains(@class, 'location-result')]",
-                )
-            )
-        )
-        soup = bs(driver.page_source, "lxml")
-        locations = soup.select(
-            "div.flex-module-list.location-list div.location-result"
-        )
+    with SgRequests() as session:
+        soup = bs(session.get(base_url, headers=_headers).text, "lxml")
+        __EVENTARGUMENT = soup.select_one("input#__EVENTARGUMENT")["value"]
+        __VIEWSTATE = soup.select_one("input#__VIEWSTATE")["value"]
+        __VIEWSTATEGENERATOR = soup.select_one("input#__VIEWSTATEGENERATOR")["value"]
+        __EVENTVALIDATION = soup.select_one("input#__EVENTVALIDATION")["value"]
+        data = {
+            "__EVENTTARGET": "ctl00$kyruusLocationSearch$search",
+            "__EVENTARGUMENT": __EVENTARGUMENT,
+            "__VIEWSTATE": __VIEWSTATE,
+            "ctl00$kyruusLocationSearch$name": "",
+            "ctl00$kyruusLocationSearch$zip": "",
+            "__VIEWSTATEGENERATOR": __VIEWSTATEGENERATOR,
+            "__EVENTVALIDATION": __EVENTVALIDATION,
+        }
+        sp1 = bs(session.post(base_url, headers=_header1, data=data).text, "lxml")
+        locations = sp1.select("div.flex-module-list.location-list div.location-result")
+        logger.info(f"{len(locations)} found")
         for _ in locations:
             page_url = f"{locator_domain}{_.h3.a['href']}"
+            logger.info(page_url)
             coord = (
                 _.select_one('div[data-id="map"]')["style"]
                 .split("center=")[1]

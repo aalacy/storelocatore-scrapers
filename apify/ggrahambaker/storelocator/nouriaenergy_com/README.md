@@ -1,1 +1,1 @@
---ignore StreetAddressHasNumber (Confirmed on website)
+--ignore StreetAddressHasNumber --ignore GeoConsistencyValidator (Confirmed on website)
