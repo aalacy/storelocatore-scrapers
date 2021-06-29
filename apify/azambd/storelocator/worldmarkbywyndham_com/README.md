@@ -1,34 +1,10 @@
+# How to write a Python3 scraper for SafeGraph (Simple)
 
-# wyndhamhotels.com/wyndham crawler requires maintenance!
+Note: This template differs from the older `python3` template in that you don't need to worry about javascript related files such as `scrape.js` and `package.json`. This template also builds faster if you're testing it in a local docker image.
 
-## Requirements: 
+Please write your scraper such that running `scrape.py` produces a file `data.csv` containing the scraped data.
 
-Please update this to include ALL Wyndham child brands GLOBALLY (8431 locations). Once this one is passing QA, I will assign the rest of the Wyndham Hotels children to you and you can copy the same code to those directories).  Safegraph will filter each crawl to their respective brand based on the location_name &/or location_type.
-
-More details: 
-All Locations (~8.4K) depends on how many broken URLs:
-Api: https://www.wyndhamhotels.com/BWSServices/services/search/properties?recordsPerPage=501200&pageNumber=1&brandId=ALL&countryCode=
-
-Would require reconstruction of page-url in order to grab all data, which might need some fiddling but it's doable.
-
-
-## Possible approach to pull data: 
-
-- Step #1. pull all 'propertyId' from https://www.wyndhamhotels.com/BWSServices/services/search/properties?recordsPerPage=501200&pageNumber=1&brandId=ALL&countryCode=
-
-- Step #2. reconstruction of page-url 
-
--  "uniqueUrl": "microtel/albertville-alabama/microtel-inn-and-suites-of-albertville/overview",  is page_url
-
-- HOO is  MISSING
-
-- location_type: Hotel 
-
-* locator_domain = 'wyndhamhotels.com/wyndham'
-* store_number = propertyId
-* page_url = website + uniqueUrl
-
-
-> SUCCESS file is not possible because it blocked when ran locally, proxy also got 403 sometimes. Need to observe performance in production
-
-
+Remember to update `requirements.txt` with all dependencies needed to run your scraper. 
+Please make sure that:
+* Your scraper can be run successfully by executing https://github.com/SafeGraphInc/crawl-service/blob/master/scripts/run_scraper.sh 
+* The resulting output passes https://github.com/SafeGraphInc/crawl-service/blob/master/scripts/validate.py

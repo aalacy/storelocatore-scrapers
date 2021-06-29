@@ -36,6 +36,7 @@ def fetch_data():
                 soup.findAll("div", {"class": "et_pb_text_inner"})[1]
                 .get_text(separator="|", strip=True)
                 .replace("30308,", "30308")
+                .replace("Ralph G. Anderson", "")
                 .split("|")[1:]
             )
             if "Georgia Institute" in temp[0]:

@@ -42,7 +42,7 @@ def fetch_data():
             else:
                 location_type = "branch"
                 hours_of_operation = "; ".join(
-                    bs(_["drivethru_hours_str"], "lxml").stripped_strings
+                    bs(_["lobby_hours_str"], "lxml").stripped_strings
                 )
                 if _["atm_services"]:
                     location_type += ",atm"

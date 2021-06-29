@@ -71,7 +71,7 @@ def fetch_data():
             "Referer": "https://www.anthonyvincenailspa.com/_partials/wix-thunderbolt/dist/clientWorker.5ac7b0f5.bundle.min.js",
         }
 
-        data = '["Location",{"state":{"$contains":"' + state + '"}},[],0,9,null,null]'
+        data = '["Location",{"state":{"$contains":"' + state + '"}},[],0,100,null,null]'
         r = session.post(
             "https://www.anthonyvincenailspa.com/_api/wix-code-public-dispatcher/siteview/wix/data-web.jsw/find.ajax?gridAppId=18aa5821-efbc-4819-8075-f93a54245584&instance=wixcode-pub.328fff89edb80d1d567bbadbba7e76cb5c1548a7.eyJpbnN0YW5jZUlkIjoiMmM5YjYzNjAtZTI0NS00ZWFkLWFiNDktYWVkMGFkYzUwMDdmIiwiaHRtbFNpdGVJZCI6IjU5MzY0NTFkLWIyYzktNDVmNC1hYjYxLTYzOThhYjk4YzUxNCIsInVpZCI6bnVsbCwicGVybWlzc2lvbnMiOm51bGwsImlzVGVtcGxhdGUiOmZhbHNlLCJzaWduRGF0ZSI6MTYyNDcwMTI2MTcxMSwiYWlkIjoiMzc3MTNiOWQtYzVmMy00NGMwLWE3ZTQtMjk5NjRjMjkxNjE0IiwiYXBwRGVmSWQiOiJDbG91ZFNpdGVFeHRlbnNpb24iLCJpc0FkbWluIjpmYWxzZSwibWV0YVNpdGVJZCI6IjY5ODJlYjZiLWQyM2YtNDUyMi05YTY1LWU3YTU2ZDU4NzJhNCIsImNhY2hlIjpudWxsLCJleHBpcmF0aW9uRGF0ZSI6bnVsbCwicHJlbWl1bUFzc2V0cyI6IlNob3dXaXhXaGlsZUxvYWRpbmcsQWRzRnJlZSxIYXNEb21haW4sSGFzRUNvbW1lcmNlIiwidGVuYW50IjpudWxsLCJzaXRlT3duZXJJZCI6IjY3OGVkMTcxLTA1NDktNDM3OS1hNzBlLWI0ZTdjMWQ5ZTNjOCIsImluc3RhbmNlVHlwZSI6InB1YiIsInNpdGVNZW1iZXJJZCI6bnVsbH0=&viewMode=site",
             headers=headers,
