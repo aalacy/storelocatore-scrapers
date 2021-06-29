@@ -42,7 +42,6 @@ def fetch_data():
                     location_name = store[0]
                 else:
                     _addr = store
-                hours = []
                 phone = ""
                 if _p(_addr[-1]):
                     phone = _addr[-1]
