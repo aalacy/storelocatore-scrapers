@@ -3,8 +3,6 @@ from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
-import json
-import re
 
 logger = SgLogSetup().get_logger("era")
 
@@ -16,7 +14,6 @@ _headers = {
 def fetch_data():
     locator_domain = "https://www.era.com"
     base_url = "https://www.era.com/real-estate-agents"
-    streets = []
     with SgRequests() as session:
         states = bs(session.get(base_url, headers=_headers).text, "lxml").select(
             "ul.hide-list-bullets a"
