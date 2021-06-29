@@ -84,9 +84,9 @@ def fetch_data():
 
         payload = {"postalCode": zip_code}
 
-        # New session every 100
-        if i % 100 == 0:
-            log.info("Getting next 100 ..")
+        # New session every 50
+        if i % 50 == 0:
+            log.info("New session for next 50 zips..")
             log.info(zip_code)
             session = SgRequests()
 
@@ -109,9 +109,10 @@ def fetch_data():
                     break
 
             for store in stores:
+                location_type = "<MISSING>"
                 location_name = store.h2.text.strip()
                 if "CLOSED" in location_name.upper():
-                    continue
+                    location_type = "Closed"
 
                 link = "https://www.pacsun.com/stores"
 
@@ -144,7 +145,6 @@ def fetch_data():
                 if store_number in found:
                     continue
                 found.append(store_number)
-                location_type = "<MISSING>"
 
                 hours_of_operation = (
                     store.find(class_="storehours").get_text(" ").strip()

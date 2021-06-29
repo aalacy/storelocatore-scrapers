@@ -32,13 +32,43 @@ def make_request():
     return json.loads(rawStr)
 
 
+def replace_space(name):
+    return name.replace(" ", "-").lower()
+
+
+def time_convert(time):
+    hour = time // 100
+    minutes = str(time)[-2:]
+    if time >= 1200:
+        hour -= 12
+        meridiem = "PM"
+    else:
+        meridiem = "AM"
+    return str(hour) + ":" + minutes + " " + meridiem
+
+
+def clean_hours_aux(day):
+    store_open = time_convert(day["Open"])
+    store_close = time_convert(day["Close"])
+    if store_open == store_close:
+        return day["DayOfWeek"] + ": Closed"
+    return day["DayOfWeek"] + ": " + str(store_open) + " - " + str(store_close)
+
+
+def clean_hours(hrlst):
+    cleaned = [clean_hours_aux(day) for day in hrlst]
+    cleaned = ", ".join(cleaned)
+    return cleaned
+
+
 def store_of_json(elt):
     """
     Returns the relevant info for any given CP store
     """
     return SgRecord(
-        locator_domain="https://www.cellularplus.com/locations/",
-        page_url="https://www.cellularplus.com/locations/",
+        locator_domain=URL,
+        # The page_url is the concatenation of the locator URL, location ID, and name without spaces
+        page_url=URL + str(elt["LocationId"]) + "/" + replace_space(elt["Name"]) + "/",
         location_name=elt["Name"],
         street_address=elt["Address"],
         city=elt["City"],
@@ -50,7 +80,7 @@ def store_of_json(elt):
         location_type="<MISSING>",
         latitude=elt["Google_Latitude"],
         longitude=elt["Google_Longitude"],
-        hours_of_operation=elt["HoursOfOperation"],
+        hours_of_operation=clean_hours(elt["HoursOfOperation"]),
     )
 
 

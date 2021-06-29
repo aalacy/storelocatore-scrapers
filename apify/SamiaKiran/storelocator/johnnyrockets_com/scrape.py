@@ -62,14 +62,18 @@ def fetch_data():
             phone = temp["phone"]
             store_number = temp["corporate_id"]
             hours_of_operation = (
-                temp["hours"]
-                .replace("1,", "Mon: ")
-                .replace("2,", " Tue: ")
-                .replace("3,:", " Wed: ")
-                .replace("4,", " Thu: ")
-                .replace("5,", " Fri: ")
-                .replace("6,", " Sat: ")
-                .replace("7,", " Sun: ")
+                (
+                    temp["hours"]
+                    .replace("1,", "Mon: ")
+                    .replace("2,", " Tue: ")
+                    .replace("3,", " Wed: ")
+                    .replace("4,", " Thu: ")
+                    .replace("5,", " Fri: ")
+                    .replace("6,", " Sat: ")
+                    .replace("7,", " Sun: ")
+                )
+                .replace(",", "-")
+                .replace("00", ":00")
             )
             yield SgRecord(
                 locator_domain=DOMAIN,

@@ -95,7 +95,7 @@ def fetch_data():
         latitude = latitude if latitude else "<MISSING>"
         longitude = poi["Longitude"]
         longitude = longitude if longitude else "<MISSING>"
-        hours_of_operation = poi["Hours"]
+        hours_of_operation = poi["YextData"]["Hours"]["StoreHours"]
         hours_of_operation = (
             " ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
         )

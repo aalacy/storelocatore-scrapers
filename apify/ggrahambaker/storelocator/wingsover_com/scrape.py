@@ -1,7 +1,6 @@
 import re
 import csv
 from lxml import etree
-from urllib.parse import urljoin
 
 from sgrequests import SgRequests
 
@@ -53,7 +52,7 @@ def fetch_data():
     all_locations = dom.xpath("//section[@data-location]")
     for poi_html in all_locations:
         url = poi_html.xpath("@data-location")[0]
-        store_url = urljoin(start_url, url)
+        store_url = "https://wingsover.com/locations/" + url
         if "coming-soon" in store_url:
             continue
         location_name = poi_html.xpath('.//div[@class="title"]/h2/text()')[0]
@@ -73,7 +72,9 @@ def fetch_data():
             './/h3[contains(text(), "location hours:")]/following-sibling::p//text()'
         )
         hoo = [e.strip() for e in hoo if e.strip()]
-        hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
+        hours_of_operation = (
+            " ".join(hoo).split("!")[-1].strip() if hoo else "<MISSING>"
+        )
 
         item = [
             domain,

@@ -92,7 +92,7 @@ def get_data(page_url):
         or "<MISSING>"
     )
 
-    text = "".join(tree.xpath("//iframe/@data-src"))
+    text = "".join(tree.xpath("//iframe/@src"))
     latitude, longitude = get_coords_from_embed(text)
     location_type = "<MISSING>"
 
