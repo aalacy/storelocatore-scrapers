@@ -73,6 +73,7 @@ def fetch_data():
 
         street_address, city, state, zip, country_code = split_fulladdress(full_address)
 
+        street_address = street_address.replace("H-E-B,", "").strip()
         store_number = "<MISSING>"
         phone = (
             "".join(
