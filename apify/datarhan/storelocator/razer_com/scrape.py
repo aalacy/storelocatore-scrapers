@@ -95,8 +95,6 @@ def fetch_data():
             )
         latitude = geo[0]
         longitude = geo[1]
-        if "@" in latitude:
-            geo = loc_dom.xpath('//a[contains(@href, "maps")]/@href')[0].split("\@")
         hours_of_operation = loc_dom.xpath(
             '//strong[contains(text(), "Opening Hours")]/following::text()'
         )
