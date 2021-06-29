@@ -58,7 +58,7 @@ def fetch_data():
         phone = store.get("phone", "<MISSING>")
 
         location_type = "<MISSING>"
-        if store["active"] == False:
+        if store["active"] is False:
             location_type = "CLOSED"
 
         hours_txt = store.get("description")
