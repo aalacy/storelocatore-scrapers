@@ -82,6 +82,10 @@ def fetch_data():
             if "Shepton Mallet" in add:
                 city = "Shepton Mallet"
                 add = add.replace("Shepton Mallet", "").strip()
+            if "Kilver Street" in add:
+                country = "GB"
+            if "Shop 1036" in add:
+                zc = "<MISSING>"
             yield [
                 website,
                 loc,

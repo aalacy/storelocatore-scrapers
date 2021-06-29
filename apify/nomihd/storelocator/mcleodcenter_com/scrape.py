@@ -5,11 +5,11 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import lxml.html
 
-website = "altonlane.com"
+website = "mcleodcenter.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 session = SgRequests()
 headers = {
-    "authority": "altonlane.com",
+    "authority": "www.mcleodcenter.com",
     "cache-control": "max-age=0",
     "sec-ch-ua": '" Not;A Brand";v="99", "Google Chrome";v="91", "Chromium";v="91"',
     "sec-ch-ua-mobile": "?0",
@@ -26,43 +26,50 @@ headers = {
 
 def fetch_data():
     # Your scraper here
-    search_url = "https://altonlane.com/pages/shopping-reimagined"
+    search_url = "https://www.mcleodcenter.com/mat/"
     stores_req = session.get(search_url, headers=headers)
     stores_sel = lxml.html.fromstring(stores_req.text)
-    stores = stores_sel.xpath('//div[@class="Showroom__grid__description"]')
-
+    stores = stores_sel.xpath(
+        '//div[@class="wp-block-column is-vertically-aligned-top"]/p'
+    )
     for store in stores:
 
         page_url = search_url
         locator_domain = website
 
-        location_name = "".join(
-            store.xpath('.//h3[@class="Showroom__grid__item__title"]/text()')
-        ).strip()
+        location_name = "".join(store.xpath("strong/text()")).strip()
 
-        address = store.xpath('.//p[@class="Showroom__grid__item__address"]/text()')
-        street_address = ""
-        city = ""
-        state = ""
-        zip = ""
-        if len(address) > 1:
-            street_address = "".join(address[:-2]).strip().replace("\n", "").strip()
-            city = address[-2].strip().split(",")[0].strip()
-            state = address[-2].strip().split(",")[-1].strip().split(" ")[0].strip()
-            zip = address[-2].strip().split(",")[-1].strip().split(" ")[-1].strip()
+        add_sections = store.xpath("text()")
+        add_list = []
+        for add in add_sections:
+            if len("".join(add).strip()) > 0:
+                add_list.append("".join(add).strip())
+
+        street_address = ", ".join(add_list[:-3]).strip()
+        city = add_list[-3].strip().split(",")[0].strip()
+        state_zip = add_list[-3].strip().split(",")[-1].strip().split(" ")
+        state = "<MISSING>"
+        zip = "<MISSING>"
+        if len(state_zip) > 1:
+            state = state_zip[0].strip()
+            zip = state_zip[-1].strip()
+        else:
+            state = state_zip[0].strip()
 
         country_code = "US"
 
         store_number = "<MISSING>"
 
-        phone = address[-1].strip()
+        phone = add_list[-2].strip().replace("Phone:", "").strip()
+
         location_type = "<MISSING>"
         hours_of_operation = (
-            "; ".join(store.xpath('.//p[@class="Showroom__grid__item__hours"]/text()'))
+            "".join(
+                stores_sel.xpath('//em[contains(text(),"Clinics are open")]/text()')
+            )
             .strip()
-            .replace(",", ":")
-            .strip()
-            .replace("\n", "")
+            .replace("Clinics are open", "")
+            .replace(" and ", "; ")
             .strip()
         )
 
