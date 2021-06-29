@@ -23,35 +23,48 @@ def fetch_data():
         url = "https://www.kickinchicken.com/locations/"
         r = session.get(url, headers=headers)
         soup = BeautifulSoup(r.text, "html.parser")
-        loclist = soup.findAll("a", string=re.compile("VIEW LOCATION"))
+        loclist = soup.findAll(class_="location-content")
         for loc in loclist:
-            page_url = "https://www.kickinchicken.com" + loc["href"]
+            page_url = "https://www.kickinchicken.com" + loc.find_all("a")[-1]["href"]
             log.info(page_url)
             if "food-truck" in page_url:
                 continue
-            r = session.get(page_url, headers=headers)
-            soup = BeautifulSoup(r.text, "html.parser")
-            address = (
-                soup.find("div", {"class": "address"})
-                .get_text(separator="|", strip=True)
-                .split("|")
-            )
-            location_name = soup.find("h1").text
+            if "/locations/" in page_url:
+                r = session.get(page_url, headers=headers)
+                soup = BeautifulSoup(r.text, "html.parser")
+                address = (
+                    soup.find("div", {"class": "address"})
+                    .get_text(separator="|", strip=True)
+                    .split("|")
+                )
+                location_name = soup.find("h1").text
+                hours_of_operation = (
+                    soup.find("div", {"class": "widget hours loc-hour"})
+                    .find("p")
+                    .get_text(separator="|", strip=True)
+                    .replace("|", " ")
+                    .replace("-ish", "")
+                )
+            else:
+                page_url = url
+                location_name = loc.find(class_="title").text
+                address = (
+                    loc.find("div", {"class": "address"})
+                    .get_text(separator="|", strip=True)
+                    .replace("Charleston ", "Charleston, ")
+                    .split("|")
+                )
+                hours_of_operation = MISSING
             street_address = address[0].replace(",", "")
             phone = address[-1]
+            if "," in phone:
+                phone = MISSING
             address = address[1].split(",")
             city = address[0]
             address = address[1].split()
             state = address[0]
             zip_postal = address[1]
             country_code = "US"
-            hours_of_operation = (
-                soup.find("div", {"class": "widget hours loc-hour"})
-                .find("p")
-                .get_text(separator="|", strip=True)
-                .replace("|", " ")
-                .replace("-ish", "")
-            )
             yield SgRecord(
                 locator_domain=DOMAIN,
                 page_url=page_url,
