@@ -97,7 +97,7 @@ def fetch_data():
             store.append(locator_domain)
             store.append(location_name)
             store.append(street_address)
-            store.append(city)
+            store.append(city.replace("2142", "Bend"))
             store.append(state)
             store.append(zipp)
             store.append(country_code)
