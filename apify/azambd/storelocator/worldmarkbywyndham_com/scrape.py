@@ -45,7 +45,7 @@ def initiateDriver(driver=None):
     ).driver()
 
 
-def driverSleep(driver, time=2):
+def driverSleep(driver, time=5):
     try:
         WebDriverWait(driver, time).until(
             EC.presence_of_element_located((By.ID, MISSING))
@@ -133,7 +133,7 @@ def fetchSingleStore(driver, page_url):
     delay = 0
     driverSleep(driver)
     while delay < 30:
-        if "Sorry!<h3" in driver.page_source:
+        if "Sorry!" in driver.page_source:
             return None
         if '"latitude"' in driver.page_source:
             return driver.page_source
