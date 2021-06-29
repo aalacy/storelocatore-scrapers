@@ -159,6 +159,10 @@ for page_url in loc_urls:
     if "coming soon" in hours.lower():
         continue
 
+    city = (
+        "".join([i for i in city if not i.isdigit()]).replace("=", "").replace("-", "")
+    )
+
     locator_domains.append(locator_domain)
     page_urls.append(page_url)
     location_names.append(location_name)

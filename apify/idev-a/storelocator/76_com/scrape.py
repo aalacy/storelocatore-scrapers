@@ -3,7 +3,7 @@ from sgrequests import SgRequests
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 from sglogging import SgLogSetup
 
-logger = SgLogSetup().get_logger("watchesofswitzerland")
+logger = SgLogSetup().get_logger("76")
 
 _headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
@@ -14,7 +14,7 @@ base_url = "https://www.76.com/bin/stationfinderservlet?s=psx_76"
 
 search = DynamicGeoSearch(
     country_codes=[SearchableCountries.USA],
-    max_radius_miles=100,
+    max_radius_miles=50,
 )
 
 
