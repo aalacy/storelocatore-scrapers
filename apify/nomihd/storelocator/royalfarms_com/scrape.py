@@ -89,7 +89,6 @@ def fetch_data():
     latitude = ""
     longitude = ""
     hours_of_operation = ""
-    loc_list = []
 
     locations_resp = session.get(
         "https://royalfarms.com/location_results.asp",
