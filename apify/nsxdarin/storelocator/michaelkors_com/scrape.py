@@ -89,7 +89,11 @@ def fetch_data():
                 typ = line2.split('<span class="Heading-sub Heading--pre">')[1].split(
                     "<"
                 )[0]
-                name = typ
+                name = (
+                    typ
+                    + " "
+                    + line2.split('span class="Heading-main">')[1].split("<")[0]
+                )
             if '"dimension4":"' in line2:
                 country = line2.split('temprop="address" data-country="')[1].split('"')[
                     0
@@ -116,13 +120,17 @@ def fetch_data():
                             hrs = day.split('"')[0] + ": Closed"
                         else:
                             try:
-                                hrs = (
-                                    day.split('"')[0]
-                                    + ": "
-                                    + day.split('"start":')[1].split("}")[0]
-                                    + "-"
-                                    + day.split('"end":')[1].split(",")[0]
-                                )
+                                shr = day.split('"start":')[1].split("}")[0]
+                                ehr = day.split('"end":')[1].split(",")[0]
+                                if ehr == "0":
+                                    ehr = "2400"
+                                if len(shr) == 3:
+                                    shr = "0" + shr
+                                if len(ehr) == 3:
+                                    ehr = "0" + ehr
+                                shr = shr[0:2] + ":" + shr[-2:]
+                                ehr = ehr[0:2] + ":" + ehr[-2:]
+                                hrs = day.split('"')[0] + ": " + shr + "-" + ehr
                             except:
                                 hrs = day.split('"')[0] + ": Closed"
                         if hours == "":
@@ -135,22 +143,23 @@ def fetch_data():
             zc = "<MISSING>"
         if phone == "":
             phone = "<MISSING>"
-        yield [
-            website,
-            loc,
-            name,
-            add,
-            city,
-            state,
-            zc,
-            country,
-            store,
-            phone,
-            typ,
-            lat,
-            lng,
-            hours,
-        ]
+        if name != "" and ".ca/fr_ca" not in loc:
+            yield [
+                website,
+                loc,
+                name,
+                add,
+                city,
+                state,
+                zc,
+                country,
+                store,
+                phone,
+                typ,
+                lat,
+                lng,
+                hours,
+            ]
 
 
 def scrape():

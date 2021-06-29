@@ -45,10 +45,38 @@ def fetch_data():
             location_name = "".join(store.xpath("text()")).strip()
             location_type = "<MISSING>"
             locator_domain = website
+            phone = ""
+            hours_of_operation = ""
 
             raw_info = store_sel.xpath(
                 '//div[@class="formatted-content "]//div[@class="structured-text-line__paragraph"]//text()'
             )
+            if len(raw_info) <= 0:
+                raw_info = store_sel.xpath('//h6/a[contains(@href,"google")]//text()')
+                phone = store_sel.xpath(
+                    '//div[.//h6[contains(text(),"CONTACT")]]//a[contains(@href,"tel:")]/text()'
+                )
+                if len(phone) > 0:
+                    phone = phone[0]
+
+                hours_of_operation = "".join(
+                    store_sel.xpath('//p[contains(text(),"Monday")]/text()')
+                ).strip()
+            else:
+                phone = raw_info[-2].strip()
+                if "(" not in phone:
+                    phone = "(" + phone
+
+                hours_list = []
+                hours = store_sel.xpath("//div[@class='location-section__store-hours']")
+                if len(hours) > 0:
+                    hours = hours[0].xpath(".//text()")
+                    for hour in hours:
+                        if len("".join(hour).strip()) > 0:
+                            hours_list.append("".join(hour).strip())
+
+                hours_of_operation = "; ".join(hours_list).strip()
+
             raw_address = raw_info[0].strip()
             formatted_addr = parser.parse_address_usa(raw_address)
             street_address = formatted_addr.street_address_1
@@ -61,19 +89,6 @@ def fetch_data():
 
             state = formatted_addr.state
             zipp = formatted_addr.postcode
-            phone = raw_info[-2].strip()
-            if "(" not in phone:
-                phone = "(" + phone
-
-            hours_list = []
-            hours = store_sel.xpath("//div[@class='location-section__store-hours']")
-            if len(hours) > 0:
-                hours = hours[0].xpath(".//text()")
-                for hour in hours:
-                    if len("".join(hour).strip()) > 0:
-                        hours_list.append("".join(hour).strip())
-
-            hours_of_operation = "; ".join(hours_list).strip()
 
             country_code = "US"
             store_number = "<MISSING>"

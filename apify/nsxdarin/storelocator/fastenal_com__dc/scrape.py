@@ -1,10 +1,10 @@
 import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
+import time
 
 logger = SgLogSetup().get_logger("fastenal_com__dc")
 
-session = SgRequests()
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
@@ -39,6 +39,7 @@ def write_output(data):
 
 def fetch_data():
     locs = []
+    session = SgRequests()
     url = "https://www.fastenal.com/locations/all"
     r = session.get(url, headers=headers)
     if r.encoding is None:
@@ -54,6 +55,8 @@ def fetch_data():
             lurl = lurl.split(";jsession")[0]
             locs.append(lurl + "|" + styp)
     for loc in locs:
+        time.sleep(3)
+        session = SgRequests()
         r2 = session.get(loc.split("|")[0], headers=headers)
         if r2.encoding is None:
             r2.encoding = "utf-8"
