@@ -60,8 +60,10 @@ def fetch_data():
         page_url = search_url
         locator_domain = website
 
-        location_name = "".join(
-            store.xpath('.//span[contains(@style,"Aldrich")]//text()')
+        location_name = (
+            "".join(store.xpath('.//span[contains(@style,"Aldrich")]//text()'))
+            .split("-")[0]
+            .strip()
         )
 
         store_info = list(
@@ -83,6 +85,8 @@ def fetch_data():
         full_address = store_info[1:temp]
 
         street_address = full_address[0]
+        if "," == street_address[-1]:
+            street_address = "".join(street_address[:-1]).strip()
         city = full_address[1].split(",")[0].strip()
         state = full_address[1].split(",")[1].strip().split(" - ")[0].strip()
         zip = (
