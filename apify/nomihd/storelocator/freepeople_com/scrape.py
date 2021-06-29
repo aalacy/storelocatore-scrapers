@@ -295,6 +295,7 @@ def fetch_data():
             else:
                 log.info(f"\n{page_url} does not have any data to show\n")
 
+
 def scrape():
     log.info("Started")
     data = fetch_data()
