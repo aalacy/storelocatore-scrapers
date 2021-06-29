@@ -4,7 +4,6 @@ from sgrequests import SgRequests
 MISSING = '<MISSING>'
 session = SgRequests()
 headers = {
-    'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36',
     'locale': 'en_GB'
 }
 
@@ -39,7 +38,7 @@ def write_output(data):
 def fetch_data():
     dealer_map = {}
     for city in cities:
-        url = f'https://www.chevrolet.co.uk/OCRestServices/dealer/city/v1/faw/{city}?distance=14000&maxResults=50'
+        url = f'https://www.chevrolet.co.uk/OCRestServices/dealer/city/v1/Chevrolet/{city}?distance=500&maxResults=50'
         r = session.get(url, headers=headers)
         data = r.json()
 
