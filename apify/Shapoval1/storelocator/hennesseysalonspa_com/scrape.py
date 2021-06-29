@@ -47,7 +47,7 @@ def fetch_data():
         page_url = j.get("permalink")
         location_name = "".join(j.get("store")).replace("&#038;", "&")
         location_type = "<MISSING>"
-        street_address = j.get("address")
+        street_address = j.get("address2")
         phone = j.get("phone")
         state = j.get("state")
         postal = j.get("zip")
