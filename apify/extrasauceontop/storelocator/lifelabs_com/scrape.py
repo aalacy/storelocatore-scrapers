@@ -3,7 +3,6 @@ import pandas as pd
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 
 search = DynamicZipSearch(country_codes=[SearchableCountries.CANADA])
-
 locator_domains = []
 page_urls = []
 location_names = []
