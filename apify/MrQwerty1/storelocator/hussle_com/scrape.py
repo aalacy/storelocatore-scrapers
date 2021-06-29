@@ -76,14 +76,19 @@ def fetch_data():
                 ]
                 hours = j.get("opening_times") or []
                 for d, t in zip(days, hours):
-                    t = t["data"]
-                    if not t:
-                        _tmp.append(f"{d}: Closed")
-                        break
+                    try:
 
-                    start = t[0].get("opens_at")
-                    close = t[0].get("closes_at")
-                    _tmp.append(f"{d}: {start} - {close}")
+                        t = t["data"]
+                        if not t:
+                            _tmp.append(f"{d}: Closed")
+                            break
+
+                        start = t[0].get("opens_at")
+                        close = t[0].get("closes_at")
+                        _tmp.append(f"{d}: {start} - {close}")
+                    
+                    except Exception:
+                        pass
 
                 hours_of_operation = ";".join(_tmp) or "<MISSING>"
 
