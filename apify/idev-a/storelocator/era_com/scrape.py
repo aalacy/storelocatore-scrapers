@@ -31,14 +31,12 @@ def fetch_data():
                 list_url = locator_domain + _["href"]
                 logger.info(f"[List] {list_url}")
                 sp1 = bs(session.get(list_url, headers=_headers).text, "lxml")
-                if not sp1.find("script", string=re.compile(r"LocalBusiness")):
-                    continue
-                script = json.loads(
-                    sp1.find("script", string=re.compile(r"LocalBusiness")).string
-                )
-                for ss in script["@graph"]:
-                    logger.info(f"[{state.text}][page] {ss['url']}")
-                    res = session.get(ss["url"], headers=_headers).text
+                details = sp1.select(".pod__office h3 a")
+                for detail in details:
+                    page_url = locator_domain + detail["href"]
+                    logger.info(f"[{state.text}][page] {page_url}")
+                    res = session.get(page_url, headers=_headers).text
+                    sp2 = bs(res, "lxml")
                     latitude = (
                         res.split("window._METRO_LATITUDE =")[1]
                         .split("window._METRO_LONGITUDE =")[0]
@@ -50,19 +48,23 @@ def fetch_data():
                         .strip()[:-1]
                     )
 
-                    street_address = ss["address"]["streetAddress"]
-                    if street_address in streets:
-                        continue
-                    streets.append(street_address)
                     yield SgRecord(
-                        page_url=ss["url"],
-                        location_name=ss["name"],
-                        street_address=street_address,
-                        city=ss["address"]["addressLocality"],
-                        state=ss["address"]["addressRegion"],
-                        zip_postal=ss["address"]["postalCode"],
-                        country_code=ss["address"]["addressCountry"],
-                        phone=ss["telephone"],
+                        page_url=page_url,
+                        location_name=sp2.select_one("h1.heading-std").text.strip(),
+                        street_address=sp2.select_one(
+                            'span[itemprop="streetAddress"]'
+                        ).text.strip(),
+                        city=sp2.select_one(
+                            'span[itemprop="addressLocality"]'
+                        ).text.strip(),
+                        state=sp2.select_one(
+                            'span[itemprop="addressRegion"]'
+                        ).text.strip(),
+                        zip_postal=sp2.select_one(
+                            'span[itemprop="postalCode"]'
+                        ).text.strip(),
+                        country_code="US",
+                        phone=sp2.select_one('meta[itemprop="telephone"]')["content"],
                         locator_domain=locator_domain,
                         latitude=latitude,
                         longitude=longitude,
