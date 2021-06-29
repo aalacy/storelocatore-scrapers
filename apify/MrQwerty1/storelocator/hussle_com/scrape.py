@@ -86,7 +86,7 @@ def fetch_data():
                         start = t[0].get("opens_at")
                         close = t[0].get("closes_at")
                         _tmp.append(f"{d}: {start} - {close}")
-                    
+
                     except Exception:
                         pass
 
