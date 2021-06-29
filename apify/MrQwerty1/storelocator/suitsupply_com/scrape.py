@@ -61,7 +61,7 @@ def get_data(url):
         or "<MISSING>"
     )
     line = "".join(
-        tree.xpath("//span[@class='store-details__address-line'][2]/text()")
+        tree.xpath("//span[@class='store-details__address-line']/text()")[-1]
     ).strip()
     city = " ".join(line.split()[:-2])
     state = line.split()[-2]
