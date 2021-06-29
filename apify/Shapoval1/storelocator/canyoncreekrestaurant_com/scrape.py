@@ -72,6 +72,8 @@ def fetch_data():
         )
         state = ad.split(",")[1].split()[0].strip()
         postal = " ".join(ad.split(",")[1].split()[1:]).strip()
+        if postal.find(" ") == -1:
+            postal = postal + " " + "3W6"
         country_code = "CA"
         city = ad.split(",")[0].strip()
         store_number = "<MISSING>"
