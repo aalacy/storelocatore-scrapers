@@ -47,6 +47,8 @@ def fetch_data():
                 (street_address + ", " + store["address2"]).strip(", ").strip()
             )
 
+        if "International Airport," in street_address:
+            street_address = street_address.split("International Airport,")[1].strip()
         city = store["city"].strip()
         state = store["state"].strip()
 
