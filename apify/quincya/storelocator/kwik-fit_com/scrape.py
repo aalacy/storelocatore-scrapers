@@ -47,7 +47,6 @@ def fetch_data():
     req = session.get(base_link, headers=headers)
     base = BeautifulSoup(req.text, "lxml")
 
-    data = []
     found = []
 
     items = base.find(class_="lac_our-centres").find_all("a")
@@ -58,7 +57,10 @@ def fetch_data():
         req = session.get(link, headers=headers)
         base = BeautifulSoup(req.text, "lxml")
 
-        raw_address = list(base.find("address").stripped_strings)
+        try:
+            raw_address = list(base.find("address").stripped_strings)
+        except:
+            continue
 
         location_name = base.h1.text.strip()
         street_address = raw_address[0].strip()
@@ -113,26 +115,22 @@ def fetch_data():
         latitude = geo[0]
         longitude = geo[1]
 
-        data.append(
-            [
-                locator_domain,
-                link,
-                location_name,
-                street_address,
-                city,
-                state,
-                zip_code,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
-        )
-
-    return data
+        yield [
+            locator_domain,
+            link,
+            location_name,
+            street_address,
+            city,
+            state,
+            zip_code,
+            country_code,
+            store_number,
+            phone,
+            location_type,
+            latitude,
+            longitude,
+            hours_of_operation,
+        ]
 
 
 def scrape():

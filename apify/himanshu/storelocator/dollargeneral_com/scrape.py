@@ -44,24 +44,21 @@ def fetch_data():
     headers = {
         "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36"
     }
-    locator_domain = "medicineshoppe.com"
 
-    max_results = 250
-    max_distance = 50
+    max_distance = 100
 
     search = DynamicZipSearch(
         country_codes=[SearchableCountries.USA],
         max_radius_miles=max_distance,
-        max_search_results=max_results,
     )
 
-    location_url = "http://hosted.where2getit.com/dollargeneral/rest/locatorsearch?like=0.9394142712975708"
+    location_url = "http://hosted.where2getit.com/dollargeneral/rest/locatorsearch?like=0.8201113087423575"
 
     for zip_code in search:
         data = (
             '{"request":{"appkey":"9E9DE426-8151-11E4-AEAC-765055A65BB0","formdata":{"geoip":false,"dataview":"store_default","geolocs":{"geoloc":[{"addressline":"'
             + str(zip_code)
-            + '","country":"US","latitude":"","longitude":""}]},"searchradius":"10|20|50|100","where":{"nci":{"eq":""},"and":{"PROPANE":{"eq":""},"REDBOX":{"eq":""},"RUGDR":{"eq":""},"MULTICULTURAL_HAIR":{"eq":""},"TYPE_ID":{"eq":""},"DGGOCHECKOUT":{"eq":""},"FEDEX":{"eq":""},"DGGOCART":{"eq":""}}},"false":"0"}}}'
+            + '","country":"US","latitude":"","longitude":""}]},"searchradius":"100","where":{"nci":{"eq":""},"and":{"PROPANE":{"eq":""},"REDBOX":{"eq":""},"RUGDR":{"eq":""},"MULTICULTURAL_HAIR":{"eq":""},"TYPE_ID":{"eq":""},"DGGOCHECKOUT":{"eq":""},"FEDEX":{"eq":""},"DGGOCART":{"eq":""}}},"false":"0"}}}'
         )
         try:
             loc = session.post(location_url, headers=headers, data=data).json()

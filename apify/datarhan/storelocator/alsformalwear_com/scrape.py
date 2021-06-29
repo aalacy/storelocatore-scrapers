@@ -54,7 +54,9 @@ def fetch_data():
     for store_url in list(set(all_locations)):
         loc_response = session.get(store_url)
         loc_dom = etree.HTML(loc_response.text)
-        poi = loc_dom.xpath('//script[@type="application/ld+json"]/text()')[0]
+        poi = loc_dom.xpath(
+            '//script[@type="application/ld+json" and contains(text(), "MensClothingStore")]/text()'
+        )[0]
         poi = demjson.decode(poi)
         poi = [elem for elem in poi["@graph"] if elem["@type"] == "MensClothingStore"][
             0

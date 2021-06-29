@@ -1,158 +1,106 @@
-import csv
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
 import json
 from bs4 import BeautifulSoup as bs
 from sgrequests import SgRequests
+from sgscrape.sgpostal import parse_address_intl
+import re
+from sglogging import SgLogSetup
 
-session = SgRequests()
+logger = SgLogSetup().get_logger("originalmattress")
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+def _p(val):
+    return val.strip().split(":")[-1].replace("Phone", "")
 
 
 def fetch_data():
-    base_url = "https://www.originalmattress.com/"
-
-    res1 = session.get("https://www.originalmattress.com/find-a-store")
-    store_list = json.loads(
-        res1.text.split('type="hidden" data-mapmarkers="')[1]
-        .split('" />')[0]
-        .replace("&quot;", '"')
-    )
-    data = []
-    for store in store_list:
-        page_url = base_url + store["UrlSlug"]
-        store_number = store["Id"]
-        location_name = store["Name"].replace("&amp;", "&")
-        location_type = (
-            "Factory & Store" if "Factory & Store" in location_name else "Store"
-        )
-        latitude = store["Latitude"]
-        longitude = store["Longitude"]
-        contents = (
-            store["ShortDescription"]
+    locator_domain = "https://www.originalmattress.com/"
+    base_url = "https://www.originalmattress.com/find-a-store"
+    with SgRequests() as session:
+        store_list = json.loads(
+            bs(session.get(base_url).text, "lxml")
+            .select_one("input#mapMarkers")["data-mapmarkers"]
+            .replace("&quot;", '"')
             .replace("&gt;", ">")
             .replace("&lt;", "<")
-            .replace("NOW OPEN:", "")
-            .replace("Next to Trader Joe’s", "")
+            .replace("&#160;", " ")
+            .replace("&amp;", "&")
+            .replace("\xa0", " ")
         )
-        if "Phone:" in bs(contents, "lxml").text:
-            phone = (
-                bs(contents, "lxml")
-                .text.split("Phone:")[1]
-                .split("\n")[0]
-                .replace("\xa0", "")
-            )
-        else:
-            phone = (
-                bs(contents, "lxml")
-                .text.split("Phone number:")[1]
-                .split("\n")[0]
-                .replace("\xa0", "")
+        for store in store_list:
+            page_url = locator_domain + store["UrlSlug"]
+            sp1 = bs(session.get(page_url).text, "lxml")
+            if "coming soon" in sp1.select_one(".shop-full-description").text.lower():
+                continue
+            logger.info(page_url)
+            location_name = store["Name"]
+            location_type = (
+                "Factory & Store" if "Factory & Store" in location_name else "Store"
             )
 
-        try:
-            hours = (
-                bs(contents, "lxml")
-                .text.lower()
-                .split("store hours:")[1]
-                .split("\nhigh")
+            _ = bs(
+                store["ShortDescription"]
+                .replace("NOW OPEN:", "")
+                .replace("Next to Trader Joe’s", ""),
+                "lxml",
             )
-            hours[:] = [x for x in hours if x]
-            hours_of_operation = hours[0].replace("\n", "").split("phone")[0]
-        except:
-            hours_of_operation = (
-                bs(contents, "lxml").text.lower().split("8\n")[1].split("\n")[0]
+            content = list(_.stripped_strings)
+            phone = ""
+            _phone = _.select_one(".store-phone")
+            if _phone and "hour" not in _phone.text.lower():
+                phone = _phone.text
+            else:
+                _phone = _.find("", string=re.compile(r"Phone"))
+                if _phone:
+                    phone = _phone.find_parent().text
+                else:
+                    for x, aa in enumerate(content):
+                        if "Phone" in aa:
+                            phone = content[x + 1]
+                            break
+            hours = []
+            for x, hh in enumerate(content):
+                if "Mon" in hh:
+                    hours = content[x:]
+            if hours and hours[0] == ":":
+                del hours[0]
+            else:
+                if "Temporarily closed." in _.text.strip():
+                    hours = ["Temporarily closed."]
+
+            if hours and "Phone" in hours[-1]:
+                del hours[-1]
+            _addr = []
+            for aa in content:
+                if "Phone" in aa or "hour" in aa.lower():
+                    break
+                _addr.append(aa)
+            addr = parse_address_intl(" ".join(_addr))
+            street_address = addr.street_address_1
+            if addr.street_address_2:
+                street_address += " " + addr.street_address_2
+
+            yield SgRecord(
+                page_url=page_url,
+                location_name=location_name,
+                store_number=store["Id"],
+                street_address=street_address,
+                city=addr.city,
+                state=addr.state,
+                zip_postal=addr.postcode,
+                country_code="US",
+                phone=_p(phone),
+                latitude=store["Latitude"],
+                longitude=store["Longitude"],
+                locator_domain=locator_domain,
+                location_type=location_type,
+                hours_of_operation="; ".join(hours),
             )
-        hours_of_operation = hours_of_operation.replace("\xa0", "")
-
-        contents = contents.split(">")
-        contents_data = []
-        for x in contents:
-            content = x.split("<")
-            contents_data.append(
-                content[0]
-                .replace("\r\n", "")
-                .replace(",", " ")
-                .replace("&#160;", "")
-                .strip()
-            )
-        contents_data[:] = [x for x in contents_data if x]
-        contents_data = (
-            "/".join(contents_data)
-            .split("Store hours:")[0]
-            .split("Phone")[0]
-            .split("/")[:-1]
-        )
-
-        tmp = "/ ".join(contents_data).split(" ")
-        tmp[:] = [x for x in tmp if x]
-        zip = tmp.pop()
-        if len(zip) == 7:
-            state = zip[:2]
-            zip = zip[2:]
-        else:
-            state = tmp.pop().replace("/", "")
-        contents_data = " ".join(tmp).strip().split("/")
-        contents_data[:] = [x for x in contents_data if x]
-
-        city = contents_data.pop()
-        street_address = " ".join(contents_data).replace("&#39;", "'")
-
-        country_code = "US"
-
-        data.append(
-            [
-                base_url,
-                page_url,
-                location_name,
-                street_address,
-                city,
-                state,
-                zip,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
-        )
-
-    return data
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
 
 
 if __name__ == "__main__":
-    scrape()
+    with SgWriter() as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
