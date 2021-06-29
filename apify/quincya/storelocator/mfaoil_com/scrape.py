@@ -138,7 +138,11 @@ def fetch_data():
             except:
                 pass
             try:
-                raw_hours = " ".join(list(base.find(class_="hours").stripped_strings)).split("Location")[0].strip()
+                raw_hours = (
+                    " ".join(list(base.find(class_="hours").stripped_strings))
+                    .split("Location")[0]
+                    .strip()
+                )
                 hours_of_operation = (hours_of_operation + " " + raw_hours).strip()
             except:
                 pass
