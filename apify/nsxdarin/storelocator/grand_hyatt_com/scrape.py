@@ -86,6 +86,7 @@ def fetch_data():
                         zc = "<MISSING>"
                     if typ == "":
                         typ = "<MISSING>"
+                    hours = "<MISSING>"
                     logger.info(loc)
                     try:
                         r2 = session.get(loc, headers=headers)

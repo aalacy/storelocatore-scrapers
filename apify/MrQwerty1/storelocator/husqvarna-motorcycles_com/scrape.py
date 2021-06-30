@@ -58,8 +58,13 @@ def fetch_data():
             hours_of_operation.replace("\n\n", ";")
             .replace("\n", ";")
             .replace("<br/>", ";")
+            .replace("STORE HOURS;", "")
+            .replace("; ;", ";")
+            .replace(";;", ";")
             .split()
         )
+        if ");" in hours_of_operation:
+            hours_of_operation = hours_of_operation.split(");")[-1].strip()
 
         row = [
             locator_domain,
