@@ -54,10 +54,10 @@ for search_code in search:
             address = location["locationAddress"]["street"]
             x = 0
             for character in address:
-                if bool(re.search(r'\d', character)) is True:
+                if bool(re.search(r"\d", character)) is True:
                     break
 
-                x = x+1
+                x = x + 1
             address = address[x:]
             city = location["locationAddress"]["city"]
             state = location["locationAddress"]["province"]
