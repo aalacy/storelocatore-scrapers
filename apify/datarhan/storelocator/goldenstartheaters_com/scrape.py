@@ -1,4 +1,3 @@
-# --extra-index-url https://dl.cloudsmith.io/KVaWma76J5VNwrOm/crawl/crawl/python/simple/
 import re
 import csv
 from lxml import etree
@@ -56,7 +55,7 @@ def fetch_data():
     for store_url in all_locations:
         if "goldenstartheaters" not in store_url:
             continue
-        loc_response = session.get(store_url)
+        loc_response = session.get(store_url, headers=hdr)
         loc_dom = etree.HTML(loc_response.text)
 
         location_name = loc_dom.xpath(
@@ -101,8 +100,13 @@ def fetch_data():
                 .strip()
             )
         location_type = "<MISSING>"
+        geo = loc_dom.xpath('//a[contains(@href, "maps")]/@href')[0]
         latitude = "<MISSING>"
         longitude = "<MISSING>"
+        if "@" in geo:
+            geo = geo.split("/@")[-1].split(",")[:2]
+            latitude = geo[0]
+            longitude = geo[1]
         hours_of_operation = "<MISSING>"
 
         item = [

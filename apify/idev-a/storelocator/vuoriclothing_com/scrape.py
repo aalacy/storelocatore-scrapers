@@ -37,10 +37,13 @@ def fetch_data():
             if _p(block[-1]):
                 phone = block[-1]
                 del block[-1]
+            street_address = " ".join(addr[:-1]).strip()
+            if street_address.endswith(","):
+                street_address = street_address[:-1]
             yield SgRecord(
                 page_url=base_url,
                 location_name=_.select_one("p.store-loc-vuori-store-name").text,
-                street_address=" ".join(addr[:-1]),
+                street_address=street_address,
                 city=addr[-1].split(",")[0].strip(),
                 state=addr[-1].split(",")[1].strip().split(" ")[0].strip(),
                 zip_postal=addr[-1].split(",")[1].strip().split(" ")[-1].strip(),

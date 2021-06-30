@@ -43,7 +43,11 @@ def get_data(coord):
 
     session = SgRequests()
     r = session.get(api_url)
-    js = r.json()
+    try:
+        js = r.json()
+    except:
+        js = []
+
     for j in js:
         page_url = j.get("permalink") or "<MISSING>"
         location_name = j.get("store").strip()
@@ -99,7 +103,7 @@ def fetch_data():
     s = set()
     coords = static_coordinate_list(radius=200, country_code=SearchableCountries.USA)
 
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
+    with futures.ThreadPoolExecutor(max_workers=5) as executor:
         future_to_url = {executor.submit(get_data, coord): coord for coord in coords}
         for future in futures.as_completed(future_to_url):
             rows = future.result()

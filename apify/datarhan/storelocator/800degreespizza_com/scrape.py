@@ -83,6 +83,8 @@ def fetch_data():
         phone = poi_html.xpath('.//a[contains(@href, "tel")]/b/text()')
         phone = phone[0] if phone else "<MISSING>"
         location_type = "<MISSING>"
+        if poi_html.xpath('.//h4[contains(text(), "TEMPORARILY CLOSED")]'):
+            location_type = "TEMPORARILY CLOSED"
         latitude = "<MISSING>"
         longitude = "<MISSING>"
         if store_url != "<MISSING>":
