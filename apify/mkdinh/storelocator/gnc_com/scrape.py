@@ -52,9 +52,6 @@ def write_output(data):
             writer.writerows(rows)
 
 
-session = SgRequests()
-
-
 def get_session():
     # give each thread its own session object.
     # when using proxy, each thread's session will have a unique IP, and we'll switch IPs every 6 requests
