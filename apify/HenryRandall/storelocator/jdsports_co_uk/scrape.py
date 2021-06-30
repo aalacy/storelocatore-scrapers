@@ -23,6 +23,7 @@ def fetch_data():
     data = []
     for location in loclist:
         loc_url = location[1]
+        driver = SgSelenium().chrome()
         driver.get(loc_url)
         soup = BeautifulSoup(driver.page_source, "html.parser")
         info = soup.find("div", {"class": "storeContentLeft"})
