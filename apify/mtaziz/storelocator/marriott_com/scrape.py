@@ -1,13 +1,8 @@
 from sglogging import SgLogSetup
-from sgselenium import SgChrome
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support import expected_conditions as EC
 from sgselenium import SgChrome
 from webdriver_manager.chrome import ChromeDriverManager
-from undetected_chromedriver import Chrome, ChromeOptions
 from sgrequests import SgRequests
 import json
 import time
@@ -60,7 +55,6 @@ def get_state_country_submit_search_urls():
     """
     r_count = session.get(URL_LOCATION, headers=headers)
     sel_count = html.fromstring(r_count.text, "lxml")
-    data_count = sel_count.xpath('//li[@class="data-count"]/text()')
     lis = sel_count.xpath(
         '//nav[@class="l-pos-relative m-navigation m-navigation-white"]/ul/li'
     )
@@ -153,11 +147,6 @@ def fetch_data():
             'search_list_records_total":', ""
         ).strip(",")
         logger.info(f"Number of records found: {search_list_records_total}")
-        headers_single_page = {
-            "accept": "application/json, text/plain, */*",
-            "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.114 Safari/537.36",
-            "referrer": url_base_city_state,
-        }
         if not search_list_records_total:
             continue
         else:
