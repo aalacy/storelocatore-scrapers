@@ -88,7 +88,7 @@ def fetch_data():
                 location_name = temp[0]
                 street_address = temp[1]
                 address = temp[2].split(",")
-                phone = temp[3]
+                phone = temp[3].replace("P:", "")
                 city = address[0]
                 address = address[1].split()
                 state = address[0]

@@ -92,6 +92,7 @@ def fetch_data():
                         + "/golden-corral-"
                         + addtext
                     )
+                    loc = loc.replace("#", "").replace(",", "")
                     try:
                         r = session.get(loc, headers=headers)
                         if r.encoding is None:
@@ -132,6 +133,38 @@ def fetch_data():
                         lng,
                         hours,
                     ]
+    website = "goldencorral.com"
+    typ = "<MISSING>"
+    country = "US"
+    name = "Golden Corral 2709"
+    add = "1734 W. 49th Street"
+    city = "Hialeah"
+    loc = "https://www.goldencorral.com/locations/location-detail/2709/golden-corral-w-49th-street/"
+    state = "FL"
+    zc = "33012"
+    phone = "786-245-8997"
+    store = "2709"
+    hours = (
+        "Mon-Thu: 11:00AM - 10:00PM; Fri-Sat: 8:00AM - 11:00PM; Sun: 8:00AM - 10:00PM"
+    )
+    lat = "25.8665337"
+    lng = "-80.3170877"
+    yield [
+        website,
+        loc,
+        name,
+        add,
+        city,
+        state,
+        zc,
+        country,
+        store,
+        phone,
+        typ,
+        lat,
+        lng,
+        hours,
+    ]
 
 
 def scrape():

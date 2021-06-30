@@ -70,7 +70,7 @@ def fetch_data():
         title = title.text
         address = address.text
         phone = phone.text
-        link = "https://starlightcinemas.com/" + link["href"]
+        loclink = "https://starlightcinemas.com/" + link["href"]
         parsed = parser.parse_address_usa(address)
         street1 = parsed.street_address_1 if parsed.street_address_1 else "<MISSING>"
         street = (
@@ -81,11 +81,20 @@ def fetch_data():
         city = parsed.city if parsed.city else "<MISSING>"
         state = parsed.state if parsed.state else "<MISSING>"
         pcode = parsed.postcode if parsed.postcode else "<MISSING>"
-
+        stores_req = session.get(loclink, headers=headers)
+        soup = BeautifulSoup(stores_req.text, "html.parser")
+        string_soup = str(soup)
+        if string_soup.find("See directions on map") != -1:
+            coords = soup.find("a", {"class": "cinemaInfoDirectionsLink"})["href"]
+            coords = coords.split("addr=")[2]
+            lat, lng = coords.split(",")
+        else:
+            lat = "<MISSING>"
+            lng = "<MISSING>"
         data.append(
             [
                 "https://starlightcinemas.com/",
-                link,
+                loclink,
                 title,
                 street,
                 city,
@@ -95,8 +104,8 @@ def fetch_data():
                 "<MISSING>",
                 phone,
                 "<MISSING>",
-                "<MISSING>",
-                "<MISSING>",
+                lat,
+                lng,
                 "<MISSING>",
             ]
         )
