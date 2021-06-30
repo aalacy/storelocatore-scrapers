@@ -67,7 +67,12 @@ def fetch_data():
     soup = BeautifulSoup(stores_req.text, "html.parser")
     stores = soup.find("div", {"id": "StoreLocator"}).findAll("tr")
     stores.pop(0)
-    for store in stores:
+    jfile = "https://www2.ranchosanmiguelmarkets.com/StoreLocator/Store_MapDistance_S.las?miles=1000&zipcode=95240"
+    r = session.get(jfile, headers=headers).json()
+    for store, info in zip(stores, r):
+        lat = info["Latitude"]
+        lng = info["Longitude"]
+        storeid = info["StoreNbr"]
         url = store.findAll("a")[1]
         url = url["href"]
         phone = store.findAll("a")[0].text
@@ -92,6 +97,7 @@ def fetch_data():
         hours = re.sub(pattern, " ", hours)
         hours = re.sub(cleanr, " ", hours)
         hours = hours.split("\n")[1]
+
         data.append(
             [
                 "https://ranchosanmiguelmarkets.com/",
@@ -102,11 +108,11 @@ def fetch_data():
                 state,
                 pcode,
                 "US",
-                "<MISSING>",
+                storeid,
                 phone,
                 "<MISSING>",
-                "<MISSING>",
-                "<MISSING>",
+                lat,
+                lng,
                 hours,
             ]
         )

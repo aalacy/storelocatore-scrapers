@@ -86,6 +86,9 @@ def fetch_data():
         country_code = j.get("country") or "<MISSING>"
         store_number = j.get("locationId") or "<MISSING>"
         location_name = j.get("locationName")
+        if "ATM" in location_name:
+            continue
+
         phone = j.get("phoneNumber") or "<MISSING>"
         if ":" in phone:
             phone = phone.split(":")[-1].strip()

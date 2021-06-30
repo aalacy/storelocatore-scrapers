@@ -50,6 +50,8 @@ def get_data(zip):
     for j in js["response"]["entities"]:
         a = j.get("address")
         page_url = j.get("c_baseURL") or f"https://locations.pitapitusa.com/?q={zip}"
+        if page_url.find("https://pitapit.ca/") != -1:
+            continue
         location_name = j.get("name") or "<MISSING>"
         street_address = f"{a.get('line1')} {a.get('line2') or ''}".strip()
         city = a.get("city") or "<MISSING>"

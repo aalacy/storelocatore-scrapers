@@ -81,6 +81,12 @@ def fetch_data():
         )
         if hours_of_operation.find("*") != -1:
             hours_of_operation = hours_of_operation.split("*")[0].strip()
+
+        cms = "".join(trees.xpath("//div[contains(text(), 'Coming Soon')]/text()"))
+        if cms:
+            phone = "<MISSING>"
+            hours_of_operation = "Coming Soon"
+
         row = [
             locator_domain,
             page_url,

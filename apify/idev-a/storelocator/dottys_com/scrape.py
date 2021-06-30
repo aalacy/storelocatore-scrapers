@@ -59,7 +59,7 @@ def fetch_data():
                     city=addr.city,
                     state=addr.state,
                     zip_postal=addr.postcode,
-                    country_code="CA",
+                    country_code="US",
                     latitude=_[1][0][0][0],
                     longitude=_[1][0][0][1],
                     locator_domain=locator_domain,

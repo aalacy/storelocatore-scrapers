@@ -52,7 +52,7 @@ def fetch_data():
         city = loc["City"].lower().strip().replace(" ", "-")
         state = loc["State"]
         lat = loc["Latitude"]
-        longt = loc["Longitude"]
+        longt = "-" + str(loc["Longitude"])
         link = (
             "https://www.cubesmart.com/"
             + state
@@ -83,7 +83,6 @@ def fetch_data():
             hours = "<MISSING>"
         if pcode == "75072":
             pcode = "75070"
-
         if str(loc["OpenSoon"]) == "False":
             data.append(
                 [
@@ -105,7 +104,6 @@ def fetch_data():
             )
 
             p += 1
-
     return data
 
 

@@ -15,17 +15,29 @@ headers = {
 
 
 def fetch_data():
-    temp = []
     if True:
         url = "https://www.idreamoffalafel.com/locations/"
         r = session.get(url, headers=headers, verify=False)
         soup = BeautifulSoup(r.text, "html.parser")
         loclist = soup.find("ul", {"class": "locations"}).findAll("li")
+        count = 1
         for loc in loclist:
+            try:
+                latitude, longitude = (
+                    r.text.split(
+                        "var myLatLng" + str(count) + " = new google.maps.LatLng("
+                    )[1]
+                    .split(")")[0]
+                    .split(",")
+                )
+            except:
+                continue
+
             try:
                 address = (
                     loc.find("h3").get_text(separator="|", strip=True).replace("|", " ")
                 )
+
             except:
                 continue
             temp = loc.findAll("p")
@@ -33,7 +45,7 @@ def fetch_data():
             phone = (
                 temp[0].text.replace("</p>", "").replace("</p>", "").replace("T  ", "")
             )
-            if len(temp) > 3:
+            if len(temp) > 2:
                 hours_of_operation = temp[-2].text + " " + temp[-1].text
             else:
                 hours_of_operation = temp[-1].text
@@ -63,7 +75,8 @@ def fetch_data():
                 if temp[1].find("ZipCode") != -1:
                     zip_postal = zip_postal + " " + temp[0]
                 i += 1
-            location_name = "idreamoffalafel" + " " + street_address
+            street_address = street_address.replace("Navy Pier", "")
+            location_name = street_address
             log.info(location_name)
             yield SgRecord(
                 locator_domain="https://www.idreamoffalafel.com/",
@@ -77,10 +90,11 @@ def fetch_data():
                 store_number="<MISSING>",
                 phone=phone.strip(),
                 location_type="<MISSING>",
-                latitude="<MISSING>",
-                longitude="<MISSING>",
+                latitude=latitude,
+                longitude=longitude,
                 hours_of_operation=hours_of_operation.strip(),
             )
+            count += 1
 
 
 def scrape():
