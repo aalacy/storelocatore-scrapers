@@ -25,82 +25,94 @@ driver = SgChrome(
 ).driver()
 driver.get(base_url)
 
-data = driver.execute_async_script(
-    """
-    console.log("started")
-    var done = arguments[0]
-    fetch("https://www.maccosmetics.com/rpc/jsonrpc.tmpl?dbgmethod=locator.doorsandevents", {
-    "headers": {
-        "accept": "*/*",
-        "accept-language": "en-US,en;q=0.9",
-        "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
-        "sec-ch-ua-mobile": "?0",
-        "sec-fetch-dest": "empty",
-        "sec-fetch-mode": "cors",
-        "sec-fetch-site": "same-origin",
-        "x-requested-with": "XMLHttpRequest"
-    },
-    "referrer": "https://www.maccosmetics.com/international-store-locator",
-    "referrerPolicy": "strict-origin-when-cross-origin",
-    "body": "JSONRPC=%5B%7B%22method%22%3A%22locator.doorsandevents%22%2C%22id%22%3A3%2C%22params%22%3A%5B%7B%22fields%22%3A%22DOOR_ID%2C+DOORNAME%2C+EVENT_NAME%2C+SUB_HEADING%2C+EVENT_START_DATE%2C+EVENT_END_DATE%2C+EVENT_IMAGE%2C+EVENT_FEATURES%2C+EVENT_TIMES%2C+SERVICES%2C+STORE_HOURS%2C+ADDRESS%2C+ADDRESS2%2C+STATE_OR_PROVINCE%2C+CITY%2C+REGION%2C+COUNTRY%2C+ZIP_OR_POSTAL%2C+PHONE1%2C+PHONE2%2C+STORE_TYPE%2C+LONGITUDE%2C+LATITUDE%2C+COMMENTS%22%2C%22country%22%3A%22United+States%22%2C%22latitude%22%3A-27.4704528%2C%22longitude%22%3A153.0260341%2C%22uom%22%3A%22mile%22%2C%22region_id%22%3A0%2C%22radius%22%3A100000%7D%5D%7D%5D",
-    "method": "POST",
-    "mode": "cors",
-    "credentials": "include"
-    })
-    .then(res => res.json())
-    .then(data => done(data))
-    """
-)
+coordinates_list = [[51.3810641, -2.3590167]]
 
-locations = data[0]["result"]["value"]["doors"]
 
-for store_number in locations:
-    location = data[0]["result"]["value"]["results"][str(store_number)]
+for search_latitude, search_longitude in coordinates_list:
 
-    locator_domain = "maccosmetics.com"
-    page_url = (
-        "https://www.maccosmetics.com/rpc/jsonrpc.tmpl?dbgmethod=locator.doorsandevents"
+    data = driver.execute_async_script(
+        """
+        console.log("started")
+        var done = arguments[0]
+        fetch("https://www.maccosmetics.com/rpc/jsonrpc.tmpl?dbgmethod=locator.doorsandevents", {
+        "headers": {
+            "accept": "*/*",
+            "accept-language": "en-US,en;q=0.9",
+            "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
+            "sec-ch-ua-mobile": "?0",
+            "sec-fetch-dest": "empty",
+            "sec-fetch-mode": "cors",
+            "sec-fetch-site": "same-origin",
+            "x-requested-with": "XMLHttpRequest"
+        },
+        "referrer": "https://www.maccosmetics.com/international-store-locator",
+        "referrerPolicy": "strict-origin-when-cross-origin",
+        "body": "JSONRPC=%5B%7B%22method%22%3A%22locator.doorsandevents%22%2C%22id%22%3A3%2C%22params%22%3A%5B%7B%22fields%22%3A%22DOOR_ID%2C+DOORNAME%2C+EVENT_NAME%2C+SUB_HEADING%2C+EVENT_START_DATE%2C+EVENT_END_DATE%2C+EVENT_IMAGE%2C+EVENT_FEATURES%2C+EVENT_TIMES%2C+SERVICES%2C+STORE_HOURS%2C+ADDRESS%2C+ADDRESS2%2C+STATE_OR_PROVINCE%2C+CITY%2C+REGION%2C+COUNTRY%2C+ZIP_OR_POSTAL%2C+PHONE1%2C+PHONE2%2C+STORE_TYPE%2C+LONGITUDE%2C+LATITUDE%2C+COMMENTS%22%2C%22country%22%3A%22United+States%22%2C%22latitude%22%3A"""
+        + str(search_latitude)
+        + """%2C%22longitude%22%3A"""
+        + str(search_longitude)
+        + """%2C%22uom%22%3A%22mile%22%2C%22region_id%22%3A0%2C%22radius%22%3A100000%7D%5D%7D%5D",
+        "method": "POST",
+        "mode": "cors",
+        "credentials": "include"
+        })
+        .then(res => res.json())
+        .then(data => done(data))
+        """
     )
-    location_name = html.unescape(location["DOORNAME"]) + " " + location["SUB_HEADING"]
-    address = location["ADDRESS"]
-    city = location["CITY"]
-    state = location["STATE_OR_PROVINCE"]
-    zipp = location["ZIP_OR_POSTAL"]
-    country_code = location["COUNTRY"]
-    phone = location["PHONE1"]
-    location_type = location["STORE_TYPE"]
-    latitude = location["LATITUDE"]
-    longitude = location["LONGITUDE"]
 
-    hours_sections = location["STORE_HOURS"]
+    locations = data[0]["result"]["value"]["doors"]
+    for store_number in locations:
+        location = data[0]["result"]["value"]["results"][str(store_number)]
 
-    hours = ""
+        locator_domain = "maccosmetics.com"
+        page_url = "<MISSING>"
+        location_name = (
+            html.unescape(location["DOORNAME"]) + " " + location["SUB_HEADING"]
+        )
+        address = location["ADDRESS"]
+        city = location["CITY"]
+        state = location["STATE_OR_PROVINCE"]
+        zipp = location["ZIP_OR_POSTAL"]
+        country_code = location["COUNTRY"]
+        phone = location["PHONE1"]
+        location_type = location["STORE_TYPE"]
+        latitude = location["LATITUDE"]
+        longitude = location["LONGITUDE"]
 
-    for section in hours_sections:
-        try:
-            hours = hours + section["day"] + " " + section["hours"] + ", "
+        hours_sections = location["STORE_HOURS"]
 
-        except Exception:
-            pass
+        hours = ""
 
-    if len(hours) > 1:
-        hours = hours[:-2]
+        for section in hours_sections:
+            try:
+                hours = hours + section["day"] + " " + section["hours"] + ", "
 
-    if country_code != "United States":
-        locator_domains.append(locator_domain)
-        page_urls.append(page_url)
-        location_names.append(location_name)
-        street_addresses.append(address)
-        citys.append(city)
-        states.append(state)
-        zips.append(zipp)
-        country_codes.append(country_code)
-        store_numbers.append(store_number)
-        phones.append(phone)
-        location_types.append(location_type)
-        latitudes.append(latitude)
-        longitudes.append(longitude)
-        hours_of_operations.append(hours)
+            except Exception:
+                pass
+
+        if len(hours) > 1:
+            hours = hours[:-2]
+
+        if (
+            country_code != "United States"
+            and country_code != "US"
+            and country_code != "USA"
+        ):
+            locator_domains.append(locator_domain)
+            page_urls.append(page_url)
+            location_names.append(location_name)
+            street_addresses.append(address)
+            citys.append(city)
+            states.append(state)
+            zips.append(zipp)
+            country_codes.append(country_code)
+            store_numbers.append(store_number)
+            phones.append(phone)
+            location_types.append(location_type)
+            latitudes.append(latitude)
+            longitudes.append(longitude)
+            hours_of_operations.append(hours)
 
 df = pd.DataFrame(
     {

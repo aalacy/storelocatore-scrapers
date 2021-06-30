@@ -2,6 +2,7 @@ import csv
 from sgrequests import SgRequests
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 from sglogging import SgLogSetup
+from sglogging import sglog
 
 logger = SgLogSetup().get_logger(
     "walmart_ca__en?fltr_equals_WALK___IN___MEDICAL___CLINIC"
@@ -14,7 +15,7 @@ headers = {
 search = DynamicZipSearch(
     country_codes=[SearchableCountries.CANADA],
     max_radius_miles=20,
-    max_search_results=25,
+    max_search_results=20,
 )
 
 
@@ -45,90 +46,108 @@ def write_output(data):
             writer.writerow(row)
 
 
-def fetch_data():
-    ids = []
-    for code in search:
-        logger.info(("Pulling Zip Code %s..." % code))
-        url = (
-            "https://www.walmart.ca/en/stores-near-me/api/searchStores?singleLineAddr="
-            + code.replace(" ", "")
+ids = set()
+total = 0
+
+
+def item_transformer(item):
+    global total
+    global ids
+    website = "walmart.ca/en?fltr_equals_WALK___IN___MEDICAL___CLINIC"
+    typ = "Walmart"
+
+    if "WALK_IN_MEDICAL_CLINIC" in str(item):
+        name = item["displayName"]
+        store = item["id"]
+        loc = (
+            "https://www.walmart.ca/en/stores-near-me/"
+            + name.replace(" ", "-").lower()
+            + "-"
+            + str(store).strip()
         )
-        website = "walmart.ca/en?fltr_equals_WALK___IN___MEDICAL___CLINIC"
-        typ = "Walmart"
-        session = SgRequests()
-        r2 = session.get(url, headers=headers, timeout=15)
-        if r2.encoding is None:
-            r2.encoding = "utf-8"
-        for line2 in r2.iter_lines(decode_unicode=True):
-            if '"stores":[{"distance":' in line2:
-                items = line2.split('{"distance":')
-                for item in items:
-                    if '"address":{' in item and "WALK_IN_MEDICAL_CLINIC" in str(item):
-                        hours = ""
-                        name = item.split('"displayName":"')[1].split('"')[0]
-                        store = item.split('"id":')[1].split(",")[0]
-                        loc = (
-                            "https://www.walmart.ca/en/stores-near-me/"
-                            + name.replace(" ", "-").lower()
-                            + "-"
-                            + store
+        add = item["address"]["address1"]
+        city = item["address"]["city"]
+        state = item["address"]["state"]
+        phonecopy = item["phone"]
+        lat = item["geoPoint"]["latitude"]
+        lng = item["geoPoint"]["longitude"]
+        zc = item["address"]["postalCode"]
+        hours = None
+        phone = None
+        for service in item["servicesMap"]:
+            if service["service"]["id"] == 1005:
+                try:
+                    phone = service["phone"] if service["phone"] else phonecopy
+                except Exception:
+                    phone = phonecopy
+                hours = "; ".join(
+                    [
+                        str(
+                            "{}: {}-{}".format(
+                                str(i["day"]).capitalize(),
+                                str(i["start"]),
+                                str(i["end"]),
+                            )
                         )
-                        add = item.split('"address1":"')[1].split('"')[0]
-                        city = item.split('"city":"')[1].split('"')[0]
-                        state = item.split('"state":"')[1].split('"')[0]
-                        phone = item.split('"phone":"')[1].split('"')[0]
-                        lat = item.split('"latitude":')[1].split(",")[0]
-                        lng = item.split('"longitude":')[1].split("}")[0]
-                        zc = item.split('"postalCode":"')[1].split('"')[0]
-                        days = (
-                            item.split('"currentHours":[')[1]
-                            .split("}],")[0]
-                            .split('"start":"')
-                        )
-                        for day in days:
-                            if '"day":"' in day:
-                                if '"isClosed":true' in day:
-                                    hrs = (
-                                        day.split('"day":"')[1].split('"')[0]
-                                        + ": Closed"
-                                    )
-                                else:
-                                    hrs = (
-                                        day.split('"day":"')[1].split('"')[0]
-                                        + ": "
-                                        + day.split('"')[0]
-                                        + "-"
-                                        + day.split('"end":"')[1].split('"')[0]
-                                    )
-                                if hours == "":
-                                    hours = hrs
-                                else:
-                                    hours = hours + "; " + hrs
-                        country = "CA"
-                        if "Supercentre" in name:
-                            typ = "Supercenter"
-                        if "Neighborhood Market" in name:
-                            typ = "Neighborhood Market"
-                        if hours == "":
-                            hours = "<MISSING>"
-                        if add != "" and store not in ids:
-                            ids.append(store)
-                            yield [
-                                website,
-                                loc,
-                                name,
-                                add,
-                                city,
-                                state,
-                                zc,
-                                country,
-                                store,
-                                phone,
-                                typ,
-                                lat,
-                                lng,
-                                hours,
-                            ]
+                        if "alse" in str(i["closed"])
+                        else str("{}: Closed".format(str(i["day"]).capitalize()))
+                        for i in service["regularHours"]
+                    ]
+                )
+        if not phone:
+            phone = phonecopy
+        country = item["address"]["country"]
+        if "Supercentre" in name:
+            typ = "Supercenter"
+        if "Neighborhood Market" in name:
+            typ = "Neighborhood Market"
+        if not hours:
+            hours = "<MISSING>"
+        if add != "" and str(str(store) + str(lat) + str(lng) + str(zc)) not in ids:
+            ids.add(str(str(store) + str(lat) + str(lng) + str(zc)))
+            total += 1
+            yield [
+                website,
+                loc,
+                name,
+                add,
+                city,
+                state,
+                zc,
+                country,
+                store,
+                phone,
+                typ,
+                lat,
+                lng,
+                hours,
+            ]
+
+
+def fetch_data():
+    logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
+    maxZ = search.items_remaining()
+    with SgRequests() as session:
+        for code in search:
+            found = 0
+            url = (
+                "https://www.walmart.ca/en/stores-near-me/api/searchStores?singleLineAddr="
+                + code.replace(" ", "")
+            )
+            r2 = session.get(url, headers=headers, timeout=15)
+            if r2.encoding is None:
+                r2.encoding = "utf-8"
+            r2 = r2.json()
+            for item in r2["payload"]["stores"]:
+                found += 1
+                progress = (
+                    str(round(100 - (search.items_remaining() / maxZ * 100), 2)) + "%"
+                )
+
+                yield item_transformer(item)
+            logzilla.info(
+                f"{code} | found: {found} | total: {total} | progress: {progress}"
+            )
 
 
 def scrape():
