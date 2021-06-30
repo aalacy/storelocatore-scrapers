@@ -91,18 +91,11 @@ def fetch_data():
         page_url = json_data["Website"]
 
         sales_hours = ""
-        service_hours = ""
 
         try:
             for hr in json_data["WorkingHours"]["DealerTiming"]:
                 sales_hours += " " + hr["Day"] + " " + hr["SalesHours"] + " "
-                service_hours += " " + hr["Day"] + " " + hr["ServiceHours"] + " "
-            hours = (
-                "Sales Hours : "
-                + sales_hours.strip()
-                + " Parts & Service Hours : "
-                + service_hours.strip()
-            )
+            hours = sales_hours.strip()
         except:
             hours = "<MISSING>"
 
@@ -117,14 +110,6 @@ def fetch_data():
                         soup.find(
                             "div", {"id": "map_open_hours"}
                         ).ul.li.div.stripped_strings
-                    )
-                )
-                + " "
-                + " ".join(
-                    list(
-                        soup.find("div", {"id": "map_open_hours"})
-                        .ul.find_all("li")[1]
-                        .stripped_strings
                     )
                 ),
             )
