@@ -35,7 +35,6 @@ def write_output(data):
 
 def get_hours(url):
     _tmp = []
-    session = SgRequests()
     r = session.get(url)
     tree = html.fromstring(r.text)
     divs = tree.xpath(
@@ -50,12 +49,26 @@ def get_hours(url):
     return ";".join(_tmp) or "<MISSING>"
 
 
+def get_tree(url):
+    r = session.get(url)
+    tree = html.fromstring(r.text)
+    return tree
+
+
+def get_phone(url):
+    tree = get_tree(url)
+    kurl = tree.xpath("/html/head/script/@src")[-1]
+    r = session.get(kurl)
+    phone = (r.text.split('"phone":')[1]).split(",")[0]
+
+    return phone.replace('"', "")
+
+
 def fetch_data():
     out = []
     locator_domain = "https://smartstopselfstorage.com/"
     api_url = "https://smartstopselfstorage.com/umbraco/rhythm/locationsapi/findlocations?size=&latitude=36.563752659280766&longitude=-73.941626814556&radius=3915.6025249727622&culture=en-us"
 
-    session = SgRequests()
     r = session.get(api_url)
     js = r.json()["items"]
 
@@ -76,7 +89,7 @@ def fetch_data():
         slug = j.get("url") or ""
         page_url = f"https://smartstopselfstorage.com{slug}"
         location_name = f"Self Storage in {city} {state}"
-        phone = j.get("phone") or "<MISSING>"
+        phone = j.get("phone") or get_phone(page_url)
         latitude = j.get("latitude") or "<MISSING>"
         longitude = j.get("longitude") or "<MISSING>"
         location_type = "<MISSING>"
@@ -109,4 +122,5 @@ def scrape():
 
 
 if __name__ == "__main__":
+    session = SgRequests()
     scrape()
