@@ -213,7 +213,7 @@ def fetchData():
 
 
 def scrape():
-    log.info(f"Scrape started ...")
+    log.info("Scrape started ...")
     start = time.time()
     result = fetchData()
     with SgWriter() as writer:
