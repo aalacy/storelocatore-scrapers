@@ -7,6 +7,7 @@ headers = {"locale": "en_GB"}
 
 cities = [
     "London",
+    "Surrey",
     "Birmingham",
     "Leeds",
     "Glasgow",
@@ -82,6 +83,7 @@ cities = [
     "Basildon",
     "Bournemouth",
     "Peterborough",
+    "Surrey",
     "North East Lincolnshire",
     "Chelmsford",
     "Brighton",
