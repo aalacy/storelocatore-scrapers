@@ -153,10 +153,14 @@ def fetch_location(loc, retry_count=0):
                 lat = "33.92653800"
                 lng = "-84.34037200"
                 hours = "Mon-Thu: 11:30AM - 9:00PM; Fri: 11:30AM - 10:00PM; Sat: 5:00PM - 10:00PM; Sun: 4:00PM - 9:00PM"
+            if "chevy-chase/8041" in loc:
+                city = "Chevy Chase"
+                state = "MD"
+                add = "5310 Western Ave"
+                phone = "(301) 718-7812"
             if "mc/cuauhtemo" not in loc and "/nl/san-pedro" not in loc:
                 if CS:
                     name = name + " - Coming Soon"
-
                 return [
                     website,
                     loc,
