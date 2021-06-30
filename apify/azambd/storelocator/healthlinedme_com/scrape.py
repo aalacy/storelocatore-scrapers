@@ -132,7 +132,7 @@ def fetchStores():
                     break
                 delay = delay + 2
 
-            if found == False:
+            if found is False:
                 raise Exception("Can't overcome CF")
             body = html.fromstring(driver.page_source, "lxml")
             divHolders = body.xpath(
@@ -155,7 +155,7 @@ def fetchStores():
                     break
                 delay = delay + 2
 
-            if found == False:
+            if found is False:
                 raise Exception("Can't overcome CF")
             stores = []
             for divHolder in divHolders:
