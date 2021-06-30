@@ -62,9 +62,7 @@ def fetch_data():
         location_name = loc_dom.xpath('//div[@class="store-information"]/h1/text()')[0]
         raw_data = loc_dom.xpath('//div[@class="store-information"]/p/text()')
         addr = parse_address_intl(" ".join(raw_data[:3]))
-        street_address = addr.street_address_1
-        if addr.street_address_2:
-            street_address += " " + addr.street_address_2
+        street_address = raw_data[0]
         city = addr.city
         state = addr.state
         state = state if state else "<MISSING>"

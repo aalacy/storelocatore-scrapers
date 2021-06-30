@@ -54,13 +54,17 @@ def fetch_data():
         location_name = result["name"].replace('"', "'")
         locator_domain = "striderite.com"
         page_url = handle_missing(str(result["url"]))
+        if page_url == "None":
+            page_url = "<MISSING>"
         store_number = handle_missing(result["id"])
-        street_address = handle_missing(result["address_line_1"])
+        street_address = handle_missing(result["address_line_1"]) or "<MISSING>"
         try:
             if len(result["address_line_2"]) > 0:
                 street_address += " " + result["address_line_2"]
         except:
             street_address = street_address
+        if street_address == "4th Street":
+            street_address = handle_missing(result["address"]).split(",")[0].strip()
         latitude = handle_missing(result["lat"])
         longitude = handle_missing(result["lng"])
         city = handle_missing(result["city"])

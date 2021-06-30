@@ -31,12 +31,28 @@ def write_output(data):
             writer.writerow(row)
 
 
+def get_token():
+    session = SgRequests()
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:89.0) Gecko/20100101 Firefox/89.0",
+        "Accept": "*/*",
+        "Accept-Language": "uk-UA,uk;q=0.8,en-US;q=0.5,en;q=0.3",
+        "X-Requested-With": "XMLHttpRequest",
+        "Connection": "keep-alive",
+        "Referer": "https://locations.bankofoklahoma.com/bank-locations",
+    }
+
+    r = session.get("https://locations.bankofoklahoma.com/token", headers=headers)
+
+    return r.json()["token"]
+
+
 def fetch_data():
     out = []
     locator_domain = "https://bankofoklahoma.com"
     api_url = "https://bok-dashboard.golocalinteractive.com/api/v1/oklahoma/locations/geocode/75022/5000/all"
     headers = {
-        "Authorization": "bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwczovL2Jvay1kYXNoYm9hcmQuZ29sb2NhbGludGVyYWN0aXZlLmNvbS9hcGkvdjEvb2tsYWhvbWEvYXV0aCIsImlhdCI6MTYyNDMwNjY3NSwiZXhwIjoxNjI0MzEwMjc1LCJuYmYiOjE2MjQzMDY2NzUsImp0aSI6ImtROWFra0FWMGxTcnB3UWgiLCJzdWIiOjQ5LCJwcnYiOiJhNmRjMGRmNGRjMWE3OTNjMThmODc1N2UxMmFkODdjOGMyOWZlZGM3In0.dXUdTvG8mBroWA04HTHCnJWipnAApaVCE0vfhUhLkzg",
+        "Authorization": f"bearer {get_token()}",
     }
 
     session = SgRequests()
@@ -81,6 +97,7 @@ def fetch_data():
             start = j.get(f"{part}_open")
             end = j.get(f"{part}_close")
             if not start:
+                _tmp.append(f"{d}: Closed")
                 continue
             _tmp.append(f"{d}: {start} - {end}")
 
