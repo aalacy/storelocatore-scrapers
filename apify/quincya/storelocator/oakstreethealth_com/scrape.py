@@ -53,12 +53,16 @@ def fetch_data():
     data = []
     locator_domain = "oakstreethealth.com"
 
-    items = base.find_all(class_="thumb__content")
+    items = base.find(class_="flex-blocks").find_all("li")
     for item in items:
 
-        street_address = item.find(class_="thumb__text type-body").text.strip()
-        city = item.a.text.split("|")[1].split(",")[0].strip()
-        state = item.a.text.split("|")[1].split(",")[1].strip()
+        street_address = item.find(class_="type-body").text.strip()
+        city = (
+            item.find(class_="type-body-lg").a.text.split("|")[1].split(",")[0].strip()
+        )
+        state = (
+            item.find(class_="type-body-lg").a.text.split("|")[1].split(",")[1].strip()
+        )
 
         country_code = "US"
         store_number = "<MISSING>"
