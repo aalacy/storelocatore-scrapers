@@ -52,6 +52,9 @@ def write_output(data):
             writer.writerows(rows)
 
 
+session = SgRequests()
+
+
 def get_session():
     # give each thread its own session object.
     # when using proxy, each thread's session will have a unique IP, and we'll switch IPs every 6 requests
@@ -106,14 +109,14 @@ def retry_error_callback(retry_state):
     return []
 
 
-@retry(stop=stop_after_attempt(3), retry_error_callback=retry_error_callback)
+@retry(stop=stop_after_attempt(3))
 def search_zip(postal, tracker):
     url = "https://www.gnc.com/on/demandware.store/Sites-GNC2-Site/default/Stores-FindStores"
     payload = {
         "dwfrm_storelocator_countryCode": "US",
         "dwfrm_storelocator_distanceUnit": "mi",
         "dwfrm_storelocator_postalCode": postal,
-        "dwfrm_storelocator_maxdistance": "15",
+        "dwfrm_storelocator_maxdistance": "100",
         "dwfrm_storelocator_findbyzip": "Search",
     }
 
