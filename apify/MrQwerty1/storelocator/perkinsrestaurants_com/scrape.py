@@ -36,7 +36,6 @@ def write_output(data):
 
 
 def get_urls():
-    session = SgRequests()
     r = session.get("https://www.perkinsrestaurants.com/sitemap.xml")
     tree = html.fromstring(r.content)
 
@@ -48,39 +47,50 @@ def get_data(page_url):
     if page_url.endswith("/locations/"):
         return
 
-    session = SgRequests()
-    r = session.get(page_url)
-    tree = html.fromstring(r.text)
+    slug = page_url.split("/")[-2]
+    api = f"https://www.perkinsrestaurants.com/_data/locations/{slug}.json"
+    r = session.get(api)
+    j = r.json()
+    path = j.get("path")
+    j = j["content"]
 
-    text = "".join(tree.xpath("//script[contains(text(), 'LocalBusiness')]/text()"))
-    j = json.loads(text)
-
+    page_url = f"{locator_domain}{path}"
     location_name = j.get("name")
-    a = j.get("address") or {}
-    street_address = a.get("streetAddress") or "<MISSING>"
-    city = a.get("addressLocality") or "<MISSING>"
-    state = a.get("addressRegion") or "<MISSING>"
-    postal = a.get("postalCode") or "<MISSING>"
-    country_code = a.get("addressCountry") or "<MISSING>"
-    store_number = "<MISSING>"
-    phone = j.get("telephone") or "<MISSING>"
-
-    text = "".join(tree.xpath("//script[contains(text(), 'latitude')]/text()"))
-    try:
-        latitude = text.split("latitude:")[1].split(",")[0]
-        longitude = text.split("longitude:")[1].split(",")[0]
-    except IndexError:
-        latitude, longitude = "<MISSING>", "<MISSING>"
+    street_address = j.get("address") or "<MISSING>"
+    city = j.get("city") or "<MISSING>"
+    state = j.get("state") or "<MISSING>"
+    postal = j.get("zipcode") or "<MISSING>"
+    country_code = j.get("country") or "<MISSING>"
+    store_number = j.get("store_num") or "<MISSING>"
+    phone = j.get("phone") or "<MISSING>"
+    latitude = j.get("latitude") or "<MISSING>"
+    longitude = j.get("longitude") or "<MISSING>"
     location_type = "<MISSING>"
 
     _tmp = []
-    hours = j.get("openingHoursSpecification") or []
+    days = [
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday",
+        "Sunday",
+    ]
+    hours = j.get("hours") or []
+    if hours:
+        hours = hours[0]
+        for d in days:
+            part = d.lower()[:3]
+            start = hours.get(f"{part}_open")
+            if not start:
+                continue
+            end = hours.get(f"{part}_close")
 
-    for h in hours:
-        day = h.get("dayOfWeek")
-        start = h.get("opens")
-        end = h.get("closes")
-        _tmp.append(f"{day}: {start} - {end}")
+            if start == end:
+                _tmp.append(f"{d}: Closed")
+            else:
+                _tmp.append(f"{d}: {start} - {end}")
 
     hours_of_operation = ";".join(_tmp) or "<MISSING>"
 
@@ -124,4 +134,5 @@ def scrape():
 
 
 if __name__ == "__main__":
+    session = SgRequests()
     scrape()
