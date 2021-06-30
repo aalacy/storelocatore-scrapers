@@ -38,14 +38,20 @@ def write_output(data):
 def get_urls():
     urls = set()
     session = SgRequests()
-    r = session.get("https://www.selfmadetrainingfacility.com/locations")
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0"
+    }
+
+    r = session.get(
+        "https://www.selfmadetrainingfacility.com/locations", headers=headers
+    )
     tree = html.fromstring(r.text)
     states = tree.xpath(
         "//div[contains(@class, 'brz-row__container')]/preceding-sibling::div[1]//a[@class='brz-a']/@href"
     )
     for state in states:
         url = f"https://www.selfmadetrainingfacility.com{state}"
-        req = session.get(url)
+        req = session.get(url, headers=headers)
         root = html.fromstring(req.text)
         links = root.xpath(
             "//div[contains(@class, 'brz-columns') and .//picture]//a[contains(@class, 'brz-a')]/@href"
@@ -63,7 +69,10 @@ def get_data(page_url):
     locator_domain = "https://www.selfmadetrainingfacility.com/"
 
     session = SgRequests()
-    r = session.get(page_url)
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0"
+    }
+    r = session.get(page_url, headers=headers)
     tree = html.fromstring(r.text)
 
     tag = {
@@ -155,7 +164,7 @@ def fetch_data():
     out = []
     urls = get_urls()
 
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
+    with futures.ThreadPoolExecutor(max_workers=3) as executor:
         future_to_url = {executor.submit(get_data, url): url for url in urls}
         for future in futures.as_completed(future_to_url):
             row = future.result()

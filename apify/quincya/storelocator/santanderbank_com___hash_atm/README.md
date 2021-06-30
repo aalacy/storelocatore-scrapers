@@ -1,0 +1,1 @@
+--ignore StreetAddressHasNumber --ignore StreetAddressHasStateName --ignore StoreNumberColumnValidator (Confrimed on website)

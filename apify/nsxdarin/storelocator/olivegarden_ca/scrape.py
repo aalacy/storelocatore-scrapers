@@ -1,6 +1,9 @@
 from sglogging import SgLogSetup
 from sgrequests import SgRequests
 from sgselenium import SgChrome
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as EC
 from lxml import html
 import json
 import time
@@ -56,13 +59,17 @@ def fetch_data():
     for url_store in urls:
         with SgChrome() as driver:
             driver.get(url_store)
-            time.sleep(60)
+            wait_xpath = '//*[@id="/locations/location-search"]'
+            WebDriverWait(driver, 40).until(
+                EC.element_to_be_clickable((By.XPATH, wait_xpath))
+            )
+            time.sleep(5)
             location_raw_data = driver.page_source
-
         locator_domain_name = "olivegarden.ca"
         tree = html.fromstring(location_raw_data)
         json_raw_data = tree.xpath('//script[@type="application/ld+json"]/text()')
         json_clean = "".join(json_raw_data).replace("\n", "")
+        logger.info(("\nParsing data for: %s\n" % url_store))
         logger.info(("\nParsing data from.... \n%s\n" % json_clean))
         json_data = json.loads(json_clean)
         page_url = json_data["url"] or "<MISSING>"

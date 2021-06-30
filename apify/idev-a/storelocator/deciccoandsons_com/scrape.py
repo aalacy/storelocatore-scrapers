@@ -40,7 +40,12 @@ def fetch_data():
             state_zip = (
                 visit.find_next_siblings("p")[1].text.split(",")[1].strip().split(" ")
             )
-            coord = soup1.iframe["src"].split("!2d")[1].split("!2m")[0].split("!3d")
+            coord = (
+                soup1.select_one(".wpb_map_wraper iframe")["src"]
+                .split("!2d")[1]
+                .split("!2m")[0]
+                .split("!3d")
+            )
             phone_block = soup1.find("h2", string=re.compile(r"^phone", re.IGNORECASE))
             phone = phone_block.find_next_sibling("p").text.strip()
             hour_block = soup1.find(
@@ -55,8 +60,8 @@ def fetch_data():
                 state=state_zip[0],
                 zip_postal=state_zip[-1],
                 phone=phone,
-                latitude=coord[0],
-                longitude=coord[1],
+                latitude=coord[1],
+                longitude=coord[0],
                 country_code="US",
                 locator_domain=locator_domain,
                 hours_of_operation=_valid("; ".join(hours)),

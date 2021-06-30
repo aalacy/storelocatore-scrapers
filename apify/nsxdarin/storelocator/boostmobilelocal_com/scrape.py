@@ -1,6 +1,7 @@
 import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
+import time
 
 session = SgRequests()
 headers = {
@@ -67,6 +68,7 @@ def fetch_data():
                     lng = item.split('"lng":')[1].split(",")[0]
                     r2 = session.get(loc, headers=headers)
                     logger.info(loc)
+                    time.sleep(1)
                     for line2 in r2.iter_lines():
                         line2 = str(line2.decode("utf-8"))
                         if '"postalCode": "' in line2:

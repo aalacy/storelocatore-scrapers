@@ -3,7 +3,7 @@ import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
 from bs4 import BeautifulSoup
-import usaddress
+from sgscrape import sgpostal as parser
 
 
 logger = SgLogSetup().get_logger("breauxmart_com")
@@ -59,7 +59,7 @@ def write_output(data):
 
 def fetch_data():
     data = []
-    url = "https://api.freshop.com/1/stores?app_key=breaux_mart&distance=100&fields=id%2Cname&has_address=true&q=LA&token=5e251947db19d480fea23dfa60339d24"
+    url = "https://api.freshop.com/1/stores?app_key=breaux_mart&distance=10&fields=id%2Cname&has_address=true&q=LA"
     stores = session.get(url, headers=headers, verify=False).json()
     for loc in stores["items"]:
         storeid = loc["id"]
@@ -85,40 +85,16 @@ def fetch_data():
         hours = hours.strip()
         lat = soup.find("meta", {"property": "place:location:latitude"})["content"]
         lng = soup.find("meta", {"property": "place:location:longitude"})["content"]
-        address = address.replace(",", "")
-        address = usaddress.parse(address)
-        i = 0
-        street = ""
-        city = ""
-        state = ""
-        pcode = ""
-        while i < len(address):
-            temp = address[i]
-            if (
-                temp[1].find("Address") != -1
-                or temp[1].find("Street") != -1
-                or temp[1].find("Recipient") != -1
-                or temp[1].find("Occupancy") != -1
-                or temp[1].find("BuildingName") != -1
-                or temp[1].find("USPSBoxType") != -1
-                or temp[1].find("USPSBoxID") != -1
-            ):
-                street = street + " " + temp[0]
-            if temp[1].find("PlaceName") != -1:
-                city = city + " " + temp[0]
-            if temp[1].find("StateName") != -1:
-                state = state + " " + temp[0]
-            if temp[1].find("ZipCode") != -1:
-                pcode = pcode + " " + temp[0]
-            i += 1
-        street = street.lstrip()
-        street = street.replace(",", "")
-        city = city.lstrip()
-        city = city.replace(",", "")
-        state = state.lstrip()
-        state = state.replace(",", "")
-        pcode = pcode.lstrip()
-        pcode = pcode.replace(",", "")
+        parsed = parser.parse_address_usa(address)
+        street1 = parsed.street_address_1 if parsed.street_address_1 else "<MISSING>"
+        street = (
+            (street1 + ", " + parsed.street_address_2)
+            if parsed.street_address_2
+            else street1
+        )
+        city = parsed.city if parsed.city else "<MISSING>"
+        state = parsed.state if parsed.state else "<MISSING>"
+        pcode = parsed.postcode if parsed.postcode else "<MISSING>"
 
         data.append(
             [

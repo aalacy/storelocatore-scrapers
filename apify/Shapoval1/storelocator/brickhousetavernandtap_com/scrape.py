@@ -1,5 +1,5 @@
 import csv
-import usaddress
+import json
 from lxml import html
 from sgrequests import SgRequests
 
@@ -35,71 +35,52 @@ def write_output(data):
 
 def fetch_data():
     out = []
-    locator_domain = "https://www.brickhousetavernandtap.com"
-    page_url = "https://www.brickhousetavernandtap.com/locations"
+
+    locator_domain = "https://www.brickhousetavernandtap.com/"
+    api_url = "https://www.brickhousetavernandtap.com/view-all-locations/"
     session = SgRequests()
-    tag = {
-        "Recipient": "recipient",
-        "AddressNumber": "address1",
-        "AddressNumberPrefix": "address1",
-        "AddressNumberSuffix": "address1",
-        "StreetName": "address1",
-        "StreetNamePreDirectional": "address1",
-        "StreetNamePreModifier": "address1",
-        "StreetNamePreType": "address1",
-        "StreetNamePostDirectional": "address1",
-        "StreetNamePostModifier": "address1",
-        "StreetNamePostType": "address1",
-        "CornerOf": "address1",
-        "IntersectionSeparator": "address1",
-        "LandmarkName": "address1",
-        "USPSBoxGroupID": "address1",
-        "USPSBoxGroupType": "address1",
-        "USPSBoxID": "address1",
-        "USPSBoxType": "address1",
-        "BuildingName": "address2",
-        "OccupancyType": "address2",
-        "OccupancyIdentifier": "address2",
-        "SubaddressIdentifier": "address2",
-        "SubaddressType": "address2",
-        "PlaceName": "city",
-        "StateName": "state",
-        "ZipCode": "postal",
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
     }
-    r = session.get(page_url)
+    r = session.get(api_url, headers=headers)
     tree = html.fromstring(r.text)
-    block = tree.xpath('//li[@style="height: 723px"]')
-    for b in block:
+    jsblock = "".join(tree.xpath('//script[contains(text(), "telephone")]/text()'))
 
-        location_name = "".join(b.xpath(".//h2/a/text()")).replace("*", "")
-        line = b.xpath(".//p[./br]/text()")
-        line = list(filter(None, [a.strip() for a in line]))
-        line = " ".join(line).split("Store")[0].strip()
-        a = usaddress.tag(line, tag_mapping=tag)[0]
+    js = json.loads(jsblock)
 
-        street_address = f"{a.get('address1')} {a.get('SecondStreetName')} {a.get('SecondStreetNamePostType')} {a.get('address2')}".replace(
-            "None", ""
-        ).strip()
-        phone = "".join(b.xpath('.//a[contains(@href, "tel")]/text()'))
-        if phone.find("GrubhubUberEats") != -1:
-            phone = phone.split("GrubhubUberEats")[0]
-        city = a.get("city")
-        state = a.get("state")
+    for j in js["subOrganization"]:
+        a = j.get("address")
+        page_url = j.get("url")
+        location_name = j.get("name")
+        location_type = j.get("@type")
+        street_address = a.get("streetAddress")
+        phone = j.get("telephone")
+        state = a.get("addressRegion")
+        postal = a.get("postalCode")
         country_code = "US"
+        city = a.get("addressLocality")
         store_number = "<MISSING>"
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
-        location_type = "<MISSING>"
-        hours_of_operation = b.xpath(".//p[1]/following-sibling::p//text()")
-        hours_of_operation = list(filter(None, [a.strip() for a in hours_of_operation]))
+
+        session = SgRequests()
+        r = session.get(page_url, headers=headers)
+        tree = html.fromstring(r.text)
+
+        ll = "".join(tree.xpath('//div[@class="gmaps"]/@data-gmaps-static-url-mobile'))
+
+        latitude = ll.split("center=")[1].split("%")[0]
+        longitude = ll.split("center=")[1].split("%2C")[1].split("&")[0]
         hours_of_operation = (
-            " ".join(hours_of_operation)
-            .split("Store Hours:")[1]
-            .split("Happy Hour:")[0]
+            " ".join(
+                tree.xpath(
+                    '//h2[contains(text(), "Hours &")]/following-sibling::p[2]//text()'
+                )
+            )
+            .replace("\n", "")
             .strip()
         )
+        if hours_of_operation.find("Happy") != -1:
+            hours_of_operation = hours_of_operation.split("Happy")[0].strip()
 
-        postal = a.get("postal")
         row = [
             locator_domain,
             page_url,

@@ -56,25 +56,25 @@ def fetch_data():
         tree = html.fromstring(r.text)
         div = tree.xpath('//div[@class="location-information"]')
         for d in div:
-            location_name = "".join(d.xpath(".//h2/text()"))
-            street_address = location_name + " " + "".join(d.xpath(".//p/text()"))
+            location_name = "<MISSING>"
+            street_address = "".join(d.xpath(".//h2/text()"))
             phone = "<MISSING>"
             city = page_url.split("=")[1]
             state = "<MISSING>"
-            country_code = "US"
+            country_code = "CA"
             store_number = "<MISSING>"
             ll = "".join(
                 d.xpath('//preceding::script[contains(text(), "var PNStores")]/text()')
             )
             latitude = (
-                ll.split(location_name)[1]
+                ll.split(street_address)[1]
                 .split("]")[0]
                 .replace('",', "")
                 .strip()
                 .split(",")[0]
             )
             longitude = (
-                ll.split(location_name)[1]
+                ll.split(street_address)[1]
                 .split("]")[0]
                 .replace('",', "")
                 .strip()
