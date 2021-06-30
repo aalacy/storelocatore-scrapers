@@ -60,10 +60,13 @@ def fetch_data():
         phone = ""
         lat = ""
         lng = ""
+        Closed = False
         hours = ""
         r2 = session.get(loc, headers=headers)
         for line2 in r2.iter_lines():
             line2 = str(line2.decode("utf-8"))
+            if "Bravo Supermarkets - CLOSED" in line2:
+                Closed = True
             if '"@id":"' in line2:
                 name = "Bravo Supermarkets"
                 city = line2.split('"addressLocality":"')[1].split('"')[0]
@@ -92,6 +95,8 @@ def fetch_data():
                         else:
                             hours = hours + "; " + hrs
                 phone = line2.split('"telephone":"')[1].split('"')[0].replace("1+", "")
+        if Closed:
+            name = "Bravo Supermarkets - CLOSED"
         yield [
             website,
             loc,
