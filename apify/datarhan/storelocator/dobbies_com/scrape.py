@@ -60,11 +60,11 @@ def fetch_data():
 
     with webdriver.Firefox(options=options, firefox_profile=profile) as driver:
         driver.get(start_url)
-        sleep(2)
+        sleep(5)
         driver.find_element_by_xpath(
             '//div[contains(text(), "See all stores")]'
         ).click()
-        sleep(15)
+        sleep(25)
         dom = etree.HTML(driver.page_source)
 
     all_locations = dom.xpath('//div[h2[contains(text(), "Store List")]]//a/@href')
