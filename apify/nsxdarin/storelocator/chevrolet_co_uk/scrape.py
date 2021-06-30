@@ -7,6 +7,7 @@ headers = {"locale": "en_GB"}
 
 cities = [
     "London",
+    "Surrey",
     "Birmingham",
     "Leeds",
     "Glasgow",
@@ -82,6 +83,7 @@ cities = [
     "Basildon",
     "Bournemouth",
     "Peterborough",
+    "Surrey",
     "North East Lincolnshire",
     "Chelmsford",
     "Brighton",
@@ -242,6 +244,7 @@ def fetch_data():
         url = f"https://www.chevrolet.co.uk/OCRestServices/dealer/city/v1/Chevrolet/{city}?distance=500&maxResults=50"
         r = session.get(url, headers=headers)
         data = r.json()
+        print(city)
 
         dealers = data.get("payload", {}).get("dealers", [])
         for dealer in dealers:
