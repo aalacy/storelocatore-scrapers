@@ -1,175 +1,130 @@
 # -*- coding: utf-8 -*-
 from sgrequests import SgRequests
 from sglogging import sglog
-import json
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
-from sgzip.dynamic import SearchableCountries
-from sgzip.dynamic import DynamicZipSearch, Grain_1_KM
+import lxml.html
+
 
 website = "emeraldcitysmoothie.com"
-logger = sglog.SgLogSetup().get_logger(logger_name=website)
+log = sglog.SgLogSetup().get_logger(logger_name=website)
 session = SgRequests()
-
-search = DynamicZipSearch(
-    country_codes=[SearchableCountries.USA],
-    max_radius_miles=None,
-    max_search_results=None,
-    granularity=Grain_1_KM(),
-)
-
-
 headers = {
     "authority": "www.emeraldcitysmoothie.com",
-    "sec-ch-ua": '"Chromium";v="88", "Google Chrome";v="88", ";Not A Brand";v="99"',
-    "accept": "application/json",
+    "sec-ch-ua": '" Not A;Brand";v="99", "Chromium";v="90", "Google Chrome";v="90"',
     "sec-ch-ua-mobile": "?0",
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36",
-    "sec-fetch-site": "same-origin",
-    "sec-fetch-mode": "cors",
-    "sec-fetch-dest": "empty",
-    "referer": "https://www.emeraldcitysmoothie.com/locations?address=98001&page=1",
-    "accept-language": "en-US,en-GB;q=0.9,en;q=0.8",
+    "upgrade-insecure-requests": "1",
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.93 Safari/537.36",
+    "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+    "sec-fetch-site": "none",
+    "sec-fetch-mode": "navigate",
+    "sec-fetch-user": "?1",
+    "sec-fetch-dest": "document",
+    "accept-language": "en-US,en;q=0.9,ar;q=0.8",
 }
 
-url_list = []
+
+def split_fulladdress(address_info):
+    street_address = " ".join(address_info[0:-1]).strip(" ,.")
+
+    city_state_zip = (
+        address_info[-1].replace(",", " ").replace(".", " ").replace("  ", " ").strip()
+    )
+
+    city = " ".join(city_state_zip.split(" ")[:-2]).strip()
+    state = city_state_zip.split(" ")[-2].strip()
+    zip = city_state_zip.split(" ")[-1].strip()
+    country_code = "US"
+    return street_address, city, state, zip, country_code
 
 
 def fetch_data():
-    for zipcode in search:
-        logger.info(f"pulling records for zipcode: {zipcode}")
-        search_url = f"https://www.emeraldcitysmoothie.com/api/locations?filter=true&per_page=100&address={zipcode}&page=1"
-        stores_req = session.get(search_url.format(zipcode), headers=headers)
-        if "data" in stores_req.text:
-            if stores_req.status_code == 200:
-                json_data = json.loads(stores_req.text.replace("\n", "").strip())[
-                    "data"
-                ]
-                for stores in json_data:
+    # Your scraper here
+    search_url = "https://www.emeraldcitysmoothie.com/sitemap"
+    search_res = session.get(search_url, headers=headers)
 
-                    if len(stores) > 0 and isinstance(stores, dict):
-                        if stores["url"] not in url_list:
-                            url_list.append(stores["url"])
-                            page_url = stores["url"]
-                            logger.info(f"Page URL: {page_url}")
-                            locator_domain = website
-                            location_name = stores["name"]
-                            street_address = stores["address"]["address1"]
-                            if (
-                                stores["address"]["address2"] is not None
-                                and len(stores["address"]["address2"]) > 0
-                            ):
-                                street_address = (
-                                    street_address
-                                    + ", "
-                                    + stores["address"]["address2"]
-                                )
+    search_sel = lxml.html.fromstring(search_res.text)
 
-                            city = stores["address"]["city"]
-                            state = stores["address"]["state"]
-                            zip = stores["address"]["zip"]
-                            country_code = "US"
+    store_list = list(
+        search_sel.xpath('//*[contains(.//text(),"Location Finder")]//li//a/@href')
+    )
 
-                            store_number = str(stores["id"])
-                            logger.info(f"Store Number: {store_number}")
-                            phone = stores["phone"]
-                            location_type = "<MISSING>"
-                            hours_of_operation = (
-                                stores["hours"]
-                                .replace("<p>", "")
-                                .replace("</p>", "")
-                                .replace("<br>", "; ")
-                                .replace("\n", "; ")
-                                .replace("&nbsp", "")
-                                .strip()
-                                .replace(";; ", "; ")
-                                .rstrip(";")
-                            )
+    for store in store_list:
 
-                            latitude = stores["address"]["lat"]
-                            longitude = stores["address"]["lng"]
-                            search.found_location_at(latitude, longitude)
-                            yield SgRecord(
-                                locator_domain=locator_domain,
-                                page_url=page_url,
-                                location_name=location_name,
-                                street_address=street_address,
-                                city=city,
-                                state=state,
-                                zip_postal=zip,
-                                country_code=country_code,
-                                store_number=store_number,
-                                phone=phone,
-                                location_type=location_type,
-                                latitude=latitude,
-                                longitude=longitude,
-                                hours_of_operation=hours_of_operation,
-                            )
+        page_url = store
+        locator_domain = website
+        log.info(page_url)
+        store_res = session.get(page_url, headers=headers)
+        store_sel = lxml.html.fromstring(store_res.text)
 
-                    elif len(stores) > 0 and isinstance(stores, list):
-                        for store in stores:
-                            if store["url"] not in url_list:
-                                url_list.append(store["url"])
-                                page_url = store["url"]
-                                logger.info(page_url)
-                                locator_domain = website
-                                location_name = store["name"]
-                                street_address = store["address"]["address1"]
-                                if (
-                                    store["address"]["address2"] is not None
-                                    and len(store["address"]["address2"]) > 0
-                                ):
-                                    street_address = (
-                                        street_address
-                                        + ", "
-                                        + store["address"]["address2"]
-                                    )
-                                logger.info(f"Street Address: {street_address}")
-                                city = store["address"]["city"]
-                                state = store["address"]["state"]
-                                zip = store["address"]["zip"]
-                                country_code = "US"
+        location_name = "".join(store_sel.xpath("//h1/text()"))
+        if "coming soon" in location_name.lower():
+            continue
+        store_info = list(
+            filter(
+                str,
+                [
+                    x.strip()
+                    for x in store_sel.xpath(
+                        '//div[contains(.//text(),"Contact")]//p//text()'
+                    )
+                ],
+            )
+        )
 
-                                store_number = str(store["id"])
-                                logger.info(f"Store Number: {store_number}")
-                                phone = store["phone"]
+        full_address = store_info[:-1]
 
-                                location_type = "<MISSING>"
-                                hours_of_operation = (
-                                    store["hours"]
-                                    .replace("<p>", "")
-                                    .replace("</p>", "")
-                                    .replace("<br>", "; ")
-                                    .replace("\n", "; ")
-                                    .replace("&nbsp", "")
-                                    .strip()
-                                    .replace(";; ", "; ")
-                                    .rstrip(";")
-                                )
+        street_address, city, state, zip, country_code = split_fulladdress(full_address)
 
-                                latitude = store["address"]["lat"]
-                                longitude = store["address"]["lng"]
-                                search.found_location_at(latitude, longitude)
-                                yield SgRecord(
-                                    locator_domain=locator_domain,
-                                    page_url=page_url,
-                                    location_name=location_name,
-                                    street_address=street_address,
-                                    city=city,
-                                    state=state,
-                                    zip_postal=zip,
-                                    country_code=country_code,
-                                    store_number=store_number,
-                                    phone=phone,
-                                    location_type=location_type,
-                                    latitude=latitude,
-                                    longitude=longitude,
-                                    hours_of_operation=hours_of_operation,
-                                )
+        store_number = "<MISSING>"
+        phone = store_info[-1].replace("Phone:", "").strip()
+
+        location_type = "<MISSING>"
+
+        hours = list(
+            filter(
+                str,
+                [
+                    x.strip()
+                    for x in store_sel.xpath(
+                        '//div[contains(./h2/text(),"Hours")]//p//text()'
+                    )
+                ],
+            )
+        )
+
+        hours_of_operation = "; ".join(hours)
+
+        latitude = (
+            store_res.text.split("data-lat=")[1].split(" ")[0].strip('" ').strip()
+        )
+        longitude = (
+            store_res.text.split("data-lng=")[1].split(" ")[0].strip('" ').strip()
+        )
+
+        raw_address = "<MISSING>"
+
+        yield SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=zip,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=location_type,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+            raw_address=raw_address,
+        )
 
 
 def scrape():
-    logger.info("Started")
+    log.info("Started")
     count = 0
     with SgWriter() as writer:
         results = fetch_data()
@@ -177,8 +132,8 @@ def scrape():
             writer.write_row(rec)
             count = count + 1
 
-    logger.info(f"No of records being processed: {count}")
-    logger.info("Finished")
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
 
 
 if __name__ == "__main__":

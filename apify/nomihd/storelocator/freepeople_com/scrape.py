@@ -126,8 +126,6 @@ def fetch_data():
     latitude = ""
     longitude = ""
     hours_of_operation = ""
-    loc_list = []
-
     api_resp = session.get("https://www.freepeople.com/stores/", headers=headers)
     json_config = get_api_key(api_resp.text)
     API_KEY = json.loads(json_config)["misl"]["apiKey"]
@@ -211,7 +209,7 @@ def fetch_data():
                     longitude,
                     hours_of_operation,
                 ]
-                loc_list.append(curr_list)
+                yield curr_list
         else:
 
             stores_resp = session.get(
@@ -226,12 +224,7 @@ def fetch_data():
             store_json = json.loads(stores_resp.text)["results"]
             if len(store_json) == 1:
                 store_json = store_json[0]
-                location_name = temp_location = store_json["addresses"]["marketing"][
-                    "name"
-                ]
-                if " - " in temp_location:
-                    location_name = temp_location.split(" - ")[0].strip()
-                    location_type = temp_location.split(" - ")[1].strip()
+                location_name = store_json["addresses"]["marketing"]["name"]
 
                 street_address = store_json["addresses"]["marketing"]["addressLineOne"]
                 city = store_json["addresses"]["marketing"]["city"]
@@ -243,6 +236,7 @@ def fetch_data():
                 if len(zip) == 4:
                     zip = "0" + zip
 
+                location_type = store_json["brandName"]
                 if location_type == "":
                     location_type = "<MISSING>"
 
@@ -295,15 +289,11 @@ def fetch_data():
                         longitude,
                         hours_of_operation,
                     ]
-                    loc_list.append(curr_list)
+                    yield curr_list
                 else:
                     log.info(f"ignored because country is: {country_code}")
             else:
                 log.info(f"\n{page_url} does not have any data to show\n")
-
-        # break
-
-    return loc_list
 
 
 def scrape():

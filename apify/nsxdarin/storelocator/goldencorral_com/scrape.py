@@ -92,6 +92,7 @@ def fetch_data():
                         + "/golden-corral-"
                         + addtext
                     )
+                    loc = loc.replace("#", "").replace(",", "")
                     try:
                         r = session.get(loc, headers=headers)
                         if r.encoding is None:
