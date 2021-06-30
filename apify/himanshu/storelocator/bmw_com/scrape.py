@@ -70,6 +70,7 @@ def fetch_data():
             street_address = value["street"]
             city_str = value["city"]
             if str(city_str) == "2142":
+                raise
                 city_str = "Bend"
             if location_name == "BMW Ste-Agathe":
                 state = "QC"
