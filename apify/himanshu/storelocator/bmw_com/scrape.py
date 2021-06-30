@@ -68,7 +68,9 @@ def fetch_data():
             locator_domain = "https://www.bmw.com/"
             location_name = value["name"]
             street_address = value["street"]
-            city = value["city"].replace("2142", "Bend")
+            city_str = value["city"]
+            if str(city_str) == "2142":
+                city_str = "Bend"
             if location_name == "BMW Ste-Agathe":
                 state = "QC"
             else:
@@ -97,7 +99,7 @@ def fetch_data():
             store.append(locator_domain)
             store.append(location_name)
             store.append(street_address)
-            store.append(city.replace("2142", "Bend"))
+            store.append(city_str)
             store.append(state)
             store.append(zipp)
             store.append(country_code)
