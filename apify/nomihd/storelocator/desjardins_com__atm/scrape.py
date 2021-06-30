@@ -32,7 +32,10 @@ def fetch_data():
         store_number = store["id"]
         latitude = store["latitude"]
         longitude = store["longitude"]
-        page_url = "<MISSING>"
+        page_url = "https://www.desjardins.com/ca/your-caisse/address/index.jsp?transit={}{}".format(
+            store["inst"], store["transit"]
+        )
+
         log.info(f"Pulling data for ID: {store_number}")
         store_req = session.get(
             "https://pservices.desjardins.com/caisses/donnees_caisses.nsf/traitement?Open&ic=details&l=en&id="
