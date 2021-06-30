@@ -1,6 +1,7 @@
 from sgrequests import SgRequests
 import pandas as pd
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
+import re
 
 search = DynamicZipSearch(country_codes=[SearchableCountries.CANADA])
 locator_domains = []
@@ -51,6 +52,13 @@ for search_code in search:
             )
             location_name = location["pscName"]
             address = location["locationAddress"]["street"]
+            x = 0
+            for character in address:
+                if bool(re.search(r"\d", character)) is True:
+                    break
+
+                x = x + 1
+            address = address[x:]
             city = location["locationAddress"]["city"]
             state = location["locationAddress"]["province"]
             zipp = location["locationAddress"]["postalCode"]
