@@ -98,6 +98,8 @@ def fetch_data():
         url = "https://www.tuffy.com/location_search?zip_code=" + statenow
         if statenow == "ID":
             url = "https://www.tuffy.com/location_search?zip_code=ID&location_destination=/&lat_lng=(44.0682019,%20-114.7420408)"
+        elif statenow == "DE":
+            url = "https://www.tuffy.com/location_search?zip_code=DE&location_destination=/&lat_lng=(37.109542,%20-95.7468942)"
         logger.info(url)
         r = session.get(url, headers=headers, verify=False)
         logger.info(r)
