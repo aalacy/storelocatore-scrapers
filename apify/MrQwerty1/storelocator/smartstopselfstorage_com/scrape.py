@@ -81,9 +81,9 @@ def fetch_data():
         if state == "ONT":
             state = "ON"
         postal = csz.split(state)[1].replace("T ", "").strip()
-        if len(postal) == 5:
-            country_code = "US"
-        else:
+
+        country_code = "US"
+        if len(postal) > 5 or not postal.isdigit():
             country_code = "CA"
         store_number = "<MISSING>"
         slug = j.get("url") or ""

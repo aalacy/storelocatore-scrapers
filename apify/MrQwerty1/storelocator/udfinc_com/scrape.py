@@ -42,7 +42,7 @@ def get_data(coord):
     api_url = f"https://www.udfinc.com/wp-admin/admin-ajax.php?action=store_search&lat={lat}&lng={lon}&max_results=100&search_radius=200"
 
     session = SgRequests()
-    r = session.get(api_url)
+    r = session.get(api_url, headers=headers)
     try:
         js = r.json()
     except:
@@ -122,4 +122,14 @@ def scrape():
 
 
 if __name__ == "__main__":
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:89.0) Gecko/20100101 Firefox/89.0",
+        "Accept": "*/*",
+        "Accept-Language": "uk-UA,uk;q=0.8,en-US;q=0.5,en;q=0.3",
+        "X-Requested-With": "XMLHttpRequest",
+        "Alt-Used": "www.udfinc.com",
+        "Connection": "keep-alive",
+        "Referer": "https://www.udfinc.com/our-stores/",
+        "TE": "Trailers",
+    }
     scrape()
