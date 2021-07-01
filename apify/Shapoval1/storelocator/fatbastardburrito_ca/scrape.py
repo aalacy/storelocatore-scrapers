@@ -98,6 +98,9 @@ def fetch_data():
         cls = "".join(tree.xpath('//span[text()="CLOSED FOR RENOVATIONS"]/text()'))
         if cls:
             hours_of_operation = "Temporarily Closed"
+        if street_address == "25B Hazeldean Road":
+            postal = "K2L 25B"
+            street_address = "500 Hazeldean Road"
         row = [
             locator_domain,
             page_url,
