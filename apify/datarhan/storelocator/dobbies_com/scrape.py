@@ -49,7 +49,8 @@ def write_output(data):
 
 
 def fetch_data():
-    session = SgRequests(proxy_rotation_failure_threshold=0)
+    # Your scraper here
+    session = SgRequests()
 
     items = []
     scraped_items = []
@@ -71,8 +72,6 @@ def fetch_data():
     for url in list(set(all_locations)):
         store_url = urljoin(start_url, url)
         loc_response = session.get(store_url)
-        if loc_response.status_code != 200:
-            continue
         loc_dom = etree.HTML(loc_response.text)
 
         location_name = loc_dom.xpath('//h1[@class="ms-content-block__title"]/text()')
@@ -114,15 +113,6 @@ def fetch_data():
         hours_of_operation = (
             " ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
         )
-        if street_address == "Dd5 4Hb Ethiebeaton Park":
-            street_address = "Ethiebeaton Park"
-            zip_code = "DD5 4HB"
-        if street_address == "Lincs Pe21 9Rz Wainfleet Road":
-            zip_code = "PE21 9RZ"
-            street_address = "Wainfleet Road"
-        if street_address == "Surrey Sm6 0Su Woodmansterne Lane":
-            zip_code = "SM6 0SU"
-            street_address = "Woodmansterne Lane"
 
         item = [
             DOMAIN,
