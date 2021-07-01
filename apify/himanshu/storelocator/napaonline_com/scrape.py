@@ -306,7 +306,7 @@ def fetch_data():
     state_urls = []
     city_urls = []
 
-    with SgChrome(is_headless=False, seleniumwire_auto_config=False).driver() as driver:
+    with SgChrome(seleniumwire_auto_config=False).driver() as driver:
         load_initial_page(driver)
 
         html = fetch("https://www.napaonline.com/en/auto-parts-stores-near-me", driver)
