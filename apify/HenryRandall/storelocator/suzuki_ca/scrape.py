@@ -9,7 +9,6 @@ def fetch_data():
         "X-Requested-With": "XMLHttpRequest",
         "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
     }
-    # data = 'ajax=1&action=get_nearby_stores&distance=100000&suzukitype=matv&storetype=undefined&lat=43.7086666&lng=-79.30808809999996'
     base_url = "https://www.suzuki.ca"
     r = session.get(
         "https://www.suzuki.ca/wp-json/wpgmza/v1/markers/base64eJyrVkrLzClJLVKyUqqOUcpNLIjPTIlRsopRMoxR0gEJFGeUgsSKgYLRsbVKtQCV7hBN",
