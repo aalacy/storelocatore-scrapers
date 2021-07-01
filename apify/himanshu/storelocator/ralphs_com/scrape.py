@@ -80,10 +80,10 @@ def fetch_data():
             "https://www.ralphs.com/stores/api/graphql", headers=headers, data=data
         )
         try:
-            datas = r.json()["data"]["storeSearch"]["stores"]
+            data_store = r.json()["data"]["storeSearch"]["stores"]
         except:
             continue
-        for key in datas:
+        for key in data_store:
             location_name = key["vanityName"]
             street_address = key["address"]["addressLine1"].capitalize()
             city = key["address"]["city"].capitalize()

@@ -12,7 +12,7 @@ headers = {
 
 
 def write_output(data):
-    with open("data.csv", mode="w") as output_file:
+    with open("data.csv", mode="w", encoding="utf-8") as output_file:
         writer = csv.writer(
             output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
         )
@@ -39,7 +39,9 @@ def write_output(data):
 
 
 def fetch_data():
-    locs = []
+    locs = [
+        "https://locations.cariboucoffee.com/us/mo/lee's-summit/920-ne-langsford-road"
+    ]
     url = "https://www.cariboucoffee.com/around-the-world/"
     r = session.get(url, headers=headers)
     for line in r.iter_lines():

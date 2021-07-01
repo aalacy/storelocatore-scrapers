@@ -157,18 +157,20 @@ def fetch_data():
             try:
                 opens = (
                     str(
-                        float(opens.split(" ")[0].strip().replace(":", ".")) + 5.00
+                        float(opens.split(" ")[0].strip().replace(":", ".")) + 6.00
                     ).replace(".", ":")
                     + "0 "
                     + opens.split(" ")[1].strip()
                 )
+                if opens >= "12:00":
+                    opens = opens.replace("PM", "AM")
             except:
                 pass
 
             try:
                 closes = (
                     str(
-                        float(closes.split(" ")[0].strip().replace(":", ".")) + 5.00
+                        float(closes.split(" ")[0].strip().replace(":", ".")) + 6.00
                     ).replace(".", ":")
                     + "0 "
                     + closes.split(" ")[1].strip()

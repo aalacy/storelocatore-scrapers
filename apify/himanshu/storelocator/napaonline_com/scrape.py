@@ -77,6 +77,7 @@ def scrape_json(data, page_url):
     zipp = data["address"]["postalCode"]
     country_code = data["address"]["addressCountry"]
     store_number = data["@id"]
+
     try:
         phone = data["telephone"]
     except:
@@ -176,17 +177,19 @@ def scrape_html(soup, page_url):
         )
 
         phone_elem = soup.find(itemprop="telephone")
-        phone = phone_elem.text if phone_elem else get(address, "telephone")
+        phone = phone_elem.text if phone_elem else get(details, "telephone")
 
-        main = soup.find("main", id="main")
-        location_type = (
-            re.sub(
+        location_type = None
+        main = soup.select_one("#main")
+        if main and hasattr(main, "itemtype"):
+            location_type = re.sub(
                 "http://schema.org/",
                 "",
-                main["itemscope"] if hasattr(main, "itemscope") else "",
+                main["itemtype"],
             )
-            or get(details, "@type", MISSING)
-        )
+
+        if not location_type:
+            location_type = get(details, "@type", MISSING)
 
         geo = get(details, "geo", {})
         lat_elem = soup.find(itemprop="latitude")
@@ -236,7 +239,6 @@ def scrape_html(soup, page_url):
         return store
     except Exception as e:
         logger.error(e)
-        pass
 
 
 def scrape_one_in_city(url, driver):
@@ -249,31 +251,14 @@ def scrape_one_in_city(url, driver):
     #   and we end up at a page with multiple stores instead of one
     is_detail_page = soup.find(class_="store-browse-content-listing") is None
     if not is_detail_page:
-        logger.info(
-            f"expected store detail page but found multiple store listings on {link_url}"
-        )
         return scrape_multiple_in_city(url, driver)
 
-    data = None
-    try:
-        data = json.loads(
-            soup.find(
-                lambda tag: (tag.name == "script" and '"streetAddress"' in tag.text)
-            ).text
-        )
-    except:
-        logger.info(f">>> json data not found for {link_url} ... scraping html instead")
-
-    if data:
-        store = scrape_json(
-            data, link_url
-        )  # use the final url as page_url in case of redirect
-    else:
-        store = scrape_html(soup, link_url)
+    store = scrape_html(soup, link_url)
 
     store_key = get_store_key(store)
     if store_key in addresses:
         return None
+
     addresses.append(store_key)
     return [store]
 
@@ -290,28 +275,11 @@ def scrape_multiple_in_city(url, driver):
         html = fetch(link_url, driver)
         soup = bs(html, "lxml")
 
-        data = None
-        try:
-            data = json.loads(
-                soup.find(
-                    lambda tag: (
-                        tag.name == "script" and '"streetAddress"' in tag.string
-                    )
-                ).string
-            )
-        except:
-            logger.info(f">>> json data not found for {link_url}")
-
-        if data:
-            store = scrape_json(
-                data, link_url
-            )  # use the final url as page_url in case of redirect
-        else:
-            store = scrape_html(soup, link_url)
-
+        store = scrape_html(soup, link_url)
         store_key = get_store_key(store)
         if store_key in addresses:
             continue
+
         addresses.append(store_key)
         stores.append(store)
     return stores
@@ -329,7 +297,7 @@ def load_initial_page(driver):
     driver.get("https://www.napaonline.com")
     driver.execute_script('window.open("https://www.napaonline.com")')
 
-    WebDriverWait(driver, 10).until(
+    WebDriverWait(driver, 15).until(
         EC.presence_of_element_located((By.CLASS_NAME, "header-branding-logo"))
     )
 
@@ -338,14 +306,13 @@ def fetch_data():
     state_urls = []
     city_urls = []
 
-    with SgChrome(is_headless=True, seleniumwire_auto_config=False).driver() as driver:
+    with SgChrome(seleniumwire_auto_config=False).driver() as driver:
         load_initial_page(driver)
 
         html = fetch("https://www.napaonline.com/en/auto-parts-stores-near-me", driver)
         soup = bs(html, "lxml")
 
         for link in soup.find("div", {"class": "store-browse-content"}).find_all("a"):
-            logger.info(base_url + link["href"])
             state_urls.append(base_url + link["href"])
 
         with ThreadPoolExecutor() as executor:
