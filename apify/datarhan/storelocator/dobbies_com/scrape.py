@@ -49,7 +49,6 @@ def write_output(data):
 
 
 def fetch_data():
-    # Your scraper here
     session = SgRequests(proxy_rotation_failure_threshold=0)
 
     items = []
