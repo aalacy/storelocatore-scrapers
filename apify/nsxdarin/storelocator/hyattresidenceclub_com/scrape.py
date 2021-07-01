@@ -70,6 +70,7 @@ def fetch_data():
                     city = item.split('"city":"')[1].split('"')[0]
                     zc = item.split('"zipcode":"')[1].split('"')[0]
                     add = item.split('"addressLine1":"')[1].split('"')[0]
+                    hours = "<MISSING>"
                     try:
                         add = (
                             add + " " + item.split('"addressLine2":"')[1].split('"')[0]
@@ -98,11 +99,6 @@ def fetch_data():
                             ):
                                 CS = True
                             if ">Coming Soon<" in line2:
-                                CS = True
-                            if (
-                                "and beyond" in line2
-                                and "Now accepting reservations" in line2
-                            ):
                                 CS = True
                             if '"telephone":"' in line2:
                                 phone = line2.split('"telephone":"')[1].split('"')[0]

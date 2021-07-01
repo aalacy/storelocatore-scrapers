@@ -76,7 +76,6 @@ def get_address(line):
 
 
 def get_states():
-    session = SgRequests()
     r = session.get("https://www.progressive.com/agent/local-agent/")
     tree = html.fromstring(r.text)
 
@@ -84,7 +83,6 @@ def get_states():
 
 
 def get_cities(state):
-    session = SgRequests()
     r = session.get(state)
     tree = html.fromstring(r.text)
 
@@ -92,7 +90,6 @@ def get_cities(state):
 
 
 def get_page(city):
-    session = SgRequests()
     r = session.get(city)
     tree = html.fromstring(r.text)
 
@@ -100,7 +97,7 @@ def get_page(city):
 
 
 def get_urls():
-    states = get_states()[:1]
+    states = get_states()
     cities = []
     urls = []
 
@@ -122,7 +119,6 @@ def get_urls():
 def get_data(page_url):
     locator_domain = "https://www.progressive.com/"
 
-    session = SgRequests()
     r = session.get(page_url)
     tree = html.fromstring(r.text)
 
@@ -131,7 +127,14 @@ def get_data(page_url):
         tree.xpath("//dt[text()='Address:']/following-sibling::dd/text()")
     ).strip()
 
-    street_address, city, state, postal = get_address(line)
+    try:
+        street_address, city, state, postal = get_address(line)
+    except usaddress.RepeatedLabelError:
+        street_address = line.split(",")[0].strip()
+        city = line.split(",")[1].strip()
+        line = line.split(",")[-1].strip()
+        state = line.split()[0]
+        postal = line.split()[-1]
     country_code = "US"
     store_number = "<MISSING>"
     phone = (
@@ -180,7 +183,7 @@ def fetch_data():
     s = set()
     urls = get_urls()
 
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
+    with futures.ThreadPoolExecutor(max_workers=5) as executor:
         future_to_url = {executor.submit(get_data, url): url for url in urls}
         for future in futures.as_completed(future_to_url):
             row = future.result()
@@ -199,4 +202,5 @@ def scrape():
 
 
 if __name__ == "__main__":
+    session = SgRequests()
     scrape()

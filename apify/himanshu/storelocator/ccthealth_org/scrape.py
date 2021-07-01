@@ -1,14 +1,13 @@
 import csv
-
 from bs4 import BeautifulSoup
-
 from sgrequests import SgRequests
+from lxml import html
 
 session = SgRequests()
 
 
 def write_output(data):
-    with open("data.csv", mode="w", newline="") as output_file:
+    with open("data.csv", mode="w", newline="", encoding="utf8") as output_file:
         writer = csv.writer(
             output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
         )
@@ -47,7 +46,8 @@ def fetch_data():
 
     base_url = "https://ccthealth.org/"
     r = session.get(base_url, headers=headers)
-    soup = BeautifulSoup(r.text, "lxml")
+
+    soup = BeautifulSoup(r.text, "html.parser")
     main = (
         soup.find("li", {"id": "menu-item-3572"})
         .find("ul", {"class": "sub-menu"})
@@ -57,16 +57,20 @@ def fetch_data():
         location_name = link.find("span", {"class": "avia-menu-text"}).text.strip()
         page_url = link["href"]
         r1 = session.get(page_url, headers=headers)
-        soup1 = BeautifulSoup(r1.text, "lxml")
+        tree = html.fromstring(r1.text)
+        soup1 = BeautifulSoup(r1.text, "html.parser")
 
-        phone = list(
+        a = list(
             soup1.find("h4", {"itemprop": "headline"}, text="Phone")
             .parent.parent.find("div", {"itemprop": "text"})
             .stripped_strings
         )
-        phone = phone[0].replace("Phone:", "").split("/")[0].strip()
+
+        phone = a[0].replace("Phone:", "").split("/")[0].strip()
         if "478-862-9707" in phone:
             phone = "478-862-9707"
+        if phone.find("Tel") != -1:
+            phone = "".join(a[1]).strip()
         hour = " ".join(
             list(
                 soup1.find("h4", {"itemprop": "headline"}, text="Hours")
@@ -97,22 +101,24 @@ def fetch_data():
             city = "Butler"
             state = "GA"
             zipp = "31006"
+
         try:
             latitude = (
-                soup1.find("script", {"class": "av-php-sent-to-frontend"})
-                .text.split("av_google_map['0']['marker']['0']['long'] =")[1]
+                "".join(tree.xpath('//script[contains(text(), "lat")]/text()'))
+                .split("lat'] = ")[1]
                 .split(";")[0]
                 .strip()
             )
             longitude = (
-                soup1.find("script", {"class": "av-php-sent-to-frontend"})
-                .text.split("av_google_map['0']['marker']['0']['lat'] =")[1]
+                "".join(tree.xpath('//script[contains(text(), "lat")]/text()'))
+                .split("long'] = ")[1]
                 .split(";")[0]
                 .strip()
             )
         except:
             latitude = ""
             longitude = ""
+
         store = []
         store.append(base_url)
         store.append(location_name)
