@@ -65,7 +65,7 @@ def fetch_data():
         if r2["payload"]["nbrOfStores"]:
             if int(r2["payload"]["nbrOfStores"]) > 0:
                 for store in r2["payload"]["storesData"]["stores"]:
-                    if store["geoPoint"] and "GAS_STATION" in str(store):
+                    if store["geoPoint"] and "GAS" in str(store):
                         if store["geoPoint"]["latitude"]:
                             if store["geoPoint"]["longitude"]:
                                 search.found_location_at(

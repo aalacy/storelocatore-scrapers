@@ -1,3 +1,4 @@
+from sgscrape.sgpostal import parse_address_intl
 from lxml import html
 import time
 import json
@@ -45,7 +46,7 @@ def initiateDriver(driver=None):
     ).driver()
 
 
-def driverSleep(driver, time=2):
+def driverSleep(driver, time=5):
     try:
         WebDriverWait(driver, time).until(
             EC.presence_of_element_located((By.ID, MISSING))
@@ -133,7 +134,7 @@ def fetchSingleStore(driver, page_url):
     delay = 0
     driverSleep(driver)
     while delay < 30:
-        if "Sorry!<h3" in driver.page_source:
+        if "Sorry!" in driver.page_source:
             return None
         if '"latitude"' in driver.page_source:
             return driver.page_source
@@ -181,6 +182,36 @@ def getJSObject(response, varName, noVal=MISSING):
     return data
 
 
+def getAddress(raw_address):
+    try:
+        if raw_address is not None and raw_address != MISSING:
+            data = parse_address_intl(raw_address)
+            street_address = data.street_address_1
+            if data.street_address_2 is not None:
+                street_address = street_address + " " + data.street_address_2
+
+            city = data.city
+            state = data.state
+            zip_postal = data.postcode
+
+            if street_address is None or len(street_address) == 0:
+                street_address = MISSING
+            if city is None or len(city) == 0:
+                city = MISSING
+
+            if state is None or len(state) == 0:
+                state = MISSING
+
+            if zip_postal is None or len(zip_postal) == 0:
+                zip_postal = MISSING
+
+            return street_address, city, state, zip_postal
+    except Exception as e:
+        log.info(f"Address is missing {e}")
+        pass
+    return MISSING, MISSING, MISSING, MISSING
+
+
 def fetchData():
     driver, stores = fetchStores()
     log.info(f"Total stores = {len(stores)}")
@@ -211,26 +242,87 @@ def fetchData():
         street_address = getReviewedPath(jsonData, "itemReviewed.address.streetAddress")
         zip_postal = getReviewedPath(jsonData, "itemReviewed.address.postalCode")
         state = getReviewedPath(jsonData, "itemReviewed.address.addressRegion")
-        # SO Country Code
-        if "mexico" in page_url:
-            country_code = "MX"
-        elif "canada" in page_url:
-            country_code = "CA"
-        else:
-            country_code = "US"
-        # EO Country Code
+        raw_address = None
+
         phone = getReviewedPath(jsonData, "itemReviewed.telephone.0")
         latitude = getReviewedPath(jsonData, "itemReviewed.geo.latitude")
         longitude = getReviewedPath(jsonData, "itemReviewed.geo.longitude")
         hours_of_operation = MISSING
         city = getJSObject(response, "addressLocality")
+
+        resort_address = (
+            (", ")
+            .join(body.xpath('//div[contains(@class, "resort-address")]/text()'))
+            .replace(" ,", ",")
+            .replace("  ", " ")
+            .strip()
+        )
+
+        if len(resort_address) > 0:
+            if len(resort_address) > 0:
+                street_address1, city1, state1, zip_postal1 = getAddress(resort_address)
+
+                if (
+                    street_address1 != MISSING
+                    and city1 != MISSING
+                    and state1 != MISSING
+                    and zip_postal1 != MISSING
+                ):
+                    raw_address = resort_address
+                    street_address = street_address1
+                    city = city1
+                    state = state1
+                    zip_postal = zip_postal1
+
+                if (
+                    street_address1 != MISSING
+                    and city1 != MISSING
+                    and zip_postal1 != MISSING
+                ):
+                    street_address = street_address1
+                    city = city1
+                    zip_postal = zip_postal1
+
+                if (
+                    street_address1 != MISSING
+                    and city1 != MISSING
+                    and state1 != MISSING
+                ):
+                    street_address = street_address1
+                    city = city1
+                    state = state1
+
+                if street_address1 != MISSING and city1 != MISSING:
+                    street_address = street_address1
+                    city = city1
+
+                else:
+                    if city == MISSING and city1 != MISSING:
+                        city = city1
+                    if street_address == MISSING and street_address1 != MISSING:
+                        street_address = street_address1
+                    if city == MISSING:
+                        resort_address = resort_address.split(", ")
+                        if len(resort_address) > 2:
+                            city = resort_address[len(resort_address) - 2]
+
         if city == MISSING:
             raw_address = f"{street_address}, {state} {zip_postal}"
-        else:
+        elif raw_address is None:
             raw_address = f"{street_address}, {city}, {state} {zip_postal}"
 
         if MISSING in raw_address:
             raw_address = MISSING
+
+        if "mexico" in page_url:
+            country_code = "MX"
+        elif "canada" in page_url:
+            country_code = "CA"
+        elif "fiji" in page_url:
+            country_code = "FJ"
+        else:
+            country_code = "US"
+
         yield SgRecord(
             locator_domain=DOMAIN,
             store_number=store_number,
