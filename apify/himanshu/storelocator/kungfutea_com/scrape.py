@@ -79,134 +79,128 @@ def fetch_data():
 
         for idx, value in enumerate(json_data["results"]["locations"]):
             locator_domain = base_url
-            soon = ["SOON)", "soon)", "Soon)"]
-            if value["name"].split(" ")[-1] in soon:
+            if "coming soon" in value["name"].lower():
+                continue
+            location_name = value["name"].strip()
+            if location_name == "Pittsburgh - Kung Fu Tea Truck (Temporarily closed)":
                 continue
             else:
+                street_address_raw = (
+                    value["streetaddress"]
+                    .replace(" (Garage A Food Court Entrance)", "")
+                    .replace(" #7 38th Ave", "")
+                )
+                addr_format = usd.tag(street_address_raw, tm)
+                addr = list(addr_format[0].items())
 
-                location_name = value["name"].strip()
-                if (
-                    location_name
-                    == "Pittsburgh - Kung Fu Tea Truck (Temporarily closed)"
-                ):
-                    continue
+                street_address_ca = (
+                    value["streetaddress"]
+                    .replace(" (Garage A Food Court Entrance)", "")
+                    .split(" ")
+                )
+                if location_name == "Edmonton":
+                    street_address = " ".join(street_address_ca[0:4])
+                    city = street_address_ca[4].replace(",", "")
+                    state = street_address_ca[-3].replace(",", "")
+                    zipp = " ".join(street_address_ca[-2:])
+                elif location_name == "Welland":
+                    street_address = " ".join(street_address_ca[0:3])
+                    city = street_address_ca[3]
+                    state = "ON"
+                    zipp = " ".join(street_address_ca[-2:])
+                elif location_name == "East Village":
+                    street_address = addr[0][1]
+                    city = "New York"
+                    state = "NY"
+                    zipp = addr[3][1].replace(".", "")
+                elif addr[0][1] == "234 Canal Street suite # 107":
+                    street_address = addr[0][1]
+                    city = addr[1][1]
+                    state = "NY"
+                    zipp = "<MISSING>"
+                elif addr[0][1] == "3440 Mchenry Ave Suite D14":
+                    street_address = addr[0][1]
+                    city = addr[1][1]
+                    state = "CA"
+                    zipp = addr[2][1]
                 else:
-                    street_address_raw = (
-                        value["streetaddress"]
-                        .replace(" (Garage A Food Court Entrance)", "")
-                        .replace(" #7 38th Ave", "")
+                    street_address = addr[0][1]
+                    city = addr[1][1]
+                    state = addr[2][1]
+                    zipp = addr[3][1].replace(".", "")
+
+                if "#7 38th Ave" in value["streetaddress"]:
+                    street_address = street_address + " #7 38th Ave"
+                if location_name == "Edmonton":
+                    country_code = "CA"
+                elif location_name == "Welland":
+                    country_code = "CA"
+                else:
+                    country_code = "US"
+
+                store_number = value["id"]
+
+                if value["phone"] == "":
+                    phone = "<MISSING>"
+                else:
+                    phone = value["phone"].split("/")[0].strip()
+                location_type = "<MISSING>"
+                latitude = value["loc_lat"]
+                longitude = value["loc_long"]
+
+                if value["monday"] == "":
+                    hours_of_operation = "<MISSING>"
+                else:
+                    hours_of_operation = (
+                        "Monday: "
+                        + value["monday"]
+                        + ", "
+                        + "Tuesday: "
+                        + value["tuesday"]
+                        + ", "
+                        + "Wednesday: "
+                        + value["wednesday"]
+                        + ", "
+                        + "Thursday: "
+                        + value["thursday"]
+                        + ", "
+                        + "Friday: "
+                        + value["friday"]
+                        + ", "
+                        + "Saturday: "
+                        + value["saturday"]
+                        + ", "
+                        + "Sunday: "
+                        + value["sunday"]
                     )
-                    addr_format = usd.tag(street_address_raw, tm)
-                    addr = list(addr_format[0].items())
 
-                    street_address_ca = (
-                        value["streetaddress"]
-                        .replace(" (Garage A Food Court Entrance)", "")
-                        .split(" ")
-                    )
-                    if location_name == "Edmonton":
-                        street_address = " ".join(street_address_ca[0:4])
-                        city = street_address_ca[4]
-                        state = street_address_ca[-3].replace(",", "")
-                        zipp = " ".join(street_address_ca[-2:])
-                    elif location_name == "Welland":
-                        street_address = " ".join(street_address_ca[0:3])
-                        city = street_address_ca[3]
-                        state = "ON"
-                        zipp = " ".join(street_address_ca[-2:])
-                    elif location_name == "East Village":
-                        street_address = addr[0][1]
-                        city = "New York"
-                        state = "NY"
-                        zipp = addr[3][1].replace(".", "")
-                    elif addr[0][1] == "234 Canal Street suite # 107":
-                        street_address = addr[0][1]
-                        city = addr[1][1]
-                        state = "NY"
-                        zipp = "<MISSING>"
-                    elif addr[0][1] == "3440 Mchenry Ave Suite D14":
-                        street_address = addr[0][1]
-                        city = addr[1][1]
-                        state = "CA"
-                        zipp = addr[2][1]
-                    else:
-                        street_address = addr[0][1]
-                        city = addr[1][1]
-                        state = addr[2][1]
-                        zipp = addr[3][1].replace(".", "")
+                if location_name == "Edmonton":
+                    page_url = "https://www.kungfutea.com/locations/can"
+                elif location_name == "Welland ":
+                    page_url = "https://www.kungfutea.com/locations/can"
+                else:
+                    page_url = "https://www.kungfutea.com/locations/usa"
 
-                    if "#7 38th Ave" in value["streetaddress"]:
-                        street_address = street_address + " #7 38th Ave"
-                    if location_name == "Edmonton":
-                        country_code = "CA"
-                    elif location_name == "Welland":
-                        country_code = "CA"
-                    else:
-                        country_code = "US"
+                store = []
+                store.append(locator_domain)
+                store.append(location_name)
+                store.append(street_address)
+                store.append(city)
+                store.append(state)
+                store.append(zipp)
+                store.append(country_code)
+                store.append(store_number)
+                store.append(phone)
+                store.append(location_type)
+                store.append(latitude)
+                store.append(longitude)
+                store.append(hours_of_operation)
+                store.append(page_url)
 
-                    store_number = value["id"]
-
-                    if value["phone"] == "":
-                        phone = "<MISSING>"
-                    else:
-                        phone = value["phone"].split("/")[0].strip()
-                    location_type = "<MISSING>"
-                    latitude = value["loc_lat"]
-                    longitude = value["loc_long"]
-
-                    if value["monday"] == "":
-                        hours_of_operation = "<MISSING>"
-                    else:
-                        hours_of_operation = (
-                            "Monday: "
-                            + value["monday"]
-                            + ", "
-                            + "Tuesday: "
-                            + value["tuesday"]
-                            + ", "
-                            + "Wednesday: "
-                            + value["wednesday"]
-                            + ", "
-                            + "Thursday: "
-                            + value["thursday"]
-                            + ", "
-                            + "Friday: "
-                            + value["friday"]
-                            + ", "
-                            + "Saturday: "
-                            + value["saturday"]
-                            + ", "
-                            + "Sunday: "
-                            + value["sunday"]
-                        )
-
-                    if location_name == "Edmonton":
-                        page_url = "https://www.kungfutea.com/locations/can"
-                    elif location_name == "Welland ":
-                        page_url = "https://www.kungfutea.com/locations/can"
-                    else:
-                        page_url = "https://www.kungfutea.com/locations/usa"
-
-                    store = []
-                    store.append(locator_domain)
-                    store.append(location_name)
-                    store.append(street_address)
-                    store.append(city)
-                    store.append(state)
-                    store.append(zipp)
-                    store.append(country_code)
-                    store.append(store_number)
-                    store.append(phone)
-                    store.append(location_type)
-                    store.append(latitude)
-                    store.append(longitude)
-                    store.append(hours_of_operation)
-                    store.append(page_url)
-
-                    if store[2] in addressess:
-                        continue
-                    addressess.append(store[2])
-                    yield store
+                if store[2] in addressess:
+                    continue
+                addressess.append(store[2])
+                yield store
 
 
 def scrape():

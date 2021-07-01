@@ -72,6 +72,8 @@ def fetch_data():
     for url in list(set(all_locations)):
         store_url = urljoin(start_url, url)
         loc_response = session.get(store_url)
+        if loc_response.status_code != 200:
+            continue
         loc_dom = etree.HTML(loc_response.text)
 
         location_name = loc_dom.xpath('//h1[@class="ms-content-block__title"]/text()')
