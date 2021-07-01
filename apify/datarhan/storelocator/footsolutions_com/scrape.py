@@ -114,7 +114,9 @@ def fetch_data():
         ]
         hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
         if "Private Appointments" in hours_of_operation:
-            hours_of_operation = "10:00AM - 05:00PM"
+            hours_of_operation = (
+                "Monday-Friday 10:00AM - 5:00PM Saturday 10:00AM - 4:00PM"
+            )
 
         item = [
             DOMAIN,
