@@ -30,7 +30,9 @@ def fetch_data():
                     continue
                 if "SERVED" in hh.text:
                     break
-                hours.append(hh.text.strip())
+                if not hh.text.strip():
+                    continue
+                hours.append(" ".join(hh.stripped_strings).split("(")[0].strip())
             _pp = link.select("h3")[-1]
             phone = ""
             if _pp and _pp.text:

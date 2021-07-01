@@ -59,11 +59,14 @@ def fetch_data():
         latitude = j.get("coordinates")[1]
         longitude = j.get("coordinates")[0]
         location_type = "<MISSING>"
-        hours_of_operation = (
-            "".join(j.get("description"))
-            .replace("<br>", " ")
-            .replace("<div> </div>", "")
-        )
+        try:
+            hours_of_operation = (
+                "".join(j.get("description"))
+                .replace("<br>", " ")
+                .replace("<div> </div>", "")
+            )
+        except:
+            hours_of_operation = "<MISSING>"
         phone = a.get("phone_number") or "<MISSING>"
         if location_name.find("COMING SOON") != -1:
             hours_of_operation = "Coming Soon"

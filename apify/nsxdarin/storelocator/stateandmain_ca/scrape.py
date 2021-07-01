@@ -83,6 +83,9 @@ def fetch_data():
                     if "\\u003cb" in hours:
                         hours = hours.split("\\u003cb")[0].strip()
                     hours = hours.replace("\\n", "")
+                    hours = hours.strip()
+                    if hours[-1:] == ";":
+                        hours = hours[0 : len(hours) - 1]
                     yield [
                         website,
                         loc,
