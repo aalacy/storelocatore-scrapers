@@ -56,6 +56,9 @@ def fetch_data():
                 if len(_addr[-1].strip().split(" ")) == 2:
                     city = _addr[-2].strip()
                     zip_postal = _addr[-1].strip()
+            phone=_.get("phone_number")
+            if type(phone) == list:
+                phone = ''.join(phone)
             yield SgRecord(
                 page_url=page_url,
                 location_name=_["name"].replace("–", "-"),
@@ -66,7 +69,7 @@ def fetch_data():
                 latitude=_["location"]["lat"],
                 longitude=_["location"]["lng"],
                 country_code="CA",
-                phone=_.get("phone_number"),
+                phone=phone,
                 locator_domain=locator_domain,
                 hours_of_operation="; ".join(hours),
             )
