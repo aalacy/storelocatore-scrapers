@@ -53,18 +53,24 @@ def fetch_data():
         "TE": "Trailers",
     }
     data = {
-        "JSONRPC": '[{"method":"locator.doorsandevents","id":4,"params":[{"fields":"DOOR_ID, DOORNAME, EVENT_NAME, EVENT_START_DATE, EVENT_END_DATE, EVENT_IMAGE, EVENT_FEATURES, EVENT_TIMES, SERVICES, STORE_HOURS, ADDRESS, ADDRESS2, STATE_OR_PROVINCE, CITY, REGION, COUNTRY, ZIP_OR_POSTAL, PHONE1, STORE_TYPE, LONGITUDE, LATITUDE","radius":"10000","country":"USA","latitude":40.75368539999999,"longitude":-73.9991637}]}]'
+        "JSONRPC": '[{"method":"locator.doorsandevents","id":4,"params":[{"fields":"DOOR_ID, DOORNAME, EVENT_NAME, EVENT_START_DATE, EVENT_END_DATE, EVENT_IMAGE, EVENT_FEATURES, EVENT_TIMES, SERVICES, STORE_HOURS, ADDRESS, ADDRESS2, STATE_OR_PROVINCE, CITY, REGION, COUNTRY, ZIP_OR_POSTAL, PHONE1, STORE_TYPE, LONGITUDE, LATITUDE","radius":"100000","country":"USA","latitude":40.75368539999999,"longitude":-73.9991637}]}]'
     }
     r = session.post(api_url, headers=headers, data=data)
     js = r.json()
+    s = set()
     for j in js[0]["result"]["value"]["results"].values():
 
         page_url = "https://www.bykilian.com/stores"
         location_name = j.get("DOORNAME") or "<MISSING>"
         location_type = j.get("STORE_TYPE") or "<MISSING>"
+        if location_type == 'FSS':
+            location_type = 'BOUTIQUE KILIAN STORE'.capitalize()
+
         street_address = (
             f"{j.get('ADDRESS')} {j.get('ADDRESS2')}".strip() or "<MISSING>"
         )
+        if '87-135 Brompton Rd' in street_address:
+            location_type = 'Boutique Kilian Store'.capitalize()
         state = j.get("STATE_OR_PROVINCE") or "<MISSING>"
         postal = j.get("ZIP_OR_POSTAL") or "<MISSING>"
         country_code = j.get("COUNTRY") or "<MISSING>"
@@ -74,6 +80,11 @@ def fetch_data():
         longitude = j.get("LONGITUDE") or "<MISSING>"
         phone = j.get("PHONE1") or "<MISSING>"
         hours_of_operation = j.get("STORE_HOURS") or "<MISSING>"
+
+        line = street_address
+        if line in s:
+            continue
+        s.add(line)
 
         row = [
             locator_domain,
