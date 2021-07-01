@@ -21,7 +21,6 @@ def fetch_data():
         logger.info(f"{len(links)} found")
         for link in links:
             addr = list(link.select_one(".center p").stripped_strings)
-            hours = []
             coord = (
                 link.iframe["src"]
                 .split("!2d")[1]
