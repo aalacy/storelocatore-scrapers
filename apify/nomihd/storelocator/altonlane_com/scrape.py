@@ -46,10 +46,7 @@ def fetch_data():
         state = ""
         zip = ""
         if len(address) > 1:
-            street_address = address[0]
-            if "," == street_address[-1]:
-                street_address = "".join(street_address[:-1]).strip()
-
+            street_address = "".join(address[:-2]).strip().replace("\n", "").strip()
             city = address[-2].strip().split(",")[0].strip()
             state = address[-2].strip().split(",")[-1].strip().split(" ")[0].strip()
             zip = address[-2].strip().split(",")[-1].strip().split(" ")[-1].strip()

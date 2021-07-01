@@ -2,7 +2,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
-
+import re
 
 locator_domain = "https://planetwings.com"
 
@@ -46,27 +46,16 @@ def fetch_data():
                     street_address = " ".join(address)
                 state = location_name.split(", ").pop()
                 city = location_name.split(", ")[0]
-                try:
-                    phone = store.select(".wpsl-contact-details")[index].text.replace(
-                        "T: ", ""
+                _pp = store.find("strong", string=re.compile(r"^T$"))
+                if _pp:
+                    phone = (
+                        list(_pp.find_parent().stripped_strings)[-1]
+                        .split(":")[-1]
+                        .strip()
                     )
-                except:
-                    try:
-                        phone = (
-                            store.select("div.wpb_wrapper")[index]
-                            .select("h3")
-                            .pop()
-                            .text.replace("T: ", "")
-                        )
-                    except:
-                        phone = (
-                            store.select("div.wpb_wrapper")[index]
-                            .select("h1")
-                            .pop()
-                            .text.replace("T: ", "")
-                        )
+
                 index += 1
-                record = SgRecord(
+                yield SgRecord(
                     page_url=page_url,
                     location_name=location_name,
                     street_address=street_address.split(")").pop().strip(),
@@ -77,7 +66,6 @@ def fetch_data():
                     locator_domain=locator_domain,
                     country_code=country_code,
                 )
-                yield record
 
 
 if __name__ == "__main__":

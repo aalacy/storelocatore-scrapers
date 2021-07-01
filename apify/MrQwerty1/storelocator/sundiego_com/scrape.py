@@ -1,9 +1,41 @@
 import csv
+import ssl
 import time
 import usaddress
 
 from lxml import html
-from sgselenium import SgFirefox
+from sgselenium.sgselenium import SgChrome
+from webdriver_manager.chrome import ChromeDriverManager
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.common.by import By
+
+from sglogging import SgLogSetup
+
+log = SgLogSetup().get_logger("sundiego.com")
+user_agent = "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.101 Mobile Safari/537.36"
+
+MISSING = "<MISSING>"
+
+
+def initiateDriver(driver=None):
+    if driver is not None:
+        driver.quit()
+
+    return SgChrome(
+        is_headless=True,
+        user_agent=user_agent,
+        executable_path=ChromeDriverManager().install(),
+    ).driver()
+
+
+def driverSleep(driver, time=10):
+    try:
+        WebDriverWait(driver, time).until(
+            EC.presence_of_element_located((By.ID, MISSING))
+        )
+    except Exception:
+        pass
 
 
 def write_output(data):
@@ -74,28 +106,24 @@ def get_address(line):
 
     street_address = f"{a.get('address1')} {a.get('address2') or ''}".strip()
     if street_address == "None":
-        street_address = "<MISSING>"
-    city = a.get("city") or "<MISSING>"
-    state = a.get("state") or "<MISSING>"
-    postal = a.get("postal") or "<MISSING>"
+        street_address = MISSING
+    city = a.get("city") or MISSING
+    state = a.get("state") or MISSING
+    postal = a.get("postal") or MISSING
 
     return street_address, city, state, postal
-
-
-def get_html(page_url):
-    with SgFirefox() as fox:
-        fox.get(page_url)
-        time.sleep(10)
-
-        return fox.page_source
 
 
 def fetch_data():
     out = []
     locator_domain = "https://sundiego.com/"
     page_url = "https://sundiego.com/pages/sun-diego-store-locations"
+    log.info("Initiating Chrome Driver")
+    driver = initiateDriver()
+    driver.get(page_url)
+    driverSleep(driver)
+    source = driver.page_source
 
-    source = get_html(page_url)
     tree = html.fromstring(source)
     divs = tree.xpath("//table//tr")
 
@@ -143,14 +171,20 @@ def fetch_data():
             hours_of_operation,
         ]
         out.append(row)
-
+    driver.quit()
     return out
 
 
 def scrape():
+    log.info("Started")
+    start = time.time()
     data = fetch_data()
     write_output(data)
+    log.info(f"Finished Data Grabbing, added total rows {len(data)}")
+    end = time.time()
+    log.info(f"Scrape took {end-start} seconds.")
 
 
 if __name__ == "__main__":
+    ssl._create_default_https_context = ssl._create_unverified_context
     scrape()

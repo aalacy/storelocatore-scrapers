@@ -60,11 +60,11 @@ def fetch_data():
 
     with webdriver.Firefox(options=options, firefox_profile=profile) as driver:
         driver.get(start_url)
-        sleep(2)
+        sleep(5)
         driver.find_element_by_xpath(
             '//div[contains(text(), "See all stores")]'
         ).click()
-        sleep(15)
+        sleep(25)
         dom = etree.HTML(driver.page_source)
 
     all_locations = dom.xpath('//div[h2[contains(text(), "Store List")]]//a/@href')
@@ -72,6 +72,8 @@ def fetch_data():
     for url in list(set(all_locations)):
         store_url = urljoin(start_url, url)
         loc_response = session.get(store_url)
+        if loc_response.status_code != 200:
+            continue
         loc_dom = etree.HTML(loc_response.text)
 
         location_name = loc_dom.xpath('//h1[@class="ms-content-block__title"]/text()')
