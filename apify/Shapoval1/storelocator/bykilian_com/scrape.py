@@ -63,14 +63,14 @@ def fetch_data():
         page_url = "https://www.bykilian.com/stores"
         location_name = j.get("DOORNAME") or "<MISSING>"
         location_type = j.get("STORE_TYPE") or "<MISSING>"
-        if location_type == 'FSS':
-            location_type = 'BOUTIQUE KILIAN STORE'.capitalize()
+        if location_type == "FSS":
+            location_type = "Boutique Kilian Store".capitalize()
 
         street_address = (
             f"{j.get('ADDRESS')} {j.get('ADDRESS2')}".strip() or "<MISSING>"
         )
-        if '87-135 Brompton Rd' in street_address:
-            location_type = 'Boutique Kilian Store'.capitalize()
+        if "87-135 Brompton Rd" in street_address:
+            location_type = "Boutique Kilian Store".capitalize()
         state = j.get("STATE_OR_PROVINCE") or "<MISSING>"
         postal = j.get("ZIP_OR_POSTAL") or "<MISSING>"
         country_code = j.get("COUNTRY") or "<MISSING>"
