@@ -158,6 +158,20 @@ def fetch_location(loc, retry_count=0):
                 state = "MD"
                 add = "5310 Western Ave"
                 phone = "(301) 718-7812"
+            if "charlotte/charlotte/8011" in loc:
+                name = "Charlotte"
+                phone = "(704) 348-1400"
+                zc = "28202"
+                add = "201 N. Tryon Street"
+                city = "Charlotte"
+                state = "NC"
+            if "-the-galleria/8007" in loc:
+                state = "TX"
+                city = "Houston"
+                zc = "77056"
+                phone = "(713) 623-4600"
+                name = "Houston - The Galleria"
+                add = "5365 Westheimer Rd"
             if "mc/cuauhtemo" not in loc and "/nl/san-pedro" not in loc:
                 if CS:
                     name = name + " - Coming Soon"
