@@ -92,8 +92,11 @@ def fetch_data():
         phone = poi["_source"].get("field_phone")
         phone = phone[0] if phone else "<MISSING>"
         location_type = "<MISSING>"
-        latitude = poi["_source"]["lat_lon"][0]
-        longitude = poi["_source"]["lat_lon"][-1]
+        latitude = "<MISSING>"
+        longitude = "<MISSING>"
+        if poi["_source"].get("lat_lon"):
+            latitude = poi["_source"]["lat_lon"][0]
+            longitude = poi["_source"]["lat_lon"][-1]
         hours_of_operation = loc_dom.xpath(
             '//*[contains(@class, "time-table__item")]/span/text()'
         )
