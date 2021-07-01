@@ -91,10 +91,10 @@ def fetch_data():
                 ):
                     continue
                 else:
-                    street_address_raw = value["streetaddress"].replace(
-                        " (Garage A Food Court Entrance)", ""
-                    ).replace(
-                        " #7 38th Ave", ""
+                    street_address_raw = (
+                        value["streetaddress"]
+                        .replace(" (Garage A Food Court Entrance)", "")
+                        .replace(" #7 38th Ave", "")
                     )
                     addr_format = usd.tag(street_address_raw, tm)
                     addr = list(addr_format[0].items())
