@@ -177,9 +177,12 @@ def fetch_data():
 
 def scrape():
     log.info("Started")
+    start = time.time()
     data = fetch_data()
     write_output(data)
     log.info(f"Finished Data Grabbing, added total rows {len(data)}")
+    end = time.time()
+    log.info(f"Scrape took {end-start} seconds.")
 
 
 if __name__ == "__main__":
