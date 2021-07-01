@@ -49,7 +49,7 @@ def fetch_data():
                 street_address=street_address,
                 city=addr[1].strip(),
                 state=addr[2].strip(),
-                country_code="US",
+                country_code="CA",
                 phone=_pp(addr[1].strip(), phones),
                 locator_domain=locator_domain,
             )
