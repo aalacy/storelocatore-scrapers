@@ -183,6 +183,9 @@ def fetch_data():
             if not zip_postal.replace("-", "").isdigit():
                 zip_postal = ""
 
+            location_type = ''
+            if sp1.find('em', string=re.compile(r"temporarily closed")):
+                location_type = 'temporarily closed'
             yield SgRecord(
                 page_url=page_url,
                 location_name=sp1.select_one("h1.section__title-text").text.strip(),
@@ -195,6 +198,7 @@ def fetch_data():
                 locator_domain=locator_domain,
                 latitude=coord[0],
                 longitude=coord[1],
+                location_type=location_type,
                 hours_of_operation=hours.replace("–", "-"),
             )
 
