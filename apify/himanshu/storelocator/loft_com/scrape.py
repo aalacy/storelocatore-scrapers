@@ -42,9 +42,6 @@ def fetch_data():
     for base_url in urls_list:
         r = session.get(base_url)
         soup = BeautifulSoup(r.text, "lxml")
-        store_name = []
-        store_detail = []
-        return_main_object = []
 
         k = soup.find_all("li", {"class": "c-directory-list-content-item"})
         for i in k:
