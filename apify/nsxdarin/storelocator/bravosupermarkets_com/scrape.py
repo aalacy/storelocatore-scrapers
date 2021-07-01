@@ -97,6 +97,9 @@ def fetch_data():
                 phone = line2.split('"telephone":"')[1].split('"')[0].replace("1+", "")
         if Closed:
             name = "Bravo Supermarkets - CLOSED"
+        hours = hours.strip()
+        if hours == "":
+            hours = "<MISSING>"
         yield [
             website,
             loc,

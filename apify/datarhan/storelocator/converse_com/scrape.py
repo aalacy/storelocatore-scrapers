@@ -86,7 +86,15 @@ def fetch_data():
             '//span[contains(text(), "Hours")]/following-sibling::div/text()'
         )
         hoo = [e.strip().replace("\n", "") for e in hoo if e.strip()]
-        hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
+        hours_of_operation = (
+            " ".join(hoo)
+            .split("New")[0]
+            .split("Temporary")[0]
+            .split("Holiday")[0]
+            .strip()
+            if hoo
+            else "<MISSING>"
+        )
 
         item = [
             domain,

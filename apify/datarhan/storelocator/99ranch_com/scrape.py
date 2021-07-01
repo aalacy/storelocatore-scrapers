@@ -79,7 +79,9 @@ def fetch_data():
         latitude = latitude if latitude else "<MISSING>"
         longitude = poi["longitude"]
         longitude = longitude if longitude else "<MISSING>"
-        hoo = poi["hours_md"].split("\n")
+        hoo = []
+        if poi.get("hours_md"):
+            hoo = poi["hours_md"].split("\n")
         hoo = [elem for elem in hoo if "am -" in elem]
         hours_of_operation = (
             " ".join(hoo).split("Special")[0].strip() if hoo else "<MISSING>"
