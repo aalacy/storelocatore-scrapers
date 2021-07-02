@@ -37,7 +37,7 @@ def write_output(data):
 def fetch_data():
     locs = []
     url = "https://plazaazteca.com/locations/"
-    r = session.get(url, headers=headers)
+    r = session.get(url, headers=headers, verify=False)
     website = "plazaazteca.com"
     country = "US"
     linesone = r.iter_lines()
@@ -50,6 +50,8 @@ def fetch_data():
             lurl = line.split(
                 '<h2 class="elementor-heading-title elementor-size-default"><a href="'
             )[1].split('"')[0]
+            if "COMING SOON" in line:
+                lurl = "CS"
         if '<div class="elementor-text-editor elementor-clearfix">' in line:
             g = next(linesone)
             g = str(g.decode("utf-8"))
@@ -89,7 +91,8 @@ def fetch_data():
                     .split("<")[0]
                     .strip()
                 )
-            locs.append(lurl + "|" + a1 + "|" + a2 + "|" + a3 + "|" + a4 + "|" + a5)
+            if lurl != "CS":
+                locs.append(lurl + "|" + a1 + "|" + a2 + "|" + a3 + "|" + a4 + "|" + a5)
     for loc in locs:
         store = "<MISSING>"
         name = ""
@@ -103,7 +106,7 @@ def fetch_data():
         lng = "<MISSING>"
         hours = ""
         typ = "<MISSING>"
-        r2 = session.get(purl, headers=headers)
+        r2 = session.get(purl, headers=headers, verify=False)
         lines = r2.iter_lines()
         for line2 in lines:
             line2 = str(line2.decode("utf-8"))
@@ -136,6 +139,10 @@ def fetch_data():
             if "<" in name:
                 name = name.split("<")[0]
         if "Coming Soon" not in name:
+            if hours == "":
+                hours = "<MISSING>"
+            if "allentown" in purl:
+                phone = "(484) 656 7277"
             yield [
                 website,
                 purl,

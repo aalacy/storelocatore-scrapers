@@ -28,11 +28,13 @@ def fetch_data():
         page_url = "https://marysmountaincookies.com" + store_url
         log.info(page_url)
         store_req = session.get(page_url, headers=headers)
+        if "Opening Soon" in store_req.text:
+            continue
         store_sel = lxml.html.fromstring(store_req.text)
 
         locator_domain = website
         location_name = (
-            "".join(
+            " ".join(
                 store_sel.xpath('//section[@id="section_1"]/article//header/h1/text()')
             )
             .strip()

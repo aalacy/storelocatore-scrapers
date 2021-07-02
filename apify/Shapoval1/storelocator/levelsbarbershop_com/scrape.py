@@ -39,54 +39,37 @@ def fetch_data():
     session = SgRequests()
     r = session.get(page_url)
     tree = html.fromstring(r.text)
-    block = tree.xpath(
-        "//div[.//em[contains(text(), 'Ph')]] | //div[.//span[contains(text(), 'Ph')]]"
-    )
+    block = tree.xpath('//div[./div[@class="wsite-image wsite-image-border-none "]]')
     for b in block:
 
-        ad = " ".join(
-            b.xpath(
-                './/*[contains(text(), "Street")]//text() | .//*[contains(text(), "Avenue")]//text()'
-            )
-        ).replace("\n", "")
-        street_address = ad.split(",")[0].strip()
-        if ad.find("125") != -1:
-            street_address = ad.split("Harlem")[0]
-        street_address = street_address.replace("NY", "")
-        phone = (
-            "".join(
-                b.xpath(
-                    ".//em[contains(text(), 'Ph')]/text() | .//span[contains(text(), 'Ph')]/text()"
-                )
-            )
+        ad = (
+            "".join(b.xpath(".//following-sibling::*[1]//text()"))
             .replace("\n", "")
-            .split("Ph:")[1]
             .strip()
         )
-        city = "<MISSING>"
-        if ad.find("Street") != -1:
-            city = ad.split("Street")[1].split(",")[0].replace(",", "").strip()
-        if ad.find("915") != -1:
-            city = ad.split("Street")[1].split(",")[1].replace(",", "").strip()
-        if ad.find("2032") != -1:
-            city = ad.split(",")[-1].strip()
-        state = ad.split(",")[-1].strip()
-        location_name = "<MISSING>"
-        if ad.find("425") != -1:
-            location_name = "125th street location"
-        if ad.find("Lexington") != -1:
-            location_name = "Lexington Location"
-        if ad.find("Fulton") != -1:
-            location_name = "brooklyn location"
-        if ad.find("115th") != -1:
-            location_name = "115th street location"
+        adr = (
+            ad.split(":")[0]
+            .replace("Ph", "")
+            .replace("ph", "")
+            .replace("Avenue NY,", "Avenue, NY,")
+            .replace("Avenue Brooklyn,", "Avenue, Brooklyn,")
+            .strip()
+        )
+        street_address = adr.split(",")[0].strip()
+        phone = ad.split(":")[1].replace(" - ", "-").replace("8)5", "8) 5").strip()
+        city = adr.split(",")[1].strip()
+        state = adr.split(",")[2].strip()
+        location_name = "".join(
+            b.xpath(".//preceding-sibling::h2[1]//text()")
+        ).capitalize()
         country_code = "US"
         store_number = "<MISSING>"
         latitude = "<MISSING>"
         longitude = "<MISSING>"
-        location_type = "<MISSING>"
+        location_type = "Levels barbershop"
         hours_of_operation = "<MISSING>"
         postal = "<MISSING>"
+
         row = [
             locator_domain,
             page_url,

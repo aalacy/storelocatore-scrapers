@@ -96,7 +96,10 @@ def get_data(url):
 
     session = SgRequests()
     r = session.get(url)
-    js = r.json()["results"]
+    try:
+        js = r.json()["results"]
+    except:
+        return []
 
     for j in js:
         location_name = j.get("faName")
@@ -148,7 +151,7 @@ def fetch_data():
     out = []
     urls = get_urls()
 
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
+    with futures.ThreadPoolExecutor(max_workers=3) as executor:
         future_to_url = {executor.submit(get_data, url): url for url in urls}
         for future in futures.as_completed(future_to_url):
             rows = future.result()

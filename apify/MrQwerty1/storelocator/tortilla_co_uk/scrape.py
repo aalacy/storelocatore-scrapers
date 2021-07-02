@@ -77,6 +77,48 @@ def get_data(page_url):
     city = adr.city or "<MISSING>"
     state = adr.state or "<MISSING>"
     postal = adr.postcode or "<MISSING>"
+    if (
+        postal.find("STATION") != -1
+        or postal.find("LONDON") != -1
+        or postal.find("MANCHESTER") != -1
+    ):
+        postal = postal.split(",")[1].strip()
+    if postal.find("T:") != -1:
+        postal = (
+            "".join(
+                tree.xpath(
+                    '//a[@class="GTM-Tracking-Location-Page-Google-Maps-Link"]/@href'
+                )
+            )
+            .split("place/")[1]
+            .split(",")[1]
+            .split("/")[0]
+            .replace("+", " ")
+            .replace("London", "")
+            .strip()
+        )
+        street_address = (
+            "".join(
+                tree.xpath(
+                    '//a[@class="GTM-Tracking-Location-Page-Google-Maps-Link"]/@href'
+                )
+            )
+            .split("place/")[1]
+            .split(",")[0]
+            .replace("+", " ")
+            .strip()
+        )
+    if location_name.find("Leadenhall") != -1:
+        street_address = (
+            "".join(
+                tree.xpath(
+                    '//div[@class="b-location-info-right-coming-soon-contact"]/p/span/text()'
+                )
+            )
+            .split(",")[0]
+            .split()[:-1]
+        )
+        street_address = " ".join(street_address)
     country_code = "GB"
     store_number = (
         "".join(tree.xpath("//div[@data-postid]/@data-postid")) or "<MISSING>"
