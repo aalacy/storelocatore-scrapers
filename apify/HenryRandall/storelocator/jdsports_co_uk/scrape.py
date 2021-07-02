@@ -8,7 +8,7 @@ def fetch_data():
     driver = SgSelenium().chrome()
     link = "https://www.jdsports.co.uk/store-locator/all-stores/"
     driver.get(link)
-    soup = BeautifulSoup(driver.page_source, "lxml")
+    soup = BeautifulSoup(driver.page_source, "html.parser")
     locations = soup.find_all("li", {"data-e2e": "storeLocator-list-item"})
     base_url = "https://www.jdsports.co.uk"
     loclist = []
@@ -23,8 +23,9 @@ def fetch_data():
     data = []
     for location in loclist:
         loc_url = location[1]
+        driver = SgSelenium().chrome()
         driver.get(loc_url)
-        soup = BeautifulSoup(driver.page_source, "lxml")
+        soup = BeautifulSoup(driver.page_source, "html.parser")
         info = soup.find("div", {"class": "storeContentLeft"})
         address = info.find("div", {"id": "storeAddress"})
         address = address.find("p")
@@ -47,6 +48,9 @@ def fetch_data():
             hoo = hoo + days[x].text + " " + hours[x].text + ", "
         hoo = hoo[:-2]
         coor = soup.find("div", {"class": "storeContentRight"})
+        city = coor.find("img", {"id": "staticMapImage"})
+        city = city.attrs["src"].split("&zoom=15", 1)[0]
+        city = city.split(",")[-1]
         coor = coor.find("div", {"id": "staticMap"})
         coor = coor.attrs["data-staticmapmarkers"].split("|", 1)[1].split('"', 1)[0]
         [lat, long] = coor.split(",")
@@ -55,7 +59,7 @@ def fetch_data():
             loc_url,
             location[0],
             street,
-            "<MISSING>",
+            city,
             "<MISSING>",
             zip_code,
             "<MISSING>",

@@ -72,6 +72,8 @@ def get_data(coord):
         data=json.dumps(data),
     )
     js = r.json()["data"]["nearbyStores"]
+    if not js:
+        return []
 
     for j in js:
         j = j["store"]
