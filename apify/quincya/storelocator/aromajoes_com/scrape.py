@@ -81,7 +81,7 @@ def fetch_data():
                 zip_code = "<MISSING>"
         country_code = "US"
         store_number = "<MISSING>"
-        location_type = "<MISSING>"
+        location_type = "Open"
         phone = stores[i]["phone"]
         if "Comin" in phone:
             phone = "<MISSING>"
@@ -93,8 +93,12 @@ def fetch_data():
             .replace("  ", " ")
             .replace("NOW OPEN", "")
             .replace("!", "")
+            .replace("Cafe", "")
             .strip()
         )
+        if "Temporarily" in hours_of_operation:
+            location_type = "Temp" + hours_of_operation.split("Temp")[1].strip()
+            hours_of_operation = hours_of_operation.split("Temp")[0].strip()
         latitude = stores[i]["location_address"]["lat"]
         longitude = stores[i]["location_address"]["lng"]
 
