@@ -66,8 +66,13 @@ def fetch_data():
                 location_name = "<MISSING>"
 
             location_type = "<MISSING>"
+            try:
+                phone = a.get("phone1")
+            except:
+                phone = "<MISSING>"
+            if not phone:
+                phone = "<MISSING>"
 
-            phone = a.get("phone1") or "<MISSING>"
             if phone == "0" or phone == "-0":
                 phone = "<MISSING>"
             if phone.find("|") != -1:
