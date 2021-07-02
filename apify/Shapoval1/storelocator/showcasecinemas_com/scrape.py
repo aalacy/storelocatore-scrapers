@@ -66,7 +66,6 @@ def fetch_data():
         longitude = j.get("Longitude")
         phone = "<MISSING>"
         hours_of_operation = "<MISSING>"
-        cinemaId = j.get("CinemaId")
 
         session = SgRequests()
         r = session.get("https://www.showcasecinemas.com/contact-us", headers=headers)
