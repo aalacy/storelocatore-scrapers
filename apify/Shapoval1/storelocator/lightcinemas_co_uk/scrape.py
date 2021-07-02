@@ -45,37 +45,55 @@ def fetch_data():
     r = session.get(api_url, headers=headers)
     tree = html.fromstring(r.text)
 
-    jsblock = ''.join(tree.xpath('//script[contains(text(), "new Glitterfish.ChangeCinema")]/text()')).split('2, ')[1].split(', false);')[0].strip()
+    jsblock = (
+        "".join(
+            tree.xpath(
+                '//script[contains(text(), "new Glitterfish.ChangeCinema")]/text()'
+            )
+        )
+        .split("2, ")[1]
+        .split(", false);")[0]
+        .strip()
+    )
     js = json.loads(jsblock)
 
     for j in js:
 
-        page_url = j.get('url') + '/your-cinema/map'
-        location_name = j.get('title')
-        store_number = j.get('id')
-        if page_url == 'https://sittingbourne.thelight.co.uk/your-cinema/map':
-            page_url = 'https://sittingbourne.thelight.co.uk/'
+        page_url = j.get("url") + "/your-cinema/map"
+        location_name = j.get("title")
+        store_number = j.get("id")
+        if page_url == "https://sittingbourne.thelight.co.uk/your-cinema/map":
+            page_url = "https://sittingbourne.thelight.co.uk/"
 
         session = SgRequests()
         r = session.get(page_url, headers=headers)
         tree = html.fromstring(r.text)
 
-        ad = ''.join(tree.xpath('//p[@class="address"]/strong/text()[1]')) or ''.join(tree.xpath('//p[@class="address"]/text()'))
+        ad = "".join(tree.xpath('//p[@class="address"]/strong/text()[1]')) or "".join(
+            tree.xpath('//p[@class="address"]/text()')
+        )
 
         location_type = "Cinema"
-        street_address = ad.split(',')[0].strip()
-        if ad.count(',') == 3:
-            street_address = ' '.join(ad.split(',')[:2]).strip()
+        street_address = ad.split(",")[0].strip()
+        if ad.count(",") == 3:
+            street_address = " ".join(ad.split(",")[:2]).strip()
         state = "<MISSING>"
-        postal = ad.split(',')[-1].strip()
+        postal = ad.split(",")[-1].strip()
         country_code = "UK"
-        city = page_url.split('//')[1].split('.')[0].capitalize().strip().replace('New', 'New ').replace('brighton','Brighton')
-        map_link = ''.join(tree.xpath('//iframe/@src'))
+        city = (
+            page_url.split("//")[1]
+            .split(".")[0]
+            .capitalize()
+            .strip()
+            .replace("New", "New ")
+            .replace("brighton", "Brighton")
+        )
+        map_link = "".join(tree.xpath("//iframe/@src"))
         try:
             latitude = map_link.split("!3d")[1].strip().split("!")[0].strip()
             longitude = map_link.split("!2d")[1].strip().split("!")[0].strip()
         except:
-            latitude, longitude = "<MISSING>","<MISSING>"
+            latitude, longitude = "<MISSING>", "<MISSING>"
         phone = "<MISSING>"
         hours_of_operation = "<MISSING>"
 
