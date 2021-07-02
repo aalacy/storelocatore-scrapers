@@ -10,7 +10,9 @@ from webdriver_manager.chrome import ChromeDriverManager
 from sglogging import SgLogSetup
 
 logger = SgLogSetup().get_logger("maxandermas.com")
-user_agent = "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0"
+user_agent = (
+    "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0"
+)
 try:
     _create_unverified_https_context = (
         ssl._create_unverified_context
@@ -20,14 +22,16 @@ except AttributeError:
 else:
     ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
 
+
 def initiateDriver(driver=None):
     if driver != None:
         driver.quit()
 
-    return SgChrome(is_headless=True,
-                    user_agent=user_agent,
-                    executable_path=ChromeDriverManager().install()
-                    ).driver()
+    return SgChrome(
+        is_headless=True,
+        user_agent=user_agent,
+        executable_path=ChromeDriverManager().install(),
+    ).driver()
 
 
 def _valid(val):
@@ -63,7 +67,6 @@ def _filter(blocks):
                 hours += _valid(_).split("|")
 
     return hours
-
 
 
 def fetch_data():
