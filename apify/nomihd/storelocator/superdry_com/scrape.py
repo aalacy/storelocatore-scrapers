@@ -88,7 +88,7 @@ def get_store_data(store_sel, page_url):
     hours_list = []
     for hour in hours:
         day = "".join(hour.xpath("td[1]/text()")).strip()
-        time = "".join(hour.xpath("td[2]//text()")).strip()
+        time = ", ".join(hour.xpath("td[2]//text()")).strip()
         hours_list.append(day + ":" + time)
 
     hours_of_operation = "; ".join(hours_list).strip()

@@ -555,6 +555,14 @@ def scrape():
     df = df.replace(r"^\s*$", "<MISSING>", regex=True)
     df = df.fillna("<MISSING>")
 
+    df = df.reset_index(drop=True)
+
+    for x in range(len(hours_of_operations)):
+        hours_value = df.at[x, "hours_of_operation"]
+        if "office" in hours_value.lower():
+            df.at[x, "hours_of_operation"] = "<MISSING>"
+            df.at[x, "location_type"] = "loan office"
+
     df.to_csv("data.csv", index=False)
 
 
