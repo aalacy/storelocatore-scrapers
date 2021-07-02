@@ -79,8 +79,11 @@ def fetch_data():
         street_address = poi["_source"]["address_line1"][0]
         if poi["_source"]["address_line2"]:
             street_address += ", " + poi["_source"]["address_line2"][0]
+        street_address = street_address.strip()
         if "virtual office" in street_address:
             continue
+        if street_address.endswith(","):
+            street_address = street_address[:-1]
         city = poi["_source"]["locality_1"]
         city = city[0] if city else "<MISSING>"
         state = poi["_source"]["administrative_area"]
@@ -92,11 +95,14 @@ def fetch_data():
         phone = poi["_source"].get("field_phone")
         phone = phone[0] if phone else "<MISSING>"
         location_type = "<MISSING>"
+        if "office is closed" in street_address:
+            street_address = "<MISSING>"
+            location_type = "closed"
         latitude = "<MISSING>"
         longitude = "<MISSING>"
         if poi["_source"].get("lat_lon"):
-            latitude = poi["_source"]["lat_lon"][0]
-            longitude = poi["_source"]["lat_lon"][-1]
+            latitude = poi["_source"]["lat_lon"][0].split(",")[0]
+            longitude = poi["_source"]["lat_lon"][0].split(",")[-1]
         hours_of_operation = loc_dom.xpath(
             '//*[contains(@class, "time-table__item")]/span/text()'
         )
