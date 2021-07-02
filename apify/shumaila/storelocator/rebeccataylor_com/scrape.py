@@ -44,13 +44,16 @@ def fetch_data():
     data = []
     pattern = re.compile(r"\s\s+")
     url = "https://www.rebeccataylor.com/our-stores/"
-    r = session.get(url, headers=headers, verify=False)
+    r = session.get(url, headers=headers)
     soup = BeautifulSoup(r.text, "html.parser")
     store_list = soup.select('a:contains("Details")')
     p = 0
     for st in store_list:
-        link = "https://www.rebeccataylor.com" + st["href"]
-        r = session.get(link, headers=headers, verify=False)
+        if "https://www.rebeccataylor.com" in st["href"]:
+            link = st["href"]
+        else:
+            link = "https://www.rebeccataylor.com" + st["href"]
+        r = session.get(link, headers=headers, verify=False, timeout=100)
         soup = BeautifulSoup(r.text, "html.parser")
         title = soup.find("h2", {"class": "card-title"}).text
         address = (
