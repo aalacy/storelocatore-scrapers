@@ -68,7 +68,7 @@ def fetch_data():
         "StateName": "state",
         "ZipCode": "postal",
     }
-    soup = BeautifulSoup(r.text, "lxml")
+    soup = BeautifulSoup(r.text, "html.parser")
     return_main_object = []
     main = soup.find("div", {"id": "accordionExample"}).find_all(
         "div", {"class": "card"}
