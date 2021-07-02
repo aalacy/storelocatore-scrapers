@@ -99,6 +99,33 @@ def process_record(raw_results_from_one_coordinate):
         longitude = store["address"]["longitude"]
 
         if location_type == "ATM" or location_type == "BRANCH AND ATM":
+            if phone == "<MISSING>":
+                externalId = store["externalId"]
+                store_search_url = (
+                    "https://apps.pnc.com/locator-api/locator/api/v2/location/details/"
+                    + str(externalId)
+                    + "?t={}"
+                )
+                timestamp = (
+                    str(datetime.datetime.now().timestamp()).split(".")[0].strip()
+                )
+                try:
+                    store_req = session.get(
+                        store_search_url.format(timestamp), headers=headers, timeout=15
+                    )
+                    store_json = json.loads(store_req.text)
+                    try:
+                        cInfo = store_json["contactInfo"]
+                        if cInfo is not None:
+                            for contact in cInfo:
+                                if "External Phone" in contact["contactType"]:
+                                    phone = contact["contactInfo"]
+                                    break
+                    except:
+                        pass
+                except:
+                    pass
+
             yield SgRecord(
                 locator_domain=locator_domain,
                 page_url=page_url,

@@ -122,6 +122,7 @@ def fetch_data():
                 lng = line2.split("center: { lng:")[1].split(",")[0].strip()
                 lat = line2.split("lat: ")[1].split("}")[0].strip()
         if add != "":
+            name = name.replace("&amp;", "&").replace("&#39;", "'")
             yield [
                 website,
                 loc,

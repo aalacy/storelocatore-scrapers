@@ -52,11 +52,11 @@ def fetch_data():
     hrlist = []
     for line in r.iter_lines():
         line = str(line.decode("utf-8"))
-        if 'Locations <i class="' in line:
+        if "Grocery Locations</h4>" in line:
             Found = True
-        if Found and "</ul>" in line:
+        if Found and "Show more</a></>" in line:
             Found = False
-        if Found and 'href="' in line and 'Locations <i class="' not in line:
+        if Found and 'href="' in line:
             locs.append("https://maceys.com" + line.split('href="')[1].split('"')[0])
     url = "https://afsshareportal.com/lookUpFeatures.php?callback=jsonpcallbackHours&action=storeInfo&website_url=maceys.com&expandedHours=true"
     r = session.get(url, headers=headers)
