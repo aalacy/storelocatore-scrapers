@@ -1,3 +1,3 @@
---ignore CentroidValidator --ignore StreetAddressHasNumber --ignore StreetAddressHasStateName (Confirmed scraped correctly)
---ignore CountValidator --ignore StateLevelCountValidator (Expected 15313 POI, but found 4706)
+--ignore CentroidValidator --ignore StreetAddressHasNumber --ignore StreetAddressHasStateName --ignore LatLngDuplicationValidator (Confirmed scraped correctly)
+--ignore CountValidator --ignore StateLevelCountValidator (Expected 15313 POI, but found 17708)
 

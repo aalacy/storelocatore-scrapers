@@ -76,11 +76,16 @@ def fetch_data():
             link = item.a["href"]
             req = session.get(link, headers=headers)
             page_base = BeautifulSoup(req.text, "lxml")
-            if "coming soon" in page_base.find(class_="entry-content").text.lower():
+            if (
+                "coming soon" in page_base.find(class_="entry-content").text.lower()
+                or "opening fall" in page_base.find(class_="entry-content").text.lower()
+            ):
                 continue
 
             try:
-                map_link = page_base.find(id="locations-map").iframe["src"]
+                map_link = page_base.find(id="locations-map").find_all("iframe")[-1][
+                    "src"
+                ]
                 lat_pos = map_link.rfind("!3d")
                 latitude = map_link[
                     lat_pos + 3 : map_link.find("!", lat_pos + 5)
@@ -157,8 +162,10 @@ def fetch_data():
                 .replace("Medication", "")
                 .replace("Methadone:", "")
                 .replace("Dosing", "")
+                .replace("Business:", "")
                 .replace(": Mon", "Mon")
                 .replace("  ", " ")
+                .split("Groups:")[0]
             ).strip()
 
             if "Hours " in hours_of_operation:

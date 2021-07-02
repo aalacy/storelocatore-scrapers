@@ -1,6 +1,6 @@
-lxml==4.3.4
-requests==2.11.1
-beautifulsoup4==4.7.1
-selenium==3.141.0
+--extra-index-url https://dl.cloudsmith.io/snjnnLURl1gQtgOE/crawl/sgzip/python/simple/
+sgzip==0.6.3
+sgvalidator==0.0.71
 usaddress==0.5.10
-sglogging
+sgrequests==0.1.12
+sglogging==0.0.4

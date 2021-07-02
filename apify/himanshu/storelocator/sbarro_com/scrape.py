@@ -4,6 +4,7 @@ from bs4 import BeautifulSoup as bs
 import usaddress
 import lxml.html
 from sglogging import sglog
+from sgscrape import sgpostal as parser
 
 logger = sglog.SgLogSetup().get_logger(logger_name="sbarro.com")
 
@@ -41,6 +42,7 @@ def write_output(data):
 
 def fetch_data():
     addressess = []
+    url_list = []
     base_url = "https://sbarro.com"
     UsState = [
         "AL",
@@ -102,6 +104,7 @@ def fetch_data():
 
     for link in soup.find_all("section", {"class": "locations-result"}):
         page_url = base_url + link.find("a")["href"]
+        url_list.append(page_url)
         if page_url.split("/")[-1]:
             try:
                 location_name = link.find("h1", {"class": "location-name"}).text.strip()
@@ -253,6 +256,7 @@ def fetch_data():
         url_state = store_url.split("sbarro.com/locations/")[1].split("/")[0].strip()
         if url_state in CA_states:
             page_url = store_url
+            url_list.append(page_url)
             store_req = session.get(page_url)
             if store_req.url == "https://sbarro.com/locations/":
                 continue
@@ -272,11 +276,18 @@ def fetch_data():
                 zip = "<MISSING>"
                 country_code = "CA"
                 store_number = "<MISSING>"
-                phone = "".join(
-                    store_sel.xpath(
-                        '//div[@class="location-phone location-cta"]//text()'
-                    )
-                ).strip()
+                temp_phone = store_sel.xpath(
+                    '//div[@class="location-phone location-cta"]//text()'
+                )
+                phone_list = []
+                phone = ""
+                for tmp in temp_phone:
+                    if len("".join(tmp).strip()) > 0:
+                        phone_list.append("".join(tmp).strip())
+
+                if len(phone_list) > 0:
+                    phone = phone_list[0]
+
                 location_type = "Restaurant"
                 latitude = "".join(
                     store_sel.xpath(
@@ -351,6 +362,107 @@ def fetch_data():
                     page_url,
                 ]
                 yield curr_list
+
+    location_url = "https://sbarro.com/locations/?user_search=United+Kingdom&radius=1000&unit=MI&count=5"
+    soup = bs(session.get(location_url).text, "lxml")
+
+    for link in soup.find_all("section", {"class": "locations-result"}):
+        page_url = base_url + link.find("a")["href"]
+        if page_url not in url_list:
+            if page_url.split("/")[-1]:
+                try:
+                    location_name = link.find(
+                        "h1", {"class": "location-name"}
+                    ).text.strip()
+                except:
+                    location_name = link.find(
+                        "h2", {"class": "location-name"}
+                    ).text.strip()
+
+                addr = list(
+                    link.find(
+                        "p", {"class": "location-address nobottom"}
+                    ).stripped_strings
+                )
+
+                raw_address = ", ".join(addr)
+                formatted_addr = parser.parse_address_intl(raw_address)
+                street_address = formatted_addr.street_address_1
+                if formatted_addr.street_address_2:
+                    street_address = (
+                        street_address + ", " + formatted_addr.street_address_2
+                    )
+
+                city = formatted_addr.city
+                state = formatted_addr.state
+                zipp = formatted_addr.postcode
+
+                if link.find("div", {"class": "location-phone location-cta"}):
+                    phone = (
+                        link.find("div", {"class": "location-phone location-cta"})
+                        .find("span", {"class": "btn-label"})
+                        .text.strip()
+                    )
+
+                else:
+                    phone = "<MISSING>"
+
+                if phone == "-":
+                    phone = "<MISSING>"
+
+                store_number = link["id"].split("-")[-1].strip()
+                lat = link["data-latitude"]
+                if lat == "0":
+                    lat = "<MISSING>"
+
+                lng = link["data-longitude"]
+                if lng == "0":
+                    lng = "<MISSING>"
+
+                location_type = "Restaurant"
+                try:
+                    logger.info(page_url)
+                    location_soup = bs(session.get(page_url).text, "lxml")
+                    hours = " ".join(
+                        list(
+                            location_soup.find(
+                                "div", {"class": "location-hours"}
+                            ).stripped_strings
+                        )
+                    ).replace("Hours of Operation", "")
+                    if "Hours not available" in hours:
+                        hours = "<MISSING>"
+                except:
+                    hours = "<MISSING>"
+
+                if street_address == "" or street_address is None:
+                    street_address = "<MISSING>"
+
+                if city == "" or city is None:
+                    city = "<MISSING>"
+
+                if state == "" or state is None:
+                    state = "<MISSING>"
+
+                if zipp == "" or zipp is None:
+                    zipp = "<MISSING>"
+
+                store = []
+                store.append(base_url)
+                store.append(location_name)
+                store.append(street_address)
+                store.append(city)
+                store.append(state)
+                store.append(zipp)
+                store.append("GB")
+                store.append(store_number)
+                store.append(phone)
+                store.append(location_type)
+                store.append(lat)
+                store.append(lng)
+                store.append(hours)
+                store.append(page_url)
+                yield store
 
 
 def scrape():

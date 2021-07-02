@@ -47,20 +47,32 @@ def fetch_data():
     div = tree.xpath('//div[@class="col-md-4 col-sm-6"]')
     for d in div:
 
-        location_type = "".join(d.xpath(".//h3/text()"))
+        location_type = "".join(d.xpath(".//h3/text()")) or "<MISSING>"
+        if location_type == "<MISSING>":
+            location_type = "".join(d.xpath(".//preceding-sibling::div[1]//h3/text()"))
         store_number = "<MISSING>"
-        street_address = "".join(d.xpath(".//p/a/text()[1]"))
+        street_address = "".join(d.xpath(".//p/a/text()[1]")) or "<MISSING>"
+        if street_address == "<MISSING>":
+            continue
         ad = (
             "".join(d.xpath(".//p/a/text()[2]"))
             .replace("Southlake", "Southlake,")
             .strip()
-        )
+        ) or "<MISSING>"
+        if ad == "<MISSING>":
+            ad = (
+                "".join(d.xpath(".//following-sibling::div[1]//p/a/text()[2]"))
+                .replace("\n", "")
+                .strip()
+            )
 
         city = ad.split(",")[0].strip()
         state = ad.split(",")[1].split()[0].strip()
         postal = ad.split(",")[1].split()[-1].strip()
+
         if postal.find("-") != -1:
             postal = postal.split("-")[0].strip()
+
         country_code = "US"
 
         phone = (

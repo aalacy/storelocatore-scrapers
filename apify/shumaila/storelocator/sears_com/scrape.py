@@ -50,10 +50,11 @@ def fetch_data():
     for state in statelist:
         if state["href"].find("404") == -1:
             statelink = "https://www.sears.com" + state["href"]
+
             state1 = state.text
             flag1 = True
-            while flag1:
-                try:
+            if flag1:
+                if True:
                     page1 = session.get(statelink, headers=headers, verify=False)
                     soup1 = BeautifulSoup(page1.text, "html.parser")
                     linklist = soup1.findAll(
@@ -67,12 +68,12 @@ def fetch_data():
                             and blinks.text.find("Sears Store") > -1
                         ):
                             link = "https://www.sears.com" + link
+
                             flag = True
-                            while flag:
-                                try:
-                                    page2 = session.get(
-                                        link, headers=headers, verify=False
-                                    )
+                            if flag:
+
+                                page2 = session.get(link, headers=headers)
+                                if True:
 
                                     if page2.url.find("closed") > -1:
                                         break
@@ -186,6 +187,7 @@ def fetch_data():
                                         title = title.replace("Sears", "Sears ")
                                         title = title.replace("  ", " ")
                                         flag = True
+
                                         for i in range(0, len(data)):
 
                                             if (
@@ -222,13 +224,7 @@ def fetch_data():
                                             )
 
                                             flag = False
-                                except:
-
-                                    pass
                     flag1 = False
-                except:
-
-                    pass
     return data
 
 

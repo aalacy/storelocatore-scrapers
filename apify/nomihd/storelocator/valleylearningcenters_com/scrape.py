@@ -64,19 +64,16 @@ def fetch_data():
 
             location_type = "<MISSING>"
 
-            hours_of_operation = (
-                ":".join(
+            hours = list(
+                filter(
+                    str,
                     store_sel.xpath(
-                        '//div[@class="wp-block-media-text__content"]/p//text()'
-                    )
+                        '//*[contains(text(),"Take a tour of our ")]/..//p//text()'
+                    ),
                 )
-                .strip()
-                .encode("ascii", "replace")
-                .decode("utf-8")
-                .replace("?", "-")
-                .strip()
             )
-
+            hours = [x.strip() for x in hours]
+            hours_of_operation = "; ".join(hours).strip().replace("; ;", "").strip()
             latitude = store["lat"]
             longitude = store["lng"]
 
