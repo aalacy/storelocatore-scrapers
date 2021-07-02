@@ -68,7 +68,7 @@ def fetch_data():
         "StateName": "state",
         "ZipCode": "postal",
     }
-    soup = BeautifulSoup(r.text, "html.parser")
+    soup = BeautifulSoup(r.text, "lxml")
     return_main_object = []
     main = soup.find("div", {"id": "accordionExample"}).find_all(
         "div", {"class": "card"}
@@ -96,10 +96,11 @@ def fetch_data():
         if "Learn" in hours:
             hours = dt[3] + " " + dt[4]
             phone = dt[2]
+        page_url = location.find("a", {"class": "btn-sm btn-secondary-sm"})["href"]
 
         store = []
         store.append("hhttps://www.fasttrackurgentcare.com")
-        store.append("https://www.fasttrackurgentcare.com/locations-and-hours/")
+        store.append(page_url)
         store.append(name)
         store.append(address)
         store.append(city)
