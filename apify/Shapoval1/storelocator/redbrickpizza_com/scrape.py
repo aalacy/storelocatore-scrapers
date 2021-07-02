@@ -63,7 +63,7 @@ def fetch_data():
         driver.get(page_url)
         time.sleep(10)
         phone = driver.find_element_by_xpath('//div[@itemprop="telephone"]').text
-        print(phone)
+
         location_name = "RedBrick Pizza"
         store_number = "<MISSING>"
         latitude = driver.find_element_by_xpath(
