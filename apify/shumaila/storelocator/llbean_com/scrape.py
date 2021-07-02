@@ -93,7 +93,7 @@ def fetch_data():
                 city, state = address[1].split(", ", 1)
                 state, pcode = state.split(" ", 1)
                 title = soup.findAll("div", {"class": "font-montserrat"})[
-                    1
+                    0
                 ].text.strip()
                 lat, longt = (
                     soup.select_one("a[href*=map]")["href"]
