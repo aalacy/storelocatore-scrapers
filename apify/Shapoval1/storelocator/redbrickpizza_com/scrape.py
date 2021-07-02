@@ -1,4 +1,5 @@
 import csv
+import time
 from sgrequests import SgRequests
 from sgselenium import SgSelenium
 
@@ -49,6 +50,7 @@ def fetch_data():
         slug = j.get("llp_url")
 
         page_url = f"https://locations.redbrickpizza.com{slug}"
+
         location_type = "<MISSING>"
         street_address = f"{a.get('address')} {a.get('address_extended') or ''}".strip()
 
@@ -57,9 +59,11 @@ def fetch_data():
         country_code = "US"
         city = a.get("locality")
         driver = SgSelenium().firefox()
+        time.sleep(10)
         driver.get(page_url)
-
+        time.sleep(10)
         phone = driver.find_element_by_xpath('//div[@itemprop="telephone"]').text
+        print(phone)
         location_name = "RedBrick Pizza"
         store_number = "<MISSING>"
         latitude = driver.find_element_by_xpath(
