@@ -61,7 +61,7 @@ def fetch_data():
                 [
                     x.strip()
                     for x in store_sel.xpath(
-                        f'//div[contains(@class,"cinema_info")]//text()'
+                        '//div[contains(@class,"cinema_info")]//text()'
                     )
                 ],
             )
