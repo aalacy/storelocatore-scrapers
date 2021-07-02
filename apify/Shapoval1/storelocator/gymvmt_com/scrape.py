@@ -76,6 +76,7 @@ def fetch_data():
         .replace('tru-r"id"e-studio', "tru-r'id'e-studio")
         .replace('M"id"park', "M'id'park")
         .replace('m"id"napore/', "m'id'napore/")
+        .replace('Hol"id"ays', "Holidays")
         .replace('"club"', "'club'")
     )
     jsblock = jsblock.replace("{", "[").replace("}", "]").replace(":", "")
