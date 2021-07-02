@@ -43,7 +43,6 @@ def write_output(data):
             ]
         )
         for row in data:
-            print("this is my row: ", row)
             writer.writerow(row)
 
 
