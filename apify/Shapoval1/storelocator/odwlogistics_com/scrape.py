@@ -100,12 +100,12 @@ def fetch_data():
             )
         page_url = f"{locator_domain}{slug}"
         driver = SgSelenium().firefox()
-        time.sleep(20)
+
         driver.get(page_url)
-        time.sleep(20)
+
         iframe = driver.find_element_by_xpath('//iframe[contains(@src, "maps")]')
         driver.switch_to.frame(iframe)
-
+        time.sleep(10)
         ad = driver.find_element_by_xpath("//div[@class='address']").text
         location_type = "<MISSING>"
         a = usaddress.tag(ad, tag_mapping=tag)[0]
