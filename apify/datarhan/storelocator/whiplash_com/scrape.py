@@ -1,5 +1,6 @@
 import re
 import csv
+import json
 from lxml import etree
 from urllib.parse import urljoin
 
@@ -58,6 +59,9 @@ def fetch_data():
             '//i[contains(@class, "fa-map-marker text-orange")]/following-sibling::div[1]'
         )
 
+        data = dom.xpath('//script[contains(@data-schema, "location-App")]/text()')[0]
+        data = json.loads(data)
+
         for poi_html in all_locations:
             raw_address = poi_html.xpath(".//p/text()")[1:]
             if len(raw_address) == 3:
@@ -74,6 +78,19 @@ def fetch_data():
             location_type = "<MISSING>"
             latitude = "<MISSING>"
             longitude = "<MISSING>"
+            for e in data:
+                if type(e) == str:
+                    continue
+                if not e.get("itemReviewed"):
+                    continue
+                if not e["itemReviewed"]["address"].get("streetAddress"):
+                    continue
+                if (
+                    street_address.split(", ")[-1].lower()
+                    in e["itemReviewed"]["address"]["streetAddress"].lower()
+                ):
+                    latitude = e["itemReviewed"]["geo"]["latitude"]
+                    longitude = e["itemReviewed"]["geo"]["longitude"]
             hours_of_operation = "<MISSING>"
 
             item = [
