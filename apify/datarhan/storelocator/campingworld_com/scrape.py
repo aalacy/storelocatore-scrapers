@@ -43,7 +43,7 @@ def fetch_data():
     scraped_items = []
 
     DOMAIN = "campingworld.com"
-    start_url = "https://rv.campingworld.com/dealersinradius?miles=400&lat={}&lon={}&locationsearch=false"
+    start_url = "https://rv.campingworld.com/dealersinradius?miles=400&lat={}&lon={}&locationsearch=true"
 
     all_locations = []
     all_coords = DynamicGeoSearch(
@@ -65,8 +65,8 @@ def fetch_data():
             "glcodes": all_codes,
             "lat": lat,
             "lon": lng,
-            "locationsearch": "false",
-            "service": "false",
+            "locationsearch": "true",
+            "service": "true",
         }
         data = session.get(url, params=params, headers=headers).json()
         all_locations += data["locations"]
@@ -76,7 +76,7 @@ def fetch_data():
         store_url = urljoin(base_url, poi["dealer_url"])
         location_name = poi["marketingname"]
         location_name = location_name if location_name else "<MISSING>"
-        if "Camping World" not in location_name:
+        if "camping world" not in location_name.lower():
             continue
         street_address = poi["billing_street"]
         city = poi["billing_city"]

@@ -104,13 +104,17 @@ def fetch_data():
             zips.append(
                 soup.find("span", {"class": "store-details__street-zip"}).text.strip()
             )
+
             timing.append(
-                soup.find_all("div", {"class": "store-details__info-section"})[1]
-                .text.strip()
-                .replace("\n", " ")
-                .replace("Instagram Icon       Follow us on Instagram", "")
-                .replace("Location Hours ", "")
-                .strip()
+                re.sub(
+                    "[ ]+",
+                    " ",
+                    soup.find_all("div", {"class": "store-details__info-section"})[1]
+                    .text.strip()
+                    .replace("\n", " ")
+                    .replace("Instagram Icon       Follow us on Instagram", "")
+                    .replace("Location Hours ", ""),
+                ).strip()
             )
             phones.append(
                 soup.find("div", {"class": "store-details__phone"}).text.strip()
