@@ -86,7 +86,6 @@ def fetch_data():
 
         hours_of_operation = "<MISSING>"
 
-        map_link = "".join(store_sel.xpath('//a[contains(@href,"maps")]/@href'))
         for latlng_raw in latlng_list:
             if store_number in latlng_raw:
                 break
