@@ -65,16 +65,13 @@ def fetch_data():
     stores_req = session.get(search_url, headers=headers)
     stores = json.loads(stores_req.text)
     for store_json in stores:
-        if (
-            store_json["type"].lower().strip() == "store"
-            and "Kurt Geiger" in store_json["name"]
-        ):
+        if store_json["type"].lower().strip() == "store":
             page_url = "https://www.kurtgeiger.com/storelocator"
 
             latitude = store_json["latitude"]
             longitude = store_json["longitude"]
 
-            location_name = store_json["name"]
+            location_name = store_json["name"].upper()
 
             locator_domain = website
 

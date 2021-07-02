@@ -1,5 +1,5 @@
-lxml==4.3.4
-requests==2.11.1
-beautifulsoup4==4.7.1
-sgrequests
-sglogging
+usaddress==0.5.10
+sgrequests==0.1.12
+sglogging==0.0.4
+sgscrape==0.0.23
+beautifulsoup4==4.9.3

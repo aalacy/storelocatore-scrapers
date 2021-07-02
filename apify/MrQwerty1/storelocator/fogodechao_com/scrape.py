@@ -42,7 +42,7 @@ def get_hours(page_url):
     r = session.get(page_url, headers=headers)
     tree = html.fromstring(r.text)
     check = tree.xpath("//h5[text()='Coming Soon!']")
-    if check:
+    if check or tree.xpath("//p[contains(text(), 'coming soon')]"):
         return "Coming Soon"
 
     hours = ";".join(

@@ -55,25 +55,17 @@ def fetch_data():
         location_name = location_name if location_name else "<MISSING>"
         street_address = poi.find("Address1").text
         if poi.find("Address2").text:
-            street_address += ", " + poi.find("Address2").text
+            street_address += " " + poi.find("Address2").text
         street_address = street_address if street_address else "<MISSING>"
-        city = poi.find("City")
-        city = city.text if city else "<MISSING>"
-        state = poi.find("Province")
-        state = state.text if state else "<MISSING>"
-        zip_code = poi.find("PostalCode")
-        zip_code = zip_code.text if zip_code else "<MISSING>"
-        country_code = poi.find("Country")
-        country_code = country_code.text if country_code else "<MISSING>"
-        store_number = poi.find("StoreNum")
-        store_number = store_number.text if store_number else "<MISSING>"
-        phone = poi.find("Phone")
-        phone = phone.text if phone else "<MISSING>"
+        city = poi.find("City").text
+        state = poi.find("State").text
+        zip_code = poi.find("PostalCode").text
+        country_code = poi.find("Country").text
+        store_number = poi.find("StoreNum").text
+        phone = poi.find("Phone").text
         location_type = "<MISSING>"
-        latitude = poi.find("Latitude")
-        latitude = latitude.text if latitude else "<MISSING>"
-        longitude = poi.find("Longitude")
-        longitude = longitude.text if longitude else "<MISSING>"
+        latitude = poi.find("Latitude").text
+        longitude = poi.find("Longitude").text
         hours_of_operation = poi.find("StoreHours").text
         hours_of_operation = (
             hours_of_operation.replace(";", ",") if hours_of_operation else "<MISSING>"
@@ -104,8 +96,8 @@ def fetch_data():
             hours_of_operation,
         ]
 
-        if store_number not in scraped_items:
-            scraped_items.append(store_number)
+        if street_address not in scraped_items:
+            scraped_items.append(street_address)
             items.append(item)
 
     return items

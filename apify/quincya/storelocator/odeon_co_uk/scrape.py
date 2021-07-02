@@ -40,7 +40,7 @@ def fetch_data():
 
     base_link = "https://www.odeon.co.uk/cinemas/"
 
-    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36"
+    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36'"
     headers = {"User-Agent": user_agent}
 
     session = SgRequests()
@@ -48,8 +48,6 @@ def fetch_data():
     base = BeautifulSoup(req.text, "lxml")
 
     data = []
-
-    items = base.find_all(class_="btn blue")[1:]
     locator_domain = "odeon.co.uk"
 
     items = json.loads(base.find(id="v-site-list-all-cinemas")["data-v-site-list"])[

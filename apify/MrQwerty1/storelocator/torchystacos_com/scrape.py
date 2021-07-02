@@ -41,7 +41,7 @@ def get_hours(url):
         "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:84.0) Gecko/20100101 Firefox/84.0",
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
     }
-    r = session.get(url, proxies=proxies, headers=headers)
+    r = session.get(url, headers=headers)
     tree = html.fromstring(r.text)
     hoo = (
         ";".join(
@@ -64,9 +64,7 @@ def fetch_data():
         "Accept": "application/json, text/javascript, */*; q=0.01",
     }
 
-    r = session.get(
-        "https://torchystacos.com/locations-json/", proxies=proxies, headers=headers
-    )
+    r = session.get("https://torchystacos.com/locations-json/", headers=headers)
     js = r.json()
 
     for j in js:
@@ -130,5 +128,4 @@ def scrape():
 
 
 if __name__ == "__main__":
-    proxies = {"https": "http://MrKrabs:rfrfirf123@us-ny.proxymesh.com:31280"}
     scrape()
