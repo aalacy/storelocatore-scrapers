@@ -92,12 +92,14 @@ def fetch_data():
                 street = address[0]
                 city, state = address[1].split(", ", 1)
                 state, pcode = state.split(" ", 1)
-                title = soup.findAll("div", {"class": "font-montserrat"}).text.strip()
+                title = soup.findAll("div", {"class": "font-montserrat"})[
+                    1
+                ].text.strip()
                 lat, longt = (
-                    soup.select_one("a[href*=maps]")["href"]
+                    soup.select_one("a[href*=map]")["href"]
                     .split("@", 1)[1]
                     .split("data", 1)[0]
-                    .split(",")
+                    .split(",", 1)
                 )
                 longt = longt.split(",", 1)[0]
             store = link.split("/")[-1]
