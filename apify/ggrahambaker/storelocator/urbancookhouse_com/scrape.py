@@ -99,7 +99,7 @@ def fetch_data():
         except:
             hours = "<MISSING>"
         try:
-            hours = hours.split("Closed", 1)[0]
+            hours = hours.split("Available", 1)[0]
         except:
             pass
         try:
