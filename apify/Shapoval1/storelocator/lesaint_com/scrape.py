@@ -74,7 +74,9 @@ def fetch_data():
     }
     r = session.get(api_url, headers=headers)
     tree = html.fromstring(r.text)
-    div = tree.xpath('//div[./p//a[text()="Get Directions"]]')
+    div = tree.xpath(
+        '//div[./p//a[text()="Get Directions"]] | //div[./p//a[text()="Get Direction"]]'
+    )
     s = set()
     for d in div:
         ad = d.xpath(".//p//text()")
