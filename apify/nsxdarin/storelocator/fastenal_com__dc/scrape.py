@@ -122,6 +122,10 @@ def fetch_data():
             city = city.replace("&#039;", "'").replace("&amp;", "&")
             hours = hours.replace("&#039;", "'").replace("&amp;", "&")
             add = add.replace("&#039;", "'").replace("&amp;", "&")
+            if "; For" in hours:
+                hours = hours.split("; For")[0]
+            hours = hours.replace("Will Call", "").strip()
+            hours = hours.replace("Open to the public", "").strip()
             if "MN100" not in name:
                 yield [
                     website,
