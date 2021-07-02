@@ -20,8 +20,16 @@ def fetch_data():
         locations = json.loads(res.text)
         for _ in locations:
             hours = []
-            for key, value in json.loads(_["open_hours"]).items():
-                hours.append(f"{key}: {value[0]}")
+            try:
+                for key, value in json.loads(_["open_hours"]).items():
+                    times = "Closed"
+                    if value:
+                        times = value[0]
+                    hours.append(f"{key}: {times}")
+            except:
+                import pdb
+
+                pdb.set_trace()
             yield SgRecord(
                 store_number=_["id"],
                 location_name=_["title"],

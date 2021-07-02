@@ -72,21 +72,30 @@ def fetch_data():
 
         for j in js:
             j = j.get("_source")
-            location_name = "".join(j.get("title_office"))
-            page_url = f'{locator_domain}{"".join(j.get("url"))}'
-            adr = "".join(j.get("address_line1"))
+            location_name = "".join(j.get("title_office") or [])
+            page_url = f'{locator_domain}{"".join(j.get("url") or [])}'
+            adr = "".join(j.get("address_line1") or [])
             adr2 = "".join(j.get("address_line2") or [])
             street_address = f"{adr} {adr2}".strip() or "<MISSING>"
-            city = "".join(j.get("locality")) or "<MISSING>"
-            state = "".join(j.get("administrative_area")) or "<MISSING>"
-            postal = "".join(j.get("postal_code")) or "<MISSING>"
+            if street_address == "<MISSING>":
+                continue
+            city = "".join(j.get("locality") or []) or "<MISSING>"
+            state = "".join(j.get("administrative_area") or []) or "<MISSING>"
+            postal = "".join(j.get("postal_code") or []) or "<MISSING>"
             country_code = "CA"
             store_number = page_url.split("_")[1].replace("/", "")
-            phone = j.get("field_phone")[0].strip()
-            if phone.find("\n") != -1:
-                phone = phone.split("\n")[0].strip()
-            latitude = j.get("lat")[0]
-            longitude = j.get("lng")[0]
+            try:
+                phone = j.get("field_phone")[0].strip()
+                if phone.find("\n") != -1:
+                    phone = phone.split("\n")[0].strip()
+            except TypeError:
+                phone = "<MISSING>"
+
+            try:
+                latitude = j.get("lat")[0]
+                longitude = j.get("lng")[0]
+            except TypeError:
+                latitude, longitude = "<MISSING>", "<MISSING>"
             location_type = "<MISSING>"
             hours_of_operation = get_hours(page_url)
 

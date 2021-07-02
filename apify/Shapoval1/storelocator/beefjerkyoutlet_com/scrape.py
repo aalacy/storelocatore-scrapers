@@ -44,7 +44,7 @@ def fetch_data():
     r = session.get(api_url, headers=headers)
     tree = html.fromstring(r.text)
     div = tree.xpath('//div[@class="location-content"]')
-
+    s = set()
     for d in div:
         slug = "".join(d.xpath('.//a[@class="btn-yellow"]/@href'))
         page_url = f"{locator_domain}{slug}"
@@ -83,7 +83,32 @@ def fetch_data():
                 filter(None, [a.strip() for a in hours_of_operation])
             )
             hours_of_operation = " ".join(hours_of_operation) or "<MISSING>"
+        hours_of_operation = (
+            hours_of_operation.replace("Hours may vary Please call for hours", "")
+            .replace(
+                "Closed New Years Day, Easter Sunday, Thanksgiving Day, Christmas.", ""
+            )
+            .replace(
+                "For Curbside Orders please call during normal business hours to schedule your Pickup",
+                "",
+            )
+            .strip()
+        )
+        if hours_of_operation.find("Now Open") != -1:
+            hours_of_operation = "<MISSING>"
+        hours_of_operation = hours_of_operation.replace("OPEN DAILY!", "").strip()
+        if hours_of_operation.find("Temporarily Closed") != -1:
+            hours_of_operation = "Temporarily Closed"
 
+        line = page_url
+        if (
+            line in s
+            and line.find("110") == -1
+            and line.find("209") == -1
+            and line.find("20") == -1
+        ):
+            continue
+        s.add(line)
         row = [
             locator_domain,
             page_url,

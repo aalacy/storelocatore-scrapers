@@ -116,7 +116,10 @@ def fetch_data():
         hours_of_operation = (
             hoo.split("Open to a limited")[0].strip() if hoo else "<MISSING>"
         )
-
+        hours_of_operation = hours_of_operation.split(" Happy")[0]
+        hours_of_operation = hours_of_operation.split(" Seating")[0]
+        if "temporarily" in hours_of_operation:
+            hours_of_operation = "Temporarily Closed"
         item = [
             DOMAIN,
             store_url,

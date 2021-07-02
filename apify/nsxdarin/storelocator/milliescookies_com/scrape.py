@@ -92,13 +92,16 @@ def fetch_data():
                     day_name = "Sat"
                 if wd == 0:
                     day_name = "Sun"
-                hrs = (
-                    day_name
-                    + ": "
-                    + day.split("{'open': '")[1].split("'")[0]
-                    + "-"
-                    + day.split("'close': '")[1].split("'")[0]
-                )
+                try:
+                    hrs = (
+                        day_name
+                        + ": "
+                        + day.split("{'open': '")[1].split("'")[0]
+                        + "-"
+                        + day.split("'close': '")[1].split("'")[0]
+                    )
+                except:
+                    hrs = "<MISSING>"
                 if dc <= 7:
                     if hours == "":
                         hours = hrs
@@ -119,6 +122,11 @@ def fetch_data():
             .replace(", Newcastle", "")
             .replace(", Glasgow", "")
         )
+        hours = hours.replace("; <MISSING>", "").replace("<MISSING>; ", "")
+        if "High Cross Shopping Centre" in add:
+            hours = "Mon: 10:00-20:00; Tue: 10:00-20:00; Wed: 10:00-20:00; Thu: 10:00-20:00; Fri: 10:00-19:00; Sat: 11:00-17:00; Sun: 10:00-20:00"
+        if "Unit K7 Middle Mall Bullring Shopping Centre" in add:
+            hours = "Mon: 09:00-20:00; Tue: 09:00-20:00; Wed: 09:00-20:00; Thu: 09:00-20:00; Fri: 09:00-20:00; Sat: 11:00-17:00; Sun: 09:00-20:00"
         yield [
             website,
             loc,
