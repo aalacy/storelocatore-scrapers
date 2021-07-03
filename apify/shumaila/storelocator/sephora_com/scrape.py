@@ -1,7 +1,6 @@
 from bs4 import BeautifulSoup
 import csv
-import json
-
+import re
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -42,96 +41,190 @@ def write_output(data):
 
 def fetch_data():
     data = []
-    p = 0
-    datanow = []
-    datanow.append("none")
-    url = "https://www.sephora.com/happening/storelist"
-    r = session.get(url, headers=headers, verify=False)
-    soup = BeautifulSoup(r.text, "html.parser")
-    linklist = soup.select("a[href*=happening]")[6:]
-    for link in linklist:
-        link = "https://www.sephora.com" + link["href"]
+    pattern = re.compile(r"\s\s+")
+    url = "https://www.sears.com/stores.html"
+    page = session.get(url, headers=headers, verify=False)
+    soup = BeautifulSoup(page.text, "html.parser")
+    mainul = soup.find("ul", {"class": "shc-search-by-state__list"})
+    statelist = mainul.findAll("a")
+    for state in statelist:
+        if state["href"].find("404") == -1:
+            statelink = "https://www.sears.com" + state["href"]
 
-        r = session.get(link, headers=headers, verify=False)
-        try:
-            r = r.text.split('"stores":[')[1].split('}],"thirdpartyImageHost"', 1)[0]
-        except:
-            continue
-        r = r + "}"
+            state1 = state.text
+            flag1 = True
+            if flag1:
+                if True:
+                    page1 = session.get(statelink, headers=headers, verify=False)
+                    soup1 = BeautifulSoup(page1.text, "html.parser")
+                    linklist = soup1.findAll(
+                        "li", {"class": "shc-quick-links--store-details__list--stores"}
+                    )
+                    for blinks in linklist:
+                        link = blinks.find("a")["href"]
+                        state1 = blinks.find("a").text.split(",")[1].split("\n", 1)[0]
+                        if (
+                            link.find("http") == -1
+                            and blinks.text.find("Sears Store") > -1
+                        ):
+                            link = "https://www.sears.com" + link
 
-        loc = json.loads(r)
-        street = loc["address"]["address1"]
-        try:
-            street = street + " " + str(loc["address"]["address2"])
-            street = street.replace("None", "").replace("null", "").strip()
-        except:
-            pass
-        ccode = loc["address"]["country"]
-        state = loc["address"]["state"]
-        city = loc["address"]["city"]
-        pcode = loc["address"]["postalCode"]
-        phone = loc["address"]["phone"]
-        lat = loc["latitude"]
-        longt = loc["longitude"]
-        store = loc["storeId"]
-        ltype = "Store"
-        link = "https://www.sephora.com" + loc["targetUrl"]
-        title = "Sephora " + loc["displayName"]
-        hours = "<MISSING>"
-        try:
-            hours = (
-                "Monday "
-                + loc["storeHours"]["mondayHours"]
-                + " Tuesday "
-                + loc["storeHours"]["tuesdayHours"]
-                + " Wednesday "
-                + loc["storeHours"]["wednesdayHours"]
-                + " Thursday "
-                + loc["storeHours"]["thursdayHours"]
-                + "Friday "
-                + loc["storeHours"]["fridayHours"]
-                + " Saturday "
-                + loc["storeHours"]["saturdayHours"]
-                + " Sunday "
-                + loc["storeHours"]["sundayHours"]
-            )
-            hours = hours.replace("AM", " AM ").replace("PM", " PM ").replace("-", "- ")
-        except:
-            hours = loc["storeHours"]["closedDays"]
-            if hours.find("Opening on") > -1:
-                hours = "SOON"
-            elif hours.find("closed") > -1:
-                hours = "<MISSING>"
-        if hours != "SOON":
-            if len(phone) < 3:
-                phone = "<MISSING>"
-            if len(pcode) == 4:
-                pcode = "0" + pcode
-            if state == "NW":
-                state = "WA"
-        if store in datanow or "SOON" in hours:
-            continue
-        datanow.append(store)
-        data.append(
-            [
-                "https://www.sephora.com",
-                link,
-                title.rstrip().lstrip(),
-                street.replace("\r", "").replace("\n", " ").rstrip().lstrip(),
-                city.rstrip().lstrip(),
-                state.rstrip().lstrip(),
-                pcode.rstrip().lstrip(),
-                ccode.rstrip().lstrip(),
-                store,
-                phone.rstrip().lstrip(),
-                ltype,
-                lat,
-                longt,
-                hours.rstrip(),
-            ]
-        )
+                            flag = True
+                            if flag:
 
-        p += 1
+                                page2 = session.get(link, headers=headers)
+                                if True:
+
+                                    if page2.url.find("closed") > -1:
+                                        break
+                                    else:
+
+                                        soup2 = BeautifulSoup(page2.text, "html.parser")
+
+                                        try:
+                                            title = (
+                                                soup2.find(
+                                                    "h1",
+                                                    {"class": "shc-save-store__title"},
+                                                )["data-store-title"]
+                                                + soup2.find(
+                                                    "h1",
+                                                    {"class": "shc-save-store__title"},
+                                                )["data-unit-number"]
+                                            )
+                                        except:
+
+                                            title = soup2.find(
+                                                "small", {"itemprop": "name"}
+                                            ).text
+                                        title = title.replace("\n", " ").replace(
+                                            "000", " # "
+                                        )
+                                        title = re.sub(pattern, " ", title)
+                                        start = title.find("#")
+                                        if start != -1:
+                                            store = title.split("#", 1)[1].lstrip()
+                                        else:
+                                            store = "<MISSING>"
+                                        try:
+                                            street = (
+                                                soup2.find(
+                                                    "p",
+                                                    {
+                                                        "class": "shc-store-location__details--address"
+                                                    },
+                                                )
+                                                .findAll("span")[0]
+                                                .text
+                                            )
+                                            street = street.lstrip()
+                                        except:
+                                            street = "<MISSING>"
+                                        try:
+                                            city = (
+                                                soup2.find(
+                                                    "p",
+                                                    {
+                                                        "class": "shc-store-location__details--address"
+                                                    },
+                                                )
+                                                .findAll("span")[1]
+                                                .text.split(", ")[0]
+                                            )
+                                            city = city.lstrip()
+                                        except:
+                                            city = "<MISSING>"
+                                        pcode = "<MISSING>"
+                                        try:
+                                            pcode = (
+                                                soup2.find(
+                                                    "p",
+                                                    {
+                                                        "class": "shc-store-location__details--address"
+                                                    },
+                                                )
+                                                .findAll("span")[1]
+                                                .text.split(", ")[1]
+                                            )
+                                        except:
+                                            state = "<MISSING>"
+                                        try:
+                                            phone = soup2.find(
+                                                "strong",
+                                                {
+                                                    "class": "shc-store-location__details--tel"
+                                                },
+                                            ).text
+                                        except:
+                                            phone = "<MISSING>"
+                                        try:
+                                            hourd = soup2.find(
+                                                "div",
+                                                {"class": "shc-store-hours__details"},
+                                            ).findAll("li")
+                                            hours = ""
+                                            for hour in hourd:
+
+                                                hours = hours + hour.text + " "
+                                                hours = re.sub(pattern, " ", hours)
+                                        except:
+                                            hours = "<MISSING>"
+                                        try:
+                                            coord = soup2.find(
+                                                "div", {"class": "shc-store-location"}
+                                            )
+                                            lat = coord["data-latitude"]
+                                            longt = coord["data-longitude"]
+                                        except:
+                                            lat = "<MISSING>"
+                                            longt = "<MISSING>"
+                                        hours = hours.replace("\n", " ")
+                                        hours = hours.strip()
+                                        title = title.lstrip()
+                                        title = title.encode("ascii", "ignore").decode(
+                                            "ascii"
+                                        )
+                                        title = title.replace("Sears", "Sears ")
+                                        title = title.replace("  ", " ")
+                                        flag = True
+
+                                        for i in range(0, len(data)):
+
+                                            if (
+                                                link == data[i][1]
+                                                and title == data[i][2]
+                                            ):
+
+                                                flag = False
+                                                break
+                                        if (
+                                            flag
+                                            and title.lower().find(
+                                                "find your next closest Store"
+                                            )
+                                            == -1
+                                        ):
+                                            data.append(
+                                                [
+                                                    "https://www.sears.com/",
+                                                    link,
+                                                    title,
+                                                    street,
+                                                    city,
+                                                    state1,
+                                                    pcode,
+                                                    "US",
+                                                    store,
+                                                    phone,
+                                                    "<MISSING>",
+                                                    lat,
+                                                    longt,
+                                                    hours,
+                                                ]
+                                            )
+
+                                            flag = False
+                    flag1 = False
     return data
 
 
