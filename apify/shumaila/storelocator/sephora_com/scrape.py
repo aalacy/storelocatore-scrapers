@@ -52,7 +52,7 @@ def fetch_data():
     for link in linklist:
         link = "https://www.sephora.com" + link["href"]
 
-        r = session.get(link, headers=headers, verify=False)
+        r = session.get(link, headers=headers, verify=False, timeout=100)
         try:
             r = r.text.split('"stores":[')[1].split('}],"thirdpartyImageHost"', 1)[0]
         except:
