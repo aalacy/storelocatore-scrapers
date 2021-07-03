@@ -82,15 +82,29 @@ def fetch_data():
                 if type(e) == str:
                     continue
                 if not e.get("itemReviewed"):
-                    continue
-                if not e["itemReviewed"]["address"].get("streetAddress"):
-                    continue
-                if (
-                    street_address.split(", ")[-1].lower()
-                    in e["itemReviewed"]["address"]["streetAddress"].lower()
-                ):
-                    latitude = e["itemReviewed"]["geo"]["latitude"]
-                    longitude = e["itemReviewed"]["geo"]["longitude"]
+                    if e.get("streetAddress"):
+                        if e["streetAddress"].lower() == street_address.lower():
+                            name = e["@id"].split("#")[-1].split("Postal")[0]
+                            if not name:
+                                continue
+                            if name[-1].isdigit():
+                                name = name[:-1] + " " + name[-1]
+                            for s in data:
+                                if s["name"] == f"{name} GeoCoordiates":
+                                    latitude = s["latitude"]
+                                    longitude = s["longitude"]
+                                    break
+                    else:
+                        continue
+                if e.get("itemReviewed"):
+                    if not e["itemReviewed"]["address"].get("streetAddress"):
+                        continue
+                    if (
+                        street_address.split(", ")[-1].lower()
+                        in e["itemReviewed"]["address"]["streetAddress"].lower()
+                    ):
+                        latitude = e["itemReviewed"]["geo"]["latitude"]
+                        longitude = e["itemReviewed"]["geo"]["longitude"]
             hours_of_operation = "<MISSING>"
 
             item = [
