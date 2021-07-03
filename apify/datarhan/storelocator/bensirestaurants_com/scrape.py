@@ -50,7 +50,10 @@ def fetch_data():
     ]
 
     for store_url in store_urls:
+        print(store_url)
         loc_response = session.get(store_url)
+        if loc_response.status_code != 200:
+            continue
         loc_dom = etree.HTML(loc_response.text)
 
         location_name = loc_dom.xpath('//h2[@class="wsite-content-title"]/font/text()')
