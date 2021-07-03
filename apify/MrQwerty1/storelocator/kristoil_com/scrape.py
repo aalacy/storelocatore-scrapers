@@ -120,7 +120,6 @@ def fetch_data():
             .replace(".", "")
             .strip()
         )
-        print(line)
         street_address, city, state, postal = get_address(line)
         country_code = "US"
         try:
