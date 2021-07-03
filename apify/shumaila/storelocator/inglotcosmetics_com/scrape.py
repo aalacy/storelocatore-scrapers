@@ -1,7 +1,6 @@
 from bs4 import BeautifulSoup
 import csv
 import json
-import re, time
 
 from sgrequests import SgRequests
 
@@ -42,22 +41,15 @@ def write_output(data):
 
 
 def fetch_data():
-    # Your scraper here
 
     data = []
-    pattern = re.compile(r"\s\s+")
-    cleanr = re.compile(r"<[^>]+>")
     url = "https://inglotcosmetics.com/index.php?option=com_ajax&plugin=istorelocator&tmpl=component&format=json&lat=0&lng=0&maxdistance=123456&limit=123456&source=com_contactenhanced&file=&category=12"
     loclist = session.get(url, headers=headers, verify=False).json()["data"][0]["list"]
-
     soup = BeautifulSoup(str(loclist), "html.parser")
     divlist = soup.findAll("li")
-
     p = 0
     for div in divlist:
-
         content = json.loads(div["data-gmapping"])
-
         lat = content["lat"]
         longt = content["lng"]
         store = content["id"]
