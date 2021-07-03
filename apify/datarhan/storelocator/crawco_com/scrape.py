@@ -74,8 +74,6 @@ def fetch_data():
             street_address = poi["address"].get("line3")
         if street_address and poi["address"].get("line2"):
             street_address += " " + poi["address"]["line2"]
-        else:
-            street_address = poi["address"].get("line2")
         if not street_address:
             street_address = poi["mailing"].get("line1")
             if poi["mailing"].get("line2"):
