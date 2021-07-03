@@ -76,6 +76,10 @@ def fetch_data():
         zip_code = poi["zip"]
         country_code = "<MISSING>"
         store_number = location_name.split("#")[-1]
+        if not store_number.isdigit():
+            store_number = loc_dom.xpath(
+                '//a[contains(@href, "{}")]/@data-id'.format(store_url)
+            )[0]
         phone = "<MISSING>"
         phone = loc_dom.xpath('//meta[@property="og:description"]/@content')[0]
         if "Phone" in phone:

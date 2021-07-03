@@ -42,6 +42,7 @@ def fetch_data():
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
     }
     r = session.get(api_url, headers=headers)
+
     tree = html.fromstring(r.text)
     div = tree.xpath('//div[./div/a[contains(text(), "Explore")]]')
     s = set()
@@ -79,11 +80,15 @@ def fetch_data():
                 longitude = text.split("@")[1].split(",")[1]
         except IndexError:
             latitude, longitude = "<MISSING>", "<MISSING>"
-
+        if page_url == "https://coolgreens.com/locations/ok-north-may/":
+            page_url = "https://coolgreens.revelup.com/weborder/?establishment=6#about"
         session = SgRequests()
         r = session.get(page_url, headers=headers)
+
         tree = html.fromstring(r.text)
         location_name = "".join(tree.xpath("//h2/text()")).replace("•", "").strip()
+        if location_name == "Oops!":
+            location_name = loc
         if location_name == "Coolgreens  Downtown OKC":
             street_address = "".join(tree.xpath("//h1/span[1]/text()"))
             city = (
@@ -154,6 +159,42 @@ def fetch_data():
             phone = "".join(fa[-1]).strip()
         except:
             phone = "<MISSING>"
+        if phone == "<MISSING>":
+            session = SgRequests()
+            r = session.get(
+                "https://coolgreens.revelup.com/weborders/get_initial_data/?establishment=6",
+                headers=headers,
+            )
+            js = r.json()["data"]["system_settings"]["data"]
+            phone = js.get("phone")
+            days = [
+                "monday",
+                "tuesday",
+                "wednesday",
+                "thursday",
+                "friday",
+                "saturday",
+                "sunday",
+            ]
+            tmp = []
+            for d in days:
+                day = d
+                opens = (
+                    js.get("timetables")[0]
+                    .get("timetable_data")
+                    .get(f"{d}")[0]
+                    .get("from")
+                )
+                closes = (
+                    js.get("timetables")[0]
+                    .get("timetable_data")
+                    .get(f"{d}")[0]
+                    .get("to")
+                )
+                line = f"{day} {opens} {closes}"
+                tmp.append(line)
+            hours_of_operation = ";".join(tmp)
+            location_name = "".join(js.get("about_title")).split("-")[1].strip()
 
         line = street_address
         if line in s:

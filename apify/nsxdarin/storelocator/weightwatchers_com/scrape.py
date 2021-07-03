@@ -109,6 +109,8 @@ def fetch_data():
             locinfo.append(info)
             if "Zoom.com" in add:
                 add = "<MISSING>"
+            if "1162350/ww-studio--virtual-palmyra" in loc:
+                add = "<MISSING>"
             yield [
                 website,
                 loc,

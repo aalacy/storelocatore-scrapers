@@ -59,6 +59,7 @@ def fetch_data():
                     )
                     lat = item.split('"latitude":')[1].split(",")[0]
                     lng = item.split('"longitude":')[1].split("}")[0]
+                    hours = "<MISSING>"
                     typ = (
                         item.split('"brand":{"key":"')[1]
                         .split('"label":"')[1]
@@ -69,6 +70,7 @@ def fetch_data():
                     city = item.split('"city":"')[1].split('"')[0]
                     zc = item.split('"zipcode":"')[1].split('"')[0]
                     add = item.split('"addressLine1":"')[1].split('"')[0]
+                    hours = "<MISSING>"
                     try:
                         add = (
                             add + " " + item.split('"addressLine2":"')[1].split('"')[0]
@@ -96,10 +98,7 @@ def fetch_data():
                                 and "Opening 20" in line2
                             ):
                                 CS = True
-                            if (
-                                "and beyond" in line2
-                                and "Now accepting reservations" in line2
-                            ):
+                            if ">Coming Soon<" in line2:
                                 CS = True
                             if '"telephone":"' in line2:
                                 phone = line2.split('"telephone":"')[1].split('"')[0]
@@ -108,7 +107,7 @@ def fetch_data():
                     if "Club Maui, " in name:
                         name = "Hyatt Residence Club Maui, Kaanapali Beach"
                     if CS:
-                        name = name + " - Coming Soon"
+                        hours = "Coming Soon"
                     if loc not in alllocs:
                         alllocs.append(loc)
                         yield [

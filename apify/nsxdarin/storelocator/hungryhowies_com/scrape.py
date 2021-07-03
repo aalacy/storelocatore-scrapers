@@ -38,28 +38,28 @@ def write_output(data):
 
 
 def fetch_data():
-    url = "https://www.hungryhowies.com/locations"
     locs = []
-    r = session.get(url, headers=headers)
-    if r.encoding is None:
-        r.encoding = "utf-8"
-    for line in r.iter_lines(decode_unicode=True):
-        if "href=\\u0022\\/store\\/" in line:
-            items = line.split("href=\\u0022\\/store\\/")
-            for item in items:
-                if "jQuery.extend(Drupal.settings" not in item:
-                    loc = item.split("\\u0022")[0]
-                    lurl = "https://www.hungryhowies.com/store/" + loc
-                    if lurl not in locs:
-                        locs.append(lurl)
-        if "href=\\u0022\\/STORE\\/" in line:
-            items = line.split("href=\\u0022\\/STORE\\/")
-            for item in items:
-                if "jQuery.extend(Drupal.settings" not in item:
-                    loc = item.split("\\u0022")[0]
-                    lurl = "https://www.hungryhowies.com/store/" + loc
-                    if lurl not in locs:
-                        locs.append(lurl)
+    alllocs = []
+    for x in range(0, 101):
+        logger.info("Pulling Page %s..." % str(x))
+        url = "https://www.hungryhowies.com/locations?page=" + str(x)
+        r = session.get(url, headers=headers)
+        if r.encoding is None:
+            r.encoding = "utf-8"
+        for line in r.iter_lines(decode_unicode=True):
+            if '<div class="details roundButton"><a href="/store/' in line:
+                lurl = (
+                    "https://www.hungryhowies.com"
+                    + line.split('href="')[1].split('"')[0]
+                )
+                locs.append(lurl)
+            if '<div class="details roundButton"><a href="/STORE/' in line:
+                lurl = (
+                    "https://www.hungryhowies.com"
+                    + line.split('href="')[1].split('"')[0]
+                )
+                locs.append(lurl)
+        logger.info("Found %s Locations..." % str(len(locs)))
     for loc in locs:
         logger.info(("Pulling Location %s..." % loc))
         r2 = session.get(loc, headers=headers)
@@ -117,22 +117,26 @@ def fetch_data():
             phone = "<MISSING>"
         if "0000000" in phone:
             name = name + " - Coming Soon"
-        yield [
-            website,
-            loc,
-            name,
-            add,
-            city,
-            state,
-            zc,
-            country,
-            store,
-            phone,
-            typ,
-            lat,
-            lng,
-            hours,
-        ]
+        if phone == "0000000000":
+            phone = "<MISSING>"
+        if loc not in alllocs:
+            alllocs.append(loc)
+            yield [
+                website,
+                loc,
+                name,
+                add,
+                city,
+                state,
+                zc,
+                country,
+                store,
+                phone,
+                typ,
+                lat,
+                lng,
+                hours,
+            ]
 
 
 def scrape():
