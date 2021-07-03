@@ -88,6 +88,8 @@ def fetch_data():
             '//b[contains(text(), "Hours of Operation")]/following-sibling::ul//text()'
         )
         hoo = [e.strip().replace("\n", "") for e in hoo if e.strip()]
+        if not hoo:
+            location_type = "TEMPORARILY CLOSED"
         hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
 
         item = [
