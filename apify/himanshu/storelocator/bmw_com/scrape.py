@@ -69,6 +69,8 @@ def fetch_data():
             location_name = value["name"]
             street_address = value["street"]
             city = value["city"]
+            if str(city) == "2142":
+                city = "Bend"
             if location_name == "BMW Ste-Agathe":
                 state = "QC"
             else:
@@ -85,6 +87,9 @@ def fetch_data():
             lat = value["lat"]
             lng = value["lat"]
             store_number = value["attributes"]["distributionPartnerId"]
+            link = value["attributes"]["homepage"]
+            if not link:
+                link = "<MISSING>"
 
             if location_name + street_address in addresses:
                 continue
@@ -104,7 +109,7 @@ def fetch_data():
             store.append(lat)
             store.append(lng)
             store.append("<MISSING>")
-            store.append("<MISSING>")
+            store.append(link)
             yield store
 
 

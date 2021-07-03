@@ -14,7 +14,7 @@ _headers = {
 }
 session = SgRequests(proxy_rotation_failure_threshold=10).requests_retry_session()
 
-max_workers = 8
+max_workers = 24
 
 
 def fetchConcurrentSingle(data):
