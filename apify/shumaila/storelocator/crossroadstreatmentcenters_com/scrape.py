@@ -70,8 +70,7 @@ def fetch_data():
                 },
             }
         }
-        # print(state,session.post(url, headers=headers, verify=False, json=myobj).json()['response']["collectioncount"])
-        # continue
+
         loclist = session.post(url, headers=headers, verify=False, json=myobj).json()[
             "response"
         ]["collection"]
