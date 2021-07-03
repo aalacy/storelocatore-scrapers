@@ -1,4 +1,5 @@
 import csv
+import usaddress
 
 from lxml import html
 from sgrequests import SgRequests
@@ -33,6 +34,51 @@ def write_output(data):
             writer.writerow(row)
 
 
+def get_address(line):
+    tag = {
+        "Recipient": "recipient",
+        "AddressNumber": "address1",
+        "AddressNumberPrefix": "address1",
+        "AddressNumberSuffix": "address1",
+        "StreetName": "address1",
+        "StreetNamePreDirectional": "address1",
+        "StreetNamePreModifier": "address1",
+        "StreetNamePreType": "address1",
+        "StreetNamePostDirectional": "address1",
+        "StreetNamePostModifier": "address1",
+        "StreetNamePostType": "address1",
+        "CornerOf": "address1",
+        "IntersectionSeparator": "address1",
+        "LandmarkName": "address1",
+        "USPSBoxGroupID": "address1",
+        "USPSBoxGroupType": "address1",
+        "USPSBoxID": "address1",
+        "USPSBoxType": "address1",
+        "OccupancyType": "address2",
+        "OccupancyIdentifier": "address2",
+        "SubaddressIdentifier": "address2",
+        "SubaddressType": "address2",
+        "PlaceName": "city",
+        "StateName": "state",
+        "ZipCode": "postal",
+    }
+
+    try:
+        a = usaddress.tag(line, tag_mapping=tag)[0]
+        street_address = f"{a.get('address1')} {a.get('address2') or ''}".strip()
+        if street_address == "None":
+            street_address = "<MISSING>"
+    except usaddress.RepeatedLabelError:
+        street_address = line.split(",")[0]
+        a = usaddress.tag(",".join(line.split(",")[1:]), tag_mapping=tag)[0]
+
+    city = a.get("city") or "<MISSING>"
+    state = a.get("state") or "<MISSING>"
+    postal = a.get("postal") or "<MISSING>"
+
+    return street_address, city, state, postal
+
+
 def fetch_data():
     out = []
     locator_domain = "https://kristoil.com/"
@@ -64,7 +110,7 @@ def fetch_data():
         li = tree.xpath(
             f"//li[@class='grid grid--locations grid--one-col-mobile locations-list__list-item' and .//a[contains(text(), '-{_id}')]]"
         )[0]
-        city = "".join(li.xpath("./text()")).replace(".", "").strip()
+
         line = (
             "".join(
                 li.xpath(
@@ -74,13 +120,14 @@ def fetch_data():
             .replace(".", "")
             .strip()
         )
-        street_address = line.rsplit(city, 1)[0].replace(",", "").strip()
-        sz = line.rsplit(city, 1)[-1].replace(",", "").strip()
-        state = sz.split()[0]
-        postal = sz.replace(state, "") or "<MISSING>"
+        print(line)
+        street_address, city, state, postal = get_address(line)
         country_code = "US"
-        latitude = a.get("lat") or "<MISSING>"
-        longitude = a.get("lng") or "<MISSING>"
+        try:
+            latitude = a.get("lat") or "<MISSING>"
+            longitude = a.get("lng") or "<MISSING>"
+        except:
+            latitude, longitude = "<MISSING>", "<MISSING>"
         location_type = "<MISSING>"
         hours_of_operation = "<MISSING>"
 
