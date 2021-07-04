@@ -277,6 +277,3 @@ with open("data.csv", mode="w") as output_file:
         ]
 
         writer.writerow(row)
-
-        if x == 100:
-            break
