@@ -73,7 +73,9 @@ def fetch_data():
         if not hoo:
             hoo = poi_html.xpath('.//p[contains(text(), "Mon ")]//text()')
         hoo = [e.strip() for e in hoo if e.strip()]
-        hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
+        hours_of_operation = (
+            " ".join(hoo).replace(" (Temporary)", "") if hoo else "<MISSING>"
+        )
 
         item = [
             domain,
