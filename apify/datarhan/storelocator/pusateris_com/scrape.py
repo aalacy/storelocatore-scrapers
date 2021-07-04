@@ -51,7 +51,9 @@ def fetch_data():
     all_locations = dom.xpath('//div[@class="store-location desktop-only"]')
     for poi_html in all_locations:
         store_url = start_url
-        location_name = poi_html.xpath('.//p[@class="store-name"]/text()')[0]
+        location_name = " ".join(
+            poi_html.xpath('.//p[@class="store-name"]/text()')
+        ).replace("\n", "")
         raw_address = poi_html.xpath('.//p[@class="store-address"]/text()')[:2]
         street_address = raw_address[0]
         city = raw_address[1].split(", ")[0].strip()
