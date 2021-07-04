@@ -53,6 +53,7 @@ def fetch_data():
         if len(raw_address) == 5:
             raw_address = [", ".join(raw_address[:2])] + raw_address[2:]
         street_address = raw_address[0]
+        street_address = street_address.replace("West Sunset Square, ", "")
         city = raw_address[1]
         state = raw_address[2].split()[0]
         zip_code = raw_address[2].split()[-1]
