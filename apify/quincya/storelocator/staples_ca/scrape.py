@@ -64,7 +64,13 @@ def fetch_data():
 
         locator_domain = "staples.ca"
         location_name = store["location_name"] + " " + store["fid"]
-        street_address = (store["address_1"] + " " + store["address_2"]).strip()
+        street_address = (
+            (store["address_1"] + " " + store["address_2"])
+            .replace("u00e9", "e")
+            .replace("u00e7", "c")
+            .replace("u00f4", "o")
+            .strip()
+        )
         city = store["city"]
         state = store["region"]
         zip_code = store["post_code"]

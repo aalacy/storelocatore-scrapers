@@ -101,8 +101,8 @@ def fetch_data():
                 phone = line2.split('phone-main-number-link" href="tel:+')[1].split(
                     '"'
                 )[0]
-            if "'ids': " in line2:
-                store = line2.split("'ids': ")[1].split(",")[0]
+            if ',"id":' in line2:
+                store = line2.split(',"id":')[1].split(",")[0]
             if hours == "" and "data-days='[{" in line2:
                 days = line2.split("data-days='[{")[1].split("]}]")[0].split('"day":"')
                 for day in days:
@@ -133,6 +133,8 @@ def fetch_data():
             phone = "<MISSING>"
         if CS:
             name = name + " - Coming Soon"
+        name = name.replace("&amp;", "&")
+        add = add.replace("&amp;", "&")
         yield [
             website,
             loc,

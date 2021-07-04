@@ -58,13 +58,17 @@ def fetch_data():
         address = " ".join(address.split())
         logger.info(f"Location Name: {address}")
         address1 = address.split(",")
-        street_address = address1[0]
-        if street_address:
+        street_address = MISSING
+        if len(address1) > 3:
+            street_address = address1[0] + "," + address1[1]
+            street_address = street_address.strip()
+        elif len(address1) == 3:
+            street_address = address1[0]
             street_address = street_address.strip()
         else:
             street_address = MISSING
 
-        city = address1[1]
+        city = address1[-2]
         if city:
             city = city.strip()
         else:
@@ -112,8 +116,9 @@ def fetch_data():
 
         # Hours of Operation
         hoo = d1.xpath(
-            '//h4[contains(text(), "Lobby and Drive Thru Hours")]/following-sibling::*[1][self::div]//text()'
+            '//h4[contains(text(), "Lobby Hours") or contains(text(), "Lobby and Drive Thru Hours")]/following-sibling::*[1][self::div]//text()'
         )
+
         hoo = "".join(hoo)
         if hoo:
             hours_of_operation = hoo.strip()

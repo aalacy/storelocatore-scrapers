@@ -71,6 +71,7 @@ def fetch_data():
                 phone=phone,
                 location_type=location_type,
                 hours_of_operation="; ".join(hours).replace("–", "-"),
+                raw_address=" ".join(addr),
             )
 
 

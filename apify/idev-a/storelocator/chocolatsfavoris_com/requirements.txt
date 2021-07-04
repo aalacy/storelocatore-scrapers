@@ -1,4 +1,4 @@
 selenium==3.141.0
-sgvalidator==0.0.71
 sgscrape==0.0.23
-sgselenium==0.0.15
+sgselenium==0.1.4
+sgvalidator==0.0.71

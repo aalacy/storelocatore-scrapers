@@ -1,6 +1,5 @@
 from bs4 import BeautifulSoup
 import csv
-
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -42,12 +41,12 @@ def write_output(data):
 def fetch_data():
     data = []
     p = 0
-
     url = "https://www.landmarkcinemas.com/showtimes/"
     r = session.get(url, headers=headers, verify=False)
     soup = BeautifulSoup(r.text, "html.parser")
     linklist = soup.select("a[href*=showtimes]")
     for link in linklist:
+
         title = link.text
         link = link["href"]
         if link == "/showtimes/":
@@ -55,12 +54,21 @@ def fetch_data():
         link = "https://www.landmarkcinemas.com" + link
         r = session.get(link, headers=headers, verify=False)
         soup = BeautifulSoup(r.text, "html.parser")
-        hours = soup.find("div", {"class": "cinenote"}).find("p").text.split(".", 1)[0]
+        try:
+            hours = (
+                soup.find("div", {"class": "cinenote"}).find("p").text.split(".", 1)[0]
+            )
+        except:
+            hours = "<MISSING>"
         if "permanently CLOSED" in hours:
             continue
+        if "In compliance" in hours or len(hours) < 3:
+            hours = "<MISSING>"
         streetlist = soup.findAll("span", {"itemprop": "streetAddress"})
         street = ""
         for st in streetlist:
+            if st.text in street:
+                continue
             street = street + st.text + " "
         city = soup.find("span", {"itemprop": "addressLocality"}).text
         state = soup.find("span", {"itemprop": "addressRegion"}).text
@@ -74,7 +82,7 @@ def fetch_data():
                 "https://www.landmarkcinemas.com/",
                 link,
                 title,
-                street,
+                street.strip(),
                 city,
                 state,
                 pcode,
