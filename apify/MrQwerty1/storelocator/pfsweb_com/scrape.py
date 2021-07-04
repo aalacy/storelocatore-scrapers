@@ -1,6 +1,6 @@
 import csv
-import json
 
+import country_converter as coco
 from lxml import html
 from sgrequests import SgRequests
 
@@ -36,59 +36,57 @@ def write_output(data):
 
 def fetch_data():
     out = []
-    locator_domain = "https://www.lineagelogistics.com/"
-    api = "https://www.lineagelogistics.com/facilities"
+    locator_domain = "https://www.pfsweb.com/"
+    page_url = "https://www.pfsweb.com/contact/"
+    cc = coco.CountryConverter()
 
     session = SgRequests()
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0"
     }
-    r = session.get(api, headers=headers)
+    r = session.get(page_url, headers=headers)
     tree = html.fromstring(r.text)
-    text = "".join(tree.xpath("//script[@data-drupal-selector]/text()"))
-    js = json.loads(text)["geofield_google_map"][
-        "geofield-map-view-facilities-attachment-1"
-    ]["data"]["features"]
+    divs = tree.xpath(
+        "//div[contains(@class, 'wpb_column wpb_animate_when_almost_visible') and .//div[@itemprop='address']]"
+    )
 
-    for j in js:
-        longitude, latitude = j["geometry"]["coordinates"]
-        j = j.get("properties")
-
-        text = j.get("description")
-        d = html.fromstring(text)
-
-        location_name = (
-            "Lineage Logistics "
-            + "".join(d.xpath("//p[@class='map-card__type']/text()")).strip()
-        )
+    for d in divs:
+        location_name = "".join(d.xpath(".//span[not(@itemprop)]/text()")).strip()
         street_address = (
-            "".join(d.xpath("//span[contains(@class, 'address-line')]/text()")).strip()
+            " ".join(
+                "".join(d.xpath(".//span[@itemprop='streetAddress']/text()")).split()
+            )
             or "<MISSING>"
         )
         city = (
-            "".join(d.xpath("//span[@class='locality']/text()")).strip() or "<MISSING>"
+            " ".join(
+                "".join(d.xpath(".//span[@itemprop='addressLocality']/text()")).split()
+            )
+            or "<MISSING>"
         )
+        if street_address == "Wide Lane":
+            street_address, city = city, street_address
+        if street_address.endswith(","):
+            street_address = street_address[:-1]
         state = (
-            "".join(d.xpath("//span[@class='administrative-area']/text()")).strip()
+            "".join(d.xpath(".//span[@itemprop='addressRegion']/text()")).strip()
             or "<MISSING>"
         )
         postal = (
-            "".join(d.xpath("//span[@class='postal-code']/text()")).strip()
+            "".join(d.xpath(".//span[@itemprop='postalCode']/text()")).strip()
             or "<MISSING>"
         )
-        country_code = "<MISSING>"
-        store_number = j.get("entity_id") or "<MISSING>"
-        phone = (
-            "".join(d.xpath("//a[@class='map-card__phone']/text()")).strip()
-            or "<MISSING>"
-        )
-        location_type = "".join(d.xpath("//p[@class='map-card__type']/text()")).strip()
-        slug = "".join(d.xpath("//a[@class='link__link']/@href"))
-        page_url = f"https://www.lineagelogistics.com{slug}"
+        country = "".join(d.xpath(".//span[@itemprop='addressCountry']/text()")).strip()
+        country_code = cc.convert(names=[country], to="ISO2")
+        store_number = "<MISSING>"
+        try:
+            phone = d.xpath(".//span[@itemprop='telephone']/text()")[0].strip()
+        except IndexError:
+            phone = "<MISSING>"
+        latitude = "<MISSING>"
+        longitude = "<MISSING>"
+        location_type = "<MISSING>"
         hours_of_operation = "<MISSING>"
-
-        if d.xpath("//a[contains(@href, 'active-construction')]"):
-            continue
 
         row = [
             locator_domain,
