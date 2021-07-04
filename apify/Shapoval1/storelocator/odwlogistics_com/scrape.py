@@ -100,7 +100,7 @@ def fetch_data():
             )
         page_url = f"{locator_domain}{slug}"
         driver = SgSelenium().firefox()
-
+        time.sleep(10)
         driver.get(page_url)
 
         iframe = driver.find_element_by_xpath('//iframe[contains(@src, "maps")]')
