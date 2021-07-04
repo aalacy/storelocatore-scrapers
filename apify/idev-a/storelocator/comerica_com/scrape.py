@@ -1,6 +1,6 @@
 from sgscrape import simple_scraper_pipeline as sp
 from sgrequests import SgRequests
-from sgzip.dynamic import DynamicZipSearch, SearchableCountries, Grain_2
+from sgzip.dynamic import DynamicZipSearch, SearchableCountries, Grain_1_KM
 from sglogging import SgLogSetup
 from requests import exceptions  # noqa
 from urllib3 import exceptions as urllibException
@@ -14,7 +14,9 @@ headers = {
 }
 
 search = DynamicZipSearch(
-    country_codes=[SearchableCountries.USA], granularity=Grain_2()
+    country_codes=[SearchableCountries.USA],
+    max_radius_miles=50,
+    granularity=Grain_1_KM(),
 )
 
 

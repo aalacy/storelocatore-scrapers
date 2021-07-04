@@ -61,7 +61,7 @@ def fetch_data():
     search_url = "https://www.lunardis.com/locations"
     stores_req = session.get(search_url, headers=headers)
     soup = BeautifulSoup(stores_req.text, "html.parser")
-    divlist = soup.findAll("div", {"class": "bDfMI"})
+    divlist = soup.findAll("div", {"class": "_31Ne5"})
     for div in divlist:
         details = div.text
         details = details.split("\n")
