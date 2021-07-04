@@ -99,16 +99,10 @@ def fetch_data():
         country_code = "US"
         city = a.get("city")
         store_number = "<MISSING>"
-        text = "".join(tree.xpath("//a[contains(@href, 'google')]/@href"))
-        try:
-            if text.find("ll=") != -1:
-                latitude = text.split("ll=")[1].split(",")[0]
-                longitude = text.split("ll=")[1].split(",")[1].split("&")[0]
-            else:
-                latitude = text.split("@")[1].split(",")[0]
-                longitude = text.split("@")[1].split(",")[1]
-        except IndexError:
-            latitude, longitude = "<MISSING>", "<MISSING>"
+        ll = "".join(tree.xpath("//div/@data-markers")).replace("\\", "")
+
+        latitude = ll.split('"lat":')[1].split(",")[0].strip()
+        longitude = ll.split('"lng":')[1].split("}")[0].strip()
         hours_of_operation = (
             " ".join(
                 tree.xpath(
