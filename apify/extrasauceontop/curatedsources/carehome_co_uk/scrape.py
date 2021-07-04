@@ -171,6 +171,7 @@ with open("data.csv", mode="w") as output_file:
             "hours_of_operation",
         ]
     )
+    
     for location_url in location_urls:
         x = x + 1
         response = s.get(location_url, headers=headers)
