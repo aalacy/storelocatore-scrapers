@@ -6,7 +6,6 @@ import lxml.html
 import us
 
 website = "royalfarms.com"
-domain = "https://www.goddardschool.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 session = SgRequests()
 headers = {
@@ -90,7 +89,6 @@ def fetch_data():
     latitude = ""
     longitude = ""
     hours_of_operation = ""
-    loc_list = []
 
     locations_resp = session.get(
         "https://royalfarms.com/location_results.asp",
@@ -123,6 +121,9 @@ def fetch_data():
             ]
             location_name = "".join(store.xpath("td[1]/strong/text()")).strip()
             add_dict = get_splitted_address(address_mobile)
+            add_dict["city_state_zip"] = (
+                add_dict["city_state_zip"].replace(", ,", ", ").strip()
+            )
             street_address = "".join(add_dict["street_address"]).strip()
 
             city = "".join(add_dict["city_state_zip"]).strip().split(",")[0].strip()
@@ -185,10 +186,7 @@ def fetch_data():
                 hours_of_operation,
             ]
 
-            loc_list.append(curr_list)
-        #     break
-        # break
-    return loc_list
+            yield curr_list
 
 
 def scrape():

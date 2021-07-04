@@ -56,6 +56,9 @@ def fetch_data():
 
         location_name = "BPL Plasma - " + item.h3.text.strip()
 
+        if "generated location" in location_name.lower():
+            continue
+
         raw_address = item.find_all(class_="field__item")[1].text.strip().split(",")
         street_address = " ".join(raw_address[:-2]).strip()
         city = raw_address[-2].strip()

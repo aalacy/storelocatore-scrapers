@@ -51,38 +51,51 @@ def fetch_data():
     for div in divlist:
         div = "<h3" + div
         div = BeautifulSoup(div, "html.parser")
+        branchlist = div.findAll("strong")
         city = div.find("h3").text
-        state = "NH"
-        title = div.find("strong").text
-        street = div.find("p").text.split(title, 1)[1].split("(", 1)[0]
-        phone = div.find("li", {"class": "phone"}).text.split(":", 1)[1].strip()
-        hours = (
-            div.find("div", {"class": "lobby"})
-            .text.replace("Lobby Hours", "")
-            .replace("\n", " ")
-            .strip()
-        )
+        for i in range(0, len(branchlist)):
+            state = "NH"
+            title = div.findAll("strong")[i].text
 
-        data.append(
-            [
-                "https://www.mvsb.com/",
-                url,
-                title,
-                street,
-                city,
-                state,
-                "<MISSING>",
-                "US",
-                "<MISSING>",
-                phone,
-                "Branch",
-                "<MISSING>",
-                "<MISSING>",
-                hours,
-            ]
-        )
+            try:
+                street = (
+                    div.findAll("p")[i].text.split(title, 1)[1].split("(Drive", 1)[0]
+                )
+            except:
+                street = div.text.split(title, 1)[1].split("(Drive", 1)[0]
+            phone = (
+                div.findAll("li", {"class": "phone"})[i].text.split(":", 1)[1].strip()
+            )
+            hours = (
+                div.findAll("div", {"class": "lobby"})[i]
+                .text.replace("Lobby Hours", "")
+                .replace("\n", " ")
+                .strip()
+            )
+            try:
+                street = street.split("(Walk", 1)[0]
+            except:
+                pass
+            data.append(
+                [
+                    "https://www.mvsb.com/",
+                    url,
+                    title,
+                    street.strip(),
+                    city,
+                    state,
+                    "<MISSING>",
+                    "US",
+                    "<MISSING>",
+                    phone,
+                    "Branch",
+                    "<MISSING>",
+                    "<MISSING>",
+                    hours,
+                ]
+            )
 
-        p += 1
+            p += 1
     return data
 
 
