@@ -62,6 +62,7 @@ def fetch_data():
                 zip_postal=addr.postcode,
                 country_code=addr.country,
                 locator_domain=locator_domain,
+                phone=phone,
                 latitude=_["coord_x"],
                 longitude=_["coord_y"],
             )
