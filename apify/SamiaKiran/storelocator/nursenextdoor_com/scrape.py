@@ -1,4 +1,3 @@
-import unicodedata
 from sglogging import sglog
 from bs4 import BeautifulSoup
 from sgrequests import SgRequests
@@ -16,14 +15,6 @@ headers = {
 
 DOMAIN = "https://nursenextdoor.com/"
 MISSING = "<MISSING>"
-
-
-def strip_accents(text):
-
-    text = unicodedata.normalize("NFD", text).encode("ascii", "ignore").decode("utf-8")
-
-    return str(text)
-
 
 def fetch_data():
     if True:
