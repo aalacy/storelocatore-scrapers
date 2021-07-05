@@ -51,15 +51,18 @@ def fetch_data():
 
     all_locations = []
     all_codes = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA],
-        max_radius_miles=200
+        country_codes=[SearchableCountries.USA], max_radius_miles=200
     )
 
     with SgFirefox() as driver:
         driver.get(start_url)
         driver.implicitly_wait(5)
-        driver.find_element_by_xpath('//span[contains(text(), "International")]').click()
-        driver.find_element_by_xpath('//span[contains(text(), "United States")]').click()
+        driver.find_element_by_xpath(
+            '//span[contains(text(), "International")]'
+        ).click()
+        driver.find_element_by_xpath(
+            '//span[contains(text(), "United States")]'
+        ).click()
         for code in all_codes:
             driver.find_element_by_xpath('//input[@name="location"]').send_keys(code)
             driver.find_element_by_xpath('//button[contains(text(), "Search")]').click()
