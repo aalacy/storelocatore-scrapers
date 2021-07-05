@@ -117,6 +117,8 @@ def fetch_data():
                         hours = "<MISSING>"
                     if phone == "":
                         phone = "<MISSING>"
+                    if hours == "<MISSING>":
+                        hours = "INACCESSIBLE"
                     yield [
                         website,
                         loc,

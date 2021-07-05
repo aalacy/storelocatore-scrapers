@@ -122,6 +122,88 @@ def fetch_data():
             city = city.replace("&#039;", "'").replace("&amp;", "&")
             hours = hours.replace("&#039;", "'").replace("&amp;", "&")
             add = add.replace("&#039;", "'").replace("&amp;", "&")
+            if "; For" in hours:
+                hours = hours.split("; For")[0]
+            hours = hours.replace("Will Call", "").strip()
+            hours = hours.replace("Open to the public", "").strip()
+            if "; Off" in hours:
+                hours = hours.split("; Off")[0]
+            if "; Doug" in hours:
+                hours = hours.split("; Doug")[0]
+            if "; Hours" in hours:
+                hours = hours.split("; Hours")[0]
+            if "; Bath" in hours:
+                hours = hours.split("; Bath")[0]
+            if "; South" in hours:
+                hours = hours.split("; South")[0]
+            if "; Please" in hours:
+                hours = hours.split("; Please")[0]
+            if "; Place" in hours:
+                hours = hours.split("; Place")[0]
+            if "; Order" in hours:
+                hours = hours.split("; Order")[0]
+            if "; Beside" in hours:
+                hours = hours.split("; Beside")[0]
+            if "; High" in hours:
+                hours = hours.split("; High")[0]
+            if "; From" in hours:
+                hours = hours.split("; From")[0]
+            if "; emer" in hours:
+                hours = hours.split("; emer")[0]
+            if " / " in hours:
+                hours = hours.split(" / ")[0]
+            if "; Head" in hours:
+                hours = hours.split("; Head")[0]
+            if "; 864" in hours:
+                hours = hours.split("; 864")[0]
+            if "; Open" in hours:
+                hours = hours.split("; Open")[0]
+            if "; West" in hours:
+                hours = hours.split("; West")[0]
+            if "; Turn" in hours:
+                hours = hours.split("; Turn")[0]
+            if "; City" in hours:
+                hours = hours.split("; City")[0]
+            if "; Take" in hours:
+                hours = hours.split("; Take")[0]
+            if "; Aldine" in hours:
+                hours = hours.split("; Aldine")[0]
+            if "; Store" in hours:
+                hours = hours.split("; Store")[0]
+            if "; On " in hours:
+                hours = hours.split("; On ")[0]
+            if "; East" in hours:
+                hours = hours.split("; East")[0]
+            if "; 1 m" in hours:
+                hours = hours.split("; 1 m")[0]
+            if "; just" in hours:
+                hours = hours.split("; just")[0]
+            if "; Just" in hours:
+                hours = hours.split("; Just")[0]
+            if "; Route" in hours:
+                hours = hours.split("; Route")[0]
+            if "; 1/4" in hours:
+                hours = hours.split("; 1/4")[0]
+            if "; 122" in hours:
+                hours = hours.split("; 122")[0]
+            if "; Locate" in hours:
+                hours = hours.split("; Locate")[0]
+            if "; DO NOT" in hours:
+                hours = hours.split("; DO NOT")[0]
+            if "; Customer" in hours:
+                hours = hours.split("; Customer")[0]
+            if "; Cross" in hours:
+                hours = hours.split("; Cross")[0]
+            if "; FROM" in hours:
+                hours = hours.split("; FROM")[0]
+            if "; GM" in hours:
+                hours = hours.split("; GM")[0]
+            if "; South" in hours:
+                hours = hours.split("; South")[0]
+            if "; Univ" in hours:
+                hours = hours.split("; Univ")[0]
+            if "; Trav" in hours:
+                hours = hours.split("; Trav")[0]
             if "MN100" not in name:
                 yield [
                     website,

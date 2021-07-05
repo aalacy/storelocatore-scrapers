@@ -4,6 +4,7 @@ from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import lxml.html
+from sgscrape import sgpostal as parser
 
 website = "168markets.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -49,19 +50,15 @@ def fetch_data():
                 if len("".join(add.xpath(".//text()")).strip()) > 0:
                     add_list.append("".join(add.xpath(".//text()")).strip())
 
-            street_address = add_list[0].strip()
-            if "," == street_address[-1]:
-                street_address = "".join(street_address[:-1]).strip()
+            raw_address = ", ".join(add_list[:2]).strip().replace(",,", ",").strip()
+            formatted_addr = parser.parse_address_usa(raw_address)
+            street_address = formatted_addr.street_address_1
+            if formatted_addr.street_address_2:
+                street_address = street_address + ", " + formatted_addr.street_address_2
 
-            city = add_list[1].strip().split(",")[0].strip()
-            state_zip = add_list[1].strip().split(",")[-1].strip().split(" ")
-            state = "<MISSING>"
-            zip = "<MISSING>"
-            if len(state_zip) > 1:
-                state = state_zip[0].strip()
-                zip = state_zip[-1].strip()
-            else:
-                state = state_zip[0].strip()
+            city = formatted_addr.city
+            state = formatted_addr.state
+            zip = formatted_addr.postcode
 
             country_code = "US"
 
@@ -89,7 +86,7 @@ def fetch_data():
             latitude = "<MISSING>"
             longitude = "<MISSING>"
             map_link = "".join(
-                store.xpath('//a[contains(@onclick,"google.com/maps")]/@onclick')
+                store.xpath('.//a[contains(@onclick,"google.com/maps")]/@onclick')
             ).strip()
 
             if len(map_link) > 0 and "/@" in map_link:
@@ -111,6 +108,7 @@ def fetch_data():
                 latitude=latitude,
                 longitude=longitude,
                 hours_of_operation=hours_of_operation,
+                raw_address=raw_address,
             )
 
 
