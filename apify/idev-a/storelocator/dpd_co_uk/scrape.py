@@ -44,43 +44,35 @@ def fetch_data():
     # Need to add dedupe. Added it in pipeline.
     session = SgRequests(proxy_rotation_failure_threshold=20)
     maxZ = search.items_remaining()
-    try:
-        for zip in search:
-            if search.items_remaining() > maxZ:
-                maxZ = search.items_remaining()
-            logger.info(("Pulling Geo Code %s..." % zip))
-            obj = session.get(base_url.format(zip), headers=_headers).json()["obj"]
-            if obj:
-                store = session.get(
-                    url.format(obj["depotCode"]), headers=_headers
-                ).json()["obj"]
-                if store:
-                    hours = []
-                    for hh in store.get("openTime", []):
-                        times = "closed"
-                        if not hh.get("closed"):
-                            times = f"{hh['startTime']}-{hh['endTime']}"
-                        if hh["startTime"]:
-                            hours.append(f"{hr_obj[str(hh['weekDay'])]}: {times}")
-                    store["latitude"] = store["addressPoint"]["latitude"]
-                    store["longitude"] = store["addressPoint"]["longitude"]
-                    store["street"] = (
-                        store["address"]["street"] + " " + store["address"]["town"]
-                    )
-                    store["city"] = store["address"]["organisation"]
-                    store["zipcode"] = store["address"]["postCode"]
-                    store["phone"] = store["telephone"]
-                    store["hours"] = "; ".join(hours) or "<MISSING>"
-                    yield store
-            progress = (
-                str(round(100 - (search.items_remaining() / maxZ * 100), 2)) + "%"
-            )
-            logger.info(f"| progress: {progress}")
-    except Exception as err:
-        print(err)
-        import pdb
-
-        pdb.set_trace()
+    for zip in search:
+        if search.items_remaining() > maxZ:
+            maxZ = search.items_remaining()
+        logger.info(("Pulling Geo Code %s..." % zip))
+        obj = session.get(base_url.format(zip), headers=_headers).json()["obj"]
+        if obj:
+            store = session.get(url.format(obj["depotCode"]), headers=_headers).json()[
+                "obj"
+            ]
+            if store:
+                hours = []
+                for hh in store.get("openTime", []):
+                    times = "closed"
+                    if not hh.get("closed"):
+                        times = f"{hh['startTime']}-{hh['endTime']}"
+                    if hh["startTime"]:
+                        hours.append(f"{hr_obj[str(hh['weekDay'])]}: {times}")
+                store["latitude"] = store["addressPoint"]["latitude"]
+                store["longitude"] = store["addressPoint"]["longitude"]
+                store["street"] = (
+                    store["address"]["street"] + " " + store["address"]["town"]
+                )
+                store["city"] = store["address"]["organisation"]
+                store["zipcode"] = store["address"]["postCode"]
+                store["phone"] = store["telephone"]
+                store["hours"] = "; ".join(hours) or "<MISSING>"
+                yield store
+        progress = str(round(100 - (search.items_remaining() / maxZ * 100), 2)) + "%"
+        logger.info(f"| progress: {progress}")
 
 
 def scrape():
