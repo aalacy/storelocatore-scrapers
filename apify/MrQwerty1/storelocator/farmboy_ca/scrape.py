@@ -56,22 +56,21 @@ def get_data(page_url):
     r = session.get(page_url, headers=headers)
     tree = html.fromstring(r.text)
 
-    location_name = "".join(
-        tree.xpath('//div[@class="image__header single-store"]/h1/text()')
-    )
+    location_name = "".join(tree.xpath("//title/text()")).strip()
+
     ad = (
         "".join(
             tree.xpath('//h2[text()="Store Info"]/following-sibling::div[1]/text()')
         )
         .replace("\n", "")
-        .strip()
+        .split(",")
     )
-    street_address = " ".join(ad.split(",")[:-3]).strip()
-    csz = " ".join(ad.split(",")[-3:]).strip()
 
-    city = " ".join(csz.split()[:-3]).strip()
-    state = " ".join(csz.split()[-3:]).split()[0]
-    postal = " ".join(csz.split()[-2:]).strip()
+    street_address = ", ".join(ad[:-3]).strip()
+    ad = ad[-3:]
+    postal = ad.pop().strip() or "<MISSING>"
+    state = ad.pop().strip() or "<MISSING>"
+    city = ad.pop().strip() or "<MISSING>"
     country_code = "CA"
     store_number = "<MISSING>"
     phone = (
@@ -83,19 +82,8 @@ def get_data(page_url):
     hours_of_operation = (
         " ".join(tree.xpath("//ul/li/span/text()")).replace("\n", "").strip()
     )
-    latitude = (
-        "".join(tree.xpath('//script[contains(text(), "LatLng(")]/text()'))
-        .split("LatLng(")[1]
-        .split(",")[0]
-        .strip()
-    )
-    longitude = (
-        "".join(tree.xpath('//script[contains(text(), "LatLng(")]/text()'))
-        .split("LatLng(")[1]
-        .split(",")[1]
-        .split(")")[0]
-        .strip()
-    )
+
+    latitude, longitude = "<MISSING>", "<MISSING>"
 
     row = [
         locator_domain,
@@ -120,6 +108,7 @@ def get_data(page_url):
 def fetch_data():
     out = []
     urls = get_urls()
+
     with futures.ThreadPoolExecutor(max_workers=10) as executor:
         future_to_url = {executor.submit(get_data, url): url for url in urls}
         for future in futures.as_completed(future_to_url):
