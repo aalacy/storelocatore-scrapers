@@ -1,4 +1,4 @@
-from typing import Iterablefrom typing import List# Pausing and Resuming Long-Running Crawls
+# Pausing and Resuming Long-Running Crawls
 
 ## Rationale (Why?)
 

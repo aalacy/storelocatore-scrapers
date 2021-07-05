@@ -47,7 +47,10 @@ def fetch_data():
                 country_code="US",
                 phone=h2[2].text.strip(),
                 locator_domain=locator_domain,
-                hours_of_operation="; ".join(hours).replace("–", "-"),
+                hours_of_operation="; ".join(hours)
+                .replace("–", "-")
+                .replace("\xa0", "")
+                .replace("  ", " "),
             )
 
 
