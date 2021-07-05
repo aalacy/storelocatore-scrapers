@@ -67,6 +67,8 @@ def get_data(page_url):
     )
 
     street_address = ", ".join(ad[:-3]).strip()
+    if "Shop" in street_address:
+        street_address = street_address.split(",")[0].strip()
     ad = ad[-3:]
     postal = ad.pop().strip() or "<MISSING>"
     state = ad.pop().strip() or "<MISSING>"
@@ -80,7 +82,11 @@ def get_data(page_url):
     )
     location_type = "store"
     hours_of_operation = (
-        " ".join(tree.xpath("//ul/li/span/text()")).replace("\n", "").strip()
+        " ".join(tree.xpath("//ul/li/span//text()"))
+        .replace("(Today) ", "")
+        .replace("PM ", "PM; ")
+        .replace("\n", "")
+        .strip()
     )
 
     latitude, longitude = "<MISSING>", "<MISSING>"
