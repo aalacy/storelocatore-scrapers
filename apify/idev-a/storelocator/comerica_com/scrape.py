@@ -88,10 +88,6 @@ def fetch_data():
             except:
                 break
             for _ in r2:
-                search.found_location_at(
-                    _["location"]["lat"],
-                    _["location"]["lng"],
-                )
                 for store in _["location"]["entities"]:
                     store["state"] = _["location"]["province"]
                     store["city"] = _["location"]["city"]
