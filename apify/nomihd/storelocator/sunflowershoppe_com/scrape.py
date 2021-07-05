@@ -48,7 +48,7 @@ def fetch_data():
             if len("".join(raw_info[index]).strip()) > 0:
                 raw_list.append("".join(raw_info[index]).strip())
 
-        street_address = raw_list[0].strip()
+        street_address = raw_list[0].strip().split("(")[0].strip()
         city_state_zip = raw_list[-2].strip()
         city = city_state_zip.split(",")[0].strip()
         state = city_state_zip.split(",")[-1].strip().split(" ")[0].strip()
