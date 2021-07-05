@@ -60,6 +60,11 @@ def fetch_data():
                 stub = line.split('<a href="')[1].split('"')[0]
                 if "http" not in stub:
                     lurl = "https://www.providence.org" + stub
+                    if "/our-services/" in lurl:
+                        lurl = lurl.replace(
+                            "https://www.providence.org",
+                            "https://providence-gcn.azureedge.net",
+                        )
                     if lurl not in locs:
                         locs.append(lurl)
     for loc in locs:
