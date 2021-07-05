@@ -55,6 +55,8 @@ def fetch_data():
 
         location_name = poi["store"]
         street_address = poi["address"]
+        if poi["address2"]:
+            street_address += " " + poi["address2"]
         city = poi["city"]
         state = poi["state"]
         zip_code = poi["zip"]
