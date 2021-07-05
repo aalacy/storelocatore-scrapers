@@ -106,8 +106,6 @@ def fetch_data():
                 f"branch/{url}",
             )
             logger.info(page_url)
-            if page_url != "https://www.mkmbs.co.uk/branch/aberdeen":
-                continue
             driver.get(page_url)
             sp1 = bs(driver.page_source, "lxml")
             if sp1.select(".grid-container-desktop"):
