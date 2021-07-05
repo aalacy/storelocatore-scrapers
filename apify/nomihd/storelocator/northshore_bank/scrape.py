@@ -64,14 +64,19 @@ def fetch_data():
         hours_txt = store.get("description")
         if hours_txt:
             hours_sel = lxml.html.fromstring(hours_txt)
-            hours = hours_sel.xpath("//text()")
-            log.info(hours)
+            hours = hours_sel.xpath("div//text()")
 
+            is_found = False
             for idx, x in enumerate(hours):
                 if "MORTGAGE" in x or "DRIVE-" in x:
+                    is_found = True
                     break
 
-            hours_of_operation = "; ".join(hours[1:idx])
+            if is_found is True:
+                hours_of_operation = "; ".join(hours[1:idx])
+            else:
+                hours_of_operation = "; ".join(hours[1:]).strip()
+
         else:
             hours_of_operation = "<MISSING>"
 
