@@ -77,6 +77,12 @@ def fetch_data():
             .replace("We open at", "")
             .strip()
         )
+        close = (
+            "".join(d.xpath('.//following::p[contains(text(), "KITCHENS")]/text()'))
+            .replace("KITCHENS AT ALL LOCATIONS CLOSE AT", "")
+            .strip()
+        )
+        hours_of_operation = hours_of_operation.replace("am", f"am to {close}")
 
         row = [
             locator_domain,
