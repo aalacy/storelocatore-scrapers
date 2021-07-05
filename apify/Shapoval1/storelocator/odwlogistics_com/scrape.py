@@ -46,30 +46,41 @@ def fetch_data():
     div = tree.xpath('//a[text()="Learn More"]')
     for d in div:
 
-        page_url = 'https://www.odwlogistics.com' + ''.join(d.xpath('.//@href'))
+        page_url = "https://www.odwlogistics.com" + "".join(d.xpath(".//@href"))
 
         session = SgRequests()
         r = session.get(page_url, headers=headers)
         tree = html.fromstring(r.text)
 
-        location_name = ''.join(tree.xpath('//h2[@class="hero__title title"]/text()'))
+        location_name = "".join(tree.xpath('//h2[@class="hero__title title"]/text()'))
 
-        location_type = ''.join(tree.xpath('//ul[@class="location__specs"]/li[1]/text()')).strip()
-        street_address = ''.join(tree.xpath('//ul[@class="location__specs"]/li[4]/text()')) or '<MISSING>'
-        if street_address == '<MISSING>':
-            street_address = ''.join(tree.xpath('//ul[@class="location__specs"]/li[2]/text()'))
+        location_type = "".join(
+            tree.xpath('//ul[@class="location__specs"]/li[1]/text()')
+        ).strip()
+        street_address = (
+            "".join(tree.xpath('//ul[@class="location__specs"]/li[4]/text()'))
+            or "<MISSING>"
+        )
+        if street_address == "<MISSING>":
+            street_address = "".join(
+                tree.xpath('//ul[@class="location__specs"]/li[2]/text()')
+            )
         city_state = location_name
-        if city_state.find('|') != -1:
-            city_state = city_state.split('|')[0].strip()
+        if city_state.find("|") != -1:
+            city_state = city_state.split("|")[0].strip()
 
-        state = city_state.split(',')[1].strip()
+        state = city_state.split(",")[1].strip()
         postal = "<MISSING>"
         country_code = "USA"
-        city = city_state.split(',')[0].strip()
+        city = city_state.split(",")[0].strip()
         store_number = "<MISSING>"
         latitude = "<MISSING>"
         longitude = "<MISSING>"
-        phone = ''.join(tree.xpath('//ul[@class="location__specs"]//a[contains(@href, "tel")]/text()'))
+        phone = "".join(
+            tree.xpath(
+                '//ul[@class="location__specs"]//a[contains(@href, "tel")]/text()'
+            )
+        )
         hours_of_operation = "<MISSING>"
 
         row = [
