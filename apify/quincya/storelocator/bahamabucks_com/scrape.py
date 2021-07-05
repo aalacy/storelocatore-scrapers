@@ -79,6 +79,8 @@ def fetch_data():
                     ).strip()
         except:
             hours_of_operation = "<MISSING>"
+        if hours_of_operation.count("Game Days") == 7:
+            hours_of_operation = "<MISSING>"
         latitude = store["address"]["latitude"]
         longitude = store["address"]["longitude"]
 
