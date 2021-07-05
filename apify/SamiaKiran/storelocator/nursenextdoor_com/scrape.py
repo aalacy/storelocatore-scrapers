@@ -16,6 +16,7 @@ headers = {
 DOMAIN = "https://nursenextdoor.com/"
 MISSING = "<MISSING>"
 
+
 def fetch_data():
     if True:
         url = "https://www.nursenextdoor.com/locations/"
