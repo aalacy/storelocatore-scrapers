@@ -5,7 +5,8 @@ import json
 
 session = SgRequests()
 headers = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36",
+    "locale": "en_GB",
 }
 
 logger = SgLogSetup().get_logger("cadillac_co_uk")
@@ -53,9 +54,9 @@ def fetch_data():
         logger.info(cname)
         try:
             url = (
-                "https://www.cadillac.co.uk/OCRestServices/dealer/postalCode/v1/Cadillac/"
+                "https://www.cadillac.co.uk/OCRestServices/dealer/city/v1/Cadillac/"
                 + cname
-                + "?distance=500&maxResults=50"
+                + "?distance=50000&maxResults=5000"
             )
             r = session.get(url, headers=headers)
             website = "cadillac.co.uk"
@@ -83,7 +84,8 @@ def fetch_data():
                     state = item["address"]["countrySubdivisionCode"]
                 except:
                     state = "<MISSING>"
-                store = item["upsc"]
+
+                store = item["id"]
                 zc = zc.replace("Cheshire", "").strip()
                 if store not in ids:
                     ids.append(store)
@@ -103,7 +105,7 @@ def fetch_data():
                         lng,
                         hours,
                     ]
-        except:
+        except Exception:
             pass
 
 

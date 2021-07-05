@@ -200,12 +200,23 @@ class CleanRecord:
         )
         cleanRecord["raw_address"] = ""
         identifier = None
+
         for dent in badRecord["properties"]["identifiers"]["storeIdentifier"]:
             if dent["identifierType"] == "NSN":
                 identifier = dent["identifierValue"]
-        cleanRecord["page_url"] = "https://{}/{}/{}/location/{}.html".format(
-            cleanRecord["locator_domain"], country, locale, identifier
-        )
+        if identifier:
+            cleanRecord["page_url"] = "https://{}/{}/{}/location/{}.html".format(
+                cleanRecord["locator_domain"], country, locale, identifier
+            )
+        else:
+            cleanRecord["page_url"] = "https://{}/{}/{}/location/{}.html".format(
+                cleanRecord["locator_domain"],
+                country,
+                locale,
+                badRecord["properties"]["identifiers"]["storeIdentifier"][1][
+                    "identifierValue"
+                ],
+            )
         return cleanRecord
 
     def DEDUPE(badRecord):
@@ -745,13 +756,13 @@ def fetch_data():
     configuredCountries = todoCountries(config)
     ogProxy = fix_proxy(config["DEFAULT"].getboolean("StripProxyCountry"))
     logzilla.info(f"Crawler pulled these countries:")  # noqa
-    configuredCountries = todoCountries(config)
-    for Country in configuredCountries:
+    configuredCountrie = todoCountries(config)
+    for Country in configuredCountrie:
         logzilla.info(f"{Country}")  # noqa
 
     logzilla.info(f"Crawler did not pull these countries:")  # noqa
-    configuredCountries = notdoneCountries(config)
-    for Country in configuredCountries:
+    configuredCountrie = notdoneCountries(config)
+    for Country in configuredCountrie:
         logzilla.info(f"{Country}")  # noqa
     with SgRequests() as session:
         countries = getTestCountries(session)
