@@ -99,6 +99,10 @@ def fetch_data():
                                 CS = True
                             if ">Coming Soon<" in line2:
                                 CS = True
+                            if '">Coming in' in line2:
+                                CS = True
+                            if '">Opening' in line2:
+                                CS = True
                             if (
                                 "and beyond" in line2
                                 and "Now accepting reservations" in line2

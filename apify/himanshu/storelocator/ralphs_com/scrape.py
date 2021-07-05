@@ -2,9 +2,13 @@ import csv
 
 import phonenumbers
 
+from sglogging import SgLogSetup
+
 from sgrequests import SgRequests
 
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
+
+log = SgLogSetup().get_logger("ralphs_com")
 
 
 def write_output(data):
@@ -67,6 +71,7 @@ def fetch_data():
 
         # New session every 50
         if i % 50 == 0:
+            log.info("New session for next 50 zips..", zip_code)
             session = SgRequests()
 
         i += 1
@@ -75,10 +80,10 @@ def fetch_data():
             "https://www.ralphs.com/stores/api/graphql", headers=headers, data=data
         )
         try:
-            datas = r.json()["data"]["storeSearch"]["stores"]
+            data_store = r.json()["data"]["storeSearch"]["stores"]
         except:
             continue
-        for key in datas:
+        for key in data_store:
             location_name = key["vanityName"]
             street_address = key["address"]["addressLine1"].capitalize()
             city = key["address"]["city"].capitalize()
