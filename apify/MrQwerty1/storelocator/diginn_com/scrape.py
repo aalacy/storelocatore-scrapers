@@ -54,9 +54,11 @@ def fetch_data():
         key = adr.split()[0]
         coords[key] = (lat, lng)
 
-    divs = tree.xpath("//div[contains(@class,'flex flex-col xs-2')]")
+    divs = tree.xpath("//div[contains(@class, 'flex flex-col justify-between ')]")
     for d in divs:
         location_name = "".join(d.xpath(".//div[@class='space-y-1']/div[1]/text()"))
+        if not location_name:
+            continue
         line = d.xpath(".//div[@class='space-y-1']/p/text()")
         line = list(filter(None, [l.strip() for l in line]))
         phone = line[-1]

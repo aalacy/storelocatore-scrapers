@@ -43,20 +43,28 @@ def fetch_data():
     country = "US"
     typ = "<MISSING>"
     store = "<MISSING>"
-    for x in range(1, 151):
+    for x in range(1, 201):
         logger.info("Page " + str(x))
         url = (
-            "https://www.providence.org/locations?postal=90009&lookup=&lookupvalue=&page="
+            "https://www.providence.org/locations?postal=90210&lookup=&lookupvalue=&page="
             + str(x)
             + "&radius=5000&term="
         )
         r = session.get(url, headers=headers)
         for line in r.iter_lines():
             line = str(line.decode("utf-8"))
-            if '<h2><a href="/locations/' in line:
+            if (
+                '<h2><a href="/locations/' in line
+                or '<h2><a href="/our-services' in line
+            ):
                 stub = line.split('<a href="')[1].split('"')[0]
                 if "http" not in stub:
                     lurl = "https://www.providence.org" + stub
+                    if "/our-services/" in lurl:
+                        lurl = lurl.replace(
+                            "https://www.providence.org",
+                            "https://providence-gcn.azureedge.net",
+                        )
                     if lurl not in locs:
                         locs.append(lurl)
     for loc in locs:
@@ -130,7 +138,7 @@ def fetch_data():
                     typ = line2.split('"@type":"')[1].split('"')[0]
                 except:
                     typ = "<MISSING>"
-        if typ != "<MISSING>" and name != "":
+        if name != "":
             if add == "":
                 add = "<MISSING>"
             if city == "":

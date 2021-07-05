@@ -94,7 +94,7 @@ def fetch_data():
         try:
             page_url = d[11][0]
         except IndexError:
-            continue
+            page_url = "<MISSING>"
         latitude, longitude = d[0][2]
         street_address = d[2][0]
         line = d[2][1].replace("Ontario", "Ontario, ON ")

@@ -142,7 +142,7 @@ def fetch_data():
                     except:
                         phone = "<MISSING>"
                     if add == "":
-                        add = "<MISSING>"
+                        add = name
                     if zc == "":
                         zc = "<MISSING>"
                     if country != "GBR":

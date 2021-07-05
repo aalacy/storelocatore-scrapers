@@ -69,6 +69,9 @@ def get_store_data(store_sel, page_url):
     store_number = "<MISSING>"
     phone = "".join(store_sel.xpath('//div[@itemprop="telephone"]/text()')).strip()
     location_type = "<MISSING>"
+    if "head office" in location_name.lower():
+        location_type = "Head Office"
+
     latitude = "".join(
         store_sel.xpath(
             '//div[contains(@class,"location-map-wrapper")]//meta[@itemprop="latitude"]/@content'
@@ -85,7 +88,7 @@ def get_store_data(store_sel, page_url):
     hours_list = []
     for hour in hours:
         day = "".join(hour.xpath("td[1]/text()")).strip()
-        time = "".join(hour.xpath("td[2]//text()")).strip()
+        time = " ".join(hour.xpath("td[2]//text()")).strip()
         hours_list.append(day + ":" + time)
 
     hours_of_operation = "; ".join(hours_list).strip()
@@ -157,6 +160,14 @@ def fetch_data():
                             page_url = domain + store_url.replace("../", "").strip()
                             store_sel = get_selector(page_url)
                             yield get_store_data(store_sel, page_url)
+
+            if len(states) <= 0:
+                stores = states_sel.xpath('//a[@class="Teaser-titleLink"]/@href')
+
+                for store_url in stores:
+                    page_url = domain + store_url.replace("../", "").strip()
+                    store_sel = get_selector(page_url)
+                    yield get_store_data(store_sel, page_url)
 
 
 def scrape():

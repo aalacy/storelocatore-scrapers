@@ -87,6 +87,8 @@ def fetch_data():
         )
         phone = phone[0] if phone else "<MISSING>"
         location_type = "<MISSING>"
+        if not loc_dom.xpath("//iframe/@src"):
+            continue
         geo = (
             loc_dom.xpath("//iframe/@src")[0]
             .split("!2d")[-1]
