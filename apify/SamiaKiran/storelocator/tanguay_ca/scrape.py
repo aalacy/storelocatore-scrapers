@@ -33,6 +33,7 @@ def fetch_data():
         loclist = soup.findAll("div", {"class": "store_hlt_td"})
         for loc in loclist:
             location_name = loc.find("h3").text.replace("\n", "").strip()
+            location_name = strip_accents(location_name)
             if "distribution" in location_name:
                 continue
             log.info(location_name)
@@ -74,6 +75,8 @@ def fetch_data():
                 .replace("Samedi :", "Saturday :")
                 .replace("Dimanche :", "Sunday :")
             )
+            street_address = strip_accents(street_address)
+            city = strip_accents(city)
             yield SgRecord(
                 locator_domain=DOMAIN,
                 page_url=url,
