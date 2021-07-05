@@ -61,7 +61,7 @@ def fetch_data():
                 in line
             ):
                 locs.append(line.split('href="')[1].split('"')[0])
-    print(len(locs))
+
     for loc in locs:
         typ = "<MISSING>"
         website = "primark.com"
