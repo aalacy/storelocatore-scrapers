@@ -11,6 +11,8 @@ _headers = {
 }
 
 streets = []
+
+
 def fetch_data():
     locator_domain = "https://www.era.com"
     base_url = "https://www.era.com/real-estate-agents"
@@ -44,9 +46,9 @@ def fetch_data():
                         .split("var")[0]
                         .strip()[:-1]
                     )
-                    street_address=sp2.select_one(
-                            'span[itemprop="streetAddress"]'
-                        ).text.strip()
+                    street_address = sp2.select_one(
+                        'span[itemprop="streetAddress"]'
+                    ).text.strip()
                     _street = street_address + latitude + longitude
                     if _street in streets:
                         continue
