@@ -131,7 +131,7 @@ def get_data(url):
         )
         .replace("\n", "")
         .strip()
-    )
+    ) or "<MISSING>"
     if hours_of_operation.find("Coming soon") != -1:
         hours_of_operation = "Coming soon"
     if hours_of_operation.find("Closed for the season") != -1:
@@ -151,9 +151,8 @@ def get_data(url):
             )
             .replace("\n", "")
             .strip()
-        )
-    if street_address.find("550") != -1:
-        hours_of_operation = hours_of_operation.split("call")[1].strip()
+        ) or "<MISSING>"
+
     if location_name.find("Anthony’s Cabana") != -1:
         hours_of_operation = "Closed"
     row = [
