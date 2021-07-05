@@ -19,46 +19,31 @@ MISSING = "<MISSING>"
 
 def fetch_data():
     if True:
-        url = "https://winestyles.com/store-locator/"
-        r = session.get(url, headers=headers)
-        soup = BeautifulSoup(r.text, "html.parser")
-        loclist = soup.findAll("div", {"class": "wpb_text_column wpb_content_element"})
-        for loc in loclist[1::2]:
-            temp = loc.findAll("p")
-            page_url = temp[0].find("a")["href"]
+        url = "https://winestyles.com/wp-admin/admin-ajax.php?action=store_search&max_results=25&search_radius=50&autoload=1"
+        loclist = session.get(url, headers=headers).json()
+        for loc in loclist:
+            location_name = loc["store"]
+            store_number = loc["id"]
+            page_url = loc["url"]
             log.info(page_url)
-            if len(temp) > 2:
-                if len(temp) == 4:
-                    hours_of_operation = (
-                        temp[1].get_text(separator="|", strip=True).replace("|", " ")
-                    )
-                else:
-                    hours_of_operation = (
-                        temp[-2].get_text(separator="|", strip=True).replace("|", " ")
-                        + " "
-                        + temp[-1].get_text(separator="|", strip=True).replace("|", " ")
-                    )
-            else:
-                hours_of_operation = (
-                    temp[-1].get_text(separator="|", strip=True).replace("|", " ")
-                )
+            phone = loc["phone"]
+            hours_of_operation = loc["hours"]
+            hours_of_operation = BeautifulSoup(hours_of_operation, "html.parser")
             hours_of_operation = (
-                hours_of_operation.split("Call")[0]
-                .replace("Shop Online", "")
-                .replace("COVID-19: UPDATED HOURS", "")
-                .replace("HOURS", "")
+                hours_of_operation.find("table")
+                .get_text(separator="|", strip=True)
+                .replace("|", " ")
             )
-            temp = temp[0].get_text(separator="|", strip=True).split("|")
-            location_name = temp[0]
-
-            street_address = temp[1]
-            address = temp[2].split(",")
-            city = address[0]
-            address = address[1].split()
-            state = address[0]
-            zip_postal = address[1]
-            country_code = "US"
-            phone = temp[3].replace("Phone:", "")
+            try:
+                street_address = loc["address"] + " " + loc["address2"]
+            except:
+                street_address = loc["address"]
+            city = loc["city"]
+            zip_postal = loc["zip"]
+            country_code = loc["country"]
+            state = loc["state"]
+            latitude = loc["lat"]
+            longitude = loc["lng"]
             yield SgRecord(
                 locator_domain=DOMAIN,
                 page_url=page_url,
@@ -68,11 +53,11 @@ def fetch_data():
                 state=state.strip(),
                 zip_postal=zip_postal.strip(),
                 country_code=country_code,
-                store_number=MISSING,
+                store_number=store_number,
                 phone=phone.strip(),
                 location_type=MISSING,
-                latitude=MISSING,
-                longitude=MISSING,
+                latitude=latitude,
+                longitude=longitude,
                 hours_of_operation=hours_of_operation.strip(),
             )
 
