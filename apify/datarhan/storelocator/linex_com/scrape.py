@@ -3,20 +3,8 @@ from lxml import etree
 
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 from sgrequests import SgRequests
-from sgselenium import SgChrome
-from webdriver_manager.chrome import ChromeDriverManager
+from sgselenium import SgFirefox
 from sglogging import SgLogSetup
-import ssl
-
-try:
-    _create_unverified_https_context = (
-        ssl._create_unverified_context
-    )  # Legacy Python that doesn't verify HTTPS certificates by default
-except AttributeError:
-    pass
-else:
-    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
-
 
 logger = SgLogSetup().get_logger("minex_com")
 
@@ -63,35 +51,24 @@ def fetch_data():
 
     all_locations = []
     all_codes = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA],
-        max_radius_miles=200,
-        max_search_results=None,
+        country_codes=[SearchableCountries.USA], max_radius_miles=200
     )
 
-    with SgChrome(
-        executable_path=ChromeDriverManager().install(), is_headless=True
-    ) as driver:
+    with SgFirefox() as driver:
         driver.get(start_url)
         driver.implicitly_wait(5)
-        driver.find_element_by_xpath('//button[@title="United States"]').click()
-        logger.info("Dropdown Clicked!...")
+        driver.find_element_by_xpath(
+            '//span[contains(text(), "International")]'
+        ).click()
         driver.find_element_by_xpath(
             '//span[contains(text(), "United States")]'
         ).click()
         for code in all_codes:
-            try:
-                logger.info(f"Pulling the data for ({code})")
-                driver.find_element_by_xpath('//input[@name="location"]').send_keys(
-                    code
-                )
-                driver.find_element_by_xpath(
-                    '//button[contains(text(), "Search")]'
-                ).click()
-                driver.find_element_by_xpath('//input[@name="location"]').clear()
-                code_dom = etree.HTML(driver.page_source)
-                all_locations += code_dom.xpath('//div[@class="find-result "]')
-            except:
-                driver.save_screenshot("exception.png")
+            driver.find_element_by_xpath('//input[@name="location"]').send_keys(code)
+            driver.find_element_by_xpath('//button[contains(text(), "Search")]').click()
+            driver.find_element_by_xpath('//input[@name="location"]').clear()
+            code_dom = etree.HTML(driver.page_source)
+            all_locations += code_dom.xpath('//div[@class="find-result "]')
 
     for loc_html in list(set(all_locations)):
         store_url = loc_html.xpath('.//a[contains(text(), "Visit Website")]/@href')
