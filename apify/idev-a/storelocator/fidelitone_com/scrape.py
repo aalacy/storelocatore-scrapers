@@ -45,6 +45,7 @@ def fetch_data():
                 sp1.select_one("section.section-1")
                 .text.split("Call")[1]
                 .split("or")[0]
+                .split("and")[0]
                 .strip()
             )
             for _ in locations:
