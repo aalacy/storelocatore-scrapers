@@ -158,6 +158,10 @@ def fetch_location(loc, retry_count=0):
                 state = "MD"
                 add = "5310 Western Ave"
                 phone = "(301) 718-7812"
+            if "va/fairfax/fairfax/8068" in loc:
+                hours = "Mon-Fri: 11:30AM - 10:00PM; Sat: 5:00PM - 11:00PM; Sun: 5:00PM - 9:00PM"
+            if "yndhurst/lyndhurst/8060" in loc:
+                hours = "Mon-Thu: 11:30AM - 9:00PM; Fri: 11:30AM - 10:00PM; Sat: 4:00PM - 10:00PM; Sun: 4:00PM - 9:00PM"
             if "charlotte/charlotte/8011" in loc:
                 name = "Charlotte"
                 phone = "(704) 348-1400"
