@@ -76,7 +76,7 @@ def get_address(line):
 def fetch_data():
     out = []
     locator_domain = "https://boomerjacks.com/"
-    api_url = "https://storerocket.global.ssl.fastly.net/api/user/DMJbBrQJXe/locations"
+    api_url = "https://api.storerocket.io/api/user/DMJbBrQJXe/locations"
 
     session = SgRequests()
     r = session.get(api_url)
@@ -98,9 +98,14 @@ def fetch_data():
         days = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"]
         for d in days:
             time = j.get(d)
+            if not time:
+                continue
             _tmp.append(f"{d}: {time}")
 
         hours_of_operation = ";".join(_tmp) or "<MISSING>"
+        if "coming soon" in phone.lower():
+            phone = "<MISSING>"
+            hours_of_operation = "Coming Soon"
 
         row = [
             locator_domain,

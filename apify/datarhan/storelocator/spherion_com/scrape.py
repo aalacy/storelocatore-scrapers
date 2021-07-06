@@ -101,8 +101,8 @@ def fetch_data():
         latitude = "<MISSING>"
         longitude = "<MISSING>"
         if poi["_source"].get("lat_lon"):
-            latitude = poi["_source"]["lat_lon"][0]
-            longitude = poi["_source"]["lat_lon"][-1]
+            latitude = poi["_source"]["lat_lon"][0].split(",")[0]
+            longitude = poi["_source"]["lat_lon"][0].split(",")[-1]
         hours_of_operation = loc_dom.xpath(
             '//*[contains(@class, "time-table__item")]/span/text()'
         )
