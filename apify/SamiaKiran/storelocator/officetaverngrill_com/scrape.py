@@ -1,3 +1,4 @@
+import usaddress
 from sglogging import sglog
 from bs4 import BeautifulSoup
 from sgrequests import SgRequests
@@ -14,8 +15,12 @@ headers = {
 }
 
 
+DOMAIN = "https://www.officetaverngrill.com/"
+MISSING = "<MISSING>"
+
+
 def fetch_data():
-    url = "https://www.officetaverngrill.com/locations-new"
+    url = "https://www.officetaverngrill.com/locations"
     r = session.get(url, headers=headers)
     soup = BeautifulSoup(r.text, "html.parser")
     loclist = soup.find("div", {"id": "sortMain"}).findAll(
@@ -26,31 +31,71 @@ def fetch_data():
         location_name = temp[1].find("p", {"class": "fp-el"}).text
         log.info(location_name)
         hours_of_operation = (
-            temp[2].get_text(separator="|", strip=True).replace("|", " ")
+            temp[4].get_text(separator="|", strip=True).replace("|", " ")
         )
-        phone = (
-            temp[4].text.split("call us at")[1].split("or Order")[0].replace(",", "")
-        )
-        address = temp[6].text.split(",")
-        street_address = address[0]
-        city = address[1]
-        address = address[2].split()
-        state = address[0]
-        zip_postal = address[1]
+        phone = temp[2].find("a").text
+        try:
+            address = (
+                temp[3]
+                .find("a")["href"]
+                .split("place/")[1]
+                .split(",17z")[0]
+                .split("/@")
+            )
+            latitude, longitude = address[-1].split(",")
+            address = address[0].replace("+", " ")
+        except:
+            address = (
+                temp[3]
+                .find("a")["href"]
+                .split("q=")[1]
+                .split("&rlz")[0]
+                .replace("+", " ")
+            )
+            latitude = MISSING
+            longitude = MISSING
+        address = address.replace(",", " ").replace("%2C", "")
+        address = usaddress.parse(address)
+        i = 0
+        street_address = ""
+        city = ""
+        state = ""
+        zip_postal = ""
+        country_code = "US"
+        while i < len(address):
+            temp = address[i]
+            if (
+                temp[1].find("Address") != -1
+                or temp[1].find("Street") != -1
+                or temp[1].find("Recipient") != -1
+                or temp[1].find("Occupancy") != -1
+                or temp[1].find("BuildingName") != -1
+                or temp[1].find("USPSBoxType") != -1
+                or temp[1].find("USPSBoxID") != -1
+            ):
+                street_address = street_address + " " + temp[0]
+            if temp[1].find("PlaceName") != -1:
+                city = city + " " + temp[0]
+            if temp[1].find("StateName") != -1:
+                state = state + " " + temp[0]
+            if temp[1].find("ZipCode") != -1:
+                zip_postal = zip_postal + " " + temp[0]
+            i += 1
+
         yield SgRecord(
-            locator_domain="https://www.officetaverngrill.com/",
-            page_url="https://www.officetaverngrill.com/locations-new",
+            locator_domain=DOMAIN,
+            page_url=url,
             location_name=location_name.strip(),
             street_address=street_address.strip(),
             city=city.strip(),
             state=state.strip(),
             zip_postal=zip_postal.strip(),
-            country_code="US",
-            store_number="<MISSING>",
+            country_code=country_code,
+            store_number=MISSING,
             phone=phone.strip(),
-            location_type="<MISSING>",
-            latitude="<MISSING>",
-            longitude="<MISSING>",
+            location_type=MISSING,
+            latitude=latitude,
+            longitude=longitude,
             hours_of_operation=hours_of_operation,
         )
 
