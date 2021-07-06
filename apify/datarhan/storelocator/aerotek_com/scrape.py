@@ -45,7 +45,7 @@ def fetch_data():
 
     DOMAIN = "aerotek.com"
     start_urls = [
-        "https://www.aerotek.com/en-ca/locations/canada",
+        "https://www.aerotek.com/en/locations/canada",
         "https://aerotek.com/en/locations/united-states",
     ]
 
@@ -56,8 +56,6 @@ def fetch_data():
         for poi_url in country_urls:
             store_url = urljoin(url, poi_url)
             store_response = session.get(store_url)
-            if store_response.status_code != 200:
-                continue
             store_dom = etree.HTML(store_response.text)
 
             location_name = store_dom.xpath('//div[@id="location-title"]/a/text()')[0]
@@ -70,7 +68,12 @@ def fetch_data():
             if street_address_2:
                 street_address += ", " + street_address_2
             street_address = street_address if street_address else "<MISSING>"
-            city = store_dom.xpath('//span[@class="acs-city"]/text()')[0].split(",")[0]
+            city = (
+                store_dom.xpath('//span[@class="acs-city"]/text()')[0]
+                .split(",")[0]
+                .strip()
+            )
+            city = city if city else "<MISSING>"
             country_code = store_dom.xpath('//span[@class="acs-country"]/text()')
             country_code = country_code[0] if country_code else "<MISSING>"
             if country_code == "Canada":
