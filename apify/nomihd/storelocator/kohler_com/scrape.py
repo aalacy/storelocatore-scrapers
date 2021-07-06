@@ -3,7 +3,6 @@ from sgrequests import SgRequests
 from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
-import lxml.html
 import ast
 
 website = "kohler.com"
@@ -22,31 +21,6 @@ headers = {
     "sec-fetch-dest": "document",
     "accept-language": "en-US,en;q=0.9,ar;q=0.8",
 }
-
-
-def split_fulladdress(address_info):
-    street_address = " ".join(address_info[0:-1]).strip(" ,.")
-
-    city_state_zip = (
-        address_info[-1].replace(",", " ").replace(".", " ").replace("  ", " ").strip()
-    )
-
-    city = " ".join(city_state_zip.split(" ")[:-2]).strip()
-    state = city_state_zip.split(" ")[-2].strip()
-    zip = city_state_zip.split(" ")[-1].strip()
-
-    if not city or us.states.lookup(zip):
-        city = city + " " + state
-        state = zip
-        zip = "<MISSING>"
-
-    if city and state:
-        if not us.states.lookup(state):
-            city = city + " " + state
-            state = "<MISSING>"
-
-    country_code = "US"
-    return street_address, city, state, zip, country_code
 
 
 def fetch_data():
