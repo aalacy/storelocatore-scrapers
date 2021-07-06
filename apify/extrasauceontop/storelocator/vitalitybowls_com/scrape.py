@@ -111,7 +111,20 @@ for page_url in loc_urls:
         try:
             phone_part = soup.text.strip().split("CONTACT")[1].split("Phone:")[1]
         except Exception:
-            phone_part = "<MISSING>"
+            try:
+                phone_part = soup.text.strip().split("STORE INFO")[1].split("Phone:")[1]
+            except Exception:
+                try:
+                    phone_part = (
+                        soup.text.strip().split("CONTACT")[1].split("phone:")[1]
+                    )
+                except Exception:
+                    try:
+                        phone_part = (
+                            soup.text.strip().split("CONTACT")[1].split("Phone")[1]
+                        )
+                    except Exception:
+                        phone_part = "<MISSING>"
 
     x = 0
     phone = ""
@@ -145,6 +158,10 @@ for page_url in loc_urls:
 
     if "coming soon" in hours.lower():
         continue
+
+    city = (
+        "".join([i for i in city if not i.isdigit()]).replace("=", "").replace("-", "")
+    )
 
     locator_domains.append(locator_domain)
     page_urls.append(page_url)

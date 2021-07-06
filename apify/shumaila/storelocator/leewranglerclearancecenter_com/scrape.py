@@ -100,9 +100,11 @@ def fetch_data():
         state = state.lstrip().replace(",", "")
         pcode = pcode.lstrip().replace(",", "")
         try:
-            pcode = pcode.split(" ", 1)[0]
+            pcode = pcode.lstrip().split(" ", 1)[0]
         except:
             pass
+        if len(pcode) < 3:
+            pcode = "<MISSING>"
         data.append(
             [
                 "https://leewranglerclearancecenter.com/",

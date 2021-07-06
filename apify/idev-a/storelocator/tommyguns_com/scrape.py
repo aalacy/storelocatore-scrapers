@@ -24,37 +24,52 @@ def fetch_data():
             if not _["check_in_url"] and not _["address"]:
                 continue
             page_url = "https://ca.tommyguns.com" + _["url"]
-            soup1 = bs(session.get(page_url, headers=_headers).text, "lxml")
             logger.info(page_url)
+            soup1 = bs(session.get(page_url, headers=_headers).text, "lxml")
             hours = []
             if soup1.select_one("div.store-details__content"):
                 temp = list(
                     soup1.select_one("div.store-details__content").stripped_strings
                 )[1:]
+                if "Coming Soon" in "".join(temp):
+                    continue
                 for hh in temp:
                     if "re-open" in hh.lower():
                         continue
+                    if "open" in hh.lower():
+                        continue
                     if (
                         hh != "TEMPORARILY CLOSED"
-                        and hh.split("-")[0].strip() not in days
+                        and hh.split("-")[0].split(" ")[0].split(":")[0].strip()
+                        not in days
                     ):
                         break
                     hours.append(hh)
-            addr = parse_address_intl(_["address"].strip())
+            addr = parse_address_intl(_["address"] + ", Canada")
             street_address = addr.street_address_1
             if addr.street_address_2:
                 street_address += " " + addr.street_address_2
+            city = addr.city
+            zip_postal = addr.postcode
+            _addr = _["address"].split(",")
+            if len(_addr) == 3:
+                if len(_addr[-1].strip().split(" ")) == 2:
+                    city = _addr[-2].strip()
+                    zip_postal = _addr[-1].strip()
+            phone = _.get("phone_number")
+            if type(phone) == list:
+                phone = "".join(phone)
             yield SgRecord(
                 page_url=page_url,
                 location_name=_["name"].replace("–", "-"),
                 street_address=street_address,
-                city=addr.city,
+                city=city,
                 state=addr.state,
-                zip_postal=addr.postcode,
+                zip_postal=zip_postal,
                 latitude=_["location"]["lat"],
                 longitude=_["location"]["lng"],
                 country_code="CA",
-                phone=_.get("phone_number"),
+                phone=phone,
                 locator_domain=locator_domain,
                 hours_of_operation="; ".join(hours),
             )

@@ -90,7 +90,7 @@ def get_data(page_url):
         city = j.get("city") or "<MISSING>"
         state = j.get("state") or "<MISSING>"
         postal = j.get("postCode") or "<MISSING>"
-        location_name = j.get("branchName")
+        location_name = j.get("branchName") or "<MISSING>"
         phone = j.get("phoneNumber") or "<MISSING>"
         location_type = j.get("branchDesc") or "<MISSING>"
     else:
@@ -102,6 +102,8 @@ def get_data(page_url):
         else:
             location_type = "Standard Branch"
         location_name = location_name.split("Welcome to")[-1].strip()
+        if not location_name:
+            location_name = "<MISSING>"
         line = tree.xpath("//div[@class='col branch-details']/p/text()")
         line = list(filter(None, [l.strip() for l in line]))
         if not line:
@@ -135,7 +137,7 @@ def get_data(page_url):
         locator_domain,
         page_url,
         location_name,
-        street_address,
+        street_address.replace("&#039;", "'"),
         city,
         state,
         postal,

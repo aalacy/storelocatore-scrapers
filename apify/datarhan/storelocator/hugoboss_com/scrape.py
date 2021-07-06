@@ -30,8 +30,13 @@ def write_output(data):
             ]
         )
         # Body
+        dupes = []
         for row in data:
-            writer.writerow(row)
+            if row[8] in dupes:
+                pass
+            else:
+                writer.writerow(row)
+                dupes.append(row[8])
 
 
 def fetch_data():
@@ -64,6 +69,8 @@ def fetch_data():
         city = city if city else "<MISSING>"
         state = poi.get("state_code")
         state = state if state else "<MISSING>"
+        if state.isdigit():
+            state = "<MISSING>"
         zip_code = poi.get("postal_code")
         zip_code = zip_code if zip_code else "<MISSING>"
         country_code = poi.get("country_code")
