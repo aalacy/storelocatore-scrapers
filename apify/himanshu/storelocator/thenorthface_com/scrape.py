@@ -72,12 +72,16 @@ def fetch_data():
         if "collectioncount" not in r.json()["response"]:
             continue
         for store_data in r.json()["response"]["collection"]:
-            store = [
-                "https://www.thenorthface.com",
-                "https://www.thenorthface.com/utility/store-locator.html",
-                store_data["name"],
-            ]
+            store = ["https://www.thenorthface.com"]
+            page_url = "https://www.thenorthface.com/utility/store-locator.html"
+            if store_data["country"] == "CA":
+                page_url = (
+                    "https://www.thenorthface.com/en_ca/utility/store-locator.html"
+                )
 
+            store.append(page_url)
+            location_name = store_data["name"]
+            store.append(location_name)
             address = ""
             if store_data["address1"] is not None:
                 address = address + store_data["address1"]
