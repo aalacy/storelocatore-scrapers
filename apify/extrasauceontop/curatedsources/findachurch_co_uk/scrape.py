@@ -19,7 +19,7 @@ country_codes = []
 
 
 def get_data():
-    print("here")
+
     x = 0
     search = DynamicGeoSearch(country_codes=[SearchableCountries.BRITAIN])
     session = SgRequests(retry_behavior=False)
@@ -81,7 +81,7 @@ def get_data():
             "page_url": page_urls,
         }
     )
-    print("created df")
+
     headers = {"User-Agent": "PostmanRuntime/7.19.0"}
 
     # Here you iterate through the location URLs to grab the missing data fields for each location
@@ -124,12 +124,12 @@ def get_data():
                 "longitude": longitude,
                 "city": city,
                 "store_number": store_number,
-                "street_address": address,
-                "state": state,
-                "zip": zipp,
-                "phone": phone,
-                "location_type": location_type,
-                "hours": hours,
+                "street_address": "",
+                "state": "",
+                "zip": "",
+                "phone": "",
+                "location_type": "",
+                "hours": "",
             }
 
             continue
@@ -165,12 +165,12 @@ def get_data():
                     "longitude": longitude,
                     "city": city,
                     "store_number": store_number,
-                    "street_address": address,
-                    "state": state,
-                    "zip": zipp,
-                    "phone": phone,
-                    "location_type": location_type,
-                    "hours": hours,
+                    "street_address": "",
+                    "state": "",
+                    "zip": "",
+                    "phone": "",
+                    "location_type": "",
+                    "hours": "",
                 }
 
                 continue
