@@ -319,5 +319,4 @@ def scrape():
     pipeline.run()
 
 
-# df = get_urls()
 scrape()
