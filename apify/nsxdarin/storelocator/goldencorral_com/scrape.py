@@ -92,6 +92,7 @@ def fetch_data():
                         + "/golden-corral-"
                         + addtext
                     )
+                    loc = loc.replace("#", "").replace(",", "")
                     try:
                         r = session.get(loc, headers=headers)
                         if r.encoding is None:
@@ -116,6 +117,8 @@ def fetch_data():
                         hours = "<MISSING>"
                     if phone == "":
                         phone = "<MISSING>"
+                    if hours == "<MISSING>":
+                        hours = "INACCESSIBLE"
                     yield [
                         website,
                         loc,

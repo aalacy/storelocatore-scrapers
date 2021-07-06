@@ -65,7 +65,7 @@ def fetch_data():
         if r2["payload"]["nbrOfStores"]:
             if int(r2["payload"]["nbrOfStores"]) > 0:
                 for store in r2["payload"]["storesData"]["stores"]:
-                    if store["geoPoint"] and "GAS_STATION" in str(store):
+                    if store["geoPoint"] and "GAS" in str(store):
                         if store["geoPoint"]["latitude"]:
                             if store["geoPoint"]["longitude"]:
                                 search.found_location_at(
@@ -104,7 +104,12 @@ def human_hours(k):
                             h.append("Temporary hours: " + str(k[day].items()))
                 else:
                     h.append(str(day).capitalize() + ": <MISSING>")
-        return "; ".join(h)
+        return (
+            "; ".join(h)
+            .replace("Montofrihrs", "Mon-Fri")
+            .replace("hrs:", ":")
+            .replace("; Temporaryhours: <MISSING>", "")
+        )
     else:
         return "24/7"
 
@@ -122,7 +127,7 @@ def scrape():
             part_of_record_identity=True,
         ),
         location_name=sp.MappingField(
-            mapping=["storeType", "name"],
+            mapping=["storeType", "name" + " - Fuel"],
             value_transform=add_walmart,
         ),
         latitude=sp.MappingField(

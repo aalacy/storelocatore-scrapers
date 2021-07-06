@@ -149,6 +149,7 @@ def fetch_data():
             )
             or "<MISSING>"
         )
+
         if hours_of_operation != "<MISSING>":
             hours_of_operation = list(
                 filter(None, [a.strip() for a in hours_of_operation])
@@ -169,6 +170,11 @@ def fetch_data():
                 .replace("730PM", "7:30PM")
                 .strip()
             )
+        if street_address.find("815 Sanford Road") != -1:
+            hours_of_operation = "Mon-Fri 8AM to 5PM"
+
+        if street_address.find("211 Webb Street") != -1:
+            hours_of_operation = "Mon-Fri 8AM to 5PM"
 
         row = [
             locator_domain,
