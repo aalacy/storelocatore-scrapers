@@ -60,7 +60,6 @@ def fetch_data():
                     if temp[1].find("ZipCode") != -1:
                         zip_postal = zip_postal + " " + temp[0]
                     i += 1
-                location_name = state
                 country_code = "US"
                 phone = soup.select_one("a[href*=tel]").text
                 hours_of_operation = (
@@ -71,7 +70,7 @@ def fetch_data():
                 yield SgRecord(
                     locator_domain=DOMAIN,
                     page_url=page_url,
-                    location_name=location_name.strip(),
+                    location_name=MISSING,
                     street_address=street_address.strip(),
                     city=city.strip(),
                     state=state.strip(),
