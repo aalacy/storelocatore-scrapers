@@ -102,13 +102,18 @@ def fetch_data():
             if '<a href="https://www.statefarm.com/agent/us/' in line2:
                 loc = line2.split('href="')[1].split('"')[0]
                 r3 = session.get(loc, headers=headers)
+                HFound = False
                 for line3 in r3.iter_lines():
                     line3 = str(line3.decode("utf-8"))
+                    if '">Office Hours' in line3:
+                        HFound = True
+                    if HFound and '<div class="' in line3:
+                        HFound = False
                     if 'data-latitude="' in line3:
                         lat = line3.split('data-latitude="')[1].split('"')[0]
                     if 'data-longitude="' in line3:
                         lng = line3.split('data-longitude="')[1].split('"')[0]
-                    if '-oneX-body--primary">' in line3:
+                    if '-oneX-body--primary">' in line3 and HFound:
                         hrs = line3.split('-oneX-body--primary">')[1].split("<")[0]
                         if hours == "":
                             hours = hrs
