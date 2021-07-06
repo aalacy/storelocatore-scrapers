@@ -18,6 +18,8 @@ _headers = {
 
 locator_domain = "https://www.cicic.ca"
 
+urls = []
+
 
 def _hidden(sp1, name):
     return sp1.select_one(f"input#{name}")["value"]
@@ -26,6 +28,9 @@ def _hidden(sp1, name):
 def _parse(_, session, page=1):
     td = [tt.text.strip() for tt in _.select("td")]
     page_url = locator_domain + _.a["href"]
+    if page_url in urls:
+        return None
+    urls.append(page_url)
     logger.info(page_url)
     sp3 = bs(session.get(page_url, headers=_headers).text, "lxml")
     _addr = sp3.select_one("div.postaladdress")
