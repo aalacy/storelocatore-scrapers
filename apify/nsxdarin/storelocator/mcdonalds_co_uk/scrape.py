@@ -99,6 +99,8 @@ def fetch_data():
             )
         except:
             hours = "<MISSING>"
+        if name.strip() == "":
+            name = city.title()
         yield [
             website,
             page_url,
