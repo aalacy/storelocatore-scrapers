@@ -87,6 +87,8 @@ def get_data(page_url):
             _tmp.append(";")
 
     hours_of_operation = "".join(_tmp).strip() or "<MISSING>"
+    if hours_of_operation.endswith(";"):
+        hours_of_operation = hours_of_operation[:-1]
 
     row = [
         locator_domain,
