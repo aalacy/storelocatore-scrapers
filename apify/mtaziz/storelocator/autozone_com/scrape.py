@@ -3,6 +3,8 @@ from sglogging import SgLogSetup
 import csv
 from lxml import html
 import re
+from tenacity import retry
+from tenacity import stop_after_attempt
 
 logger = SgLogSetup().get_logger(logger_name="autozone_com")
 locator_domain_url = " https://www.autozone.com"
@@ -10,6 +12,10 @@ MISSING = "<MISSING>"
 
 headers = {
     "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.90 Safari/537.36",
+    "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+    "accept-encoding": "gzip, deflate, br",
+    "accept-language": "en-US,en;q=0.9",
+    "cache-control": "max-age=0",
 }
 session = SgRequests()
 
@@ -41,8 +47,18 @@ def write_output(data):
             writer.writerow(row)
 
 
+@retry(stop=stop_after_attempt(10))
+def get_result(url, headers):
+    global session
+    try:
+        return session.get(url, headers=headers)
+    except:
+        session = SgRequests()
+        raise
+
+
 url_sitemap_main = "https://www.autozone.com/locations/sitemap.xml"
-r = session.get(url_sitemap_main, headers=headers, timeout=120)
+r = session.get(url_sitemap_main, headers=headers, timeout=500)
 datar = html.fromstring(bytes(r.text, encoding="utf8"))
 url_sub_sitemap = datar.xpath("//sitemap/loc/text()")
 logger.info(f"Sitemap URLs: {len(url_sub_sitemap)}")
@@ -51,7 +67,7 @@ logger.info(f"Sitemap URLs: {len(url_sub_sitemap)}")
 def get_all_raw_store_urls():
     urls_part1_and_part2 = []
     for url_part in url_sub_sitemap:
-        r0 = session.get(url_part, headers=headers, timeout=120)
+        r0 = session.get(url_part, headers=headers, timeout=500)
         datar0 = html.fromstring(bytes(r0.text, encoding="utf8"))
         logger.info(f"Scraping All Store URLs from: {url_part} ")
         urls_0 = datar0.xpath("//url/loc/text()")
@@ -100,11 +116,13 @@ def get_hoo(hoo_details):
 
 
 def fetch_data():
+    global session
     items = []
     all_store_urls = get_filtered_urls()
     logger.info(f"Store URLs count: {len(all_store_urls)}")
     for idx, url in enumerate(all_store_urls):
-        r = session.get(url, headers=headers, timeout=10)
+        r = get_result(url, headers=headers)
+
         data_raw = html.fromstring(r.text, "lxml")
         logger.info(f"Pulling the Data from: {idx} <<:>> {url}")
         locator_domain = locator_domain_url

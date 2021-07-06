@@ -67,6 +67,20 @@ def fetch_data():
                 r2.encoding = "utf-8"
             lines = r2.iter_lines(decode_unicode=True)
             for line2 in lines:
+                if 'u-paddingTop4gu u-marginBottom0gu">' in line2:
+                    name = line2.split('u-paddingTop4gu u-marginBottom0gu">')[1].split(
+                        "<"
+                    )[0]
+                    csz = (
+                        line2.split('u-paddingTop4gu u-marginBottom0gu">')[1]
+                        .split("<br>")[1]
+                        .split("<")[0]
+                        .strip()
+                    )
+                    add = csz.split(",")[0]
+                    city = csz.split(",")[1].strip()
+                    state = csz.split(",")[2].strip().split(" ")[0]
+                    zc = csz.rsplit(" ", 1)[1]
                 if "<h2>" in line2:
                     name = line2.split("<h2>")[1].split("<")[0].replace("\t", "")
                 if '<div class="agent-address">' in line2:

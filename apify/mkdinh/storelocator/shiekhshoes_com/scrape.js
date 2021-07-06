@@ -18,7 +18,7 @@ function parseHtml(html) {
 }
 
 function formatPhone(phone) {
-  return phone ? phone.replace(/\-|\(|\)|\s/g, '') : null;
+  return phone ? phone.replace(/-|\(|\)|\s/g, '') : null;
 }
 
 function enqueueStoreLinks({ page, requestQueue }) {
@@ -31,14 +31,14 @@ function enqueueStoreLinks({ page, requestQueue }) {
 
 function extractHoursOfOperation($) {
   const rows = $('#open_hour tr');
-  const hours = {};
-  const data = rows.each(function () {
+  const hours = [];
+  rows.each(function () {
     const row = $(this);
     const day = row.find('td:nth-child(1)').text().replace(':', '').trim();
     const time = row.find('td:nth-child(2)').text().trim();
-    hours[day] = time;
+    hours.push(`${day}: ${time}`);
   });
-  return JSON.stringify(hours);
+  return hours.join(',');
 }
 
 async function fetchData({ page, request }) {
@@ -122,14 +122,16 @@ Apify.main(async function () {
     maxRequestsPerCrawl: 1000,
     async handlePageFunction({ page, request }) {
       switch (request.userData.pageType) {
-        case 'locations':
+        case 'locations': {
           await enqueueStoreLinks({ page, requestQueue });
           break;
-        default:
+        }
+        default: {
           const poi = await fetchData({ page, request });
           if (poi) {
             await Apify.pushData(poi);
           }
+        }
       }
     },
   });

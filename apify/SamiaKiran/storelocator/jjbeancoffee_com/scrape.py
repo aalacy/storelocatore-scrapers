@@ -24,6 +24,8 @@ def fetch_data():
             location_name = loc.find("a").text
             log.info(location_name)
             temp_list = loc.findAll("p")
+            if "Opening June 2021 " in temp_list[1].text:
+                continue
             try:
                 coords = temp_list[0].find("a")["href"].split("/")[6].split(",")
                 latitude = coords[0].replace("@", "")
@@ -31,7 +33,9 @@ def fetch_data():
             except:
                 latitude = "<MISSING>"
                 longitude = "<MISSING>"
-            hours_of_operation = temp_list[1].text
+            hours_of_operation = (
+                temp_list[1].text.replace("Hours:", "").replace("|", ",")
+            )
             phone = temp_list[2].text.split("|")[1].replace("Phone:", "")
             address = temp_list[0].find("a").text.split(",")
             street_address = address[0]

@@ -51,6 +51,7 @@ def fetch_data():
             locs.append(lurl + "|" + sname)
     logger.info(("Found %s Locations." % str(len(locs))))
     for loc in locs:
+        loc = loc.replace("&#39;", "'")
         add = ""
         city = ""
         state = ""
@@ -69,6 +70,8 @@ def fetch_data():
                 h = next(lines)
                 if "<" not in g:
                     g = h
+                    h = next(lines)
+                if "," not in h:
                     h = next(lines)
                 add = g.split("<")[0].strip().replace("\t", "")
                 city = h.split(",")[0].strip().replace("\t", "")
@@ -93,6 +96,9 @@ def fetch_data():
             name = "Home Goods"
         if "|" in store:
             store = store.split("|")[0]
+        add = add.replace("&#39;", "'")
+        city = city.replace("&#39;", "'")
+        name = name.replace("&#39;", "'")
         yield [
             website,
             loc.split("|")[0],

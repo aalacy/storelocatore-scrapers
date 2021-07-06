@@ -39,7 +39,7 @@ def get_urls():
     r = session.get("https://www.westfieldbank.com/about/locations/")
     tree = html.fromstring(r.text)
 
-    return tree.xpath("//div[@class='web']/a/@href")
+    return tree.xpath("//a[text()='View Location Details']/@href")
 
 
 def get_data(page_url):
@@ -50,8 +50,9 @@ def get_data(page_url):
     tree = html.fromstring(r.text)
 
     location_name = "".join(tree.xpath("//h1/text()")).strip()
-    line = tree.xpath("//h2[text()='Address']/following-sibling::p[1]/text()")
+    line = tree.xpath("//h1/following-sibling::p[1]//text()")
     line = list(filter(None, [l.strip() for l in line]))
+    phone = line.pop()
     street_address = ", ".join(line[:-1])
     line = line[-1]
     city = line.split(",")[0].strip()
@@ -60,9 +61,6 @@ def get_data(page_url):
     postal = line.split()[1]
     country_code = "US"
     store_number = "<MISSING>"
-    phone = (
-        "".join(tree.xpath("//a[contains(@href, 'tel')]/text()")).strip() or "<MISSING>"
-    )
 
     text = "".join(tree.xpath("//a[text()='Get Directions']/@href"))
     try:
@@ -76,20 +74,9 @@ def get_data(page_url):
         latitude, longitude = "<MISSING>", "<MISSING>"
     location_type = "<MISSING>"
 
-    _tmp = []
-    hours = tree.xpath("//div[./h2[text()='Lobby Hours']]/*")
-    for h in hours:
-        text = "".join(h.xpath("./text()")).strip()
-        if text == "Lobby Hours" or not text:
-            continue
-        if text == "Drive-Up Hours":
-            break
-        if text.find("Coin") != -1:
-            continue
-        day = "".join(h.xpath("./strong/text()")).strip()
-        _tmp.append(f"{day}: {text}")
-
-    hours_of_operation = ";".join(_tmp) or "<MISSING>"
+    hours = tree.xpath("//h6[text()='Lobby Hours']/following-sibling::p[1]/text()")
+    hours = list(filter(None, [h.strip() for h in hours]))
+    hours_of_operation = ";".join(hours) or "<MISSING>"
 
     row = [
         locator_domain,

@@ -76,12 +76,12 @@ def fetch_data():
 
         street_address = loc["street"].strip()
         city = loc["city"].strip()
-        if city == "Bloomington":
-            continue
         try:
             state = loc["region"].replace("Bacău", "BC").replace("Alba", "AB").strip()
         except:
             state = "<MISSING>"
+        if city == "Bloomington":
+            state = "MN"
         try:
             zip_code = loc["zip"].strip()
         except:

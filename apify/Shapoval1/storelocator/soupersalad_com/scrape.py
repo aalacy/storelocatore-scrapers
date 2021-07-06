@@ -35,7 +35,7 @@ def fetch_data():
     out = []
 
     locator_domain = "https://soupersalad.com/"
-    api_url = "https://api.momentfeed.com/v1/analytics/api/llp.json?auth_token=WZTVOSLQVWGVSKZC&center=32.9618,-96.8292&coordinates=31.380978570622688,-94.35178300781247,34.5148372071191,-99.30661699218744&multi_account=false&page=1&pageSize=30"
+    api_url = "https://api.momentfeed.com/v1/analytics/api/llp.json?auth_token=WZTVOSLQVWGVSKZC&center=25.94080544353035,-101.48314259810199&coordinates=-14.842261128356682,-31.48408863890205,66.72387201541738,-171.48219655730193&multi_account=false&page=1&pageSize=30"
     session = SgRequests()
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
@@ -67,13 +67,14 @@ def fetch_data():
             .replace("2,", "Tuesday: ")
             .replace("3,", "Wednesday: ")
             .replace("4,", "Thursday: ")
-            .replace("5,", "Friday: ")
+            .replace("45,", ".45 ")
             .replace("6,", "Saturday: ")
             .replace("7,", "Sunday: ")
+            .replace("000", "0.00")
             .replace("00", ".00")
             .replace("30", ".30")
-            .replace(";", " ; ")
-            .replace(",", "-")
+            .replace("..", ".")
+            .replace("5,", "Friday: ")
         )
 
         row = [

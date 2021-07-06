@@ -42,22 +42,29 @@ def write_output(data):
 
 def fetch_data():
     data = []
+    streetlist = []
     pattern = re.compile(r"\s\s+")
     cleanr = re.compile(r"<[^>]+>")
     url = "https://www.howardbank.com/branch-locations"
     r = session.get(url, headers=headers, verify=False)
     soup = BeautifulSoup(r.text, "html.parser")
-    divlist = soup.select("a[href*=branch-locations]")
+    divlist = soup.find("div", {"id": "block-menu-menu-branch-location"}).findAll("a")
+
     p = 0
     for div in divlist:
+
         title = div.text
         link = div["href"]
+
         if link.replace("locations/", "locations") == "/branch-locations":
             continue
         if "https" in link:
             pass
         else:
             link = "https://www.howardbank.com" + link
+        if link in streetlist:
+            continue
+        streetlist.append(link)
         r = session.get(link, headers=headers, verify=False)
         soup = BeautifulSoup(r.text, "html.parser")
         if "commerical-loan-office" in link:
