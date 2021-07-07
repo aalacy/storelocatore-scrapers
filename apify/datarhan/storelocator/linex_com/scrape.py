@@ -1,5 +1,6 @@
 import csv
 from lxml import etree
+from time import sleep
 
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 from sgrequests import SgRequests
@@ -56,7 +57,7 @@ def fetch_data():
 
     with SgFirefox() as driver:
         driver.get(start_url)
-        driver.implicitly_wait(5)
+        sleep(5)
         driver.find_element_by_xpath(
             '//span[contains(text(), "International")]'
         ).click()
@@ -65,6 +66,7 @@ def fetch_data():
         ).click()
         for code in all_codes:
             driver.find_element_by_xpath('//input[@name="location"]').send_keys(code)
+            sleep(2)
             driver.find_element_by_xpath('//button[contains(text(), "Search")]').click()
             driver.find_element_by_xpath('//input[@name="location"]').clear()
             code_dom = etree.HTML(driver.page_source)
