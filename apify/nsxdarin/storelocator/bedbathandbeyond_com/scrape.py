@@ -80,6 +80,17 @@ def fetch_data():
                 )
             if add == "" and '<span class="c-address-street-1">' in line2:
                 add = line2.split('<span class="c-address-street-1">')[1].split("<")[0]
+                try:
+                    add = (
+                        add
+                        + " "
+                        + line2.split('<span class="c-address-street-2">')[1].split(
+                            "<"
+                        )[0]
+                    )
+                except:
+                    pass
+                add = add.strip()
                 city = line2.split('itemprop="addressLocality">')[1].split("<")[0]
                 country = "US"
                 state = line2.split('itemprop="addressRegion">')[1].split("<")[0]
@@ -107,6 +118,8 @@ def fetch_data():
             hours = "<MISSING>"
         if phone == "":
             phone = "<MISSING>"
+        city = city.replace("&#39;", "'")
+        name = name.replace("&#39;", "'")
         yield [
             website,
             loc,
