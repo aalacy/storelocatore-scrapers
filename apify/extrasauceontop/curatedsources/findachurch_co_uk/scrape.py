@@ -4,7 +4,6 @@ from sglogging import sglog
 from sgrequests import SgRequests
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 from bs4 import BeautifulSoup as bs
-import pandas as pd
 import re
 
 log = sglog.SgLogSetup().get_logger(logger_name="findchurch")
