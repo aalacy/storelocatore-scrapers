@@ -96,7 +96,10 @@ def fetch_data():
                 url, headers=headers, json=payload(code), timeout=15
             ).json()
         except Exception:
-            res = api_post(url, headers, payload(code), 15, 0, 15).json()
+            try:
+                res = api_post(url, headers, payload(code), 15, 0, 15).json()
+            except:
+                continue
 
         if not res or not res["entity"]:
             continue

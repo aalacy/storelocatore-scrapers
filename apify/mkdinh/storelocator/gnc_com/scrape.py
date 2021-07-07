@@ -103,18 +103,17 @@ def find_node(entityNum, soup):
 
 
 def retry_error_callback(retry_state):
-    logger.error(f"error fetching {retry_state.args[0]}")
     return []
 
 
-@retry(stop=stop_after_attempt(3), retry_error_callback=retry_error_callback)
+@retry(stop=stop_after_attempt(3))
 def search_zip(postal, tracker):
     url = "https://www.gnc.com/on/demandware.store/Sites-GNC2-Site/default/Stores-FindStores"
     payload = {
         "dwfrm_storelocator_countryCode": "US",
         "dwfrm_storelocator_distanceUnit": "mi",
         "dwfrm_storelocator_postalCode": postal,
-        "dwfrm_storelocator_maxdistance": "20",
+        "dwfrm_storelocator_maxdistance": "100",
         "dwfrm_storelocator_findbyzip": "Search",
     }
 

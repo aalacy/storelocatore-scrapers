@@ -130,17 +130,131 @@ def fetch_data():
                 lng,
                 hours,
             ]
-
+    caids = []
+    for x in range(40, 65, 5):
+        for y in range(-70, -120, -5):
+            logger.info(str(x) + "," + str(y))
+            url = (
+                "https://www.costco.com/AjaxWarehouseBrowseLookupView?langId=-1&storeId=10301&numOfWarehouses=50&hasGas=false&hasTires=false&hasFood=false&hasHearing=false&hasPharmacy=false&hasOptical=false&hasBusiness=false&hasPhotoCenter=&tiresCheckout=0&isTransferWarehouse=false&populateWarehouseDetails=true&warehousePickupCheckout=false&latitude="
+                + str(x)
+                + "&longitude="
+                + str(y)
+                + "&countryCode=CA"
+            )
+            session = SgRequests()
+            r = session.get(url, headers=headers)
+            for line in r.iter_lines():
+                line = str(line.decode("utf-8"))
+                if '"stlocID":' in line:
+                    items = line.split('"stlocID":')
+                    for item in items:
+                        if '"country":"CA"' in item:
+                            store = item.split('"displayName":"')[1].split('"')[0]
+                            country = "CA"
+                            website = "costco.com"
+                            typ = "Warehouse"
+                            phone = item.split('"phone":"')[1].split('"')[0]
+                            city = item.split('"city":"')[1].split('"')[0]
+                            name = city
+                            state = item.split(',"state":"')[1].split('"')[0]
+                            zc = item.split('"zipCode":"')[1].split('"')[0]
+                            add = item.split('"address1":"')[1].split('"')[0]
+                            lat = item.split('"latitude":')[1].split(",")[0]
+                            lng = item.split('"longitude":')[1].split(",")[0]
+                            loc = "<MISSING>"
+                            if state == "":
+                                state = "<MISSING>"
+                            phone = phone.replace("\t", "").strip()
+                            if phone == "":
+                                phone = "<MISSING>"
+                            hours = (
+                                item.split('"warehouseHours":["')[1]
+                                .split("]")[0]
+                                .replace('","', "; ")
+                                .replace('"', "")
+                            )
+                            if store not in caids:
+                                caids.append(store)
+                                yield [
+                                    website,
+                                    loc,
+                                    name,
+                                    add,
+                                    city,
+                                    state,
+                                    zc,
+                                    country,
+                                    store,
+                                    phone,
+                                    typ,
+                                    lat,
+                                    lng,
+                                    hours,
+                                ]
+    url = "https://www.costco.com/AjaxWarehouseBrowseLookupView?langId=-1&storeId=10301&numOfWarehouses=50&hasGas=false&hasTires=false&hasFood=false&hasHearing=false&hasPharmacy=false&hasOptical=false&hasBusiness=false&hasPhotoCenter=&tiresCheckout=0&isTransferWarehouse=false&populateWarehouseDetails=true&warehousePickupCheckout=false&latitude=53.500152587890625&longitude=-0.12623600661754608&countryCode=GB"
+    session = SgRequests()
+    r = session.get(url, headers=headers)
+    for line in r.iter_lines():
+        line = str(line.decode("utf-8"))
+        if '"stlocID":' in line:
+            items = line.split('"stlocID":')
+            for item in items:
+                if '"country":"UK"' in item:
+                    store = item.split('"displayName":"')[1].split('"')[0]
+                    country = "GB"
+                    website = "costco.com"
+                    typ = "Warehouse"
+                    phone = item.split('"phone":"')[1].split('"')[0]
+                    city = item.split('"city":"')[1].split('"')[0]
+                    name = city
+                    state = item.split(',"state":"')[1].split('"')[0]
+                    zc = item.split('"zipCode":"')[1].split('"')[0]
+                    add = item.split('"address1":"')[1].split('"')[0]
+                    lat = item.split('"latitude":')[1].split(",")[0]
+                    lng = item.split('"longitude":')[1].split(",")[0]
+                    loc = "<MISSING>"
+                    if state == "":
+                        state = "<MISSING>"
+                    phone = phone.replace("\t", "").strip()
+                    if phone == "":
+                        phone = "<MISSING>"
+                    hours = (
+                        item.split('"warehouseHours":["')[1]
+                        .split("]")[0]
+                        .replace('","', "; ")
+                        .replace('"', "")
+                    )
+                    yield [
+                        website,
+                        loc,
+                        name,
+                        add,
+                        city,
+                        state,
+                        zc,
+                        country,
+                        store,
+                        phone,
+                        typ,
+                        lat,
+                        lng,
+                        hours,
+                    ]
     countries = []
     session = SgRequests()
     url = "https://www.costco.com"
     r = session.get(url, headers=headers)
+    CFound = False
     for line in r.iter_lines():
         line = str(line.decode("utf-8"))
-        if '<div><a href="https://www.costco.' in line and ".uk" not in line:
+        if "Select country/region:</div>" in line:
+            CFound = True
+        if '<li><a href="https://www.costco.' in line and ".uk" not in line and CFound:
             countries.append(
                 line.split('href="')[1].split('"')[0] + "/store-finder/search?q=&page=0"
             )
+        if CFound and "</ul>" in line:
+            CFound = False
     for co in countries:
         logger.info(co)
         website = "costco.com"

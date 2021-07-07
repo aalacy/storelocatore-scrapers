@@ -87,8 +87,8 @@ def fetch_data():
                 str,
                 [
                     x.strip()
-                    for x in store.xpath(
-                        './/div[contains(@class,"storeAdress")]//text()'
+                    for x in store_sel.xpath(
+                        '//div[@class="details"]/ul/li[1]/span[2]/text()'
                     )
                 ],
             )
@@ -136,7 +136,6 @@ def fetch_data():
         data_res = session.post(
             "https://vpo.ca/MapStore/GetTimeZoneStoreData", headers=headers, data=data
         )
-        log.info(data_res.text)
         json_res = json.loads(data_res.text)
 
         store_info = json_res["StoreInfo"]
@@ -155,6 +154,30 @@ def fetch_data():
         for day in days:
             opens = store_info[f"Hours{day}Open"]
             closes = store_info[f"Hours{day}Close"]
+            try:
+                opens = (
+                    str(
+                        float(opens.split(" ")[0].strip().replace(":", ".")) + 6.00
+                    ).replace(".", ":")
+                    + "0 "
+                    + opens.split(" ")[1].strip()
+                )
+                if opens >= "12:00":
+                    opens = opens.replace("PM", "AM")
+            except:
+                pass
+
+            try:
+                closes = (
+                    str(
+                        float(closes.split(" ")[0].strip().replace(":", ".")) + 6.00
+                    ).replace(".", ":")
+                    + "0 "
+                    + closes.split(" ")[1].strip()
+                )
+            except:
+                pass
+
             hour_list.append(f"{day}: {opens} - {closes}")
 
         hours_of_operation = "; ".join(hour_list)
