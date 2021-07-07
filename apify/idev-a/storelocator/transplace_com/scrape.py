@@ -72,7 +72,7 @@ def fetch_data():
                         street_address=street_address,
                         city=addr.city,
                         state=addr.state,
-                        zip_postal=addr.postcode,
+                        zip_postal=addr.postcode.replace('CP. ','').replace('CP ', ''),
                         country_code=country_code,
                         phone=phone,
                         locator_domain=locator_domain,
