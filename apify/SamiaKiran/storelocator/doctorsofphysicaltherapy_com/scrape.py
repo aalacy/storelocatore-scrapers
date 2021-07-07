@@ -24,7 +24,6 @@ def fetch_data():
         r = session.get(url, headers=headers)
         soup = BeautifulSoup(r.text, "html.parser")
         linklist = soup.findAll("div", {"class": "col-md-3"})
-        print(len(linklist))
         for link in linklist:
             try:
                 page_url = link.find("a")["href"]
