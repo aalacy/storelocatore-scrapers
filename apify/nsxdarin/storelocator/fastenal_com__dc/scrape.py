@@ -113,6 +113,15 @@ def fetch_data():
                     hours = hrs
                 else:
                     hours = hours + "; " + hrs
+            if HFound and "</p>" in line2 and "<p>" not in line2:
+                hrs = (
+                    hrs
+                    + " "
+                    + line2.split("</p>")[0]
+                    .strip()
+                    .replace("  ", " ")
+                    .replace("\t", "")
+                )
         if country == "CA" or country == "US":
             if phone == "":
                 phone = "<MISSING>"
@@ -124,7 +133,6 @@ def fetch_data():
             add = add.replace("&#039;", "'").replace("&amp;", "&")
             if "; For" in hours:
                 hours = hours.split("; For")[0]
-            hours = hours.replace("Will Call", "").strip()
             hours = hours.replace("Open to the public", "").strip()
             if "; Off" in hours:
                 hours = hours.split("; Off")[0]
@@ -204,6 +212,14 @@ def fetch_data():
                 hours = hours.split("; Univ")[0]
             if "; Trav" in hours:
                 hours = hours.split("; Trav")[0]
+            if "Due to Covid" in hours:
+                hours = hours.split("Due to")[0].strip()
+            if "/ W" in hours:
+                hours = hours.split("/ W")[0].strip()
+            if ";" not in hours and ":" not in hours and "0" not in hours:
+                hours = "<MISSING>"
+            if " (" in hours:
+                hours = hours.split(" (")[0]
             if "MN100" not in name:
                 yield [
                     website,
