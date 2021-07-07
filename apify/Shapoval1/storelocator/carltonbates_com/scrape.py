@@ -63,11 +63,15 @@ def fetch_data():
             country_code = "US"
             city = adr.split(",")[0].strip()
             store_number = "<MISSING>"
-            map_link = "".join(d.xpath(".//a/@href"))
+            text = "".join(d.xpath(".//a/@href"))
             try:
-                latitude = map_link.split("!3d")[1].strip().split("!")[0].strip()
-                longitude = map_link.split("!4d")[1].strip().split("!")[0].strip()
-            except:
+                if text.find("ll=") != -1:
+                    latitude = text.split("ll=")[1].split(",")[0]
+                    longitude = text.split("ll=")[1].split(",")[1].split("&")[0]
+                else:
+                    latitude = text.split("@")[1].split(",")[0]
+                    longitude = text.split("@")[1].split(",")[1]
+            except IndexError:
                 latitude, longitude = "<MISSING>", "<MISSING>"
             phone = "".join(ad[2])
             if phone.find("Phone:") == -1:

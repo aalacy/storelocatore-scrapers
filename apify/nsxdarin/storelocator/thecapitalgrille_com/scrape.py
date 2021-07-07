@@ -74,12 +74,12 @@ def fetch_location(loc, retry_count=0):
     try:
         with SgChrome(is_headless=True) as driver:
             driver.get(loc)
-            sleep(randint(5, 7))
+            sleep(randint(10, 15))
 
             text = driver.page_source
 
             if re.search("access denied", re.escape(text), re.IGNORECASE):
-                if retry_count > 3:
+                if retry_count > 5:
                     raise Exception()
 
                 return fetch_location(loc, retry_count + 1)
