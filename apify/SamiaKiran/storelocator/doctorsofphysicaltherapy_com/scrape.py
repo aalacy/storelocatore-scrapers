@@ -23,14 +23,12 @@ def fetch_data():
         url = "https://doctorsofphysicaltherapy.com/our-locations/"
         r = session.get(url, headers=headers)
         soup = BeautifulSoup(r.text, "html.parser")
-        linklist = soup.findAll("div", {"class": "row"})[1].findAll("p")
-        for link in linklist[4:-1]:
+        linklist = soup.findAll("div", {"class": "col-md-3"})
+        for link in linklist:
             try:
                 page_url = link.find("a")["href"]
                 log.info(page_url)
                 r = session.get(page_url, headers=headers)
-                if r.status_code == 404:
-                    continue
                 soup = BeautifulSoup(r.text, "html.parser")
                 temp = soup.find("div", {"class": "wpsl-locations-details"})
                 location_name = temp.find("strong").text
