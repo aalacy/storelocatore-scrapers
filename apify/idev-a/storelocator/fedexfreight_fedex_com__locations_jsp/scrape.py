@@ -66,7 +66,6 @@ def fetch_data():
                                 sp1.find("", string=re.compile(r"Phone"))
                                 .split(":")[-1]
                                 .split("Fax")[0]
-                                .replace("..", "")
                                 .strip()
                             )
                             if not phone:
@@ -87,7 +86,7 @@ def fetch_data():
                                 addr[1].split(",")[1].strip().split(" ")[1:]
                             ),
                             country_code=cc,
-                            phone=phone,
+                            phone=phone.replace("..", ""),
                             locator_domain=locator_domain,
                         )
 

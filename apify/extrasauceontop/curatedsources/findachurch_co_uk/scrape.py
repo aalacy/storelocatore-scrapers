@@ -1,43 +1,25 @@
-#  The address section for this site is inconsistent, with a ton of locations missing everything except for latitude and longitude.
-
-from sgrequests import SgRequests
-from bs4 import BeautifulSoup as bs
-import re
-import pandas as pd
-from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
+from sgscrape import simple_scraper_pipeline as sp
+from sgscrape.pause_resume import CrawlState
 from sglogging import sglog
+from sgrequests import SgRequests
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
+from bs4 import BeautifulSoup as bs
+import pandas as pd
+import re
 
 log = sglog.SgLogSetup().get_logger(logger_name="findchurch")
 
-search = DynamicGeoSearch(country_codes=[SearchableCountries.BRITAIN])
-session = SgRequests(retry_behavior=False)
-
-# There are two functions that get data (get_urls, and get_data). 1# means the data point is grabbed in the first function, 2#'s in the second function
-locator_domains = []
-page_urls = []
-location_names = []
-street_addresses = []
-citys = []
-states = []
-zips = []
-country_codes = []
 store_numbers = []
-phones = []
-location_types = []
+location_names = []
+citys = []
 latitudes = []
 longitudes = []
-hours_of_operations = []
-
-headers_list = [
-    {
-        "user-agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0"
-    },
-    {"User-Agent": "PostmanRuntime/7.19.0"},
-]
+page_urls = []
+country_codes = []
 
 
-# Here use SgZip to get a list of all location URLs, and other data points
-def get_urls():
+def get_data():
+
     x = 0
     search = DynamicGeoSearch(country_codes=[SearchableCountries.BRITAIN])
     session = SgRequests(retry_behavior=False)
@@ -67,7 +49,6 @@ def get_urls():
         locations = soup.find_all("row")
 
         for location in locations:
-            locator_domains.append("findachurch.co.uk")
             store_number = location["id"]
             location_name = location["title"]
             city = location["town"]
@@ -101,26 +82,27 @@ def get_urls():
         }
     )
 
-    return df
+    headers = {"User-Agent": "PostmanRuntime/7.19.0"}
 
-
-# Here you iterate through the location URLs to grab the missing data fields for each location
-def get_data(df):
-
+    # Here you iterate through the location URLs to grab the missing data fields for each location
     # Some data cleaning to remove duplicates and get a list of the page urls
     df = df.drop_duplicates()
     page_url_list = df["page_url"].to_list()
     x = 0
+
+    crawl_state = CrawlState()
+
     session = SgRequests(retry_behavior=False)
 
     # Iterate through the URLs
     for url in page_url_list:
+        crawl_state.save_state()
         log.info(url)
         x = x + 1
 
         try:
 
-            response = session.get(url, headers=headers_list[1], timeout=5).text
+            response = session.get(url, headers=headers, timeout=5).text
 
         except Exception:
             session = SgRequests(retry_behavior=False)
@@ -129,12 +111,26 @@ def get_data(df):
             "awaiting verification" in response
             and "The contact data we hold" in response
         ):
-            street_addresses.append("<MISSING>")
-            states.append("<MISSING>")
-            zips.append("<MISSING>")
-            phones.append("<MISSING>")
-            location_types.append("<MISSING>")
-            hours_of_operations.append("<MISSING>")
+            location_name = df.loc[df["page_url"] == url, "location_name"]
+            latitude = df.loc[df["page_url"] == url, "latitude"]
+            longitude = df.loc[df["page_url"] == url, "longitude"]
+            city = df.loc[df["page_url"] == url, "city"]
+            store_number = df.loc[df["page_url"] == url, "store_number"]
+
+            yield {
+                "page_url": url,
+                "location_name": location_name,
+                "latitude": latitude,
+                "longitude": longitude,
+                "city": city,
+                "store_number": store_number,
+                "street_address": "",
+                "state": "",
+                "zip": "",
+                "phone": "",
+                "location_type": "",
+                "hours": "",
+            }
 
             continue
 
@@ -150,17 +146,32 @@ def get_data(df):
 
         except Exception:
             session = SgRequests(retry_behavior=False)
-            response = session.get(url, headers=headers_list[0]).text
+            response = session.get(url, headers=headers).text
             if (
                 "awaiting verification" in response
                 and "The contact data we hold" in response
             ):
-                street_addresses.append("<MISSING>")
-                states.append("<MISSING>")
-                zips.append("<MISSING>")
-                phones.append("<MISSING>")
-                location_types.append("<MISSING>")
-                hours_of_operations.append("<MISSING>")
+
+                location_name = df.loc[df["page_url"] == url, "location_name"]
+                latitude = df.loc[df["page_url"] == url, "latitude"]
+                longitude = df.loc[df["page_url"] == url, "longitude"]
+                city = df.loc[df["page_url"] == url, "city"]
+                store_number = df.loc[df["page_url"] == url, "store_number"]
+
+                yield {
+                    "page_url": url,
+                    "location_name": location_name,
+                    "latitude": latitude,
+                    "longitude": longitude,
+                    "city": city,
+                    "store_number": store_number,
+                    "street_address": "",
+                    "state": "",
+                    "zip": "",
+                    "phone": "",
+                    "location_type": "",
+                    "hours": "",
+                }
 
                 continue
 
@@ -234,51 +245,78 @@ def get_data(df):
         except Exception:
             hours = "<MISSING>"
 
-        street_addresses.append(address)
-        states.append(state)
-        zips.append(zipp)
-        phones.append(phone)
-        location_types.append(location_type)
-        hours_of_operations.append(hours)
+        location_name = df.loc[df["page_url"] == url, "location_name"]
+        latitude = df.loc[df["page_url"] == url, "latitude"]
+        longitude = df.loc[df["page_url"] == url, "longitude"]
+        city = df.loc[df["page_url"] == url, "city"]
+        store_number = df.loc[df["page_url"] == url, "store_number"]
+
+        yield {
+            "page_url": url,
+            "location_name": location_name,
+            "latitude": latitude,
+            "longitude": longitude,
+            "city": city,
+            "store_number": store_number,
+            "street_address": address,
+            "state": state,
+            "zip": zipp,
+            "phone": phone,
+            "location_type": location_type,
+            "hours": hours,
+        }
 
 
-df = get_urls()
+def scrape():
 
-data = get_data(df)
+    field_defs = sp.SimpleScraperPipeline.field_definitions(
+        locator_domain=sp.ConstantField("findachurch.co.uk"),
+        page_url=sp.MappingField(
+            mapping=["page_url"],
+        ),
+        location_name=sp.MappingField(
+            mapping=["location_name"],
+        ),
+        latitude=sp.MappingField(
+            mapping=["latitude"],
+        ),
+        longitude=sp.MappingField(
+            mapping=["longitude"],
+        ),
+        street_address=sp.MultiMappingField(
+            mapping=["address"],
+        ),
+        city=sp.MappingField(
+            mapping=["city"],
+        ),
+        state=sp.MappingField(
+            mapping=["state"],
+        ),
+        zipcode=sp.MultiMappingField(
+            mapping=["zip"],
+        ),
+        country_code=sp.ConstantField("UK"),
+        phone=sp.MappingField(
+            mapping=["phone"],
+        ),
+        store_number=sp.MappingField(
+            mapping=["locationID"],
+        ),
+        hours_of_operation=sp.MappingField(
+            mapping=["hours"],
+        ),
+        location_type=sp.MappingField(
+            mapping=["locationType"],
+        ),
+    )
 
-df = pd.DataFrame(
-    {
-        "locator_domain": locator_domains[: len(street_addresses)],
-        "page_url": page_urls[: len(street_addresses)],
-        "location_name": location_names[: len(street_addresses)],
-        "street_address": street_addresses,
-        "city": citys[: len(street_addresses)],
-        "state": states[: len(street_addresses)],
-        "zip": zips[: len(street_addresses)],
-        "store_number": store_numbers[: len(street_addresses)],
-        "phone": phones[: len(street_addresses)],
-        "latitude": latitudes[: len(street_addresses)],
-        "longitude": longitudes[: len(street_addresses)],
-        "hours_of_operation": hours_of_operations[: len(street_addresses)],
-        "country_code": country_codes[: len(street_addresses)],
-        "location_type": location_types[: len(street_addresses)],
-    }
-)
+    pipeline = sp.SimpleScraperPipeline(
+        scraper_name="Crawler",
+        data_fetcher=get_data,
+        field_definitions=field_defs,
+        log_stats_interval=15,
+    )
+    pipeline.run()
 
-df = df.fillna("<MISSING>")
-df = df.replace(r"^\s*$", "<MISSING>", regex=True)
 
-df["dupecheck"] = (
-    df["location_name"]
-    + df["street_address"]
-    + df["city"]
-    + df["state"]
-    + df["location_type"]
-)
-
-df = df.drop_duplicates(subset=["dupecheck"])
-df = df.drop(columns=["dupecheck"])
-df = df.replace(r"^\s*$", "<MISSING>", regex=True)
-df = df.fillna("<MISSING>")
-
-df.to_csv("data.csv", index=False)
+scrape()
