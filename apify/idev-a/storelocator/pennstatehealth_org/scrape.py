@@ -92,7 +92,9 @@ def fetch_data():
                                     yield SgRecord(
                                         page_url=page_url,
                                         store_number=_["location_id"],
-                                        location_name=_.h3.text.split("-")[0].strip(),
+                                        location_name=_.h3.text.split("-")[0]
+                                        .split("–")[0]
+                                        .strip(),
                                         street_address=street_address,
                                         city=_.select_one("span.locality").text.strip(),
                                         state=_.select_one(

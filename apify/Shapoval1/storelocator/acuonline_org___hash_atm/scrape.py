@@ -1,7 +1,7 @@
 import csv
-from lxml import html
-from lxml import etree
+from concurrent import futures
 from sgrequests import SgRequests
+from sgzip.static import static_coordinate_list, SearchableCountries
 
 
 def write_output(data):
@@ -33,285 +33,111 @@ def write_output(data):
             writer.writerow(row)
 
 
+def get_data(coord):
+    rows = []
+    lat, lng = coord
+    locator_domain = "https://www.citybbq.com/"
+
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:89.0) Gecko/20100101 Firefox/89.0",
+        "Accept": "*/*",
+        "Accept-Language": "ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3",
+        "Content-Type": "application/json; charset=UTF-8",
+        "Origin": "https://03919locator.wave2.io",
+        "Connection": "keep-alive",
+        "Referer": "https://03919locator.wave2.io/",
+        "TE": "Trailers",
+    }
+
+    data = (
+        '{"Latitude":"'
+        + lat
+        + '","Longitude":"'
+        + lng
+        + '","Address":"","City":"","State":"","Zipcode":"","Country":"","Action":"initload","ActionOverwrite":"","Filters":"FCS,FIITM,FIATM,ATMSF,ATMDP,ESC,"}'
+    )
+
+    session = SgRequests()
+
+    r = session.post(
+        "https://locationapi.wave2.io/api/client/getlocations",
+        headers=headers,
+        data=data,
+    )
+    js = r.json()["Features"]
+    for j in js:
+        a = j.get("Properties")
+        page_url = "https://www.acuonline.org/home/resources/locations"
+
+        street_address = "".join(a.get("Address")).capitalize() or "<MISSING>"
+        city = a.get("City") or "<MISSING>"
+        state = a.get("State") or "<MISSING>"
+        postal = a.get("Postalcode") or "<MISSING>"
+        country_code = a.get("Country") or "US"
+        store_number = "<MISSING>"
+        phone = a.get("Phone") or "<MISSING>"
+        latitude = a.get("Latitude") or "<MISSING>"
+        longitude = a.get("Longitude") or "<MISSING>"
+        location_type = j.get("LocationFeatures").get("LocationType")
+        location_name = a.get("LocationName")
+        days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+        tmp = []
+        for d in days:
+            day = d
+            try:
+                opens = a.get(f"{d}Open")
+                closes = a.get(f"{d}Close")
+                line = f"{day} {opens} - {closes}"
+                if opens == closes:
+                    line = "<MISSING>"
+            except:
+                line = "<MISSING>"
+            tmp.append(line)
+        hours_of_operation = "; ".join(tmp)
+        if hours_of_operation.count("<MISSING>") == 7:
+            hours_of_operation = "<MISSING>"
+        hours_of_operation = hours_of_operation.replace("Closed -", "Closed").strip()
+        if hours_of_operation.count("Closed") == 7:
+            hours_of_operation = "Closed"
+        if hours_of_operation.find("<MISSING>") != -1:
+            hours_of_operation = "<MISSING>"
+
+        row = [
+            locator_domain,
+            page_url,
+            location_name,
+            street_address,
+            city,
+            state,
+            postal,
+            country_code,
+            store_number,
+            phone,
+            location_type,
+            latitude,
+            longitude,
+            hours_of_operation,
+        ]
+        rows.append(row)
+
+    return rows
+
+
 def fetch_data():
     out = []
+    s = set()
+    coords = static_coordinate_list(radius=25, country_code=SearchableCountries.USA)
 
-    locator_domain = "https://www.acuonline.org/"
-    api_url = "https://acuonline.locatorsearch.com/GetItems.aspx"
-    session = SgRequests()
-
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:89.0) Gecko/20100101 Firefox/89.0",
-        "Accept": "*/*",
-        "Accept-Language": "ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3",
-        "Content-type": "application/x-www-form-urlencoded",
-        "Origin": "https://acuonline.locatorsearch.com",
-        "Connection": "keep-alive",
-        "Referer": "https://acuonline.locatorsearch.com/index.aspx",
-    }
-
-    data = {
-        "lat": "33.749982679351234",
-        "lng": "-84.39665",
-        "searchby": "FCS|",
-        "SearchKey": "",
-        "rnd": "1623238994268",
-    }
-
-    r = session.get(api_url, headers=headers, data=data)
-    tree = etree.fromstring(r.content)
-    div = tree.xpath("//marker")
-    for d in div:
-
-        page_url = "https://www.acuonline.org/home/resources/locations"
-        location_name = (
-            "".join(
-                d.xpath('.//label[text()="Address"]/following-sibling::title[1]/text()')
-            )
-            .replace("<br>", " ")
-            .strip()
-        )
-        location_type = "ACU Branches"
-
-        street_address = "".join(d.xpath(".//add1/text()"))
-        ad = "".join(d.xpath(".//add2/text()")).replace(",,", ",")
-        if ad.find("<") != -1:
-            ad = ad.split("<")[0].strip()
-        phone = "".join(d.xpath(".//add2/text()")).split("<br>")[1:]
-        phone = "".join(phone[-1]).replace("<b>", "").replace("</b>", "").strip()
-
-        state = ad.split(",")[1].split()[0].strip()
-        postal = ad.split(",")[1].split()[1].strip()
-        city = ad.split(",")[0].strip()
-        country_code = "US"
-        store_number = "<MISSING>"
-        latitude = "".join(d.xpath(".//@lat"))
-        longitude = "".join(d.xpath(".//@lng"))
-        hours = "".join(d.xpath(".//contents//text()"))
-        ho = html.fromstring(hours)
-        hours_of_operation = " ".join(ho.xpath("//table//tr/td/text()")) or "<MISSING>"
-        if hours_of_operation.count("Temporarily Closed") == 5:
-            hours_of_operation = "Temporarily Closed"
-        hours_of_operation = (
-            hours_of_operation.replace("Lobby & Drive Thru:", "")
-            .replace("Live Teller ITM:", "")
-            .replace("| Live Teller ITM: 7:00 - 7:00", "")
-            .replace("Lobby:", "")
-            .replace("|  7:00 - 7:00", "")
-            .replace(" | ITM Drive-Thru: 7:00 - 7:00", "")
-            .replace(" |  9:00 - 1:00", "")
-            .strip()
-        )
-        hours_of_operation = hours_of_operation.replace("	 ", " ")
-
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
-
-    locator_domain = "https://www.acuonline.org/"
-    api_url = "https://acuonline.locatorsearch.com/GetItems.aspx"
-    session = SgRequests()
-
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:89.0) Gecko/20100101 Firefox/89.0",
-        "Accept": "*/*",
-        "Accept-Language": "ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3",
-        "Content-type": "application/x-www-form-urlencoded",
-        "Origin": "https://acuonline.locatorsearch.com",
-        "Connection": "keep-alive",
-        "Referer": "https://acuonline.locatorsearch.com/index.aspx",
-    }
-
-    data = {
-        "lat": "33.749982679351234",
-        "lng": "-84.39665",
-        "searchby": "ATMSF|",
-        "SearchKey": "",
-        "rnd": "1623238897844",
-    }
-
-    r = session.get(api_url, headers=headers, data=data)
-    tree = etree.fromstring(r.content)
-    div = tree.xpath("//marker")
-    for d in div:
-
-        page_url = "https://www.acuonline.org/home/resources/locations"
-        location_name = (
-            "".join(
-                d.xpath('.//label[text()="Address"]/following-sibling::title[1]/text()')
-            )
-            .replace("<br>", " ")
-            .strip()
-        )
-        location_type = "Surcharge-Free ATMs"
-        street_address = "".join(d.xpath(".//add1/text()"))
-        ad = "".join(d.xpath(".//add2/text()")).replace(",,", ",")
-        if ad.find("<") != -1:
-            ad = ad.split("<")[0].strip()
-        phone = "".join(d.xpath(".//add2/text()")).replace(",,", ",")
-        try:
-            phone = (
-                phone.split("<b>")[1]
-                .split("</b>")[0]
-                .replace("<b>", "")
-                .replace("</b>", "")
-                .strip()
-            )
-        except:
-            phone = "<MISSING>"
-        if phone.find("Restricted Access") != -1:
-            phone = "<MISSING>"
-        state = ad.split(",")[1].split()[0].strip()
-        postal = ad.split(",")[1].split()[1].strip()
-        city = ad.split(",")[0].strip()
-        country_code = "US"
-        store_number = "<MISSING>"
-        latitude = "".join(d.xpath(".//@lat"))
-        longitude = "".join(d.xpath(".//@lng"))
-        hours = "".join(d.xpath(".//contents//text()"))
-        ho = html.fromstring(hours)
-        hours_of_operation = " ".join(ho.xpath("//table//tr/td/text()")) or "<MISSING>"
-        if hours_of_operation.count("Temporarily Closed") == 5:
-            hours_of_operation = "Temporarily Closed"
-        hours_of_operation = (
-            hours_of_operation.replace("Lobby & Drive Thru:", "")
-            .replace("Live Teller ITM:", "")
-            .replace("| Live Teller ITM: 7:00 - 7:00", "")
-            .replace("Lobby:", "")
-            .replace("|  7:00 - 7:00", "")
-            .replace(" | ITM Drive-Thru: 7:00 - 7:00", "")
-            .replace(" |  9:00 - 1:00", "")
-            .strip()
-        )
-        hours_of_operation = hours_of_operation.replace("	 ", " ")
-
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
-
-    locator_domain = "https://www.acuonline.org/"
-    api_url = "https://acuonline.locatorsearch.com/GetItems.aspx"
-    session = SgRequests()
-
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:89.0) Gecko/20100101 Firefox/89.0",
-        "Accept": "*/*",
-        "Accept-Language": "ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3",
-        "Content-type": "application/x-www-form-urlencoded",
-        "Origin": "https://acuonline.locatorsearch.com",
-        "Connection": "keep-alive",
-        "Referer": "https://acuonline.locatorsearch.com/index.aspx",
-    }
-
-    data = {
-        "lat": "33.97859738150809",
-        "lng": "-84.48576499999999",
-        "searchby": "ESC|",
-        "SearchKey": "",
-        "rnd": "1623238676365",
-    }
-
-    r = session.get(api_url, headers=headers, data=data)
-    tree = etree.fromstring(r.content)
-    div = tree.xpath("//marker")
-    for d in div:
-
-        page_url = "https://www.acuonline.org/home/resources/locations"
-        location_name = (
-            "".join(
-                d.xpath('.//label[text()="Address"]/following-sibling::title[1]/text()')
-            )
-            .replace("<br>", " ")
-            .strip()
-        )
-        location_type = "Shared Branching"
-
-        street_address = "".join(d.xpath(".//add1/text()"))
-        ad = "".join(d.xpath(".//add2/text()")).replace(",,", ",")
-        if ad.find("<") != -1:
-            ad = ad.split("<")[0].strip()
-        phone = "".join(d.xpath(".//add2/text()")).replace(",,", ",")
-        try:
-            phone = (
-                phone.split("<b>")[1]
-                .split("</b>")[0]
-                .replace("<b>", "")
-                .replace("</b>", "")
-                .strip()
-            )
-        except:
-            phone = "<MISSING>"
-        if phone.find("Restricted Access") != -1:
-            phone = "<MISSING>"
-        state = ad.split(",")[1].split()[0].strip()
-        postal = ad.split(",")[1].split()[1].strip()
-        city = ad.split(",")[0].strip()
-        country_code = "US"
-        store_number = "<MISSING>"
-        latitude = "".join(d.xpath(".//@lat"))
-        longitude = "".join(d.xpath(".//@lng"))
-        hours = "".join(d.xpath(".//contents//text()"))
-        ho = html.fromstring(hours)
-        hours_of_operation = " ".join(ho.xpath("//table//tr/td/text()")) or "<MISSING>"
-        if hours_of_operation.count("Temporarily Closed") == 5:
-            hours_of_operation = "Temporarily Closed"
-        hours_of_operation = (
-            hours_of_operation.replace("Lobby & Drive Thru:", "")
-            .replace("Live Teller ITM:", "")
-            .replace("| Live Teller ITM: 7:00 - 7:00", "")
-            .replace("Lobby:", "")
-            .replace("|  7:00 - 7:00", "")
-            .replace(" | ITM Drive-Thru: 7:00 - 7:00", "")
-            .replace(" |  9:00 - 1:00", "")
-            .strip()
-        )
-        hours_of_operation = hours_of_operation.replace("	 ", " ")
-
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
+    with futures.ThreadPoolExecutor(max_workers=7) as executor:
+        future_to_url = {executor.submit(get_data, coord): coord for coord in coords}
+        for future in futures.as_completed(future_to_url):
+            rows = future.result()
+            for row in rows:
+                loc_name = row[2]
+                loc_type = row[10]
+                if loc_name not in s and loc_type not in s:
+                    s.add(loc_name)
+                    out.append(row)
 
     return out
 

@@ -19,8 +19,8 @@ def fetch_data():
         for _ in locations:
             page_url = locator_domain + _.select_one("a.seeDetails")["href"]
             street_address = _["data-address1"]
-            if _["data-address1"]:
-                street_address += " " + _["data-address1"]
+            if _["data-address2"]:
+                street_address += " " + _["data-address2"]
             location_type = ["branch"]
             if _.select_one("span.hasATM"):
                 location_type.append(_.select_one("span.hasATM").text.strip())

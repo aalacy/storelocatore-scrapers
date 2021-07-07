@@ -42,7 +42,15 @@ def fetch_data():
 
         location_type = "<MISSING>"
 
-        hours_of_operation = "<MISSING>"
+        hours_list = []
+        hours = store.xpath("table/tbody/tr/td[1]")
+        for hour in hours:
+            day = "".join(hour.xpath("strong/text()")).strip()
+            if len(day) > 0:
+                time = "".join(hour.xpath("text()")).strip()
+                hours_list.append(day + ":" + time)
+
+        hours_of_operation = "; ".join(hours_list).strip()
 
         map_link = "".join(
             store.xpath('p/a[contains(text(),"View Map")]/@href')
