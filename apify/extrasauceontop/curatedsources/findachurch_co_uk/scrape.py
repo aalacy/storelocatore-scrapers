@@ -9,6 +9,7 @@ import re
 
 log = sglog.SgLogSetup().get_logger(logger_name="findchurch")
 
+
 def get_data():
     crawl_state = CrawlState()
     headers = {"User-Agent": "PostmanRuntime/7.19.0"}
@@ -53,7 +54,12 @@ def get_data():
                     + url_city
                     + "/"
                     + store_number
-                    + ".htm?lat=" + str(latitude) + "&lon=" + str(longitude) + "&name=" + location_name.replace(" ", "---")
+                    + ".htm?lat="
+                    + str(latitude)
+                    + "&lon="
+                    + str(longitude)
+                    + "&name="
+                    + location_name.replace(" ", "---")
                 )
                 search.found_location_at(latitude, longitude)
                 crawl_state.push_request(SerializableRequest(url=page_url))
@@ -89,7 +95,6 @@ def get_data():
             and "The contact data we hold" in response
         ):
 
-
             yield {
                 "page_url": url,
                 "location_name": location_name,
@@ -102,7 +107,7 @@ def get_data():
                 "zip": zipp,
                 "phone": phone,
                 "location_type": location_type,
-                "hours": hours
+                "hours": hours,
             }
 
         soup = bs(response, "html.parser")
@@ -135,7 +140,7 @@ def get_data():
                     "zip": zipp,
                     "phone": phone,
                     "location_type": location_type,
-                    "hours": hours
+                    "hours": hours,
                 }
 
                 continue
@@ -222,17 +227,15 @@ def get_data():
             "zip": zipp,
             "phone": phone,
             "location_type": location_type,
-            "hours": hours
+            "hours": hours,
         }
 
+
 def scrape():
-    
+
     field_defs = sp.SimpleScraperPipeline.field_definitions(
         locator_domain=sp.ConstantField("findachurch.co.uk"),
-        page_url=sp.MappingField(
-            mapping=["page_url"],
-            part_of_record_identity=True
-        ),
+        page_url=sp.MappingField(mapping=["page_url"], part_of_record_identity=True),
         location_name=sp.MappingField(
             mapping=["location_name"],
         ),
@@ -243,37 +246,20 @@ def scrape():
             mapping=["longitude"],
         ),
         street_address=sp.MultiMappingField(
-            mapping=["street_address"],
-            is_required=False
+            mapping=["street_address"], is_required=False
         ),
         city=sp.MappingField(
             mapping=["city"],
         ),
-        state=sp.MappingField(
-            mapping=["state"],
-            is_required=False
-        ),
-        zipcode=sp.MultiMappingField(
-            mapping=["zip"],
-            is_required=False
-        ),
+        state=sp.MappingField(mapping=["state"], is_required=False),
+        zipcode=sp.MultiMappingField(mapping=["zip"], is_required=False),
         country_code=sp.ConstantField("UK"),
-        phone=sp.MappingField(
-            mapping=["phone"],
-            is_required=False
-        ),
+        phone=sp.MappingField(mapping=["phone"], is_required=False),
         store_number=sp.MappingField(
-            mapping=["store_number"],
-            part_of_record_identity=True
+            mapping=["store_number"], part_of_record_identity=True
         ),
-        hours_of_operation=sp.MappingField(
-            mapping=["hours"],
-            is_required=False
-        ),
-        location_type=sp.MappingField(
-            mapping=["location_type"],
-            is_required=False
-        ),
+        hours_of_operation=sp.MappingField(mapping=["hours"], is_required=False),
+        location_type=sp.MappingField(mapping=["location_type"], is_required=False),
     )
 
     pipeline = sp.SimpleScraperPipeline(
@@ -283,5 +269,6 @@ def scrape():
         log_stats_interval=15,
     )
     pipeline.run()
+
 
 scrape()
