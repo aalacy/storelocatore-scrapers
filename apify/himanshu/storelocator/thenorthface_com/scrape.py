@@ -78,7 +78,16 @@ def fetch_data():
                 page_url = (
                     "https://www.thenorthface.com/en_ca/utility/store-locator.html"
                 )
-
+            storekey = store_data["clientkey"]
+            if storekey and "USA" in "".join(storekey):
+                page_url = (
+                    "https://stores.thenorthface.com/"
+                    + "".join(store_data["state"]).lower()
+                    + "/"
+                    + "".join(store_data["city"]).replace(" ", "-").lower()
+                    + "/"
+                    + storekey
+                )
             store.append(page_url)
             location_name = store_data["name"]
             store.append(location_name)
