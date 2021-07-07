@@ -139,6 +139,8 @@ def fetch_location(loc, retry_count=0):
                 lat = "33.63713300"
                 lng = "-111.92410500"
                 hours = "Mon-Thu: 11:00AM - 9:00PM; Fri: 11:00AM - 10:00PM; Sat: 5:00PM - 10:00PM; Sun: 5:00PM - 9:00PM"
+            if "austin/austin/8053" in loc:
+                hours = "Mon-Thu: 11:00AM - 9:00PM; Fri: 11:00AM - 10:00PM; Sat: 5:00PM - 10:00PM; Sun: 5:00PM - 9:00PM"
             if "tn/memphis/memphis/8051" in loc:
                 hours = "Mon-Thu: 11:30AM - 9:00PM; Fri: 11:30AM - 10:00PM; Sat: 5:00PM - 10:00PM; Sun: 4:00PM - 9:00PM"
             if "/jacksonville/jacksonville/8029" in loc:
@@ -158,6 +160,11 @@ def fetch_location(loc, retry_count=0):
                 state = "MD"
                 add = "5310 Western Ave"
                 phone = "(301) 718-7812"
+                hours = "Mon-Fri: 11:30AM - 10:00PM; Sat: 12:00PM - 11:00PM; Sun: 4:00PM - 9:00PM"
+            if "va/fairfax/fairfax/8068" in loc:
+                hours = "Mon-Fri: 11:30AM - 10:00PM; Sat: 5:00PM - 11:00PM; Sun: 5:00PM - 9:00PM"
+            if "yndhurst/lyndhurst/8060" in loc:
+                hours = "Mon-Thu: 11:30AM - 9:00PM; Fri: 11:30AM - 10:00PM; Sat: 4:00PM - 10:00PM; Sun: 4:00PM - 9:00PM"
             if "charlotte/charlotte/8011" in loc:
                 name = "Charlotte"
                 phone = "(704) 348-1400"

@@ -67,7 +67,10 @@ def fetch_data():
             zip_code = location_soup.find("span", {"itemprop": "postalCode"}).text
         except:
             continue
-        phone = location_soup.find("span", {"itemprop": "telephone"}).text
+        try:
+            phone = location_soup.find("span", {"itemprop": "telephone"}).text
+        except:
+            phone = "<MISSING>"
         if location_soup.find("div", {"class": "hours"}) is None:
             location_hours = "<MISSING>"
         else:

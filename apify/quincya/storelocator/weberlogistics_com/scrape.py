@@ -1,4 +1,5 @@
 import csv
+import re
 
 from bs4 import BeautifulSoup
 
@@ -76,8 +77,21 @@ def fetch_data():
 
         location_name = base.h1.text.strip()
 
-        latitude = "<INACCESSIBLE>"
-        longitude = "<INACCESSIBLE>"
+        try:
+            map_link = base.iframe["src"]
+            req = session.get(map_link, headers=headers)
+            map_str = BeautifulSoup(req.text, "lxml")
+            geo = (
+                re.findall(r"\[[0-9]{2}\.[0-9]+,-[0-9]{2,3}\.[0-9]+\]", str(map_str))[0]
+                .replace("[", "")
+                .replace("]", "")
+                .split(",")
+            )
+            latitude = geo[0]
+            longitude = geo[1]
+        except:
+            latitude = "<MISSING>"
+            longitude = "<MISSING>"
 
         for i in links:
             try:
