@@ -17,7 +17,6 @@ def fetch_data():
         driver.get("https://www.miravalresorts.com/resorts/")
         soup = BeautifulSoup(driver.page_source, "html.parser")
         loclist = soup.findAll("article")
-        print(loclist)
         for loc in loclist:
             page_url = loc.find("a")["href"]
             log.info(page_url)
