@@ -52,6 +52,7 @@ def fetch_data():
                 if '"brand":{"key":"' in item:
                     phone = "<MISSING>"
                     CS = False
+                    hours = "<MISSING>"
                     name = item.split('"name":"')[1].split('"')[0]
                     loc = (
                         "https://www.hyatt.com"
@@ -96,12 +97,9 @@ def fetch_data():
                                 and "Opening 20" in line2
                             ):
                                 CS = True
-                            if ">Coming Soon<" in line2:
+                            if ">Coming " in line2:
                                 CS = True
-                            if (
-                                "and beyond" in line2
-                                and "Now accepting reservations" in line2
-                            ):
+                            if ">Opening " in line2:
                                 CS = True
                             if '"telephone":"' in line2:
                                 phone = line2.split('"telephone":"')[1].split('"')[0]
