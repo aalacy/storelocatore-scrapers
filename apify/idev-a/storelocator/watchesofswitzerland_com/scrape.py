@@ -55,7 +55,7 @@ def fetch_data():
             store["hours"] = "; ".join(hours) or "<MISSING>"
             store["phone"] = store["address"]["phone"]
             store["type"] = store["baseStoreName"]
-            store["page_url"] = locator_domain + store["url"]
+            store["page_url"] = locator_domain + "/store/" + store["name"]
             yield store
         progress = str(round(100 - (search.items_remaining() / maxZ * 100), 2)) + "%"
 
