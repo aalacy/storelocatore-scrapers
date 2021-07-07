@@ -22,6 +22,8 @@ def fetch_data():
                 page_url=base_url,
                 location_name=_.h2.text,
                 street_address=info[0],
+                city=_.h2.text,
+                state="CA",
                 country_code="US",
                 phone=info[1],
                 hours_of_operation="; ".join(hours),
