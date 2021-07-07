@@ -1,0 +1,1 @@
+--ignore StreetAddressHasNumber --ignore StreetAddressHasStateName --ignore CountValidator --ignore StateLevelCountValidator (Confirmed on website)
