@@ -59,8 +59,15 @@ def fetch_data():
         except:
             postal = "<MISSING>"
         country_code = j.get("country_iso_code") or "<MISSING>"
-        if country_code == "US" and " " in postal:
+        if country_code == "US" and " " in postal or "PO" in postal:
             postal = postal.split()[-1]
+        if "," in postal:
+            pp = postal.split()
+            for p in pp:
+                if p[0].isdigit():
+                    postal = p
+                    break
+
         try:
             store_number = j["path"][0]["pid"]
         except:

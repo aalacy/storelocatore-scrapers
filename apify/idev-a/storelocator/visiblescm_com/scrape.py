@@ -25,9 +25,10 @@ def fetch_data():
                 continue
             phone = ""
             country_code = "US"
+            location_type = ""
             if link.strong:
                 location_name = link.strong.text.strip()
-                addr = parse_address_intl(list(link.stripped_strings)[-1])
+                addr = parse_address_intl(" ".join(list(link.stripped_strings)[1:]))
                 street_address = addr.street_address_1
                 if addr.street_address_2:
                     street_address += " " + addr.street_address_2
@@ -37,6 +38,7 @@ def fetch_data():
                 zip_postal = addr.postcode
                 if addr.country:
                     country_code = addr.country
+                location_type = link.find_previous_sibling("h2").text.strip()
             else:
                 addr = list(link.stripped_strings)
                 location_name = ""
@@ -45,6 +47,7 @@ def fetch_data():
                 state = addr[1].split(",")[1].strip().split(" ")[0].strip()
                 zip_postal = addr[1].split(",")[1].strip().split(" ")[-1].strip()
                 phone = addr[2].split(":")[-1].strip()
+                location_type = "headquarter"
             yield SgRecord(
                 page_url=base_url,
                 location_name=location_name,
@@ -53,6 +56,7 @@ def fetch_data():
                 state=state,
                 zip_postal=zip_postal,
                 phone=phone,
+                location_type=location_type,
                 country_code=country_code,
                 locator_domain=locator_domain,
             )

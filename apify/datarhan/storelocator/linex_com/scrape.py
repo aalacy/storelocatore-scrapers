@@ -4,7 +4,7 @@ from time import sleep
 
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 from sgrequests import SgRequests
-from sgselenium import SgFirefox
+from sgselenium import SgChrome
 from sglogging import SgLogSetup
 
 logger = SgLogSetup().get_logger("minex_com")
@@ -55,7 +55,7 @@ def fetch_data():
         country_codes=[SearchableCountries.USA], max_radius_miles=200
     )
 
-    with SgFirefox() as driver:
+    with SgChrome() as driver:
         driver.get(start_url)
         sleep(5)
         driver.find_element_by_xpath(
