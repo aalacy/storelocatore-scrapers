@@ -1,9 +1,9 @@
-FROM safegraph/apify-python3:3.7.0
+FROM safegraph/apify-node:latest
 
 COPY . ./
 
 USER root
 
-RUN pip3 install -r requirements.txt
+RUN npm install
 
-CMD npm start
+CMD node main.js
