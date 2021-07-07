@@ -87,19 +87,24 @@ def fetch_data():
         for store in locations:
             if "boutique" not in store["storeType"]:
                 continue
-            search.found_location_at(
-                store["location"]["lat"],
-                store["location"]["lon"],
-            )
             store["lat"] = store["location"]["lat"]
             store["lng"] = store["location"]["lon"]
             addr = parse_address_intl(store["street"])
             store["street_address"] = store["street"].split(",")[0].strip()
             store["state"] = addr.state
+            if not store["state"]:
+                store["state"] = "<MISSING>"
             store["zip_postal"] = addr.postcode
+            if not store["zip_postal"]:
+                store["zip_postal"] = "<MISSING>"
             store["hours_of_operation"] = (
                 "; ".join(store.get("hours", [])) or "<MISSING>"
             )
+            if (
+                "notre boutique est temporairement"
+                in store["hours_of_operation"].lower()
+            ):
+                store["hours_of_operation"] = "temporarily closed"
             store["phone"] = (
                 store["phones"][0] if store.get("phones", []) else "<MISSING>"
             )

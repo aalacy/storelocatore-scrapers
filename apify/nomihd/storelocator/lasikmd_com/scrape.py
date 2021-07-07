@@ -68,11 +68,19 @@ def fetch_data():
             .strip()
             .strip('" ')
             .strip()
+            .replace("HSBC Tower", "")
+            .replace("Edmonton City Centre Mall", "")
+            .replace("Princeton Tower", "")
+            .replace("Complexe Jules Dallaire (Tour 2)", "")
+            .replace("Mumford Professional Centre", "")
+            .strip()
         )
         city = (
             store_res.text.split('"addressLocality":')[1]
             .split(",")[0]
             .strip('" ')
+            .strip()
+            .split("(")[0]
             .strip()
         )
 
