@@ -79,13 +79,23 @@ def fetch_data():
     store_list = response.xpath('//div[contains(@class, "row marker-row")]')
     for store in store_list:
         output = [base_url, "https://www.bankunited.com/contact-us/find-a-branch-atm"]
-        location_name = get_value(store.xpath('.//span[@itemprop="name"]//text()'))
+        location_name = get_value(store.xpath('.//h2[@itemprop="name"]//text()'))
         output.append(location_name)  # location name
         address = get_value(store.xpath('.//span[@itemprop="streetAddress"]//text()'))
         if address == "<MISSING>":
             address = get_value(
                 store.xpath(
                     './/span[@itemprop="streetAddress"]/following-sibling::span[1]//text()'
+                )
+            )
+        if address.find("1000 Parkwood Circle") != -1:
+            address = (
+                address
+                + " "
+                + get_value(
+                    store.xpath(
+                        './/span[@itemprop="streetAddress"]/following-sibling::span[1]//text()'
+                    )
                 )
             )
         output.append(address)  # address

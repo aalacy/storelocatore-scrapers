@@ -92,30 +92,39 @@ def fetch_data():
                         + "/golden-corral-"
                         + addtext
                     )
+                    loc = loc.replace("#", "").replace(",", "")
                     try:
                         r = session.get(loc, headers=headers)
                         if r.encoding is None:
                             r.encoding = "utf-8"
                         lines = r.iter_lines(decode_unicode=True)
                         for line in lines:
-                            if '"dayOfWeek":' in line:
-                                g = next(lines)
-                                day = g.split('"')[1]
-                            if '"opens": "' in line:
-                                ot = line.split('"opens": "')[1].split(':00"')[0]
-                            if '"closes": "' in line:
-                                ct = line.split('"closes": "')[1].split(':00"')[0]
-                                hrs = day + ": " + ot + "-" + ct
-                                if hours == "":
-                                    hours = hrs
-                                else:
-                                    hours = hours + "; " + hrs
+                            if '<ul class="location-detail-hours">' in line:
+                                items = line.split("<li><span>")
+                                for item in items:
+                                    if "<time" in item:
+                                        hrs = item.split("<")[0] + ": "
+                                        if 'class="subheading-s"></time>' in item:
+                                            hrs = hrs + "Closed"
+                                        else:
+                                            hrs = (
+                                                hrs
+                                                + item.split('class="subheading-s">')[
+                                                    1
+                                                ].split("<")[0]
+                                            )
+                                        if hours == "":
+                                            hours = hrs
+                                        else:
+                                            hours = hours + "; " + hrs
                     except:
                         pass
                     if hours == "":
                         hours = "<MISSING>"
                     if phone == "":
                         phone = "<MISSING>"
+                    if hours == "<MISSING>":
+                        hours = "INACCESSIBLE"
                     yield [
                         website,
                         loc,
@@ -132,6 +141,38 @@ def fetch_data():
                         lng,
                         hours,
                     ]
+    website = "goldencorral.com"
+    typ = "<MISSING>"
+    country = "US"
+    name = "Golden Corral 2709"
+    add = "1734 W. 49th Street"
+    city = "Hialeah"
+    loc = "https://www.goldencorral.com/locations/location-detail/2709/golden-corral-w-49th-street/"
+    state = "FL"
+    zc = "33012"
+    phone = "786-245-8997"
+    store = "2709"
+    hours = (
+        "Mon-Thu: 11:00AM - 10:00PM; Fri-Sat: 8:00AM - 11:00PM; Sun: 8:00AM - 10:00PM"
+    )
+    lat = "25.8665337"
+    lng = "-80.3170877"
+    yield [
+        website,
+        loc,
+        name,
+        add,
+        city,
+        state,
+        zc,
+        country,
+        store,
+        phone,
+        typ,
+        lat,
+        lng,
+        hours,
+    ]
 
 
 def scrape():

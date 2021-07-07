@@ -6,7 +6,7 @@ import csv
 from webdriver_manager.chrome import ChromeDriverManager
 from sglogging import sglog
 
-log = sglog.SgLogSetup().get_logger(logger_name="carehome")
+log = sglog.SgLogSetup().get_logger(logger_name="carehomes")
 
 
 def extract_json(html_string):
@@ -60,6 +60,7 @@ def reset_sessions(data_url):
                 return [s, headers, response_text]
 
         except Exception:
+            driver.quit()
             continue
 
 
@@ -170,6 +171,7 @@ with open("data.csv", mode="w") as output_file:
             "hours_of_operation",
         ]
     )
+
     for location_url in location_urls:
         x = x + 1
         response = s.get(location_url, headers=headers)
@@ -277,6 +279,3 @@ with open("data.csv", mode="w") as output_file:
         ]
 
         writer.writerow(row)
-
-        if x == 100:
-            break
