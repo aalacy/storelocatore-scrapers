@@ -49,10 +49,6 @@ def fetch_data():
     stores_sel = lxml.html.fromstring(raw_data)
     stores = stores_sel.xpath('//article[@class="location-info-card"]')
 
-    namespaces = {
-        "svg": "https://www.w3.org/2000/svg",
-        "xlink": "http://www.w3.org/1999/xlink",
-    }
     for store in stores:
         page_url = "".join(
             store.xpath('.//a[contains(text(),"Go to Page")]/@href')
