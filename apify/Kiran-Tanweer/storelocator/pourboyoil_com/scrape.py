@@ -15,7 +15,7 @@ headers = {
 
 
 def write_output(data):
-    with open("data.csv", mode="w", newline="", encoding="utf8") as output_file:
+    with open("data.csv", mode="w", newline="") as output_file:
         writer = csv.writer(
             output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
         )
@@ -76,7 +76,10 @@ def fetch_data():
             address = loc[1] + " " + loc[2]
             phone = loc[4]
             phone = phone.split("Phone: ")[1]
-            hours = loc[5]
+            hours = loc[-1] + " " + loc[-2]
+            hours = hours.split("Phone")[0]
+            if hours.find("Open 24 hours") != -1:
+                hours = "Open 24 hours"
             parsed = parser.parse_address_usa(address)
             street1 = (
                 parsed.street_address_1 if parsed.street_address_1 else "<MISSING>"
