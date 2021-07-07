@@ -1,5 +1,5 @@
 from sgscrape import simple_scraper_pipeline as sp
-from sgscrape.pause_resume import CrawlState
+from sgscrape.pause_resume import CrawlState, SerializableRequest
 from sglogging import sglog
 from sgrequests import SgRequests
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
@@ -9,96 +9,73 @@ import re
 
 log = sglog.SgLogSetup().get_logger(logger_name="findchurch")
 
-store_numbers = []
-location_names = []
-citys = []
-latitudes = []
-longitudes = []
-page_urls = []
-country_codes = []
-
-
 def get_data():
-
-    x = 0
-    search = DynamicGeoSearch(country_codes=[SearchableCountries.BRITAIN])
-    session = SgRequests(retry_behavior=False)
-    for search_lat, search_lon in search:
-        x = x + 1
-        url = (
-            "https://www.findachurch.co.uk/ajax/Nearby.ashx?CenterLat="
-            + str(search_lat)
-            + "&CenterLon="
-            + str(search_lon)
-        )
-        y = 0
-        while True:
-            y = y + 1
-            if y == 10:
-                raise Exception
-            try:
-                response = session.get(url).text
-                break
-
-            except Exception:
-                session = SgRequests()
-                continue
-
-        soup = bs(response, "html.parser")
-
-        locations = soup.find_all("row")
-
-        for location in locations:
-            store_number = location["id"]
-            location_name = location["title"]
-            city = location["town"]
-            latitude = location["latlon"].split(",")[0]
-            longitude = location["latlon"].split(",")[1]
-            url_city = re.sub(r"[^A-Za-z0-9 ]+", "", city).lower().replace(" ", "-")
-            page_url = (
-                "https://www.findachurch.co.uk/church/"
-                + url_city
-                + "/"
-                + store_number
-                + ".htm"
-            )
-            search.found_location_at(latitude, longitude)
-            store_numbers.append(store_number)
-            location_names.append(location_name)
-            citys.append(city)
-            latitudes.append(latitude)
-            longitudes.append(longitude)
-            page_urls.append(page_url)
-            country_codes.append("UK")
-
-    df = pd.DataFrame(
-        {
-            "store_number": store_numbers,
-            "location_name": location_names,
-            "city": citys,
-            "latitude": latitudes,
-            "longitude": longitudes,
-            "page_url": page_urls,
-        }
-    )
-
+    crawl_state = CrawlState()
     headers = {"User-Agent": "PostmanRuntime/7.19.0"}
 
-    # Here you iterate through the location URLs to grab the missing data fields for each location
-    # Some data cleaning to remove duplicates and get a list of the page urls
-    df = df.drop_duplicates()
-    page_url_list = df["page_url"].to_list()
-    x = 0
+    if not crawl_state.get_misc_value("got_urls"):
+        search = DynamicGeoSearch(country_codes=[SearchableCountries.BRITAIN])
+        session = SgRequests(retry_behavior=False)
+        for search_lat, search_lon in search:
 
-    crawl_state = CrawlState()
+            url = (
+                "https://www.findachurch.co.uk/ajax/Nearby.ashx?CenterLat="
+                + str(search_lat)
+                + "&CenterLon="
+                + str(search_lon)
+            )
+            y = 0
+            while True:
+                y = y + 1
+                if y == 10:
+                    raise Exception
+                try:
+                    response = session.get(url).text
+                    break
 
-    session = SgRequests(retry_behavior=False)
+                except Exception:
+                    session = SgRequests()
+                    continue
 
-    # Iterate through the URLs
-    for url in page_url_list:
-        crawl_state.save_state()
+            soup = bs(response, "html.parser")
+
+            locations = soup.find_all("row")
+
+            for location in locations:
+                store_number = location["id"]
+                location_name = location["title"]
+                city = location["town"]
+                latitude = location["latlon"].split(",")[0]
+                longitude = location["latlon"].split(",")[1]
+                url_city = re.sub(r"[^A-Za-z0-9 ]+", "", city).lower().replace(" ", "-")
+                page_url = (
+                    "https://www.findachurch.co.uk/church/"
+                    + url_city
+                    + "/"
+                    + store_number
+                    + ".htm?lat=" + str(latitude) + "&lon=" + str(longitude) + "&name=" + location_name.replace(" ", "---")
+                )
+                search.found_location_at(latitude, longitude)
+                crawl_state.push_request(SerializableRequest(url=page_url))
+        crawl_state.set_misc_value("got_urls", True)
+
+    for request_url in crawl_state.request_stack_iter():
+
+        url = request_url.url
         log.info(url)
-        x = x + 1
+
+        store_number = url.split(".htm")[0].split("/")[-1]
+        location_name = url.split("&name=")[1].replace("---", " ")
+        city = url.split("church/")[1].split("/")[0].replace("-", " ")
+        latitude = url.split("?lat=")[1].split("&lon")[0]
+        longitude = url.split("&lon=")[1].split("&")[0]
+        url = url.split("?")[0]
+        address = ""
+        state = ""
+        zipp = ""
+        phone = ""
+        location_type = ""
+        hours = ""
 
         try:
 
@@ -111,11 +88,7 @@ def get_data():
             "awaiting verification" in response
             and "The contact data we hold" in response
         ):
-            location_name = df.loc[df["page_url"] == url, "location_name"]
-            latitude = df.loc[df["page_url"] == url, "latitude"]
-            longitude = df.loc[df["page_url"] == url, "longitude"]
-            city = df.loc[df["page_url"] == url, "city"]
-            store_number = df.loc[df["page_url"] == url, "store_number"]
+
 
             yield {
                 "page_url": url,
@@ -124,15 +97,13 @@ def get_data():
                 "longitude": longitude,
                 "city": city,
                 "store_number": store_number,
-                "street_address": "",
-                "state": "",
-                "zip": "",
-                "phone": "",
-                "location_type": "",
-                "hours": "",
+                "street_address": address,
+                "state": state,
+                "zip": zipp,
+                "phone": phone,
+                "location_type": location_type,
+                "hours": hours
             }
-
-            continue
 
         soup = bs(response, "html.parser")
 
@@ -152,12 +123,6 @@ def get_data():
                 and "The contact data we hold" in response
             ):
 
-                location_name = df.loc[df["page_url"] == url, "location_name"]
-                latitude = df.loc[df["page_url"] == url, "latitude"]
-                longitude = df.loc[df["page_url"] == url, "longitude"]
-                city = df.loc[df["page_url"] == url, "city"]
-                store_number = df.loc[df["page_url"] == url, "store_number"]
-
                 yield {
                     "page_url": url,
                     "location_name": location_name,
@@ -165,12 +130,12 @@ def get_data():
                     "longitude": longitude,
                     "city": city,
                     "store_number": store_number,
-                    "street_address": "",
-                    "state": "",
-                    "zip": "",
-                    "phone": "",
-                    "location_type": "",
-                    "hours": "",
+                    "street_address": address,
+                    "state": state,
+                    "zip": zipp,
+                    "phone": phone,
+                    "location_type": location_type,
+                    "hours": hours
                 }
 
                 continue
@@ -245,12 +210,6 @@ def get_data():
         except Exception:
             hours = "<MISSING>"
 
-        location_name = df.loc[df["page_url"] == url, "location_name"]
-        latitude = df.loc[df["page_url"] == url, "latitude"]
-        longitude = df.loc[df["page_url"] == url, "longitude"]
-        city = df.loc[df["page_url"] == url, "city"]
-        store_number = df.loc[df["page_url"] == url, "store_number"]
-
         yield {
             "page_url": url,
             "location_name": location_name,
@@ -263,16 +222,16 @@ def get_data():
             "zip": zipp,
             "phone": phone,
             "location_type": location_type,
-            "hours": hours,
+            "hours": hours
         }
 
-
 def scrape():
-
+    
     field_defs = sp.SimpleScraperPipeline.field_definitions(
         locator_domain=sp.ConstantField("findachurch.co.uk"),
         page_url=sp.MappingField(
             mapping=["page_url"],
+            part_of_record_identity=True
         ),
         location_name=sp.MappingField(
             mapping=["location_name"],
@@ -284,29 +243,36 @@ def scrape():
             mapping=["longitude"],
         ),
         street_address=sp.MultiMappingField(
-            mapping=["address"],
+            mapping=["street_address"],
+            is_required=False
         ),
         city=sp.MappingField(
             mapping=["city"],
         ),
         state=sp.MappingField(
             mapping=["state"],
+            is_required=False
         ),
         zipcode=sp.MultiMappingField(
             mapping=["zip"],
+            is_required=False
         ),
         country_code=sp.ConstantField("UK"),
         phone=sp.MappingField(
             mapping=["phone"],
+            is_required=False
         ),
         store_number=sp.MappingField(
-            mapping=["locationID"],
+            mapping=["store_number"],
+            part_of_record_identity=True
         ),
         hours_of_operation=sp.MappingField(
             mapping=["hours"],
+            is_required=False
         ),
         location_type=sp.MappingField(
-            mapping=["locationType"],
+            mapping=["location_type"],
+            is_required=False
         ),
     )
 
@@ -317,6 +283,5 @@ def scrape():
         log_stats_interval=15,
     )
     pipeline.run()
-
 
 scrape()
