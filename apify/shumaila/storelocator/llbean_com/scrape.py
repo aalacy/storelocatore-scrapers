@@ -156,7 +156,7 @@ def fetch_data():
                     ccode,
                     store,
                     phone,
-                    "flagship, Bike, Boat & Ski, hunting and fishing",
+                    "<MISSING>",
                     lat,
                     longt,
                     hours,

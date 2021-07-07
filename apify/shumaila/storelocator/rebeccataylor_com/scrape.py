@@ -42,6 +42,7 @@ def write_output(data):
 
 def fetch_data():
     data = []
+    titlelist = []
     pattern = re.compile(r"\s\s+")
     url = "https://www.rebeccataylor.com/our-stores/"
     r = session.get(url, headers=headers)
@@ -53,6 +54,9 @@ def fetch_data():
             link = st["href"]
         else:
             link = "https://www.rebeccataylor.com" + st["href"]
+        if link in titlelist:
+            continue
+        titlelist.append(link)
         r = session.get(link, headers=headers, verify=False, timeout=100)
         soup = BeautifulSoup(r.text, "html.parser")
         title = soup.find("h2", {"class": "card-title"}).text

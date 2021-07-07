@@ -51,7 +51,7 @@ def fetch_data():
     response = session.get(start_url, headers=hdr)
     dom = etree.HTML(response.text)
 
-    all_locations = dom.xpath('//a[@class="store-name-link"]/@href')
+    all_locations = dom.xpath('//a[h3[@class="store-name"]]/@href')
     for store_url in all_locations:
         store_url = urljoin(start_url, store_url)
 
@@ -59,7 +59,7 @@ def fetch_data():
             with SgFirefox() as driver:
                 driver.get(store_url)
                 loc_dom = etree.HTML(driver.page_source)
-            poi = poi = loc_dom.xpath('//script[@type="application/ld+json"]/text()')[0]
+            poi = loc_dom.xpath('//script[@type="application/ld+json"]/text()')[0]
             poi = json.loads(poi)
 
             location_name = loc_dom.xpath("//h1/text()")[0]
@@ -85,8 +85,8 @@ def fetch_data():
             location_name = loc_dom.xpath("//h1/text()")[0]
             street_address = poi["location"]["addressLine1"]
             city = poi["location"]["addressLine2"].split(", ")[0]
-            state = poi["location"]["addressLine2"].split(", ")[1]
-            zip_code = poi["location"]["addressLine2"].split(", ")[-1]
+            state = poi["location"]["addressLine2"].split(", ")[1].split()[0]
+            zip_code = poi["location"]["addressLine2"].split(", ")[-1].split()[-1]
             country_code = poi["location"]["addressCountry"]
             store_number = "<MISSING>"
             phone = loc_dom.xpath(
