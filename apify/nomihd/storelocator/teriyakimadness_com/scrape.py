@@ -36,7 +36,8 @@ def fetch_data():
             continue
 
         location_name = "".join(page_sel.xpath("//title/text()")).strip()
-
+        if "MX |" in location_name:
+            continue
         raw_address = " ".join(
             list(
                 filter(

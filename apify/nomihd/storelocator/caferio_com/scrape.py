@@ -46,7 +46,11 @@ def fetch_data():
         ].lower().replace(" ", "-")
         locator_domain = website
 
-        location_name = store["siteName"]
+        location_name = (
+            store["siteName"]
+            .replace("(NOTE: We are behind security in Concourse A)", "")
+            .strip()
+        )
 
         street_address = store["address"]["street"].strip()
         city = store["address"]["city"].strip()
@@ -64,14 +68,20 @@ def fetch_data():
         )
 
         location_type = "<MISSING>"
-
+        try:
+            location_type = "(" + location_name.split("(", 1)[1].strip()
+            location_name = location_name.split("(", 1)[0].strip()
+        except:
+            pass
         if store["hours"]:
             hours = store["hours"]
             hours_list = []
             for hour in hours:
 
                 day = hour["open"]["day"]
-                timing = f"{hour['open']['time']} - '{hour['close']['time']}"
+                open_time = hour["open"]["time"]
+                close_time = hour["close"]["time"]
+                timing = f"{open_time[0:2]+':'+open_time[2:]} - {close_time[0:2]+':'+close_time[2:]}"
 
                 hours_list.append(f"{day}: {timing}")
 

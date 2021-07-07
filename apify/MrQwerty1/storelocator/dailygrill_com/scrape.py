@@ -146,6 +146,10 @@ def get_data(params):
     )
     if isclosed:
         hours_of_operation = "Temporarily Closed"
+    if tree.xpath(
+        "//p[contains(text(), 'permanently closed')]|//span[contains(text(), 'permanently closed')]"
+    ):
+        return
 
     row = [
         locator_domain,

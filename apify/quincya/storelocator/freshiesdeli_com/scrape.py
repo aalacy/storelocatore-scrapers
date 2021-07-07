@@ -1,5 +1,6 @@
 import csv
 import re
+import ssl
 
 from bs4 import BeautifulSoup
 
@@ -7,7 +8,18 @@ from sglogging import SgLogSetup
 
 from sgrequests import SgRequests
 
+from sgselenium import SgChrome
+
 logger = SgLogSetup().get_logger("freshiesdeli_com")
+
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
 
 
 def write_output(data):
@@ -49,14 +61,18 @@ def fetch_data():
 
     session = SgRequests()
 
+    driver = SgChrome(user_agent=user_agent).driver()
+
     all_links = []
     data = []
 
     req = session.get(base_link, headers=headers)
-    base = str(BeautifulSoup(req.text, "lxml"))
+    base_str = str(BeautifulSoup(req.text, "lxml"))
 
-    all_links = re.findall(r"https://www.freshiesdeli.com/storelocations/[a-z]+", base)
-    geos = re.findall(r"LatLng\([0-9]{2}\.[0-9]+,-[0-9]{2,3}\.[0-9]+\);", base)[1:]
+    all_links = re.findall(
+        r"https://www.freshiesdeli.com/storelocations/[a-z]+", base_str
+    )
+    geos = re.findall(r"LatLng\([0-9]{2}\.[0-9]+,-[0-9]{2,3}\.[0-9]+\);", base_str)[1:]
     for i, link in enumerate(all_links):
         logger.info(link)
 
@@ -78,8 +94,6 @@ def fetch_data():
             location_name = item.find("meta", attrs={"property": "og:title"})[
                 "content"
             ].replace("—", "-")
-
-        logger.info(location_name)
 
         phone = item.find("meta", attrs={"itemprop": "description"})["content"][
             -15:
@@ -112,13 +126,14 @@ def fetch_data():
         store_number = "<MISSING>"
         location_type = "<MISSING>"
 
+        driver.get(link)
+        base = BeautifulSoup(driver.page_source, "lxml")
+
         hours_of_operation = ""
-        raw_hours = item.find_all(class_="sqs-block-content")[3].find_all("tr")[1:]
-        if not raw_hours:
-            raw_hours = item.find_all(class_="sqs-block-content")[2].find_all("tr")[1:]
+        raw_hours = base.find(class_="storehoursholder").find_all("tr")[1:]
         for raw_hour in raw_hours:
             day = raw_hour.td.text
-            hours = raw_hour.find_all("td")[2].text
+            hours = raw_hour.find_all("td")[1].text
             hours_of_operation = hours_of_operation + " " + day + " " + hours
         hours_of_operation = (re.sub(" +", " ", hours_of_operation)).strip()
         if not hours_of_operation:
@@ -145,7 +160,7 @@ def fetch_data():
                 hours_of_operation,
             ]
         )
-
+    driver.close()
     return data
 
 

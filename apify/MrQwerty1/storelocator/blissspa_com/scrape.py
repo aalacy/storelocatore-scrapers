@@ -68,9 +68,11 @@ def fetch_data():
         longitude = "<MISSING>"
         location_type = "<MISSING>"
 
-        hours = d.xpath(
-            ".//p[@class='wpsl-contact-details']/span[last()]/text()|.//p[@class='wpsl-contact-details']/text()"
-        )
+        hours = d.xpath(".//p[@class='wpsl-contact-details']/span[last()]/text()")
+        if d.xpath(
+            ".//p[@class='wpsl-contact-details']/strong[contains(text(), 'New Hours')]"
+        ):
+            hours = d.xpath(".//p[@class='wpsl-contact-details']/text()")
         hours = list(filter(None, [h.strip() for h in hours]))
         hours_of_operation = ";".join(hours).replace(":", "").strip() or "<MISSING>"
 
