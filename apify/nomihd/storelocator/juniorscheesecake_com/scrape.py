@@ -28,6 +28,8 @@ def fetch_data():
     for store in stores_list:
 
         page_url = store
+        if "/blog/restaurants/catering" in page_url:
+            continue
         locator_domain = website
         log.info(store)
         page_res = session.get(store, headers=headers)
@@ -72,6 +74,17 @@ def fetch_data():
         hours_info = "; ".join(
             list(filter(str, page_sel.xpath('//div[./h4="HOURS"]/div[1]//text()')))
         )
+        try:
+            hours_info = (
+                hours_info.split("Indoor Dining:")[1].strip().split("-Stay")[0].strip()
+            )
+        except:
+            pass
+
+        try:
+            hours_info = hours_info.split("; Outlet:")[0].strip()
+        except:
+            pass
 
         if "Temporarily Closed" in hours_info:
             location_type = "Temporarily Closed"

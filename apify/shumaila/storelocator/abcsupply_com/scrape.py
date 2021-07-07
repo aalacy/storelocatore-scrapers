@@ -100,7 +100,7 @@ def fetch_data():
     p = 0
     for i in range(0, len(states)):
         url = "https://www.abcsupply.com/locations/location-results"
-        result = session.post(url, data={"State": states[i]})
+        result = session.post(url, data={"State": states[i]}, headers=headers)
         soup = BeautifulSoup(result.text, "html.parser")
         divlist = soup.findAll("div", {"class": "location"})
         maplist = result.text.split("var marker = new google.maps.Marker({")[1:]

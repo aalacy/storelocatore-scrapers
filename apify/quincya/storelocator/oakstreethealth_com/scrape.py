@@ -53,12 +53,16 @@ def fetch_data():
     data = []
     locator_domain = "oakstreethealth.com"
 
-    items = base.find_all(class_="thumb__content")
+    items = base.find(class_="flex-blocks").find_all("li")
     for item in items:
 
-        street_address = item.find(class_="thumb__text type-body").text.strip()
-        city = item.a.text.split("|")[1].split(",")[0].strip()
-        state = item.a.text.split("|")[1].split(",")[1].strip()
+        street_address = item.find(class_="type-body").text.strip()
+        city = (
+            item.find(class_="type-body-lg").a.text.split("|")[1].split(",")[0].strip()
+        )
+        state = (
+            item.find(class_="type-body-lg").a.text.split("|")[1].split(",")[1].strip()
+        )
 
         country_code = "US"
         store_number = "<MISSING>"
@@ -71,7 +75,21 @@ def fetch_data():
 
         location_name = base.h1.text.strip()
 
-        zip_code = base.find("a", string="Get Directions")["href"][-5:]
+        try:
+            zip_code = (
+                base.find("a", string="Get Directions")
+                .find_previous("span")
+                .text.split()[-1]
+            )
+        except:
+            zip_code = (
+                base.find("a", string="Get directions")
+                .find_previous("span")
+                .text.split()[-1]
+            )
+
+        if len(zip_code) == 4:
+            zip_code = "0" + zip_code
 
         try:
             raw_types = base.find_all(class_="section section--featureGrid")[
@@ -89,6 +107,8 @@ def fetch_data():
             .find_all(class_="flex items-start")[1]
             .text.strip()
         )
+        if len(phone) > 40:
+            phone = "<MISSING>"
         try:
             hours_of_operation = " ".join(
                 list(base.find(class_="w-full lg:w-3/4 pt-2").stripped_strings)

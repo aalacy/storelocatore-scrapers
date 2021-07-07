@@ -1,8 +1,8 @@
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
-import json
 from sglogging import SgLogSetup
+from bs4 import BeautifulSoup as bs
 
 logger = SgLogSetup().get_logger("subaru")
 
@@ -22,18 +22,12 @@ def fetch_data():
             if _["address"]["street2"]:
                 street_address += " " + _["address"]["street2"]
             logger.info(_["siteUrl"])
-            hours = []
-            try:
-                _hr = json.loads(
-                    session.get(_["siteUrl"], headers=_headers)
-                    .text.split("['ws-hours']['hours1'] = ")[1]
-                    .split("DDC.WS.state")[0]
-                    .strip()[:-1]
-                )
-                for hh in _hr["hours"]["DEALERSHIP"]:
-                    hours.append(f"{hh['day']}: {hh['timings']}")
-            except:
-                pass
+            hours = [
+                ": ".join(hh.stripped_strings)
+                for hh in bs(
+                    session.get(_["siteUrl"], headers=_headers).text, "lxml"
+                ).select("div#hours1-app-root li")
+            ]
             yield SgRecord(
                 page_url=_["siteUrl"],
                 location_name=_["name"],

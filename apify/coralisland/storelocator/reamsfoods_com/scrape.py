@@ -11,7 +11,7 @@ headers = {
 
 
 def write_output(data):
-    with open("data.csv", mode="w") as output_file:
+    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
         writer = csv.writer(
             output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
         )
@@ -71,7 +71,8 @@ def fetch_data():
         except:
             pass
         hours = content.split("Hours", 1)[1].replace("\n", " ").replace(":", "").strip()
-
+        if hours.find("Winter") != -1:
+            hours = hours.split("Winter")[0].strip()
         address = address.replace("\n", " ").strip()
         address = usaddress.parse(address)
         i = 0

@@ -2,7 +2,6 @@ import csv
 import json
 from lxml import html
 from sgrequests import SgRequests
-from sgscrape.sgpostal import International_Parser, parse_address
 
 
 def write_output(data):
@@ -43,25 +42,40 @@ def fetch_data():
     r = session.get(page_url)
 
     tree = html.fromstring(r.text)
-    block = "".join(tree.xpath("//@data-nodes"))
-    block = block.split('"more_locations":')[1].split('}},{"id"')[0]
-    js = json.loads(block)
-    for j in js:
-        ad = "".join(j.get("location")).replace("\n", "").replace("\r", " ")
-        a = parse_address(International_Parser(), ad)
+    block = "".join(tree.xpath("//@data-nodes")).replace("/n", "").strip()
+    block = block.split('"more_locations":')[1].split(',"locations_filter"')[0]
 
-        street_address = f"{a.street_address_1} {a.street_address_2}".replace(
-            "None", ""
-        ).strip()
-        if street_address.find("8066") != -1:
-            street_address = ad.split("Mclean")[0].strip()
-        city = a.city
-        postal = a.postcode
-        state = a.state
-        country_code = "US"
+    js = json.loads(block)
+
+    for j in js:
+
+        ad = "".join(j.get("location")).split("\r\n")
+        street_address = (
+            " ".join(ad[:-1])
+            .replace("Northpark", "")
+            .replace("Soho Broadway", "")
+            .replace("Waterside Shops", "")
+            .replace("Georgetown", "")
+            .replace(",", "")
+            .strip()
+            or "<MISSING>"
+        )
+        adr = (
+            "".join(ad[-1])
+            .replace("Minneapolis, MN, US", "Minneapolis, MN")
+            .replace("United States", "")
+            .strip()
+        )
+        city = adr.split(",")[0] or "<MISSING>"
+        if city.find("900B") != -1:
+            city = city.replace("900B", "").strip()
+            street_address = street_address + " " + "900B"
+        postal = adr.split(",")[1].split()[-1].strip() or "<MISSING>"
+        state = adr.split(",")[1].split()[0].strip() or "<MISSING>"
+        country_code = j.get("country")
         store_number = "<MISSING>"
         location_name = j.get("title")
-        phone = j.get("phone")
+        phone = j.get("phone") or "<MISSING>"
         latitude = "<MISSING>"
         longitude = "<MISSING>"
         location_type = "<MISSING>"

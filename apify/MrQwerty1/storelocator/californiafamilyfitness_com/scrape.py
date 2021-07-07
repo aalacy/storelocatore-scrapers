@@ -59,6 +59,8 @@ def get_data(url):
         "".join(tree.xpath("//span[@itemprop='streetAddress']/text()")).strip()
         or "<MISSING>"
     )
+    if street_address.endswith(","):
+        street_address = street_address[:-1]
     city = (
         "".join(tree.xpath("//span[@itemprop='addressLocality']/text()")).strip()
         or "<MISSING>"
@@ -81,26 +83,21 @@ def get_data(url):
     longitude = "<MISSING>"
     location_type = "<MISSING>"
 
-    _tmp = []
-    elements = tree.xpath("//p[./strong[text()='HOURS OF OPERATION']]/*")
-
-    for e in elements:
-        if (
-            e.tag == "strong"
-            and "".join(e.xpath("./text()")).lower().find("operation") != -1
-        ):
-            continue
-        if (
-            e.tag == "strong"
-            and "".join(e.xpath("./text()")).lower().find("operation") == -1
-        ):
-            break
-        line = " ".join("".join(e.xpath(".//text()")).split())
-        if line:
-            _tmp.append(line)
-
-    hours_of_operation = ";".join(_tmp) or "<MISSING>"
-    isclosed = tree.xpath("//strong[contains(text(), 'closed')]")
+    hours_of_operation = (
+        " ".join(
+            tree.xpath(
+                "//*[contains(text(), 'HOURS OF OPERATION')]/following-sibling::*//text()"
+            )
+        )
+        or "<MISSING>"
+    )
+    if "*" in hours_of_operation:
+        hours_of_operation = hours_of_operation.split("*")[0].strip()
+    if "FAMILY" in hours_of_operation:
+        hours_of_operation = hours_of_operation.split("FAMILY")[0].strip()
+    isclosed = tree.xpath(
+        "//strong[contains(text(), 'closed')]|//strong[contains(text(), 'reopen')]"
+    )
     if isclosed:
         hours_of_operation = "Temporarily Closed"
 
