@@ -78,13 +78,19 @@ def fetch_data():
             "".join(d.xpath(".//a[contains(@href, 'tel:')]/text()")).strip()
             or "<MISSING>"
         )
-        latitude, longitude = get_coords(page_url)
+        try:
+            latitude, longitude = get_coords(page_url)
+        except IndexError:
+            latitude, longitude = "<MISSING>", "<MISSING>"
         location_type = "<MISSING>"
         hours = d.xpath(".//p[@class='stores-hours_copy']/text()")
         hours = list(filter(None, [h.strip() for h in hours]))
         hours_of_operation = ";".join(hours) or "<MISSING>"
         if "Hours;" in hours_of_operation:
             hours_of_operation = hours_of_operation.split("Hours;")[-1].strip()
+
+        if not slug:
+            page_url = api
 
         row = [
             locator_domain,

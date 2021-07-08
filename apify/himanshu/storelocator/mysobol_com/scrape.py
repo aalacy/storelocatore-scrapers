@@ -66,8 +66,11 @@ def fetch_data():
         location_type = "<MISSING>"
         latitude = poi["lat"]
         longitude = poi["lng"]
-        hoo = loc_dom.xpath('//span[contains(text(), "Open 7 days")]/text()')
-        hours_of_operation = hoo[0] if hoo else "<MISSING>"
+        hoo = loc_dom.xpath('//div[p[span[contains(text(), "Open 7 days")]]]//text()')
+        if not hoo:
+            hoo = loc_dom.xpath('//p[i[@class="far fa-clock"]]/text()')
+        hoo = [e.strip() for e in hoo if e.strip()]
+        hours_of_operation = " ".join(hoo).replace("……….", " ") if hoo else "<MISSING>"
 
         item = [
             domain,
