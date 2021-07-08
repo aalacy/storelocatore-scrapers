@@ -86,6 +86,8 @@ def fetch_data():
             hours_of_operation = hours_of_operation.split("ONLY")[1].strip()
         if hours_of_operation.find("See") != -1:
             hours_of_operation = "<MISSING>"
+        if hours_of_operation.find("COMING") != -1:
+            hours_of_operation = "Coming Soon"
 
         row = [
             locator_domain,
