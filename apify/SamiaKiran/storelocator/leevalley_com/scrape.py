@@ -24,29 +24,50 @@ def fetch_data():
         r = session.get(url, headers=headers)
         soup = BeautifulSoup(r.text, "html.parser")
         linklist = soup.findAll("li", {"class": "lv-store-location-card"})
+        linklist.append("https://www.leevalley.com/en-us/storelocations/reno")
         for link in linklist:
-            page_url = "https://www.leevalley.com" + link.find("a")["href"]
-            log.info(page_url)
-            r = session.get(page_url, headers=headers)
-            temp = r.text.split('<script type="application/ld+json">')[1].split(
-                "</script>"
-            )[0]
-            temp = json.loads(temp)
-            location_name = temp["name"]
-            phone = temp["telephone"]
-            address = temp["address"]
-            street_address = address["streetAddress"]
-            city = address["addressLocality"]
-            zip_postal = address["postalCode"]
-            country_code = "CA"
-            state = address["addressRegion"]
-            hour_list = temp["openingHoursSpecification"]
-            hours_of_operation = ""
-            for hour in hour_list:
-                day = hour["dayOfWeek"]["name"]
-                time = hour["opens"] + ": " + hour["closes"]
-                hours_of_operation = hours_of_operation + " " + day + " " + time
-
+            try:
+                page_url = "https://www.leevalley.com" + link.find("a")["href"]
+                r = session.get(page_url, headers=headers)
+                temp = r.text.split('<script type="application/ld+json">')[1].split(
+                    "</script>"
+                )[0]
+                log.info(page_url)
+                temp = json.loads(temp)
+                location_name = temp["name"]
+                phone = temp["telephone"]
+                address = temp["address"]
+                street_address = address["streetAddress"]
+                city = address["addressLocality"]
+                zip_postal = address["postalCode"]
+                country_code = "CA"
+                state = address["addressRegion"]
+                hour_list = temp["openingHoursSpecification"]
+                location_type = MISSING
+                hours_of_operation = ""
+                for hour in hour_list:
+                    day = hour["dayOfWeek"]["name"]
+                    time = hour["opens"] + ": " + hour["closes"]
+                    hours_of_operation = hours_of_operation + " " + day + " " + time
+            except:
+                page_url = linklist[-1]
+                log.info(page_url)
+                r = session.get(page_url, headers=headers)
+                soup = BeautifulSoup(r.text, "html.parser")
+                temp = soup.find("div", {"style": "text-align: left;"})
+                location_name = temp.find("h1").text
+                hours_of_operation = temp.findAll("span")[1].text
+                if "Temporarily closed" in hours_of_operation:
+                    hours_of_operation = MISSING
+                    location_type = "Temporarily closed"
+                temp = temp.find("p").get_text(separator="|", strip=True).split("|")
+                street_address = temp[1]
+                address = temp[2].split(",")
+                city = address[0]
+                state = MISSING
+                zip_postal = address[1]
+                country_code = temp[3]
+                phone = temp[5]
             yield SgRecord(
                 locator_domain=DOMAIN,
                 page_url=page_url,
@@ -58,7 +79,7 @@ def fetch_data():
                 country_code=country_code,
                 store_number=MISSING,
                 phone=phone.strip(),
-                location_type=MISSING,
+                location_type=location_type,
                 latitude=MISSING,
                 longitude=MISSING,
                 hours_of_operation=hours_of_operation.strip(),
