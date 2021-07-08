@@ -20,7 +20,6 @@ MISSING = "<MISSING>"
 
 
 def fetch_data():
-    final_data = []
     if True:
         url = "https://www.snipits.com/locations/"
         r = session.get(url, headers=headers, verify=False)
