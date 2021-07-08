@@ -63,6 +63,8 @@ def fetch_data():
             except:
                 pass
             addr = _[5][3][0][1][0]
+            if addr.endswith("#"):
+                addr = addr[:-1]
             if len(addr.split(",")) == 3:
                 street_address = addr.split(",")[0].strip()
                 city = addr.split(",")[1].replace("#", "").strip()
@@ -73,16 +75,15 @@ def fetch_data():
                 continue
             streets.append(street_address)
             state = addr.split(",")[-1].strip().split(" ")[0].split("#")[0].strip()
+            zip_postal = (
+                addr.split(",")[-1].strip().split("#")[-1].split(state)[-1].strip()
+            )
             yield SgRecord(
                 location_name=_[5][0][1][0],
                 street_address=street_address,
                 city=city,
                 state=state,
-                zip_postal=addr.split(",")[-1]
-                .strip()
-                .split("#")[-1]
-                .split(state)[-1]
-                .strip(),
+                zip_postal=zip_postal,
                 country_code="CA",
                 phone=phone,
                 latitude=_[1][0][0][0],
