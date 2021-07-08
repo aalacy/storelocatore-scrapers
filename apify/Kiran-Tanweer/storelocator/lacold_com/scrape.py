@@ -102,6 +102,9 @@ def fetch_data():
             hours = hours.split("Hours")[1]
             hours = hours.lstrip(":").strip()
             hours = hours.replace("of Operation: ", "").strip()
+            hours = hours.replace("Office:", "").strip()
+            hours = hours.replace("Warehouse:", "").strip()
+            hours = hours.replace("  ", " ").strip()
 
             if street != "715 E Fourth St":
 

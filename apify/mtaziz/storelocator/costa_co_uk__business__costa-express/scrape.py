@@ -1,5 +1,5 @@
 from sgrequests import SgRequests
-from sgzip.dynamic import DynamicGeoSearch, SearchableCountries, Grain_4
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries, Grain_8
 from sglogging import SgLogSetup
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
@@ -23,11 +23,10 @@ MISSING = "<MISSING>"
 
 search = DynamicGeoSearch(
     country_codes=[SearchableCountries.BRITAIN],
-    max_radius_miles=None,
-    max_search_results=None,
-    granularity=Grain_4(),
+    max_radius_miles=5,
+    max_search_results=500,
+    granularity=Grain_8(),
 )
-
 
 headers = {
     "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.108 Safari/537.36"

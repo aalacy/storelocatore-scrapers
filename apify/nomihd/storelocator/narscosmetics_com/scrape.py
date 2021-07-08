@@ -169,7 +169,7 @@ def scrape():
         currentCountryCount = 0
         for country in countries:
             try:
-                search = DynamicGeoSearch(max_radius_miles=100, country_codes=[country])
+                search = DynamicGeoSearch(max_radius_miles=20, country_codes=[country])
                 results = parallelize(
                     search_space=[
                         (

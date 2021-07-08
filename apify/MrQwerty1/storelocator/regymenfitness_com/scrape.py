@@ -103,14 +103,15 @@ def fetch_data():
     }
 
     for state in states:
-        page_url = f"https://regymenfitness.com/{state}"
-        r = session.get(page_url, headers=headers)
+        url = f"https://regymenfitness.com/{state}"
+        r = session.get(url, headers=headers)
         tree = html.fromstring(r.text)
         divs = tree.xpath(
             "//div[contains(@class, 'et_pb_column et_pb_column_1_3') and .//iframe]"
         )
 
         for d in divs:
+            page_url = "".join(d.xpath(".//a[contains(text(), 'View ')]/@href"))
             location_name = "".join(d.xpath(".//h2/text()")).strip()
             line = " ".join(
                 "".join(

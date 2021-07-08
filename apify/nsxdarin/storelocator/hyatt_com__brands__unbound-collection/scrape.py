@@ -99,11 +99,6 @@ def fetch_data():
                                 CS = True
                             if ">Coming Soon<" in line2:
                                 CS = True
-                            if (
-                                "and beyond" in line2
-                                and "Now accepting reservations" in line2
-                            ):
-                                CS = True
                             if '"telephone":"' in line2:
                                 phone = line2.split('"telephone":"')[1].split('"')[0]
                     except:

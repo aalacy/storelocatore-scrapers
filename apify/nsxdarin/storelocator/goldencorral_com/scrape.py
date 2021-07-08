@@ -92,30 +92,39 @@ def fetch_data():
                         + "/golden-corral-"
                         + addtext
                     )
+                    loc = loc.replace("#", "").replace(",", "")
                     try:
                         r = session.get(loc, headers=headers)
                         if r.encoding is None:
                             r.encoding = "utf-8"
                         lines = r.iter_lines(decode_unicode=True)
                         for line in lines:
-                            if '"dayOfWeek":' in line:
-                                g = next(lines)
-                                day = g.split('"')[1]
-                            if '"opens": "' in line:
-                                ot = line.split('"opens": "')[1].split(':00"')[0]
-                            if '"closes": "' in line:
-                                ct = line.split('"closes": "')[1].split(':00"')[0]
-                                hrs = day + ": " + ot + "-" + ct
-                                if hours == "":
-                                    hours = hrs
-                                else:
-                                    hours = hours + "; " + hrs
+                            if '<ul class="location-detail-hours">' in line:
+                                items = line.split("<li><span>")
+                                for item in items:
+                                    if "<time" in item:
+                                        hrs = item.split("<")[0] + ": "
+                                        if 'class="subheading-s"></time>' in item:
+                                            hrs = hrs + "Closed"
+                                        else:
+                                            hrs = (
+                                                hrs
+                                                + item.split('class="subheading-s">')[
+                                                    1
+                                                ].split("<")[0]
+                                            )
+                                        if hours == "":
+                                            hours = hrs
+                                        else:
+                                            hours = hours + "; " + hrs
                     except:
                         pass
                     if hours == "":
                         hours = "<MISSING>"
                     if phone == "":
                         phone = "<MISSING>"
+                    if hours == "<MISSING>":
+                        hours = "INACCESSIBLE"
                     yield [
                         website,
                         loc,
