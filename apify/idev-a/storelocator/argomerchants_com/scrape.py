@@ -34,23 +34,45 @@ def fetch_data():
                 page_url = locator_domain + link["linkd"]
             logger.info(page_url)
             sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
-            country_code = parse_address_intl(
+            _addr = parse_address_intl(
                 sp1.select_one('h1[data-elementor-setting-key="title"]')
                 .find_next_sibling()
                 .text.strip()
-            ).country
-            addr = parse_address_intl(
-                " ".join(
-                    list(
-                        sp1.find("h4", string=re.compile(r"Details"))
-                        .find_parent()
-                        .stripped_strings
-                    )[1:]
-                )
             )
-            street_address = addr.street_address_1
-            if addr.street_address_2:
-                street_address += " " + addr.street_address_2
+            country_code = _addr.country
+            aa = list(
+                sp1.find("h4", string=re.compile(r"Details"))
+                .find_parent()
+                .stripped_strings
+            )[1:]
+            addr = parse_address_intl("  ".join(aa))
+            city = addr.city
+            zip_postal = ""
+            if country_code == "The Netherlands":
+                aa_0 = aa[0]
+                if aa_0.endswith(","):
+                    aa_0 = aa[0][:-1]
+                city = _addr.city.replace("‘", "'")
+                zip_postal = (
+                    aa[1]
+                    .split(city)[0]
+                    .replace(",", "")
+                    .replace("Netherlands", "")
+                    .replace(country_code, "")
+                    .replace("Maasvlakte", "")
+                    .strip()
+                )
+                if len(aa_0.split(",")) > 1 and not zip_postal:
+                    zip_postal = aa_0.split(",")[1].strip()
+                street_address = aa_0.replace(zip_postal, "").replace(",", "").strip()
+            else:
+                street_address = addr.street_address_1
+                if addr.street_address_2:
+                    street_address += " " + addr.street_address_2
+                zip_postal = addr.postcode
+            if country_code == "Portugal" and not zip_postal:
+                street_address = aa[0].replace(",", "")
+                zip_postal = aa[1].split(city)[0].replace(",", "")
             if street_address in streets:
                 continue
             streets.append(street_address)
@@ -65,7 +87,7 @@ def fetch_data():
                 street_address=street_address,
                 city=addr.city,
                 state=addr.state,
-                zip_postal=addr.postcode,
+                zip_postal=zip_postal,
                 country_code=country_code,
                 phone=phone,
                 locator_domain=locator_domain,

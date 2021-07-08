@@ -47,6 +47,7 @@ def fetch_data():
     start_urls = [
         "https://www.aerotek.com/en/locations/canada",
         "https://aerotek.com/en/locations/united-states",
+        "https://www.aerotek.com/en-gb/locations/emea/united-kingdom",
     ]
 
     for url in start_urls:
@@ -76,6 +77,8 @@ def fetch_data():
             city = city if city else "<MISSING>"
             country_code = store_dom.xpath('//span[@class="acs-country"]/text()')
             country_code = country_code[0] if country_code else "<MISSING>"
+            if country_code == "<MISSING>" and "united-kingdom" in url:
+                country_code = "United Kingdom"
             if country_code == "Canada":
                 state = (
                     store_dom.xpath('//span[@class="acs-city"]/text()')[0]
@@ -91,6 +94,13 @@ def fetch_data():
                     .split()[-2:]
                 )
                 zip_code = " ".join(zip_code) if zip_code else "<MISSING>"
+            elif country_code == "United Kingdom":
+                state = "<MISSING>"
+                zip_code = (
+                    store_dom.xpath('//span[@class="acs-city"]/text()')[0]
+                    .split(",")[-1]
+                    .strip()
+                )
             else:
                 state = (
                     store_dom.xpath('//span[@class="acs-city"]/text()')[0]
@@ -142,6 +152,13 @@ def fetch_data():
             hours_of_operation = (
                 ", ".join(hours_of_operation).replace("Office Hours:,", "").strip()
             )
+            if not hours_of_operation:
+                hours_of_operation = store_dom.xpath(
+                    '//p[contains(text(), "Office Hours:")]/following-sibling::p/text()'
+                )
+                hours_of_operation = (
+                    " ".join(hours_of_operation) if hours_of_operation else ""
+                )
             hours_of_operation = (
                 hours_of_operation if hours_of_operation else "<MISSING>"
             )
