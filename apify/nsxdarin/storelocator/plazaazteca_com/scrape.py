@@ -50,6 +50,8 @@ def fetch_data():
             lurl = line.split(
                 '<h2 class="elementor-heading-title elementor-size-default"><a href="'
             )[1].split('"')[0]
+            if "COMING SOON" in line:
+                lurl = "CS"
         if '<div class="elementor-text-editor elementor-clearfix">' in line:
             g = next(linesone)
             g = str(g.decode("utf-8"))
@@ -89,7 +91,8 @@ def fetch_data():
                     .split("<")[0]
                     .strip()
                 )
-            locs.append(lurl + "|" + a1 + "|" + a2 + "|" + a3 + "|" + a4 + "|" + a5)
+            if lurl != "CS":
+                locs.append(lurl + "|" + a1 + "|" + a2 + "|" + a3 + "|" + a4 + "|" + a5)
     for loc in locs:
         store = "<MISSING>"
         name = ""
@@ -138,6 +141,8 @@ def fetch_data():
         if "Coming Soon" not in name:
             if hours == "":
                 hours = "<MISSING>"
+            if "allentown" in purl:
+                phone = "(484) 656 7277"
             yield [
                 website,
                 purl,

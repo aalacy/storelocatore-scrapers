@@ -109,6 +109,10 @@ def fetch_data():
             hours = hours.replace("&nbsp;", " ")
             if "<br/>" in hours:
                 hours = hours.split("<br/>")[0]
+            if "44 Winchester" in add:
+                hours = "MON-SUN: 6am-12am"
+            if "Unit 2 Queensgate Centre" in add:
+                hours = "MON-SUN: 6am-midnight"
             hours = hours.replace("; <!--", "").replace("-->;", "").strip()
             if hours == "":
                 hours = "<MISSING>"

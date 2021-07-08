@@ -10,7 +10,7 @@ from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 
 import usaddress
 
-log = sglog.SgLogSetup().get_logger(logger_name="wingstop.com")
+log = sglog.SgLogSetup().get_logger(logger_name="wingstop_com")
 
 base_url = "https://www.wingstop.com"
 page_url = "https://www.wingstop.com/order"
@@ -42,8 +42,13 @@ def write_output(data):
             ]
         )
         # Body
+        id_dupes = []
         for row in data:
-            writer.writerow(row)
+            if row[8] in id_dupes:
+                pass
+            else:
+                id_dupes.append(row[8])
+                writer.writerow(row)
 
 
 def validate(item):
@@ -134,6 +139,7 @@ def fetch_data():
     headers = {"User-Agent": user_agent}
 
     history = []
+    data = []
 
     today = datetime.datetime.utcnow()
     start_datetime = today.strftime("%Y%m%d")
@@ -158,7 +164,7 @@ def fetch_data():
             + "&long="
             + str(lng)
             + "&radius="
-            + str(100)
+            + str(max_distance)
             + "&limit=100&nomnom=calendars&nomnom_calendars_from="
             + start_datetime
             + "&nomnom_calendars_to="
@@ -182,10 +188,11 @@ def fetch_data():
 
             if get_value(store["id"]) in history:
                 continue
-            history.append(get_value(store["id"]))
+            else:
+                history.append(get_value(store["id"]))
 
-            output = get_info(store)
-            yield output
+                output = get_info(store)
+                data.append(output)
 
     # Get GUAM locations
     url = (
@@ -212,16 +219,16 @@ def fetch_data():
             or "closed!" in get_value(store["name"]).lower()
         ):
             continue
-        latitude = get_value(store["latitude"])
-        longitude = get_value(store["longitude"])
-        search.found_location_at(latitude, longitude)
 
         if get_value(store["id"]) in history:
             continue
-        history.append(get_value(store["id"]))
+        else:
+            history.append(get_value(store["id"]))
 
-        output = get_info(store)
-        yield output
+            output = get_info(store)
+            data.append(output)
+
+    return data
 
 
 def scrape():

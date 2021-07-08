@@ -40,7 +40,9 @@ def fetch_data():
 
     items = []
 
-    start_url = "https://storerocket.global.ssl.fastly.net/api/user/VyJzm2D46M/locations?radius=50&units=miles"
+    start_url = (
+        "https://api.storerocket.io/api/user/VyJzm2D46M/locations?radius=50&units=miles"
+    )
     domain = "usaveitpharmacy.com"
     response = session.get(start_url)
     data = json.loads(response.text)

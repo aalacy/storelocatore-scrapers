@@ -115,6 +115,13 @@ def parse_detail(store, link):
         raw_hours = "<MISSING>"
     if "<MISS" not in raw_hours:
         raw_hours = get_value(" ".join(raw_hours))
+    raw_hours = (
+        raw_hours.replace("ATM Hours Day of the Week Hours", "")
+        .replace("ATM Hours", "")
+        .strip()
+    )
+    if "Week Hours" in raw_hours:
+        raw_hours = raw_hours.split("Week Hours")[1].strip()
     output.append(raw_hours)  # opening hours
     return output
 

@@ -23,7 +23,8 @@ def fetch_data():
         for loc in loclist:
             if loc["countryCode"]["value"] != "US":
                 if loc["countryCode"]["value"] != "CA":
-                    continue
+                    if loc["countryCode"]["value"] != "GB":
+                        continue
             store_number = loc["ID"]
             latitude = loc["latitude"]
             longitude = loc["longitude"]
@@ -58,7 +59,7 @@ def fetch_data():
                 zip_postal=zip_postal.strip(),
                 country_code=country_code,
                 store_number=store_number,
-                phone=phone.strip(),
+                phone=phone,
                 location_type=MISSING,
                 latitude=latitude,
                 longitude=longitude,

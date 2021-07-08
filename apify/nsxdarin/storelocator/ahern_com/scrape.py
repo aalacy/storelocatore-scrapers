@@ -90,6 +90,7 @@ def fetch_data():
             hours = hours.strip()
             if hours == "":
                 hours = "<MISSING>"
+            phone = phone.replace("Phone:", "").strip().replace("phone:", "")
             yield [
                 website,
                 loc,

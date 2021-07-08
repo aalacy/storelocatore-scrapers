@@ -36,7 +36,7 @@ def fetch_data():
     out = []
 
     locator_domain = "https://banksouthern.com"
-    api_url = "https://banksouthern.com/?hcs=locatoraid&hca=search%3Asearch%2F%2Fproduct%2F1%2Flat%2F%2Flng%2F%2Flimit%2F100%2Fproduct2%2F1"
+    api_url = "https://banksouthern.com/?hcs=locatoraid&hca=search%3Asearch%2F%2Fproduct%2F_PRODUCT_%2Flat%2F%2Flng%2F%2Flimit%2F100"
     session = SgRequests()
 
     headers = {
@@ -48,6 +48,10 @@ def fetch_data():
         page_url = "https://banksouthern.com/locations/"
         location_name = j.get("name")
         location_type = "Branch"
+        if "ATM Only" in location_name:
+            location_type = "ATM"
+        if "Lending Services" in location_name:
+            location_type = "Lending Services"
         street_address = f"{j.get('street1')} {j.get('street2')}".strip()
         phone = j.get("phone") or "<MISSING>"
         if phone != "<MISSING>":
@@ -69,6 +73,8 @@ def fetch_data():
             hours_of_operation == "By appointment only"
             or hours_of_operation == "No deposit services Call for Appointment"
         ):
+            hours_of_operation = "<MISSING>"
+        if hours_of_operation == "Call for appointment":
             hours_of_operation = "<MISSING>"
 
         row = [

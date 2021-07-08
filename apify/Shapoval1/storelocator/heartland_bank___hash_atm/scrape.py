@@ -94,24 +94,7 @@ def get_data(url):
         .strip()
     )
     location_type = "ATM"
-    hours_of_operation = (
-        " ".join(
-            tree.xpath('//p[text()="Lobby"]/following-sibling::table[1]//td/text()')
-        )
-        .replace("\n", "")
-        .strip()
-        or "<MISSING>"
-    )
-    if hours_of_operation == "<MISSING>":
-        hours_of_operation = (
-            " ".join(
-                tree.xpath(
-                    '//p[text()="Lobby/Drive-Thru"]/following-sibling::table[1]//td/text()'
-                )
-            )
-            .replace("\n", "")
-            .strip()
-        )
+    hours_of_operation = "<MISSING>"
 
     row = [
         locator_domain,
