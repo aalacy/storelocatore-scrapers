@@ -68,11 +68,12 @@ def get_data(url):
     if not line:
         return
 
-    if line[-1][0].isdigit() or line[-1][0] == "(":
-        phone = line.pop()
-    else:
-        phone = "<MISSING>"
-
+    phone = (
+        "".join(
+            tree.xpath("//a[@class='call-link']/text()|//a[@class='call-=link']/text()")
+        ).strip()
+        or "<MISSING>"
+    )
     street_address = ", ".join(line[:-1])
     line = line[-1]
     city = line.split(",")[0].strip()

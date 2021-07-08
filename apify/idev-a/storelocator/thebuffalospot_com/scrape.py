@@ -3,11 +3,6 @@ from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 import json
-import re
-from sglogging import SgLogSetup
-from sgscrape.sgpostal import parse_address_intl
-
-logger = SgLogSetup().get_logger("thebuffalospot")
 
 _headers = {
     "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
@@ -21,79 +16,43 @@ _headers = {
 locator_domain = "https://thebuffalospot.com"
 
 
-def _valid(val):
-    return (
-        val.strip()
-        .replace("–", "-")
-        .replace("-", "-")
-        .encode("unicode-escape")
-        .decode("utf8")
-        .replace("\\xa", "")
-        .replace("\\xa0", "")
-        .replace("\\xa0\\xa", "")
-        .replace("\\xae", "")
-    )
-
-
 def fetch_data():
     with SgRequests() as session:
-        base_url = "https://thebuffalospot.com/our-spots/"
-        res = session.get(base_url, headers=_headers).text
-        soup = bs(res, "lxml")
-        blocks = soup.select("div.wpb-row-4-cols div.wpb-column.wpb-col")
-        logger.info(f"{len(blocks)} found")
-        for _ in blocks:
-            if not _.text.strip():
+        base_url = "https://www.thebuffalospot.com/locations/"
+        locations = json.loads(
+            session.get(base_url, headers=_headers)
+            .text.split("locations:")[1]
+            .split("apiKey:")[0]
+            .strip()[:-1]
+        )
+        for _ in locations:
+            page_url = locator_domain + _["url"]
+            if "Coming Soon" in _["hours"]:
                 continue
-            addr = parse_address_intl(" ".join(list(_.p.stripped_strings)[1:]))
-            street_address = addr.street_address_1
-            if addr.street_address_2:
-                street_address += " " + addr.street_address_2
-            city = addr.city
-            state = addr.state
-            zip_postal = addr.postcode
-            latitude = longitude = ""
-            phone = ""
-            _phone = _.find("a", href=re.compile(r"tel"))
-            if _phone:
-                phone = _phone.text
-            page_url = ""
-            _url = _.find("a", href=re.compile(r"/locations"))
-            if _url:
-                page_url = locator_domain + _url["href"].replace("/locations", "")
-                logger.info(page_url)
-                res1 = session.get(page_url, headers=_headers)
-                hours_of_operation = ""
-                if res1.status_code == 200:
-                    sp1 = bs(res1.text, "lxml")
-                    if "COMING SOON!" in sp1.h2.text:
-                        continue
-                    script = json.loads(
-                        sp1.select('script[type="application/ld+json"]')[-1].string
-                    )
-                    street_address = script["address"]["streetAddress"]
-                    city = script["address"]["addressLocality"]
-                    state = script["address"]["addressRegion"]
-                    zip_postal = script["address"]["postalCode"]
-                    latitude = script["geo"]["latitude"]
-                    longitude = script["geo"]["longitude"]
-                    hours_of_operation = script["openingHours"]
-
+            hours = []
+            temp = list(bs(_["hours"], "lxml").stripped_strings)
+            if temp:
+                temp = temp[:-1]
+            for x in range(0, len(temp), 2):
+                hours.append(f"{temp[x]} {temp[x+1]}")
             yield SgRecord(
                 page_url=page_url,
-                location_name=_.h3.text.strip(),
-                street_address=street_address,
-                city=city,
-                state=state,
-                zip_postal=zip_postal,
+                store_number=_["id"],
+                location_name=_["name"],
+                street_address=_["street"],
+                city=_["city"],
+                state=_["state"],
+                zip_postal=_["postal_code"],
+                latitude=_["lat"],
+                longitude=_["lng"],
                 country_code="US",
-                phone=phone,
-                latitude=latitude,
-                longitude=longitude,
+                phone=_["phone_number"],
                 locator_domain=locator_domain,
-                hours_of_operation=hours_of_operation.replace("–", "-").replace(
-                    "’", "'"
-                ),
+                hours_of_operation="; ".join(hours)
+                .replace("–", "-")
+                .replace("&ndash;", "-")
+                .replace("’til", "-"),
+                raw_address=_["address"],
             )
 
 

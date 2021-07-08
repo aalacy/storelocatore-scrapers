@@ -86,12 +86,9 @@ def fetch_data():
             max_radius_miles=max_distance,
             max_search_results=max_results,
         )
+        logger.info("Sgzips for loc_type: %s" % loc_type)
 
         for x, y in search:
-            logger.info(
-                "Searching: %s, %s | Items remaining: %s"
-                % (x, y, search.items_remaining())
-            )
             r_data = (
                 "sideBarType=LSTORES&latitude="
                 + str(x)
@@ -137,7 +134,17 @@ def fetch_data():
                     ca_zip = store_data["zipcode"].replace(" ", "")
                     store.append(ca_zip[:3] + " " + ca_zip[3:])
                     store.append("CA")
-                store.append(store_data["url"].split("storeNumber=")[1].split("&")[0])
+                store_num = store_data["url"].split("storeNumber=")[1].split("&")[0]
+                if store_num in [
+                    "190520",
+                    "24921",
+                    "627001",
+                    "622001",
+                    "614502",
+                    "621001",
+                ]:
+                    continue
+                store.append(store_num)
                 store.append(
                     store_data["phone"].replace("  ", "")
                     if "phone" in store_data
@@ -154,18 +161,25 @@ def fetch_data():
                     headers=headers,
                 )
                 location_soup = BeautifulSoup(location_request.text, "lxml")
-                hours = (
-                    " ".join(
-                        list(
-                            location_soup.find(
-                                "div",
-                                {"class": "cmp-storedetailhero__store-hours-container"},
-                            ).stripped_strings
+
+                hours = ""
+                try:
+                    hours = (
+                        " ".join(
+                            list(
+                                location_soup.find(
+                                    "div",
+                                    {
+                                        "class": "cmp-storedetailhero__store-hours-container"
+                                    },
+                                ).stripped_strings
+                            )
                         )
+                        .replace("Store Hours", "")
+                        .strip()
                     )
-                    .replace("Store Hours", "")
-                    .strip()
-                )
+                except:
+                    pass
                 store.append(hours if hours != "" else "<MISSING>")
                 store.append(link)
                 yield store

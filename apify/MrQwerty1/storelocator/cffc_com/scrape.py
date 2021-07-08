@@ -129,6 +129,16 @@ def fetch_data():
             or "<MISSING>"
         )
 
+        if hours_of_operation == "<MISSING>":
+            hours_of_operation = (
+                ";".join(
+                    d.xpath(
+                        ".//strong[contains(text(), 'Office')]/following-sibling::text()"
+                    )
+                )
+                or "<MISSING>"
+            )
+
         row = [
             locator_domain,
             page_url,

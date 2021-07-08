@@ -1,107 +1,101 @@
-import csv
-import json
-from sgrequests import SgRequests
+import usaddress
 from sglogging import sglog
 from bs4 import BeautifulSoup
+from sgrequests import SgRequests
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
 
-
+session = SgRequests()
 website = "steakescape_com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 session = SgRequests()
-
-session = SgRequests()
 headers = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+    "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.66 Safari/537.36",
+    "Accept": "application/json",
 }
 
-
-def write_output(data):
-    with open("data.csv", mode="w", newline="", encoding="utf8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
-        log.info(f"No of records being processed: {len(data)}")
+DOMAIN = "https://steakescape.com/"
+MISSING = "<MISSING>"
 
 
 def fetch_data():
-    # Your scraper here
-    data = []
-    url = "https://steakescape.com/df-data/scripts/stores.js"
-    r = session.get(url, headers=headers)
-    loclist = json.loads(r.text)
-    for loc in loclist:
-        title = loc["name"]
-        link = loc["file"]
-        link = "https://steakescape.com/df-data/copy/locations/" + link
-        r = session.get(link, headers=headers, verify=False)
+    if True:
+        url = "https://steakescape.com/locations/"
+        r = session.get(url, headers=headers)
         soup = BeautifulSoup(r.text, "html.parser")
-        templist = soup.find("div", {"class": "two_col_15"}).findAll("p")
-
-        if len(templist) > 2:
-            address = templist[1].text.split("\n")
-            if len(address) > 2:
-                city = address[2].split(",", 1)[0]
-            else:
-                city = address[1].split(",", 1)[0]
-            street = address[0]
-            phone = templist[2].text
-        else:
-            phone = "<MISSING>"
-            street = "<MISSING>"
-            city = templist[1].text.split(",", 1)[0]
-        lat = loc["lat"]
-        longt = loc["lon"]
-        state = loc["state"]
-        pcode = loc["zip"]
-
-        data.append(
-            [
-                "https://steakescape.com/",
-                "https://steakescape.com/locations/",
-                title.strip(),
-                street.strip(),
-                city.strip(),
-                state.strip(),
-                pcode.strip(),
-                "US",
-                "<MISSING>",
-                phone.strip(),
-                "<MISSING>",
-                lat,
-                longt,
-                "<MISSING>",
-            ]
-        )
-    return data
+        loclist = soup.findAll("div", {"class": "location-detail py1"})
+        for loc in loclist:
+            store_number = loc["data-store-id"]
+            latitude = loc["data-lat"]
+            longitude = loc["data-lng"]
+            location_name = loc.find("h4").text
+            log.info(location_name)
+            address = (
+                loc.find("address")
+                .get_text(separator="|", strip=True)
+                .replace("|", " ")
+            )
+            address = address.replace(",", " ")
+            address = usaddress.parse(address)
+            i = 0
+            street_address = ""
+            city = ""
+            state = ""
+            zip_postal = ""
+            while i < len(address):
+                temp = address[i]
+                if (
+                    temp[1].find("Address") != -1
+                    or temp[1].find("Street") != -1
+                    or temp[1].find("Recipient") != -1
+                    or temp[1].find("Occupancy") != -1
+                    or temp[1].find("BuildingName") != -1
+                    or temp[1].find("USPSBoxType") != -1
+                    or temp[1].find("USPSBoxID") != -1
+                ):
+                    street_address = street_address + " " + temp[0]
+                if temp[1].find("PlaceName") != -1:
+                    city = city + " " + temp[0]
+                if temp[1].find("StateName") != -1:
+                    state = state + " " + temp[0]
+                if temp[1].find("ZipCode") != -1:
+                    zip_postal = zip_postal + " " + temp[0]
+                i += 1
+            try:
+                phone = loc.select_one("a[href*=tel]").text
+            except:
+                phone = MISSING
+            country_code = "US"
+            yield SgRecord(
+                locator_domain=DOMAIN,
+                page_url=url,
+                location_name=location_name.strip(),
+                street_address=street_address.strip(),
+                city=city.strip(),
+                state=state.strip(),
+                zip_postal=zip_postal.strip(),
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone.strip(),
+                location_type=MISSING,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=MISSING,
+            )
 
 
 def scrape():
     log.info("Started")
-    data = fetch_data()
-    write_output(data)
+    count = 0
+    with SgWriter() as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+
+    log.info(f"No of records being processed: {count}")
     log.info("Finished")
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()
