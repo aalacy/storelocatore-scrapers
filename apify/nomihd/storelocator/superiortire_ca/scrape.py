@@ -62,7 +62,7 @@ def fetch_data():
 
         street_address = " ".join(
             store.xpath('.//div[contains(@class,"addr")]//text()')
-        )
+        ).strip()
         if "," == street_address[-1]:
             street_address = "".join(street_address[:-1]).strip()
 
@@ -104,7 +104,7 @@ def fetch_data():
             )
         )
         hours = hours[1:]
-        hours_of_operation = "; ".join(hours)
+        hours_of_operation = "; ".join(hours).replace(":;", ":").strip()
 
         map_link = "".join(store.xpath('.//div[contains(@class,"latlong")]//text()'))
 
