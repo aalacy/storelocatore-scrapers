@@ -3,7 +3,6 @@ from sglogging import sglog
 from sgselenium import SgChrome
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
-from webdriver_manager.chrome import ChromeDriverManager
 
 website = "miravalresorts.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -13,7 +12,7 @@ MISSING = "<MISSING>"
 
 
 def fetch_data():
-    with SgChrome(executable_path=ChromeDriverManager().install()) as driver:
+    with SgChrome() as driver:
         driver.get("https://www.miravalresorts.com/resorts/")
         soup = BeautifulSoup(driver.page_source, "html.parser")
         loclist = soup.findAll("article")
