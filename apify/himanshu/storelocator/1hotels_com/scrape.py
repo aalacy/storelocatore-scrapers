@@ -52,7 +52,7 @@ def fetch_data():
     all_locations = dom.xpath("//a[img]/@href")[1:]
     for url in all_locations:
         store_url = url.replace("/contact-us", "")
-        print(store_url)
+
         loc_response = session.get(store_url)
         loc_dom = etree.HTML(loc_response.text)
         poi = loc_dom.xpath('//script[contains(text(), "PostalAddress")]/text()')
