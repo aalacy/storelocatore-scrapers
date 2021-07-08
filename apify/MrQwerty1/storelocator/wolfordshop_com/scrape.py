@@ -72,8 +72,8 @@ def fetch_data():
             state = "<MISSING>"
             postal = j.get("postalCode") or "<MISSING>"
         else:
-            city = j.get('city') or "<MISSING>"
-            state = '<MISSING>'
+            city = j.get("city") or "<MISSING>"
+            state = "<MISSING>"
             postal = j.get("postalCode") or "<MISSING>"
 
         store_number = j.get("storeID") or "<MISSING>"
