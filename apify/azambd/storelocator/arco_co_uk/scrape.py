@@ -50,10 +50,10 @@ def getHoo(texts):
     for text in texts:
         text = text.replace("\r", " ").replace("\n", " ").replace("\xa0", " ")
         text = " ".join(text.split())
-        if isStore == False and "day" in text:
+        if isStore is False and "day" in text:
             isStore = True
             continue
-        if isStore == True and len(text.strip()) > 0:
+        if isStore is True and len(text.strip()) > 0:
             hoo = hoo + text + " "
 
     hoo = hoo.strip()
