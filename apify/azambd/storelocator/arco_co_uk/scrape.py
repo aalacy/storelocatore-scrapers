@@ -45,11 +45,20 @@ def fetchStores():
 
 
 def getHoo(texts):
+    isStore = False
+    hoo = ""
     for text in texts:
-        if "day" in text:
-            text = text.replace("\r", " ").replace("\n", " ").replace("\xa0", " ")
-            text = " ".join(text.split())
-            return text
+        text = text.replace("\r", " ").replace("\n", " ").replace("\xa0", " ")
+        text = " ".join(text.split())
+        if isStore is False and "day" in text:
+            isStore = True
+            continue
+        if isStore is True and len(text.strip()) > 0:
+            hoo = hoo + text + " "
+
+    hoo = hoo.strip()
+    if len(hoo):
+        return hoo
     return MISSING
 
 
@@ -62,8 +71,8 @@ def fetchData():
         count = count + 1
         location_name = store["location_name"]
         page_url = store["page_url"]
-        latitude = store["latitude"].replace("\r", "").replace("\n", "")
-        longitude = store["longitude"].replace("\r", "").replace("\n", "")
+        latitude = str(store["latitude"]).strip()
+        longitude = str(store["longitude"]).strip()
         log.debug(f"{count}. crawling {page_url} ...")
         response = request_with_retries(page_url)
         body = html.fromstring(response.text, "lxml")
@@ -80,6 +89,12 @@ def fetchData():
         store_number = page_url.split("/")[len(page_url.split("/")) - 1]
         location_type = trTexts["Address:"] if "Address:" in trTexts else MISSING
         street_address = trTexts["Address:"] if "Address:" in trTexts else MISSING
+        street_address = (
+            street_address.replace("Arco Limited", "")
+            .replace("ARCO Ltd", "")
+            .replace("Arco Ltd", "")
+            .strip()
+        )
         city = trTexts["City:"] if "City:" in trTexts else MISSING
         zip_postal = trTexts["Postcode:"] if "Postcode:" in trTexts else MISSING
         state = MISSING
