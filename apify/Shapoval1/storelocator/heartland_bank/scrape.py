@@ -1,4 +1,5 @@
 import csv
+import usaddress
 from lxml import html
 from sgrequests import SgRequests
 from concurrent import futures
@@ -57,22 +58,50 @@ def get_data(url):
         "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:85.0) Gecko/20100101 Firefox/85.0",
     }
     session = SgRequests()
+    tag = {
+        "Recipient": "recipient",
+        "AddressNumber": "address1",
+        "AddressNumberPrefix": "address1",
+        "AddressNumberSuffix": "address1",
+        "StreetName": "address1",
+        "StreetNamePreDirectional": "address1",
+        "StreetNamePreModifier": "address1",
+        "StreetNamePreType": "address1",
+        "StreetNamePostDirectional": "address1",
+        "StreetNamePostModifier": "address1",
+        "StreetNamePostType": "address1",
+        "CornerOf": "address1",
+        "IntersectionSeparator": "address1",
+        "LandmarkName": "address1",
+        "USPSBoxGroupID": "address1",
+        "USPSBoxGroupType": "address1",
+        "USPSBoxID": "address1",
+        "USPSBoxType": "address1",
+        "BuildingName": "address2",
+        "OccupancyType": "address2",
+        "OccupancyIdentifier": "address2",
+        "SubaddressIdentifier": "address2",
+        "SubaddressType": "address2",
+        "PlaceName": "city",
+        "StateName": "state",
+        "ZipCode": "postal",
+    }
     r = session.get(page_url, headers=headers)
     tree = html.fromstring(r.text)
-
-    street_address = (
-        "".join(tree.xpath('//p[@class="blueAddress"]/text()[1]'))
-        .replace("\n", "")
-        .strip()
-    )
     ad = (
-        "".join(tree.xpath('//p[@class="blueAddress"]/text()[2]'))
+        " ".join(tree.xpath('//h4[text()="Address:"]/following-sibling::p[1]/text()'))
+        .replace("(Rossmore Square Plaza)", "")
         .replace("\n", "")
         .strip()
     )
-    city = ad.split(",")[0].strip()
-    state = ad.split(",")[1].split()[0].strip()
-    postal = ad.split(",")[1].split()[1].strip()
+    a = usaddress.tag(ad, tag_mapping=tag)[0]
+    street_address = f"{a.get('address1')} {a.get('address2')}".replace(
+        "None", ""
+    ).strip()
+
+    city = a.get("city") or "<MISSING>"
+    state = a.get("state") or "<MISSING>"
+    postal = a.get("postal") or "<MISSING>"
     country_code = "US"
     store_number = "<MISSING>"
     location_name = "".join(tree.xpath("//h1/text()"))
@@ -109,6 +138,12 @@ def get_data(url):
                     '//p[text()="Lobby/Drive-Thru"]/following-sibling::table[1]//td/text()'
                 )
             )
+            .replace("\n", "")
+            .strip()
+        ) or "<MISSING>"
+    if hours_of_operation == "<MISSING>":
+        hours_of_operation = (
+            " ".join(tree.xpath('//h4[text()="Hours"]/following-sibling::p[1]/text()'))
             .replace("\n", "")
             .strip()
         )
