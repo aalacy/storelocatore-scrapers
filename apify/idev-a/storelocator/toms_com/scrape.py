@@ -3,7 +3,6 @@ from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
-from sgscrape.sgpostal import parse_address_intl
 import re
 
 
@@ -41,11 +40,12 @@ def fetch_data():
             ):
                 if "Phone" in aa.text:
                     break
+                if not aa.text.strip():
+                    continue
                 _addr.append(aa.text)
-            addr = parse_address_intl(" ".join(_addr))
-            street_address = addr.street_address_1
-            if addr.street_address_2:
-                street_address += " " + addr.street_address_2
+
+            if not _addr[0][0].isdigit():
+                del _addr[0]
             phone = ""
             if link.find("strong", string=re.compile(r"Phone")):
                 phone = (
@@ -60,20 +60,25 @@ def fetch_data():
                         .find_next_sibling("p")
                         .text.strip()
                     )
-            yield SgRecord(
-                page_url=base_url,
-                location_name=link.select_one("span.c-content-tile__box-title")
-                .text.replace("Store Details", "")
-                .strip(),
-                street_address=street_address,
-                city=addr.city,
-                state=addr.state,
-                zip_postal=addr.postcode,
-                country_code="US",
-                phone=phone,
-                locator_domain=locator_domain,
-                hours_of_operation="; ".join(hours).replace("–", "-"),
-            )
+            try:
+                yield SgRecord(
+                    page_url=base_url,
+                    location_name=link.select_one("span.c-content-tile__box-title")
+                    .text.replace("Store Details", "")
+                    .strip(),
+                    street_address=" ".join(_addr[:-1]),
+                    city=_addr[-1].split(",")[0].strip(),
+                    state=_addr[-1].split(",")[1].strip().split(" ")[0].strip(),
+                    zip_postal=_addr[-1].split(",")[1].strip().split(" ")[-1].strip(),
+                    country_code="US",
+                    phone=phone,
+                    locator_domain=locator_domain,
+                    hours_of_operation="; ".join(hours).replace("–", "-"),
+                )
+            except:
+                import pdb
+
+                pdb.set_trace()
 
 
 if __name__ == "__main__":

@@ -1,4 +1,5 @@
 import csv
+import re
 
 from concurrent import futures
 from lxml import html
@@ -35,56 +36,34 @@ def write_output(data):
 
 
 def get_urls():
-    session = SgRequests()
-    r = session.get("https://eyemart.com/locations/")
+    r = session.get("https://expstores.com/", headers=headers)
     tree = html.fromstring(r.text)
 
-    return tree.xpath("//a[./img[@class='alignleft size-full wp-image-160']]/@href")
+    return tree.xpath("//a[contains(@class, 'mpfy-pin mpfy-pin-id-')]/@href")
 
 
 def get_data(page_url):
-    locator_domain = "https://eyemart.com/"
+    locator_domain = "https://expstores.com/"
 
-    session = SgRequests()
-    r = session.get(page_url)
+    r = session.get(page_url, headers=headers)
     tree = html.fromstring(r.text)
 
-    location_name = "".join(tree.xpath("//div[@class='storeInfo']/h2/text()")).strip()
-    line = tree.xpath("//div[@class='storeInfo']/p/text()")
-    line = list(filter(None, [l.strip() for l in line]))
+    location_name = "".join(tree.xpath("//h1/text()")).strip()
+    line = tree.xpath("//div[@class='mpfy-p-entry']//text()")
+    line = list(filter(None, [l.replace("US", "").strip() for l in line]))
 
-    street_address = line[0]
-    line = line[1]
-    city = line.split(",")[0].strip()
-    line = line.split(",")[1].strip()
-    state = line.split()[0]
-    postal = line.split()[1]
+    phone = line.pop()
+    street_address = line.pop(0)
+    line = line[-1]
+    postal = "".join(p.findall(line))
+    state = "".join(st.findall(line))
+    city = line.replace(postal, "").replace(state, "").strip()
     country_code = "US"
     store_number = "<MISSING>"
-    phone = (
-        "".join(
-            tree.xpath("//div[@class='storeInfo']//span[@class='tel']/text()")
-        ).strip()
-        or "<MISSING>"
-    )
-
-    text = "".join(
-        tree.xpath("//script[contains(text(), 'google.maps.LatLng')]/text()")
-    )
-    latitude = text.split('parseFloat("')[1].split('"')[0]
-    longitude = text.split('parseFloat("')[-1].split('"')[0]
+    text = "".join(tree.xpath("//a/@href"))
+    latitude, longitude = text.split("=")[-1].split(",")
     location_type = "<MISSING>"
-
-    _tmp = []
-    days = tree.xpath("//div[@class='days']/p/text()")
-    text = "".join(tree.xpath("//script[contains(text(), 'siteHour ?')]/text()"))
-    times = eval(text.split("siteHour ?")[1].split(": [")[0])
-
-    for d, t in zip(days, times):
-        if d.strip():
-            _tmp.append(f"{d.strip()} {t.strip()}")
-
-    hours_of_operation = ";".join(_tmp).replace(": -", ": Closed") or "<MISSING>"
+    hours_of_operation = "<MISSING>"
 
     row = [
         locator_domain,
@@ -126,4 +105,12 @@ def scrape():
 
 
 if __name__ == "__main__":
+    headers = {
+        "accept": "text/html, */*; q=0.01",
+        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.105 Safari/537.36",
+        "x-requested-with": "XMLHttpRequest",
+    }
+    session = SgRequests()
+    st = re.compile(r"[A-Z]{2}")
+    p = re.compile(r"\d{5}")
     scrape()
