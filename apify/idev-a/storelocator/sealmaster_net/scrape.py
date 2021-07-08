@@ -50,9 +50,15 @@ def fetch_data():
                     del addr[-1]
                 try:
                     street_address = " ".join(addr[:-1])
-                    city = " ".join(addr[-1].split(" ")[-2])
-                    state = addr[-1].split(" ")[-2].strip()
+                    state = " ".join(addr[-1].split(" ")[1:-1]).split(",")[-1]
                     zip_postal = addr[-1].split(" ")[-1]
+                    city = (
+                        addr[-1]
+                        .split(",")[0]
+                        .replace(state, "")
+                        .replace(zip_postal, "")
+                        .strip()
+                    )
                 except:
                     import pdb
 

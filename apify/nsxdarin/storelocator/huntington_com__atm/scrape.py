@@ -94,7 +94,7 @@ def fetch_data():
                     hours = "<MISSING>"
                 storeinfo = store + "|" + add + "|" + typ + "|" + zc
                 if storeinfo not in ids:
-                    ids.append(store)
+                    ids.append(storeinfo)
                     loc = "<MISSING>"
                     if phone == "":
                         phone = "<MISSING>"
@@ -161,7 +161,7 @@ def fetch_data():
                     hours = "<MISSING>"
                 storeinfo = store + "|" + add + "|" + typ + "|" + zc
                 if storeinfo not in ids:
-                    ids.append(store)
+                    ids.append(storeinfo)
                     if DT != "" or WU != "" or IN != "" or BS != "":
                         loc = (
                             "https://www.huntington.com/Community/branch-info?locationId="

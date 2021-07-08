@@ -166,6 +166,8 @@ def fetchData():
             street_address = getJSONObjectVariable(store, "Address")
             city = getJSONObjectVariable(store, "City")
             zip_postal = str(getJSONObjectVariable(store, "Zip"))
+            if not zip_postal.isdigit():
+                country_code = "CA"
             state = getJSONObjectVariable(store, "State")
             latitude = str(getJSONObjectVariable(store, "Latitude"))
             longitude = str(getJSONObjectVariable(store, "Longitude"))
