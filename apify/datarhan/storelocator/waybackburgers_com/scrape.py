@@ -78,9 +78,10 @@ def fetch_data():
         location_type = "<MISSING>"
         latitude = loc_dom.xpath("//@data-markerlat")[0]
         longitude = loc_dom.xpath("//@data-markerlon")[0]
-
-        days = loc_dom.xpath('//div[@class="location-hours"]/ul//text()')[:7]
-        hours = loc_dom.xpath('//div[@class="location-hours"]/ul//text()')[7:]
+        hoo_data = loc_dom.xpath('//div[@class="location-hours"]/ul//text()')
+        hoo_data = [e.strip() for e in hoo_data if e.strip()]
+        days = hoo_data[:7]
+        hours = hoo_data[7:]
         hoo = list(map(lambda d, h: d + " " + h, days, hours))
         hoo = [e.strip() for e in hoo if e.strip()]
         hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
