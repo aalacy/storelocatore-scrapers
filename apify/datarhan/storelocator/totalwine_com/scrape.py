@@ -135,7 +135,7 @@ def fetch_data():
         country_code = poi["stateIsoCode"]
         country_code = country_code.split("-")[0] if country_code else "<MISSING>"
         store_number = poi["storeNumber"]
-        phone = poi["phone"]
+        phone = poi.get("phone")
         phone = phone if phone else "<MISSING>"
         location_type = "<MISSING>"
         latitude = poi["latitude"]

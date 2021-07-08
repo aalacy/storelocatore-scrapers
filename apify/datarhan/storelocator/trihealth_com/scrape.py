@@ -1,6 +1,7 @@
 import re
 import csv
 from lxml import etree
+from urllib.parse import urljoin
 
 from sgrequests import SgRequests
 
@@ -43,15 +44,37 @@ def fetch_data():
     scraped_items = []
 
     DOMAIN = "trihealth.com"
-    start_url = "https://www.trihealth.com/hospitals-and-practices/"
-    response = session.get(start_url)
-    dom = etree.HTML(response.text)
+    start_urls = [
+        "https://www.trihealth.com/hospitals-and-practices/",
+        "https://www.trihealth.com/institutes-and-services/",
+    ]
+    for start_url in start_urls:
+        response = session.get(start_url)
+        dom = etree.HTML(response.text)
 
-    all_locations = dom.xpath('//table[@dropzone="copy"]//ul/li/a/@href')
-    for url in all_locations:
-        store_url = url
-        if "http" not in url:
-            store_url = "https://www.trihealth.com" + url
+        all_locations = dom.xpath('//table[@dropzone="copy"]//ul/li/a/@href')
+        all_locations += dom.xpath('//a[contains(text(), "Locations")]/@href')
+        all_locations += dom.xpath(
+            '//li[a[contains(text(), "HOSPITALS & LOCATIONS")]]/ul//a/@href'
+        )
+        all_locations += dom.xpath(
+            '//div[h1[contains(text(), "Institutes & Services")]]//a/@href'
+        )
+        all_locations += dom.xpath('//a[contains(text(), "Locations")]/@href')
+
+    final_list = all_locations
+    for url in list(set(all_locations)):
+        response = session.get(urljoin(start_url, url))
+        dom = etree.HTML(response.text)
+        final_list += dom.xpath('//a[contains(text(), "Locations")]/@href')
+        final_list += dom.xpath('//a[contains(@href, "/locations/")]/@href')
+
+    final_list += [
+        "https://www.trihealth.com/institutes-and-services/trihealth-orthopedic-and-sports-institute/locations#ANDERSON (7794 Five Mile Road)",
+        "https://www.trihealth.com/institutes-and-services/trihealth-orthopedic-and-sports-institute/locations",
+    ]
+    for url in list(set(final_list)):
+        store_url = urljoin(start_url, url)
         if "cgha.com" in url:
             continue
         store_response = session.get(store_url)
@@ -59,6 +82,7 @@ def fetch_data():
         loc_type_1 = store_dom.xpath('//div[contains(@id, "prLoc")]')
         loc_type_2 = store_dom.xpath('//address[@class="vcard"]')
         loc_type_3 = store_dom.xpath('//main[h2[contains(text(), "Our Offices:")]]/p')
+        loc_type_4 = store_dom.xpath('//td[strong[a[contains(@id, "anchor")]]]')
         directions_url = store_dom.xpath(
             '//a[contains(text(), "Directions and Parking")]/@href'
         )
@@ -273,6 +297,56 @@ def fetch_data():
                 )[0]
                 latitude = "<MISSING>"
                 longitude = "<MISSING>"
+                hours_of_operation = "<MISSING>"
+
+                item = [
+                    DOMAIN,
+                    store_url,
+                    location_name,
+                    street_address,
+                    city,
+                    state,
+                    zip_code,
+                    country_code,
+                    store_number,
+                    phone,
+                    location_type,
+                    latitude,
+                    longitude,
+                    hours_of_operation,
+                ]
+                check = f"{location_name} {street_address}"
+                if check not in scraped_items:
+                    scraped_items.append(check)
+                    items.append(item)
+
+        if loc_type_4:
+            for loc_4 in loc_type_4:
+                location_name = loc_4.xpath(".//a/@name")
+                location_name = location_name[0] if location_name else "<MISSING>"
+                address_raw = loc_4.xpath(".//text()")
+                address_raw = [elem.strip() for elem in address_raw if elem.strip()][
+                    1:-2
+                ]
+                street_address = address_raw[0]
+                city = address_raw[-1].split(", ")[0]
+                state = address_raw[-1].split(", ")[-1].split()[0]
+                zip_code = address_raw[-1].split(", ")[-1].split()[-1]
+                country_code = "<MISSING>"
+                store_number = "<MISSING>"
+                location_type = "<MISSING>"
+                phone = loc_4.xpath(".//text()")[-3].strip()
+                geo = (
+                    loc_4.xpath('.//a[contains(@href, "/maps/")]/@href')[0]
+                    .split("/@")[-1]
+                    .split(",")[:2]
+                )
+                latitude = geo[0].strip()
+                longitude = geo[-1].strip().replace("\n", "").replace(" ", "")
+                if geo:
+                    geo = geo[0].split(",")
+                    latitude = geo[0]
+                    longitude = geo[-1]
                 hours_of_operation = "<MISSING>"
 
                 item = [

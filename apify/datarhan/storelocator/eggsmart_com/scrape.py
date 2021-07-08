@@ -87,7 +87,9 @@ def fetch_data():
         country_code = addr.country
         country_code = country_code if country_code else "<MISSING>"
         store_number = location_name.split()[-1]
-        phone = loc_dom.xpath('//a[contains(@href, "tel")]/text()')[0].split()[-1]
+        phone = loc_dom.xpath('//a[contains(@href, "tel")]/text()')[0].replace(
+            "CALL", ""
+        )
         location_type = "<MISSING>"
         data = loc_dom.xpath('//script[contains(text(),  "locations")]/text()')[1]
         data = re.findall(

@@ -23,35 +23,41 @@ def fetch_data():
         for _ in locations:
             page_url = locator_domain + _["href"]
             soup1 = bs(session.get(page_url, headers=_headers).text, "lxml")
-            hours = [
-                hh.text
-                for hh in soup1.select("div.entry-content.our-restaurants p")[1:]
-            ]
-            if "COMING SOON" in hours:
-                continue
-            if not re.search(r"tel:", hours[-1], re.IGNORECASE):
-                del hours[-1]
-            for x, hh in enumerate(hours):
-                if not re.search(r"Monday", hh, re.IGNORECASE):
-                    del hours[x]
-            hours_of_operation = ""
-            if hours:
-                if "we have closed" not in " ".join(hours):
-                    hours_of_operation = hours[0].replace("\n", "; ")
+            hours = []
+
+            for hh in soup1.select("div.entry-content.our-restaurants p")[1:]:
+                if re.search(r"NOS HEURES D’OUVERTURE VARIENT", hh.text, re.IGNORECASE):
+                    continue
+                if re.search(r"nous avons fermé nos", hh.text, re.IGNORECASE):
+                    hours = ["Closed"]
+                if re.search(r"LUNDI", hh.text, re.IGNORECASE):
+                    hours = list(hh.stripped_strings)
+
+            hours1 = []
+            for x in range(0, len(hours), 2):
+                hours1.append(f"{hours[x]}: {hours[x+1]}")
+
             addr = parse_address_intl(
                 soup1.select_one("div.entry-content.our-restaurants p").text.replace(
                     "|", ""
                 )
             )
+            phone_block = list(
+                soup1.find("h3", string=re.compile(r"Nos coordonnées", re.IGNORECASE))
+                .find_next_sibling("p")
+                .stripped_strings
+            )
+            if (
+                phone_block
+                and not phone_block[0].replace("TEL:", "").replace("TÉL:", "").strip()
+            ):
+                del phone_block[0]
             phone = (
-                (
-                    soup1.find(
-                        "h3", string=re.compile(r"Nos coordonnées", re.IGNORECASE)
-                    )
-                    .find_next_sibling("p")
-                    .stripped_strings
-                )[0]
+                phone_block[0]
+                .split(":")[-1]
+                .split("#")[0]
                 .replace("TEL:", "")
+                .replace("TÉL:", "")
                 .strip()
             )
             yield SgRecord(
@@ -64,7 +70,7 @@ def fetch_data():
                 country_code="CA",
                 phone=phone,
                 locator_domain=locator_domain,
-                hours_of_operation=_valid(hours_of_operation),
+                hours_of_operation=_valid("; ".join(hours1)),
             )
 
 

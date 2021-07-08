@@ -13,12 +13,10 @@ def fetch_data():
     with SgRequests() as session:
         locations = session.get(base_url, headers=_headers).json()
         for _ in locations["results"]["locations"]:
-            street_address = _["address_line_1"]
+            street_address = " ".join(_["display_address"].split(",")[:-3])
             hours = []
             for day, hh in _["hours"].items():
                 hours.append(f"{day}: {hh}")
-            if not street_address:
-                street_address = _["address"].split(",")[0]
             yield SgRecord(
                 page_url="https://villamadina.com/locations",
                 store_number=_["id"],

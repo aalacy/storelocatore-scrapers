@@ -82,7 +82,7 @@ def fetch_data():
                 title.replace("\xa0", ""),
                 street.replace("\xa0", ""),
                 city.replace("\xa0", ""),
-                state.replace("\xa0", ""),
+                state.replace("\xa0", "").replace(".", ""),
                 pcode.replace("\xa0", ""),
                 "US",
                 store,

@@ -36,46 +36,51 @@ def write_output(data):
 def fetch_data():
     out = []
     locator_domain = "https://www.fooddepot.com/"
-    api_url = "https://www.fooddepot.com/stores/store-search-results.html?zipcode=75022&radius=5000&displayCount=5000"
+    api_url = "https://www.fooddepot.com/locations/"
 
     session = SgRequests()
     r = session.get(api_url)
     tree = html.fromstring(r.text)
-    li = tree.xpath("//li[@data-storeid]")
+    li = tree.xpath("//div[@class='store-list-row-container store-bucket filter-rows']")
 
     for l in li:
         location_name = "".join(
-            l.xpath(".//h2[@class='store-display-name h6']/text()")
+            l.xpath(".//a[contains(@class, 'store-name')]/text()")
         ).strip()
-        street_address = (
-            "".join(l.xpath(".//p[@class='store-address']/text()")).strip()
-            or "<MISSING>"
-        )
-        line = "".join(l.xpath(".//p[@class='store-city-state-zip']/text()")).strip()
+        lines = l.xpath(".//div[@class='store-address']/text()")
+        lines = list(filter(None, [line.strip() for line in lines]))
+        street_address = ", ".join(lines[:-1])
+        line = lines[-1]
         city = line.split(",")[0].strip()
         line = line.split(",")[1].strip()
-        state = line.split()[0].strip()
-        postal = line.split()[1].strip()
+        state = line.split()[0]
+        postal = line.split()[1]
         country_code = "US"
-        if location_name.find("-") != -1:
-            store_number = location_name.split("-")[0].strip().split()[-1]
-        else:
+        try:
             store_number = location_name.split("#")[1].strip().split()[0]
-        slug = "".join(l.xpath(".//a[@class='store-detail']/@href")) or ""
+        except IndexError:
+            store_number = "<MISSING>"
+
+        slug = "".join(l.xpath(".//a[contains(text(), 'Store Details')]/@href")) or ""
         page_url = f"https://www.fooddepot.com{slug}"
         phone = (
-            "".join(l.xpath(".//p[@class='store-main-phone']/span/text()")).strip()
+            "".join(l.xpath(".//a[@class='store-phone']/text()")).strip() or "<MISSING>"
+        )
+
+        try:
+            text = "".join(
+                l.xpath(".//a[@class='block-link' and contains(@href, 'google')]/@href")
+            )
+            latitude, longitude = text.split("/")[-1].split(",")
+        except:
+            latitude, longitude = "<MISSING>", "<MISSING>"
+        location_type = "<MISSING>"
+        hours_of_operation = (
+            "".join(
+                l.xpath(".//div[@class='store-list-row-item-col02']/text()")
+            ).strip()
             or "<MISSING>"
         )
-        latitude = "".join(l.xpath("./@data-storelat")) or "<MISSING>"
-        longitude = "".join(l.xpath("./@data-storelng")) or "<MISSING>"
-        location_type = "<MISSING>"
-        hours = (
-            "".join(l.xpath(".//ul[@class='store-regular-hours']/li[2]/text()"))
-            .replace(", 7 days a week", "")
-            .strip()
-        )
-        hours_of_operation = f"Mon-Sun: {hours}"
 
         row = [
             locator_domain,

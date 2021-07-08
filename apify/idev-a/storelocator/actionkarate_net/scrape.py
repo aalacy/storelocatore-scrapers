@@ -6,6 +6,9 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
 import time
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger("actionkarate")
 
 
 def toggle(driver):
@@ -21,7 +24,20 @@ def toggle(driver):
     time.sleep(1)
 
 
-def _close(driver, close_btn):
+def _close(driver):
+    close_retry = 3
+    while close_retry:
+        close_btn = WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located(
+                (
+                    By.XPATH,
+                    "//html/body/div[1]/div/div/div/div/div[3]/div/div/div/aside/div[1]/div/button",
+                )
+            )
+        )
+        if close_btn:
+            break
+        close_retry -= 1
     if driver.find_element_by_xpath(
         "//html/body/div[1]/div/div/div/div/div[3]/div/div/div/aside/div[1]/div/button"
     ):
@@ -36,15 +52,7 @@ def fetch_data():
     idx = 1
     with SgChrome() as driver:
         driver.get(base_url)
-        close_btn = WebDriverWait(driver, 10).until(
-            EC.presence_of_element_located(
-                (
-                    By.XPATH,
-                    "//html/body/div[1]/div/div/div/div/div[3]/div/div/div/aside/div[1]/div/button",
-                )
-            )
-        )
-        _close(driver, close_btn)
+        _close(driver)
         toggle(driver)
         soup = html.fromstring(driver.page_source)
         total = len(
@@ -55,7 +63,7 @@ def fetch_data():
         while True:
             if idx > total:
                 break
-            _close(driver, close_btn)
+            _close(driver)
             button = WebDriverWait(driver, 5).until(
                 EC.presence_of_element_located(
                     (
@@ -66,7 +74,24 @@ def fetch_data():
             )
             driver.execute_script("arguments[0].click();", button)
             time.sleep(1)
-            location_name = driver.find_element_by_xpath("//h1[1]").text
+            retry_times = 3
+            while retry_times:
+                WebDriverWait(driver, 5).until(
+                    EC.presence_of_element_located(
+                        (
+                            By.XPATH,
+                            "//div[@class='contact-detail']",
+                        )
+                    )
+                )
+                retry_times -= 1
+
+            retry_times = 3
+            while retry_times:
+                location_name = driver.find_element_by_xpath("//h1[1]").text
+                retry_times -= 1
+
+            logger.info(f"----------- {location_name}")
             addr = [
                 _.text
                 for _ in driver.find_elements_by_xpath(
@@ -83,7 +108,7 @@ def fetch_data():
                 location_name=location_name,
                 street_address=addr[0].replace(",", ""),
                 city=addr[1].split(",")[0].strip(),
-                state=addr[1].split(",")[1].strip().split(" ")[0].strip(),
+                state=" ".join(addr[1].split(",")[1].strip().split(" ")[:-1]),
                 zip_postal=addr[1].split(",")[1].strip().split(" ")[-1].strip(),
                 country_code="us",
                 phone=phone,

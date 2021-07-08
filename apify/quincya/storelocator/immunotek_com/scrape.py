@@ -38,7 +38,7 @@ def write_output(data):
 
 def fetch_data():
 
-    base_link = "https://www.immunotek.com/locations-2/"
+    base_link = "https://www.immunotek.com/locations/"
 
     user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36"
     headers = {"User-Agent": user_agent}
@@ -51,7 +51,7 @@ def fetch_data():
     locator_domain = "immunotek.com"
 
     sections = base.find(
-        class_="et_pb_section et_pb_section_3 et_pb_with_background et_section_regular"
+        class_="et_pb_section et_pb_section_2 et_pb_with_background et_section_regular"
     ).find_all("div", recursive=False)
     for section in sections:
         items = section.find_all("div", recursive=False)
