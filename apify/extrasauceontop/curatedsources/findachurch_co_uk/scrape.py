@@ -12,10 +12,9 @@ log = sglog.SgLogSetup().get_logger(logger_name="findchurch")
 def get_data():
     crawl_state = CrawlState()
     headers = {"User-Agent": "PostmanRuntime/7.19.0"}
-
+    session = SgRequests(retry_behavior=False)
     if not crawl_state.get_misc_value("got_urls"):
         search = DynamicGeoSearch(country_codes=[SearchableCountries.BRITAIN])
-        session = SgRequests(retry_behavior=False)
         for search_lat, search_lon in search:
 
             url = (
