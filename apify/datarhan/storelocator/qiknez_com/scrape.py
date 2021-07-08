@@ -3,6 +3,7 @@ import csv
 from lxml import etree
 
 from sgrequests import SgRequests
+from sgscrape.sgpostal import parse_address_intl
 
 
 def write_output(data):
@@ -40,37 +41,37 @@ def fetch_data():
 
     items = []
 
-    start_url = "https://mysobol.com/wp-admin/admin-ajax.php?action=asl_load_stores&nonce=bcab98a9bf&load_all=1&layout=1"
+    start_url = (
+        "http://qiknez.com/wp-content/plugins/superstorefinder-wp/ssf-wp-xml.php"
+    )
     domain = re.findall(r"://(.+?)/", start_url)[0].replace("www.", "")
     hdr = {
-        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36",
-        "X-Requested-With": "XMLHttpRequest",
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
     }
+    response = session.get(start_url, headers=hdr)
+    dom = etree.HTML(response.text)
 
-    all_locations = session.get(start_url, headers=hdr).json()
-    for poi in all_locations:
-        store_url = poi["website"]
-        loc_response = session.get(store_url, headers=hdr)
-        loc_dom = etree.HTML(loc_response.text)
+    all_locations = dom.xpath("//item")
+    for poi_html in all_locations:
+        store_url = "http://qiknez.com/locations/"
+        location_name = poi_html.xpath(".//location/text()")[0]
+        raw_address = poi_html.xpath(".//address/text()")[0]
+        addr = parse_address_intl(raw_address)
 
-        location_name = poi["title"]
-        street_address = poi["street"]
-        city = poi["city"]
-        state = poi["state"]
-        zip_code = poi["postal_code"]
-        country_code = poi["country"]
-        country_code = country_code if country_code else "<MISSING>"
-        store_number = poi["id"]
-        phone = poi["phone"]
-        phone = phone if phone else "<MISSING>"
-        location_type = "<MISSING>"
-        latitude = poi["lat"]
-        longitude = poi["lng"]
-        hoo = loc_dom.xpath('//div[p[span[contains(text(), "Open 7 days")]]]//text()')
-        if not hoo:
-            hoo = loc_dom.xpath('//p[i[@class="far fa-clock"]]/text()')
-        hoo = [e.strip() for e in hoo if e.strip()]
-        hours_of_operation = " ".join(hoo).replace("……….", " ") if hoo else "<MISSING>"
+        street_address = addr.street_address_1
+        if addr.street_address_2:
+            street_address += " " + addr.street_address_2
+        city = addr.city
+        state = addr.state
+        zip_code = addr.postcode
+        country_code = "<MISSING>"
+        store_number = poi_html.xpath(".//storeid/text()")[0]
+        phone = poi_html.xpath(".//telephone/text()")
+        phone = phone[0] if phone else "<MISSING>"
+        location_type = poi_html.xpath(".//productsservices/text()")[0]
+        latitude = poi_html.xpath(".//latitude/text()")[0]
+        longitude = poi_html.xpath(".//longitude/text()")[0]
+        hours_of_operation = "<MISSING>"
 
         item = [
             domain,
