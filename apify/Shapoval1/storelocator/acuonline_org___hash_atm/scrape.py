@@ -54,7 +54,7 @@ def get_data(coord):
         + lat
         + '","Longitude":"'
         + lng
-        + '","Address":"","City":"","State":"","Zipcode":"","Country":"","Action":"initload","ActionOverwrite":"","Filters":"FCS,FIATM,ATMSF,ATMDP,ESC,"}'
+        + '","Address":"","City":"","State":"","Zipcode":"","Country":"","Action":"initload","ActionOverwrite":"","Filters":"FCS,FIITM,FIATM,ATMSF,ATMDP,ESC,"}'
     )
 
     session = SgRequests()
@@ -79,7 +79,7 @@ def get_data(coord):
         latitude = a.get("Latitude") or "<MISSING>"
         longitude = a.get("Longitude") or "<MISSING>"
         location_type = j.get("LocationFeatures").get("LocationType")
-        location_name = a.get("LocationName") + " " + location_type
+        location_name = a.get("LocationName")
         days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
         tmp = []
         for d in days:
@@ -126,17 +126,17 @@ def get_data(coord):
 def fetch_data():
     out = []
     s = set()
-    coords = static_coordinate_list(radius=100, country_code=SearchableCountries.USA)
+    coords = static_coordinate_list(radius=25, country_code=SearchableCountries.USA)
 
     with futures.ThreadPoolExecutor(max_workers=7) as executor:
         future_to_url = {executor.submit(get_data, coord): coord for coord in coords}
         for future in futures.as_completed(future_to_url):
             rows = future.result()
             for row in rows:
-                _id = row[2]
-                straddr = row[3]
-                if _id not in s and straddr not in s:
-                    s.add(_id)
+                loc_name = row[2]
+                loc_type = row[10]
+                if loc_name not in s and loc_type not in s:
+                    s.add(loc_name)
                     out.append(row)
 
     return out

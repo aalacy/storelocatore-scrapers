@@ -1,12 +1,18 @@
+import time
+import json
+import ssl
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from bs4 import BeautifulSoup as bs
 from sgscrape.sgpostal import parse_address_intl
 from sgselenium import SgChrome
-import time
-import json
-import ssl
+from webdriver_manager.chrome import ChromeDriverManager
+from sglogging import SgLogSetup
 
+logger = SgLogSetup().get_logger("maxandermas.com")
+user_agent = (
+    "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0"
+)
 try:
     _create_unverified_https_context = (
         ssl._create_unverified_context
@@ -15,6 +21,17 @@ except AttributeError:
     pass
 else:
     ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
+
+
+def initiateDriver(driver=None):
+    if driver is not None:
+        driver.quit()
+
+    return SgChrome(
+        is_headless=True,
+        user_agent=user_agent,
+        executable_path=ChromeDriverManager().install(),
+    ).driver()
 
 
 def _valid(val):
@@ -53,6 +70,7 @@ def _filter(blocks):
 
 
 def fetch_data():
+    logger.info("Started Crawling")
     locator_domain = "https://www.maxandermas.com/"
     base_url = "https://www.maxandermas.com/locations/"
     json_url = "https://www.maxandermas.com/wp-json/wpgmza/v1/features/"
@@ -62,17 +80,21 @@ def fetch_data():
         driver.get(base_url)
         exist = False
         while not exist:
-            time.sleep(1)
+            time.sleep(2)
             for rr in driver.requests:
                 if rr.url.startswith(json_url) and rr.response:
+                    logger.info(f"Crawling Kicked Off {rr.url}")
                     exist = True
                     driver.get(rr.url)
                     locations = json.loads(bs(driver.page_source, "lxml").text.strip())[
                         "markers"
                     ]
                     for location in locations:
+                        logger.info(f"Now processing Page: {location['link']}")
                         location_type = "<MISSING>"
+                        driver = initiateDriver()
                         driver.get(location["link"])
+                        time.sleep(5)
                         soup = bs(driver.page_source, "lxml")
                         blocks = soup.select("div.et_pb_text_inner h2")
                         hours = _filter(blocks)
@@ -127,7 +149,10 @@ def fetch_data():
 
 
 if __name__ == "__main__":
+    count = 0
     with SgWriter() as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
+            count = count + 1
+    logger.info(f"Finished Data Grabbing, Total Locations {count}")
