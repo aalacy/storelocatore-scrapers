@@ -70,7 +70,7 @@ def fetch_data():
     )
 
     with SgChrome(
-        executable_path=ChromeDriverManager().install(), is_headless=False
+        executable_path=ChromeDriverManager().install(), is_headless=True
     ) as driver:
         driver.get(start_url)
         sleep(5)
