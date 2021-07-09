@@ -109,6 +109,8 @@ def fetch_data():
                         name = "Hyatt Residence Club Maui, Kaanapali Beach"
                     if CS:
                         hours = "Coming Soon"
+                    if "dxbzm" in loc:
+                        hours = "<MISSING>"
                     if loc not in alllocs:
                         alllocs.append(loc)
                         yield [
