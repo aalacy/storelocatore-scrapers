@@ -231,7 +231,7 @@ def fetch_data():
                         state=state,
                     )
                 except Exception as e:
-                    logzilla.info(
+                    logzilla.warning(
                         f"Issue with sgzip and country code: {SearchableCountry}\n{e}"
                     )
                 if search:
@@ -330,5 +330,5 @@ def scrape():
 if __name__ == "__main__":
     scrape()
     for i in errorz:
-        logzilla.info(i)
+        logzilla.warning(i)
     raise
