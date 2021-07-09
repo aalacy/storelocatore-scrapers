@@ -42,6 +42,18 @@ def fetch_data():
     lines = r.iter_lines(decode_unicode=True)
     name = ""
     state = "OH"
+    add = ""
+    city = ""
+    country = "US"
+    store = "<MISSING>"
+    phone = ""
+    loc = "<MISSING>"
+    lat = "<MISSING>"
+    lng = "<MISSING>"
+    website = "masseyspizza.com"
+    typ = "Restaurant"
+    zc = ""
+    hours = ""
     for line in lines:
         if "South Carolina</span>" in line:
             state = "SC"
