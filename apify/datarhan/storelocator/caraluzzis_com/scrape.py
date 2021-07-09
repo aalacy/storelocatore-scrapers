@@ -65,8 +65,6 @@ def fetch_data():
             location_name = location_name[0] if location_name else "<MISSING>"
             logger.info(f"Location Name: {location_name}")
             logger.info(f"Page URL: {store_url}")
-            if "WINE & SPIRITS" in location_name:
-                continue
 
             driver.get(store_url)
             driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
@@ -117,6 +115,49 @@ def fetch_data():
                 .split("- Temp Hours")[0]
                 .strip()
             )
+
+            item = [
+                domain,
+                store_url,
+                location_name,
+                street_address,
+                city,
+                state,
+                zip_code,
+                country_code,
+                store_number,
+                phone,
+                location_type,
+                latitude,
+                longitude,
+                hours_of_operation,
+            ]
+
+            items.append(item)
+
+        wine_locations = dom.xpath(
+            '//div[@class="fl-rich-text" and p[strong[contains(text(), "Wine & Spirits")]]]'
+        )
+        for poi_html in wine_locations:
+            store_url = poi_html.xpath(".//p/a/@href")[-1]
+            location_name = poi_html.xpath(".//strong/text()")[0]
+            raw_data = poi_html.xpath(".//p/text()")
+            raw_data = [e.strip() for e in raw_data if e.strip()]
+            raw_address = raw_data[:2]
+            street_address = raw_address[0]
+            city = raw_address[1].split(", ")[0]
+            state = raw_address[1].split(", ")[-1].split()[0]
+            zip_code = raw_address[1].split(", ")[-1].split()[-1]
+            country_code = "<MISSING>"
+            store_number = "<MISSING>"
+            phone = poi_html.xpath('.//a[contains(@href, "tel")]/text()')
+            phone = phone[0] if phone else "<MISSING>"
+            location_type = "<MISSING>"
+            latitude = "<MISSING>"
+            longitude = "<MISSING>"
+            hoo = raw_data[2:]
+            hoo = [e.strip() for e in hoo if e.strip()]
+            hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
 
             item = [
                 domain,
