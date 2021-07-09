@@ -33,39 +33,39 @@ def write_output(data):
 
 def fetch_data():
     out = []
-    s = set()
-    locator_domain = "https://www.jetlocal.co.uk/"
-    api_url = "https://api.storerocket.io/api/user/2BkJ1wEpqR/locations?filters=37343"
 
+    locator_domain = "https://www.yolandasmexicancafe.com/"
+    api_url = "https://www.yolandasmexicancafe.com/graphql"
     session = SgRequests()
-    r = session.get(api_url)
-    js = r.json()["results"]["locations"]
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:89.0) Gecko/20100101 Firefox/89.0",
+        "Accept": "*/*",
+        "Accept-Language": "ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3",
+        "content-type": "application/json",
+        "Origin": "https://www.yolandasmexicancafe.com",
+        "Connection": "keep-alive",
+        "TE": "Trailers",
+    }
+
+    data = '{"operationName":"restaurantWithLocations","variables":{"restaurantId":9483},"extensions":{"operationId":"PopmenuClient/102b4a83f4a8183677ec8cb4829ac6ce"}}'
+    r = session.post(api_url, headers=headers, data=data)
+    js = r.json()["data"]["restaurant"]["locations"]
 
     for j in js:
-        street_address = (
-            f"{j.get('address_line_1')} {j.get('address_line_2') or ''}".strip()
-            or "<MISSING>"
-        )
-        city = j.get("state") or "<MISSING>"
-        state = "<MISSING>"
-        postal = j.get("postcode") or "<MISSING>"
-        country_code = j.get("country") or "<MISSING>"
-        store_number = "<MISSING>"
-        page_url = j.get("url") or "https://www.jetlocal.co.uk/drivers/locator"
+
+        page_url = "https://www.yolandasmexicancafe.com/"
         location_name = j.get("name")
-        phone = "<MISSING>"
+        location_type = "Restaurant"
+        street_address = j.get("streetAddress") or "<MISSING>"
+        state = j.get("state") or "<MISSING>"
+        postal = j.get("postalCode") or "<MISSING>"
+        country_code = j.get("country") or "<MISSING>"
+        city = j.get("city") or "<MISSING>"
+        store_number = "<MISSING>"
         latitude = j.get("lat") or "<MISSING>"
         longitude = j.get("lng") or "<MISSING>"
-        location_type = "<MISSING>"
-
-        _tmp = []
-        hours = j.get("hours")
-        for k, v in hours.items():
-            if not v:
-                continue
-            _tmp.append(f"{k.capitalize()}: {v}")
-
-        hours_of_operation = ";".join(_tmp) or "<MISSING>"
+        phone = j.get("phone") or "<MISSING>"
+        hours_of_operation = " ".join(j.get("schemaHours"))
 
         row = [
             locator_domain,
@@ -83,12 +83,6 @@ def fetch_data():
             longitude,
             hours_of_operation,
         ]
-
-        check = tuple(row[2:6])
-        if check in s:
-            continue
-
-        s.add(check)
         out.append(row)
 
     return out

@@ -116,8 +116,14 @@ def fetch_data():
             city = a.get("city") or "<MISSING>"
             store_number = "<MISSING>"
             map_link = "".join(tree.xpath("//iframe/@src"))
-            latitude = map_link.split("!3d")[1].strip().split("!")[0].strip()
-            longitude = map_link.split("!2d")[1].strip().split("!")[0].strip()
+            try:
+                latitude = map_link.split("!3d")[1].strip().split("!")[0].strip()
+                longitude = map_link.split("!2d")[1].strip().split("!")[0].strip()
+            except:
+                latitude, longitude = "<MISSING>", "<MISSING>"
+            if latitude == "<MISSING>":
+                latitude = map_link.split("@")[1].split(",")[0].strip()
+                longitude = map_link.split("@")[1].split(",")[1].strip()
             hours_of_operation = tree.xpath(
                 '//div[text()="Hours:"]/following-sibling::div[1]//text()'
             )
