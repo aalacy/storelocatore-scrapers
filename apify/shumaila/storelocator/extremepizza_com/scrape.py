@@ -53,10 +53,14 @@ def fetch_data():
         except:
             break
         link = "https://www.extremepizza.com" + link.replace('"', "")
+
         r = session.get(link, headers=headers, verify=False)
         soup = BeautifulSoup(r.text, "html.parser")
         address = r.text.split('"location": ', 1)[1].split("}", 1)[0]
-        address = soup.find("section", {"id": "intro"}).findAll("a")[0].text.strip()
+        try:
+            address = soup.find("section", {"id": "intro"}).findAll("a")[0].text.strip()
+        except:
+            continue
         try:
             phone = soup.find("section", {"id": "intro"}).findAll("a")[1].text
         except:
@@ -99,7 +103,7 @@ def fetch_data():
         except:
             pass
         try:
-            hours = hours.split("We", 1)[0]
+            hours = hours.split("We ", 1)[0]
         except:
             pass
         if "Order Online" in phone:
