@@ -5,7 +5,10 @@ from sgzip.utils import country_names_by_code
 from fuzzywuzzy import process
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as b4
-
+from sgscrape.pause_resume import CrawlState
+from dataclasses import asdict, dataclass
+from typing import Iterable, Optional
+from ordered_set import OrderedSet
 import json
 
 
@@ -14,6 +17,59 @@ known_empties = set()
 known_empties.add("xxxxxxx")
 
 errorz = []
+
+
+@dataclass(frozen=True)
+class SerializableCountry:
+    """
+    Consists of fields that define a country.
+    """
+
+    name: str
+    link: str
+    special: bool
+
+    def serialize(self) -> str:
+        return json.dumps(asdict(self))
+
+    def __hash__(self):
+        return hash((self.name, self.link, self.special))
+
+    def __eq__(self, other):
+        return isinstance(other, SerializableCountry) and hash(self) == hash(other)
+
+    @staticmethod
+    def deserialize(serialized_json: str) -> "SerializableCountry":
+        as_dict = json.loads(serialized_json)
+        return SerializableCountry(
+            name=as_dict["name"], link=as_dict["link"], special=as_dict["special"]
+        )
+
+
+class CountryStack:
+    def __init__(
+        self,
+    ):
+        self.__country_stack = OrderedSet()
+
+    def push_country(self, req: SerializableCountry) -> bool:  # type: ignore
+        self.__country_stack.add(req)  # type: ignore
+
+    def pop_country(self) -> Optional[SerializableCountry]:
+        return self.__country_stack.pop() if self.__country_stack else None
+
+    def serialize_requests(self) -> Iterable[str]:  # type: ignore
+        return list(map(lambda r: r.serialize(), self.__country_stack))  # type: ignore
+
+    def __iter__(self):
+        return self
+
+    def __len__(self):
+        return len(self.__country_stack)
+
+    def __next__(self):
+        req = self.pop_request()
+        return req
 
 
 def get_Start(session, headers):
@@ -38,17 +94,25 @@ def get_Start(session, headers):
                 data.append({"name": name, "link": link, "special": True})
             else:
                 data.append({"name": name, "link": link, "special": False})
-    return data
+
+    this = CountryStack()
+    for item in data:
+        this.push_country(
+            SerializableCountry(
+                name=item["name"], link=item["link"], special=item["special"]
+            )
+        )
+    return this
 
 
 def determine_country(country):
     Searchable = country_names_by_code()
-    resultName = process.extract(country["name"], list(Searchable.values()), limit=1)
+    resultName = process.extract(country.name, list(Searchable.values()), limit=1)
     resultCode = process.extract(
-        country["link"].split("/")[1], list(Searchable.keys()), limit=1
+        country.link.split("/")[1], list(Searchable.keys()), limit=1
     )
     logzilla.info(
-        f"Matched {country['name']}{country['link']} to {resultName[0]} or {resultCode[0]}"
+        f"Matched {country.name}{country.link} to {resultName[0]} or {resultCode[0]}"
     )
     if resultName[-1][-1] > resultCode[-1][-1]:
         for i in Searchable.items():
@@ -94,7 +158,7 @@ def get_country(search, country, session, headers, SearchableCountry):
     total = 0
     for Point in search:
         found = 0
-        for record in getPoint(Point, session, country["link"], headers):
+        for record in getPoint(Point, session, country.link, headers):
             search.found_location_at(
                 record["locationData"]["geo"][0], record["locationData"]["geo"][1]
             )
@@ -119,13 +183,41 @@ def get_country(search, country, session, headers, SearchableCountry):
 
 
 def fetch_data():
+    global errorz
+    state = CrawlState()
     headers = {
         "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
     }
     with SgRequests() as session:
-        countries = get_Start(session, headers)
-        for country in countries:
-            if country["special"]:
+        countries = None
+        try:
+            countries = state.get_misc_value("countries")
+        except Exception as e:
+            logzilla.warning("Something happened along the lines of", exc_info=e)
+        if not countries:
+            countries = get_Start(session, headers)
+            state.set_misc_value(key="countries", value=countries)
+            state.save()
+        errorzCopy = None
+        if len(errorz) != 0:
+            errorzCopy = errorz
+        try:
+            errorz = state.get_misc_value("errorz")
+        except Exception as e:
+            logzilla.warning("Something happened along the lines of", exc_info=e)
+        if errorz and errorzCopy:
+            errorz = errorz + errorzCopy
+            state.set_misc_value("errorz", errorz)
+            state.save()
+        else:
+            if not errorz:
+                if errorzCopy:
+                    state.set_misc_value("errorz", errorzCopy)
+                    state.save()
+
+        country = countries.pop_country()
+        while country:
+            if country.special:
                 pass
             else:
                 SearchableCountry = determine_country(country)
@@ -136,9 +228,10 @@ def fetch_data():
                         max_radius_miles=50,
                         max_search_results=None,
                         granularity=Grain_8(),
+                        state=state,
                     )
                 except Exception as e:
-                    logzilla.info(
+                    logzilla.warning(
                         f"Issue with sgzip and country code: {SearchableCountry}\n{e}"
                     )
                 if search:
@@ -237,5 +330,5 @@ def scrape():
 if __name__ == "__main__":
     scrape()
     for i in errorz:
-        logzilla.info(i)
+        logzilla.warning(i)
     raise

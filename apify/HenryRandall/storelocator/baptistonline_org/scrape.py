@@ -28,6 +28,10 @@ def find_details(link, location_type, session):
     country_code = "US"
     latitude = link.select_one('input[name="location-lat"]').get("value")
     longitude = link.select_one('input[name="location-lng"]').get("value")
+    if latitude is None:
+        latitude = "<MISSING>"
+    if longitude is None:
+        longitude = "<MISSING>"
     location_data = [
         locator_domain,
         page_url,
