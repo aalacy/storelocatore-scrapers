@@ -1,5 +1,4 @@
 import csv
-import json
 
 from lxml import html
 from sgrequests import SgRequests
@@ -37,71 +36,46 @@ def write_output(data):
 
 def fetch_data():
     out = []
-    locator_domain = "https://leon.co/"
-    api_url = "https://leon.co/all-restaurants/"
+    locator_domain = "https://corporate.dow.com/"
+    api_url = "https://corporate.dow.com/content/corp/en-us.corplocations.json"
+    page_url = "https://corporate.dow.com/en-us/locations.html"
 
     session = SgRequests()
     r = session.get(api_url)
-    tree = html.fromstring(r.text)
-    text = "".join(tree.xpath("//script[@id='__NEXT_DATA__']/text()"))
-    js = json.loads(text)["props"]["initialReduxState"]["data"]["restaurants"]
+    js = r.json()
 
     for j in js:
-        isclosed = j.get("closed")
-        iscoming = j.get("comingSoon")
+        source = j.get("address") or "<html></html>"
+        tree = html.fromstring(source)
+        lines = tree.xpath("//p//text()")
+        _tmp = []
+        for line in lines:
+            if not line.strip() or "Dow in" in line:
+                continue
+            _tmp.append(line.strip())
 
-        location_name = j.get("name")
-        slug = j.get("slug")
-        page_url = f"https://leon.co/restaurants/{slug}"
-        location_type = j.get("type") or "<MISSING>"
-        line = j["locationDetails"]["fullAddress"]
-
-        try:
-            p = j["locationDetails"]["postCode"]
-            c = j["locationDetails"]["townOrCity"]
-            adr = parse_address(International_Parser(), line, postcode=p, city=c)
-        except KeyError:
-            adr = parse_address(International_Parser(), line)
+        line = ", ".join(_tmp)
+        adr = parse_address(International_Parser(), line)
         street_address = (
             f"{adr.street_address_1} {adr.street_address_2 or ''}".replace(
                 "None", ""
             ).strip()
             or "<MISSING>"
         )
-        if len(street_address) < 5 and "," in line:
-            street_address = line.split(",")[0].strip()
 
         city = adr.city or "<MISSING>"
         state = adr.state or "<MISSING>"
         postal = adr.postcode or "<MISSING>"
-        country_code = "GB"
+        country_code = "<MISSING>"
         store_number = "<MISSING>"
-        try:
-            phone = j["contactDetails"]["phoneNumber"]
-        except KeyError:
-            phone = "<MISSING>"
-        loc = j.get("geoLocation")
-        latitude = loc.get("lat") or "<MISSING>"
-        longitude = loc.get("lng") or "<MISSING>"
-
-        _tmp = []
-        try:
-            hours = j["restaurantOpeningTimes"]["openingTimes"]
-        except KeyError:
-            hours = []
-
-        for h in hours:
-            day = h.get("day")
-            start = h.get("opensAt")
-            end = h.get("closesAt")
-            _tmp.append(f"{day}: {start} - {end}")
-
-        hours_of_operation = ";".join(_tmp) or "<MISSING>"
-
-        if isclosed:
-            hours_of_operation = "Closed"
-        if iscoming:
-            hours_of_operation = "Coming Soon"
+        location_name = j.get("locationName")
+        if not location_name:
+            continue
+        phone = j.get("telephone") or "<MISSING>"
+        latitude = j.get("latitude") or "<MISSING>"
+        longitude = j.get("longitude") or "<MISSING>"
+        location_type = "<MISSING>"
+        hours_of_operation = "<MISSING>"
 
         row = [
             locator_domain,

@@ -34,10 +34,7 @@ def write_output(data):
 def fetch_data():
     out = []
     url = "https://www.urbanoutfitters.com/stores/"
-    api_url = (
-        "https://www.urbanoutfitters.com/api/misl/v1/stores/search?&country=US,"
-        "CA&urbn_key=937e0cfc7d4749d6bb1ad0ac64fce4d5&brandId=51|01"
-    )
+    api_url = "https://www.urbanoutfitters.com/api/misl/v1/stores/search?&urbn_key=937e0cfc7d4749d6bb1ad0ac64fce4d5&brandId=51|01"
 
     session = SgRequests()
     r = session.get(api_url)
@@ -92,7 +89,7 @@ def fetch_data():
 
         hours_of_operation = ";".join(_tmp)
         if hours_of_operation.count("CLOSED") == 7:
-            continue
+            hours_of_operation = "Closed"
 
         row = [
             locator_domain,
