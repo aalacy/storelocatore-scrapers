@@ -67,8 +67,8 @@ def fetch_data():
         raw_data = item["Html"].split(",,")
         location_name = raw_data[0].strip()
 
-        location_type = raw_data[-3].replace("DDDt", "ht").replace("DDD", "")
-        if "sacobay" not in location_type.lower():
+        loc_type = raw_data[-3].replace("DDDt", "ht").replace("DDD", "")
+        if "sacobay" not in loc_type.lower():
             continue
 
         if len(raw_data) == 7:
