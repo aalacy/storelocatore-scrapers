@@ -40,12 +40,58 @@ def fetch_data():
     if r.encoding is None:
         r.encoding = "utf-8"
     lines = r.iter_lines(decode_unicode=True)
+    name = ""
     state = "OH"
     for line in lines:
         if "South Carolina</span>" in line:
             state = "SC"
         if ">Ohio Sports Bars" in line:
             state = "OH"
+        if (
+            '<div class="et_pb_text_inner"><p>' in line
+            or '<footer id="main-footer">' in line
+        ):
+            if name != "":
+                if "AVE." in city:
+                    city = "COLUMBUS"
+                if "/" in city:
+                    city = city.split("/")[0]
+                if "261 Lincoln" in add:
+                    zc = "43230"
+                if "!" in zc:
+                    zc = zc.split("!")[0]
+                if "1951 E" in add or "261 Lincoln" in add:
+                    city = "<MISSING>"
+                if "Pawleys Island/Litchfield" in name:
+                    add = "115 Willbrook Blvd Unit O"
+                    city = "Pawleys Island"
+                    state = "SC"
+                    zc = "<MISSING>"
+                    hours = "Tue: Closed; Mon, Wed & Thurs: 4pm-8pm; Fri, Sat & Sun: 11am-9pm"
+                if "261 Lincoln" in add:
+                    hours = "Sun-Thu: 11am-10pm; Fri-Sat: 11am-MIDNIGHT"
+                hours = hours.replace("&amp;", "&")
+                if "<span" in hours:
+                    hours = hours.split("<span")[0]
+                if "; DINI" in hours:
+                    hours = hours.split("; DINI")[0]
+                yield [
+                    website,
+                    loc,
+                    name,
+                    add,
+                    city,
+                    state,
+                    zc,
+                    country,
+                    store,
+                    phone,
+                    typ,
+                    lat,
+                    lng,
+                    hours,
+                ]
+
         if '<div class="et_pb_text_inner"><p>' in line:
             if '<div class="et_pb_text_inner"><p><strong>' in line:
                 name = line.split('<div class="et_pb_text_inner"><p><strong>')[1].split(
@@ -59,16 +105,29 @@ def fetch_data():
             store = "<MISSING>"
             lat = ""
             lng = ""
-            hours = ""
+            if "771 South" in g:
+                hours = "SUN-THUR 11am-11pm; FRI &amp; SAT 11am-Midnight"
+            elif "4015 Parkmead" in g:
+                hours = "SUN-THUR 11am-11pm; FRI &amp; SAT 11am-Midnight"
+            elif "6394 Gender Rd" in g:
+                hours = "Sun-Thu: 11am-10pm; Fri &amp; Sat 11am-11pm"
+            elif "152 Graceland Blvd" in g:
+                hours = "Sun-Thu: 11am-10pm; Fri &amp; Sat 11am-11pm"
+            else:
+                hours = (
+                    g.split("</a><br />")[1]
+                    .split("<br /><a")[0]
+                    .strip()
+                    .replace("<br />", "; ")
+                )
             country = "US"
             zc = "<MISSING>"
-            phone = ""
+            phone = g.split('<a href="tel:+1')[1].split('"')[0]
             website = "masseyspizza.com"
             typ = "Restaurant"
             loc = "<MISSING>"
             lat = "<MISSING>"
             lng = "<MISSING>"
-            g = next(lines)
             if name == "DELAWARE":
                 city = "Delaware"
                 add = "219 S. Sandusky Street"
@@ -76,8 +135,7 @@ def fetch_data():
                 if "</strong><br />" not in g:
                     add = g.split("<")[0]
                 else:
-                    city = g.split("<")[0]
-                    add = next(lines).split("<")[0]
+                    add = g.split("</strong><br />")[1].split("<")[0]
         if "pm<" in line or "idnight<" in line or "am<" in line:
             hrs = line.split("<")[0]
             if hours == "":
@@ -92,43 +150,6 @@ def fetch_data():
                 zc = line.split(",+OH+")[1].split("/")[0]
         if '<a href="tel:+' in line:
             phone = line.split('<a href="tel:+')[1].split('"')[0]
-        if '<a href="https://www.google.com/' in line:
-            if "AVE." in city:
-                city = "COLUMBUS"
-            if "/" in city:
-                city = city.split("/")[0]
-            if "261 Lincoln" in add:
-                zc = "43230"
-            if "!" in zc:
-                zc = zc.split("!")[0]
-            if "1951 E" in add or "261 Lincoln" in add:
-                city = "<MISSING>"
-            if "Pawleys Island/Litchfield" in name:
-                add = "115 Willbrook Blvd Unit O"
-                city = "Pawleys Island"
-                state = "SC"
-                zc = "<MISSING>"
-                hours = (
-                    "Tue: Closed; Mon, Wed & Thurs: 4pm-8pm; Fri, Sat & Sun: 11am-9pm"
-                )
-            if "261 Lincoln" in add:
-                hours = "Sun-Thu: 11am-10pm; Fri-Sat: 11am-MIDNIGHT"
-            yield [
-                website,
-                loc,
-                name,
-                add,
-                city,
-                state,
-                zc,
-                country,
-                store,
-                phone,
-                typ,
-                lat,
-                lng,
-                hours,
-            ]
 
 
 def scrape():
