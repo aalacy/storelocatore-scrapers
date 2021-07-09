@@ -128,7 +128,7 @@ def fetch_data():
             hours = "<MISSING>"
         if pcode == "75072":
             pcode = "75070"
-        if loc["OpenSoon"] == False:
+        if loc["OpenSoon"] is False:
             data.append(
                 [
                     "https://www.cubesmart.com/",
