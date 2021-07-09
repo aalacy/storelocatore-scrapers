@@ -45,9 +45,10 @@ def fetch_data():
             state = loc["state"]
             latitude = loc["lat"]
             longitude = loc["lng"]
+            page_url = "https://www.1stconstitution.com/locations/"
             yield SgRecord(
                 locator_domain=DOMAIN,
-                page_url=url,
+                page_url=page_url,
                 location_name=location_name,
                 street_address=street_address.strip(),
                 city=city.strip(),

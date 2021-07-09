@@ -69,9 +69,9 @@ def fetch_data():
             if _["marker_colour"] == "map-pin-pink":
                 location_type = "store"
             elif _["marker_colour"] == "map-pin-black":
-                location_type = "retailer"
-            elif _["marker_colour"] == "map-pin-grey":
                 location_type = "outlet"
+            elif _["marker_colour"] == "map-pin-grey":
+                location_type = "retailer"
             yield SgRecord(
                 page_url=base_url,
                 store_number=_["id"],
