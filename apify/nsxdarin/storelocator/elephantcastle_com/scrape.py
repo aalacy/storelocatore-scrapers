@@ -9,6 +9,7 @@ headers = {
 
 logger = SgLogSetup().get_logger("elephantcastle_com")
 
+
 def write_output(data):
     with open("data.csv", mode="w") as output_file:
         writer = csv.writer(
