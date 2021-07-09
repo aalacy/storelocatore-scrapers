@@ -83,6 +83,10 @@ def fetch_data():
             .replace("ms", "Morning Sun Health Foods")
             .replace("sp", "Supplements Plus")
         )
+        if location_type != "Morning Sun Health Foods":
+            continue
+        if hours_of_operation == "Permanently Closed":
+            continue
 
         row = [
             locator_domain,
