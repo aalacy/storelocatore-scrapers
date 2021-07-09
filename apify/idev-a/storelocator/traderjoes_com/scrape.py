@@ -42,6 +42,9 @@ def fetch_data():
                         session.get(loc["href"], headers=_headers(city["href"])).text,
                         "lxml",
                     )
+                    cc = sp2.select_one("p.opening-comments")
+                    if cc and "COMING SOON!" in cc.text:
+                        continue
                     addr = list(sp2.select_one("div.addressline").stripped_strings)
                     hours = [_.text for _ in sp2.select("div#hoursSpl p")]
                     yield SgRecord(
