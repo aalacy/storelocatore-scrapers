@@ -36,57 +36,77 @@ def fetch_data():
     out = []
 
     locator_domain = "https://www.baggerdaves.com/"
-    api_url = "https://www.baggerdaves.com/"
+    page_url = "https://baggerdaves.com/?page_id=3470"
     session = SgRequests()
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
     }
-    r = session.get(api_url, headers=headers)
+    r = session.get(page_url, headers=headers)
     tree = html.fromstring(r.text)
-    div = tree.xpath(
-        '//ul[@id="menu-main-menu"]//a[./span[contains(text(), "Menus & Locations")]]/following-sibling::ul/li/a'
-    )
+    div = tree.xpath('//section[.//a[text()="ORDER NOW"]]')
 
     for d in div:
-        page_url = "".join(d.xpath(".//@href"))
-        session = SgRequests()
-        r = session.get(page_url, headers=headers)
-        tree = html.fromstring(r.text)
 
-        location_name = "".join(tree.xpath('//h1[@class="entry-title"]/text()'))
-        location_type = "<MISSING>"
-        street_address = "".join(
-            tree.xpath(
-                '//span[@class="nearest-posts-results-single-address"]/text()[1]'
-            )
+        location_name = "".join(
+            d.xpath('.//h3[@class="elementor-image-box-title"]/text()')
         )
-        ad = (
-            "".join(
-                tree.xpath(
-                    '//span[@class="nearest-posts-results-single-address"]/text()[2]'
-                )
-            )
-            .replace("\n", "")
+        location_type = "Location"
+        hours_of_operation = d.xpath('.//p[contains(text(), "Monday")]/text()')
+        hours_of_operation = list(filter(None, [a.strip() for a in hours_of_operation]))
+        hours_of_operation = (
+            "".join(hours_of_operation).replace("\xa0 ", "").replace("pm", "pm ")
+        )
+        sub_page_url = "".join(d.xpath('.//a[text()="ORDER NOW"]/@href'))
+
+        session = SgRequests()
+        r = session.get(sub_page_url, headers=headers)
+        tree = html.fromstring(r.text)
+        guid = (
+            "".join(tree.xpath('//script[contains(text(), "restaurantGuid")]/text()'))
+            .split('"restaurantGuid" : "')[1]
+            .split('"')[0]
             .strip()
         )
-        phone = "".join(
-            tree.xpath('//span[@class="nearest-posts-results-single-phone"]/text()')
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:89.0) Gecko/20100101 Firefox/89.0",
+            "Accept": "*/*",
+            "Accept-Language": "ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3",
+            "Referer": "https://www.toasttab.com/",
+            "content-type": "application/json",
+            "Toast-Restaurant-External-ID": guid,
+            "apollographql-client-name": "takeout-web",
+            "apollographql-client-version": "519",
+            "toast-customer-access": "",
+            "Origin": "https://www.toasttab.com",
+            "Connection": "keep-alive",
+            "TE": "Trailers",
+        }
+        data = (
+            '[{"operationName":"RESTAURANT_INFO","variables":{"restaurantGuid":"'
+            + guid
+            + '"},"query":"query RESTAURANT_INFO($restaurantGuid: ID!) {\\n restaurantV2(guid: $restaurantGuid) {\\n ... on Restaurant {\\n guid\\n whiteLabelName\\n description\\n imageUrl\\n bannerUrls {\\n raw\\n __typename\\n }\\n minimumTakeoutTime\\n minimumDeliveryTime\\n location {\\n address1\\n address2\\n city\\n state\\n zip\\n phone\\n latitude\\n longitude\\n __typename\\n }\\n logoUrls {\\n small\\n __typename\\n }\\n schedule {\\n asapAvailableForTakeout\\n todaysHoursForTakeout {\\n startTime\\n endTime\\n __typename\\n }\\n __typename\\n }\\n socialMediaLinks {\\n facebookLink\\n twitterLink\\n instagramLink\\n __typename\\n }\\n giftCardLinks {\\n purchaseLink\\n checkValueLink\\n addValueEnabled\\n __typename\\n }\\n giftCardConfig {\\n redemptionAllowed\\n __typename\\n }\\n specialRequestsConfig {\\n enabled\\n placeholderMessage\\n __typename\\n }\\n spotlightConfig {\\n headerText\\n bodyText\\n __typename\\n }\\n curbsidePickupConfig {\\n enabled\\n enabledV2\\n __typename\\n }\\n popularItemsConfig {\\n enabled\\n __typename\\n }\\n upsellsConfig {\\n enabled\\n __typename\\n }\\n creditCardConfig {\\n amexAccepted\\n tipEnabled\\n __typename\\n }\\n __typename\\n }\\n ... on GeneralError {\\n code\\n message\\n __typename\\n }\\n __typename\\n }\\n}\\n"},{"operationName":"DINING_OPTIONS","variables":{"input":{"restaurantGuid":"'
+            + guid
+            + '","includeBehaviors":[]}},"query":"query DINING_OPTIONS($input: DiningOptionsInput!) {\\n diningOptions(input: $input) {\\n guid\\n behavior\\n deliveryProvider {\\n provider\\n __typename\\n }\\n asapSchedule {\\n availableNow\\n availableAt\\n __typename\\n }\\n futureSchedule {\\n dates {\\n date\\n timesAndGaps {\\n ... on FutureFulfillmentTime {\\n time\\n __typename\\n }\\n ... on FutureFulfillmentServiceGap {\\n description\\n __typename\\n }\\n __typename\\n }\\n __typename\\n }\\n __typename\\n }\\n __typename\\n }\\n}\\n"}]'
         )
-        state = ad.split(",")[1].split()[0].strip()
-        postal = ad.split(",")[1].split()[1].strip()
-        city = ad.split(",")[0].strip()
+
+        session = SgRequests()
+        r = session.post(
+            "https://ws.toasttab.com/consumer-app-bff/v1/graphql",
+            headers=headers,
+            data=data,
+        )
+        js = r.json()[0]["data"]["restaurantV2"]["location"]
+
+        street_address = js.get("address1")
+        phone = js.get("phone")
+        state = js.get("state")
+        postal = js.get("zip")
+        city = js.get("city")
         country_code = "US"
         store_number = "<MISSING>"
-        hours_of_operation = (
-            " ".join(tree.xpath("//div[./p/img]//text()"))
-            .replace("\n", "")
-            .replace("Grub Hub", "")
-            .replace("Door Dash", "")
-            .strip()
-        )
-        map_link = "".join(tree.xpath("//iframe/@src"))
-        latitude = map_link.split("!3d")[1].strip().split("!")[0].strip()
-        longitude = map_link.split("!2d")[1].strip().split("!")[0].strip()
+
+        latitude = js.get("latitude")
+        longitude = js.get("longitude")
 
         row = [
             locator_domain,

@@ -109,8 +109,11 @@ def fetch_data():
                 tree.xpath('//div[@class="Core-miniBio Core-hidden--xs"]/h1/text()')
             ).strip()
             location_type = "<MISSING>"
+
             street_address = (
                 "".join(tree.xpath('//span[@class="c-address-street-1"]/text()'))
+                + " "
+                + "".join(tree.xpath('//span[@class="c-address-street-2"]/text()'))
                 or "<MISSING>"
             )
             latitude = (

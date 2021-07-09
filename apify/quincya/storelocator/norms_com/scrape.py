@@ -41,7 +41,9 @@ def fetch_data():
     user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
     headers = {"User-Agent": user_agent}
 
-    base_link = "https://storerocket.global.ssl.fastly.net/api/user/MZponDn8DN/locations?radius=1000&units=miles"
+    base_link = (
+        "https://api.storerocket.io/api/user/MZponDn8DN/locations?radius=50&units=miles"
+    )
 
     session = SgRequests()
     stores = session.get(base_link, headers=headers).json()["results"]["locations"]
@@ -50,6 +52,8 @@ def fetch_data():
     locator_domain = "norms.com"
 
     for store in stores:
+        if "coming-soon" in str(store):
+            continue
         location_name = "Norms - " + store["name"]
         street_address = store["display_address"].split(",")[0].strip()
         city = store["city"]

@@ -76,6 +76,7 @@ def fetch_data():
         .replace('tru-r"id"e-studio', "tru-r'id'e-studio")
         .replace('M"id"park', "M'id'park")
         .replace('m"id"napore/', "m'id'napore/")
+        .replace('Hol"id"ays', "Holidays")
         .replace('"club"', "'club'")
     )
     jsblock = jsblock.replace("{", "[").replace("}", "]").replace(":", "")
@@ -103,7 +104,10 @@ def fetch_data():
         store_number = "<MISSING>"
         latitude = "".join(j[1]).split("lat")[1].strip()
         longitude = "".join(j[2]).split("lng")[1].strip()
-        hours_of_operation = "".join(j[9]).split("hours")[1].strip()
+
+        hours_of_operation = (
+            "".join(j[9:]).split("hours")[1].split("Holidays")[0].strip()
+        )
         if "Permanently Closed" in tmpcls:
             hours_of_operation = "Permanently Closed"
         if "Temporarily Closed" in tmpcls:
@@ -113,7 +117,7 @@ def fetch_data():
             and page_url.find("edgemont") == -1
         ):
             hours_of_operation = (
-                " ".join(hours_of_operation.split("<strong>")[2:])
+                " ".join(hours_of_operation.split("<strong>")[1:])
                 .replace("</strong>", "")
                 .replace("</br>", "")
             )

@@ -1,3 +1,4 @@
+import re
 import csv
 import demjson
 from lxml import etree
@@ -79,13 +80,16 @@ def fetch_data():
         phone = phone if phone else "<MISSING>"
         location_type = poi["@type"]
         location_type = location_type if location_type else "<MISSING>"
+        if loc_dom.xpath('//h1[contains(text(), "Temporarily Closed")]'):
+            location_type = "Temporarily Closed"
         if not poi["openingHoursSpecification"]:
             location_type = "coming soon"
         latitude = poi["geo"]["latitude"]
         longitude = poi["geo"]["longitude"]
-        hoo = loc_dom.xpath('//div[@class="uael-table-wrapper"]/table//text()')
+        hoo = loc_dom.xpath('//div[@id="store_hours"]//text()')
         hoo = [elem.strip() for elem in hoo if elem.strip()]
-        hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
+        hours_of_operation = " ".join(hoo[1:]) if hoo else "<MISSING>"
+        hours_of_operation = re.sub(r"\w\w\w\. \d ", "", hours_of_operation)
 
         item = [
             DOMAIN,

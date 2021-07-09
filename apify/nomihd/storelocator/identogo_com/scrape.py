@@ -7,6 +7,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgzip.dynamic import SearchableCountries
 from sgzip.static import static_zipcode_list
+from sgscrape import sgpostal as parser
 
 website = "identogo.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -99,6 +100,13 @@ def process_record(raw_results_from_one_zipcode):
         city = store["properties"]["info"]["city"]
         state = store["properties"]["info"]["state"]
         zip = store["properties"]["info"]["zip"]
+        raw_address = street_address + ", " + city + ", " + state + ", " + zip
+
+        formatted_addr = parser.parse_address_usa(raw_address)
+        street_address = formatted_addr.street_address_1
+        if formatted_addr.street_address_2:
+            street_address = street_address + ", " + formatted_addr.street_address_2
+
         country_code = "US"
 
         store_number = "<MISSING>"
@@ -107,7 +115,6 @@ def process_record(raw_results_from_one_zipcode):
         location_type = "<MISSING>"
         if "-" in location_name:
             location_type = location_name.split("-")[1].strip()
-            location_name = location_name.split("-")[0].strip()
 
         hours_of_operation = store["properties"]["info"]["hours"]
         latitude = store["geometry"]["coordinates"][1]

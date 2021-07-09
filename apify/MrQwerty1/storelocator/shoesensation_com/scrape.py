@@ -88,10 +88,11 @@ def get_data(page_url):
         "".join(tree.xpath("//a[@class='btn btn-link phone']/text()")).strip()
         or "<MISSING>"
     )
-    text = "".join(tree.xpath("//script[contains(text(), 'var location=')]/text()"))
+    text = "".join(tree.xpath("//iframe/@src"))
     try:
-        latitude = text.split("lat:")[1].split(",")[0]
-        longitude = text.split("lng:")[1].split("}")[0]
+        latitude, longitude = text.split("&center=")[1].split(",")
+        if "0.00" in latitude:
+            raise IndexError
     except IndexError:
         latitude, longitude = "<MISSING>", "<MISSING>"
     location_type = "<MISSING>"
@@ -129,7 +130,7 @@ def fetch_data():
     out = []
     urls = get_urls()
 
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
+    with futures.ThreadPoolExecutor(max_workers=5) as executor:
         future_to_url = {executor.submit(get_data, url): url for url in urls}
         for future in futures.as_completed(future_to_url):
             row = future.result()
