@@ -1,5 +1,6 @@
 import csv
 import re
+import ssl
 import time
 
 from random import randint
@@ -17,6 +18,15 @@ from sgrequests import SgRequests
 from sgselenium import SgChrome
 
 logger = SgLogSetup().get_logger("esportafitness_com")
+
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
 
 
 def write_output(data):
@@ -128,7 +138,8 @@ def fetch_data():
 
         hours_of_operation = (
             item.find(id="divClubHourPanel")
-            .text.replace("pm", "pm ")
+            .get_text(" ")
+            .replace("pm", "pm ")
             .replace("CLUB HOURS", "")
             .strip()
         )
