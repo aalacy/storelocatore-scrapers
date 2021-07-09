@@ -5,6 +5,7 @@ from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
 from sgscrape.sgpostal import parse_address_intl
 import re
+import json
 
 logger = SgLogSetup().get_logger("razzoos")
 
@@ -39,32 +40,31 @@ def fetch_data():
             if "Coming" in link.text:
                 continue
             page_url = locator_domain + link.a["href"]
+            logger.info(page_url)
+            sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
+            ss = json.loads(
+                sp1.select_one("div.sqs-block-map")["data-block-json"]
+                .replace("&#123;", "{")
+                .replace("&#125;", "}")
+                .replace("&quot;", '"')
+            )
             _addr = []
             for aa in link.select_one("div.summary-excerpt p").stripped_strings:
                 if "Phone" in aa:
                     break
-                if "(" in aa:
+                if "(" in aa or ")" in aa:
                     continue
                 _addr.append(aa)
             addr = parse_address_intl(" ".join(_addr))
-            street_address = addr.street_address_1
-            if addr.street_address_2:
-                street_address += " " + addr.street_address_2
-            hours = []
-
-            try:
-                coord = (
-                    link.select_one("div.summary-excerpt p a")["href"]
-                    .split("/@")[1]
-                    .split("/data")[0]
-                    .split(",")
-                )
-            except:
-                coord = ["", ""]
+            street_address = _addr[0]
+            if addr.postcode in street_address:
+                street_address = street_address.split(addr.city)[0].strip()
 
             phone = ""
             if link.find("a", href=re.compile(r"tel:")):
                 phone = link.find("a", href=re.compile(r"tel:")).text.strip()
+            if not phone and sp1.find("a", href=re.compile(r"tel:")):
+                phone = sp1.find("a", href=re.compile(r"tel:")).text.strip()
             yield SgRecord(
                 page_url=page_url,
                 location_name=link.select_one("div.summary-title").text.strip(),
@@ -75,9 +75,8 @@ def fetch_data():
                 country_code="US",
                 phone=phone,
                 locator_domain=locator_domain,
-                latitude=coord[0],
-                longitude=coord[1],
-                hours_of_operation="; ".join(hours).replace("–", "-"),
+                latitude=ss["location"]["mapLat"],
+                longitude=ss["location"]["mapLng"],
             )
 
 
