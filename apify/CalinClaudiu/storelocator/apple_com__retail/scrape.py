@@ -52,14 +52,14 @@ class CountryStack:
     ):
         self.__country_stack = OrderedSet()
 
-    def push_country(self, req: SerializableCountry) -> bool:
-        self.__country_stack.add(req)
+    def push_country(self, req: SerializableCountry) -> bool:  # type: ignore
+        self.__country_stack.add(req)  # type: ignore
 
     def pop_country(self) -> Optional[SerializableCountry]:
         return self.__country_stack.pop() if self.__country_stack else None
 
-    def serialize_requests(self) -> Iterable[str]:
-        return list(map(lambda r: r.serialize(), self.__country_stack))
+    def serialize_requests(self) -> Iterable[str]:  # type: ignore
+        return list(map(lambda r: r.serialize(), self.__country_stack))  # type: ignore
 
     def __iter__(self):
         return self
