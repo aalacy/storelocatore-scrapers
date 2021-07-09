@@ -79,6 +79,8 @@ def fetch_data():
         longitude = dt["lng"]
 
         base = bs(session.get(page_url, headers=headers).text, "lxml")
+        if "has closed due" in base.text:
+            continue
         hours_of_operation = ""
         phone = ""
         try:
