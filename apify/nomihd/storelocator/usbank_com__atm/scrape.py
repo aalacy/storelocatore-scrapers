@@ -5,7 +5,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import lxml.html
 
-website = "usbank.com"
+website = "usbank.com/atm"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 session = SgRequests()
 headers = {
@@ -22,6 +22,7 @@ def fetch_data():
     states_sel = lxml.html.fromstring(states_req.text)
     states = states_sel.xpath('//li/a[@class="stateListItemLink"]/@href')
     url_list = []
+    locator_domain = website
     for state_url in states:
         cities_req = session.get(base_url + state_url, headers=headers)
         cities_sel = lxml.html.fromstring(cities_req.text)
@@ -58,8 +59,6 @@ def fetch_data():
                     log.info(page_url)
                     store_req = session.get(page_url)
                     store_sel = lxml.html.fromstring(store_req.text)
-
-                    locator_domain = website
 
                     location_name = title
                     street_address = "".join(

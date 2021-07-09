@@ -92,21 +92,9 @@ def fetch_data():
                         r2 = session.get(loc, headers=headers)
                         for line2 in r2.iter_lines():
                             line2 = str(line2.decode("utf-8"))
-                            if (
-                                '<span class="opening-date' in line2
-                                and "Opening 20" in line2
-                            ):
+                            if ">Coming " in line2:
                                 CS = True
-                            if ">Coming Soon<" in line2:
-                                CS = True
-                            if '">Coming in' in line2:
-                                CS = True
-                            if '">Opening' in line2:
-                                CS = True
-                            if (
-                                "and beyond" in line2
-                                and "Now accepting reservations" in line2
-                            ):
+                            if '">Opening ' in line2:
                                 CS = True
                             if '"telephone":"' in line2:
                                 phone = line2.split('"telephone":"')[1].split('"')[0]
