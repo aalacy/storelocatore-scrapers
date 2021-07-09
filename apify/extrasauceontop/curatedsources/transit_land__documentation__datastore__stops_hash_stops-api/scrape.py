@@ -1,7 +1,6 @@
 from sgrequests import SgRequests
 import time
 from sgscrape import simple_scraper_pipeline as sp
-from sgscrape.pause_resume import CrawlState, SerializableRequest
 
 
 def get_data():
@@ -97,7 +96,6 @@ def get_data():
                 city = "<MISSING>"
                 state = "<MISSING>"
                 zipp = "<MISSING>"
-                country_code = "<MISSING>"
                 latitude = location["geometry"]["coordinates"][1]
                 longitude = location["geometry"]["coordinates"][0]
                 store_number = (
