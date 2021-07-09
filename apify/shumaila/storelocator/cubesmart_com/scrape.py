@@ -108,7 +108,7 @@ def fetch_data():
         try:
             pcode = r.split(',"postalCode":"', 1)[1].split('"', 1)[0]
         except:
-            print("enter")
+
             headers1["Cookie"] = cookielist[2]
             r = session.get(link, headers=headers1).text
             try:
