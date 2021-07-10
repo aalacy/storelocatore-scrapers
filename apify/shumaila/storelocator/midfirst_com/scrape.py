@@ -85,7 +85,7 @@ def fetch_data():
     }
 
     addresses = []
-    mylist = static_coordinate_list(50, SearchableCountries.USA)
+    mylist = static_coordinate_list(10, SearchableCountries.USA)
     MAX_RESULTS = 25
     MAX_DISTANCE = 150
     p = 0

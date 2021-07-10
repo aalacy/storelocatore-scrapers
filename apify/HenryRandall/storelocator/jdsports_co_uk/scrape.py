@@ -82,9 +82,6 @@ def fetch_data():
             hoo = hoo + days[x].text + " " + hours[x].text + ", "
         hoo = hoo[:-2]
         coor = soup.find("div", {"class": "storeContentRight"})
-        city = coor.find("img", {"id": "staticMapImage"})
-        city = city.attrs["src"].split("&zoom=15", 1)[0]
-        city = city.split(",")[-1]
         coor = coor.find("div", {"id": "staticMap"})
         coor = coor.attrs["data-staticmapmarkers"].split("|", 1)[1].split('"', 1)[0]
         [lat, long] = coor.split(",")
@@ -93,10 +90,10 @@ def fetch_data():
             loc_url,
             location[0],
             street,
-            city,
+            "<MISSING>",
             "<MISSING>",
             zip_code,
-            "<MISSING>",
+            "UK",
             location[2],
             phone,
             "<MISSING>",

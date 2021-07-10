@@ -133,7 +133,6 @@ def fetch_data():
             add = add.replace("&#039;", "'").replace("&amp;", "&")
             if "; For" in hours:
                 hours = hours.split("; For")[0]
-            hours = hours.replace("Will Call", "").strip()
             hours = hours.replace("Open to the public", "").strip()
             if "; Off" in hours:
                 hours = hours.split("; Off")[0]
@@ -217,6 +216,10 @@ def fetch_data():
                 hours = hours.split("Due to")[0].strip()
             if "/ W" in hours:
                 hours = hours.split("/ W")[0].strip()
+            if ";" not in hours and ":" not in hours and "0" not in hours:
+                hours = "<MISSING>"
+            if " (" in hours:
+                hours = hours.split(" (")[0]
             if "MN100" not in name:
                 yield [
                     website,
