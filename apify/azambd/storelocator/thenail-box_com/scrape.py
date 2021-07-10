@@ -33,6 +33,7 @@ def driverSleep(driver, time=2):
             EC.presence_of_element_located((By.ID, MISSING))
         )
     except Exception as e1:
+        log.info(f"NO need sleep time {e1}")
         pass
 
 
@@ -74,6 +75,7 @@ def fetchStores():
                 driver.execute_script("arguments[0].click();", button)
                 log.debug("click on cross")
             except Exception as e:
+                log.info(f"Failed Driver {e}")
                 pass
 
             driverSleep(driver, 3)
