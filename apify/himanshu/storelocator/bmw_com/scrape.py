@@ -68,7 +68,9 @@ def fetch_data():
             locator_domain = "https://www.bmw.com/"
             location_name = value["name"]
             street_address = value["street"]
-            city = value["city"].replace("2142", "Bend")
+            city = value["city"].strip()
+            if city == "2142":
+                city = value["settlement"]
             if location_name == "BMW Ste-Agathe":
                 state = "QC"
             else:

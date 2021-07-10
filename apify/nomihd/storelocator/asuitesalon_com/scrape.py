@@ -61,13 +61,13 @@ def fetch_data():
         store_res = session.get(page_url, headers=headers)
         store_sel = lxml.html.fromstring(store_res.text)
 
-        location_name = "".join(store_sel.xpath("//title/text()"))
-
-        address_info = " ".join(
-            store_sel.xpath(
-                '//p//a[not(contains(@href,"tel")) and not(contains(@href,"mailto")) and text()]'
-            )[0].xpath(".//text()")
+        location_name = "".join(
+            store_sel.xpath("//div[@class='info-row']/div[@class='name']/text()")
         )
+
+        address_info = "".join(
+            store_sel.xpath('//div[@class="address"]/text()')
+        ).strip()
 
         raw_address = address_info
 
@@ -84,23 +84,9 @@ def fetch_data():
         country_code = "US"
 
         store_number = "<MISSING>"
-        phone = (
-            "".join(
-                list(
-                    filter(
-                        str,
-                        [
-                            x.strip()
-                            for x in store_sel.xpath(
-                                '//p//a[contains(@href,"tel") and text()]'
-                            )[0].xpath(".//text()")
-                        ],
-                    )
-                )
-            )
-            .replace("tel:", "")
-            .strip()
-        )
+        phone = "".join(
+            store_sel.xpath('//div[@class="contact"]/a[contains(@href,"tel:")]/text()')
+        ).strip()
 
         location_type = "<MISSING>"
 
