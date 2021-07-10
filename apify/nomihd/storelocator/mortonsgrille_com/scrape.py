@@ -158,7 +158,17 @@ def fetch_data():
                 )
                 hours = list(filter(validhour, hours))
 
-                hours_of_operation = "; ".join(hours).replace("; :", ":").strip()
+                hours_of_operation = (
+                    "; ".join(hours)
+                    .replace("; :", ":")
+                    .strip()
+                    .encode("ascii", "replace")
+                    .decode("utf-8")
+                    .replace("?", "-")
+                    .strip()
+                    .replace("---", "-")
+                    .strip()
+                )
 
                 map_link = "".join(store_sel.xpath('//a[contains(@href,"maps")]/@href'))
 
@@ -168,6 +178,9 @@ def fetch_data():
                     )
 
                 latitude, longitude = get_latlng(map_link)
+
+            if location_name == "Shenzhen, China":
+                street_address = "5033 Yitian Road"
 
             yield SgRecord(
                 locator_domain=locator_domain,
