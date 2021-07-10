@@ -9,7 +9,7 @@ _headers = {
 
 def fetch_data():
     locator_domain = "https://villamadina.com/"
-    base_url = "https://storerocket.global.ssl.fastly.net/api/user/E5Z4wBKpPd/locations?radius=5000&units=kilometers"
+    base_url = "https://api.storerocket.io/api/user/E5Z4wBKpPd/locations?radius=50&units=kilometers"
     with SgRequests() as session:
         locations = session.get(base_url, headers=_headers).json()
         for _ in locations["results"]["locations"]:

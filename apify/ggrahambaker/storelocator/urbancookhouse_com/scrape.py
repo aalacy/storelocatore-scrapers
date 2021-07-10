@@ -117,7 +117,7 @@ def fetch_data():
                 pcode,
                 "US",
                 "<MISSING>",
-                phone,
+                phone.replace("phone", "").strip(),
                 "<MISSING>",
                 lat,
                 longt,
