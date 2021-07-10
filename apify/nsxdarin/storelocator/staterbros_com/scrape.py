@@ -138,6 +138,11 @@ def fetch_data():
                 city = "Yorba Linda"
             if phone == "":
                 phone = "<MISSING>"
+            if "1717 East Vista" in rawadd:
+                add = "1717 East Vista Chino"
+                city = "Palm Springs"
+            if ", L A" in city:
+                city = city.split(", L A")[0].strip()
             yield [
                 website,
                 loc,

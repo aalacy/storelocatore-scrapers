@@ -1,7 +1,9 @@
 import csv
-from lxml import etree
+import json
+from urllib.parse import urljoin
 
 from sgrequests import SgRequests
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 
 
 def write_output(data):
@@ -36,66 +38,64 @@ def write_output(data):
 
 def fetch_data():
     # Your scraper here
-    session = SgRequests()
+    session = SgRequests(proxy_rotation_failure_threshold=0).requests_retry_session(
+        retries=0, backoff_factor=0.3
+    )
 
     items = []
+    scraped_items = []
 
     DOMAIN = "cashstore.com"
-    start_url = "https://www.cashstore.com/components/getlocations"
-    formdata = {
-        "lat": "42.5896728",
-        "lng": "-89.6628111",
-        "pageSize": "500",
-        "page": "0",
-        "radius": "50000",
-        "useIcons": "true",
-    }
+    start_url = (
+        "https://www.cashstore.com/api/v1/stores/search?latitude={}&longitude={}"
+    )
 
-    headers = {
-        "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
-        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.67 Safari/537.36",
-        "x-requested-with": "XMLHttpRequest",
-    }
+    all_locations = []
+    all_coords = DynamicGeoSearch(
+        country_codes=[SearchableCountries.USA], max_radius_miles=50
+    )
+    for lat, lng in all_coords:
+        response = session.get(start_url.format(lat, lng))
+        all_locations += json.loads(response.text)
 
-    response = session.post(start_url, data=formdata, headers=headers)
-    dom = etree.HTML(response.text)
-
-    all_poi_html = dom.xpath('//div[@class="media location location_box"]')
-    for poi_html in all_poi_html:
-        store_url = ""
+    for poi in all_locations:
+        store_url = urljoin("https://www.cashstore.com", poi["url"])
         store_url = store_url if store_url else "<MISSING>"
-        location_name = poi_html.xpath('.//h4[@class="media-heading"]/text()')
-        location_name = location_name[-1].strip() if location_name else "<MISSING>"
-        street_address = poi_html.xpath('.//span[@class="locAddr1"]/text()')[0]
-        street_address_2 = poi_html.xpath('.//span[@class="locAddr2"]/text()')
-        if street_address_2:
-            street_address += ", " + street_address_2[0]
+        location_name = "Cash Store"
+        street_address = poi["address"]
         street_address = street_address if street_address else "<MISSING>"
-        city = poi_html.xpath('.//span[@class="locCityStSip"]/text()')
-        city = city[0].split(",")[0] if city else "<MISSING>"
-        state = poi_html.xpath('.//span[@class="locCityStSip"]/text()')
-        state = state[0].split(",")[-1].strip().split()[0] if state else "<MISSING>"
-        zip_code = poi_html.xpath('.//span[@class="locCityStSip"]/text()')
-        zip_code = (
-            zip_code[0].split(",")[-1].strip().split()[-1] if zip_code else "<MISSING>"
-        )
-        country_code = ""
-        country_code = country_code if country_code else "<MISSING>"
-        store_number = "<MISSING>"
-        phone = poi_html.xpath('.//a[contains(@href, "tel")]/text()')
-        phone = phone[0] if phone else "<MISSING>"
-        location_type = ""
-        location_type = location_type if location_type else "<MISSING>"
-        latitude = poi_html.xpath("@data-latitude")
-        latitude = latitude[0] if latitude else "<MISSING>"
-        longitude = poi_html.xpath("@data-longitude")
-        longitude = longitude[0] if longitude else "<MISSING>"
-        hours_of_operation = poi_html.xpath(
-            './/p[strong[contains(text(), "Hours:")]]/text()'
-        )
-        hours_of_operation = (
-            hours_of_operation[1] if hours_of_operation else "<MISSING>"
-        )
+        city = poi["city"]
+        city = city if city else "<MISSING>"
+        state = poi["state"]
+        state = state if state else "<MISSING>"
+        zip_code = poi["zip"]
+        zip_code = zip_code if zip_code else "<MISSING>"
+        country_code = "<MISSING>"
+        store_number = poi["storeNumber"]
+        phone = poi["phone"]
+        phone = phone if phone else "<MISSING>"
+        location_type = "<MISSING>"
+        if poi["isClosed"]:
+            location_type = "closed"
+        latitude = poi["latitude"]
+        latitude = latitude if latitude else "<MISSING>"
+        longitude = poi["longitude"]
+        longitude = longitude if longitude else "<MISSING>"
+        hoo = []
+        days = [
+            "monday",
+            "tuesday",
+            "wednesday",
+            "thursday",
+            "friday",
+            "saturday",
+            "sunday",
+        ]
+        for day in days:
+            opens = poi[f"{day}Open"]
+            closes = poi[f"{day}Close"]
+            hoo.append(f"{day} {opens} - {closes}")
+        hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
 
         item = [
             DOMAIN,
@@ -113,8 +113,9 @@ def fetch_data():
             longitude,
             hours_of_operation,
         ]
-
-        items.append(item)
+        if store_number not in scraped_items:
+            scraped_items.append(store_number)
+            items.append(item)
 
     return items
 

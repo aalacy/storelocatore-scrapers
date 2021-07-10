@@ -3,6 +3,7 @@ import csv
 from concurrent import futures
 from lxml import html
 from sgrequests import SgRequests
+from urllib import parse
 
 
 def write_output(data):
@@ -58,6 +59,8 @@ def get_urls():
 
 def get_data(page_url):
     locator_domain = "https://www.thereformation.com/"
+    if page_url.startswith("/"):
+        page_url = f"https://www.thereformation.com{page_url}"
 
     session = SgRequests()
     r = session.get(page_url)
@@ -68,8 +71,16 @@ def get_data(page_url):
         "//div[@class='content-block content-block--hidden-for-small content-block--image-new content-block--show-divider-true']//text()"
     )
     lines = list(filter(None, [l.strip() for l in lines]))
+    if not lines:
+        return
 
-    line = lines[1 : lines.index("Hours:")]
+    hours_index = 0
+    for l in lines:
+        if l.startswith("Hours:"):
+            break
+        hours_index += 1
+
+    line = lines[1:hours_index]
     street_address = ", ".join(line[:-1]).replace(",,", ",")
     if "Mall" in street_address:
         street_address = street_address.split("Mall,")[1].strip()
@@ -87,6 +98,7 @@ def get_data(page_url):
         phone = tree.xpath(
             "//div[@class='content-block content-block--hidden-for-small content-block--image-new content-block--show-divider-true']//a[contains(@href, 'tel:')]/@href"
         )[-1].replace("tel:+", "")
+        phone = parse.unquote(phone).replace("\xa0", "")
     except IndexError:
         phone = "<MISSING>"
     text = "".join(
@@ -97,7 +109,7 @@ def get_data(page_url):
     latitude, longitude = get_coords_from_google_url(text)
     location_type = "<MISSING>"
     hours_of_operation = (
-        ";".join(lines[lines.index("Hours:") + 1 : lines.index("Call:")]) or "<MISSING>"
+        ";".join(lines[hours_index + 1 : lines.index("Call:")]) or "Closed"
     )
 
     row = [

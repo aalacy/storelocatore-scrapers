@@ -111,7 +111,17 @@ def get_data(page_url):
     _tmp = []
     divs = tree.xpath("//h2[contains(text(), 'Timings')]/following-sibling::div[1]/div")
     for d in divs:
-        _tmp.append(" ".join(" ".join(d.xpath(".//text()")).split()))
+        day = "".join(d.xpath("./h4/text()")).strip()
+        text = d.xpath("./h4/following-sibling::p/text()")
+        text = list(filter(None, [t.strip() for t in text]))
+        start = text[0].split("–")[0].strip()
+        ends = []
+        for t in text:
+            ends.append(int(t.split("–")[1].split()[0]))
+
+        ends.sort(reverse=True)
+        end = str(ends[0]) + " pm"
+        _tmp.append(f"{day}: {start} - {end}")
 
     hours_of_operation = ";".join(_tmp) or "<MISSING>"
 

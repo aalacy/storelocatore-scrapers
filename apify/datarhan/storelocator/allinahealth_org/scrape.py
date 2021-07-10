@@ -1,9 +1,11 @@
+import re
 import csv
 from lxml import etree
 from urllib.parse import urljoin
 from w3lib.url import add_or_replace_parameter
 
 from sgrequests import SgRequests
+from sgscrape.sgpostal import parse_address_intl
 
 
 def write_output(data):
@@ -63,25 +65,52 @@ def fetch_data():
         loc_url = urljoin(start_url, url)
         address_raw = poi_html.xpath(".//address/text()")
         address_raw = [elem.strip() for elem in address_raw if elem.strip()]
-        if len(address_raw) == 3:
-            address_raw = [", ".join(address_raw[:2])] + address_raw[2:]
+        addr = parse_address_intl(" ".join(address_raw).replace(",", " "))
         location_name = poi_html.xpath(".//h5/text()")
         location_name = (
             location_name[0].split("-")[0].strip().split("–")[0].strip()
             if location_name
             else "<MISSING>"
         )
-        street_address = address_raw[0]
-        city = address_raw[1].split(",")[0]
-        state = address_raw[1].split(",")[-1].split()[0]
-        zip_code = address_raw[1].split(",")[-1].split()[-1]
-        country_code = "<MISSING>"
+        street_address = addr.street_address_1
+        if addr.street_address_2:
+            street_address += " " + addr.street_address_2
+        street_address = street_address.split("Inside")[0].split("Emergency")[0].strip()
+        if street_address == "611":
+            street_address += " " + "E Fairview"
+        city = addr.city
+        city = city if city else "<MISSING>"
+        state = addr.state
+        state = state if state else "<MISSING>"
+        zip_code = addr.postcode
+        zip_code = zip_code if zip_code else "<MISSING>"
+        country_code = addr.country
+        country_code = country_code if country_code else "<MISSING>"
         store_number = "<MISSING>"
         if loc_url.split("/")[-1].isdigit():
             store_number = loc_url.split("/")[-1]
         store_number = store_number if store_number else "<MISSING>"
         phone = poi_html.xpath('.//a[contains(@href, "tel")]/text()')
-        phone = phone[0] if phone else "<MISSING>"
+        if not phone:
+            loc_response = session.get(loc_url)
+            loc_dom = etree.HTML(loc_response.text)
+            phone = re.findall('telephone": "(.+?)"', loc_response.text)
+            if not phone:
+                phone = loc_dom.xpath(
+                    '//div[a[contains(text(), "View map")]]/preceding-sibling::div[1]/strong/text()'
+                )
+            phone = [e.strip() for e in phone if e.strip()]
+            if not phone:
+                phone = loc_dom.xpath('//p[contains(text(), "Call")]/strong/text()')
+            if not phone:
+                phone = loc_dom.xpath(
+                    '//p[contains(text(), "To make a referral or schedule")]/strong/text()'
+                )
+            if not phone:
+                phone = loc_dom.xpath(
+                    '//span[contains(text(), "Call")]/following-sibling::strong/text()'
+                )
+        phone = phone[0].strip().replace(".", "") if phone else "<MISSING>"
         latitude = "<MISSING>"
         longitude = "<MISSING>"
         store_response = session.get(loc_url)

@@ -69,7 +69,6 @@ def write_output(data):
 
 def fetch_data():
     # Your scraper here
-    loc_list = []
 
     search_url = "https://www.hungryhorse.co.uk/find-us/"
     stores_req = session.get(search_url)
@@ -92,87 +91,86 @@ def fetch_data():
             headers=headers,
         )
         store_json = store_req.json()["data"]["venue"]
-        locator_domain = website
-        latitude = store_json["location"]["latitude"]
-        longitude = store_json["location"]["longitude"]
-        store_number = venueId
-        location_name = store_json["name"]
-        location_type = "<MISSING>"
-        if store_json["closed"] is True:
-            location_type = "Temporary Closed"
-
-        street_address = store_json["address"]["line1"]
-        city = store_json["address"]["line2"]
-        state = store_json["address"]["county"]
-        zip = store_json["address"]["postcode"]
-        phone = store_json["phone"]
-
-        hours = store_json["operatingHours"]
-        hours_list = []
-        for hour in hours:
-            if hour["open"] is not None and len(hour["open"]) > 0:
-                day = hour["name"]
-                time = hour["open"] + "-" + hour["close"]
-                hours_list.append(day + ":" + time)
-
-        hours_of_operation = "; ".join(hours_list).strip()
-
-        if store_number == "":
-            store_number = "<MISSING>"
-
-        if location_name == "":
-            location_name = "<MISSING>"
-
-        country_code = "GB"
-
-        if street_address == "" or street_address is None:
-            street_address = "<MISSING>"
-
-        if city == "" or city is None:
-            city = "<MISSING>"
-
-        if state == "" or state is None:
-            state = "<MISSING>"
-
-        if zip == "" or zip is None:
-            zip = "<MISSING>"
-
-        if country_code == "" or country_code is None:
-            country_code = "<MISSING>"
-
-        if phone == "" or phone is None:
-            phone = "<MISSING>"
-
-        if latitude == "" or latitude is None:
-            latitude = "<MISSING>"
-        if longitude == "" or longitude is None:
-            longitude = "<MISSING>"
-
-        if hours_of_operation == "":
-            hours_of_operation = "<MISSING>"
-
-        if location_type == "":
+        if store_json is not None:
+            locator_domain = website
+            latitude = store_json["location"]["latitude"]
+            longitude = store_json["location"]["longitude"]
+            store_number = venueId
+            location_name = store_json["name"]
             location_type = "<MISSING>"
+            if store_json["closed"] is True:
+                location_type = "Temporary Closed"
 
-        curr_list = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        loc_list.append(curr_list)
+            street_address = store_json["address"]["line1"]
+            city = store_json["address"]["line2"]
+            state = store_json["address"]["county"]
+            zip = store_json["address"]["postcode"]
+            phone = store_json["phone"]
 
-    return loc_list
+            hours = store_json["operatingHours"]
+            hours_list = []
+            for hour in hours:
+                if hour["open"] is not None and len(hour["open"]) > 0:
+                    day = hour["name"]
+                    time = hour["open"] + "-" + hour["close"]
+                    hours_list.append(day + ":" + time)
+
+            hours_of_operation = "; ".join(hours_list).strip()
+
+            if store_number == "":
+                store_number = "<MISSING>"
+
+            if location_name == "":
+                location_name = "<MISSING>"
+
+            country_code = "GB"
+
+            if street_address == "" or street_address is None:
+                street_address = "<MISSING>"
+
+            if city == "" or city is None:
+                city = "<MISSING>"
+
+            if state == "" or state is None:
+                state = "<MISSING>"
+
+            if zip == "" or zip is None:
+                zip = "<MISSING>"
+
+            if country_code == "" or country_code is None:
+                country_code = "<MISSING>"
+
+            if phone == "" or phone is None:
+                phone = "<MISSING>"
+
+            if latitude == "" or latitude is None:
+                latitude = "<MISSING>"
+            if longitude == "" or longitude is None:
+                longitude = "<MISSING>"
+
+            if hours_of_operation == "":
+                hours_of_operation = "<MISSING>"
+
+            if location_type == "":
+                location_type = "<MISSING>"
+
+            curr_list = [
+                locator_domain,
+                page_url,
+                location_name,
+                street_address,
+                city,
+                state,
+                zip,
+                country_code,
+                store_number,
+                phone,
+                location_type,
+                latitude,
+                longitude,
+                hours_of_operation,
+            ]
+            yield curr_list
 
 
 def scrape():

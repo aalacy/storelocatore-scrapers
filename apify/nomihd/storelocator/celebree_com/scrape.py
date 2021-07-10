@@ -4,6 +4,7 @@ from sgrequests import SgRequests
 from sglogging import sglog
 import json
 import us
+import lxml.html
 
 website = "celebree.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -72,7 +73,11 @@ def fetch_data():
             store = json_data[0]
             if "name" in store:
                 if store["name"] != "" or store["name"] is not None:
-                    page_url = "https:" + store["link"]
+                    page_url = ""
+                    if "http" not in store["link"]:
+                        page_url = "https:" + store["link"]
+                    else:
+                        page_url = store["link"]
                     locator_domain = website
                     location_name = store["name"]
                     if location_name == "":
@@ -105,8 +110,23 @@ def fetch_data():
 
                     store_number = str(store["id"])
                     phone = store["phone"]
+                    if phone is None or len(phone) <= 0:
+                        log.info(page_url)
+                        store_page_req = session.get(page_url, headers=headers)
+                        store_page_sel = lxml.html.fromstring(store_page_req.text)
+                        phone = store_page_sel.xpath(
+                            '//a[@class="app-header__utility-bar-phone"]/text()'
+                        )
+                        if len(phone) > 0:
+                            phone = phone[0].strip()
 
                     location_type = "<MISSING>"
+                    if (
+                        "coming" in location_name.lower()
+                        or "opening" in location_name.lower()
+                    ):
+                        location_type = "Coming Soon"
+
                     latitude = store["lat"]
                     longitude = store["lng"]
 

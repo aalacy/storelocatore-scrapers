@@ -1,62 +1,34 @@
 import csv
+import re
+from bs4 import BeautifulSoup as bs
 from sgrequests import SgRequests
-from lxml import etree
-
-from sgscrape.sgpostal import parse_address_usa
-
-
-base_url = "http://asianfoodmarkets.com"
+from sglogging import sglog
+from ast import literal_eval
 
 
-def validate(item):
-    if type(item) == list:
-        item = " ".join(item)
-    return item.replace("\r", "").replace("\t", "").replace("\n", "").strip()
+DOMAIN = "asianfoodmarkets.com"
+BASE_URL = "https://www.asianfoodmarkets.com"
+LOCATION_URL = "https://www.asianfoodmarkets.com/"
+HEADERS = {
+    "Accept": "application/json, text/plain, */*",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
+}
+log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
 
-
-def get_value(item):
-    if not item:
-        item = "<MISSING>"
-    item = validate(item)
-    if item == "":
-        item = "<MISSING>"
-    return item
-
-
-def eliminate_space(items):
-    rets = []
-    for item in items:
-        item = validate(item)
-        if item != "":
-            rets.append(item)
-    return rets
-
-
-def parse_address(address):
-    address = parse_address_usa(address)
-    street = address.street_address_1
-    if address.street_address_2:
-        street += " " + address.street_address_2
-    city = address.city
-    state = address.state
-    zipcode = address.postcode
-    return {
-        "street": get_value(street),
-        "city": get_value(city),
-        "state": get_value(state),
-        "zipcode": get_value(zipcode),
-    }
+session = SgRequests()
 
 
 def write_output(data):
+    log.info("Write Output of " + DOMAIN)
     with open("data.csv", mode="w") as output_file:
         writer = csv.writer(
             output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
         )
+        # Header
         writer.writerow(
             [
-                "page_url",
                 "locator_domain",
+                "page_url",
                 "location_name",
                 "street_address",
                 "city",
@@ -71,80 +43,109 @@ def write_output(data):
                 "hours_of_operation",
             ]
         )
+        # Body
         for row in data:
             writer.writerow(row)
 
 
+def pull_content(url):
+    log.info("Pull content => " + url)
+    soup = bs(session.get(url, headers=HEADERS).content, "lxml")
+    return soup
+
+
+def handle_missing(field):
+    if field is None or (isinstance(field, str) and len(field.strip()) == 0):
+        return "<MISSING>"
+    return field
+
+
+def parse_json(soup):
+    pattern_latlong = re.compile(r"var\s+markers\s+=.*", re.MULTILINE | re.DOTALL)
+    pattern_store = re.compile(
+        r"var\s+infoWindowContent\s+=.*", re.MULTILINE | re.DOTALL
+    )
+    lat_long_content = soup.find("script", text=pattern_latlong).string
+    store_content = soup.find("script", text=pattern_store).string
+    parse_latlong = re.search(r"(?s)var\s+markers\s+=\s+(\[.*?\])\;", lat_long_content)
+    parse_store = re.search(
+        r"(?s)var\s+infoWindowContent\s+=\s+(\[.*?\])\;", store_content
+    )
+    lat_long = literal_eval(parse_latlong.group(1))
+    store = literal_eval(re.sub(r"'\s+\+\s+'", "", parse_store.group(1)))
+    result = []
+    for i in range(len(store)):
+        data = {
+            "title": lat_long[i][0],
+            "latitude": lat_long[i][1],
+            "longitude": lat_long[i][2],
+            "content": store[i][0],
+        }
+        result.append(data)
+    return result
+
+
 def fetch_data():
-    session = SgRequests()
-
-    items = []
-
-    start_url = "http://asianfoodmarkets.com"
-    domain = "asianfoodmarkets.com"
-
-    response = session.get(start_url)
-    source = response.text
-    store_list = (
-        validate(
-            source.split("var infoWindowContent = [")[1].split("// Display multiple")[0]
+    log.info("Fetching store_locator data")
+    soup = pull_content(LOCATION_URL)
+    details = parse_json(soup)
+    locations = []
+    for row in details:
+        locator_domain = DOMAIN
+        location_name = row["title"]
+        info = (
+            bs(row["content"], "lxml")
+            .get_text(strip=True, separator=",")
+            .replace(",Online shopping available here!", "")
+            .replace(",Get Directions", "")
+            .strip()
         )
-        .replace("'", "")
-        .replace("+", "")[1:-3]
-        .split("],[")
-    )
-    geo_list = validate(source.split("var markers = [")[1].split("];")[0])[1:-1].split(
-        "],["
-    )
-    for idx, store in enumerate(store_list):
-        store = eliminate_space(etree.HTML(store).xpath(".//text()"))
-        store_url = start_url
-        location_name = store[0]
-        address = parse_address(store[1])
-        if "Online shopping" in store[1]:
-            address = parse_address(store[2])
-        street_address = address["street"]
-        city = address["city"]
-        state = address["state"]
-        zip_code = address["zipcode"]
+        list_info = info.split(",")
+        street_address = list_info[1].strip()
+        city = list_info[2].strip()
+        state = re.sub(r"\d+", "", list_info[3]).strip()
+        zip_code = re.sub(r"\D+", "", list_info[3]).strip()
         country_code = "US"
         store_number = "<MISSING>"
-        phone = [e.split(":")[-1].strip() for e in store if "Tel:" in e]
-        phone = phone[0] if phone else "<MISSING>"
-        location_type = "Asian Grocery Stores"
-        geo = eliminate_space(geo_list[idx].split(","))
-        latitude = geo[1]
-        longitude = geo[2].replace("]", "")
-        hours = [e.strip() for e in store if "AM-" in e]
-        if not hours:
-            location_type = "coming soon"
-        hours_of_operation = " ".join(hours) if hours else "<MISSING>"
-
-        item = [
-            domain,
-            store_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip_code,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-
-        items.append(item)
-
-    return items
+        if "Tel:" in list_info[4]:
+            phone = list_info[4].replace("Tel:", "").strip()
+        else:
+            phone = "<MISSING>"
+        location_type = "<MISSING>"
+        hours_of_operation = ", ".join(list_info[6:])
+        if "COMING SOON" in info:
+            location_type = "COMING_SOON"
+            hours_of_operation = "<MISSING>"
+        latitude = row["latitude"]
+        longitude = row["longitude"]
+        log.info("Append {} => {}".format(location_name, street_address))
+        locations.append(
+            [
+                locator_domain,
+                BASE_URL,
+                location_name,
+                street_address,
+                city,
+                state,
+                zip_code,
+                country_code,
+                store_number,
+                phone,
+                location_type,
+                latitude,
+                longitude,
+                hours_of_operation,
+            ]
+        )
+    return locations
 
 
 def scrape():
+    log.info("Start {} Scraper".format(DOMAIN))
     data = fetch_data()
+    log.info("Found {} locations".format(len(data)))
     write_output(data)
+    log.info("Finish processed " + str(len(data)))
 
 
 scrape()

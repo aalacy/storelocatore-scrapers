@@ -28,11 +28,13 @@ def fetch_data():
         page_url = "https://marysmountaincookies.com" + store_url
         log.info(page_url)
         store_req = session.get(page_url, headers=headers)
+        if "Opening Soon" in store_req.text:
+            continue
         store_sel = lxml.html.fromstring(store_req.text)
 
         locator_domain = website
         location_name = (
-            "".join(
+            " ".join(
                 store_sel.xpath('//section[@id="section_1"]/article//header/h1/text()')
             )
             .strip()
@@ -94,7 +96,19 @@ def fetch_data():
                 if len("".join(hours[index].xpath("@class")).strip()) <= 0:
                     hours_list.append("".join(hours[index].xpath(".//text()")).strip())
 
+        hour2 = "".join(
+            store_sel.xpath(
+                '//section[@id="section_2"]//ul[./li[@class="icon-hours"]]/text()'
+            )
+        )
+        if hour2:
+            hours_list.append(hour2)
+
         hours_of_operation = "; ".join(hours_list).strip()
+        if "; We are open for delivery" in hours_of_operation:
+            hours_of_operation = hours_of_operation.split("; We are open for delivery")[
+                0
+            ].strip()
 
         latitude = "<MISSING>"
         longitude = "<MISSING>"
