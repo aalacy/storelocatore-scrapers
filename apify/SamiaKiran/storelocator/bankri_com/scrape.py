@@ -46,6 +46,12 @@ def fetch_data():
                 x.text.replace("\n", " ")
                 for x in soup.findAll("table")[1].findAll("tr")[1:]
             )
+            if not hours_of_operation:
+                hours_of_operation = " ".join(
+                    x.text.replace("\n", " ")
+                    for x in soup.findAll("table")[2].findAll("tr")[1:]
+                )
+
             yield SgRecord(
                 locator_domain=DOMAIN,
                 page_url=page_url,
