@@ -123,6 +123,10 @@ def fetch_data():
         )
         if hours_of_operation.find("*") != -1:
             hours_of_operation = hours_of_operation.split("*")[0].strip()
+        if street_address.find("1001") != -1:
+            hours_of_operation = hours_of_operation.replace(
+                " Sat: 3:00 – 8:30pm Sun: 3:00 – 8:00pm", ""
+            ).strip()
 
         row = [
             locator_domain,
