@@ -1,4 +1,5 @@
 from sglogging import sglog
+from bs4 import BeautifulSoup
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
@@ -19,9 +20,15 @@ MISSING = "<MISSING>"
 def fetch_data():
     if True:
         linklist = []
-        token = "https://locations.johnnyrockets.com/scripts/app-3c96de537f.js"
+        token_url = "https://locations.johnnyrockets.com/"
+        token = session.get(token_url, headers=headers)
+        token = BeautifulSoup(token.text, "html.parser")
+        token = token.select_one("script[src*=app]")['src']
+        token = "https://locations.johnnyrockets.com/"+token
+        log.info(token)
+        log.info("Fetching the Token...")
         token = session.get(token, headers=headers)
-        token = token.text.split('.constant("API_TOKEN", "')[1].split('"')[0]
+        token = token.text.split('API_TOKEN",')[1].split(').')[0].replace('"',"")
         url = (
             "https://api.momentfeed.com/v1/analytics/api/v2/llp/sitemap?auth_token="
             + token
@@ -33,6 +40,11 @@ def fetch_data():
             "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.106 Safari/537.36",
         }
         for loc in loclist:
+            location_type = loc["open_or_closed"]
+            if "temp closed" in location_type:
+                location_type = "Temporarily Closed"
+            else:
+                location_type = MISSING
             page_url = "https://locations.johnnyrockets.com" + loc["llp_url"]
             if page_url in linklist:
                 continue
@@ -86,7 +98,7 @@ def fetch_data():
                 country_code=country_code.strip(),
                 store_number=store_number,
                 phone=phone.strip(),
-                location_type=MISSING,
+                location_type=location_type,
                 latitude=latitude,
                 longitude=longitude,
                 hours_of_operation=hours_of_operation.strip(),
