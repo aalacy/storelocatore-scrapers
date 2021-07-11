@@ -57,7 +57,37 @@ def fetch_data():
         "NU",
         "NT",
     ]
-    for xlat in range(44, 70):
+    website = "curves.com"
+    typ = "Fitness Studio"
+    country = "CA"
+    purl = "<MISSING>"
+    name = "Curves (Kanata, ON)"
+    add = "462 Hazeldean Rd., Unit #17"
+    city = "Kanata"
+    state = "ON"
+    zc = "K2L 1V3"
+    store = "<MISSING>"
+    phone = "613-254-5704"
+    hours = "<MISSING>"
+    lat = "<MISSING>"
+    lng = "<MISSING>"
+    yield [
+        website,
+        purl,
+        name,
+        add,
+        city,
+        state,
+        zc,
+        country,
+        store,
+        phone,
+        typ,
+        lat,
+        lng,
+        hours,
+    ]
+    for xlat in range(43, 70):
         for ylng in range(-80, -52):
             url = (
                 "https://www.curves.com/ca/find-a-club?location=Toronto,%20ON&lat="
