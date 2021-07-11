@@ -83,8 +83,10 @@ def fetch_data():
                 .replace("for", "")
                 .replace(",", "")
             )
+            location_type = MISSING
             if "Temporarily Closed" in hours_of_operation:
                 hours_of_operation = MISSING
+                location_type = "Temporarily Closed"
             country_code = "US"
             for coord in coord_list:
                 if street_address.split()[0] == coord["address"].strip().split()[0]:
@@ -102,7 +104,7 @@ def fetch_data():
                 country_code=country_code,
                 store_number=MISSING,
                 phone=phone.strip(),
-                location_type=MISSING,
+                location_type=location_type,
                 latitude=latitude,
                 longitude=longitude,
                 hours_of_operation=hours_of_operation.strip(),
