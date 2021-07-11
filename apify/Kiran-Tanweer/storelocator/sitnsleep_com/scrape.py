@@ -58,8 +58,13 @@ def fetch_data():
             log.info(page_url)
             loc = loc.split("address:")[1].split(",reviews:")[0]
             location_name = loc.split(',name:"')[1].split('",')[0]
-            street_address = loc.split(',street:"')[1].split('",')[0]
+
+            street_address = loc.split(',street:"')[1].split('",zip:')[0]
             street_address = street_address.replace("<br/>", " ")
+            if "Long Beach" in location_name:
+                street_address = (
+                    loc.split(',street:"')[1].split('",zip:')[0].rsplit(";")[-1]
+                )
             if "(" in street_address:
                 street_address = street_address.split("(")[0]
             if "&" in street_address:
