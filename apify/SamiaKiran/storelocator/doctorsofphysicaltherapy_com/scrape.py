@@ -36,6 +36,10 @@ def fetch_data():
             loclist = session.get(url, headers=headers).json()
             for loc in loclist:
                 page_url = loc["permalink"]
+                if "coming-soon" in page_url:
+                    location_type = "Coming Soon"
+                else:
+                    location_type= MISSING
                 phone = loc["phone"]
                 location_name = loc["store"]
                 hours_of_operation = loc["hours"]
@@ -81,7 +85,7 @@ def fetch_data():
                         country_code=country_code,
                         store_number=MISSING,
                         phone=phone.strip(),
-                        location_type=MISSING,
+                        location_type=location_type,
                         latitude=latitude,
                         longitude=longitude,
                         hours_of_operation=hours_of_operation.strip(),
