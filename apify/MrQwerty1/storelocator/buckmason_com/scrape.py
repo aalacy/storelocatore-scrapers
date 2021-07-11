@@ -54,9 +54,9 @@ def fetch_data():
     r = session.get(api, headers=headers)
     tree = html.fromstring(r.text)
     divs = tree.xpath("//figure[@class='stores-menu__item']")
+    slugs = tree.xpath("//a[@class='site_menu-panel_link submenu_store-link']/@href")
 
-    for d in divs:
-        slug = "".join(d.xpath(".//a[@class='stores-menu__link']/@href"))
+    for d, slug in zip(divs, slugs):
         page_url = f"https://www.buckmason.com{slug}"
         location_name = "".join(
             d.xpath(".//h2[@class='stores-menu__name']/text()")
@@ -88,9 +88,6 @@ def fetch_data():
         hours_of_operation = ";".join(hours) or "<MISSING>"
         if "Hours;" in hours_of_operation:
             hours_of_operation = hours_of_operation.split("Hours;")[-1].strip()
-
-        if not slug:
-            page_url = api
 
         row = [
             locator_domain,

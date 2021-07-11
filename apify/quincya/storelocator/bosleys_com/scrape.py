@@ -97,9 +97,7 @@ def fetch_data():
             if "bosley" not in location_name.lower():
                 continue
             store_number = store["ID"]
-            street_address = store["st"]
-            if "<" in street_address:
-                street_address = street_address.split("<")[0].strip()
+            street_address = store["st"].replace("<br>", " ").strip()
             city = store["ct"].strip()
             state = store["rg"].strip()
             zipp = store["zp"].strip()

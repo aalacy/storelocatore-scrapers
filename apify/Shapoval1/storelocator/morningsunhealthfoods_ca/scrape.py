@@ -75,14 +75,19 @@ def fetch_data():
         if "permanentlyClosed" in j:
             hours_of_operation = "Permanently Closed"
 
-        latitude = j.split("coordinates:[")[1].split(",")[0].strip()
-        longitude = j.split("coordinates:[")[1].split(",")[1].split("]")[0].strip()
+        longitude = j.split("coordinates:[")[1].split(",")[0].strip()
+        latitude = j.split("coordinates:[")[1].split(",")[1].split("]")[0].strip()
+
         location_type = j.split('category:"')[1].split('"')[0].strip()
         location_type = (
             location_type.replace("ahc", "Alive Health Centre")
             .replace("ms", "Morning Sun Health Foods")
             .replace("sp", "Supplements Plus")
         )
+        if location_type != "Morning Sun Health Foods":
+            continue
+        if hours_of_operation == "Permanently Closed":
+            continue
 
         row = [
             locator_domain,
