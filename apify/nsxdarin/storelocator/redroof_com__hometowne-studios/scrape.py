@@ -38,19 +38,23 @@ def write_output(data):
 
 def fetch_data():
     locs = []
-    url = "https://www.redroof.com/sitemap.xml"
+    url = "https://www.redroof.com/extendedstay/hometownestudios/all-locations"
     session = SgRequests()
     r = session.get(url, headers=headers)
-    website = "redroof.com/hometowne-studios crawler"
+    website = "redroof.com/hometowne-studios"
     typ = "<MISSING>"
     country = "US"
     logger.info("Pulling Stores")
     for line in r.iter_lines():
         line = str(line.decode("utf-8"))
-        if "<loc>/extendedstay/hometownestudios/property/" in line:
-            locs.append(
-                "https://www.redroof.com" + line.split("<loc>")[1].split("<")[0]
-            )
+        if '<a href="/extendedstay/hometownestudios/property/' in line:
+            items = line.split('<a href="/extendedstay/hometownestudios/property/')
+            for item in items:
+                if 'class=" link-parsed ">' in item:
+                    locs.append(
+                        "https://www.redroof.com/extendedstay/hometownestudios/property/"
+                        + item.split('"')[0]
+                    )
     for loc in locs:
         logger.info(loc)
         name = ""
@@ -67,6 +71,8 @@ def fetch_data():
         r2 = session.get(loc, headers=headers)
         for line2 in r2.iter_lines():
             line2 = str(line2.decode("utf-8"))
+            if '"ShortName\\":\\"' in line2:
+                name = line2.split('"ShortName\\":\\"')[1].split("\\")[0]
             if 'Street1\\":\\"' in line2:
                 add = line2.split('Street1\\":\\"')[1].split("\\")[0]
                 zc = line2.split('"PostalCode\\":\\"')[1].split("\\")[0]
@@ -75,23 +81,35 @@ def fetch_data():
                 lat = line2.split('"Latitude\\":\\"')[1].split("\\")[0]
                 lng = line2.split('"Longitude\\":\\"')[1].split("\\")[0]
                 phone = line2.split('"PhoneNumber\\":\\"')[1].split("\\")[0]
-                name = line2.split('"Description\\":\\"')[1].split("\\")[0]
-        yield [
-            website,
-            loc,
-            name,
-            add,
-            city,
-            state,
-            zc,
-            country,
-            store,
-            phone,
-            typ,
-            lat,
-            lng,
-            hours,
-        ]
+        if state == "AB":
+            country = "CA"
+        else:
+            country = "US"
+        intl = ["OT", "FU", "RJ", "SP"]
+        if "1051 Tiffany" in add:
+            state = "OH"
+        if "," in city:
+            city = city.split(",")[0].strip()
+        city = city.replace(" area", "")
+        if state not in intl and "troy/11191" not in loc:
+            if "3440 W" in add:
+                name = "HomeTowne Studios Dallas - Irving"
+            yield [
+                website,
+                loc,
+                name,
+                add,
+                city,
+                state,
+                zc,
+                country,
+                store,
+                phone,
+                typ,
+                lat,
+                lng,
+                hours,
+            ]
 
 
 def scrape():

@@ -38,7 +38,9 @@ def write_output(data):
 
 
 def fetch_data():
-    locs = []
+    locs = [
+        "https://restaurants.fiveguys.com/concourse-b-gate-b71-dulles-international-airport"
+    ]
     url = "https://restaurants.fiveguys.com/sitemap.xml"
     r = session.get(url, headers=headers)
     website = "fiveguys.com"
@@ -50,8 +52,21 @@ def fetch_data():
         line = str(line.decode("utf-8"))
         if "https://restaurants.fiveguys.com/al" in line:
             Found = False
-        if "<loc>https://restaurants.fiveguys.com/" in line and Found:
+        if (
+            "<loc>https://restaurants.fiveguys.com/" in line
+            and Found
+            and "concourse-b-gate-b71-dulles" not in line
+        ):
             locs.append(line.split("<loc>")[1].split("<")[0].replace("&#39;", "'"))
+    url = "https://restaurants.fiveguys.ca/sitemap.xml"
+    r = session.get(url, headers=headers)
+    Found = True
+    for line in r.iter_lines():
+        line = str(line.decode("utf-8"))
+        if "https://restaurants.fiveguys.ca/ab</loc>" in line:
+            Found = False
+        if 'hreflang="en_CA" href="https://restaurants.fiveguys.ca/' in line and Found:
+            locs.append(line.split('href="')[1].split('"')[0].replace("&#39;", "'"))
     for loc in locs:
         logger.info(loc)
         name = ""
@@ -63,10 +78,16 @@ def fetch_data():
         phone = ""
         lat = ""
         lng = ""
+        if "fiveguys.ca/" in loc:
+            country = "CA"
+        else:
+            country = "US"
         hours = ""
         r2 = session.get(loc, headers=headers)
         for line2 in r2.iter_lines():
             line2 = str(line2.decode("utf-8"))
+            if 'ntityType":"restaurant","id":"' in line2:
+                store = line2.split('ntityType":"restaurant","id":"')[1].split('"')[0]
             if name == "" and '<span class="LocationName-geo">' in line2:
                 name = line2.split('<span class="LocationName-geo">')[1].split("<")[0]
             if 'itemprop="streetAddress" content="' in line2:
@@ -85,29 +106,27 @@ def fetch_data():
                 lng = line2.split('<meta itemprop="longitude" content="')[1].split('"')[
                     0
                 ]
-            if hours == "" and '<div class="Hero-hoursToday"><span class=' in line2:
-                days = (
-                    line2.split('<div class="Hero-hoursToday"><span class=')[1]
-                    .split("data-days='[")[1]
-                    .split("data-utc-offsets=")[0]
-                    .split('"day":"')
-                )
+            if 'itemprop="openingHours" content="' in line2:
+                days = line2.split('itemprop="openingHours" content="')
+                dc = 0
                 for day in days:
-                    if '"intervals":' in day:
-                        if ',"isClosed":true' in day:
-                            hrs = day.split('"')[0] + ": Closed"
-                        else:
-                            hrs = (
-                                day.split('"')[0]
-                                + ": "
-                                + day.split('"start":')[1].split("}")[0]
-                                + "-"
-                                + day.split('"end":')[1].split(",")[0]
-                            )
-                        if hours == "":
-                            hours = hrs
-                        else:
-                            hours = hours + "; " + hrs
+                    if "<!doctype html>" not in day:
+                        dc = dc + 1
+                        if dc <= 7:
+                            hrs = day.split('"')[0]
+                            if hours == "":
+                                hours = hrs
+                            else:
+                                hours = hours + "; " + hrs
+        if hours == "":
+            hours = "<MISSING>"
+        if "-" not in phone:
+            phone = "<MISSING>"
+        if "{: Closed; MONDAY: Closed" in hours:
+            hours = "Sun-Sat: Closed"
+        name = name.replace("&#39;", "'")
+        add = add.replace("&#39;", "'")
+        city = city.replace("&#39;", "'")
         yield [
             website,
             loc,

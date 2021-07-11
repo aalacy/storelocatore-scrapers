@@ -1,19 +1,37 @@
+import time
+import json
+import ssl
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
-from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 from sgscrape.sgpostal import parse_address_intl
-import json
+from sgselenium import SgChrome
+from webdriver_manager.chrome import ChromeDriverManager
+from sglogging import SgLogSetup
 
-_headers = {
-    "accept": "*/*",
-    "accept-encoding": "gzip, deflate, br",
-    "accept-language": "en-US,en;q=0.9,ko;q=0.8",
-    "referer": "https://www.maxandermas.com/locations/",
-    "Host": "www.maxandermas.com",
-    "Cookie": "apbct_site_landing_ts=1614059484; ct_checkjs=119679886; apbct_antibot=6dcdc5436cfeea9e37a679fa8832eee8af4b91c675654f54ebc157202a31de23; _fbp=fb.1.1614059492359.1765100544; _ga=GA1.2.1580962890.1614059493; _gid=GA1.2.1933188988.1614059493; _gat=1; apbct_prev_referer=https%3A%2F%2Fwww.maxandermas.com%2F; apbct_timestamp=1614059543; apbct_page_hits=4; apbct_cookies_test=%257B%2522cookies_names%2522%253A%255B%2522apbct_timestamp%2522%252C%2522apbct_prev_referer%2522%252C%2522apbct_site_landing_ts%2522%252C%2522apbct_page_hits%2522%255D%252C%2522check_value%2522%253A%252299027d854a6dc9e6c7767308b17b2fab%2522%257D; ct_ps_timestamp=1614059543; ct_fkp_timestamp=0; ct_pointer_data=0; ct_timezone=0; apbct_visible_fields=0",
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.182 Safari/537.36",
-}
+logger = SgLogSetup().get_logger("maxandermas.com")
+user_agent = (
+    "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0"
+)
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
+
+
+def initiateDriver(driver=None):
+    if driver is not None:
+        driver.quit()
+
+    return SgChrome(
+        is_headless=True,
+        user_agent=user_agent,
+        executable_path=ChromeDriverManager().install(),
+    ).driver()
 
 
 def _valid(val):
@@ -28,75 +46,113 @@ def _valid(val):
     )
 
 
-def _filter(blocks, hours):
+days = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN", "DINE-IN"]
+
+
+def _filter(blocks):
+    hours = []
     for block in blocks:
-        if "SUN" in block.text:
-            for _ in block.stripped_strings:
-                if "DINE" in _valid(_):
-                    continue
+        for _ in block.stripped_strings:
+            if "DINE" in _valid(_).upper():
+                continue
+            if (
+                _.split(" ")[0]
+                .split("-")[0]
+                .split("–")[0]
+                .split("&")[0]
+                .strip()
+                .upper()
+                in days
+            ):
                 hours += _valid(_).split("|")
+
+    return hours
 
 
 def fetch_data():
-    with SgRequests() as session:
-        locator_domain = "https://www.maxandermas.com/locations/"
-        base_url = "https://www.maxandermas.com/wp-json/wpgmza/v1/features/base64eJyrVkrLzClJLVKyUqqOUcpNLIjPTIlRsopRMopR0gEJFGeUFni6FAPFomOBAsmlxSX5uW6ZqTkpELFapVoABXgWuw"
-        res = session.get(base_url, headers=_headers)
-        locations = json.loads(res.text)["markers"]
-        for location in locations:
-            location_type = "<MISSING>"
-            r1 = session.get(location["link"], headers=_headers)
-            soup = bs(r1.text, "lxml")
-            hours = []
-            try:
-                blocks = soup.select("div.et_pb_text_inner h2")
-                _filter(blocks, hours)
-                if not hours:
-                    blocks = soup.select("div.et_pb_text_inner p")
-                    _filter(blocks, hours)
-            except:
-                pass
-            if (
-                soup.select_one('span[color="#808080"]')
-                and "TEMPORARILY CLOSED"
-                in soup.select_one('span[color="#808080"]').text
-            ):
-                hours = ["Closed"]
+    logger.info("Started Crawling")
+    locator_domain = "https://www.maxandermas.com/"
+    base_url = "https://www.maxandermas.com/locations/"
+    json_url = "https://www.maxandermas.com/wp-json/wpgmza/v1/features/"
+    with SgChrome(
+        user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.182 Safari/537.36"
+    ) as driver:
+        driver.get(base_url)
+        exist = False
+        while not exist:
+            time.sleep(2)
+            for rr in driver.requests:
+                if rr.url.startswith(json_url) and rr.response:
+                    logger.info(f"Crawling Kicked Off {rr.url}")
+                    exist = True
+                    driver.get(rr.url)
+                    locations = json.loads(bs(driver.page_source, "lxml").text.strip())[
+                        "markers"
+                    ]
+                    for location in locations:
+                        logger.info(f"Now processing Page: {location['link']}")
+                        location_type = "<MISSING>"
+                        driver = initiateDriver()
+                        driver.get(location["link"])
+                        time.sleep(5)
+                        soup = bs(driver.page_source, "lxml")
+                        blocks = soup.select("div.et_pb_text_inner h2")
+                        hours = _filter(blocks)
+                        if not hours:
+                            blocks = soup.select("div.et_pb_text_inner p")
+                            hours = _filter(blocks)
+                        if (
+                            soup.select_one('span[color="#808080"]')
+                            and "TEMPORARILY CLOSED"
+                            in soup.select_one('span[color="#808080"]').text
+                        ):
+                            hours = ["TEMPORARILY CLOSED"]
+                            location_type = "TEMPORARILY CLOSED"
 
-            addr = parse_address_intl(location["address"])
-            phone = [_ for _ in bs(location["description"], "lxml").stripped_strings][
-                -1
-            ]
-            _phone = phone.encode("unicode-escape").decode("utf8").split("\\xa0")
-            if len(_phone) > 1:
-                phone = _phone[1]
+                        addr = parse_address_intl(location["address"])
+                        phone = [
+                            _
+                            for _ in bs(
+                                location["description"], "lxml"
+                            ).stripped_strings
+                        ][-1]
+                        _phone = (
+                            phone.encode("unicode-escape").decode("utf8").split("\\xa0")
+                        )
+                        if len(_phone) > 1:
+                            phone = _phone[1]
 
-            location_name = _valid(location["title"])
-            if "TEMPORARILY CLOSED" in location_name:
-                location_name = location_name.split("-")[0].strip()
-                location_type = "Closed"
-                hours = ["Closed"]
+                        location_name = _valid(location["title"])
+                        if "TEMPORARILY CLOSED" in location_name:
+                            location_name = location_name.split("-")[0].strip()
+                            location_type = "TEMPORARILY CLOSED"
+                            hours = ["TEMPORARILY CLOSED"]
 
-            yield SgRecord(
-                page_url=location["link"],
-                store_number=location["id"],
-                location_name=location_name,
-                street_address=addr.street_address_1,
-                city=addr.city,
-                state=addr.state,
-                zip_postal=addr.postcode,
-                country_code="US",
-                location_type=location_type,
-                latitude=location["lat"],
-                longitude=location["lng"],
-                phone=phone,
-                locator_domain=locator_domain,
-                hours_of_operation="; ".join(hours),
-            )
+                        yield SgRecord(
+                            page_url=location["link"],
+                            store_number=location["id"],
+                            location_name=location_name,
+                            street_address=addr.street_address_1,
+                            city=addr.city,
+                            state=addr.state,
+                            zip_postal=addr.postcode,
+                            country_code="US",
+                            location_type=location_type,
+                            latitude=location["lat"],
+                            longitude=location["lng"],
+                            phone=phone,
+                            locator_domain=locator_domain,
+                            hours_of_operation="; ".join(hours),
+                        )
+
+                    break
 
 
 if __name__ == "__main__":
+    count = 0
     with SgWriter() as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
+            count = count + 1
+    logger.info(f"Finished Data Grabbing, Total Locations {count}")

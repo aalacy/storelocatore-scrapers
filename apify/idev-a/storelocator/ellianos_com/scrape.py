@@ -1,83 +1,48 @@
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
-from sgscrape.sgpostal import parse_address_intl
-from bs4 import BeautifulSoup as bs
 import json
 
-locator_domain = "https://www.ellianos.com/"
-base_url = "https://www.ellianos.com/locations/"
-
-
-def _hours(dom_locs, location):
-    hours = []
-    address = ""
-    phone = ""
-    for _ in dom_locs:
-        if (
-            _.select_one("h4.edgtf-team-name")
-            and _.select_one("h4.edgtf-team-name").text.strip().lower()
-            == location["title"].strip().lower()
-        ):
-            if _.select_one("div.wpb_text_column"):
-                hours = [
-                    hour
-                    for hour in _.select_one("div.wpb_text_column").stripped_strings
-                ]
-            try:
-                address = _.select_one("div.edgtf-team-description").text
-            except:
-                pass
-            try:
-                phone = _.select_one("p.edgtf-team-position").text
-            except:
-                pass
-    return ("; ".join(hours) or "<MISSING>").replace("–", "-"), address, phone
+_headers = {
+    "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
+}
 
 
 def fetch_data():
+    locator_domain = "https://www.ellianos.com/"
+    base_url = "https://www.ellianos.com/wp-admin/admin-ajax.php?action=asl_load_stores&nonce=9fe95f4d86&load_all=1&layout=1"
     with SgRequests() as session:
-        res = session.get(base_url)
-        soup = bs(res.text, "lxml")
-        dom_locs = soup.select(
-            "div.edgtf-section-inner-margin div.wpb_column div.vc_column-inner"
-        )
-        scripts = [
-            _.contents[0]
-            for _ in soup.findAll("script")
-            if _.contents
-            and _.contents[0].startswith("jQuery(document).ready(function($)")
-        ]
-        locations = json.loads(
-            scripts[0].split('$("#map1").maps(')[1].split(').data("wpgmp_maps");')[0]
-        )["places"]
+        locations = session.get(base_url, headers=_headers).json()
         for _ in locations:
-            location_type = "<MISSING>"
-            title = _["title"]
-            if (
-                len(_["title"].split("-")) > 1
-                and _["title"].split("-")[1].strip() == "COMING SOON!"
-            ):
-                location_type = "COMING SOON"
-                title = _["title"].split("-")[0].strip()
-            hours_of_operation, address, phone = _hours(dom_locs, _)
-            if not address:
-                address = _["address"]
-            addr = parse_address_intl(address)
+            if "COMING SOON" in _["title"]:
+                continue
+            hours = []
+            is_coming_soon = False
+            for day, hh in json.loads(_["open_hours"]).items():
+                times = hh[0]
+                if hh[0] == "0":
+                    if day == "mon":
+                        is_coming_soon = True
+                        break
+                    else:
+                        times = "closed"
+                hours.append(f"{day}: {times}")
+            if is_coming_soon:
+                continue
             yield SgRecord(
+                page_url=_["website"],
+                location_name=_["title"],
                 store_number=_["id"],
-                location_name=title,
-                location_type=location_type,
-                street_address=addr.street_address_1,
-                city=addr.city,
-                state=addr.state,
-                zip_postal=addr.postcode,
-                country_code="US",
-                phone=phone,
-                latitude=_["location"]["lat"],
-                longitude=_["location"]["lng"],
+                street_address=_["street"],
+                city=_["city"],
+                state=_["state"],
+                zip_postal=_["postal_code"],
+                latitude=_["lat"],
+                longitude=_["lng"],
+                country_code=_["country"],
+                phone=_["phone"],
                 locator_domain=locator_domain,
-                hours_of_operation=hours_of_operation,
+                hours_of_operation="; ".join(hours),
             )
 
 

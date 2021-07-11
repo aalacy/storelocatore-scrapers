@@ -1,5 +1,7 @@
 import csv
+import json
 
+from lxml import html
 from sgrequests import SgRequests
 
 
@@ -35,13 +37,21 @@ def write_output(data):
 def fetch_data():
     out = []
     locator_domain = "https://bigredliquors.com/"
-    api_url = "https://bigredliquors.com/api/v1/merchants/"
+    api_url = "https://bigredliquors.com/store-locator/"
 
     session = SgRequests()
     r = session.get(api_url)
-    js = r.json()["data"]
+    tree = html.fromstring(r.text)
+    text = "".join(
+        tree.xpath(
+            "//script[contains(text(), 'cityHiveWidgetAPIResourceStorage')]/text()"
+        )
+    )
+    text = text.split('JSON.parse("')[2].split('");')[0].replace("\\", "")
+    js = json.loads(text)["merchant_configs"]
 
     for j in js:
+        j = j.get("merchant")
         location_name = j.get("name")
         status = j.get("onboarding_state")
         if status != "active":

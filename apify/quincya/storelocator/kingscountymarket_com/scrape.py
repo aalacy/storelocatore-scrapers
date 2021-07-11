@@ -35,7 +35,7 @@ def fetch_data():
     user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36"
     headers = {"User-Agent": user_agent}
 
-    base_link = "https://api-2.freshop.com/1/stores?app_key=kings_county_market&has_address=true&limit=-1&token=434265630f02f0db1199faac7565cbef"
+    base_link = "https://api-2.freshop.com/1/stores?app_key=kings_county_market&has_address=true&limit=-1"
 
     session = SgRequests()
     stores = session.get(base_link, headers=headers).json()["items"]

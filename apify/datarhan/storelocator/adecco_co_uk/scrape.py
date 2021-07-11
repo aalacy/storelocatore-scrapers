@@ -1,7 +1,7 @@
 import csv
-import json
 
 from sgrequests import SgRequests
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 
 
 def write_output(data):
@@ -39,22 +39,37 @@ def fetch_data():
     session = SgRequests()
 
     items = []
+    scraped_items = []
 
     DOMAIN = "adecco.co.uk"
     start_url = "https://www.adecco.co.uk/globalweb/branch/branchsearch"
 
     headers = {
         "Accept": "application/json, text/javascript, */*; q=0.01",
-        "Content-Type": "application/json; charset=UTF-8",
+        "Content-Type": "application/json; charset=utf-8",
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.67 Safari/537.36",
         "X-Requested-With": "XMLHttpRequest",
     }
 
-    body = '{"dto":{"Latitude":"51.5073509","Longitude":"-0.1277583","MaxResults":"1000","Radius":"5000","Industry":"ALL","RadiusUnits":"MILES"}}'
-    response = session.post(start_url, data=body, headers=headers)
-    data = json.loads(response.text)
+    all_locations = []
+    all_codes = DynamicGeoSearch(
+        country_codes=[SearchableCountries.BRITAIN], max_radius_miles=5
+    )
+    for lat, lng in all_codes:
+        frm = {
+            "dto": {
+                "Latitude": str(lat),
+                "Longitude": str(lng),
+                "MaxResults": "10",
+                "Radius": "5",
+                "Industry": "ALL",
+                "RadiusUnits": "MILES",
+            }
+        }
+        response = session.post(start_url, json=frm, headers=headers).json()
+        all_locations += response["Items"]
 
-    for poi in data["Items"]:
+    for poi in all_locations:
         store_url = "https://www.adeccousa.co.uk/" + poi["ItemUrl"]
         store_url = store_url if store_url else "<MISSING>"
         location_name = poi["BranchName"]
@@ -107,8 +122,9 @@ def fetch_data():
             longitude,
             hours_of_operation,
         ]
-
-        items.append(item)
+        if store_number not in scraped_items:
+            scraped_items.append(store_number)
+            items.append(item)
 
     return items
 

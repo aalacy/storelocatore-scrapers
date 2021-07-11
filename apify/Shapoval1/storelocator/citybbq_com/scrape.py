@@ -1,6 +1,7 @@
 import csv
-from lxml import html
+from concurrent import futures
 from sgrequests import SgRequests
+from sgzip.static import static_coordinate_list, SearchableCountries
 
 
 def write_output(data):
@@ -32,121 +33,94 @@ def write_output(data):
             writer.writerow(row)
 
 
-def fetch_data():
-    out = []
-    locator_domain = "https://www.citybbq.com"
-    api_url = "https://order.citybbq.com/locations"
-    session = SgRequests()
+def get_data(coord):
+    rows = []
+    lat, lng = coord
+    locator_domain = "https://www.citybbq.com/"
+
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:86.0) Gecko/20100101 Firefox/86.0",
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:89.0) Gecko/20100101 Firefox/89.0",
+        "Accept": "application/json, text/plain, */*",
         "Accept-Language": "ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3",
+        "Referer": "https://www.citybbq.com/",
+        "ui-cache-ttl": "300",
+        "ui-transformer": "restaurants",
+        "clientid": "citybbq",
+        "Content-Type": "application/json",
+        "nomnom-platform": "web",
+        "Origin": "https://www.citybbq.com",
         "Connection": "keep-alive",
-        "Upgrade-Insecure-Requests": "1",
+        "TE": "Trailers",
         "Pragma": "no-cache",
         "Cache-Control": "no-cache",
-        "TE": "Trailers",
     }
 
-    r = session.get(api_url, headers=headers)
-    tree = html.fromstring(r.text)
-    block = tree.xpath('//ul[@id="ParticipatingStates"]/li')
-    for i in block:
-        url1 = "".join(i.xpath(".//a/@href"))
-        url1 = f"https://order.citybbq.com{url1}"
-        session = SgRequests()
-        headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:86.0) Gecko/20100101 Firefox/86.0",
-            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
-            "Accept-Language": "ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3",
-            "Connection": "keep-alive",
-            "Referer": "https://order.citybbq.com/locations",
-            "Upgrade-Insecure-Requests": "1",
-            "Pragma": "no-cache",
-            "Cache-Control": "no-cache",
-            "TE": "Trailers",
-        }
-        cookies = {
-            "_gcl_au": "1.1.1275666536.1616147724",
-            "_ga": "GA1.2.1565131436.1616147732",
-            "_gid": "GA1.2.169092942.1616147732",
-            "_fbp": "fb.1.1616147732783.1672002159",
-            "__cfduid": "d51d0f4f8d1b467178bce7dd202af32771616149617",
-        }
-        r = session.get(url1, headers=headers, cookies=cookies)
-        trees = html.fromstring(r.text)
-        block = trees.xpath("//h2")
-        for n in block:
-            page_url = "".join(n.xpath(".//a/@href"))
-            session = SgRequests()
-            headers = {
-                "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:86.0) Gecko/20100101 Firefox/86.0",
-                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
-                "Accept-Language": "ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3",
-                "Connection": "keep-alive",
-                "Referer": "https://order.citybbq.com/locations",
-                "Upgrade-Insecure-Requests": "1",
-                "Pragma": "no-cache",
-                "Cache-Control": "no-cache",
-                "TE": "Trailers",
-            }
-            r = session.get(page_url, headers=headers)
-            tree = html.fromstring(r.text)
-            location_name = "".join(tree.xpath("//h1/text()")).replace("\n", "").strip()
-            street_address = (
-                "".join(tree.xpath('//span[@class="street-address"]/text()'))
-                .replace("\n", "")
-                .strip()
-            )
-            phone = (
-                "".join(tree.xpath('//span[@class="tel"]/text()'))
-                .replace("\n", "")
-                .strip()
-            )
-            city = (
-                "".join(tree.xpath('//span[@class="locality"]/text()'))
-                .replace("\n", "")
-                .strip()
-            )
-            state = (
-                "".join(tree.xpath('//span[@class="region"]/text()'))
-                .replace("\n", "")
-                .strip()
-            )
-            country_code = "US"
-            store_number = "<MISSING>"
-            latitude = "".join(tree.xpath('//span[@class="latitude"]/span/@title'))
-            longitude = "".join(tree.xpath('//span[@class="longitude"]/span/@title'))
-            location_type = "<MISSING>"
-            hours_of_operation = tree.xpath(
-                '//dl[@id="available-business-hours-popover"]//text()'
-            )
-            hours_of_operation = list(
-                filter(None, [a.strip() for a in hours_of_operation])
-            )
-            hours_of_operation = " ".join(hours_of_operation)
-            postal = (
-                "".join(tree.xpath('//span[@class="postal-code"]/text()'))
-                .replace("\n", "")
-                .strip()
-            )
-            row = [
-                locator_domain,
-                page_url,
-                location_name,
-                street_address,
-                city,
-                state,
-                postal,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
-            out.append(row)
+    session = SgRequests()
+
+    r = session.get(
+        f"https://nomnom-prod-api.citybbq.com/restaurants/near?lat={lat}&long={lng}&radius=20000&limit=6&nomnom=calendars&nomnom_calendars_from=20210701&nomnom_calendars_to=20210709&nomnom_exclude_extref=999",
+        headers=headers,
+    )
+    js = r.json()["restaurants"]
+    for j in js:
+
+        page_url = j.get("url")
+        location_name = j.get("storename")
+        street_address = j.get("streetaddress")
+        city = j.get("city")
+        state = j.get("state")
+        postal = j.get("zip")
+        country_code = j.get("country")
+        store_number = "<MISSING>"
+        phone = j.get("telephone")
+        latitude = j.get("latitude")
+        longitude = j.get("longitude")
+        location_type = "<MISSING>"
+        hours = j.get("calendars").get("calendar")[0].get("ranges")
+        tmp = []
+        for h in hours:
+            day = h.get("weekday")
+            start = "".join(h.get("start")).split()[1].strip()
+            end = "".join(h.get("end")).split()[1].strip()
+            line = f"{day} {start} - {end}"
+            tmp.append(line)
+        hours_of_operation = ";".join(tmp) or "<MISISNG>"
+
+        row = [
+            locator_domain,
+            page_url,
+            location_name,
+            street_address,
+            city,
+            state,
+            postal,
+            country_code,
+            store_number,
+            phone,
+            location_type,
+            latitude,
+            longitude,
+            hours_of_operation,
+        ]
+        rows.append(row)
+
+    return rows
+
+
+def fetch_data():
+    out = []
+    s = set()
+    coords = static_coordinate_list(radius=50, country_code=SearchableCountries.USA)
+
+    with futures.ThreadPoolExecutor(max_workers=2) as executor:
+        future_to_url = {executor.submit(get_data, coord): coord for coord in coords}
+        for future in futures.as_completed(future_to_url):
+            rows = future.result()
+            for row in rows:
+                _id = row[3]
+                if _id not in s:
+                    s.add(_id)
+                    out.append(row)
 
     return out
 

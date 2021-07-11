@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-import csv
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from sglogging import sglog
 import lxml.html
@@ -10,54 +11,8 @@ session = SgRequests()
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 
 
-def write_output(data):
-    with open("data.csv", mode="w", newline="", encoding="utf8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        temp_list = []  # ignoring duplicates
-        for row in data:
-            comp_list = [
-                row[2].strip(),
-                row[3].strip(),
-                row[4].strip(),
-                row[5].strip(),
-                row[6].strip(),
-                row[8].strip(),
-                row[10].strip(),
-            ]
-            if comp_list not in temp_list:
-                temp_list.append(comp_list)
-            writer.writerow(row)
-
-        log.info(f"No of records being processed: {len(temp_list)}")
-
-
 def fetch_data():
     # Your scraper here
-    loc_list = []
-
     headers = {
         "authority": "www.bahamabreeze.com",
         "cache-control": "max-age=0",
@@ -99,45 +54,14 @@ def fetch_data():
         store_req = session.get(page_url, headers=headers)
         store_sel = lxml.html.fromstring(store_req.text)
         json_list = store_sel.xpath('//script[@type="application/ld+json"]/text()')
+        latitude = ""
+        longitude = ""
+        hours_of_operation = ""
         for js in json_list:
             if "@type" in js:
                 if json.loads(js)["@type"] == "Restaurant":
                     json_text = js
                     store_json = json.loads(json_text)
-
-                    location_name = store_json["name"]
-                    if location_name == "":
-                        location_name = "<MISSING>"
-
-                    street_address = store_json["address"]["streetAddress"]
-                    city = store_json["address"]["addressLocality"]
-                    state = store_json["address"]["addressRegion"]
-                    zip = store_json["address"]["postalCode"]
-                    country_code = store_json["address"]["addressCountry"]
-
-                    if country_code == "" or country_code is None:
-                        country_code = "<MISSING>"
-                    if street_address == "":
-                        street_address = "<MISSING>"
-
-                    if city == "":
-                        city = "<MISSING>"
-
-                    if state == "":
-                        state = "<MISSING>"
-
-                    if zip == "":
-                        zip = "<MISSING>"
-
-                    store_number = store_json["branchCode"]
-                    if store_number == "":
-                        store_number = "<MISSING>"
-                    phone = store_json["telephone"]
-
-                    location_type = store_json["@type"]
-                    if location_type == "":
-                        location_type = "<MISSING>"
-
                     hours_of_operation = ""
                     hours_list = []
                     hours = store_json["openingHours"]
@@ -150,128 +74,85 @@ def fetch_data():
                     latitude = store_json["geo"]["latitude"]
                     longitude = store_json["geo"]["longitude"]
 
-                    if latitude == "":
-                        latitude = "<MISSING>"
-                    if longitude == "":
-                        longitude = "<MISSING>"
+        location_name = "".join(
+            store_sel.xpath('//h1[@class="style_h1"]/text()')
+        ).strip()
+        if location_name == "":
+            location_name = "<MISSING>"
 
-                    if hours_of_operation == "":
-                        hours_of_operation = "<MISSING>"
-                    if phone == "":
-                        phone = "<MISSING>"
+        street_address = "".join(
+            store_sel.xpath('//p[@id="info-link-webhead"]/text()[1]')
+        ).strip()
+        city_state_Zip = "".join(
+            store_sel.xpath('//p[@id="info-link-webhead"]/text()[2]')
+        ).strip()
+        city = city_state_Zip.split(",")[0].strip()
+        state = city_state_Zip.split(",")[1].strip().split(" ")[0].strip()
+        zip = city_state_Zip.split(",")[1].strip().split(" ")[1].strip()
+        country_code = "US"
 
-                    curr_list = [
-                        locator_domain,
-                        page_url,
-                        location_name,
-                        street_address,
-                        city,
-                        state,
-                        zip,
-                        country_code,
-                        store_number,
-                        phone,
-                        location_type,
-                        latitude,
-                        longitude,
-                        hours_of_operation,
-                    ]
-                    loc_list.append(curr_list)
+        store_number = page_url.split("/")[-1].strip()
+        if store_number.isdigit() is False:
+            store_number = "<MISSING>"
 
-            else:
-                location_name = "".join(
-                    store_sel.xpath('//h1[@class="style_h1"]/text()')
-                ).strip()
-                if location_name == "":
-                    location_name = "<MISSING>"
+        phone = "".join(
+            store_sel.xpath('//p[@id="info-link-webhead"]/text()[3]')
+        ).strip()
 
-                street_address = "".join(
-                    store_sel.xpath('//p[@id="info-link-webhead"]/text()[1]')
-                ).strip()
-                city_state_Zip = "".join(
-                    store_sel.xpath('//p[@id="info-link-webhead"]/text()[2]')
-                ).strip()
-                city = city_state_Zip.split(",")[0].strip()
-                state = city_state_Zip.split(",")[1].strip().split(" ")[0].strip()
-                zip = city_state_Zip.split(",")[1].strip().split(" ")[1].strip()
-                country_code = "US"
+        location_type = "<MISSING>"
 
-                if country_code == "" or country_code is None:
-                    country_code = "<MISSING>"
-                if street_address == "":
-                    street_address = "<MISSING>"
+        if len(hours_of_operation) <= 0:
+            hours_list = []
+            hours = store_sel.xpath('//div[@class="hours-section"]/span')
+            total = int((len(hours) / 2))
+            for index in range(0, total):
+                hours_list.append(
+                    "".join(hours[index].xpath("text()")).strip()
+                    + ":"
+                    + "".join(hours[index + 1].xpath("text()")).strip()
+                )
 
-                if city == "":
-                    city = "<MISSING>"
+            hours_of_operation = "; ".join(hours_list).strip()
 
-                if state == "":
-                    state = "<MISSING>"
+        if len(hours_of_operation) <= 0:
+            hours_list = []
+            hours = store_sel.xpath('//div[contains(@class,"week-schedule")]/div')
+            for hour in hours:
+                day = "".join(hour.xpath("ul/li[1]/text()")).strip()
+                if "(" in day:
+                    day = day.split("(")[1].strip().replace(")", "").strip()
+                time = "".join(hour.xpath("ul/li[2]//text()")).strip()
+                hours_list.append(day + ":" + time)
+            hours_of_operation = "; ".join(hours_list).strip()
 
-                if zip == "":
-                    zip = "<MISSING>"
-
-                store_number = "<MISSING>"
-                if store_number == "":
-                    store_number = "<MISSING>"
-                phone = "".join(
-                    store_sel.xpath('//p[@id="info-link-webhead"]/text()[3]')
-                ).strip()
-
-                location_type = "<MISSING>"
-                if location_type == "":
-                    location_type = "<MISSING>"
-
-                hours_of_operation = ""
-                hours_list = []
-                hours = store_sel.xpath('//div[@class="hours-section"]/span')
-                total = int((len(hours) / 2))
-                for index in range(0, total):
-                    hours_list.append(
-                        "".join(hours[index].xpath("text()")).strip()
-                        + ":"
-                        + "".join(hours[index + 1].xpath("text()")).strip()
-                    )
-
-                hours_of_operation = "; ".join(hours_list).strip()
-
-                latitude = "<MISSING>"
-                longitude = "<MISSING>"
-
-                if latitude == "":
-                    latitude = "<MISSING>"
-                if longitude == "":
-                    longitude = "<MISSING>"
-
-                if hours_of_operation == "":
-                    hours_of_operation = "<MISSING>"
-                if phone == "":
-                    phone = "<MISSING>"
-
-                curr_list = [
-                    locator_domain,
-                    page_url,
-                    location_name,
-                    street_address,
-                    city,
-                    state,
-                    zip,
-                    country_code,
-                    store_number,
-                    phone,
-                    location_type,
-                    latitude,
-                    longitude,
-                    hours_of_operation,
-                ]
-                loc_list.append(curr_list)
-
-    return loc_list
+        yield SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=zip,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=location_type,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+        )
 
 
 def scrape():
     log.info("Started")
-    data = fetch_data()
-    write_output(data)
+    count = 0
+    with SgWriter() as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+
+    log.info(f"No of records being processed: {count}")
     log.info("Finished")
 
 

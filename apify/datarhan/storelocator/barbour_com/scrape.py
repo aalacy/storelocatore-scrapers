@@ -54,11 +54,15 @@ def fetch_data():
         location_name = poi["name"]
         location_name = location_name if location_name else "<MISSING>"
         street_address = poi["address"]
-        street_address = street_address if street_address else "<MISSING>"
+        street_address = street_address.strip() if street_address else "<MISSING>"
+        if street_address == "-":
+            street_address = "<MISSING>"
         city = poi["city"]
         city = city if city else "<MISSING>"
         state = poi["state"]
         state = state if state else "<MISSING>"
+        if state.isdigit():
+            state = "<MISSING>"
         zip_code = poi["zip"]
         zip_code = zip_code if zip_code else "<MISSING>"
         country_code = poi["country"]

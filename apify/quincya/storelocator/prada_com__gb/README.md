@@ -1,1 +1,1 @@
---ignore CountryCodeFillRateChecker (UK)
+--ignore LatLngDuplicationValidator --ignore CountryCodeFillRateChecker (Confirmed on website)
