@@ -1,12 +1,13 @@
 import csv
 import json
+import os
 import re
 
 from bs4 import BeautifulSoup
-from sglogging import sglog
-from sgrequests import SgRequests
 
-session = SgRequests()
+from sglogging import sglog
+
+from sgrequests import SgRequests
 
 log = sglog.SgLogSetup().get_logger("pepboys.com")
 
@@ -14,9 +15,23 @@ user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Ge
 
 headers = {"User-Agent": user_agent}
 
+DEFAULT_PROXY_URL = "https://groups-RESIDENTIAL,country-us:{}@proxy.apify.com:8000/"
 
-def getPage(url):
-    return session.get(url, headers=headers)
+
+def set_proxies():
+    if "PROXY_PASSWORD" in os.environ and os.environ["PROXY_PASSWORD"].strip():
+
+        proxy_password = os.environ["PROXY_PASSWORD"]
+        url = (
+            os.environ["PROXY_URL"] if "PROXY_URL" in os.environ else DEFAULT_PROXY_URL
+        )
+        proxy_url = url.format(proxy_password)
+        proxies = {
+            "https://": proxy_url,
+        }
+        return proxies
+    else:
+        return None
 
 
 def write_output(data):
@@ -50,9 +65,13 @@ def write_output(data):
 
 
 def fetch_data():
+
     locator_domain = "https://www.pepboys.com"
     to_scrape = "https://pepboys.com/stores"
-    page = getPage(to_scrape)
+    session = SgRequests()
+    session.proxies = set_proxies()
+    page = session.get(to_scrape, headers=headers)
+    session.close()
     assert page.status_code == 200
     soup = BeautifulSoup(page.content, "html.parser")
     main = soup.find("div", {"class": "store-locator__home-browse-location"})
@@ -66,8 +85,11 @@ def fetch_data():
         state_list.append(link)
 
     for state in state_list:
-        log.info(state)
-        page = getPage(state)
+        log.info(f"State: {state}")
+        session = SgRequests()
+        session.proxies = set_proxies()
+        page = session.get(state, headers=headers)
+        session.close()
         assert page.status_code == 200
         soup = BeautifulSoup(page.content, "html.parser")
         main = soup.find("div", {"class": "store-locator__home-browse-location"})
@@ -77,8 +99,11 @@ def fetch_data():
             city_list.append(link)
 
     for city_link in city_list:
-        log.info(city_link)
-        page = getPage(city_link)
+        log.info(f"City: {city_link}")
+        session = SgRequests()
+        session.proxies = set_proxies()
+        page = session.get(city_link, headers=headers)
+        session.close()
         assert page.status_code == 200
         soup = BeautifulSoup(page.content, "html.parser")
         js = soup.main.find(id="mapDataArray").text.strip()
@@ -120,7 +145,7 @@ def fetch_data():
                     "longitude": longit,
                 }
             )
-    log.info(f"Total Locations: {len(page_list)}")
+
     for pl in page_list:
         location_name = pl["location_name"]
         street_address = pl["street_address"]
@@ -133,9 +158,11 @@ def fetch_data():
         page_url = pl["page_url"]
         lat = pl["latitude"]
         longit = pl["longitude"]
-
-        log.info(page_url)
-        page = getPage(page_url)
+        log.info(f"Fetching data from: {page_url}")
+        session = SgRequests()
+        session.proxies = set_proxies()
+        page = session.get(page_url, headers=headers)
+        session.close()
         assert page.status_code == 200
         soup = BeautifulSoup(page.content, "html.parser")
         hours = (
@@ -166,11 +193,15 @@ def fetch_data():
             hours,
             page_url,
         ]
+    log.info(f"Total Locations: {len(page_list)}")
 
 
 def scrape():
+    log.info("Started")
     data = fetch_data()
     write_output(data)
+    log.info("Finished grabbing locations")
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()

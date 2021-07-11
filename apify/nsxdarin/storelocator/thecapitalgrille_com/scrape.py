@@ -74,12 +74,12 @@ def fetch_location(loc, retry_count=0):
     try:
         with SgChrome(is_headless=True) as driver:
             driver.get(loc)
-            sleep(randint(5, 7))
+            sleep(randint(10, 15))
 
             text = driver.page_source
 
             if re.search("access denied", re.escape(text), re.IGNORECASE):
-                if retry_count > 3:
+                if retry_count > 5:
                     raise Exception()
 
                 return fetch_location(loc, retry_count + 1)
@@ -139,6 +139,8 @@ def fetch_location(loc, retry_count=0):
                 lat = "33.63713300"
                 lng = "-111.92410500"
                 hours = "Mon-Thu: 11:00AM - 9:00PM; Fri: 11:00AM - 10:00PM; Sat: 5:00PM - 10:00PM; Sun: 5:00PM - 9:00PM"
+            if "austin/austin/8053" in loc:
+                hours = "Mon-Thu: 11:00AM - 9:00PM; Fri: 11:00AM - 10:00PM; Sat: 5:00PM - 10:00PM; Sun: 5:00PM - 9:00PM"
             if "tn/memphis/memphis/8051" in loc:
                 hours = "Mon-Thu: 11:30AM - 9:00PM; Fri: 11:30AM - 10:00PM; Sat: 5:00PM - 10:00PM; Sun: 4:00PM - 9:00PM"
             if "/jacksonville/jacksonville/8029" in loc:
@@ -153,10 +155,33 @@ def fetch_location(loc, retry_count=0):
                 lat = "33.92653800"
                 lng = "-84.34037200"
                 hours = "Mon-Thu: 11:30AM - 9:00PM; Fri: 11:30AM - 10:00PM; Sat: 5:00PM - 10:00PM; Sun: 4:00PM - 9:00PM"
+            if "chevy-chase/8041" in loc:
+                city = "Chevy Chase"
+                state = "MD"
+                add = "5310 Western Ave"
+                phone = "(301) 718-7812"
+                hours = "Mon-Fri: 11:30AM - 10:00PM; Sat: 12:00PM - 11:00PM; Sun: 4:00PM - 9:00PM"
+            if "va/fairfax/fairfax/8068" in loc:
+                hours = "Mon-Fri: 11:30AM - 10:00PM; Sat: 5:00PM - 11:00PM; Sun: 5:00PM - 9:00PM"
+            if "yndhurst/lyndhurst/8060" in loc:
+                hours = "Mon-Thu: 11:30AM - 9:00PM; Fri: 11:30AM - 10:00PM; Sat: 4:00PM - 10:00PM; Sun: 4:00PM - 9:00PM"
+            if "charlotte/charlotte/8011" in loc:
+                name = "Charlotte"
+                phone = "(704) 348-1400"
+                zc = "28202"
+                add = "201 N. Tryon Street"
+                city = "Charlotte"
+                state = "NC"
+            if "-the-galleria/8007" in loc:
+                state = "TX"
+                city = "Houston"
+                zc = "77056"
+                phone = "(713) 623-4600"
+                name = "Houston - The Galleria"
+                add = "5365 Westheimer Rd"
             if "mc/cuauhtemo" not in loc and "/nl/san-pedro" not in loc:
                 if CS:
                     name = name + " - Coming Soon"
-
                 return [
                     website,
                     loc,
