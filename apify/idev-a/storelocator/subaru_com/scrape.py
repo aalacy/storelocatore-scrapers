@@ -3,6 +3,17 @@ from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
 from bs4 import BeautifulSoup as bs
+import ssl
+
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
+
 
 logger = SgLogSetup().get_logger("subaru")
 
@@ -13,7 +24,7 @@ _headers = {
 
 def fetch_data():
     locator_domain = "https://www.subaru.com/"
-    base_url = "https://www.subaru.com/services/dealers/distances/by/bounded-location?latitude=90&longitude=-90&neLatitude=90&neLongitude=-90&swLatitude=33.977430203277436&swLongitude=-122.17336933998703&count=-1"
+    base_url = "https://www.subaru.com/services/dealers/distances/by/bounded-location?latitude=39.857117&longitude=-98.56977&neLatitude=84.92891450547761&neLongitude=180&swLatitude=-20.626499923373608&swLongitude=-180&count=-1"
     with SgRequests() as session:
         locations = session.get(base_url, headers=_headers).json()
         for loc in locations:

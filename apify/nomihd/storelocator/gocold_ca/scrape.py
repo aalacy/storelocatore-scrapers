@@ -67,7 +67,7 @@ def fetch_data():
         state = city_state_zip.split(",")[-1].strip().split(" ", 1)[0].strip()
         zip = city_state_zip.split(",")[-1].strip().split(" ", 1)[-1].strip()
 
-        country_code = "US"
+        country_code = "CA"
 
         store_number = "<MISSING>"
 

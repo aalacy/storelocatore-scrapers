@@ -68,6 +68,8 @@ def fetch_data():
                     postal = p
                     break
 
+        postal = postal.replace("Hubei", "<MISSING>").replace(" Lisboa", "")
+
         try:
             store_number = j["path"][0]["pid"]
         except:
