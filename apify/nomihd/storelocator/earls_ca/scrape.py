@@ -5,6 +5,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import lxml.html
 import json
+import us
 
 website = "earls.ca"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -79,7 +80,10 @@ def fetch_data():
         state = store["address2"].split(",")[1].strip()
         zip = "<MISSING>"
 
-        country_code = "US"
+        country_code = "CA"
+        if us.states.lookup(state):
+            country_code = "US"
+
         store_number = store["id"]
 
         phone = store["phone"]

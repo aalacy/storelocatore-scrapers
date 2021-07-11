@@ -10,8 +10,6 @@ from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 
 log = sglog.SgLogSetup().get_logger(logger_name="bmwusa_com")
 
-session = SgRequests()
-
 
 def write_output(data):
     with open("data.csv", mode="w") as output_file:
@@ -48,6 +46,8 @@ def fetch_data():
     user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
     headers = {"User-Agent": user_agent}
 
+    session = SgRequests()
+
     found_poi = []
     max_distance = 1000
 
@@ -57,6 +57,10 @@ def fetch_data():
     )
 
     for zip_code in search:
+        if len(str(zip_code)) == 4:
+            zip_code = "0" + str(zip_code)
+        if len(str(zip_code)) == 3:
+            zip_code = "00" + str(zip_code)
         log.info(
             "Searching: %s | Items remaining: %s" % (zip_code, search.items_remaining())
         )
@@ -67,7 +71,12 @@ def fetch_data():
             + "/"
             + str(max_distance)
         )
-        r = session.get(base_url, headers=headers)
+        try:
+            r = session.get(base_url, headers=headers)
+        except:
+            session = SgRequests()
+            r = session.get(base_url, headers=headers)
+
         json_data = r.json()["Dealers"]
         for store_data in json_data:
             store = []
@@ -92,9 +101,13 @@ def fetch_data():
             store.append(loc_type)
             latitude = store_data["DefaultService"]["LonLat"]["Lat"]
             longitude = store_data["DefaultService"]["LonLat"]["Lon"]
+            if len(str(latitude)) < 4:
+                latitude = "<MISSING>"
+                longitude = "<MISSING>"
+            else:
+                search.found_location_at(latitude, longitude)
             store.append(latitude)
             store.append(longitude)
-            search.found_location_at(latitude, longitude)
             hours = " ".join(
                 list(
                     BeautifulSoup(

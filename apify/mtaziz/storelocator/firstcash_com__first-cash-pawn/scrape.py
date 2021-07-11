@@ -164,9 +164,13 @@ def fetch_data():
                 zipp = "<MISSING>"
             store.append(zipp if zipp else "<MISSING>")
             store.append("US")
+
+            # Store Number
             store.append(
                 store_data["storeNumber"] if store_data["storeNumber"] else "<MISSING>"
             )
+
+            # Phone
             phone = (
                 "("
                 + store_data["phone"][0:3]
@@ -177,10 +181,13 @@ def fetch_data():
             )
             if "() -" in phone:
                 phone = "<MISSING>"
-            store.append(phone if phone else "<MISSING>")
-            store.append(
-                store_data["brand"]
-                .replace("0", "")
+            phone = phone if phone else "<MISSING>"
+            store.append(phone)
+
+            # Location Type
+            location_type = store_data["brand"]
+            location_type = (
+                location_type.replace("0", "")
                 .replace("1", "")
                 .replace("2", "")
                 .replace("3", "")
@@ -191,15 +198,24 @@ def fetch_data():
                 .replace("8", "")
                 .replace("9", "")
                 .strip()
-                if store_data["brand"]
+                if location_type
                 else "<MISSING>"
             )
+            if location_type == "First Cash Pawn #":
+                continue
+            store.append(location_type)
+
+            # Latitude
             store.append(
                 store_data["latitude"] if store_data["latitude"] else "<MISSING>"
             )
+
+            # Longitude
             store.append(
                 store_data["longitude"] if store_data["longitude"] else "<MISSING>"
             )
+
+            # Hours of operation
             try:
                 hours_request = session.get(
                     "http://find.cashamerica.us/api/stores/"
@@ -224,7 +240,11 @@ def fetch_data():
             except:
                 hours = ""
             store.append(hours.strip() if hours != "" else "<MISSING>")
+
+            # Page URL
             store.append(page_url)
+
+            # Sanitize the data
             for i in range(len(store)):
                 if type(store[i]) == str:
                     store[i] = "".join(
@@ -245,4 +265,5 @@ def scrape():
     write_output(data)
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()

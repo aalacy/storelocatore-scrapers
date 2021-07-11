@@ -1,0 +1,2 @@
+--ignore CountryCodeFillRateChecker (not only US and CA in store locator)
+--ignore LatLngDuplicationValidator (Confirmed scrape correctly)
