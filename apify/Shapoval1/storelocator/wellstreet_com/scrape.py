@@ -90,6 +90,8 @@ def fetch_data():
                 .replace("\r\n", " ")
                 .strip()
             )
+            if hours_of_operation.find("Temp Closed") != -1:
+                hours_of_operation = "Temporarily Closed"
 
             session = SgRequests()
             r = session.get(page_url, headers=headers)
@@ -123,6 +125,11 @@ def fetch_data():
                 .strip()
                 or "<MISSING>"
             )
+
+            cms = "".join(tree.xpath("//h1/text()"))
+            if cms.find("Coming Soon") != -1:
+                hours_of_operation = "Coming Soon"
+
             try:
                 ll = (
                     "".join(tree.xpath('//script[contains(text(), "LatLng")]/text()'))
@@ -147,6 +154,8 @@ def fetch_data():
                 )
             location_type = "urgent care"
             state = a.get("state") or "<MISSING>"
+            if state.find(",") != -1:
+                state = state.split(",")[0].strip()
             postal = a.get("postal") or "<MISSING>"
             country_code = "US"
             city = a.get("city") or "<MISSING>"

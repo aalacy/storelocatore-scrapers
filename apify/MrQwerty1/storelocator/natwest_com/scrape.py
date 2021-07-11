@@ -4,7 +4,6 @@ import json
 from concurrent import futures
 from lxml import html
 from sgrequests import SgRequests
-from sgscrape.sgpostal import parse_address, International_Parser
 
 
 def write_output(data):
@@ -70,6 +69,8 @@ def get_urls():
 def get_data(url):
     locator_domain = "https://natwest.com"
     page_url = f"https://locator.natwest.com{url}"
+    if "Mobile" in page_url:
+        return
 
     session = SgRequests()
     r = session.get(page_url)
@@ -78,19 +79,11 @@ def get_data(url):
     location_name = "".join(tree.xpath("//input[@id='branchName']/@value"))
     line = tree.xpath("//div[@class='print']//td[@class='first']/text()")
     line = list(filter(None, [l.strip() for l in line]))
-    line = " ".join(line)
-    adr = parse_address(International_Parser(), line)
 
-    street_address = (
-        f"{adr.street_address_1} {adr.street_address_2 or ''}".replace(
-            "None", ""
-        ).strip()
-        or "<MISSING>"
-    )
-
-    city = adr.city or "<MISSING>"
-    state = adr.state or "<MISSING>"
-    postal = adr.postcode or "<MISSING>"
+    street_address = line[0]
+    city = line[-3]
+    state = line[-2]
+    postal = line[-1]
     country_code = "GB"
     store_number = page_url.split("/")[-1].split("-")[0]
 
@@ -102,16 +95,11 @@ def get_data(url):
         phone = phone.split("(")[0].strip()
 
     text = "".join(tree.xpath("//script[contains(text(), 'locationObject')]/text()"))
-    try:
-        text = text.split("locationObject =")[1].split(";")[0].strip()
-        js = json.loads(text)
-        latitude = js.get("LAT") or "<MISSING>"
-        longitude = js.get("LNG") or "<MISSING>"
-        location_type = js.get("TYPE") or "<MISSING>"
-    except IndexError:
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
-        location_type = "<MISSING>"
+    text = text.split("locationObject =")[1].split(";")[0].strip()
+    js = json.loads(text)
+    latitude = js.get("LAT") or "<MISSING>"
+    longitude = js.get("LNG") or "<MISSING>"
+    location_type = js.get("TYPE") or "<MISSING>"
 
     _tmp = []
     tr = tree.xpath("//tr[@class='time']")
