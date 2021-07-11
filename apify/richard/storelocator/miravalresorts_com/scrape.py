@@ -22,6 +22,7 @@ MISSING = "<MISSING>"
 
 def fetch_data():
     with SgChrome() as driver:
+    with SgChrome(executable_path="C:/webdrivers/chromedriver.exe") as driver:
         driver.get("https://www.miravalresorts.com/resorts/")
         soup = BeautifulSoup(driver.page_source, "html.parser")
         loclist = soup.findAll("article")
@@ -30,6 +31,7 @@ def fetch_data():
             log.info(page_url)
             driver.get(page_url)
             soup = BeautifulSoup(driver.page_source, "html.parser")
+            hours_of_operation = soup.find("p", {"class": "planning-time"}).text
             temp_list = (
                 soup.findAll("div", {"class": "footer--column"})[3]
                 .get_text(separator="|", strip=True)
@@ -58,7 +60,7 @@ def fetch_data():
                 location_type=MISSING,
                 latitude=MISSING,
                 longitude=MISSING,
-                hours_of_operation=MISSING,
+                hours_of_operation=hours_of_operation,
             )
 
 
