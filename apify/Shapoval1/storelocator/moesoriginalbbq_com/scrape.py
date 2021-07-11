@@ -1,5 +1,6 @@
 import csv
 import usaddress
+import json
 from lxml import html
 from sgrequests import SgRequests
 from concurrent import futures
@@ -46,12 +47,6 @@ def get_data(url):
     page_url = "".join(url)
     if page_url.find("st-george") != -1:
         page_url = "https://www.moesoriginalbbq.com/st-george"
-    if page_url.find("http://www.moesbbqtahoe.com/") != -1:
-        return
-    if page_url.find("https://moesbbqcharlotte.com/") != -1:
-        return
-    if page_url.find("https://www.moesdenver.com") != -1:
-        return
     if page_url.find("https://www.moesoriginalbbq.com/mexico-city") != -1:
         return
     session = SgRequests()
@@ -107,7 +102,7 @@ def get_data(url):
     if page_url.find("http://www.moesoriginalbbq.com/lo/steamboat") != -1:
         ad = " ".join(
             tree.xpath(
-                '//div[./div[@class="col sqs-col-3 span-3"]]/following-sibling::div[1]//h2/a/text()'
+                '//div[./div[@class="col sqs-col-3 span-3"]]/following-sibling::div[1]//h3/a/text()'
             )
         )
     if page_url.find("http://www.moesoriginalbbq.com/lo/tuscaloosa/") != -1:
@@ -143,7 +138,7 @@ def get_data(url):
     if page_url.find("http://www.moesoriginalbbq.com/lo/atlanta/") != -1:
         ad = " ".join(
             tree.xpath(
-                '//div[./div[@class="col sqs-col-3 span-3"]]/following-sibling::div[1]//h2/a/strong/em/text()'
+                '//div[./div[@class="col sqs-col-3 span-3"]]/following-sibling::div[1]//h3/a/strong/em/text()'
             )
         )
     if page_url.find("http://www.moesoriginalbbq.com/destin") != -1:
@@ -202,12 +197,16 @@ def get_data(url):
     country_code = "US"
     store_number = "<MISSING>"
 
-    location_name = " ".join(
-        tree.xpath(
-            '//div[./div[@class="col sqs-col-3 span-3"]]/following-sibling::div[1]//h1/text() | //div[./div[@class="col sqs-col-4 span-4"]]/following-sibling::div[1]//h1/text()'
+    location_name = (
+        " ".join(
+            tree.xpath(
+                '//div[./div[@class="col sqs-col-3 span-3"]]/following-sibling::div[1]//h1/text() | //div[./div[@class="col sqs-col-4 span-4"]]/following-sibling::div[1]//h1/text()'
+            )
         )
+        or "<MISSING>"
     )
-
+    if location_name == "<MISSING>":
+        location_name = "".join(tree.xpath("//h1/text()")).strip()
     if page_url.find("http://www.moesoriginalbbq.com/lo/newark/") != -1:
         location_name = " ".join(
             tree.xpath(
@@ -237,7 +236,16 @@ def get_data(url):
         phone = phone.split("Phone:")[1].strip()
     if phone.find("-RIBS") != -1:
         phone = "<MISSING>"
-
+    if page_url.find("http://www.moesoriginalbbq.com/lo/steamboat") != -1:
+        phone = (
+            "".join(
+                tree.xpath(
+                    '//div[./div[@class="col sqs-col-3 span-3"]]/following-sibling::div[1]//h3[contains(text(), "Phone")]/text()'
+                )
+            )
+            .replace("Phone:", "")
+            .strip()
+        )
     ll = (
         "".join(
             tree.xpath(
@@ -429,6 +437,154 @@ def get_data(url):
         .strip()
     )
 
+    if page_url == "https://moesbbqcharlotte.com/":
+        location_name = "".join(
+            tree.xpath('//div[@class="col sqs-col-5 span-5"]/div/div/h1/text()')
+        )
+        hours_of_operation = (
+            " ".join(
+                tree.xpath(
+                    '//div[@class="col sqs-col-5 span-5"]/div/div/h3[contains(text(), "HOURS")]/following-sibling::p[1]//text()'
+                )
+            )
+            .replace("\n", "")
+            .strip()
+        )
+        ad = "".join(
+            tree.xpath(
+                '//div[@class="col sqs-col-5 span-5"]/div/div/h3[contains(text(), "LOCATION")]/following-sibling::p[1]/text()'
+            )
+        ).strip()
+        a = usaddress.tag(ad, tag_mapping=tag)[0]
+        street_address = f"{a.get('address1')} {a.get('address2')}".replace(
+            "None", ""
+        ).strip()
+        city = a.get("city")
+        state = a.get("state")
+        postal = a.get("postal")
+        country_code = "US"
+        phone = (
+            "".join(
+                tree.xpath(
+                    '//div[@class="col sqs-col-5 span-5"]/div/div/h3[contains(text(), "PHONE")]/following-sibling::p[1]/text()[1]'
+                )
+            )
+            .replace("Matthews", "")
+            .strip()
+        )
+        ll = "".join(
+            tree.xpath(
+                '//div[@class="sqs-block map-block sqs-block-map sized vsize-12"]/@data-block-json'
+            )
+        )
+        js = json.loads(ll)
+        latitude = js.get("location").get("mapLat")
+        longitude = js.get("location").get("mapLng")
+    if page_url == "https://www.moesdenver.com":
+        location_name = "".join(tree.xpath('//div[@class="top-info"]/h3/text()'))
+        street_address = "".join(
+            tree.xpath('//div[@class="top-info"]/h3/following-sibling::p[1]/text()[1]')
+        )
+        phone = (
+            "".join(
+                tree.xpath(
+                    '//div[@class="top-info"]/h3/following-sibling::p[1]/text()[2]'
+                )
+            )
+            .replace("\n", "")
+            .strip()
+        )
+        hours_of_operation = "".join(
+            tree.xpath('//p[contains(text(), "every day")]/text()')
+        )
+        city = "<MISSING>"
+        state = "<MISSING>"
+        postal = "<MISSING>"
+        country_code = "US"
+        latitude = "<MISSING>"
+        longitude = "<MISSING>"
+    if page_url.find("http://www.moesbbqtahoe.com/") != -1:
+        location_name = "".join(tree.xpath('//span[@style="font-weight:bold"]//text()'))
+        street_address = "700 N Lake Blvd"
+        city = "Tahoe City"
+        state = "CA"
+        postal = "96145"
+        country_code = "US"
+        hours_of_operation = (
+            "".join(tree.xpath('//div[@id="comp-kl6yd3tj"]/p[2]//text()'))
+            + " "
+            + "".join(tree.xpath('//div[@id="comp-kl6yd3tj"]/p[3]//text()'))
+        )
+        phone = "530-807-1023"
+    if page_url.find("http://www.moesoriginalbbq.com/lo/vail/") != -1:
+        slug = "".join(tree.xpath('//h2[contains(text(), "will be")]/text()[1]'))
+        if slug:
+            hours_of_operation = "Coming Soon"
+    if page_url.find("http://www.moesoriginalbbq.com/lo/steamboat") != -1:
+        hours_of_operation = "".join(
+            tree.xpath('//h3[contains(text(), "Daily")]/text()[1]')
+        )
+    if location_name.find("Hours") != -1:
+        location_name = location_name.split("Hours")[0].strip()
+    street_address = street_address or "<MISSING>"
+    if street_address == "<MISSING>" and location_name == "decatur":
+        ad = "".join(tree.xpath("//h2/a/text()"))
+        street_address = ad.split(",")[0].strip()
+        city = ad.split(",")[1].strip()
+        state = ad.split(",")[2].split()[0].strip()
+        postal = ad.split(",")[2].split()[1].strip()
+    if street_address == "<MISSING>" and location_name == "Leadville":
+        street_address = (
+            "".join(tree.xpath('//a[contains(@href, "google")]//text()[1]'))
+            .replace("\n", "")
+            .strip()
+        )
+        ad = (
+            "".join(tree.xpath('//a[contains(@href, "google")]//text()[2]'))
+            .replace("\n", "")
+            .strip()
+        )
+        city = ad.split(",")[0].strip()
+        state = ad.split(",")[1].split()[0].strip()
+        postal = ad.split(",")[1].split()[1].strip()
+
+    phone = phone or "<MISSING>"
+    hours_of_operation = hours_of_operation or "<MISSING>"
+    cms = "".join(tree.xpath('//strong[text()="Coming Soon!"]//text()'))
+    if cms:
+        hours_of_operation = "Coming Soon"
+    if hours_of_operation == "<MISSING>" and location_name == "Priceville":
+        hours_of_operation = (
+            " ".join(tree.xpath("//h2/text()"))
+            .replace("\n", "")
+            .replace("Re-opening Wednesday May 5th!!", "")
+            .strip()
+        )
+    if hours_of_operation == "<MISSING>" and location_name == "Asheville":
+        hours_of_operation = (
+            " ".join(tree.xpath("//h2/text()")).replace("\n", "").strip()
+        )
+    if hours_of_operation == "<MISSING>" and location_name == "steamboat Springs":
+        hours_of_operation = (
+            " ".join(
+                tree.xpath(
+                    '//h1[text()="steamboat Springs"]/following-sibling::h3[1]/text()[1]'
+                )
+            )
+            .replace("\n", "")
+            .strip()
+        )
+    if hours_of_operation == "<MISSING>" and location_name == "Tuscaloosa":
+        hours_of_operation = (
+            " ".join(tree.xpath("//div/h2[1]/text()")).replace("\n", "").strip()
+        )
+    if hours_of_operation == "<MISSING>" and location_name == "Boulder":
+        hours_of_operation = (
+            " ".join(tree.xpath('//h1[text()="Boulder"]/following-sibling::h2//text()'))
+            .replace("\n", "")
+            .strip()
+        )
+    hours_of_operation = hours_of_operation.replace("HOURS:", "").strip()
     row = [
         locator_domain,
         page_url,

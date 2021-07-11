@@ -59,10 +59,10 @@ def write_output(data):
 
 def fetch_data():
     data = []
-    url = "https://www.zoomcare.com/schedule"
+    url = "https://www.zoomcare.com/locations"
     stores_req = session.get(url, headers=headers)
     soup = BeautifulSoup(stores_req.text, "html.parser")
-    loc_link = soup.findAll("a", {"class": "modal__location-link w-inline-block"})
+    loc_link = soup.findAll("a", {"class": "modal__location-link"})
     for loc in loc_link:
         link = "https://www.zoomcare.com" + loc["href"]
         req = session.get(link, headers=headers)
@@ -107,19 +107,15 @@ def fetch_data():
 
             if city.find("null") != -1:
                 city = city.lstrip("null").strip()
-
             if link == "https://www.zoomcare.com/clinic/zoomcare-downtown-portland":
                 street = "900 SW 5th Ave (enter on 4th) null"
                 city = "Portland"
                 state = "OR"
-
             if street.find("null") != -1:
                 street = street.replace("null", "")
-
             if link == "https://www.zoomcare.com/clinic/zoomcare-bellevue":
                 street = "10425 NE 8th St #4 Lincoln Square"
                 city = "Bellevue"
-
             street = street.strip()
             city = city.strip()
             state = state.strip()

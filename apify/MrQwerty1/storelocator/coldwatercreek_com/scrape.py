@@ -62,6 +62,10 @@ def fetch_data():
         hours_of_operation = (
             ";".join(tree.xpath("//text()")).replace(".", "").strip() or "<MISSING>"
         )
+        if hours_of_operation.endswith(";"):
+            hours_of_operation = hours_of_operation.replace(
+                "CLOSED FOR RENOVATION", "TEMPORARILY CLOSED"
+            )[:-1]
 
         row = [
             locator_domain,

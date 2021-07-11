@@ -82,7 +82,7 @@ def fetch_data():
         country_code = "US"
         store_number = "<MISSING>"
 
-        text = "".join(d.xpath(".//strong/a/@href"))
+        text = "".join(d.xpath("./strong/a/@href"))
         latitude, longitude = get_coords_from_google_url(text)
         location_type = "<MISSING>"
 

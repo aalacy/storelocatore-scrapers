@@ -11,21 +11,31 @@ _headers = {
 
 def fetch_data():
     locator_domain = "https://giorgio.ca/"
-    base_url = "https://giorgio.ca/restaurants/"
+    base_url = "https://giorgio.ca/en/restaurants/"
     with SgRequests() as session:
         soup = bs(session.get(base_url, headers=_headers).text, "lxml")
         locations = soup.select(
             "section.elementor-section.elementor-section-content-middle"
         )
         for _ in locations:
-            location_name = _.select("h2.elementor-heading-title")[1].text
+            location_name = _.select_one("h2.elementor-heading-title").text
             block = list(_.select_one("div.elementor-text-editor p").stripped_strings)
             phone = _.find("a", href=re.compile(r"tel:")).text
-            hours = list(
-                _.select("div.elementor-text-editor")[-1]
-                .select_one("p")
-                .stripped_strings
-            )[1:]
+            hours = []
+            if _.find("div", string=re.compile(r"DINING ROOM", re.IGNORECASE)):
+                for hh in _.find(
+                    "div", string=re.compile(r"DINING ROOM")
+                ).find_next_siblings("div"):
+                    if "TERRACE" in hh.text.strip() or not hh.text.strip():
+                        break
+                    hours.append("; ".join(hh.stripped_strings))
+
+            coord = (
+                _.find("a", href=re.compile(r"maps/"))["href"]
+                .split("/@")[1]
+                .split("z/data")[0]
+                .split(",")
+            )
             yield SgRecord(
                 page_url=base_url,
                 location_name=location_name,
@@ -35,6 +45,8 @@ def fetch_data():
                 zip_postal=" ".join(block[1].split(",")[1].strip().split(" ")[1:]),
                 country_code="CA",
                 phone=phone,
+                latitude=coord[0],
+                longitude=coord[1],
                 locator_domain=locator_domain,
                 hours_of_operation="; ".join(hours),
             )

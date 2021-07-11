@@ -36,7 +36,7 @@ def write_output(data):
 
 def fetch_data():
     # Your scraper here
-    session = SgRequests().requests_retry_session(retries=0, backoff_factor=0.3)
+    session = SgRequests().requests_retry_session(retries=9, backoff_factor=0.6)
 
     items = []
     scraped_items = []
@@ -52,14 +52,14 @@ def fetch_data():
         "timeout": "10000",
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.192 Safari/537.36",
     }
-    body = '{"offset":0,"count":24,"include":["offices"],"filters":{"officeStatus":"OPEN","officeClass":"OFFICE","countryCode":"USA"},"sorts":[],"custom":{"filters":{}},"options":{}}'
+    body = '{"offset":0,"count":24,"include":["offices"],"filters":{"officeStatus":"OPEN","officeClass":"OFFICE","countryCode":"USA","officeGeoLocation.geoPoint":{"boundingBox":{"top_left":{"lat":57.28952570425056,"lon":-162.8558901924884},"bottom_right":{"lat":22.401028627615535,"lon":-36.29339019248841}}}},"sorts":[{"officeGeoLocation.geoPoint":{"geo":{"lat":40.70668199998021,"lon":-73.97795499996471}}}],"custom":{"filters":{}},"options":{}}'
     response = session.post(start_url, data=body, headers=headers)
     data = json.loads(response.text)
     all_locations = data["data"]["offices"]["results"]
 
     for i in range(24, data["data"]["offices"]["total"] + 24, 24):
         body = (
-            '{"offset":%s,"count":24,"include":["offices"],"filters":{"officeStatus":"OPEN","officeClass":"OFFICE","countryCode":"USA"},"sorts":[],"custom":{"filters":{}},"options":{}}'
+            '{"offset":%s,"count":24,"include":["offices"],"filters":{"officeStatus":"OPEN","officeClass":"OFFICE","countryCode":"USA","officeGeoLocation.geoPoint":{"boundingBox":{"top_left":{"lat":57.28952570425056,"lon":-162.8558901924884},"bottom_right":{"lat":22.401028627615535,"lon":-36.29339019248841}}}},"sorts":[{"officeGeoLocation.geoPoint":{"geo":{"lat":40.70668199998021,"lon":-73.97795499996471}}}],"custom":{"filters":{}},"options":{}}'
             % i
         )
         response = session.post(start_url, data=body, headers=headers)
@@ -74,13 +74,18 @@ def fetch_data():
         state = poi["state"]
         store_url = "https://www.remax.com/real-estate-offices/remax-{}-{}-{}/{}"
         store_url = store_url.format(
-            location_name.replace("RE/MAX ", "").replace(" ", "-"),
+            location_name.replace("RE/MAX ", "")
+            .replace(",", "")
+            .replace("&", "")
+            .replace(" ", "-"),
             city.replace(" ", "-"),
             state,
             store_number,
         )
         location_name = location_name if location_name else "<MISSING>"
         street_address = poi["address1"]
+        if poi.get("address2"):
+            street_address += " " + poi["address2"]
         zip_code = poi["postalCode"]
         country_code = poi["countryCode"]
         phone = poi["phones"]
@@ -111,9 +116,8 @@ def fetch_data():
             longitude,
             hours_of_operation,
         ]
-        check = f"{location_name} {street_address}"
-        if check not in scraped_items:
-            scraped_items.append(check)
+        if store_number not in scraped_items:
+            scraped_items.append(store_number)
             items.append(item)
 
     return items

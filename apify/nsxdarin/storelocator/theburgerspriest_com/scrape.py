@@ -94,6 +94,47 @@ def fetch_data():
                 lng,
                 hours,
             ]
+    hours = "<MISSING>"
+    city = "Oakville"
+    state = "ON"
+    add = "487 Cornwall Rd"
+    phone = "(905) 338-5527"
+    yield [
+        website,
+        loc,
+        name,
+        add,
+        city,
+        state,
+        zc,
+        country,
+        store,
+        phone,
+        typ,
+        lat,
+        lng,
+        hours,
+    ]
+    city = "Ottawa"
+    add = "1677 Bank St"
+    state = "ON"
+    phone = "(613) 260-7828"
+    yield [
+        website,
+        loc,
+        name,
+        add,
+        city,
+        state,
+        zc,
+        country,
+        store,
+        phone,
+        typ,
+        lat,
+        lng,
+        hours,
+    ]
 
 
 def scrape():

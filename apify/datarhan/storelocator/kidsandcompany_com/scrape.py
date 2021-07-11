@@ -65,7 +65,7 @@ def fetch_data():
         location_name = location_name if location_name else "<MISSING>"
         street_address = raw_data[1]
         street_address = street_address if street_address else "<MISSING>"
-        city = raw_data[2].split(", ")[0]
+        city = raw_data[2].split(", ")[0].split(" Hill - Corporate")[0]
         state = raw_data[2].split(", ")[1]
         zip_code = raw_data[2].split(", ")[-1]
         country_code = "CA"

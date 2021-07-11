@@ -69,6 +69,8 @@ def get_data(url):
         ).strip()
         or "<MISSING>"
     )
+    if street_address == "<MISSING>":
+        street_address = location_name
 
     city = adr.city or "<MISSING>"
     state = adr.state or "<MISSING>"

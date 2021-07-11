@@ -88,7 +88,16 @@ def fetch_data():
     r = session.get(page_url, headers=headers)
     tree = html.fromstring(r.text)
     text = "".join(tree.xpath("//div[@data-options]/@data-options"))
-    js = json.loads(text)["adresses"]
+    js = json.loads(text)
+    exc = {
+        "title": js.get("title"),
+        "lat": js.get("lat"),
+        "lng": js.get("lng"),
+        "popup": js.get("text"),
+    }
+
+    js = js["adresses"]
+    js.append(exc)
 
     for j in js:
         location_name = j.get("title") or "Body Renew"

@@ -46,15 +46,15 @@ def fetch_data():
     logger.info("Pulling Stores")
     for line in r.iter_lines():
         line = str(line.decode("utf-8"))
-        if '{"name": "' in line:
-            items = line.split('{"name": "')
+        if '{"id": ' in line:
+            items = line.split('{"id": ')
             for item in items:
-                if '"slug": "' in item:
+                if '"url": "' in item:
                     loc = (
                         "https://www.pizzamyheart.com"
                         + item.split('"url": "')[1].split('"')[0]
                     )
-                    name = item.split('"')[0]
+                    name = item.split('"name": "')[1].split('"')[0]
                     hours = item.split('"hours": "\\u003cp\\u003e')[1].split(
                         "\\u003c/p\\u003e\\u003cp\\u003e\\u003ca class"
                     )[0]

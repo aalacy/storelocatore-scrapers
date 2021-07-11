@@ -69,6 +69,13 @@ def fetch_data():
         )
 
         hours_of_operation = "; ".join(hours_of_operation.split("\n")).strip()
+        if "; Accessible" in hours_of_operation:
+            hours_of_operation = hours_of_operation.split("; Accessible")[0].strip()
+        elif "; <br />Accessible" in hours_of_operation:
+            hours_of_operation = hours_of_operation.split("; <br />Accessible")[
+                0
+            ].strip()
+
         latitude = "".join(restaurant.xpath("./@data-restaurant-lat")).strip()
         longitude = "".join(restaurant.xpath("./@data-restaurant-lat")).strip()
 

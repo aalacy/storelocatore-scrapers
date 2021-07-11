@@ -72,7 +72,17 @@ def fetch_data():
             country_code = "<MISSING>"
             store_number = "<MISSING>"
             phone = store_dom.xpath('//div[@class="phones"]//a/text()')
-            phone = phone[0] if phone else "<MISSING>"
+            if not phone:
+                phone = store_dom.xpath('//a[contains(@href, "tel")]/text()')
+            if not phone:
+                phone = store_dom.xpath(
+                    '//*[strong[contains(text(), "Phone:")]]/text()'
+                )
+            if not phone:
+                phone = store_dom.xpath('//p[contains(text(), "Phone:")]/text()')
+            if not phone:
+                phone = re.findall("first call (.+?) to schedule", store_response.text)
+            phone = phone[0].split(":")[-1].strip() if phone else "<MISSING>"
             latitude = "<MISSING>"
             longitude = "<MISSING>"
             hours_of_operation = "<INACCESSIBLE>"
