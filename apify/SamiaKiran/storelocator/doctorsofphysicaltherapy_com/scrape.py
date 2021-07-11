@@ -39,7 +39,7 @@ def fetch_data():
                 if "coming-soon" in page_url:
                     location_type = "Coming Soon"
                 else:
-                    location_type= MISSING
+                    location_type = MISSING
                 phone = loc["phone"]
                 location_name = loc["store"]
                 hours_of_operation = loc["hours"]
