@@ -65,6 +65,7 @@ def get_data(coord):
         data=data,
     )
     js = r.json()["Features"]
+
     for j in js:
         a = j.get("Properties")
         page_url = "https://www.acuonline.org/home/resources/locations"
@@ -74,9 +75,9 @@ def get_data(coord):
         state = a.get("State") or "<MISSING>"
         postal = a.get("Postalcode") or "<MISSING>"
         country_code = a.get("Country") or "US"
-        store_number = "<MISSING>"
         phone = a.get("Phone") or "<MISSING>"
         latitude = a.get("Latitude") or "<MISSING>"
+        store_number = a.get("LocationId") or "<MISSING>"
         longitude = a.get("Longitude") or "<MISSING>"
         location_type = j.get("LocationFeatures").get("LocationType")
         location_name = a.get("LocationName")
@@ -126,17 +127,16 @@ def get_data(coord):
 def fetch_data():
     out = []
     s = set()
-    coords = static_coordinate_list(radius=25, country_code=SearchableCountries.USA)
+    coords = static_coordinate_list(radius=1, country_code=SearchableCountries.USA)
 
     with futures.ThreadPoolExecutor(max_workers=7) as executor:
         future_to_url = {executor.submit(get_data, coord): coord for coord in coords}
         for future in futures.as_completed(future_to_url):
             rows = future.result()
             for row in rows:
-                loc_name = row[2]
-                loc_type = row[10]
-                if loc_name not in s and loc_type not in s:
-                    s.add(loc_name)
+                _id = row[8]
+                if _id not in s:
+                    s.add(_id)
                     out.append(row)
 
     return out
