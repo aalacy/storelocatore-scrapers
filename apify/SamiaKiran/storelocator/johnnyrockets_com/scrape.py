@@ -23,12 +23,12 @@ def fetch_data():
         token_url = "https://locations.johnnyrockets.com/"
         token = session.get(token_url, headers=headers)
         token = BeautifulSoup(token.text, "html.parser")
-        token = token.select_one("script[src*=app]")['src']
-        token = "https://locations.johnnyrockets.com/"+token
+        token = token.select_one("script[src*=app]")["src"]
+        token = "https://locations.johnnyrockets.com/" + token
         log.info(token)
         log.info("Fetching the Token...")
         token = session.get(token, headers=headers)
-        token = token.text.split('API_TOKEN",')[1].split(').')[0].replace('"',"")
+        token = token.text.split('API_TOKEN",')[1].split(").")[0].replace('"', "")
         url = (
             "https://api.momentfeed.com/v1/analytics/api/v2/llp/sitemap?auth_token="
             + token
