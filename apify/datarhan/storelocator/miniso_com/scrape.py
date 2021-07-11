@@ -66,8 +66,6 @@ def fetch_data():
         all_locations = session.post(url, data=frm).json()
 
         for poi in all_locations:
-            print(len(poi["LinkAddr"].split(",")), poi["LinkAddr"])
-
             store_url = start_url
             location_name = poi["StoreName"]
             location_name = location_name if location_name else "<MISSING>"
