@@ -45,7 +45,7 @@ def fetch_data():
     DOMAIN = "oldtimepottery.com"
     start_url = "https://storemapper-herokuapp-com.global.ssl.fastly.net/api/users/6818/stores.js?callback=SMcallback2"
     response = session.get(start_url)
-    data = re.findall("back2\((.+)\)", response.text)[0]
+    data = re.findall(r"back2\((.+)\)", response.text)[0]
     data = json.loads(data)
 
     for poi in data["stores"]:
