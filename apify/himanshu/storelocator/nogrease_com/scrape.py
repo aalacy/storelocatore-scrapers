@@ -72,6 +72,8 @@ def fetch_data():
                     zip_postal = zip_postal + " " + temp[0]
                 i += 1
             country_code = "US"
+            if "(980" in street_address:
+                street_address = street_address.split("(")[0]
             yield SgRecord(
                 locator_domain=DOMAIN,
                 page_url=url,
