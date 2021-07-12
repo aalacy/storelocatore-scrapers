@@ -68,7 +68,6 @@ def fetch_data():
             line = str(line.decode("utf-8"))
             if '{"_id":"restaurant_' in line:
                 items = line.split('{"_id":"restaurant_')
-                print(len(items))
                 for item in items:
                     if '{"ms":' not in item:
                         loc = "<MISSING>"
