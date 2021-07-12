@@ -97,6 +97,7 @@ def fetch_data():
                     locator_domain=locator_domain,
                     latitude=ss["position"]["lat"],
                     longitude=ss["position"]["lng"],
+                    location_type=location_type,
                     hours_of_operation="; ".join(hours).replace("–", "-"),
                     raw_address=ss["info"]["address"],
                 )
