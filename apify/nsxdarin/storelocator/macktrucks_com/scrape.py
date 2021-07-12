@@ -42,7 +42,7 @@ def fetch_data():
     website = "macktrucks.com"
     for line in r.iter_lines(decode_unicode=True):
         if '"IDENTIFIER_VALUE":"' in line:
-            items = line.split(',"SELECT_EMAIL_ADDRESS":""},"')
+            items = line.split("IDENTIFIER_VALUE")
             for item in items:
                 if '"COMPANY_DBA_NAME":"' in item:
                     loc = "<MISSING>"
