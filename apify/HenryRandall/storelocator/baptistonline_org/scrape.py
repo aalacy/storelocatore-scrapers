@@ -17,7 +17,7 @@ def find_details(link, location_type, session):
     elif not page_url.startswith("http"):
         page_url = locator_domain + link.a["href"]
     addr = list(link.select_one("p.location-address").stripped_strings)
-    phone = ""
+    phone = "<MISSING>"
     if link.select_one(".location-phone"):
         phone = link.select_one(".location-phone").text.strip()
     location_name = link.select_one(".location-name").text.strip()
@@ -28,6 +28,10 @@ def find_details(link, location_type, session):
     country_code = "US"
     latitude = link.select_one('input[name="location-lat"]').get("value")
     longitude = link.select_one('input[name="location-lng"]').get("value")
+    if latitude is None:
+        latitude = "<MISSING>"
+    if longitude is None:
+        longitude = "<MISSING>"
     location_data = [
         locator_domain,
         page_url,
@@ -50,7 +54,7 @@ def find_details(link, location_type, session):
 def fetch_data():
     data = []
     with SgRequests() as session:
-        soup = bs(session.get(base_url, headers=headers).text, "lxml")
+        soup = bs(session.get(base_url, headers=headers).text, "html.parser")
         links = soup.select("div#hospitals ul li")
         location_type = "hospital"
         for link in links:

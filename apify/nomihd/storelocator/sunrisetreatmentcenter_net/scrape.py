@@ -61,7 +61,10 @@ def fetch_data():
         )
 
         store_json = json.loads(store_json_text)["location"]
-        location_name = store_json["addressTitle"]
+        location_name = "".join(
+            store_sel.xpath('//div[@class="sqs-block-content"]/h1/text()')
+        ).strip()
+
         street_address = store_json["addressLine1"]
         city = store_json["addressLine2"].strip().split(",")[0].strip()
         state_zip = store_json["addressLine2"].strip().split(",", 1)[-1].strip()
