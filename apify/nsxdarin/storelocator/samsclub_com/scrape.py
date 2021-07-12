@@ -69,7 +69,6 @@ def fetch_data():
         for line2 in r2.iter_lines():
             line2 = str(line2.decode("utf-8"))
             if '"postalCode":"' in line2:
-                Fuel = True
                 name = line2.split('"name":"')[1].split('"')[0]
                 zc = line2.split('"postalCode":"')[1].split('"')[0]
                 try:
