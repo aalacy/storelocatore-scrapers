@@ -49,7 +49,6 @@ def fetch_data():
             locs.append(lurl)
     for loc in locs:
         time.sleep(5)
-        Fuel = False
         logger.info("Pulling Location %s..." % loc)
         website = "samsclub.com"
         typ = "Gas"
