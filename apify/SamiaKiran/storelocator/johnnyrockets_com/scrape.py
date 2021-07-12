@@ -86,6 +86,7 @@ def fetch_data():
                 )
                 .replace(",", "-")
                 .replace("00", ":00")
+                .replace(";", " ")
             )
             yield SgRecord(
                 locator_domain=DOMAIN,
