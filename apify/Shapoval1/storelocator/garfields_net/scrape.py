@@ -107,7 +107,6 @@ def fetch_data():
         text = "".join(tree.xpath('//a[contains(@href, "maps")]/@href'))
         if "Selinsgrove" in location_name:
             text = "".join(tree.xpath('//a[./span[text()="Directions"]]/@href'))
-        print(text)
         try:
             if text.find("ll=") != -1:
                 latitude = text.split("ll=")[1].split(",")[0]
