@@ -9,7 +9,8 @@ _headers = {
 }
 
 locator_domain = "http://valuedrugmart.com"
-base_url = "http://valuedrugmart.com/wp-admin/admin-ajax.php?action=store_search&lat=53.933271&lng=-116.576503&max_results=50&search_radius=100&autoload=1"
+base_url = "http://valuedrugmart.com/wp-admin/admin-ajax.php?action=store_search&lat=53.933271&lng=-116.576503&max_results=500&search_radius=100&autoload=1"
+page_url = "http://valuedrugmart.com/store-locator/"
 
 
 def fetch_data():
@@ -24,17 +25,17 @@ def fetch_data():
                 for hh in bs(_["hours"], "lxml").select("table tr")
             ]
             yield SgRecord(
-                page_url=base_url,
+                page_url=page_url,
                 store_number=_["id"],
                 location_name=_["store"].replace("&#8217;", "'"),
                 street_address=street_address,
-                city=_["city"],
+                city=_["city"].replace(",", ""),
                 state=_["state"],
                 zip_postal=_["zip"],
                 latitude=_["lat"],
                 longitude=_["lng"],
                 country_code=_["country"],
-                phone=_["phone"],
+                phone=_["phone"].split(":")[-1],
                 locator_domain=locator_domain,
                 hours_of_operation="; ".join(hours),
             )
