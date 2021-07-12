@@ -29,6 +29,8 @@ def fetch_data():
         locations = session.get(base_url, headers=_headers).json()
         for loc in locations:
             _ = loc["dealer"]
+            if _["siteUrl"] == "https://null":
+                continue
             street_address = _["address"]["street"]
             if _["address"]["street2"]:
                 street_address += " " + _["address"]["street2"]
