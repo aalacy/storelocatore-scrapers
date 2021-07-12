@@ -1,4 +1,5 @@
 import csv
+import time
 import usaddress
 
 from concurrent import futures
@@ -99,7 +100,8 @@ def get_data(url):
     try:
         js = r.json()["results"]
     except:
-        return []
+        time.sleep(5)
+        get_data(url)
 
     for j in js:
         location_name = j.get("faName")

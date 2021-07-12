@@ -5,7 +5,19 @@ from time import sleep
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 from sgrequests import SgRequests
 from sgselenium import SgChrome
+from webdriver_manager.chrome import ChromeDriverManager
 from sglogging import SgLogSetup
+import ssl
+
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
+
 
 logger = SgLogSetup().get_logger("minex_com")
 
@@ -52,23 +64,34 @@ def fetch_data():
 
     all_locations = []
     all_codes = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA], max_radius_miles=200
+        country_codes=[SearchableCountries.USA],
+        max_radius_miles=200,
+        max_search_results=None,
     )
 
-    with SgChrome() as driver:
+    with SgChrome(
+        executable_path=ChromeDriverManager().install(), is_headless=True
+    ) as driver:
         driver.get(start_url)
         sleep(5)
         driver.find_element_by_xpath(
             '//span[contains(text(), "International")]'
         ).click()
+        sleep(5)
+        logger.info("International Clicked")
         driver.find_element_by_xpath(
             '//span[contains(text(), "United States")]'
         ).click()
+        logger.info("United States Clicked")
         for code in all_codes:
             driver.find_element_by_xpath('//input[@name="location"]').send_keys(code)
             sleep(2)
+            logger.info("zipcode - send_keys executed")
             driver.find_element_by_xpath('//button[contains(text(), "Search")]').click()
+            sleep(20)
+            logger.info(" Search Button Clicked")
             driver.find_element_by_xpath('//input[@name="location"]').clear()
+
             code_dom = etree.HTML(driver.page_source)
             all_locations += code_dom.xpath('//div[@class="find-result "]')
 

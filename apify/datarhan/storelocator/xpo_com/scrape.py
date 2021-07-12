@@ -1,6 +1,5 @@
-import re
 import csv
-import yaml
+import json
 from lxml import etree
 
 from sgrequests import SgRequests
@@ -50,13 +49,11 @@ def fetch_data():
 
     response = session.get(start_url, headers=headers)
     dom = etree.HTML(response.text)
-    data = dom.xpath('//script[contains(text(), "globalLocationsArray")]/text()')[0]
-    data = re.findall("globalLocationsArray =(.+);", data)[0]
-    data = yaml.load(data)
 
-    for poi in data:
-        store_url = ""
-        store_url = store_url if store_url else "<MISSING>"
+    all_locations = dom.xpath('//script[@id="globalLocations"]/text()')[0]
+    all_locations = json.loads(all_locations)
+    for poi in all_locations:
+        store_url = start_url
         location_name = poi["office_name"]
         location_name = location_name if location_name else "<MISSING>"
         street_address = poi["street"]

@@ -49,8 +49,8 @@ def get_data(page_url):
     r = session.get(page_url)
     tree = html.fromstring(r.text)
 
-    location_name = "".join(tree.xpath("//h1/text()")).strip()
-    line = tree.xpath("//h2[text()='Contact']/following-sibling::div[1]/p/text()")[1:]
+    location_name = "".join(tree.xpath("//div[@class='storeInfo']/h2/text()")).strip()
+    line = tree.xpath("//div[@class='storeInfo']/p/text()")
     line = list(filter(None, [l.strip() for l in line]))
 
     street_address = line[0]
@@ -63,17 +63,28 @@ def get_data(page_url):
     store_number = "<MISSING>"
     phone = (
         "".join(
-            tree.xpath("//h2[text()='Contact']/following-sibling::div[1]/p/a/text()")
+            tree.xpath("//div[@class='storeInfo']//span[@class='tel']/text()")
         ).strip()
         or "<MISSING>"
     )
-    latitude = "<MISSING>"
-    longitude = "<MISSING>"
-    location_type = "<MISSING>"
-    hours_of_operation = (
-        "".join(tree.xpath("//p[contains(text(), 'Monday')]/text()")).strip()
-        or "<MISSING>"
+
+    text = "".join(
+        tree.xpath("//script[contains(text(), 'google.maps.LatLng')]/text()")
     )
+    latitude = text.split('parseFloat("')[1].split('"')[0]
+    longitude = text.split('parseFloat("')[-1].split('"')[0]
+    location_type = "<MISSING>"
+
+    _tmp = []
+    days = tree.xpath("//div[@class='days']/p/text()")
+    text = "".join(tree.xpath("//script[contains(text(), 'siteHour ?')]/text()"))
+    times = eval(text.split("siteHour ?")[1].split(": [")[0])
+
+    for d, t in zip(days, times):
+        if d.strip():
+            _tmp.append(f"{d.strip()} {t.strip()}")
+
+    hours_of_operation = ";".join(_tmp).replace(": -", ": Closed") or "<MISSING>"
 
     row = [
         locator_domain,
