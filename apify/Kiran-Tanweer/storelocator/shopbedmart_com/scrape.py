@@ -29,7 +29,7 @@ def fetch_data():
             location_name = loc["title"]
             store_number = loc["id"]
             page_url = loc["url"]
-            # log.info(page_url)
+            log.info(page_url)
             phone = loc["phone"]
             hours_of_operation = loc["hours"]
             hours_of_operation = BeautifulSoup(hours_of_operation, "html.parser")
@@ -39,7 +39,6 @@ def fetch_data():
                 .replace("|", " ")
             )
             address = loc["address"]
-            print(address)
             address = address.replace(", USA", "")
             address = address.replace(",", " ")
             address = usaddress.parse(address)
@@ -72,7 +71,7 @@ def fetch_data():
             longitude = loc["longitude"]
             yield SgRecord(
                 locator_domain=DOMAIN,
-                page_url=url,
+                page_url=page_url,
                 location_name=location_name,
                 street_address=street_address.strip(),
                 city=city.strip(),
