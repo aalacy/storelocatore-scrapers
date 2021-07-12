@@ -1,5 +1,4 @@
 import csv
-import time
 from lxml import html
 from sgrequests import SgRequests
 from sgselenium.sgselenium import SgFirefox
@@ -75,7 +74,8 @@ def fetch_data():
         page_url = f"https://www.pizzadepot.ca{sg}"
         with SgFirefox() as driver:
             driver.get(page_url)
-            time.sleep(10)
+            driver.maximize_window()
+            driver.implicitly_wait(20)
             driver.switch_to.frame(0)
             ad = driver.find_element_by_xpath('//div[@class="address"]').text
             ll = driver.find_element_by_xpath(
