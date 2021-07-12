@@ -98,7 +98,7 @@ def fetch_data():
             phone = phone.split("tel:")[1].split("'")[0]
         if add not in locs:
             locs.append(add)
-            phone = phone.replace("Pre Delivery:").strip()
+            phone = phone.replace("Pre Delivery:", "").strip()
             if "," in phone:
                 phone = phone.split(",")[0].strip()
             yield [
@@ -180,7 +180,7 @@ def fetch_data():
                     phone = "<MISSING>"
                 if add not in locs:
                     locs.append(add)
-                    phone = phone.replace("Pre Delivery:").strip()
+                    phone = phone.replace("Pre Delivery:", "").strip()
                     if "," in phone:
                         phone = phone.split(",")[0].strip()
                     yield [
