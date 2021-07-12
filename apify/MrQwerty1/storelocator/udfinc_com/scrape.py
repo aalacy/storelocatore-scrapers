@@ -1,38 +1,18 @@
 import csv
-
-from concurrent import futures
 from lxml import html
 from sgrequests import SgRequests
 from sgzip.static import static_coordinate_list, SearchableCountries
 
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
+headers = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:89.0) Gecko/20100101 Firefox/89.0",
+    "Accept": "*/*",
+    "Accept-Language": "uk-UA,uk;q=0.8,en-US;q=0.5,en;q=0.3",
+    "X-Requested-With": "XMLHttpRequest",
+    "Alt-Used": "www.udfinc.com",
+    "Connection": "keep-alive",
+    "Referer": "https://www.udfinc.com/our-stores/",
+    "TE": "Trailers",
+}
 
 
 def get_data(coord):
@@ -50,7 +30,7 @@ def get_data(coord):
 
     for j in js:
         page_url = j.get("permalink") or "<MISSING>"
-        location_name = j.get("store").strip()
+        location_name = j.get("store").replace("&#038;", "").strip()
         street_address = (
             f"{j.get('address')} {j.get('address2') or ''}".strip() or "<MISSING>"
         )
@@ -99,21 +79,52 @@ def get_data(coord):
 
 
 def fetch_data():
-    out = []
-    s = set()
+    data = []
+    raw = []
+    ids = []
+
     coords = static_coordinate_list(radius=200, country_code=SearchableCountries.USA)
+    for coord in coords:
+        raw.append(get_data(coord))
 
-    with futures.ThreadPoolExecutor(max_workers=5) as executor:
-        future_to_url = {executor.submit(get_data, coord): coord for coord in coords}
-        for future in futures.as_completed(future_to_url):
-            rows = future.result()
-            for row in rows:
-                _id = row[8]
-                if _id not in s:
-                    s.add(_id)
-                    out.append(row)
+    for row in raw:
+        if row == []:
+            continue
+        for location in row:
+            if location[8] not in ids:
+                ids.append(location[8])
+                data.append(location)
 
-    return out
+    return data
+
+
+def write_output(data):
+    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
+        writer = csv.writer(
+            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+        )
+
+        writer.writerow(
+            [
+                "locator_domain",
+                "page_url",
+                "location_name",
+                "street_address",
+                "city",
+                "state",
+                "zip",
+                "country_code",
+                "store_number",
+                "phone",
+                "location_type",
+                "latitude",
+                "longitude",
+                "hours_of_operation",
+            ]
+        )
+
+        for row in data:
+            writer.writerow(row)
 
 
 def scrape():
@@ -121,15 +132,4 @@ def scrape():
     write_output(data)
 
 
-if __name__ == "__main__":
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:89.0) Gecko/20100101 Firefox/89.0",
-        "Accept": "*/*",
-        "Accept-Language": "uk-UA,uk;q=0.8,en-US;q=0.5,en;q=0.3",
-        "X-Requested-With": "XMLHttpRequest",
-        "Alt-Used": "www.udfinc.com",
-        "Connection": "keep-alive",
-        "Referer": "https://www.udfinc.com/our-stores/",
-        "TE": "Trailers",
-    }
-    scrape()
+scrape()

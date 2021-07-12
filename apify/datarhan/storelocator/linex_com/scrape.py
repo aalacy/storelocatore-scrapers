@@ -1,5 +1,6 @@
 import csv
 from lxml import etree
+from time import sleep
 
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 from sgrequests import SgRequests
@@ -72,26 +73,27 @@ def fetch_data():
         executable_path=ChromeDriverManager().install(), is_headless=True
     ) as driver:
         driver.get(start_url)
-        driver.implicitly_wait(5)
-        driver.find_element_by_xpath('//button[@title="United States"]').click()
-        logger.info("Dropdown Clicked!...")
+        sleep(5)
+        driver.find_element_by_xpath(
+            '//span[contains(text(), "International")]'
+        ).click()
+        sleep(5)
+        logger.info("International Clicked")
         driver.find_element_by_xpath(
             '//span[contains(text(), "United States")]'
         ).click()
+        logger.info("United States Clicked")
         for code in all_codes:
-            try:
-                logger.info(f"Pulling the data for ({code})")
-                driver.find_element_by_xpath('//input[@name="location"]').send_keys(
-                    code
-                )
-                driver.find_element_by_xpath(
-                    '//button[contains(text(), "Search")]'
-                ).click()
-                driver.find_element_by_xpath('//input[@name="location"]').clear()
-                code_dom = etree.HTML(driver.page_source)
-                all_locations += code_dom.xpath('//div[@class="find-result "]')
-            except:
-                driver.save_screenshot("exception.png")
+            driver.find_element_by_xpath('//input[@name="location"]').send_keys(code)
+            sleep(2)
+            logger.info("zipcode - send_keys executed")
+            driver.find_element_by_xpath('//button[contains(text(), "Search")]').click()
+            sleep(20)
+            logger.info(" Search Button Clicked")
+            driver.find_element_by_xpath('//input[@name="location"]').clear()
+
+            code_dom = etree.HTML(driver.page_source)
+            all_locations += code_dom.xpath('//div[@class="find-result "]')
 
     for loc_html in list(set(all_locations)):
         store_url = loc_html.xpath('.//a[contains(text(), "Visit Website")]/@href')

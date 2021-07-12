@@ -3,6 +3,7 @@ from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
+import re
 
 logger = SgLogSetup().get_logger("valero")
 
@@ -35,6 +36,7 @@ def fetch_data():
                         " " + link.select_one(".address-line2").text.strip()
                     )
 
+                street_address = re.sub(r"P.O. Box \d+", "", street_address).strip()
                 state = ""
                 if link.select_one(".administrative-area"):
                     state = link.select_one(".administrative-area").text.strip()
