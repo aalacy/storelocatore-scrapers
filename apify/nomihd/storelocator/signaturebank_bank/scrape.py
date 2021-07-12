@@ -95,10 +95,9 @@ def fetch_data():
         hours = list(
             filter(
                 str,
-                [x.strip() for x in store.xpath(".//div[./h3]//li[3]//text()")],
+                [x.strip() for x in store.xpath(".//div[./h3]//li[3]/text()")],
             )
         )
-        hours = hours[1:]
         hours_of_operation = "; ".join(hours).replace("; :", ":").strip()
 
         latitude = store.xpath('.//div[contains(@class,"acf-map")]/div/@data-lat')[
