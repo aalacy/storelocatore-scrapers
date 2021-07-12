@@ -36,7 +36,7 @@ def write_output(data):
 def fetch_data():
     out = []
     locator_domain = "https://woofgangbakery.com/"
-    api_url = "https://storerocket.global.ssl.fastly.net/api/user/7OdJEZD8WE/locations"
+    api_url = "https://api.storerocket.io/api/user/7OdJEZD8WE/locations"
     tag = {
         "Recipient": "recipient",
         "AddressNumber": "address1",
@@ -72,6 +72,8 @@ def fetch_data():
 
     for j in js:
         line = j.get("address").split(",")
+        country_code = j.get("country") or "<MISSING>"
+
         if j.get("address_line_1"):
             street_address = (
                 f'{j.get("address_line_1")} {j.get("address_line_2") or ""}'.strip()
@@ -80,7 +82,6 @@ def fetch_data():
             city = j.get("city") or "<MISSING>"
             state = j.get("state") or "<MISSING>"
             postal = j.get("postcode") or "<MISSING>"
-            country_code = j.get("country") or "<MISSING>"
         else:
             a = usaddress.tag(", ".join(line), tag_mapping=tag)[0]
             street_address = f"{a.get('address1')} {a.get('address2') or ''}".strip()
