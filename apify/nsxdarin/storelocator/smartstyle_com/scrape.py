@@ -1,10 +1,10 @@
 import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
+import time
 
 logger = SgLogSetup().get_logger("smartstyle_com")
 
-session = SgRequests()
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
@@ -43,6 +43,7 @@ def fetch_data():
     canada = ["ab", "nb", "on", "bc", "nl", "qc", "mb", "ns", "sk"]
     states = []
     stubs = []
+    session = SgRequests()
     r = session.get(url, headers=headers, verify=False)
     for line in r.iter_lines():
         line = str(line.decode("utf-8"))
@@ -78,8 +79,10 @@ def fetch_data():
         retries = 0
         while PFound:
             try:
+                time.sleep(3)
                 PFound = False
                 retries = retries + 1
+                session = SgRequests()
                 r2 = session.get(loc, headers=headers, timeout=5)
                 for line2 in r2.iter_lines():
                     line2 = str(line2.decode("utf-8"))
@@ -152,7 +155,7 @@ def fetch_data():
                             hours,
                         ]
             except:
-                if retries <= 3:
+                if retries <= 5:
                     PFound = True
 
 
