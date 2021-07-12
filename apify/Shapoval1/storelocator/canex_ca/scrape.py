@@ -62,6 +62,8 @@ def fetch_data():
                 phone = phone.split()[0].strip()
             state = j.get("region")
             postal = j.get("postcode")
+            if postal == " Alberta":
+                postal = "<MISSING>"
             country_code = "CA"
             city = j.get("city")
             store_number = "<MISSING>"

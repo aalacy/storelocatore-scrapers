@@ -81,9 +81,10 @@ def fetch_data():
             './/preceding-sibling::div[./p[@style="line-height:1.7em;font-size:17px"]][1]//text()'
         )
         ad = list(filter(None, [a.strip() for a in adr]))
-        ad = " ".join(ad)
-
-        a = usaddress.tag(ad, tag_mapping=tag)[0]
+        adress = " ".join(ad[:-1])
+        if "".join(ad).find("Clinic") != -1:
+            adress = " ".join(ad)
+        a = usaddress.tag(adress, tag_mapping=tag)[0]
         phone = "".join(adr[-1])
         if "".join(adr).find("420") != -1:
             phone = "<MISSING>"
