@@ -90,7 +90,7 @@ def fetch_data():
             "https://www.sunglasshut.com/AjaxSGHFindPhysicalStoreLocations",
             params=params,
         )
-
+        log.info(f"Status Code: {stores_req}")
         stores = json.loads(stores_req.text)["locationDetails"]
         for store in stores:
             if store["countryCode"] == "GB":
