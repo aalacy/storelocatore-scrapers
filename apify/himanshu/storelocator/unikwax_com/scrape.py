@@ -69,11 +69,6 @@ def fetch_data():
             .replace(", NJ", "")
             .strip()
         )
-        street_address = " ".join(
-            list(bs(dt["info_window_content"], "lxml").stripped_strings)[1].split(",")[
-                :-3
-            ]
-        )
         page_url = adr.find("a")["href"]
         latitude = dt["lat"]
         longitude = dt["lng"]
@@ -81,6 +76,11 @@ def fetch_data():
         base = bs(session.get(page_url, headers=headers).text, "lxml")
         if "has closed due" in base.text:
             continue
+        try:
+            street_address = base.find(class_="address").text.strip()
+        except:
+            street_address = base.find(class_="info").p.text.split("  ")[0].strip()
+            city = base.find(class_="info").p.text.split("  ")[1].split("FL")[0].strip()
         hours_of_operation = ""
         phone = ""
         try:
