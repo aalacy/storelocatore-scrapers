@@ -59,6 +59,8 @@ def get_data(url):
         "".join(tree.xpath("//span[@itemprop='streetAddress']/text()")).strip()
         or "<MISSING>"
     )
+    if street_address.endswith(","):
+        street_address = street_address[:-1]
     city = (
         "".join(tree.xpath("//span[@itemprop='addressLocality']/text()")).strip()
         or "<MISSING>"

@@ -51,7 +51,7 @@ def fetch_data():
     ]["data"]["features"]
 
     for j in js:
-        latitude, longitude = j["geometry"]["coordinates"]
+        longitude, latitude = j["geometry"]["coordinates"]
         j = j.get("properties")
 
         text = j.get("description")

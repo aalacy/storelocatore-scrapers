@@ -86,6 +86,8 @@ def fetch_data():
             for day, hours in poi["hours"].items():
                 if "holiday" in day:
                     continue
+                if type(hours) == str:
+                    continue
                 if hours.get("openIntervals"):
                     opens = hours["openIntervals"][0]["start"]
                     closes = hours["openIntervals"][0]["end"]

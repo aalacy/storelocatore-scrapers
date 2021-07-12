@@ -39,7 +39,7 @@ def write_output(data):
 
 
 def fetch_data():
-    url = "https://api.freshop.com/1/stores?app_key=foodfair_market&has_address=true&limit=-1&token=767272d5f35a3ac63f8ac3917715dbc2"
+    url = "https://api.freshop.com/1/stores?app_key=foodfair_market&has_address=true&limit=-1&token=7ef808ec0aa226391feac9e87749ac3f"
     r = session.get(url, headers=headers)
     website = "foodfairmarkets.com"
     typ = "<MISSING>"
@@ -59,7 +59,10 @@ def fetch_data():
             state = "<MISSING>"
         zc = item["postal_code"]
         hours = item["hours_md"]
-        phone = item["phone_md"]
+        try:
+            phone = item["phone_md"]
+        except:
+            phone = "<MISSING>"
         if city == "Ironton":
             state = "OH"
         if city == "West Hamlin":

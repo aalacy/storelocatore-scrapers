@@ -68,6 +68,8 @@ def fetch_data():
         store_url = "https://surgefun.com/locations/"
         state = raw_address[-1].split(", ")[-1].split()[0]
         location_name = f"{city.upper()}, {state.upper()}"
+        if location_name == "WINSTON SALEM, NC":
+            location_name = "WINSTON-SALEM, NC"
         if location_name == "MONROE, LA":
             continue
         if location_name == "HOPE MILLS, NC":
@@ -79,6 +81,8 @@ def fetch_data():
         street_address = raw_address[0]
         if street_address.endswith(","):
             street_address = street_address[:-1]
+        if street_address == "2723 W. Pinhook Rd":
+            continue
         zip_code = raw_address[-1].split(", ")[-1].split()[-1]
         country_code = "<MISSING>"
         phone = "<MISSING>"

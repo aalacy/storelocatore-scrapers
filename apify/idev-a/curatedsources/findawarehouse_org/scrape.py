@@ -4,7 +4,6 @@ from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
 import dirtyjson as json
 import re
-from sgscrape.sgpostal import parse_address_intl
 
 
 def write_output(data):
@@ -31,11 +30,13 @@ def write_output(data):
                 "longitude",
                 "hours_of_operation",
                 "brand_website",
+                "raw_address",
             ]
         )
         # Body
         for row in data:
-            writer.writerow(row)
+            if row:
+                writer.writerow(row)
 
 
 logger = SgLogSetup().get_logger("findawarehouse")
@@ -53,6 +54,14 @@ _headers = {
     "Upgrade-Insecure-Requests": "1",
     "Pragma": "no-cache",
     "Cache-Control": "no-cache",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:88.0) Gecko/20100101 Firefox/88.0",
+}
+
+header1 = {
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+    "Accept-Encoding": "gzip, deflate, br",
+    "Accept-Language": "en-US,en;q=0.9,ko;q=0.8",
+    "Host": "www.findawarehouse.org",
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:88.0) Gecko/20100101 Firefox/88.0",
 }
 
@@ -80,6 +89,7 @@ _header1 = {
 
 locator_domain = "https://www.findawarehouse.org/"
 base_url = "https://www.findawarehouse.org/SearchFAW"
+urls = []
 
 
 def _ll(street, json_locations):
@@ -102,27 +112,31 @@ def get_country_by_code(code=""):
 
 def _detail(_, json_locations, session):
     name = _.h2.text.strip()
-    page_url = f"https://www.findawarehouse.org/DetailsHD.aspx?company={name.replace(' ', '%20')}"
+    page_url = locator_domain + _.a["href"].strip()
+    if page_url in urls:
+        return []
+    urls.append(page_url)
     _addr = list(_.p.stripped_strings)
     if _addr[0] == _.p.b.text.strip():
         del _addr[0]
     latitude, longitude, phone = _ll(_addr[0], json_locations)
-    addr = parse_address_intl(" ".join(_addr[:2]))
-    street_address = addr.street_address_1
-    if addr.street_address_2:
-        street_address += " " + addr.street_address_2
-    brand_website = ""
-    if _addr[-1].startswith("http"):
-        brand_website = _addr[-1]
+    street_address = _addr[0]
+    city_state = _addr[1].strip().split(",")
+    state = city_state[1].strip().split(" ")[0].strip()
+    zip_postal = " ".join(city_state[1].strip().split(" ")[1:]).strip()
+    brand_website = "<MISSING>"
+    if _.select_one("p a.website"):
+        brand_website = _.select_one("p a.website").text.strip()
+
     return [
         locator_domain,
         page_url,
         name,
-        street_address,
-        addr.city,
-        addr.state,
-        addr.postcode,
-        get_country_by_code(addr.state),
+        street_address or "<MISSING>",
+        city_state[0].strip(),
+        state,
+        zip_postal,
+        get_country_by_code(state),
         "<MISSING>",
         phone,
         "<MISSING>",
@@ -130,6 +144,7 @@ def _detail(_, json_locations, session):
         longitude,
         "<MISSING>",
         brand_website,
+        "<MISSING>",
     ]
 
 
