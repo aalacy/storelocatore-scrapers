@@ -36,7 +36,13 @@ def fetch_data():
             )
             if "Contact Our School" in hours_of_operation:
                 hours_of_operation = MISSING
+            try:
+                temp_address = address[0].find("strong").text
+            except:
+                temp_address = ""
             address = address[0].get_text(separator="|", strip=True).split("|")
+            if address[0] == temp_address:
+                address = address[1:]
             location_name = loc.find("h3").text
             log.info(location_name)
             phone = address[-1]
