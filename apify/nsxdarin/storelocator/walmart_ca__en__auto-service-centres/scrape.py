@@ -79,6 +79,7 @@ def fetch_data():
                         try:
                             phone = (
                                 item.split('"TIRE_AND_LUBE_EXPRESS_CENTRE"')[1]
+                                .split('{"service":')[0]
                                 .split('"phone":"')[1]
                                 .split('"')[0]
                             )
