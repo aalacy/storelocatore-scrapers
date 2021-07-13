@@ -124,6 +124,11 @@ def fetch_data():
         if "7715" in add:
             hours = "Coming Soon"
         city = city.replace(",", "").strip()
+        if "joliet-pickup-delivery" in lurl:
+            add = "1444 N Larkin Ave."
+            city = "Joliet"
+            state = "IL"
+            zc = "60435"
         yield [
             website,
             lurl,
