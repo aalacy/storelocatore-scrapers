@@ -6,7 +6,7 @@ import csv
 from webdriver_manager.chrome import ChromeDriverManager
 from sglogging import sglog
 
-log = sglog.SgLogSetup().get_logger(logger_name="carehome")
+log = sglog.SgLogSetup().get_logger(logger_name="carehomes")
 
 
 def extract_json(html_string):
@@ -60,6 +60,7 @@ def reset_sessions(data_url):
                 return [s, headers, response_text]
 
         except Exception:
+            driver.quit()
             continue
 
 
@@ -147,88 +148,7 @@ for country_url in country_urls:
                 location_urls.append(location_url)
         count = count + 1
 
-all_rows = []
 x = 0
-for location_url in location_urls:
-    x = x + 1
-    response = s.get(location_url, headers=headers)
-    response_text = response.text
-    log.info("URL " + str(x) + "/" + str(len(location_urls)))
-    log.info(location_url)
-    if len(response_text.split("div")) > 2:
-        pass
-    else:
-        y = 0
-        while True:
-            y = y + 1
-            log.info("location_url_fail: " + str(y))
-            try:
-                new_sess = reset_sessions(location_url)
-
-                s = new_sess[0]
-                headers = new_sess[1]
-                response_text = new_sess[2]
-                break
-            except Exception:
-                continue
-
-    soup = bs(response_text, "html.parser")
-
-    locator_domain = "carehome.co.uk"
-    page_url = location_url
-    location_name = soup.find("h1", attrs={"class": "mb-0 card-title"}).text.strip()
-    address_parts = soup.find("meta", attrs={"property": "og:title"})["content"].split(
-        ","
-    )
-    address = address_parts[1].strip()
-    city = address_parts[-2].strip()
-    state_parts = address_parts[-1].split(" ")[:-2]
-    state = ""
-    for part in state_parts:
-        state = state + part + " "
-    state = state.strip().replace("County ", "")
-
-    zipp = address_parts[-1].split(" ")[-2] + " " + address_parts[-1].split(" ")[-1]
-    country_code = "UK"
-    store_number = location_url.split("/")[-1]
-    phone = "<INACCESSIBLE>"
-
-    geo_json = extract_json(response_text.split('geo":')[1].split("reviews")[0])[0]
-    latitude = geo_json["latitude"]
-    longitude = geo_json["longitude"]
-    hours = "<MISSING>"
-
-    location_type_text = (
-        soup.find("div", attrs={"class": "row profile-row"})
-        .find_all("div", attrs={"class": "col-md-4"})[1]
-        .find("ul")
-        .text.strip()
-        .split("\n")
-    )
-    if "Owner" in location_type_text[0]:
-        location_type = location_type_text[-1].replace("\r", "").replace("\t", "")
-    else:
-        location_type = "<MISSING>"
-
-    all_rows.append(
-        [
-            locator_domain,
-            page_url,
-            location_name,
-            location_type,
-            store_number,
-            address,
-            city,
-            state,
-            zipp,
-            country_code,
-            latitude,
-            longitude,
-            phone,
-            hours,
-        ]
-    )
-
 with open("data.csv", mode="w") as output_file:
     writer = csv.writer(
         output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
@@ -251,5 +171,111 @@ with open("data.csv", mode="w") as output_file:
             "hours_of_operation",
         ]
     )
-    for row in all_rows:
+
+    for location_url in location_urls:
+        x = x + 1
+        response = s.get(location_url, headers=headers)
+        response_text = response.text
+        log.info("URL " + str(x) + "/" + str(len(location_urls)))
+        log.info(location_url)
+        if len(response_text.split("div")) > 2:
+            pass
+        else:
+            y = 0
+            while True:
+                y = y + 1
+                log.info("location_url_fail: " + str(y))
+                try:
+                    new_sess = reset_sessions(location_url)
+
+                    s = new_sess[0]
+                    headers = new_sess[1]
+                    response_text = new_sess[2]
+                    break
+                except Exception:
+                    continue
+
+        soup = bs(response_text, "html.parser")
+
+        locator_domain = "carehome.co.uk"
+        page_url = location_url
+        location_name = soup.find("h1", attrs={"class": "mb-0 card-title"}).text.strip()
+        if len(location_name.split("\n")) > 1:
+            continue
+
+        address_parts = soup.find("meta", attrs={"property": "og:title"})[
+            "content"
+        ].split(",")
+        address = address_parts[1].strip()
+        city = address_parts[-2].strip()
+        state_zipp_parts = address_parts[-1].split(" |")[0].split(" ")
+        state_parts = state_zipp_parts[:-2]
+        state = ""
+        for part in state_parts:
+            state = state + part + " "
+        state = state.strip().replace("County ", "")
+
+        zipp = state_zipp_parts[-2] + " " + state_zipp_parts[-1]
+
+        country_code = "UK"
+        store_number = location_url.split("/")[-1]
+
+        try:
+            phone_link = soup.find("button", attrs={"id": "brochure_phone"})["href"]
+            phone_response = s.get(phone_link, headers=headers).text
+            response_soup = bs(phone_response, "html.parser")
+            phone = (
+                response_soup.find("div", attrs={"class": "contacts_telephone"})
+                .find("a")
+                .text.strip()
+            )
+        except Exception:
+            phone = "<MISSING>"
+
+        geo_json = extract_json(response_text.split('geo":')[1].split("reviews")[0])[0]
+        latitude = geo_json["latitude"]
+        longitude = geo_json["longitude"]
+        hours = "<MISSING>"
+
+        try:
+            location_type = [
+                item.strip()
+                for item in soup.find("div", attrs={"class": "row profile-row"})
+                .text.strip()
+                .split("Care Provided")[1]
+                .split("Type of Service")[1]
+                .split("\n")
+                if len(item) > 2
+            ][0] + [
+                item.strip()
+                for item in soup.find("div", attrs={"class": "row profile-row"})
+                .text.strip()
+                .split("Care Provided")[1]
+                .split("Type of Service")[1]
+                .split("\n")
+                if len(item) > 2
+            ][
+                1
+            ]
+
+        except Exception:
+            location_type = "<MISSING>"
+
+        row = [
+            locator_domain,
+            page_url,
+            location_name,
+            location_type,
+            store_number,
+            address,
+            city,
+            state,
+            zipp,
+            country_code,
+            latitude,
+            longitude,
+            phone,
+            hours,
+        ]
+
         writer.writerow(row)

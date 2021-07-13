@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
@@ -96,6 +97,7 @@ def write_output(data):
                 "locator_domain",
                 "page_url",
                 "location_name",
+                "raw_address",
                 "street_address",
                 "city",
                 "state",
@@ -162,22 +164,12 @@ def fetch_data():
                     + " "
                     + line2.split('<span class="extended-address">')[1].split("<")[0]
                 )
-                rawadd = add.strip()
+                rawadd = rawadd.strip()
             if '<span class="locality">' in line2:
                 g = line2.replace("  ", " ").replace("  ", " ")
                 rawadd = rawadd + " " + g.split('ity">')[1].split("<")[0]
                 if "<br />" in g:
                     rawadd = rawadd + " " + g.split("<br />")[1].split("<")[0]
-                addr = parse_address_intl(rawadd)
-                city = addr.city
-                zc = addr.postcode
-                state = addr.state
-                country = addr.country
-                add = addr.street_address_1
-                if add is None:
-                    add = "<MISSING>"
-                else:
-                    add = add.strip()
             if '<span class="type">' in line2 and typ == "":
                 typ = typ + "; " + line2.split('<span class="type">')[1].split("<")[0]
                 if phone == "":
@@ -280,6 +272,54 @@ def fetch_data():
         if hours == "":
             hours = "<MISSING>"
         hours = hours.replace(";;", ";")
+        if "aucklandponsonby" in loc:
+            rawadd = "501 Karangahape Road"
+        if "christchurch" in loc:
+            rawadd = "17 Avenger Crescent, Wigram"
+        if "macauservice" in loc:
+            rawadd = "The Venetian, Macao Level LG, Guest Car Park Estrada de Baia de N. Senhora da Esperanca"
+        if "beijingxueyuanroad" in loc:
+            rawadd = "Tesla Center, Xueyuan Road, Beijing"
+        if "qingdaoyinchuan" in loc:
+            rawadd = "Tesla Center, Yinchuan West Road, Qingdao"
+        if "APAC-CN-Tianjin-Wanggang" in loc:
+            rawadd = "<MISSING>"
+        if "wellington" in loc:
+            rawadd = "Wellington 6011"
+        if "wenzhoubinhai" in loc:
+            rawadd = "Wenzhou Binhai Service Center"
+        if "APAC-CN-Wenzhou-Binhai" in loc:
+            rawadd = "<MISSING>"
+        if "sendaiservice" in loc:
+            rawadd = "仙台市宮城野区"
+        if "taichungshizhengservice" in loc:
+            rawadd = "台中市政服務中心 台中市西屯區市政路638號"
+        if "taipeineihuservicecenter" in loc:
+            rawadd = "台北市內湖區舊宗路二段1號 賞車或試駕服務請從舊宗路2段1號入口前往"
+        if "osakatoyonaka" in loc:
+            rawadd = "豊中 大阪府豊中市上津島1丁目1-20"
+        if "aichinagoyaservice" in loc:
+            rawadd = "名古屋市南区星崎1-41"
+        if "tokyobay" in loc:
+            rawadd = "東京ベイ 東京都江東区東雲2丁目7-20"
+        if "kawasakitomei" in loc:
+            rawadd = "東名川崎 神奈川県川崎市宮前区土橋6-10-1"
+        if "yokohama" in loc:
+            rawadd = "横浜 神奈川県横浜市戸塚区上矢部町995-1"
+        if "fukuokaservice" in loc:
+            rawadd = "博多市"
+        if "gushankaohsiungservice" in loc:
+            rawadd = "高雄市鼓山區博愛一路437號"
+        if "busanteslacentre" in loc:
+            rawadd = "부산광역시 연제구 좌수영로 290"
+        if "seoulgangseo" in loc:
+            rawadd = "서울특별시 강서구 양천로 66길5"
+        if "seoulmunjeong" in loc:
+            rawadd = "서울특별시 송파구 동남로4길 36-1"
+        if "seoulseungsu" in loc:
+            rawadd = "서울특별시 성동구 광나루로 8길 6"
+        if "seongnambundang" in loc:
+            rawadd = "경기도 성남시 분당구 대왕판교로 316"
         if lat == "" or lng == "":
             lat = "<MISSING>"
             lng = "<MISSING>"
@@ -292,6 +332,16 @@ def fetch_data():
             typ = "Store"
         if CS:
             name = name + " - Coming Soon"
+        addr = parse_address_intl(rawadd)
+        city = addr.city
+        zc = addr.postcode
+        state = addr.state
+        country = addr.country
+        add = addr.street_address_1
+        if add is None:
+            add = "<MISSING>"
+        else:
+            add = add.strip()
         if state == "" or state is None:
             state = "<MISSING>"
         if state in usstates:
@@ -313,10 +363,22 @@ def fetch_data():
                 zc = locality.rsplit(" ", 1)[1]
             except:
                 pass
+        hours = (
+            hours.replace(";Mon", "Mon")
+            .replace("<br>Mon", "Mon")
+            .replace("; Mon", "Mon")
+            .replace("<br> Mon", "Mon")
+        )
+        hours = (
+            hours.replace("<br >", "").replace("; Sunday", "Sunday").replace("; ;", ";")
+        )
+        if city == "" or city is None:
+            city = "<MISSING>"
         yield [
             website,
             loc,
             name,
+            rawadd,
             add,
             city,
             state,

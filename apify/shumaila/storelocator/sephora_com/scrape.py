@@ -52,7 +52,7 @@ def fetch_data():
     for link in linklist:
         link = "https://www.sephora.com" + link["href"]
 
-        r = session.get(link, headers=headers, verify=False)
+        r = session.get(link, headers=headers, verify=False, timeout=100)
         try:
             r = r.text.split('"stores":[')[1].split('}],"thirdpartyImageHost"', 1)[0]
         except:
@@ -109,7 +109,7 @@ def fetch_data():
                 pcode = "0" + pcode
             if state == "NW":
                 state = "WA"
-        if store in datanow:
+        if store in datanow or "SOON" in hours:
             continue
         datanow.append(store)
         data.append(

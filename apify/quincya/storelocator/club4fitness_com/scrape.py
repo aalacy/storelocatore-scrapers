@@ -50,6 +50,7 @@ def fetch_data():
     locator_domain = "club4fitness.com"
 
     items = base.find_all("article")
+    geos = base.find(class_="acf-map").find_all("div")
 
     for i in items:
         location_name = i.a.text
@@ -82,11 +83,21 @@ def fetch_data():
             .strip()
         )
         location_type = "<MISSING>"
-        hours_of_operation = " ".join(
-            list(item.find(class_="dce-acf-repater-list").stripped_strings)
-        )
+
+        try:
+            hours_of_operation = " ".join(
+                list(item.find(class_="dce-acf-repater-list").stripped_strings)
+            )
+        except:
+            hours_of_operation = "<MISSING>"
         latitude = "<INACCESSIBLE>"
         longitude = "<INACCESSIBLE>"
+        for geo in geos:
+            url = geo.strong.text
+            if url in link:
+                latitude = geo["data-lat"]
+                longitude = geo["data-lng"]
+                break
 
         data.append(
             [

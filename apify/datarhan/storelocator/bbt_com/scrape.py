@@ -44,9 +44,7 @@ def fetch_data():
     scraped_items = []
 
     DOMAIN = "bbt.com"
-    start_url = (
-        "https://www.bbt.com/clocator/searchLocations.do?quickZip={}&type=&services="
-    )
+    start_url = "https://www.bbt.com/clocator/searchLocations.do?quickZip={}&type=branch&services="
 
     all_codes = static_zipcode_list(
         country_code=SearchableCountries.USA,
@@ -99,13 +97,14 @@ def parallel_run(code, hdr, start_url, DOMAIN, scraped_items, items, session):
         state = state if state else "<MISSING>"
         zip_code = poi["zip"]
         zip_code = zip_code if zip_code else "<MISSING>"
-        country_code = ""
-        country_code = country_code if country_code else "<MISSING>"
+        country_code = "<MISSING>"
         store_number = poi["centerATMNumber"]
         store_number = store_number if store_number else "<MISSING>"
         phone = poi["phone"]
         phone = phone if phone else "<MISSING>"
         location_type = poi["locationType"]
+        if location_type == "Branch":
+            location_type = "Branch/ATM"
         location_type = location_type if location_type else "<MISSING>"
         latitude = poi["latitude"]
         latitude = latitude if latitude else "<MISSING>"
@@ -135,9 +134,8 @@ def parallel_run(code, hdr, start_url, DOMAIN, scraped_items, items, session):
             hours_of_operation,
         ]
 
-        check = "{} {}".format(store_number, street_address)
-        if check not in scraped_items:
-            scraped_items.append(check)
+        if poi["locationKey"] not in scraped_items:
+            scraped_items.append(poi["locationKey"])
             yield item
 
 

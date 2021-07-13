@@ -1,9 +1,9 @@
-import usaddress
 from sglogging import sglog
 from bs4 import BeautifulSoup
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
+from sgscrape import sgpostal as parser
 
 
 website = "wahlburgers_com"
@@ -45,6 +45,10 @@ def fetch_data():
                         continue
                     soup = BeautifulSoup(r.text, "html.parser")
                     temp = soup.find("div", {"class": "insideThing"}).findAll("div")
+                    if "We are currently closed" in r.text:
+                        location_type = "Temporarily Closed"
+                    else:
+                        location_type = "<MISSING>"
                 except:
                     continue
                 log.info(page_url)
@@ -60,49 +64,39 @@ def fetch_data():
                     del temp[-1]
                 if len(temp) > 3:
                     temp = temp[1:]
-                phone = temp[0].find("a")["href"].replace("tel:", "").replace("%20", "")
-                hours_of_operation = (
-                    temp[2].get_text(separator="|", strip=True).replace("|", " ")
-                ).replace("Opening hours:", "")
-                address = temp[1].get_text(separator="|", strip=True).split("|")[1:]
+                try:
+                    phone = (
+                        temp[0].find("a")["href"].replace("tel:", "").replace("%20", "")
+                    )
+                    hours_of_operation = (
+                        temp[2].get_text(separator="|", strip=True).replace("|", " ")
+                    ).replace("Opening hours:", "")
+                    address = temp[1].get_text(separator="|", strip=True).split("|")[1:]
+                except:
+                    phone = "<MISSING>"
+                    hours_of_operation = (
+                        temp[1].get_text(separator="|", strip=True).replace("|", " ")
+                    ).replace("Opening hours:", "")
+                    address = temp[0].get_text(separator="|", strip=True).split("|")[1:]
                 address = " ".join(
                     x.replace("\n", "").replace("    ", " ") for x in address
                 )
-                raw_address = address
-                address = usaddress.parse(address)
-
-                i = 0
-                street_address = ""
-                city = ""
-                state = ""
-                zip_postal = ""
-                while i < len(address):
-                    temp = address[i]
-                    if (
-                        temp[1].find("Address") != -1
-                        or temp[1].find("Street") != -1
-                        or temp[1].find("Recipient") != -1
-                        or temp[1].find("Occupancy") != -1
-                        or temp[1].find("BuildingName") != -1
-                        or temp[1].find("USPSBoxType") != -1
-                        or temp[1].find("USPSBoxID") != -1
-                    ):
-                        street_address = street_address + " " + temp[0]
-                    if temp[1].find("PlaceName") != -1:
-                        city = city + " " + temp[0]
-                    if temp[1].find("StateName") != -1:
-                        state = state + " " + temp[0]
-                    if temp[1].find("ZipCode") != -1:
-                        zip_postal = zip_postal + " " + temp[0]
-                    i += 1
-                longitude, latitude = (
-                    soup.select_one("iframe[src*=maps]")["src"]
-                    .split("!2d", 1)[1]
-                    .split("!3m", 1)[0]
-                    .split("!3d")
-                )
-                if "!2m" in latitude:
-                    latitude = latitude.split("!2m")[0]
+                formatted_addr = parser.parse_address_intl(address)
+                street_address = formatted_addr.street_address_1
+                if street_address is None:
+                    street_address = formatted_addr.street_address_2
+                if formatted_addr.street_address_2:
+                    street_address = (
+                        street_address + ", " + formatted_addr.street_address_2
+                    )
+                city = formatted_addr.city
+                state = formatted_addr.state if formatted_addr.state else "<MISSING>"
+                zip_postal = formatted_addr.postcode
+                coords = soup.select_one("iframe[src*=maps]")["src"]
+                r = session.get(coords, headers=headers)
+                coords = r.text.split("null,[null,null,")[2].split("],")[0].split(",")
+                latitude = coords[0]
+                longitude = coords[1]
                 yield SgRecord(
                     locator_domain="https://wahlburgers.com/",
                     page_url=page_url,
@@ -114,11 +108,11 @@ def fetch_data():
                     country_code=country_code,
                     store_number="<MISSING>",
                     phone=phone,
-                    location_type="<MISSING>",
+                    location_type=location_type,
                     latitude=latitude.strip(),
                     longitude=longitude.strip(),
                     hours_of_operation=hours_of_operation.strip(),
-                    raw_address=raw_address,
+                    raw_address=address,
                 )
 
 

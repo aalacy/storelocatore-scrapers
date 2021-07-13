@@ -41,7 +41,9 @@ def fetch_data():
 
     items = []
 
-    start_url = "https://storerocket.global.ssl.fastly.net/api/user/6wpZjxZpAn/locations?radius=20&units=miles"
+    start_url = (
+        "https://api.storerocket.io/api/user/6wpZjxZpAn/locations?radius=10&units=miles"
+    )
     domain = "tanrepublic.com"
     hdr = {
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
@@ -55,6 +57,8 @@ def fetch_data():
         location_name = poi["name"]
         location_name = location_name if location_name else "<MISSING>"
         street_address = poi["address"].split(",")[0]
+        if "suite" in poi["address"].lower():
+            street_address = " ".join(poi["address"].split(",")[:2])
         city = poi["city"]
         city = city if city else "<MISSING>"
         state = poi["state"]
