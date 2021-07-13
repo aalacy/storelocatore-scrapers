@@ -108,6 +108,10 @@ def fetch_data():
             pass
         if "Order Online" in phone:
             phone = "<MISSING>"
+        check = hours.split("Sun")
+        if len(check) > 1:
+            hours = hours.split("Sun")[1]
+            hours = "Sun " + hours
         data.append(
             [
                 "https://www.extremepizza.com/",

@@ -41,7 +41,10 @@ def fetch_data():
         location_name = "".join(store.xpath("@data-title")).strip()
 
         street_address = "".join(store.xpath("@data-address1")).strip()
-        if len("".join(store.xpath("@data-address2")).strip()) > 0:
+        if (
+            len("".join(store.xpath("@data-address2")).strip()) > 0
+            and "PO Box" not in "".join(store.xpath("@data-address2")).strip()
+        ):
             street_address = (
                 street_address + ", " + "".join(store.xpath("@data-address2")).strip()
             )
