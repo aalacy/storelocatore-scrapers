@@ -96,7 +96,7 @@ def fetch_data():
             if add == "" and 'ard_block-address">' in line2:
                 add = line2.split('ard_block-address">')[1].split("<")[0]
             if add != "" and 'ard_block-address">' in line2 and "-->" not in line2:
-                if add not in line2:
+                if add not in line2 and ", " in line2:
                     csz = line2.split('card_block-address">')[1].split("<")[0].strip()
                     city = csz.split(",")[0]
                     state = csz.split(",")[1].strip().split(" ")[0]
