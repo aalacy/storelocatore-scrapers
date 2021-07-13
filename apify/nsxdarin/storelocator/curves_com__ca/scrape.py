@@ -69,8 +69,8 @@ def fetch_data():
     store = "<MISSING>"
     phone = "613-254-5704"
     hours = "<MISSING>"
-    lat = "<MISSING>"
-    lng = "<MISSING>"
+    lat = "45.2983929"
+    lng = "-75.8883216"
     yield [
         website,
         purl,
