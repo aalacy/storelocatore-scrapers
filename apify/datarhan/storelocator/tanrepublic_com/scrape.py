@@ -41,7 +41,9 @@ def fetch_data():
 
     items = []
 
-    start_url = "https://storerocket.global.ssl.fastly.net/api/user/6wpZjxZpAn/locations?radius=20&units=miles"
+    start_url = (
+        "https://api.storerocket.io/api/user/6wpZjxZpAn/locations?radius=10&units=miles"
+    )
     domain = "tanrepublic.com"
     hdr = {
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"

@@ -1,6 +1,7 @@
 import re
 import csv
-import json
+from lxml import etree
+from urllib.parse import urljoin
 
 from sgrequests import SgRequests
 
@@ -41,47 +42,35 @@ def fetch_data():
 
     items = []
 
-    start_url = "https://www.meridiancu.ca/Meridian/WebService.asmx/GetLocations"
+    start_url = "https://www.meridiancu.ca/api/search/bank-locations-all"
     domain = re.findall("://(.+?)/", start_url)[0].replace("www.", "")
     hdr = {
         "Accept": "application/json, text/javascript, */*; q=0.01",
         "Content-Type": "application/json; charset=UTF-8",
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.90 Safari/537.36",
-        "X-Requested-With": "XMLHttpRequest",
     }
-    response = session.post(start_url, headers=hdr, data="{}")
-    data = json.loads(response.text)
-    data = json.loads(data["d"])
+    data = session.get(start_url, headers=hdr).json()
 
-    for poi in data:
-        store_url = (
-            "https://www.meridiancu.ca/Contact-Us/Branch-Details.aspx?id={}".format(
-                poi["ItemID"]
-            )
-        )
-        store_url = store_url if store_url else "<MISSING>"
-        location_name = poi["Title"]
+    for poi in data["items"]:
+        store_url = urljoin("https://www.meridiancu.ca/", poi["pageUrl"])
+        loc_response = session.get(store_url)
+        loc_dom = etree.HTML(loc_response.text)
+
+        location_name = poi["title"]
         location_name = location_name if location_name else "<MISSING>"
-        street_address = poi["Address"]
-        street_address = street_address if street_address else "<MISSING>"
-        city = poi["City"]
-        city = city if city else "<MISSING>"
-        state = poi["Province"]
-        state = state if state else "<MISSING>"
-        zip_code = poi["Postal"]
-        zip_code = zip_code if zip_code else "<MISSING>"
+        street_address = poi["address1"]
+        city = poi["city"]
+        state = poi["province"]
+        zip_code = poi["postalCode"]
         country_code = "<MISSING>"
-        store_number = poi["ItemID"]
-        phone = poi["Phone"]
+        store_number = "<MISSING>"
+        phone = poi["phone"]
         phone = phone if phone else "<MISSING>"
-        location_type = "<MISSING>"
-        latitude = poi["Latitude"]
-        longitude = poi["Longitude"]
-        hoo = []
-        for k, v in poi.items():
-            if "Hours" in k:
-                day = k.replace("Hours", "")
-                hoo.append(f"{day} {v}")
+        location_type = poi["locationType"]
+        latitude = poi["latitude"]
+        longitude = poi["longitude"]
+        hoo = loc_dom.xpath('//div[@class="c-branch-hrs-list"]/div/p/text()')
+        hoo = [e.strip() for e in hoo if e.strip()]
         hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
 
         item = [

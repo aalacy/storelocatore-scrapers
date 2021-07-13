@@ -58,9 +58,11 @@ def fetch_data():
             title = div.findAll("strong")[i].text
 
             try:
-                street = div.findAll("p")[i].text.split(title, 1)[1].split("(", 1)[0]
+                street = (
+                    div.findAll("p")[i].text.split(title, 1)[1].split("(Drive", 1)[0]
+                )
             except:
-                street = div.text.split(title, 1)[1].split("(", 1)[0]
+                street = div.text.split(title, 1)[1].split("(Drive", 1)[0]
             phone = (
                 div.findAll("li", {"class": "phone"})[i].text.split(":", 1)[1].strip()
             )
@@ -70,7 +72,10 @@ def fetch_data():
                 .replace("\n", " ")
                 .strip()
             )
-
+            try:
+                street = street.split("(Walk", 1)[0]
+            except:
+                pass
             data.append(
                 [
                     "https://www.mvsb.com/",

@@ -5,20 +5,41 @@ import time
 import json
 
 from sgrequests import SgRequests
+from sgselenium import SgChrome
+from webdriver_manager.chrome import ChromeDriverManager
 from sglogging import sglog
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
+
+import ssl
+
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
+
 
 website = "https://www.patagonia.com"
 MISSING = "<MISSING>"
 api_url = "https://patagonia.locally.com/stores/conversion_data?has_data=true&company_id=30&store_mode=&style=&color=&upc=&category=&inline=1&show_links_in_list=&parent_domain=&map_center_lat=40.78831928091212&map_center_lng=-74.06000000000097&map_distance_diag=5000&sort_by=proximity&no_variants=0&only_retailer_id=&dealers_company_id=&only_store_id=false&uses_alt_coords=false&q=false&zoom_level=.json"
 
+user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+headers = {"user-agent": user_agent}
 
-headers = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
-}
-session = SgRequests().requests_retry_session()
+session = SgRequests(proxy_rotation_failure_threshold=0).requests_retry_session(
+    retries=1,
+    backoff_factor=0.3,
+    status_forcelist=[
+        418,
+    ],
+)
 log = sglog.SgLogSetup().get_logger(logger_name=website)
+
+days = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"]
 
 
 def getVarName(value):
@@ -70,7 +91,30 @@ def getAddress(raw_address):
     return MISSING, MISSING, MISSING, MISSING
 
 
-def fetchSinglePage(page_url, country_code):
+def getHooViaDriver(driver, page_url):
+    driver.get(page_url)
+    response = driver.page_source
+
+    body = html.fromstring(response, "lxml")
+    hoo = fetchLxmlText(
+        body,
+        '//strong[contains(text(), "Opening Hours")]/following-sibling::text()',
+        "; ",
+    )
+    if hoo == MISSING:
+        hoo = fetchLxmlText(
+            body,
+            '//strong[contains(text(), "Store Hours")]/following-sibling::text()',
+            "; ",
+        )
+    if hoo == MISSING:
+        hoo = fetchLxmlText(
+            body, '//div[contains(@class, "store-details-hours--full")]/p/text()', "; "
+        )
+    return hoo
+
+
+def fetchSinglePage(driver, page_url, country_code):
     response = request_with_retries(page_url)
     body = html.fromstring(response.text, "lxml")
     latitude = fetchLxmlText(body, '//div[@class="store-locator-map"]/@data-latitude')
@@ -86,17 +130,25 @@ def fetchSinglePage(page_url, country_code):
             '//strong[contains(text(), "Store Hours")]/following-sibling::text()',
             "; ",
         )
+    if hoo == MISSING:
+        hoo = fetchLxmlText(
+            body, '//div[contains(@class, "store-details-hours--full")]/p/text()', "; "
+        )
+
+    if hoo == MISSING:
+        hoo = getHooViaDriver(driver, page_url)
     hoo = hoo.replace(": Monday", "Monday").replace(":; ", "").strip()
     return hoo, latitude, longitude
 
 
-def fetchCountry(country_code):
+def fetchCountry(driver, country_code):
     stores = []
     country_url = f"{website}/store-locator/?dwfrm_wheretogetit_country={country_code}"
     response = request_with_retries(country_url)
     body = html.fromstring(response.text, "lxml")
     pageStores = body.xpath('//div[@class="store-info"]')
     log.debug(f"Scrapping country={country_code}; stores = {len(pageStores)}")
+
     for pageStore in pageStores:
         location_type = "Patagonia Retail Stores"
         page_url = website + pageStore.xpath('.//div[@class="store-name"]/a/@href')[0]
@@ -122,7 +174,7 @@ def fetchCountry(country_code):
             page_url = country_url
 
         street_address, city, state, zip_postal = getAddress(raw_address)
-        hoo, latitude, longitude = fetchSinglePage(page_url, country_code)
+        hoo, latitude, longitude = fetchSinglePage(driver, page_url, country_code)
 
         stores.append(
             {
@@ -142,10 +194,8 @@ def fetchCountry(country_code):
                 "hoo": hoo,
             }
         )
+
     return stores
-
-
-days = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"]
 
 
 def getHoo(data):
@@ -200,15 +250,19 @@ def fetchStores():
     log.info(f"Total stores from api = {len(jsData)}")
     for data in jsData:
         stores.append(convertJSData(data))
-
     response = request_with_retries(f"{website}/store-locator")
     body = html.fromstring(response.text, "lxml")
     country_codes = body.xpath('//select[@class="input-select country"]/option/@value')
     log.info(f"Total country codes = {len(country_codes)}")
+
+    driver = initiateDriver()
     for country_code in country_codes:
         if country_code == "JP":
             continue
-        stores = stores + fetchCountry(country_code)
+        stores = stores + fetchCountry(driver, country_code)
+
+    if driver is not None:
+        driver.close()
     return stores
 
 
@@ -228,6 +282,17 @@ def fetchLxmlText(body, xpath, delimiter=" "):
     if len(value) == 0:
         return MISSING
     return value.strip()
+
+
+def initiateDriver(driver=None):
+    if driver is not None:
+        driver.close()
+
+    return SgChrome(
+        is_headless=True,
+        executable_path=ChromeDriverManager().install(),
+        user_agent=user_agent,
+    ).driver()
 
 
 def fetchData():

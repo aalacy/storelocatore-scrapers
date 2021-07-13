@@ -54,6 +54,7 @@ def fetch_data():
         ):
             street_address = street_address + ", " + store["address_2"]
 
+        street_address = street_address.replace(", Seabranch Square Plaza", "").strip()
         city = store["city"]
         state = store["region"]
         zip = store["post_code"]

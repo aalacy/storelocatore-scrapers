@@ -111,9 +111,12 @@ def fetch_data():
                     zc = line2.split('<span itemprop="zipCode">')[1].split("<")[0]
                 except:
                     zc = "<MISSING>"
-                country = line2.split('<span itemprop="addressCountry">')[1].split("<")[
-                    0
-                ]
+                try:
+                    country = line2.split('<span itemprop="addressCountry">')[1].split(
+                        "<"
+                    )[0]
+                except:
+                    country = "<MISSING>"
             if '"addressLocality": "' in line2 and city == "":
                 city = line2.split('"addressLocality": "')[1].split('"')[0]
             if lat == "" and '<meta itemprop="latitude" content="' in line2:
@@ -127,7 +130,9 @@ def fetch_data():
             if '"addressRegion": "' in line2 and state == "":
                 state = line2.split('"addressRegion": "')[1].split('"')[0]
             if phone == "" and 'itemprop="telephone">' in line2:
-                phone = line2.split('itemprop="telephone">')[1].split("<")[0]
+                phone = line2.split('<span itemprop="telephone">')[1].split("<span>")[0]
+                if "tel:" in phone:
+                    phone = phone.split("tel:")[1].split('"')[0]
             if '"addressCountry": "' in line2 and country == "":
                 country = line2.split('"addressCountry": "')[1].split('"')[0]
             if '"latitude": "' in line2 and lat == "":
@@ -188,8 +193,22 @@ def fetch_data():
             phone = "<MISSING>"
         if city == "":
             city = "<MISSING>"
+        if "/en/macao/" in loc:
+            country = "China"
         state = state.replace("&nbsp;", "")
         city = city.replace("&nbsp;", "")
+        if len(phone) <= 5:
+            phone = "<MISSING>"
+        if (
+            "1" not in phone
+            and "2" not in phone
+            and "3" not in phone
+            and "4" not in phone
+            and "5" not in phone
+            and "6" not in phone
+            and "7" not in phone
+        ):
+            phone = "<MISSING>"
         if " Hotels" not in name and name != "":
             yield [
                 website,
