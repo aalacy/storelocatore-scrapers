@@ -45,7 +45,7 @@ def fetch_data():
                 .find_parent()
                 .stripped_strings
             )[1:]
-            addr = parse_address_intl("  ".join(aa))
+            addr = parse_address_intl("  ".join(aa).replace("‘", "'"))
             city = addr.city
             zip_postal = ""
             if country_code == "The Netherlands":
@@ -65,6 +65,9 @@ def fetch_data():
                 if len(aa_0.split(",")) > 1 and not zip_postal:
                     zip_postal = aa_0.split(",")[1].strip()
                 street_address = aa_0.replace(zip_postal, "").replace(",", "").strip()
+                if "2691 MG" in street_address:
+                    street_address = street_address.replace("2691 MG", "")
+                    zip_postal = "2691 MG"
             else:
                 street_address = addr.street_address_1
                 if addr.street_address_2:
@@ -93,6 +96,7 @@ def fetch_data():
                 locator_domain=locator_domain,
                 latitude=link["lat"],
                 longitude=link["lng"],
+                raw_address="  ".join(aa),
             )
 
 

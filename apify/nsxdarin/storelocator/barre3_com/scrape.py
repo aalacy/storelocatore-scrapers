@@ -39,7 +39,7 @@ def write_output(data):
 
 
 def fetch_data():
-    url = "https://storerocket.global.ssl.fastly.net/api/user/jN49m3n4Gy/locations"
+    url = "https://api.storerocket.io/api/user/jN49m3n4Gy/locations"
     r = session.get(url, headers=headers)
     website = "barre3.com"
     typ = "<MISSING>"

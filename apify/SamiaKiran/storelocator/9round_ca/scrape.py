@@ -30,6 +30,7 @@ def fetch_data():
             for link in state_list:
                 page_url = "https://www.9round.ca" + link["href"]
                 r = session.get(page_url, headers=headers)
+
                 soup = BeautifulSoup(r.text, "html.parser")
                 try:
                     temp = r.text.split("<script type='application/ld+json'>")[1].split(
@@ -37,6 +38,10 @@ def fetch_data():
                     )[0]
                 except:
                     continue
+                if "coming-soon-modal" in r.text:
+                    location_type = "Coming Soon"
+                else:
+                    location_type = "<MISSING>"
                 log.info(page_url)
                 temp = json.loads(temp)
                 location_name = html.unescape(temp["name"])
@@ -66,7 +71,7 @@ def fetch_data():
                     country_code="CA",
                     store_number="<MISSING>",
                     phone=phone.strip(),
-                    location_type="<MISSING>",
+                    location_type=location_type,
                     latitude=latitude,
                     longitude=longitude,
                     hours_of_operation=hours_of_operation.strip(),

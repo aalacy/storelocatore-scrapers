@@ -4,6 +4,11 @@ from lxml import etree
 from sgrequests import SgRequests
 from sgscrape.sgpostal import parse_address_intl
 
+from sglogging import sglog
+
+DOMAIN = "waybackburgers.com"
+log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
+
 
 def write_output(data):
     with open("data.csv", mode="w", encoding="utf-8") as output_file:
@@ -41,7 +46,6 @@ def fetch_data():
 
     items = []
 
-    DOMAIN = "waybackburgers.com"
     start_url = "https://waybackburgers.com/locations/"
 
     hdr = {
@@ -53,7 +57,9 @@ def fetch_data():
     all_locations = dom.xpath('//li[@class="location-info-wrapper"]/h3/a/@href')
 
     for store_url in all_locations:
+        log.info(f"Now crawling {store_url}")
         loc_response = session.get(store_url, headers=hdr)
+        log.info(f"Response Code: {loc_response}")
         if loc_response.status_code != 200:
             continue
         loc_dom = etree.HTML(loc_response.text)
@@ -78,9 +84,10 @@ def fetch_data():
         location_type = "<MISSING>"
         latitude = loc_dom.xpath("//@data-markerlat")[0]
         longitude = loc_dom.xpath("//@data-markerlon")[0]
-
-        days = loc_dom.xpath('//div[@class="location-hours"]/ul//text()')[:7]
-        hours = loc_dom.xpath('//div[@class="location-hours"]/ul//text()')[7:]
+        hoo_data = loc_dom.xpath('//div[@class="location-hours"]/ul//text()')
+        hoo_data = [e.strip() for e in hoo_data if e.strip()]
+        days = hoo_data[:7]
+        hours = hoo_data[7:]
         hoo = list(map(lambda d, h: d + " " + h, days, hours))
         hoo = [e.strip() for e in hoo if e.strip()]
         hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
@@ -108,8 +115,10 @@ def fetch_data():
 
 
 def scrape():
+    log.info("Crawling Started")
     data = fetch_data()
     write_output(data)
+    log.info(f"Finished grabbing!! & Total rows {len(data)}")
 
 
 if __name__ == "__main__":

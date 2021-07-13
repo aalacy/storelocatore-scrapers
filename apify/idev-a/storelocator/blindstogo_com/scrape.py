@@ -62,8 +62,10 @@ def fetch_data():
             if addr[-1] == "Get Directions":
                 del addr[-1]
             zip_postal = " ".join(addr[-1].split(",")[1].strip().split(" ")[1:]).strip()
+            if not zip_postal and len(addr[-1].split(",")) == 3:
+                zip_postal = addr[-1].split(",")[-1].strip()
             country_code = "US"
-            if len(zip_postal) > 5:
+            if not zip_postal.replace("-", "").isdigit() and len(zip_postal) > 5:
                 country_code = "CA"
             hours = []
             _hr = sp1.find("strong", string=re.compile(r"Opening Hours"))
@@ -96,7 +98,7 @@ def fetch_data():
                 zip_postal=zip_postal,
                 country_code=country_code,
                 phone=sp1.select_one("div.sppb-addon-content a")
-                .text.split("ext")[-1]
+                .text.split("ext")[0]
                 .strip(),
                 locator_domain=locator_domain,
                 latitude=link.lat.text,
