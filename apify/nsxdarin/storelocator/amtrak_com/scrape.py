@@ -83,28 +83,29 @@ def fetch_data():
         lng = "<MISSING>"
         phone = "215-856-7924"
         store = loc.rsplit("=", 1)[1]
-        lurl = "https://www.amtrak.com/stations/" + store
-        r2 = session.get(loc, headers=headers)
+        lurl = "https://www.amtrak.com/content/amtrak/en-us/stations/" + store + ".html"
+        r2 = session.get(lurl, headers=headers)
         if r2.encoding is None:
             r2.encoding = "utf-8"
         lines = r2.iter_lines(decode_unicode=True)
         for line2 in lines:
-            if '"name":"' in line2:
-                name = line2.split('"name":"')[1].split('"')[0]
-            if '"latitude":"' in line2:
-                lat = line2.split('"latitude":"')[1].split('"')[0]
-            if '"longitude":"' in line2:
-                lng = line2.split('"longitude":"')[1].split('"')[0]
-            if '"stationType":"' in line2:
-                typ = line2.split('"stationType":"')[1].split('"')[0]
-            if '"addressLine":["' in line2:
-                add = line2.split('"addressLine":["')[1].split('"')[0]
-            if '"cityName":"' in line2:
-                city = line2.split('"cityName":"')[1].split('"')[0]
-            if '"postalCode":"' in line2:
-                zc = line2.split('"postalCode":"')[1].split('"')[0]
-            if '"stateProv":{"stateCode":"' in line2:
-                state = line2.split('"stateProv":{"stateCode":"')[1].split('"')[0]
+            if '<h1 class="hero-banner-and-info__card_info-title">' in line2:
+                name = line2.split(
+                    '<h1 class="hero-banner-and-info__card_info-title">'
+                )[1].split("<")[0]
+            if add == "" and 'ard_block-address">' in line2:
+                add = line2.split('ard_block-address">')[1].split("<")[0]
+            if add != "" and 'ard_block-address">' in line2 and "-->" not in line2:
+                if add not in line2:
+                    csz = line2.split('card_block-address">')[1].split("<")[0].strip()
+                    city = csz.split(",")[0]
+                    state = csz.split(",")[1].strip().split(" ")[0]
+                    zc = csz.rsplit(" ", 1)[1]
+            if 'station-type">' in line2:
+                typ = line2.split('station-type">')[1].split("<")[0]
+            if "maps/dir//" in line2:
+                lat = line2.split("maps/dir//")[1].split(",")[0]
+                lng = line2.split("maps/dir//")[1].split(",")[1].split('"')[0]
         hurl = (
             "https://www.amtrak.com/content/amtrak/en-us/stations/"
             + store.lower()
@@ -137,6 +138,8 @@ def fetch_data():
             hours = "<MISSING>"
         if state in canada:
             country = "CA"
+        if "(" in typ:
+            typ = typ.split("(")[0].strip()
         if add != "":
             yield [
                 website,

@@ -146,7 +146,7 @@ def get_data(url):
         hours_of_operation = (
             " ".join(
                 tree.xpath(
-                    '//h3[contains(text(),"Hours:")]/following-sibling::div[1]//text()'
+                    '//h3[contains(text(),"Hours:")]/following-sibling::div[1]//text() | //strong[contains(text(),"Hours:")]/following-sibling::text()'
                 )
             )
             .replace("\n", "")
