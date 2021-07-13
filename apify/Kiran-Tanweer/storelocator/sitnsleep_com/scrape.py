@@ -1,3 +1,4 @@
+import ssl
 from bs4 import BeautifulSoup
 from sgrequests import SgRequests
 from sglogging import sglog
@@ -5,10 +6,20 @@ from sgselenium import SgChrome
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from selenium.webdriver.support.ui import WebDriverWait
+from webdriver_manager.chrome import ChromeDriverManager
+
 from lxml import html
 
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
 
-session = SgRequests()
+
 website = "sitnsleep_com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 session = SgRequests()
@@ -22,9 +33,11 @@ MISSING = "<MISSING>"
 
 
 def fetch_data():
-    with SgChrome(executable_path="C:/webdrivers/chromedriver.exe") as driver:
+    with SgChrome(
+        executable_path=ChromeDriverManager().install(), is_headless=True
+    ) as driver:
         driver.get("https://www.sitnsleep.com/storelocator")
-        WebDriverWait(driver, 15)
+        WebDriverWait(driver, 40)
         response_text = driver.page_source
         data = html.fromstring(response_text, "lxml")
         js_app_slug = data.xpath('//link[contains(@href, "/js/app")]/@href')
@@ -42,11 +55,21 @@ def fetch_data():
         if loc != "[":
             page_url = loc.split('route:"')[1].split('",')[0]
             page_url = "https://www.sitnsleep.com/store/" + page_url
+            page_url = page_url.replace('"},', "")
             log.info(page_url)
             loc = loc.split("address:")[1].split(",reviews:")[0]
             location_name = loc.split(',name:"')[1].split('",')[0]
-            street_address = loc.split(',street:"')[1].split('",')[0]
+
+            street_address = loc.split(',street:"')[1].split('",zip:')[0]
             street_address = street_address.replace("<br/>", " ")
+            if "Long Beach" in location_name:
+                street_address = (
+                    loc.split(',street:"')[1].split('",zip:')[0].rsplit(";")[-1]
+                )
+            if "(" in street_address:
+                street_address = street_address.split("(")[0]
+            if "&" in street_address:
+                street_address = street_address.split("&")[0]
             city = loc.split('{city:"')[1].split('",')[0]
             state = loc.split(',state:"')[1].split('",')[0]
             zip_postal = loc.split(',zip:"')[1].split('"}')[0]
@@ -66,7 +89,7 @@ def fetch_data():
             )
             latitude = loc.split('latitude:"')[1].split('",')[0]
             longitude = loc.split('longitude:"')[1].split('",')[0]
-            phone = loc.split(',phone:"')[1].split('",')[0]
+            phone = loc.split(',phone:"')[1].split('",')[0].replace('"', "")
             yield SgRecord(
                 locator_domain=DOMAIN,
                 page_url=page_url,

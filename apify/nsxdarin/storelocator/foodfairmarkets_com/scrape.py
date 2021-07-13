@@ -59,7 +59,10 @@ def fetch_data():
             state = "<MISSING>"
         zc = item["postal_code"]
         hours = item["hours_md"]
-        phone = item["phone_md"]
+        try:
+            phone = item["phone_md"]
+        except:
+            phone = "<MISSING>"
         if city == "Ironton":
             state = "OH"
         if city == "West Hamlin":

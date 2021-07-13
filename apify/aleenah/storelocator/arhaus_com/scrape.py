@@ -8,6 +8,18 @@ from bs4 import BeautifulSoup
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
 
+import ssl
+
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
+
+
 logger = SgLogSetup().get_logger("arhaus_com")
 
 session = SgRequests()
@@ -92,13 +104,17 @@ def fetch_data():
             zips.append(
                 soup.find("span", {"class": "store-details__street-zip"}).text.strip()
             )
+
             timing.append(
-                soup.find_all("div", {"class": "store-details__info-section"})[1]
-                .text.strip()
-                .replace("\n", " ")
-                .replace("Instagram Icon       Follow us on Instagram", "")
-                .replace("Location Hours ", "")
-                .strip()
+                re.sub(
+                    "[ ]+",
+                    " ",
+                    soup.find_all("div", {"class": "store-details__info-section"})[1]
+                    .text.strip()
+                    .replace("\n", " ")
+                    .replace("Instagram Icon       Follow us on Instagram", "")
+                    .replace("Location Hours ", ""),
+                ).strip()
             )
             phones.append(
                 soup.find("div", {"class": "store-details__phone"}).text.strip()

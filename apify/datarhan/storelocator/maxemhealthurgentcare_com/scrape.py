@@ -54,12 +54,13 @@ def fetch_data():
         loc_response = session.get(store_url)
         loc_dom = etree.HTML(loc_response.text)
 
-        location_name = loc_dom.xpath('//h1[@class="post_title"]/text()')
-        location_name = location_name[0].strip() if location_name else "<MISSING>"
+        location_name = loc_dom.xpath('//h1[@class="post_title"]/text()')[0].strip()
         raw_data = loc_dom.xpath(
             '//div[@class="profile_single_photo col-md-5"]/following-sibling::div[1]/p/text()'
         )
         raw_data = [e.strip() for e in raw_data if e.strip()]
+        if "Ocean Springs Urgent Care – Washington" in raw_data[0]:
+            raw_data = raw_data[1:]
         if len(raw_data) == 1:
             continue
         if "suit" in raw_data[1].lower():
@@ -72,16 +73,24 @@ def fetch_data():
             zip_code = "<MISSING>"
         country_code = "<MISSING>"
         store_number = "<MISSING>"
-        phone = raw_data[2].split(":")[-1].replace("Ph. ", "").strip()
+        phone = [e.replace("Ph. ", "") for e in raw_data if "Ph." in e]
+        if not phone:
+            phone = [e.split(":")[-1] for e in raw_data if "Ph:" in e]
+        phone = phone[0] if phone else "<MISSING>"
         location_type = "<MISSING>"
         latitude = "<MISSING>"
         longitude = "<MISSING>"
-        hoo = raw_data[-3:]
-        hoo = [e.strip() for e in hoo if e.strip() and "Fax" not in e]
-        hoo = [e.strip() for e in hoo if e.strip() and "Ph:" not in e]
+        if len(raw_data) == 2:
+            hoo = loc_dom.xpath('//div[@dir="ltr"]/div[@dir="ltr"]/div/text()')
+        else:
+            hoo = raw_data[-3:]
+            hoo = [e.strip() for e in hoo if e.strip() and "Fax" not in e]
+            hoo = [e.strip() for e in hoo if e.strip() and "Ph:" not in e]
         hours_of_operation = (
             " ".join(hoo).split(" Click")[0].strip() if hoo else "<MISSING>"
         )
+        if "Click" in hours_of_operation:
+            hours_of_operation = [e for e in raw_data if "Everyday" in e][0]
 
         item = [
             domain,
