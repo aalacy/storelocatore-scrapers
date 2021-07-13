@@ -5,7 +5,7 @@ from lxml import etree
 from urllib.parse import urljoin
 
 from sgrequests import SgRequests
-from sgselenium import SgChrome
+from sgselenium import SgFirefox
 from sgscrape.sgpostal import parse_address_intl
 
 import ssl
@@ -65,7 +65,14 @@ def fetch_data():
     all_locations = dom.xpath('//a[@class="single-location__image"]/@href')
     for store_url in all_locations:
         store_url = urljoin(start_url, store_url)
-        with SgChrome() as driver:
+        urls_pass = [
+            "https://leavetheherdbehind.com/blogs/locations/greenhill-mall",
+            "https://leavetheherdbehind.com/blogs/locations/manila",
+        ]
+        if store_url in urls_pass:
+            continue
+
+        with SgFirefox() as driver:
             driver.get(store_url)
             loc_dom = etree.HTML(driver.page_source)
 
@@ -98,8 +105,8 @@ def fetch_data():
         phone = "<MISSING>"
         geo_data = loc_dom.xpath('//script[contains(text(), "center:")]/text()')[0]
         geo = re.findall(r"center: \[(.+?)\],", geo_data)[0].split(",")
-        latitude = geo[0]
-        longitude = geo[1]
+        latitude = geo[1]
+        longitude = geo[0]
         hours_of_operation = loc_dom.xpath(
             '//h2[contains(text(), "Opening Hours")]/following-sibling::div/span/text()'
         )

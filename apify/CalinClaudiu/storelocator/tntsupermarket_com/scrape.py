@@ -18,7 +18,7 @@ def para(k):
         headers=headers,
     ).json()
     k = k["data"]
-
+    backup = k
     try:
         k["zip"] = k["address"].rsplit(".", 1)[1]
         k["zip"] = k["zip"].strip()
@@ -38,6 +38,7 @@ def para(k):
         k["town"] = "<MISSING>"
 
     try:
+        addressbackup = k["address"]
         k["address"] = k["address"].split("  ", 1)[0]
     except:
         k["address"] = "<MISSING>"
@@ -53,11 +54,53 @@ def para(k):
         "https://www.tntsupermarket.com/rest/V1/xmapi/get-store-details?lang=en&id="
         + k["id"]
     )
+
+    if k["zip"] == "<MISSING>":
+        k = backup
+        try:
+            k["zip"] = k["address"].rsplit(",", 1).split(" ")
+            k["region"] = k["zip"][0]
+            k["zip"] = "".join(k["zip"][1:])
+        except:
+            k["zip"] = "<MISSING>"
+
+        try:
+            k["town"] = k["address"].split("  ", 1)[1].split(",")[0]
+            k["town"] = k["town"].strip()
+        except:
+            k["town"] = "<MISSING>"
+
+        try:
+            k["address"] = k["address"].split("  ", 1)[0]
+        except:
+            k["address"] = "<MISSING>"
+
+        if k["town"] == "<MISSING>":
+            try:
+                k["address"] = k["address"].split("North Waterloo", 1)[0]
+                k["town"] = "Waterloo"
+            except:
+                pass
+        k["id"] = ide
+        k["page_url"] = (
+            "https://www.tntsupermarket.com/rest/V1/xmapi/get-store-details?lang=en&id="
+            + k["id"]
+        )
+    if len(k["town"]) > len(k["address"]):
+        k["address"] = addressbackup
+        try:
+            k["address"] = k["address"].split(")", 1)[1]
+            k["address"] = k["address"].rsplit(",", 1)[0]
+            k["town"] = k["address"].rsplit(" ", 1)[1]
+            k["address"] = k["address"].replace(k["town"], "").replace("  ", " ")
+        except Exception:
+            k["address"] = addressbackup
+            k["town"] = "<INACCESSIBLE>"
     return k
 
 
 def fix_hours(x):
-    x = x.replace("<br />", ": ")
+    x = x.replace("<br />", ", ").replace("\n", "")
 
     return x
 

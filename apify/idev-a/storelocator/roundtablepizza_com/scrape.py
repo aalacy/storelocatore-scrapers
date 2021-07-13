@@ -25,6 +25,8 @@ locator_domain = "https://roundtablepizza.com/"
 
 search = DynamicGeoSearch(
     country_codes=[SearchableCountries.USA],
+    max_radius_miles=None,
+    max_search_results=None,
 )
 
 
@@ -87,13 +89,14 @@ def fetch_data():
                             ": ".join(hh.stripped_strings)
                             for hh in sp1.select("#openHours ul li")
                         ]
+                        if sp1.select_one("span.phone"):
+                            store["phone"] = sp1.select_one("span.phone").text.strip()
                         if not hours:
                             driver.get(store["page_url"])
                             sp1 = bs(driver.page_source, "lxml")
                             store["zip_postal"] = sp1.select_one(
                                 "span.zip"
                             ).text.strip()
-                            store["phone"] = sp1.select_one("span.phone").text.strip()
                             for hh in sp1.select("div.dayHoursContainer div.dayHours"):
                                 hours.append(
                                     f"{hh.select_one('span.startDayContainer').text.strip()}: {''.join(hh.select_one('span.timeContainer').stripped_strings)}"
@@ -140,12 +143,15 @@ def scrape():
         ),
         latitude=sp.MappingField(
             mapping=["latitude"],
+            part_of_record_identity=True,
         ),
         longitude=sp.MappingField(
             mapping=["longitude"],
+            part_of_record_identity=True,
         ),
         street_address=sp.MappingField(
             mapping=["street_address"],
+            part_of_record_identity=True,
         ),
         city=sp.MappingField(
             mapping=["city"],
@@ -159,12 +165,12 @@ def scrape():
         country_code=sp.ConstantField("US"),
         phone=sp.MappingField(
             mapping=["phone"],
-            part_of_record_identity=True,
         ),
         hours_of_operation=sp.MappingField(mapping=["hours_of_operation"]),
         location_type=sp.MissingField(),
         store_number=sp.MappingField(
             mapping=["store_number"],
+            part_of_record_identity=True,
         ),
         raw_address=sp.MissingField(),
     )

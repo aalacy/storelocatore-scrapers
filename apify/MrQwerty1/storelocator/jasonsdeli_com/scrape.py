@@ -1,7 +1,7 @@
 import csv
 import json
 
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent import futures
 from lxml import html
 from sgrequests import SgRequests
 
@@ -119,17 +119,14 @@ def get_data(url):
 
 def fetch_data():
     out = []
-    threads = []
     urls = get_urls()
 
-    with ThreadPoolExecutor(max_workers=10) as executor:
-        for url in urls:
-            threads.append(executor.submit(get_data, url))
-
-    for task in as_completed(threads):
-        row = task.result()
-        if row:
-            out.append(row)
+    with futures.ThreadPoolExecutor(max_workers=10) as executor:
+        future_to_url = {executor.submit(get_data, url): url for url in urls}
+        for future in futures.as_completed(future_to_url):
+            row = future.result()
+            if row:
+                out.append(row)
 
     return out
 

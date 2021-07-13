@@ -1,9 +1,12 @@
 import csv
+import threading
+from datetime import datetime as dt
 from sgrequests import SgRequests
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from sglogging import SgLogSetup
 from tenacity import retry, stop_after_attempt
 
+local = threading.local()
 logger = SgLogSetup().get_logger("ymca_net")
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36",
@@ -39,16 +42,25 @@ def write_output(data):
             writer.writerow(row)
 
 
-def retry_error_callback(retry_state):
-    id = retry_state.args[0]
-    logger.error(f"Failure to fetch details for: {id}")
+def get_session():
+    if not hasattr(local, "session") or local.count > 3:
+        local.session = SgRequests()
+        local.count = 0
+
+    local.count += 1
+    return local.session
 
 
-@retry(stop=stop_after_attempt(3), retry_error_callback=retry_error_callback)
+@retry(stop=stop_after_attempt(3), reraise=True)
 def fetch_location(id):
-    session = SgRequests()
+    session = get_session()
     url = f"https://www.ymca.net/y-profile/?id={id}"
     r = session.get(url, headers=headers)
+    if r.status_code not in (500, 200, 404):
+        # 500/404: not found
+        # 200: success
+        r.raise_for_status()
+
     name = ""
     add = ""
     city = ""
@@ -121,10 +133,22 @@ def fetch_location(id):
         ]
 
 
-def fetch_data():
-    with ThreadPoolExecutor(max_workers=10) as executor:
-        futures = [executor.submit(fetch_location, id) for id in range(1, 5000)]
+def validate_proxy():
+    try:
+        for id in range(1, 20):
+            fetch_location(id)
+    except Exception as e:
+        logger.error("Scraper need to be run with proxy enabled.")
+        raise e
 
+
+def fetch_data():
+    # this scraper need to be run with a proxy else will silently fails
+    # due to the thread pool executor swallowing the exceptions.
+    validate_proxy()
+
+    with ThreadPoolExecutor(max_workers=20) as executor:
+        futures = [executor.submit(fetch_location, id) for id in range(1, 5000)]
         for future in as_completed(futures):
             poi = future.result()
             if poi:
@@ -132,8 +156,11 @@ def fetch_data():
 
 
 def scrape():
+    start = dt.now()
     data = fetch_data()
     write_output(data)
+    logger.info(f"duration: {dt.now() - start}")
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()

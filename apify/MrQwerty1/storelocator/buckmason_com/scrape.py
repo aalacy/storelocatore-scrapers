@@ -54,9 +54,9 @@ def fetch_data():
     r = session.get(api, headers=headers)
     tree = html.fromstring(r.text)
     divs = tree.xpath("//figure[@class='stores-menu__item']")
+    slugs = tree.xpath("//a[@class='site_menu-panel_link submenu_store-link']/@href")
 
-    for d in divs:
-        slug = "".join(d.xpath(".//a[@class='stores-menu__link']/@href"))
+    for d, slug in zip(divs, slugs):
         page_url = f"https://www.buckmason.com{slug}"
         location_name = "".join(
             d.xpath(".//h2[@class='stores-menu__name']/text()")
@@ -64,6 +64,8 @@ def fetch_data():
 
         line = d.xpath(".//div[@class='stores-menu__address']/text()")
         line = list(filter(None, [l.strip() for l in line]))
+        if not line:
+            continue
         street_address = ", ".join(line[:-1]).replace("Westfield, ", "")
         line = line[-1]
         city = line.split(",")[0].strip()
@@ -76,11 +78,16 @@ def fetch_data():
             "".join(d.xpath(".//a[contains(@href, 'tel:')]/text()")).strip()
             or "<MISSING>"
         )
-        latitude, longitude = get_coords(page_url)
+        try:
+            latitude, longitude = get_coords(page_url)
+        except IndexError:
+            latitude, longitude = "<MISSING>", "<MISSING>"
         location_type = "<MISSING>"
         hours = d.xpath(".//p[@class='stores-hours_copy']/text()")
         hours = list(filter(None, [h.strip() for h in hours]))
         hours_of_operation = ";".join(hours) or "<MISSING>"
+        if "Hours;" in hours_of_operation:
+            hours_of_operation = hours_of_operation.split("Hours;")[-1].strip()
 
         row = [
             locator_domain,

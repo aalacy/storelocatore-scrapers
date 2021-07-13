@@ -35,7 +35,7 @@ proxies = set_proxies()
 
 async def get_main(url, headers):
     async with httpx.AsyncClient(
-        proxies=proxies, headers=headers, timeout=None
+        proxies=proxies, headers=headers, timeout=210
     ) as client:
         response = None
         response = await client.get(url)

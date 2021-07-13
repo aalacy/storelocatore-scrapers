@@ -89,7 +89,7 @@ def fetch_data():
                 latitude = ""
                 longitude = ""
                 map_link = "".join(
-                    store_sel.xpath('//a[contains(@href,"maps.google.com/maps")]/@href')
+                    store_sel.xpath('//a[contains(text(),"Map This Location")]/@href')
                 ).strip()
                 if "sll=" in map_link:
                     latitude = map_link.split("sll=")[1].strip().split(",")[0].strip()
@@ -101,6 +101,22 @@ def fetch_data():
                         .split("&")[0]
                         .strip()
                     )
+                    if "maps.google." in longitude:
+                        latitude = (
+                            map_link.split("sll=")[-1].strip().split(",")[0].strip()
+                        )
+                        longitude = (
+                            map_link.split("sll=")[-1]
+                            .strip()
+                            .split(",")[1]
+                            .strip()
+                            .split("&")[0]
+                            .strip()
+                        )
+
+                elif "/@" in map_link:
+                    latitude = map_link.split("/@")[1].strip().split(",")[0].strip()
+                    longitude = map_link.split("/@")[1].strip().split(",")[1]
 
                 yield SgRecord(
                     locator_domain=locator_domain,
