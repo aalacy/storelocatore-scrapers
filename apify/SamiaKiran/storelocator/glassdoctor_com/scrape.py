@@ -35,7 +35,7 @@ def fetch_data():
         )
         for loc in loclist:
             page_url = loc.find("a")["href"]
-            if loc.find("a").text == "Michigan":
+            if loc.find("a").text == "Michigan" or "portland" in page_url:
                 continue
             log.info(page_url)
             r = session.get(page_url, headers=headers, allow_redirects=True)
