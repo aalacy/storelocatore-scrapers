@@ -133,7 +133,8 @@ def process_record(raw_results_from_one_coordinate):
             if key in days:
                 day = key
                 time = store[day]
-                hours_list.append(day + ": " + time)
+                if time is not None:
+                    hours_list.append(day + ": " + time)
 
         hours_of_operation = "; ".join(hours_list).strip()
         latitude = store["latitude"]
@@ -165,6 +166,7 @@ def scrape():
             SearchableCountries.WITH_ZIPCODE_AND_COORDS
             + SearchableCountries.WITH_COORDS_ONLY
         )
+
         totalCountries = len(countries)
         currentCountryCount = 0
         for country in countries:

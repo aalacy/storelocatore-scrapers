@@ -97,12 +97,9 @@ def fetch_data():
                                 and "Opening 20" in line2
                             ):
                                 CS = True
-                            if ">Coming Soon<" in line2:
+                            if ">Coming " in line2:
                                 CS = True
-                            if (
-                                "and beyond" in line2
-                                and "Now accepting reservations" in line2
-                            ):
+                            if ">Opening " in line2:
                                 CS = True
                             if '"telephone":"' in line2:
                                 phone = line2.split('"telephone":"')[1].split('"')[0]
@@ -112,6 +109,8 @@ def fetch_data():
                         name = "Hyatt Residence Club Maui, Kaanapali Beach"
                     if CS:
                         hours = "Coming Soon"
+                    if "dxbzm" in loc:
+                        hours = "<MISSING>"
                     if loc not in alllocs:
                         alllocs.append(loc)
                         yield [

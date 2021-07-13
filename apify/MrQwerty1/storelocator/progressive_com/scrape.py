@@ -101,17 +101,20 @@ def get_urls():
     cities = []
     urls = []
 
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
+    with futures.ThreadPoolExecutor(max_workers=5) as executor:
         future_to_url = {executor.submit(get_cities, state): state for state in states}
         for future in futures.as_completed(future_to_url):
             rows = future.result()
             cities += rows
 
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
+    states.clear()
+    with futures.ThreadPoolExecutor(max_workers=5) as executor:
         future_to_url = {executor.submit(get_page, city): city for city in cities}
         for future in futures.as_completed(future_to_url):
             rows = future.result()
             urls += rows
+
+    cities.clear()
 
     return urls
 
@@ -183,7 +186,7 @@ def fetch_data():
     s = set()
     urls = get_urls()
 
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
+    with futures.ThreadPoolExecutor(max_workers=3) as executor:
         future_to_url = {executor.submit(get_data, url): url for url in urls}
         for future in futures.as_completed(future_to_url):
             row = future.result()
