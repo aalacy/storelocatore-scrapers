@@ -44,7 +44,7 @@ def write_output(data):
             comp_list = [
                 row[2].strip(),
                 row[3].strip(),
-                row[4].strip(),
+                row[4],
                 row[5].strip(),
                 row[6].strip(),
                 row[8].strip(),
@@ -61,7 +61,7 @@ def fetch_data():
     search_url = "https://www.lunardis.com/locations"
     stores_req = session.get(search_url, headers=headers)
     soup = BeautifulSoup(stores_req.text, "html.parser")
-    divlist = soup.findAll("div", {"class": "bDfMI"})
+    divlist = soup.findAll("div", {"class": "_31Ne5"})
     for div in divlist:
         details = div.text
         details = details.split("\n")
@@ -76,16 +76,22 @@ def fetch_data():
                 phone = details[-4]
         hoo = hoo.lstrip("Hours: Open Daily ").strip()
         hoo = hoo.replace("PEN DAILY ", "").strip()
-        hoo = "Mon - Sun: " + hoo
+        hoo = "Mon - Sat: " + hoo
         phone = phone.lstrip("Store Phone:").strip()
-        title = div.findAll("div", {"class": "_3Mgpu"})[2]
+        title = div.findAll("div", {"class": "_2bafp"})[2]
+        city = title
         for t in title:
             allspan = t.findAll("span")
-            title = allspan[0].text
-            address = allspan[4].text + " " + allspan[5].text
-            address = address.replace("\n", " ")
-            address = address.split("Store Phone")[0].strip()
-            street = address.replace("  ", "").strip()
+            title = allspan[3].text
+            info = div.findAll("div", {"class": "_2bafp"})[3].text
+            info = info.split("\n")
+            if len(info) == 5:
+                street = info[0] + " " + info[1] + " " + info[2]
+            if len(info) == 4:
+                street = info[0] + " " + info[1]
+            if len(info) == 6:
+                street = info[0] + " " + info[1] + " " + info[2] + " " + info[3]
+            street = street.split("Phone")[0].strip()
 
             data.append(
                 [
@@ -93,7 +99,7 @@ def fetch_data():
                     "https://www.lunardis.com/locations",
                     title,
                     street,
-                    "<MISSING>",
+                    city,
                     "<MISSING>",
                     "<MISSING>",
                     "US",

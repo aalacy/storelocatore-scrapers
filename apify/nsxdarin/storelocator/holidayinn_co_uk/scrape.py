@@ -39,6 +39,7 @@ def write_output(data):
 
 def fetch_data():
     locs = []
+    alllocs = []
     states = []
     url = "https://www.ihg.com/holidayinn/destinations/gb/en/united-kingdom-hotels"
     r = session.get(url, headers=headers)
@@ -95,22 +96,25 @@ def fetch_data():
                 zc = line2.split('<span itemprop="postalCode">')[1].split("<")[0]
             if '<a href="tel:' in line2:
                 phone = line2.split('<a href="tel:')[1].split('"')[0]
-        yield [
-            website,
-            loc,
-            name,
-            add,
-            city,
-            state,
-            zc,
-            country,
-            store,
-            phone,
-            typ,
-            lat,
-            lng,
-            hours,
-        ]
+        info = name + "|" + add + "|" + city
+        if info not in alllocs:
+            alllocs.append(info)
+            yield [
+                website,
+                loc,
+                name,
+                add,
+                city,
+                state,
+                zc,
+                country,
+                store,
+                phone,
+                typ,
+                lat,
+                lng,
+                hours,
+            ]
 
 
 def scrape():
