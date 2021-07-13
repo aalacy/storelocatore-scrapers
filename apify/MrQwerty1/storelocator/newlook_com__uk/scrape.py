@@ -58,17 +58,26 @@ def get_data(page_url):
         return
 
     j = json.loads(text)
-    location_name = j.get("name")
+    location_name = j.get("name").replace("&#39;", "'")
     a = j.get("address") or {}
-    line = "".join(tree.xpath("//p[@class='store-results__address']/text()")).strip()
-    city = a.get("addressLocality") or "<MISSING>"
+    line = (
+        "".join(tree.xpath("//p[@class='store-results__address']/text()"))
+        .replace("&#39;", "'")
+        .strip()
+    )
+    city = a.get("addressLocality").replace("&#39;", "'") or "<MISSING>"
     try:
         street_address = line.split(f", {city},")[0].strip()
     except:
         street_address = a.get("streetAddress") or "<MISSING>"
+
+    street_address = street_address.replace(", Speke", "").replace(", Skelmersdale", "")
     state = "<MISSING>"
     postal = a.get("postalCode") or "<MISSING>"
     country_code = "GB"
+
+    if "," in location_name:
+        location_name = location_name.split(",")[0].strip()
     store_number = page_url.split("-")[-1]
     phone = j.get("telephone") or "<MISSING>"
     g = j.get("geo") or {}

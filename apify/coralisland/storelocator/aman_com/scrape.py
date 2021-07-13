@@ -23,7 +23,6 @@ accept_country = [
         "UK": [
             "United Kingdom",
             "Wales",
-            "Greece",
             "England",
             "Northen Ireland",
             "Scotland",
@@ -84,6 +83,8 @@ def fetch_store_urls():
     )
     links = content.find_all("a", {"class": "clean"})
     for link in links:
+        if "Coming soon" in link.text:
+            continue
         store_urls.append(BASE_URL + link["href"])
     log.info("Found {} URL ".format(len(store_urls)))
     return store_urls
@@ -106,7 +107,6 @@ def fetch_data():
                     location_name = handle_missing(
                         content.find("h3", {"class": "heading-h"}).text.strip()
                     )
-                    city = "<MISSING>"
                     if len(address) > 3:
                         if country == "Greece":
                             street_address = address[0]
@@ -123,9 +123,34 @@ def fetch_data():
                         zip_code = re.sub(r"\D+", "", address[1].split("-")[0]).strip()
                     country_code = key
                     store_number = "<MISSING>"
-                    phone = handle_missing(
-                        content.find("a", {"href": re.compile(r"tel:.*")}).text.strip()
-                    )
+                    try:
+                        phone = handle_missing(
+                            content.find(
+                                "a", {"href": re.compile(r"tel:.*")}
+                            ).text.strip()
+                        )
+                    except:
+                        phone = handle_missing(
+                            soup.main.find(
+                                "a", {"href": re.compile(r"tel:.*")}
+                            ).text.strip()
+                        )
+
+                    city = "<MISSING>"
+
+                    if state == "London WK AL":
+                        city = "London"
+                        state = "<MISSING>"
+                        zip_code = "W1K 2AL"
+
+                    if country_code == "US":
+                        city = (
+                            soup.find_all("a", {"aria-current": "page"})[-1]
+                            .find_all("span")[-1]
+                            .text.split(",")[0]
+                            .replace("HOLE", "")
+                        ).strip()
+
                     location_type = "<MISSING>"
                     hours_of_operation = "<MISSING>"
                     latitude = "<MISSING>"

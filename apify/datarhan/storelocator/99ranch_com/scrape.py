@@ -49,7 +49,7 @@ def fetch_data():
     data = json.loads(response.text)
 
     for poi in data["items"]:
-        store_url = poi["url"]
+        store_url = poi.get("url")
         store_url = store_url if store_url else "<MISSING>"
         location_name = poi["name"]
         location_name = location_name if location_name else "<MISSING>"
@@ -73,15 +73,19 @@ def fetch_data():
         country_code = "<MISSING>"
         store_number = poi["number"]
         store_number = store_number if store_number else "<MISSING>"
-        phone = poi["phone"].split("\n")[0]
+        phone = poi["phone"].split("\n")[0].split("Phone: ")[-1]
         location_type = "<MISSING>"
         latitude = poi["latitude"]
         latitude = latitude if latitude else "<MISSING>"
         longitude = poi["longitude"]
         longitude = longitude if longitude else "<MISSING>"
-        hoo = poi["hours_md"].split("\n")
+        hoo = []
+        if poi.get("hours_md"):
+            hoo = poi["hours_md"].split("\n")
         hoo = [elem for elem in hoo if "am -" in elem]
-        hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
+        hours_of_operation = (
+            " ".join(hoo).split("Special")[0].strip() if hoo else "<MISSING>"
+        )
 
         item = [
             DOMAIN,

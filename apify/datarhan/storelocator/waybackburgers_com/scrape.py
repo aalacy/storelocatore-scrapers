@@ -1,7 +1,13 @@
 import csv
-import urllib.parse
 from lxml import etree
-from sgselenium import SgFirefox
+
+from sgrequests import SgRequests
+from sgscrape.sgpostal import parse_address_intl
+
+from sglogging import sglog
+
+DOMAIN = "waybackburgers.com"
+log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
 
 
 def write_output(data):
@@ -36,61 +42,55 @@ def write_output(data):
 
 def fetch_data():
     # Your scraper here
+    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
+
     items = []
 
-    DOMAIN = "waybackburgers.com"
     start_url = "https://waybackburgers.com/locations/"
 
-    all_locations = []
-    with SgFirefox() as driver:
-        driver.get(start_url)
-        driver_r = etree.HTML(driver.page_source)
-    all_locations = driver_r.xpath('//li[@class="locations_list_item "]')
+    hdr = {
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
+    }
 
-    for poi in all_locations:
-        store_url = poi.xpath("@data-order_online_url")
-        store_url = store_url[0] if store_url[0].strip() else "<MISSING>"
-        if store_url == "<MISSING>":
-            store_url = (
-                "https://waybackburgers.com/locations/#location_"
-                + poi.xpath("@data-id")[0]
-            )
-        location_name = poi.xpath("@data-name")
-        location_name = (
-            urllib.parse.unquote(location_name[0]) if location_name else "<MISSING>"
-        )
-        street_address = poi.xpath("@data-address")
-        street_address = (
-            urllib.parse.unquote(street_address[0]).replace("\n", "")
-            if street_address
-            else "<MISSING>"
-        )
-        city = poi.xpath("@data-city")
-        city = urllib.parse.unquote(city[0]) if city else "<MISSING>"
-        state = poi.xpath("@data-state")
-        state = state[0] if state else "<MISSING>"
-        zip_code = poi.xpath("@data-postal_code")
-        zip_code = urllib.parse.unquote(zip_code[0]) if zip_code else "<MISSING>"
-        country_code = poi.xpath("@data-country")
-        country_code = country_code[0].strip() if country_code else "<MISSING>"
-        if country_code not in ["USA", "Canada"]:
+    response = session.get(start_url, headers=hdr)
+    dom = etree.HTML(response.text)
+    all_locations = dom.xpath('//li[@class="location-info-wrapper"]/h3/a/@href')
+
+    for store_url in all_locations:
+        log.info(f"Now crawling {store_url}")
+        loc_response = session.get(store_url, headers=hdr)
+        log.info(f"Response Code: {loc_response}")
+        if loc_response.status_code != 200:
             continue
-        store_number = poi.xpath("@data-id")
-        store_number = store_number[0] if store_number else "<MISSING>"
-        phone = poi.xpath("@data-phone")
-        phone = urllib.parse.unquote(phone[0]) if phone else "<MISSING>"
+        loc_dom = etree.HTML(loc_response.text)
+
+        location_name = loc_dom.xpath('//div[@class="location-name"]/text()')[0]
+        addr = parse_address_intl(
+            loc_dom.xpath('//div[@class="location-address"]/text()')[0]
+        )
+        street_address = addr.street_address_1
+        if addr.street_address_2:
+            street_address += " " + addr.street_address_2
+        city = addr.city
+        city = city if city else "<MISSING>"
+        state = addr.state
+        state = state if state else "<MISSING>"
+        zip_code = addr.postcode
+        zip_code = zip_code if zip_code else "<MISSING>"
+        country_code = "<MISSING>"
+        store_number = "<MISSING>"
+        phone = loc_dom.xpath('//div[@class="location-phone"]/a[2]/text()')
+        phone = phone[0] if phone else "<MISSING>"
         location_type = "<MISSING>"
-        latitude = poi.xpath("@data-geo_latitude")
-        latitude = (
-            latitude[0] if latitude and latitude[0] != "0.000000" else "<MISSING>"
-        )
-        longitude = poi.xpath("@data-geo_longitude")
-        longitude = (
-            longitude[0] if longitude and longitude[0] != "0.000000" else "<MISSING>"
-        )
-        hours_of_operation = urllib.parse.unquote(poi.xpath("@data-hours")[0])
-        hours_html = etree.HTML(hours_of_operation)
-        hours_of_operation = " ".join(hours_html.xpath(".//text()"))
+        latitude = loc_dom.xpath("//@data-markerlat")[0]
+        longitude = loc_dom.xpath("//@data-markerlon")[0]
+        hoo_data = loc_dom.xpath('//div[@class="location-hours"]/ul//text()')
+        hoo_data = [e.strip() for e in hoo_data if e.strip()]
+        days = hoo_data[:7]
+        hours = hoo_data[7:]
+        hoo = list(map(lambda d, h: d + " " + h, days, hours))
+        hoo = [e.strip() for e in hoo if e.strip()]
+        hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
 
         item = [
             DOMAIN,
@@ -115,8 +115,10 @@ def fetch_data():
 
 
 def scrape():
+    log.info("Crawling Started")
     data = fetch_data()
     write_output(data)
+    log.info(f"Finished grabbing!! & Total rows {len(data)}")
 
 
 if __name__ == "__main__":

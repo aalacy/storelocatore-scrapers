@@ -4,7 +4,6 @@ from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import lxml.html
-from bs4 import BeautifulSoup as BS
 
 website = "communityrx.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -33,11 +32,11 @@ def fetch_data():
             store_sel.xpath('//h3[@class="widget-title"]/span/text()')
         ).strip()
 
-        store_soup = BS(store_req.text, "lxml")
-        raw_info = store_soup.find("div", {"class": "textwidget"})
+        raw_info = store_sel.xpath('//div[@class="textwidget"]/p//text()')
         raw_list = []
-        if raw_info is not None:
-            raw_list = list(raw_info.stripped_strings)
+        for raw in raw_info:
+            if len("".join(raw).strip()) > 0:
+                raw_list.append("".join(raw).strip())
 
         add_list = ""
         phone = ""
@@ -57,6 +56,8 @@ def fetch_data():
                     .encode("ascii", "replace")
                     .decode("utf-8")
                     .replace("?", "-")
+                    .strip()
+                    .replace("; Copyright - 2010-2021 Community Pharmacies", "")
                     .strip()
                 )
 

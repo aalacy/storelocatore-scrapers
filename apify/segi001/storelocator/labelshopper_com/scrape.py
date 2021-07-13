@@ -127,13 +127,18 @@ def fetch_data():
             .replace("<li>", "")
             .replace("</li>", ", ")[:-2]
         )
+        address = addressJSON["address"].strip()
+        city = addressJSON["city"]
+        if address.endswith(city):
+            rreplacement = city[::-1]
+            address = address[::-1].replace(rreplacement, "", 1)[::-1].strip()
         result.append(
             [
                 locator_domain,
                 pageURL,
                 store["title"],
-                addressJSON["address"],
-                addressJSON["city"],
+                address,
+                city,
                 addressJSON["state"],
                 addressJSON["zip"],
                 missingString,

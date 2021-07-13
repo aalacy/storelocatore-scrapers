@@ -46,6 +46,9 @@ def fetch_data():
             j = j["store_info"]
             locator_domain = url
             page_url = j.get("website") or "<MISSING>"
+            if "*" in page_url:
+                page_url = page_url.split("*")[0]
+
             street_address = (
                 f"{j.get('address')} {j.get('address_extended') or ''}" or "<MISSING>"
             )
