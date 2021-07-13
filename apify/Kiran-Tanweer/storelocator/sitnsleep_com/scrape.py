@@ -49,6 +49,7 @@ def fetch_data():
         if loc != "[":
             page_url = loc.split('route:"')[1].split('",')[0]
             page_url = "https://www.sitnsleep.com/store/" + page_url
+            page_url = page_url.replace('"},',"")
             log.info(page_url)
             loc = loc.split("address:")[1].split(",reviews:")[0]
             location_name = loc.split(',name:"')[1].split('",')[0]
