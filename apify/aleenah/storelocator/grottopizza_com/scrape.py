@@ -49,6 +49,9 @@ def fetch_data():
     sa = soup.find("ul", {"class": "sub-nav grid-parent"}).find_all("a")
     logger.info(len(sa))
     for a in sa:
+
+        if "https://www.grottopizza.com/grotto-gift-shop/" in a.get("href"):
+            continue
         res = session.get(a.get("href"))
         soup = BeautifulSoup(res.text, "html.parser")
         loc = soup.find("span", {"class": "italia white-text blocked"}).text
@@ -81,7 +84,11 @@ def fetch_data():
             .replace("AM -    Su", "AM   Su")
             .replace("ySu", "y - Su")
         )
+
+        if "Thank you for another great season!" in tim:
+            tim = "<MISSING>"
         logger.info(tim)
+
         all.append(
             [
                 "https://grottopizza.com",
@@ -103,35 +110,36 @@ def fetch_data():
 
     res = session.get("https://grottopizzapa.com/?page_id=20")  # pensylvania locations
     soup = BeautifulSoup(res.text, "html.parser")
-    addr = re.findall(
-        r"<h3>([^<]+)<br/>([^<]+)<br/>([^<]+)</h3><p>[^<]+</p><p>([^<]+)</p>",
-        str(soup)
-        .replace("\n", "")
-        .replace("\r", "")
-        .replace("&amp; ", "")
-        .replace("</strong>", "")
-        .replace("<strong>", ""),
-    )
-    for add in addr:
-        loc = add[0]
-        tim = add[-1]
-        phone = add[2]
-        add = add[1].split("•")
-        street = add[0]
-        add = add[1].split(",")
-        city = add[0]
-        state = add[1].strip()
-        zip = "<MISSING>"
+
+    addrs = re.findall(r"(\nGrotto Pizza.*Delivery to:)", str(soup.text), re.DOTALL)[
+        0
+    ].split("Delivery to:")
+    if addrs[-1].strip() == "":
+        del addrs[-1]
+    for addr in addrs:
+        addr = addr.split("\n")
+        del addr[0]
+        if addr[-1].strip() == "":
+            del addr[-1]
+
+        loc = addr[0]
+        del addr[0]
+        add = addr[0].split("•")
+        street = add[0].strip()
+        city = add[1].split(",")[0].strip()
+        state = add[1].split(",")[1].strip()
+        del addr[0]
+        phone = addr[0]
+        del addr[0]
+        if "Hours" not in addr[0]:
+            del addr[0]
         tim = (
-            tim.encode("ascii", errors="ignore")
-            .decode("ascii")
-            .replace("AM  ", "AM - ")
-            .replace("y T", "y - T")
-            .replace("AM -   Su", "AM   Su")
-            .replace("AM -    Su", "AM   Su")
-            .replace("ySu", "y - Su")
+            ", ".join(addr)
+            .replace("Hours:", "")
+            .replace("Hours –", "")
+            .replace("\xa0", "")
+            .strip()
         )
-        logger.info(tim)
 
         all.append(
             [
@@ -140,7 +148,7 @@ def fetch_data():
                 street,
                 city,
                 state,
-                zip,
+                "<MISSING>",
                 "US",
                 "<MISSING>",  # store #
                 phone,  # phone

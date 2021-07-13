@@ -61,6 +61,12 @@ def fetch_data():
         phone = j.get("phone") or "<MISSING>"
         latitude = j.get("latitude") or "<MISSING>"
         longitude = j.get("longitude") or "<MISSING>"
+        if (
+            street_address == "<MISSING>"
+            and state == "<MISSING>"
+            and postal == "<MISSING>"
+        ):
+            continue
 
         c = j.get("custom") or {}
         location_type = c.get("OCC_category") or "<MISSING>"

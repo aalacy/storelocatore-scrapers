@@ -50,7 +50,7 @@ def fetch_data():
             if child.tag == "location":
                 location_name = child.text.replace("&amp;", "&").strip()
             if child.tag == "address":
-                raw_address = child.text
+                raw_address = child.text.replace("&#44;", ",").strip()
                 full_raw_address = raw_address
                 state_zip = raw_address.rsplit(",", 1)[-1].strip()
                 state = state_zip.split(" ", 1)[0].strip()
@@ -64,6 +64,9 @@ def fetch_data():
                     )
 
                 city = formatted_addr.city
+                if city is None and location_name == "Place du Royaume":
+                    city = "Chicoutimi"
+
                 country_code = "CA"
 
             if child.tag == "operatingHours":

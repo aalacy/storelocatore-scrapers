@@ -1,8 +1,8 @@
 import re
 import csv
+import json
 from lxml import etree
 from urllib.parse import urljoin
-from w3lib.url import add_or_replace_parameter
 
 from sgrequests import SgRequests
 
@@ -45,35 +45,18 @@ def fetch_data():
     scraped_items = []
 
     DOMAIN = "henryford.com"
-    start_url = "https://www.henryford.com/locations/search-results?services=&zip=&locationtype={}&locationname=&range=&page=1"
-    response = session.get("https://www.henryford.com/locations/search-results")
-    dom = etree.HTML(response.text)
-    all_types = dom.xpath('//select[@name="locationtype"]/option/@value')[1:]
-    for location_type in all_types:
-        if location_type == "open locations":
-            continue
-        response = session.get(start_url.format(location_type.replace(" ", "+")))
-        dom = etree.HTML(response.text)
-        all_locations = dom.xpath('//div[@class="module-lc-info"]/h4/a/@href')
-        total = dom.xpath('//div[@class="module-pg-info"]/text()')[0]
-        total = int(re.findall(r"of (\d+) | Re", total)[0])
-        for page in range(2, total + 1):
-            response = session.get(
-                add_or_replace_parameter(start_url, "page", str(page))
-            )
-            dom = etree.HTML(response.text)
-            all_locations += dom.xpath('//div[@class="module-lc-info"]/h4/a/@href')
-
-        for store_url in all_locations:
-            store_url = urljoin(start_url, store_url)
+    start_url = "https://www.henryford.com/locations"
+    response = session.get(start_url)
+    data = re.findall("locationsList = (.+?); var", response.text)[0]
+    data = json.loads(data[1:-1])
+    for e in data:
+        for loc in e["Locations"]:
+            store_url = urljoin(start_url, loc["Maps"])
             store_response = session.get(store_url)
             store_dom = etree.HTML(store_response.text)
 
-            location_name = store_dom.xpath('//div[@class="content"]/h1/text()')
-            if not location_name:
-                location_name = store_dom.xpath('//h1[@class="loc-detail-h1"]/text()')
-                location_name = [location_name[0].strip()] if location_name else ""
-            location_name = location_name[0] if location_name else "<MISSING>"
+            location_name = loc["Name"]
+            location_name = location_name if location_name else "<MISSING>"
             street_address = store_dom.xpath('//span[@id="address1"]/text()')[0]
             if store_dom.xpath('//span[@id="address2"]/text()'):
                 street_address += (
@@ -85,10 +68,21 @@ def fetch_data():
             state = state[0].strip() if state else "<MISSING>"
             zip_code = store_dom.xpath('//span[@id="zip"]/text()')
             zip_code = zip_code[0].strip() if zip_code else "<MISSING>"
+            location_type = "<MISSING>"
             country_code = "<MISSING>"
             store_number = "<MISSING>"
             phone = store_dom.xpath('//div[@class="phones"]//a/text()')
-            phone = phone[0] if phone else "<MISSING>"
+            if not phone:
+                phone = store_dom.xpath('//a[contains(@href, "tel")]/text()')
+            if not phone:
+                phone = store_dom.xpath(
+                    '//*[strong[contains(text(), "Phone:")]]/text()'
+                )
+            if not phone:
+                phone = store_dom.xpath('//p[contains(text(), "Phone:")]/text()')
+            if not phone:
+                phone = re.findall("first call (.+?) to schedule", store_response.text)
+            phone = phone[0].split(":")[-1].strip() if phone else "<MISSING>"
             latitude = "<MISSING>"
             longitude = "<MISSING>"
             hours_of_operation = "<INACCESSIBLE>"

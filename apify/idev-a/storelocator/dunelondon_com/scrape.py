@@ -1,7 +1,6 @@
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
-import json
 from bs4 import BeautifulSoup as bs
 
 locator_domain = "https://www.dunelondon.com"
@@ -9,53 +8,39 @@ locator_domain = "https://www.dunelondon.com"
 
 def fetch_data():
     with SgRequests() as session:
-        base_url = "https://www.dunelondon.com/rw/stores/?validate=0&longitude=0&lattitude=0&dummyInput=&countryChoice=UK&sl_postcode="
-        res = session.get(base_url)
-        store_list = json.loads(
-            res.text.split("var myStores = ")[1].split(";</script>")[0]
-        )["stores"]
-        for store in store_list:
-            if store["country"] == "IE":
+        base_url = "https://www.dunelondon.com/on/demandware.store/Sites-DuneUS-Site/en_US/Stores-FindStores?showMap=false&radius=5000&lat=52.5620475&long=-1.1818485&src=store"
+        page_url = "https://www.dunelondon.com/us/en/stores"
+        store_list = session.get(base_url).json()["stores"]
+        for _ in store_list:
+            if _["countryCode"] != "GB":
                 continue
-            page_url = store["storeLink"]
-            location_name = store["name"]
-            zip = store["postcode"].strip()
-            city = store["town"]
-            street_address = store["address1"]
-            country_code = store["country"]
-            phone = store["storecontacts"]
-            store_number = store["storenumber"]
-            latitude = store["pca_wgs84_latitude"]
-            longitude = store["pca_wgs84_longitude"]
-            location_type = store["storeType"]
-            hours = bs(store["openinghours"], "lxml").select_one("p").contents
-            hours = [x for x in hours if x.string is not None]
-            hours_of_operation = " ".join(hours)
-            if latitude == "" or latitude is None:
-                res = session.get(page_url)
-                latitude = res.text.split("var pca_default_position_lat = '")[1].split(
-                    "'"
-                )[0]
-                longitude = res.text.split("var pca_default_position_long = '")[
-                    1
-                ].split("'")[0]
+            street_address = _["address1"]
+            if _["address2"]:
+                street_address += " " + _["address2"]
 
-            record = SgRecord(
+            hours = []
+            temp = bs(_["storeHours"], "lxml").select("tr")
+            for hh in temp:
+                td = list(hh.stripped_strings)
+                if len(td) == 4:
+                    hours.append(f"{td[0]}: {td[1]}:{td[2]}:{td[3]}")
+                else:
+                    hours.append(f"{td[0]}: {td[1]}")
+
+            yield SgRecord(
                 page_url=page_url,
-                location_name=location_name,
+                location_name=_["name"],
                 street_address=street_address,
-                city=city,
-                zip_postal=zip,
-                phone=phone,
-                store_number=store_number,
-                country_code=country_code,
+                city=_["city"],
+                zip_postal=_["postalCode"],
+                store_number=_["ID"],
+                country_code=_["countryCode"],
                 locator_domain=locator_domain,
-                location_type=location_type,
-                latitude=latitude,
-                longitude=longitude,
-                hours_of_operation=hours_of_operation,
+                latitude=_["latitude"],
+                longitude=_["longitude"],
+                phone=_.get("phone"),
+                hours_of_operation=" ".join(hours),
             )
-            yield record
 
 
 if __name__ == "__main__":

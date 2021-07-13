@@ -21,6 +21,7 @@ def write_output(data):
                 "locator_domain",
                 "page_url",
                 "location_name",
+                "raw_address",
                 "street_address",
                 "city",
                 "state",
@@ -59,6 +60,7 @@ def fetch_data():
             for item in items:
                 if '"title":"' in item:
                     add = ""
+                    address = ""
                     city = ""
                     state = ""
                     zc = ""
@@ -66,6 +68,11 @@ def fetch_data():
                     store = item.split('"')[0]
                     rawadd = item.split(',"address":"')[1].split('"')[0]
                     rawadd = rawadd.replace(",", "").replace("\\t", " ")
+                    rawadd = rawadd.replace(" S. ", " South ")
+                    rawadd = rawadd.replace(" N. ", " North ")
+                    rawadd = rawadd.replace(" E. ", " East ")
+                    rawadd = rawadd.replace(" W. ", " West ")
+                    rawadd = rawadd.replace(" Hwy ", " Highway ")
                     name = item.split('"title":"')[1].split('"')[0].replace("\\t", "")
                     lat = item.split('"lat":"')[1].split('"')[0]
                     lng = item.split('"lng":"')[1].split('"')[0]
@@ -87,7 +94,7 @@ def fetch_data():
                                     + add[0]["StreetNamePostType"]
                                 )
                             except:
-                                add = "<INACCESSIBLE>"
+                                address = "<INACCESSIBLE>"
                             if add == "":
                                 address = "<INACCESSIBLE>"
                             try:
@@ -145,10 +152,13 @@ def fetch_data():
                         city = "Banner Elk"
                         state = "NC"
                         zc = "28604"
+                    if address == "":
+                        address = "<INACCESSIBLE>"
                     yield [
                         website,
                         loc,
                         name,
+                        rawadd,
                         address,
                         city,
                         state,

@@ -94,18 +94,28 @@ def fetch_data():
                     .split('"')[0]
                     .replace("+", "")
                 )
-            if 'itemprop="openingHours" content="' in line2:
-                days = line2.split('itemprop="openingHours" content="')
-                rc = 0
+            if hours == "" and "data-days='[" in line2:
+                days = (
+                    line2.split("data-days='[")[1]
+                    .split("]' data-timezone=")[0]
+                    .split('"day":"')
+                )
                 for day in days:
-                    rc = rc + 1
-                    if rc <= 8:
-                        if "<!doctype html>" not in day:
-                            hrs = day.split('"')[0]
-                            if hours == "":
-                                hours = hrs
-                            else:
-                                hours = hours + "; " + hrs
+                    if "isClosed" in day:
+                        if 'isClosed":true' in day:
+                            hrs = day.split('"')[0] + ": Closed"
+                        else:
+                            hrs = (
+                                day.split('"')[0]
+                                + ": "
+                                + day.split('"start":')[1].split("}")[0]
+                                + "-"
+                                + day.split('"end":')[1].split(",")[0]
+                            )
+                        if hours == "":
+                            hours = hrs
+                        else:
+                            hours = hours + "; " + hrs
             if 'entityType":"location","id":"' in line2:
                 store = line2.split('entityType":"location","id":"')[1].split('"')[0]
             if '<meta itemprop="latitude" content="' in line2:

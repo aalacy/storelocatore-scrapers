@@ -26,6 +26,8 @@ def fetch_data():
         page_url = "https://www.americansale.com/pages/" + store["shopify_handle"]
         locator_domain = website
         location_name = store["name"]
+        if location_name == "CORPORATE OFFICE" or location_name == "WEBSITE":
+            continue
         street_address = store["address1"]
         if store["address2"] is not None and len(store["address2"]) > 0:
             street_address = street_address + ", " + store["address2"]
