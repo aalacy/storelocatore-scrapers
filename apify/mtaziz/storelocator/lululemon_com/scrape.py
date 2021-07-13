@@ -78,9 +78,6 @@ def clean_raw_address(raw_address_):
 def fetch_data():
     # This part scrape the data for the US and CA
     s = set()
-    URL_LOCATION_ALL_STORES_US_CA = (
-        "https://shop.lululemon.com/stores/all-lululemon-stores"
-    )
     headers_us_ca = {
         "accept": "application/json, text/plain, */*",
         "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.114 Safari/537.36",
@@ -240,7 +237,7 @@ def fetch_data():
         except KeyError:
             state = MISSING
         if state == "," or state == ".":
-            state = MISSIN
+            state = MISSING
 
         # Zip code
         zip_postal_raw = item["postalCode"]
