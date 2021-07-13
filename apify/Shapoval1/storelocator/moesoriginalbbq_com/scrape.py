@@ -197,12 +197,16 @@ def get_data(url):
     country_code = "US"
     store_number = "<MISSING>"
 
-    location_name = " ".join(
-        tree.xpath(
-            '//div[./div[@class="col sqs-col-3 span-3"]]/following-sibling::div[1]//h1/text() | //div[./div[@class="col sqs-col-4 span-4"]]/following-sibling::div[1]//h1/text()'
+    location_name = (
+        " ".join(
+            tree.xpath(
+                '//div[./div[@class="col sqs-col-3 span-3"]]/following-sibling::div[1]//h1/text() | //div[./div[@class="col sqs-col-4 span-4"]]/following-sibling::div[1]//h1/text()'
+            )
         )
+        or "<MISSING>"
     )
-
+    if location_name == "<MISSING>":
+        location_name = "".join(tree.xpath("//h1/text()")).strip()
     if page_url.find("http://www.moesoriginalbbq.com/lo/newark/") != -1:
         location_name = " ".join(
             tree.xpath(
@@ -510,6 +514,8 @@ def get_data(url):
             "".join(tree.xpath('//div[@id="comp-kl6yd3tj"]/p[2]//text()'))
             + " "
             + "".join(tree.xpath('//div[@id="comp-kl6yd3tj"]/p[3]//text()'))
+            + " "
+            + "".join(tree.xpath('//div[@id="comp-kl6yd3tj"]/p[4]//text()'))
         )
         phone = "530-807-1023"
     if page_url.find("http://www.moesoriginalbbq.com/lo/vail/") != -1:
@@ -520,7 +526,80 @@ def get_data(url):
         hours_of_operation = "".join(
             tree.xpath('//h3[contains(text(), "Daily")]/text()[1]')
         )
+    if location_name.find("Hours") != -1:
+        location_name = location_name.split("Hours")[0].strip()
+    street_address = street_address or "<MISSING>"
+    if street_address == "<MISSING>" and location_name == "decatur":
+        ad = "".join(tree.xpath("//h2/a/text()"))
+        street_address = ad.split(",")[0].strip()
+        city = ad.split(",")[1].strip()
+        state = ad.split(",")[2].split()[0].strip()
+        postal = ad.split(",")[2].split()[1].strip()
+    if street_address == "<MISSING>" and location_name == "Leadville":
+        street_address = (
+            "".join(tree.xpath('//a[contains(@href, "google")]//text()[1]'))
+            .replace("\n", "")
+            .strip()
+        )
+        ad = (
+            "".join(tree.xpath('//a[contains(@href, "google")]//text()[2]'))
+            .replace("\n", "")
+            .strip()
+        )
+        city = ad.split(",")[0].strip()
+        state = ad.split(",")[1].split()[0].strip()
+        postal = ad.split(",")[1].split()[1].strip()
 
+    phone = phone or "<MISSING>"
+    hours_of_operation = hours_of_operation or "<MISSING>"
+    cms = "".join(tree.xpath('//strong[text()="Coming Soon!"]//text()'))
+    if cms:
+        hours_of_operation = "Coming Soon"
+    if hours_of_operation == "<MISSING>" and location_name == "Priceville":
+        hours_of_operation = (
+            " ".join(tree.xpath("//h2/text()"))
+            .replace("\n", "")
+            .replace("Re-opening Wednesday May 5th!!", "")
+            .strip()
+        )
+    if hours_of_operation == "<MISSING>" and location_name == "Asheville":
+        hours_of_operation = (
+            " ".join(tree.xpath("//h2/text()")).replace("\n", "").strip()
+        )
+    if hours_of_operation == "<MISSING>" and location_name == "steamboat Springs":
+        hours_of_operation = (
+            " ".join(
+                tree.xpath(
+                    '//h1[text()="steamboat Springs"]/following-sibling::h3[1]/text()[1]'
+                )
+            )
+            .replace("\n", "")
+            .strip()
+        )
+    if hours_of_operation == "<MISSING>" and location_name == "Tuscaloosa":
+        hours_of_operation = (
+            " ".join(tree.xpath("//div/h2[1]/text()")).replace("\n", "").strip()
+        )
+    if hours_of_operation == "<MISSING>" and location_name == "Boulder":
+        hours_of_operation = (
+            " ".join(tree.xpath('//h1[text()="Boulder"]/following-sibling::h2//text()'))
+            .replace("\n", "")
+            .strip()
+        )
+    if location_name == "Lakeview":
+        hours_of_operation = (
+            " ".join(
+                tree.xpath('//h1[text()="Lakeview"]/following-sibling::h2//text()')
+            )
+            .replace("\n", "")
+            .replace("Bar open as long as there's a crowd!", "")
+            .strip()
+        )
+    hours_of_operation = (
+        hours_of_operation.replace("HOURS:", "")
+        .replace("Close  @ 3pm 12/24 Closed  12/25", "")
+        .strip()
+    )
     row = [
         locator_domain,
         page_url,

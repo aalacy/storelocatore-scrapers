@@ -29,6 +29,8 @@ def fetch_data():
         location_type = "<MISSING>"
         locator_domain = website
         store_req = session.get(page_url, headers=headers)
+        if "This location is no longer operated by ExpressCare" in store_req.text:
+            continue
         store_sel = lxml.html.fromstring(store_req.text)
         json_data = json.loads(
             "".join(store_sel.xpath('//script[@type="application/ld+json"]/text()'))

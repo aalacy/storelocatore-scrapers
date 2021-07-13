@@ -1,4 +1,5 @@
-lxml
-sgrequests
-bs4
-sglogging
+usaddress==0.5.10
+sgrequests==0.1.12
+beautifulsoup4==4.7.1
+sglogging==0.0.4
+

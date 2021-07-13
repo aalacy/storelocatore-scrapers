@@ -85,6 +85,7 @@ def fetch_data():
                         if "are: <BR>" in hours:
                             hours = hours.split("are: <BR>")[1]
                         hours = hours.replace("<BR>", "; ")
+                        store = store.replace(",", "")
                         yield [
                             website,
                             loc,

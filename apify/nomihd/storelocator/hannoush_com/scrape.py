@@ -63,7 +63,7 @@ def fetch_data():
 
     search_url = "https://hannoush.com/storelocator/index/ajax/"
     stores_req = session.get(search_url, headers=headers)
-    stores = json.loads(stores_req.text)
+    stores = json.loads(stores_req.text.split("}]<link")[0].strip() + "}]")
 
     for store in stores:
         page_url = store["store_url"]
