@@ -57,7 +57,6 @@ soup = bs(driver.page_source, "html.parser")
 object_response = soup.find("body").text.strip()
 
 response = json.loads(object_response)
-
 search_states = response.keys()
 
 for search_state in search_states:
@@ -108,6 +107,8 @@ for search_state in search_states:
         country_code = "US"
         store_number = location["id"]
         phone = location["catering_phone_number"]
+        if phone == "":
+            phone = location["contact_phone"]
         location_type = "<MISSING>"
         latitude = location["address"]["lat"]
         longitude = location["address"]["lng"]

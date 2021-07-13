@@ -79,7 +79,10 @@ def fetch_data():
         postal = j.get("zip") or "<MISSING>"
         country_code = "US"
         store_number = j.get("seq") or "<MISSING>"
-        page_url = j.get("site_url") or "<MISSING>"
+        page_url = (
+            j.get("site_url")
+            or f"https://local.stretchlab.com/locations/{j.get('site_slug')}"
+        )
         location_name = j.get("name")
         phone = j.get("phone") or "<MISSING>"
         latitude = j.get("lat") or "<MISSING>"

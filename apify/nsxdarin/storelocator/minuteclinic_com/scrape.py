@@ -132,78 +132,81 @@ def fetch_data():
 
 def get_location(url):
 
-    session = get_session()
-    logger.info(url)
-    website = "minuteclinic.com"
-    typ = "<MISSING>"
-    hours = ""
-    name = "Minute Clinic"
-    add = ""
-    city = ""
-    country = "US"
-    state = ""
-    zc = ""
-    phone = ""
-    lat = ""
-    lng = ""
-    store = url.rsplit("/", 1)[1].split(".")[0]
+    try:
+        session = get_session()
+        logger.info(url)
+        website = "minuteclinic.com"
+        typ = "<MISSING>"
+        hours = ""
+        name = "Minute Clinic"
+        add = ""
+        city = ""
+        country = "US"
+        state = ""
+        zc = ""
+        phone = ""
+        lat = ""
+        lng = ""
+        store = url.rsplit("/", 1)[1].split(".")[0]
 
-    random_sleep()
-    response = session.get(url, headers=headers)
+        random_sleep()
+        response = session.get(url, headers=headers)
 
-    if response.url != url and "cvs-pharmacy-address" in response.url:
-        return None
+        if response.url != url and "cvs-pharmacy-address" in response.url:
+            return None
 
-    for line2 in response.iter_lines(decode_unicode=True):
-        if '"streetAddress": "' in line2:
-            add = line2.split('"streetAddress": "')[1].split('"')[0]
-        if '"addressLocality": "' in line2:
-            city = line2.split('"addressLocality": "')[1].split('"')[0]
-        if '"addressRegion": "' in line2:
-            state = line2.split('"addressRegion": "')[1].split('"')[0]
-        if '"postalCode": "' in line2:
-            zc = line2.split('"postalCode": "')[1].split('"')[0]
-        if '"telephone": "' in line2:
-            phone = line2.split('"telephone": "')[1].split('"')[0]
-        if '"openingHours": "' in line2:
-            hours = line2.split('"openingHours": "')[1].split('"')[0].strip()
-        if '"latitude": "' in line2:
-            lat = line2.split('"latitude": "')[1].split('"')[0]
-        if '"longitude": "' in line2:
-            lng = line2.split('"longitude": "')[1].split('"')[0]
+        for line2 in response.iter_lines(decode_unicode=True):
+            if '"streetAddress": "' in line2:
+                add = line2.split('"streetAddress": "')[1].split('"')[0]
+            if '"addressLocality": "' in line2:
+                city = line2.split('"addressLocality": "')[1].split('"')[0]
+            if '"addressRegion": "' in line2:
+                state = line2.split('"addressRegion": "')[1].split('"')[0]
+            if '"postalCode": "' in line2:
+                zc = line2.split('"postalCode": "')[1].split('"')[0]
+            if '"telephone": "' in line2:
+                phone = line2.split('"telephone": "')[1].split('"')[0]
+            if '"openingHours": "' in line2:
+                hours = line2.split('"openingHours": "')[1].split('"')[0].strip()
+            if '"latitude": "' in line2:
+                lat = line2.split('"latitude": "')[1].split('"')[0]
+            if '"longitude": "' in line2:
+                lng = line2.split('"longitude": "')[1].split('"')[0]
 
-    if hours == "":
-        hours = "<MISSING>"
-
-    if url not in allurls:
-        allurls.append(url)
-        if "133 Peachtree St" in add:
-            phone = "(404) 522-6330"
-        if "sanantonio/7829" in url:
-            add = "16580 Huebner Road"
-            city = "San Antonio"
-            state = "TX"
-            zc = "78248"
-            lat = "<MISSING>"
-            lng = "<MISSING>"
-            phone = "<MISSING>"
+        if hours == "":
             hours = "<MISSING>"
-        return [
-            website,
-            url,
-            name,
-            add,
-            city,
-            state,
-            zc,
-            country,
-            store,
-            phone,
-            typ,
-            lat,
-            lng,
-            hours,
-        ]
+
+        if url not in allurls:
+            allurls.append(url)
+            if "133 Peachtree St" in add:
+                phone = "(404) 522-6330"
+            if "sanantonio/7829" in url:
+                add = "16580 Huebner Road"
+                city = "San Antonio"
+                state = "TX"
+                zc = "78248"
+                lat = "<MISSING>"
+                lng = "<MISSING>"
+                phone = "<MISSING>"
+                hours = "<MISSING>"
+            return [
+                website,
+                url,
+                name,
+                add,
+                city,
+                state,
+                zc,
+                country,
+                store,
+                phone,
+                typ,
+                lat,
+                lng,
+                hours,
+            ]
+    except:
+        pass
 
 
 def scrape():

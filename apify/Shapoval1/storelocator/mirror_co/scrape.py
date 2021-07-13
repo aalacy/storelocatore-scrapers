@@ -50,15 +50,32 @@ def fetch_data():
     for j in js:
 
         ad = "".join(j.get("location")).split("\r\n")
-        street_address = " ".join(ad[:-1]).strip()
-        adr = "".join(ad[-1]).replace("Minneapolis, MN, US", "Minneapolis, MN")
+        street_address = (
+            " ".join(ad[:-1])
+            .replace("Northpark", "")
+            .replace("Soho Broadway", "")
+            .replace("Waterside Shops", "")
+            .replace("Georgetown", "")
+            .replace(",", "")
+            .strip()
+            or "<MISSING>"
+        )
+        adr = (
+            "".join(ad[-1])
+            .replace("Minneapolis, MN, US", "Minneapolis, MN")
+            .replace("United States", "")
+            .strip()
+        )
         city = adr.split(",")[0] or "<MISSING>"
+        if city.find("900B") != -1:
+            city = city.replace("900B", "").strip()
+            street_address = street_address + " " + "900B"
         postal = adr.split(",")[1].split()[-1].strip() or "<MISSING>"
         state = adr.split(",")[1].split()[0].strip() or "<MISSING>"
         country_code = j.get("country")
         store_number = "<MISSING>"
         location_name = j.get("title")
-        phone = j.get("phone")
+        phone = j.get("phone") or "<MISSING>"
         latitude = "<MISSING>"
         longitude = "<MISSING>"
         location_type = "<MISSING>"
@@ -69,6 +86,8 @@ def fetch_data():
             hours_of_operation = hours_of_operation.split("ONLY")[1].strip()
         if hours_of_operation.find("See") != -1:
             hours_of_operation = "<MISSING>"
+        if hours_of_operation.find("COMING") != -1:
+            hours_of_operation = "Coming Soon"
 
         row = [
             locator_domain,
