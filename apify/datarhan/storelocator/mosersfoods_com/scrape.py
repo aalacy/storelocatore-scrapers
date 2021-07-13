@@ -1,6 +1,5 @@
 import re
 import csv
-from lxml import etree
 
 from sgrequests import SgRequests
 
@@ -41,36 +40,35 @@ def fetch_data():
 
     items = []
 
-    start_url = "https://mosersfoods.com/Home/Locations"
+    start_url = "https://mosersfoods.com/ajax/index.php"
     domain = re.findall(r"://(.+?)/", start_url)[0].replace("www.", "")
     hdr = {
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
     }
-    response = session.get(start_url, headers=hdr)
-    dom = etree.HTML(response.text)
+    frm = {
+        "method": "POST",
+        "apiurl": "https://mosersfoods.rsaamerica.com/Services/SSWebRestApi.svc/GetClientStores/1",
+    }
+    response = session.post(start_url, headers=hdr, data=frm).json()
 
-    all_locations = dom.xpath('//div[p[@class="contact_details"]]')
-    for poi_html in all_locations:
-        store_url = start_url
-        location_name = poi_html.xpath('.//p[@class="contact_details"]/b/text()')
-        location_name = location_name[0].strip() if location_name else "<MISSING>"
-        raw_data = poi_html.xpath('.//p[@class="contact_details"]/text()')
-        raw_data = [e.strip() for e in raw_data if e.strip()]
-        street_address = raw_data[0]
-        city = raw_data[1].split(",")[0]
-        state = " ".join(raw_data[1].split(",")[-1].split()[:-1])
-        zip_code = raw_data[1].split(",")[-1].split()[-1]
+    all_locations = response["GetClientStores"]
+    for poi in all_locations:
+        store_url = "https://mosersfoods.com/contact"
+        location_name = poi["ClientStoreName"]
+        location_name = location_name if location_name else "<MISSING>"
+        street_address = poi["AddressLine1"]
+        city = poi["City"]
+        state = poi["StateName"]
+        zip_code = poi["ZipCode"]
         country_code = "<MISSING>"
-        store_number = "<MISSING>"
-        phone = raw_data[2]
+        store_number = poi["StoreNumber"]
+        phone = poi["StorePhoneNumber"]
         location_type = "<MISSING>"
-        latitude = poi_html.xpath(".//@data-lat")
-        if not latitude:
-            continue
-        latitude = latitude[0] if latitude else "<MISSING>"
-        longitude = poi_html.xpath(".//@data-lng")
-        longitude = longitude[0] if longitude else "<MISSING>"
-        hours_of_operation = raw_data[-1]
+        latitude = poi["Latitude"]
+        latitude = latitude if latitude else "<MISSING>"
+        longitude = poi["Longitude"]
+        longitude = longitude if longitude else "<MISSING>"
+        hours_of_operation = poi["StoreTimings"]
 
         item = [
             domain,

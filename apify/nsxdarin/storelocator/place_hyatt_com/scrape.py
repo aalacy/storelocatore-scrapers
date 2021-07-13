@@ -90,41 +90,40 @@ def fetch_data():
                         r2 = session.get(loc, headers=headers)
                         for line2 in r2.iter_lines():
                             line2 = str(line2.decode("utf-8"))
-                            if 'Tel: <a href="tel:' in line2:
-                                phone = (
-                                    line2.split('Tel: <a href="tel:')[1]
-                                    .split('"')[0]
-                                    .replace("%20", " ")
-                                )
+                            if (
+                                '<span class="opening-date' in line2
+                                and "Opening 20" in line2
+                            ):
+                                CS = True
                             if (
                                 "and beyond" in line2
                                 and "Now accepting reservations" in line2
                             ):
                                 CS = True
+                            if '"telephone":"' in line2:
+                                phone = line2.split('"telephone":"')[1].split('"')[0]
                     except:
                         pass
-                    if country == "GB" or country == "CA" or country == "US":
-                        if "Club Maui, " in name:
-                            name = "Hyatt Residence Club Maui, Kaanapali Beach"
-                        if CS:
-                            name = name + " - Coming Soon"
-                        if "Hyatt Place" in name:
-                            yield [
-                                website,
-                                loc,
-                                name,
-                                add,
-                                city,
-                                state,
-                                zc,
-                                country,
-                                store,
-                                phone,
-                                typ,
-                                lat,
-                                lng,
-                                hours,
-                            ]
+                    if "Club Maui, " in name:
+                        name = "Hyatt Residence Club Maui, Kaanapali Beach"
+                    if CS:
+                        name = name + " - Coming Soon"
+                    yield [
+                        website,
+                        loc,
+                        name,
+                        add,
+                        city,
+                        state,
+                        zc,
+                        country,
+                        store,
+                        phone,
+                        typ,
+                        lat,
+                        lng,
+                        hours,
+                    ]
 
 
 def scrape():

@@ -34,7 +34,7 @@ def write_output(data):
 def fetch_data():
     out = []
     locator_domain = "https://www.mycountrymart.com"
-    api_url = "https://api.freshop.com/1/stores?app_key=mycountrymart&has_address=true&limit=100&token=baa14ac6df1a84f85835c28b9293328c"
+    api_url = "https://api.freshop.com/1/stores?app_key=mycountrymart&has_address=true&limit=100&token=94cc5d3743b783147d8df8809d02b61a"
     session = SgRequests()
 
     r = session.get(api_url)
@@ -57,7 +57,7 @@ def fetch_data():
         page_url = j.get("url")
         phone = j.get("phone_md")
         hours_of_operation = (
-            "".join(j.get("hours_md")).replace("Open", "").replace("\n", "").strip()
+            "".join(j.get("hours_md")).replace("Open", "").replace("\n", ", ").strip()
         )
         if hours_of_operation.find("First") != -1:
             hours_of_operation = hours_of_operation.split("First")[0].strip()

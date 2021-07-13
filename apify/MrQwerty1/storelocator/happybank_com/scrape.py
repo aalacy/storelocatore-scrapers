@@ -1,5 +1,4 @@
 import csv
-import json
 
 from lxml import html
 from sgrequests import SgRequests
@@ -34,65 +33,64 @@ def write_output(data):
             writer.writerow(row)
 
 
-def get_hours(page_url):
-    hours = []
-    session = SgRequests()
-    r = session.get(page_url)
-    tree = html.fromstring(r.text)
-    pp = tree.xpath(
-        "//h2[contains(text(),'Lobby Hours')]/following-sibling::p[1]/text()|.//p[contains(text(), 'Lobby Hours')]/text()"
-    )
-
-    pp = list(filter(None, [p.strip() for p in pp]))
-    if not pp:
-        pp = tree.xpath("//div[@id='hours']/p[1]/text()")
-
-    for p in pp:
-        p = p.strip()
-        if p.find("Lobby") != -1:
-            continue
-        if p.lower().find("drive") != -1:
-            break
-        hours.append(p)
-
-    return ";".join(hours) or "<MISSING>"
-
-
 def fetch_data():
     out = []
-    locator_domain = "https://happybank.com/"
-    api_url = "https://happybank.com/Locations?locpage=search"
+    s = set()
+    locator_domain = "https://www.happybank.com/"
+    api = "https://www.happybank.com/locations"
 
     session = SgRequests()
-    r = session.get(api_url)
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0"
+    }
+    r = session.get(api, headers=headers)
     tree = html.fromstring(r.text)
-    text = "".join(tree.xpath("//script[contains(text(), 'JSON.stringify(')]/text()"))
-    text = text.split("JSON.stringify(")[1].split("),")[0]
-    js = json.loads(text)
+    divs = tree.xpath(
+        "//div[contains(@class, 'locationCard js-location-card') and not(@data-mb-layer='atm')]"
+    )
 
-    for j in js:
-        street_address = (
-            f"{j.get('address')} {j.get('address2') or ''}".strip() or "<MISSING>"
+    for d in divs:
+        location_name = "".join(
+            d.xpath(".//span[@class='locationCard__heading-text']/text()")
+        ).strip()
+        page_url = "https://www.happybank.com" + "".join(
+            d.xpath(".//a[@class='links__primary--large']/@href")
         )
-        city = j.get("city") or "<MISSING>"
-        state = j.get("state") or "<MISSING>"
-        postal = j.get("postal") or "<MISSING>"
-        country_code = j.get("country") or "<MISSING>"
-        page_url = f'https://happybank.com/Locations{j.get("web")}'
-        store_number = page_url.split("=")[-1]
-        location_name = j.get("name")
+        if "-atm" in page_url or page_url in s:
+            continue
+
+        s.add(page_url)
+        line = d.xpath(
+            ".//div[@class='locationCard__info-text']/a[contains(@href, 'google')]/text()"
+        )
+        line = list(filter(None, [l.strip() for l in line]))
+        street_address = ", ".join(line[:-1])
+        line = line[-1]
+        city = line.split(",")[0].strip()
+        line = line.split(",")[1].strip()
+        state = line.split()[0]
+        postal = line.split()[1]
+        country_code = "US"
+        store_number = "<MISSING>"
         phone = (
-            j.get("phone")
-            .replace("BANK", "")
-            .replace("(", "")
-            .replace(")", "")
-            .replace(" ", "")
+            "".join(d.xpath(".//a[contains(@href, 'tel:')]/text()")).strip()
             or "<MISSING>"
         )
-        latitude = j.get("lat") or "<MISSING>"
-        longitude = j.get("lng") or "<MISSING>"
-        location_type = j.get("category") or "<MISSING>"
-        hours_of_operation = get_hours(page_url)
+        try:
+            longitude, latitude = "".join(d.xpath("./@data-mb-coords")).split(",")
+        except:
+            latitude = "<MISSING>"
+            longitude = "<MISSING>"
+        location_type = "<MISSING>"
+
+        _tmp = []
+        li = d.xpath(".//li[@class='locationCard__hours-item']")
+        for l in li:
+            day = "".join(l.xpath("./span/text()")).strip()
+            time = "".join(l.xpath("./strong/text()")).strip()
+            _tmp.append(f"{day}: {time}")
+
+        hours_of_operation = ";".join(_tmp) or "<MISSING>"
 
         row = [
             locator_domain,

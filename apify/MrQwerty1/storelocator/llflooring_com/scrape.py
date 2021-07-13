@@ -85,7 +85,7 @@ def fetch_data():
             hours_of_operation = ";".join(_tmp) or "<MISSING>"
             if hours_of_operation.count("Closed") == 7:
                 hours_of_operation = "Closed"
-            if "Coming Soon" in location_name:
+            if "Coming Soon" in location_name or j.get("c_comingSoon"):
                 hours_of_operation = "Coming Soon"
 
             row = [
