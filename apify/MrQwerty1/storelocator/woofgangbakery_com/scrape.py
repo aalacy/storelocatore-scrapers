@@ -33,10 +33,7 @@ def write_output(data):
             writer.writerow(row)
 
 
-def fetch_data():
-    out = []
-    locator_domain = "https://woofgangbakery.com/"
-    api_url = "https://storerocket.global.ssl.fastly.net/api/user/7OdJEZD8WE/locations"
+def get_address(line):
     tag = {
         "Recipient": "recipient",
         "AddressNumber": "address1",
@@ -56,7 +53,6 @@ def fetch_data():
         "USPSBoxGroupType": "address1",
         "USPSBoxID": "address1",
         "USPSBoxType": "address1",
-        "BuildingName": "address2",
         "OccupancyType": "address2",
         "OccupancyIdentifier": "address2",
         "SubaddressIdentifier": "address2",
@@ -66,33 +62,39 @@ def fetch_data():
         "ZipCode": "postal",
     }
 
+    try:
+        a = usaddress.tag(line, tag_mapping=tag)[0]
+        street_address = f"{a.get('address1')} {a.get('address2') or ''}".strip()
+        if street_address == "None":
+            street_address = "<MISSING>"
+        city = a.get("city") or "<MISSING>"
+        state = a.get("state") or "<MISSING>"
+        if state == "New":
+            raise usaddress.RepeatedLabelError("", "", "")
+        postal = a.get("postal") or "<MISSING>"
+    except usaddress.RepeatedLabelError:
+        line = line.split(",")
+        postal = line.pop().strip()
+        state = line.pop().strip()
+        city = line.pop().strip()
+        street_address = ",".join(line)
+
+    return street_address, city, state, postal
+
+
+def fetch_data():
+    out = []
+    locator_domain = "https://woofgangbakery.com/"
+    api_url = "https://api.storerocket.io/api/user/7OdJEZD8WE/locations"
+    country_code = "US"
+
     session = SgRequests()
     r = session.get(api_url)
     js = r.json()["results"]["locations"]
 
     for j in js:
-        line = j.get("address").split(",")
-        if j.get("address_line_1"):
-            street_address = (
-                f'{j.get("address_line_1")} {j.get("address_line_2") or ""}'.strip()
-                or "<MISSING>"
-            )
-            city = j.get("city") or "<MISSING>"
-            state = j.get("state") or "<MISSING>"
-            postal = j.get("postcode") or "<MISSING>"
-            country_code = j.get("country") or "<MISSING>"
-        else:
-            a = usaddress.tag(", ".join(line), tag_mapping=tag)[0]
-            street_address = f"{a.get('address1')} {a.get('address2') or ''}".strip()
-            if street_address == "None":
-                street_address = "<MISSING>"
-            city = a.get("city") or "<INACCESSIBLE>"
-            state = a.get("state") or "<INACCESSIBLE>"
-            postal = a.get("postal") or "<INACCESSIBLE>"
-            if city.find(",") != -1:
-                state = city.split(",")[-1].strip()
-                city = city.split(",")[0].strip()
-
+        line = j.get("address").replace(", USA", "").replace(", US", "")
+        street_address, city, state, postal = get_address(line)
         if len(postal) == 4:
             postal = f"0{postal}"
 

@@ -10,6 +10,8 @@ _headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
 }
 
+streets = []
+
 
 def fetch_data():
     locator_domain = "https://www.era.com"
@@ -44,13 +46,17 @@ def fetch_data():
                         .split("var")[0]
                         .strip()[:-1]
                     )
-
+                    street_address = sp2.select_one(
+                        'span[itemprop="streetAddress"]'
+                    ).text.strip()
+                    _street = street_address + latitude + longitude
+                    if _street in streets:
+                        continue
+                    streets.append(_street)
                     yield SgRecord(
                         page_url=page_url,
                         location_name=sp2.select_one("h1.heading-std").text.strip(),
-                        street_address=sp2.select_one(
-                            'span[itemprop="streetAddress"]'
-                        ).text.strip(),
+                        street_address=street_address,
                         city=sp2.select_one(
                             'span[itemprop="addressLocality"]'
                         ).text.strip(),
