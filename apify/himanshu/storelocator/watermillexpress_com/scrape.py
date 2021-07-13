@@ -87,7 +87,7 @@ def fetch_data():
             + str(lng)
             + "&max_results=25&search_radius=25&search=&statistics="
         )
-        print(len(json_data))
+
         for location in json_data:
             city = location["city"]
             state = location["state"]
