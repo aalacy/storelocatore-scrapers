@@ -95,6 +95,8 @@ def fetch_data():
         location_name = loc_dom.xpath('//h1[@class="heading-1"]/text()')
         location_name = location_name[0] if location_name else "<MISSING>"
         raw_address = loc_dom.xpath('//div[@class="profile-content"]/address//text()')
+        if not raw_address:
+            raw_address = loc_dom.xpath("//address//a/text()")[:2]
         raw_address = [elem.strip() for elem in raw_address if elem.strip()]
         addr = parse_address_intl(" ".join(raw_address))
 

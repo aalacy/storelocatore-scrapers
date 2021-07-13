@@ -48,7 +48,8 @@ def fetch_data():
             locator_domain = website
 
             location_name = "".join(store.xpath(".//h3/a/text()")).strip()
-
+            if "Headquarters" in location_name:
+                continue
             street_address = (
                 " ".join(store.xpath('.//span[@itemprop="streetAddress"]//text()'))
                 .strip(",. ")
