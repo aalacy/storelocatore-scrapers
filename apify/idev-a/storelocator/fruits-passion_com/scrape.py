@@ -3,6 +3,9 @@ from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 import json
 from bs4 import BeautifulSoup as bs
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger("mycarecompass")
 
 _headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
@@ -10,6 +13,20 @@ _headers = {
 
 locator_domain = "https://fruits-passion.com"
 base_url = "https://fruits-passion.com/en-ca/amlocator/"
+
+
+def _p(val):
+    return (
+        val.replace("(", "")
+        .replace(")", "")
+        .replace("+", "")
+        .replace("-", "")
+        .replace(".", " ")
+        .replace("to", "")
+        .replace(" ", "")
+        .strip()
+        .isdigit()
+    )
 
 
 def _coord(block, _):
@@ -44,8 +61,18 @@ def fetch_data():
             location_type = ""
             if "Temporarily closed" in _.select_one("div.amlocator-description").text:
                 location_type = "Temporarily closed"
+            page_url = _.a["href"]
+            logger.info(page_url)
+            sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
+            phone = ""
+            if sp1.select_one("span.amlocator-icon.-phone"):
+                phone = (
+                    sp1.select_one("span.amlocator-icon.-phone")
+                    .find_next_sibling()
+                    .text.strip()
+                )
             yield SgRecord(
-                page_url=base_url,
+                page_url=page_url,
                 location_name=_.select_one("div.amlocator-title").text.strip(),
                 street_address=addr[0],
                 city=addr[1],
@@ -56,6 +83,7 @@ def fetch_data():
                 country_code="CA",
                 location_type=location_type,
                 locator_domain=locator_domain,
+                phone=phone,
                 hours_of_operation="; ".join(hours),
             )
 

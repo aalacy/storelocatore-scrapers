@@ -129,11 +129,9 @@ def fetch_data():
         )
         latitude, longitude = coords.pop(0)
         location_type = "<MISSING>"
+        text = "".join(tree.xpath("//div[@class='entry-content']/text()"))
         hours_of_operation = (
-            "".join(tree.xpath("//h6/span[@style='color: #800000;']/text()"))
-            .split("are")[-1]
-            .replace(".", "")
-            .strip()
+            text.split("between")[1].split("!")[0].replace("and", "-").strip()
         )
 
         row = [
