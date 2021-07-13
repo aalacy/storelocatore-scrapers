@@ -4,6 +4,7 @@ import json
 from lxml import etree
 
 from sgrequests import SgRequests
+from sgscrape.sgpostal import parse_address_intl
 
 
 def write_output(data):
@@ -52,12 +53,16 @@ def fetch_data():
         store_url = poi["url"]
         location_name = poi["name"]
         location_name = location_name if location_name else "<MISSING>"
-        raw_address = poi["address"].split(", ")
-        street_address = raw_address[0]
-        city = raw_address[1]
-        state = raw_address[2]
-        zip_code = raw_address[3]
-        country_code = raw_address[4]
+        addr = " ".join(etree.HTML(poi["custom_field_1"]).xpath("//text()"))
+        addr = parse_address_intl(addr)
+        street_address = addr.street_address_1
+        if addr.street_address_2:
+            street_address += addr.street_address_2
+        city = addr.city
+        state = addr.state
+        zip_code = addr.postcode
+        country_code = addr.country
+        country_code = country_code if country_code else "<MISSING>"
         store_number = poi["id"]
         store_number = store_number if store_number else "<MISSING>"
         phone = poi["phone"]
