@@ -77,7 +77,7 @@ def fetch_data():
 
         latitude, longitude = (
             map_link.split("(")[1].split(",")[0],
-            map_link.split("(")[1].split(",")[1],
+            map_link.split("(")[1].split(",")[1].split(");")[0].strip(),
         )
 
         raw_address = "<MISSING>"
