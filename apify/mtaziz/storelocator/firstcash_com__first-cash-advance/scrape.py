@@ -1,5 +1,4 @@
 from sgrequests import SgRequests
-
 from sglogging import SgLogSetup
 import unicodedata
 import pgeocode
