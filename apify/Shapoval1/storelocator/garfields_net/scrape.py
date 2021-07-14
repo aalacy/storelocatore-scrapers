@@ -123,6 +123,8 @@ def fetch_data():
             .replace("\xa0", "")
             .split("ours")[1]
             .split("Let's")[0]
+            .replace("Less", "")
+            .replace("SUNDAY - THURSDAY 11 AM - 9PM FRIDAY - SATURDAY", "")
             .strip()
         )
 
