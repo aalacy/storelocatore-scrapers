@@ -1,6 +1,8 @@
 import csv
 from sglogging import sglog
 from sgrequests import SgRequests
+
+from sgscrape.pause_resume import CrawlState
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 
 logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
@@ -115,7 +117,22 @@ def fetch_data():
             search = None
             try:
                 search = DynamicGeoSearch(
-                    country_codes=[SearchableCountry], max_radius_miles=30
+                    country_codes=[SearchableCountry],
+                    max_radius_miles=30,
+                    state=CrawlState(),
+                )
+            except KeyError:
+                continue
+            if search:
+                for item in search_country(session, search, hdr, SearchableCountry):
+                    yield item
+        for SearchableCountry in SearchableCountries.WITH_ZIPCODE_AND_COORDS:
+            search = None
+            try:
+                search = DynamicGeoSearch(
+                    country_codes=[SearchableCountry],
+                    max_radius_miles=30,
+                    state=CrawlState(),
                 )
             except KeyError:
                 continue
