@@ -3,7 +3,6 @@ from sgrequests import SgRequests
 from tenacity import retry, stop_after_attempt
 
 session = SgRequests()
-
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
@@ -65,6 +64,7 @@ def fetch_data():
         country = "US"
         HFound = False
         IsGas = False
+        day = ""
         r2 = fetch_loc(loc)
         for line in r2.iter_lines():
             g = str(line)
@@ -79,7 +79,8 @@ def fetch_data():
                 )[0]
                 if "am" in text or "pm" in text:
                     hrs = text.strip()
-                    allhrs = day + ": " + hrs
+                    if day != "":
+                        allhrs = day + ": " + hrs
                 else:
                     day = text.strip()
                     allhrs = ""
