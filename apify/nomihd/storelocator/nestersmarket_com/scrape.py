@@ -54,9 +54,7 @@ def fetch_data():
         country_code = "CA"
         phone = store_info["phone_numbers"][0]["phone_number"]
 
-        location_type = (
-            "<MISSING>" if store["store_status"] == "OPEN" else store["store_status"]
-        )
+        location_type = "<MISSING>"
 
         hours_info = store["store_hours"]
         hours = []
