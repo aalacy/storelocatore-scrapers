@@ -30,6 +30,20 @@ def fetch_data():
             for x, bb in enumerate(blocks):
                 if not bb.text.strip():
                     continue
+                if (bb.name == "h3" and addr) or x == len(blocks) - 1:
+                    yield SgRecord(
+                        page_url=base_url,
+                        location_name=location_name,
+                        street_address=street_address,
+                        city=addr.city,
+                        state=addr.state,
+                        zip_postal=zip_postal,
+                        country_code=addr.country,
+                        phone=phone,
+                        locator_domain=locator_domain,
+                    )
+                    location_name = phone = street_address = zip_postal = ""
+                    addr = None
                 if bb.name == "h3":
                     location_name = bb.text.strip()
                 elif bb.name == "p" and "Visit Website" not in bb.text:
@@ -48,20 +62,6 @@ def fetch_data():
                     "Telephone" in bb.text or "Toll free" in bb.text
                 ) and bb.name == "div":
                     phone = bb.a.text.strip()
-                if (bb.name == "h3" and addr) or x == len(blocks) - 1:
-                    yield SgRecord(
-                        page_url=base_url,
-                        location_name=location_name,
-                        street_address=street_address,
-                        city=addr.city,
-                        state=addr.state,
-                        zip_postal=zip_postal,
-                        country_code=addr.country,
-                        phone=phone,
-                        locator_domain=locator_domain,
-                    )
-                    location_name = phone = street_address = zip_postal = ""
-                    addr = None
 
 
 if __name__ == "__main__":
