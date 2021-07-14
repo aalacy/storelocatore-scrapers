@@ -1,6 +1,6 @@
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
-from sgselenium import SgChrome
+from sgselenium import SgFirefox
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
@@ -15,7 +15,7 @@ def fetch_data():
     json_url = (
         "https://maps.googleapis.com/maps/api/place/js/PlaceService.GetPlaceDetails"
     )
-    with SgChrome() as driver:
+    with SgFirefox() as driver:
         driver.get(base_url)
         WebDriverWait(driver, 20).until(
             EC.presence_of_element_located(
@@ -25,12 +25,20 @@ def fetch_data():
                 )
             )
         )
+        WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located(
+                (
+                    By.XPATH,
+                    '//div[@class="store-map"]//div[@role="button"]',
+                )
+            )
+        )
         locations = driver.find_elements_by_xpath(
             '//div[@class="store-map"]//div[@role="button"]'
         )
         for loc in locations:
             driver.execute_script("arguments[0].click();", loc)
-            time.sleep(1)
+            time.sleep(3)
 
         for rr in driver.requests:
             if rr.url.startswith(json_url) and rr.response:
@@ -43,24 +51,27 @@ def fetch_data():
                     .strip()[:-1]
                     .strip()
                 )
-                addr = parse_address_intl(_["result"]["formatted_address"])
-                hours = []
-                if "opening_hours" in _["result"]:
-                    hours = _["result"]["opening_hours"]["weekday_text"]
-                yield SgRecord(
-                    page_url=base_url,
-                    location_name=_["result"]["name"],
-                    street_address=addr.street_address_1,
-                    city=addr.city,
-                    state=addr.state,
-                    latitude=_["result"]["geometry"]["location"]["lat"],
-                    longitude=_["result"]["geometry"]["location"]["lng"],
-                    zip_postal=addr.postcode,
-                    country_code=addr.country,
-                    phone=_["result"]["formatted_phone_number"],
-                    locator_domain=locator_domain,
-                    hours_of_operation="; ".join(hours).replace("–", "-"),
-                )
+                try:
+                    addr = parse_address_intl(_["result"]["formatted_address"])
+                    hours = []
+                    if "opening_hours" in _["result"]:
+                        hours = _["result"]["opening_hours"]["weekday_text"]
+                    yield SgRecord(
+                        page_url=base_url,
+                        location_name=_["result"]["name"],
+                        street_address=addr.street_address_1,
+                        city=addr.city,
+                        state=addr.state,
+                        latitude=_["result"]["geometry"]["location"]["lat"],
+                        longitude=_["result"]["geometry"]["location"]["lng"],
+                        zip_postal=addr.postcode,
+                        country_code=addr.country,
+                        phone=_["result"]["formatted_phone_number"],
+                        locator_domain=locator_domain,
+                        hours_of_operation="; ".join(hours).replace("–", "-"),
+                    )
+                except:
+                    continue
 
 
 if __name__ == "__main__":
