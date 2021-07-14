@@ -29,7 +29,8 @@ def fetch_data():
         location_name = "".join(
             store.xpath('.//a[@class="heading-link"]/h3/text()')
         ).strip()
-
+        if "ONLINE 24/7" in location_name:
+            continue
         address = "".join(
             store.xpath(
                 'div[@class="content-container"]/p[1]/a[contains(@href,"/maps")]/text()'

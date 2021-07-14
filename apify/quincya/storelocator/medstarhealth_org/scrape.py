@@ -55,6 +55,7 @@ def fetch_data():
 
     data = []
     found = []
+    all_links = []
 
     items = script.split("google.maps.LatLng")
     locator_domain = "medstarhealth.org"
@@ -69,11 +70,15 @@ def fetch_data():
             store_number = "<MISSING>"
             location_type = "<MISSING>"
 
-            geo = re.findall(r"[0-9]{2}\.[0-9]+, -[0-9]{2,3}\.[0-9]+", item)[0].split(
-                ","
-            )
-            latitude = geo[0].strip()
-            longitude = geo[1].strip()
+            try:
+                geo = re.findall(r"[0-9]{2}\.[0-9]+, -[0-9]{2,3}\.[0-9]+", item)[
+                    0
+                ].split(",")
+                latitude = geo[0].strip()
+                longitude = geo[1].strip()
+            except:
+                latitude = "<MISSING>"
+                longitude = "<MISSING>"
 
             try:
                 link = (
@@ -84,6 +89,9 @@ def fetch_data():
                 )
                 if link[-2:] == "//":
                     link = link[:-1]
+                if link in all_links:
+                    continue
+                all_links.append(link)
             except:
                 link = "<MISSING>"
 

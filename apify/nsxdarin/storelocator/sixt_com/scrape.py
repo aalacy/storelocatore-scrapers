@@ -84,7 +84,15 @@ def fetch_data():
             line2 = str(line2.decode("utf-8"))
             if "<h1>" in line2:
                 name = line2.split("<h1>")[1].split("<")[0].strip()
-            if '"@id": "' in line2:
+            if "orlando-lake-buena-vista" in loc:
+                add = "12205 S Apopka Vineland Rd"
+                city = "Orlando"
+                state = "FL"
+                zc = "32836-6804"
+                lat = "28.386945724487"
+                lng = "-81.504974365234"
+                hours = "MO - FR: 07:00 - 18:00; SA - SU: 09:00 - 17:00"
+            if '"@id": "' in line2 and "orlando-lake-buena-vista" not in loc:
                 add = line2.split('"streetAddress":"')[1].split('"')[0]
                 zc = line2.split('"postalCode":"')[1].split('"')[0]
                 state = "<MISSING>"

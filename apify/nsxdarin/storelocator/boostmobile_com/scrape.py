@@ -6,15 +6,15 @@ import json
 
 session = SgRequests()
 headers = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+    "user-agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0"
 }
 
 logger = SgLogSetup().get_logger("boostmobile_com")
 
 search = DynamicZipSearch(
     country_codes=[SearchableCountries.USA],
-    max_radius_miles=1,
-    max_search_results=20,
+    max_radius_miles=None,
+    max_search_results=None,
 )
 
 
@@ -48,22 +48,39 @@ def write_output(data):
 def fetch_data():
     ids = []
     for coord in search:
+
+        logger.info(f"Zip Code: {coord}")
+        url = (
+            "https://boostmobile.nearestoutlet.com/cgi-bin/jsonsearch-cs.pl?showCaseInd=false&brandId=bst&results=50&zipcode="
+            + coord
+            + "&page=1"
+        )
+        r = session.get(url, headers=headers)
         try:
-            logger.info(coord)
+            array = json.loads(r.content, strict=False)
+        except Exception:
+            raise Exception(f"Err on this zip:{url}")
+        count = int(array["nearestOutletResponse"]["resultsFoundNum"])
+        pages = int((count - 1) / 50) + 2
+        for x in range(1, pages):
             url = (
                 "https://boostmobile.nearestoutlet.com/cgi-bin/jsonsearch-cs.pl?showCaseInd=false&brandId=bst&results=50&zipcode="
                 + coord
-                + "&page=1"
+                + "&page="
+                + str(x)
             )
             r = session.get(url, headers=headers)
-            array = json.loads(r.content)
+            try:
+                array = json.loads(r.content, strict=False)
+            except Exception:
+                raise Exception(f"Err on this zip:{url}")
             for item in array["nearestOutletResponse"]["nearestlocationinfolist"][
                 "nearestLocationInfo"
             ]:
                 website = "boostmobile.com"
                 store = item["id"]
-                name = "Boost Mobile"
-                typ = item["storeName"]
+                name = item["storeName"]  # Change Location Name as  we discussed
+                typ = "Mobile Store"  # Change Location type as  we discussed
                 add = item["storeAddress"]["primaryAddressLine"]
                 city = item["storeAddress"]["city"]
                 state = item["storeAddress"]["state"]
@@ -80,6 +97,9 @@ def fetch_data():
                 hours = hours + "; Fri: " + item["storeHours"]["fri"]
                 hours = hours + "; Sat: " + item["storeHours"]["sat"]
                 hours = hours + "; Sun: " + item["storeHours"]["sun"]
+                if lat and lng:
+                    search.found_location_at(lat, lng)
+                    logger.info(f"found loc at ({lat}, {lng})")
                 if lat == "":
                     lat = "<MISSING>"
                 if lng == "":
@@ -88,7 +108,10 @@ def fetch_data():
                     phone = "<MISSING>"
                 if "see store" in hours.lower():
                     hours = "<MISSING>"
-                if store not in ids and store != "" and "Boost Mobile" in typ:
+                if loc == "" or loc is None:
+                    loc = "<MISSING>"
+                # store_number should be unique
+                if store not in ids and store != "":
                     ids.append(store)
                     yield [
                         website,
@@ -106,8 +129,6 @@ def fetch_data():
                         lng,
                         hours,
                     ]
-        except:
-            pass
 
 
 def scrape():
