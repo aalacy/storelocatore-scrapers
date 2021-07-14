@@ -45,22 +45,38 @@ def fetch_data():
         )
 
         map_link = "".join(store_sel.xpath("//iframe/@src")).strip()
-        page_url = "<MISSING>"
+        page_url = search_url
 
         locator_domain = website
 
-        location_name = "".join(store_sel.xpath("div/h2/text()")).strip()
+        location_name = json.loads(json_str)[0]["label"]
 
         raw_list = (
             map_link.split("!2s")[1].strip().split(", USA!")[0].strip().split(",")
         )
+        street_address = ""
+        city = ""
+        state = ""
+        zip = ""
+
         if "Talpa Supermercados" in "".join(raw_list).strip():
-            continue
-        street_address = raw_list[0].strip().split("(")[0].strip()
-        state_zip = raw_list[-1].strip()
-        city = raw_list[-2].strip()
-        state = state_zip.split(" ")[0].strip()
-        zip = state_zip.split(" ")[-1].strip()
+            if location_name == "Lilburn":
+                street_address = "4760 Lawrenceville Hwy"
+                city = "Lilburn"
+                state = "GA"
+                zip = "30047"
+            elif location_name == "Mableton":
+                street_address = "1245 Veterans Memorial Hwy SW"
+                city = "Mableton"
+                state = "GA"
+                zip = "30126"
+
+        else:
+            street_address = raw_list[0].strip().split("(")[0].strip()
+            state_zip = raw_list[-1].strip()
+            city = raw_list[-2].strip()
+            state = state_zip.split(" ")[0].strip()
+            zip = state_zip.split(" ")[-1].strip()
 
         country_code = "US"
 
