@@ -184,7 +184,7 @@ def fetch_data():
                     if country == "CANADA":
                         country = "CA"
                     if country != "MEXICO":
-                        if hours == "":
+                        if hours == "" or "Sun: -; Mon: -;" in hours:
                             hours = "<MISSING>"
                         if zc == "":
                             zc = "<MISSING>"
