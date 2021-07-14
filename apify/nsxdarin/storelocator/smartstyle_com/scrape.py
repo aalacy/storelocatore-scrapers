@@ -42,7 +42,7 @@ def fetch_data():
     locs = []
     canada = ["ab", "nb", "on", "bc", "nl", "qc", "mb", "ns", "sk"]
     states = []
-    stubs = []
+    donelocs = []
     session = SgRequests()
     r = session.get(url, headers=headers, verify=False)
     for line in r.iter_lines():
@@ -83,19 +83,22 @@ def fetch_data():
                 PFound = False
                 retries = retries + 1
                 session = SgRequests()
+                dcount = 0
                 r2 = session.get(loc, headers=headers, timeout=5)
                 for line2 in r2.iter_lines():
                     line2 = str(line2.decode("utf-8"))
                     if '<meta itemprop="openingHours" content="' in line2:
+                        dcount = dcount + 1
                         hrs = (
                             line2.split('<meta itemprop="openingHours" content="')[1]
                             .split('"')[0]
                             .strip()
                         )
-                        if hours == "":
-                            hours = hrs
-                        else:
-                            hours = hours + "; " + hrs
+                        if dcount <= 7:
+                            if hours == "":
+                                hours = hrs
+                            else:
+                                hours = hours + "; " + hrs
                     if '<h2 class="hidden-xs salontitle_salonlrgtxt">' in line2:
                         name = line2.split(
                             '<h2 class="hidden-xs salontitle_salonlrgtxt">'
@@ -133,9 +136,8 @@ def fetch_data():
                     if hours == "":
                         hours = "<MISSING>"
                     state = state.replace("&nbsp;", "")
-                    stub = loc.rsplit("/", 1)[1].split(".html")[0]
-                    if stub not in stubs:
-                        stubs.append(stub)
+                    if loc not in donelocs:
+                        donelocs.append(loc)
                         if "0" not in hours and "3" not in hours and "1" not in hours:
                             hours = "Sun-Sat: Closed"
                         yield [

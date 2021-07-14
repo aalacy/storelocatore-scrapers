@@ -3,17 +3,6 @@ from lxml import html
 from sgrequests import SgRequests
 from sgselenium.sgselenium import SgFirefox
 
-import ssl
-
-try:
-    _create_unverified_https_context = (
-        ssl._create_unverified_context
-    )  # Legacy Python that doesn't verify HTTPS certificates by default
-except AttributeError:
-    pass
-else:
-    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
-
 
 def write_output(data):
     with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
@@ -73,6 +62,7 @@ def fetch_data():
             location_type = "Temporarily Closed"
         page_url = f"https://www.pizzadepot.ca{sg}"
         with SgFirefox() as driver:
+            driver.implicitly_wait(10)
             driver.get(page_url)
             driver.maximize_window()
             driver.implicitly_wait(20)
