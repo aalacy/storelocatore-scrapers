@@ -71,6 +71,19 @@ def fetch_store_urls():
     return store_urls
 
 
+def get_latlong(soup):
+    script = soup.find(
+        "script",
+        text=re.compile(r"[a-zA-Z0-9]*bt_gmap_init.*", re.MULTILINE | re.DOTALL),
+    )
+    lat_long = (
+        re.search(r"(-?[\d]*\.[\d]*),\s+(-?[\d]*\.[\d]*)", script.string)
+        .group()
+        .split(",")
+    )
+    return lat_long[0], lat_long[1]
+
+
 def fetch_data():
     log.info("Fetching store_locator data")
     store_urls = fetch_store_urls()
@@ -107,8 +120,7 @@ def fetch_data():
             content[3].find("p").text.strip().replace("By Appointment Only", ""),
         ).replace(" – ", " - ")
         location_type = "OFFICE"
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
+        latitude, longitude = get_latlong(soup)
         log.info("Append {} => {}".format(location_name, street_address))
         locations.append(
             [
