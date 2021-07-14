@@ -61,6 +61,9 @@ def fetch_data():
         lat = item["lat"]
         lng = item["lng"]
         name = item["name"]
+        add = add.strip()
+        if add == "":
+            add = "<MISSING>"
         if "939-2510" in str(phone):
             phone = "480-939-2510"
         if "811.2828" in str(phone):

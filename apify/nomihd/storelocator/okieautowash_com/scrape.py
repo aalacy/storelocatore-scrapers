@@ -40,100 +40,111 @@ def split_fulladdress(address_info):
 
 def fetch_data():
     # Your scraper here
-    search_url = "http://okieautowash.com/locations"
-    search_res = session.get(search_url, headers=headers)
+    search_url = "https://www.okieautowash.com/team/"
+    while True:
+        search_res = session.get(search_url, headers=headers)
 
-    search_sel = lxml.html.fromstring(search_res.text)
+        search_sel = lxml.html.fromstring(search_res.text)
+        stores = search_sel.xpath('//div[@class="descr"]')
+        for store in stores:
+            if (
+                "Coming Soon"
+                in "".join(store.xpath('p[@class="subheader"]/text()')).strip()
+            ):
+                continue
 
-    store_list = list(search_sel.xpath("//a[@title and not(./img)]/@href"))
+            page_url = "".join(store.xpath("a/@href")).strip()
+            locator_domain = website
+            log.info(page_url)
+            store_res = session.get(page_url, headers=headers)
 
-    stores_details_raw_list = list(
-        filter(
-            str,
-            [
-                x.strip()
-                for x in search_sel.xpath(
-                    '//div[@class="classes-content-inner"]//text()'
+            store_sel = lxml.html.fromstring(store_res.text)
+
+            location_name = " ".join(store_sel.xpath("//title/text()"))
+
+            full_address = list(
+                filter(
+                    str,
+                    [
+                        x.strip()
+                        for x in store_sel.xpath(
+                            '//div[@class="field__item even"]/strong/text()'
+                        )
+                        if "Manager:" not in x
+                    ],
                 )
-            ],
-        )
-    )
-
-    stores_details_raw_list = stores_details_raw_list[1:]
-
-    for no, store in enumerate(store_list):
-
-        page_url = store
-        locator_domain = website
-        log.info(page_url)
-        store_res = session.get(page_url, headers=headers)
-
-        store_sel = lxml.html.fromstring(store_res.text)
-        store_info = stores_details_raw_list[
-            no * 4 : (no * 4) + 4
-        ]  # Get stroe info from rawlist
-
-        location_name = " ".join(store_sel.xpath("//title/text()"))
-
-        full_address = store_info[1:-1]
-
-        street_address, city, state, zip, country_code = split_fulladdress(full_address)
-
-        store_number = "<MISSING>"
-        phone = store_info[-1].strip()
-
-        location_type = "<MISSING>"
-
-        hours = list(
-            filter(
-                str,
-                [
-                    x.strip()
-                    for x in store_sel.xpath(
-                        '//div[contains(@class,"hours-widget-pro")]//text()'
+            )
+            if len(full_address) <= 0:
+                full_address = list(
+                    filter(
+                        str,
+                        [
+                            x.strip()
+                            for x in store_sel.xpath(
+                                '//div[@class="field__item even"]/div[@class="descr"]/strong/text()'
+                            )
+                            if "Manager:" not in x
+                        ],
                     )
-                ],
-            )
-        )
+                )
 
-        if "Warr Acres" in location_name:
-
-            hours_of_operation = (
-                "Open Daily " + (" ".join(hours)).split("Warr Acres")[1].strip()
+            street_address, city, state, zip, country_code = split_fulladdress(
+                full_address
             )
-        else:
-            hours_of_operation = (" ".join(hours)).split("Warr Acres")[0].strip()
 
-        if "longt=" in store_res.text:
+            store_number = "<MISSING>"
+            phone = "".join(
+                store_sel.xpath(
+                    '//div[./span[@class="ltx-icon fas fa-phone-alt bg-transparent"]]/h6/text()'
+                )
+            ).strip()
 
-            latitude = (
-                store_res.text.split("latitute=")[1].split(";")[0].strip('" ').strip()
-            )
-            longitude = (
-                store_res.text.split("longt=")[1].split(";")[0].strip('" ').strip()
-            )
-        else:
+            if "COMING SOON" in phone:
+                continue
+
+            location_type = "<MISSING>"
+
+            hours_of_operation = " ".join(
+                list(
+                    filter(
+                        str,
+                        [
+                            x.strip()
+                            for x in store_sel.xpath(
+                                '//p[contains(text(),"7 Days A Week")]/text()'
+                            )
+                        ],
+                    )
+                )
+            ).strip()
+
             latitude, longitude = "<MISSING>", "<MISSING>"
 
-        raw_address = "<MISSING>"
+            raw_address = "<MISSING>"
 
-        yield SgRecord(
-            locator_domain=locator_domain,
-            page_url=page_url,
-            location_name=location_name,
-            street_address=street_address,
-            city=city,
-            state=state,
-            zip_postal=zip,
-            country_code=country_code,
-            store_number=store_number,
-            phone=phone,
-            location_type=location_type,
-            latitude=latitude,
-            longitude=longitude,
-            hours_of_operation=hours_of_operation,
-            raw_address=raw_address,
-        )
+            yield SgRecord(
+                locator_domain=locator_domain,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+                raw_address=raw_address,
+            )
+
+        next_page = search_sel.xpath('//a[@class="next page-numbers"]/@href')
+        if len(next_page) > 0:
+            search_url = next_page[0]
+        else:
+            break
 
 
 def scrape():
