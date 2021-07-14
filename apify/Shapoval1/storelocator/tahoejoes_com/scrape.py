@@ -87,9 +87,12 @@ def fetch_data():
         )
         a = usaddress.tag(ad, tag_mapping=tag)[0]
         location_type = "<MISSING>"
-        street_address = f"{a.get('address1')} {a.get('address2')}".replace(
-            "None", ""
-        ).strip()
+        street_address = (
+            f"{a.get('address1')} {a.get('address2')}".replace("None", "")
+            .replace("The Marketplace", "")
+            .replace("HomeTown Plaza", "")
+            .strip()
+        )
         state = a.get("state") or "<MISSING>"
         postal = a.get("postal") or "<MISSING>"
         country_code = "US"
@@ -104,7 +107,7 @@ def fetch_data():
         if hours_of_operation.find("Take-Out") != -1:
             hours_of_operation = hours_of_operation.split("Take-Out")[0].strip()
         if location_name.find("Temp. Closed") != -1:
-            location_name = "Temporarily Closed"
+            location_type = "Temporarily Closed"
         location_name = location_name.replace(
             "(Temp. Closed Until Further Notice)", ""
         ).strip()
