@@ -83,6 +83,7 @@ def fetch_data():
                 and CS is False
                 and "locations/financialdistrict" not in loc
                 and "locations/santamonica" not in loc
+                and "locations/redondobeach" not in loc
             ):
                 g = next(lines)
                 h = next(lines)
@@ -137,6 +138,11 @@ def fetch_data():
             city = "Daly City"
             state = "CA"
             zc = "94014"
+        if "locations/redondobeach" in loc:
+            add = "819 North Harbor Drive"
+            city = "Redondo Beach"
+            state = "CA"
+            zc = "90277"
         if "locations/santamonica" in loc:
             add = "2425 Olympic Boulevard"
             city = "Santa Monica"
