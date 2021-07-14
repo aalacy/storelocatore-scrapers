@@ -148,7 +148,14 @@ def fetch_data():
                 '//*[contains(text(), "Store Hours")]/following-sibling::p/text()'
             )
             hoo = [elem.strip() for elem in hoo if elem.strip()]
-            hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
+            if not hoo:
+                hoo = hoo_html.xpath(
+                    '//*[strong[contains(text(), "STORE HOURS")]]//text()'
+                )
+                hoo = [elem.strip() for elem in hoo if elem.strip()]
+            hours_of_operation = (
+                " ".join(hoo).replace("STORE HOURS ", "") if hoo else "<MISSING>"
+            )
 
         hours_of_operation = hours_of_operation.split("Drive")[0]
 
