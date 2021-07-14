@@ -22,7 +22,7 @@ def fetch_data():
         url = "https://members.yogasix.com/api/brands/yogasix/locations?open_status=external&geoip=111.119.187.48&offer_slug="
         loclist = session.get(url, headers=headers).json()["locations"]
         for loc in loclist:
-            if loc["coming_soon"] == True:
+            if loc["coming_soon"] is True:
                 continue
             location_name = loc["name"]
             store_number = loc["clubready_id"]
@@ -39,7 +39,7 @@ def fetch_data():
             state = loc["state"]
             latitude = loc["lat"]
             longitude = loc["lng"]
-            if page_url == None:
+            if page_url is None:
                 hours_of_operation = MISSING
                 page_url = MISSING
             else:
