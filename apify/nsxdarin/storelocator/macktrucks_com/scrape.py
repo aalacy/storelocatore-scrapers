@@ -8,7 +8,7 @@ headers = {
 
 
 def write_output(data):
-    with open("data.csv", mode="w") as output_file:
+    with open("data.csv", mode="w", encoding="utf-8") as output_file:
         writer = csv.writer(
             output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
         )
@@ -36,15 +36,15 @@ def write_output(data):
 
 def fetch_data():
     url = "https://www.macktrucks.com/simpleprox.ashx?http://mvservices.na.volvogroup.com/DealerJSON_new.ashx?state=1"
-    r = session.get(url, headers=headers)
+    r = session.get(url, headers=headers, stream=True)
     if r.encoding is None:
         r.encoding = "utf-8"
     website = "macktrucks.com"
     for line in r.iter_lines(decode_unicode=True):
         if '"IDENTIFIER_VALUE":"' in line:
-            items = line.split("IDENTIFIER_VALUE")
+            items = line.split('SELECT_EMAIL_ADDRESS":""}')
             for item in items:
-                if '"COMPANY_DBA_NAME":"' in item:
+                if "MAIN_ADDRESS_LINE_1_TXT" in item:
                     loc = "<MISSING>"
                     store = item.split('"')[0]
                     name = item.split('"COMPANY_DBA_NAME":"')[1].split('"')[0]
@@ -65,7 +65,10 @@ def fetch_data():
                         phone = "<MISSING>"
                     hours = ""
                     zc = item.split(',"MAIN_POSTAL_CD":"')[1].split('"')[0]
-                    typ = item.split('"DEALER_TYPE_DESC":"')[1].split('"')[0]
+                    try:
+                        typ = item.split('"DEALER_TYPE_DESC":"')[1].split('"')[0]
+                    except:
+                        typ = "<MISSING>"
                     if ',"Sales":{' in item:
                         days = (
                             item.split(',"Sales":{')[1]
