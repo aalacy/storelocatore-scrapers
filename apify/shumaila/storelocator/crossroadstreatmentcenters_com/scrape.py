@@ -70,9 +70,11 @@ def fetch_data():
                 },
             }
         }
+
         loclist = session.post(url, headers=headers, verify=False, json=myobj).json()[
             "response"
         ]["collection"]
+
         for loc in loclist:
 
             title = loc["name"]
@@ -81,6 +83,11 @@ def fetch_data():
             state = loc["state"]
             pcode = loc["postalcode"]
             phone = loc["phone"]
+            try:
+                if len(phone) < 3:
+                    phone = "<MISSING>"
+            except:
+                phone = "<MISSING>"
             lat = loc["latitude"]
             longt = loc["longitude"]
             try:
@@ -113,10 +120,10 @@ def fetch_data():
                 + "/"
                 + str(loc["clientkey"]).lower()
             )
-            if link in titlelist:
+            if link in titlelist or (phone == "<MISSING>" and hours == "<MISSING>"):
                 continue
             titlelist.append(link)
-            if "OPEN" in loc["status"]:
+            if True:
                 data.append(
                     [
                         "https://www.crossroadstreatmentcenters.com/",
