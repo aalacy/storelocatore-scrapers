@@ -46,7 +46,7 @@ def fetch_data():
             for item in items:
                 if "MAIN_ADDRESS_LINE_1_TXT" in item:
                     loc = "<MISSING>"
-                    store = item.split('"')[0]
+                    store = item.split('"IDENTIFIER_VALUE":"')[1].split('"')[0]
                     name = item.split('"COMPANY_DBA_NAME":"')[1].split('"')[0]
                     add = item.split(',"MAIN_ADDRESS_LINE_1_TXT":"')[1].split('"')[0]
                     city = item.split('"MAIN_CITY_NM":"')[1].split('"')[0]
