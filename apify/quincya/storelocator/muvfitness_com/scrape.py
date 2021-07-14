@@ -43,7 +43,7 @@ def fetch_data():
     stores = session.post(base_link, headers=headers).json()
 
     data = []
-    locator_domain = "muvfitness_com"
+    locator_domain = "https://www.muvfitness.com/"
 
     for store in stores:
         location_name = store["FranchiseLocationName"]
@@ -59,38 +59,15 @@ def fetch_data():
         longitude = store["Longitude"]
         link = "https://www.muvfitness.com" + store["Path"]
 
-        found = []
-        hours_of_operation = ""
-        try:
-            hours = store["LocationHours"].split("[")[1:]
-            for row in hours:
-                days = row.split(":")[1].split('"')[1]
-                if days in found:
-                    continue
-                found.append(days)
-                if "1" in row.split("Closed")[1][:5]:
-                    time = "Closed"
-                else:
-                    time = (
-                        row.split("OpenTime")[1].split(':"')[1].split(",")[0][:-1]
-                        + "-"
-                        + row.split("CloseTime")[1].split(':"')[1].split(",")[0][:-1]
-                    )
-                hours_of_operation = (
-                    hours_of_operation + " " + days + " " + time
-                ).strip()
-        except:
-            pass
-        if not hours_of_operation:
-            req = session.get(link, headers=headers)
-            base = BeautifulSoup(req.text, "lxml")
-            hours_of_operation = (
-                " ".join(list(base.find(class_="gym-hours").stripped_strings))
-                .split("Hours")[1]
-                .strip()
-            )
-            if "mon" not in hours_of_operation.lower():
-                hours_of_operation = "<MISSING>"
+        req = session.get(link, headers=headers)
+        base = BeautifulSoup(req.text, "lxml")
+        hours_of_operation = (
+            " ".join(list(base.find(class_="gym-hours").stripped_strings))
+            .split("Hours")[1]
+            .strip()
+        )
+        if "mon" not in hours_of_operation.lower():
+            hours_of_operation = "<MISSING>"
         # Store data
         data.append(
             [
