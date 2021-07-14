@@ -41,11 +41,12 @@ def fetch_data():
     for store in stores_list:
 
         store_number = store["retailerStoreId"]
-        page_url = f"https://www.pricesmartfoods.com/sm/pickup/rsid/{store_number}/our-locations"
+        location_name = store["name"]
+        if location_name == "Alberni":
+            location_name = "Shangri-La"
+        page_url = f"https://www.urbanfare.com/{location_name.replace(' ','-')}/"
 
         locator_domain = website
-
-        location_name = store["name"]
 
         street_address = store["addressLine1"].strip()
         if "addressLine2" in store and store["addressLine2"]:
