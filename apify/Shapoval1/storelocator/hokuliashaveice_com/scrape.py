@@ -245,6 +245,7 @@ def fetch_data():
             )
         except:
             adr = "<MISSING>"
+
         if (
             adr.find("1602 W Brandon") != -1
             or adr.find("4057 E County Hwy 30A") != -1
@@ -255,6 +256,14 @@ def fetch_data():
             or adr.find("1875 7000 S") != -1
         ):
             postal = adr.split()[-1].strip()
+
+        tmpcls = (
+            "".join(tree.xpath(f'//div[contains(text(), "{location_name}")]/a//text()'))
+            .replace("\n", "")
+            .strip()
+        )
+        if tmpcls == "Closed for the season":
+            hours_of_operation = "Temporarily closed"
 
         row = [
             locator_domain,
