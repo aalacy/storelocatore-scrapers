@@ -33,8 +33,8 @@ def fetch_data():
             locations = session.get(url, headers=header1).json()["Locations"]
             logger.info(f"[{country['value']}] {len(locations)} found")
             for _ in locations:
-                street_address = _["address_1"]
-                if _["address_2"]:
+                street_address = _["address_1"] and _["address_1"].strip() or ""
+                if _["address_2"] and _["address_2"].strip():
                     street_address += " " + _["address_2"]
                 state = ""
                 zip_postal = _["zip_code"] or ""

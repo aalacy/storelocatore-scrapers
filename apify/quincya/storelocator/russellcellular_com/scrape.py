@@ -100,7 +100,7 @@ def fetch_data():
 
             yield [
                 locator_domain,
-                base_link,
+                "https://russellcellular.com/locations/",
                 location_name,
                 street_address,
                 city,

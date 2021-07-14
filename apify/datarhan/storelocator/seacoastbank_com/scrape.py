@@ -32,8 +32,11 @@ def write_output(data):
             ]
         )
         # Body
+        unique_rows = []
         for row in data:
-            writer.writerow(row)
+            if row not in unique_rows:
+                writer.writerow(row)
+                unique_rows.append(row)
 
 
 def fetch_data():
@@ -43,7 +46,7 @@ def fetch_data():
     items = []
 
     DOMAIN = "seacoastbank.com"
-    start_url = "https://www.seacoastbank.com/locations/viera-suntree"
+    start_url = "https://www.seacoastbank.com/locations"
 
     response = session.get(start_url)
     dom = etree.HTML(response.text)

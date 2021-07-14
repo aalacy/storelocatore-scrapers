@@ -74,7 +74,7 @@ def fetch_data():
                 )
                 yield [
                     locator_domain,
-                    missing_string,
+                    "https://www.ladyjanes.com/locations",
                     store_name,
                     address,
                     city,

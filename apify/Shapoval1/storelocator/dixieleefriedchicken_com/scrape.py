@@ -64,11 +64,17 @@ def fetch_data():
         page_url = (
             f"https://www.dixieleefriedchicken.com/locations/#wpsl-id-{store_number}"
         )
-        hours = j.get("hours")
-        hours = html.fromstring(hours)
-        hours_of_operation = (
-            " ".join(hours.xpath("//*//text()")).replace("\n", "").strip()
-        )
+        hours = j.get("hours") or "<MISSING>"
+        if hours != "<MISSING>":
+            hours = html.fromstring(hours)
+            hours_of_operation = (
+                " ".join(hours.xpath("//*//text()")).replace("\n", "").strip()
+            )
+        else:
+            hours_of_operation = "<MISSING>"
+        desc = "".join(j.get("description"))
+        if "Temporarily Closed" in desc:
+            hours_of_operation = "Temporarily Closed"
 
         row = [
             locator_domain,
