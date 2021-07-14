@@ -43,7 +43,10 @@ def fetch_data():
     r = session.get(url, headers=headers)
     for line in r.iter_lines():
         line = str(line.decode("utf-8"))
-        if "<loc>https://www.redlion.com/signature/" in line:
+        if (
+            "<loc>https://www.redlion.com/signature/" in line
+            or "<loc>https://www.redlion.com/signature-inn/" in line
+        ):
             locs.append(line.split("<loc>")[1].split("<")[0])
     for loc in locs:
         logger.info(("Pulling Location %s..." % loc))
