@@ -1,5 +1,4 @@
-
-FROM safegraph/apify-python3:3.8.5
+FROM safegraph/apify-python3:latest
 
 COPY . ./
 
