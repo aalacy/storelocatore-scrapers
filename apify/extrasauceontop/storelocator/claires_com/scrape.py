@@ -44,12 +44,14 @@ longitudes = []
 hours_of_operations = []
 
 session = SgRequests()
-url = "https://maps.stores.claires.com/api/getAsyncLocations?template=search&level=search&search=27609&limit=10000&radius=1000000000"
+url = "https://maps.stores.claires.com/api/getAsyncLocations?template=search&level=search&search=98101&limit=10000&radius=1000000000"
 
 response = session.get(url).json()
 
 map_json = extract_json(response["maplist"])
-
+print(len(map_json))
+with open("file.txt", "w", encoding="utf-8") as output:
+    json.dump(map_json, output, indent=4)
 for location in map_json:
     locator_domain = "claires.com"
     page_url = location["url"]
@@ -61,8 +63,6 @@ for location in map_json:
     zipp = location["post_code"]
 
     country_code = location["country"]
-    if country_code not in ["US", "GB", "CA"]:
-        continue
 
     store_number = location["lid"]
     phone = location["local_phone"]
