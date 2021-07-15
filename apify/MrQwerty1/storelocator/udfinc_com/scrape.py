@@ -30,7 +30,7 @@ def get_data(coord):
 
     for j in js:
         page_url = j.get("permalink") or "<MISSING>"
-        location_name = j.get("store").strip()
+        location_name = j.get("store").replace("&#038;", "").strip()
         street_address = (
             f"{j.get('address')} {j.get('address2') or ''}".strip() or "<MISSING>"
         )

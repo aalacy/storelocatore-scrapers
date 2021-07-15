@@ -33,7 +33,11 @@ def fetch_data():
         location_type = "<MISSING>"
         locator_domain = website
         location_name = "".join(store.xpath("div[1]/div[2]/span[1]//text()")).strip()
-        if len(location_name) <= 0:
+        if (
+            len(location_name) <= 0
+            or "COMING SOON"
+            in "".join(store.xpath("div[1]/div[2]/span/span/strong/text()")).strip()
+        ):
             continue
         address = "".join(store.xpath("div[1]/div[2]/p[1]/a[1]/text()")).strip()
         street_address = (

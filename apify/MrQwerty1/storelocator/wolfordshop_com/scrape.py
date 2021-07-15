@@ -76,6 +76,9 @@ def fetch_data():
             state = "<MISSING>"
             postal = j.get("postalCode") or "<MISSING>"
 
+        if postal == ".":
+            postal = "<MISSING>"
+
         store_number = j.get("storeID") or "<MISSING>"
         location_name = j.get("name")
         phone = j.get("phone") or "<MISSING>"
