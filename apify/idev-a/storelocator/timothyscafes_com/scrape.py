@@ -30,6 +30,17 @@ def fetch_data():
                 location_type = "TEMPORARILY CLOSED"
             if "(CLOSED)" in location_name:
                 location_type = "CLOSED"
+            hours = []
+            if _.operatinghours:
+                temp = list(
+                    bs(
+                        _.operatinghours.text.replace("&amp;", "&"), "lxml"
+                    ).stripped_strings
+                )
+                for hh in temp:
+                    if "Good" in hh:
+                        break
+                    hours.append(hh)
             yield SgRecord(
                 page_url=page_url,
                 store_number=_.storeId.text if _.storeId else _.storeid.text,
@@ -44,9 +55,7 @@ def fetch_data():
                 phone=_.telephone.text,
                 location_type=location_type,
                 locator_domain=locator_domain,
-                hours_of_operation=_.operatinghours.text.replace("&amp;", "&")
-                if _.operatinghours
-                else "",
+                hours_of_operation="; ".join(hours),
                 raw_address=_.address.text.replace("&#44;", ","),
             )
 
