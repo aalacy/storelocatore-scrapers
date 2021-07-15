@@ -1,3 +1,4 @@
+import re
 import csv
 import demjson
 from lxml import etree
@@ -88,6 +89,7 @@ def fetch_data():
         hoo = loc_dom.xpath('//div[@id="store_hours"]//text()')
         hoo = [elem.strip() for elem in hoo if elem.strip()]
         hours_of_operation = " ".join(hoo[1:]) if hoo else "<MISSING>"
+        hours_of_operation = re.sub(r"\w\w\w\. \d ", "", hours_of_operation)
 
         item = [
             DOMAIN,

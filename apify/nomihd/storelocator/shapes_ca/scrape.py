@@ -7,7 +7,7 @@ import lxml.html
 from sgscrape import sgpostal as parser
 
 
-website = "shapes.com"
+website = "shapes.ca"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 session = SgRequests()
 headers = {
@@ -54,7 +54,12 @@ def fetch_data():
     store_list = search_sel.xpath(
         '//li[.//span[contains(./text(),"LOCATION")]]//li/a/@href'
     )
-    store_addrs = search_sel.xpath("//li[@geoid]//span[last()]/text()")
+    add_name_list = search_sel.xpath("//li[@class='dmGeoMLocItem']")
+    add_name_dict = {}
+    for temp in add_name_list:
+        add_name_dict[
+            "".join(temp.xpath(".//span[@class='dmGeoMLocItemTitle']/text()")).strip()
+        ] = "".join(temp.xpath(".//span[@class='dmGeoMLocItemDetails']/text()")).strip()
 
     for no, store in enumerate(store_list):
 
@@ -66,7 +71,11 @@ def fetch_data():
 
         location_name = "".join(store_sel.xpath("//title/text()")).strip()
 
-        raw_address = store_addrs[no]
+        new_loc_name = location_name.split("|")[0].strip().split("\\")[0].strip()
+        if new_loc_name == "Nairn Avenue":
+            new_loc_name = "Nairn Street"
+
+        raw_address = add_name_dict[new_loc_name]
 
         formatted_addr = parser.parse_address_intl(raw_address)
         street_address = formatted_addr.street_address_1

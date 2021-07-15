@@ -105,7 +105,7 @@ def fetch_data():
         if hours == "":
             hours = "<MISSING>"
         info = add + "|" + city
-        if info not in locinfo and city != "":
+        if info not in locinfo and city != "" and "@ Virtual" not in name:
             locinfo.append(info)
             if "Zoom.com" in add:
                 add = "<MISSING>"

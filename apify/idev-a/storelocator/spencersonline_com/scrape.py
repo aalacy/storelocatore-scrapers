@@ -145,7 +145,7 @@ def scrape():
         for rec in result:
             writer.write_row(rec)
     end = time.time()
-    log.info(f"Scrape took {end-start} seconds.")
+    log.info(f"{end-start} seconds.")
 
 
 session.close()

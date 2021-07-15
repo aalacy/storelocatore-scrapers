@@ -50,9 +50,9 @@ def fetch_data():
         if name.upper() not in store_json["name"].upper():
             log.info("json_data not updated")
             continue
-        page_url = base
 
-        store_number = store_json["storeId"]
+        store_number = "".join(store.xpath("@id")).strip()
+        page_url = "https://boqueriarestaurant.com/#" + store_number
         locator_domain = website
 
         location_name = store_json["name"].strip()

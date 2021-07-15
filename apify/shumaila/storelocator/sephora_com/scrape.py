@@ -1,13 +1,13 @@
+from bs4 import BeautifulSoup
 import csv
 import json
-from bs4 import BeautifulSoup
+
 from sgrequests import SgRequests
 
-from sglogging import sglog
-
-log = sglog.SgLogSetup().get_logger("sephora.com")
-
 session = SgRequests()
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+}
 
 
 def write_output(data):
@@ -46,16 +46,13 @@ def fetch_data():
     datanow = []
     datanow.append("none")
     url = "https://www.sephora.com/happening/storelist"
-    log.info(f"storelist: {url}")
-    r = session.get(url, timeout=180, verify=False)
-    log.info(f"Res Code: {r.status_code}")
+    r = session.get(url, headers=headers, verify=False)
     soup = BeautifulSoup(r.text, "html.parser")
     linklist = soup.select("a[href*=happening]")[6:]
     for link in linklist:
         link = "https://www.sephora.com" + link["href"]
-        log.info(f"Scraping data from: {link}")
-        r = session.get(link, timeout=180, verify=False)
-        log.info(f"Status Code: {r.status_code}")
+
+        r = session.get(link, headers=headers, verify=False, timeout=100)
         try:
             r = r.text.split('"stores":[')[1].split('}],"thirdpartyImageHost"', 1)[0]
         except:
@@ -135,15 +132,12 @@ def fetch_data():
         )
 
         p += 1
-    log.info(f"Total Locations added: {p}")
     return data
 
 
 def scrape():
-    log.info("Started")
     data = fetch_data()
     write_output(data)
-    log.info("Finished grabbing locations")
 
 
 scrape()
