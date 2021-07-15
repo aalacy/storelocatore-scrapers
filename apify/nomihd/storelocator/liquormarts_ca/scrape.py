@@ -5,7 +5,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import json
 import lxml.html
-
+import datetime
 
 website = "liquormarts.ca"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -39,8 +39,11 @@ def fetch_data():
 
     for store in stores_list:
 
-        page_url = search_url
         store_sel = lxml.html.fromstring(store["text"])
+        page_url = (
+            "https://www.liquormarts.ca" + "".join(store_sel.xpath("//a/@href")).strip()
+        )
+
         store_info = list(
             filter(
                 str,
@@ -48,7 +51,7 @@ def fetch_data():
             )
         )
 
-        store_number = "<MISSING>"
+        store_number = page_url.split("/")[-1].strip()
         locator_domain = website
 
         location_name = store_info[0].strip()
@@ -64,7 +67,34 @@ def fetch_data():
         phone = store_info[-2]
         location_type = "<MISSING>"
 
-        hours_of_operation = store_info[-1].strip()
+        log.info(page_url)
+        store_req = session.get(page_url, headers=headers)
+        store_html_sel = lxml.html.fromstring(store_req.text)
+        nid = (
+            "".join(store_html_sel.xpath('//link[@rel="shortlink"]/@href'))
+            .strip()
+            .split("/")[-1]
+            .strip()
+        )
+        today = datetime.date.today()
+        next_sunday = str(today + datetime.timedelta(days=today.weekday()))
+        last_monday = str(today + datetime.timedelta(days=-today.weekday()))
+
+        hours_req = session.get(
+            "https://www.liquormarts.ca/opening_hours/instances?from_date={}&to_date={}&nid={}".format(
+                last_monday, next_sunday, nid
+            ),
+            headers=headers,
+        )
+
+        hours = json.loads(hours_req.text)
+        hours_list = []
+        for hour in hours:
+            day = datetime.datetime.strptime(hour["date"], "%Y-%m-%d").strftime("%A")
+            time = hour["start_time"] + "-" + hour["end_time"]
+            hours_list.append(day + ":" + time)
+
+        hours_of_operation = "; ".join(hours_list).strip()
 
         latitude = store["latitude"]
         longitude = store["longitude"]
