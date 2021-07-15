@@ -50,6 +50,8 @@ def fetch_data():
             location_name = "".join(store.xpath(".//h3/a/text()")).strip()
             if "Headquarters" in location_name:
                 continue
+
+            location_name = store_type
             street_address = (
                 " ".join(store.xpath('.//span[@itemprop="streetAddress"]//text()'))
                 .strip(",. ")
@@ -79,7 +81,7 @@ def fetch_data():
 
             store_number = "<MISSING>"
 
-            location_type = store_type
+            location_type = "".join(_type.xpath("./h2/text()")).strip()
 
             hours_of_operation = "<MISSING>"
 
