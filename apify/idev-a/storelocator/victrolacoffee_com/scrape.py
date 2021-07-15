@@ -51,13 +51,11 @@ def fetch_data():
             city = state = zip_postal = ""
             if "Open" not in hours[0] and "Monday" not in hours[0]:
                 addr = hours[0].replace("map", "")
-                street_address = hours[0].split("--")[0].strip()
-                city = hours[0].split("--")[1].split(",")[0].strip()
-                state = (
-                    hours[0].split("--")[1].split(",")[1].strip().split(" ")[0].strip()
-                )
+                street_address = addr.split("--")[0].strip()
+                city = addr.split("--")[1].split(",")[0].strip()
+                state = addr.split("--")[1].split(",")[1].strip().split(" ")[0].strip()
                 zip_postal = (
-                    hours[0].split("--")[1].split(",")[1].strip().split(" ")[1].strip()
+                    addr.split("--")[1].split(",")[1].strip().split(" ")[1].strip()
                 )
                 del hours[0]
             coord = (
