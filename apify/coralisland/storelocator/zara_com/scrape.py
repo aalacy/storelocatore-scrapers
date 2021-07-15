@@ -1,8 +1,7 @@
 import csv
+
 from sglogging import sglog
 from sgrequests import SgRequests
-
-from sgscrape.pause_resume import CrawlState
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 
 logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
@@ -80,13 +79,13 @@ def record_transformer(poi):
     return (item, latitude, longitude)
 
 
-def search_country(session, search, hdr, SearchableCountry):
+def search_all(session, search, hdr):
     total = 0
     maxZ = search.items_remaining()
 
     def getPoint(point, session, hdr):
         url = "https://www.zara.com/{}/en/stores-locator/search?lat={}&lng={}&isGlobalSearch=true&showOnlyPickup=false&isDonationOnly=false&ajax=true".format(
-            SearchableCountry, *point
+            search.current_country(), *point
         )
         data = session.get(url, headers=hdr)
         return data.json()
@@ -103,7 +102,7 @@ def search_country(session, search, hdr, SearchableCountry):
         progress = str(round(100 - (search.items_remaining() / maxZ * 100), 2)) + "%"
         total += found
         logzilla.info(
-            f"{str(Point).replace('(','').replace(')','')}|found: {found}|total: {total}|prog: {progress}|\nRemaining: {search.items_remaining()} Searchable: {SearchableCountry}"
+            f"{str(Point).replace('(','').replace(')','')}|found: {found}|total: {total}|prog: {progress}|\nRemaining: {search.items_remaining()} Searchable: {search.current_country()}"
         )
 
 
@@ -113,32 +112,11 @@ def fetch_data():
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.182 Safari/537.36"
     }
     with SgRequests() as session:
-        for SearchableCountry in SearchableCountries.WITH_COORDS_ONLY:
-            search = None
-            try:
-                search = DynamicGeoSearch(
-                    country_codes=[SearchableCountry],
-                    max_radius_miles=30,
-                    state=CrawlState(),
-                )
-            except KeyError:
-                continue
-            if search:
-                for item in search_country(session, search, hdr, SearchableCountry):
-                    yield item
-        for SearchableCountry in SearchableCountries.WITH_ZIPCODE_AND_COORDS:
-            search = None
-            try:
-                search = DynamicGeoSearch(
-                    country_codes=[SearchableCountry],
-                    max_radius_miles=30,
-                    state=CrawlState(),
-                )
-            except KeyError:
-                continue
-            if search:
-                for item in search_country(session, search, hdr, SearchableCountry):
-                    yield item
+        search = DynamicGeoSearch(
+            country_codes=SearchableCountries.ALL, max_radius_miles=30
+        )
+        for item in search_all(session, search, hdr):
+            yield item
 
 
 def scrape():
