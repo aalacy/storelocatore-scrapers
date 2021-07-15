@@ -198,13 +198,13 @@ def fetchStores():
                         "location_type": googleLocation["location_type"],
                     }
                 )
-        if Found == False:
+        if Found is False:
             foundAtm = False
             for atm in atms:
                 if googleLocation["location_name"] in atm["name"]:
                     foundAtm = atm
 
-            if foundAtm != False:
+            if foundAtm is not False:
                 log.debug(
                     f'{googleLocation["location_name"]} retrieve address {foundAtm["href"]} ...'
                 )
