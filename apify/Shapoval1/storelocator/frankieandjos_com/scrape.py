@@ -55,8 +55,18 @@ def fetch_data():
         country_code = "US"
         city = ad.split(",")[0].strip()
         store_number = "<MISSING>"
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
+        text = "".join(
+            tree.xpath(f'//a[./p[contains(text(), "{location_name}")]]/@href')
+        )
+        try:
+            if text.find("ll=") != -1:
+                latitude = text.split("ll=")[1].split(",")[0]
+                longitude = text.split("ll=")[1].split(",")[1].split("&")[0]
+            else:
+                latitude = text.split("@")[1].split(",")[0]
+                longitude = text.split("@")[1].split(",")[1]
+        except IndexError:
+            latitude, longitude = "<MISSING>", "<MISSING>"
         phone = "".join(d.xpath(".//p[4]/text()"))
         hours_of_operation = (
             "".join(d.xpath(".//p[5]/text()"))
