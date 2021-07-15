@@ -115,7 +115,9 @@ def fetch_data():
         longitude = store["geo"]["longitude"]
 
         try:
-            hours_of_operation = " ".join(list(item.find(class_="hours").stripped_strings))
+            hours_of_operation = " ".join(
+                list(item.find(class_="hours").stripped_strings)
+            )
         except:
             hours_of_operation = "<MISSING>"
 
