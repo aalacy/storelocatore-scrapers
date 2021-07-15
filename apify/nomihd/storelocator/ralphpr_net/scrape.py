@@ -53,12 +53,14 @@ def fetch_data():
 
         raw_address = " ".join(store_info.split("Dirección:")[1:]).strip("| ").strip()
 
-        formatted_addr = parser.parse_address_usa(raw_address)
-        street_address = formatted_addr.street_address_1
-        if formatted_addr.street_address_2:
-            street_address = street_address + ", " + formatted_addr.street_address_2
+        formatted_addr = parser.parse_address_intl(raw_address)
+        street_address = ", ".join(raw_address.split(",")[:-1]).strip()
 
-        city = formatted_addr.city
+        city = location_name.replace("Ralph's", "").strip()
+        if city == "Del Este Humacao":
+            city = "Humacao"
+
+        street_address = street_address.replace(city + " ", "").strip()
         state = formatted_addr.state
         zip = formatted_addr.postcode
         if not state:
