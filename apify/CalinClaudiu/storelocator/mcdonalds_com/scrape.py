@@ -416,7 +416,10 @@ class CrawlMethod(CleanRecord):
                             found += 1
                             yield record
                     except Exception as e:
-                        self.Oopsie(results["SEARCHPOINT"], str(e))
+                        try:
+                            self.Oopsie(results["SEARCHPOINT"], str(e))
+                        except Exception:
+                            pass
 
             remaining = self._search.items_remaining()
             if remaining == 0:
