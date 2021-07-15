@@ -2,6 +2,7 @@ from sgrequests import SgRequests
 from sgselenium import SgChrome
 import pandas as pd
 from bs4 import BeautifulSoup as bs
+from webdriver_manager.chrome import ChromeDriverManager
 import re
 
 
@@ -9,7 +10,9 @@ def reset_sessions(data_url):
 
     s = SgRequests()
 
-    driver = SgChrome().driver()
+    driver = SgChrome(
+        executable_path=ChromeDriverManager().install(), is_headless=True
+    ).driver()
     driver.get(data_url)
 
     incap_str = "/_Incapsula_Resource?SWJIYLWA=719d34d31c8e3a6e6fffd425f7e032f3"
@@ -28,7 +31,8 @@ def reset_sessions(data_url):
             if len(test_html) < 2:
                 continue
             else:
-                return [s, driver, headers, response_text]
+                driver.quit()
+                return [s, headers, response_text]
 
         except Exception:
             continue
@@ -58,7 +62,11 @@ grids = soup.find_all(
 session = SgRequests()
 for grid in grids:
     locator_domain = "mezeh.com"
-    page_url = grid.find("a")["href"]
+    try:
+        page_url = grid.find("a")["href"]
+    except Exception:
+        page_url = "<MISSING>"
+    zipp = "nope"
     location_name = grid.find("h4").text.strip()
     try:
         address_section = grid.find("a").text.strip().split("\n")[1]
@@ -95,21 +103,6 @@ for grid in grids:
         r = session.get(latlon_url).url
         latitude = r.split("@")[1].split(",")[0]
         longitude = r.split("@")[1].split(",")[1]
-
-        locator_domains.append(locator_domain)
-        page_urls.append(page_url)
-        location_names.append(location_name)
-        street_addresses.append(address)
-        citys.append(city)
-        states.append(state)
-        zips.append(zipp)
-        country_codes.append(country_code)
-        store_numbers.append(store_number)
-        phones.append(phone)
-        location_types.append(location_type)
-        latitudes.append(latitude)
-        longitudes.append(longitude)
-        hours_of_operations.append(hours)
 
     except Exception:
         if "coming soon" in grid.text.strip():
@@ -158,19 +151,48 @@ for grid in grids:
             hours = "Coming Soon"
 
         else:
+            # print(grid.find("h5").text.strip().split("\n"))
             address = grid.find("h5").text.strip().split(".")[0]
             city = grid.find("h5").text.strip().split(".")[1].split(",")[0]
-            state = (
-                grid.find("h5").text.strip().split(".")[1].split(",")[1].split(" ")[1]
-            )
-            zipp = (
-                grid.find("h5")
-                .text.strip()
-                .split(".")[1]
-                .split(",")[1]
-                .split(" ")[2]
-                .split("\n")[0]
-            )
+
+            try:
+                state = (
+                    grid.find("h5")
+                    .text.strip()
+                    .split(".")[1]
+                    .split(",")[1]
+                    .split(" ")[1]
+                )
+
+                zipp = (
+                    grid.find("h5")
+                    .text.strip()
+                    .split(".")[1]
+                    .split(",")[1]
+                    .split(" ")[2]
+                    .split("\n")[0]
+                )
+                phone = "<MISSING>"
+                latitude = "<MISSING>"
+                longitude = "<MISSING>"
+                hours = "Temporarily Closed"
+                store_number = "<MISSING>"
+                country_code = "US"
+            except Exception:
+                address = grid.find("h5").text.strip().split(location_name)[0]
+                city = location_name
+                state = grid.find("h5").text.strip().split(", ")[-1].split(" ")[0]
+                zipp = grid.find("h5").text.strip().split(", ")[-1].split(" ")[1][:5]
+
+            if zipp == "nope":
+                zipp = (
+                    grid.find("h5")
+                    .text.strip()
+                    .split(".")[1]
+                    .split(",")[1]
+                    .split(" ")[2]
+                    .split("\n")[0]
+                )
             phone = "<MISSING>"
             latitude = "<MISSING>"
             longitude = "<MISSING>"
