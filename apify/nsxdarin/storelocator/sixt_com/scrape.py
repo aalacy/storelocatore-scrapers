@@ -92,19 +92,52 @@ def fetch_data():
                 lat = "28.386945724487"
                 lng = "-81.504974365234"
                 hours = "MO - FR: 07:00 - 18:00; SA - SU: 09:00 - 17:00"
-            if '"@id": "' in line2 and "orlando-lake-buena-vista" not in loc:
-                add = line2.split('"streetAddress":"')[1].split('"')[0]
-                zc = line2.split('"postalCode":"')[1].split('"')[0]
+            if '"@id": "' in line2:
                 state = "<MISSING>"
-                city = line2.split('"addressLocality":"')[1].split('"')[0]
-                lat = line2.split(',"latitude":')[1].split(",")[0]
-                lng = line2.split('"longitude":')[1].split("}")[0]
-                add = line2.split('"streetAddress":"')[1].split('"')[0]
-                add = line2.split('"streetAddress":"')[1].split('"')[0]
+                try:
+                    add = line2.split('"streetAddress":"')[1].split('"')[0]
+                    zc = line2.split('"postalCode":"')[1].split('"')[0]
+                    city = line2.split('"addressLocality":"')[1].split('"')[0]
+                    lat = line2.split(',"latitude":')[1].split(",")[0]
+                    lng = line2.split('"longitude":')[1].split("}")[0]
+                    add = line2.split('"streetAddress":"')[1].split('"')[0]
+                    add = line2.split('"streetAddress":"')[1].split('"')[0]
+                    hours = (
+                        line2.split('"openingHours":["')[1]
+                        .split('"]')[0]
+                        .replace('","', "; ")
+                    )
+                except:
+                    pass
+            if "address</h3>" in line2 and add == "":
+                addinfo = (
+                    line2.split("<p>")[1].split("<")[0].replace(", Suite", " Suite")
+                )
+                add = addinfo.split(",")[0]
+                zc = addinfo.split(",")[1].strip().split(" ")[0]
+                try:
+                    city = addinfo.split(",")[1].strip().split(" ")[1]
+                except:
+                    city = "<MISSING>"
+            if "coordinates: { lat:" in line2:
+                lat = line2.split("coordinates: { lat:")[1].split(",")[0].strip()
+                lng = (
+                    line2.split("coordinates: { lat:")[1]
+                    .split("lng:")[1]
+                    .split(",")[0]
+                    .strip()
+                )
+            if 'openhours-scheduler_week">' in line2:
                 hours = (
-                    line2.split('"openingHours":["')[1]
-                    .split('"]')[0]
-                    .replace('","', "; ")
+                    line2.split('openhours-scheduler_week">')[1]
+                    .split("</p> </div>")[0]
+                    .replace('<div data-component="text">', "")
+                    .replace("<p>", "")
+                    .replace("</div>", "")
+                    .replace("<div>", "")
+                    .replace("  ", " ")
+                    .replace("  ", " ")
+                    .replace("  ", " ")
                 )
         hours = hours.replace("24 HRS RETURN;", "").strip()
         yield [

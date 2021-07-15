@@ -2,17 +2,9 @@ import csv
 from lxml import html
 from sgrequests import SgRequests
 from sgselenium.sgselenium import SgFirefox
-
-import ssl
-
-try:
-    _create_unverified_https_context = (
-        ssl._create_unverified_context
-    )  # Legacy Python that doesn't verify HTTPS certificates by default
-except AttributeError:
-    pass
-else:
-    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 
 
 def write_output(data):
@@ -73,10 +65,15 @@ def fetch_data():
             location_type = "Temporarily Closed"
         page_url = f"https://www.pizzadepot.ca{sg}"
         with SgFirefox() as driver:
+            driver.implicitly_wait(10)
             driver.get(page_url)
+
             driver.maximize_window()
             driver.implicitly_wait(20)
             driver.switch_to.frame(0)
+            WebDriverWait(driver, 10).until(
+                EC.presence_of_element_located((By.XPATH, '//div[@class="address"]'))
+            )
             ad = driver.find_element_by_xpath('//div[@class="address"]').text
             ll = driver.find_element_by_xpath(
                 '//div[@class="google-maps-link"]/a'

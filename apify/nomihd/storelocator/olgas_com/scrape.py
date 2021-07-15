@@ -8,8 +8,20 @@ website = "olgas.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 session = SgRequests()
 headers = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.66 Safari/537.36",
-    "Accept": "application/json",
+    "authority": "order.olgas.com",
+    "sec-ch-ua": '" Not;A Brand";v="99", "Google Chrome";v="91", "Chromium";v="91"',
+    "x-olo-request": "1",
+    "sec-ch-ua-mobile": "?0",
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+    "accept": "application/json, */*",
+    "x-requested-with": "XMLHttpRequest",
+    "x-olo-app-platform": "web",
+    "__requestverificationtoken": "",
+    "x-olo-viewport": "Desktop",
+    "sec-fetch-site": "same-origin",
+    "sec-fetch-mode": "cors",
+    "sec-fetch-dest": "empty",
+    "accept-language": "en-US,en-GB;q=0.9,en;q=0.8",
 }
 
 
@@ -59,7 +71,6 @@ def write_output(data):
 
 def fetch_data():
     # Your scraper here
-    loc_list = []
 
     search_url = "https://www.olgas.com/wp-admin/admin-ajax.php?action=store_search&lat=42.36837&lng=-83.35271&max_results=50000&radius=50000&autoload=1"
     stores_req = session.get(search_url, headers=headers)
@@ -114,7 +125,32 @@ def fetch_data():
         ):
             hours_list.append("Sun:" + store["store_time_weekend"])
 
-        hours_of_operation = "; ".join(hours_list).strip()
+        hours_of_operation = ""
+        if len(hours_list) > 0:
+            hours_of_operation = "; ".join(hours_list).strip()
+        else:
+            if page_url != "<MISSING>":
+                log.info(page_url)
+                store_req = session.get(
+                    "https://order.olgas.com/api/vendors/"
+                    + page_url.split("/menu/")[1].strip(),
+                    headers=headers,
+                )
+                if "vendor" in store_req.text:
+                    hours_sections = json.loads(store_req.text)["vendor"][
+                        "weeklySchedule"
+                    ]["calendars"]
+                    for sec in hours_sections:
+                        if "Business" == sec["scheduleDescription"]:
+                            hours = sec["schedule"]
+                            for hour in hours:
+                                day = hour["weekDay"]
+                                time = hour["description"]
+                                hours_list.append(day + ":" + time)
+
+                            break
+
+                    hours_of_operation = "; ".join(hours_list).strip()
 
         latitude = store["lat"]
         longitude = store["lng"]
@@ -146,10 +182,7 @@ def fetch_data():
             longitude,
             hours_of_operation,
         ]
-        loc_list.append(curr_list)
-
-        # break
-    return loc_list
+        yield curr_list
 
 
 def scrape():

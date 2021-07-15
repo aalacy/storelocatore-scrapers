@@ -85,7 +85,7 @@ def fetch_data():
         store_number = "<MISSING>"
         phone = "".join(tree.xpath('//span[@class="cWhite"]/span/text()')).strip()
         hours_of_operation = tree.xpath(
-            '//div[@class="col-xs-12 col-sm-5 col-sm-offset-1 text-left-xs"]/p//text() | //div[@class="col-xs-12 col-sm-5 col-sm-offset-1 col-lg-4 col-lg-offset-2 text-left-xs"]/p//text()'
+            '//div[@class="col-xs-12 col-sm-5 col-sm-offset-1 text-left-xs"]/p//text() | //div[@class="col-xs-12 col-sm-5 col-sm-offset-1 col-lg-4 col-lg-offset-2 text-left-xs"]/p//text() | //div[@class="col-xs-12 col-sm-5 col-sm-offset-1 col-lg-4 col-lg-offset-2 text-left-xs"]/text()'
         )
         if page_url.find("stpaul") != -1:
             hours_of_operation = tree.xpath(
