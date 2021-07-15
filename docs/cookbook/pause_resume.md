@@ -24,7 +24,7 @@
 ```python
 from typing import Iterable
 
-form sgscrape.pause_resume import SerializableRequest, CrawlStateSingleton
+from sgscrape.pause_resume import SerializableRequest, CrawlStateSingleton
 from sgscrape.sgrecord_id import SgRecordID, RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord import SgRecord
