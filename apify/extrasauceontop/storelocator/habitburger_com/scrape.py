@@ -170,7 +170,7 @@ for url in page_urls_to_iterate:
 
     if "www.habitburger.com" in hours:
         hours = "Temporarily Closed"
-    
+
     elif "Thru" in hours:
         hours = hours.split("Thru")[1].replace(":", "").strip()
 
