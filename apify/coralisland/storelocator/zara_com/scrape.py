@@ -1,8 +1,7 @@
 import csv
+
 from sglogging import sglog
 from sgrequests import SgRequests
-
-from sgscrape.pause_resume import CrawlState
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 
 logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
