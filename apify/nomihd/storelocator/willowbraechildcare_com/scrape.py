@@ -63,6 +63,13 @@ def fetch_data():
         if formatted_addr.street_address_2:
             street_address = street_address + ", " + formatted_addr.street_address_2
 
+        if street_address is not None:
+            street_address = (
+                street_address.replace("Way Glen Arbour", "Way")
+                .strip()
+                .replace("Burlington Power", "")
+                .strip()
+            )
         city = formatted_addr.city
         state = location_name.split(",")[-1].strip()
         zip = formatted_addr.postcode
@@ -91,16 +98,15 @@ def fetch_data():
 
         location_type = "<MISSING>"
 
-        hours = list(
-            filter(
-                str,
-                [
-                    x.strip()
-                    for x in store_sel.xpath('//*[@class="table-hours"]//text()')
-                ],
-            )
-        )
-        hours_of_operation = " ".join(hours)
+        hours = store_sel.xpath('//*[@class="table-hours"]//tr')
+        hours_list = []
+        for hour in hours:
+            day = "".join(hour.xpath("td[1]/text()")).strip()
+            time = "".join(hour.xpath("td[2]/text()")).strip()
+            if len(day) > 0 and len(time) > 0:
+                hours_list.append(day + ":" + time)
+
+        hours_of_operation = "; ".join(hours_list)
 
         latitude, longitude = "<MISSING>", "<MISSING>"
 

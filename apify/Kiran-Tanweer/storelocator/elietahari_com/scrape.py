@@ -1,15 +1,16 @@
 import csv
-import time
+from bs4 import BeautifulSoup
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
+import time
 from sgscrape import sgpostal as parser
 
-logger = SgLogSetup().get_logger("ontheborder_com")
+logger = SgLogSetup().get_logger("elietahari_com")
 
 session = SgRequests()
 
 headers = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.141 Safari/537.36",
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.114 Safari/537.36",
 }
 
 
@@ -46,7 +47,7 @@ def write_output(data):
                 row[4].strip(),
                 row[5].strip(),
                 row[6].strip(),
-                row[8],
+                row[8].strip(),
                 row[10].strip(),
             ]
             if comp_list not in temp_list:
@@ -57,30 +58,40 @@ def write_output(data):
 
 def fetch_data():
     data = []
-    search_url = "https://www.ontheborder.com/wp-admin/admin-ajax.php?searchFallback=false&page=1&sort%5B0%5D%5Bfield%5D=name&sort%5B0%5D%5Border%5D=asc&perpage=0&action=mapsvg_data_get_all&map_id=405&table=database"
-    stores_req = session.get(search_url, headers=headers).json()
-    for loc in stores_req["objects"]:
-        address = loc["location"]["address"]["formatted"]
-        lat = loc["location"]["lat"]
-        lng = loc["location"]["lng"]
-        title = loc["name"]
-        isloc = loc["post"]
-        if isloc is not None:
-            link = loc["post"]["guid"]
-            hours = loc["post"]["acf"]["hours"]
-            hoo = ""
-            for hr in hours:
-                day = hr["day_or_day_range"]
-                time = hr["hour_range"]
-                hoo = hoo + " " + day + " " + time
-            phone = loc["post"]["acf"]["phone_number"]
-            storeid = loc["post"]["ID"]
-        else:
-            link = "<MISSING>"
-            hours = "<MISSING>"
+    search_url = "https://cdn.shopify.com/s/files/1/0350/8997/3385/t/49/assets/ndnapps-geojson.js?v=12382587392219603945"
+    stores_req = session.get(search_url, headers=headers)
+    soup = stores_req.text
+    r_text = soup.split("eqfeed_callback(")[1].split(")")[0]
+    locations = r_text.split("}},")
+    link = "https://www.elietahari.com/pages/store-locator"
+    r = session.get(link, headers=headers)
+    bs = BeautifulSoup(r.text, "html.parser")
+    hours = bs.findAll("div", {"class": "hours"})
+    for locs, hr in zip(locations, hours):
+        hoo = hr.text
+        hoo = hoo.replace("\n", " ")
+        hoo = hoo.replace("Opens", "")
+        hoo = hoo.replace("Hours", "")
+        hoo = hoo.replace("  ", " ")
+        hoo = hoo.strip()
+        title = locs.split('name":"')[1].split('",')[0]
+        address = locs.split('"address":"')[1].split('",')[0]
+        phone = locs.split('phone":')[1].split(",")[0]
+        phone = phone.strip('"')
+        if phone == "null":
             phone = "<MISSING>"
-            storeid = "540"
-        parsed = parser.parse_address_usa(address)
+        storeid = locs.split('"id":')[1].split(',"')[0]
+        url = "https://www.elietahari.com" + locs.split('url":"')[1].split('",')[0]
+        url = url.replace("\\", "")
+        lat = locs.split('"lat":"')[1].split('",')[0]
+        lng = locs.split('"lng":"')[1].split('",')[0]
+        if (
+            url
+            == "https://www.elietahari.com/apps/store-locator/elie-tahari-pembroke-gardens.html"
+        ):
+            phone = "954-589-1399"
+        address = address.rstrip(", United States")
+        parsed = parser.parse_address_intl(address)
         street1 = parsed.street_address_1 if parsed.street_address_1 else "<MISSING>"
         street = (
             (street1 + ", " + parsed.street_address_2)
@@ -90,34 +101,24 @@ def fetch_data():
         city = parsed.city if parsed.city else "<MISSING>"
         state = parsed.state if parsed.state else "<MISSING>"
         pcode = parsed.postcode if parsed.postcode else "<MISSING>"
-        hours = str(hours)
-        hours = hours.replace("'", "")
-        hours = hours.replace(",", "")
-        hours = hours.replace("[", "")
-        hours = hours.replace("]", "")
-        hours = hours.replace("{", "")
-        hours = hours.replace("}", "")
-        hours = hours.replace(":", "")
-        hours = hours.replace("day_or_day_range", "")
-        hours = hours.replace("hour_range", "")
-        hours = hours.replace("  ", " ").strip()
+        country = "US"
 
         data.append(
             [
-                "https://www.ontheborder.com/",
-                link,
+                "https://www.elietahari.com/",
+                url,
                 title,
                 street,
                 city,
                 state,
                 pcode,
-                "US",
+                country,
                 storeid,
                 phone,
                 "<MISSING>",
                 lat,
                 lng,
-                hours,
+                hoo,
             ]
         )
     return data

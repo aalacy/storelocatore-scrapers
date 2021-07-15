@@ -72,6 +72,8 @@ def fetch_data():
         country_code = poi["address"]["addressCountry"]
         store_number = store_url.split("=")[-1]
         phone = poi["telephone"]
+        if not phone:
+            continue
         location_type = poi["@type"]
         latitude = poi["geo"]["latitude"]
         longitude = poi["geo"]["longitude"]
