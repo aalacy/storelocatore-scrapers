@@ -151,7 +151,6 @@ for grid in grids:
             hours = "Coming Soon"
 
         else:
-            # print(grid.find("h5").text.strip().split("\n"))
             address = grid.find("h5").text.strip().split(".")[0]
             city = grid.find("h5").text.strip().split(".")[1].split(",")[0]
 
