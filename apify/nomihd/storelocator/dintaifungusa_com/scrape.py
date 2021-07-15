@@ -101,7 +101,6 @@ def fetch_data():
     )
     global_sel = lxml.html.fromstring(global_loc_req.text)
     countries = global_sel.xpath('//a[contains(@class,"worldname ")]')
-    # search_url = "https://www.dintaifung.com.tw/eng/store_list.php?cid=18"
     for country in countries:
         search_url = "https://www.dintaifung.com.tw/eng/" + "".join(
             country.xpath("@href")
