@@ -59,7 +59,6 @@ def fetch_data():
     for link in main:
         location_name = link.find("span", {"class": "avia-menu-text"}).text.strip()
         page_url = link["href"]
-        print(page_url)
         r1 = session.get(page_url, headers=headers)
         tree = html.fromstring(r1.text)
         soup1 = BeautifulSoup(r1.text, "html.parser")
