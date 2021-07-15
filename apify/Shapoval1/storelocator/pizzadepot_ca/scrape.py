@@ -2,6 +2,9 @@ import csv
 from lxml import html
 from sgrequests import SgRequests
 from sgselenium.sgselenium import SgFirefox
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 
 
 def write_output(data):
@@ -64,9 +67,13 @@ def fetch_data():
         with SgFirefox() as driver:
             driver.implicitly_wait(10)
             driver.get(page_url)
+
             driver.maximize_window()
             driver.implicitly_wait(20)
             driver.switch_to.frame(0)
+            WebDriverWait(driver, 10).until(
+                EC.presence_of_element_located((By.XPATH, '//div[@class="address"]'))
+            )
             ad = driver.find_element_by_xpath('//div[@class="address"]').text
             ll = driver.find_element_by_xpath(
                 '//div[@class="google-maps-link"]/a'

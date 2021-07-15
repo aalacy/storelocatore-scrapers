@@ -26,7 +26,9 @@ headers = {
 
 
 def split_fulladdress(address_info):
-    street_address = " ".join(address_info[0:-1]).strip(" ,.")
+    street_address = (
+        " ".join(address_info[0:-1]).strip(" ,.").replace("The Gardens", "").strip()
+    )
 
     city_state_zip = (
         address_info[-1].replace(",", " ").replace(".", " ").replace("  ", " ").strip()

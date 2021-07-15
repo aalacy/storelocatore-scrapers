@@ -21,7 +21,13 @@ def extract_json(html_string):
             if brace_count == 0:
                 end = count
                 try:
-                    json_objects.append(json.loads(html_string[start : end + 1]))
+                    json_objects.append(
+                        json.loads(
+                            html_string[start : end + 1]
+                            .replace("\n", "")
+                            .replace("\r", "")
+                        )
+                    )
                 except Exception:
                     pass
         count = count + 1

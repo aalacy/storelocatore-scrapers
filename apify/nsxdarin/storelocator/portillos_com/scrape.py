@@ -85,10 +85,13 @@ def fetch_data():
         lng = loc.split("|")[3]
         hours = ""
         HFound = False
+        CS = False
         r2 = session.get(lurl, headers=headers)
         lines = r2.iter_lines()
         for line2 in lines:
             line2 = str(line2.decode("utf-8"))
+            if "Opening Soon<" in line2:
+                CS = True
             if "<h1>" in line2:
                 name = line2.split("<h1>")[1].split("<")[0]
             if 'data-yext-field="address1"' in line2:
@@ -129,6 +132,8 @@ def fetch_data():
             city = "Joliet"
             state = "IL"
             zc = "60435"
+        if CS:
+            name = name + " - Coming Soon"
         yield [
             website,
             lurl,
