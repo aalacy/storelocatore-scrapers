@@ -109,8 +109,10 @@ def fetch_data():
                     )
                 except:
                     pass
-            if "address</h3>" in line2:
-                addinfo = line2.split("<p>")[1].split("<")[0]
+            if "address</h3>" in line2 and add == "":
+                addinfo = (
+                    line2.split("<p>")[1].split("<")[0].replace(", Suite", " Suite")
+                )
                 add = addinfo.split(",")[0]
                 zc = addinfo.split(",")[1].strip().split(" ")[0]
                 city = addinfo.split(",")[1].strip().split(" ")[1]
