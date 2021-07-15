@@ -49,9 +49,7 @@ url = "https://maps.stores.claires.com/api/getAsyncLocations?template=search&lev
 response = session.get(url).json()
 
 map_json = extract_json(response["maplist"])
-print(len(map_json))
-with open("file.txt", "w", encoding="utf-8") as output:
-    json.dump(map_json, output, indent=4)
+
 for location in map_json:
     locator_domain = "claires.com"
     page_url = location["url"]
