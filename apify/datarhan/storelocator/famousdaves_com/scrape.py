@@ -66,10 +66,30 @@ def fetch_data():
             poi_html.xpath('.//div[@class="row location-store-address"]/p[2]/text()')[0]
         )
         city = addr.city
+        if not city:
+            city = poi_html.xpath(
+                './/div[@class="row location-store-address"]/p[2]/text()'
+            )[0].split(", ")[0]
         city = city if city else "<MISSING>"
         state = addr.state
+        if not state:
+            state = (
+                poi_html.xpath(
+                    './/div[@class="row location-store-address"]/p[2]/text()'
+                )[0]
+                .split(", ")[-1]
+                .split()[0]
+            )
         state = state if state else "<MISSING>"
         zip_code = addr.postcode
+        if not zip_code:
+            zip_code = (
+                poi_html.xpath(
+                    './/div[@class="row location-store-address"]/p[2]/text()'
+                )[0]
+                .split(", ")[-1]
+                .split()[-1]
+            )
         zip_code = zip_code if zip_code else "<MISSING>"
         country_code = addr.country
         country_code = country_code if country_code else "<MISSING>"

@@ -40,7 +40,7 @@ def fetch_data():
         address = (
             soup.find("div", {"class": "restaurant-info"})
             .get_text(separator="|", strip=True)
-            .split("|")[:-1]
+            .split("|")[1:-1]
         )
         address = " ".join(x for x in address)
         address = address.replace(",", " ")
