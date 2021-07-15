@@ -14,22 +14,19 @@
 sgscrape>=0.1.7
 ```
 
-### Dos And Don'ts:
+### Best Practices & Dos And Don'ts:
 - Always use either an `SgWriter`, `SimpleScraperPipeline` or else an `SgCrawler` to deduplicate & persist records.
-  
 - Never create a list of results that you return.
 - Instead, always `yield` each result as it arrives.
-
 - When using `sgzip`, never create multiple `DynamicXSearch` instances (e.g. per-country.)
-- Instead, always pass all countries to `sgzip`.
+- Instead, always pass all countries to `sgzip`, via `SearchableCountries.ALL`
+- If you're initializing a persistent value, use the `default_factory` parameter of `state.get_misc_value`.
 
-- If you want to pass all countries to an `sgzip` search, use: `SearchableCountries.ALL`
-
-- 
 
 ### Bare-bones, just requests:
 - This is a bare-bones example for how to implement a scraper/crawler which pause/resumes, with an initial phase that
-  uses a site-map:
+  uses a site-map.
+- Take special note how `record_initial_requests` is being called only once via `state.get_misc_value` with the `default_factory` method.
 
 ```python
 from typing import Iterable
