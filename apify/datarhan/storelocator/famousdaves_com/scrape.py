@@ -2,6 +2,7 @@ import csv
 from lxml import etree
 
 from sgrequests import SgRequests
+from sgscrape.sgpostal import parse_address_intl
 
 
 def write_output(data):
@@ -46,7 +47,7 @@ def fetch_data():
     dom = etree.HTML(response.text)
 
     all_locations = []
-    all_states = dom.xpath('//div[@id="state-list"]/a/@href')
+    all_states = dom.xpath('//a[@class="location-list"]/@href')
     for state_url in all_states:
         state_response = session.get("https://www.famousdaves.com" + state_url)
         state_dom = etree.HTML(state_response.text)
@@ -61,21 +62,17 @@ def fetch_data():
             './/div[@class="row location-store-address"]/p[1]/text()'
         )
         street_address = street_address[0] if street_address else "<MISSING>"
-        city = poi_html.xpath('.//div[@class="row location-store-address"]/p[2]/text()')
-        city = city[0].split(",")[0] if city else "<MISSING>"
-        state = poi_html.xpath(
-            './/div[@class="row location-store-address"]/p[2]/text()'
-        )
-        state = state[0].split(",")[-1].split()[0] if state else "<MISSING>"
-        zip_code = (
+        addr = parse_address_intl(
             poi_html.xpath('.//div[@class="row location-store-address"]/p[2]/text()')[0]
-            .split(",")[-1]
-            .split()[-1]
         )
+        city = addr.city
+        city = city if city else "<MISSING>"
+        state = addr.state
+        state = state if state else "<MISSING>"
+        zip_code = addr.postcode
         zip_code = zip_code if zip_code else "<MISSING>"
-        if len(zip_code) < 3:
-            zip_code = "<MISSING>"
-        country_code = "<MISSING>"
+        country_code = addr.country
+        country_code = country_code if country_code else "<MISSING>"
         store_number = "<MISSING>"
         phone = poi_html.xpath('.//span[@class="location-store-phone-number"]/text()')
         phone = phone[0] if phone else "<MISSING>"
