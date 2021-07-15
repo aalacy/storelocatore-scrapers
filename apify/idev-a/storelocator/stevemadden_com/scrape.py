@@ -14,21 +14,11 @@ _headers = {
 
 def fetch_data():
     locator_domain = "https://www.stevemadden.com/apps/store-locator"
-    base_url = "https://www.stevemadden.com/apps/store-locator"
+    base_url = "https://stores.boldapps.net/front-end/get_surrounding_stores.php?shop=stevemadden.myshopify.com&latitude=40.7135097&longitude=-73.9859414&max_distance=50000&limit=1000&calc_distance=1"
     with SgRequests() as session:
-        locations = (
-            session.get(base_url, headers=_headers)
-            .text.replace("&lt;", "<")
-            .replace("&gt;", ">")
-            .replace("&#039;", '"')
-            .replace("&quot;", '"')
-            .split("markersCoords.push(")[1:-2]
-        )
+        locations = session.get(base_url, headers=_headers).json()["stores"]
         for loc in locations:
-            _ = json.loads(loc.split(");")[0])
-            json_url = f"https://stores.boldapps.net/front-end/get_store_info.php?shop=stevemadden.myshopify.com&data=detailed&store_id={_['id']}&tm=2020-12-29%2008:16:57-17"
-            data = bs(session.get(json_url, headers=_headers).json()["data"], "lxml")
-            logger.info(json_url)
+            data = bs(loc["summary"], "lxml")
             hours = []
             if data.select_one(".hours"):
                 temp = data.select_one(".hours").stripped_strings
@@ -53,17 +43,20 @@ def fetch_data():
                 street_address += " " + data.select_one(".address2").text.strip()
             if "NULL" in hours:
                 hours = []
+            country_code = ""
+            if data.select_one(".country"):
+                country_code = data.select_one(".country").text.strip()
             yield SgRecord(
                 page_url=base_url,
-                store_number=_["id"],
+                store_number=loc["store_id"],
                 location_name=data.select_one(".name").text.strip(),
                 street_address=street_address,
                 city=city,
                 state=state,
                 zip_postal=zip_postal,
-                country_code=data.select_one(".country").text.strip(),
-                latitude=_["lat"],
-                longitude=_["lng"],
+                country_code=country_code,
+                latitude=loc["lat"],
+                longitude=loc["lng"],
                 phone=phone,
                 locator_domain=locator_domain,
                 hours_of_operation="; ".join(hours),
