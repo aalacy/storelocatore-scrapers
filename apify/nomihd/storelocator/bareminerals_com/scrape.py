@@ -5,7 +5,6 @@ import json
 from sgscrape.simple_utils import parallelize
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
-from sgzip.dynamic import SearchableCountries
 from sgzip.dynamic import DynamicGeoSearch
 import lxml.html
 
