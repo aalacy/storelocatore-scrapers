@@ -35,8 +35,21 @@ def write_output(data):
             writer.writerow(row)
 
 
+def get_coords_from_google_url(url):
+    try:
+        if url.find("ll=") != -1:
+            latitude = url.split("ll=")[1].split(",")[0]
+            longitude = url.split("ll=")[1].split(",")[1].split("&")[0]
+        else:
+            latitude = url.split("@")[1].split(",")[0]
+            longitude = url.split("@")[1].split(",")[1]
+    except IndexError:
+        latitude, longitude = "<MISSING>", "<MISSING>"
+
+    return latitude, longitude
+
+
 def get_urls():
-    session = SgRequests()
     r = session.get("https://www.ntnl.ca/locations")
     tree = html.fromstring(r.text)
 
@@ -46,22 +59,40 @@ def get_urls():
 def get_data(url):
     locator_domain = "https://www.ntnl.ca/"
     page_url = f"https://www.ntnl.ca{url}"
+    country_code = "CA"
+    store_number = "<MISSING>"
+    location_type = "<MISSING>"
 
-    session = SgRequests()
     r = session.get(page_url)
     tree = html.fromstring(r.text)
 
     text = "".join(tree.xpath("//div[@data-block-json]/@data-block-json"))
-    j = json.loads(text)["location"]
+    location_name = "national on " + tree.xpath("//h2/text()")[0].strip()
 
-    location_name = j.get("addressTitle")
-    street_address = j.get("addressLine1")
-    line = j.get("addressLine2").split(", ")
+    j = json.loads(text)["location"]
+    if "westhills" in page_url:
+        street_address = tree.xpath("//a[contains(@href, '/maps/place')]/text()")[
+            0
+        ].strip()[:-1]
+        line = (
+            tree.xpath("//a[contains(@href, '/maps/place')]/text()")[-1]
+            .strip()
+            .split(", ")
+        )
+        marker = "".join(tree.xpath("//a[contains(@href, '/maps/place')]/@href"))
+        latitude, longitude = get_coords_from_google_url(marker)
+    else:
+        street_address = j.get("addressLine1")
+        line = j.get("addressLine2").split(", ")
+        latitude = j.get("markerLat")
+        longitude = j.get("markerLng")
+
     city = line.pop(0).strip()
     state = line.pop(0).strip()
-    postal = line.pop(0).strip()
-    country_code = "CA"
-    store_number = "<MISSING>"
+    try:
+        postal = line.pop(0).strip()
+    except:
+        postal = "<MISSING>"
     phone = (
         "".join(
             tree.xpath(
@@ -70,9 +101,6 @@ def get_data(url):
         ).strip()
         or "<MISSING>"
     )
-    latitude = j.get("markerLat")
-    longitude = j.get("markerLng")
-    location_type = "<MISSING>"
 
     _tmp = []
     days = tree.xpath("//p[./strong[contains(text(), 'hours')]]/strong/text()")[1:]
@@ -123,4 +151,5 @@ def scrape():
 
 
 if __name__ == "__main__":
+    session = SgRequests()
     scrape()

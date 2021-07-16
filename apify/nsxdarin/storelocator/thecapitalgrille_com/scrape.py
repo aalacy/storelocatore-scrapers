@@ -74,12 +74,12 @@ def fetch_location(loc, retry_count=0):
     try:
         with SgChrome(is_headless=True) as driver:
             driver.get(loc)
-            sleep(randint(5, 7))
+            sleep(randint(10, 15))
 
             text = driver.page_source
 
             if re.search("access denied", re.escape(text), re.IGNORECASE):
-                if retry_count > 3:
+                if retry_count > 10:
                     raise Exception()
 
                 return fetch_location(loc, retry_count + 1)
@@ -117,8 +117,8 @@ def fetch_location(loc, retry_count=0):
                 state = "MI"
                 zc = "48084"
                 phone = "(248) 649-5300"
-                lat = "<MISSING>"
-                lng = "<MISSING>"
+                lat = "42.562578"
+                lng = "-83.18373"
             if "/il/rosemont/chicago-rosemont/8036" in loc:
                 name = "Chicago - Rosemont"
                 add = "5340 N River Road"
@@ -139,6 +139,8 @@ def fetch_location(loc, retry_count=0):
                 lat = "33.63713300"
                 lng = "-111.92410500"
                 hours = "Mon-Thu: 11:00AM - 9:00PM; Fri: 11:00AM - 10:00PM; Sat: 5:00PM - 10:00PM; Sun: 5:00PM - 9:00PM"
+            if "austin/austin/8053" in loc:
+                hours = "Mon-Thu: 11:00AM - 9:00PM; Fri: 11:00AM - 10:00PM; Sat: 5:00PM - 10:00PM; Sun: 5:00PM - 9:00PM"
             if "tn/memphis/memphis/8051" in loc:
                 hours = "Mon-Thu: 11:30AM - 9:00PM; Fri: 11:30AM - 10:00PM; Sat: 5:00PM - 10:00PM; Sun: 4:00PM - 9:00PM"
             if "/jacksonville/jacksonville/8029" in loc:
@@ -158,6 +160,7 @@ def fetch_location(loc, retry_count=0):
                 state = "MD"
                 add = "5310 Western Ave"
                 phone = "(301) 718-7812"
+                hours = "Mon-Fri: 11:30AM - 10:00PM; Sat: 12:00PM - 11:00PM; Sun: 4:00PM - 9:00PM"
             if "va/fairfax/fairfax/8068" in loc:
                 hours = "Mon-Fri: 11:30AM - 10:00PM; Sat: 5:00PM - 11:00PM; Sun: 5:00PM - 9:00PM"
             if "yndhurst/lyndhurst/8060" in loc:

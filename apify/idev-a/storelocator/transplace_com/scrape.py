@@ -42,39 +42,41 @@ def fetch_data():
             country = link.select_one("div.title-wrap").text.strip()
             locations = link.select("main div.item")
             for _ in locations:
-                block = list(_.p.stripped_strings)
-                phone = ""
-                if _p(block[-1]):
-                    phone = (
-                        block[-1]
-                        .split(":")[-1]
-                        .replace("Phone", "")
-                        .split("al")[0]
-                        .split("x")[0]
-                        .strip()
-                    )
-                    del block[-1]
-                if "phone" in block[-1].lower():
-                    del block[-1]
-                addr = parse_address_intl(" ".join(block))
-                street_address = addr.street_address_1
-                if addr.street_address_2:
-                    street_address += " " + addr.street_address_2
+                location_name = _.select_one("div.item-title").text.strip()
+                for loc in _.select("p"):
+                    block = list(loc.stripped_strings)
+                    phone = ""
+                    if _p(block[-1]):
+                        phone = (
+                            block[-1]
+                            .split(":")[-1]
+                            .replace("Phone", "")
+                            .split("al")[0]
+                            .split("x")[0]
+                            .strip()
+                        )
+                        del block[-1]
+                    if "phone" in block[-1].lower():
+                        del block[-1]
+                    addr = parse_address_intl(" ".join(block))
+                    street_address = addr.street_address_1
+                    if addr.street_address_2:
+                        street_address += " " + addr.street_address_2
 
-                country_code = addr.country
-                if not country_code:
-                    country_code = country
-                yield SgRecord(
-                    page_url=base_url,
-                    location_name=_.select_one("div.item-title").text.strip(),
-                    street_address=street_address,
-                    city=addr.city,
-                    state=addr.state,
-                    zip_postal=addr.postcode,
-                    country_code=country_code,
-                    phone=phone,
-                    locator_domain=locator_domain,
-                )
+                    country_code = addr.country
+                    if not country_code:
+                        country_code = country
+                    yield SgRecord(
+                        page_url=base_url,
+                        location_name=location_name,
+                        street_address=street_address,
+                        city=addr.city,
+                        state=addr.state,
+                        zip_postal=addr.postcode.replace("CP. ", "").replace("CP ", ""),
+                        country_code=country_code,
+                        phone=phone,
+                        locator_domain=locator_domain,
+                    )
 
 
 if __name__ == "__main__":

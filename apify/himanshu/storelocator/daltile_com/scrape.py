@@ -42,7 +42,7 @@ def write_output(data):
 def fetch_data():
 
     max_results = 1000
-    max_distance = 200
+    max_distance = 250
 
     search = DynamicZipSearch(
         country_codes=[SearchableCountries.USA],
@@ -60,18 +60,18 @@ def fetch_data():
     base_url = "https://www.daltile.com"
 
     for zip_code in search:
-
         r = session.post(
-            "https://hosted.where2getit.com/daltile/rest/locatorsearch",
+            "https://hosted.where2getit.com/daltile/rest/locatorsearch?like=0.3630849894369319&lang=en_US",
             headers=headers,
             data='{"request":{"appkey":"085E99FA-1901-11E4-966B-82C955A65BB0","formdata":{'
-            '"dynamicSearch":true,"geoip":false,"dataview":"store_default","limit":1000,'
+            '"dynamicSearch":true,"false":"0","geoip":false,"dataview":"store_default","limit":1000,'
             '"geolocs":{"geoloc":[{"addressline":"'
             + str(zip_code)
             + '","country":"","latitude":"",'
-            '"longitude":""}]},"searchradius":"1000"}}}',
+            '"longitude":"","postalcode":'
+            + str(zip_code)
+            + ',"province":"","state":""}]},"order":"PREMIERSTATEMENTSDEALER asc, SHOWROOM asc, LOCATION_RATING::numeric desc nulls last, _distance","searchradius":"1000"}}}',
         )
-
         json_data = r.json()
         location_name = ""
         street_address = "<MISSING>"
@@ -101,6 +101,7 @@ def fetch_data():
                     "Dealer" in location_type
                     or "Distributor" in location_type
                     or "Corporate" in location_type
+                    or "Tile & Stone" in location_name
                 ):
                     continue
                 state = address_list["state"]

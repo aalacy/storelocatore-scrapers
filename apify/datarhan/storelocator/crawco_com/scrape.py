@@ -67,7 +67,7 @@ def fetch_data():
                     all_locations += session.get(url).json()
 
     for poi in all_locations:
-        store_url = f'https://www.crawco.com/about/our-locations/{poi["number"]}'
+        store_url = f'https://www.crawco.com/about/our-locations/{poi["number"]}{poi["addressNum"]}'
         location_name = poi["name"]
         street_address = poi["address"].get("line1")
         if not street_address:

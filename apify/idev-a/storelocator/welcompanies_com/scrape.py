@@ -34,7 +34,7 @@ def fetch_data():
                 page_url=base_url,
                 location_name=link.h2.text.strip(),
                 street_address=addr[0],
-                city=" ".join(addr[1].split(" ")[:-2]),
+                city=" ".join(addr[1].split(" ")[:-2]).replace(",", ""),
                 state=addr[1].split(" ")[-2].strip(),
                 zip_postal=addr[1].split(" ")[-1].strip(),
                 country_code="US",
