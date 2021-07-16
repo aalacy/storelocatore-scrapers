@@ -1,6 +1,10 @@
 import csv
 from lxml import html
 from sgrequests import SgRequests
+from sgselenium.sgselenium import SgFirefox
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 
 
 def write_output(data):
@@ -44,113 +48,100 @@ def fetch_data():
     r = session.get(api_url, headers=headers)
     tree = html.fromstring(r.text)
 
-    slug = tree.xpath('//span[./i[@class="fas fa-home"]]/following-sibling::span')
+    slug = tree.xpath('//a[.//span[contains(text(), "VIEW")]]')
     for d in slug:
-        sg = (
-            "".join(d.xpath(".//text()"))
-            .replace(",", "")
-            .lower()
-            .strip()
-            .replace(" ", "-")
-            .replace("(", "")
-            .replace(")", "")
-            .strip()
-        )
-
-        page_url = f"https://www.pizzadepot.ca/{sg}"
-        if page_url.find("https://www.pizzadepot.ca/1527-provincial-rd-windsor") != -1:
-            continue
-        session = SgRequests()
-        r = session.get(page_url, headers=headers)
-        tree = html.fromstring(r.text)
-
-        ad = "".join(tree.xpath('//meta[@property="og:description"]/@content'))
-
-        if ad.find("Hours") != -1:
-            ad = ad.split("Monday")[0].strip()
-        if ad.find("@") != -1:
-            ad = ad.split("@")[0]
-        if ad.find("Depot") != -1 and ad.find("Vaughan") == -1:
-            ad = ad.split("Depot")[1].strip()
-
-        ad = ad.replace("Hagersville 28", "28").strip()
-        ad = " ".join(ad.split()[:-1]).strip()
-
-        ad = (
-            ad.replace("945 Peter Robertson", "945 Peter Robertson,")
-            .replace("4265 Thomas Alton Blvd", "4265 Thomas Alton Blvd,")
-            .replace("825 Weber Street E", "825 Weber Street E,")
-        )
-        if ad.find("Vaughan") != -1:
-            ad = "".join(tree.xpath('//iframe[contains(@title, "9461")]/@title'))
-        ad = ad.replace("(519) 256", "(519)-256")
+        sg = "".join(d.xpath(".//@href"))
+        phone = "".join(
+            d.xpath(
+                './/preceding::span[./i[@class="fas fa-phone-alt"]][1]/following-sibling::span[1]/text()'
+            )
+        ).strip()
         location_type = "<MISSING>"
-        street_address = ad.split(",")[0].strip()
+        tc = "".join(d.xpath(".//preceding::h2[1]/text()"))
+        if tc.find("Opening Soon") != -1:
+            location_type = "Coming Soon"
+        cms = "".join(d.xpath(".//preceding::div[5]//text()")).replace("\n", "").strip()
+        if cms.find("Temporarily Closed") != -1:
+            location_type = "Temporarily Closed"
+        page_url = f"https://www.pizzadepot.ca{sg}"
+        with SgFirefox() as driver:
+            driver.implicitly_wait(10)
+            driver.get(page_url)
 
-        phone = ad.split()[-1].strip()
-        if phone.find("Canada") != -1:
-            phone = "".join(tree.xpath('//span[contains(text() ,"289-")]/text()'))
+            driver.maximize_window()
+            driver.implicitly_wait(20)
+            driver.switch_to.frame(0)
+            WebDriverWait(driver, 10).until(
+                EC.presence_of_element_located((By.XPATH, '//div[@class="address"]'))
+            )
+            ad = driver.find_element_by_xpath('//div[@class="address"]').text
+            ll = driver.find_element_by_xpath(
+                '//div[@class="google-maps-link"]/a'
+            ).get_attribute("href")
+            ll = "".join(ll)
+            ad = "".join(ad)
+            driver.switch_to.default_content()
 
-        state = "Ontario"
-        postal = " ".join(ad.split()[-3:-1]).strip()
+            street_address = ad.split(",")[0].strip()
+            state = ad.split(",")[2].split()[0].strip()
+            postal = " ".join(ad.split(",")[2].split()[1:]).strip()
+            country_code = "Canada"
+            city = ad.split(",")[1].strip()
+            location_name = city + " " + "Pizza Depot"
+            store_number = "<MISSING>"
+            try:
+                latitude = ll.split("ll=")[1].split(",")[0].strip()
+                longitude = ll.split("ll=")[1].split(",")[1].split("&")[0].strip()
+            except:
+                latitude, longitude = "<MISSING>", "<MISSING>"
 
-        country_code = "Canada"
-        city = ad.split(",")[1].split()[0]
-        if street_address.find("945") != -1:
-            city = "Brampton"
-        if street_address.find("4265") != -1:
-            city = "Burlington"
-        if street_address.find("825") != -1:
-            city = "Kitchener"
-        if street_address.find("vaughan") != -1:
-            city = "Vaughan"
-        if street_address.find("3945") != -1:
-            city = "Mississauga"
-        if street_address.find("9461") != -1:
-            street_address = " ".join(street_address.split()[:-1])
-            city = "Maple"
-        if city.find("Stoney") != -1:
-            city = "Stoney Creek"
+            session = SgRequests()
+            r = session.get(page_url, headers=headers)
+            tree = html.fromstring(r.text)
+            hours_of_operation = tree.xpath(
+                '//div[./div/h3[contains(text(), "Hours")]]/following-sibling::div//p/text() | //div[./div/h2[contains(text(), "Hours")]]/following-sibling::div//p/text()'
+            )
+            hours_of_operation = list(
+                filter(None, [a.strip() for a in hours_of_operation])
+            )
+            hours_of_operation = (
+                " ".join(hours_of_operation)
+                .replace("Thursday-Thursday", "Thursday")
+                .replace("Sunday-Sunday", "Sunday")
+                .replace("1:900", "19:00")
+                or "<MISSING>"
+            )
+            if page_url.find("vaughan") != -1:
+                hours_of_operation = "Monday-Thursday" + hours_of_operation
+            if page_url.find("https://www.pizzadepot.ca/995-paisley-rd-guelph/") != -1:
+                street_address = "995 Paisley Rd"
+                city = "Guelph"
+                state = "ON"
+                postal = "N1T 2A6"
+                latitude, longitude = "<MISSING>", "<MISSING>"
+            tmcl = "".join(
+                tree.xpath('//h3[contains(text(), "Temporarily closed")]/text()')
+            )
+            if tmcl:
+                location_type = "Temporarily Closed"
 
-        location_name = city + " " + "Pizza Depot"
-        store_number = "<MISSING>"
-
-        map_link = "".join(
-            tree.xpath('//iframe[contains(@src, "google.com/maps/embed")]/@src')
-        )
-        try:
-            latitude = map_link.split("!3d")[1].strip().split("!")[0].strip()
-            longitude = map_link.split("!2d")[1].strip().split("!")[0].strip()
-        except IndexError:
-            latitude, longitude = "<MISSING>", "<MISSING>"
-
-        if city.find("Guelph") != -1:
-            latitude, longitude = "<MISSING>", "<MISSING>"
-        hours_of_operation = tree.xpath(
-            '//div[./div/h3[contains(text(), "Hours")]]/following-sibling::div//p/text() | //div[./div/h2[contains(text(), "Hours")]]/following-sibling::div//p/text()'
-        )
-        hours_of_operation = list(filter(None, [a.strip() for a in hours_of_operation]))
-        hours_of_operation = " ".join(hours_of_operation) or "<MISSING>"
-        if page_url.find("vaughan") != -1:
-            hours_of_operation = "Monday-Thursday" + hours_of_operation
-
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
+            row = [
+                locator_domain,
+                page_url,
+                location_name,
+                street_address,
+                city,
+                state,
+                postal,
+                country_code,
+                store_number,
+                phone,
+                location_type,
+                latitude,
+                longitude,
+                hours_of_operation,
+            ]
+            out.append(row)
 
     return out
 

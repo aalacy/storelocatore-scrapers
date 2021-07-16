@@ -1,6 +1,5 @@
-selenium==3.141.0
-bs4==0.0.1
-usaddress
-sgrequests
-lxml
-sglogging
+usaddress==0.5.10
+sgscrape==0.0.23
+sgrequests==0.1.12
+sglogging==0.0.4
+beautifulsoup4==4.9.3
