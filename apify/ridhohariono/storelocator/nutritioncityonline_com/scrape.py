@@ -112,12 +112,15 @@ def fetch_data():
                 location_type = "Mega Store"
             else:
                 location_type = "Outlet Store"
-            gmap_link = row.find("a", {"class": "ci-green-button view-store-button"})[
-                "href"
-            ]
-            lat_long = get_latlong(gmap_link)
-            latitude = handle_missing(lat_long[0])
-            longitude = handle_missing(lat_long[1])
+            latitude = "<MISSING>"
+            longitude = "<MISSING>"
+            if i == 0:
+                gmap_link = row.find(
+                    "a", {"class": "ci-green-button view-store-button"}
+                )["href"]
+                lat_long = get_latlong(gmap_link)
+                latitude = handle_missing(lat_long[0])
+                longitude = handle_missing(lat_long[1])
             log.info("Append {} => {}".format(location_name, street_address))
             locations.append(
                 [

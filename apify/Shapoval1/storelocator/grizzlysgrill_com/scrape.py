@@ -115,20 +115,27 @@ def fetch_data():
         map_link = "".join(tree.xpath('//iframe[contains(@src, "google")]/@src'))
         latitude = map_link.split("!3d")[1].strip().split("!")[0].strip()
         longitude = map_link.split("!2d")[1].strip().split("!")[0].strip()
+
         hours_of_operation = (
             " ".join(
                 tree.xpath(
-                    '//strong[contains(text(), "HOURS")]/following-sibling::strong//text() | //strong[contains(text(), "HOURS")]/following-sibling::text()'
+                    '//p[./a[contains(@href, "tel")]]/following-sibling::p//text()'
                 )
             )
             .replace("\n", "")
+            .replace("WE’RE OPEN!", "")
+            .replace("HOURS", "")
             .strip()
             or "<MISSING>"
         )
         if hours_of_operation == "<MISSING>":
             hours_of_operation = (
-                "".join(tree.xpath('//h3[contains(text(), "pm")]//text()[1]'))
+                " ".join(
+                    tree.xpath('//a[contains(@href, "tel")]/preceding-sibling::text()')
+                )
+                .replace("\n", "")
                 .split("from")[1]
+                .split("Click")[0]
                 .strip()
             )
 

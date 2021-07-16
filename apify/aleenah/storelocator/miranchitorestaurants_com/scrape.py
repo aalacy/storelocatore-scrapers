@@ -40,14 +40,14 @@ def write_output(data):
 
 
 session = SgRequests()
-scraper = cloudscraper.create_scraper(sess=session)
-all = []
+scraper = cloudscraper.create_scraper(sess=session, debug=False)
 
 
 def fetch_data():
     # Your scraper here
-
-    res = scraper.get("https://www.miranchitorestaurants.com/")
+    all = []
+    res = scraper.get("http://www.miranchitorestaurants.com/")
+    logger.info(f"Status Code: {res.status_code}")
     soup = BeautifulSoup(res.text, "html.parser")
     scripts = soup.find_all("script", {"type": "application/ld+json"})
     for script in scripts:
@@ -89,12 +89,15 @@ def fetch_data():
                 + loc.strip().lower().replace(" ", "-"),
             ]
         )
+
     return all
 
 
 def scrape():
+    logger.info("Start Scraping")
     data = fetch_data()
     write_output(data)
+    logger.info(f"Finished Grabbing data and got {len(data)} locations")
 
 
 scrape()
