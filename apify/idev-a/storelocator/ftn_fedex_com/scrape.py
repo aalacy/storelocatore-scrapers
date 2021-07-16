@@ -116,6 +116,7 @@ def fetch_data():
                                         if aa.startswith(street_address):
                                             street_address = aa
                                             break
+                                state = addr.state
                                 zip_postal = addr.postcode
                                 if zip_postal == "00000":
                                     zip_postal = ""
@@ -124,7 +125,7 @@ def fetch_data():
                                 location_name=blocks[0],
                                 street_address=street_address,
                                 city=blocks[0],
-                                state=addr.state,
+                                state=state,
                                 zip_postal=zip_postal,
                                 country_code=country_code,
                                 phone=phone,
