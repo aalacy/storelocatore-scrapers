@@ -106,7 +106,7 @@ def item_transformer(item):
         if add != "" and str(str(store) + str(lat) + str(lng) + str(zc)) not in ids:
             ids.add(str(str(store) + str(lat) + str(lng) + str(zc)))
             total += 1
-            yield [
+            return [
                 website,
                 loc,
                 name,
@@ -140,11 +140,12 @@ def fetch_data():
             r2 = r2.json()
             for item in r2["payload"]["stores"]:
                 found += 1
-                progress = (
-                    str(round(100 - (search.items_remaining() / maxZ * 100), 2)) + "%"
-                )
-
-                yield item_transformer(item)
+                record = item_transformer(item)
+                if record:
+                    yield record
+            progress = (
+                str(round(100 - (search.items_remaining() / maxZ * 100), 2)) + "%"
+            )
             logzilla.info(
                 f"{code} | found: {found} | total: {total} | progress: {progress}"
             )

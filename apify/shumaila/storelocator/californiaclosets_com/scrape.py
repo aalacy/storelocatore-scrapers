@@ -169,6 +169,12 @@ def fetch_data():
         if len(state) > 3 or link in titlelist:
             continue
         titlelist.append(link)
+        if "showroom" in hours.lower() or "For questions please" in hours:
+            try:
+                hours = hours.split("Monday", 1)[1]
+                hours = "Monday" + hours
+            except:
+                pass
         data.append(
             [
                 "https://www.californiaclosets.com/",

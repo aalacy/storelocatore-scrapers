@@ -2,6 +2,17 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgselenium import SgChrome
 from bs4 import BeautifulSoup as bs
+import ssl
+
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
+
 
 _headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
@@ -36,7 +47,10 @@ def fetch_data():
                 country_code="US",
                 phone=h2[2].text.strip(),
                 locator_domain=locator_domain,
-                hours_of_operation="; ".join(hours).replace("–", "-"),
+                hours_of_operation="; ".join(hours)
+                .replace("–", "-")
+                .replace("\xa0", "")
+                .replace("  ", " "),
             )
 
 

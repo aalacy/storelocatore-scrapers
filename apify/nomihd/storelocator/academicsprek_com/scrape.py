@@ -130,6 +130,17 @@ def fetch_data():
             latitude = LatLng.split(",")[0].strip()
             longitude = LatLng.split(",")[1].strip()
 
+        if hours_of_operation == "<MISSING>" or hours_of_operation == "":
+            hours = store_sel.xpath(
+                '//div[.//b[contains(text(),"School Hours")]]/table//tr'
+            )
+            hours_list = []
+            for hour in hours:
+                day = "".join(hour.xpath("td[1]/text()")).strip()
+                time = "".join(hour.xpath("td[2]/text()")).strip()
+                hours_list.append(day + ":" + time)
+
+            hours_of_operation = "; ".join(hours_list).strip()
         yield SgRecord(
             locator_domain=locator_domain,
             page_url=page_url,

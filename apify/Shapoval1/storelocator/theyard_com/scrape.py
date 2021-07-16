@@ -2,7 +2,6 @@ import csv
 import usaddress
 from lxml import html
 from sgrequests import SgRequests
-from concurrent import futures
 
 
 def write_output(data):
@@ -34,30 +33,11 @@ def write_output(data):
             writer.writerow(row)
 
 
-def get_urls():
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:85.0) Gecko/20100101 Firefox/85.0",
-        "Accept": "*/*",
-        "Accept-Language": "ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3",
-        "Content-Type": "application/json",
-        "Origin": "https://theyard.com",
-        "Connection": "keep-alive",
-        "Referer": "https://theyard.com/philadelphia-coworking-office-space/",
-        "Pragma": "no-cache",
-        "Cache-Control": "no-cache",
-    }
+def fetch_data():
+    out = []
 
-    session = SgRequests()
-    r = session.get("https://theyard.com/", headers=headers)
-    tree = html.fromstring(r.text)
-
-    return tree.xpath('//a[./span[@class="image-holder"]]/@href')
-
-
-def get_data(url):
-    locator_domain = "https://theyard.com"
-    page_url = url
-
+    locator_domain = "https://theyard.com/"
+    api_url = "https://theyard.com/new-york-city-coworking-office-space/"
     session = SgRequests()
     tag = {
         "Recipient": "recipient",
@@ -87,77 +67,78 @@ def get_data(url):
         "StateName": "state",
         "ZipCode": "postal",
     }
-    r = session.get(page_url)
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
+    }
+    r = session.get(api_url, headers=headers)
     tree = html.fromstring(r.text)
-    line = " ".join(
-        tree.xpath('//div[@class="back-link"]/following-sibling::address[1]/p/text()')
+    div = tree.xpath(
+        '//a[text()="Locations"]/following-sibling::ul/li/a/following-sibling::ul/li/a'
     )
-    line = line.split(",")[:-1]
-    line = "".join(line)
-    a = usaddress.tag(line, tag_mapping=tag)[0]
-    street_address = f"{a.get('address1')} {a.get('address2')}".replace(
-        "None", ""
-    ).strip()
-    city = a.get("city")
-    state = a.get("state")
-    postal = a.get("postal") or "<MISSING>"
-    country_code = " ".join(
-        tree.xpath('//div[@class="back-link"]/following-sibling::address[1]/p/text()')
-    ).split(",")[-1]
-    page_url = url
+    for d in div:
 
-    store_number = "<MISSING>"
-    location_name = tree.xpath(
-        '//div[@class="back-link"]/following-sibling::h1[1]/text()'
-    )
-    location_name = list(filter(None, [a.strip() for a in location_name]))
-    location_name = " ".join(location_name).replace("\n", " ")
-    phone = (
-        "".join(
-            tree.xpath('//div[@class="manager-block"]/p[contains(text(), "(")]/text()')
+        page_url = "".join(d.xpath(".//@href"))
+        location_name = "".join(d.xpath(".//text()"))
+        session = SgRequests()
+        r = session.get(page_url, headers=headers)
+        tree = html.fromstring(r.text)
+
+        ad = (
+            "".join(tree.xpath('//div[@class="address"]/p/text()[1]'))
+            .replace("\n", "")
+            .replace(", United States", "")
+            .replace(", USA", "")
+            .strip()
+        )
+        a = usaddress.tag(ad, tag_mapping=tag)[0]
+        street_address = f"{a.get('address1')} {a.get('address2')}".replace(
+            "None", ""
         ).strip()
-        or "<MISSING>"
-    )
-    latitude = "".join(tree.xpath('//div[@id="map"]/@data-latitude')).strip()
-    longitude = "".join(tree.xpath('//div[@id="map"]/@data-longitude')).strip()
-    location_type = "<MISSING>"
-    hours_of_operation = (
-        " ".join(tree.xpath("//header/ul/li/text()")).replace("\n", "").strip()
-    )
-    if street_address.find("13th") != -1:
-        hours_of_operation = hours_of_operation.split("Manhattan – 23 minutes")[
-            1
-        ].strip()
+        state = a.get("state") or "<MISSING>"
+        postal = a.get("postal") or "<MISSING>"
+        country_code = "USA"
+        city = a.get("city") or "<MISSING>"
+        location_type = "<MISSING>"
+        store_number = "<MISSING>"
+        phone = "<MISSING>"
+        hoo = tree.xpath('//div[@class="address"]/p//text()')
+        hoo = list(filter(None, [a.strip() for a in hoo]))
+        hours_of_operation = " ".join(hoo[1:])
 
-    row = [
-        locator_domain,
-        page_url,
-        location_name,
-        street_address,
-        city,
-        state,
-        postal,
-        country_code,
-        store_number,
-        phone,
-        location_type,
-        latitude,
-        longitude,
-        hours_of_operation,
-    ]
-
-    return row
-
-
-def fetch_data():
-    out = []
-    urls = get_urls()
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
-        future_to_url = {executor.submit(get_data, url): url for url in urls}
-        for future in futures.as_completed(future_to_url):
-            row = future.result()
-            if row:
-                out.append(row)
+        session = SgRequests()
+        r = session.get(
+            "https://theyard.com/new-york-city-coworking-office-space/", headers=headers
+        )
+        tree = html.fromstring(r.text)
+        latitude = (
+            "".join(
+                tree.xpath(f'//li[@data-display-name="{location_name}"]/@data-map-lat')
+            )
+            or "<MISSING>"
+        )
+        longitude = (
+            "".join(
+                tree.xpath(f'//li[@data-display-name="{location_name}"]/@data-map-lng')
+            )
+            or "<MISSING>"
+        )
+        row = [
+            locator_domain,
+            page_url,
+            location_name,
+            street_address,
+            city,
+            state,
+            postal,
+            country_code,
+            store_number,
+            phone,
+            location_type,
+            latitude,
+            longitude,
+            hours_of_operation,
+        ]
+        out.append(row)
 
     return out
 
