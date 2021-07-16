@@ -74,9 +74,24 @@ def fetch_data():
     log.info("Running sgzips ..")
 
     found = []
+    i = 1
     for zip_code in search:
 
+        if len(str(zip_code)) == 3:
+            zip_code = "00" + str(zip_code)
+        if len(str(zip_code)) == 4:
+            zip_code = "0" + str(zip_code)
+
         payload = {"postalCode": zip_code}
+
+        # New session every 50
+        if i % 50 == 0:
+            log.info("New session for next 50 zips..")
+            log.info(zip_code)
+            session = SgRequests()
+
+        i += 1
+
         response = session.post(base_link, headers=headers, data=payload)
         base = BeautifulSoup(response.text, "lxml")
 
@@ -94,9 +109,10 @@ def fetch_data():
                     break
 
             for store in stores:
+                location_type = "<MISSING>"
                 location_name = store.h2.text.strip()
                 if "CLOSED" in location_name.upper():
-                    continue
+                    location_type = "Closed"
 
                 link = "https://www.pacsun.com/stores"
 
@@ -116,17 +132,9 @@ def fetch_data():
                 state = city_line[1]
                 zip_code = city_line[2]
                 country_code = "US"
-                store_number = store["id"]
-                if store_number in found:
-                    continue
-                found.append(store_number)
-                location_type = "<MISSING>"
-
-                hours_of_operation = (
-                    store.find(class_="storehours").get_text(" ").strip()
-                )
                 latitude = "<MISSING>"
                 longitude = "<MISSING>"
+                store_number = store["id"]
 
                 for j in store_json:
                     if j["ID"] == store_number:
@@ -134,6 +142,13 @@ def fetch_data():
                         longitude = j["long"]
                         search.found_location_at(latitude, longitude)
                         break
+                if store_number in found:
+                    continue
+                found.append(store_number)
+
+                hours_of_operation = (
+                    store.find(class_="storehours").get_text(" ").strip()
+                )
 
                 yield [
                     locator_domain,

@@ -77,6 +77,8 @@ def fetch_data():
             .split("|")[1]
             .strip()
             .replace("Tarentum ", "Tarentum,")
+            .replace("Eastdale Mall,", "")
+            .replace(" Montgomery ", "Montgomery,")
             .replace("Mills Cir ", "Mills Cir,")
             .replace("\n", "")
             .split(",")
@@ -100,6 +102,9 @@ def fetch_data():
                 )
         except:
             phone = "<MISSING>"
+        if not phone:
+            phone = "<MISSING>"
+
         map_link = item.find("a", string="GET DIRECTIONS")["href"]
         latitude = map_link[map_link.rfind("=") + 1 : map_link.rfind(",")].strip()
         longitude = map_link[map_link.rfind(",") + 1 :].strip()
@@ -107,6 +112,10 @@ def fetch_data():
         if "590 Pittsburgh" in street_address:
             latitude = "40.572417"
             longitude = "-79.799902"
+
+        if "1001 Eastdale Cir" in street_address:
+            latitude = "32.38598"
+            longitude = "-86.205642"
 
         hours_of_operation = "<MISSING>"
 

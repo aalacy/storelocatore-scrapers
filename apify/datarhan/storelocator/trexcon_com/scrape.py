@@ -67,7 +67,9 @@ def fetch_data():
         )
         street_address = poi["location"]["addressLine1"]
         if not street_address:
-            street_address = "<MISSING>"
+            street_address = loc_dom.xpath(
+                '//a[contains(@href, "maps")]/strong/text()'
+            )[0].split(",")[0]
         city = addr.city
         city = city if city else "<MISSING>"
         state = addr.state
@@ -79,7 +81,9 @@ def fetch_data():
         if "#" in poi["location"]["addressTitle"]:
             store_number = poi["location"]["addressTitle"].split("#")[-1]
         phone = loc_dom.xpath('//a[contains(@href, "tel")]/text()')
-        phone = phone[0].split(":")[-1] if phone else "<MISSING>"
+        if not phone:
+            phone = loc_dom.xpath('//a[contains(text(), "TREX:")]/text()')
+        phone = phone[0].split(":")[-1].strip() if phone else "<MISSING>"
         location_type = "<MISSING>"
         latitude = poi["location"]["mapLat"]
         longitude = poi["location"]["mapLng"]
