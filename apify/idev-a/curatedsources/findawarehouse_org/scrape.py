@@ -89,7 +89,6 @@ _header1 = {
 
 locator_domain = "https://www.findawarehouse.org/"
 base_url = "https://www.findawarehouse.org/SearchFAW"
-urls = []
 
 
 def _ll(street, json_locations):
@@ -113,9 +112,6 @@ def get_country_by_code(code=""):
 def _detail(_, json_locations, session):
     name = _.h2.text.strip()
     page_url = locator_domain + _.a["href"].strip()
-    if page_url in urls:
-        return []
-    urls.append(page_url)
     _addr = list(_.p.stripped_strings)
     if _addr[0] == _.p.b.text.strip():
         del _addr[0]
