@@ -54,9 +54,9 @@ def fetch_data():
     r = session.get(api, headers=headers)
     tree = html.fromstring(r.text)
     divs = tree.xpath("//figure[@class='stores-menu__item']")
+    slugs = tree.xpath("//a[@class='site_menu-panel_link submenu_store-link']/@href")
 
-    for d in divs:
-        slug = "".join(d.xpath(".//a[@class='stores-menu__link']/@href"))
+    for d, slug in zip(divs, slugs):
         page_url = f"https://www.buckmason.com{slug}"
         location_name = "".join(
             d.xpath(".//h2[@class='stores-menu__name']/text()")
@@ -78,7 +78,10 @@ def fetch_data():
             "".join(d.xpath(".//a[contains(@href, 'tel:')]/text()")).strip()
             or "<MISSING>"
         )
-        latitude, longitude = get_coords(page_url)
+        try:
+            latitude, longitude = get_coords(page_url)
+        except IndexError:
+            latitude, longitude = "<MISSING>", "<MISSING>"
         location_type = "<MISSING>"
         hours = d.xpath(".//p[@class='stores-hours_copy']/text()")
         hours = list(filter(None, [h.strip() for h in hours]))

@@ -24,7 +24,8 @@ def fetch_data():
         )
         for block in blocks:
             if "Call for Application" in block.text or (
-                "Phone" in block.text and "Monday" in block.text
+                "Phone" in block.text
+                and ("Monday" in block.text or "Wednesday" in block.text)
             ):
                 data = [dd.text.strip() for dd in block.select("p")]
                 phone = ""
@@ -69,7 +70,8 @@ def fetch_data():
                             or "Psychiatry Services" in hh
                         ):
                             break
-                        if hh.split(" ")[0] in days:
+                        hh = hh.replace("\u200b", "")
+                        if hh.split(" ")[0].split("-")[0] in days:
                             hours.append(hh)
                 yield SgRecord(
                     page_url=base_url,

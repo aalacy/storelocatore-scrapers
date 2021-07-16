@@ -47,22 +47,27 @@ def fetch_data():
         driver.get(start_url)
         dom = etree.HTML(driver.page_source)
 
-    all_locations = dom.xpath('//script[contains(text(), "Restaurant")]/text()')[1:]
+    data = dom.xpath('//script[@class="js-react-on-rails-component"]/text()')[0]
+    data = json.loads(data)
+    all_locations = data["preloadQueries"][4]["data"]["restaurant"]["pageContent"][
+        "sections"
+    ][0]["locations"]
     for poi in all_locations:
-        poi = json.loads(poi)
         store_url = start_url
-        location_name = poi["address"]["addressLocality"]
-        street_address = poi["address"]["streetAddress"].replace("\n", " ")
-        city = poi["address"]["addressLocality"]
-        state = poi["address"]["addressRegion"]
-        zip_code = poi["address"]["postalCode"]
-        country_code = "<MISSING>"
-        store_number = "<MISSING>"
-        phone = poi["address"]["telephone"]
-        location_type = poi["@type"]
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
-        hoo = poi["openingHours"]
+        street_address = poi["streetAddress"].replace("\n", "")
+        if street_address.endswith(","):
+            street_address = street_address[:-1]
+        location_name = poi["name"]
+        city = poi["city"]
+        state = poi["state"]
+        zip_code = poi["postalCode"]
+        country_code = poi["country"]
+        store_number = poi["id"]
+        phone = poi["phone"]
+        location_type = "<MISSING>"
+        latitude = poi["lat"]
+        longitude = poi["lng"]
+        hoo = poi["schemaHours"]
         hoo = [e.strip() for e in hoo if e.strip()]
         hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
 

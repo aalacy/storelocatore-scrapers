@@ -27,13 +27,16 @@ def fetch_data():
                 if "Due to lockdown, we'll be closed starting" in _["store_note"]:
                     location_type = "closed"
                 hours = []
-                hours.append(f"Mon: {_['monday_hours']}")
-                hours.append(f"Tue: {_['tuesday_hours']}")
-                hours.append(f"Wed: {_['wednesday_hours']}")
-                hours.append(f"Thu: {_['thursday_hours']}")
-                hours.append(f"Fri: {_['friday_hours']}")
-                hours.append(f"Sat: {_['saturday_hours']}")
-                hours.append(f"Sun: {_['sunday_hours']}")
+                if "Temporarily Closed" in _["monday_hours"]:
+                    location_type = "Temporarily Closed"
+                else:
+                    hours.append(f"Mon: {_['monday_hours']}")
+                    hours.append(f"Tue: {_['tuesday_hours']}")
+                    hours.append(f"Wed: {_['wednesday_hours']}")
+                    hours.append(f"Thu: {_['thursday_hours']}")
+                    hours.append(f"Fri: {_['friday_hours']}")
+                    hours.append(f"Sat: {_['saturday_hours']}")
+                    hours.append(f"Sun: {_['sunday_hours']}")
                 yield SgRecord(
                     page_url=page_url,
                     store_number=_["store_id"],

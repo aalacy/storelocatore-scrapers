@@ -89,7 +89,6 @@ _header1 = {
 
 locator_domain = "https://www.findawarehouse.org/"
 base_url = "https://www.findawarehouse.org/SearchFAW"
-urls = []
 
 
 def _ll(street, json_locations):
@@ -113,30 +112,12 @@ def get_country_by_code(code=""):
 def _detail(_, json_locations, session):
     name = _.h2.text.strip()
     page_url = locator_domain + _.a["href"].strip()
-    if page_url in urls:
-        return []
-    urls.append(page_url)
-    logger.info(page_url)
     _addr = list(_.p.stripped_strings)
     if _addr[0] == _.p.b.text.strip():
         del _addr[0]
     latitude, longitude, phone = _ll(_addr[0], json_locations)
-    res = session.get(page_url, headers=header1)
-    if res.status_code == 200:
-        sp1 = bs(res.text, "lxml")
-        street_address = ""
-        if sp1.select_one("span#MainContent_lblAddress1"):
-            street_address = sp1.select_one("span#MainContent_lblAddress1").text.strip()
-        if sp1.select_one("span#MainContent_lblAddress2"):
-            street_address += (
-                " " + sp1.select_one("span#MainContent_lblAddress2").text.strip()
-            )
-        city_state = (
-            sp1.select_one("span#MainContent_lblCityStateZip").text.strip().split(",")
-        )
-    else:
-        street_address = _addr[0]
-        city_state = _addr[1].strip().split(",")
+    street_address = _addr[0]
+    city_state = _addr[1].strip().split(",")
     state = city_state[1].strip().split(" ")[0].strip()
     zip_postal = " ".join(city_state[1].strip().split(" ")[1:]).strip()
     brand_website = "<MISSING>"
