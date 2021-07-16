@@ -21,7 +21,13 @@ def extract_json(html_string):
             if brace_count == 0:
                 end = count
                 try:
-                    json_objects.append(json.loads(html_string[start : end + 1]))
+                    json_objects.append(
+                        json.loads(
+                            html_string[start : end + 1]
+                            .replace("\n", "")
+                            .replace("\r", "")
+                        )
+                    )
                 except Exception:
                     pass
         count = count + 1
@@ -161,6 +167,12 @@ for url in page_urls_to_iterate:
 
         elif location_name == "Phoenix":
             hours = check.split("\n")[1].replace("<br>", "").strip()
+
+    if "www.habitburger.com" in hours:
+        hours = "Temporarily Closed"
+
+    elif "Thru" in hours:
+        hours = hours.split("Thru:")[1].strip()
 
     locator_domains.append(locator_domain)
     page_urls.append(url)

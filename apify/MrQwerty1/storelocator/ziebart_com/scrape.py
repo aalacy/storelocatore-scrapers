@@ -33,7 +33,7 @@ def write_output(data):
 
 def fetch_data():
     out = []
-    locator_domain = "https://impark.com/"
+    locator_domain = "https://ziebart.com"
     api_url = "https://api.uniglassplus.com/api/stores?page=1&itemsPerPage=3000&isZiebart=true&locale=en"
 
     headers = {
