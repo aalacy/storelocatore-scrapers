@@ -70,7 +70,14 @@ def fetch_data():
         )
         latitude = "".join(d.xpath("./@data-marker-lat")) or "<MISSING>"
         longitude = "".join(d.xpath("./@data-marker-lng")) or "<MISSING>"
+        color = "".join(d.xpath("./@data-color"))
         location_type = "<MISSING>"
+        if color == "blue":
+            location_type = "soundRunner"
+        elif color == "red":
+            location_type = "RUNNER'S ALLEY"
+        elif color == "yellow":
+            location_type = "Marathon Sports"
         hours_of_operation = (
             ";".join(eval("".join(d.xpath("./@data-workhours")).strip())) or "<MISSING>"
         )

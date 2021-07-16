@@ -34,6 +34,12 @@ def write_output(data):
             writer.writerow(row)
 
 
+def get_cookies():
+    r = session.get("https://www.kikocosmetics.com/en-gb/store-locator.html")
+
+    return {"JSESSIONID": r.cookies["JSESSIONID"]}
+
+
 def get_urls():
     urls = []
     r = session.get(
@@ -135,14 +141,6 @@ def scrape():
 
 if __name__ == "__main__":
     session = SgRequests()
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:89.0) Gecko/20100101 Firefox/89.0",
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
-        "Accept-Language": "uk-UA,uk;q=0.8,en-US;q=0.5,en;q=0.3",
-        "Connection": "keep-alive",
-        "Upgrade-Insecure-Requests": "1",
-    }
-
-    cookies = {"JSESSIONID": "106A7FDD2F65FC200D2625B658ECD4A4"}
+    cookies = get_cookies()
 
     scrape()

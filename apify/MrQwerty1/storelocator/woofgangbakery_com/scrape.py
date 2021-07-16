@@ -1,6 +1,7 @@
 import csv
 import usaddress
 
+from lxml import html
 from sgrequests import SgRequests
 
 
@@ -31,6 +32,14 @@ def write_output(data):
 
         for row in data:
             writer.writerow(row)
+
+
+def get_adr_from_page(page_url):
+    r = session.get(page_url)
+    tree = html.fromstring(r.text)
+    line = " ".join("".join(tree.xpath("//p[@class='addr']//text()")).split())
+
+    return get_address(line)
 
 
 def get_address(line):
@@ -88,7 +97,6 @@ def fetch_data():
     api_url = "https://api.storerocket.io/api/user/7OdJEZD8WE/locations"
     country_code = "US"
 
-    session = SgRequests()
     r = session.get(api_url)
     js = r.json()["results"]["locations"]
 
@@ -105,6 +113,9 @@ def fetch_data():
         latitude = j.get("lat") or "<MISSING>"
         longitude = j.get("lng") or "<MISSING>"
         location_type = "<MISSING>"
+
+        if postal == "<MISSING>":
+            street_address, city, state, postal = get_adr_from_page(page_url)
 
         _tmp = []
         days = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"]
@@ -143,4 +154,5 @@ def scrape():
 
 
 if __name__ == "__main__":
+    session = SgRequests()
     scrape()

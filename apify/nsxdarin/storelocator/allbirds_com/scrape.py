@@ -142,6 +142,30 @@ def fetch_data():
                 if "MU47a" in add:
                     add = "MU47a No.383 Tianhe Rd"
                     city = "Guangzhou"
+                if "London" in city:
+                    city = "London"
+                    zc = city.split("London")[1].strip()
+                    state = "<MISSING>"
+                if "Auckland" in city:
+                    city = "Auckland"
+                    zc = city.split("Auckland")[1].strip()
+                if "Amsterdam" in city:
+                    city = "Amsterdam"
+                    zc = "1016 BZ"
+                if "Berlin" in city:
+                    city = "Berlin"
+                    zc = city.split("Berlin")[0].strip()
+                if "L241" in add:
+                    add = "L241, Nr. 789 West Nanjing Rd"
+                    city = "Shanghai"
+                    country = "CN"
+                    zc = "200000"
+                if "Seoul" in name:
+                    add = "45 Gangnam-daero 160-gil, Sinsa-dong"
+                    city = "Seoul"
+                    state = "<MISSING>"
+                    country = "KR"
+                    zc = "<MISSING>"
                 yield [
                     website,
                     purl,
