@@ -71,7 +71,7 @@ def fetch_data():
         lat = "<MISSING>"
         longit = "<MISSING>"
         hours = "<MISSING>"
-        page_url = "<MISSING>"
+        page_url = "https://www.roseoilco.com/rosemart-stores"
 
         store_data = [
             locator_domain,
