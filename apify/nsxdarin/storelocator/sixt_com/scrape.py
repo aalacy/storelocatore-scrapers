@@ -115,7 +115,10 @@ def fetch_data():
                 )
                 add = addinfo.split(",")[0]
                 zc = addinfo.split(",")[1].strip().split(" ")[0]
-                city = addinfo.split(",")[1].strip().split(" ")[1]
+                try:
+                    city = addinfo.split(",")[1].strip().split(" ")[1]
+                except:
+                    city = "<MISSING>"
             if "coordinates: { lat:" in line2:
                 lat = line2.split("coordinates: { lat:")[1].split(",")[0].strip()
                 lng = (

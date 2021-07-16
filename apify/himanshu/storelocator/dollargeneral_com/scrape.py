@@ -210,6 +210,8 @@ def fetch_data():
 
     location_url = "http://hosted.where2getit.com/dollargeneral/rest/locatorsearch?like=0.8201113087423575"
 
+    today_date = datetime.today()
+
     for zip_code in search:
         data = (
             '{"request":{"appkey":"9E9DE426-8151-11E4-AEAC-765055A65BB0","formdata":{"geoip":false,"dataview":"store_default","geolocs":{"geoloc":[{"addressline":"'
@@ -258,6 +260,9 @@ def fetch_data():
                 search.found_location_at(
                     float(data["latitude"]), float(data["longitude"])
                 )
+                open_date = datetime.strptime(data["open_date"], "%m-%d-%Y")
+                if open_date > today_date:
+                    continue
                 if store[2] + store[-3] in addresses:
                     continue
                 addresses.append(store[2] + store[-3])
@@ -423,6 +428,9 @@ def fetch_data():
                     hours_of_operation,
                     page_url,
                 ]
+                open_date = datetime.strptime(data["open_date"], "%m-%d-%Y")
+                if open_date > today_date:
+                    continue
                 if store[2] + store[-3] in addresses:
                     continue
                 addresses.append(store[2] + store[-3])
