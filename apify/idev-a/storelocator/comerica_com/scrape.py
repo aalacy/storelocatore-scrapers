@@ -1,6 +1,6 @@
 from sgscrape import simple_scraper_pipeline as sp
 from sgrequests import SgRequests
-from sgzip.dynamic import DynamicZipSearch, SearchableCountries
+from sgzip.dynamic import DynamicZipSearch, SearchableCountries, Grain_1_KM
 from sglogging import SgLogSetup
 from requests import exceptions  # noqa
 from urllib3 import exceptions as urllibException
@@ -15,8 +15,8 @@ headers = {
 
 search = DynamicZipSearch(
     country_codes=[SearchableCountries.USA],
-    max_radius_miles=None,
-    max_search_results=None,
+    max_radius_miles=50,
+    granularity=Grain_1_KM(),
 )
 
 
@@ -78,14 +78,16 @@ def fetch_data():
                 logger.info("Proxy not working")
                 break
             soup = bs(res, "lxml")
-            r2 = json.loads(
-                res.split("var results = ")[1].strip().split("var map;")[0].strip()[:-1]
-            )
-            for _ in r2:
-                search.found_location_at(
-                    _["location"]["lat"],
-                    _["location"]["lng"],
+            try:
+                r2 = json.loads(
+                    res.split("var results = ")[1]
+                    .strip()
+                    .split("var map;")[0]
+                    .strip()[:-1]
                 )
+            except:
+                break
+            for _ in r2:
                 for store in _["location"]["entities"]:
                     store["state"] = _["location"]["province"]
                     store["city"] = _["location"]["city"]
@@ -114,11 +116,12 @@ def fetch_data():
                         store[
                             "page_url"
                         ] = f"https://locations.comerica.com/location/{name}"
-                    elif store["cma_id"]:
+                    elif store["type"] == "atm" and store["cma_id"]:
                         store["name"] = store["type"] + store["street"]
                         store[
                             "page_url"
                         ] = f"https://locations.comerica.com/location/{store['type'].lower()}-{store['cma_id'].lower()}"
+
                     else:
                         continue
                     store["hours"] = human_hours(store["open_hours_formatted"])
@@ -135,6 +138,7 @@ def fetch_data():
                                 store["hours"] = "Temporarily closed"
                         except:
                             pass
+
                     yield store
                     found += 1
             total += found
@@ -220,11 +224,10 @@ def scrape():
             mapping=["id"],
             part_of_record_identity=True,
         ),
-        hours_of_operation=sp.MappingField(
-            mapping=["open_hours_formatted"], raw_value_transform=human_hours
-        ),
+        hours_of_operation=sp.MappingField(mapping=["hours"]),
         location_type=sp.MappingField(
             mapping=["type"],
+            part_of_record_identity=True,
         ),
         raw_address=sp.MissingField(),
     )

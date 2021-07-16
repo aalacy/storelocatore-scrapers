@@ -1,68 +1,97 @@
 # -*- coding: utf-8 -*-
+import csv
+import threading
 from sgrequests import SgRequests
 from sglogging import sglog
-import json
-from sgscrape.simple_utils import parallelize
 from sgscrape.sgrecord import SgRecord
-from sgscrape.sgwriter import SgWriter
 from sgzip.dynamic import SearchableCountries
 from sgzip.static import static_coordinate_list
 from tenacity import retry, stop_after_attempt
+import datetime
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 website = "pnc.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
-session = SgRequests()
+local = threading.local()
 
 headers = {
     "authority": "apps.pnc.com",
-    "cache-control": "max-age=0",
-    "sec-ch-ua": '"Google Chrome";v="89", "Chromium";v="89", ";Not A Brand";v="99"',
+    "sec-ch-ua": '" Not A;Brand";v="99", "Chromium";v="90", "Google Chrome";v="90"',
+    "accept": "application/json, text/plain, */*",
     "sec-ch-ua-mobile": "?0",
-    "upgrade-insecure-requests": "1",
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.114 Safari/537.36",
-    "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-    "sec-fetch-site": "none",
-    "sec-fetch-mode": "navigate",
-    "sec-fetch-user": "?1",
-    "sec-fetch-dest": "document",
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.93 Safari/537.36",
+    "sec-fetch-site": "same-origin",
+    "sec-fetch-mode": "cors",
+    "sec-fetch-dest": "empty",
+    "referer": "https://apps.pnc.com/locator/search",
     "accept-language": "en-US,en-GB;q=0.9,en;q=0.8",
 }
 
 id_list = []
 
 
+def get_session():
+    if not hasattr(local, "session") or local.count > 5:
+        local.session = SgRequests()
+        local.count = 0
+
+    local.count += 1
+    return local.session
+
+
 def retry_error_callback(retry_state):
-    postal = retry_state.args[0]
-    log.error(f"Failure to fetch locations for: {postal}")
+    coord = retry_state.args[0]
+    log.error(f"Failure to fetch locations for: {coord}")
     return []
 
 
+@retry(stop=stop_after_attempt(3), retry_error_callback=retry_error_callback)
+def fetch_locations(base_url, coord):
+    timestamp = str(datetime.datetime.now().timestamp()).split(".")[0].strip()
+    url = base_url.format(timestamp, coord[0], coord[1])
+
+    return get_session().get(url, headers=headers, timeout=15).json()
+
+
+def fetch_records_for(coord):
+    search_url = "https://apps.pnc.com/locator-api/locator/api/v2/location/?t={}&latitude={}&longitude={}&radius=100&radiusUnits=mi&branchesOpenNow=false"
+    result = fetch_locations(search_url, coord)
+    stores = result["locations"]
+    return process_record(stores)
+
+
+def retry_fetch_phone_error_callback(retry_state):
+    id = retry_state.args[0]
+    log.error(f"Failure to fetch phone for: {id}")
+    return None
+
+
 @retry(
-    retry_error_callback=retry_error_callback, stop=stop_after_attempt(5), reraise=True
+    stop=stop_after_attempt(3), retry_error_callback=retry_fetch_phone_error_callback
 )
-def fetch_records_for(coords):
-    lat = coords[0]
-    lng = coords[1]
-    log.info(f"pulling records for coordinates: {lat,lng}")
-    search_url = "https://apps.pnc.com/locator-api/locator/api/v2/location/?latitude={}&longitude={}&radius=100&radiusUnits=mi&branchesOpenNow=false"
+def fetch_phone(id):
+    timestamp = str(datetime.datetime.now().timestamp()).split(".")[0].strip()
+    url = f"https://apps.pnc.com/locator-api/locator/api/v2/location/details/{id}?t={timestamp}"
 
-    stores_req = session.get(search_url.format(lat, lng), headers=headers, timeout=15)
-    stores = json.loads(stores_req.text)["locations"]
-    return stores
+    store_json = (
+        get_session().get(url.format(timestamp), headers=headers, timeout=15).json()
+    )
+    cInfo = store_json["contactInfo"] or []
+
+    for contact in cInfo:
+        if "External Phone" in contact["contactType"]:
+            return contact["contactInfo"]
 
 
-def process_record(raw_results_from_one_coordinate):
-    for store in raw_results_from_one_coordinate:
-        if store["locationType"]["locationTypeDesc"] != "ATM":
+def process_record(stores):
+    locations = []
+    for store in stores:
+        store_number = store["locationId"]
+        if store["partnerFlag"] == "1" or store_number in id_list:
             continue
-        if store["partnerFlag"] == "1":
-            continue
-        if store["locationId"] in id_list:
-            continue
+        id_list.append(store_number)
 
-        id_list.append(store["locationId"])
-
-        page_url = "<MISSING>"
+        page_url = MISSING
         locator_domain = website
         location_name = store["locationName"]
         street_address = store["address"]["address1"]
@@ -77,53 +106,88 @@ def process_record(raw_results_from_one_coordinate):
         zip = store["address"]["zip"]
         country_code = "US"
 
-        store_number = store["locationId"]
-        phone = "<MISSING>"
+        phone = MISSING
+
+        cInfo = store["contactInfo"] or []
+        for contact in cInfo:
+            if "External Phone" in contact["contactType"]:
+                phone = contact["contactInfo"]
+                break
 
         location_type = store["locationType"]["locationTypeDesc"]
-        hours_of_operation = "<MISSING>"
+        if location_type != "ATM" and store["children"]:
+            location_type = "BRANCH AND ATM"
+
+        hours_of_operation = MISSING
         latitude = store["address"]["latitude"]
         longitude = store["address"]["longitude"]
 
-        yield SgRecord(
-            locator_domain=locator_domain,
-            page_url=page_url,
-            location_name=location_name,
-            street_address=street_address,
-            city=city,
-            state=state,
-            zip_postal=zip,
-            country_code=country_code,
-            store_number=store_number,
-            phone=phone,
-            location_type=location_type,
-            latitude=latitude,
-            longitude=longitude,
-            hours_of_operation=hours_of_operation,
+        if location_type == "ATM" or location_type == "BRANCH AND ATM":
+            if phone == MISSING:
+                externalId = store["externalId"]
+                phone = fetch_phone(externalId)
+
+            record = SgRecord(
+                locator_domain=locator_domain,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            ).as_dict()
+
+            locations.append([record[field] for field in FIELDS])
+
+    return locations
+
+
+MISSING = "<MISSING>"
+FIELDS = [
+    "locator_domain",
+    "page_url",
+    "location_name",
+    "location_type",
+    "store_number",
+    "street_address",
+    "city",
+    "state",
+    "zip",
+    "country_code",
+    "latitude",
+    "longitude",
+    "phone",
+    "hours_of_operation",
+]
+
+
+def write_output(data):
+    with open("data.csv", mode="w") as output_file:
+        writer = csv.writer(
+            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
         )
+        writer.writerow(FIELDS)
+        for rows in data:
+            writer.writerows(rows)
 
 
 def scrape():
-    log.info("Started")
-    count = 0
-    with SgWriter() as writer:
-        results = parallelize(
-            search_space=static_coordinate_list(
-                radius=100, country_code=SearchableCountries.USA
-            ),
-            fetch_results_for_rec=fetch_records_for,
-            processing_function=process_record,
-            max_threads=20,  # tweak to see what's fastest
-        )
-        for rec in results:
-            writer.write_row(rec)
-            count = count + 1
+    coords = static_coordinate_list(radius=10, country_code=SearchableCountries.USA)
 
-    log.info(f"No of records being processed: {count}")
-    log.info("Finished")
-
-    log.info("Finished")
+    with ThreadPoolExecutor() as executor:
+        futures = [executor.submit(fetch_records_for, coord) for coord in coords]
+        for future in as_completed(futures):
+            locations = future.result()
+            yield locations
 
 
 if __name__ == "__main__":
-    scrape()
+    data = scrape()
+    write_output(data)

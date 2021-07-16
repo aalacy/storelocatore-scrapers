@@ -34,8 +34,9 @@ def fetch_data():
             "div.fusion-builder-row.fusion-row .fusion-layout-column"
         )
         for _ in locations:
-            if len(_.select("p")) > 1 and re.search(
-                r"coming soon", _.select("p")[1].text, re.IGNORECASE
+            if len(_.select("p")) > 1 and (
+                re.search(r"coming soon", _.select("p")[1].text, re.IGNORECASE)
+                or re.search(r"opening soon", _.select("p")[1].text, re.IGNORECASE)
             ):
                 continue
             block = list(_.select("p")[0].stripped_strings)
@@ -52,11 +53,10 @@ def fetch_data():
                         del addr[0]
                     break
 
-            coord = ["", ""]
             try:
                 coord = _.a["href"].split("/@")[1].split(",17z/data")[0].split(",")
             except:
-                pass
+                coord = ["", ""]
             yield SgRecord(
                 page_url=base_url,
                 location_name=_.h3.text,

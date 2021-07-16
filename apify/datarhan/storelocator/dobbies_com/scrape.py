@@ -1,9 +1,21 @@
 import csv
 from lxml import etree
+from time import sleep
 from urllib.parse import urljoin
 
 from sgrequests import SgRequests
 from sgscrape.sgpostal import parse_address_intl
+from sgselenium.sgselenium import webdriver
+
+profile = webdriver.FirefoxProfile()
+profile.set_preference("geo.prompt.testing", True)
+profile.set_preference("geo.prompt.testing.allow", True)
+profile.set_preference(
+    "geo.wifi.uri",
+    'data:application/json,{"location": {"lat": 40.7590, "lng": -73.9845}, "accuracy": 27000.0}',
+)
+options = webdriver.FirefoxOptions()
+options.headless = True
 
 
 def write_output(data):
@@ -41,17 +53,27 @@ def fetch_data():
     session = SgRequests()
 
     items = []
+    scraped_items = []
 
     DOMAIN = "dobbies.com"
     start_url = "https://www.dobbies.com/store-locator"
 
-    response = session.get(start_url)
-    dom = etree.HTML(response.text)
+    with webdriver.Firefox(options=options, firefox_profile=profile) as driver:
+        driver.get(start_url)
+        sleep(5)
+        driver.find_element_by_xpath(
+            '//div[contains(text(), "See all stores")]'
+        ).click()
+        sleep(25)
+        dom = etree.HTML(driver.page_source)
 
     all_locations = dom.xpath('//div[h2[contains(text(), "Store List")]]//a/@href')
-    for url in all_locations:
+    all_locations += dom.xpath('//a[contains(text(), "See all details")]/@href')
+    for url in list(set(all_locations)):
         store_url = urljoin(start_url, url)
         loc_response = session.get(store_url)
+        if loc_response.status_code != 200:
+            continue
         loc_dom = etree.HTML(loc_response.text)
 
         location_name = loc_dom.xpath('//h1[@class="ms-content-block__title"]/text()')
@@ -72,13 +94,15 @@ def fetch_data():
         zip_code = zip_code if zip_code else "<MISSING>"
         country_code = "<MISSING>"
         store_number = "<MISSING>"
-        phone = loc_dom.xpath('//a[contains(@href, "tel")]/strong/text()')
-        phone = phone[0] if phone else "<MISSING>"
+        phone = loc_dom.xpath('//a[contains(@href, "tel")]//text()')
+        phone = phone[-1] if phone else "<MISSING>"
         location_type = "<MISSING>"
         tmp_closed = loc_dom.xpath(
             '//h3[contains(text(), "Our restaurant is temporarily closed")]'
         )
         if tmp_closed:
+            location_type = "temporarily closed"
+        if loc_dom.xpath('//p[contains(text(), "temporarily closed")]'):
             location_type = "temporarily closed"
         geo = loc_dom.xpath('//a[contains(@href, "/maps/")]/@href')
         latitude = "<MISSING>"
@@ -93,6 +117,15 @@ def fetch_data():
         hours_of_operation = (
             " ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
         )
+        if street_address == "Surrey Sm6 0Su Woodmansterne Lane":
+            street_address = "Surrey Woodmansterne Lane"
+            zip_code = "SM6 0SU"
+        if street_address == "Lincs Pe21 9Rz Wainfleet Road":
+            street_address = "Lincs Wainfleet Road"
+            zip_code = "PE21 9RZ"
+        if street_address == "Dd5 4Hb Ethiebeaton Park":
+            street_address = "Ethiebeaton Park"
+            zip_code = "DD5 4HB"
 
         item = [
             DOMAIN,
@@ -110,8 +143,10 @@ def fetch_data():
             longitude,
             hours_of_operation,
         ]
-
-        items.append(item)
+        check = f"{location_name} {street_address}"
+        if check not in scraped_items:
+            scraped_items.append(check)
+            items.append(item)
 
     return items
 

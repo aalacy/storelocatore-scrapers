@@ -36,10 +36,13 @@ def write_output(data):
 def fetch_data():
     out = []
     url = "https://www.thorntonsinc.com/"
-    api_url = "https://www.thorntonsinc.com/about-us/location-finder"
+    api_url = "https://www.mythorntons.com/locations/"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:88.0) Gecko/20100101 Firefox/88.0"
+    }
 
     session = SgRequests()
-    r = session.get(api_url)
+    r = session.get(api_url, headers=headers)
     tree = html.fromstring(r.text)
 
     js = tree.xpath("//div[@data-type='store']")
