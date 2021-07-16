@@ -24,7 +24,13 @@ def fetch_data():
     for store in stores:
         page_url = store["permalink"]
         locator_domain = website
-        location_name = store["store"].replace("&#8211;", "-").strip()
+        location_name = (
+            store["store"]
+            .replace("&#8211;", "-")
+            .strip()
+            .replace("&#038;", "&")
+            .strip()
+        )
         street_address = store["address"]
         if store["address2"] is not None and len(store["address2"]) > 0:
             street_address = street_address + ", " + store["address2"]
