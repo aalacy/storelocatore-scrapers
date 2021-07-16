@@ -35,59 +35,57 @@ def write_output(data):
 def fetch_data():
     out = []
 
-    locator_domain = "https://www.epicerieboulud.com"
-    api_url = "https://www.epicerieboulud.com/locations"
+    locator_domain = "https://www.erincondren.com"
+    api_url = "https://www.erincondren.com/"
     session = SgRequests()
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
     }
     r = session.get(api_url, headers=headers)
     tree = html.fromstring(r.text)
-    div = tree.xpath('//a[contains(@class, "Header-nav-folder-item")]')
+    div = tree.xpath('//div[@id="stores"]//ul/li[position()<4]/a')
     for d in div:
         slug = "".join(d.xpath(".//@href"))
-
         page_url = f"{locator_domain}{slug}"
+        location_name = "".join(d.xpath(".//text()"))
+
         session = SgRequests()
         r = session.get(page_url, headers=headers)
         tree = html.fromstring(r.text)
 
-        location_name = "".join(tree.xpath("//h1//text()"))
         location_type = "<MISSING>"
-        street_address = "".join(tree.xpath("//h1/following-sibling::p[1]/text()[1]"))
+        street_address = "".join(
+            tree.xpath('//h1[text()="Address"]/following-sibling::p[1]/text()[1]')
+        )
         ad = (
-            "".join(tree.xpath("//h1/following-sibling::p/text()[2]"))
+            "".join(
+                tree.xpath('//h1[text()="Address"]/following-sibling::p[1]/text()[2]')
+            )
             .replace("\n", "")
             .strip()
         )
         state = ad.split(",")[1].split()[0].strip()
-        postal = ad.split(",")[1].split()[1]
+        postal = ad.split(",")[1].split()[1].strip()
         country_code = "US"
         city = ad.split(",")[0].strip()
         store_number = "<MISSING>"
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
-        phone = "".join(
-            tree.xpath('//h1/following-sibling::p/a[contains(@href, "tel")]/text()')
-        )
-
-        hours_of_operation = (
-            " ".join(
+        map_link = "".join(tree.xpath("//iframe/@src"))
+        latitude = map_link.split("!3d")[1].strip().split("!")[0].strip()
+        longitude = map_link.split("!2d")[1].strip().split("!")[0].strip()
+        phone = (
+            "".join(
                 tree.xpath(
-                    '//p[./a[contains(@href, "tel")]]/following-sibling::p[1]//text()'
+                    '//h1[text()="Contact"]/following-sibling::p[contains(text(), "Phone:")]/text()[1]'
                 )
             )
-            .replace("\n", "")
+            .replace("Phone:", "")
             .strip()
-            or "<MISSING>"
         )
-        if hours_of_operation == "<MISSING>":
-            hours_of_operation = tree.xpath("//h1/following-sibling::p[1]//text()")
-            hours_of_operation = " ".join(hours_of_operation[-2:])
-
-        cms = "".join(tree.xpath('//strong[text()="REOPENING SOON"]/text()'))
-        if cms:
-            hours_of_operation = "Temporarily closed"
+        hours_of_operation = (
+            " ".join(tree.xpath('//h1[text()="Hours"]/following-sibling::p/text()'))
+            .replace("\n", " ")
+            .strip()
+        )
 
         row = [
             locator_domain,
