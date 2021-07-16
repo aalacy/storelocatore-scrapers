@@ -51,7 +51,7 @@ def fetch_data():
                 "https://www.onehourheatandair.com"
                 + line.split('href="')[1].split('"')[0]
             )
-            if stub not in locs:
+            if stub not in locs and "comhttp" not in stub:
                 locs.append(stub)
     for loc in locs:
         logger.info(("Pulling Location %s..." % loc))

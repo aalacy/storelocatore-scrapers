@@ -53,11 +53,8 @@ def fetch_data():
         store_url = poi["url"]
         location_name = poi["name"]
         location_name = location_name if location_name else "<MISSING>"
-        addr = " ".join(etree.HTML(poi["custom_field_1"]).xpath("//text()"))
-        addr = parse_address_intl(addr)
-        street_address = addr.street_address_1
-        if addr.street_address_2:
-            street_address += addr.street_address_2
+        street_address = poi["custom_field_1"].split("<br>")[0]
+        addr = parse_address_intl(poi["address"])
         city = addr.city
         state = addr.state
         zip_code = addr.postcode
