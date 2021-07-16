@@ -12,7 +12,7 @@ log = sglog.SgLogSetup().get_logger(logger_name="findchurch")
 def get_data():
     crawl_state = CrawlState()
     headers = {"User-Agent": "PostmanRuntime/7.19.0"}
-    session = SgRequests(retry_behavior=False)
+    session = SgRequests(retry_behavior=False, proxy_rotation_failure_threshold=3)
     if not crawl_state.get_misc_value("got_urls"):
         search = DynamicGeoSearch(country_codes=[SearchableCountries.BRITAIN])
         for search_lat, search_lon in search:
@@ -33,7 +33,7 @@ def get_data():
                     break
 
                 except Exception:
-                    session = SgRequests()
+                    session = SgRequests(retry_behavior=False, proxy_rotation_failure_threshold=3)
                     continue
 
             soup = bs(response, "html.parser")
@@ -86,7 +86,7 @@ def get_data():
             response = session.get(url, headers=headers, timeout=5).text
 
         except Exception:
-            session = SgRequests(retry_behavior=False)
+            session = SgRequests(retry_behavior=False, proxy_rotation_failure_threshold=3)
 
         if (
             "awaiting verification" in response
@@ -119,7 +119,7 @@ def get_data():
             )
 
         except Exception:
-            session = SgRequests(retry_behavior=False)
+            session = SgRequests(retry_behavior=False, proxy_rotation_failure_threshold=3)
             response = session.get(url, headers=headers).text
             if (
                 "awaiting verification" in response
