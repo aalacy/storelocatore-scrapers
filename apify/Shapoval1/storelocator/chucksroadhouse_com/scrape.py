@@ -86,6 +86,10 @@ def fetch_data():
                 longitude = j.get("store_longitude")
                 state = j.get("store_province")
                 postal = j.get("store_postal")
+                if latitude.find("-") != -1:
+                    latitude = j.get("store_longitude")
+                if longitude.find("-") == -1:
+                    longitude = j.get("store_latitude")
             if strad == "41 Main Street" and strad == "6465 Millcreek Dr Unit110":
                 state = j.get("store_province")
                 postal = j.get("store_postal")
