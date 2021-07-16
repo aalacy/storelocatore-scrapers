@@ -136,7 +136,9 @@ def fetch_data():
             .split("To Go")[0]
             .split("Temporarily closed")[0]
             .split("Dining Room: ")[-1]
-        )
+            .split("Hours:")[-1]
+            .split("Dine-In:")[-1]
+        ).strip()
 
         item = [
             DOMAIN,
