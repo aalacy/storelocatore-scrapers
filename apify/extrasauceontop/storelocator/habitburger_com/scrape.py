@@ -172,7 +172,7 @@ for url in page_urls_to_iterate:
         hours = "Temporarily Closed"
 
     elif "Thru" in hours:
-        hours = hours.split("Thru")[1].replace(":", "").strip()
+        hours = hours.split("Thru:")[1].strip()
 
     locator_domains.append(locator_domain)
     page_urls.append(url)
