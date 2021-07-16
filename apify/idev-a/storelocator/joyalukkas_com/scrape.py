@@ -21,7 +21,6 @@ def fetch_data():
         links = soup.select("div.store_item a")
         logger.info(f"{len(links)} found")
         for link in links:
-            hours = []
             street_address = link["data-store_address_1"]
             _addr = []
             _addr.append(street_address)
