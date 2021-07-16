@@ -115,6 +115,8 @@ def fetch_data():
                         if loc not in alllocs and "homewood-suites" in loc:
                             alllocs.append(loc)
                             count = count + 1
+                            if "}" in lng:
+                                lng = lng.split("}")[0].strip()
                             yield [
                                 website,
                                 loc,

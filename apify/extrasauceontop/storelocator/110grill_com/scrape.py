@@ -1,8 +1,36 @@
-from sgrequests import SgRequests
-import cloudscraper
+from sgselenium.sgselenium import SgChrome
+from webdriver_manager.chrome import ChromeDriverManager
 import json
 import pandas as pd
 from bs4 import BeautifulSoup as bs
+
+
+def get_driver(url, driver=None):
+    if driver is not None:
+        driver.quit()
+
+    user_agent = (
+        "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0"
+    )
+    x = 0
+    while True:
+        x = x + 1
+        try:
+            driver = SgChrome(
+                executable_path=ChromeDriverManager().install(),
+                user_agent=user_agent,
+                is_headless=True,
+            ).driver()
+            driver.get(url)
+            break
+        except Exception:
+            driver.quit()
+            if x == 10:
+                raise Exception(
+                    "Make sure this ran with a Proxy, will fail without one"
+                )
+            continue
+    return driver
 
 
 def extract_json(html_string):
@@ -22,6 +50,7 @@ def extract_json(html_string):
             if brace_count == 0:
                 end = count
                 try:
+
                     json_objects.append(json.loads(html_string[start : end + 1]))
                 except Exception:
                     pass
@@ -45,18 +74,19 @@ latitudes = []
 longitudes = []
 hours_of_operations = []
 
-session = SgRequests()
+base_url = "https://www.110grill.com/locations"
+driver = get_driver(base_url)
+response = driver.page_source
 
-scraper = cloudscraper.create_scraper(sess=session)
+json_objects = extract_json(response.split("preloadQueries")[1])
+first_location = json_objects[0]["data"]["restaurant"]["firstLocation"]
 
-base_url = "https://www.110grill.com"
-response = scraper.get(base_url).text
+location_contenders = json_objects[2]["data"]["restaurant"]["pageContent"]["sections"]
 
-json_objects = extract_json(response)
-
-locations = json_objects[1]["preloadQueries"][0]["data"]["restaurant"]["homePage"][
-    "sections"
-][3]["locations"]
+for item in location_contenders:
+    if len(item["locations"]) > 1:
+        locations = item["locations"]
+        break
 
 for location in locations:
     locator_domain = "110grill.com"
@@ -142,3 +172,5 @@ df = df.replace(r"^\s*$", "<MISSING>", regex=True)
 df = df.fillna("<MISSING>")
 
 df.to_csv("data.csv", index=False)
+
+driver.quit()
