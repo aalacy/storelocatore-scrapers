@@ -25,6 +25,7 @@ def fetch_data():
             logger.info(page_url)
             sp1 = etree.HTML(session.get(page_url, headers=_headers).text)
             addr = link["data-store-address"].split(",")
+            country_code = sp1.xpath('//a[@class="store-link"]//text()')[-1].strip()
             hours = []
             if sp1.xpath('//div[@class="storedetails-hours"]//text()'):
                 hours = [
@@ -44,7 +45,7 @@ def fetch_data():
                 city=addr[-3].strip(),
                 state=addr[-2].strip(),
                 zip_postal=addr[-1].strip(),
-                country_code="US",
+                country_code=country_code,
                 phone=phone,
                 locator_domain=locator_domain,
                 latitude=link["data-lat"],

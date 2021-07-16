@@ -62,9 +62,7 @@ def fetch_data():
             if "https://store.caraluzzis.com/" in store_url:
                 continue
             location_name = poi_html.xpath(".//strong/text()")
-            location_name = location_name[0] if location_name else "<MISSING>"
-            logger.info(f"Location Name: {location_name}")
-            logger.info(f"Page URL: {store_url}")
+            location_name = " ".join(location_name) if location_name else "<MISSING>"
 
             driver.get(store_url)
             driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
@@ -140,7 +138,7 @@ def fetch_data():
         )
         for poi_html in wine_locations:
             store_url = poi_html.xpath(".//p/a/@href")[-1]
-            location_name = poi_html.xpath(".//strong/text()")[0]
+            location_name = " ".join(poi_html.xpath(".//strong/text()"))
             raw_data = poi_html.xpath(".//p/text()")
             raw_data = [e.strip() for e in raw_data if e.strip()]
             raw_address = raw_data[:2]

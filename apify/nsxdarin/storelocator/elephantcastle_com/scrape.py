@@ -1,7 +1,5 @@
 import csv
-
 from sglogging import SgLogSetup
-
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -118,7 +116,6 @@ def fetch_data():
                         if "HAPPY" in hours:
                             hours = hours.split("HAPPY")[0].strip()
                         hours = hours.split(", minors")[0].strip()
-
                         if store not in ids:
                             ids.append(store)
                             yield [
