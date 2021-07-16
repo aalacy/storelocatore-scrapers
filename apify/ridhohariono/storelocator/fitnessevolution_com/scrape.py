@@ -103,6 +103,9 @@ def fetch_store_urls():
 def fetch_data():
     log.info("Fetching store_locator data")
     page_urls = fetch_store_urls()
+    excpet_page = "https://fitnessevolution.com/clubs/silver-spring-maryland/"
+    if excpet_page in page_urls:
+        page_urls.remove(excpet_page)
     locations = []
     for page_url in page_urls:
         data = parse_json(page_url)
