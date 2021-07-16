@@ -39,7 +39,7 @@ def get_urls():
     r = session.get("https://www.pollyspies.com/locations/")
     tree = html.fromstring(r.text)
 
-    return tree.xpath("//a[@class='location-details loc_cta']/@href")
+    return tree.xpath("//a[@class='details_link']/@href")
 
 
 def get_data(page_url):
@@ -49,19 +49,23 @@ def get_data(page_url):
     r = session.get(page_url)
     tree = html.fromstring(r.text)
 
-    location_name = "".join(tree.xpath("//h1/span/text()")).strip()
-    line = tree.xpath("//div[@class='address']/a[1]/text()")
+    location_name = "".join(tree.xpath("//h1/text()")).strip()
+    line = tree.xpath("//h2[text()='Address']/following-sibling::a/text()")
     line = list(filter(None, [l.strip() for l in line]))
 
-    street_address = line[0]
+    street_address = ", ".join(line[:-1])
     line = line[-1]
     city = line.split(",")[0].strip()
-    state = line.split(",")[1].strip()
-    postal = line.split(",")[-1].strip()
+    line = line.split(",")[1].strip()
+    state = line.split()[0]
+    postal = line.split()[-1]
     country_code = "US"
     store_number = "<MISSING>"
     phone = (
-        "".join(tree.xpath("//div[@class='telephone']/a/text()")).strip() or "<MISSING>"
+        "".join(
+            tree.xpath("//h2[text()='Telephone']/following-sibling::p[last()]/text()")
+        ).strip()
+        or "<MISSING>"
     )
 
     text = "".join(
