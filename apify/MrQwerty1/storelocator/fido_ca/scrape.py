@@ -51,7 +51,10 @@ def fetch_data():
             a = j.get("address")
             page_url = j.get("c_pagesURL") or "<MISSING>"
             store_number = "<MISSING>"
-            street_address = a.get("line1").replace("\n", ", ") or "<MISSING>"
+            street_address = (
+                f'{a.get("line1")} {a.get("line2") or ""}'.strip().replace("\n", ", ")
+                or "<MISSING>"
+            )
             city = a.get("city") or "<MISSING>"
             location_name = j.get("name")
             state = a.get("region") or "<MISSING>"
