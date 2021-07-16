@@ -43,13 +43,9 @@ def get_urls():
     return tree.xpath("//div[@class='ColumnsWrapper']//a/@href")
 
 
-def get_data(url):
+def get_data(page_url):
     session = SgRequests()
     locator_domain = "https://www.bathfitter.com/"
-
-    if url.startswith("http"):
-        return
-    page_url = f"https://www.bathfitter.com{url}"
 
     try:
         r = session.get(page_url)

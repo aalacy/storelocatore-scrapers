@@ -1,17 +1,16 @@
-import time
 import csv
+from bs4 import BeautifulSoup
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
-from bs4 import BeautifulSoup
+import time
 from sgscrape import sgpostal as parser
 
-
-logger = SgLogSetup().get_logger("breauxmart_com")
-
+logger = SgLogSetup().get_logger("elietahari_com")
 
 session = SgRequests()
+
 headers = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.114 Safari/537.36",
 }
 
 
@@ -59,33 +58,40 @@ def write_output(data):
 
 def fetch_data():
     data = []
-    url = "https://api.freshop.com/1/stores?app_key=breaux_mart&distance=10&fields=id%2Cname&has_address=true&q=LA&token=b9d5ebe8311a1e8691c9e16d0740383e"
-    stores = session.get(url, headers=headers, verify=False).json()
-    for loc in stores["items"]:
-        storeid = loc["id"]
-        title = loc["name"]
-        title2 = title.replace(" - ", "-")
-        title2 = title2.replace(" ", "-")
-        link = "https://www.breauxmart.com/stores/" + title2
-        req = session.get(link, headers=headers, verify=False)
-        soup = BeautifulSoup(req.text, "html.parser")
-        address = soup.find("div", {"class": "fp-store-address"}).text
-        address = address.lstrip(title)
-        information = soup.find(
-            "div", {"class": "stores-landing-left col-md-6"}
-        ).findAll("div")
-        if len(information) == 19:
-            hours = information[12].find("p").text
-            phone = information[14].find("p").text
-        else:
-            hours = information[9].find("p").text
-            phone = information[11].find("p").text
-        phone = phone.split("Fax")[0].strip()
-        phone = phone.strip()
-        hours = hours.strip()
-        lat = soup.find("meta", {"property": "place:location:latitude"})["content"]
-        lng = soup.find("meta", {"property": "place:location:longitude"})["content"]
-        parsed = parser.parse_address_usa(address)
+    search_url = "https://cdn.shopify.com/s/files/1/0350/8997/3385/t/49/assets/ndnapps-geojson.js?v=12382587392219603945"
+    stores_req = session.get(search_url, headers=headers)
+    soup = stores_req.text
+    r_text = soup.split("eqfeed_callback(")[1].split(")")[0]
+    locations = r_text.split("}},")
+    link = "https://www.elietahari.com/pages/store-locator"
+    r = session.get(link, headers=headers)
+    bs = BeautifulSoup(r.text, "html.parser")
+    hours = bs.findAll("div", {"class": "hours"})
+    for locs, hr in zip(locations, hours):
+        hoo = hr.text
+        hoo = hoo.replace("\n", " ")
+        hoo = hoo.replace("Opens", "")
+        hoo = hoo.replace("Hours", "")
+        hoo = hoo.replace("  ", " ")
+        hoo = hoo.strip()
+        title = locs.split('name":"')[1].split('",')[0]
+        address = locs.split('"address":"')[1].split('",')[0]
+        phone = locs.split('phone":')[1].split(",")[0]
+        phone = phone.strip('"')
+        if phone == "null":
+            phone = "<MISSING>"
+        storeid = locs.split('"id":')[1].split(',"')[0]
+        url = "https://www.elietahari.com" + locs.split('url":"')[1].split('",')[0]
+        url = url.replace("\\", "")
+        lat = locs.split('"lat":"')[1].split('",')[0]
+        lng = locs.split('"lng":"')[1].split('",')[0]
+        if (
+            url
+            == "https://www.elietahari.com/apps/store-locator/elie-tahari-pembroke-gardens.html"
+        ):
+            phone = "954-589-1399"
+        address = address.rstrip(", United States")
+        parsed = parser.parse_address_intl(address)
         street1 = parsed.street_address_1 if parsed.street_address_1 else "<MISSING>"
         street = (
             (street1 + ", " + parsed.street_address_2)
@@ -95,23 +101,24 @@ def fetch_data():
         city = parsed.city if parsed.city else "<MISSING>"
         state = parsed.state if parsed.state else "<MISSING>"
         pcode = parsed.postcode if parsed.postcode else "<MISSING>"
+        country = "US"
 
         data.append(
             [
-                "https://www.breauxmart.com/",
-                link,
+                "https://www.elietahari.com/",
+                url,
                 title,
                 street,
                 city,
                 state,
                 pcode,
-                "US",
+                country,
                 storeid,
                 phone,
                 "<MISSING>",
                 lat,
                 lng,
-                hours,
+                hoo,
             ]
         )
     return data

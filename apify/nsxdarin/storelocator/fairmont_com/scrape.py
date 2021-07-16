@@ -111,7 +111,10 @@ def fetch_data():
                 add = g.split(",")[0]
                 g = g.replace(",Massac", "- Massac")
                 city = g.split(",")[1].strip().split(" - ")[0]
-                state = g.split(",")[1].strip().split(" - ")[1]
+                try:
+                    state = g.split(",")[1].strip().split(" - ")[1]
+                except:
+                    state = "<MISSING>"
                 if "United States" in g:
                     zc = g.rsplit(",", 1)[0].rsplit(" ", 1)[1]
                     state = state.rsplit(" ", 1)[0]
@@ -152,6 +155,12 @@ def fetch_data():
         if "British Columbia" in state:
             zc = state.split("Columbia")[1].strip()
             state = "British Columbia"
+        if lat == "":
+            lat = "<MISSING>"
+        if lng == "":
+            lng = "<MISSING>"
+        if "windsor-park" in loc:
+            zc = "TW20 0YL"
         yield [
             website,
             purl,

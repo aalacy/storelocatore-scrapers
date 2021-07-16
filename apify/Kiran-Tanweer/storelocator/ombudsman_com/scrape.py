@@ -118,6 +118,9 @@ def fetch_data():
             lng = "<MISSING>"
         link = "https://www.ombudsman.com/state/" + state.lower()
 
+        if title == "Cartersville":
+            street = "134 Market Sq Shopping Center"
+            city = "Cartersville"
         data.append(
             [
                 "https://www.ombudsman.com/",
