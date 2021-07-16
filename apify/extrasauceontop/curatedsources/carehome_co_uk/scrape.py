@@ -127,9 +127,6 @@ for country_url in country_urls:
                 except Exception:
                     continue
 
-        with open("file.txt", "w", encoding="utf-8") as output:
-            print(response_text, file=output)
-
         # raise Exception
         soup = bs(response_text, "html.parser")
         div_tags = soup.find_all("div", attrs={"class": "col-xs-12"})
@@ -153,7 +150,6 @@ for country_url in country_urls:
         count = count + 1
 
 x = 0
-print(len(location_urls))
 with open("data.csv", mode="w") as output_file:
     writer = csv.writer(
         output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
