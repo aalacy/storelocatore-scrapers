@@ -12,6 +12,17 @@ _headers = {
 }
 
 
+def _p(val):
+    return (
+        val.replace("(", "")
+        .replace(")", "")
+        .replace("-", "")
+        .replace(" ", "")
+        .strip()
+        .isdigit()
+    )
+
+
 def fetch_data():
     locator_domain = "https://mainstreamboutique.com"
     base_url = "https://mainstreamboutique.com/apps/store-locator"
@@ -32,6 +43,7 @@ def fetch_data():
 
         soup = bs(res, "lxml")
         locations = soup.select("div#addresses_list ul li")
+        logger.info(f"{len(locations)} found")
         for _ in locations:
             store_number = _["onmouseover"].split("(")[1][:-1]
             city = _.select_one("span.city").text.strip()
@@ -48,16 +60,22 @@ def fetch_data():
             if "We are closed" in sp1.select("div.shg-row > div")[1].text:
                 hours = ["Closed"]
             else:
-                hh = list(sp1.select("div.shg-row > div")[1].p.stripped_strings)
+                hh = list(sp1.select("div.shg-row > div")[1].stripped_strings)[1:]
                 for x in range(0, len(hh), 2):
                     hours.append(f"{hh[x]} {hh[x+1]}")
             phone = (
                 sp1.select("div.shg-row > div")[2].p.text.strip().split(":")[-1].strip()
             )
 
-            zip_postal = _addr[-1].strip()
-            if not zip_postal.isdigit():
-                zip_postal = ""
+            if not _p(phone):
+                phone = ""
+            zip_postal = ""
+            if _.select_one("span.postal_zip"):
+                zip_postal = _.select_one("span.postal_zip").text.strip()
+            if not zip_postal:
+                zip_postal = _addr[-1].strip()
+                if not zip_postal.isdigit():
+                    zip_postal = ""
             coord = ["", ""]
             for loc in locs:
                 if str(loc["id"]) == store_number:

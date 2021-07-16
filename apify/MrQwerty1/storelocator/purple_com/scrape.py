@@ -1,4 +1,5 @@
 import csv
+
 from sgrequests import SgRequests
 
 
@@ -35,63 +36,79 @@ def fetch_data():
     out = []
     s = set()
     locator_domain = "https://purple.com/"
-    api_url = "https://storerocket.global.ssl.fastly.net/api/user/7OdJER58WE/locations"
 
     session = SgRequests()
-    r = session.get(api_url)
-    js = r.json()["results"]["locations"]
+    headers = {"Accept": "application/json"}
 
-    for j in js:
-        street_address = (
-            f"{j.get('address_line_1')} {j.get('address_line_2') or ''}".strip()
-            or "<MISSING>"
+    for i in range(0, 100000, 10):
+        r = session.get(
+            f"https://purple.com/stores/index.html?q=&offset={i}", headers=headers
         )
-        city = j.get("city") or "<MISSING>"
-        state = j.get("state") or "<MISSING>"
-        postal = j.get("postcode") or "<MISSING>"
-        country_code = j.get("country") or "<MISSING>"
-        if country_code == "USA":
-            country_code = "US"
-        store_number = "<MISSING>"
-        page_url = f'https://purple.com/stores?location={j.get("slug")}'
-        location_name = j.get("name")
-        phone = j.get("phone") or "<MISSING>"
-        latitude = j.get("lat") or "<MISSING>"
-        longitude = j.get("lng") or "<MISSING>"
-        location_type = "<MISSING>"
+        js = r.json()["response"]["entities"]
 
-        _tmp = []
-        hours = j.get("hours")
-        for k, v in hours.items():
-            if not v:
-                continue
-            _tmp.append(f"{k.capitalize()}: {v}")
+        for jj in js:
+            j = jj.get("profile")
+            a = j.get("address")
+            page_url = j.get("c_pagesURL") or "<MISSING>"
+            store_number = page_url.split("-")[-1]
+            street_address = a.get("line1").replace("\n", ", ") or "<MISSING>"
+            city = a.get("city") or "<MISSING>"
+            location_name = j.get("c_pagesTitle").strip() or "<MISSING>"
+            state = a.get("region") or "<MISSING>"
+            postal = a.get("postalCode") or "<MISSING>"
+            country_code = a.get("countryCode") or "<MISSING>"
+            phone = j.get("mainPhone", {}).get("display") or "<MISSING>"
+            latitude = j.get("yextDisplayCoordinate", {}).get("lat") or "<MISSING>"
+            longitude = j.get("yextDisplayCoordinate", {}).get("long") or "<MISSING>"
+            location_type = "<MISSING>"
 
-        hours_of_operation = ";".join(_tmp) or "<MISSING>"
+            hours = j.get("hours", {}).get("normalHours", [])
+            _tmp = []
+            for h in hours:
+                day = h.get("day")
+                if not h.get("isClosed"):
+                    interval = h.get("intervals")
+                    start = str(interval[0].get("start"))
+                    if len(start) == 3:
+                        start = f"0{start}"
+                    if len(start) == 1:
+                        start = "1200"
+                    end = str(interval[0].get("end"))
+                    line = f"{day[:3].capitalize()}: {start[:2]}:{start[2:]} - {end[:2]}:{end[2:]}"
+                else:
+                    line = f"{day[:3].capitalize()}: Closed"
+                _tmp.append(line)
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
+            hours_of_operation = ";".join(_tmp) or "<MISSING>"
+            if hours_of_operation.count("Closed") == 7:
+                hours_of_operation = "Closed"
+            if "Coming Soon" in location_name or j.get("c_comingSoon"):
+                hours_of_operation = "Coming Soon"
 
-        check = tuple(row[2:6])
-        if check in s:
-            continue
+            row = [
+                locator_domain,
+                page_url,
+                location_name,
+                street_address,
+                city,
+                state,
+                postal,
+                country_code,
+                store_number,
+                phone,
+                location_type,
+                latitude,
+                longitude,
+                hours_of_operation,
+            ]
 
-        s.add(check)
-        out.append(row)
+            check = (street_address, city, state, postal)
+            if check not in s:
+                s.add(check)
+                out.append(row)
+
+        if len(js) < 10:
+            break
 
     return out
 

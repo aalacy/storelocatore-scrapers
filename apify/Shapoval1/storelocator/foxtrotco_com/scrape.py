@@ -62,22 +62,19 @@ def fetch_data():
         r = session.get(api_url, headers=headers, cookies=cookies)
         js = r.json()["stores"]
         for j in js:
-            street_address = j.get("address")
-            city = j.get("city")
-            postal = j.get("zip")
-            state = "".join(j.get("state"))
+            street_address = j.get("address") or "<MISSING>"
+            city = j.get("city") or "<MISSING>"
+            postal = j.get("zip") or "<MISSING>"
+            state = "".join(j.get("state")) or "<MISSING>"
             country_code = "US"
             store_number = "<MISSING>"
-            location_name = "".join(j.get("name"))
+            location_name = "".join(j.get("name")) or "<MISSING>"
             location_type = "<MISSING>"
-            if state.find("DC") != -1:
-                location_type = "Coming Soon"
-            phone = j.get("phone")
-            latitude = j.get("lat")
+            phone = j.get("phone") or "<MISSING>"
+            latitude = j.get("lat") or "<MISSING>"
             slug = location_name.replace(" ", "-").lower()
             page_url = f"https://foxtrotco.com/stores/{slug}"
-            longitude = j.get("lon")
-
+            longitude = j.get("lon") or "<MISSING>"
             hours = j.get("operating_hours")
             tmp = []
             days = [
@@ -89,6 +86,7 @@ def fetch_data():
                 "Friday",
                 "Saturday",
             ]
+
             for h in hours:
                 day = h.get("day_of_week")
                 open = h.get("opening_time")
@@ -96,6 +94,11 @@ def fetch_data():
                 line = f"{days[day]} : {open} - {close}"
                 tmp.append(line)
             hours_of_operation = " ; ".join(tmp) or "<MISSING>"
+
+            a_url = "".join(j.get("asset_url"))
+            if "ComingSoon" in a_url:
+                hours_of_operation = "Coming Soon"
+
             row = [
                 locator_domain,
                 page_url,
