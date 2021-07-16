@@ -1,6 +1,5 @@
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
-from bs4 import BeautifulSoup as bs
 from sgrequests import SgRequests
 
 _headers = {
