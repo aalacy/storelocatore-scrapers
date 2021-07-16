@@ -127,8 +127,9 @@ for country_url in country_urls:
                 except Exception:
                     continue
 
+        # raise Exception
         soup = bs(response_text, "html.parser")
-        div_tags = soup.find_all("div", attrs={"class": "col-sm-9 col-xs-12"})
+        div_tags = soup.find_all("div", attrs={"class": "col-xs-12"})
         for div_tag in div_tags:
             try:
                 location_url = div_tag.find(
@@ -173,7 +174,11 @@ with open("data.csv", mode="w") as output_file:
     )
 
     for location_url in location_urls:
+        if "searchazref" not in location_url:
+            continue
+
         x = x + 1
+
         response = s.get(location_url, headers=headers)
         response_text = response.text
         log.info("URL " + str(x) + "/" + str(len(location_urls)))
@@ -223,6 +228,22 @@ with open("data.csv", mode="w") as output_file:
         try:
             phone_link = soup.find("button", attrs={"id": "brochure_phone"})["href"]
             phone_response = s.get(phone_link, headers=headers).text
+            if len(phone_response.split("div")) > 2:
+                pass
+            else:
+                y = 0
+                while True:
+                    y = y + 1
+                    log.info("phone_url_fail: " + str(y))
+                    try:
+                        new_sess = reset_sessions(phone_link)
+
+                        s = new_sess[0]
+                        headers = new_sess[1]
+                        phone_response = new_sess[2]
+                        break
+                    except Exception:
+                        continue
             response_soup = bs(phone_response, "html.parser")
             phone = (
                 response_soup.find("div", attrs={"class": "contacts_telephone"})
@@ -261,6 +282,7 @@ with open("data.csv", mode="w") as output_file:
         except Exception:
             location_type = "<MISSING>"
 
+        phone = phone.split("ext")[0].strip()
         row = [
             locator_domain,
             page_url,

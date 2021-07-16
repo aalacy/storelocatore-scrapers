@@ -1,8 +1,12 @@
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
-from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
+import json
+from sgselenium import SgChrome
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.common.by import By
 
 logger = SgLogSetup().get_logger("victrolacoffee")
 
@@ -30,54 +34,85 @@ def _p(val):
 
 
 def fetch_data():
-    with SgRequests() as session:
-        soup = bs(session.get(base_url, headers=_headers).text, "lxml")
+    with SgChrome() as driver:
+        driver.get(base_url)
+        soup = bs(driver.page_source, "lxml")
         links = soup.select("div.shg-c-lg-6")
         logger.info(f"{len(links)} found")
         for link in links:
             page_url = link.a["href"]
             logger.info(page_url)
-            sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
-            hours = [
-                hh.text.strip().split("(")[0]
-                for hh in sp1.select("div.shg-theme-text-content p")
-                if hh.text.strip()
-            ][1:]
-            phone = ""
-            if _p(hours[-1]):
-                phone = hours[-1]
-                del hours[-1]
-            street_address = sp1.select_one("h1.page-title").text.strip()
-            city = state = zip_postal = ""
-            if "Open" not in hours[0] and "Monday" not in hours[0]:
-                addr = hours[0].replace("map", "")
-                street_address = addr.split("--")[0].strip()
-                city = addr.split("--")[1].split(",")[0].strip()
-                state = addr.split("--")[1].split(",")[1].strip().split(" ")[0].strip()
-                zip_postal = (
-                    addr.split("--")[1].split(",")[1].strip().split(" ")[1].strip()
+            driver.get(page_url)
+            WebDriverWait(driver, 10).until(
+                EC.presence_of_element_located(
+                    (
+                        By.XPATH,
+                        "//div[contains(@class,'shg-c')]//iframe",
+                    )
                 )
-                del hours[0]
-            coord = (
-                sp1.select_one("div.shg-c iframe")["src"]
-                .split("!2d")[1]
-                .split("!2m")[0]
-                .split("!3d")
             )
-            yield SgRecord(
-                page_url=page_url,
-                location_name=link.h1.text.strip(),
-                street_address=street_address,
-                city=city,
-                state=state,
-                zip_postal=zip_postal,
-                country_code="US",
-                phone=phone.replace("Call", ""),
-                locator_domain=locator_domain,
-                latitude=coord[1],
-                longitude=coord[0],
-                hours_of_operation="; ".join(hours).replace("–", "-"),
-            )
+            sp1 = bs(driver.page_source, "lxml")
+            try:
+                hours = [
+                    hh.text.strip().split("(")[0]
+                    for hh in sp1.select("div.shg-c p")
+                    if hh.text.strip()
+                ][1:]
+                if "Reserve" in hours[0]:
+                    del hours[0]
+                phone = ""
+                if _p(hours[-1]):
+                    phone = hours[-1]
+                    del hours[-1]
+                if "Open" not in hours[0] and "Monday" not in hours[0]:
+                    del hours[0]
+                coord = (
+                    sp1.select_one("div.shg-c iframe")["src"]
+                    .split("!2d")[1]
+                    .split("!2m")[0]
+                    .split("!3d")
+                )
+                city = state = zip_postal = ""
+                try:
+                    driver.switch_to.frame(
+                        driver.find_element_by_css_selector("div.shg-c iframe")
+                    )
+                    addr = (
+                        bs(driver.page_source, "lxml")
+                        .select_one("div.place-desc-large div.address")
+                        .text.strip()
+                        .split(",")
+                    )
+                    city = addr[1].strip()
+                    state = addr[2].strip().split(" ")[0].strip()
+                    zip_postal = addr[2].strip().split(" ")[1].strip()
+                except:
+                    addr = json.loads(
+                        driver.page_source.split("initEmbed(")[1]
+                        .split("}")[0]
+                        .strip()[:-2]
+                    )[21][3][2]
+                    city = addr[1].split(",")[0].strip()
+                    state = addr[1].split(",")[1].strip().split(" ")[0].strip()
+                    zip_postal = addr[1].split(",")[1].strip().split(" ")[1].strip()
+                yield SgRecord(
+                    page_url=page_url,
+                    location_name=link.h1.text.strip(),
+                    street_address=addr[0],
+                    city=city,
+                    state=state,
+                    zip_postal=zip_postal,
+                    country_code="US",
+                    phone=phone.replace("Call", ""),
+                    locator_domain=locator_domain,
+                    latitude=coord[1],
+                    longitude=coord[0],
+                    hours_of_operation="; ".join(hours).replace("–", "-"),
+                )
+            except:
+                import pdb
+
+                pdb.set_trace()
 
 
 if __name__ == "__main__":
