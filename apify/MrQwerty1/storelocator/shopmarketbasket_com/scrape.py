@@ -41,8 +41,10 @@ def get_hours(url):
     tree = html.fromstring(r.text)
 
     _tmp = []
-    hours = tree.xpath("//div[text()='Hours']/following-sibling::div[1]/p/text()")
+    hours = tree.xpath("//div[text()='Hours']/following-sibling::div[1]//text()")
     for h in hours:
+        if not h.strip():
+            continue
         if h.find("Senior") != -1:
             break
         _tmp.append(h.strip())
@@ -73,6 +75,8 @@ def fetch_data():
         page_url = "https://www.shopmarketbasket.com" + j.get("path")
         _id = page_url.split("-")[-1]
         location_name = j.get("title")
+        if "coming" in location_name.lower():
+            continue
         street_address = (
             f'{j.get("field_address_address_line1")} {j.get("field_address_address_line2") or ""}'.strip()
             or "<MISSING>"
@@ -92,7 +96,7 @@ def fetch_data():
             "<MISSING>",
         ]
         location_type = "<MISSING>"
-        hours_of_operation = hours.get(_id)
+        hours_of_operation = hours.get(_id) or "<MISSING>"
 
         row = [
             locator_domain,

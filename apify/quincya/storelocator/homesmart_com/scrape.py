@@ -71,11 +71,12 @@ def fetch_data():
         hours_of_operation = "<MISSING>"
         latitude = "<MISSING>"
         longitude = "<MISSING>"
+        link = item.a["href"]
 
         data.append(
             [
                 locator_domain,
-                base_link,
+                link,
                 location_name,
                 street_address,
                 city,

@@ -40,6 +40,7 @@ def write_output(data):
 def fetch_data():
     locs = []
     states = []
+    alllocs = []
     url = "https://www.ihg.com/crowneplaza/destinations/gb/en/united-kingdom-hotels"
     r = session.get(url, headers=headers)
     website = "crowneplaza.co.uk"
@@ -85,22 +86,24 @@ def fetch_data():
                 zc = line2.split("|")[1].strip().replace("\t", "")
             if '<a href="tel:' in line2:
                 phone = line2.split('<a href="tel:')[1].split('"')[0]
-        yield [
-            website,
-            loc,
-            name,
-            add,
-            city,
-            state,
-            zc,
-            country,
-            store,
-            phone,
-            typ,
-            lat,
-            lng,
-            hours,
-        ]
+        if loc not in alllocs:
+            alllocs.append(loc)
+            yield [
+                website,
+                loc,
+                name,
+                add,
+                city,
+                state,
+                zc,
+                country,
+                store,
+                phone,
+                typ,
+                lat,
+                lng,
+                hours,
+            ]
 
 
 def scrape():

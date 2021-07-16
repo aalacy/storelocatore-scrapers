@@ -2,49 +2,47 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
-from sgscrape.sgpostal import parse_address_intl
+from sglogging import SgLogSetup
+import json
+
+logger = SgLogSetup().get_logger("miafrancesca")
+
+_headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.141 Safari/537.36",
+}
 
 
 def fetch_data():
     with SgRequests() as session:
         locator_domain = "https://www.miafrancesca.com"
-        base_url = "https://www.miafrancesca.com/"
-        res = session.get(base_url)
-        links = bs(res.text, "lxml").select("div#SubMenu-1 ul li a")
-        for link in links[1:]:
-            page_url = locator_domain + link["href"]
-            r1 = session.get(page_url)
-            soup = bs(r1.text, "lxml")
-            hours = []
-            blocks = [
-                _
-                for _ in soup.select_one("section#intro div.col-md-6").stripped_strings
+        base_url = "https://www.miafrancesca.com/locations/"
+        locations = json.loads(
+            session.get(base_url, headers=_headers)
+            .text.split("locations:")[1]
+            .split("apiKey:")[0]
+            .strip()[:-1]
+        )
+        logger.info(f"{len(locations)} found")
+        for _ in locations:
+            if not _["street"]:
+                continue
+            page_url = locator_domain + _["url"]
+            hours = [
+                ": ".join(hh.stripped_strings)
+                for hh in bs(_["hours"], "lxml").select("p")
             ]
-            for x, block in enumerate(blocks):
-                if block == "HOURS":
-                    hours = blocks[x + 1 :]
-                    break
-
-            address = " ".join(
-                [
-                    _
-                    for _ in soup.select_one(
-                        'a[data-bb-track-category="Address"]'
-                    ).stripped_strings
-                ]
-            )
-            addr = parse_address_intl(address)
-            phone = soup.select_one('a[data-bb-track-category="Phone Number"]').text
-
             yield SgRecord(
                 page_url=page_url,
-                location_name=soup.select_one("h1").text,
-                street_address=addr.street_address_1,
-                city=addr.city,
-                state=addr.state,
-                zip_postal=addr.postcode,
+                store_number=_["id"],
+                location_name=_["name"],
+                street_address=_["street"],
+                city=_["city"],
+                state=_["state"],
+                zip_postal=_["postal_code"],
                 country_code="US",
-                phone=phone,
+                phone=_["phone_number"],
+                latitude=_["lat"],
+                longitude=_["lng"],
                 locator_domain=locator_domain,
                 hours_of_operation="; ".join(hours),
             )
