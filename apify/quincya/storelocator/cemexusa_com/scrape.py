@@ -64,7 +64,7 @@ def fetch_data():
         if not hours_of_operation:
             hours_of_operation = "<MISSING>"
 
-        location_type = store["locationType"]
+        location_type = store["product"]
         if not location_type:
             location_type = "<MISSING>"
 

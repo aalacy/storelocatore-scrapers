@@ -1,108 +1,88 @@
-import csv
-from sgrequests import SgRequests
-from bs4 import BeautifulSoup
-import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('salonrepublic_com')
-
-
-
-
-
+from sglogging import sglog
+from bs4 import BeautifulSoup
+from sgrequests import SgRequests
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
 
 session = SgRequests()
+website = "salonrepublic_com"
+log = sglog.SgLogSetup().get_logger(logger_name=website)
+session = SgRequests()
+headers = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.66 Safari/537.36",
+    "Accept": "application/json",
+}
 
-def write_output(data):
-    with open('data.csv', mode='w', encoding="utf-8") as output_file:
-        writer = csv.writer(output_file, delimiter=',',
-                            quotechar='"', quoting=csv.QUOTE_ALL)
 
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
-        # Body
-        for row in data:
-            writer.writerow(row)
+DOMAIN = "https://salonrepublic.com/"
+MISSING = "<MISSING>"
 
 
 def fetch_data():
-    headers = {
-        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36"
-    }
-    base_url = "http://salonrepublic.com"
-    r = session.get("http://salonrepublic.com/locations/", headers=headers)
-    soup = BeautifulSoup(r.text, "lxml")
-    return_main_object = []
-    addresses = []
-    script = soup.find_all(
-        'script')[-2].text.strip().split('var mapdata = ')[1].split('};')[0] + "}"
-    json_data = json.loads(script)
-    for loc in json_data['pois']:
-        body = BeautifulSoup(loc['body'], 'lxml')
-        page_url = base_url + body.a['href']
-        locator_domain = base_url
-        address = list(body.find_all('p')[-1].stripped_strings)
-        street_address = " ".join(address[:-2]).strip()
-        city = address[-2].split(',')[0].strip()
-        state = address[-2].split(',')[-1].split()[0].strip()
-        zipp = address[-2].split(',')[-1].split()[-1].strip()
-        latitude = loc['point']['lat']
-        longitude = loc['point']['lng']
-        location_name = loc['title']
-        store_number = "<MISSING>"
-        country_code = "US"
-        location_type = "<MISSING>"
-        # logger.info(page_url)
-        r_loc = session.get(page_url, headers=headers)
-        soup_loc = BeautifulSoup(r_loc.text, 'lxml')
+    url = "https://salonrepublic.com/locations/"
+    r = session.get(url, headers=headers)
+    soup = BeautifulSoup(r.text, "html.parser")
+    loclist = soup.find("div", {"class": "pt-cv-view pt-cv-grid pt-cv-colsys"}).findAll(
+        "div", {"class": "pt-cv-ifield"}
+    )
+    for loc in loclist:
+        page_url = loc.find("a")["href"]
+        log.info(page_url)
+        r = session.get(page_url, headers=headers)
+        soup = BeautifulSoup(r.text, "html.parser")
         try:
-            try:
-                phone = soup_loc.find(
-                    'div', class_='loc_contact').find('a').text.strip()
-                if phone == "":
-                    phone = "<MISSING>"
-
-                hours_of_operation = "<MISSING>"
-            except:
-                phone = list(soup_loc.find(
-                    'p', class_='thelab_addr2').stripped_strings)[0]
-                hours_of_operation = " ".join(list(soup_loc.find(
-                    'div', class_='lab_hours_box').stripped_strings)).replace("The Lab Hours:", "")
+            temp = r.text.split('<script type="application/ld+json">')[1].split(
+                "</script>"
+            )[0]
         except:
-
             continue
-
-        store = []
-        store.append(locator_domain if locator_domain else '<MISSING>')
-        store.append(location_name if location_name else '<MISSING>')
-        store.append(street_address if street_address else '<MISSING>')
-        store.append(city if city else '<MISSING>')
-        store.append(state if state else '<MISSING>')
-        store.append(zipp if zipp else '<MISSING>')
-        store.append(country_code if country_code else '<MISSING>')
-        store.append(store_number if store_number else '<MISSING>')
-        store.append(phone if phone else '<MISSING>')
-        store.append(location_type if location_type else '<MISSING>')
-        store.append(latitude if latitude else '<MISSING>')
-        store.append(longitude if longitude else '<MISSING>')
-        store.append(
-            hours_of_operation if hours_of_operation else '<MISSING>')
-        store.append(page_url)
-        if store[1] + " " + store[2] in addresses:
-            continue
-        addresses.append(store[1] + " " + store[2])
-
-        #logger.info("data = " + str(store))
-        #logger.info(
-            #'~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-        yield store
+        temp = json.loads(temp)
+        location_name = temp["name"]
+        address = temp["address"]
+        street_address = address["streetAddress"]
+        city = address["addressLocality"]
+        state = address["addressRegion"]
+        zip_postal = address["postalCode"]
+        country_code = "US"
+        try:
+            hours_of_operation = (
+                str(temp["openingHours"]).replace('["', "").replace(']"', "")
+            )
+            phone = temp["telephone"]
+        except:
+            phone = soup.select_one("a[href*=tel]").text
+            hours_of_operation = MISSING
+        yield SgRecord(
+            locator_domain=DOMAIN,
+            page_url=page_url,
+            location_name=location_name.strip(),
+            street_address=street_address.strip(),
+            city=city.strip(),
+            state=state.strip(),
+            zip_postal=zip_postal.strip(),
+            country_code=country_code,
+            store_number=MISSING,
+            phone=phone,
+            location_type=MISSING,
+            latitude=MISSING,
+            longitude=MISSING,
+            hours_of_operation=hours_of_operation,
+        )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    log.info("Started")
+    count = 0
+    with SgWriter() as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()
