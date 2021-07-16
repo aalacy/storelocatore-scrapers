@@ -1,11 +1,2 @@
-# How to write a Python3 scraper for SafeGraph
-
-Please write your scraper such that running `scrape.py` produces a file `data.csv` containing the scraped data.
-
-Remember to update `requirements.txt` with all dependencies needed to run your scraper. 
-Please make sure that:
-* Your scraper can be run successfully by executing https://github.com/SafeGraphInc/crawl-service/blob/master/scripts/run_scraper.sh 
-* The resulting output passes https://github.com/SafeGraphInc/crawl-service/blob/master/scripts/validate.py
-
-
-# site to scrape: https://www.pirtekusa.com/locations/?list_by=region
+--ignore StreetAddressHasNumber --ignore GeoConsistencyValidator (Confirmed on website)
+--ignore CountValidator --ignore StateLevelCountValidator (Expected 85 POI, but website has 104 POI)

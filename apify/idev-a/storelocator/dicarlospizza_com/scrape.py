@@ -5,6 +5,16 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
 import json
+import ssl
+
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
 
 
 def _valid(val):
@@ -25,24 +35,24 @@ def fetch_data():
             )
         )
         locations = json.loads(
-            driver.page_source.split("window.siteData = ")[1]
+            driver.page_source.split("window.__BOOTSTRAP_STATE__ = ")[1]
             .strip()
-            .split("window.__BOOTSTRAP_STATE__ =")[0]
+            .split("</script>")[0]
             .strip()[:-1]
         )
-        for cell in locations["page"]["properties"]["contentAreas"]["userContent"][
-            "content"
-        ]["cells"]:
+        for cell in locations["siteData"]["page"]["properties"]["contentAreas"][
+            "userContent"
+        ]["content"]["cells"]:
             location_name = ""
             street_address = ""
             phone = ""
-            coord = ["", ""]
             state = cell["content"]["elements"][1]["properties"]["title"]["quill"][
                 "ops"
             ][0]["insert"].strip()
             location = cell["content"]["elements"][2]["properties"]["title"]["quill"][
                 "ops"
             ]
+            coord = ["", ""]
             for x, _ in enumerate(location):
                 if (
                     not _["insert"]
@@ -83,7 +93,7 @@ def fetch_data():
                             map_link = _["attributes"]["wLink"]["link"]["external"]
                             coord = map_link.split("/@")[1].split("/data")[0].split(",")
                     except:
-                        pass
+                        coord = ["", ""]
 
                 if location_name and street_address and phone:
                     yield SgRecord(
@@ -99,6 +109,7 @@ def fetch_data():
                         locator_domain=locator_domain,
                     )
                     location_name = street_address = phone = ""
+                    coord = ["", ""]
 
 
 if __name__ == "__main__":

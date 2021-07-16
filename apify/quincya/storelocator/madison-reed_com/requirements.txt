@@ -1,4 +1,2 @@
-lxml==4.3.3
-sgrequests
-beautifulsoup4==4.7.1
-sglogging
+sgrequests==0.1.12
+sgselenium==0.1.4

@@ -129,8 +129,6 @@ def fetch_data():
             else:
                 lat = "<MISSING>"
                 lng = "<MISSING>"
-            if street.find("Travel Plaza") != -1:
-                street = street.split("Travel Plaza")[1].strip()
             data.append(
                 [
                     "https://www.royrogersrestaurants.com/",
