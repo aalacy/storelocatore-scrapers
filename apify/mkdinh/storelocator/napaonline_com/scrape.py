@@ -15,7 +15,6 @@ from tenacity import retry, stop_after_attempt
 
 logger = SgLogSetup().get_logger("napaonline_com")
 
-addresses = []
 base_url = "https://www.napaonline.com/stores"
 
 local = threading.local()
