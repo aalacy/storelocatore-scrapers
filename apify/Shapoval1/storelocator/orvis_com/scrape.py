@@ -66,14 +66,14 @@ def fetch_data():
         longitude = j.get("longitude") or "<MISSING>"
         location_type = j.get("storeType") or "<MISSING>"
         hours_of_operation = j.get("storeHours") or "<MISSING>"
-        phone = "<MISSING>"
         if hours_of_operation != "<MISSING>":
+            hours_of_operation = html.fromstring(hours_of_operation)
             hours_of_operation = (
-                "".join(hours_of_operation)
+                "".join(hours_of_operation.xpath("//*//text()"))
                 .replace("\n", "")
-                .replace("<br/>", "")
                 .strip()
             )
+        phone = "<MISSING>"
         if (
             page_url
             != "https://www.orvis.com/stores?showMap=true&horizontalView=true&isForm=true"

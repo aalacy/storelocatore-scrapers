@@ -1,2 +1,3 @@
 --ignore CountryCodeFillRateChecker (not only US and CA in store locator)
---ignore LatLngDuplicationValidator (Confirmed scrape correctly)
+--ignore StreetAddressHasStateName (no state name in street address)
+--ignore StreetAddressHasNumber (Confirmed scrape correctly)
