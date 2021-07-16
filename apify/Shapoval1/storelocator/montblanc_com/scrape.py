@@ -66,27 +66,42 @@ def fetch_data():
                 location_name = "<MISSING>"
 
             location_type = "<MISSING>"
+            try:
+                phone = a.get("phone1") or "<MISSING>"
+            except:
+                phone = "<MISSING>"
+            if not phone:
+                phone = "<MISSING>"
 
-            phone = a.get("phone1") or "<MISSING>"
             if phone == "0" or phone == "-0":
                 phone = "<MISSING>"
             if phone.find("|") != -1:
                 phone = phone.replace("|", "").strip()
             if phone.find('"') != -1:
                 phone = phone.replace('"', "").strip()
-
-            street_address = a.get("line1") or "<MISSING>"
+            try:
+                street_address = a.get("line1") or "<MISSING>"
+            except:
+                street_address = "<MISSING>"
+            if not street_address:
+                street_address = "<MISSING>"
             if street_address.find("?") != -1:
                 street_address = "<MISSING>"
 
             if street_address == "0":
                 street_address = "<MISSING>"
-
-            state = a.get("state") or "<MISSING>"
+            try:
+                state = a.get("state") or "<MISSING>"
+            except:
+                state = "<MISSING>"
             if state == "0":
                 state = "<MISSING>"
-
-            postal = a.get("postCode") or "<MISSING>"
+            try:
+                postal = a.get("postCode") or "<MISSING>"
+            except:
+                postal = "<MISSING>"
+            if not postal:
+                postal = "<MISSING>"
             if postal == "0":
                 postal = "<MISSING>"
             if (
@@ -113,10 +128,14 @@ def fetch_data():
             if postal.find("54292 Trier") != -1 or postal.find("50737 Köln") != -1:
                 postal = postal.split()[0].strip()
             postal = postal.replace("*", "").replace("%", "").strip()
-
-            country_code = a.get("countryCode") or "<MISSING>"
-
-            city = a.get("city") or "<MISSING>"
+            try:
+                country_code = a.get("countryCode")
+            except:
+                country_code = "<MISSING>"
+            try:
+                city = a.get("city") or "<MISSING>"
+            except:
+                city = "<MISSING>"
             if city.find("?") != -1:
                 city = "<MISSING>"
             city = city.replace("Rio De Janeiro", "Rio de Janeiro")

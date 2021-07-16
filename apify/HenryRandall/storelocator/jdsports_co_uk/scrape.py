@@ -1,14 +1,49 @@
 import csv
 import re
-from sgselenium import SgSelenium
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from sgselenium.sgselenium import SgChrome
+from webdriver_manager.chrome import ChromeDriverManager
 from bs4 import BeautifulSoup
 
 
+def get_driver(url, class_name, driver=None):
+    if driver is not None:
+        driver.quit()
+
+    user_agent = (
+        "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0"
+    )
+    x = 0
+    while True:
+        x = x + 1
+        try:
+            driver = SgChrome(
+                executable_path=ChromeDriverManager().install(),
+                user_agent=user_agent,
+                is_headless=True,
+            ).driver()
+            driver.get(url)
+
+            WebDriverWait(driver, 20).until(
+                EC.presence_of_element_located((By.CLASS_NAME, class_name))
+            )
+            break
+        except Exception:
+            driver.quit()
+            if x == 10:
+                raise Exception(
+                    "Make sure this ran with a Proxy, will fail without one"
+                )
+            continue
+    return driver
+
+
 def fetch_data():
-    driver = SgSelenium().chrome()
     link = "https://www.jdsports.co.uk/store-locator/all-stores/"
-    driver.get(link)
-    soup = BeautifulSoup(driver.page_source, "lxml")
+    driver = get_driver(link, "storeName")
+    soup = BeautifulSoup(driver.page_source, "html.parser")
     locations = soup.find_all("li", {"data-e2e": "storeLocator-list-item"})
     base_url = "https://www.jdsports.co.uk"
     loclist = []
@@ -24,7 +59,7 @@ def fetch_data():
     for location in loclist:
         loc_url = location[1]
         driver.get(loc_url)
-        soup = BeautifulSoup(driver.page_source, "lxml")
+        soup = BeautifulSoup(driver.page_source, "html.parser")
         info = soup.find("div", {"class": "storeContentLeft"})
         address = info.find("div", {"id": "storeAddress"})
         address = address.find("p")
@@ -58,7 +93,7 @@ def fetch_data():
             "<MISSING>",
             "<MISSING>",
             zip_code,
-            "<MISSING>",
+            "UK",
             location[2],
             phone,
             "<MISSING>",

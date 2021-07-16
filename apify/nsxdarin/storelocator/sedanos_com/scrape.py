@@ -80,23 +80,25 @@ def fetch_data():
         if 'aria-label="Phone' in line:
             phone = line.split('aria-label="Phone')[1].split('"')[0].strip()
         if "day" in line or "24 hours" in line:
-            hours = line.split('">')[1].split("<")[0].strip().replace("\t", "")
-            yield [
-                website,
-                loc,
-                name,
-                add,
-                city,
-                state,
-                zc,
-                country,
-                store,
-                phone,
-                typ,
-                lat,
-                lng,
-                hours,
-            ]
+            if "datepicker" not in line:
+                hours = line.split('">')[1].split("<")[0].strip().replace("\t", "")
+                loc = "https://sedanos.com/stores/"
+                yield [
+                    website,
+                    loc,
+                    name,
+                    add,
+                    city,
+                    state,
+                    zc,
+                    country,
+                    store,
+                    phone,
+                    typ,
+                    lat,
+                    lng,
+                    hours,
+                ]
 
 
 def scrape():

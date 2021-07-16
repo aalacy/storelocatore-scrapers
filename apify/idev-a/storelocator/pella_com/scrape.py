@@ -26,7 +26,7 @@ def fetch_data():
     streets = []
     with SgRequests() as session:
         soup = bs(session.get(base_url, headers=_headers).text, "lxml")
-        links = soup.select("ul.directory--showroomsDirectory_CityList li a")
+        links = soup.select("ul.directory--showroomsDirectory_CityList  li a")
         logger.info(f"{len(links)} found")
         for link in links:
             page_url = locator_domain + link["href"]

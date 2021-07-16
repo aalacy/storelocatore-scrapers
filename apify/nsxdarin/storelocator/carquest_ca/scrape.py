@@ -41,11 +41,7 @@ def fetch_data():
     urls = ["https://www.carquest.com/stores/canada"]
     states = []
     cities = []
-    locs = [
-        "https://www.carquest.com/stores/on/brampton/15641",
-        "https://www.carquest.com/stores/qc/saint-%C3%A9tienne/15564",
-    ]
-    allstores = []
+    locs = []
     website = "carquest.ca"
     typ = "<MISSING>"
     country = "<MISSING>"
@@ -247,35 +243,33 @@ def fetch_data():
                     )
                 except:
                     hours = "Sun-Sat: Closed"
-        if store not in allstores:
-            allstores.append(store)
-            if state == "":
-                state = "PR"
-            name = name.replace("\\u0026#39;", "'")
-            hours = (
-                hours.replace("00", ":00")
-                .replace("30", ":30")
-                .replace("1:000AM", "10:00AM")
-                .replace("2:000PM", "20:00PM")
-            )
-            if store == "":
-                store = loc.rsplit("/", 1)[1]
-            yield [
-                website,
-                loc,
-                name,
-                add,
-                city,
-                state,
-                zc,
-                country,
-                store,
-                phone,
-                typ,
-                lat,
-                lng,
-                hours,
-            ]
+        if state == "":
+            state = "PR"
+        name = name.replace("\\u0026#39;", "'")
+        hours = (
+            hours.replace("00", ":00")
+            .replace("30", ":30")
+            .replace("1:000AM", "10:00AM")
+            .replace("2:000PM", "20:00PM")
+        )
+        if store == "":
+            store = loc.rsplit("/", 1)[1]
+        yield [
+            website,
+            loc,
+            name,
+            add,
+            city,
+            state,
+            zc,
+            country,
+            store,
+            phone,
+            typ,
+            lat,
+            lng,
+            hours,
+        ]
 
 
 def scrape():
