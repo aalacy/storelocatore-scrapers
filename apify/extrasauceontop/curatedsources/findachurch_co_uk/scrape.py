@@ -33,7 +33,9 @@ def get_data():
                     break
 
                 except Exception:
-                    session = SgRequests(retry_behavior=False, proxy_rotation_failure_threshold=3)
+                    session = SgRequests(
+                        retry_behavior=False, proxy_rotation_failure_threshold=3
+                    )
                     continue
 
             soup = bs(response, "html.parser")
@@ -86,7 +88,9 @@ def get_data():
             response = session.get(url, headers=headers, timeout=5).text
 
         except Exception:
-            session = SgRequests(retry_behavior=False, proxy_rotation_failure_threshold=3)
+            session = SgRequests(
+                retry_behavior=False, proxy_rotation_failure_threshold=3
+            )
 
         if (
             "awaiting verification" in response
@@ -119,7 +123,9 @@ def get_data():
             )
 
         except Exception:
-            session = SgRequests(retry_behavior=False, proxy_rotation_failure_threshold=3)
+            session = SgRequests(
+                retry_behavior=False, proxy_rotation_failure_threshold=3
+            )
             response = session.get(url, headers=headers).text
             if (
                 "awaiting verification" in response
