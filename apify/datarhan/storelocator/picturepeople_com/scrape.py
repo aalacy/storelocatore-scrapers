@@ -49,7 +49,7 @@ def fetch_data():
     }
 
     response = session.get(
-        "https://tpp.mystratus.com/20.21/(S(yvwjo2fmynyixy4hnhou1vwc))/OnlineBooking/Verify.aspx?ReferenceGUID=E3915F3B997D45ABA1E66D7F0385023F",
+        "https://tpp.mystratus.com/21.03/(S(kvubomul5hawr1vzpdwvngbd))/OnlineBooking/LocationSelection.aspx?loginoption=defaultnew&ReferenceGUID=77DCE75EA49948559C80E5F385FF6A77",
         headers=headers,
     )
     dom = etree.HTML(response.text)
@@ -131,6 +131,8 @@ def fetch_data():
         state = raw_address[1].split(", ")[-1].split()[0]
         zip_code = raw_address[1].split(", ")[-1].split()[-1]
         phone = raw_address[-1]
+        if zip_code in phone:
+            phone = "<MISSING>"
         country_code = "<MISSING>"
         store_number = "<MISSING>"
         location_type = "<MISSING>"

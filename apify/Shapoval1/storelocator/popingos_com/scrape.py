@@ -58,7 +58,10 @@ def fetch_data():
         postal = j.get("postal_code")
         country_code = j.get("country")
         city = j.get("city")
-        store_number = location_name.split("#")[1].strip()
+        try:
+            store_number = page_url.split("-")[-1].replace("/", "").strip()
+        except:
+            store_number = "<MISSING>"
         latitude = j.get("Latitude")
         longitude = j.get("Longitude")
         session = SgRequests()
