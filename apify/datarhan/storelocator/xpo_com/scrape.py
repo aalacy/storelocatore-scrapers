@@ -68,12 +68,12 @@ def fetch_data():
         if country_code not in ["CA", "US"]:
             continue
         country_code = country_code if country_code else "<MISSING>"
-        store_number = ""
-        store_number = store_number if store_number else "<MISSING>"
+        if len(zip_code) > 5:
+            country_code = "CA"
+        store_number = "<MISSING>"
         phone = poi["telephone"]
         phone = phone if phone else "<MISSING>"
-        location_type = ""
-        location_type = location_type if location_type else "<MISSING>"
+        location_type = "<MISSING>"
         latitude = poi["latitude"]
         latitude = latitude if latitude else "<MISSING>"
         longitude = poi["longitude"]
