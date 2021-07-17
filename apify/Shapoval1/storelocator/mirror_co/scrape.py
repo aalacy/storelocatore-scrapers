@@ -46,7 +46,7 @@ def fetch_data():
     block = block.split('"more_locations":')[1].split(',"locations_filter"')[0]
 
     js = json.loads(block)
-    s = set()
+
     for j in js:
 
         ad = "".join(j.get("location")).split("\r\n")
@@ -58,18 +58,30 @@ def fetch_data():
             .replace("Georgetown", "")
             .replace(",", "")
             .strip()
+            or "<MISSING>"
         )
-        adr = "".join(ad[-1]).replace("Minneapolis, MN, US", "Minneapolis, MN")
+
+        adr = (
+            "".join(ad[-1])
+            .replace("Minneapolis, MN, US", "Minneapolis, MN")
+            .replace("United States", "")
+            .strip()
+        )
         city = adr.split(",")[0] or "<MISSING>"
         if city.find("900B") != -1:
             city = city.replace("900B", "").strip()
             street_address = street_address + " " + "900B"
         postal = adr.split(",")[1].split()[-1].strip() or "<MISSING>"
         state = adr.split(",")[1].split()[0].strip() or "<MISSING>"
-        country_code = j.get("country")
+        if "323 Oakway Rd" in "".join(ad) or "17 Hillsdale Mall" in "".join(ad):
+            street_address = "".join(ad[0]).split(",")[0].strip()
+            city = "".join(ad[0]).split(",")[1].strip()
+            state = "".join(ad[0]).split(",")[2].split()[0].strip()
+            postal = "".join(ad[0]).split(",")[2].split()[1].strip()
+        country_code = j.get("country") or "US"
         store_number = "<MISSING>"
         location_name = j.get("title")
-        phone = j.get("phone")
+        phone = j.get("phone") or "<MISSING>"
         latitude = "<MISSING>"
         longitude = "<MISSING>"
         location_type = "<MISSING>"
@@ -80,11 +92,8 @@ def fetch_data():
             hours_of_operation = hours_of_operation.split("ONLY")[1].strip()
         if hours_of_operation.find("See") != -1:
             hours_of_operation = "<MISSING>"
-
-        line = street_address
-        if line in s and line != "7014 East Camelback Rd":
-            continue
-        s.add(line)
+        if hours_of_operation.find("COMING") != -1:
+            hours_of_operation = "Coming Soon"
 
         row = [
             locator_domain,

@@ -54,7 +54,7 @@ def fetch_data():
 
         location_name = "".join(tree.xpath("//h1//text()"))
         location_type = "<MISSING>"
-        street_address = "".join(tree.xpath("//h1/following-sibling::p/text()[1]"))
+        street_address = "".join(tree.xpath("//h1/following-sibling::p[1]/text()[1]"))
         ad = (
             "".join(tree.xpath("//h1/following-sibling::p/text()[2]"))
             .replace("\n", "")
@@ -72,18 +72,18 @@ def fetch_data():
         )
 
         hours_of_operation = (
-            "".join(
+            " ".join(
                 tree.xpath(
-                    '//h1/following-sibling::p/a[contains(@href, "tel")]/following-sibling::*/text()'
+                    '//p[./a[contains(@href, "tel")]]/following-sibling::p[1]//text()'
                 )
             )
-            + " "
-            + "".join(
-                tree.xpath(
-                    '//h1/following-sibling::p/a[contains(@href, "tel")]/following-sibling::text()'
-                )
-            )
+            .replace("\n", "")
+            .strip()
+            or "<MISSING>"
         )
+        if hours_of_operation == "<MISSING>":
+            hours_of_operation = tree.xpath("//h1/following-sibling::p[1]//text()")
+            hours_of_operation = " ".join(hours_of_operation[-2:])
 
         cms = "".join(tree.xpath('//strong[text()="REOPENING SOON"]/text()'))
         if cms:

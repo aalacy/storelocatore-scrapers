@@ -59,6 +59,27 @@ def fetch_data():
         except:
             postal = "<MISSING>"
         country_code = j.get("country_iso_code") or "<MISSING>"
+        if country_code == "US" and " " in postal or "PO" in postal:
+            postal = postal.split()[-1]
+        if "," in postal:
+            pp = postal.split()
+            for p in pp:
+                if p[0].isdigit():
+                    postal = p
+                    break
+
+        postal = postal.replace("Hubei", "<MISSING>").replace(" Lisboa", "")
+        if postal == "<MISSING>" and city[0].isdigit():
+            postal = city.split()[0]
+            city = city.replace(city, "").strip()
+
+        if city.endswith(","):
+            city = city[:-1]
+
+        if "2690-379" in street_address:
+            street_address = street_address.replace("2690-379 ", "")
+            postal = "2690-379"
+
         try:
             store_number = j["path"][0]["pid"]
         except:

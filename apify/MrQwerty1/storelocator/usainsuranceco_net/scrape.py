@@ -1,8 +1,26 @@
+import time
 import csv
 import usaddress
-
 from lxml import html
-from sgrequests import SgRequests
+from webdriver_manager.chrome import ChromeDriverManager
+from sgselenium import SgChrome
+from sglogging import sglog
+import ssl
+
+locator_domain = "usainsuranceco.net"
+log = sglog.SgLogSetup().get_logger(logger_name=locator_domain)
+
+ssl._create_default_https_context = ssl._create_unverified_context
+
+user_agent = (
+    "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0"
+)
+
+driver = SgChrome(
+    is_headless=True,
+    user_agent=user_agent,
+    executable_path=ChromeDriverManager().install(),
+).driver()
 
 
 def write_output(data):
@@ -32,17 +50,6 @@ def write_output(data):
 
         for row in data:
             writer.writerow(row)
-
-
-def get_texts():
-    session = SgRequests()
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0"
-    }
-    r = session.get("https://usainsuranceco.net/insurance-locations/", headers=headers)
-    tree = html.fromstring(r.text)
-
-    return tree.xpath("//div[@class='entry-content']/p/iframe/@src")
 
 
 def get_address(line):
@@ -95,20 +102,26 @@ def get_coords_from_embed(text):
     return latitude, longitude
 
 
+def get_texts():
+    data_url = "https://usainsuranceco.net/insurance-locations/"
+    log.info(f"Crawling Locations Page: {data_url}")
+    driver.get(data_url)
+    time.sleep(30)
+    tree = html.fromstring(driver.page_source, "lxml")
+    driver.quit()
+    return tree.xpath("//div[@class='entry-content']/p/iframe/@src")
+
+
 def fetch_data():
     out = []
-    locator_domain = "https://usainsuranceco.net/"
     page_url = "https://usainsuranceco.net/"
-
-    session = SgRequests()
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0"
-    }
-    r = session.get(page_url, headers=headers)
-    tree = html.fromstring(r.text)
+    log.info(f"Driver initiationed and now crawling {page_url}")
+    driver.get(page_url)
+    time.sleep(30)
+    tree = html.fromstring(driver.page_source, "lxml")
     divs = tree.xpath("//div[@class='banner_box' and ./a]")
     texts = get_texts()
-
+    log.info(f"Total Locations: {len(divs)}")
     for d in divs:
         text = texts.pop(0)
         line = (
@@ -152,8 +165,10 @@ def fetch_data():
 
 
 def scrape():
+    log.info("Started Crawling")
     data = fetch_data()
     write_output(data)
+    log.info("!!Finished Data Grabbing!!")
 
 
 if __name__ == "__main__":
