@@ -815,7 +815,10 @@ def scrape():
         locator_domain=sp.MappingField(
             mapping=["locator_domain"],
         ),
-        page_url=sp.MappingField(mapping=["page_url"], is_required=False),
+        page_url=sp.MappingField(
+            mapping=["page_url"],
+            is_required=False,
+        ),
         location_name=sp.MappingField(
             mapping=["location_name"],
             is_required=False,
@@ -836,6 +839,7 @@ def scrape():
             multi_mapping_concat_with=", ",
             value_transform=fix_comma,
             is_required=False,
+            part_of_record_identity=True,
         ),
         city=sp.MappingField(mapping=["city"], is_required=False),
         state=sp.MappingField(mapping=["state"], is_required=False),
@@ -844,7 +848,6 @@ def scrape():
         phone=sp.MappingField(
             mapping=["phone"],
             is_required=False,
-            part_of_record_identity=True,
         ),
         store_number=sp.MappingField(
             mapping=["store_number"],

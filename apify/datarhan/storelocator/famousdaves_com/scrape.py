@@ -91,12 +91,17 @@ def fetch_data():
                 .split()[-1]
             )
         zip_code = zip_code if zip_code else "<MISSING>"
+        if len(zip_code) == 2:
+            zip_code = "<MISSING>"
         country_code = addr.country
         country_code = country_code if country_code else "<MISSING>"
         store_number = "<MISSING>"
         phone = poi_html.xpath('.//span[@class="location-store-phone-number"]/text()')
         phone = phone[0] if phone else "<MISSING>"
         location_type = "<MISSING>"
+        if len(state) > 2:
+            state = "<MISSING>"
+            zip_code = "<MISSING>"
 
         loc_response = session.get(store_url)
         loc_dom = etree.HTML(loc_response.text)
@@ -131,7 +136,9 @@ def fetch_data():
             .split("To Go")[0]
             .split("Temporarily closed")[0]
             .split("Dining Room: ")[-1]
-        )
+            .split("Hours:")[-1]
+            .split("Dine-In:")[-1]
+        ).strip()
 
         item = [
             DOMAIN,
