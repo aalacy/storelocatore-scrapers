@@ -52,7 +52,8 @@ def fetch_data():
                     if len(addr) > 2:
                         del addr[0]
                     break
-
+            if not addr:
+                addr = block
             try:
                 coord = _.a["href"].split("/@")[1].split(",17z/data")[0].split(",")
             except:
@@ -63,13 +64,13 @@ def fetch_data():
                 street_address=addr[0],
                 city=addr[-1].split(",")[0].strip(),
                 state=addr[-1].split(",")[1].strip().split(" ")[0].strip(),
-                zip_postal=addr[-1].split(",")[1].strip().split(" ")[-1].strip(),
+                zip_postal=addr[-1].split(",")[1].strip().split(" ")[-1].strip().replace('\u200b',''),
                 phone=phone,
                 latitude=coord[0],
                 longitude=coord[1],
                 country_code="US",
                 locator_domain=locator_domain,
-                hours_of_operation=_valid("; ".join(hours)),
+                hours_of_operation=_valid("; ".join(hours)).replace('\u200b',''),
             )
 
 
