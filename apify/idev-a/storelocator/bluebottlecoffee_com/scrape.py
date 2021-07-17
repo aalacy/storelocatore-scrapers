@@ -46,6 +46,8 @@ def fetch_data():
                 street_address = street_address.replace(
                     "Entrance is on 52nd St", ""
                 ).replace("NW corner of Tower 4", "")
+                if street_address.replace("-", "").strip().isdigit():
+                    street_address = " ".join(full).split(",")[0]
                 page_url = dt["url"]
                 logger.info(page_url)
                 soup = bs(session.get(page_url).text, "lxml")
