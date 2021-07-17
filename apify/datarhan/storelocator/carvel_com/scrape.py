@@ -1,6 +1,7 @@
 import csv
 import urllib.parse
 from lxml import etree
+from datetime import datetime, timedelta
 
 from sgrequests import SgRequests
 
@@ -95,13 +96,18 @@ def fetch_data():
             longitude = store_dom.xpath("//a/@data-long")
             longitude = longitude[0] if longitude else "<MISSING>"
             days_list = store_dom.xpath('//div[@class="hours-wrapper"]//dt/text()')
-            days_list = [elem.strip() for elem in days_list]
+            days_list = [elem.strip() for elem in days_list if elem.strip()]
             hours_list = store_dom.xpath('//div[@class="hours-wrapper"]//dd/text()')
-            hours_list = [elem.strip() for elem in hours_list]
+            hours_list = [elem.strip() for elem in hours_list if elem.strip()]
             hours_of_operation = list(
                 map(lambda d, h: d + " " + h, days_list, hours_list)
             )
-            hours_of_operation = ", ".join(hours_of_operation)
+            d = datetime.today() - timedelta(days=1)
+            hours_of_operation = (
+                ", ".join(hours_of_operation)
+                .replace("Today", d.strftime("%A"))
+                .replace(" BOGO", "")
+            )
             hours_of_operation = (
                 hours_of_operation if hours_of_operation.strip() else "<MISSING>"
             )
