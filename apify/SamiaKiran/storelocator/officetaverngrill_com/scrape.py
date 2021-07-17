@@ -34,27 +34,16 @@ def fetch_data():
             temp[4].get_text(separator="|", strip=True).replace("|", " ")
         )
         phone = temp[2].find("a").text
-        try:
-            address = (
-                temp[3]
-                .find("a")["href"]
-                .split("place/")[1]
-                .split(",17z")[0]
-                .split("/@")
-            )
-            latitude, longitude = address[-1].split(",")
-            address = address[0].replace("+", " ")
-        except:
-            address = (
-                temp[3]
-                .find("a")["href"]
-                .split("q=")[1]
-                .split("&rlz")[0]
-                .replace("+", " ")
-            )
-            latitude = MISSING
-            longitude = MISSING
-        address = address.replace(",", " ").replace("%2C", "")
+        address_url = temp[6].find("a")["data-href"]
+        r = session.get(address_url, headers=headers)
+        soup = BeautifulSoup(r.text, "html.parser")
+        address = (
+            soup.find("div", {"class": "restaurant-info"})
+            .get_text(separator="|", strip=True)
+            .split("|")[1:-1]
+        )
+        address = " ".join(x for x in address)
+        address = address.replace(",", " ")
         address = usaddress.parse(address)
         i = 0
         street_address = ""
@@ -81,7 +70,18 @@ def fetch_data():
             if temp[1].find("ZipCode") != -1:
                 zip_postal = zip_postal + " " + temp[0]
             i += 1
-
+        try:
+            coords = (
+                temp[3]
+                .find("a")["href"]
+                .split("place/")[1]
+                .split(",17z")[0]
+                .split("/@")
+            )
+            latitude, longitude = coords[-1].split(",")
+        except:
+            latitude = MISSING
+            longitude = MISSING
         yield SgRecord(
             locator_domain=DOMAIN,
             page_url=url,

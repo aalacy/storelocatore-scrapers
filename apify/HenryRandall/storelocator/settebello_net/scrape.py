@@ -19,7 +19,7 @@ def fetch_data():
     for location in locations:
         try:
             location_name = location.find("h3").text.strip()
-            page_url = locator_domain + location.find("a").get("href")
+            page_url = locator_domain[:-1] + location.find("a").get("href")
             text = location.find_all("p")
             street_address = text[0].text.strip()
             address2 = text[1].text.strip()
