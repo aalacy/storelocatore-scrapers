@@ -1,4 +1,5 @@
 import csv
+
 from lxml import html
 from sgrequests import SgRequests
 
@@ -39,7 +40,13 @@ def fetch_data():
     api_url = "https://www.zippys.com/wp-admin/admin-ajax.php?action=store_search&lat=21.30694&lng=-157.85833&max_results=10&search_radius=50&autoload=1"
     session = SgRequests()
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:89.0) Gecko/20100101 Firefox/89.0",
+        "Accept": "*/*",
+        "Accept-Language": "ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3",
+        "X-Requested-With": "XMLHttpRequest",
+        "Connection": "keep-alive",
+        "Referer": "https://www.zippys.com/locations/",
+        "TE": "Trailers",
     }
     r = session.get(api_url, headers=headers)
     js = r.json()
@@ -47,31 +54,37 @@ def fetch_data():
     for j in js:
 
         page_url = j.get("permalink")
-        location_name = "".join(j.get("store")).replace("&#8217;", "`")
-        location_type = "<MISSING>"
+        location_name = "".join(j.get("store")).replace("&#8217;", "`").strip()
+        location_type = "Restaurant"
         street_address = f"{j.get('address')} {j.get('address2')}".strip()
-        phone = j.get("phone")
-        state = "".join(j.get("state")).replace("Hilo", "HI").strip()
+        state = j.get("state")
         postal = j.get("zip")
         country_code = j.get("country")
         city = j.get("city")
         store_number = "<MISSING>"
         latitude = j.get("lat")
         longitude = j.get("lng")
-        hours_of_operation = "<MISSING>"
-        hours = j.get("hours")
-        if hours is not None:
-            hours = html.fromstring(hours)
-            hourses = hours.xpath("//table/tr")
-            tmp = []
-            for h in hourses:
-                day = "".join(h.xpath(".//td[1]/text()"))
-                time = "".join(h.xpath(".//td[2]/time[2]/text()"))
-                line = f"{day} - {time}"
-                tmp.append(line)
-            hours_of_operation = ";".join(tmp)
-        if hours is None:
-            hours_of_operation = "<MISSING>"
+        phone = j.get("phone")
+        _tmp = []
+        hours_of_operation = j.get("hours") or "<MISSING>"
+        if hours_of_operation != "<MISSING>":
+            h = html.fromstring(hours_of_operation)
+            days = h.xpath("//td/text()")
+            times = h.xpath("//td/time[2]/text()")
+            for d, t in zip(days, times):
+                _tmp.append(f"{d.strip()}: {t.strip()}")
+            hours_of_operation = ";".join(_tmp)
+        if (
+            page_url == "https://www.zippys.com/locations/zippys-pearlridge/"
+            and hours_of_operation == "<MISSING>"
+        ):
+            hours_of_operation = "Closed"
+        if (
+            page_url == "https://www.zippys.com/locations/zippys-waimalu/"
+            and hours_of_operation == "<MISSING>"
+        ):
+            hours_of_operation = "Temporarily closed"
+
         row = [
             locator_domain,
             page_url,

@@ -44,7 +44,7 @@ def write_output(data):
             comp_list = [
                 row[2].strip(),
                 row[3].strip(),
-                row[4].strip(),
+                row[4],
                 row[5].strip(),
                 row[6].strip(),
                 row[8].strip(),
@@ -61,7 +61,7 @@ def fetch_data():
     search_url = "https://www.lunardis.com/locations"
     stores_req = session.get(search_url, headers=headers)
     soup = BeautifulSoup(stores_req.text, "html.parser")
-    divlist = soup.findAll("div", {"class": "bDfMI"})
+    divlist = soup.findAll("div", {"class": "_31Ne5"})
     for div in divlist:
         details = div.text
         details = details.split("\n")
@@ -79,6 +79,7 @@ def fetch_data():
         hoo = "Mon - Sat: " + hoo
         phone = phone.lstrip("Store Phone:").strip()
         title = div.findAll("div", {"class": "_2bafp"})[2]
+        city = title
         for t in title:
             allspan = t.findAll("span")
             title = allspan[3].text
@@ -98,7 +99,7 @@ def fetch_data():
                     "https://www.lunardis.com/locations",
                     title,
                     street,
-                    "<MISSING>",
+                    city,
                     "<MISSING>",
                     "<MISSING>",
                     "US",

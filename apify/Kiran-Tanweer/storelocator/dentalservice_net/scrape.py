@@ -96,6 +96,22 @@ def fetch_data():
                     locations.pop(-1)
                 elif url.find("/waxahachie") != -1:
                     locations.pop(-1)
+                elif url.find("/paducah") != -1:
+                    locations.pop(-1)
+                elif url.find("slidell-dentures") != -1:
+                    locations.pop(-1)
+                elif url.find("norman-ok-dentures") != -1:
+                    locations.pop(-1)
+                elif url.find("arlington") != -1:
+                    locations.pop(-1)
+                elif url.find("clarksville-dentures") != -1:
+                    locations.pop(-1)
+                elif url.find("smyrna-dentures") != -1:
+                    locations.pop(-1)
+                elif url.find("spring-hill") != -1:
+                    locations.pop(-1)
+                elif url.find("katy") != -1:
+                    locations.pop(-1)
     for loc in locations:
         stores_req = session.get(loc, headers=headers)
         soup = BeautifulSoup(stores_req.text, "html.parser")

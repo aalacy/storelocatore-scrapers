@@ -1,9 +1,25 @@
 import csv
 from lxml import etree
+from time import sleep
 
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 from sgrequests import SgRequests
-from sgselenium import SgFirefox
+from sgselenium import SgChrome
+from webdriver_manager.chrome import ChromeDriverManager
+from sglogging import SgLogSetup
+import ssl
+
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
+
+
+logger = SgLogSetup().get_logger("minex_com")
 
 
 def write_output(data):
@@ -53,25 +69,31 @@ def fetch_data():
         max_search_results=None,
     )
 
-    with SgFirefox() as driver:
+    with SgChrome(
+        executable_path=ChromeDriverManager().install(), is_headless=True
+    ) as driver:
         driver.get(start_url)
-        driver.find_element_by_xpath('//button[@title="International"]').click()
+        sleep(5)
+        driver.find_element_by_xpath(
+            '//span[contains(text(), "International")]'
+        ).click()
+        sleep(5)
+        logger.info("International Clicked")
         driver.find_element_by_xpath(
             '//span[contains(text(), "United States")]'
         ).click()
+        logger.info("United States Clicked")
         for code in all_codes:
-            try:
-                driver.find_element_by_xpath('//input[@name="location"]').send_keys(
-                    code
-                )
-                driver.find_element_by_xpath(
-                    '//button[contains(text(), "Search")]'
-                ).click()
-                driver.find_element_by_xpath('//input[@name="location"]').clear()
-                code_dom = etree.HTML(driver.page_source)
-                all_locations += code_dom.xpath('//div[@class="find-result "]')
-            except:
-                driver.save_screenshot("exception.png")
+            driver.find_element_by_xpath('//input[@name="location"]').send_keys(code)
+            sleep(2)
+            logger.info("zipcode - send_keys executed")
+            driver.find_element_by_xpath('//button[contains(text(), "Search")]').click()
+            sleep(20)
+            logger.info(" Search Button Clicked")
+            driver.find_element_by_xpath('//input[@name="location"]').clear()
+
+            code_dom = etree.HTML(driver.page_source)
+            all_locations += code_dom.xpath('//div[@class="find-result "]')
 
     for loc_html in list(set(all_locations)):
         store_url = loc_html.xpath('.//a[contains(text(), "Visit Website")]/@href')
@@ -95,6 +117,8 @@ def fetch_data():
 
         location_name = loc_html.xpath(".//h4/text()")
         location_name = location_name[0] if location_name else "<MISSING"
+        logger.info(f"Location Name: {location_name}")
+
         address_raw = loc_html.xpath(".//address/text()")
         address_raw = [elem.strip() for elem in address_raw if elem.strip()]
         if len(address_raw[0]) == 1:
@@ -109,7 +133,9 @@ def fetch_data():
             state = address_raw[-1].split(",")[0].split()[-1:]
             state = state[0] if state else "<MISSING>"
             zip_code = address_raw[-1].split(",")[-1].strip()
-        country_code = "<MISSING>"
+        country_code = "USA"
+        if len(zip_code.split()) == 2:
+            country_code = "CA"
         store_number = "<MISSING>"
         phone = loc_html.xpath(
             './/h5[contains(text(), "Contact:")]/following-sibling::p/text()'
@@ -134,6 +160,7 @@ def fetch_data():
 
         if "coming soon" in location_name.lower() or street_address == "<MISSING>":
             continue
+        logger.info(f"Hours of Operation: {hours_of_operation}")
 
         item = [
             DOMAIN,
@@ -160,7 +187,9 @@ def fetch_data():
 
 
 def scrape():
+    logger.info("Scraping started! ")
     data = fetch_data()
+    logger.info(f"Number of items scraped and processed: {len(data)}")
     write_output(data)
 
 
