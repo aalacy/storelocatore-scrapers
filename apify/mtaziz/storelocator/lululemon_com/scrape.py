@@ -322,7 +322,7 @@ def scrape():
     count = 0
     with SgWriter() as writer:
         results_us_ca_data = list(fetch_us_ca_data())
-        results_global_data = fetch_global_data()
+        results_global_data = list(fetch_global_data())
         results_us_ca_data.extend(results_global_data)
         for rec in results_us_ca_data:
             writer.write_row(rec)
