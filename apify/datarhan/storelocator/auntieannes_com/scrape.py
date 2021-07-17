@@ -41,7 +41,7 @@ def write_output(data):
 
 def fetch_data():
     # Your scraper here
-    session = SgRequests().requests_retry_session(retries=10, backoff_factor=0.5)
+    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.5)
 
     items = []
     scraped_items = []
@@ -63,11 +63,10 @@ def fetch_data():
     for city_url in all_cities:
         logger.info(f"scraping city: {city_url}")
         full_city_url = urllib.parse.urljoin(start_url, city_url)
-        try:
+        city_code = ""
+        while city_code != 200:
             city_response = session.get(full_city_url, headers=user_agent)
-        except Exception as e:
-            logger.info(f"!!! Warning, {full_city_url} passed with eception: {e}")
-            continue
+            city_code = city_response.status_code
         city_dom = etree.HTML(city_response.text)
 
         all_poi_data = city_dom.xpath('//div[@class="city-list"]/ul/li')

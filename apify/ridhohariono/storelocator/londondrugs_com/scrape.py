@@ -105,10 +105,9 @@ def fetch_store_urls():
 
 def get_page_url(location_name, urls):
     for row in urls:
-        for url, name in row.items():
-            if name == location_name:
-                return url
-    return LOCATION_URL
+        if row["name"] == location_name:
+            return row["url"]
+    return "https://www.londondrugs.com/store-locations/?context=storeLocator"
 
 
 def fetch_data():

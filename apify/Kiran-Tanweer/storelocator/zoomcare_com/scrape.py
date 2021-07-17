@@ -1,7 +1,5 @@
-from bs4 import BeautifulSoup
 import csv
 import time
-from sgscrape import sgpostal as parser
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
 
@@ -45,9 +43,9 @@ def write_output(data):
             comp_list = [
                 row[2].strip(),
                 row[3].strip(),
-                row[4].strip(),
+                row[4],
                 row[5].strip(),
-                row[6].strip(),
+                row[6],
                 row[8].strip(),
                 row[10].strip(),
             ]
@@ -59,89 +57,43 @@ def write_output(data):
 
 def fetch_data():
     data = []
-    url = "https://www.zoomcare.com/schedule"
-    stores_req = session.get(url, headers=headers)
-    soup = BeautifulSoup(stores_req.text, "html.parser")
-    loc_link = soup.findAll("a", {"class": "modal__location-link w-inline-block"})
-    for loc in loc_link:
-        link = "https://www.zoomcare.com" + loc["href"]
-        req = session.get(link, headers=headers)
-        bs = BeautifulSoup(req.text, "html.parser")
-        info = bs.find("div", {"class": "location-info__card__content__about__reviews"})
-        address = info.find("p").text.strip()
-        if address != "":
-            title = (
-                bs.find("div", {"class": "location-info__card__header"}).find("h3").text
-            )
-            maps = bs.find("div", {"class": "location-info__card__content__map"}).find(
-                "iframe"
-            )
-            if maps is not None:
-                maps = str(maps)
-                if maps.find("frameborder") != -1:
-                    maps = maps.split("center%3D")[1].split("%26key")[0]
-                    lat, lng = maps.split("%252C")
-                else:
-                    maps = maps.split("!2d")[1].split("!2m")[0]
-                    lng, lat = maps.split("!3d")
-            else:
-                lat = "<MISSING>"
-                lng = "<MISSING>"
-            hours = info.find("h5").text.strip()
-            hours = hours.replace(" |", ",")
-            address = address.strip()
-            parsed = parser.parse_address_usa(address)
-            street1 = (
-                parsed.street_address_1 if parsed.street_address_1 else "<MISSING>"
-            )
-            street = (
-                (street1 + ", " + parsed.street_address_2)
-                if parsed.street_address_2
-                else street1
-            )
-            city = parsed.city if parsed.city else "<MISSING>"
-            state = parsed.state if parsed.state else "<MISSING>"
-            pcode = parsed.postcode if parsed.postcode else "<MISSING>"
-
+    url = "https://api-prod.zoomcare.com/v1/schedule/clinics"
+    stores_req = session.get(url, headers=headers).json()
+    for loc in stores_req:
+        street = loc["address"]["line1"]
+        street2 = loc["address"]["line2"]
+        if street2 is not None:
+            street = street + " " + street2
+        else:
             street = street.strip()
+        city = loc["address"]["city"]
+        state = loc["address"]["state"]
+        pcode = loc["address"]["postalCode"]
+        storeid = loc["clinicId"]
+        title = loc["name"]
+        lat = loc["address"]["latitude"]
+        lng = loc["address"]["longitude"]
+        hours = loc["clinicHoursText"]
+        hours = hours.replace("| ", ",")
 
-            if city.find("null") != -1:
-                city = city.lstrip("null").strip()
-
-            if link == "https://www.zoomcare.com/clinic/zoomcare-downtown-portland":
-                street = "900 SW 5th Ave (enter on 4th) null"
-                city = "Portland"
-                state = "OR"
-
-            if street.find("null") != -1:
-                street = street.replace("null", "")
-
-            if link == "https://www.zoomcare.com/clinic/zoomcare-bellevue":
-                street = "10425 NE 8th St #4 Lincoln Square"
-                city = "Bellevue"
-
-            street = street.strip()
-            city = city.strip()
-            state = state.strip()
-
-            data.append(
-                [
-                    "https://www.zoomcare.com/",
-                    link,
-                    title,
-                    street,
-                    city,
-                    state,
-                    pcode,
-                    "US",
-                    "<MISSING>",
-                    "<MISSING>",
-                    "<MISSING>",
-                    lat,
-                    lng,
-                    hours,
-                ]
-            )
+        data.append(
+            [
+                "https://www.zoomcare.com/",
+                "https://www.zoomcare.com/locations",
+                title,
+                street,
+                city,
+                state,
+                pcode,
+                "US",
+                storeid,
+                "<MISSING>",
+                "<MISSING>",
+                lat,
+                lng,
+                hours,
+            ]
+        )
     return data
 
 

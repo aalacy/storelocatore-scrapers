@@ -26,7 +26,7 @@ def _street(addr):
 def fetch_data():
     locator_domain = "https://spiritofmath.com/"
     base_url = "https://spiritofmath.com/#locations"
-    with SgChrome(executable_path=r"/mnt/g/work/mia/chromedriver.exe") as driver:
+    with SgChrome() as driver:
         driver.set_window_size(930, 660)
         driver.get(base_url)
         _close(driver)

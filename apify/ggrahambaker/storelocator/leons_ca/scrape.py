@@ -1,69 +1,120 @@
+import re
 import csv
-import os
-from sgselenium import SgSelenium
-import json
-from bs4 import BeautifulSoup
+import demjson
+from lxml import etree
+
+from sgrequests import SgRequests
+
 
 def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+    with open("data.csv", mode="w", encoding="utf-8") as output_file:
+        writer = csv.writer(
+            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+        )
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
+        writer.writerow(
+            [
+                "locator_domain",
+                "page_url",
+                "location_name",
+                "street_address",
+                "city",
+                "state",
+                "zip",
+                "country_code",
+                "store_number",
+                "phone",
+                "location_type",
+                "latitude",
+                "longitude",
+                "hours_of_operation",
+            ]
+        )
         # Body
         for row in data:
             writer.writerow(row)
 
+
 def fetch_data():
-    locator_domain = 'https://leons.ca'
-    ext = '/apps/store-locator'
+    # Your scraper here
+    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
 
-    driver = SgSelenium().chrome()
-    driver.get(locator_domain + ext)
+    items = []
 
-    alert_obj = driver.switch_to.alert
-    alert_obj.accept()
+    start_url = "https://www.leons.ca/apps/store-locator"
+    domain = re.findall(r"://(.+?)/", start_url)[0].replace("www.", "")
+    hdr = {
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
+    }
+    response = session.get(start_url, headers=hdr)
+    all_locations = re.findall(r"Coords.push\((.+?)\);", response.text)
 
-    element = driver.find_element_by_css_selector('a.ltkmodal-close')
-    driver.execute_script("arguments[0].click();", element)
+    for poi in all_locations:
+        try:
+            poi = demjson.decode(poi)
+        except:
+            continue
+        poi_html = (
+            poi["address"]
+            .replace("&lt;", "<")
+            .replace("&quot;", '"')
+            .replace("&gt;", ">")
+            .replace("&#039;", '"')
+        )
+        poi_html = etree.HTML(poi_html)
 
-    all_store_data = []
-    coords = driver.execute_script('return markersCoords')
+        store_url = start_url
+        location_name = poi_html.xpath('//span[@class="name"]/text()')
+        location_name = location_name[0].strip() if location_name else "<MISSING>"
+        street_address = poi_html.xpath('//span[@class="address"]/text()')
+        street_address = street_address[0].strip() if street_address else "<MISSING>"
+        city = poi_html.xpath('//span[@class="city"]/text()')
+        city = city[0].strip() if city else "<MISSING>"
+        state = poi_html.xpath('//span[@class="prov_state"]/text()')
+        state = state[0].strip() if state else "<MISSING>"
+        zip_code = poi_html.xpath('//span[@class="postal_zip"]/text()')
+        zip_code = zip_code[0] if zip_code else "<MISSING>"
+        country_code = poi_html.xpath('//span[@class="country"]/text()')
+        country_code = country_code[0].strip() if country_code else "<MISSING>"
+        store_number = poi["id"]
+        phone = poi_html.xpath('//span[@class="phone"]/text()')
+        phone = phone[0].strip() if phone else "<MISSING>"
+        location_type = "<MISSING>"
+        latitude = poi["lat"]
+        longitude = poi["lng"]
+        hoo = poi_html.xpath('//span[@class="hours"]/text()')
+        if "Temporarily Closed" in hoo[0]:
+            location_type = "Temporarily Closed"
+        hoo = [e.strip() for e in hoo if e.strip()]
+        hours_of_operation = " ".join(hoo).split("Hours:")[-1] if hoo else "<MISSING>"
 
-    for loc in coords:
-        html_cont = loc['address'].replace('&lt;', '<').replace('&quot;', '"').replace('&gt;', '>').replace('&#039;',
-                                                                                                            '"')
-        soup = BeautifulSoup(html_cont, 'html.parser')
+        item = [
+            domain,
+            store_url,
+            location_name,
+            street_address,
+            city,
+            state,
+            zip_code,
+            country_code,
+            store_number,
+            phone,
+            location_type,
+            latitude,
+            longitude,
+            hours_of_operation,
+        ]
 
-        location_name = soup.find('span', {'class': 'name'}).text.strip()
-        street_address = soup.find('span', {'class': 'address'}).text.strip()
-        city = soup.find('span', {'class': 'city'}).text.strip()
-        state = soup.find('span', {'class': 'prov_state'}).text.strip()
-        zip_code = soup.find('span', {'class': 'postal_zip'}).text.strip()
-        if len(zip_code.split(' ')) == 1:
-            zip_code = '<MISSING>'
+        items.append(item)
 
-        country_code = 'CA'
-        hours = soup.find('span', {'class': 'hours'}).text.replace('PM', 'PM ')
-        hours = ' '.join(hours.split())
-        phone_number = soup.find('span', {'class': 'phone'}).text.strip()
+    return items
 
-        lat = loc['lat']
-        longit = loc['lng']
-
-        location_type = '<MISSING>'
-        page_url = '<MISSING>'
-
-        store_number = '<MISSING>'
-        store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
-                      store_number, phone_number, location_type, lat, longit, hours, page_url]
-        all_store_data.append(store_data)
-
-    driver.quit()
-    return all_store_data
 
 def scrape():
     data = fetch_data()
     write_output(data)
 
-scrape()
+
+if __name__ == "__main__":
+    scrape()

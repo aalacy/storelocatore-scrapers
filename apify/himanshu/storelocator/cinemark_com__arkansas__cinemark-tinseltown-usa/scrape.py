@@ -1,3 +1,4 @@
+import re
 import csv
 from lxml import etree
 
@@ -70,9 +71,10 @@ def fetch_data():
         state = state if state else "<MISSING>"
         zip_code = addr.postcode
         zip_code = zip_code if zip_code else "<MISSING>"
-        country_code = addr.country
-        country_code = country_code if country_code else "<MISSING>"
-        store_number = "<MISSING>"
+        country_code = re.findall('addressCountry":"(.+?)",', response.text)
+        country_code = country_code[0] if country_code else "<MISSING>"
+        store_number = re.findall("currentTheaterId = (.+?);", response.text)
+        store_number = store_number[0] if store_number else "<MISSING>"
         phone = dom.xpath('//div[svg[@aria-labelledby="icon-title-phone"]]/text()')
         phone = phone[1].strip() if phone else "<MISSING>"
         location_type = "<MISSING>"

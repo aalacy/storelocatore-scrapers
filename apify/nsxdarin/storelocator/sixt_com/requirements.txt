@@ -1,2 +1,3 @@
-sglogging
-sgrequests
+cloudscraper==1.2.56
+sgrequests==0.1.12
+sglogging==0.0.4
