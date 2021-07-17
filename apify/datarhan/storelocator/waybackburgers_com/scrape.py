@@ -76,6 +76,8 @@ def fetch_data():
         phone = loc_dom.xpath('//div[@class="location-phone"]/a[2]/text()')
         phone = phone[0] if phone else "<MISSING>"
         location_type = "<MISSING>"
+        if loc_dom.xpath('//div[@class="coming-soon"]'):
+            location_type = "coming soon"
         latitude = loc_dom.xpath("//@data-markerlat")[0]
         longitude = loc_dom.xpath("//@data-markerlon")[0]
         hoo_data = loc_dom.xpath('//div[@class="location-hours"]/ul//text()')
