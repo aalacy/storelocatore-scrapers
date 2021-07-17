@@ -42,7 +42,7 @@ def fetch_data():
     domain = "rolex.com"
 
     all_locations = session.get(
-        f"https://retailers.rolex.com/v2/app/establishments/light/jsFront?establishmentType=STORE&langCode=en&brand=RLX&countryCodeGeofencing=US"
+        "https://retailers.rolex.com/v2/app/establishments/light/jsFront?establishmentType=STORE&langCode=en&brand=RLX&countryCodeGeofencing=US"
     ).json()
     for poi in all_locations:
         store_url = urljoin("https://www.rolex.com/rolex-dealers/", poi["urlRolexSeo"])
