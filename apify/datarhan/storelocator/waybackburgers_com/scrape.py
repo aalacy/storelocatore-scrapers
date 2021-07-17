@@ -4,11 +4,6 @@ from lxml import etree
 from sgrequests import SgRequests
 from sgscrape.sgpostal import parse_address_intl
 
-from sglogging import sglog
-
-DOMAIN = "waybackburgers.com"
-log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
-
 
 def write_output(data):
     with open("data.csv", mode="w", encoding="utf-8") as output_file:
@@ -47,6 +42,7 @@ def fetch_data():
     items = []
 
     start_url = "https://waybackburgers.com/locations/"
+    DOMAIN = "waybackburgers.com"
 
     hdr = {
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
@@ -57,9 +53,7 @@ def fetch_data():
     all_locations = dom.xpath('//li[@class="location-info-wrapper"]/h3/a/@href')
 
     for store_url in all_locations:
-        log.info(f"Now crawling {store_url}")
         loc_response = session.get(store_url, headers=hdr)
-        log.info(f"Response Code: {loc_response}")
         if loc_response.status_code != 200:
             continue
         loc_dom = etree.HTML(loc_response.text)
@@ -117,10 +111,8 @@ def fetch_data():
 
 
 def scrape():
-    log.info("Crawling Started")
     data = fetch_data()
     write_output(data)
-    log.info(f"Finished grabbing!! & Total rows {len(data)}")
 
 
 if __name__ == "__main__":
