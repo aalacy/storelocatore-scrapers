@@ -46,7 +46,7 @@ def fetch_data():
     }
     r = session.get(api_url, headers=headers)
 
-    root = etree.fromstring(r.text)
+    root = etree.fromstring(r.content)
     div = root.xpath("//locator/store/item")
 
     for d in div:

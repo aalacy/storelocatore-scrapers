@@ -46,6 +46,7 @@ def fetch_data():
             phone = ""
             if _p(addr[-1]):
                 phone = addr[-1].split("and")[0]
+                del addr[-1]
 
             try:
                 coord = _.a["href"].split("!3d")[1].split("!3m")[0].split("!4d")
@@ -82,7 +83,7 @@ def fetch_data():
             if _p(_addr[-1]):
                 phone = _addr[-1].split("and")[0]
                 del _addr[-1]
-            addr = parse_address_intl(" ".join(_addr))
+            addr = parse_address_intl(" ".join(_addr).replace("\xa0", " "))
             street_address = addr.street_address_1
             if addr.street_address_2:
                 street_address += " " + addr.street_address_2
