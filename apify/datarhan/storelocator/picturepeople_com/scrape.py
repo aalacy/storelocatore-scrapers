@@ -49,7 +49,7 @@ def fetch_data():
     }
 
     response = session.get(
-        "https://tpp.mystratus.com/21.03/(S(kvubomul5hawr1vzpdwvngbd))/OnlineBooking/LocationSelection.aspx?loginoption=defaultnew&ReferenceGUID=77DCE75EA49948559C80E5F385FF6A77",
+        "https://tpp.mystratus.com/21.05/(S(3o22wngui024ac5aho1fh0gb))/OnlineBooking/LocationSelection.aspx?loginoption=defaultnew&ReferenceGUID=2af09639166346abac7b38bd1247e155",
         headers=headers,
     )
     dom = etree.HTML(response.text)
@@ -91,9 +91,7 @@ def fetch_data():
 
     all_locations = []
     all_codes = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA],
-        max_radius_miles=200,
-        max_search_results=None,
+        country_codes=[SearchableCountries.USA], max_search_distance_miles=200
     )
     for code in all_codes:
         formdata = {
