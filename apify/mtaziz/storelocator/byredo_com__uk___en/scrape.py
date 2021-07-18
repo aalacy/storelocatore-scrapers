@@ -1,202 +1,657 @@
-import csv
-from lxml import html
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
 from sgscrape.sgpostal import parse_address_intl
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+import phonenumbers
+import csv
+from lxml import html
+import re
+import time
+import ssl
+
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
 
 logger = SgLogSetup().get_logger("byredo_com__uk___en")
+DOMAIN = "https://www.byredo.com"
+URL_LOCATION = "https://www.byredo.com/uk_en/find-a-store"
+MISSING = "<MISSING>"
 
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
-session = SgRequests()
-
-locator_domain_url = "https://www.byredo.com"
-base_url_uk = "https://www.byredo.com/uk_en/find-a-store/united-kingdom"
-base_url_us = "https://www.byredo.com/uk_en/find-a-store/united-states"
 headers = {
     "Connection": "keep-alive",
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.121 Safari/537.36",
+    "accept": "application/json, text/plain, */*",
+    "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.77 Safari/537.36",
 }
 
-r_uk = session.get(base_url_uk, headers=headers)
-r_us = session.get(base_url_us, headers=headers)
+
+def get_url_for_all_countries():
+    session = SgRequests()
+    r = session.get(URL_LOCATION, headers=headers)
+    sel = html.fromstring(r.text, "lxml")
+    urls_for_all_countries = sel.xpath('//ul[@class="cms-menu"]/li/ul/li/a/@href')
+    url_germany = "https://www.byredo.com/us_en/store-germany"
+    urls_for_all_countries.append(url_germany)
+    return urls_for_all_countries
 
 
-def get_data_from_uk():
-    tree_uk = html.fromstring(r_uk.text, "lxml")
-    tds_uk = tree_uk.xpath('//div[@class="block-cms-text"]/table/tbody')
-    items_uk = []
-    for idxuk, td_uk in enumerate(tds_uk):
-        location_names_uk = td_uk.xpath("//tr/td/h2//descendant::text()")
-        address_data_uk = td_uk.xpath(
-            "//tr/td//text()[count(preceding-sibling::h2)=$count]",
-            count="{}".format(idxuk),
-        )
-        address_data_uk1 = " ".join(address_data_uk)
-        address_data_uk2 = address_data_uk1.split("Map")
-        address_data_uk3 = [" ".join(i.split()) for i in address_data_uk2 if i]
-        phone_numbers_uk = ["+" + i.split("+")[-1] for i in address_data_uk3 if i]
-        latlng_from_googlemap_url_uk = td_uk.xpath("//tr/td//p//a/@href")
-        latlng_from_googlemap_url_deduped_uk = list(
-            dict.fromkeys(latlng_from_googlemap_url_uk)
-        )
-
-    for idxuk1, address in enumerate(address_data_uk3):
-        address_without_phone_data = address.split("+")
-        address_wpd = address_without_phone_data[0].strip()
-        address_wpd1 = address_wpd.split("Temporarily closed")[0].strip()
-        paddress = parse_address_intl(address_wpd1)
-        street_address = paddress.street_address_1 or "<MISSING>"
-        city = paddress.city or "<MISSING>"
-        state = paddress.state or "<MISSING>"
-        zip = paddress.postcode or "<MISSING>"
-        locator_domain = locator_domain_url
-        page_url = "<MISSING>"
-        location_name = location_names_uk[idxuk1] or "<MISSING>"
-        country_code = "UK"
-        store_number = "<MISSING>"
-        phone = phone_numbers_uk[idxuk1] or "<MISSING>"
-        location_type = "<MISSING>"
-        latitude = (
-            latlng_from_googlemap_url_deduped_uk[idxuk1].split("@")[1].split(",")[0]
-            or "<MISSING>"
-        )
-        longitude = (
-            latlng_from_googlemap_url_deduped_uk[idxuk1].split("@")[1].split(",")[1]
-            or "<MISSING>"
-        )
-        hoo = address_wpd.split("Temporarily closed")[1].strip()
-        if hoo:
-            hours_of_operation = "<MISSING>"
-        else:
-            hours_of_operation = "Temporarily closed"
-        row_uk = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        items_uk.append(row_uk)
-    return items_uk
+urls_for_all_countries = get_url_for_all_countries()
 
 
-def get_data_from_us():
-    locator_domain = "https://www.byredo.com"
-    tree_us = html.fromstring(r_us.text, "lxml")
-    tds_us = tree_us.xpath('//div[@class="block-cms-text"]/table/tbody')
-    items_us = []
-    for idxus, td_us in enumerate(tds_us):
-        location_names_us = td_us.xpath("//tr/td/h2//descendant::text()")
-        address_data_us = td_us.xpath(
-            "//tr/td//text()[count(preceding-sibling::h2)=$count]",
-            count="{}".format(idxus),
-        )
-        address_data_us1 = " ".join(address_data_us)
-        address_data_us2 = address_data_us1.split("Map")
-        address_data_us3 = [" ".join(i.split()) for i in address_data_us2 if i]
-        phone_numbers_us = ["+" + i.split("+")[-1] for i in address_data_us3 if i]
-        latlng_from_googlemap_url = td_us.xpath("//tr/td//p//a/@href")
-        latlng_from_googlemap_url_deduped = list(
-            dict.fromkeys(latlng_from_googlemap_url)
-        )
+def fetch_data_global():
+    session = SgRequests()
 
-    for idxus1, address in enumerate(address_data_us3):
-        locator_domain = locator_domain_url
-        page_url = "<MISSING>"
-        location_name = location_names_us[idxus1] or "<MISSING>"
-        paddress = parse_address_intl(address)
-        street_address = paddress.street_address_1 or "<MISSING>"
-        city = paddress.city or "<MISSING>"
-        state = paddress.state or "<MISSING>"
-        zip = paddress.postcode or "<MISSING>"
-        country_code = "US"
-        store_number = "<MISSING>"
-        phone = phone_numbers_us[idxus1] or "<MISSING>"
-        location_type = "<MISSING>"
-        if "@" in latlng_from_googlemap_url_deduped[idxus1]:
-            latitude = (
-                latlng_from_googlemap_url_deduped[idxus1].split("@")[1].split(",")[0]
-                or "<MISSING>"
+    for urlnum, base_url in enumerate(urls_for_all_countries[0:]):
+        if (
+            "china" in base_url
+            or "france" in base_url
+            or "sweden" in base_url
+            or "united-kingdom" in base_url
+            or "united-states" in base_url
+            or "store-germany" in base_url
+        ):
+            r = session.get(base_url, headers=headers)
+            tree = html.fromstring(r.text, "lxml")
+            tds = tree.xpath('//div[@class="column main"]//table/tbody')
+            for idxuk, td in enumerate(tds):
+                location_names = td.xpath("//tr/td/h3//descendant::text()")
+                address_data = td.xpath(
+                    "//tr/td//text()[count(preceding-sibling::h2)=$count]",
+                    count="{}".format(idxuk),
+                )
+                address_data1 = " ".join(address_data)
+                logger.info(f"Address Data UK: {address_data1}")
+                address_data2 = address_data1.split("Map")
+                address_data3 = [" ".join(i.split()) for i in address_data2 if i]
+                address_data3 = [i for i in address_data3 if i]
+                logger.info(f"Number of Addresses Found: {address_data3}")
+                phone_numbers = ["+" + i.split("+")[-1] for i in address_data3 if i]
+                logger.info(f"Phone Numbers: {idxuk}: \n{phone_numbers}")
+                latlng_from_googlemap_url = td.xpath(
+                    '//a[contains(text(), "Map")]/@href'
+                )
+                logger.info(f"latlng data: {latlng_from_googlemap_url}")
+                latlng_from_googlemap_url_deduped = list(
+                    dict.fromkeys(latlng_from_googlemap_url)
+                )
+
+            for idxuk1, address in enumerate(address_data3):
+                logger.info(f"Parsing the address: {idxuk1}: {address}")
+                address_without_phone_data = address.split("+")
+                address_wpd = address_without_phone_data[0].strip()
+                logger.info(f"Address without Phone data: {idxuk1}: {address_wpd}")
+
+                address_wpd1 = address_wpd.split("Temporarily closed")[0].strip()
+                paddress = parse_address_intl(address_wpd1)
+                logger.info(f"Parsed Address: {paddress}")
+
+                street_address = paddress.street_address_1 or "<MISSING>"
+                logger.info(f"Street Address: {street_address}")
+
+                city = paddress.city or "<MISSING>"
+                state = paddress.state or "<MISSING>"
+                zip_postal = paddress.postcode or "<MISSING>"
+                locator_domain = DOMAIN
+                page_url = base_url
+                page_url = page_url if page_url else MISSING
+
+                try:
+                    location_name = location_names[idxuk1]
+                except:
+                    location_name = MISSING
+                logger.info(f"Location Name: {idxuk1}: {location_name}")
+
+                country_code = r.url.split("/")[-1]
+                if country_code == "china":
+                    country_code = "CH"
+                if country_code == "france":
+                    country_code = "FR"
+                if country_code == "korea":
+                    country_code = "KR"
+                if country_code == "russia":
+                    country_code = "RU"
+                if country_code == "sweden":
+                    country_code = "SE"
+                if country_code == "united-arab-emirates":
+                    country_code = "AE"
+                if country_code == "united-kingdom":
+                    country_code = "UK"
+                if country_code == "united-states":
+                    country_code = "US"
+                if country_code == "store-germany":
+                    country_code = "DE"
+
+                store_number = "<MISSING>"
+                phone = ""
+
+                phone_data_to_be_parsed = phone_numbers[idxuk1]
+                for match in phonenumbers.PhoneNumberMatcher(
+                    phone_data_to_be_parsed, country_code
+                ):
+                    phone = phonenumbers.format_number(
+                        match.number, phonenumbers.PhoneNumberFormat.INTERNATIONAL
+                    )
+                phone = phone if phone else MISSING
+                location_type = "<MISSING>"
+                if country_code == "US":
+                    if "@" in latlng_from_googlemap_url_deduped[idxuk1]:
+                        latitude = (
+                            latlng_from_googlemap_url_deduped[idxuk1]
+                            .split("@")[1]
+                            .split(",")[0]
+                            or "<MISSING>"
+                        )
+                        longitude = (
+                            latlng_from_googlemap_url_deduped[idxuk1]
+                            .split("@")[1]
+                            .split(",")[1]
+                            or "<MISSING>"
+                        )
+                    else:
+                        latitude = "<MISSING>"
+                        longitude = "<MISSING>"
+                else:
+                    latitude = (
+                        latlng_from_googlemap_url_deduped[idxuk1]
+                        .split("@")[1]
+                        .split(",")[0]
+                        or "<MISSING>"
+                    )
+                    longitude = (
+                        latlng_from_googlemap_url_deduped[idxuk1]
+                        .split("@")[1]
+                        .split(",")[1]
+                        or "<MISSING>"
+                    )
+                hours_of_operation = MISSING
+                logger.info(f"hours of operation raw: {hours_of_operation}")
+                raw_address = address_wpd
+                yield SgRecord(
+                    locator_domain=locator_domain,
+                    page_url=page_url,
+                    location_name=location_name,
+                    street_address=street_address,
+                    city=city,
+                    state=state,
+                    zip_postal=zip_postal,
+                    country_code=country_code,
+                    store_number=store_number,
+                    phone=phone,
+                    location_type=location_type,
+                    latitude=latitude,
+                    longitude=longitude,
+                    hours_of_operation=hours_of_operation,
+                    raw_address=raw_address,
+                )
+
+
+def fetch_data_russia():
+    session = SgRequests()
+    for urlnum, base_url in enumerate(urls_for_all_countries[0:]):
+        if "russia" in base_url:
+            r = session.get(base_url, headers=headers)
+            tree = html.fromstring(r.text, "lxml")
+            tds = tree.xpath(
+                '//div[@class="column main"]//div[@data-content-type="html"]'
             )
-            longitude = (
-                latlng_from_googlemap_url_deduped[idxus1].split("@")[1].split(",")[1]
-                or "<MISSING>"
+            for idx, td in enumerate(tds):
+                address_data2_temp = []
+                # Location Names
+                location_names = td.xpath("./h3/descendant::text()")
+
+                # Address Data
+                address_data = td.xpath("./text()")
+                address_data1 = [" ".join(i.split()) for i in address_data]
+                address_data2 = [i for i in address_data1 if i]
+                address_data2 = ", ".join(address_data2)
+                address_data2_temp.append(address_data2)
+
+                logger.info(f"Number of Addresses Found: {address_data2_temp}")
+
+                telephone_data = td.xpath("./span/text()")
+                logger.info(f"Phone Numbers: {idx}: \n{telephone_data}")
+
+                # Latitude and longitude data
+                latlng_from_googlemap_url = td.xpath(
+                    '//a[contains(text(), "Map")]/@href'
+                )
+                logger.info(f"latlng data: {latlng_from_googlemap_url}")
+                latlng_from_googlemap_url_deduped = list(
+                    dict.fromkeys(latlng_from_googlemap_url)
+                )
+
+            for idx1, address in enumerate(address_data2_temp):
+                address_raw = "".join(address)
+                if "Russia" not in address_raw.lower():
+                    address_raw = address_raw + ", " + "Russia"
+                else:
+                    address_raw = address_raw
+
+                logger.info(f"Parsing the address: {idx1}: {address_raw}")
+
+                paddress = parse_address_intl(address_raw)
+                logger.info(f"Parsed Address: {paddress}")
+
+                street_address = paddress.street_address_1 or "<MISSING>"
+                logger.info(f"Street Address: {street_address}")
+
+                city = paddress.city or "<MISSING>"
+                state = paddress.state or "<MISSING>"
+                zip_postal = paddress.postcode or "<MISSING>"
+                locator_domain = DOMAIN
+                page_url = base_url
+                page_url = page_url if page_url else MISSING
+                try:
+                    location_name = location_names[idx1]
+                except:
+                    location_name = MISSING
+                logger.info(f"Location Name: {idx1}: {location_name}")
+
+                country_code = r.url.split("/")[-1]
+                if country_code == "china":
+                    country_code = "CH"
+                if country_code == "france":
+                    country_code = "FR"
+                if country_code == "korea":
+                    country_code = "KR"
+                if country_code == "russia":
+                    country_code = "RU"
+                if country_code == "sweden":
+                    country_code = "SE"
+                if country_code == "united-arab-emirates":
+                    country_code = "AE"
+                if country_code == "united-kingdom":
+                    country_code = "UK"
+                if country_code == "united-states":
+                    country_code = "US"
+                if country_code == "store-germany":
+                    country_code = "DE"
+
+                store_number = "<MISSING>"
+                phone = ""
+                phone_data_to_be_parsed = telephone_data[-1]
+                for match in phonenumbers.PhoneNumberMatcher(
+                    phone_data_to_be_parsed, country_code
+                ):
+                    phone = phonenumbers.format_number(
+                        match.number, phonenumbers.PhoneNumberFormat.INTERNATIONAL
+                    )
+                phone = phone if phone else MISSING
+
+                # Location Type
+                location_type = "<MISSING>"
+                if country_code == "US":
+                    if "@" in latlng_from_googlemap_url_deduped[idx1]:
+                        latitude = (
+                            latlng_from_googlemap_url_deduped[idx1]
+                            .split("@")[1]
+                            .split(",")[0]
+                            or "<MISSING>"
+                        )
+                        longitude = (
+                            latlng_from_googlemap_url_deduped[idx1]
+                            .split("@")[1]
+                            .split(",")[1]
+                            or "<MISSING>"
+                        )
+                    else:
+                        latitude = "<MISSING>"
+                        longitude = "<MISSING>"
+                else:
+                    try:
+                        latitude = (
+                            latlng_from_googlemap_url_deduped[idx1]
+                            .split("@")[1]
+                            .split(",")[0]
+                        )
+                        longitude = (
+                            latlng_from_googlemap_url_deduped[idx1]
+                            .split("@")[1]
+                            .split(",")[1]
+                        )
+                    except:
+                        latitude = MISSING
+                        longitude = MISSING
+
+                hours_of_operation = MISSING
+                raw_address = address_raw
+                raw_address = raw_address if raw_address else MISSING
+
+                yield SgRecord(
+                    locator_domain=locator_domain,
+                    page_url=page_url,
+                    location_name=location_name,
+                    street_address=street_address,
+                    city=city,
+                    state=state,
+                    zip_postal=zip_postal,
+                    country_code=country_code,
+                    store_number=store_number,
+                    phone=phone,
+                    location_type=location_type,
+                    latitude=latitude,
+                    longitude=longitude,
+                    hours_of_operation=hours_of_operation,
+                    raw_address=raw_address,
+                )
+
+
+def fetch_data_uae():
+    session = SgRequests()
+    for urlnum, base_url in enumerate(urls_for_all_countries[0:]):
+        if "united-arab-emirates" in base_url:
+            r = session.get(base_url, headers=headers)
+            tree = html.fromstring(r.text, "lxml")
+            tds = tree.xpath(
+                '//div[@class="column main"]//div[@data-content-type="html"]'
             )
-        else:
-            latitude = "<MISSING>"
-            longitude = "<MISSING>"
-        hours_of_operation = "<MISSING>"
-        row_us = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        items_us.append(row_us)
-    return items_us
+
+            for idx, td in enumerate(tds):
+                address_data2_temp = []
+                # Location Names
+                location_names = td.xpath("./h3/descendant::text()")
+
+                # Address Data
+                address_data = td.xpath("./text()")
+                address_data1 = [" ".join(i.split()) for i in address_data]
+                address_data2 = [i for i in address_data1 if i]
+                address_data2 = ", ".join(address_data2)
+                address_data2_temp.append(address_data2)
+
+                logger.info(f"Addresses Found: {address_data2_temp}")
+
+                telephone_data = td.xpath("./span/text()")
+                logger.info(f"Phone Numbers: {idx}: \n{telephone_data}")
+
+                # Latitude and longitude data
+                latlng_from_googlemap_url = td.xpath(
+                    '//a[contains(text(), "Map")]/@href'
+                )
+                logger.info(f"latlng data: {latlng_from_googlemap_url}")
+                latlng_from_googlemap_url_deduped = list(
+                    dict.fromkeys(latlng_from_googlemap_url)
+                )
+
+            for idx1, address in enumerate(address_data2_temp):
+                address_raw = "".join(address)
+                if "Russia" not in address_raw.lower():
+                    address_raw = address_raw + ", " + "Russia"
+                else:
+                    address_raw = address_raw
+
+                logger.info(f"Parsing the address: {idx1}: {address_raw}")
+                paddress = parse_address_intl(address_raw)
+                logger.info(f"Parsed Address: {paddress}")
+
+                street_address = paddress.street_address_1 or "<MISSING>"
+                street_address = street_address.replace("Byredo Dubai ", "")
+                logger.info(f"Street Address: {street_address}")
+
+                city = paddress.city or "<MISSING>"
+                state = paddress.state or "<MISSING>"
+                zip_postal = paddress.postcode or "<MISSING>"
+                locator_domain = DOMAIN
+                page_url = base_url
+                page_url = page_url if page_url else MISSING
+                try:
+                    location_name = location_names[idx1]
+                except:
+                    location_name = MISSING
+                logger.info(f"Location Name: {idx1}: {location_name}")
+
+                country_code = r.url.split("/")[-1]
+                if country_code == "china":
+                    country_code = "CH"
+                if country_code == "france":
+                    country_code = "FR"
+                if country_code == "korea":
+                    country_code = "KR"
+                if country_code == "russia":
+                    country_code = "RU"
+                if country_code == "sweden":
+                    country_code = "SE"
+                if country_code == "united-arab-emirates":
+                    country_code = "AE"
+                if country_code == "united-kingdom":
+                    country_code = "UK"
+                if country_code == "united-states":
+                    country_code = "US"
+                if country_code == "store-germany":
+                    country_code = "DE"
+
+                store_number = "<MISSING>"
+                phone = ""
+                try:
+                    phone_data_to_be_parsed = telephone_data[-1]
+                    for match in phonenumbers.PhoneNumberMatcher(
+                        phone_data_to_be_parsed, country_code
+                    ):
+                        phone = phonenumbers.format_number(
+                            match.number, phonenumbers.PhoneNumberFormat.INTERNATIONAL
+                        )
+                    phone = phone if phone else MISSING
+                except:
+                    phone = MISSING
+
+                # Location Type
+                location_type = "<MISSING>"
+                if country_code == "US":
+                    if "@" in latlng_from_googlemap_url_deduped[idx1]:
+                        latitude = (
+                            latlng_from_googlemap_url_deduped[idx1]
+                            .split("@")[1]
+                            .split(",")[0]
+                            or "<MISSING>"
+                        )
+                        longitude = (
+                            latlng_from_googlemap_url_deduped[idx1]
+                            .split("@")[1]
+                            .split(",")[1]
+                            or "<MISSING>"
+                        )
+                    else:
+                        latitude = "<MISSING>"
+                        longitude = "<MISSING>"
+                else:
+                    try:
+                        latitude = (
+                            latlng_from_googlemap_url_deduped[idx1]
+                            .split("@")[1]
+                            .split(",")[0]
+                        )
+                        longitude = (
+                            latlng_from_googlemap_url_deduped[idx1]
+                            .split("@")[1]
+                            .split(",")[1]
+                        )
+                    except:
+                        latitude = MISSING
+                        longitude = MISSING
+
+                hours_of_operation = MISSING
+                raw_address = address_raw
+                raw_address = raw_address if raw_address else MISSING
+
+                yield SgRecord(
+                    locator_domain=locator_domain,
+                    page_url=page_url,
+                    location_name=location_name,
+                    street_address=street_address,
+                    city=city,
+                    state=state,
+                    zip_postal=zip_postal,
+                    country_code=country_code,
+                    store_number=store_number,
+                    phone=phone,
+                    location_type=location_type,
+                    latitude=latitude,
+                    longitude=longitude,
+                    hours_of_operation=hours_of_operation,
+                    raw_address=raw_address,
+                )
 
 
-def fetch_data():
-    uk_data = get_data_from_uk()
-    us_data = get_data_from_us()
-    items = []
-    items.extend(uk_data)
-    items.extend(us_data)
-    return items
+def fetch_data_korea():
+    session = SgRequests()
+    for urlnum, base_url in enumerate(urls_for_all_countries[0:]):
+        if "korea" in base_url:
+            r = session.get(base_url, headers=headers)
+            tree = html.fromstring(r.text, "lxml")
+            tds = tree.xpath('//div[@class="column main"]//table/tbody')
+            for idxuk, td in enumerate(tds):
+                location_names = td.xpath("//tr/td/h3//descendant::text()")
+                address_data = td.xpath(
+                    "//tr/td//text()[count(preceding-sibling::h2)=$count]",
+                    count="{}".format(idxuk),
+                )
+                address_data1 = " ".join(address_data)
+                logger.info(f"Address Data: {address_data1}")
+                address_data2 = address_data1.split("Map")
+                address_data3 = [" ".join(i.split()) for i in address_data2 if i]
+                address_data3 = [i for i in address_data3 if i]
+                logger.info(f"Number of Addresses Found: {address_data3}")
+                phone_numbers = ["+" + i.split("+")[-1] for i in address_data3 if i]
+                logger.info(f"Phone Numbers: {idxuk}: \n{phone_numbers}")
+                latlng_from_googlemap_url = td.xpath(
+                    '//a[contains(text(), "Map")]/@href'
+                )
+                logger.info(f"latlng data: {latlng_from_googlemap_url}")
+                latlng_from_googlemap_url_deduped = list(
+                    dict.fromkeys(latlng_from_googlemap_url)
+                )
+
+            for idxuk1, address in enumerate(address_data3):
+                logger.info(f"Parsing the address: {idxuk1}: {address}")
+                address_without_phone_data = address.split("+")
+                address_wpd = address_without_phone_data[0].strip()
+                logger.info(f"Address without Phone data: {idxuk1}: {address_wpd}")
+
+                address_wpd1 = address_wpd.split("Temporarily closed")[0].strip()
+                paddress = parse_address_intl(address_wpd1)
+                logger.info(f"Parsed Address: {paddress}")
+
+                street_address = paddress.street_address_1 or "<MISSING>"
+                logger.info(f"Street Address: {street_address}")
+
+                city = paddress.city or "<MISSING>"
+                state = paddress.state or "<MISSING>"
+                zip_postal = paddress.postcode or "<MISSING>"
+                locator_domain = DOMAIN
+                page_url = base_url
+                page_url = page_url if page_url else MISSING
+
+                try:
+                    location_name = location_names[idxuk1]
+                except:
+                    location_name = MISSING
+                logger.info(f"Location Name: {idxuk1}: {location_name}")
+
+                country_code = r.url.split("/")[-1]
+                if country_code == "china":
+                    country_code = "CH"
+                if country_code == "france":
+                    country_code = "FR"
+                if country_code == "korea":
+                    country_code = "KR"
+                if country_code == "russia":
+                    country_code = "RU"
+                if country_code == "sweden":
+                    country_code = "SE"
+                if country_code == "united-arab-emirates":
+                    country_code = "AE"
+                if country_code == "united-kingdom":
+                    country_code = "UK"
+                if country_code == "united-states":
+                    country_code = "US"
+                if country_code == "store-germany":
+                    country_code = "DE"
+
+                store_number = "<MISSING>"
+                phone = ""
+                phone_data_to_be_parsed = phone_numbers[idxuk1]
+                for match in phonenumbers.PhoneNumberMatcher(
+                    phone_data_to_be_parsed, country_code
+                ):
+                    phone = phonenumbers.format_number(
+                        match.number, phonenumbers.PhoneNumberFormat.INTERNATIONAL
+                    )
+                phone = phone if phone else MISSING
+                location_type = "<MISSING>"
+                if country_code == "US":
+                    if "@" in latlng_from_googlemap_url_deduped[idxuk1]:
+                        latitude = (
+                            latlng_from_googlemap_url_deduped[idxuk1]
+                            .split("@")[1]
+                            .split(",")[0]
+                            or "<MISSING>"
+                        )
+                        longitude = (
+                            latlng_from_googlemap_url_deduped[idxuk1]
+                            .split("@")[1]
+                            .split(",")[1]
+                            or "<MISSING>"
+                        )
+                    else:
+                        latitude = "<MISSING>"
+                        longitude = "<MISSING>"
+                else:
+                    latitude = (
+                        latlng_from_googlemap_url_deduped[idxuk1]
+                        .split("@")[1]
+                        .split(",")[0]
+                        or "<MISSING>"
+                    )
+                    longitude = (
+                        latlng_from_googlemap_url_deduped[idxuk1]
+                        .split("@")[1]
+                        .split(",")[1]
+                        or "<MISSING>"
+                    )
+                hours_of_operation = MISSING
+                logger.info(f"hours of operation raw: {hours_of_operation}")
+                raw_address = address_wpd
+                yield SgRecord(
+                    locator_domain=locator_domain,
+                    page_url=page_url,
+                    location_name=location_name,
+                    street_address=street_address,
+                    city=city,
+                    state=state,
+                    zip_postal=zip_postal,
+                    country_code=country_code,
+                    store_number=store_number,
+                    phone=phone,
+                    location_type=location_type,
+                    latitude=latitude,
+                    longitude=longitude,
+                    hours_of_operation=hours_of_operation,
+                    raw_address=raw_address,
+                )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    logger.info("Started")
+    count = 0
+    with SgWriter() as writer:
+        global_data = list(fetch_data_global())
+        russia_data = list(fetch_data_russia())
+        global_data.extend(russia_data)
+        uae_data = list(fetch_data_uae())
+        global_data.extend(uae_data)
+        korea_data = list(fetch_data_korea())
+        global_data.extend(korea_data)
+        for rec in global_data:
+            writer.write_row(rec)
+            count = count + 1
+
+    logger.info(f"No of records being processed: {count}")
+    logger.info("Finished")
 
 
 if __name__ == "__main__":
