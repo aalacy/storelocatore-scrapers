@@ -117,6 +117,9 @@ def fetch_data():
                 store = line2.split('<span itemprop="name" data-item="i" data-key="')[
                     1
                 ].split('"')[0]
+            if "/maps/place/" in line2:
+                lat = line2.split("/@")[1].split(",")[0]
+                lng = line2.split("/@")[1].split(",")[1]
         if name != "":
             if add == "<MISSING>":
                 add = add2
