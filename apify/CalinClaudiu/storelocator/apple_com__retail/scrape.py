@@ -5,7 +5,7 @@ from sgzip.utils import country_names_by_code
 from fuzzywuzzy import process
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as b4
-from sgscrape.pause_resume import CrawlState
+from sgscrape.pause_resume import CrawlStateSingleton, CrawlState
 from dataclasses import asdict, dataclass
 from typing import Iterable, Optional
 from ordered_set import OrderedSet
@@ -48,9 +48,10 @@ class SerializableCountry:
 
 class CountryStack:
     def __init__(
-        self,
+        self, seed: Optional[OrderedSet[SerializableCountry]], state: "CrawlState"
     ):
-        self.__country_stack = OrderedSet()
+        self.__country_stack = seed
+        self.__state = state
 
     def push_country(self, req: SerializableCountry) -> bool:  # type: ignore
         self.__country_stack.add(req)  # type: ignore
@@ -95,7 +96,10 @@ def get_Start(session, headers):
             else:
                 data.append({"name": name, "link": link, "special": False})
 
-    this = CountryStack()
+    this = CountryStack(
+        seed=OrderedSet(map(lambda r: SerializableCountry.deserialize(r), [])),
+        state=None,
+    )
     for item in data:
         this.push_country(
             SerializableCountry(
@@ -184,20 +188,29 @@ def get_country(search, country, session, headers, SearchableCountry):
 
 def fetch_data():
     global errorz
-    state = CrawlState()
+    state = CrawlStateSingleton.get_instance()
     headers = {
         "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
     }
     with SgRequests() as session:
         countries = None
         try:
-            countries = state.get_misc_value("countries")
+            countries = CountryStack(
+                seed=OrderedSet(
+                    map(
+                        lambda r: SerializableCountry.deserialize(r),
+                        state.get_misc_value("countries") or [],
+                    )
+                ),
+                state=state,
+            )
         except Exception as e:
             logzilla.warning("Something happened along the lines of", exc_info=e)
         if not countries:
             countries = get_Start(session, headers)
-            state.set_misc_value(key="countries", value=countries)
-            state.save()
+            state.set_misc_value(key="countries", value=countries.serialize_requests())
+            state.set_misc_value(key="SearchableCountry", value=None)
+            state.save(override=True)
         errorzCopy = None
         if len(errorz) != 0:
             errorzCopy = errorz
@@ -208,19 +221,29 @@ def fetch_data():
         if errorz and errorzCopy:
             errorz = errorz + errorzCopy
             state.set_misc_value("errorz", errorz)
-            state.save()
+            state.save(override=True)
         else:
             if not errorz:
                 if errorzCopy:
                     state.set_misc_value("errorz", errorzCopy)
-                    state.save()
+                    state.save(override=True)
 
         country = countries.pop_country()
         while country:
             if country.special:
                 pass
             else:
-                SearchableCountry = determine_country(country)
+                SearchableCountry = state.get_misc_value("SearchableCountry")
+                if not SearchableCountry:
+                    SearchableCountry = determine_country(country)
+                    state.set_misc_value("SearchableCountry", SearchableCountry)
+                    state.save(override=True)
+                else:
+                    countries.push_country(country)
+                    state.set_misc_value(
+                        key="countries", value=countries.serialize_requests()
+                    )
+                    state.save(override=True)
                 search = False
                 try:
                     search = DynamicGeoSearch(
@@ -239,6 +262,17 @@ def fetch_data():
                         search, country, session, headers, SearchableCountry
                     ):
                         yield record
+                    SearchableCountry = None
+                    state.set_misc_value(
+                        key="SearchableCountry", value=SearchableCountry
+                    )
+                    state.save(override=True)
+                else:
+                    SearchableCountry = None
+                    state.set_misc_value(
+                        key="SearchableCountry", value=SearchableCountry
+                    )
+                    state.save(override=True)
     logzilla.info(f"Finished grabbing data!!")  # noqa
 
 

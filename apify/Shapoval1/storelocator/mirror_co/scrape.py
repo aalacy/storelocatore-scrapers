@@ -60,6 +60,7 @@ def fetch_data():
             .strip()
             or "<MISSING>"
         )
+
         adr = (
             "".join(ad[-1])
             .replace("Minneapolis, MN, US", "Minneapolis, MN")
@@ -72,7 +73,12 @@ def fetch_data():
             street_address = street_address + " " + "900B"
         postal = adr.split(",")[1].split()[-1].strip() or "<MISSING>"
         state = adr.split(",")[1].split()[0].strip() or "<MISSING>"
-        country_code = j.get("country")
+        if "323 Oakway Rd" in "".join(ad) or "17 Hillsdale Mall" in "".join(ad):
+            street_address = "".join(ad[0]).split(",")[0].strip()
+            city = "".join(ad[0]).split(",")[1].strip()
+            state = "".join(ad[0]).split(",")[2].split()[0].strip()
+            postal = "".join(ad[0]).split(",")[2].split()[1].strip()
+        country_code = j.get("country") or "US"
         store_number = "<MISSING>"
         location_name = j.get("title")
         phone = j.get("phone") or "<MISSING>"

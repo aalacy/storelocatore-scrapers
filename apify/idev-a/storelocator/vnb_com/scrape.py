@@ -77,14 +77,34 @@ def fetch_data():
         logger.info(f"{len(sibs[:-1])} found")
         for _ in sibs[:-1]:
             addr = list(_.stripped_strings)
-            yield SgRecord(
-                page_url=atm_url,
-                location_name=addr[0],
-                street_address=addr[1],
-                country_code="US",
-                locator_domain=locator_domain,
-                location_type="atm",
-            )
+            if "Back to top" in addr[0] or "please visit" in addr[0]:
+                continue
+            try:
+                yield SgRecord(
+                    page_url=atm_url,
+                    location_name=addr[0],
+                    street_address=addr[1],
+                    city=addr[2].split(",")[0].strip(),
+                    state=addr[2]
+                    .replace("\xa0", " ")
+                    .split(",")[1]
+                    .strip()
+                    .split(" ")[0]
+                    .strip(),
+                    zip_postal=addr[2]
+                    .replace("\xa0", " ")
+                    .split(",")[1]
+                    .strip()
+                    .split(" ")[-1]
+                    .strip(),
+                    country_code="US",
+                    locator_domain=locator_domain,
+                    location_type="atm",
+                )
+            except:
+                import pdb
+
+                pdb.set_trace()
 
 
 if __name__ == "__main__":
