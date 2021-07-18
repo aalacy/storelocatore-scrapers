@@ -56,7 +56,7 @@ def fetch_data():
         store_url = urljoin(start_url, url)
         with SgFirefox() as driver:
             driver.get(store_url)
-            sleep(20)
+            sleep(30)
             loc_dom = etree.HTML(driver.page_source)
             raw_address = loc_dom.xpath('//div[@id="locationContact"]/text()')
             raw_address = [e.strip() for e in raw_address if e.strip()]
@@ -78,7 +78,11 @@ def fetch_data():
                     '//h3[contains(text(), "Hours of Operation")]/following-sibling::p[1]/text()'
                 )
             hoo = [e.strip() for e in hoo if e.strip()]
-            hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
+            hours_of_operation = (
+                " ".join(hoo).replace("*", "").replace(" Same hours as above", "")
+                if hoo
+                else "<MISSING>"
+            )
 
             driver.switch_to.frame(driver.find_element_by_id("mapIndividual"))
             loc_dom = etree.HTML(driver.page_source)
