@@ -58,13 +58,23 @@ def fetch_data():
                 if temp[1].find("ZipCode") != -1:
                     zip_postal = zip_postal + " " + temp[0]
                 i += 1
-            hours_of_operation = (
-                loc[0]
-                .find("div")
-                .get_text(separator="|", strip=True)
-                .replace("|", " ")
-                .replace("Store Hours:", "")
-            )
+            try:
+                hours_of_operation = (
+                    loc[0]
+                    .findAll("div")[1]
+                    .get_text(separator="|", strip=True)
+                    .replace("|", " ")
+                    .replace("Store Hours:", "")
+                )
+            except:
+                hours_of_operation = (
+                    loc[0]
+                    .find("div")
+                    .get_text(separator="|", strip=True)
+                    .replace("|", " ")
+                    .replace("Store Hours:", "")
+                )
+
             phone = (
                 loc[1]
                 .get_text(separator="|", strip=True)
@@ -76,7 +86,6 @@ def fetch_data():
             coords = r.text.split("],0,1")[0].rsplit("[null,null,", 1)[1].split(",")
             latitude = coords[0]
             longitude = coords[1]
-
             country_code = "US"
             yield SgRecord(
                 locator_domain=DOMAIN,
