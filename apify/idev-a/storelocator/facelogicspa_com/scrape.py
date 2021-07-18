@@ -45,6 +45,7 @@ def fetch_data():
             )
             if not location_name:
                 continue
+            location_name = link.text.strip()
             phone = latitude = longitude = ""
             hours = []
             _addr = None
@@ -116,7 +117,7 @@ def fetch_data():
                         ].strong.text.strip()
                     elif sp1.select_one("div.mt20.mb20 p"):
                         _addr = list(sp1.select_one("div.mt20.mb20 p").stripped_strings)
-                        phone = sp1.select_one("div.fr").text.strip()
+                        phone = sp1.select("div.fr")[1].text.strip()
                     elif sp1.select("div#le_footer1 div.le_content p"):
                         _addr = [
                             aa.text.strip()
