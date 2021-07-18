@@ -88,37 +88,45 @@ def fetch_data():
                                     break
                                 else:
                                     phone = ""
-                            if not _addr:
-                                _addr = blocks
-
-                            if "FedEx" in _addr[0]:
-                                del _addr[0]
-                            _address = " ".join(_addr[1:])
-                            addr = parse_address_intl(_address)
-                            street_address = addr.street_address_1
-                            if addr.street_address_2:
-                                street_address += " " + addr.street_address_2
-                            if (
-                                not street_address
-                                or street_address
-                                and street_address.replace("-", "").isdigit()
-                            ):
-                                if len(_addr) > 1:
-                                    street_address = _addr[1]
-                            city = addr.city
-                            location_name = blocks[0]
-                            zip_postal = addr.postcode
-                            if zip_postal == "00000":
-                                zip_postal = ""
-                            if not city:
-                                city = location_name
+                            temp = []
+                            for aa in _addr:
+                                if (
+                                    "FedEx" in aa
+                                    or "corporation" in aa.lower()
+                                    or "company" in aa.lower()
+                                    or "ltd" in aa.lower()
+                                    or "llc" in aa.lower()
+                                    or "center" in aa.lower()
+                                ):
+                                    continue
+                                temp.append(aa)
+                            _addr = temp
+                            street_address = state = zip_postal = ""
+                            if _addr:
+                                _address = " ".join(_addr)
+                                addr = parse_address_intl(_address)
+                                street_address = addr.street_address_1
+                                if addr.street_address_2:
+                                    street_address += " " + addr.street_address_2
+                                if (
+                                    street_address
+                                    and street_address.replace("-", "").isdigit()
+                                ):
+                                    for aa in _addr:
+                                        if aa.startswith(street_address):
+                                            street_address = aa
+                                            break
+                                state = addr.state
+                                zip_postal = addr.postcode
+                                if zip_postal == "00000":
+                                    zip_postal = ""
                             yield SgRecord(
                                 page_url=page_url,
                                 location_name=blocks[0],
                                 street_address=street_address,
-                                city=city,
-                                state=addr.state,
-                                zip_postal=addr.postcode,
+                                city=blocks[0],
+                                state=state,
+                                zip_postal=zip_postal,
                                 country_code=country_code,
                                 phone=phone,
                                 locator_domain=locator_domain,
