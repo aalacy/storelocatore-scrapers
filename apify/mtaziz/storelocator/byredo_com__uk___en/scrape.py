@@ -4,10 +4,7 @@ from sgscrape.sgpostal import parse_address_intl
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import phonenumbers
-import csv
 from lxml import html
-import re
-import time
 import ssl
 
 try:
