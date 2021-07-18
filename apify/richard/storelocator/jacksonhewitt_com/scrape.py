@@ -6,8 +6,7 @@ from Scraper import Scrape
 import time
 from sglogging import SgLogSetup
 
-logger = SgLogSetup().get_logger('jacksonhewitt_com')
-
+logger = SgLogSetup().get_logger("jacksonhewitt_com")
 
 
 URL = "https://www.jacksonhewitt.com"
@@ -87,7 +86,7 @@ class Scraper(Scrape):
             try:
                 data = json.loads(response.content)["Offices"]
             except:
-                logger.info('sleeeeeping..............\n\n\n\n\n\n\n\n\n')
+                logger.info("sleeeeeping..............\n\n\n\n\n\n\n\n\n")
                 time.sleep(60)
                 response = requests.get(
                     f"https://www.jacksonhewitt.com/api/offices/search/{zipcode}",
@@ -109,10 +108,13 @@ class Scraper(Scrape):
                 location_title = "Hackson Hewitt" + " " + store["City"]
 
                 # Type
-                location_type = store["TypeName"].strip()
+                try:
+                    location_type = store["TypeName"].strip()
+                except:
+                    location_type = "<MISSING>"
 
-                if location_type == '':
-                    location_type = '<MISSING>'
+                if location_type == "":
+                    location_type = "<MISSING>"
 
                 # Street
                 street_address = store["Address1"] + store["Address2"]
@@ -140,14 +142,13 @@ class Scraper(Scrape):
 
                 # hour
                 hour_arr = store["OfficeHours"]
-                hour = ''
+                hour = ""
                 for h in hour_arr:
-                    hour += h['DayOfWeek'] + ' ' + h['Hours'] + ' '
+                    hour += h["DayOfWeek"] + " " + h["Hours"] + " "
 
                 hour = hour.strip()
 
-
-                url = 'https://www.jacksonhewitt.com/' + store['DetailsUrl']
+                url = "https://www.jacksonhewitt.com/" + store["DetailsUrl"]
 
                 # Store data
                 locations_ids.append(location_id)
@@ -178,7 +179,7 @@ class Scraper(Scrape):
             location_id,
             country,
             location_type,
-            url
+            url,
         ) in zip(
             locations_titles,
             street_addresses,
@@ -192,7 +193,7 @@ class Scraper(Scrape):
             locations_ids,
             countries,
             location_types,
-            urls
+            urls,
         ):
             self.data.append(
                 [
@@ -209,7 +210,7 @@ class Scraper(Scrape):
                     latitude,
                     longitude,
                     hour,
-                    url
+                    url,
                 ]
             )
 
