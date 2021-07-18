@@ -41,7 +41,7 @@ def fetch_data():
                 state = address[0]
                 zip_postal = address[1]
                 country_code = "US"
-            hours_of_operation = loc[2].text
+            hours_of_operation = loc[2].text.replace("\n", " ")
             phone = loc[4].text
             yield SgRecord(
                 locator_domain=DOMAIN,

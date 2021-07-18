@@ -26,7 +26,6 @@ DOMAIN_US = "lululemon.com"
 DOMAIN_GLOBAL = "lululemon.co.uk"
 URL_LOCATION_US_CA = "https://shop.lululemon.com/stores"
 MISSING = "<MISSING>"
-session = SgRequests()
 
 
 def get_special_headers():
@@ -36,7 +35,7 @@ def get_special_headers():
         requestName = "/cne/graphql"
         driver.get(URL_LOCATION_US_CA)
         driver.implicitly_wait(20)
-        time.sleep(10)
+        time.sleep(20)
         see_all_store_listings = '//a[contains(@href, "/stores/all-lululemon-stores")]'
         element1 = driver.find_element_by_xpath(see_all_store_listings).get_attribute(
             "href"
@@ -75,8 +74,9 @@ def clean_raw_address(raw_address_):
     return t9
 
 
-def fetch_data():
+def fetch_us_ca_data():
     # This part scrape the data for the US and CA
+    session_us_ca = SgRequests()
     s = set()
     headers_us_ca = {
         "accept": "application/json, text/plain, */*",
@@ -88,7 +88,7 @@ def fetch_data():
     }
     headers_from_graphql_path = get_special_headers()
     API_ENDPOINT_URL_US_CA = "https://shop.lululemon.com/cne/graphql"
-    response_sgr = session.post(
+    response_sgr = session_us_ca.post(
         API_ENDPOINT_URL_US_CA,
         data=json.dumps(PAYLOAD),
         headers=dict(headers_from_graphql_path),
@@ -100,7 +100,7 @@ def fetch_data():
         page_url = f"https://shop.lululemon.com{slug}"
         logger.info(f"Pulling data from {idx1}: {page_url}")
         locator_domain = DOMAIN_US
-        r_per_store = session.get(page_url, headers=headers_us_ca)
+        r_per_store = session_us_ca.get(page_url, headers=headers_us_ca, timeout=300)
         data_per_store = html.fromstring(r_per_store.text, "lxml")
         xpath_get_json_data = '//script[contains(@id, "__NEXT_DATA__")]/text()'
         data_json2 = data_per_store.xpath(xpath_get_json_data)
@@ -191,7 +191,11 @@ def fetch_data():
         except KeyError:
             continue
 
+
+def fetch_global_data():
     # This is used to get the data from countries those are outside of US and CA
+    session_global = SgRequests()
+    s = set()
     headers_global = {
         "accept": "application/json, text/javascript, */*; q=0.01",
         "accept-encoding": "gzip, deflate, br",
@@ -201,7 +205,7 @@ def fetch_data():
         "x-requested-with": "XMLHttpRequest",
     }
     API_ENDPOINT_URL_GLOBAL = "https://www.lululemon.co.uk/on/demandware.store/Sites-UK-Site/en_GB/Stores-FindStores?showMap=true&radius=20000&lat=51.5073509&long=-0.1277583&lat=51.5073509&long=-0.1277583"
-    json_data = session.get(
+    json_data = session_global.get(
         API_ENDPOINT_URL_GLOBAL, headers=headers_global, timeout=300
     ).json()
     json_data_stores = json_data["stores"]
@@ -249,7 +253,7 @@ def fetch_data():
         # Country Code
         country_code_raw = item["countryCode"]
         country_code = country_code_raw if country_code_raw else MISSING
-        if country_code_raw == "US" or country_code_raw == "CA":
+        if str(country_code_raw) == "US" or str(country_code_raw) == "CA":
             continue
 
         store_number = item["ID"]
@@ -317,8 +321,10 @@ def scrape():
     logger.info("Started")
     count = 0
     with SgWriter() as writer:
-        results = fetch_data()
-        for rec in results:
+        results_us_ca_data = list(fetch_us_ca_data())
+        results_global_data = list(fetch_global_data())
+        results_us_ca_data.extend(results_global_data)
+        for rec in results_us_ca_data:
             writer.write_row(rec)
             count = count + 1
 
