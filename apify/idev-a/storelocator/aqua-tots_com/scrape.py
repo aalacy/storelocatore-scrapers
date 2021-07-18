@@ -22,7 +22,7 @@ def fetch_data():
         for _ in locations:
             if _["ACF"].get("coming_soon") == "yes":
                 continue
-            if (_["ACF"].get("country") or "US") != "US":
+            if (_["ACF"].get("country") or "US") not in ["US", "CA"]:
                 logger.info(f'[Non US] {_["ACF"].get("country")} - {_["post_name"]}')
                 continue
             page_url = f"{locator_domain}{_['post_name']}"

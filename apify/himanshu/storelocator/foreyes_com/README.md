@@ -8,4 +8,7 @@ Please make sure that:
 * The resulting output passes https://github.com/SafeGraphInc/crawl-service/blob/master/scripts/validate.py
 
 
-address with no number,invalid zip and i checked all data is true for this site
+--ignore StreetAddressHasNumber --ignore LatLngDuplicationValidator --ignore CountryValidator
+
+
+

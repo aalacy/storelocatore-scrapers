@@ -24,8 +24,6 @@ def fetch_data():
     maxZ = search.items_remaining()
     total = 0
     for lat, lng in search:
-        if lat > 90 or lng < -90:
-            continue
         if search.items_remaining() > maxZ:
             maxZ = search.items_remaining()
         logger.info(("Pulling Geo Code %s..." % lat, lng))

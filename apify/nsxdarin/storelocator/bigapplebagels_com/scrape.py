@@ -73,10 +73,22 @@ def fetch_data():
                 items = line.split('"Longitude":')
                 for item in items:
                     if '"Latitude":' in item:
+                        Closed = False
+                        typ = "<MISSING>"
                         add = ""
                         lng = item.split(",")[0]
                         lat = item.split('"Latitude":')[1].split(",")[0]
                         name = item.split('"Name":"')[1].split('"')[0]
+                        if "Temporarily Closed" in name:
+                            Closed = True
+                        try:
+                            if (
+                                "Temporarily Closed"
+                                in item.split('"Address1":"')[1].split('"')[0]
+                            ):
+                                Closed = True
+                        except:
+                            pass
                         try:
                             add = item.split('"Address2":"')[1].split('"')[0]
                         except:
@@ -95,8 +107,14 @@ def fetch_data():
                                 )
                             except:
                                 pass
-                        city = item.split('"Locality":"')[1].split('"')[0]
-                        state = item.split('"Region":"')[1].split('"')[0]
+                        try:
+                            city = item.split('"Locality":"')[1].split('"')[0]
+                        except:
+                            city = "<MISSING>"
+                        try:
+                            state = item.split('"Region":"')[1].split('"')[0]
+                        except:
+                            state = "<MISSING>"
                         try:
                             zc = item.split('"PostalCode":"')[1].split('"')[0]
                         except:
@@ -110,8 +128,14 @@ def fetch_data():
                             lat = "<MISSING>"
                         if lng == "0" or lng is None or lng == "0.0":
                             lng = "<MISSING>"
-                        if add not in locs and add != "Test":
+                        if add not in locs and add != "Test" and add != "":
                             locs.append(add)
+                            if "*" in add:
+                                add = add.split("*")[0].strip()
+                            if "2616 Ogden" in add:
+                                phone = "630-375-9822"
+                            if Closed:
+                                typ = "Temporarily Closed"
                             yield [
                                 website,
                                 loc,

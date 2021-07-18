@@ -122,17 +122,36 @@ def fetch_data():
 
         store_number = str(store["id"])
         location_type = "<MISSING>"
-        if store["status"] == 3:
-            location_type = "temp_closed"
-        if store["status"] == 4:
-            location_type = "opening_soon"
-        if store["status"] == 1:
-            location_type = "coming_soon"
 
         phone = store_json["telephone"]
-        hours_of_operation = "; ".join(
-            store_sel.xpath('//div[@class="gym-hours"]/table//tr//text()')
-        ).strip()
+        hours = store_sel.xpath('//div[@class="gym-hours"]/table//tr')
+        hours_list = []
+        for hour in hours:
+            day = "".join(hour.xpath("td[1]/text()")).strip()
+            time = "".join(hour.xpath("td[2]/text()")).strip()
+            if len(day) > 0 and len(time) > 0:
+                hours_list.append(day + ":" + time)
+
+        if len(hours_list) > 0:
+            hours_of_operation = "; ".join(hours_list).strip()
+        else:
+            hours_of_operation = " ".join(
+                store_sel.xpath('//div[@class="gym-hours"]/text()')
+            ).strip()
+            if len(hours_of_operation) <= 0:
+                hours_of_operation = " ".join(
+                    store_sel.xpath('//div[@class="gym-hours"]/table/text()')
+                ).strip()
+
+        if store["status"] == 3:
+            location_type = "temp_closed"
+            hours_of_operation = "<MISSING>"
+        if store["status"] == 4:
+            location_type = "opening_soon"
+            hours_of_operation = "<MISSING>"
+        if store["status"] == 1:
+            location_type = "coming_soon"
+            hours_of_operation = "<MISSING>"
 
         if latitude == "" or latitude is None:
             latitude = "<MISSING>"

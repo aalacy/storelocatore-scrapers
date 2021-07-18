@@ -1,6 +1,9 @@
 import csv
-from sgrequests import SgRequests
 import json
+
+from sgrequests import SgRequests
+
+from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 
 
 def write_output(data):
@@ -37,52 +40,54 @@ def fetch_data():
     # Your scraper here
     locator_domain = "https://www.ladyjanes.com/"
     api = "https://www.ladyjanes.com/location/getLocationsBySearch"
-    missingString = "<MISSING>"
-
-    p = {"search": "48083"}
+    missing_string = "<MISSING>"
 
     s = SgRequests()
+    dup_tracker = []
 
-    locs = json.loads(s.post(api, data=p).text)["data"]["visibleLocations"]
-    result = []
-    for loc in locs:
-        st = locs[loc]
-        if st["wait_time"] == "Coming Soon":
-            pass
-        else:
-            store_name = st["api"]["name"]
-            address = st["street_address"]
-            state = st["state"]
-            city = st["city"]
-            store_zip = st["api"]["address"].split(" ")[-1]
-            lat = st["api"]["lat"]
-            lng = st["api"]["lng"]
-            store_number = st["id"]
-            phone = st["phone"]
-            hours = (
-                "Monday-Thursday : {}, Friday : {}, Saturday : {}, Sunday : {}".format(
+    search = DynamicZipSearch(country_codes=[SearchableCountries.USA])
+
+    for postcode in search:
+        p = {"search": postcode}
+
+        locs = json.loads(s.post(api, data=p).text)["data"]["visibleLocations"]
+        for loc in locs:
+            st = locs[loc]
+            if st["wait_time"] == "Coming Soon":
+                pass
+            else:
+                store_name = st["api"]["name"]
+                address = st["street_address"]
+                state = st["state"]
+                city = st["city"]
+                store_zip = st["api"]["address"].strip().split(" ")[-1]
+                lat = st["api"]["lat"]
+                lng = st["api"]["lng"]
+                search.found_location_at(lat, lng)
+                store_number = st["id"]
+                if store_number in dup_tracker:
+                    continue
+                dup_tracker.append(store_number)
+                phone = st["phone"]
+                hours = "Monday-Thursday : {}, Friday : {}, Saturday : {}, Sunday : {}".format(
                     st["monday_thursday"], st["friday"], st["saturday"], st["sunday"]
                 )
-            )
-            result.append(
-                [
+                yield [
                     locator_domain,
-                    missingString,
+                    "https://www.ladyjanes.com/locations",
                     store_name,
                     address,
                     city,
                     state,
                     store_zip,
-                    missingString,
+                    "US",
                     store_number,
                     phone,
-                    missingString,
+                    missing_string,
                     lat,
                     lng,
                     hours,
                 ]
-            )
-    return result
 
 
 def scrape():

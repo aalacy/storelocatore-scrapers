@@ -40,6 +40,7 @@ def write_output(data):
 def fetch_data():
     # Your scraper here
     items = []
+    scraped_items = []
 
     start_url = "https://www.lelabofragrances.com/"
     domain = re.findall("://(.+?)/", start_url)[0].replace("www.", "")
@@ -116,8 +117,9 @@ def fetch_data():
             longitude,
             hours_of_operation,
         ]
-
-        items.append(item)
+        if store_number not in scraped_items:
+            scraped_items.append(store_number)
+            items.append(item)
 
     return items
 

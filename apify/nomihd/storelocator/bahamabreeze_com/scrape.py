@@ -91,7 +91,10 @@ def fetch_data():
         zip = city_state_Zip.split(",")[1].strip().split(" ")[1].strip()
         country_code = "US"
 
-        store_number = "<MISSING>"
+        store_number = page_url.split("/")[-1].strip()
+        if store_number.isdigit() is False:
+            store_number = "<MISSING>"
+
         phone = "".join(
             store_sel.xpath('//p[@id="info-link-webhead"]/text()[3]')
         ).strip()
@@ -109,6 +112,17 @@ def fetch_data():
                     + "".join(hours[index + 1].xpath("text()")).strip()
                 )
 
+            hours_of_operation = "; ".join(hours_list).strip()
+
+        if len(hours_of_operation) <= 0:
+            hours_list = []
+            hours = store_sel.xpath('//div[contains(@class,"week-schedule")]/div')
+            for hour in hours:
+                day = "".join(hour.xpath("ul/li[1]/text()")).strip()
+                if "(" in day:
+                    day = day.split("(")[1].strip().replace(")", "").strip()
+                time = "".join(hour.xpath("ul/li[2]//text()")).strip()
+                hours_list.append(day + ":" + time)
             hours_of_operation = "; ".join(hours_list).strip()
 
         yield SgRecord(

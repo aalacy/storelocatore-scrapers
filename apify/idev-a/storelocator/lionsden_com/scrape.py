@@ -26,9 +26,15 @@ def fetch_data():
             logger.info(page_url)
             sp = bs(session.get(page_url, headers=_headers).text, "lxml")
             hour_block = sp.find("h2", string=re.compile(r"Hours", re.IGNORECASE))
-            hours_of_operation = "; ".join(
-                [hh.text for hh in hour_block.find_next_sibling("ul").select("li")]
-            )
+            hours = []
+            for hh in hour_block.find_next_sibling("ul").select("li"):
+                if "HOLIDAY" in hh.text:
+                    continue
+                if "**" in hh.text:
+                    continue
+                hours.append(
+                    "-".join([ho.split("(")[0] for ho in hh.text.strip().split("-")])
+                )
             yield SgRecord(
                 page_url=page_url,
                 store_number=_["storelocator_id"],
@@ -42,7 +48,7 @@ def fetch_data():
                 country_code=_["country"],
                 phone=_["phone"],
                 locator_domain=locator_domain,
-                hours_of_operation=hours_of_operation,
+                hours_of_operation="; ".join(hours),
             )
 
 
