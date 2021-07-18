@@ -36,7 +36,7 @@ def fetch_data():
     out = []
 
     locator_domain = "https://www.novahealth.com"
-    api_url = "https://www.novahealth.com/wp-admin/admin-ajax.php?action=store_search&lat=44.05207&lng=-123.08675&max_results=10&search_radius=10&autoload=1"
+    api_url = "https://www.novahealth.com/wp-admin/admin-ajax.php?action=store_search&lat=44.05207&lng=-123.08675&max_results=1000&search_radius=500&autoload=1"
 
     session = SgRequests()
 
@@ -96,6 +96,13 @@ def fetch_data():
         )
         if hours_of_operation.find("This location is closed") != -1:
             hours_of_operation = hours_of_operation.split(".")[2].strip()
+        if hours_of_operation.find("(") != -1:
+            hours_of_operation = hours_of_operation.split("(")[0].strip()
+        if hours_of_operation.find("for lunch") != -1:
+            hours_of_operation = hours_of_operation.split("Closed")[0].strip()
+        hours_of_operation = hours_of_operation.replace(
+            "8 am to 5 pm Monday – Thursday", ""
+        ).strip()
 
         row = [
             locator_domain,

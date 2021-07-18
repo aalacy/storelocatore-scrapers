@@ -66,7 +66,8 @@ def process_record(raw_results_from_one_coordinate):
             hours_of_operation = (
                 store_data["hours"] if store_data["hours"] else "<MISSING>"
             )
-            page_url = "<MISSING>"
+            page_url = f"https://www.chevronwithtechron.com/station/{street_address.replace(' ','-')}-{city.replace(' ','-')}-{state}-{zipp}-id{store_number}"
+
             yield SgRecord(
                 locator_domain=locator_domain,
                 page_url=page_url,

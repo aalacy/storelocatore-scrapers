@@ -47,13 +47,25 @@ def fetch_data():
     data = []
 
     for store in stores:
-        location_name = "Frutta Bowls - " + store["facebookDescriptor"]
-        if "Permanently Closed" in store["name"]:
-            continue
-        street_address = store["address"]["line1"].strip()
+        try:
+            street_address = (
+                store["address"]["line1"].strip()
+                + " "
+                + store["address"]["line2"].strip()
+            ).strip()
+        except:
+            street_address = store["address"]["line1"].strip()
         city = store["address"]["city"]
         state = store["address"]["region"]
         zip_code = store["address"]["postalCode"]
+        try:
+            location_name = "Frutta Bowls - " + store["facebookDescriptor"]
+        except:
+            location_name = "Frutta Bowls - " + city
+        if "Permanently Closed" in store["name"]:
+            continue
+        if "Coming Soon" in store["featuredMessage"]["description"]:
+            continue
         country_code = "US"
         store_number = store["meta"]["id"]
         location_type = "<MISSING>"
