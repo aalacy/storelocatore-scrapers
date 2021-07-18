@@ -28,7 +28,9 @@ def fetch_data():
             location_name = location_name.replace("'", "")
             log.info(location_name)
             raw_address = loc.split("'address': '")[1].split("'}")[0]
-            raw_address = raw_address.replace("Memorial Student Center","").replace("Second floor","")
+            raw_address = raw_address.replace("Memorial Student Center", "").replace(
+                "Second floor", ""
+            )
             formatted_addr = parser.parse_address_intl(raw_address)
             street_address = formatted_addr.street_address_1
             if street_address is None:
