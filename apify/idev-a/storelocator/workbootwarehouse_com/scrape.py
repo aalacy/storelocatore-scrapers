@@ -24,6 +24,18 @@ def fetch_data():
             sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
             addr = list(sp1.select("div.entry__content p")[0].a.stripped_strings)
             script = sp1.select("div.marker")[-1]
+            hours_of_operation = "; ".join(
+                list(
+                    sp1.select("div.contact-info__content div.entry__content p")[
+                        -1
+                    ].stripped_strings
+                )[1:]
+            ).replace("–", "-")
+            if (
+                "We are closed on"
+                in sp1.select("div.contact-info__content div.entry__content p")[-1].text
+            ):
+                hours_of_operation = "Temporarily closed"
             yield SgRecord(
                 page_url=page_url,
                 location_name=sp1.select_one("div.entry__content h3").text.strip(),
@@ -36,9 +48,7 @@ def fetch_data():
                 locator_domain=locator_domain,
                 latitude=script["data-lat"],
                 longitude=script["data-lng"],
-                hours_of_operation="; ".join(
-                    list(sp1.select("div.entry__content p")[2].stripped_strings)[1:]
-                ).replace("–", "-"),
+                hours_of_operation=hours_of_operation,
             )
 
 

@@ -49,7 +49,7 @@ def fetch_data():
     }
 
     response = session.get(
-        "https://tpp.mystratus.com/20.21/(S(yvwjo2fmynyixy4hnhou1vwc))/OnlineBooking/Verify.aspx?ReferenceGUID=E3915F3B997D45ABA1E66D7F0385023F",
+        "https://tpp.mystratus.com/21.05/(S(3o22wngui024ac5aho1fh0gb))/OnlineBooking/LocationSelection.aspx?loginoption=defaultnew&ReferenceGUID=2af09639166346abac7b38bd1247e155",
         headers=headers,
     )
     dom = etree.HTML(response.text)
@@ -91,9 +91,7 @@ def fetch_data():
 
     all_locations = []
     all_codes = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA],
-        max_radius_miles=200,
-        max_search_results=None,
+        country_codes=[SearchableCountries.USA], max_search_distance_miles=200
     )
     for code in all_codes:
         formdata = {
@@ -131,6 +129,8 @@ def fetch_data():
         state = raw_address[1].split(", ")[-1].split()[0]
         zip_code = raw_address[1].split(", ")[-1].split()[-1]
         phone = raw_address[-1]
+        if zip_code in phone:
+            phone = "<MISSING>"
         country_code = "<MISSING>"
         store_number = "<MISSING>"
         location_type = "<MISSING>"

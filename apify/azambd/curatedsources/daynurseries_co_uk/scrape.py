@@ -101,7 +101,7 @@ def fetchSinglePage(data_url, findRedirect=False):
                         headers,
                         {
                             "response": response_text,
-                            "hours_of_operation": getHoursOfOperation(),
+                            "hours_of_operation": getHoursOfOperation(response_text),
                             "phone": getPhone(session, headers, response_text),
                         },
                     ]
@@ -110,23 +110,25 @@ def fetchSinglePage(data_url, findRedirect=False):
                 continue
 
 
-def getHoursOfOperation():
+def getHoursOfOperation(response_text):
     try:
         hours_of_operation = []
-        profileRows = driver.find_elements_by_xpath(
-            "//div[contains(@class, 'profile-rows')]/div/ul"
+
+        hoosoup = html.fromstring(response_text, "lxml")
+        profileRows = hoosoup.xpath(
+            "//div[contains(@class, 'profile-row-section')]/div/ul"
         )
 
         for profileRow in profileRows:
             texts = []
-            for li in profileRow.find_elements_by_xpath(".//li"):
+            for li in profileRow.xpath(".//li | .//li/div"):
                 texts.append(li.text)
-            if len(texts) > 1 and texts[0] == "Opening Days":
-                hours_of_operation.append(f"Opening Days: {texts[1].strip()}")
-            if len(texts) > 1 and texts[0] == "Opening Hours":
-                hours_of_operation.append(f"Opening Hours: {texts[1].strip()}")
-            if len(texts) > 1 and texts[0] == "When Closed":
-                hours_of_operation.append(f"Closed: {texts[1].strip()}")
+            if len(texts) > 1 and texts[1] == "Opening Days":
+                hours_of_operation.append(f"Opening Days: {texts[2].strip()}")
+            if len(texts) > 1 and texts[1] == "Opening Hours":
+                hours_of_operation.append(f"Opening Hours: {texts[2].strip()}")
+            if len(texts) > 1 and texts[1] == "When Closed":
+                hours_of_operation.append(f"Closed: {texts[2].strip()}")
         hours_of_operation = "; ".join(hours_of_operation)
         return hours_of_operation
     except Exception as e:
@@ -137,7 +139,12 @@ def getHoursOfOperation():
 def getPhone(session, headers, response_text):
     try:
         phone_soup = bs(response_text, "html.parser")
-        phone_link = phone_soup.find("a", attrs={"id": "brochure_phone"})["href"]
+        phone_soup = html.fromstring(response_text, "lxml")
+        phone_link = phone_soup.xpath('//button[@id="brochure_phone"]/@href')
+        if len(phone_link) == 0:
+            return MISSING
+        phone_link = phone_link[0]
+
         phone_response = session.get(phone_link, headers=headers).text
         response_soup = bs(phone_response, "html.parser")
         phone = (
@@ -207,7 +214,7 @@ def fetchSingleStore(page_url, session=None, headers=None):
         else:
             store_response = {
                 "response": response_text,
-                "hours_of_operation": getHoursOfOperation(),
+                "hours_of_operation": getHoursOfOperation(response_text),
                 "phone": getPhone(session, headers, response_text),
             }
 
@@ -230,20 +237,23 @@ def fetchSingleStore(page_url, session=None, headers=None):
     latitude = str(getJSONObjectVariable(geoJSON, "geo.latitude"))
     longitude = str(getJSONObjectVariable(geoJSON, "geo.longitude"))
 
-    redirect_urls = body.xpath('//a[contains(@class, "button-website")]/@href')
+    redirect_urls = body.xpath('//a[contains(@id, "website-button")]/@href')
     if len(redirect_urls) > 0:
 
         url_text = session.get(redirect_urls[0], headers=headers).text
 
         try:
             brand_website = url_text.split("window.location.replace(")[1].split(")")[0]
+            brand_website = brand_website.replace("'", "")
         except Exception:
             brand_website_session = fetchSinglePage(redirect_urls[0], True)
             brand_website = brand_website_session[2]
             session = brand_website_session[0]
             headers = brand_website_session[1]
 
-            brand_website = (urlparse(brand_website).netloc).replace("www.", "")
+            brand_website = (
+                (urlparse(brand_website).netloc).replace("www.", "").replace("'", "")
+            )
 
     else:
         brand_website = MISSING

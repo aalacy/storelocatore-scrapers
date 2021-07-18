@@ -74,12 +74,12 @@ def fetch_location(loc, retry_count=0):
     try:
         with SgChrome(is_headless=True) as driver:
             driver.get(loc)
-            sleep(randint(5, 7))
+            sleep(randint(10, 15))
 
             text = driver.page_source
 
             if re.search("access denied", re.escape(text), re.IGNORECASE):
-                if retry_count > 3:
+                if retry_count > 10:
                     raise Exception()
 
                 return fetch_location(loc, retry_count + 1)
@@ -117,8 +117,8 @@ def fetch_location(loc, retry_count=0):
                 state = "MI"
                 zc = "48084"
                 phone = "(248) 649-5300"
-                lat = "<MISSING>"
-                lng = "<MISSING>"
+                lat = "42.562578"
+                lng = "-83.18373"
             if "/il/rosemont/chicago-rosemont/8036" in loc:
                 name = "Chicago - Rosemont"
                 add = "5340 N River Road"

@@ -36,7 +36,7 @@ HEADERS = {
     "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.120 Safari/537.36",
 }
 
-URL = "https://storerocket.global.ssl.fastly.net/api/user/wjN49rzJGy/locations?lat=37.7802277&lng=-122.40416580000002&radius=500000"
+URL = "https://api.storerocket.io/api/user/wjN49rzJGy/locations"
 
 session = SgRequests()
 

@@ -94,6 +94,13 @@ def fetch_data():
                     .split()[-2:]
                 )
                 zip_code = " ".join(zip_code) if zip_code else "<MISSING>"
+            elif country_code == "United Kingdom":
+                state = "<MISSING>"
+                zip_code = (
+                    store_dom.xpath('//span[@class="acs-city"]/text()')[0]
+                    .split(",")[-1]
+                    .strip()
+                )
             else:
                 state = (
                     store_dom.xpath('//span[@class="acs-city"]/text()')[0]

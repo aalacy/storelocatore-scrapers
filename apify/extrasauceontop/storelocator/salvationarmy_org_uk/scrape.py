@@ -35,7 +35,6 @@ for zip_code in search:
 
     grids = soup.find_all("div", attrs={"class": "geolocation-location js-hide"})
 
-    coords = []
     for grid in grids:
         locator_domain = "salvationarmy.org.uk"
         page_url = url
@@ -97,15 +96,12 @@ for zip_code in search:
         phones.append(phone)
         lats.append(current_lat)
         lngs.append(current_lng)
-
-        coords.append([current_lat, current_lng])
+        search.found_location_at(current_lat, current_lng)
 
     grids = soup.find_all("div", attrs={"class": "e-grid-column"})
     for grid in grids:
         location_type = grid.find("p").text.strip()
         location_types.append(location_type)
-
-    search.mark_found(coords)
 
 
 df = pd.DataFrame(

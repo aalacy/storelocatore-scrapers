@@ -99,7 +99,11 @@ def fetch_data():
                                 CS = True
                             if ">Coming " in line2:
                                 CS = True
-                            if ">Opening " in line2:
+                            if (
+                                ">Opening " in line2
+                                and "hours" not in line2
+                                and "Hours" not in line2
+                            ):
                                 CS = True
                             if '"telephone":"' in line2:
                                 phone = line2.split('"telephone":"')[1].split('"')[0]
@@ -109,6 +113,8 @@ def fetch_data():
                         name = "Hyatt Residence Club Maui, Kaanapali Beach"
                     if CS:
                         hours = "Coming Soon"
+                    if "wasxs" in loc:
+                        hours = "<MISSING>"
                     if loc not in locs:
                         locs.append(loc)
                         yield [

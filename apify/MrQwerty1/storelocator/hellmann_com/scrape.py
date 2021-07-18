@@ -68,6 +68,18 @@ def fetch_data():
                     postal = p
                     break
 
+        postal = postal.replace("Hubei", "<MISSING>").replace(" Lisboa", "")
+        if postal == "<MISSING>" and city[0].isdigit():
+            postal = city.split()[0]
+            city = city.replace(city, "").strip()
+
+        if city.endswith(","):
+            city = city[:-1]
+
+        if "2690-379" in street_address:
+            street_address = street_address.replace("2690-379 ", "")
+            postal = "2690-379"
+
         try:
             store_number = j["path"][0]["pid"]
         except:
