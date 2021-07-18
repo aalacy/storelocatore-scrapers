@@ -1,5 +1,5 @@
 import csv
-from lxml import etree
+from lxml import html
 from sgrequests import SgRequests
 from sgscrape.sgpostal import International_Parser, parse_address
 
@@ -46,8 +46,8 @@ def fetch_data():
     }
     r = session.get(api_url, headers=headers)
 
-    root = etree.fromstring(r.content)
-    div = root.xpath("//locator/store/item")
+    tree = html.fromstring(r.content)
+    div = tree.xpath("//locator/store/item")
 
     for d in div:
 
