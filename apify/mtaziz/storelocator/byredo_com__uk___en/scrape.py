@@ -78,11 +78,11 @@ def fetch_data_global():
                     dict.fromkeys(latlng_from_googlemap_url)
                 )
 
-            for idxuk1, address in enumerate(address_data3):
-                logger.info(f"Parsing the address: {idxuk1}: {address}")
+            for idx1, address in enumerate(address_data3):
+                logger.info(f"Parsing the address: {idx1}: {address}")
                 address_without_phone_data = address.split("+")
                 address_wpd = address_without_phone_data[0].strip()
-                logger.info(f"Address without Phone data: {idxuk1}: {address_wpd}")
+                logger.info(f"Address without Phone data: {idx1}: {address_wpd}")
 
                 address_wpd1 = address_wpd.split("Temporarily closed")[0].strip()
                 paddress = parse_address_intl(address_wpd1)
@@ -99,10 +99,10 @@ def fetch_data_global():
                 page_url = page_url if page_url else MISSING
 
                 try:
-                    location_name = location_names[idxuk1]
+                    location_name = location_names[idx1]
                 except:
                     location_name = MISSING
-                logger.info(f"Location Name: {idxuk1}: {location_name}")
+                logger.info(f"Location Name: {idx1}: {location_name}")
 
                 country_code = r.url.split("/")[-1]
                 if country_code == "china":
@@ -127,7 +127,7 @@ def fetch_data_global():
                 store_number = "<MISSING>"
                 phone = ""
 
-                phone_data_to_be_parsed = phone_numbers[idxuk1]
+                phone_data_to_be_parsed = phone_numbers[idx1]
                 for match in phonenumbers.PhoneNumberMatcher(
                     phone_data_to_be_parsed, country_code
                 ):
@@ -137,15 +137,15 @@ def fetch_data_global():
                 phone = phone if phone else MISSING
                 location_type = "<MISSING>"
                 if country_code == "US":
-                    if "@" in latlng_from_googlemap_url_deduped[idxuk1]:
+                    if "@" in latlng_from_googlemap_url_deduped[idx1]:
                         latitude = (
-                            latlng_from_googlemap_url_deduped[idxuk1]
+                            latlng_from_googlemap_url_deduped[idx1]
                             .split("@")[1]
                             .split(",")[0]
                             or "<MISSING>"
                         )
                         longitude = (
-                            latlng_from_googlemap_url_deduped[idxuk1]
+                            latlng_from_googlemap_url_deduped[idx1]
                             .split("@")[1]
                             .split(",")[1]
                             or "<MISSING>"
@@ -155,13 +155,13 @@ def fetch_data_global():
                         longitude = "<MISSING>"
                 else:
                     latitude = (
-                        latlng_from_googlemap_url_deduped[idxuk1]
+                        latlng_from_googlemap_url_deduped[idx1]
                         .split("@")[1]
                         .split(",")[0]
                         or "<MISSING>"
                     )
                     longitude = (
-                        latlng_from_googlemap_url_deduped[idxuk1]
+                        latlng_from_googlemap_url_deduped[idx1]
                         .split("@")[1]
                         .split(",")[1]
                         or "<MISSING>"
@@ -523,11 +523,11 @@ def fetch_data_korea():
                     dict.fromkeys(latlng_from_googlemap_url)
                 )
 
-            for idxuk1, address in enumerate(address_data3):
-                logger.info(f"Parsing the address: {idxuk1}: {address}")
+            for idx1, address in enumerate(address_data3):
+                logger.info(f"Parsing the address: {idx1}: {address}")
                 address_without_phone_data = address.split("+")
                 address_wpd = address_without_phone_data[0].strip()
-                logger.info(f"Address without Phone data: {idxuk1}: {address_wpd}")
+                logger.info(f"Address without Phone data: {idx1}: {address_wpd}")
 
                 address_wpd1 = address_wpd.split("Temporarily closed")[0].strip()
                 paddress = parse_address_intl(address_wpd1)
@@ -544,10 +544,10 @@ def fetch_data_korea():
                 page_url = page_url if page_url else MISSING
 
                 try:
-                    location_name = location_names[idxuk1]
+                    location_name = location_names[idx1]
                 except:
                     location_name = MISSING
-                logger.info(f"Location Name: {idxuk1}: {location_name}")
+                logger.info(f"Location Name: {idx1}: {location_name}")
 
                 country_code = r.url.split("/")[-1]
                 if country_code == "china":
@@ -571,7 +571,7 @@ def fetch_data_korea():
 
                 store_number = "<MISSING>"
                 phone = ""
-                phone_data_to_be_parsed = phone_numbers[idxuk1]
+                phone_data_to_be_parsed = phone_numbers[idx1]
                 for match in phonenumbers.PhoneNumberMatcher(
                     phone_data_to_be_parsed, country_code
                 ):
@@ -581,15 +581,15 @@ def fetch_data_korea():
                 phone = phone if phone else MISSING
                 location_type = "<MISSING>"
                 if country_code == "US":
-                    if "@" in latlng_from_googlemap_url_deduped[idxuk1]:
+                    if "@" in latlng_from_googlemap_url_deduped[idx1]:
                         latitude = (
-                            latlng_from_googlemap_url_deduped[idxuk1]
+                            latlng_from_googlemap_url_deduped[idx1]
                             .split("@")[1]
                             .split(",")[0]
                             or "<MISSING>"
                         )
                         longitude = (
-                            latlng_from_googlemap_url_deduped[idxuk1]
+                            latlng_from_googlemap_url_deduped[idx1]
                             .split("@")[1]
                             .split(",")[1]
                             or "<MISSING>"
@@ -599,13 +599,13 @@ def fetch_data_korea():
                         longitude = "<MISSING>"
                 else:
                     latitude = (
-                        latlng_from_googlemap_url_deduped[idxuk1]
+                        latlng_from_googlemap_url_deduped[idx1]
                         .split("@")[1]
                         .split(",")[0]
                         or "<MISSING>"
                     )
                     longitude = (
-                        latlng_from_googlemap_url_deduped[idxuk1]
+                        latlng_from_googlemap_url_deduped[idx1]
                         .split("@")[1]
                         .split(",")[1]
                         or "<MISSING>"
