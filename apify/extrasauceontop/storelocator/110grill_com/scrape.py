@@ -79,7 +79,9 @@ driver = get_driver(base_url)
 response = driver.page_source
 
 json_objects = extract_json(response.split("preloadQueries")[1])
-location_contenders = json_objects[0]["data"]["restaurant"]["homePage"]["sections"]
+first_location = json_objects[0]["data"]["restaurant"]["firstLocation"]
+
+location_contenders = json_objects[2]["data"]["restaurant"]["pageContent"]["sections"]
 
 for item in location_contenders:
     if len(item["locations"]) > 1:

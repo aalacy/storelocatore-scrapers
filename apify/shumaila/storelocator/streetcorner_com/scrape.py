@@ -101,7 +101,12 @@ def fetch_data():
             else:
                 if len(pcode) == 4:
                     pcode = "0" + pcode
+            ltype = "Store"
             hours = hours.encode("ascii", "ignore").decode("ascii")
+            if "mall" in title.lower() or "plaza" in title.lower():
+                ltype = "Mall"
+            elif "gas" in title.lower() or "fuel" in title.lower():
+                ltype = "Gas Station"
             if title.find("Coming Soon") == -1:
                 data.append(
                     [
@@ -115,7 +120,7 @@ def fetch_data():
                         "US",
                         "<MISSING>",
                         phone,
-                        "Gas Station, Mall",
+                        ltype,
                         lat.strip(),
                         longt,
                         hours.replace("am", "am-"),

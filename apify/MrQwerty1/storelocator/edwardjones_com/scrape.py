@@ -1,4 +1,5 @@
 import csv
+import time
 import usaddress
 
 from concurrent import futures
@@ -99,7 +100,8 @@ def get_data(url):
     try:
         js = r.json()["results"]
     except:
-        return []
+        time.sleep(5)
+        get_data(url)
 
     for j in js:
         location_name = j.get("faName")
@@ -151,7 +153,7 @@ def fetch_data():
     out = []
     urls = get_urls()
 
-    with futures.ThreadPoolExecutor(max_workers=3) as executor:
+    with futures.ThreadPoolExecutor(max_workers=1) as executor:
         future_to_url = {executor.submit(get_data, url): url for url in urls}
         for future in futures.as_completed(future_to_url):
             rows = future.result()
