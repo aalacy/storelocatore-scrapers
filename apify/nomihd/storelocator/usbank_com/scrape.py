@@ -42,7 +42,7 @@ def fetch_data():
                         + " and "
                         + "".join(title.split("and")[1]).strip()
                     )
-                if "Branch and ATM" in title:
+                if "Branch and ATM" in title or "Branch" in title:
                     page_url = (
                         base_url
                         + "".join(
@@ -99,7 +99,13 @@ def fetch_data():
                     ).strip()
 
                     store_number = "<MISSING>"
-                    location_type = "Branch and ATM"
+
+                    location_type = ""
+                    if "Branch and ATM" in location_name:
+                        location_type = "Branch and ATM"
+                    else:
+                        if "Branch" in location_name:
+                            location_type = "Branch"
 
                     hours = store_sel.xpath(
                         '//table[@class="lobbyTimes"]//tr[position()>1]'

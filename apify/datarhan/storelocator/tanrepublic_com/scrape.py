@@ -57,8 +57,13 @@ def fetch_data():
         location_name = poi["name"]
         location_name = location_name if location_name else "<MISSING>"
         street_address = poi["address"].split(",")[0]
+        if "suite" in poi["address"].lower():
+            street_address = " ".join(poi["address"].split(",")[:2])
         city = poi["city"]
         city = city if city else "<MISSING>"
+        if "Las Vegas" in street_address:
+            street_address = street_address.replace("Las Vegas", "").strip()
+            city = "Las Vegas"
         state = poi["state"]
         state = state if state else "<MISSING>"
         zip_code = poi["postcode"]
@@ -66,8 +71,9 @@ def fetch_data():
         country_code = poi["country"]
         country_code = country_code if country_code else "<MISSING>"
         store_number = poi["marker_id"]
-        phone = "<MISSING>"
-        location_type = "<MISSING>"
+        phone = poi["phone"]
+        phone = phone if phone else "<MISSING>"
+        location_type = poi["location_type_name"]
         latitude = poi["lat"]
         longitude = poi["lng"]
         hoo = []
