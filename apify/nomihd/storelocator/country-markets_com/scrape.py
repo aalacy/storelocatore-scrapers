@@ -57,7 +57,14 @@ def fetch_data():
                 ):
                     hours_of_operation = stores[index]["hours_md"]
 
-        hours_of_operation = "; ".join(hours_of_operation.split("\n")).strip()
+        hours_of_operation = (
+            "; ".join(hours_of_operation.split("\n"))
+            .strip()
+            .replace("April 4th, 2021 Easter Sunday: Closed", "")
+            .strip()
+            .replace("; ;", "")
+            .strip()
+        )
 
         latitude = stores[index]["latitude"]
         longitude = stores[index]["longitude"]

@@ -4,7 +4,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
 import re
-from sgscrape.sgpostal import parse_address_intl
 
 logger = SgLogSetup().get_logger("budgetinn")
 
@@ -34,20 +33,32 @@ def fetch_data():
                 sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
                 if not sp1.select_one(".addrs"):
                     continue
-                addr = parse_address_intl(
-                    " ".join(sp1.select_one(".addrs").stripped_strings)
-                )
-                street_address = addr.street_address_1
-                if addr.street_address_2:
-                    street_address += " " + addr.street_address_2
+                addr = list(sp1.select_one(".addrs").stripped_strings)
+                country_code = addr[-1].split(",")[-1].strip()
+                if not addr[-1]:
+                    continue
+                elif "us" in addr[-1].lower():
+                    country_code = "Us"
+                elif "ca" in addr[-1].lower():
+                    country_code = "Ca"
+                else:
+                    continue
+                street_address = addr[0]
+                if len(addr) == 2:
+                    street_address = ""
+                city = addr[-2].split("-")[0].strip()
+                zip_postal = addr[-2].split("-")[-1].strip()
+                if country_code == "Us":
+                    zip_postal = zip_postal.split(" ")[-1]
+                state = addr[-1].split(",")[0].strip()
                 yield SgRecord(
                     page_url=page_url,
                     location_name=sp1.select_one("h2.head").text.strip(),
                     street_address=street_address,
-                    city=addr.city,
-                    state=addr.state,
-                    zip_postal=addr.postcode,
-                    country_code="US",
+                    city=city,
+                    state=state,
+                    zip_postal=zip_postal,
+                    country_code=country_code,
                     locator_domain=locator_domain,
                 )
 

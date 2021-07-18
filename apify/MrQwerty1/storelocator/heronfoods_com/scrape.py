@@ -71,6 +71,8 @@ def get_urls(coord):
 
 def get_data(page_url):
     locator_domain = "https://heronfoods.com/"
+    if not page_url:
+        return
 
     session = SgRequests()
     r = session.get(page_url)

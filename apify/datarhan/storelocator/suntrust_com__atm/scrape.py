@@ -73,23 +73,9 @@ def fetch_data():
             store_number = store_number if store_number else "<MISSING>"
             phone = poi["fields"]["Phone_Published"]
             phone = phone if phone else "<MISSING>"
-            summ = 0
-            for key, value in poi["fields"].items():
-                if "Is_" in key:
-                    if not value:
-                        continue
-                    if type(value) != int:
-                        continue
-                    summ += int(value)
-            location_type = ""
-            if summ > 1:
-                if poi["fields"]["Is_Branch"] == 1:
-                    location_type = "branch"
-            if summ == 1:
-                if poi["fields"]["Is_ATM"] == 1:
-                    location_type = "atm"
-            if not location_type:
-                location_type = "atm, branch"
+            location_type = "atm"
+            if poi["fields"]["Is_Mortgage_Office"]:
+                location_type = "branch"
             location_type = location_type if location_type else "<MISSING>"
             latitude = poi["fields"]["mqap_geography"]["latLng"]["lat"]
             latitude = latitude if latitude else "<MISSING>"
@@ -103,16 +89,13 @@ def fetch_data():
             store_url = "<MISSING>"
             if location_type != "<MISSING>":
                 store_url = "https://www.suntrust.com/{}/{}/{}/{}/{}?location={}"
-                location = "{} {} {}".format(
-                    city, poi["fields"]["region_code"], zip_code
-                )
                 store_url = store_url.format(
                     location_type,
                     state,
                     city.replace(" ", "-"),
                     zip_code,
-                    poi["fields"]["seo_name"],
-                    location,
+                    location_name.replace(" ", "-"),
+                    zip_code,
                 )
 
             item = [

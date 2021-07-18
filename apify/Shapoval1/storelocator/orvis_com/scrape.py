@@ -55,20 +55,25 @@ def fetch_data():
         city = j.get("city") or "<MISSING>"
         state = j.get("stateCode") or "<MISSING>"
         country_code = j.get("countryCode") or "<MISSING>"
-        postal = j.get("postalCode") or "<MISSING>"
+
+        postal = "".join(j.get("postalCode")) or "<MISSING>"
+        if postal.find("-") != -1:
+            postal = postal.split("-")[0].strip()
+        if not postal.isdigit():
+            country_code = "UK"
         store_number = "<MISSING>"
         latitude = j.get("latitude") or "<MISSING>"
         longitude = j.get("longitude") or "<MISSING>"
         location_type = j.get("storeType") or "<MISSING>"
         hours_of_operation = j.get("storeHours") or "<MISSING>"
-        phone = "<MISSING>"
         if hours_of_operation != "<MISSING>":
+            hours_of_operation = html.fromstring(hours_of_operation)
             hours_of_operation = (
-                "".join(hours_of_operation)
+                "".join(hours_of_operation.xpath("//*//text()"))
                 .replace("\n", "")
-                .replace("<br/>", "")
                 .strip()
             )
+        phone = "<MISSING>"
         if (
             page_url
             != "https://www.orvis.com/stores?showMap=true&horizontalView=true&isForm=true"
