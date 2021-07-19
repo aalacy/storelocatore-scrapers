@@ -47,7 +47,7 @@ def get_data(coord):
     rows = []
     lat, lng = coord
     locator_domain = "https://ecoatm.com"
-    api = "https://locations.ecoatm.com"
+    api = f"https://ws.bullseyelocations.com/RestSearch.svc/DoSearch2?FillAttr=true&GetHoursForUpcomingWeek=true&Radius=100&StartIndex=0&PageSize=50&Latitude={lat}&Longitude={lng}&CountryId=1&InterfaceID=15703&ClientId=5965&ApiKey=e722b82b-de25-4ceb-b09f-aab90c59d4b6"
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:89.0) Gecko/20100101 Firefox/89.0",
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
@@ -61,47 +61,30 @@ def get_data(coord):
         "Cache-Control": "no-cache",
     }
 
-    data = {"latitudeInput": lat, "longitudeInput": lng}
-
     session = SgRequests()
-    r = session.post(api, headers=headers, data=data)
-    tree = html.fromstring(r.text)
-    divs = tree.xpath("//div[@class='resultsDetails']")
+    r = session.get(api, headers=headers)
+    js = r.json()["ResultList"]
 
-    for d in divs:
-        location_name = "".join(d.xpath(".//h3[@itemprop='name']/a/text()")).strip()
-        page_url = "https://locations.ecoatm.com/" + "".join(
-            d.xpath(".//h3[@itemprop='name']/a/@href")
-        )
+    for j in js:
+        location_name = j.get("Name")
+        page_url = j.get("URL")
 
-        street_address = "".join(
-            d.xpath(".//span[@itemprop='streetAddress']/text()")
-        ).strip()
-        city = "".join(d.xpath(".//span[@itemprop='addressLocality']/text()")).strip()
-        if city.endswith(","):
-            city = city[:-1].strip()
-        state = "".join(d.xpath(".//span[@itemprop='addressRegion']/text()")).strip()
-        postal = "".join(d.xpath(".//span[@itemprop='postalCode']/text()")).strip()
+        street_address = f'{j.get("Address1")} {j.get("Address2") or ""}'.strip()
+        city = j.get("City") or "<MISSING>"
+        state = j.get("State") or "<MISSING>"
+        postal = j.get("PostCode") or "<MISSING>"
         country_code = "US"
-        store_number = "<MISSING>"
-        phone = "".join(d.xpath(".//span[@itemprop='telephone']/a/text()")).strip()
-        latitude = (
-            "".join(d.xpath(".//meta[@itemprop='latitude']/@content")).replace(",", ".")
-            or "<MISSING>"
-        )
-        longitude = (
-            "".join(d.xpath(".//meta[@itemprop='longitude']/@content")).replace(
-                ",", "."
-            )
-            or "<MISSING>"
-        )
-        location_type = "<MISSING>"
+        store_number = j.get("ThirdPartyId") or "<MISSING>"
+        phone = j.get("PhoneNumber") or "<MISSING>"
+        latitude = j.get("Latitude") or "<MISSING>"
+        longitude = j.get("Longitude") or "<MISSING>"
+        location_type = j.get("LocationTypeName") or "<MISSING>"
 
         _tmp = []
-        hours = d.xpath(".//div[@class='hoursItemWrap']")
+        hours = j.get("DailyHoursList") or []
         for h in hours:
-            day = "".join(h.xpath(".//span[@class='dayName']/text()")).strip()
-            time = "".join(h.xpath(".//span[@class='regularHours']/text()")).strip()
+            day = h.get("NameOfDay")
+            time = h.get("HoursDisplayText")
             _tmp.append(f"{day}: {time}")
 
         hours_of_operation = ";".join(_tmp) or "<MISSING>"

@@ -1,4 +1,3 @@
-import unicodedata
 from sglogging import sglog
 from bs4 import BeautifulSoup
 from sgrequests import SgRequests
@@ -40,12 +39,6 @@ def fetch_data():
                 .get_text(separator="|", strip=True)
                 .replace("|", " ")
             )
-            hours_of_operation = (
-                unicodedata.normalize("NFD", hours_of_operation)
-                .encode("ascii", "ignore")
-                .decode("utf-8")
-            )
-            hours_of_operation = hours_of_operation.replace("MonThurs", "Mon–Thurs")
             try:
                 location_type = loc.find("div", {"class": "services"}).text.replace(
                     "24/7 ATM Only;", ""
