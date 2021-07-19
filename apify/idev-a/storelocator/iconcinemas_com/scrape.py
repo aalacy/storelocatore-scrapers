@@ -10,7 +10,7 @@ _headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
 }
 
-locator_domain = "https://www.iconcinemas.com/"
+locator_domain = "https://www.iconcinemas.com"
 base_url = "https://www.iconcinemas.com/"
 
 
@@ -26,13 +26,30 @@ def fetch_data():
             alert = sp1.select_one("div#alertMessage img.img-responsive")
             if alert and "edmondcomingsoonart.jpg" in alert["src"]:
                 continue
-            addr = sp1.select_one("h2 strong").text.strip()
+            addr = list(sp1.select_one("div#footer-address p a").stripped_strings)
+            map_url = page_url + sp1.select_one("div#footer-address p a")["href"]
+            res = session.get(map_url, headers=_headers).text
+            try:
+                coord = (
+                    res.split("new google.maps.LatLng(")[1].split(");")[0].split(",")
+                )
+            except:
+                coord = ["", ""]
             yield SgRecord(
                 page_url=page_url,
-                location_name=addr,
-                city=addr.split(",")[0].strip(),
-                state=addr.split(",")[1],
+                location_name=sp1.select_one("h2 strong").text.strip(),
+                street_address=addr[0],
+                city=addr[1].split(",")[0].strip(),
+                state=addr[1].split(",")[1].strip().split(" ")[0].strip(),
+                zip_postal=addr[1]
+                .replace("\xa0", " ")
+                .split(",")[1]
+                .strip()
+                .split(" ")[-1]
+                .strip(),
                 country_code="US",
+                latitude=coord[0],
+                longitude=coord[1],
                 locator_domain=locator_domain,
             )
 
