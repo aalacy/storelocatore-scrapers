@@ -24,27 +24,22 @@ def fetch_data():
                 continue
             page_url = locator_domain + link.select_one("span.location")["data-link"]
             coord = link.select_one("span.location")["data-location"].split(":")
-            try:
-                yield SgRecord(
-                    page_url=page_url,
-                    location_name=link.h3.text.strip(),
-                    street_address=addr[0],
-                    city=addr[1].split(",")[0].strip(),
-                    state=addr[1].split(",")[1].strip().split(" ")[0].strip(),
-                    zip_postal=addr[1].split(",")[1].strip().split(" ")[-1].strip(),
-                    country_code="US",
-                    phone=link.select_one("div.phone a").text.strip(),
-                    locator_domain=locator_domain,
-                    latitude=coord[1],
-                    longitude=coord[0],
-                    hours_of_operation="; ".join(
-                        link.select_one("div.hours").stripped_strings
-                    ).replace("–", "-"),
-                )
-            except:
-                import pdb
-
-                pdb.set_trace()
+            yield SgRecord(
+                page_url=page_url,
+                location_name=link.h3.text.strip(),
+                street_address=addr[0],
+                city=addr[1].split(",")[0].strip(),
+                state=addr[1].split(",")[1].strip().split(" ")[0].strip(),
+                zip_postal=addr[1].split(",")[1].strip().split(" ")[-1].strip(),
+                country_code="US",
+                phone=link.select_one("div.phone a").text.strip(),
+                locator_domain=locator_domain,
+                latitude=coord[1],
+                longitude=coord[0],
+                hours_of_operation="; ".join(
+                    link.select_one("div.hours").stripped_strings
+                ).replace("–", "-"),
+            )
 
 
 if __name__ == "__main__":
