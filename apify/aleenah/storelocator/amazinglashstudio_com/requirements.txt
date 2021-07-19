@@ -1,2 +1,2 @@
 beautifulsoup4==4.8.0
-sgrequests==0.0.12
+sgrequests==0.1.12
