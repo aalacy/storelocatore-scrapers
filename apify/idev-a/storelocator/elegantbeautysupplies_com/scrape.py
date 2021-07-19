@@ -88,7 +88,9 @@ def fetch_data():
                 longitude=coord[1],
                 country_code="US",
                 locator_domain=locator_domain,
-                hours_of_operation=_valid("; ".join(hours)).replace("\u200b", ""),
+                hours_of_operation="; ".join(hours)
+                .replace("–", "-")
+                .replace("\u200b", ""),
             )
 
 

@@ -83,10 +83,12 @@ def fetch_data():
             if _p(_addr[-1]):
                 phone = _addr[-1].split("and")[0]
                 del _addr[-1]
-            addr = parse_address_intl(" ".join(_addr).replace("\xa0", " "))
+            addr = parse_address_intl(", ".join(_addr).replace("\xa0", " "))
             street_address = addr.street_address_1
             if addr.street_address_2:
                 street_address += " " + addr.street_address_2
+            city = addr.city
+            state = addr.state
             try:
                 coord = _.a["href"].split("!3d")[1].split("!3m")[0].split("!4d")
             except:
@@ -94,12 +96,22 @@ def fetch_data():
                     coord = _.a["href"].split("/@")[1].split("/data")[0].split(",")
                 except:
                     coord = ["", ""]
+            if addr.country == "Mexico":
+                city = _addr[1].replace("\xa0", " ").split(",")[0].strip()
+                state = (
+                    _addr[1]
+                    .replace("\xa0", " ")
+                    .split(",")[1]
+                    .strip()
+                    .split(" ")[0]
+                    .strip()
+                )
             yield SgRecord(
                 page_url=base_url,
                 location_name=" ".join(_.h5.stripped_strings).replace("’", "'"),
                 street_address=street_address,
-                city=addr.city,
-                state=addr.state,
+                city=city,
+                state=state,
                 zip_postal=addr.postcode,
                 country_code=addr.country,
                 phone=phone,

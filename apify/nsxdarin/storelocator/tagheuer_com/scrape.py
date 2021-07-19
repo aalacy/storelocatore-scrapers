@@ -38,6 +38,7 @@ def write_output(data):
 
 
 def fetch_data():
+    ids = []
     countries = [
         "ar",
         "au",
@@ -224,22 +225,27 @@ def fetch_data():
                     state = "<MISSING>"
                 if zc == "":
                     zc = "<MISSING>"
-                yield [
-                    website,
-                    loc,
-                    name,
-                    add,
-                    city,
-                    state,
-                    zc,
-                    country,
-                    store,
-                    phone,
-                    typ,
-                    lat,
-                    lng,
-                    hours,
-                ]
+                if country == "US":
+                    if " " in zc:
+                        zc = zc.rsplit(" ", 1)[1].strip()
+                if store not in ids:
+                    ids.append(store)
+                    yield [
+                        website,
+                        loc,
+                        name,
+                        add,
+                        city,
+                        state,
+                        zc,
+                        country,
+                        store,
+                        phone,
+                        typ,
+                        lat,
+                        lng,
+                        hours,
+                    ]
 
 
 def scrape():

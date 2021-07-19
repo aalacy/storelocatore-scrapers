@@ -37,7 +37,7 @@ def fetch_data():
     out = []
 
     locator_domain = "https://jugojuice.com/"
-    api_url = "https://jugojuice.com/wp-content/plugins/superstorefinder-wp/ssf-wp-xml.php?wpml_lang=en&t=1626429161801"
+    api_url = "https://jugojuice.com/wp-content/plugins/superstorefinder-wp/ssf-wp-xml.php?wpml_lang=en&t=1626731353763"
 
     session = SgRequests()
 
@@ -54,11 +54,13 @@ def fetch_data():
         page_url = (
             "".join(d.xpath(".//exturl/text()")) or "https://jugojuice.com/locations/"
         )
-        ad = "".join(d.xpath(".//address/text()")).replace("&#44;", ",").strip()
+        ad = "".join(d.xpath(".//address/text()[1]")).replace("&#44;", ",")
         a = parse_address(International_Parser(), ad)
         street_address = f"{a.street_address_1} {a.street_address_2}".replace(
             "None", ""
         ).strip()
+        if street_address == "15":
+            street_address = ad.split(",")[0].strip()
         state = a.state or "<MISSING>"
         postal = a.postcode or "<MISSING>"
         city = a.city or "<MISSING>"
@@ -66,8 +68,7 @@ def fetch_data():
         location_name = (
             "".join(d.xpath(".//location/text()"))
             .replace("&#39;", "`")
-            .replace("&amp;", "&")
-            .strip()
+            .replace(" â", "")
         )
         latitude = "".join(d.xpath(".//latitude/text()"))
         longitude = "".join(d.xpath(".//longitude/text()"))
@@ -75,60 +76,27 @@ def fetch_data():
         location_type = "Jugo Juice"
         phone = "".join(d.xpath(".//telephone/text()"))
         hours_of_operation = (
-            "".join(d.xpath(".//operatingHours//text()"))
-            .replace("\n", "")
-            .replace("<div>", "")
-            .replace("</div>", "")
-            .replace('<span style="white-space:pre">', "")
-            .replace("</span>", "")
+            "".join(d.xpath(".//exturl/following-sibling::*[1]/text()")) or "<MISSING>"
         )
-        hours_of_operation = hours_of_operation.replace(
-            '<span style="font-size: 12px;">', ""
-        ).replace('<font color="#333333" face="Roboto, sans-serif">', "")
-        hours_of_operation = (
-            hours_of_operation.replace('<span style="font-size: 16px;">', "")
-            .replace("</font>", "")
-            .replace("&nbsp;", " ")
-            .replace("&lt;br&gt;", "")
-            .replace("<br>", "")
-        )
-        hours_of_operation = (
-            hours_of_operation.replace("	​", " ")
-            .replace("	", " ")
-            .replace(
-                '<span style="background-color: rgb(255, 255, 255); font-size: 16px;"><div style="">',
-                "",
+        if hours_of_operation != "<MISSING>":
+            a = html.fromstring(hours_of_operation)
+            hours_of_operation = a.xpath("//*//text()")
+            hours_of_operation = list(
+                filter(None, [a.strip() for a in hours_of_operation])
             )
-        )
-        hours_of_operation = (
-            hours_of_operation.replace('<span style="white-space: pre;">', "")
-            .replace('<div style="">', " ")
-            .replace(
-                '<p class="p1" style="margin-top: 0px; margin-bottom: 0px; font-variant-numeric: normal; font-variant-east-asian: normal; font-stretch: normal; line-height: normal;">',
-                "",
+            hours_of_operation = (
+                " ".join(hours_of_operation)
+                .replace("â", "")
+                .replace("ââ", "")
+                .replace(" <br> ", " ")
+                .replace("<br>", "")
+                .strip()
             )
-        )
-        hours_of_operation = (
-            hours_of_operation.replace(
-                '<span style="font-family: inherit; font-weight: inherit;">', ""
-            )
-            .replace("</p>", "")
-            .replace('<font color="#000000" face="Helvetica Neue">', "")
-        )
-
-        hours_of_operation = hours_of_operation or "<MISSING>"
-        hours_of_operation = hours_of_operation.replace(
-            '<span style="color: rgb(0, 0, 0); font-family: &quot;Helvetica Neue&quot;; font-size: 12px; font-weight: inherit;">',
-            "",
-        )
-        hours_of_operation = hours_of_operation.replace(
-            '<span style="color: rgb(0, 0, 0); font-family: &quot;Helvetica Neue&quot;; font-size: 12px;">​',
-            "",
-        ).strip()
         if hours_of_operation.find("*") != -1:
             hours_of_operation = hours_of_operation.split("*")[0].strip()
         if hours_of_operation.find("(") != -1:
             hours_of_operation = hours_of_operation.split("(")[0].strip()
+
         if "Temporarily Closed" in location_name:
             location_type = "Temporarily Closed"
         if "temporarily closed" in location_name:
