@@ -2,6 +2,7 @@ import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from tenacity import retry, stop_after_attempt
 
 logger = SgLogSetup().get_logger("walgreens_com__pharmacy")
 
@@ -40,6 +41,7 @@ def get(obj, key, default=MISSING):
     return obj.get(key, default) or default
 
 
+@retry(stop=stop_after_attempt(3))
 def fetch_stores():
     data = {
         "apiKey": "0IILjid96hgTNUwAVKFldgNA4Fe3Cwcr",
@@ -54,12 +56,17 @@ def fetch_stores():
     return [int(number) for number in response["store"]]
 
 
+@retry(stop=stop_after_attempt(3))
 def fetch_location(store_number, session):
     page_url = f"https://www.walgreens.com/locator/v1/stores/{store_number}"
-    data = session.get(page_url).json()
+    response = session.get(page_url)
 
+    data = response.json()
     if data.get("messages"):  # invalid store number
-        return None
+        if data["messages"]["type"] == "ERROR":
+            return None
+        else:
+            raise Exception()
 
     locator_domain = "walgreens.com"
     location_name = MISSING
@@ -84,13 +91,13 @@ def fetch_location(store_number, session):
 
     location_type = (
         "TelePharmacy Kiosk"
-        if get(info, "storeBrand") != "Walgreens"
+        if get(data, "storeBrand") != "Walgreens"
         else "Walgreens Pharmacy"
     )
 
     hours = get(info, "hrs", [])
     hours_of_operation = (
-        [f'{hr["day"]}: {hr["open"]}-{hr["close"]}' for hr in hours]
+        ','.join([f'{hr["day"]}: {hr["open"]}-{hr["close"]}' for hr in hours])
         if len(hours)
         else MISSING
     )
