@@ -47,7 +47,7 @@ def fetch_data():
         country_code = "US"
         try:
             hours_of_operation = (
-                str(temp["openingHours"]).replace('["', "").replace(']"', "")
+                str(temp["openingHours"]).replace("['", "").replace("]'", "")
             )
             phone = temp["telephone"]
         except:

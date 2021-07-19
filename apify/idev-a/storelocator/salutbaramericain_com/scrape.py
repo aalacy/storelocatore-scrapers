@@ -60,7 +60,7 @@ def fetch_data():
             yield SgRecord(
                 page_url=page_url,
                 location_name=sp1.select_one("div.entry-content h1").text.strip(),
-                street_address=addr[0].strip(),
+                street_address=addr[0].replace("50th and France", "").strip(),
                 city=addr[1].strip(),
                 state=addr[2].strip().split(" ")[0].strip(),
                 zip_postal=addr[2].strip().split(" ")[-1].strip(),

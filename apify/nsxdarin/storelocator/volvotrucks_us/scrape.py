@@ -42,7 +42,7 @@ def fetch_data():
     website = "volvotrucks.us"
     for line in r.iter_lines(decode_unicode=True):
         if '"IDENTIFIER_VALUE":"' in line:
-            items = line.split(',"SELECT_EMAIL_ADDRESS":""},"')
+            items = line.split('SELECT_EMAIL_ADDRESS":""}')
             for item in items:
                 if "MAIN_ADDRESS_LINE_1_TXT" in item:
                     loc = item.split('"WEB_ADDRESS":"')[1].split('"')[0]
