@@ -1,2 +1,2 @@
-sgrequests==0.0.4
-sglogging==0.1.12
+sgrequests==0.1.12
+sglogging==0.0.4
