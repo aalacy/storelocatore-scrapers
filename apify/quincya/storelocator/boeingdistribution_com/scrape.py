@@ -136,7 +136,6 @@ def fetch_data():
                 latitude,
                 longitude,
                 hours_of_operation,
-                raw_text,
             ]
         )
 

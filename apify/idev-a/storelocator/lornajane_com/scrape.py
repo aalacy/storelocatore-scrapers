@@ -42,17 +42,17 @@ def fetch_data():
                     hours = hours[1:]
                 yield SgRecord(
                     page_url=page_url,
-                    street_address=" ".join(addr[:-1]),
-                    city=addr[-1].split(",")[0].strip(),
-                    state=addr[-1].split(",")[1].strip(),
-                    zip_postal=addr[-1].split(",")[2].strip(),
+                    street_address=" ".join(addr[:-1]).replace("\n", ""),
+                    city=addr[-1].split(",")[0].replace("\n", "").strip(),
+                    state=addr[-1].split(",")[1].replace("\n", "").strip(),
+                    zip_postal=addr[-1].split(",")[2].replace("\n", "").strip(),
                     store_number=_["data-store-id"],
                     location_name=_["data-store-name"],
                     phone=phone,
                     latitude=coord[0],
                     longitude=coord[1],
                     hours_of_operation="; ".join(hours),
-                    raw_address=" ".join(addr),
+                    raw_address=" ".join(addr).replace("\n", ""),
                 )
 
 
