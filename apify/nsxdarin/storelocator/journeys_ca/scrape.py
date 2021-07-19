@@ -1,6 +1,5 @@
 import csv
 from sgrequests import SgRequests
-import json
 from sglogging import SgLogSetup
 
 logger = SgLogSetup().get_logger("journeys_ca")
