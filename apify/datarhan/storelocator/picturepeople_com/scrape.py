@@ -58,8 +58,9 @@ def fetch_data():
     viewgen = dom.xpath('//input[@name="__VIEWSTATEGENERATOR"]/@value')[0]
     eventval = dom.xpath('//input[@name="__EVENTVALIDATION"]/@value')[0]
 
+    all_locations = []
     all_codes = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA], expected_search_radius_miles=100
+        country_codes=[SearchableCountries.USA], expected_search_radius_miles=200
     )
     for code in all_codes:
         formdata = {
@@ -84,34 +85,33 @@ def fetch_data():
         viewstate = dom.xpath('//input[@name="__VIEWSTATE"]/@value')[0]
         viewgen = dom.xpath('//input[@name="__VIEWSTATEGENERATOR"]/@value')[0]
         eventval = dom.xpath('//input[@name="__EVENTVALIDATION"]/@value')[0]
+        all_locations += dom.xpath('//div[@class="LocationDiv"]')
 
-        for poi_html in dom.xpath('//div[@class="LocationDiv"]'):
-            location_name = poi_html.xpath('.//div[@class="StudioInfoClass"]/b/text()')
-            location_name = location_name[0] if location_name else "<MISSING>"
-            raw_address = poi_html.xpath('.//div[@class="StudioInfoClass"]/text()')
-            zip_code = raw_address[1].split(", ")[-1].split()[-1]
-            phone = (
-                raw_address[-1] if zip_code not in raw_address[-1] else SgRecord.MISSING
-            )
+    for poi_html in all_locations:
+        location_name = poi_html.xpath('.//div[@class="StudioInfoClass"]/b/text()')
+        location_name = location_name[0] if location_name else "<MISSING>"
+        raw_address = poi_html.xpath('.//div[@class="StudioInfoClass"]/text()')
+        zip_code = raw_address[1].split(", ")[-1].split()[-1]
+        phone = raw_address[-1] if zip_code not in raw_address[-1] else SgRecord.MISSING
 
-            item = SgRecord(
-                locator_domain=DOMAIN,
-                page_url=SgRecord.MISSING,
-                location_name=location_name,
-                street_address=raw_address[0],
-                city=raw_address[1].split(", ")[0],
-                state=raw_address[1].split(", ")[-1].split()[0],
-                zip_postal=zip_code,
-                country_code=SgRecord.MISSING,
-                store_number=SgRecord.MISSING,
-                phone=phone,
-                location_type=SgRecord.MISSING,
-                latitude=SgRecord.MISSING,
-                longitude=SgRecord.MISSING,
-                hours_of_operation=SgRecord.MISSING,
-            )
+        item = SgRecord(
+            locator_domain=DOMAIN,
+            page_url=SgRecord.MISSING,
+            location_name=location_name,
+            street_address=raw_address[0],
+            city=raw_address[1].split(", ")[0],
+            state=raw_address[1].split(", ")[-1].split()[0],
+            zip_postal=zip_code,
+            country_code=SgRecord.MISSING,
+            store_number=SgRecord.MISSING,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=SgRecord.MISSING,
+            longitude=SgRecord.MISSING,
+            hours_of_operation=SgRecord.MISSING,
+        )
 
-            yield item
+        yield item
 
 
 def scrape():
