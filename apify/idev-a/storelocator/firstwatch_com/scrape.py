@@ -62,7 +62,7 @@ def fetch_data():
                 session.get(store["page_url"], headers=_headers).text, "lxml"
             ).find("script", {"id": "locations-detail"})
             hours_of_operation = SgRecord.MISSING
-            if h_list != None:
+            if h_list is not None:
                 _hr = bs(h_list.string, "lxml").select("div.loc-item address")
                 if len(_hr) > 1:
                     hours_of_operation = list(_hr[-1].stripped_strings)[0]
