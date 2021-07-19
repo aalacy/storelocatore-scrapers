@@ -68,11 +68,15 @@ def fetch_data():
             line = str(line.decode("utf-8"))
             if '{"_id":"restaurant_' in line:
                 items = line.split('{"_id":"restaurant_')
+                print(len(items))
                 for item in items:
                     if '{"ms":' not in item:
-                        loc = "<MISSING>"
+                        store = item.split('"')[0]
+                        loc = (
+                            "https://www.timhortons.com/store-locator/store/restaurant_"
+                            + store
+                        )
                         website = "timhortons.com"
-                        store = item.split('"number":"')[1].split('"')[0]
                         name = item.split('"name":"')[1].split('"')[0]
                         add = (
                             item.split('"address1":"')[1].split('"')[0]
@@ -95,6 +99,90 @@ def fetch_data():
                         if phone == "":
                             phone = "<MISSING>"
                         hours = ""
+                        dthours = ""
+                        if '"driveThruHours":{"_type":"hoursOfOperation",' in item:
+                            days = item.split(
+                                '"driveThruHours":{"_type":"hoursOfOperation",'
+                            )[1].split("}")[0]
+                            try:
+                                dthours = (
+                                    "Mon: "
+                                    + days.split('"monOpen":"')[1]
+                                    .split(" ")[1]
+                                    .split(':00"')[0]
+                                    + "-"
+                                    + days.split('"monClose":"')[1]
+                                    .split(" ")[1]
+                                    .split(':00"')[0]
+                                )
+                                dthours = (
+                                    hours
+                                    + "; Tue: "
+                                    + days.split('"tueOpen":"')[1]
+                                    .split(" ")[1]
+                                    .split(':00"')[0]
+                                    + "-"
+                                    + days.split('"tueClose":"')[1]
+                                    .split(" ")[1]
+                                    .split(':00"')[0]
+                                )
+                                dthours = (
+                                    hours
+                                    + "; Wed: "
+                                    + days.split('"wedOpen":"')[1]
+                                    .split(" ")[1]
+                                    .split(':00"')[0]
+                                    + "-"
+                                    + days.split('"wedClose":"')[1]
+                                    .split(" ")[1]
+                                    .split(':00"')[0]
+                                )
+                                dthours = (
+                                    hours
+                                    + "; Thu: "
+                                    + days.split('"thrOpen":"')[1]
+                                    .split(" ")[1]
+                                    .split(':00"')[0]
+                                    + "-"
+                                    + days.split('"thrClose":"')[1]
+                                    .split(" ")[1]
+                                    .split(':00"')[0]
+                                )
+                                dthours = (
+                                    hours
+                                    + "; Fri: "
+                                    + days.split('"friOpen":"')[1]
+                                    .split(" ")[1]
+                                    .split(':00"')[0]
+                                    + "-"
+                                    + days.split('"friClose":"')[1]
+                                    .split(" ")[1]
+                                    .split(':00"')[0]
+                                )
+                                dthours = (
+                                    hours
+                                    + "; Sat: "
+                                    + days.split('"satOpen":"')[1]
+                                    .split(" ")[1]
+                                    .split(':00"')[0]
+                                    + "-"
+                                    + days.split('"satClose":"')[1]
+                                    .split(" ")[1]
+                                    .split(':00"')[0]
+                                )
+                                dthours = (
+                                    hours
+                                    + "; Sun: "
+                                    + days.split('"sunOpen":"')[1]
+                                    .split(" ")[1]
+                                    .split(':00"')[0]
+                                    + "-"
+                                    + days.split('"sunClose":"')[1]
+                                    .split(" ")[1]
+                                    .split(':00"')[0]
+                                )
+                            except:
+                                pass
                         if '"diningRoomHours":{"_type":"hoursOfOperation"' in item:
                             days = item.split(
                                 '"diningRoomHours":{"_type":"hoursOfOperation"'
@@ -179,7 +267,9 @@ def fetch_data():
                             except:
                                 pass
                         if hours == "":
-                            hours = "<MISSING>"
+                            hours = dthours
+                        if dthours == "":
+                            hours = "<CLOSED>"
                         if store not in ids:
                             ids.append(store)
                             yield [
