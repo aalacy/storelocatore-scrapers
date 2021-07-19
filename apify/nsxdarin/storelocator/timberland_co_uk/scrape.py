@@ -129,7 +129,7 @@ def fetch_data():
                 typ = "Timberland Store"
             if "TBC" in phone:
                 phone = "<MISSING>"
-            add = add.replace('None','').strip()
+            add = add.replace("None", "").strip()
             yield [
                 website,
                 loc,
