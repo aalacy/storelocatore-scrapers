@@ -3,9 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import json
 import re
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger("amazinglashstudio_com")
 
 
 def write_output(data):
@@ -42,30 +39,26 @@ session = SgRequests()
 
 
 def fetch_data():
-    # Your scraper here
 
     res = session.get("https://www.amazinglashstudio.com/find-a-studio?searchVal=54000")
     soup = BeautifulSoup(res.text, "html.parser")
-    # logger.info(soup)
 
     data = re.findall('(studioArray.*)"};', str(soup), re.DOTALL)[0]
     urls = data.split('"};')
-    # logger.info(urls)
+
     ids = re.findall('\["([\d]+)"\]', data)
 
     all = []
     for yrl in urls:
 
         url = "https://www.amazinglashstudio.com" + re.findall("(/studios/.*)", yrl)[0]
-        logger.info(url)
-        if (
-            url == "https://www.amazinglashstudio.com/studios/tx/beaumont/beaumont"
-        ):  # redirects
+
+        if url == "https://www.amazinglashstudio.com/studios/tx/beaumont/beaumont":
             continue
         res = session.get(url)
         soup = BeautifulSoup(res.text, "html.parser")
         if "coming soon" in str(soup).lower():
-            logger.info("coming soon")
+
             continue
 
         jss = soup.find_all("script", {"type": "application/ld+json"})
@@ -74,8 +67,9 @@ def fetch_data():
         elif len(jss) == 2:
             jss = jss[1]
         else:
-            logger.info("lllllllllllllllllllllllllllllllllllllllllllllllll")
-        # break
+
+            continue
+
         try:
             js = jss.contents
         except:
@@ -107,12 +101,12 @@ def fetch_data():
                 addr["addressRegion"],
                 addr["postalCode"].split("-")[0],
                 "US",
-                ids[urls.index(yrl)],  # store #
+                ids[urls.index(yrl)],
                 p,  # phone
-                js["@type"],  # type
-                lat,  # lat
-                long,  # long
-                tim,  # timing
+                js["@type"],
+                lat,
+                long,
+                tim,
                 url,
             ]
         )
