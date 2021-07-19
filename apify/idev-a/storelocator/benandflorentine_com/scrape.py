@@ -77,7 +77,7 @@ def fetch_data():
                 location_name=_["title"],
                 street_address=street_address,
                 city=addr.city,
-                state=state,
+                state=state.replace("Local", ""),
                 zip_postal=zip_postal,
                 latitude=_["latitude"],
                 longitude=_["longitude"],
