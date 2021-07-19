@@ -30,7 +30,7 @@ def _ii(locations, _):
     phone = ""
     hours = []
     for loc in locations:
-        if loc.a.text.strip() == _["name"]:
+        if loc.a.text.strip() == _["name"].strip():
             phone = (
                 loc.select("div.col-sm-6")[0]
                 .select("p.text-display--small-p")[-1]

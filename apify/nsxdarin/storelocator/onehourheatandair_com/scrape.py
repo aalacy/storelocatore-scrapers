@@ -51,7 +51,7 @@ def fetch_data():
                 "https://www.onehourheatandair.com"
                 + line.split('href="')[1].split('"')[0]
             )
-            if stub not in locs:
+            if stub not in locs and "comhttp" not in stub:
                 locs.append(stub)
     for loc in locs:
         logger.info(("Pulling Location %s..." % loc))
@@ -117,6 +117,9 @@ def fetch_data():
                 store = line2.split('<span itemprop="name" data-item="i" data-key="')[
                     1
                 ].split('"')[0]
+            if "/maps/place/" in line2:
+                lat = line2.split("/@")[1].split(",")[0]
+                lng = line2.split("/@")[1].split(",")[1]
         if name != "":
             if add == "<MISSING>":
                 add = add2

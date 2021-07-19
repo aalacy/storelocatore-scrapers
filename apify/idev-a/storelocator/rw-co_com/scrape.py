@@ -27,11 +27,8 @@ def fetch_data():
         for _ in locations:
             page_url = base_url + _["properties"]["slug"]
             logger.info(page_url)
-            ss = json.loads(
-                bs(session.get(page_url, headers=_headers).text, "lxml")
-                .find("script", type="application/ld+json")
-                .string
-            )
+            sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
+            ss = json.loads(sp1.find("script", type="application/ld+json").string)
             hours = [
                 f"{hh['dayOfWeek']}: {hh['opens']}-{hh['closes']}"
                 for hh in ss["openingHoursSpecification"]
@@ -40,10 +37,12 @@ def fetch_data():
                 page_url=page_url,
                 store_number=_["properties"]["id"],
                 location_name=_["properties"]["name"],
-                street_address=ss["address"]["streetAddress"],
-                city=ss["address"]["addressLocality"],
-                state=ss["address"]["addressRegion"],
-                zip_postal=ss["address"]["postalCode"],
+                street_address=sp1.select_one(
+                    'span[itemprop="streetAddress"]'
+                ).text.strip(),
+                city=sp1.select_one('span[itemprop="addressLocality"]').text.strip(),
+                state=sp1.select_one('span[itemprop="addressRegion"]').text.strip(),
+                zip_postal=sp1.select_one('span[itemprop="postalCode"]').text.strip(),
                 latitude=ss["geo"]["latitude"],
                 longitude=ss["geo"]["longitude"],
                 country_code=ss["address"]["addressCountry"],
