@@ -122,6 +122,7 @@ def fetch_data():
                     country = "DE"
                 if "Korea" in name:
                     country = "KR"
+                    zc = "<MISSING>"
                 if "<" in add:
                     add = add.split("<")[0]
                 if country == "CN":
