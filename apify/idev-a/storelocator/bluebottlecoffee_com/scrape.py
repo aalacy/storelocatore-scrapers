@@ -41,7 +41,7 @@ def fetch_data():
                 if len(full[-1].split(",")) == 1:
                     del full[-1]
 
-                addr = parse_address_intl(" ".join(full))
+                addr = parse_address_intl(", ".join(full).replace("00000", ""))
                 street_address = " ".join(full[:-1])
                 street_address = street_address.replace(
                     "Entrance is on 52nd St", ""

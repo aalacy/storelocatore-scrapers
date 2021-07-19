@@ -1,6 +1,5 @@
 from lxml import etree
 from requests_toolbelt import MultipartEncoder
-
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
@@ -59,7 +58,6 @@ def fetch_data():
     viewgen = dom.xpath('//input[@name="__VIEWSTATEGENERATOR"]/@value')[0]
     eventval = dom.xpath('//input[@name="__EVENTVALIDATION"]/@value')[0]
 
-    all_locations = []
     all_codes = DynamicZipSearch(
         country_codes=[SearchableCountries.USA], expected_search_radius_miles=100
     )
@@ -86,7 +84,6 @@ def fetch_data():
         viewstate = dom.xpath('//input[@name="__VIEWSTATE"]/@value')[0]
         viewgen = dom.xpath('//input[@name="__VIEWSTATEGENERATOR"]/@value')[0]
         eventval = dom.xpath('//input[@name="__EVENTVALIDATION"]/@value')[0]
-
         all_locations += dom.xpath('//div[@class="LocationDiv"]')
 
     for poi_html in all_locations:

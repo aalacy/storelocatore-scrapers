@@ -61,14 +61,24 @@ def fetch_data():
             street_address = addr.street_address_1
             if addr.street_address_2:
                 street_address += " " + addr.street_address_2
+            state = addr.state
+            zip_postal = addr.postcode
+            _addr = " ".join(blocks[0])
+            if not state:
+                state = _addr.split(",")[1].strip().split(" ")[0]
+            if not zip_postal:
+                if len(_addr.split(",")) == 3:
+                    zip_postal = _addr.split(",")[-1].strip()
+                else:
+                    zip_postal = " ".join(_addr.split(",")[1].strip().split(" ")[1:])
             yield SgRecord(
                 page_url=base_url,
                 store_number=x,
                 location_name=_["title"],
                 street_address=street_address,
                 city=addr.city,
-                state=addr.state,
-                zip_postal=addr.postcode,
+                state=state.replace("Local", ""),
+                zip_postal=zip_postal,
                 latitude=_["latitude"],
                 longitude=_["longitude"],
                 country_code="CA",
