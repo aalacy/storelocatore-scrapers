@@ -43,7 +43,8 @@ def fetch_data():
             street_address = address[0]
             address = address[1].split(",")
             city = address[0]
-            state = address[1]
+            address = address[1].split()
+            state = address[0]
             zip_postal = address[1]
             country_code = "US"
             yield SgRecord(
