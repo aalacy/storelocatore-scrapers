@@ -40,7 +40,9 @@ def fetch_data():
     r = session.get(url, headers=headers)
     for line in r.iter_lines():
         line = str(line.decode("utf-8"))
-        line = line.replace('"address":{"id":', '"address":{"ID')
+        line = line.replace('"address":{"id":', '"address":{"ID').replace(
+            '"market":{"id":', '"market":{"ID"'
+        )
         if '{"id":' in line:
             items = line.split('{"id":')
             for item in items:
@@ -53,7 +55,10 @@ def fetch_data():
                     lat = item.split('"latitude":')[1].split(",")[0]
                     lng = item.split('"longitude":')[1].split(",")[0]
                     add = item.split('streetLine1":"')[1].split('"')[0]
-                    tid = item.split('"typeId":')[1].split(",")[0]
+                    try:
+                        tid = item.split('"typeId":')[1].split(",")[0]
+                    except:
+                        tid = "<MISSING>"
                     typ = "<MISSING>"
                     try:
                         add = add + " " + item.split('streetLine2":"')[1].split('"')[0]
@@ -100,7 +105,7 @@ def fetch_data():
                                 hours = hours + "; " + hrs
                     if hours == "":
                         hours = "<MISSING>"
-                    if '"locationTypeId":1' in item:
+                    if '"locationTypeId":' in item:
                         yield [
                             website,
                             loc,
