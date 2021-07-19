@@ -58,8 +58,9 @@ def fetch_data():
     viewgen = dom.xpath('//input[@name="__VIEWSTATEGENERATOR"]/@value')[0]
     eventval = dom.xpath('//input[@name="__EVENTVALIDATION"]/@value')[0]
 
+    all_locations = []
     all_codes = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA], expected_search_radius_miles=100
+        country_codes=[SearchableCountries.USA], expected_search_radius_miles=200
     )
     for code in all_codes:
         formdata = {
@@ -67,7 +68,7 @@ def fetch_data():
             "__VIEWSTATEGENERATOR": viewgen,
             "__EVENTVALIDATION": eventval,
             "txtLocationQuery": code,
-            "cmbWithinDistance": "100",
+            "cmbWithinDistance": "200",
             "btnLoadLocations": "Search",
         }
 
@@ -91,9 +92,7 @@ def fetch_data():
         location_name = location_name[0] if location_name else "<MISSING>"
         raw_address = poi_html.xpath('.//div[@class="StudioInfoClass"]/text()')
         zip_code = raw_address[1].split(", ")[-1].split()[-1]
-        phone = (
-            raw_address[-1] if zip_code not in raw_address[-1] else SgRecord.MISSING
-        )
+        phone = raw_address[-1] if zip_code not in raw_address[-1] else SgRecord.MISSING
 
         item = SgRecord(
             locator_domain=DOMAIN,
@@ -117,11 +116,11 @@ def fetch_data():
 
 def scrape():
     with SgWriter(
-         SgRecordDeduper(
-             SgRecordID(
-                 {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
-             )
-         )
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
     ) as writer:
         for item in fetch_data():
             writer.write_row(item)
