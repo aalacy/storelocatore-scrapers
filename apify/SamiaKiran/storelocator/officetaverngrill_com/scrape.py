@@ -42,6 +42,7 @@ def fetch_data():
             .get_text(separator="|", strip=True)
             .split("|")[1:-1]
         )
+        try:
             coords = (
                 temp[3]
                 .find("a")["href"]
