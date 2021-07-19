@@ -66,7 +66,6 @@ def fetch_data():
             locator_domain = website
 
             log.info(page_url)
-            # store_res = session.get(page_url, headers=headers)
             driver.get(page_url)
             time.sleep(30)
             store_sel = lxml.html.fromstring(driver.page_source)
