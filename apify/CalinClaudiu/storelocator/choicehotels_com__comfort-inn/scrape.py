@@ -39,25 +39,96 @@ def fetch_records(http: SgRequests, search: DynamicGeoSearch) -> Iterable[SgReco
         locations = http.get(url, headers=headers).json()
         if locations["hotelCount"] > 0:
             for record in locations["hotels"]:
-                yield SgRecord(
-                    page_url="https://www.choicehotels.com/" + str(record["id"]),
-                    location_name=str(record["name"]),
-                    street_address=str(record["address"]["line1"]),
-                    city=str(record["address"]["city"]),
-                    state=str(record["address"]["subdivision"]),
-                    zip_postal=str(record["address"]["postalCode"]),
-                    country_code=str(record["address"]["country"]),
-                    store_number=str(record["id"]),
-                    phone=str(record["phone"]),
-                    location_type=str(
-                        str(record["brandCode"]) + " - " + str(record["brandName"])
-                    ),
-                    latitude=str(record["lat"]),
-                    longitude=str(record["lon"]),
-                    locator_domain="https://www.choicehotels.com/",
-                    hours_of_operation=SgRecord.MISSING,
-                    raw_address=SgRecord.MISSING,
-                )
+                try:
+                    record["address"]["subdivision"] = record["address"]["subdivision"]
+                except KeyError:
+                    record["address"]["subdivision"] = SgRecord.MISSING
+                try:
+                    record["name"] = record["name"]
+                except KeyError:
+                    record["name"] = SgRecord.MISSING
+
+                try:
+                    record["phone"] = record["phone"]
+                except KeyError:
+                    record["phone"] = SgRecord.MISSING
+
+                try:
+                    record["brandCode"] = record["brandCode"]
+                except KeyError:
+                    record["brandCode"] = SgRecord.MISSING
+
+                try:
+                    record["brandName"] = record["brandName"]
+                except KeyError:
+                    record["brandName"] = SgRecord.MISSING
+
+                try:
+                    record["lon"] = record["lon"]
+                except KeyError:
+                    record["lon"] = SgRecord.MISSING
+
+                try:
+                    record["lat"] = record["lat"]
+                except KeyError:
+                    record["lat"] = SgRecord.MISSING
+
+                try:
+                    record["address"]["line1"] = record["address"]["line1"]
+                except KeyError:
+                    record["address"]["line1"] = SgRecord.MISSING
+                try:
+                    record["address"]["city"] = record["address"]["city"]
+                except KeyError:
+                    record["address"]["city"] = SgRecord.MISSING
+                try:
+                    record["address"]["postalCode"] = record["address"]["postalCode"]
+                except KeyError:
+                    record["address"]["postalCode"] = SgRecord.MISSING
+                try:
+                    record["address"]["country"] = record["address"]["country"]
+                except KeyError:
+                    record["address"]["country"] = SgRecord.MISSING
+
+                try:
+                    yield SgRecord(
+                        page_url="https://www.choicehotels.com/" + str(record["id"]),
+                        location_name=str(record["name"]),
+                        street_address=str(record["address"]["line1"]),
+                        city=str(record["address"]["city"]),
+                        state=str(record["address"]["subdivision"]),
+                        zip_postal=str(record["address"]["postalCode"]),
+                        country_code=str(record["address"]["country"]),
+                        store_number=str(record["id"]),
+                        phone=str(record["phone"]),
+                        location_type=str(
+                            str(record["brandCode"]) + " - " + str(record["brandName"])
+                        ),
+                        latitude=str(record["lat"]),
+                        longitude=str(record["lon"]),
+                        locator_domain="https://www.choicehotels.com/",
+                        hours_of_operation=SgRecord.MISSING,
+                        raw_address=SgRecord.MISSING,
+                    )
+                except KeyError:
+                    print(record)
+                    yield SgRecord(
+                        page_url=SgRecord.MISSING,
+                        location_name=SgRecord.MISSING,
+                        street_address=SgRecord.MISSING,
+                        city=SgRecord.MISSING,
+                        state=SgRecord.MISSING,
+                        zip_postal=SgRecord.MISSING,
+                        country_code=SgRecord.MISSING,
+                        store_number=str(record["id"]),
+                        phone=SgRecord.MISSING,
+                        location_type=SgRecord.MISSING,
+                        latitude=SgRecord.MISSING,
+                        longitude=SgRecord.MISSING,
+                        locator_domain=SgRecord.MISSING,
+                        hours_of_operation=SgRecord.MISSING,
+                        raw_address=str(record),
+                    )
 
 
 if __name__ == "__main__":
