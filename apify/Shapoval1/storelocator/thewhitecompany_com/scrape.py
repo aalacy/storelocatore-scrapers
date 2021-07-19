@@ -1,4 +1,5 @@
 import csv
+from lxml import html
 import usaddress
 from sgrequests import SgRequests
 
@@ -36,7 +37,7 @@ def fetch_data():
     out = []
 
     locator_domain = "https://www.thewhitecompany.com"
-    api_url = "https://www.thewhitecompany.com/uk/store-locator-endpoint/storesData"
+    api_url = "https://www.thewhitecompany.com/uk/sitemap_Store-en_GB-GBP-7511621901403490864.xml"
     session = SgRequests()
     tag = {
         "Recipient": "recipient",
@@ -70,14 +71,22 @@ def fetch_data():
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
     }
     r = session.get(api_url, headers=headers)
-    js = r.json()
-    js = "".join(js).replace("false", "False").replace("true", "True")
-    js = eval(js)
-    for j in js["data"]["shops"]:
+    tree = html.fromstring(r.content)
+    div = tree.xpath("//url/loc")
+    for d in div:
 
-        a = j.get("address")
-        page_url = f"https://www.thewhitecompany.com/uk/our-stores/{j.get('name')}"
-        location_name = "".join(j.get("displayName")) or "<MISSING>"
+        page_url = "".join(d.xpath(".//text()"))
+        slug = page_url.split("/")[-1].strip()
+
+        session = SgRequests()
+        r = session.get(
+            f"https://www.thewhitecompany.com/uk/store-locator-endpoint/storesData/{slug}",
+            headers=headers,
+        )
+        js = r.json()["data"]["shop"]
+
+        a = js.get("address")
+        location_name = js.get("displayName")
         location_type = "<MISSING>"
         ad = f"{a.get('line1')} {a.get('line2')} {a.get('town')} {a.get('postalCode')}"
 
@@ -95,13 +104,13 @@ def fetch_data():
                 "None", ""
             ).strip()
         store_number = "<MISSING>"
-        latitude = j.get("geoPoint").get("latitude") or "<MISSING>"
-        longitude = j.get("geoPoint").get("longitude") or "<MISSING>"
+        latitude = js.get("geoPoint").get("latitude") or "<MISSING>"
+        longitude = js.get("geoPoint").get("longitude") or "<MISSING>"
         if latitude == longitude:
             latitude, longitude = "<MISSING>", "<MISSING>"
         phone = a.get("phone") or "<MISSING>"
         try:
-            hours = j.get("openingHours").get("weekDayOpeningList") or "<MISSING>"
+            hours = js.get("openingHours").get("weekDayOpeningList") or "<MISSING>"
         except:
             hours = "<MISSING>"
 
@@ -125,7 +134,7 @@ def fetch_data():
         hours_of_operation = "; ".join(tmp) or "<MISSING>"
         if hours_of_operation == "<MISSING>":
             try:
-                hours = j.get("specialOpeningSchedule").get("weekDayOpeningList")
+                hours = js.get("specialOpeningSchedule").get("weekDayOpeningList")
             except:
                 hours = "<MISSING>"
             if hours != "<MISSING>":

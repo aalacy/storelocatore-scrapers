@@ -1,4 +1,5 @@
 import csv
+from lxml import html
 from sgrequests import SgRequests
 
 
@@ -34,29 +35,34 @@ def write_output(data):
 def fetch_data():
     out = []
 
-    locator_domain = "https://www.justsavefoods.com/"
-    api_url = "https://api.freshop.com/1/stores?app_key=just_save&has_address=true&is_selectable=true&limit=100&token=1bc2f03fd3dbdb8f4bcce2a175cda1d4"
+    locator_domain = "https://jhoil.com"
+    api_url = "https://jhoil.com/wholesale-locations/"
     session = SgRequests()
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
     }
     r = session.get(api_url, headers=headers)
-    js = r.json()
+    tree = html.fromstring(r.text)
+    div = tree.xpath(
+        '//div[@id="genesis-footer-widgets"]//div[./p/strong[contains(text(), "J & H Oil")]]'
+    )
+    for d in div:
 
-    for j in js["items"]:
-        page_url = j.get("url")
-        location_name = j.get("name")
-        street_address = j.get("address_1")
-        phone = j.get("phone_md")
-        state = j.get("state")
-        postal = j.get("postal_code")
+        page_url = "https://jhoil.com/wholesale-locations/"
+        location_name = "".join(d.xpath(".//strong/text()")).replace("\n", "").strip()
+        location_type = "<MISSING>"
+        street_address = "".join(d.xpath(".//p/text()[1]")).replace("\n", "").strip()
+        ad = "".join(d.xpath(".//p/text()[2]")).replace("\n", "").strip()
+        state = ad.split(",")[1].split()[0].strip()
+        postal = ad.split(",")[1].split()[1].strip()
         country_code = "US"
-        city = j.get("city")
+        city = ad.split(",")[0].strip()
         store_number = "<MISSING>"
-        latitude = j.get("latitude")
-        longitude = j.get("longitude")
-        hours_of_operation = j.get("hours")
-        location_type = j.get("site_name")
+        latitude = "<MISSING>"
+        longitude = "<MISSING>"
+        phone = "".join(d.xpath(".//p/text()[3]")).replace("\n", "").strip()
+        hours_of_operation = "<MISSING>"
+
         row = [
             locator_domain,
             page_url,

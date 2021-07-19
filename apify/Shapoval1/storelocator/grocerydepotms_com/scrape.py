@@ -34,29 +34,37 @@ def write_output(data):
 def fetch_data():
     out = []
 
-    locator_domain = "https://www.justsavefoods.com/"
-    api_url = "https://api.freshop.com/1/stores?app_key=just_save&has_address=true&is_selectable=true&limit=100&token=1bc2f03fd3dbdb8f4bcce2a175cda1d4"
+    locator_domain = "https://grocerydepotms.com"
+    api_url = "https://grocerydepotms.com/ajax/index.php"
     session = SgRequests()
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:88.0) Gecko/20100101 Firefox/88.0",
+        "Referer": "https://grocerydepotms.com/contact",
     }
-    r = session.get(api_url, headers=headers)
-    js = r.json()
 
-    for j in js["items"]:
-        page_url = j.get("url")
-        location_name = j.get("name")
-        street_address = j.get("address_1")
-        phone = j.get("phone_md")
-        state = j.get("state")
-        postal = j.get("postal_code")
+    data = {
+        "method": "POST",
+        "apiurl": "https://grocerydepotms.rsaamerica.com/Services/SSWebRestApi.svc/GetClientStores/1",
+    }
+
+    r = session.post(api_url, headers=headers, data=data)
+    js = r.json()
+    for j in js["GetClientStores"]:
+
+        page_url = "https://grocerydepotms.com/contact"
+        location_name = j.get("ClientStoreName")
+        location_type = "<MISSING>"
+        street_address = j.get("AddressLine1")
+        phone = j.get("StorePhoneNumber")
+        state = j.get("StateName")
+        postal = j.get("ZipCode")
         country_code = "US"
-        city = j.get("city")
+        city = j.get("City")
         store_number = "<MISSING>"
-        latitude = j.get("latitude")
-        longitude = j.get("longitude")
-        hours_of_operation = j.get("hours")
-        location_type = j.get("site_name")
+        latitude = j.get("Latitude")
+        longitude = j.get("Longitude")
+        hours_of_operation = j.get("StoreTimings")
+
         row = [
             locator_domain,
             page_url,
