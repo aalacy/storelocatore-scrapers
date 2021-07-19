@@ -56,7 +56,6 @@ def fetch_data():
     p = 0
     data = []
     titlelist = []
-    cleanr = re.compile(r"<[^>]+>")
     zips = static_zipcode_list(radius=30, country_code=SearchableCountries.USA)
     for zip_code in zips:
         url = "https://www.jacksonhewitt.com/api/offices/search/" + zip_code
@@ -103,7 +102,7 @@ def fetch_data():
                     "US",
                     store,
                     phone,
-                    "<MISSING>",
+                    ltype,
                     lat,
                     longt,
                     hours,
