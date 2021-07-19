@@ -586,6 +586,15 @@ def get_data(url):
             .replace("\n", "")
             .strip()
         )
+    if location_name == "Lakeview":
+        hours_of_operation = (
+            " ".join(
+                tree.xpath('//h1[text()="Lakeview"]/following-sibling::h2//text()')
+            )
+            .replace("\n", "")
+            .replace("Bar open as long as there's a crowd!", "")
+            .strip()
+        )
     hours_of_operation = (
         hours_of_operation.replace("HOURS:", "")
         .replace("Close  @ 3pm 12/24 Closed  12/25", "")
