@@ -46,7 +46,7 @@ def fetch_data():
     data = re.findall('(studioArray.*)"};', str(soup), re.DOTALL)[0]
     urls = data.split('"};')
 
-    ids = re.findall('\["([\d]+)"\]', data)
+    ids = re.findall('\\["([\\d]+)"\\]', data)
 
     all = []
     for yrl in urls:
