@@ -8,7 +8,7 @@ _headers = {
 }
 
 locator_domain = "https://www.victoryma.com"
-base_url = "https://www.victoryma.com/wp-admin/admin-ajax.php?action=store_search&lat=28.5966&lng=-81.39972&max_results=100&search_radius=500&autoload=1"
+base_url = "https://www.victoryma.com/wp-admin/admin-ajax.php?action=store_search&lat=28.63668&lng=-81.36744&max_results=100&search_radius=3000"
 
 
 def fetch_data():
