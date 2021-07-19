@@ -97,7 +97,7 @@ def fetch_location(store_number, session):
 
     hours = get(info, "hrs", [])
     hours_of_operation = (
-        ','.join([f'{hr["day"]}: {hr["open"]}-{hr["close"]}' for hr in hours])
+        ",".join([f'{hr["day"]}: {hr["open"]}-{hr["close"]}' for hr in hours])
         if len(hours)
         else MISSING
     )
