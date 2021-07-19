@@ -35,7 +35,7 @@ def fetch_data():
     out = []
 
     locator_domain = "https://www.justsavefoods.com/"
-    api_url = "https://api.freshop.com/1/stores?app_key=just_save&has_address=true&is_selectable=true&limit=100&token=83e287cc8933414ef1d692c1451a325c"
+    api_url = "https://api.freshop.com/1/stores?app_key=just_save&has_address=true&is_selectable=true&limit=100&token=1bc2f03fd3dbdb8f4bcce2a175cda1d4"
     session = SgRequests()
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",

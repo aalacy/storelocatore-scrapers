@@ -28,8 +28,9 @@ def fetch_data():
             location_name = location_name.replace("'", "")
             log.info(location_name)
             raw_address = loc.split("'address': '")[1].split("'}")[0]
-            if "Second floor" in raw_address:
-                raw_address = raw_address.split("Second floor")[0]
+            raw_address = raw_address.replace("Memorial Student Center", "").replace(
+                "Second floor", ""
+            )
             formatted_addr = parser.parse_address_intl(raw_address)
             street_address = formatted_addr.street_address_1
             if street_address is None:
@@ -42,7 +43,7 @@ def fetch_data():
             country_code = "US"
             yield SgRecord(
                 locator_domain=DOMAIN,
-                page_url=url,
+                page_url=DOMAIN,
                 location_name=location_name,
                 street_address=street_address,
                 city=city,
