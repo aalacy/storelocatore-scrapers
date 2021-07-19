@@ -19,27 +19,32 @@ def fetch_data():
         links = soup.select("div.query--locations > div.col")
         logger.info(f"{len(links)} found")
         for link in links:
-            if "coming soon" in link.h3.text.strip().lower():
+            addr = list(link.address.stripped_strings)
+            if "coming soon" in addr[0].lower():
                 continue
             page_url = locator_domain + link.select_one("span.location")["data-link"]
-            addr = list(link.address.stripped_strings)
             coord = link.select_one("span.location")["data-location"].split(":")
-            yield SgRecord(
-                page_url=page_url,
-                location_name=link.h3.text.strip(),
-                street_address=addr[0],
-                city=addr[1].split(",")[0].strip(),
-                state=addr[1].split(",")[1].strip().split(" ")[0].strip(),
-                zip_postal=addr[1].split(",")[1].strip().split(" ")[-1].strip(),
-                country_code="US",
-                phone=link.select_one("div.phone a").text.strip(),
-                locator_domain=locator_domain,
-                latitude=coord[1],
-                longitude=coord[0],
-                hours_of_operation="; ".join(
-                    link.select_one("div.hours").stripped_strings
-                ).replace("–", "-"),
-            )
+            try:
+                yield SgRecord(
+                    page_url=page_url,
+                    location_name=link.h3.text.strip(),
+                    street_address=addr[0],
+                    city=addr[1].split(",")[0].strip(),
+                    state=addr[1].split(",")[1].strip().split(" ")[0].strip(),
+                    zip_postal=addr[1].split(",")[1].strip().split(" ")[-1].strip(),
+                    country_code="US",
+                    phone=link.select_one("div.phone a").text.strip(),
+                    locator_domain=locator_domain,
+                    latitude=coord[1],
+                    longitude=coord[0],
+                    hours_of_operation="; ".join(
+                        link.select_one("div.hours").stripped_strings
+                    ).replace("–", "-"),
+                )
+            except:
+                import pdb
+
+                pdb.set_trace()
 
 
 if __name__ == "__main__":
