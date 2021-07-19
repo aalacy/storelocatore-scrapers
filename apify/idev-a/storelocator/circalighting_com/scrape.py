@@ -22,6 +22,8 @@ def fetch_data():
             if "Coming Soon" in _.select_one("div.more").text:
                 continue
             block = list(_.select_one("div.more").stripped_strings)
+            if "Now Open" in block[1]:
+                del block[1]
             page_url = locator_domain + _.select("div.more a")[-1]["href"]
             if block[1].strip() in streets:
                 continue
@@ -36,9 +38,6 @@ def fetch_data():
             phone = ""
             if "Phone" in block[3]:
                 phone = block[3].replace("Phone", "").strip()
-            if phone in phones:
-                continue
-            phones.append(phone)
             hours = []
             if len(block) >= 5:
                 hours = block[4:]
