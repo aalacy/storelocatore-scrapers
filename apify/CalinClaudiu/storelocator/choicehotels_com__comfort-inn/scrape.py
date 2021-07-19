@@ -111,7 +111,6 @@ def fetch_records(http: SgRequests, search: DynamicGeoSearch) -> Iterable[SgReco
                         raw_address=SgRecord.MISSING,
                     )
                 except KeyError:
-                    print(record)
                     yield SgRecord(
                         page_url=SgRecord.MISSING,
                         location_name=SgRecord.MISSING,
