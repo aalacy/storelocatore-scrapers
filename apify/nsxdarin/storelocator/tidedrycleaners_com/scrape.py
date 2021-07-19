@@ -35,7 +35,6 @@ def write_output(data):
 
 
 def fetch_data():
-    locs = []
     weekdays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
     url = "https://consumer.tidelaundry.com/v1/servicepoints?maxLatitude=64.93218366344629&maxLongitude=-63.19580074023439&minLatitude=14.87138826455165&minLongitude=-173.33038325976564&statuses=1&statuses=2&statuses=3"
     r = session.get(url, headers=headers)
