@@ -74,13 +74,20 @@ def fetch_data():
 
     all_locations = []
     all_codes = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA], max_radius_miles=50
+        country_codes=[SearchableCountries.USA], max_radius_miles=30
     )
     for code in all_codes:
-        log.info(f"Fetching location for: {code}")
+        str_zip = str(code)
+        if len(str_zip) == 4:
+            str_zip = "0" + str_zip
+            log.info(f"appended zero:{code} => {str_zip}")
+        if len(str_zip) == 3:
+            str_zip = "00" + str_zip
+            log.info(f"appended zeros:{code} => {str_zip}")
+        log.info(f"Fetching location for: {str_zip}")
         body = {
             "StoreLocatorForm": {
-                "Location": code,
+                "Location": str_zip,
                 "Filter": "All Locations",
                 "Range": "50",
                 "CSRFID": csrfid,
@@ -95,7 +102,7 @@ def fetch_data():
             token = dom.xpath('//input[@id="StoreLocatorForm_CSRFToken"]/@value')[0]
             body = {
                 "StoreLocatorForm": {
-                    "Location": code,
+                    "Location": str_zip,
                     "Filter": "All Locations",
                     "Range": "50",
                     "CSRFID": csrfid,
@@ -138,7 +145,6 @@ def fetch_data():
         latitude = latitude if latitude else "<MISSING>"
         longitude = poi["Longitude"]
         longitude = longitude if longitude else "<MISSING>"
-        all_codes.found_location_at(latitude, longitude)
         hours_of_operation = "<MISSING>"
 
         item = [

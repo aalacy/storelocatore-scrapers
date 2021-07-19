@@ -48,7 +48,7 @@ def fetch_data():
             exist = False
             while not exist:
                 time.sleep(1)
-                for rr in driver.requests:
+                for rr in driver.requests[::-1]:
                     if rr.url.startswith(json_url) and rr.response:
                         exist = True
                         locations = json.loads(rr.response.body)

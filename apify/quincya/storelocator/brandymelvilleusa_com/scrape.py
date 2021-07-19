@@ -61,54 +61,60 @@ def fetch_data():
     items = json.loads(js)
 
     for i in items:
-        if i in ["United States", "United Kingdom", "Canada"]:
-            country_code = i
-            states = items[i]
+        country_code = i
+        states = items[i]
 
-            for state in states:
-                stores = states[state]
+        for state in states:
+            stores = states[state]
 
-                for store in stores:
-                    street_address = store[1]
-                    city = store[0]
-                    state = state.replace("Washington", "WA")
-                    location_name = "Brandy Melville - " + city
-                    zip_code = "<MISSING>"
-                    phone = store[2]
-                    hours_of_operation = store[4]
-                    latitude = "<MISSING>"
-                    longitude = "<MISSING>"
-                    store_number = "<MISSING>"
-                    location_type = "<MISSING>"
-                    if city == "London":
-                        state = "<MISSING>"
-                    if not phone:
-                        phone = "<MISSING>"
+            for store in stores:
+                street_address = store[1]
+                city = store[0]
+                state = state.replace("Washington", "WA")
+                location_name = "Brandy Melville - " + city
+                zip_code = "<MISSING>"
+                phone = store[2]
+                hours_of_operation = store[4]
+                latitude = "<MISSING>"
+                longitude = "<MISSING>"
+                store_number = "<MISSING>"
+                location_type = "<MISSING>"
+                if city == "London":
+                    state = "<MISSING>"
+                if not phone:
+                    phone = "<MISSING>"
 
-                    if "Kingdom" not in country_code:
-                        digit = re.search(r"\d", street_address).start(0)
-                        if digit != 0:
-                            street_address = street_address[digit:]
+                if country_code in ["United States", "Canada"]:
+                    digit = re.search(r"\d", street_address).start(0)
+                    if digit != 0:
+                        street_address = street_address[digit:]
 
-                    # Store data
-                    data.append(
-                        [
-                            locator_domain,
-                            base_link,
-                            location_name,
-                            street_address,
-                            city,
-                            state,
-                            zip_code,
-                            country_code,
-                            store_number,
-                            phone,
-                            location_type,
-                            latitude,
-                            longitude,
-                            hours_of_operation,
-                        ]
-                    )
+                if country_code in ["Europe"]:
+                    country = state
+                    fin_state = "<MISSING>"
+                else:
+                    fin_state = state
+                    country = country_code
+
+                # Store data
+                data.append(
+                    [
+                        locator_domain,
+                        base_link,
+                        location_name,
+                        street_address,
+                        city,
+                        fin_state,
+                        zip_code,
+                        country,
+                        store_number,
+                        phone,
+                        location_type,
+                        latitude,
+                        longitude,
+                        hours_of_operation,
+                    ]
+                )
     return data
 
 

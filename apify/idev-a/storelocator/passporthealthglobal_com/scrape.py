@@ -38,7 +38,7 @@ def fetch_data():
                 logger.info(f"[US] {page_url}")
                 yield SgRecord(
                     page_url=page_url,
-                    location_name=_.select_one('span[itemprop="name"]').text,
+                    location_name=_.select_one('span[itemprop="name"]').text.strip(),
                     street_address=_.select_one('span[itemprop="streetAddress"]').text,
                     city=_c(_.select("span.streetAddress span")[1].text),
                     state=_.select_one('span[itemprop="addressRegion"]').text,
@@ -58,7 +58,9 @@ def fetch_data():
             sp = bs(session.get(page_url, headers=_headers).text, "lxml")
             yield SgRecord(
                 page_url=page_url,
-                location_name=sp.select_one('div[itemprop="name"]').text,
+                location_name=sp.select_one('div[itemprop="name"]')
+                .text.replace("\n", "")
+                .strip(),
                 street_address=sp.select_one('span[itemprop="streetAddress"]').text,
                 city=_c(sp.select_one('span[itemprop="addressLocality"]').text),
                 zip_postal=sp.select_one('span[itemprop="postalCode"]').text,
@@ -77,7 +79,10 @@ def fetch_data():
             sp = bs(session.get(page_url, headers=_headers).text, "lxml")
             yield SgRecord(
                 page_url=page_url,
-                location_name=sp.select_one('div[itemprop="name"]').text,
+                location_name=sp.select_one('div[itemprop="name"]')
+                .text.replace("\n", "")
+                .strip(),
+                state=sp.select_one('span[itemprop="addressRegion"]').text,
                 street_address=sp.select_one('span[itemprop="streetAddress"]').text,
                 city=sp.select_one('span[itemprop="addressLocality"]').text,
                 zip_postal=sp.select_one('span[itemprop="postalCode"]').text,

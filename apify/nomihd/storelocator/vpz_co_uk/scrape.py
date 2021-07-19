@@ -59,8 +59,6 @@ def write_output(data):
 
 def fetch_data():
     # Your scraper here
-    loc_list = []
-
     search_url = "https://liveapi.yext.com/v2/accounts/me/entities/geosearch?radius=2500&location=SW17%200RG&offset={}&limit=50&api_key=46014f43cb3d0581a9d4b5e3c04e0b4e&v=20181201&resolvePlaceholders=true&entityTypes=location"
     offset = 0
     while True:
@@ -81,7 +79,7 @@ def fetch_data():
             if location_name == "":
                 location_name = "<MISSING>"
 
-            if "COMING SOON" in location_name:
+            if "COMING SOON" in location_name or "coming-soon" in page_url:
                 continue
             street_address = store["address"]["line1"]
             if "line2" in store:
@@ -107,7 +105,16 @@ def fetch_data():
             if zip == "":
                 zip = "<MISSING>"
 
-            store_number = store["meta"]["id"]
+            store_temp = store["meta"]["id"]
+            store_number = ""
+            for temp in store_temp:
+                if temp.isalpha():
+                    break
+                else:
+                    store_number = store_number + temp
+
+            if store_number == "":
+                store_number = "<MISSING>"
             phone = ""
             if "mainPhone" in store:
                 phone = store["mainPhone"]
@@ -164,11 +171,9 @@ def fetch_data():
                 longitude,
                 hours_of_operation,
             ]
-            loc_list.append(curr_list)
+            yield curr_list
 
         offset = offset + 50
-        # break
-    return loc_list
 
 
 def scrape():

@@ -1,6 +1,7 @@
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
+from sgscrape.sgpostal import parse_address_intl
 
 _headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
@@ -17,6 +18,9 @@ def fetch_data():
             street_address = _["address"]["address1"]
             if _["address"]["address2"]:
                 street_address += " " + _["address"]["address2"]
+            addr = parse_address_intl(
+                f'{_["address"]["city"]} {_["address"]["state"]} {_["address"]["zip"]}'
+            )
             hours = []
             for day, times in _["operationalHours"]["hours"].items():
                 if times["isClosed"]:
@@ -30,9 +34,9 @@ def fetch_data():
                 location_name=_["displayName"].replace("–", "-"),
                 location_type=", ".join(_["type"]),
                 street_address=street_address,
-                city=_["address"]["city"],
-                state=_["address"]["state"],
-                zip_postal=_["address"]["zip"],
+                city=addr.city,
+                state=addr.state,
+                zip_postal=addr.postcode,
                 latitude=_["geocode"]["latitude"],
                 longitude=_["geocode"]["longitude"],
                 country_code="US",
