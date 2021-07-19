@@ -113,9 +113,9 @@ def fetch_data():
         state = formatted_addr.state
         if state is None:
             if " Ny" in street_address:
-                street_address = street_address.replace(' Ny','').strip()
+                street_address = street_address.replace(" Ny", "").strip()
                 state = "NY"
-                
+
         zip = formatted_addr.postcode
         country_code = "US"
         if location_name == "Korea":
