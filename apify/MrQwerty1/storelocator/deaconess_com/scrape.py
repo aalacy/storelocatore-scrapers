@@ -77,7 +77,9 @@ def fetch_data():
         loc = j.get("_geoloc")
         latitude = loc.get("lat") or "<MISSING>"
         longitude = loc.get("lon") or "<MISSING>"
-        location_type = j.get("facility_type") or "<MISSING>"
+        location_type = j.get("LocationTypeName") or "<MISSING>"
+        if "-" in location_type:
+            location_type = location_type.split("-")[-1].strip()
 
         _tmp = []
         source = j.get("OfficeHours") or "<html></html>"
