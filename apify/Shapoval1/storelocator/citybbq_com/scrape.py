@@ -58,13 +58,15 @@ def get_data(coord):
     session = SgRequests()
 
     r = session.get(
-        f"https://nomnom-prod-api.citybbq.com/restaurants/near?lat={lat}&long={lng}&radius=20000&limit=6&nomnom=calendars&nomnom_calendars_from=20210701&nomnom_calendars_to=20210709&nomnom_exclude_extref=999",
+        f"https://nomnom-prod-api.citybbq.com/restaurants/near?lat={lat}&long={lng}&radius=20000&limit=6&nomnom=calendars&nomnom_calendars_from=20210715&nomnom_calendars_to=20210723&nomnom_exclude_extref=999",
         headers=headers,
     )
     js = r.json()["restaurants"]
+
     for j in js:
 
         page_url = j.get("url")
+
         location_name = j.get("storename")
         street_address = j.get("streetaddress")
         city = j.get("city")
@@ -76,15 +78,21 @@ def get_data(coord):
         latitude = j.get("latitude")
         longitude = j.get("longitude")
         location_type = "<MISSING>"
-        hours = j.get("calendars").get("calendar")[0].get("ranges")
+        try:
+            hours = j.get("calendars").get("calendar")[0].get("ranges") or "<MISSING>"
+        except:
+            hours = "<MISSING>"
         tmp = []
-        for h in hours:
-            day = h.get("weekday")
-            start = "".join(h.get("start")).split()[1].strip()
-            end = "".join(h.get("end")).split()[1].strip()
-            line = f"{day} {start} - {end}"
-            tmp.append(line)
-        hours_of_operation = ";".join(tmp) or "<MISISNG>"
+        if hours != "<MISSING>":
+            for h in hours:
+                day = h.get("weekday")
+                start = "".join(h.get("start")).split()[1].strip()
+                end = "".join(h.get("end")).split()[1].strip()
+                line = f"{day} {start} - {end}"
+                tmp.append(line)
+            hours_of_operation = ";".join(tmp) or "<MISISNG>"
+        else:
+            hours_of_operation = "<MISSING>"
 
         row = [
             locator_domain,
@@ -112,7 +120,7 @@ def fetch_data():
     s = set()
     coords = static_coordinate_list(radius=50, country_code=SearchableCountries.USA)
 
-    with futures.ThreadPoolExecutor(max_workers=2) as executor:
+    with futures.ThreadPoolExecutor(max_workers=10) as executor:
         future_to_url = {executor.submit(get_data, coord): coord for coord in coords}
         for future in futures.as_completed(future_to_url):
             rows = future.result()

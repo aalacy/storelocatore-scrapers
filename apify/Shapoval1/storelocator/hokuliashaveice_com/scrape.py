@@ -96,6 +96,7 @@ def fetch_data():
         street_address = " ".join(ad.xpath("//*//text()[2]"))
 
         csz = " ".join(ad.xpath("//*//text()[3]")).replace("sdfasdf", "") or "<MISSING>"
+
         if (
             location_name.find("Desert Hills") != -1
             or location_name.find("Parker") != -1
@@ -162,6 +163,12 @@ def fetch_data():
         if street_address.find("(") != -1:
             street_address = street_address.split("(")[0].strip()
         street_address = street_address.replace(",", "").strip()
+        if street_address == "2929 FM 1960 Houston TX 77073":
+            city = street_address.split()[3].strip()
+            state = street_address.split()[4].strip()
+            postal = street_address.split()[-1].strip()
+            street_address = " ".join(street_address.split()[:-3])
+
         country_code = "US"
         try:
             ll = b[1]
@@ -226,6 +233,37 @@ def fetch_data():
         )
         if cms == "Coming soon":
             location_type = "Coming soon"
+        try:
+            adr = (
+                "".join(
+                    tree.xpath(f'//div[contains(text(), "{location_name}")]/a/@href')
+                )
+                .split("place/")[1]
+                .split("/@")[0]
+                .replace("+", " ")
+                .strip()
+            )
+        except:
+            adr = "<MISSING>"
+
+        if (
+            adr.find("1602 W Brandon") != -1
+            or adr.find("4057 E County Hwy 30A") != -1
+            or adr.find("4155 N Yellowstone Hwy") != -1
+            or adr.find("986 Shepard") != -1
+            or adr.find("170 W 200 N") != -1
+            or adr.find("411 W 1425 N") != -1
+            or adr.find("1875 7000 S") != -1
+        ):
+            postal = adr.split()[-1].strip()
+
+        tmpcls = (
+            "".join(tree.xpath(f'//div[contains(text(), "{location_name}")]/a//text()'))
+            .replace("\n", "")
+            .strip()
+        )
+        if tmpcls == "Closed for the season":
+            hours_of_operation = "Temporarily closed"
 
         row = [
             locator_domain,
