@@ -101,7 +101,7 @@ def fetchSinglePage(data_url, findRedirect=False):
                         headers,
                         {
                             "response": response_text,
-                            "hours_of_operation": getHoursOfOperation(),
+                            "hours_of_operation": getHoursOfOperation(response_text),
                             "phone": getPhone(session, headers, response_text),
                         },
                     ]
@@ -110,23 +110,25 @@ def fetchSinglePage(data_url, findRedirect=False):
                 continue
 
 
-def getHoursOfOperation():
+def getHoursOfOperation(response_text):
     try:
         hours_of_operation = []
 
-        profileRows = driver.find_elements_by_xpath(
+        hoosoup = html.fromstring(response_text, "lxml")
+        profileRows = hoosoup.xpath(
             "//div[contains(@class, 'profile-row-section')]/div/ul"
         )
+
         for profileRow in profileRows:
             texts = []
-            for li in profileRow.find_elements_by_xpath(".//li"):
+            for li in profileRow.xpath(".//li | .//li/div"):
                 texts.append(li.text)
-            if len(texts) > 1 and texts[0] == "Opening Days":
-                hours_of_operation.append(f"Opening Days: {texts[1].strip()}")
-            if len(texts) > 1 and texts[0] == "Opening Hours":
-                hours_of_operation.append(f"Opening Hours: {texts[1].strip()}")
-            if len(texts) > 1 and texts[0] == "When Closed":
-                hours_of_operation.append(f"Closed: {texts[1].strip()}")
+            if len(texts) > 1 and texts[1] == "Opening Days":
+                hours_of_operation.append(f"Opening Days: {texts[2].strip()}")
+            if len(texts) > 1 and texts[1] == "Opening Hours":
+                hours_of_operation.append(f"Opening Hours: {texts[2].strip()}")
+            if len(texts) > 1 and texts[1] == "When Closed":
+                hours_of_operation.append(f"Closed: {texts[2].strip()}")
         hours_of_operation = "; ".join(hours_of_operation)
         return hours_of_operation
     except Exception as e:
@@ -212,7 +214,7 @@ def fetchSingleStore(page_url, session=None, headers=None):
         else:
             store_response = {
                 "response": response_text,
-                "hours_of_operation": getHoursOfOperation(),
+                "hours_of_operation": getHoursOfOperation(response_text),
                 "phone": getPhone(session, headers, response_text),
             }
 

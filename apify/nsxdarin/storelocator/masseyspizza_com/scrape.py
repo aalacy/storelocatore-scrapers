@@ -87,6 +87,30 @@ def fetch_data():
                     hours = hours.split("<span")[0]
                 if "; DINI" in hours:
                     hours = hours.split("; DINI")[0]
+                if "261 Lincoln" in add:
+                    lat = "40.0176083"
+                    lng = "-82.8750958"
+                if "2970" in add:
+                    lat = "39.9438144"
+                    lng = "-83.0800593"
+                if "1299 N" in add:
+                    lat = "39.7274719"
+                    lng = "-82.6146089"
+                if "1951 E" in add:
+                    lat = "40.0903889"
+                    lng = "-82.9694044"
+                if "399 S" in add:
+                    lat = "40.1153043"
+                    lng = "-82.9304702"
+                if "9838" in add:
+                    lat = "40.1546363"
+                    lng = "-83.0961791"
+                if "440 E" in add:
+                    lat = "40.0064944"
+                    lng = "-82.6648511"
+                if "Willbrook" in add:
+                    lat = "33.4838211"
+                    lng = "-79.0983286"
                 yield [
                     website,
                     loc,
@@ -103,7 +127,9 @@ def fetch_data():
                     lng,
                     hours,
                 ]
-
+        if "google.com/maps" in line and "/@" in line:
+            lat = line.split("/@")[1].split(",")[0]
+            lng = line.split("/@")[1].split(",")[1]
         if '<div class="et_pb_text_inner"><p>' in line:
             if '<div class="et_pb_text_inner"><p><strong>' in line:
                 name = line.split('<div class="et_pb_text_inner"><p><strong>')[1].split(
@@ -117,6 +143,9 @@ def fetch_data():
             store = "<MISSING>"
             lat = ""
             lng = ""
+            if "google.com/maps" in g and "/@" in g:
+                lat = g.split("/@")[1].split(",")[0]
+                lng = g.split("/@")[1].split(",")[1]
             if "771 South" in g:
                 hours = "SUN-THUR 11am-11pm; FRI &amp; SAT 11am-Midnight"
             elif "4015 Parkmead" in g:

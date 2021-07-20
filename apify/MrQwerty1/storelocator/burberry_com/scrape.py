@@ -53,6 +53,8 @@ def fetch_data():
         postal = a.get("postcode") or "<MISSING>"
         if "AB " in postal:
             postal = postal.replace("AB ", "")
+        if postal == "--":
+            postal = "<MISSING>"
         country_code = a.get("country") or "<MISSING>"
         store_number = j.get("id") or "<MISSING>"
         country = a.get("country_name")

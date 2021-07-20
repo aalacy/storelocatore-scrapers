@@ -4,6 +4,7 @@ from lxml import etree
 from urllib.parse import urljoin
 
 from sgrequests import SgRequests
+from sgscrape.sgpostal import parse_address_intl
 
 
 def write_output(data):
@@ -70,12 +71,12 @@ def fetch_data():
             '//div[contains(text(), "Address")]/following-sibling::div/text()'
         )
         raw_address = [e.replace("\xa0", " ").strip() for e in raw_address if e.strip()]
-        location_name = loc_dom.xpath('//h1[@class="page-title"]/text()')
-        location_name = location_name[0].strip() if location_name else "<MISSING>"
+        addr = parse_address_intl(" ".join(raw_address))
+        location_name = loc_dom.xpath('//h1[@class="page-title"]/text()')[0]
         street_address = raw_address[0]
-        city = raw_address[1].split(", ")[0]
-        state = raw_address[1].split(", ")[-1].split()[0]
-        zip_code = raw_address[1].split(", ")[-1].split()[-1]
+        city = addr.city
+        state = addr.state
+        zip_code = addr.postcode
         country_code = re.findall(
             "storeaddresscountryname = '(.+?)';", loc_response.text
         )
