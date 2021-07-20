@@ -17,10 +17,13 @@ def fetch_data():
             "upgrade-insecure-requests": "1",
             "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.141 Safari/537.36",
         }
-        res = session.get("https://www.mendocinofarms.com/locations/", headers=headers)
-        soup = bs(res.text, "lxml")
+        soup = bs(
+            session.get(
+                "https://www.mendocinofarms.com/locations/", headers=headers
+            ).text,
+            "lxml",
+        )
         store_list = soup.select("div.locations-all a")
-        data = []
         for store in store_list:
             page_url = store["href"]
             if "Opening" in store.text:
