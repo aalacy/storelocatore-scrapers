@@ -32,7 +32,7 @@ headers = {
     "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.114 Safari/537.36",
 }
 
-session = SgRequests()
+# session = SgRequests()
 
 
 def removekey(d, key):
@@ -53,6 +53,7 @@ def get_state_country_submit_search_urls():
     This is one of the issues that we experience.
     This needs to be tested and find a way to fix.
     """
+    session = SgRequests()
     r_count = session.get(URL_LOCATION, headers=headers)
     sel_count = html.fromstring(r_count.text, "lxml")
     lis = sel_count.xpath(
@@ -136,6 +137,7 @@ def fetch_data():
             "upgrade-insecure-requests": "1",
             "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.77 Safari/537.36",
         }
+        session = SgRequests()
 
         r1 = session.get(url_base_city_state, headers=headers_path_ak)
         time.sleep(7)
