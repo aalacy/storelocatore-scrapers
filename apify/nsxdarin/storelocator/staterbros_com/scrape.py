@@ -152,6 +152,14 @@ def fetch_data():
                     city = "Palm Springs"
                 if ", L A" in city:
                     city = city.split(", L A")[0].strip()
+                if "1830 E Rte 66" in rawadd:
+                    add = "1830 E Rte 66"
+                if "16920 State Hwy 14" in rawadd:
+                    add = "16920 State Hwy 14"
+                if "1850 E Ave. J" in rawadd:
+                    add = "1850 E Ave. J"
+                if "2845 W Ave L" in rawadd:
+                    add = "2845 W Ave L"
                 yield [
                     website,
                     loc,
