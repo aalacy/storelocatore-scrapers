@@ -130,7 +130,26 @@ def determine_country(country):
         return resultCode[-1][0]
 
 
-def get_country(search, country, session, headers, SearchableCountry):
+def get_country(search, country, session, headers, SearchableCountry, state):
+    global errorz
+    errorzCopy = None
+    if errorz:
+        if len(errorz) != 0:
+            errorzCopy = errorz
+        try:
+            errorz = state.get_misc_value("errorz")
+        except Exception as e:
+            logzilla.warning("Something happened along the lines of", exc_info=e)
+        if errorz and errorzCopy:
+            errorz = errorz + errorzCopy
+            state.set_misc_value("errorz", errorz)
+            state.save(override=True)
+        else:
+            if not errorz:
+                if errorzCopy:
+                    state.set_misc_value("errorz", errorzCopy)
+                    state.save(override=True)
+
     def getPoint(point, session, locale, headers):
         if locale[-1] != "/":
             locale = locale + "/"
@@ -183,6 +202,25 @@ def get_country(search, country, session, headers, SearchableCountry):
             f"Found a total of 0 results for country {country}\n this is unacceptable and possibly a country/search space mismatch\n Matched to: {SearchableCountry}"
         )
         if SearchableCountry not in known_empties:
+            errorzCopy = None
+            if errorz:
+                if len(errorz) != 0:
+                    errorzCopy = errorz
+                try:
+                    errorz = state.get_misc_value("errorz")
+                except Exception as e:
+                    logzilla.warning(
+                        "Something happened along the lines of", exc_info=e
+                    )
+                if errorz and errorzCopy:
+                    errorz = errorz + errorzCopy
+                    state.set_misc_value("errorz", errorz)
+                    state.save(override=True)
+                else:
+                    if not errorz:
+                        if errorzCopy:
+                            state.set_misc_value("errorz", errorzCopy)
+                            state.save(override=True)
             errorz.append(
                 str(
                     f"Found a total of 0 results for country {country}\n this is unacceptable and possibly a country/search space mismatch\n Matched to: {SearchableCountry}"
@@ -264,7 +302,7 @@ def fetch_data():
                         )
                     if search:
                         for record in get_country(
-                            search, country, session, headers, SearchableCountry
+                            search, country, session, headers, SearchableCountry, state
                         ):
                             yield record
                         SearchableCountry = None
