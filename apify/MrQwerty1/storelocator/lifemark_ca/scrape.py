@@ -61,7 +61,7 @@ def fetch_data():
         country_code = "CA"
         store_number = j.get("ClinicId") or "<MISSING>"
         page_url = f'https://www.lifemark.ca/{j.get("url_alias")}'
-        location_name = j.get("ClinicName")
+        location_name = j.get("ClinicName") or city
         phone = j.get("Phone") or "<MISSING>"
         latitude = j.get("Latitude") or "<MISSING>"
         longitude = j.get("Longitude") or "<MISSING>"

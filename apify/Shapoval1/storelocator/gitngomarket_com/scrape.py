@@ -1,4 +1,5 @@
 import csv
+from lxml import html
 from sgrequests import SgRequests
 
 
@@ -33,45 +34,41 @@ def write_output(data):
 
 def fetch_data():
     out = []
-    locator_domain = "https://barrospizza.com/"
-    api_url = "https://cms.barrospizza.com/wp-json/wp/v2/locations?per_page=100&fields=id,slug,acf,title"
 
+    locator_domain = "https://gitngomarket.com"
+    api_url = "https://gitngomarket.com/locations/"
     session = SgRequests()
-    r = session.get(api_url)
-    js = r.json()
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
+    }
+    r = session.get(api_url, headers=headers)
+    tree = html.fromstring(r.text)
+    div = tree.xpath('//div[@class="entry-content"]/div[2]/div')
+    for d in div:
 
-    for j in js:
-        page_url = f'https://barrospizza.com/locations/{j.get("slug")}/'
-        store_number = j.get("id") or "<MISSING>"
-        location_name = j.get("title").get("rendered").replace("&#038;", "&")
-        j = j.get("acf")
-
-        a = j.get("address")
-        street_address = (
-            f"{a.get('address_1')} {a.get('address_2') or ''}".strip() or "<MISSING>"
-        )
-        city = a.get("city") or "<MISSING>"
-        state = a.get("state") or "<MISSING>"
-        postal = a.get("zip") or "<MISSING>"
-        country_code = "US"
-        phone = j.get("phone").strip() or "<MISSING>"
-        latitude = j.get("latitude") or "<MISSING>"
-        longitude = j.get("longitude") or "<MISSING>"
+        page_url = "https://gitngomarket.com/locations/"
+        location_name = "<MISSING>"
         location_type = "<MISSING>"
-
-        _tmp = []
-        sun_thu = j.get("hours_sunday_thursday")
-        if sun_thu:
-            _tmp.append(f"Sun - Thurs: {sun_thu}")
-        fri_sat = j.get("hours_friday_saturday")
-        if fri_sat:
-            _tmp.append(f"Fri - Sat: {fri_sat}")
-
-        hours_of_operation = ";".join(_tmp) or "<MISSING>"
-
-        issoon = j.get("cross_streets") or ""
-        if "soon" in issoon.lower():
-            hours_of_operation = "Coming Soon"
+        street_address = "".join(d.xpath('.//div[@class="map-addr"]/a/text()[1]'))
+        ad = (
+            "".join(d.xpath('.//div[@class="map-addr"]/a/text()[2]'))
+            .replace("\n", "")
+            .strip()
+        )
+        state = ad.split(",")[1].split()[0].strip()
+        postal = ad.split(",")[1].split()[1].strip()
+        country_code = "US"
+        city = ad.split(",")[0].strip()
+        store_number = "<MISSING>"
+        map_link = "".join(d.xpath(".//iframe/@src"))
+        latitude = map_link.split("!3d")[1].strip().split("!")[0].strip()
+        longitude = map_link.split("!2d")[1].strip().split("!")[0].strip()
+        phone = "".join(d.xpath('.//*[contains(text(), "Store:")]/a[1]/text()'))
+        hours_of_operation = (
+            " ".join(d.xpath('.//div[@class="map-hours"]/text()'))
+            .replace("\n", "")
+            .strip()
+        )
 
         row = [
             locator_domain,
