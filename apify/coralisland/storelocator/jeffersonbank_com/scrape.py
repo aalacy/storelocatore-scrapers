@@ -37,7 +37,6 @@ def fetch_data():
                 street_address = address[0]
                 country_code = address[-1]
                 address = address[1].split()
-                print(address)
                 city = MISSING
                 state = address[1]
                 zip_postal = address[0]
