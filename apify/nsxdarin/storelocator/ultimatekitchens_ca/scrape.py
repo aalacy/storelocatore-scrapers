@@ -1,6 +1,8 @@
 import csv
-from sgrequests import SgRequests
+
 from sglogging import SgLogSetup
+
+from sgrequests import SgRequests
 
 session = SgRequests()
 headers = {
@@ -82,7 +84,10 @@ def fetch_data():
                         name = item.split('"gsx$storename":{"$t":"')[1].split('"')[0]
                         state = item.split("province: ")[1].split(",")[0]
                         zc = item.split("postalcode: ")[1].split(",")[0]
-                        phone = item.split("phonenumber: ")[1].split(",")[0]
+                        try:
+                            phone = item.split("phonenumber: ")[1].split(",")[0]
+                        except:
+                            phone = "<MISSING>"
                         purl = "https://www.ultimatekitchens.ca/en/locations.html"
                         try:
                             hours = (
@@ -101,6 +106,7 @@ def fetch_data():
                             hours = hours.split(", storenotice")[0].strip()
                         if "Holiday" in hours:
                             hours = hours.split("Holiday")[0].strip()
+                        hours = hours.split('"}')[0].strip()
                         if store not in ids:
                             ids.append(store)
                             yield [

@@ -25,12 +25,9 @@ def fetch_data():
                 if not _["status"] == "open":
                     continue
                 addr = parse_address_intl(_["location"]["address"])
-                street_address = addr.street_address_1
-                if addr.street_address_2:
-                    street_address += " " + addr.street_address_2
-                page_url = f"https://wellnow.com/location-state/{addr.state}"
+                street_address = _["location"]["address"].split(",")[0]
                 yield SgRecord(
-                    page_url=page_url,
+                    page_url=_["link"],
                     store_number=_["ID"],
                     location_name=_["title"],
                     street_address=street_address,

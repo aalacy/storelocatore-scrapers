@@ -2,37 +2,14 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
-from sgscrape.sgpostal import parse_address_intl
+from sglogging import SgLogSetup
+import json
+
+logger = SgLogSetup().get_logger("cinnaholic")
 
 _header1 = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.141 Safari/537.36",
 }
-
-
-def _valid(val):
-    return (
-        val.strip()
-        .replace("–", "-")
-        .encode("unicode-escape")
-        .decode("utf8")
-        .replace("\\xa0\\xa", " ")
-        .replace("\\xa0", " ")
-        .replace("\\xa", " ")
-        .replace("\\xae", "")
-    )
-
-
-def _phone(val):
-    if (
-        val.replace("-", "")
-        .replace(" ", "")
-        .replace("(", "")
-        .replace(")", "")
-        .strip()
-        .isdigit()
-    ):
-        return val
-    return ""
 
 
 def fetch_data():
@@ -61,28 +38,36 @@ def fetch_data():
                 details = soup3.select("div.content ul li a")
                 for detail in details:
                     page_url = detail["href"]
+                    logger.info(f"[{state.text}] [{city.text}] [{page_url}]")
                     soup4 = bs(session.get(page_url, headers=_header1).text, "lxml")
-                    addr = parse_address_intl(soup4.select_one("div.address").text)
-                    hours = [
-                        ": ".join(list(_.stripped_strings))
-                        for _ in soup4.select("div.store-hours .hours-box .day-row")
-                    ]
-                    if soup4.h3.text not in names:
-                        names.append(soup4.h3.text)
+                    _ = json.loads(
+                        soup4.find_all("script", type="application/ld+json")[-1].string
+                    )
+                    if _["name"] not in names:
+                        names.append(_["name"])
                     else:
                         continue
 
+                    hours = []
+                    if soup4.select("div.hours-box .day-row"):
+                        hours = [
+                            ": ".join(hh.stripped_strings)
+                            for hh in soup4.select("div.hours-box .day-row")
+                        ]
                     yield SgRecord(
                         page_url=page_url,
-                        location_name=soup4.h3.text,
-                        street_address=f"{addr.street_address_1} {addr.street_address_2}",
-                        city=addr.city,
-                        state=addr.state,
-                        zip_postal=addr.postcode,
+                        location_name=_["name"],
+                        street_address=_["address"]["streetAddress"],
+                        city=_["address"]["addressLocality"],
+                        state=_["address"]["addressRegion"],
+                        zip_postal=_["address"]["postalCode"],
                         country_code="US",
-                        phone=_phone(soup4.select_one("div.phone a").text),
+                        phone=_.get("telephone"),
                         locator_domain=locator_domain,
-                        hours_of_operation=_valid("; ".join(hours)),
+                        latitude=_["geo"]["latitude"],
+                        longitude=_["geo"]["longitude"],
+                        location_type=_["@type"],
+                        hours_of_operation="; ".join(hours).replace("–", "-"),
                     )
 
 

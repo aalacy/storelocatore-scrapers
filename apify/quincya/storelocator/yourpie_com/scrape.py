@@ -1,4 +1,5 @@
 import csv
+import re
 
 from bs4 import BeautifulSoup
 
@@ -49,13 +50,11 @@ def fetch_data():
 
     found_poi = []
 
-    max_results = 10
-    max_distance = 50
+    max_distance = 150
 
     search = DynamicZipSearch(
         country_codes=[SearchableCountries.USA],
         max_radius_miles=max_distance,
-        max_search_results=max_results,
     )
 
     log.info("Running sgzip ..")
@@ -72,7 +71,7 @@ def fetch_data():
         except:
             continue
         for item in items:
-            locator_domain = "citizensbank.com"
+            locator_domain = "yourpie.com"
             if "COMING SOON" in item.text.upper():
                 continue
 
@@ -82,28 +81,46 @@ def fetch_data():
             street_address = raw_address[0].strip()
             city = raw_address[1].split(",")[0].strip()
             state = raw_address[1].split(",")[1].strip().split()[0]
-            try:
-                zip_code = raw_address[1].split(",")[1].strip().split()[1]
-                if not zip_code.isdigit():
-                    zip_code = "<MISSING>"
-            except:
-                zip_code = "<MISSING>"
             country_code = "US"
             store_number = "<MISSING>"
-            phone = item.find(class_="phone").text.strip()
-            if phone in found_poi:
-                continue
-            found_poi.append(phone)
-            location_type = "<MISSING>"
             latitude = item["data-lat"]
             longitude = item["data-lng"]
 
             search.found_location_at(latitude, longitude)
+            location_type = "<MISSING>"
+
+            try:
+                phone = item.find(class_="phone").text.strip()
+                if phone in found_poi:
+                    continue
+                found_poi.append(phone)
+            except:
+                phone = ""
 
             link = item.a["href"]
+
             log.info(link)
             req = session.get(link, headers=headers)
             base = BeautifulSoup(req.text, "lxml")
+
+            zip_code = "<MISSING>"
+            try:
+                zip_base = base.find("meta", attrs={"name": "geo.placename"})[
+                    "content"
+                ][-20:]
+                zip_code = re.findall(r"[0-9]{5}", zip_base)[0]
+            except:
+                try:
+                    zip_code = base.find("meta", attrs={"name": "zipcode"})[
+                        "content"
+                    ].strip()
+                except:
+                    try:
+                        zip_code = raw_address[1].split(",")[1].strip().split()[1]
+                        if not zip_code.isdigit():
+                            zip_code = "<MISSING>"
+                    except:
+                        pass
 
             try:
                 hours_of_operation = " ".join(
@@ -111,6 +128,12 @@ def fetch_data():
                 )
             except:
                 hours_of_operation = "<MISSING>"
+
+            if not phone:
+                phone = base.find(class_="contactInfo").a.text.strip()
+                if phone in found_poi:
+                    continue
+                found_poi.append(phone)
 
             yield [
                 locator_domain,

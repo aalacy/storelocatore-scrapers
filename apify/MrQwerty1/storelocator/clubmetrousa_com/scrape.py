@@ -83,13 +83,19 @@ def get_data(page_url):
     location_type = "<MISSING>"
 
     _tmp = []
-    hours = tree.xpath("//p[@class='text-center' and ./strong]")
+    hours = tree.xpath(
+        "//p[@class='text-center' and ./strong]|//p[@class='text-center' and ./strong]/following-sibling::p"
+    )
 
     for h in hours:
         line = " ".join("".join(h.xpath(".//text()")).split())
+        if "*" in line:
+            continue
         _tmp.append(line)
 
     hours_of_operation = ";".join(_tmp) or "<MISSING>"
+    if hours_of_operation.endswith(";"):
+        hours_of_operation = hours_of_operation[:-1]
 
     row = [
         locator_domain,

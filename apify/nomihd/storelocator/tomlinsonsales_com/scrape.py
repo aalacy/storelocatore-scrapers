@@ -59,6 +59,7 @@ def fetch_data():
                 " ".join(address_info[: phone_index[0] - 1])
                 .replace("\n", " ")
                 .replace("  ", " ")
+                .replace("Biggs Park Mall", "")
                 .strip()
             )
 
@@ -66,7 +67,7 @@ def fetch_data():
             city = cty_st_zip.split(",")[0].strip()
             state = cty_st_zip.split(",")[1].strip().split(" ")[0].strip()
             zip = cty_st_zip.split(",")[1].strip().split(" ")[1].strip()
-            hours_of_operation = address_info[-1].strip()
+            hours_of_operation = "; ".join(address_info[phone_index[0] + 1 :]).strip()
 
         country_code = "US"
 
