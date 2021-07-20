@@ -22,7 +22,9 @@ def fetch_data():
                 street_address += ", " + _["address2"]
             hours = []
             for hh in _["hours"]["days"]:
-                time = f"{hh['intervals'][0]['start']}-{hh['intervals'][0]['end']}"
+                time = "Closed"
+                if hh["intervals"]:
+                    time = f"{hh['intervals'][0]['start']}-{hh['intervals'][0]['end']}"
                 hours.append(f"{hh['day']}: {time}")
             yield SgRecord(
                 page_url=_["website"]["url"],

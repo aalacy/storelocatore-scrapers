@@ -35,12 +35,16 @@ def fetch_data():
         if "centers" in locations:
             for _ in locations["centers"]:
                 page_url = f"{locator_domain}{_['link']}"
-                soup = bs(
-                    session.get(page_url, headers=headers, timeout=15).text, "lxml"
-                )
-                store = json.loads(
-                    soup.find("script", type="application/ld+json").string.strip()
-                )
+                res = session.get(page_url, headers=headers, timeout=15)
+                if res.status_code != 200:
+                    continue
+                soup = bs(res.text, "lxml")
+                try:
+                    store = json.loads(
+                        soup.find("script", type="application/ld+json").string.strip()
+                    )
+                except:
+                    continue
                 search.found_location_at(
                     store["geo"]["latitude"],
                     store["geo"]["longitude"],

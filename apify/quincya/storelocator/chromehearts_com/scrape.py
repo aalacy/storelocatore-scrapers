@@ -79,11 +79,12 @@ def fetch_data():
 
         try:
             map_link = item.a["href"]
-            at_pos = map_link.rfind("@")
-            latitude = map_link[at_pos + 1 : map_link.find(",", at_pos)].strip()
-            longitude = map_link[
-                map_link.find(",", at_pos) + 1 : map_link.find(",", at_pos + 15)
-            ].strip()
+            geo = re.findall(r"[0-9]{2}\.[0-9]+,-[0-9]{2,3}\.[0-9]+", map_link)[
+                0
+            ].split(",")
+            latitude = geo[0]
+            longitude = geo[1]
+
         except:
             latitude = "<MISSING>"
             longitude = "<MISSING>"

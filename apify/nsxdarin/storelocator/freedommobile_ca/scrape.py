@@ -98,7 +98,12 @@ def fetch_data():
                 lurl = "https://locations.freedommobile.ca/store/" + store
                 name = item.split('"name": "')[1].split('"')[0]
                 phone = item.split('"phone": "')[1].split('"')[0]
-                aid = item.split('"address": {')[1].split('"id": "')[1].split('"')[0]
+                try:
+                    aid = (
+                        item.split('"address": {')[1].split('"id": "')[1].split('"')[0]
+                    )
+                except:
+                    aid = "<MISSING>"
                 try:
                     mhrs = item.split('"Monday":')[1].split('"id": "')[1].split('"')[0]
                 except:

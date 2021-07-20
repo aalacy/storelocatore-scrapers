@@ -18,14 +18,29 @@ headers = {
 def fetch_data():
     # Your scraper here
 
-    search_url = "https://yosushi.com/restaurants"
+    search_url = "https://yosushi.com/restaurants?location=&restaurantTypeFilter=&longitude=&latitude="
     while True:
         stores_req = session.get(search_url, headers=headers)
         stores_sel = lxml.html.fromstring(stores_req.text)
 
-        stores = stores_sel.xpath('//a[@class="content-link__link"]/@href')
-        for store_url in stores:
-            page_url = "https://yosushi.com" + store_url
+        stores = stores_sel.xpath('//div[@class="restaurant-list"]/div')
+        for store in stores:
+            if (
+                "Kiosk"
+                in "".join(
+                    store.xpath('.//div[@class="restaurant-card__badge"]/text()')
+                ).strip()
+            ):
+                continue
+
+            page_url = (
+                "https://yosushi.com"
+                + "".join(
+                    store.xpath(
+                        './/a[@class="btn btn--primary restaurant-card__button"]/@href'
+                    )
+                ).strip()
+            )
             log.info(page_url)
             store_req = session.get(page_url, headers=headers)
             store_sel = lxml.html.fromstring(store_req.text)

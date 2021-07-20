@@ -1,4 +1,5 @@
 import csv
+from lxml import html
 from sgrequests import SgRequests
 
 
@@ -57,10 +58,25 @@ def fetch_data():
         postal = j.get("postal_code")
         country_code = j.get("country")
         city = j.get("city")
-        store_number = location_name.split("#")[1].strip()
+        try:
+            store_number = page_url.split("-")[-1].replace("/", "").strip()
+        except:
+            store_number = "<MISSING>"
         latitude = j.get("Latitude")
         longitude = j.get("Longitude")
-        hours_of_operation = "<MISSING>"
+        session = SgRequests()
+        r = session.get(page_url, headers=headers)
+        tree = html.fromstring(r.text)
+
+        hours_of_operation = (
+            " ".join(
+                tree.xpath(
+                    '//h2[contains(text(), "Business")]/following-sibling::p//text()'
+                )
+            )
+            .replace("\n", "")
+            .strip()
+        )
         row = [
             locator_domain,
             page_url,

@@ -60,16 +60,20 @@ def get_data(url):
     r = session.get(page_url)
     tree = html.fromstring(r.text)
 
-    location_name = "".join(
-        tree.xpath("//div[@id='_store_schedule']//h1/text()")
-    ).strip()
+    location_name = " ".join(
+        "".join(tree.xpath("//h1[@class='small']//text()")).split()
+    )
     line = tree.xpath("//span[@class='set-store']/following-sibling::p[1]/text()")
     line = list(filter(None, [l.strip() for l in line]))
-    if line[-1][0].isdigit() or line[-1][0] == "(":
-        phone = line.pop()
-    else:
-        phone = "<MISSING>"
+    if not line:
+        return
 
+    phone = (
+        "".join(
+            tree.xpath("//a[@class='call-link']/text()|//a[@class='call-=link']/text()")
+        ).strip()
+        or "<MISSING>"
+    )
     street_address = ", ".join(line[:-1])
     line = line[-1]
     city = line.split(",")[0].strip()
