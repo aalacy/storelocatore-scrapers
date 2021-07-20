@@ -1,5 +1,4 @@
 import csv
-from lxml import html
 from sgrequests import SgRequests
 
 
@@ -35,42 +34,40 @@ def write_output(data):
 def fetch_data():
     out = []
 
-    locator_domain = "https://gitngomarket.com"
-    api_url = "https://gitngomarket.com/locations/"
+    locator_domain = "https://www.destinationdentaire.ca"
+    api_url = "https://www.destinationdentaire.ca/wp-admin/admin-ajax.php?action=asl_load_stores&nonce=971a8239f8&load_all=1&layout=1"
     session = SgRequests()
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
     }
     r = session.get(api_url, headers=headers)
-    tree = html.fromstring(r.text)
-    div = tree.xpath('//div[@class="entry-content"]/div[2]/div')
-    for d in div:
+    js = r.json()
+    for j in js:
 
-        page_url = "https://gitngomarket.com/locations/"
-        location_name = "<MISSING>"
+        page_url = locator_domain + j.get("website")
+        location_name = j.get("title")
         location_type = "<MISSING>"
-        street_address = "".join(d.xpath('.//div[@class="map-addr"]/a/text()[1]'))
-        ad = (
-            "".join(d.xpath('.//div[@class="map-addr"]/a/text()[2]'))
-            .replace("\n", "")
-            .strip()
-        )
-        state = ad.split(",")[1].split()[0].strip()
-        postal = ad.split(",")[1].split()[1].strip()
-        country_code = "US"
-        city = ad.split(",")[0].strip()
+        street_address = j.get("street")
+        state = j.get("state")
+        postal = j.get("postal_code")
+        country_code = j.get("country")
+        city = j.get("city")
         store_number = "<MISSING>"
-        map_link = "".join(d.xpath(".//iframe/@src"))
-        latitude = map_link.split("!3d")[1].strip().split("!")[0].strip()
-        longitude = map_link.split("!2d")[1].strip().split("!")[0].strip()
-        phone = "".join(d.xpath('.//*[contains(text(), "Store:")]/a[1]/text()'))
-        hours_of_operation = (
-            " ".join(d.xpath('.//div[@class="map-hours"]/text()'))
-            .replace("\n", "")
-            .strip()
-        )
-        if hours_of_operation.find("Deli") != -1:
-            hours_of_operation = hours_of_operation.split("Deli")[0].strip()
+        latitude = j.get("lat")
+        longitude = j.get("lng")
+        phone = j.get("phone")
+        hours = j.get("open_hours")
+        hours = eval(hours)
+        days = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"]
+        _tmp = []
+        for d in days:
+            day = d.capitalize()
+            time = hours.get(f"{d}")[0]
+            if time == "0":
+                time = "Closed"
+            line = f"{day} {time}"
+            _tmp.append(line)
+        hours_of_operation = "; ".join(_tmp) or "<MISSING>"
 
         row = [
             locator_domain,
