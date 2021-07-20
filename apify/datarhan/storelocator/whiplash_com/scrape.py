@@ -64,8 +64,10 @@ def fetch_data():
 
         for poi_html in all_locations:
             raw_address = poi_html.xpath(".//p/text()")[1:]
+            raw_address = [e.strip() for e in raw_address if e.strip()]
             if len(raw_address) == 3:
                 raw_address = [", ".join(raw_address[:2])] + raw_address[2:]
+            raw_address = [e.strip() for e in raw_address if e.strip()]
             store_url = url
             street_address = raw_address[0]
             city = raw_address[-1].split(", ")[0]
@@ -105,6 +107,13 @@ def fetch_data():
                     ):
                         latitude = e["itemReviewed"]["geo"]["latitude"]
                         longitude = e["itemReviewed"]["geo"]["longitude"]
+            if latitude == "<MISSING>" and len(all_locations) == 1:
+                data = dom.xpath('//script[contains(text(), "latitude")]/text()')[0]
+                data = json.loads(data)
+                if type(data) == list:
+                    data = data[0]
+                latitude = data["geo"]["latitude"]
+                longitude = data["geo"]["longitude"]
             hours_of_operation = "<MISSING>"
 
             item = [
