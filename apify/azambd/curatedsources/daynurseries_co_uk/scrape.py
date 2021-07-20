@@ -6,7 +6,7 @@ from urllib.parse import urlparse
 from lxml import html
 import ssl
 from bs4 import BeautifulSoup as bs
-
+from webdriver_manager.chrome import ChromeDriverManager
 from sgselenium import SgChrome
 from sgrequests import SgRequests
 from sglogging import sglog
@@ -44,7 +44,9 @@ COLUMNS = [
 
 session = SgRequests().requests_retry_session()
 log = sglog.SgLogSetup().get_logger(logger_name=website)
-driver = SgChrome(is_headless=True, executable_path="chromedriver.exe").driver()
+driver = SgChrome(
+    is_headless=True, executable_path=ChromeDriverManager().install()
+).driver()
 
 
 def fetchStores():
@@ -65,57 +67,68 @@ def fetchSinglePage(data_url, findRedirect=False):
     incap_url = website + incap_str
     session.get(incap_url)
 
-    for request in driver.requests:
-        headers = request.headers
-        try:
-            response = session.get(data_url, headers=headers)
-            response_text = response.text
+    x = 0
+    while True:
+        x = x + 1
+        if x == 10:
+            break
+        for request in driver.requests:
+            headers = request.headers
+            try:
+                response = session.get(data_url, headers=headers)
+                response_text = response.text
 
-            test_html = response_text.split("div")
+                test_html = response_text.split("div")
 
-            if findRedirect and response_text.find("window.location.replace") > -1:
+                if findRedirect and response_text.find("window.location.replace") > -1:
 
-                try:
-                    return response_text.split("window.location.replace('")[1].split(
-                        "')"
-                    )[0]
-                except Exception:
+                    try:
+                        return [
+                            session,
+                            headers,
+                            response_text.split("window.location.replace('")[1].split(
+                                "')"
+                            )[0],
+                        ]
+                    except Exception:
+                        continue
+                elif len(test_html) < 2:
                     continue
-            elif len(test_html) < 2:
+                else:
+
+                    return [
+                        session,
+                        headers,
+                        {
+                            "response": response_text,
+                            "hours_of_operation": getHoursOfOperation(response_text),
+                            "phone": getPhone(session, headers, response_text),
+                        },
+                    ]
+
+            except Exception:
                 continue
-            else:
-
-                return [
-                    session,
-                    headers,
-                    {
-                        "response": response_text,
-                        "hours_of_operation": getHoursOfOperation(),
-                        "phone": getPhone(session, headers, response_text),
-                    },
-                ]
-
-        except Exception:
-            continue
 
 
-def getHoursOfOperation():
+def getHoursOfOperation(response_text):
     try:
         hours_of_operation = []
-        profileRows = driver.find_elements_by_xpath(
-            "//div[contains(@class, 'profile-rows')]/div/ul"
+
+        hoosoup = html.fromstring(response_text, "lxml")
+        profileRows = hoosoup.xpath(
+            "//div[contains(@class, 'profile-row-section')]/div/ul"
         )
 
         for profileRow in profileRows:
             texts = []
-            for li in profileRow.find_elements_by_xpath(".//li"):
+            for li in profileRow.xpath(".//li | .//li/div"):
                 texts.append(li.text)
-            if len(texts) > 1 and texts[0] == "Opening Days":
-                hours_of_operation.append(f"Opening Days: {texts[1].strip()}")
-            if len(texts) > 1 and texts[0] == "Opening Hours":
-                hours_of_operation.append(f"Opening Hours: {texts[1].strip()}")
-            if len(texts) > 1 and texts[0] == "When Closed":
-                hours_of_operation.append(f"Closed: {texts[1].strip()}")
+            if len(texts) > 1 and texts[1] == "Opening Days":
+                hours_of_operation.append(f"Opening Days: {texts[2].strip()}")
+            if len(texts) > 1 and texts[1] == "Opening Hours":
+                hours_of_operation.append(f"Opening Hours: {texts[2].strip()}")
+            if len(texts) > 1 and texts[1] == "When Closed":
+                hours_of_operation.append(f"Closed: {texts[2].strip()}")
         hours_of_operation = "; ".join(hours_of_operation)
         return hours_of_operation
     except Exception as e:
@@ -126,7 +139,12 @@ def getHoursOfOperation():
 def getPhone(session, headers, response_text):
     try:
         phone_soup = bs(response_text, "html.parser")
-        phone_link = phone_soup.find("a", attrs={"id": "brochure_phone"})["href"]
+        phone_soup = html.fromstring(response_text, "lxml")
+        phone_link = phone_soup.xpath('//button[@id="brochure_phone"]/@href')
+        if len(phone_link) == 0:
+            return MISSING
+        phone_link = phone_link[0]
+
         phone_response = session.get(phone_link, headers=headers).text
         response_soup = bs(phone_response, "html.parser")
         phone = (
@@ -196,7 +214,7 @@ def fetchSingleStore(page_url, session=None, headers=None):
         else:
             store_response = {
                 "response": response_text,
-                "hours_of_operation": getHoursOfOperation(),
+                "hours_of_operation": getHoursOfOperation(response_text),
                 "phone": getPhone(session, headers, response_text),
             }
 
@@ -219,10 +237,23 @@ def fetchSingleStore(page_url, session=None, headers=None):
     latitude = str(getJSONObjectVariable(geoJSON, "geo.latitude"))
     longitude = str(getJSONObjectVariable(geoJSON, "geo.longitude"))
 
-    redirect_urls = body.xpath('//a[contains(@class, "button-website")]/@href')
+    redirect_urls = body.xpath('//a[contains(@id, "website-button")]/@href')
     if len(redirect_urls) > 0:
-        brand_website = fetchSinglePage(redirect_urls[0], True)
-        brand_website = (urlparse(brand_website).netloc).replace("www.", "")
+
+        url_text = session.get(redirect_urls[0], headers=headers).text
+
+        try:
+            brand_website = url_text.split("window.location.replace(")[1].split(")")[0]
+            brand_website = brand_website.replace("'", "")
+        except Exception:
+            brand_website_session = fetchSinglePage(redirect_urls[0], True)
+            brand_website = brand_website_session[2]
+            session = brand_website_session[0]
+            headers = brand_website_session[1]
+
+            brand_website = (
+                (urlparse(brand_website).netloc).replace("www.", "").replace("'", "")
+            )
 
     else:
         brand_website = MISSING

@@ -94,6 +94,12 @@ def fetch_data():
 
             if zip_code == "2h L":
                 zip_code = "BT22 2hL"
+            if "Co. Down" in zip_code:
+                zip_code = "<MISSING>"
+
+            street_address = street_address.split(city)[0].strip()
+            if city.upper() in street_address:
+                street_address = street_address.split(city.upper())[0].strip()
 
             item = [
                 DOMAIN,

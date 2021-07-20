@@ -27,7 +27,7 @@ MISSING = "<MISSING>"
 def get_headers(url, api_v1_ordering, headerIdent):
     with SgChrome(is_headless=True) as driver:
         driver.get(url)
-        time.sleep(20)
+        time.sleep(50)
         for r in driver.requests:
             logger.info(f"Getting Bearer Token from Path: {r.path}")
             if api_v1_ordering in r.path and r.headers[headerIdent]:
@@ -55,19 +55,19 @@ def get_hoo(hoo, state_for_different_timezone):
             end_line = test_end.split("T")[1]
             if "NM" in state_for_different_timezone:
                 start_sanitized = (
-                    datetime.strptime(start_line, "%H:%M:%S+00:00") - timedelta(hours=6)
-                ).strftime("%I:%M %p")
-
-                end_sanitized = (
-                    datetime.strptime(end_line, "%H:%M:%S+00:00") - timedelta(hours=6)
-                ).strftime("%I:%M %p")
-            else:
-                start_sanitized = (
                     datetime.strptime(start_line, "%H:%M:%S+00:00") - timedelta(hours=5)
                 ).strftime("%I:%M %p")
 
                 end_sanitized = (
                     datetime.strptime(end_line, "%H:%M:%S+00:00") - timedelta(hours=5)
+                ).strftime("%I:%M %p")
+            else:
+                start_sanitized = (
+                    datetime.strptime(start_line, "%H:%M:%S+00:00") - timedelta(hours=4)
+                ).strftime("%I:%M %p")
+
+                end_sanitized = (
+                    datetime.strptime(end_line, "%H:%M:%S+00:00") - timedelta(hours=4)
                 ).strftime("%I:%M %p")
             hoo_sanitized = f"{day_of_week} {start_sanitized} - {end_sanitized}"
             hoo_list.append(hoo_sanitized)

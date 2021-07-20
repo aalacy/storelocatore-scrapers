@@ -58,7 +58,7 @@ def get_result(url, headers):
 
 
 url_sitemap_main = "https://www.autozone.com/locations/sitemap.xml"
-r = session.get(url_sitemap_main, headers=headers, timeout=120)
+r = session.get(url_sitemap_main, headers=headers, timeout=500)
 datar = html.fromstring(bytes(r.text, encoding="utf8"))
 url_sub_sitemap = datar.xpath("//sitemap/loc/text()")
 logger.info(f"Sitemap URLs: {len(url_sub_sitemap)}")
@@ -67,7 +67,7 @@ logger.info(f"Sitemap URLs: {len(url_sub_sitemap)}")
 def get_all_raw_store_urls():
     urls_part1_and_part2 = []
     for url_part in url_sub_sitemap:
-        r0 = session.get(url_part, headers=headers, timeout=120)
+        r0 = session.get(url_part, headers=headers, timeout=500)
         datar0 = html.fromstring(bytes(r0.text, encoding="utf8"))
         logger.info(f"Scraping All Store URLs from: {url_part} ")
         urls_0 = datar0.xpath("//url/loc/text()")

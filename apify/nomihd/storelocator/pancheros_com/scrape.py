@@ -61,8 +61,6 @@ def write_output(data):
 
 def fetch_data():
     # Your scraper here
-    loc_list = []
-
     search_url = "https://www.pancheros.com/index.php?ACT=23&locate_method=json&lat=40.75368539999999&lng=-73.9991637&radius=1000000"
     stores_req = session.get(search_url, headers=headers)
     stores = stores_req.json()
@@ -124,6 +122,8 @@ def fetch_data():
         if len("".join(temp_hours).strip()) <= 0:
             store_req = session.get(page_url, headers=headers)
             store_sel = lxml.html.fromstring(store_req.text)
+            if "Coming Soon" in store_req.text:
+                continue
             hours = store_sel.xpath('//tr[@class="LocationHours-day"]')
             hours_list = []
             for hour in hours:
@@ -172,10 +172,7 @@ def fetch_data():
             longitude,
             hours_of_operation,
         ]
-        loc_list.append(curr_list)
-
-    # break
-    return loc_list
+        yield curr_list
 
 
 def scrape():

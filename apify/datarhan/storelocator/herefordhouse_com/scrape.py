@@ -1,9 +1,8 @@
 import re
 import csv
 from lxml import etree
-
 from sgrequests import SgRequests
-from sgselenium import SgChrome
+from sgselenium import SgFirefox
 
 
 def write_output(data):
@@ -55,13 +54,14 @@ def fetch_data():
     )
     for poi_html in all_locations:
         store_url = poi_html.xpath(".//a/@href")[0]
-        with SgChrome() as driver:
+        with SgFirefox() as driver:
             driver.get(store_url)
+            driver.implicitly_wait(15)
             iframe = driver.find_element_by_xpath("//iframe[contains(@src, 'google')]")
             driver.switch_to.frame(iframe)
             loc_dom = etree.HTML(driver.page_source)
-            zip_code = loc_dom.xpath('//div[@class="address"]/text()')[0].split()[-1]
             driver.switch_to.default_content()
+            zip_code = loc_dom.xpath('//div[@class="address"]/text()')[0].split()[-1]
             loc_dom = etree.HTML(driver.page_source)
 
         location_name = loc_dom.xpath('//h1[@id="page-title"]/text()')
