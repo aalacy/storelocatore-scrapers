@@ -199,6 +199,10 @@ for grid in grids:
             store_number = "<MISSING>"
             country_code = "US"
 
+    if "goo.gl" in page_url:
+        page_url = "<MISSING>"
+    
+    phone = phone.strip().replace("\n", "")
     locator_domains.append(locator_domain)
     page_urls.append(page_url)
     location_names.append(location_name)
