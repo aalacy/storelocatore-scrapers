@@ -7,7 +7,7 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup as b4
 from sgscrape.pause_resume import CrawlStateSingleton, CrawlState
 from dataclasses import asdict, dataclass
-from typing import Iterable, Optional
+from typing import Iterable, Optional, List
 from ordered_set import OrderedSet
 import json
 
@@ -16,7 +16,7 @@ logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
 known_empties = set()
 known_empties.add("xxxxxxx")
 
-errorz = []
+errorz: List[str] = []
 
 
 @dataclass(frozen=False)
