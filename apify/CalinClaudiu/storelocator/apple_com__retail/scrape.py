@@ -19,7 +19,7 @@ known_empties.add("xxxxxxx")
 errorz = []
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=False)
 class SerializableCountry:
     """
     Consists of fields that define a country.
@@ -28,6 +28,7 @@ class SerializableCountry:
     name: str
     link: str
     special: bool
+    retries: int
 
     def serialize(self) -> str:
         return json.dumps(asdict(self))
@@ -42,7 +43,10 @@ class SerializableCountry:
     def deserialize(serialized_json: str) -> "SerializableCountry":
         as_dict = json.loads(serialized_json)
         return SerializableCountry(
-            name=as_dict["name"], link=as_dict["link"], special=as_dict["special"]
+            name=as_dict["name"],
+            link=as_dict["link"],
+            special=as_dict["special"],
+            retries=as_dict["retries"],
         )
 
 
@@ -103,7 +107,7 @@ def get_Start(session, headers):
     for item in data:
         this.push_country(
             SerializableCountry(
-                name=item["name"], link=item["link"], special=item["special"]
+                name=item["name"], link=item["link"], special=item["special"], retries=0
             )
         )
     return this
@@ -234,45 +238,47 @@ def fetch_data():
                 pass
             else:
                 SearchableCountry = state.get_misc_value("SearchableCountry")
-                if not SearchableCountry:
-                    SearchableCountry = determine_country(country)
-                    state.set_misc_value("SearchableCountry", SearchableCountry)
-                    state.save(override=True)
-                else:
-                    countries.push_country(country)
-                    state.set_misc_value(
-                        key="countries", value=countries.serialize_requests()
-                    )
-                    state.save(override=True)
-                search = False
-                try:
-                    search = DynamicGeoSearch(
-                        country_codes=[SearchableCountry],
-                        max_radius_miles=50,
-                        max_search_results=None,
-                        granularity=Grain_8(),
-                        state=state,
-                    )
-                except Exception as e:
-                    logzilla.warning(
-                        f"Issue with sgzip and country code: {SearchableCountry}\n{e}"
-                    )
-                if search:
-                    for record in get_country(
-                        search, country, session, headers, SearchableCountry
-                    ):
-                        yield record
-                    SearchableCountry = None
-                    state.set_misc_value(
-                        key="SearchableCountry", value=SearchableCountry
-                    )
-                    state.save(override=True)
-                else:
-                    SearchableCountry = None
-                    state.set_misc_value(
-                        key="SearchableCountry", value=SearchableCountry
-                    )
-                    state.save(override=True)
+                if country.retries < 3:
+                    country.retries = country.retries + 1
+                    if not SearchableCountry:
+                        SearchableCountry = determine_country(country)
+                        state.set_misc_value("SearchableCountry", SearchableCountry)
+                        state.save(override=True)
+                    else:
+                        countries.push_country(country)
+                        state.set_misc_value(
+                            key="countries", value=countries.serialize_requests()
+                        )
+                        state.save(override=True)
+                    search = False
+                    try:
+                        search = DynamicGeoSearch(
+                            country_codes=[SearchableCountry],
+                            expected_search_radius_miles=50,
+                            max_search_results=None,
+                            granularity=Grain_8(),
+                        )
+                    except Exception as e:
+                        logzilla.warning(
+                            f"Issue with sgzip and country code: {SearchableCountry}\n{e}"
+                        )
+                    if search:
+                        for record in get_country(
+                            search, country, session, headers, SearchableCountry
+                        ):
+                            yield record
+                        SearchableCountry = None
+                        state.set_misc_value(
+                            key="SearchableCountry", value=SearchableCountry
+                        )
+                        state.save(override=True)
+                    else:
+                        SearchableCountry = None
+                        state.set_misc_value(
+                            key="SearchableCountry", value=SearchableCountry
+                        )
+                        state.save(override=True)
+            country = countries.pop_country()
     logzilla.info(f"Finished grabbing data!!")  # noqa
 
 

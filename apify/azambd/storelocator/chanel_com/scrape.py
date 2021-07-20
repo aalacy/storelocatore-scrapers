@@ -16,7 +16,15 @@ from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 
 import ssl
 
-ssl._create_default_https_context = ssl._create_unverified_context
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
+
 
 website = "https://www.chanel.com"
 MISSING = "<MISSING>"
@@ -27,8 +35,13 @@ log = sglog.SgLogSetup().get_logger(logger_name=website)
 
 
 def fetchHeaders():
+    user_agent = (
+        "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0"
+    )
     driver = SgChrome(
-        is_headless=True, executable_path=ChromeDriverManager().install()
+        is_headless=True,
+        user_agent=user_agent,
+        executable_path=ChromeDriverManager().install(),
     ).driver()
 
     session = SgRequests().requests_retry_session()

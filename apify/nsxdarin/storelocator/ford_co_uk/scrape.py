@@ -155,7 +155,83 @@ def fetch_data():
                             add = "<MISSING>"
                         if zc == "":
                             zc = "<MISSING>"
-                        if '"ServiceMondayOpenTime":""' not in item:
+                        if '"SalesMondayOpenTime":""' not in item:
+                            hours = (
+                                "Mon: "
+                                + item.split('"SalesMondayOpenTime":"')[1].split('"')[0]
+                                + "-"
+                                + item.split('"SalesMondayCloseTime":"')[1].split('"')[
+                                    0
+                                ]
+                            )
+                            hours = (
+                                hours
+                                + "; "
+                                + "Tue: "
+                                + item.split('"SalesTuesdayOpenTime":"')[1].split('"')[
+                                    0
+                                ]
+                                + "-"
+                                + item.split('"SalesTuesdayOpenTime":"')[1].split('"')[
+                                    0
+                                ]
+                            )
+                            hours = (
+                                hours
+                                + "; "
+                                + "Wed: "
+                                + item.split('"SalesWednesdayOpenTime":"')[1].split(
+                                    '"'
+                                )[0]
+                                + "-"
+                                + item.split('"SalesWednesdayOpenTime":"')[1].split(
+                                    '"'
+                                )[0]
+                            )
+                            hours = (
+                                hours
+                                + "; "
+                                + "Thu: "
+                                + item.split('"SalesThursdayOpenTime":"')[1].split('"')[
+                                    0
+                                ]
+                                + "-"
+                                + item.split('"SalesThursdayOpenTime":"')[1].split('"')[
+                                    0
+                                ]
+                            )
+                            hours = (
+                                hours
+                                + "; "
+                                + "Fri: "
+                                + item.split('"SalesFridayOpenTime":"')[1].split('"')[0]
+                                + "-"
+                                + item.split('"SalesFridayOpenTime":"')[1].split('"')[0]
+                            )
+                            hours = (
+                                hours
+                                + "; "
+                                + "Sat: "
+                                + item.split('"SalesSaturdayOpenTime":"')[1].split('"')[
+                                    0
+                                ]
+                                + "-"
+                                + item.split('"SalesSaturdayOpenTime":"')[1].split('"')[
+                                    0
+                                ]
+                            )
+                            hours = (
+                                hours
+                                + "; "
+                                + "Sun: "
+                                + item.split('"SalesSundayOpenTime":"')[1].split('"')[0]
+                                + "-"
+                                + item.split('"SalesSundayOpenTime":"')[1].split('"')[0]
+                            )
+                        if (
+                            '"ServiceMondayOpenTime":""' not in item
+                            and hours == "<MISSING>"
+                        ):
                             hours = (
                                 "Mon: "
                                 + item.split('"ServiceMondayOpenTime":"')[1].split('"')[
