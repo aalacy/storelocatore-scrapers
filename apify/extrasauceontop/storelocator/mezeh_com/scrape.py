@@ -201,7 +201,7 @@ for grid in grids:
 
     if "goo.gl" in page_url:
         page_url = "<MISSING>"
-    
+
     phone = phone.strip().replace("\n", "")
     locator_domains.append(locator_domain)
     page_urls.append(page_url)
