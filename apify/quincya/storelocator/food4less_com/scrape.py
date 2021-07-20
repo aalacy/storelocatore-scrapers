@@ -59,7 +59,8 @@ def fetch_data():
             try:
                 script = (
                     base.find("script", attrs={"type": "application/ld+json"})
-                    .contents[0].replace("\n", "")
+                    .contents[0]
+                    .replace("\n", "")
                     .strip()
                 )
             except:
