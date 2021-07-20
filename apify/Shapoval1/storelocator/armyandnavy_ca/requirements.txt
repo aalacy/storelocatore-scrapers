@@ -1,2 +1,2 @@
-klxml==4.5.2
+lxml==4.5.2
 sgrequests==0.1.12
