@@ -80,8 +80,22 @@ def scrape():
                 ):
                     phone = part
 
-            if phone == "":
-                phone = "<LATER>"
+            if phone == "" and "advisor-search-results" in page_url:
+                phone_response = session.get(page_url).text
+                phone_soup = bs(phone_response, "html.parser")
+
+                phone_section = phone_soup.find(
+                    "div", attrs={"class": "location-item"}
+                ).text.strip()
+
+                y = 0
+                phone = ""
+                for character in phone_section:
+                    if bool(re.search(r"\d", character)) is True:
+                        y = y + 1
+                        phone = phone + character
+                    if y == 10:
+                        break
 
             latitude = "<MISSING>"
             longitude = "<MISSING>"
@@ -111,6 +125,9 @@ def scrape():
                 hours = hours[:-2]
 
             except Exception:
+                hours = "<MISSING>"
+
+            if "mon" not in hours[:4].lower():
                 hours = "<MISSING>"
 
             country_code = "US"
@@ -217,8 +234,22 @@ def scrape():
                 ):
                     phone = part
 
-            if phone == "":
-                phone = "<LATER>"
+            if phone == "" and "advisor-search-results" in page_url:
+                phone_response = session.get(page_url).text
+                phone_soup = bs(phone_response, "html.parser")
+
+                phone_section = phone_soup.find(
+                    "div", attrs={"class": "location-item"}
+                ).text.strip()
+
+                y = 0
+                phone = ""
+                for character in phone_section:
+                    if bool(re.search(r"\d", character)) is True:
+                        y = y + 1
+                        phone = phone + character
+                    if y == 10:
+                        break
 
             latitude = "<MISSING>"
             longitude = "<MISSING>"
@@ -354,8 +385,22 @@ def scrape():
                 ):
                     phone = part
 
-            if phone == "":
-                phone = "<LATER>"
+            if phone == "" and "advisor-search-results" in page_url:
+                phone_response = session.get(page_url).text
+                phone_soup = bs(phone_response, "html.parser")
+
+                phone_section = phone_soup.find(
+                    "div", attrs={"class": "location-item"}
+                ).text.strip()
+
+                y = 0
+                phone = ""
+                for character in phone_section:
+                    if bool(re.search(r"\d", character)) is True:
+                        y = y + 1
+                        phone = phone + character
+                    if y == 10:
+                        break
 
             latitude = "<MISSING>"
             longitude = "<MISSING>"
@@ -509,6 +554,14 @@ def scrape():
     df = df.drop(columns=["dupecheck"])
     df = df.replace(r"^\s*$", "<MISSING>", regex=True)
     df = df.fillna("<MISSING>")
+
+    df = df.reset_index(drop=True)
+
+    for x in range(len(hours_of_operations)):
+        hours_value = df.at[x, "hours_of_operation"]
+        if "office" in hours_value.lower():
+            df.at[x, "hours_of_operation"] = "<MISSING>"
+            df.at[x, "location_type"] = "loan office"
 
     df.to_csv("data.csv", index=False)
 

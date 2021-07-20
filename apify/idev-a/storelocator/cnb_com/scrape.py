@@ -11,16 +11,22 @@ _headers = {
 }
 
 locator_domain = "https://www.cnb.com"
+base_url = "https://locations.cnb.com/"
 
 
 def _detail(_, page_url):
     hours = []
-    if _.select_one("div.Services-atm"):
-        hours = _.select_one("div.Services-atm").stripped_strings
+    if _.select("section.Core table.c-hours-details"):
+        for hh in _.select("section.Core table.c-hours-details")[0].select("tbody tr"):
+            td = hh.select("td")
+            hours.append(f"{td[0].text}: {td[1].text}")
+
     location_type = _.select_one("span.LocationName-brand").text.strip()
     if location_type.split("-")[-1].strip() == "CLOSED":
         location_type = location_type.split("-")[0]
         hours = ["CLOSED"]
+    if _.select_one("div.Core-hoursTemporarilyClosed"):
+        hours = ["Temporarily Closed"]
     return SgRecord(
         page_url=page_url,
         location_name=_.select_one("span.LocationName-geo").text.strip(),
@@ -39,7 +45,6 @@ def _detail(_, page_url):
 
 
 def fetch_data():
-    base_url = "https://locations.cnb.com/"
     with SgRequests() as session:
         soup = bs(session.get(base_url, headers=_headers).text, "lxml")
         states = soup.select("ul.Directory-listLinks li a")

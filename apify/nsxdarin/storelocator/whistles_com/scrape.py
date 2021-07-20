@@ -86,6 +86,10 @@ def fetch_data():
                 country = "GB"
             if "Shop 1036" in add:
                 zc = "<MISSING>"
+            if "Shop 120A" in add:
+                city = "Admiralty"
+            if city == "":
+                city = "<MISSING>"
             yield [
                 website,
                 loc,

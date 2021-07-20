@@ -22,6 +22,7 @@ def fetch_data():
     states_sel = lxml.html.fromstring(states_req.text)
     states = states_sel.xpath('//li/a[@class="stateListItemLink"]/@href')
     url_list = []
+    locator_domain = website
     for state_url in states:
         cities_req = session.get(base_url + state_url, headers=headers)
         cities_sel = lxml.html.fromstring(cities_req.text)
@@ -41,7 +42,7 @@ def fetch_data():
                         + " and "
                         + "".join(title.split("and")[1]).strip()
                     )
-                if "Branch and ATM" in title:
+                if "Branch and ATM" in title or "Branch" in title:
                     page_url = (
                         base_url
                         + "".join(
@@ -58,8 +59,6 @@ def fetch_data():
                     log.info(page_url)
                     store_req = session.get(page_url)
                     store_sel = lxml.html.fromstring(store_req.text)
-
-                    locator_domain = website
 
                     location_name = title
                     street_address = "".join(
@@ -100,7 +99,13 @@ def fetch_data():
                     ).strip()
 
                     store_number = "<MISSING>"
-                    location_type = "Branch and ATM"
+
+                    location_type = ""
+                    if "Branch and ATM" in location_name:
+                        location_type = "Branch and ATM"
+                    else:
+                        if "Branch" in location_name:
+                            location_type = "Branch"
 
                     hours = store_sel.xpath(
                         '//table[@class="lobbyTimes"]//tr[position()>1]'

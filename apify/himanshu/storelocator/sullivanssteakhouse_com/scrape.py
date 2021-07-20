@@ -6,6 +6,7 @@ from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 
+
 session = SgRequests()
 website = "sullivanssteakhouse_com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -46,6 +47,9 @@ def fetch_data():
                 if "temporarily closed" in text:
                     hours_of_operation = MISSING
                     location_type = "Temporarily Closed"
+                elif "coming soon" in text.lower():
+                    hours_of_operation = MISSING
+                    location_type = "Coming Soon"
             temp = soup.find("div", {"class": "e9370-10 x-text"}).findAll("p")
             phone = temp[1].find("a").text
             address = (
@@ -87,6 +91,7 @@ def fetch_data():
                     store_number = coord["ID"]
                     latitude = coord["address"]["lat"]
                     longitude = coord["address"]["lng"]
+
             yield SgRecord(
                 locator_domain=DOMAIN,
                 page_url=page_url,
