@@ -67,11 +67,13 @@ def fetch_data():
         street_address = poi["address"]["streetAddress"]
         city = addr.city
         city = city if city else "<MISSING>"
-        state = poi["address"]["addressRegion"]
+        state = "<MISSING>"
         zip_code = poi["address"]["postalCode"]
         country_code = poi["address"]["addressCountry"]
         store_number = store_url.split("=")[-1]
         phone = poi["telephone"]
+        if not phone:
+            continue
         location_type = poi["@type"]
         latitude = poi["geo"]["latitude"]
         longitude = poi["geo"]["longitude"]

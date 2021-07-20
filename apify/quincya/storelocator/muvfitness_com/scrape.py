@@ -43,7 +43,7 @@ def fetch_data():
     stores = session.post(base_link, headers=headers).json()
 
     data = []
-    locator_domain = "muvfitness_com"
+    locator_domain = "https://www.muvfitness.com/"
 
     for store in stores:
         location_name = store["FranchiseLocationName"]
