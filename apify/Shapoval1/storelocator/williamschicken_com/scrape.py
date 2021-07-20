@@ -45,7 +45,7 @@ def fetch_data():
     js = r.json()
     for j in js:
 
-        page_url = j.get("url") or "https://williamschicken.com/locations/"
+        page_url = j.get("permalink") or "https://williamschicken.com/locations/"
         location_name = j.get("store") or "<MISSING>"
         location_type = "<MISSING>"
         street_address = (
@@ -65,6 +65,10 @@ def fetch_data():
             hours_of_operation = (
                 " ".join(a.xpath("//*//text()")).replace("\n", "").strip()
             )
+        if hours_of_operation == "<MISSING>":
+            hours_of_operation = j.get("store_custom_message") or "<MISSING>"
+        if hours_of_operation == "Seasonal" or hours_of_operation == "Call for Hours":
+            hours_of_operation = "<MISSING>"
 
         row = [
             locator_domain,
