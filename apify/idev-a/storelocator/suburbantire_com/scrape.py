@@ -19,10 +19,10 @@ def fetch_data():
         links = soup.select("div.query--locations > div.col")
         logger.info(f"{len(links)} found")
         for link in links:
-            if "coming soon" in link.h3.text.strip().lower():
+            addr = list(link.address.stripped_strings)
+            if "coming soon" in addr[0].lower():
                 continue
             page_url = locator_domain + link.select_one("span.location")["data-link"]
-            addr = list(link.address.stripped_strings)
             coord = link.select_one("span.location")["data-location"].split(":")
             yield SgRecord(
                 page_url=page_url,

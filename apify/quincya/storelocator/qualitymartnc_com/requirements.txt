@@ -1,1 +1,1 @@
-sgrequests
+sgrequests==0.1.12
