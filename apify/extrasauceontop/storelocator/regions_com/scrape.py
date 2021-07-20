@@ -106,8 +106,6 @@ def get_data():
             longitudes.append(longitude)
             store_numbers.append(store_number)
 
-            # search.found_location_at(latitude, longitude)
-
         soup = bs(response, "html.parser")
 
         grids = soup.find_all("li", attrs={"class": "locator-result__list-item"})
