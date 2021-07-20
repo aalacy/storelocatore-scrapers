@@ -77,16 +77,14 @@ def fetch_data():
     for d in div:
 
         location_type = "Rock 'n' Joe Coffee"
-        adr = d.xpath('.//preceding-sibling::div[./p[@class="font_8"]]/p//text()')
-        ad = (
-            " ".join(adr)
-            .replace("7:00am - 3:00pm 7:00am - 3:00pm 7:00am - 3:00pm", "")
-            .replace("Lincoln VA Clinic", "")
-            .strip()
+        adr = d.xpath(
+            './/preceding-sibling::div[./p[@style="line-height:1.7em;font-size:17px"]][1]//text()'
         )
-        if ad.find("(") != -1:
-            ad = ad.split("(")[0].strip()
-        a = usaddress.tag(ad, tag_mapping=tag)[0]
+        ad = list(filter(None, [a.strip() for a in adr]))
+        adress = " ".join(ad[:-1])
+        if "".join(ad).find("Clinic") != -1:
+            adress = " ".join(ad)
+        a = usaddress.tag(adress, tag_mapping=tag)[0]
         phone = "".join(adr[-1])
         if "".join(adr).find("420") != -1:
             phone = "<MISSING>"

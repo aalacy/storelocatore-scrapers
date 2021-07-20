@@ -60,9 +60,10 @@ def fetch_data():
         postal = j.get("zip") or "<MISSING>"
         store_number = j.get("storeNumber") or "<MISSING>"
         page_url = f'https://www.urbanoutfitters.com/stores/{j.get("slug")}'
-        phone = j.get("storePhoneNumber") or "<MISSING>"
-        if phone.find("?") != -1:
-            phone = "<MISSING>"
+        phone = (
+            j.get("addresses", {}).get("marketing", {}).get("phoneNumber")
+            or "<MISSING>"
+        )
         country_code = j["country"]
         latitude = j.get("loc")[1] if j.get("loc") else "<MISSING>"
         longitude = j.get("loc")[0] if j.get("loc") else "<MISSING>"
