@@ -56,7 +56,7 @@ def fetch_data():
         with SgFirefox() as driver:
             driver.get(store_url)
             loc_dom = etree.HTML(driver.page_source)
-        print(store_url)
+
         location_name = loc_dom.xpath("//title/text()")[0].split("|")[0]
         raw_address = loc_dom.xpath('//p[contains(text(), "Store Address:")]/a/text()')
         raw_address = [e.strip() for e in raw_address if e.strip()]
