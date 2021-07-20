@@ -89,7 +89,8 @@ def fetch_data():
             ).strip()
             or "<MISSING>"
         )
-
+        if "3B Hwy" in line:
+            street_address = line.split(",")[0].strip()
         city = adr.city or "<MISSING>"
         state = adr.state or "<MISSING>"
         postal = adr.postcode or "<MISSING>"

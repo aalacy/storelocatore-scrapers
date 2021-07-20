@@ -5,7 +5,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import lxml.html
 import re
-import us
+from sgscrape import sgpostal as parser
 
 
 website = "oddfellowsnyc.com"
@@ -24,28 +24,6 @@ headers = {
     "sec-fetch-dest": "document",
     "accept-language": "en-US,en;q=0.9,ar;q=0.8",
 }
-
-
-def split_fulladdress(address_info):
-    street_address = " ".join(address_info[0:-1]).strip(" ,.")
-
-    city_state_zip = (
-        address_info[-1].replace(",", " ").replace(".", " ").replace("  ", " ").strip()
-    )
-
-    city = " ".join(city_state_zip.split(" ")[:-2]).strip()
-    state = city_state_zip.split(" ")[-2].strip()
-    zip = city_state_zip.split(" ")[-1].strip()
-
-    if not city or us.states.lookup(zip):
-        city = city + " " + state
-        state = zip
-        zip = "<MISSING>"
-    if us.states.lookup(state):
-        country_code = "US"
-    else:
-        country_code = "Korea"
-    return street_address, city.strip(), state, zip, country_code
 
 
 def get_latlng(map_link):
@@ -70,7 +48,12 @@ def get_latlng(map_link):
 
 
 def addr_phn(x):
-    if "WEATHER" in x.upper() or "FOR" in x.upper() or "EVENTS@" in x.upper():
+    if (
+        "WEATHER" in x.upper()
+        or "FOR" in x.upper()
+        or "EVENTS@" in x.upper()
+        or "HELLO@" in x.upper()
+    ):
         return False
     return True
 
@@ -84,7 +67,7 @@ def fetch_data():
 
     store_list = list(search_sel.xpath('//div[contains(@class,"shops-contact")]'))
     store_name_list = list(
-        search_sel.xpath('//div[contains(@class,"shops-header-")]/h4/text()')
+        search_sel.xpath('//div[contains(@class,"shops-header-")]/h3/text()')
     )
     for no, store in enumerate(store_list):
 
@@ -116,7 +99,27 @@ def fetch_data():
             full_address = store_info
             phone = "<MISSING>"
 
-        street_address, city, state, zip, country_code = split_fulladdress(full_address)
+        raw_address = ", ".join(full_address).strip().replace(",,", ",").strip()
+        formatted_addr = parser.parse_address_intl(raw_address)
+        street_address = formatted_addr.street_address_1
+        if formatted_addr.street_address_2:
+            street_address = street_address + ", " + formatted_addr.street_address_2
+
+        city = formatted_addr.city
+        if city is None:
+            if "Brooklyn," in raw_address:
+                city = "Brooklyn"
+
+        state = formatted_addr.state
+        if state is None:
+            if " Ny" in street_address:
+                street_address = street_address.replace(" Ny", "").strip()
+                state = "NY"
+
+        zip = formatted_addr.postcode
+        country_code = "US"
+        if location_name == "Korea":
+            country_code = "Korea"
 
         store_number = "<MISSING>"
 
@@ -125,7 +128,7 @@ def fetch_data():
         hours = list(
             filter(
                 str,
-                [x.strip() for x in store.xpath(".//p[./strong]//text()")],
+                [x.strip() for x in store.xpath(".//p[./strong]/strong/text()")],
             )
         )
 
@@ -134,8 +137,6 @@ def fetch_data():
         map_link = "".join(store.xpath('.//a[contains(@href,"maps")]/@href'))
 
         latitude, longitude = get_latlng(map_link)
-
-        raw_address = "<MISSING>"
 
         yield SgRecord(
             locator_domain=locator_domain,
