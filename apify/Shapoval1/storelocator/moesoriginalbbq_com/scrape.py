@@ -514,6 +514,8 @@ def get_data(url):
             "".join(tree.xpath('//div[@id="comp-kl6yd3tj"]/p[2]//text()'))
             + " "
             + "".join(tree.xpath('//div[@id="comp-kl6yd3tj"]/p[3]//text()'))
+            + " "
+            + "".join(tree.xpath('//div[@id="comp-kl6yd3tj"]/p[4]//text()'))
         )
         phone = "530-807-1023"
     if page_url.find("http://www.moesoriginalbbq.com/lo/vail/") != -1:
@@ -584,7 +586,20 @@ def get_data(url):
             .replace("\n", "")
             .strip()
         )
-    hours_of_operation = hours_of_operation.replace("HOURS:", "").strip()
+    if location_name == "Lakeview":
+        hours_of_operation = (
+            " ".join(
+                tree.xpath('//h1[text()="Lakeview"]/following-sibling::h2//text()')
+            )
+            .replace("\n", "")
+            .replace("Bar open as long as there's a crowd!", "")
+            .strip()
+        )
+    hours_of_operation = (
+        hours_of_operation.replace("HOURS:", "")
+        .replace("Close  @ 3pm 12/24 Closed  12/25", "")
+        .strip()
+    )
     row = [
         locator_domain,
         page_url,

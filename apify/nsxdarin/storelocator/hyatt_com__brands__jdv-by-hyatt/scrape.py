@@ -92,11 +92,6 @@ def fetch_data():
                         r2 = session.get(loc, headers=headers)
                         for line2 in r2.iter_lines():
                             line2 = str(line2.decode("utf-8"))
-                            if (
-                                '<span class="opening-date' in line2
-                                and "Opening 20" in line2
-                            ):
-                                CS = True
                             if ">Coming " in line2:
                                 CS = True
                             if ">Opening " in line2:
@@ -105,6 +100,8 @@ def fetch_data():
                                 phone = line2.split('"telephone":"')[1].split('"')[0]
                     except:
                         pass
+                    if "wasxs" in loc:
+                        CS = False
                     if "Club Maui, " in name:
                         name = "Hyatt Residence Club Maui, Kaanapali Beach"
                     if CS:
