@@ -1,6 +1,6 @@
 from sgscrape import simple_scraper_pipeline as sp
 from sgrequests import SgRequests
-from sgzip.dynamic import DynamicZipSearch, SearchableCountries
+from sgzip.dynamic import DynamicZipSearch, SearchableCountries, Grain_1_KM
 from sglogging import SgLogSetup
 from requests import exceptions  # noqa
 from urllib3 import exceptions as urllibException
@@ -15,8 +15,8 @@ headers = {
 
 search = DynamicZipSearch(
     country_codes=[SearchableCountries.USA],
-    max_radius_miles=100,
-    max_search_results=10,
+    max_radius_miles=50,
+    granularity=Grain_1_KM(),
 )
 
 
@@ -88,10 +88,6 @@ def fetch_data():
             except:
                 break
             for _ in r2:
-                search.found_location_at(
-                    _["location"]["lat"],
-                    _["location"]["lng"],
-                )
                 for store in _["location"]["entities"]:
                     store["state"] = _["location"]["province"]
                     store["city"] = _["location"]["city"]
