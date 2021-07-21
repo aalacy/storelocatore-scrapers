@@ -35,6 +35,9 @@ def fetchConcurrentList(list, occurrence=max_workers):
     output = []
     total = len(list)
     reminder = 100
+    reminder = math.floor(total / 50)
+    if reminder < occurrence:
+        reminder = occurrence
 
     count = 0
     with ThreadPoolExecutor(
