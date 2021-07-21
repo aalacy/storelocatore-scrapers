@@ -67,7 +67,7 @@ def fetch_data():
         hours_of_operation = " ".join(
             list(
                 item.find(
-                    class_="rank-math-contact-hours-details rank-math-gear-snippet-content"
+                    class_="olderdata rank-math-contact-hours-details rank-math-gear-snippet-content"
                 ).stripped_strings
             )
         )
@@ -79,8 +79,8 @@ def fetch_data():
 
         try:
             raw_gps = maps.find("meta", attrs={"itemprop": "image"})["content"]
-            latitude = raw_gps.split("=")[-1].split(",")[0]
-            longitude = raw_gps.split("=")[-1].split(",")[1]
+            latitude = raw_gps.split("=")[1].split("%2C")[0]
+            longitude = raw_gps.split("%2C")[1].split("&")[0]
         except:
             try:
                 map_str = maps.find("meta", attrs={"itemprop": "image"})["content"]

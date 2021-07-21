@@ -69,8 +69,6 @@ def get_data(url):
     state = j.get("state") or "<MISSING>"
     postal = j.get("postalCode") or "<MISSING>"
     country_code = j.get("country") or "<MISSING>"
-    if country_code not in {"US", "CA", "GB"}:
-        return
     store_number = j.get("corporateCode") or "<MISSING>"
     phone = j.get("phone") or "<MISSING>"
     latitude = j.get("latitude") or "<MISSING>"

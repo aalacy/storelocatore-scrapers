@@ -3,6 +3,8 @@ import csv
 from sgrequests import SgRequests
 from sglogging import sglog
 import json
+from sgzip.dynamic import SearchableCountries
+from sgzip.static import static_coordinate_list
 
 website = "gliks.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -68,17 +70,17 @@ def write_output(data):
 
 def fetch_data():
     # Your scraper here
-    loc_list = []
+    address_list = []
+    coords = static_coordinate_list(radius=200, country_code=SearchableCountries.USA)
 
-    search_url = [
-        "https://rebase.global.ssl.fastly.net/api/places/index.json?api_key=a0f289f0b91b1b6177194e9e0336f7ef",
-        "https://rebase.global.ssl.fastly.net/api/places/index.json?api_key=a0f289f0b91b1b6177194e9e0336f7ef&lat=38.716&lng=-90.131",
-    ]
-    for s_url in search_url:
-        stores_req = session.get(s_url, headers=headers)
+    for lat, lng in coords:
+        log.info(f"Pulling stores for {lat,lng}")
+
+        search_url = "https://rebase.global.ssl.fastly.net/api/places/index.json?api_key=a0f289f0b91b1b6177194e9e0336f7ef&lat={}&lng={}"
+        stores_req = session.get(search_url.format(lat, lng), headers=headers)
         stores = json.loads(stores_req.text)["locations"]
         for store_json in stores:
-            page_url = "https://www.gliks.com/pages/store-locator"
+            page_url = "<MISSING>"
             latitude = store_json["latitude"]
             longitude = store_json["longitude"]
 
@@ -89,7 +91,9 @@ def fetch_data():
             location_type = "<MISSING>"
 
             street_address = store_json["info"]["location"]["street"]
-
+            if street_address in address_list:
+                continue
+            address_list.append(street_address)
             city = store_json["info"]["location"]["city"]
             state = store_json["info"]["location"]["state"]
             zip = store_json["info"]["location"]["zip"]
@@ -190,10 +194,7 @@ def fetch_data():
                 longitude,
                 hours_of_operation,
             ]
-            loc_list.append(curr_list)
-            # break
-
-    return loc_list
+            yield curr_list
 
 
 def scrape():

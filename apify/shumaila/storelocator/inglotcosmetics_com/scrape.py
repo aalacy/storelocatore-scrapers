@@ -1,149 +1,103 @@
-import requests
 from bs4 import BeautifulSoup
 import csv
-import string
-import re, time
-import usaddress
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-from sglogging import SgLogSetup
+import json
 
-logger = SgLogSetup().get_logger('inglotcosmetics_com')
+from sgrequests import SgRequests
 
+session = SgRequests()
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+}
 
-
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    chrome_path = '/Users/Dell/local/chromedriver'
-    return webdriver.Chrome('chromedriver', chrome_options=options)
 
 def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+    with open("data.csv", mode="w") as output_file:
+        writer = csv.writer(
+            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+        )
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(
+            [
+                "locator_domain",
+                "page_url",
+                "location_name",
+                "street_address",
+                "city",
+                "state",
+                "zip",
+                "country_code",
+                "store_number",
+                "phone",
+                "location_type",
+                "latitude",
+                "longitude",
+                "hours_of_operation",
+            ]
+        )
         # Body
         for row in data:
             writer.writerow(row)
 
 
 def fetch_data():
-    # Your scraper here
+
     data = []
-    url = 'https://inglotcosmetics.com/stores'
-   # page = requests.get(url)
-    driver = get_driver()
-    driver.get(url)
-    time.sleep(4)
-    hreflist = driver.find_element_by_xpath("/html/body/div[2]/div/div/div[2]/div/div[2]/ul")
-    hrefs = hreflist.find_elements_by_tag_name('li')
-
-    logger.info(len(hrefs))
-    for n in range(0,len(hrefs)):
+    url = "https://inglotcosmetics.com/index.php?option=com_ajax&plugin=istorelocator&tmpl=component&format=json&lat=0&lng=0&maxdistance=123456&limit=123456&source=com_contactenhanced&file=&category=12"
+    loclist = session.get(url, headers=headers, verify=False).json()["data"][0]["list"]
+    soup = BeautifulSoup(str(loclist), "html.parser")
+    divlist = soup.findAll("li")
+    p = 0
+    for div in divlist:
+        content = json.loads(div["data-gmapping"])
+        lat = content["lat"]
+        longt = content["lng"]
+        store = content["id"]
+        ccode = div.find("span", {"class": "loc-country"}).text
+        if "England" in ccode or "US" in ccode or "Can" in ccode:
+            pass
+        else:
+            continue
+        title = div.find("div", {"class": "loc-name"}).text
+        street = div.find("span", {"class": "loc-address"}).text
+        city = div.find("span", {"class": "loc-city"}).text
         try:
-            ccode = str(hrefs[n].find_element_by_class_name('loc-country').text)
-            #logger.info(ccode)
+            pcode = div.find("span", {"class": "loc-postcode"}).text
         except:
-            ccode = "None"
-        if ccode.find("USA") > -1:
-            gmap = hrefs[n].get_attribute("data-gmapping")[0:110]
-            #logger.info(gmap)
-            start = 0
-            start = gmap.find("id")
-            start = gmap.find(":", start) + 2
-            end = gmap.find('"', start)
-            store = gmap[start:end]
-            #logger.info(start)
-            start = gmap.find("lat")
-            start = gmap.find(":", start) + 2
-            end = gmap.find('"', start)
-            lat = gmap[start:end]
-            start = gmap.find("lng")
-            start = gmap.find(":", start) + 2
-            end = gmap.find('"', start)
-            longt = gmap[start:end]
-            title = hrefs[n].find_element_by_class_name('loc-name').text
-            address = hrefs[n].find_element_by_class_name('loc-addr').text
-            address = address.replace("\n", " ")
-            address = usaddress.parse(address)
-            logger.info(address)
-            i = 0
-            street = ""
-            city = ""
-            state = ""
-            pcode = ""
-            while i < len(address):
-                temp = address[i]
-                if temp[1].find("Address") != -1 or temp[1].find("Street") != -1 or temp[1].find("Recipient") != -1 or \
-                        temp[1].find("BuildingName") != -1 or temp[1].find("USPSBoxType") != -1 or temp[1].find(
-                        "USPSBoxID") != -1:
-                    street = street + " " + temp[0]
-                if temp[1].find("PlaceName") != -1:
-                    city = city + " " + temp[0]
-                if temp[1].find("StateName") != -1:
-                    state = state + " " + temp[0]
-                if temp[1].find("ZipCode") != -1:
-                    pcode = pcode + " " + temp[0]
-                i += 1
+            pcode = "<MISSING>"
+        state = "<MISSING>"
+        if "USA" in ccode:
+            ccode = "US"
+            state, pcode = pcode.split(" ", 1)
+        elif "Canada" in ccode:
+            ccode = "CA"
+        elif "England" in ccode:
+            ccode = "GB"
+        data.append(
+            [
+                "https://inglotcosmetics.com/",
+                "https://inglotcosmetics.com/stores",
+                title.replace("\n", ""),
+                street.replace("\n", ""),
+                city.replace("\n", "").replace(",", ""),
+                state.replace("\n", ""),
+                pcode.replace("\n", "").replace(",", ""),
+                ccode,
+                store,
+                "<MISSING>",
+                "<MISSING>",
+                lat,
+                longt,
+                "<MISSING>",
+            ]
+        )
 
-            if len(state) < 2 and len(city) < 3 and len(pcode) < 3:
-                street = "<MISSING>"
-                temp = address[0]
-                city = temp[0]
-                temp = address[1] + address[2]
-                state = temp[0]
-                temp = address[3]
-                pcode = temp[0]
-            street = street.lstrip()
-            city = city.lstrip()
-            state = state.lstrip()
-            pcode = pcode.lstrip()
-            pcode = pcode.replace(",", "")
-            logger.info(store)
-            logger.info(title)
-            logger.info(street)
-            logger.info(city)
-            logger.info(state)
-            logger.info(pcode)
-            logger.info(ccode)
-            logger.info(lat)
-            logger.info(longt)
-
-            if len(state) < 2 and city.find("Washington") > -1:
-                state = "WA"
-                city = "<MISSING>"
-            if len(state) < 2:
-                state = "<MISSING>"
-
-            logger.info(".....................")
-
-            data.append([
-                    url,
-                    title,
-                    street,
-                    city,
-                    state,
-                    pcode,
-                    "US",
-                    store,
-                    "<MISSING>",
-                    "<MISSING>",
-                    lat,
-                    longt,
-                    "<MISSING>"
-            ])
-
-
-
-    driver.quit()
+        p += 1
     return data
 
 
 def scrape():
+
     data = fetch_data()
     write_output(data)
 

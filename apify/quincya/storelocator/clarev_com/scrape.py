@@ -52,7 +52,8 @@ def fetch_data():
     locator_domain = "clarev.com"
 
     for item in items:
-
+        if "COMING SOON" in item.text.upper():
+            continue
         location_name = item.h3.text.strip()
         raw_address = list(item.p.stripped_strings)
         street_address = raw_address[0].strip()

@@ -1,120 +1,53 @@
-import csv
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
+from sgscrape.sgpostal import parse_address_intl
 from bs4 import BeautifulSoup as bs
-from urllib.parse import urljoin
 
-from util import Util  # noqa: I900
-
-myutil = Util()
-
-
-session = SgRequests()
-
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_list(url, data):
-    r = session.get(url)
-    soup = bs(r.text, "lxml")
-    links = soup.select("span.field-content a")
-    if links:
-        for link in links:
-            page_url = urljoin(
-                "http://tacotimecanada.com",
-                f"{link['href']}",
-            )
-            fetch_list(page_url, data)
-    else:
-        fetch_detail(soup, url, data)
-
-
-def fetch_detail(soup, page_url, data):
-    locator_domain = "http://tacotimecanada.com/"
-    location_name = soup.select_one("h1#page-title").text.strip()
-    store_number = "<MISSING>"
-    rows = soup.select("div#block-system-main div.row")
-    street_address = ""
-    city = ""
-    state = ""
-    country_code = "CA"
-    phone = "<MISSING>"
-    latitude = "<MISSING>"
-    longitude = "<MISSING>"
-    location_type = "<MISSING>"
-    hours_of_operation = "<MISSING>"
-    for row in rows:
-        label = row.select_one(".label").text
-        if label == "Address:":
-            address = [_ for _ in row.select_one(".text").stripped_strings]
-            street_address = address[0]
-            city = address[1].split(",")[0]
-            state = address[1].split(",")[1].strip()
-            zip = "<MISSING>"
-
-        if label == "Phone:":
-            phone = myutil._valid(row.select_one(".text").text)
-
-    _item = [
-        locator_domain,
-        page_url,
-        location_name,
-        street_address,
-        city,
-        state,
-        zip,
-        country_code,
-        store_number,
-        phone,
-        location_type,
-        latitude,
-        longitude,
-        hours_of_operation,
-    ]
-
-    data.append(_item)
+_headers = {
+    "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
+}
 
 
 def fetch_data():
-    data = []
-
-    base_url = "http://tacotimecanada.com/locations"
-    fetch_list(base_url, data)
-
-    return data
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+    locator_domain = "https://tacotimecanada.com/"
+    base_url = "https://tacotimecanada.com/wp-content/plugins/superstorefinder-wp/ssf-wp-xml.php?wpml_lang=&t=1620063384973"
+    page_url = "https://tacotimecanada.com/locations/"
+    with SgRequests() as session:
+        sp1 = bs(session.get(base_url, headers=_headers).text, "lxml")
+        locations = sp1.find_all("item")
+        for _ in locations:
+            _addr = _.address.text.replace("&#44;", ",")
+            addr = parse_address_intl(_addr)
+            street_address = addr.street_address_1
+            if addr.street_address_2:
+                street_address += " " + addr.street_address_2
+            if "google" in street_address.lower():
+                street_address = ""
+            zip_postal = addr.postcode
+            state = addr.state
+            if not zip_postal:
+                zip_postal = " ".join(_addr.split(",")[-1].strip().split(" ")[1:])
+            if not state:
+                state = _addr.split(",")[-1].strip().split(" ")[0]
+            yield SgRecord(
+                page_url=page_url,
+                store_number=_.storeId.text if _.storeId else _.storeid.text,
+                location_name=_.location.text,
+                street_address=street_address,
+                city=addr.city,
+                state=state,
+                zip_postal=zip_postal,
+                latitude=_.latitude.text,
+                longitude=_.longitude.text,
+                country_code="CA",
+                phone=_.telephone.text,
+                locator_domain=locator_domain,
+            )
 
 
 if __name__ == "__main__":
-    scrape()
+    with SgWriter() as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)

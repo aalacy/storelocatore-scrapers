@@ -49,7 +49,9 @@ def get_data(page_url):
     session = SgRequests()
     r = session.get(page_url)
     tree = html.fromstring(r.text)
-    text = "".join(tree.xpath("//script[@type='application/ld+json']/text()"))
+    text = "".join(tree.xpath("//script[@type='application/ld+json']/text()")).strip()
+    if not text:
+        return
     j = json.loads(text)["@graph"][0]
 
     location_name = "".join(tree.xpath("//h1/text()")).strip()

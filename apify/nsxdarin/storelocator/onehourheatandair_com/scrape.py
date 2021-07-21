@@ -43,15 +43,16 @@ def write_output(data):
 def fetch_data():
     url = "https://www.onehourheatandair.com/locations/"
     locs = []
-    payload = {"_m_": "LocationList"}
-    r = session.post(url, headers=headers, data=payload)
+    r = session.get(url, headers=headers)
     for line in r.iter_lines():
         line = str(line.decode("utf-8"))
         if "View Website</a>" in line:
-            locs.append(
+            stub = (
                 "https://www.onehourheatandair.com"
                 + line.split('href="')[1].split('"')[0]
             )
+            if stub not in locs and "comhttp" not in stub:
+                locs.append(stub)
     for loc in locs:
         logger.info(("Pulling Location %s..." % loc))
         website = "onehourheatandair.com"
@@ -112,6 +113,13 @@ def fetch_data():
                 phone = line2.split(
                     '<a class="phone-link phone-number-style text-color" href="tel:'
                 )[1].split('"')[0]
+            if '<span itemprop="name" data-item="i" data-key="' in line2:
+                store = line2.split('<span itemprop="name" data-item="i" data-key="')[
+                    1
+                ].split('"')[0]
+            if "/maps/place/" in line2:
+                lat = line2.split("/@")[1].split(",")[0]
+                lng = line2.split("/@")[1].split(",")[1]
         if name != "":
             if add == "<MISSING>":
                 add = add2

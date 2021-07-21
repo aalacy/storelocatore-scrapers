@@ -61,12 +61,14 @@ def fetch_data():
 
         location_name = raw_data[0].strip()
         street_address = raw_data[1].strip()
+        if "Located in" in street_address:
+            street_address = raw_data[2].strip()
         if street_address[-1:] == ",":
             street_address = street_address[:-1]
-        city = raw_data[2].split(",")[0].strip()
-        state = raw_data[2].split(",")[1].split()[0].strip()
+        city = raw_data[-1].split(",")[0].strip()
+        state = raw_data[-1].split(",")[1].split()[0].strip()
         try:
-            zip_code = raw_data[2].split(",")[1].split()[1].strip()
+            zip_code = raw_data[-1].split(",")[1].split()[1].strip()
         except:
             if "2167 Broadway" in street_address:
                 street_address = "2167 Broadway"

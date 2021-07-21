@@ -52,109 +52,131 @@ def fetch_data():
         if "<loc>https://www.staterbros.com/stores/" in line:
             locs.append(line.split("<loc>")[1].split("<")[0])
     for loc in locs:
-        logger.info(loc)
-        name = ""
-        add = ""
-        city = ""
-        rawadd = ""
-        state = ""
-        zc = ""
-        phone = ""
-        lat = "<MISSING>"
-        lng = "<MISSING>"
-        store = loc.split("/stores/")[1].split("/")[0]
-        hours = ""
-        r2 = session.get(loc, headers=headers)
-        lines = r2.iter_lines()
-        for line2 in lines:
-            line2 = str(line2.decode("utf-8"))
-            if (
-                '<div class="elementor-text-editor elementor-clearfix">' in line2
-                and phone == ""
-            ):
-                ph = line2.split('">')[1].split("<")[0]
-                if ph.count("-") == 2:
-                    phone = ph
-                if ")" in ph and "(" in ph:
-                    phone = ph
-            if "<title>" in line2:
-                name = line2.split("<title>")[1].split(" - ")[0]
-            if '<div class="elementor-custom-embed"><iframe frameborder="0"' in line2:
-                rawadd = line2.split('title="')[1].split('"')[0]
-                try:
-                    add = usaddress.tag(rawadd)
-                    baseadd = add[0]
-                    if "AddressNumber" not in baseadd:
-                        baseadd["AddressNumber"] = ""
-                    if "StreetName" not in baseadd:
-                        baseadd["StreetName"] = ""
-                    if "StreetNamePostType" not in baseadd:
-                        baseadd["StreetNamePostType"] = ""
-                    if "PlaceName" not in baseadd:
-                        baseadd["PlaceName"] = "<INACCESSIBLE>"
-                    if "StateName" not in baseadd:
-                        baseadd["StateName"] = "<INACCESSIBLE>"
-                    if "ZipCode" not in baseadd:
-                        baseadd["ZipCode"] = "<INACCESSIBLE>"
-                    address = (
-                        add[0]["AddressNumber"]
-                        + " "
-                        + add[0]["StreetName"]
-                        + " "
-                        + add[0]["StreetNamePostType"]
-                    )
-                    address = address.encode("ascii").decode()
-                    if address == "":
-                        address = "<MISSING>"
-                    city = add[0]["PlaceName"]
-                    state = add[0]["StateName"]
-                    zc = add[0]["ZipCode"]
-                except:
-                    pass
-            if '<p class="elementor-icon-box-description"><p><b>' in line2:
-                if hours == "":
-                    hours = (
-                        line2.split('<p class="elementor-icon-box-description"><p><b>')[
-                            1
-                        ]
-                        .split("</p>")[0]
-                        .replace("</b>", ": ")
-                        .replace("&#8211;", "-")
-                    )
-                else:
-                    hours = (
-                        hours
-                        + "; "
-                        + line2.split(
-                            '<p class="elementor-icon-box-description"><p><b>'
-                        )[1]
-                        .split("</p>")[0]
-                        .replace("</b>", ": ")
-                        .replace("&#8211;", "-")
-                    )
-        if add != "":
-            if state == "Linda":
-                state = "CA"
-                city = "Yorba Linda"
-            if phone == "":
-                phone = "<MISSING>"
-            yield [
-                website,
-                loc,
-                name,
-                rawadd,
-                address,
-                city,
-                state,
-                zc,
-                country,
-                store,
-                phone,
-                typ,
-                lat,
-                lng,
-                hours,
-            ]
+        if loc != "https://www.staterbros.com/stores/":
+            logger.info(loc)
+            name = ""
+            add = ""
+            city = ""
+            rawadd = ""
+            state = ""
+            zc = ""
+            phone = ""
+            lat = "<MISSING>"
+            lng = "<MISSING>"
+            store = loc.split("/stores/")[1].split("/")[0]
+            hours = ""
+            r2 = session.get(loc, headers=headers)
+            lines = r2.iter_lines()
+            for line2 in lines:
+                line2 = str(line2.decode("utf-8"))
+                if (
+                    '<div class="elementor-text-editor elementor-clearfix">' in line2
+                    and phone == ""
+                    and rawadd != ""
+                ):
+                    g = next(lines)
+                    g = str(g.decode("utf-8"))
+                    ph = g.split("<")[0].strip().replace("\t", "")
+                    if ph.count("-") == 2:
+                        phone = ph
+                    if ")" in ph and "(" in ph:
+                        phone = ph
+                if "<title>" in line2:
+                    name = line2.split("<title>")[1].split(" - ")[0]
+                if (
+                    '<div class="elementor-text-editor elementor-clearfix">' in line2
+                    and rawadd == ""
+                ):
+                    g = next(lines)
+                    g = str(g.decode("utf-8"))
+                    rawadd = g.split("<")[0].strip().replace("\t", "")
+                    try:
+                        add = usaddress.tag(rawadd)
+                        baseadd = add[0]
+                        if "AddressNumber" not in baseadd:
+                            baseadd["AddressNumber"] = ""
+                        if "StreetName" not in baseadd:
+                            baseadd["StreetName"] = ""
+                        if "StreetNamePostType" not in baseadd:
+                            baseadd["StreetNamePostType"] = ""
+                        if "PlaceName" not in baseadd:
+                            baseadd["PlaceName"] = "<INACCESSIBLE>"
+                        if "StateName" not in baseadd:
+                            baseadd["StateName"] = "<INACCESSIBLE>"
+                        if "ZipCode" not in baseadd:
+                            baseadd["ZipCode"] = "<INACCESSIBLE>"
+                        address = (
+                            add[0]["AddressNumber"]
+                            + " "
+                            + add[0]["StreetName"]
+                            + " "
+                            + add[0]["StreetNamePostType"]
+                        )
+                        address = address.encode("ascii").decode()
+                        if address == "":
+                            address = "<MISSING>"
+                        city = add[0]["PlaceName"]
+                        state = add[0]["StateName"]
+                        zc = add[0]["ZipCode"]
+                    except:
+                        pass
+                if '<p class="elementor-icon-box-description"><p><b>' in line2:
+                    if hours == "":
+                        hours = (
+                            line2.split(
+                                '<p class="elementor-icon-box-description"><p><b>'
+                            )[1]
+                            .split("</p>")[0]
+                            .replace("</b>", ": ")
+                            .replace("&#8211;", "-")
+                        )
+                    else:
+                        hours = (
+                            hours
+                            + "; "
+                            + line2.split(
+                                '<p class="elementor-icon-box-description"><p><b>'
+                            )[1]
+                            .split("</p>")[0]
+                            .replace("</b>", ": ")
+                            .replace("&#8211;", "-")
+                        )
+            if add != "":
+                if state == "Linda":
+                    state = "CA"
+                    city = "Yorba Linda"
+                if phone == "":
+                    phone = "<MISSING>"
+                if "1717 East Vista" in rawadd:
+                    add = "1717 East Vista Chino"
+                    city = "Palm Springs"
+                if ", L A" in city:
+                    city = city.split(", L A")[0].strip()
+                if "1830 E Rte 66" in rawadd:
+                    add = "1830 E Rte 66"
+                if "16920 State Hwy 14" in rawadd:
+                    add = "16920 State Hwy 14"
+                if "1850 E Ave. J" in rawadd:
+                    add = "1850 E Ave. J"
+                if "2845 W Ave L" in rawadd:
+                    add = "2845 W Ave L"
+                yield [
+                    website,
+                    loc,
+                    name,
+                    rawadd,
+                    address,
+                    city,
+                    state,
+                    zc,
+                    country,
+                    store,
+                    phone,
+                    typ,
+                    lat,
+                    lng,
+                    hours,
+                ]
 
 
 def scrape():

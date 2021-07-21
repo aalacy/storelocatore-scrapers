@@ -92,7 +92,7 @@ def get_data(zone):
 
     for j in js:
         page_url = j.get("homeUrl")
-        location_name = j.get("name")
+        location_name = j.get("name").replace(", Tapestry Collection by Hilton", "")
         a = j.get("address") or {}
         street_address = (
             f'{a.get("addressLine1")} {a.get("addressLine2") or ""}'.strip()
@@ -102,7 +102,7 @@ def get_data(zone):
         state = a.get("state") or "<MISSING>"
         postal = a.get("postalCode") or "<MISSING>"
         country_code = a.get("country") or "<MISSING>"
-        if not (country_code == "US" or country_code == "CA"):
+        if not (country_code == "US" or country_code == "CA" or country_code == "UK"):
             continue
         store_number = j.get("_id") or "<MISSING>"
         phone = j.get("phoneNumber") or "<MISSING>"
