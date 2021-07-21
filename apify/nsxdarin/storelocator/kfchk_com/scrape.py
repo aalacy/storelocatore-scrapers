@@ -92,12 +92,10 @@ def fetch_data():
 
 
 def scrape():
-    count = 0
-    results = fetchData()
+    results = fetch_data()
     with SgWriter() as writer:
         for rec in results:
             writer.write_row(rec)
-            count = count + 1
 
 
 scrape()
