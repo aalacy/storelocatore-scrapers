@@ -32,6 +32,11 @@ def fetch_data():
             state_list = soup.findAll("a", {"class": "lead"})
             for link in state_list:
                 page_url = "https://www.9round.com" + link["href"]
+                if (
+                    "https://www.9round.com/locations/nj/south-plainfield/stelton-rd"
+                    in page_url
+                ):
+                    continue
                 r = session.get(page_url, headers=headers)
                 soup = BeautifulSoup(r.text, "html.parser")
                 log.info(page_url)

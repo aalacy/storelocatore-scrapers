@@ -103,14 +103,22 @@ def fetch_data():
         except:
             latitude, longitude = "<MISSING>", "<MISSING>"
         hours_of_operation = (
-            tree.xpath('//strong[text()="Address"]/preceding-sibling::text()')
+            tree.xpath(
+                '//strong[text()="Address"]/preceding-sibling::text() | //strong[text()="Address"]/preceding-sibling::*/text()'
+            )
             or "<MISSING>"
         )
+
         if hours_of_operation != "<MISSING>":
             hours_of_operation = list(
                 filter(None, [a.strip() for a in hours_of_operation])
             )
             hours_of_operation = " ".join(hours_of_operation)
+        hours_of_operation = (
+            hours_of_operation.replace("Regular Store Hours", "")
+            .replace(" ( ) ", " ")
+            .strip()
+        )
         if "Temporary closed" in info:
             hours_of_operation = "Temporary closed"
         if "Closed" in info:
