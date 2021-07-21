@@ -151,6 +151,7 @@ def get_country(search, country, session, headers, SearchableCountry, state):
                     state.save(override=True)
 
     def getPoint(point, session, locale, headers):
+        global errorz
         if locale[-1] != "/":
             locale = locale + "/"
         url = "https://locate.apple.com{locale}sales/?pt=all&lat={lat}&lon={lon}&address=".format(
@@ -174,11 +175,14 @@ def get_country(search, country, session, headers, SearchableCountry, state):
             locs = json.loads(thescript)
             return locs["results"]
         except Exception as e:
-            errorz.append(
-                str(
-                    f"had some issues with this country and point  {country}\n{point}{url} \n Matched to: {SearchableCountry}\nIssue was\n{str(e)}"
+            try:
+                errorz.append(
+                    str(
+                        f"had some issues with this country and point  {country}\n{point}{url} \n Matched to: {SearchableCountry}\nIssue was\n{str(e)}"
+                    )
                 )
-            )
+            except Exception:
+                pass
 
     maxZ = None
     maxZ = search.items_remaining()
@@ -221,11 +225,14 @@ def get_country(search, country, session, headers, SearchableCountry, state):
                         if errorzCopy:
                             state.set_misc_value("errorz", errorzCopy)
                             state.save(override=True)
-            errorz.append(
-                str(
-                    f"Found a total of 0 results for country {country}\n this is unacceptable and possibly a country/search space mismatch\n Matched to: {SearchableCountry}"
+            try:
+                errorz.append(
+                    str(
+                        f"Found a total of 0 results for country {country}\n this is unacceptable and possibly a country/search space mismatch\n Matched to: {SearchableCountry}"
+                    )
                 )
-            )
+            except Exception:
+                pass
 
 
 def fetch_data():

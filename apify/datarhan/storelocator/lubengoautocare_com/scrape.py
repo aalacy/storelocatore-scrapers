@@ -66,10 +66,10 @@ def fetch_data():
             .split("|")[0]
             .strip()
         )
-        street_address = addr.street_address_1
-        if addr.street_address_2:
-            street_address += " " + addr.street_address_2
         city = addr.city
+        street_address = raw_address.split(city)[0].strip()
+        if street_address.endswith(","):
+            street_address = street_address[:-1]
         state = addr.state
         zip_code = addr.postcode
         country_code = addr.country
@@ -89,9 +89,11 @@ def fetch_data():
         )
         latitude = geo[-1].split("!")[0]
         longitude = geo[0]
-        hoo = loc_dom.xpath('//p[b[contains(text(), "Hours")]]/text()')[1:]
+        hoo = loc_dom.xpath('//p[b[contains(text(), "Hours")]]/text()')
         hoo = [e.strip() for e in hoo if e.strip()]
-        hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
+        hours_of_operation = (
+            "Monday " + " ".join(hoo).split("Monday ")[-1] if hoo else "<MISSING>"
+        )
 
         item = [
             domain,
