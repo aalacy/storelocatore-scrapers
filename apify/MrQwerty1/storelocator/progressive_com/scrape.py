@@ -1,221 +1,162 @@
-import csv
-import usaddress
-import time
-from concurrent import futures
+from sgscrape.sgpostal import parse_address_intl
 from lxml import html
+from concurrent.futures import ThreadPoolExecutor
+import math
+import time
 from sgrequests import SgRequests
-
 from sglogging import sglog
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
 
-DOMAIN = "progressive.com"
-log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
+website = "progressive.com"
+MISSING = "<MISSING>"
+start_url = "https://www.progressive.com/agent/local-agent"
+max_workers = 12
 
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+}
+session = SgRequests().requests_retry_session(retries=5, backoff_factor=1)
+log = sglog.SgLogSetup().get_logger(logger_name=website)
 
 
-def get_address(line):
-    tag = {
-        "Recipient": "recipient",
-        "AddressNumber": "address1",
-        "AddressNumberPrefix": "address1",
-        "AddressNumberSuffix": "address1",
-        "StreetName": "address1",
-        "StreetNamePreDirectional": "address1",
-        "StreetNamePreModifier": "address1",
-        "StreetNamePreType": "address1",
-        "StreetNamePostDirectional": "address1",
-        "StreetNamePostModifier": "address1",
-        "StreetNamePostType": "address1",
-        "CornerOf": "address1",
-        "IntersectionSeparator": "address1",
-        "LandmarkName": "address1",
-        "USPSBoxGroupID": "address1",
-        "USPSBoxGroupType": "address1",
-        "USPSBoxID": "address1",
-        "USPSBoxType": "address1",
-        "OccupancyType": "address2",
-        "OccupancyIdentifier": "address2",
-        "SubaddressIdentifier": "address2",
-        "SubaddressType": "address2",
-        "PlaceName": "city",
-        "StateName": "state",
-        "ZipCode": "postal",
-    }
-
-    a = usaddress.tag(line, tag_mapping=tag)[0]
-    street_address = f"{a.get('address1')} {a.get('address2') or ''}".strip()
-    if street_address == "None":
-        street_address = "<MISSING>"
-    city = a.get("city") or "<MISSING>"
-    state = a.get("state") or "<MISSING>"
-    postal = a.get("postal") or "<MISSING>"
-
-    return street_address, city, state, postal
+def request_with_retries(url):
+    return session.get(url, headers=headers)
 
 
-def get_states():
-    r = session.get("https://www.progressive.com/agent/local-agent/")
-    tree = html.fromstring(r.text)
-
-    return tree.xpath("//ul[@class='state-list']/li/a/@href")
-
-
-def get_cities(state):
-    log.info(f"State:: {state}")
-    r = session.get(state)
-    tree = html.fromstring(r.text)
-
-    return tree.xpath("//ul[@class='city-list']/li/a/@href")
+def fetchConcurrentSingle(url):
+    data = {'url': url}
+    response = request_with_retries(data['url'])
+    body = html.fromstring(response.text, 'lxml')
+    return {'data': data, 'body': body, 'response': response.text}
 
 
-def get_page(city):
-    log.info(f"City:: {city}")
-    r = session.get(city)
-    tree = html.fromstring(r.text)
+def fetchConcurrentList(list, occurrence=max_workers):
+    output = []
+    total = len(list)
+    reminder = 100
 
-    return tree.xpath("//a[@class='list-link details']/@href")
-
-
-def get_urls():
-    states = get_states()
-    cities = []
-    urls = []
-
-    with futures.ThreadPoolExecutor(max_workers=12) as executor:
-        future_to_url = {executor.submit(get_cities, state): state for state in states}
-        for future in futures.as_completed(future_to_url):
-            rows = future.result()
-            cities += rows
-
-    states.clear()
-    with futures.ThreadPoolExecutor(max_workers=12) as executor:
-        future_to_url = {executor.submit(get_page, city): city for city in cities}
-        for future in futures.as_completed(future_to_url):
-            rows = future.result()
-            urls += rows
-
-    cities.clear()
-
-    return urls
+    count = 0
+    with ThreadPoolExecutor(max_workers=occurrence, thread_name_prefix='fetcher') as executor:
+        for result in executor.map(fetchConcurrentSingle, list):
+            count = count + 1
+            if count % reminder == 0:
+                log.debug(f"Concurrent Operation count = {count}")
+            output.append(result)
+    return output
 
 
-def get_data(page_url):
-    locator_domain = DOMAIN
-    log.info(f"Grabbing From: {page_url}")
-    r = session.get(page_url)
-    tree = html.fromstring(r.text)
+def fetchStores():
+    response = request_with_retries(start_url)
+    body = html.fromstring(response.text, 'lxml')
+    stateUrls = body.xpath("//ul[@class='state-list']/li/a/@href")
+    log.debug(f"total states= {len(stateUrls)}")
 
-    location_name = "".join(tree.xpath("//h1/text()")).strip()
-    line = "".join(
-        tree.xpath("//dt[text()='Address:']/following-sibling::dd/text()")
-    ).strip()
+    cityUrls = []
+    for city in fetchConcurrentList(stateUrls):
+        cityUrls = cityUrls + \
+            city['body'].xpath("//ul[@class='city-list']/li/a/@href")
+    log.debug(f"total cities= {len(cityUrls)}")
 
+    page_urls = []
+    for page in fetchConcurrentList(cityUrls):
+        page_urls = page_urls + \
+            page['body'].xpath("//a[@class='list-link details']/@href")
+    log.debug(f"total stores= {len(page_urls)}")
+
+    return page_urls
+
+
+def getAddress(raw_address):
     try:
-        street_address, city, state, postal = get_address(line)
-    except usaddress.RepeatedLabelError:
-        street_address = line.split(",")[0].strip()
-        city = line.split(",")[1].strip()
-        line = line.split(",")[-1].strip()
-        state = line.split()[0]
-        postal = line.split()[-1]
-    country_code = "US"
-    store_number = "<MISSING>"
-    phone = (
-        "".join(
-            tree.xpath("//dt[text()='Phone:']/following-sibling::dd/a/text()")
-        ).strip()
-        or "<MISSING>"
-    )
-    latitude = "<MISSING>"
-    longitude = "<MISSING>"
-    location_type = "<MISSING>"
+        if raw_address is not None and raw_address != MISSING:
+            data = parse_address_intl(raw_address)
+            street_address = data.street_address_1
+            if data.street_address_2 is not None:
+                street_address = street_address + " " + data.street_address_2
+            city = data.city
+            state = data.state
+            zip_postal = data.postcode
 
-    _tmp = []
-    hours = tree.xpath(
-        "//div[./h2[text()='Office Hours']]/following-sibling::div[1]//dl/div"
-    )
-    for h in hours:
-        day = "".join(h.xpath("./dt/text()")).strip()
-        time = "".join(h.xpath("./dd/text()")).strip()
-        _tmp.append(f"{day} {time}")
-
-    hours_of_operation = ";".join(_tmp) or "<MISSING>"
-
-    row = [
-        locator_domain,
-        page_url,
-        location_name,
-        street_address,
-        city,
-        state,
-        postal,
-        country_code,
-        store_number,
-        phone,
-        location_type,
-        latitude,
-        longitude,
-        hours_of_operation,
-    ]
-
-    return row
+            if street_address is None or len(street_address) == 0:
+                street_address = MISSING
+            if city is None or len(city) == 0:
+                city = MISSING
+            if state is None or len(state) == 0:
+                state = MISSING
+            if zip_postal is None or len(zip_postal) == 0:
+                zip_postal = MISSING
+            return street_address, city, state, zip_postal
+    except Exception as e:
+        log.info(f"Address Missing: {e}")
+        pass
+    return MISSING, MISSING, MISSING, MISSING
 
 
-def fetch_data():
-    out = []
-    s = set()
-    urls = get_urls()
+def fetchData():
+    page_urls = fetchStores()
+    log.info(f"Total stores = {len(page_urls)}")
 
-    with futures.ThreadPoolExecutor(max_workers=8) as executor:
-        future_to_url = {executor.submit(get_data, url): url for url in urls}
-        for future in futures.as_completed(future_to_url):
-            row = future.result()
-            if row:
-                check = tuple(row[2:7])
-                if check not in s:
-                    s.add(check)
-                    out.append(row)
+    for detail in fetchConcurrentList(page_urls):
+        page_url = detail['data']['url']
+        body = detail['body']
+        store_number = MISSING
+        location_type = MISSING
+        latitude = MISSING
+        longitude = MISSING
+        country_code = 'US'
 
-    return out
+        location_name = "".join(body.xpath("//h1/text()")).strip()
+        phone = "".join(body.xpath(
+            "//dt[text()='Phone:']/following-sibling::dd/a/text()")).strip()
+
+        raw_address = "".join(body.xpath(
+            "//dt[text()='Address:']/following-sibling::dd/text()")).strip()
+
+        street_address, city, state, zip_postal = getAddress(raw_address)
+
+        hours = body.xpath(
+            "//div[./h2[text()='Office Hours']]/following-sibling::div[1]//dl/div"
+        )
+        hoo = []
+        for hour in hours:
+            day = "".join(hour.xpath("./dt/text()")).strip()
+            time = "".join(hour.xpath("./dd/text()")).strip()
+            hoo.append(f"{day} {time}")
+
+        hours_of_operation = ";".join(hoo) or MISSING
+
+        yield SgRecord(
+            locator_domain=website,
+            store_number=store_number,
+            page_url=page_url,
+            location_name=location_name,
+            location_type=location_type,
+            street_address=street_address,
+            city=city,
+            zip_postal=zip_postal,
+            state=state,
+            country_code=country_code,
+            phone=phone,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+            raw_address=raw_address,
+        )
+    return []
 
 
 def scrape():
-    log.info("Scraping Started")
+    log.info(f"Start scrapping {website} ...")
     start = time.time()
-    data = fetch_data()
-    write_output(data)
+    count = 0
+    with SgWriter() as writer:
+        for rec in fetchData():
+            writer.write_row(rec)
+            count = count + 1
     end = time.time()
-    log.info(f"Total Locations added = {len(data)}")
-    log.info(f"It took {end-start} seconds to complete the crawl.")
+    log.info(f"Scrape took {end-start} seconds. total store = {count}")
 
 
 if __name__ == "__main__":
-    session = SgRequests()
     scrape()
