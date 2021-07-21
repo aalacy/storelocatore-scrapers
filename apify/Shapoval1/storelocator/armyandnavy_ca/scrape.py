@@ -52,18 +52,20 @@ def fetch_data():
         ad = (
             "".join(d.xpath('.//following-sibling::span[@class="rte"]/text()'))
             .replace("\n", "")
+            .replace("New Westminster", "New_Westminster")
             .strip()
             or "<MISSING>"
         )
         if ad == "<MISSING>":
             ad = "".join(
                 d.xpath('.//following-sibling::p[./span[@class="rte"]]/span/text()')
-            )
-        street_address = ad.split(".")[0].strip()
+            ).replace("New Westminster", "New_Westminster")
+
+        street_address = " ".join(ad.split(",")[0].split()[:-1]).strip()
         state = ad.split(",")[1].split()[0].strip()
         postal = " ".join(ad.split(",")[1].split()[1:]).strip()
         country_code = "CA"
-        city = ad.split(".")[1].split(",")[0].strip()
+        city = ad.split(".")[1].split(",")[0].split()[-1].replace("_", " ").strip()
         store_number = "<MISSING>"
         map_link = "".join(d.xpath(".//following::iframe[1]/@src"))
         latitude = map_link.split("!3d")[1].strip().split("!")[0].strip()
