@@ -47,7 +47,6 @@ def fetch_data(sgw: SgWriter):
             link = "https://www.weberlogistics.com" + item.a["href"]
         else:
             link = item.a["href"]
-        print(link)
         req = session.get(link, headers=headers)
         base = BeautifulSoup(req.text, "lxml")
 
