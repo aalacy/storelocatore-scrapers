@@ -1,5 +1,6 @@
 import csv
 from sgrequests import SgRequests
+import re
 
 session = SgRequests()
 headers = {
@@ -74,37 +75,46 @@ def fetch_data():
                         country = "UK"
                     if state == "AB":
                         country = "CA"
+                    if ", JP" in name:
+                        country = "JP"
+                    if "CNMI" in name:
+                        country = "US"
+                    if ", QR" in name:
+                        country = "MX"
+                    if "QA" in name:
+                        country = "QA"
+                    if ", CN" in name:
+                        country = "CN"
+                    if "Kuta" in name:
+                        country = "ID"
+                    if ", JL" in name:
+                        country = "MX"
                     name = name.replace("\\u0026", "&")
                     add = add.replace("\\u0026", "&")
-                    if (
-                        state != "JP"
-                        and state != "CNMI"
-                        and state != "QA"
-                        and state != "CN"
-                        and state != "JL"
-                        and city != "Bali"
-                    ):
-                        if "Baltimore" in city:
-                            hours = "Sunday - Thursday: 11:30 AM - 9:00 PM; Friday - Saturday: 11:30 AM - 10:00 PM"
-                        if "Orlando" in city:
-                            hours = "SUN - SAT: 11:00 AM - 11:00 PM"
-                        if "china" not in purl and "cancun" not in purl:
-                            yield [
-                                website,
-                                purl,
-                                name,
-                                add,
-                                city,
-                                state,
-                                zc,
-                                country,
-                                store,
-                                phone,
-                                typ,
-                                lat,
-                                lng,
-                                hours,
-                            ]
+                    if country == "CN" or country == "QA":
+                        state = "<MISSING>"
+                        zc = "<MISSING>"
+                    if "Baltimore" in city:
+                        hours = "Sunday - Thursday: 11:30 AM - 9:00 PM; Friday - Saturday: 11:30 AM - 10:00 PM"
+                    if "Orlando" in city:
+                        hours = "SUN - SAT: 11:00 AM - 11:00 PM"
+                    if "Coming" not in name:
+                        yield [
+                            website,
+                            purl,
+                            name,
+                            add,
+                            city,
+                            state,
+                            zc,
+                            country,
+                            store,
+                            phone,
+                            typ,
+                            lat,
+                            lng,
+                            hours,
+                        ]
 
 
 def scrape():
