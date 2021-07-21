@@ -118,6 +118,12 @@ jobs:
             source ./venv/bin/activate
             source ./.circleci/lib.sh
             check_internal_library_versions
+      - run:
+          name: Check script is using a sanctioned library to write to file
+          command: |
+            source ./venv/bin/activate
+            source ./.circleci/lib.sh
+            check_how_records_are_written_to_file
 
   node-lint-updates:
     executor: node/default
