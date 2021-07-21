@@ -38,13 +38,6 @@ def get_urls():
     session = SgRequests()
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:86.0) Gecko/20100101 Firefox/86.0",
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
-        "Accept-Language": "ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3",
-        "Referer": "https://www.urgentteam.com/locations/urgent-team-batesville-ms/",
-        "Connection": "keep-alive",
-        "Upgrade-Insecure-Requests": "1",
-        "Pragma": "no-cache",
-        "Cache-Control": "no-cache",
     }
 
     r = session.get("https://www.urgentteam.com/location-sitemap.xml", headers=headers)
@@ -88,20 +81,19 @@ def get_data(url):
     }
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:86.0) Gecko/20100101 Firefox/86.0",
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
-        "Accept-Language": "ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3",
-        "Referer": "https://www.urgentteam.com/locations/urgent-team-batesville-ms/",
-        "Connection": "keep-alive",
-        "Upgrade-Insecure-Requests": "1",
-        "Pragma": "no-cache",
-        "Cache-Control": "no-cache",
     }
 
     r = session.get(page_url, headers=headers)
     tree = html.fromstring(r.text)
     ad = " ".join(
-        tree.xpath("//h3[contains(text(), 'Address')]/following-sibling::p[1]/text()")
-    )
+        tree.xpath("//h3[contains(text(), 'Address')]/following-sibling::a/text()")
+    ).strip()
+    if ad.count("Cullman") == 2:
+        ad = " ".join(
+            tree.xpath(
+                "//h3[contains(text(), 'Address')]/following-sibling::a/text()[1]"
+            )
+        ).strip()
     a = usaddress.tag(ad, tag_mapping=tag)[0]
     street_address = f"{a.get('address1')} {a.get('address2')}".replace(
         "None", ""

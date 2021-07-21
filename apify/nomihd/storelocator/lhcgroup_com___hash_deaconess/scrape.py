@@ -53,7 +53,6 @@ def fetch_data():
         page_url = "".join(
             store.xpath('.//a[contains(text(),"Go to Page")]/@href')
         ).strip()
-        page_url = "https://lhcgroup.com/locations/brandywine-river-valley-home-health/"
         log.info(page_url)
         store_req = session.get(page_url, headers=headers)
         store_sel = lxml.html.fromstring(store_req.text.replace("xlink:href", "href"))
@@ -146,7 +145,6 @@ def fetch_data():
             longitude=longitude,
             hours_of_operation=hours_of_operation,
         )
-        break
 
 
 def scrape():

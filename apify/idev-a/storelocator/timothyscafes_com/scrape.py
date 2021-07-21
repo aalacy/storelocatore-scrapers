@@ -37,7 +37,9 @@ def fetch_data():
                         _.operatinghours.text.replace("&amp;", "&"), "lxml"
                     ).stripped_strings
                 )
-                for hh in temp:
+                for hh in "; ".join(temp).split(";"):
+                    if not hh.strip() or "Hours" in hh:
+                        continue
                     if "Good" in hh:
                         break
                     hours.append(hh)

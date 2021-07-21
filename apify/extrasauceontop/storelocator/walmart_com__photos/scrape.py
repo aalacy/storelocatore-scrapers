@@ -42,7 +42,6 @@ for search_code in search:
 
         try:
             phone = location["servicesMap"]["PHOTO_CENTER"]["phone"]
-
         except Exception:
             phone = location["phone"]
 

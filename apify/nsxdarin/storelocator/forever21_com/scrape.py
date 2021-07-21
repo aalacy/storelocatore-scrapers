@@ -82,7 +82,7 @@ def fetch_data():
                             )
                             cities.append(lurl)
     for city in cities:
-        r2 = session.get(state, headers=headers)
+        r2 = session.get(city, headers=headers)
         logger.info(city)
         for line2 in r2.iter_lines():
             line2 = str(line2.decode("utf-8"))
