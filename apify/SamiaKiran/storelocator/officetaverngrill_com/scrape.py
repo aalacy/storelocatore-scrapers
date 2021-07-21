@@ -42,6 +42,19 @@ def fetch_data():
             .get_text(separator="|", strip=True)
             .split("|")[1:-1]
         )
+        try:
+            coords = (
+                temp[3]
+                .find("a")["href"]
+                .split("place/")[1]
+                .split(",17z")[0]
+                .split("/@")
+            )
+
+            latitude, longitude = coords[-1].split(",")
+        except:
+            latitude = MISSING
+            longitude = MISSING
         address = " ".join(x for x in address)
         address = address.replace(",", " ")
         address = usaddress.parse(address)
@@ -70,18 +83,6 @@ def fetch_data():
             if temp[1].find("ZipCode") != -1:
                 zip_postal = zip_postal + " " + temp[0]
             i += 1
-        try:
-            coords = (
-                temp[3]
-                .find("a")["href"]
-                .split("place/")[1]
-                .split(",17z")[0]
-                .split("/@")
-            )
-            latitude, longitude = coords[-1].split(",")
-        except:
-            latitude = MISSING
-            longitude = MISSING
         yield SgRecord(
             locator_domain=DOMAIN,
             page_url=url,

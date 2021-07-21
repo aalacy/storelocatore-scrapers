@@ -1,4 +1,3 @@
-# --extra-index-url https://dl.cloudsmith.io/KVaWma76J5VNwrOm/crawl/crawl/python/simple/
 import re
 import csv
 from lxml import etree
@@ -57,7 +56,9 @@ def fetch_data():
             raw_data = [" ".join(raw_data[:2])] + raw_data[2:]
         store_url = start_url
         location_name = "<MISSING>"
-        street_address = " ".join(raw_data[:2])
+        street_address = " ".join(raw_data[:2]).replace(
+            " Jurong Point Shopping Centre", ""
+        )
         city = raw_data[2].split()[0]
         state = "<MISSING>"
         zip_code = raw_data[2].split()[-1]

@@ -11,8 +11,6 @@ _headers = {
 def fetch_data():
     locator_domain = "https://www.circalighting.com"
     base_url = "https://www.circalighting.com/showrooms/"
-    streets = []
-    phones = []
     with SgRequests() as session:
         soup = bs(session.get(base_url, headers=_headers).text, "lxml")
         locations = soup.select("div.category-cms .pagebuilder-column")
@@ -22,10 +20,9 @@ def fetch_data():
             if "Coming Soon" in _.select_one("div.more").text:
                 continue
             block = list(_.select_one("div.more").stripped_strings)
+            if "Now Open" in block[1]:
+                del block[1]
             page_url = locator_domain + _.select("div.more a")[-1]["href"]
-            if block[1].strip() in streets:
-                continue
-            streets.append(block[1].strip())
             block = [
                 bb
                 for bb in block
@@ -36,9 +33,6 @@ def fetch_data():
             phone = ""
             if "Phone" in block[3]:
                 phone = block[3].replace("Phone", "").strip()
-            if phone in phones:
-                continue
-            phones.append(phone)
             hours = []
             if len(block) >= 5:
                 hours = block[4:]
