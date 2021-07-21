@@ -18,6 +18,7 @@ def write_output(data):
         writer.writerow(
             [
                 "locator_domain",
+                "page_url",
                 "location_name",
                 "street_address",
                 "city",
@@ -112,6 +113,7 @@ def fetch_data():
         add = add.strip()
         yield [
             website,
+            loc,
             name,
             add,
             city,
