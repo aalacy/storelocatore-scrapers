@@ -1,6 +1,6 @@
 from sgrequests import SgRequests
 import pandas as pd
-from sgzip.dynamic import DynamicZipSearch, SearchableCountries
+from sgzip.static import static_zipcode_list, SearchableCountries
 
 locator_domains = []
 page_urls = []
@@ -17,7 +17,7 @@ latitudes = []
 longitudes = []
 hours_of_operations = []
 
-search = DynamicZipSearch(country_codes=[SearchableCountries.USA])
+search = static_zipcode_list(country_code=SearchableCountries.USA, radius=20)
 session = SgRequests()
 
 for search_code in search:
@@ -48,7 +48,7 @@ for search_code in search:
         location_type = location["storeType"]
         latitude = location["coordinates"]["latitude"]
         longitude = location["coordinates"]["longitude"]
-        search.found_location_at(latitude, longitude)
+        # search.found_location_at(latitude, longitude)
         hours = ""
         for day in location["servicesMap"]["PHOTO_CENTER"]["operationalHours"].keys():
             try:
