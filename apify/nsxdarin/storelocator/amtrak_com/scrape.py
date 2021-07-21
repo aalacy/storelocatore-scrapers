@@ -59,8 +59,8 @@ def fetch_data():
     if r.encoding is None:
         r.encoding = "utf-8"
     for line in r.iter_lines(decode_unicode=True):
-        if "<loc>https://beta.amtrak.com/stations/" in line:
-            items = line.split("<loc>https://beta.amtrak.com/stations/")
+        if "<loc>https://www.amtrak.com/stations/" in line:
+            items = line.split("<loc>https://www.amtrak.com/stations/")
             for item in items:
                 if "<?xml" not in item:
                     lurl = (
