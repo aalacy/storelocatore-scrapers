@@ -36,7 +36,7 @@ def write_output(data):
 def fetch_data():
     out = []
     locator_domain = "https://www.lonestarnationalbank.com/locations/"
-    api_url = "https://www.lonestarnationalbank.com/a80ffd210dffea6c5cfb9968d6f0a5b18f5d9718-9663d157b5abb14b3eef.js"
+    api_url = "https://www.lonestarnationalbank.com/a80ffd210dffea6c5cfb9968d6f0a5b18f5d9718-445032573d4c7aa30d2f.js"
     session = SgRequests()
 
     r = session.get(api_url)

@@ -39,7 +39,12 @@ for search_code in search:
         zipp = location["address"]["zipcode"]
         country_code = location["address"]["country"]
         store_number = location["id"]
-        phone = location["phone"]
+
+        try:
+            phone = location["servicesMap"]["PHOTO_CENTER"]["phone"]
+        except Exception:
+            phone = location["phone"]
+
         location_type = location["storeType"]
         latitude = location["coordinates"]["latitude"]
         longitude = location["coordinates"]["longitude"]

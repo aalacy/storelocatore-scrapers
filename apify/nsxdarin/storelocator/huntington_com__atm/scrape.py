@@ -92,8 +92,9 @@ def fetch_data():
                     hours = hours + "; Sat: " + item["properties"]["SaturdayLobbyHours"]
                 except:
                     hours = "<MISSING>"
-                if store not in ids:
-                    ids.append(store)
+                storeinfo = store + "|" + add + "|" + typ + "|" + zc
+                if storeinfo not in ids:
+                    ids.append(storeinfo)
                     loc = "<MISSING>"
                     if phone == "":
                         phone = "<MISSING>"
@@ -158,8 +159,9 @@ def fetch_data():
                     hours = hours + "; Sat: " + item["properties"]["SaturdayLobbyHours"]
                 except:
                     hours = "<MISSING>"
-                if store not in ids:
-                    ids.append(store)
+                storeinfo = store + "|" + add + "|" + typ + "|" + zc
+                if storeinfo not in ids:
+                    ids.append(storeinfo)
                     if DT != "" or WU != "" or IN != "" or BS != "":
                         loc = (
                             "https://www.huntington.com/Community/branch-info?locationId="

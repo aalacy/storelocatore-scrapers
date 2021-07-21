@@ -1,9 +1,14 @@
 import csv
 import usaddress
-
+import time
 from concurrent import futures
 from lxml import html
 from sgrequests import SgRequests
+
+from sglogging import sglog
+
+DOMAIN = "progressive.com"
+log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
 
 
 def write_output(data):
@@ -83,6 +88,7 @@ def get_states():
 
 
 def get_cities(state):
+    log.info(f"State:: {state}")
     r = session.get(state)
     tree = html.fromstring(r.text)
 
@@ -90,6 +96,7 @@ def get_cities(state):
 
 
 def get_page(city):
+    log.info(f"City:: {city}")
     r = session.get(city)
     tree = html.fromstring(r.text)
 
@@ -101,24 +108,27 @@ def get_urls():
     cities = []
     urls = []
 
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
+    with futures.ThreadPoolExecutor(max_workers=12) as executor:
         future_to_url = {executor.submit(get_cities, state): state for state in states}
         for future in futures.as_completed(future_to_url):
             rows = future.result()
             cities += rows
 
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
+    states.clear()
+    with futures.ThreadPoolExecutor(max_workers=12) as executor:
         future_to_url = {executor.submit(get_page, city): city for city in cities}
         for future in futures.as_completed(future_to_url):
             rows = future.result()
             urls += rows
 
+    cities.clear()
+
     return urls
 
 
 def get_data(page_url):
-    locator_domain = "https://www.progressive.com/"
-
+    locator_domain = DOMAIN
+    log.info(f"Grabbing From: {page_url}")
     r = session.get(page_url)
     tree = html.fromstring(r.text)
 
@@ -183,7 +193,7 @@ def fetch_data():
     s = set()
     urls = get_urls()
 
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
+    with futures.ThreadPoolExecutor(max_workers=8) as executor:
         future_to_url = {executor.submit(get_data, url): url for url in urls}
         for future in futures.as_completed(future_to_url):
             row = future.result()
@@ -197,8 +207,13 @@ def fetch_data():
 
 
 def scrape():
+    log.info("Scraping Started")
+    start = time.time()
     data = fetch_data()
     write_output(data)
+    end = time.time()
+    log.info(f"Total Locations added = {len(data)}")
+    log.info(f"It took {end-start} seconds to complete the crawl.")
 
 
 if __name__ == "__main__":

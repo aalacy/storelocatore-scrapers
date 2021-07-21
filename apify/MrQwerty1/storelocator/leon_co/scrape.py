@@ -56,13 +56,20 @@ def fetch_data():
         location_type = j.get("type") or "<MISSING>"
         line = j["locationDetails"]["fullAddress"]
 
-        adr = parse_address(International_Parser(), line)
+        try:
+            p = j["locationDetails"]["postCode"]
+            c = j["locationDetails"]["townOrCity"]
+            adr = parse_address(International_Parser(), line, postcode=p, city=c)
+        except KeyError:
+            adr = parse_address(International_Parser(), line)
         street_address = (
             f"{adr.street_address_1} {adr.street_address_2 or ''}".replace(
                 "None", ""
             ).strip()
             or "<MISSING>"
         )
+        if len(street_address) < 5 and "," in line:
+            street_address = line.split(",")[0].strip()
 
         city = adr.city or "<MISSING>"
         state = adr.state or "<MISSING>"
