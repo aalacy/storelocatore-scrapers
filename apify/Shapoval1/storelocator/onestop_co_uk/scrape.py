@@ -108,7 +108,10 @@ def get_data(_zip):
                     thursday_hrs = f"Thursday: {loc.get('location').get('openingHours').get('standard').get('thursday').get('intervals')[0].get('start')} - {loc.get('location').get('openingHours').get('standard').get('thursday').get('intervals')[0].get('end')}"
                     friday_hrs = f"Friday: {loc.get('location').get('openingHours').get('standard').get('friday').get('intervals')[0].get('start')} - {loc.get('location').get('openingHours').get('standard').get('friday').get('intervals')[0].get('end')}"
                     saturday_hrs = f"Saturday: {loc.get('location').get('openingHours').get('standard').get('saturday').get('intervals')[0].get('start')} - {loc.get('location').get('openingHours').get('standard').get('saturday').get('intervals')[0].get('end')}"
-                    sunday_hrs = f"Sunday: {loc.get('location').get('openingHours').get('standard').get('sunday').get('intervals')[0].get('start')} - {loc.get('location').get('openingHours').get('standard').get('sunday').get('intervals')[0].get('end')}"
+                    try:
+                        sunday_hrs = f"Sunday: {loc.get('location').get('openingHours').get('standard').get('sunday').get('intervals')[0].get('start')} - {loc.get('location').get('openingHours').get('standard').get('sunday').get('intervals')[0].get('end')}"
+                    except:
+                        sunday_hrs = "Sunday Closed"
                 except:
                     monday_hrs = "<MISSING>"
                     tuesday_hrs = "<MISSING>"
@@ -136,13 +139,6 @@ def get_data(_zip):
                 )
                 if hours_of_operation.count("<MISSING>") == 7:
                     hours_of_operation = "<MISSING>"
-                if (
-                    hours_of_operation.find("<MISSING>") != -1
-                    and hours_of_operation.count("<MISSING>") != 1
-                ):
-                    hours_of_operation = hours_of_operation.replace(
-                        "<MISSING>", "closed"
-                    )
 
                 page_url = f"https://www.onestop.co.uk/store/?store={loc.get('location').get('id')}"
 
