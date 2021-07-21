@@ -3,7 +3,7 @@
 crawler_subdir_regex='apify(\/[^/]+){3}'
 required_python_files=('Dockerfile' 'requirements.txt' 'scrape.py')
 required_node_files=('Dockerfile' 'scrape.js' 'package.json')
-forbidden_files=('chromedriver' 'geckodriver' 'validate.py' 'data.csv')
+forbidden_files=('chromedriver' 'geckodriver' 'validate.py' 'data.csv' 'state.json')
 internal_libraries=('sgscrape' 'sgcrawler' 'sgrequests' 'sgselenium' 'sglogging' 'sgzip' 'sggrid')
 
 list_diffs() {

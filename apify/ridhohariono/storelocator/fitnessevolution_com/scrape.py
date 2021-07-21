@@ -127,6 +127,9 @@ def fetch_data():
             city = address[1].strip()
             state = re.sub(r"\d+", "", address[2]).strip()
             zip_code = re.sub(r"\D+", "", address[2]).strip()
+        street_address = street_address.replace(
+            "Royal Plaza Shopping Center,", ""
+        ).strip()
         country_code = "US"
         store_number = "<MISSING>"
         phone = soup.find(

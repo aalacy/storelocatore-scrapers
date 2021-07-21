@@ -60,7 +60,14 @@ def fetch_data():
         if city == "Del Este Humacao":
             city = "Humacao"
 
-        street_address = street_address.replace(city + " ", "").strip()
+        try:
+            street_address = street_address.rsplit(city, 1)[0].strip()
+        except:
+            pass
+
+        if street_address[-1] == ",":
+            street_address = "".join(street_address[:-1]).strip()
+
         state = formatted_addr.state
         zip = formatted_addr.postcode
         if not state:

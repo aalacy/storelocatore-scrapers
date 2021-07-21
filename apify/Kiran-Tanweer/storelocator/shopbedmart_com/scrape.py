@@ -1,3 +1,4 @@
+import html
 import usaddress
 from sglogging import sglog
 from bs4 import BeautifulSoup
@@ -27,6 +28,7 @@ def fetch_data():
         loclist = session.post(url, headers=headers, data=payload).json()
         for loc in loclist:
             location_name = loc["title"]
+            location_name = html.unescape(location_name)
             store_number = loc["id"]
             page_url = loc["url"]
             log.info(page_url)
@@ -37,6 +39,7 @@ def fetch_data():
                 hours_of_operation.find("p")
                 .get_text(separator="|", strip=True)
                 .replace("|", " ")
+                .replace("Customer Will Cal", "")
             )
             address = loc["address"]
             address = address.replace(", USA", "")
