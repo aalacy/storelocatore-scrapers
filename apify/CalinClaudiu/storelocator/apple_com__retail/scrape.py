@@ -221,11 +221,14 @@ def get_country(search, country, session, headers, SearchableCountry, state):
                         if errorzCopy:
                             state.set_misc_value("errorz", errorzCopy)
                             state.save(override=True)
-            errorz.append(
-                str(
-                    f"Found a total of 0 results for country {country}\n this is unacceptable and possibly a country/search space mismatch\n Matched to: {SearchableCountry}"
+            try:
+                errorz.append(
+                    str(
+                        f"Found a total of 0 results for country {country}\n this is unacceptable and possibly a country/search space mismatch\n Matched to: {SearchableCountry}"
+                    )
                 )
-            )
+            except Exception:
+                pass
 
 
 def fetch_data():
