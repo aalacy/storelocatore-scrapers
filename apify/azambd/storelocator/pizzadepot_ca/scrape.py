@@ -70,7 +70,7 @@ def get_driver(url, xpath_name, driver=None):
             break
         except Exception:
             driver.quit()
-            if x == 2:
+            if x == 10:
                 raise Exception(
                     "Make sure this ran with a Proxy, will fail without one"
                 )
@@ -167,7 +167,6 @@ def fetchData():
                     )
                     _tmp.append(hr)
                 hours_of_operation = hours_of_operation = "; ".join(_tmp) or MISSING
-                log.info(f"HOO: {hours_of_operation}")
         except:
             hours_of_operation = MISSING
 
