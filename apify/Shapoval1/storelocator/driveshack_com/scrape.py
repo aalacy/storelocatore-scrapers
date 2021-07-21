@@ -1,5 +1,4 @@
 import csv
-from lxml import html
 from sgrequests import SgRequests
 
 
@@ -36,7 +35,7 @@ def fetch_data():
     out = []
 
     locator_domain = "https://www.driveshack.com"
-    api_url = "https://www.driveshack.com/page-data/events/orlando/book-a-2-bay-package/page-data.json"
+    api_url = "https://www.driveshack.com/page-data/locations/page-data.json"
     session = SgRequests()
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
@@ -46,34 +45,35 @@ def fetch_data():
     for j in js:
         a = j.get("node")
         slug = a.get("slug")
-        page_url = f"https://www.driveshack.com/locations/{slug}"
-
-        location_type = "<MISSING>"
-        street_address = a.get("address1")
-        phone = "<MISSING>"
-        state = a.get("state")
-        postal = a.get("zipCode")
-        country_code = "USA"
-        city = a.get("city")
-        store_number = "<MISSING>"
-        latitude = a.get("locationCoordinates").get("lat")
-        longitude = a.get("locationCoordinates").get("lon")
 
         session = SgRequests()
-        r = session.get(page_url, headers=headers)
-        tree = html.fromstring(r.text)
+        r = session.get(
+            f"https://www.driveshack.com/page-data/locations/{slug}/page-data.json",
+            headers=headers,
+        )
+        js = r.json()["result"]["data"]["contentfulDriveShackLocations"]
 
-        location_name = "".join(tree.xpath("//h1/text()"))
-        _tmp = []
-        days = tree.xpath(
-            '//h4[text()="Hours"]/following-sibling::div[1]/div[1]/div/text()'
-        )
-        times = tree.xpath(
-            '//h4[text()="Hours"]/following-sibling::div[1]/div[2]/div/text()'
-        )
-        for d, t in zip(days, times):
-            _tmp.append(f"{d.strip()}: {t.strip()}")
-        hours_of_operation = "; ".join(_tmp) or "<MISSING>"
+        page_url = f"{locator_domain}/{slug}"
+        location_type = "<MISSING>"
+        street_address = js.get("address1")
+        phone = "<MISSING>"
+        state = js.get("state")
+        postal = js.get("zipCode")
+        country_code = "USA"
+        city = js.get("city")
+        store_number = "<MISSING>"
+        latitude = js.get("locationCoordinates").get("lat")
+        longitude = js.get("locationCoordinates").get("lon")
+        location_name = js.get("locationName")
+        hours = js.get("hoursOfOperation").get("tableData")
+        tmp = []
+        for h in hours[1:]:
+            day = h[0]
+            time = h[1]
+            line = f"{day} {time}"
+            tmp.append(line)
+
+        hours_of_operation = "; ".join(tmp) or "<MISSING>"
 
         row = [
             locator_domain,
