@@ -55,12 +55,12 @@ def fetch_data():
                 [": ".join(hh.stripped_strings) for hh in sp1.select("table.hours tr")]
             )
             yield SgRecord(
-                page_url=page_url,
+                page_url=store_url,
                 location_name=location_name,
                 street_address=street_address,
                 city=city,
                 state=state,
-                zip_postal=zip_postal,
+                zip_postal=zip_code,
                 country_code="US",
                 phone=phone,
                 locator_domain=locator_domain,
