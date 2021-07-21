@@ -74,11 +74,13 @@ def fetch_data():
 
         for store in stores:
             location_name = store["store_name"]
+            if len(location_name.strip()) <= 2:
+                location_name = "<MISSING>"
             street_address = store["number"]
             if not street_address:
                 street_address = store["address"]
                 if not street_address:
-                    continue
+                    street_address = "<MISSING>"
             city = store["municipality"]
             state = store["area1_name"]
             zip_code = store["postcode"]
@@ -144,6 +146,8 @@ def fetch_data():
             if not longitude:
                 latitude = "<MISSING>"
                 longitude = "<MISSING>"
+            if state == "Kuala Lumpur" and latitude == "<MISSING>":
+                continue
             link = (
                 "https://map.uniqlo.com/"
                 + country_code.lower()

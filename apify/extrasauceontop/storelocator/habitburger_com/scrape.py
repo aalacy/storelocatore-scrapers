@@ -168,6 +168,12 @@ for url in page_urls_to_iterate:
         elif location_name == "Phoenix":
             hours = check.split("\n")[1].replace("<br>", "").strip()
 
+    if "www.habitburger.com" in hours:
+        hours = "Temporarily Closed"
+
+    elif "Thru" in hours:
+        hours = hours.split("Thru:")[1].strip()
+
     locator_domains.append(locator_domain)
     page_urls.append(url)
     location_names.append(location_name)

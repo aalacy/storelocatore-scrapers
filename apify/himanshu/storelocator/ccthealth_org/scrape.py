@@ -192,6 +192,59 @@ def fetch_data():
 
         yield store
 
+    # School clinics
+    school_hours_url = "https://ccthealth.org/careconnect-school-clinics-butler/"
+
+    r1 = session.get(school_hours_url, headers=headers)
+    soup1 = BeautifulSoup(r1.text, "html.parser")
+
+    hour = ""
+    rows = soup1.find_all(class_="iconlist_content")
+    for row in rows:
+        if "day" in row.text.lower():
+            hour = row.text
+            break
+
+    page_url = "https://ccthealth.org/locations-school-clinics/"
+
+    r1 = session.get(page_url, headers=headers)
+    soup1 = BeautifulSoup(r1.text, "html.parser")
+
+    items = soup1.find_all(class_="av_textblock_section")
+    for i in items:
+        item = list(i.stripped_strings)
+        location_name = item[0]
+        street_address = item[1]
+        city_line = item[2].strip().split(",")
+        city = city_line[0].strip()
+        state = city_line[-1].strip().split()[0].strip()
+        zipp = city_line[-1].strip().split()[1].strip()
+        phone = item[3].replace("Telephone:", "").strip()
+        latitude = ""
+        longitude = ""
+
+        store = []
+        store.append(base_url)
+        store.append(location_name)
+        store.append(street_address)
+        store.append(city)
+        store.append(state)
+        store.append(zipp if zipp else "<MISSING>")
+        store.append("US")
+        store.append("<MISSING>")
+        store.append(phone)
+        store.append("<MISSING>")
+        store.append(latitude if latitude else "<MISSING>")
+        store.append(longitude if longitude else "<MISSING>")
+        store.append(hour)
+        store.append(school_hours_url)
+        if store[2] in addressess:
+            continue
+        addressess.append(store[2])
+        store = [str(x).strip() if x else "<MISSING>" for x in store]
+
+        yield store
+
 
 def scrape():
     data = fetch_data()
