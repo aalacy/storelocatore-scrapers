@@ -79,14 +79,15 @@ def fetch_data():
         latitude = "<MISSING>"
         longitude = "<MISSING>"
         if loc_response.status_code == 200:
-            geo = (
-                loc_dom.xpath("//iframe/@src")[0]
-                .split("!2d")[1]
-                .split("!2m")[0]
-                .split("!3d")
-            )
-            latitude = geo[-1]
-            longitude = geo[0]
+            if loc_dom.xpath("//iframe/@src"):
+                geo = (
+                    loc_dom.xpath("//iframe/@src")[0]
+                    .split("!2d")[1]
+                    .split("!2m")[0]
+                    .split("!3d")
+                )
+                latitude = geo[-1]
+                longitude = geo[0]
         hoo = loc_dom.xpath(
             '//div[i[@class="fa fa-clock-o icon-custom"]]/following-sibling::div[1]//text()'
         )

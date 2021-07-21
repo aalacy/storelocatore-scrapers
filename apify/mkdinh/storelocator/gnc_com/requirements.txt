@@ -1,0 +1,5 @@
+sgrequests==0.1.12
+sglogging==0.0.4
+beautifulsoup4==4.9.3
+sgzip==0.5.3
+tenacity==7.0.0

@@ -5,6 +5,7 @@ from lxml import etree
 from urllib.parse import urljoin
 
 from sgrequests import SgRequests
+from sgscrape.sgpostal import parse_address_intl
 
 
 def write_output(data):
@@ -56,26 +57,53 @@ def fetch_data():
         store_url = urljoin(start_url, url)
         loc_response = session.get(store_url)
         loc_dom = etree.HTML(loc_response.text)
+
         poi = loc_dom.xpath('//script[contains(text(), "GeoCoordinates")]/text()')[0]
         poi = json.loads(poi)
+        if loc_dom.xpath('//div[contains(text(), "OPENING SOON")]'):
+            continue
+        if loc_dom.xpath(
+            '//div[contains(text(), "PERMANENTLY CLOSED DUE TO COVID-19")]'
+        ):
+            continue
+        if loc_dom.xpath('//div[contains(text(), "Permanently closed")]'):
+            continue
 
         location_name = poi["name"]
         location_name = location_name if location_name else "<MISSING>"
         if not poi.get("address"):
-            continue
-        street_address = poi["address"]["streetAddress"]
-        street_address = street_address if street_address else "<MISSING>"
-        city = poi["address"]["addressLocality"]
-        city = city if city else "<MISSING>"
-        state = poi["address"]["addressRegion"]
-        state = state if state else "<MISSING>"
-        zip_code = poi["address"]["postalCode"]
-        zip_code = zip_code if zip_code else "<MISSING>"
-        country_code = poi["address"]["addressCountry"]
-        country_code = country_code if country_code else "<MISSING>"
+            addr = parse_address_intl(
+                loc_dom.xpath('//a[contains(@href, "maps")]/@href')[0]
+                .split("q=")[-1]
+                .split("&")[0]
+                .replace("+", " ")
+                .replace("%2C", "")
+            )
+            street_address = addr.street_address_1
+            if addr.street_address_2:
+                street_address += " " + addr.street_address_2
+            street_address = street_address if street_address else "<MISSING>"
+            city = addr.city
+            state = addr.state
+            zip_code = addr.postcode
+            country_code = "<MISSING>"
+        else:
+            street_address = poi["address"]["streetAddress"]
+            street_address = street_address if street_address else "<MISSING>"
+            city = poi["address"]["addressLocality"]
+            city = city if city else "<MISSING>"
+            state = poi["address"]["addressRegion"]
+            state = state if state else "<MISSING>"
+            zip_code = poi["address"]["postalCode"]
+            zip_code = zip_code if zip_code else "<MISSING>"
+            country_code = poi["address"]["addressCountry"]
+            country_code = country_code if country_code else "<MISSING>"
         store_number = "<MISSING>"
-        phone = poi["telephone"]
-        phone = phone if phone else "<MISSING>"
+        if poi.get("telephone"):
+            phone = poi["telephone"]
+        else:
+            phone = loc_dom.xpath('//a[contains(@href, "tel")]/text()')
+            phone = phone[0] if phone else "<MISSING>"
         location_type = poi["@type"]
         latitude = poi["geo"]["latitude"]
         longitude = poi["geo"]["longitude"]

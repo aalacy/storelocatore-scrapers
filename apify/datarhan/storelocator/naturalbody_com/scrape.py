@@ -1,6 +1,7 @@
 import re
 import csv
 from lxml import etree
+from urllib.parse import urljoin
 
 from sgrequests import SgRequests
 
@@ -49,8 +50,11 @@ def fetch_data():
     response = session.get(start_url, headers=hdr)
     dom = etree.HTML(response.text)
 
-    all_locations = dom.xpath('//a[@class="spa-details-link"]/@href')
+    all_locations = dom.xpath(
+        '//div[div[contains(text(), "Locations")]]/following-sibling::nav[1]//a/@href'
+    )[1:]
     for store_url in all_locations:
+        store_url = urljoin(start_url, store_url)
         loc_response = session.get(store_url)
         loc_dom = etree.HTML(loc_response.text)
 

@@ -52,12 +52,21 @@ def fetch_data():
     endpoint("London", 4, data)
     endpoint("Paris", 2, data)
     endpoint("Dublin", 1, data)
-    endpoint("all", 24, data)
 
     result = []
 
     def hasHours(stri):
         return any(char.isdigit() for char in stri)
+
+    def hasState(stri):
+        if len(stri.split(",")) == 2:
+            return {
+                "has": True,
+                "state": stri.split(",")[1].strip(),
+                "city": stri.split(",")[0].strip(),
+            }
+        else:
+            return {"city": stri, "has": False}
 
     for ss in set(data):
         s = json.loads(ss)
@@ -70,6 +79,10 @@ def fetch_data():
             .replace("Tél. : +", "")
         )
         city = s["town"]
+        state = missingString
+        if hasState(city)["has"]:
+            state = hasState(city)["state"]
+            city = hasState(city)["city"]
         zp = s["postalCode"]
         if not zp:
             zp = missingString
@@ -101,7 +114,7 @@ def fetch_data():
                 name,
                 street,
                 city,
-                missingString,
+                state,
                 zp,
                 missingString,
                 missingString,

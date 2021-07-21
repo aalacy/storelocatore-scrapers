@@ -88,12 +88,15 @@ def fetch_data():
             continue
 
         location_name = (
-            base.find_all(class_="font_4")[-1].text.replace("  ", " ").strip()
+            base.find_all(class_="font_4")[-1]
+            .text.replace("  ", " ")
+            .replace("\xa0", " ")
+            .strip()
         )
         if "We are now seeing" in location_name:
             continue
 
-        rows = base.find_all(class_="_1Z_nJ")
+        rows = base.find_all("div", attrs={"data-testid": "richTextElement"})
 
         for row in rows:
             if "phone:" in row.text.lower():

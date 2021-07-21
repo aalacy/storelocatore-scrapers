@@ -1,5 +1,4 @@
 import csv
-import usaddress
 from concurrent import futures
 from sgrequests import SgRequests
 from sgzip.static import static_coordinate_list, SearchableCountries
@@ -40,74 +39,60 @@ def get_data(coord):
     locator_domain = "https://www.citybbq.com/"
 
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:88.0) Gecko/20100101 Firefox/88.0",
-        "Accept": "application/json, text/javascript, */*; q=0.01",
-        "Accept-Language": "uk-UA,uk;q=0.8,en-US;q=0.5,en;q=0.3",
-        "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
-        "X-Requested-With": "XMLHttpRequest",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:89.0) Gecko/20100101 Firefox/89.0",
+        "Accept": "application/json, text/plain, */*",
+        "Accept-Language": "ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3",
+        "Referer": "https://www.citybbq.com/",
+        "ui-cache-ttl": "300",
+        "ui-transformer": "restaurants",
+        "clientid": "citybbq",
+        "Content-Type": "application/json",
+        "nomnom-platform": "web",
         "Origin": "https://www.citybbq.com",
         "Connection": "keep-alive",
-        "Referer": "https://www.citybbq.com/",
-    }
-
-    data = {
-        "lat": lat,
-        "lng": lng,
+        "TE": "Trailers",
+        "Pragma": "no-cache",
+        "Cache-Control": "no-cache",
     }
 
     session = SgRequests()
-    tag = {
-        "Recipient": "recipient",
-        "AddressNumber": "address1",
-        "AddressNumberPrefix": "address1",
-        "AddressNumberSuffix": "address1",
-        "StreetName": "address1",
-        "StreetNamePreDirectional": "address1",
-        "StreetNamePreModifier": "address1",
-        "StreetNamePreType": "address1",
-        "StreetNamePostDirectional": "address1",
-        "StreetNamePostModifier": "address1",
-        "StreetNamePostType": "address1",
-        "CornerOf": "address1",
-        "IntersectionSeparator": "address1",
-        "LandmarkName": "address1",
-        "USPSBoxGroupID": "address1",
-        "USPSBoxGroupType": "address1",
-        "USPSBoxID": "address1",
-        "USPSBoxType": "address1",
-        "BuildingName": "address2",
-        "OccupancyType": "address2",
-        "OccupancyIdentifier": "address2",
-        "SubaddressIdentifier": "address2",
-        "SubaddressType": "address2",
-        "PlaceName": "city",
-        "StateName": "state",
-        "ZipCode": "postal",
-    }
-    r = session.post(
-        "https://www.citybbq.com/wp-content/themes/city-bbq/api/get-closest-locations.php",
+
+    r = session.get(
+        f"https://nomnom-prod-api.citybbq.com/restaurants/near?lat={lat}&long={lng}&radius=20000&limit=6&nomnom=calendars&nomnom_calendars_from=20210715&nomnom_calendars_to=20210723&nomnom_exclude_extref=999",
         headers=headers,
-        data=data,
     )
-    js = r.json()
+    js = r.json()["restaurants"]
 
     for j in js:
 
-        page_url = f"https:{j.get('order_link')}"
-        location_name = j.get("title")
-        ad = "".join(j.get("address")).replace("<br>", " ")
-        a = usaddress.tag(ad, tag_mapping=tag)[0]
-        street_address = "<MISSING>"
-        city = a.get("city")
-        state = a.get("state")
-        postal = a.get("postal") or "<MISSING>"
-        country_code = "US"
-        store_number = j.get("id")
-        phone = j.get("phone") or "<MISSING>"
-        latitude = j.get("lat")
-        longitude = j.get("lng")
+        page_url = j.get("url")
+
+        location_name = j.get("storename")
+        street_address = j.get("streetaddress")
+        city = j.get("city")
+        state = j.get("state")
+        postal = j.get("zip")
+        country_code = j.get("country")
+        store_number = "<MISSING>"
+        phone = j.get("telephone")
+        latitude = j.get("latitude")
+        longitude = j.get("longitude")
         location_type = "<MISSING>"
-        hours_of_operation = "".join(j.get("hours")).replace("<br>", " ")
+        try:
+            hours = j.get("calendars").get("calendar")[0].get("ranges") or "<MISSING>"
+        except:
+            hours = "<MISSING>"
+        tmp = []
+        if hours != "<MISSING>":
+            for h in hours:
+                day = h.get("weekday")
+                start = "".join(h.get("start")).split()[1].strip()
+                end = "".join(h.get("end")).split()[1].strip()
+                line = f"{day} {start} - {end}"
+                tmp.append(line)
+            hours_of_operation = ";".join(tmp) or "<MISISNG>"
+        else:
+            hours_of_operation = "<MISSING>"
 
         row = [
             locator_domain,
@@ -135,12 +120,12 @@ def fetch_data():
     s = set()
     coords = static_coordinate_list(radius=50, country_code=SearchableCountries.USA)
 
-    with futures.ThreadPoolExecutor(max_workers=2) as executor:
+    with futures.ThreadPoolExecutor(max_workers=10) as executor:
         future_to_url = {executor.submit(get_data, coord): coord for coord in coords}
         for future in futures.as_completed(future_to_url):
             rows = future.result()
             for row in rows:
-                _id = row[8]
+                _id = row[3]
                 if _id not in s:
                     s.add(_id)
                     out.append(row)

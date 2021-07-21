@@ -1,107 +1,65 @@
-import csv
-from sgrequests import SgRequests
-import json
-from sgscrape.sgpostal import parse_address_intl
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+from sgrequests.sgrequests import SgRequests
+import us
+from bs4 import BeautifulSoup as bs
+from sglogging import SgLogSetup
 
-from util import Util  # noqa: I900
-
-myutil = Util()
+logger = SgLogSetup().get_logger("lornajane")
 
 
-session = SgRequests()
-
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+_headers = {
+    "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
+}
 
 
 def fetch_data():
-    locator_domain = "https://www.lornajane.com/"
-    base_url = "https://www.lornajane.com/on/demandware.store/Sites-LJUS-Site/en_US/Stores-FindStores?showMap=true&radius=15&selectedCountryCode=US&postalCode=&radius=300%20mi"
-    r = session.get(base_url)
-    items = json.loads(r.text)["stores"]
-    data = []
-    for item in items:
-        page_url = "<MISSING>"
-        location_name = item["name"]
-        street_address = myutil._valid1(
-            myutil._valid(f"{item['address1']}")
-            + " "
-            + myutil._valid1(item.get("address2", ""))
-        ).replace("None", "")
-        city = myutil._valid(item["city"])
-        state = myutil._valid(item["stateCode"])
-        zip = myutil._valid(myutil._digit(item["postalCode"]))
-        raw_address = f"{street_address} {city}, {state} {zip}"
-        addr = parse_address_intl(raw_address)
-        country_code = item["countryCode"]
-        store_number = item["ID"]
-        phone = myutil._valid_phone(item.get("phone", ""))
-        location_type = "<MISSING>"
-        latitude = item["latitude"]
-        longitude = item["longitude"]
-        hours_of_operation = "<INACCESSIBLE>"
-        if "storeHours" in item:
-            if len(item["storeHours"].split("<br/>")) > 1:
-                hours_of_operation = "; ".join(
-                    myutil._strip_list(item["storeHours"].split("<br/>"))
+    with SgRequests() as session:
+        for ss in us.states.STATES:
+            url = f"https://www.lornajane.com/on/demandware.store/Sites-LJUS-Site/en_US/Stores-FindStores?country=US&state={ss.name}"
+            logger.info(url)
+            # here you use the requests session to fetch the location from the requests
+            locations = bs(session.get(url, headers=_headers).text, "lxml").select(
+                "div.results div.store-item"
+            )
+            for _ in locations:
+                addr = list(_.select_one("div.store-address").stripped_strings)
+                phone = ""
+                if _.select_one("a.storelocator-phone"):
+                    phone = _.select_one("a.storelocator-phone").text.strip()
+                try:
+                    coord = (
+                        _.select_one("a.store-map")["href"].split("addr=")[1].split(",")
+                    )
+                except:
+                    coord = ["", ""]
+                page_url = _.select_one("div.store-name a")["href"]
+                sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
+                hours = list(sp1.select_one("div.store-hours").stripped_strings)
+                if hours:
+                    hours = hours[1:]
+                yield SgRecord(
+                    page_url=page_url,
+                    street_address=" ".join(addr[:-1]).replace("\n", ""),
+                    city=addr[-1].split(",")[0].replace("\n", "").strip(),
+                    state=addr[-1].split(",")[1].replace("\n", "").strip(),
+                    zip_postal=addr[-1].split(",")[2].replace("\n", "").strip(),
+                    store_number=_["data-store-id"],
+                    location_name=_["data-store-name"],
+                    phone=phone,
+                    latitude=coord[0],
+                    longitude=coord[1],
+                    hours_of_operation="; ".join(hours),
+                    raw_address=" ".join(addr).replace("\n", ""),
                 )
-            else:
-                hours_of_operation = "; ".join(
-                    myutil._strip_list(item["storeHours"].split("<br />"))
-                )
-
-        _item = [
-            locator_domain,
-            page_url,
-            location_name,
-            addr.street_address_1,
-            city,
-            state,
-            zip,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        data.append(_item)
-
-    return data
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
 
 
 if __name__ == "__main__":
-    scrape()
+    with SgWriter(
+        deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumberId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)

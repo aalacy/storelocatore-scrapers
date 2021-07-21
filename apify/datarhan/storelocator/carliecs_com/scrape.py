@@ -41,9 +41,15 @@ def fetch_data():
     items = []
 
     DOMAIN = "carliecs.com"
-    start_url = "https://api.freshop.com/1/stores?app_key=carlie_c_s&has_address=true&limit=-1&token=e1a838a05201fa9391f560674a6bf98b"
+    start_url = "https://api.freshop.com/1/stores?app_key=carlie_c_s&has_address=true&limit=-1&token={}"
 
-    response = session.get(start_url)
+    frm = {
+        "app_key": "carlie_c_s",
+        "referrer": "https://www.carliecs.com/",
+        "utc": "1626174932446",
+    }
+    token = session.post("https://api.freshop.com/2/sessions/create", data=frm).json()
+    response = session.get(start_url.format(token["token"]))
     data = json.loads(response.text)
 
     for poi in data["items"]:

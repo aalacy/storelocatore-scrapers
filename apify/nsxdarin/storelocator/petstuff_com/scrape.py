@@ -1,8 +1,8 @@
 import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
+import time
 
-session = SgRequests()
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
@@ -38,6 +38,7 @@ def write_output(data):
 
 
 def fetch_data():
+    session = SgRequests()
     locs = ["https://petstuff.com/ca-anaheim-hills-protein-for-pets"]
     alllocs = []
     url = "https://petstuff.com/store-locator"
@@ -65,6 +66,8 @@ def fetch_data():
                             alllocs.append(lurl)
                             locs.append("https://petstuff.com/" + lurl)
     for loc in locs:
+        time.sleep(5)
+        session = SgRequests()
         logger.info(loc)
         name = ""
         add = ""
