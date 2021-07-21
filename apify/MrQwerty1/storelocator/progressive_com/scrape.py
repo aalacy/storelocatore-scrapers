@@ -25,10 +25,10 @@ def request_with_retries(url):
 
 
 def fetchConcurrentSingle(url):
-    data = {'url': url}
-    response = request_with_retries(data['url'])
-    body = html.fromstring(response.text, 'lxml')
-    return {'data': data, 'body': body, 'response': response.text}
+    data = {"url": url}
+    response = request_with_retries(data["url"])
+    body = html.fromstring(response.text, "lxml")
+    return {"data": data, "body": body, "response": response.text}
 
 
 def fetchConcurrentList(list, occurrence=max_workers):
@@ -37,7 +37,9 @@ def fetchConcurrentList(list, occurrence=max_workers):
     reminder = 100
 
     count = 0
-    with ThreadPoolExecutor(max_workers=occurrence, thread_name_prefix='fetcher') as executor:
+    with ThreadPoolExecutor(
+        max_workers=occurrence, thread_name_prefix="fetcher"
+    ) as executor:
         for result in executor.map(fetchConcurrentSingle, list):
             count = count + 1
             if count % reminder == 0:
@@ -48,20 +50,20 @@ def fetchConcurrentList(list, occurrence=max_workers):
 
 def fetchStores():
     response = request_with_retries(start_url)
-    body = html.fromstring(response.text, 'lxml')
+    body = html.fromstring(response.text, "lxml")
     stateUrls = body.xpath("//ul[@class='state-list']/li/a/@href")
     log.debug(f"total states= {len(stateUrls)}")
 
     cityUrls = []
     for city in fetchConcurrentList(stateUrls):
-        cityUrls = cityUrls + \
-            city['body'].xpath("//ul[@class='city-list']/li/a/@href")
+        cityUrls = cityUrls + city["body"].xpath("//ul[@class='city-list']/li/a/@href")
     log.debug(f"total cities= {len(cityUrls)}")
 
     page_urls = []
     for page in fetchConcurrentList(cityUrls):
-        page_urls = page_urls + \
-            page['body'].xpath("//a[@class='list-link details']/@href")
+        page_urls = page_urls + page["body"].xpath(
+            "//a[@class='list-link details']/@href"
+        )
     log.debug(f"total stores= {len(page_urls)}")
 
     return page_urls
@@ -98,20 +100,22 @@ def fetchData():
     log.info(f"Total stores = {len(page_urls)}")
 
     for detail in fetchConcurrentList(page_urls):
-        page_url = detail['data']['url']
-        body = detail['body']
+        page_url = detail["data"]["url"]
+        body = detail["body"]
         store_number = MISSING
         location_type = MISSING
         latitude = MISSING
         longitude = MISSING
-        country_code = 'US'
+        country_code = "US"
 
         location_name = "".join(body.xpath("//h1/text()")).strip()
-        phone = "".join(body.xpath(
-            "//dt[text()='Phone:']/following-sibling::dd/a/text()")).strip()
+        phone = "".join(
+            body.xpath("//dt[text()='Phone:']/following-sibling::dd/a/text()")
+        ).strip()
 
-        raw_address = "".join(body.xpath(
-            "//dt[text()='Address:']/following-sibling::dd/text()")).strip()
+        raw_address = "".join(
+            body.xpath("//dt[text()='Address:']/following-sibling::dd/text()")
+        ).strip()
 
         street_address, city, state, zip_postal = getAddress(raw_address)
 
