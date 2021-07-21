@@ -75,17 +75,14 @@ def fetch_data(sgw: SgWriter):
             longitude = "<MISSING>"
 
         for i in links:
-            try:
-                if i["data-link"] == link:
-                    if i["class"][-1] == "style-03-blue":
-                        location_type = "Transportation Service Center"
-                    if i["class"][-1] == "style-02":
-                        location_type = (
-                            "Distribution Center & Transportation Service Center"
-                        )
-                    break
-            except:
-                pass
+            if "data-link" in str(i) and link in str(i):
+                if "style-03-blue" in str(i):
+                    location_type = "Transportation Service Center"
+                elif "style-02" in str(i):
+                    location_type = (
+                        "Distribution Center & Transportation Service Center"
+                    )
+                break
 
         sgw.write_row(
             SgRecord(
