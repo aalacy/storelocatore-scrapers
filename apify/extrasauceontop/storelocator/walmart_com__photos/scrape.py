@@ -48,7 +48,7 @@ for search_code in search:
         location_type = location["storeType"]
         latitude = location["coordinates"]["latitude"]
         longitude = location["coordinates"]["longitude"]
-        # search.found_location_at(latitude, longitude)
+
         hours = ""
         for day in location["servicesMap"]["PHOTO_CENTER"]["operationalHours"].keys():
             try:
