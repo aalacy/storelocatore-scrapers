@@ -31,7 +31,6 @@ def fetch_data():
             ps = desc.select("p")
             if "This location is an" in ps[0].text or "DINE IN" in ps[0].text:
                 del ps[0]
-            block = list(ps[0].stripped_strings)
             hours = [
                 ": ".join(hh.stripped_strings)
                 for hh in bs(_["hours"], "lxml").select("table tr")
