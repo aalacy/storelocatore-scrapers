@@ -59,10 +59,6 @@ def fetch_data():
                 )
     for loc in locs:
         logger.info("Pulling Location %s..." % loc)
-        lurl = (
-            "https://uscc.koremuat.com//getStoreInfo?callback=jQuery191011573511012738757_1577812759166&id="
-            + loc
-        )
         website = "uscellular.com"
         typ = "<MISSING>"
         hours = ""
