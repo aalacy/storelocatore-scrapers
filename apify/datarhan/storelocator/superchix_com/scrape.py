@@ -56,6 +56,8 @@ def fetch_data():
         location_name = poi_html.xpath(".//preceding-sibling::div/b/span/span/text()")
         if not location_name:
             location_name = poi_html.xpath(".//preceding-sibling::div/font/span/text()")
+        if not location_name:
+            location_name = poi_html.xpath(".//preceding-sibling::div/p/span/text()")
         location_name = location_name[0] if location_name else "<MISSING>"
         raw_address = poi_html.xpath(".//text()")[1:]
         raw_address = [e.strip() for e in raw_address]
