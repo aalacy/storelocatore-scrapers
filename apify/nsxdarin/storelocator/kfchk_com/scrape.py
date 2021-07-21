@@ -10,7 +10,6 @@ headers = {
 
 logger = SgLogSetup().get_logger("kfchk_com")
 
-
 def fetch_data():
     url = "https://corp.kfchk.com/filemanager/system/en/js/restaurant.js"
     r = session.get(url, headers=headers)
@@ -96,6 +95,5 @@ def scrape():
     with SgWriter() as writer:
         for rec in results:
             writer.write_row(rec)
-
 
 scrape()
