@@ -5,6 +5,8 @@ from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
 import dirtyjson as json
 import re
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 logger = SgLogSetup().get_logger("findawarehouse")
 
@@ -168,7 +170,21 @@ def fetch_data():
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
+    with SgWriter(
+        SgRecordDeduper(
+            record_id=SgRecordID(
+                {
+                    SgRecord.Headers.PAGE_URL,
+                    SgRecord.Headers.LOCATION_NAME,
+                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.LATITUDE,
+                    SgRecord.Headers.LONGITUDE,
+                    SgRecord.Headers.PHONE,
+                    SgRecord.Headers.ZIP,
+                }
+            )
+        )
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
