@@ -74,7 +74,7 @@ def fetch_data():
                 state_count.append(state_count)
         logger.info(len(state_count))
 
-    logger.info("Processing %s links .." % (len(final_links)))
+    logger.info("Processing %s links ..." % (len(final_links)))
     for final_link in final_links:
         final_req = session.get(final_link, headers=headers)
         item = BeautifulSoup(final_req.text, "lxml")

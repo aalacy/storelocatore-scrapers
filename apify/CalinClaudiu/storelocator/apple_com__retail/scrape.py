@@ -7,7 +7,7 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup as b4
 from sgscrape.pause_resume import CrawlStateSingleton, CrawlState
 from dataclasses import asdict, dataclass
-from typing import Iterable, Optional
+from typing import Iterable, Optional, List
 from ordered_set import OrderedSet
 import json
 
@@ -16,7 +16,7 @@ logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
 known_empties = set()
 known_empties.add("xxxxxxx")
 
-errorz = []
+errorz: List[str] = []
 
 
 @dataclass(frozen=False)
@@ -130,7 +130,26 @@ def determine_country(country):
         return resultCode[-1][0]
 
 
-def get_country(search, country, session, headers, SearchableCountry):
+def get_country(search, country, session, headers, SearchableCountry, state):
+    global errorz
+    errorzCopy = None
+    if errorz:
+        if len(errorz) != 0:
+            errorzCopy = errorz
+        try:
+            errorz = state.get_misc_value("errorz")
+        except Exception as e:
+            logzilla.warning("Something happened along the lines of", exc_info=e)
+        if errorz and errorzCopy:
+            errorz = errorz + errorzCopy
+            state.set_misc_value("errorz", errorz)
+            state.save(override=True)
+        else:
+            if not errorz:
+                if errorzCopy:
+                    state.set_misc_value("errorz", errorzCopy)
+                    state.save(override=True)
+
     def getPoint(point, session, locale, headers):
         if locale[-1] != "/":
             locale = locale + "/"
@@ -183,11 +202,33 @@ def get_country(search, country, session, headers, SearchableCountry):
             f"Found a total of 0 results for country {country}\n this is unacceptable and possibly a country/search space mismatch\n Matched to: {SearchableCountry}"
         )
         if SearchableCountry not in known_empties:
-            errorz.append(
-                str(
-                    f"Found a total of 0 results for country {country}\n this is unacceptable and possibly a country/search space mismatch\n Matched to: {SearchableCountry}"
+            errorzCopy = None
+            if errorz:
+                if len(errorz) != 0:
+                    errorzCopy = errorz
+                try:
+                    errorz = state.get_misc_value("errorz")
+                except Exception as e:
+                    logzilla.warning(
+                        "Something happened along the lines of", exc_info=e
+                    )
+                if errorz and errorzCopy:
+                    errorz = errorz + errorzCopy
+                    state.set_misc_value("errorz", errorz)
+                    state.save(override=True)
+                else:
+                    if not errorz:
+                        if errorzCopy:
+                            state.set_misc_value("errorz", errorzCopy)
+                            state.save(override=True)
+            try:
+                errorz.append(
+                    str(
+                        f"Found a total of 0 results for country {country}\n this is unacceptable and possibly a country/search space mismatch\n Matched to: {SearchableCountry}"
+                    )
                 )
-            )
+            except Exception:
+                pass
 
 
 def fetch_data():
@@ -264,7 +305,7 @@ def fetch_data():
                         )
                     if search:
                         for record in get_country(
-                            search, country, session, headers, SearchableCountry
+                            search, country, session, headers, SearchableCountry, state
                         ):
                             yield record
                         SearchableCountry = None
