@@ -22,7 +22,6 @@ def fetch_data():
     dom = etree.HTML(response.text)
     all_poi = dom.xpath('//div[@class="col-sm-6 col-md-3 listing-link"]/a/@href')
     for store_url in all_poi:
-        print(store_url)
         store_response = session.get(store_url)
         data = re.findall("model=(.+?)>", store_response.text)[0][1:-1]
         data = data.replace("&quot;", '"')
