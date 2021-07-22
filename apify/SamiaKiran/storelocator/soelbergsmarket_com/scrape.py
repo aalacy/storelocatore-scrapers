@@ -65,7 +65,5 @@ def fetch_data(sgw: SgWriter):
             )
 
 
-
-
 with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
     fetch_data(writer)
