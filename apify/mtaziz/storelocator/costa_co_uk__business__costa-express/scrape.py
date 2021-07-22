@@ -48,7 +48,6 @@ def fetch_data():
                 locator_domain = DOMAIN
                 store_number = item["storeNo8Digit"]
                 location_type = item["storeType"]
-                # page_url = MISSING
 
                 # Phone
                 phone = item["telephone"]
