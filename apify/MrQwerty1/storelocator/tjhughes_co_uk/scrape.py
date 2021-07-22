@@ -14,9 +14,9 @@ def fetch_data(sgw: SgWriter):
     text = "".join(
         tree.xpath("//script[contains(text(),' function initialize() {')]/text()")
     )
-    text = text.split("_marker_latlng =")[1:]
+    text_list = text.split("_marker_latlng =")[1:]
 
-    for t in text:
+    for t in text_list:
         source = (
             t.split("_content = ")[1].split("';")[0].replace("'", "").replace("+", "")
         )
