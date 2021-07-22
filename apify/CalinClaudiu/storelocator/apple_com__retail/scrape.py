@@ -271,7 +271,7 @@ def fetch_data():
             state.set_misc_value(key="countries", value=countries.serialize_requests())
             state.set_misc_value(key="SearchableCountry", value=None)
             state.save(override=True)
-        errorzCopy = None
+        errorzCopy = []
         if len(errorz) != 0:
             errorzCopy = errorz
         try:
