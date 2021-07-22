@@ -1,4 +1,3 @@
-import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
 from sgscrape.sgwriter import SgWriter
@@ -12,6 +11,7 @@ headers = {
 }
 
 logger = SgLogSetup().get_logger("rentawreck_com")
+
 
 def fetch_data():
     locs = [
