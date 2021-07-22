@@ -1,43 +1,12 @@
-import csv
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
 import dirtyjson as json
 import re
-
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-                "brand_website",
-                "raw_address",
-            ]
-        )
-        # Body
-        for row in data:
-            if row:
-                writer.writerow(row)
-
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 logger = SgLogSetup().get_logger("findawarehouse")
 
@@ -117,35 +86,31 @@ def _detail(_, json_locations, session):
         del _addr[0]
     latitude, longitude, phone = _ll(_addr[0], json_locations)
     street_address = _addr[0]
+    if street_address.startswith("PO Box"):
+        street_address = ""
     city_state = _addr[1].strip().split(",")
     state = city_state[1].strip().split(" ")[0].strip()
     zip_postal = " ".join(city_state[1].strip().split(" ")[1:]).strip()
-    brand_website = "<MISSING>"
     if _.select_one("p a.website"):
         brand_website = _.select_one("p a.website").text.strip()
 
-    return [
-        locator_domain,
-        page_url,
-        name,
-        street_address or "<MISSING>",
-        city_state[0].strip(),
-        state,
-        zip_postal,
-        get_country_by_code(state),
-        "<MISSING>",
-        phone,
-        "<MISSING>",
-        latitude,
-        longitude,
-        "<MISSING>",
-        brand_website,
-        "<MISSING>",
-    ]
+    return SgRecord(
+        page_url=page_url,
+        location_name=name,
+        street_address=street_address,
+        city=city_state[0].strip(),
+        state=state,
+        zip_postal=zip_postal,
+        country_code=get_country_by_code(state),
+        phone=phone,
+        latitude=latitude,
+        longitude=longitude,
+        locator_domain=locator_domain,
+        raw_address=brand_website,
+    )
 
 
 def fetch_data():
-    _data = []
     with SgRequests() as session:
         total = 0
         res = session.get(base_url, headers=_header1).text
@@ -155,7 +120,7 @@ def fetch_data():
         total += len(locations)
         logger.info(f"[total {total}] {len(locations)} found")
         for _ in locations:
-            _data.append(_detail(_, json_locations, session))
+            yield _detail(_, json_locations, session)
         while True:
             __VIEWSTATE = soup.select_one("input#__VIEWSTATE")["value"]
             __VIEWSTATEGENERATOR = soup.select_one("input#__VIEWSTATEGENERATOR")[
@@ -201,14 +166,25 @@ def fetch_data():
             total += len(locations)
             logger.info(f"[total {total}] {len(locations)} found")
             for _ in locations:
-                _data.append(_detail(_, json_locations, session))
-
-        return _data
-
-
-def scrape():
-    write_output(fetch_data())
+                yield _detail(_, json_locations, session)
 
 
 if __name__ == "__main__":
-    scrape()
+    with SgWriter(
+        SgRecordDeduper(
+            record_id=SgRecordID(
+                {
+                    SgRecord.Headers.PAGE_URL,
+                    SgRecord.Headers.LOCATION_NAME,
+                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.LATITUDE,
+                    SgRecord.Headers.LONGITUDE,
+                    SgRecord.Headers.PHONE,
+                    SgRecord.Headers.ZIP,
+                }
+            )
+        )
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
