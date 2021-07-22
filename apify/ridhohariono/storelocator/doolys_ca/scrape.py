@@ -6,9 +6,20 @@ from webdriver_manager.chrome import ChromeDriverManager
 from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 import time
 import re
+import ssl
 
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
 
 DOMAIN = "doolys.ca"
 BASE_URL = "https://www.doolys.ca"
@@ -31,7 +42,7 @@ def get_driver(url, class_name, driver=None):
             driver = SgChrome(
                 executable_path=ChromeDriverManager().install(),
                 user_agent=user_agent,
-                is_headless=True,
+                is_headless=False,
             ).driver()
             driver.get(url)
 
@@ -149,7 +160,7 @@ def fetch_data():
 def scrape():
     log.info("Start {} Scraper".format(DOMAIN))
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
