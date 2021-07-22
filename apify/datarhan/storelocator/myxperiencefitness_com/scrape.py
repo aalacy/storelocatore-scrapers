@@ -69,7 +69,7 @@ def fetch_data():
                 location_type=SgRecord.MISSING,
                 latitude=SgRecord.MISSING,
                 longitude=SgRecord.MISSING,
-                hours_of_operation=SgRecord.MISSING,
+                hours_of_operation=hours_of_operation,
             )
 
         yield item
