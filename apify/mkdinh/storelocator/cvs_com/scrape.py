@@ -319,7 +319,7 @@ def get_location(page_url):
     geolocation = get_geolocation(location, page_schema)
     hours_of_operation = get_hours(location, page_schema)
 
-    locator_domain = "csv.com"
+    locator_domain = "cvs.com"
     location_name = get(page_schema, "name")
     location_type = get(page_schema, "@type")
     street_address = get(basic_info, "street_address")
