@@ -1,28 +1,128 @@
-import csv
-import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
-import json
 from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('dominos_com')
-
-
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
+import json
 
 session = SgRequests()
-headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
-           }
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+}
 
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-        for row in data:
-            writer.writerow(row)
+logger = SgLogSetup().get_logger("dominos_com")
+
+letters = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z']
+
+searchurls = ['BRAZIL|https://order.golo01.dominos.com/store-locator-international/locate/store?regionCode=BR&latitude=-13.5415477&longitude=-56.3346976']
 
 def fetch_data():
+    for letter in letters:
+        logger.info('Pulling Letter %s...' % letter)
+        url = "https://www.dominos.nl/dynamicstoresearchapi/getlimitedstores/100/" + letter
+        r = session.get(url, headers=headers)
+        website = "dominos.com"
+        typ = "<MISSING>"
+        country = "<MISSING>"
+        loc = "<MISSING>"
+        store = "<MISSING>"
+        hours = "<MISSING>"
+        lat = "<MISSING>"
+        lng = "<MISSING>"
+        logger.info("Pulling Stores")
+        for item in json.loads(r.content)['Data']:
+            name = item['Name']
+            store = item['StoreNo']
+            phone = item['PhoneNo']
+            try:
+                add = item['Address']['UnitNo'] + ' ' + item['Address']['StreetNo'] + ' ' + item['Address']['StreetName']
+            except:
+                add = "<MISSING>"
+            city = item['Address']['Suburb']
+            state = "<MISSING>"
+            zc = item['Address']['PostalCode']
+            lat = item['GeoCoordinates']['Latitude']
+            lng = item['GeoCoordinates']['Longitude']
+            hours = str(item['OpeningHours'])
+            loc = "<MISSING>"
+            country = item['CountryCode']
+            yield SgRecord(
+                locator_domain=website,
+                page_url=loc,
+                location_name=name,
+                street_address=add,
+                city=city,
+                state=state,
+                zip_postal=zc,
+                country_code=country,
+                phone=phone,
+                location_type=typ,
+                store_number=store,
+                latitude=lat,
+                longitude=lng,
+                hours_of_operation=hours,
+            )
+
+    for url in searchurls:
+        lurl = url.split('|')[1]
+        cc = url.split('|')[0]
+        logger.info(lurl)
+        headers2 = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+            'DPZ-Market': cc
+            }
+        r = session.get(lurl, headers=headers2)
+        website = "dominos.br"
+        typ = "<MISSING>"
+        country = lurl.split('regionCode=')[1].split('&')[0]
+        loc = "<MISSING>"
+        store = "<MISSING>"
+        hours = "<MISSING>"
+        lat = "<MISSING>"
+        lng = "<MISSING>"
+        logger.info("Pulling Stores")
+        for item in json.loads(r.content)['Stores']:
+            if 'StoreName' in str(item):
+                name = item['StoreName']
+                store = item['StoreID']
+                phone = item['Phone']
+                try:
+                    add = item['StreetName']
+                except:
+                    add = "<MISSING>"
+                add = str(add).replace('\r','').replace('\n','')
+                city = str(item['City']).replace('\r','').replace('\n','')
+                state = "<MISSING>"
+                zc = item['PostalCode']
+                try:
+                    lat = item['StoreCoordinates']['StoreLatitude']
+                    lng = item['StoreCoordinates']['StoreLongitude']
+                except:
+                    lat = "<MISSING>"
+                    lng = "<MISSING>"
+                hours = str(item['HoursDescription']).replace('\t','').replace('\n','').replace('\r','')
+                loc = "<MISSING>"
+                yield SgRecord(
+                    locator_domain=website,
+                    page_url=loc,
+                    location_name=name,
+                    street_address=add,
+                    city=city,
+                    state=state,
+                    zip_postal=zc,
+                    country_code=country,
+                    phone=phone,
+                    location_type=typ,
+                    store_number=store,
+                    latitude=lat,
+                    longitude=lng,
+                    hours_of_operation=hours,
+                )
+
     locs = []
     states = []
     url = 'https://pizza.dominos.com/sitemap.xml'
+    country = "US"
     r = session.get(url, headers=headers)
     if r.encoding is None: r.encoding = 'utf-8'
     for line in r.iter_lines(decode_unicode=True):
@@ -41,7 +141,7 @@ def fetch_data():
                     locs.append(line2.replace('\r','').replace('\n','').replace('\t','').strip())
         logger.info(('%s Locations Found...' % str(len(locs))))
     for loc in locs:
-        #logger.info('Pulling Location %s...' % loc)
+        logger.info('Pulling Location %s...' % loc)
         r2 = session.get(loc, headers=headers)
         if r2.encoding is None: r2.encoding = 'utf-8'
         for line2 in r2.iter_lines(decode_unicode=True):
@@ -62,10 +162,27 @@ def fetch_data():
                     phone = line2.split(',"telephone":"')[1].split('"')[0]
                 except:
                     phone = '<MISSING>'
-                yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+                yield SgRecord(
+                    locator_domain=website,
+                    page_url=loc,
+                    location_name=name,
+                    street_address=add,
+                    city=city,
+                    state=state,
+                    zip_postal=zc,
+                    country_code=country,
+                    phone=phone,
+                    location_type=typ,
+                    store_number=store,
+                    latitude=lat,
+                    longitude=lng,
+                    hours_of_operation=hours,
+                )
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+        for rec in results:
+            writer.write_row(rec)
 
 scrape()
