@@ -41,10 +41,9 @@ def fetch_data():
             log.info(page_url)
             r = session.get(page_url, headers=headers)
             soup = BeautifulSoup(r.text, "html.parser")
-            phone = soup.find("span", {"itemprop": "telephone"}).find("a").text
-            hours_of_operation = soup.find("meta", {"itemprop": "openingHours"})[
-                "content"
-            ]
+            temp = soup.find("div", {"class": "footer-block store-contact-info"})
+            phone = temp.find("p", {"class": "store-phone-number"}).find("a").text
+            hours_of_operation = temp.findAll("p")[4].text
             address = (
                 soup.find("div", {"class": "address"})
                 .find("span")
