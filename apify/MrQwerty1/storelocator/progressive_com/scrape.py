@@ -11,12 +11,13 @@ from sgscrape.sgrecord import SgRecord
 website = "progressive.com"
 MISSING = "<MISSING>"
 start_url = "https://www.progressive.com/agent/local-agent"
-max_workers = 12
+max_workers = 6
 
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
-session = SgRequests().requests_retry_session(retries=5, backoff_factor=1)
+
+session = SgRequests(retry_behavior=False, proxy_rotation_failure_threshold=3)
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 
 
