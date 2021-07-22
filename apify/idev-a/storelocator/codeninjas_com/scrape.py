@@ -3,6 +3,8 @@ from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 logger = SgLogSetup().get_logger("codeninjas")
 
@@ -12,7 +14,6 @@ _headers = {
 
 
 def fetch_data():
-    addresses = []
     with SgRequests() as session:
         locator_domain = "https://www.codeninjas.com/"
         base_url = "https://services.codeninjas.com/api/locations/queryarea?latitude=37.09024&longitude=-95.712891&includeUnOpened=false&miles=5117.825778587137"
@@ -51,10 +52,10 @@ def fetch_data():
                     or "Program hours may vary" in hours[0]
                 ):
                     hours = []
-            if street_address in addresses:
-                continue
-            addresses.append(street_address)
 
+            country_code = data["countryCode"]
+            if data["postalCode"].replace("-", "").strip().isdigit():
+                country_code = "US"
             yield SgRecord(
                 page_url=page_url,
                 location_name=data["name"],
@@ -62,7 +63,7 @@ def fetch_data():
                 city=data["city"],
                 state=data["state"]["code"],
                 zip_postal=data["postalCode"],
-                country_code=data["countryCode"],
+                country_code=country_code,
                 longitude=data["longitude"],
                 latitude=data["latitude"],
                 phone=data["phone"],
@@ -78,7 +79,7 @@ def fetch_data():
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
+    with SgWriter(SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
