@@ -200,8 +200,8 @@ def get_country(search, country, session, headers, SearchableCountry, state):
         except Exception as e:
             try:
                 msg = getPoint(Point, session, country.link, headers)
-            except Exception:
-                msg = None
+            except Exception as y:
+                msg = y
             try:
                 logzilla.error(f"Something happened with {msg} \n error is: {e}")
             except Exception as p:
