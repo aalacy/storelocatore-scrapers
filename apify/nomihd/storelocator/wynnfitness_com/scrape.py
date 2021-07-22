@@ -100,8 +100,6 @@ def fetch_data():
             .strip()
         )
 
-        map_link = store_sel.xpath("//*[@data-lat]")
-
         latitude, longitude = "".join(store_sel.xpath("//@data-lat")), "".join(
             store_sel.xpath("//@data-lng")
         )
