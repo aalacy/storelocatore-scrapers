@@ -7,7 +7,6 @@ from sgscrape.sgpostal import parse_address_intl
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
-import time
 
 logger = SgLogSetup().get_logger("dunkindonuts")
 
