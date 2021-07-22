@@ -79,39 +79,48 @@ def fetch_data():
 
 
 def human_hours(k):
-    if not k["open24Hours"]:
-        unwanted = ["open24", "todayHr", "tomorrowHr"]
-        h = []
-        for day in list(k):
-            if not any(i in day for i in unwanted):
-                if k[day]:
-                    if "temporaryHour" not in day:
-                        if k[day]["closed"]:
-                            h.append(str(day).capitalize() + ": Closed")
-                        else:
-                            if k[day]["openFullDay"]:
-                                h.append(str(day).capitalize() + ": 24Hours")
-                            else:
-                                h.append(
-                                    str(day).capitalize()
-                                    + ": "
-                                    + str(k[day]["startHr"])
-                                    + "-"
-                                    + str(k[day]["endHr"])
-                                )
-                    else:
+    AllTheHours = k
+    for hrSet in AllTheHours:
+        if (
+            hrSet["id"] == 851
+            or hrSet["id"] == 17
+            or "GAS" in hrSet["name"]
+            or "FUEL" in hrSet["name"]
+        ):
+            k = hrSet["operationalHours"]
+            if not k["open24Hours"]:
+                unwanted = ["open24", "todayHr", "tomorrowHr"]
+                h = []
+                for day in list(k):
+                    if not any(i in day for i in unwanted):
                         if k[day]:
-                            h.append("Temporary hours: " + str(k[day].items()))
-                else:
-                    h.append(str(day).capitalize() + ": <MISSING>")
-        return (
-            "; ".join(h)
-            .replace("Montofrihrs", "Mon-Fri")
-            .replace("hrs:", ":")
-            .replace("; Temporaryhours: <MISSING>", "")
-        )
-    else:
-        return "24/7"
+                            if "temporaryHour" not in day:
+                                if k[day]["closed"]:
+                                    h.append(str(day).capitalize() + ": Closed")
+                                else:
+                                    if k[day]["openFullDay"]:
+                                        h.append(str(day).capitalize() + ": 24Hours")
+                                    else:
+                                        h.append(
+                                            str(day).capitalize()
+                                            + ": "
+                                            + str(k[day]["startHr"])
+                                            + "-"
+                                            + str(k[day]["endHr"])
+                                        )
+                            else:
+                                if k[day]:
+                                    h.append("Temporary hours: " + str(k[day].items()))
+                        else:
+                            h.append(str(day).capitalize() + ": <MISSING>")
+                return (
+                    "; ".join(h)
+                    .replace("Montofrihrs", "Mon-Fri")
+                    .replace("hrs:", ":")
+                    .replace("; Temporaryhours: <MISSING>", "")
+                )
+            else:
+                return "24/7"
 
 
 def add_walmart(x):
@@ -119,7 +128,7 @@ def add_walmart(x):
 
 
 def scrape():
-    url = "https://www.walmart.com/fuel"
+    url = "https://www.walmart.com/vision"
     field_defs = sp.SimpleScraperPipeline.field_definitions(
         locator_domain=sp.ConstantField(url),
         page_url=sp.MappingField(
@@ -127,7 +136,7 @@ def scrape():
             part_of_record_identity=True,
         ),
         location_name=sp.MappingField(
-            mapping=["storeType", "name" + " - Fuel"],
+            mapping=["storeType", "name"],
             value_transform=add_walmart,
         ),
         latitude=sp.MappingField(
@@ -163,7 +172,9 @@ def scrape():
             part_of_record_identity=True,
         ),
         hours_of_operation=sp.MappingField(
-            mapping=["operationalHours"], raw_value_transform=human_hours
+            mapping=["featuredServices"],
+            raw_value_transform=human_hours,
+            is_required=False,
         ),
         location_type=sp.MappingField(
             mapping=["storeType", "displayName"],
