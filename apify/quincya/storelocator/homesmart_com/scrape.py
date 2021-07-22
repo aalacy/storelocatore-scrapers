@@ -1,10 +1,8 @@
-import csv
-
 from bs4 import BeautifulSoup
 
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
-from sgscrape.sgrecord_id import RecommendedRecordIds, SgRecordID
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 from sgrequests import SgRequests
@@ -22,8 +20,6 @@ def fetch_data(sgw: SgWriter):
     session = SgRequests()
     response = session.post(base_link, headers=headers, data=payload)
     base = BeautifulSoup(response.text, "lxml")
-
-    data = []
 
     items = base.find_all(id="office-result")
     locator_domain = "homesmart.com"
