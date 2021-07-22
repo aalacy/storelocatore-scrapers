@@ -15,7 +15,8 @@ Please make sure that:
 
 ## R&D:
 
-Rewrite to pull data from a google plugin. `35` stores scrapped in `1mins`.
+Rewrite to pull data from a google plugin. 
+Total Locations = `30` [ extracted in `1mins`. ]
 
 Missing attributes -
 
