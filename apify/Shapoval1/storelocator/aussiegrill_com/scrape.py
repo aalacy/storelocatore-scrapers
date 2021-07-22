@@ -1,4 +1,5 @@
 import csv
+from lxml import html
 from sgrequests import SgRequests
 
 
@@ -45,7 +46,7 @@ def fetch_data():
 
     for j in js:
 
-        page_url = "https://www.aussiegrill.com/pickup.html"
+        page_url = j.get("YextURL") or "https://www.aussiegrill.com/pickup.html"
         location_name = j.get("Name")
         location_type = "<MISSING>"
         ad = "".join(j.get("Address"))
@@ -74,17 +75,36 @@ def fetch_data():
             city = "".join(location_name).split(",")[0].capitalize().strip()
             state = "".join(location_name).split(",")[1].strip()
         store_number = "<MISSING>"
-        text = "".join(j.get("DirectionsURL"))
-        try:
-            if text.find("ll=") != -1:
-                latitude = text.split("ll=")[1].split(",")[0]
-                longitude = text.split("ll=")[1].split(",")[1].split("&")[0]
-            else:
-                latitude = text.split("@")[1].split(",")[0]
-                longitude = text.split("@")[1].split(",")[1]
-        except IndexError:
-            latitude, longitude = "<MISSING>", "<MISSING>"
+        latitude, longitude = "<MISSING>", "<MISSING>"
         hours_of_operation = "<MISSING>"
+        if page_url != "https://www.aussiegrill.com/pickup.html":
+            session = SgRequests()
+            r = session.get(page_url, headers=headers)
+            tree = html.fromstring(r.text)
+            hours_of_operation = (
+                " ".join(tree.xpath('//table[@class="c-hours-details"]//tr/td//text()'))
+                .replace("\n", "")
+                .strip()
+            )
+            phone = (
+                "".join(
+                    tree.xpath(
+                        '//h2[text()="Contact"]/following-sibling::div[1]//a[@class="Phone-link"]/text()'
+                    )
+                )
+                or "<MISSING>"
+            )
+            latitude = (
+                "".join(tree.xpath('//script[@class="js-map-data"]/text()'))
+                .split('latitude":')[1]
+                .split(",")[0]
+            )
+
+            longitude = (
+                "".join(tree.xpath('//script[@class="js-map-data"]/text()'))
+                .split('longitude":')[1]
+                .split("}")[0]
+            )
 
         row = [
             locator_domain,
