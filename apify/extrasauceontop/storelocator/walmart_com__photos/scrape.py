@@ -2,6 +2,7 @@ from sgrequests import SgRequests
 from sgzip.static import static_zipcode_list, SearchableCountries
 from sgscrape import simple_scraper_pipeline as sp
 
+
 def get_data():
     search = static_zipcode_list(country_code=SearchableCountries.USA, radius=20)[:100]
     session = SgRequests()
@@ -35,11 +36,13 @@ def get_data():
             longitude = location["coordinates"]["longitude"]
 
             hours = ""
-            for day in location["servicesMap"]["PHOTO_CENTER"]["operationalHours"].keys():
+            for day in location["servicesMap"]["PHOTO_CENTER"][
+                "operationalHours"
+            ].keys():
                 try:
-                    open_time = location["servicesMap"]["PHOTO_CENTER"]["operationalHours"][
-                        day
-                    ]["startHr"]
+                    open_time = location["servicesMap"]["PHOTO_CENTER"][
+                        "operationalHours"
+                    ][day]["startHr"]
                     close = location["servicesMap"]["PHOTO_CENTER"]["operationalHours"][
                         day
                     ]["endHr"]
@@ -57,7 +60,7 @@ def get_data():
                     hours = hours + day.replace("Hrs", "") + " " + "closed" + ", "
 
             hours = hours[:-2]
-        
+
             yield {
                 "locator_domain": locator_domain,
                 "page_url": page_url,
@@ -72,18 +75,15 @@ def get_data():
                 "phone": phone,
                 "location_type": location_type,
                 "hours": hours,
-                "country_code": country_code
+                "country_code": country_code,
             }
+
 
 def scrape():
     print("here!")
     field_defs = sp.SimpleScraperPipeline.field_definitions(
-        locator_domain=sp.MappingField(
-            mapping=["locator_domain"]
-            ),
-        page_url=sp.MappingField(
-            mapping=["page_url"], part_of_record_identity=True
-            ),
+        locator_domain=sp.MappingField(mapping=["locator_domain"]),
+        page_url=sp.MappingField(mapping=["page_url"], part_of_record_identity=True),
         location_name=sp.MappingField(
             mapping=["location_name"],
         ),
@@ -99,12 +99,8 @@ def scrape():
         city=sp.MappingField(
             mapping=["city"],
         ),
-        state=sp.MappingField(
-            mapping=["state"], is_required=False
-        ),
-        zipcode=sp.MultiMappingField(
-            mapping=["zip"], is_required=False
-        ),
+        state=sp.MappingField(mapping=["state"], is_required=False),
+        zipcode=sp.MultiMappingField(mapping=["zip"], is_required=False),
         country_code=sp.MappingField(mapping=["country_code"]),
         phone=sp.MappingField(mapping=["phone"], is_required=False),
         store_number=sp.MappingField(
@@ -121,5 +117,6 @@ def scrape():
         log_stats_interval=15,
     )
     pipeline.run()
+
 
 scrape()
