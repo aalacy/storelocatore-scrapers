@@ -4,7 +4,7 @@ from sgscrape import simple_scraper_pipeline as sp
 
 
 def get_data():
-    search = static_zipcode_list(country_code=SearchableCountries.USA, radius=20)[:100]
+    search = static_zipcode_list(country_code=SearchableCountries.USA, radius=20)
     session = SgRequests()
     for search_code in search:
         url = (
@@ -80,7 +80,6 @@ def get_data():
 
 
 def scrape():
-    print("here!")
     field_defs = sp.SimpleScraperPipeline.field_definitions(
         locator_domain=sp.MappingField(mapping=["locator_domain"]),
         page_url=sp.MappingField(mapping=["page_url"], part_of_record_identity=True),
