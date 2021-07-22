@@ -132,7 +132,7 @@ def determine_country(country):
 
 def get_country(search, country, session, headers, SearchableCountry, state):
     global errorz
-    errorzCopy = None
+    errorzCopy = []
     if errorz:
         if len(errorz) != 0:
             errorzCopy = errorz
@@ -217,7 +217,7 @@ def get_country(search, country, session, headers, SearchableCountry, state):
             f"Found a total of 0 results for country {country}\n this is unacceptable and possibly a country/search space mismatch\n Matched to: {SearchableCountry}"
         )
         if SearchableCountry not in known_empties:
-            errorzCopy = None
+            errorzCopy = []
             if errorz:
                 if len(errorz) != 0:
                     errorzCopy = errorz
@@ -425,6 +425,7 @@ def scrape():
 
 if __name__ == "__main__":
     scrape()
+    global errorz
     for i in errorz:
         logzilla.warning(i)
     raise
