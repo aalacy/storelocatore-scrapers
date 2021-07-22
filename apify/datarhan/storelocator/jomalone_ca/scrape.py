@@ -68,6 +68,10 @@ def fetch_data():
         state = state if state else "<MISSING>"
         zip_code = poi["ZIP_OR_POSTAL"]
         zip_code = zip_code if zip_code else "<MISSING>"
+        if zip_code in ["0", "."]:
+            zip_code = "<MISSING>"
+        if len(zip_code) == 2:
+            zip_code = "<MISSING>"
         country_code = poi["COUNTRY"]
         country_code = country_code if country_code else "<MISSING>"
         store_number = poi["DOOR_ID"]

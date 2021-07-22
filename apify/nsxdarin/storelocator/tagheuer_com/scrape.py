@@ -38,6 +38,7 @@ def write_output(data):
 
 
 def fetch_data():
+    ids = []
     countries = [
         "ar",
         "au",
@@ -102,7 +103,7 @@ def fetch_data():
             infos = []
             name = ""
             logger.info("%s, Page %s..." % (cc, str(x)))
-            purl = "https://store.tagheuer.com/" + cc + "?page=" + str(page)
+            purl = "https://store.tagheuer.com/" + cc + "?page=" + str(x)
             r2 = session.get(purl, headers=headers)
             lines = r2.iter_lines()
             AFound = False
@@ -224,22 +225,29 @@ def fetch_data():
                     state = "<MISSING>"
                 if zc == "":
                     zc = "<MISSING>"
-                yield [
-                    website,
-                    loc,
-                    name,
-                    add,
-                    city,
-                    state,
-                    zc,
-                    country,
-                    store,
-                    phone,
-                    typ,
-                    lat,
-                    lng,
-                    hours,
-                ]
+                if country == "US":
+                    if " " in zc:
+                        zc = zc.rsplit(" ", 1)[1].strip()
+                if store not in ids:
+                    ids.append(store)
+                    if phone == "":
+                        phone = "<MISSING>"
+                    yield [
+                        website,
+                        loc,
+                        name,
+                        add,
+                        city,
+                        state,
+                        zc,
+                        country,
+                        store,
+                        phone,
+                        typ,
+                        lat,
+                        lng,
+                        hours,
+                    ]
 
 
 def scrape():
