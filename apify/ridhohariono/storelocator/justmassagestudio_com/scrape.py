@@ -2,6 +2,7 @@ import csv
 from bs4 import BeautifulSoup as bs
 from sgrequests import SgRequests
 from sglogging import sglog
+import re
 
 DOMAIN = "justmassagestudio.com"
 BASE_URL = "https://justmassagestudio.com/"
@@ -57,6 +58,26 @@ def handle_missing(field):
     return field.strip()
 
 
+def get_latlong(soup):
+    pattern = re.compile(r"window\.wsb\[(.*)\]", re.MULTILINE | re.DOTALL)
+    script = soup.find_all("script", text=pattern)
+    if len(script) == 0:
+        return False
+    parse = re.search(
+        r'"lat\\":\\"(-?\d+(\.\d+)?)\\",\\"lon\\":\\"\s*(-?\d+(\.\d+)?)\\"',
+        script[3].string,
+    )
+    if not parse:
+        parse = re.search(
+            r'"lat\\":(-?\d+(\.\d+)?),\\"lon\\":\s*(-?\d+(\.\d+)?)', script[3].string
+        )
+    if not parse:
+        return "<MISSING>", "<MISSING>"
+    latitude = parse.group(1)
+    longitude = parse.group(3)
+    return latitude, longitude
+
+
 def fetch_data():
     log.info("Fetching store_locator data")
     store_urls = [BASE_URL + "el-segundo", BASE_URL + "westchester"]
@@ -88,8 +109,7 @@ def fetch_data():
         store_number = "<MISSING>"
         country_code = "US"
         location_type = "justmassagestudio"
-        longitude = "<MISSING>"
-        latitude = "<MISSING>"
+        latitude, longitude = get_latlong(soup)
         log.info("Append {} => {}".format(location_name, street_address))
         locations.append(
             [
