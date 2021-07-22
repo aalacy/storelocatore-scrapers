@@ -114,7 +114,7 @@ def fetch_data():
             links = soup.select("div.container")
             if not links:
                 break
-            logger.info(f"[{option['value']}] {len(links)} found")
+            logger.info(f"{len(links)} found")
             for link in links:
                 yield _d(link, session)
 
