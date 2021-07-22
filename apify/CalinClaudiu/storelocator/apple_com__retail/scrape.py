@@ -189,13 +189,24 @@ def get_country(search, country, session, headers, SearchableCountry, state):
     total = 0
     for Point in search:
         found = 0
-        for record in getPoint(Point, session, country.link, headers):
-            search.found_location_at(
-                record["locationData"]["geo"][0], record["locationData"]["geo"][1]
-            )
-            record["COUNTRY"] = country
-            found += 1
-            yield record
+        try:
+            for record in getPoint(Point, session, country.link, headers):
+                search.found_location_at(
+                    record["locationData"]["geo"][0], record["locationData"]["geo"][1]
+                )
+                record["COUNTRY"] = country
+                found += 1
+                yield record
+        except Exception as e:
+            try:
+                msg = getPoint(Point, session, country.link, headers)
+            except Exception:
+                msg = None
+            try:
+                logzilla.error(f"Something happened with {msg} \n error is: {e}")
+            except Exception as p:
+                logzilla.error(f"SMH couldn't even print the error:{e} \n {p}")
+
         progress = str(round(100 - (search.items_remaining() / maxZ * 100), 2)) + "%"
         total += found
         logzilla.info(
