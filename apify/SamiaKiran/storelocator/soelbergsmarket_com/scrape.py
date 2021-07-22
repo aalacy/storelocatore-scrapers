@@ -1,8 +1,10 @@
 import json
 from sglogging import sglog
 from sgrequests import SgRequests
-from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
 website = "soelbergsmarket_com"
@@ -16,7 +18,7 @@ DOMAIN = "https://thedynamicfitness.com/"
 MISSING = "<MISSING>"
 
 
-def fetch_data():
+def fetch_data(sgw: SgWriter):
     if True:
         url = "https://afsshareportal.com/lookUpFeatures.php?callback=jsonpcallbackInfoAll&action=storeInfo&website_url=soelbergsmarket.com&_=1626935888845"
         r = session.get(url, headers=headers)
@@ -43,36 +45,27 @@ def fetch_data():
             state = loc["store_state"]
             latitude = loc["store_lat"]
             longitude = loc["store_lng"]
-            yield SgRecord(
-                locator_domain=DOMAIN,
-                page_url=page_url,
-                location_name=location_name,
-                street_address=street_address.strip(),
-                city=city.strip(),
-                state=state.strip(),
-                zip_postal=zip_postal.strip(),
-                country_code=country_code,
-                store_number=store_number,
-                phone=phone.strip(),
-                location_type=MISSING,
-                latitude=latitude,
-                longitude=longitude,
-                hours_of_operation=hours_of_operation.strip(),
+            sgw.write_row(
+                SgRecord(
+                    locator_domain=DOMAIN,
+                    page_url=page_url,
+                    location_name=location_name,
+                    street_address=street_address,
+                    city=city,
+                    state=state,
+                    zip_postal=zip_postal,
+                    country_code=country_code,
+                    store_number=store_number,
+                    phone=phone,
+                    location_type=MISSING,
+                    latitude=latitude,
+                    longitude=longitude,
+                    hours_of_operation=hours_of_operation,
+                )
             )
 
 
-def scrape():
-    log.info("Started")
-    count = 0
-    with SgWriter() as writer:
-        results = fetch_data()
-        for rec in results:
-            writer.write_row(rec)
-            count = count + 1
-
-    log.info(f"No of records being processed: {count}")
-    log.info("Finished")
 
 
-if __name__ == "__main__":
-    scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    fetch_data(writer)
