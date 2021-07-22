@@ -43,11 +43,11 @@ def fetch_data():
     scraped_items = []
 
     domain = "costcutter.co.uk"
-    start_url = "https://liveapi.yext.com/v2/accounts/me/entities/geosearch?radius=20&location={}&limit=50&api_key=da7d6d15af3d121187fcc796664e9600&v=20181201&resolvePlaceholders=true&entityTypes=location"
+    start_url = "https://liveapi.yext.com/v2/accounts/me/entities/geosearch?radius=20&location={}&limit=25&api_key=c6803232fc9ac63c541dc43cd8434aca&v=20181201&resolvePlaceholders=true&languages=en_GB&entityTypes=location"
 
     all_coods = DynamicZipSearch(
         country_codes=[SearchableCountries.BRITAIN],
-        max_radius_miles=20,
+        expected_search_radius_miles=20,
         max_search_results=None,
     )
 
@@ -85,6 +85,8 @@ def fetch_data():
         hoo = []
         if poi.get("hours"):
             for day, hours in poi["hours"].items():
+                if day == "holidayHours":
+                    continue
                 if hours.get("openIntervals"):
                     opens = hours["openIntervals"][0]["start"]
                     closes = hours["openIntervals"][0]["end"]

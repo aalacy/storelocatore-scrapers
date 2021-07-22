@@ -76,34 +76,48 @@ def fetch_data():
                         add = item.split('"address1":"')[1].split('"')[0]
                         city = item.split('"city":"')[1].split('"')[0]
                         state = item.split('"state":"')[1].split('"')[0]
-                        phone = item.split('"phone":"')[1].split('"')[0]
+                        try:
+                            phone = (
+                                item.split('"TIRE_AND_LUBE_EXPRESS_CENTRE"')[1]
+                                .split('{"service":')[0]
+                                .split('"phone":"')[1]
+                                .split('"')[0]
+                            )
+                        except:
+                            phone = "<MISSING>"
                         lat = item.split('"latitude":')[1].split(",")[0]
                         lng = item.split('"longitude":')[1].split("}")[0]
                         zc = item.split('"postalCode":"')[1].split('"')[0]
-                        days = (
-                            item.split('"currentHours":[')[1]
-                            .split("}],")[0]
-                            .split('"start":"')
-                        )
-                        for day in days:
-                            if '"day":"' in day:
-                                if '"isClosed":true' in day:
-                                    hrs = (
-                                        day.split('"day":"')[1].split('"')[0]
-                                        + ": Closed"
-                                    )
-                                else:
-                                    hrs = (
-                                        day.split('"day":"')[1].split('"')[0]
-                                        + ": "
-                                        + day.split('"')[0]
-                                        + "-"
-                                        + day.split('"end":"')[1].split('"')[0]
-                                    )
-                                if hours == "":
-                                    hours = hrs
-                                else:
-                                    hours = hours + "; " + hrs
+                        try:
+                            days = (
+                                item.split('"name":"TIRE_AND_LUBE_EXPRESS_CENTRE"')[1]
+                                .split('"regularHours":[')[1]
+                                .split("]},")[0]
+                                .split("{")
+                            )
+                            for day in days:
+                                if "openFullDay" in day:
+                                    if '"closed":true' in day:
+                                        hrs = (
+                                            day.split('"day":"')[1].split('"')[0]
+                                            + ": Closed"
+                                        )
+                                    else:
+                                        hrs = (
+                                            day.split('"day":"')[1].split('"')[0]
+                                            + ": "
+                                            + day.split('":"')[1].split('"')[0]
+                                            + "-"
+                                            + day.split('"end":"')[1].split('"')[0]
+                                        )
+                                    if hours == "":
+                                        hours = hrs
+                                    else:
+                                        hours = hours + "; " + hrs
+                        except:
+                            hours = "<MISSING>"
+                        if "0" not in hours:
+                            hours = "<MISSING>"
                         country = "CA"
                         if "Supercentre" in name:
                             typ = "Supercenter"

@@ -1,4 +1,5 @@
 import csv
+import json
 
 from concurrent import futures
 from lxml import html
@@ -34,27 +35,30 @@ def write_output(data):
             writer.writerow(row)
 
 
-def get_cities():
+def get_urls():
+    urls = []
     session = SgRequests()
-    r = session.get("https://www.wework.com/locations")
+    r = session.get("https://www.wework.com/search?slug=")
     tree = html.fromstring(r.text)
-
-    return tree.xpath(
-        "//ul[contains(@class,'list--US') or contains(@class, 'list--CA')]//a/@href"
+    text = "".join(
+        tree.xpath(
+            "//script[contains(text(), 'window.clientSideInjectionVars')]/text()"
+        )
     )
+    text = text.split('"buildings":')[1].split('"clientStrings"')[0][:-1]
+    js = json.loads(text)
+    for j in js:
+        country = j.get("207")
+        if country not in ("US", "CA"):
+            continue
+        urls.append(j.get("2"))
 
-
-def get_urls(url):
-    session = SgRequests()
-    r = session.get(f"https://www.wework.com{url}")
-    tree = html.fromstring(r.text)
-
-    return tree.xpath("//a[@class='ray-card ray-card--link building-card']/@href")
+    return urls
 
 
 def get_data(url):
     locator_domain = "https://www.wework.com/"
-    page_url = f"https://www.wework.com{url}"
+    page_url = f"https://www.wework.com/buildings/{url}"
 
     session = SgRequests()
     r = session.get(page_url)
@@ -114,13 +118,7 @@ def get_data(url):
 
 def fetch_data():
     out = []
-    urls = []
-    cities = get_cities()
-
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
-        future_to_url = {executor.submit(get_urls, url): url for url in cities}
-        for future in futures.as_completed(future_to_url):
-            urls += future.result()
+    urls = get_urls()
 
     with futures.ThreadPoolExecutor(max_workers=10) as executor:
         future_to_url = {executor.submit(get_data, url): url for url in urls}

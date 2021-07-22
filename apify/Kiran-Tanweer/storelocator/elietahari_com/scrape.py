@@ -85,6 +85,11 @@ def fetch_data():
         url = url.replace("\\", "")
         lat = locs.split('"lat":"')[1].split('",')[0]
         lng = locs.split('"lng":"')[1].split('",')[0]
+        if (
+            url
+            == "https://www.elietahari.com/apps/store-locator/elie-tahari-pembroke-gardens.html"
+        ):
+            phone = "954-589-1399"
         address = address.rstrip(", United States")
         parsed = parser.parse_address_intl(address)
         street1 = parsed.street_address_1 if parsed.street_address_1 else "<MISSING>"

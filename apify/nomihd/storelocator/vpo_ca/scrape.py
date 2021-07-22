@@ -6,7 +6,7 @@ from sgscrape.sgwriter import SgWriter
 import lxml.html
 from sgscrape import sgpostal as parser
 import json
-
+import datetime as dt
 
 website = "vpo.ca"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -56,6 +56,12 @@ def get_latlng(map_link):
         latitude = "<MISSING>"
         longitude = "<MISSING>"
     return latitude, longitude
+
+
+def add_hours(time_string, hr):
+    the_time = dt.datetime.strptime(time_string, "%I:%M %p")
+    new_time = the_time + dt.timedelta(hours=hr)
+    return new_time.strftime("%I:%M %p")
 
 
 def fetch_data():
@@ -156,25 +162,26 @@ def fetch_data():
             closes = store_info[f"Hours{day}Close"]
             try:
                 opens = (
-                    str(
-                        float(opens.split(" ")[0].strip().replace(":", ".")) + 6.00
-                    ).replace(".", ":")
+                    str(float(opens.split(" ")[0].strip().replace(":", "."))).replace(
+                        ".", ":"
+                    )
                     + "0 "
                     + opens.split(" ")[1].strip()
                 )
-                if opens >= "12:00":
-                    opens = opens.replace("PM", "AM")
+                opens = add_hours(opens, 6)
+
             except:
                 pass
 
             try:
                 closes = (
-                    str(
-                        float(closes.split(" ")[0].strip().replace(":", ".")) + 6.00
-                    ).replace(".", ":")
+                    str(float(closes.split(" ")[0].strip().replace(":", "."))).replace(
+                        ".", ":"
+                    )
                     + "0 "
                     + closes.split(" ")[1].strip()
                 )
+                closes = add_hours(closes, 6)
             except:
                 pass
 
