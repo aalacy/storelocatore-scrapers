@@ -1,10 +1,11 @@
-import csv
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from sgselenium.sgselenium import SgChrome
 from webdriver_manager.chrome import ChromeDriverManager
 from sglogging import sglog
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
 import time
 import re
 
@@ -14,45 +15,6 @@ BASE_URL = "https://www.doolys.ca"
 LOCATION_URL = "https://www.doolys.ca/locations-1"
 
 log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
-
-
-def addy_ext(addy):
-    addy = addy.split(",")
-    city = addy[0]
-    state_zip = addy[1].strip().split(" ")
-    state = state_zip[0]
-    zip_code = state_zip[1]
-    return city, state, zip_code
-
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
 
 
 def get_driver(url, class_name, driver=None):
@@ -124,7 +86,6 @@ def fetch_data():
     )
     expand_location(driver)
     single_store = driver.find_elements_by_class_name("HzV7m-pbTTYe-ibnC6b-V67aGc")
-    all_store_data = []
     for row in single_store:
         driver.execute_script("arguments[0].click();", row)
         WebDriverWait(driver, 30).until(
@@ -163,40 +124,39 @@ def fetch_data():
             hours_of_operation = handle_missing(
                 ", ".join(info[5:]).replace("Hours of Operation", "").strip()
             )
-        store_number = "<MISSING>"
-        location_type = "<MISSING>"
         latitude, longitude = get_latlong(driver.current_url)
         country_code = "CA"
-
-        store_data = [
-            DOMAIN,
-            LOCATION_URL,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip_code,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
         log.info("Append {} => {}".format(location_name, street_address))
-        all_store_data.append(store_data)
-
+        yield SgRecord(
+            locator_domain=DOMAIN,
+            page_url=LOCATION_URL,
+            location_name=location_name,
+            street_address=street_address.strip(),
+            city=city.strip(),
+            state=state.strip(),
+            zip_postal=zip_code.strip(),
+            country_code=country_code,
+            store_number="<MISSING>",
+            phone=phone.strip(),
+            location_type="<MISSING>",
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation.strip(),
+        )
     driver.quit()
-    return all_store_data
 
 
 def scrape():
     log.info("Start {} Scraper".format(DOMAIN))
-    data = fetch_data()
-    log.info("Found {} locations".format(len(data)))
-    write_output(data)
-    log.info("Finish processed " + str(len(data)))
+    count = 0
+    with SgWriter() as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
 
 
 scrape()
