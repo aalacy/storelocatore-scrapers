@@ -2,6 +2,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from sgselenium.sgselenium import SgChrome
+from sgselenium import SgSelenium
 from webdriver_manager.chrome import ChromeDriverManager
 from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
@@ -91,9 +92,14 @@ def get_latlong(url):
 
 def fetch_data():
     log.info("Fetching store_locator data")
-    driver = get_driver(
-        "https://www.google.com/maps/d/u/1/embed?mid=10tX5h80FPpTJ2AF85_BZzIl5hbo",
-        "i4ewOd-pzNkMb-ornU0b-b0t70b-Bz112c",
+    driver = SgSelenium().firefox()
+    driver.get(
+        "https://www.google.com/maps/d/u/1/embed?mid=10tX5h80FPpTJ2AF85_BZzIl5hbo"
+    )
+    WebDriverWait(driver, 30).until(
+        EC.presence_of_element_located(
+            (By.CLASS_NAME, "i4ewOd-pzNkMb-ornU0b-b0t70b-Bz112c")
+        )
     )
     expand_location(driver)
     single_store = driver.find_elements_by_class_name("HzV7m-pbTTYe-ibnC6b-V67aGc")
