@@ -42,6 +42,7 @@ def fetchData():
             latitude = data["coordinates"]["latitude"]
             longitude = data["coordinates"]["longitude"]
         except Exception as e:
+            latitude, longitude = MISSING, MISSING
             log.info(f"Invalid Location {e}")
             pass
 

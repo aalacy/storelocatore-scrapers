@@ -4,6 +4,7 @@ import json
 from lxml import etree
 
 from sgrequests import SgRequests
+from sgscrape.sgpostal import parse_address_intl
 
 
 def write_output(data):
@@ -59,7 +60,13 @@ def fetch_data():
         street_address = poi["address1"]
         if poi["address2"]:
             street_address += " " + poi["address2"]
-        city = poi["city"]
+        city = parse_address_intl(poi["city"]).city
+        if not city:
+            city = poi["city"]
+        city = city.split(",")[0]
+        if city == "Newyork":
+            city = "New York"
+        city = city.replace("NewYork", "New York")
         state = poi["state_name"]
         state = state if state else "<MISSING>"
         zip_code = poi["postcode"]
