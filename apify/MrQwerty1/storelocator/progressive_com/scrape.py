@@ -7,16 +7,19 @@ from sgrequests import SgRequests
 from sglogging import sglog
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 website = "progressive.com"
 MISSING = "<MISSING>"
 start_url = "https://www.progressive.com/agent/local-agent"
-max_workers = 12
+max_workers = 3
 
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
-session = SgRequests().requests_retry_session(retries=5, backoff_factor=1)
+
+session = SgRequests(proxy_rotation_failure_threshold=10)
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 
 
@@ -157,7 +160,7 @@ def scrape():
     log.info(f"Start scrapping {website} ...")
     start = time.time()
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         for rec in fetchData():
             writer.write_row(rec)
             count = count + 1
