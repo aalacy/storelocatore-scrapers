@@ -1,9 +1,13 @@
-import csv
 import re
 
 from bs4 import BeautifulSoup
 
 from sglogging import sglog
+
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 from sgrequests import SgRequests
 
@@ -42,7 +46,7 @@ def write_output(data):
             writer.writerow(row)
 
 
-def fetch_data():
+def fetch_data(sgw: SgWriter):
     user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
     headers = {"User-Agent": user_agent}
 
@@ -72,8 +76,6 @@ def fetch_data():
             continue
         for item in items:
             locator_domain = "yourpie.com"
-            if "COMING SOON" in item.text.upper():
-                continue
 
             location_name = "Your Pie - " + item.a.text.strip()
 
@@ -86,7 +88,11 @@ def fetch_data():
             latitude = item["data-lat"]
             longitude = item["data-lng"]
 
-            search.found_location_at(latitude, longitude)
+            search.found_location_at(float(latitude), float(longitude))
+
+            if "COMING SOON" in item.text.upper():
+                continue
+
             location_type = "<MISSING>"
 
             try:
@@ -135,27 +141,25 @@ def fetch_data():
                     continue
                 found_poi.append(phone)
 
-            yield [
-                locator_domain,
-                link,
-                location_name,
-                street_address,
-                city,
-                state,
-                zip_code,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
+            sgw.write_row(
+                SgRecord(
+                    locator_domain=locator_domain,
+                    page_url=link,
+                    location_name=location_name,
+                    street_address=street_address,
+                    city=city,
+                    state=state,
+                    zip_postal=zip_code,
+                    country_code=country_code,
+                    store_number=store_number,
+                    phone=phone,
+                    location_type=location_type,
+                    latitude=latitude,
+                    longitude=longitude,
+                    hours_of_operation=hours_of_operation,
+                )
+            )
 
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    fetch_data(writer)
