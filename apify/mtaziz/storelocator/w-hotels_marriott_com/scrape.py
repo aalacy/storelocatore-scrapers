@@ -1,6 +1,8 @@
 from sglogging import SgLogSetup
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgselenium import SgChrome
 from webdriver_manager.chrome import ChromeDriverManager
 from sgrequests import SgRequests
@@ -23,7 +25,6 @@ else:
 
 DOMAIN = "w-hotels.marriott.com"
 URL_LOCATION = "https://www.marriott.com/hotel-search.mi"
-MISSING = "<MISSING>"
 
 logger = SgLogSetup().get_logger("marriott_com")
 
@@ -184,49 +185,54 @@ def fetch_data():
                                 location.xpath(
                                     './/div[contains(@class, "m-hotel-address")]/@data-address-line1'
                                 )[0]
-                                or MISSING
+                                or SgRecord.MISSING
                             )
-                            city = location.xpath("./@data-city")[0] or MISSING
-                            state = location.xpath("./@data-statecode")[0] or MISSING
+                            city = location.xpath("./@data-city")[0] or SgRecord.MISSING
+                            state = (
+                                location.xpath("./@data-statecode")[0]
+                                or SgRecord.MISSING
+                            )
                             zip_postal = (
                                 location.xpath(
                                     './/div[contains(@class, "m-hotel-address")]/@data-postal-code'
                                 )[0]
-                                or MISSING
+                                or SgRecord.MISSING
                             )
                             country_code = (
                                 location.xpath(
                                     './/div[contains(@class, "m-hotel-address")]/@data-country-description'
                                 )[0]
-                                or MISSING
+                                or SgRecord.MISSING
                             )
                             logger.info(
                                 f"Street Address: {street_address} | City: {city} | State: {state} | Zip: {zip_postal} | Country Code: {country_code}"
                             )
-                            store_number = MISSING
-                            store_number = MISSING
+                            store_number = SgRecord.MISSING
+                            store_number = SgRecord.MISSING
                             phone = (
                                 location.xpath(
                                     './/div[contains(@class, "m-hotel-address")]/@data-contact'
                                 )[0]
-                                or MISSING
+                                or SgRecord.MISSING
                             )
-                            phone = phone if phone else MISSING
+                            phone = phone if phone else SgRecord.MISSING
                             location_type = (
-                                location.xpath("./@data-brand")[0] or MISSING
+                                location.xpath("./@data-brand")[0] or SgRecord.MISSING
                             )
                             location_type = location_type + " Hotels"
-                            latitude = data_property["lat"] or MISSING
-                            longitude = data_property["longitude"] or MISSING
+                            latitude = data_property["lat"] or SgRecord.MISSING
+                            longitude = data_property["longitude"] or SgRecord.MISSING
                             logger.info(
                                 f"Latitude: {latitude} | Longitude: {longitude}"
                             )
-                            hours_of_operation = MISSING
+                            hours_of_operation = SgRecord.MISSING
                             raw_address = location.xpath(
                                 './/div[contains(@class, "m-hotel-address")]/text()'
                             )[0]
                             raw_address = " ".join(raw_address.split())
-                            raw_address = raw_address if raw_address else MISSING
+                            raw_address = (
+                                raw_address if raw_address else SgRecord.MISSING
+                            )
                             logger.info(f"Raw Address: {raw_address}")
                             logger.info(f"Data Property: {data_property}")
                             yield SgRecord(
@@ -290,49 +296,54 @@ def fetch_data():
                                 location.xpath(
                                     './/div[contains(@class, "m-hotel-address")]/@data-address-line1'
                                 )[0]
-                                or MISSING
+                                or SgRecord.MISSING
                             )
-                            city = location.xpath("./@data-city")[0] or MISSING
-                            state = location.xpath("./@data-statecode")[0] or MISSING
+                            city = location.xpath("./@data-city")[0] or SgRecord.MISSING
+                            state = (
+                                location.xpath("./@data-statecode")[0]
+                                or SgRecord.MISSING
+                            )
                             zip_postal = (
                                 location.xpath(
                                     './/div[contains(@class, "m-hotel-address")]/@data-postal-code'
                                 )[0]
-                                or MISSING
+                                or SgRecord.MISSING
                             )
                             country_code = (
                                 location.xpath(
                                     './/div[contains(@class, "m-hotel-address")]/@data-country-description'
                                 )[0]
-                                or MISSING
+                                or SgRecord.MISSING
                             )
                             logger.info(
                                 f"Street Address: {street_address} | City: {city} | State: {state} | Zip: {zip_postal} | Country Code: {country_code}"
                             )
-                            store_number = MISSING
-                            store_number = MISSING
+                            store_number = SgRecord.MISSING
+                            store_number = SgRecord.MISSING
                             phone = (
                                 location.xpath(
                                     './/div[contains(@class, "m-hotel-address")]/@data-contact'
                                 )[0]
-                                or MISSING
+                                or SgRecord.MISSING
                             )
-                            phone = phone if phone else MISSING
+                            phone = phone if phone else SgRecord.MISSING
                             location_type = (
-                                location.xpath("./@data-brand")[0] or MISSING
+                                location.xpath("./@data-brand")[0] or SgRecord.MISSING
                             )
                             location_type = location_type + " Hotels"
-                            latitude = data_property["lat"] or MISSING
-                            longitude = data_property["longitude"] or MISSING
+                            latitude = data_property["lat"] or SgRecord.MISSING
+                            longitude = data_property["longitude"] or SgRecord.MISSING
                             logger.info(
                                 f"Latitude: {latitude} | Longitude: {longitude}"
                             )
-                            hours_of_operation = MISSING
+                            hours_of_operation = SgRecord.MISSING
                             raw_address = location.xpath(
                                 './/div[contains(@class, "m-hotel-address")]/text()'
                             )[0]
                             raw_address = " ".join(raw_address.split())
-                            raw_address = raw_address if raw_address else MISSING
+                            raw_address = (
+                                raw_address if raw_address else SgRecord.MISSING
+                            )
                             logger.info(f"Raw Address: {raw_address}")
                             logger.info(f"Data Property: {data_property}")
                             yield SgRecord(
@@ -371,45 +382,47 @@ def fetch_data():
                         location.xpath(
                             './/div[contains(@class, "m-hotel-address")]/@data-address-line1'
                         )[0]
-                        or MISSING
+                        or SgRecord.MISSING
                     )
-                    city = location.xpath("./@data-city")[0] or MISSING
-                    state = location.xpath("./@data-statecode")[0] or MISSING
+                    city = location.xpath("./@data-city")[0] or SgRecord.MISSING
+                    state = location.xpath("./@data-statecode")[0] or SgRecord.MISSING
                     zip_postal = (
                         location.xpath(
                             './/div[contains(@class, "m-hotel-address")]/@data-postal-code'
                         )[0]
-                        or MISSING
+                        or SgRecord.MISSING
                     )
                     country_code = (
                         location.xpath(
                             './/div[contains(@class, "m-hotel-address")]/@data-country-description'
                         )[0]
-                        or MISSING
+                        or SgRecord.MISSING
                     )
                     logger.info(
                         f"Street Address: {street_address} | City: {city} | State: {state} | Zip: {zip_postal} | Country Code: {country_code}"
                     )
-                    store_number = MISSING
-                    store_number = MISSING
+                    store_number = SgRecord.MISSING
+                    store_number = SgRecord.MISSING
                     phone = (
                         location.xpath(
                             './/div[contains(@class, "m-hotel-address")]/@data-contact'
                         )[0]
-                        or MISSING
+                        or SgRecord.MISSING
                     )
-                    phone = phone if phone else MISSING
-                    location_type = location.xpath("./@data-brand")[0] or MISSING
+                    phone = phone if phone else SgRecord.MISSING
+                    location_type = (
+                        location.xpath("./@data-brand")[0] or SgRecord.MISSING
+                    )
                     location_type = location_type + " Hotels"
-                    latitude = data_property["lat"] or MISSING
-                    longitude = data_property["longitude"] or MISSING
+                    latitude = data_property["lat"] or SgRecord.MISSING
+                    longitude = data_property["longitude"] or SgRecord.MISSING
                     logger.info(f"Latitude: {latitude} | Longitude: {longitude}")
-                    hours_of_operation = MISSING
+                    hours_of_operation = SgRecord.MISSING
                     raw_address = location.xpath(
                         './/div[contains(@class, "m-hotel-address")]/text()'
                     )[0]
                     raw_address = " ".join(raw_address.split())
-                    raw_address = raw_address if raw_address else MISSING
+                    raw_address = raw_address if raw_address else SgRecord.MISSING
                     logger.info(f"Raw Address: {raw_address}")
                     logger.info(f"Data Property: {data_property}")
                     yield SgRecord(
@@ -436,7 +449,7 @@ def fetch_data():
 def scrape():
     logger.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
