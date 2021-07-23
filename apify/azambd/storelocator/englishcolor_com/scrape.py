@@ -39,7 +39,7 @@ def getGoogleParent(data, depth=7, string=""):
             if string in json.dumps(singleData):
                 result = singleData
                 break
-        if result == None:
+        if result is None:
             return None
         data = singleData
         count = count + 1
@@ -163,7 +163,7 @@ def fetchStores():
                 Found = index
                 break
 
-            if Found == False:
+            if Found is False:
                 for index in range(0, len(googleLocations)):
                     location = googleLocations[index]
                     if (
@@ -177,7 +177,7 @@ def fetchStores():
                         Found = index
                         break
 
-            if Found == False:
+            if Found is False:
                 for index in range(0, len(googleLocations)):
                     location = googleLocations[index]
                     if (
@@ -190,7 +190,7 @@ def fetchStores():
                         Found = index
                         break
 
-        if Found != False:
+        if Found is not False:
             googleLocations[Found]["Found"] = googleLocations[Found]["Found"] + 1
             location = googleLocations[Found]
 
