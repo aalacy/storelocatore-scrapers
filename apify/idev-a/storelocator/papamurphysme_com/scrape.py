@@ -26,13 +26,13 @@ def fetch_data():
             hours = []
             if len(link.select("p")) > 1:
                 for hh in link.select("p")[1].stripped_strings:
-                    if "delivery" in hh:
+                    if "delivery" in hh.lower():
                         break
                     hours.append(hh)
             yield SgRecord(
                 page_url=link.select_one("a.portalbtn")["href"],
                 location_name=link.h6.text.strip(),
-                street_address=addr[0],
+                street_address=addr[0].replace("–", "-"),
                 city=addr[1].split(",")[0].strip(),
                 state=addr[1].split(",")[1].strip().split(" ")[0].strip(),
                 zip_postal=" ".join(addr[1].split(",")[1].strip().split(" ")[1:]),
