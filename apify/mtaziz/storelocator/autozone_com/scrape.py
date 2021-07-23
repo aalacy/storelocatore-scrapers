@@ -91,7 +91,6 @@ def get_hoo(hoo_details):
 
 def fetch_data():
     global session
-    items = []
     all_store_urls = get_filtered_urls()
     logger.info(f"Store URLs count: {len(all_store_urls)}")
     for idx, url in enumerate(all_store_urls[0:10]):
