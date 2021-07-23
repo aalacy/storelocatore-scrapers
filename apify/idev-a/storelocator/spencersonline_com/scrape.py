@@ -1,7 +1,7 @@
 import math
 from concurrent.futures import ThreadPoolExecutor
 import time
-
+import os
 from sgrequests import SgRequests
 from sglogging import sglog
 from sgscrape.sgwriter import SgWriter
