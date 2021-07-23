@@ -52,7 +52,15 @@ def fetch_data():
 
 
 if __name__ == "__main__":
-    with SgWriter( SgRecordID({SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS, SgRecord.Headers.ZIP_POSTAL})) as writer:
+    with SgWriter(
+        SgRecordID(
+            {
+                SgRecord.Headers.LOCATION_NAME,
+                SgRecord.Headers.STREET_ADDRESS,
+                SgRecord.Headers.ZIP_POSTAL,
+            }
+        )
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
