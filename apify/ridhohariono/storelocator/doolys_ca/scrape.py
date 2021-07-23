@@ -7,8 +7,8 @@ from webdriver_manager.chrome import ChromeDriverManager
 from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
-from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
 import time
 import re
 import ssl
@@ -43,7 +43,7 @@ def get_driver(url, class_name, driver=None):
             driver = SgChrome(
                 executable_path=ChromeDriverManager().install(),
                 user_agent=user_agent,
-                is_headless=False,
+                is_headless=True,
             ).driver()
             driver.get(url)
 
@@ -92,7 +92,7 @@ def get_latlong(url):
 
 def fetch_data():
     log.info("Fetching store_locator data")
-    driver = SgSelenium().firefox()
+    driver = SgSelenium().chrome()
     driver.get(
         "https://www.google.com/maps/d/u/1/embed?mid=10tX5h80FPpTJ2AF85_BZzIl5hbo"
     )
@@ -143,6 +143,9 @@ def fetch_data():
             )
         latitude, longitude = get_latlong(driver.current_url)
         country_code = "CA"
+        raw_address = row.find_element_by_xpath(
+            '//*[@id="featurecardPanel"]/div/div/div[4]/div[2]/div[2]'
+        ).text.strip()
         log.info("Append {} => {}".format(location_name, street_address))
         yield SgRecord(
             locator_domain=DOMAIN,
@@ -159,14 +162,24 @@ def fetch_data():
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=hours_of_operation.strip(),
+            raw_address=raw_address,
         )
     driver.quit()
 
 
 def scrape():
-    log.info("Start {} Scraper".format(DOMAIN))
+    log.info("asdasStasdasart {} Scraper".format(DOMAIN))
     count = 0
-    with SgWriter(SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)) as writer:
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.PAGE_URL,
+                    SgRecord.Headers.STREET_ADDRESS,
+                }
+            )
+        )
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
