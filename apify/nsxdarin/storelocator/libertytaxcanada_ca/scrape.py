@@ -106,19 +106,17 @@ def fetch_data():
                     store = (
                         line2.split("value=")[1].split(" ")[0].replace('"', "").strip()
                     )
-                if '<div class="office-hours-week' in line2 and hours == "":
+                if "office-hours-week" in line2 and hours == "":
                     HFound = True
                 if HFound and "</section>" in line2:
                     HFound = False
-                if HFound and '<span class="office-day-name">' in line2:
-                    day = line2.split('<span class="office-day-name">')[1].split("<")[0]
-                if HFound and '<span class="office-day-hours">' in line2:
+                if HFound and "office-day-name" in line2:
+                    day = line2.split("office-day-name")[1].split(">")[1].split("<")[0]
+                if HFound and "office-day-hours" in line2:
                     hrs = (
                         day
                         + ": "
-                        + line2.split('<span class="office-day-hours">')[1].split("<")[
-                            0
-                        ]
+                        + line2.split("office-day-hours")[1].split(">")[1].split("<")[0]
                     )
                     if hours == "":
                         hours = hrs

@@ -147,6 +147,14 @@ def fetch_data():
         if "), " in add:
             add = add.split("), ")[1]
         name = name.replace("&amp;", "&").replace("&quot;", "'")
+        if "on/timmins/yts" in loc:
+            add = "4599 Airport Rd"
+            city = "Timmins"
+            state = "ON"
+            country = "CA"
+            zc = "P4N 7C3"
+            name = "Timmins Airport (YTS)"
+            phone = "1-705-268-3335"
         yield [
             website,
             loc,

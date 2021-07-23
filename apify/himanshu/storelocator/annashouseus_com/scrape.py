@@ -1,119 +1,116 @@
-import csv
-from sgrequests import SgRequests
+from sglogging import sglog
 from bs4 import BeautifulSoup
-import lxml.html
+from sgrequests import SgRequests
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+import ssl
+
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
+
 
 session = SgRequests()
+website = "annashouseus_com"
+log = sglog.SgLogSetup().get_logger(logger_name=website)
+session = SgRequests()
+headers = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.66 Safari/537.36",
+    "Accept": "application/json",
+}
 
-
-def write_output(data):
-    with open("data.csv", newline="", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-                "page_url",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+DOMAIN = "https://annashouseus.com/"
+MISSING = "<MISSING>"
 
 
 def fetch_data():
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36"
-    }
-    base_url = "https://annashouseus.com"
-    r = session.get("https://annashouseus.com/locations/", headers=headers)
-    soup = BeautifulSoup(r.text, "lxml")
-    stores_sel = lxml.html.fromstring(r.text)
-    location_object = {}
-    for location in soup.find_all("div", {"class": "vc-location-content"}):
-        location_details = list(location.stripped_strings)
-        for i in range(len(location_details)):
-            if location_details[i] == "Phone:":
-                phone = location_details[i + 1]
-                break
-        geo_location = location.find_all("iframe")[-1]["src"]
-        if len(geo_location.split("!3d")) != 1:
-            location_object[location_details[0]] = [
-                phone,
-                geo_location.split("!3d")[1].split("!")[0],
-                geo_location.split("!2d")[1].split("!")[0],
-            ]
-        else:
-            location_object[location_details[0]] = [phone, "<MISSING>", "<MISSING>"]
-
-    hours = stores_sel.xpath(
-        '//div[@class="et_pb_row et_pb_row_1"]//div[@class="et_pb_text_inner"]/p'
-    )
-    for location in soup.find_all("div", {"class": "vc-locationContainer"}):
-        location_details = list(location.stripped_strings)
-        address = (
-            location_details[-1]
-            .replace("\r", "")
-            .replace("\n", "")
-            .replace("\u200e", "")
-        )
-        hours_of_operation = "<MISSING>"
-        for hour in hours:
-            if location_details[0] in "".join(hour.xpath("text()")).strip():
-                if "open " in "".join(hour.xpath("text()")).strip():
-                    hours_of_operation = (
-                        "".join(hour.xpath("text()")).strip().split("open ")[1].strip()
+    if True:
+        url = "https://annashouseus.com/locations/"
+        r = session.get(url, headers=headers)
+        soup = BeautifulSoup(r.text, "html.parser")
+        loclist = soup.find("ul", {"id": "vc-locationsList"}).findAll("li")
+        coord_list = soup.findAll("div", {"class": "vc-location-content"})
+        for loc in loclist:
+            loc = loc.get_text(separator="|", strip=True).split("|")
+            location_name = loc[0]
+            log.info(location_name)
+            address = (
+                loc[-1]
+                .encode("ascii", "replace")
+                .decode("utf-8")
+                .replace("\n", " ")
+                .replace("?", "")
+            )
+            for coord in coord_list:
+                if location_name in coord.find("h2").text:
+                    phone = coord.select_one("a[href*=tel]").text
+                    coords = coord.findAll("iframe")[-1]["src"]
+                    r = session.get(coords, headers=headers)
+                    coords = (
+                        r.text.split("],0],")[0].rsplit("[null,null,", 1)[1].split(",")
                     )
-                elif "temporarily closed" in "".join(hour.xpath("text()")).strip():
-                    hours_of_operation = "temporarily closed"
+                    latitude = coords[0]
+                    longitude = coords[1]
+                    break
 
-        store = []
-        store.append(base_url)
-        store.append(location_details[0])
-        if len(address.split(",")) == 3:
-            store.append(address.split(",")[0])
-            store.append(address.split(",")[1])
-            store.append(address.split(",")[-1].split(" ")[-2])
-            store.append(address.split(",")[-1].split(" ")[-1])
-        else:
-            store.append(address.split(",")[0])
-            store.append(" ".join(address.split(",")[1].split(" ")[1:-1]))
-            store.append("<MISSING>")
-            store.append(address.split(",")[-1].split(" ")[-1])
-        store.append("US")
-        store.append("<MISSING>")
-        store.append(location_object[location_details[0]][0])
-        store.append("<MISSING>")
-        store.append(location_object[location_details[0]][1])
-        store.append(location_object[location_details[0]][2])
-        store.append(
-            hours_of_operation.encode("ascii", "replace")
-            .decode("utf-8")
-            .replace("?", "-")
-            .strip()
-        )
-        store.append("https://annashouseus.com/locations/")
-        yield store
+            address = address.split(",")
+            try:
+                street_address = address[0]
+                city = address[1]
+                address = address[2].split()
+                state = address[0]
+                zip_postal = address[1]
+            except:
+                street_address = address[0]
+                address = address[1].split()
+
+                city = address[0] + " " + address[1]
+                state = MISSING
+                zip_postal = address[2]
+            country_code = "US"
+            hours_of_operation = ""
+            hour_list = soup.findAll("div", {"class": "et_pb_text_inner"})[1].find_all(
+                "p"
+            )
+            for hour in hour_list:
+                if location_name in hour.text:
+                    hours_of_operation = hour.text.split("open")[1].split(".")[0]
+                    break
+            yield SgRecord(
+                locator_domain=DOMAIN,
+                page_url=url,
+                location_name=location_name,
+                street_address=street_address.strip(),
+                city=city.strip(),
+                state=state.strip(),
+                zip_postal=zip_postal.strip(),
+                country_code=country_code,
+                store_number=MISSING,
+                phone=phone.strip(),
+                location_type=MISSING,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation.strip(),
+            )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    log.info("Started")
+    count = 0
+    with SgWriter() as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()
