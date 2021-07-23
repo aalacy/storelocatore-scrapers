@@ -18,10 +18,6 @@ website = "https://stores.spencersonline.com"
 headers = {
     "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.93 Safari/537.36"
 }
-session = SgRequests(proxy_rotation_failure_threshold=20).requests_retry_session()
-session.proxies = set_proxies()
-log = sglog.SgLogSetup().get_logger("spencersonline")
-
 DEFAULT_PROXY_URL = "https://groups-RESIDENTIAL,country-us:{}@proxy.apify.com:8000/"
 
 
@@ -39,6 +35,11 @@ def set_proxies():
         return proxies
     else:
         return None
+
+
+session = SgRequests(proxy_rotation_failure_threshold=20).requests_retry_session()
+session.proxies = set_proxies()
+log = sglog.SgLogSetup().get_logger("spencersonline")
 
 
 ca_provinces_codes = {
