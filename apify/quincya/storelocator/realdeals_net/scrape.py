@@ -171,7 +171,7 @@ def fetch_data(sgw: SgWriter):
                         except:
                             latitude = longitude = "<MISSING>"
                     except:
-                        print(link, "FAILED")
+                        raise
 
         if longitude == "240.594345":
             longitude = "-119.405655"
