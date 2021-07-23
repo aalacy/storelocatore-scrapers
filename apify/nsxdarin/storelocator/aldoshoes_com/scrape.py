@@ -1,7 +1,10 @@
-import csv
 from sgrequests import SgRequests
 import json
 from sglogging import SgLogSetup
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 logger = SgLogSetup().get_logger("aldoshoes_com")
 
@@ -27,33 +30,6 @@ caheaders = {
     "x-forwarded-akamai-edgescape": "undefined",
     "x-aldo-api-version": "2",
 }
-
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
 
 
 def fetch_data():
@@ -135,22 +111,30 @@ def fetch_data():
                 phone = "<MISSING>"
             if "store/2522" in surl:
                 name = add
-            yield [
-                website,
-                surl,
-                name,
-                add,
-                city,
-                state,
-                zc,
-                country,
-                store,
-                phone,
-                typ,
-                lat,
-                lng,
-                hours,
-            ]
+            if "store/2085" in surl:
+                name = "Beachwood Place"
+            if "store/2090" in surl:
+                name = "Easton Town Center"
+            if "/store/2211" in surl:
+                name = "Wolfchase Galleria"
+            if "store/2816" in surl:
+                name = "Carlsbad Premium Outlets"
+            yield SgRecord(
+                locator_domain=website,
+                page_url=surl,
+                location_name=name,
+                street_address=add,
+                city=city,
+                state=state,
+                zip_postal=zc,
+                country_code=country,
+                phone=phone,
+                location_type=typ,
+                store_number=store,
+                latitude=lat,
+                longitude=lng,
+                hours_of_operation=hours,
+            )
 
     url = "https://www.aldoshoes.com/api/stores?countryCode=US&lat=44.99512980000001&lng=-93.4352207&allStores=True"
     rcan = session.get(url, headers=caheaders)
@@ -193,29 +177,39 @@ def fetch_data():
                 hours = hours + "; " + dname + ": " + hrs
         if "/store/1422" in purl:
             phone = "<MISSING>"
-        if "store/2522" in surl:
+        if "store/2522" in purl:
             name = add
-        yield [
-            website,
-            purl,
-            name,
-            add,
-            city,
-            state,
-            zc,
-            country,
-            store,
-            phone,
-            typ,
-            lat,
-            lng,
-            hours,
-        ]
+        if "store/2085" in purl:
+            name = "Beachwood Place"
+        if "store/2090" in purl:
+            name = "Easton Town Center"
+        if "/store/2211" in purl:
+            name = "Wolfchase Galleria"
+        if "store/2816" in purl:
+            name = "Carlsbad Premium Outlets"
+        yield SgRecord(
+            locator_domain=website,
+            page_url=purl,
+            location_name=name,
+            street_address=add,
+            city=city,
+            state=state,
+            zip_postal=zc,
+            country_code=country,
+            phone=phone,
+            location_type=typ,
+            store_number=store,
+            latitude=lat,
+            longitude=lng,
+            hours_of_operation=hours,
+        )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()
