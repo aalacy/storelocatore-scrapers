@@ -310,7 +310,7 @@ def fetch_data():
                     try:
                         search = DynamicGeoSearch(
                             country_codes=[SearchableCountry],
-                            expected_search_radius_miles=500, # Must turn it back down to 50 after testing
+                            expected_search_radius_miles=500,  # Must turn it back down to 50 after testing
                             max_search_results=None,
                             granularity=Grain_8(),
                         )
