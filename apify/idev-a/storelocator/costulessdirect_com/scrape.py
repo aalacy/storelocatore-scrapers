@@ -110,7 +110,6 @@ def fetch_data():
             zip_postal=zip,
             country_code="US",
             phone=phone,
-            location_type=location_type,
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=hours_of_operation,
