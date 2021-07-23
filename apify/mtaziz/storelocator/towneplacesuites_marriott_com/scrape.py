@@ -26,7 +26,7 @@ else:
 DOMAIN = "towneplacesuites.marriott.com"
 URL_LOCATION = "https://www.marriott.com/hotel-search.mi"
 
-logger = SgLogSetup().get_logger("marriott_com")
+logger = SgLogSetup().get_logger("towneplacesuites_marriott_com")
 
 headers = {
     "accept": "application/json, text/plain, */*",
