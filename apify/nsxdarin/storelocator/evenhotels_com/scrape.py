@@ -62,7 +62,7 @@ def fetch_data():
         name = ""
         city = ""
         state = ""
-        country = "US"
+        country = ""
         add = ""
         zc = ""
         typ = "Hotel"
@@ -115,24 +115,16 @@ def fetch_data():
                     zc = "<MISSING>"
             if '"addressLocality": "' in line2 and city == "":
                 city = line2.split('"addressLocality": "')[1].split('"')[0]
-            if lat == "" and '<meta itemprop="latitude" content="' in line2:
-                lat = line2.split('<meta itemprop="latitude" content="')[1].split('"')[
-                    0
-                ]
-            if lng == "" and '<meta itemprop="longitude" content="' in line2:
-                lng = line2.split('<meta itemprop="longitude" content="')[1].split('"')[
-                    0
-                ]
+            if lat == "" and 'place:location:latitude"' in line2:
+                lat = line2.split('content="')[1].split('"')[0]
+            if lng == "" and 'place:location:longitude"' in line2:
+                lng = line2.split('content="')[1].split('"')[0]
             if '"addressRegion": "' in line2 and state == "":
                 state = line2.split('"addressRegion": "')[1].split('"')[0]
             if phone == "" and 'itemprop="telephone">' in line2:
                 phone = line2.split('itemprop="telephone">')[1].split("<")[0]
             if '"addressCountry": "' in line2 and country == "":
                 country = line2.split('"addressCountry": "')[1].split('"')[0]
-            if '"latitude": "' in line2 and lat == "":
-                lat = line2.split('"latitude": "')[1].split('"')[0]
-            if '"longitude": "' in line2 and lng == "":
-                lng = line2.split('"longitude": "')[1].split('"')[0]
             if '"telephone": "' in line2 and phone == "":
                 phone = line2.split('"telephone": "')[1].split('"')[0]
             if 'itemprop="streetAddress">' in line2:

@@ -1,43 +1,12 @@
-import csv
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
 import dirtyjson as json
 import re
-from sgscrape.sgpostal import parse_address_intl
-
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-                "brand_website",
-                "raw_address",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 logger = SgLogSetup().get_logger("findawarehouse")
 
@@ -54,6 +23,14 @@ _headers = {
     "Upgrade-Insecure-Requests": "1",
     "Pragma": "no-cache",
     "Cache-Control": "no-cache",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:88.0) Gecko/20100101 Firefox/88.0",
+}
+
+header1 = {
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+    "Accept-Encoding": "gzip, deflate, br",
+    "Accept-Language": "en-US,en;q=0.9,ko;q=0.8",
+    "Host": "www.findawarehouse.org",
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:88.0) Gecko/20100101 Firefox/88.0",
 }
 
@@ -103,40 +80,37 @@ def get_country_by_code(code=""):
 
 def _detail(_, json_locations, session):
     name = _.h2.text.strip()
-    page_url = f"https://www.findawarehouse.org/DetailsHD.aspx?company={name.replace(' ', '%20')}"
+    page_url = locator_domain + _.a["href"].strip()
     _addr = list(_.p.stripped_strings)
     if _addr[0] == _.p.b.text.strip():
         del _addr[0]
     latitude, longitude, phone = _ll(_addr[0], json_locations)
-    addr = parse_address_intl(" ".join(_addr[:2]))
-    street_address = addr.street_address_1
-    if addr.street_address_2:
-        street_address += " " + addr.street_address_2
-    brand_website = ""
-    if _addr[-1].startswith("http"):
-        brand_website = _addr[-1]
-    return [
-        locator_domain,
-        page_url,
-        name,
-        street_address or "<MISSING>",
-        addr.city,
-        addr.state,
-        addr.postcode,
-        get_country_by_code(addr.state),
-        "<MISSING>",
-        phone,
-        "<MISSING>",
-        latitude,
-        longitude,
-        "<MISSING>",
-        brand_website,
-        " ".join(_addr[:2]),
-    ]
+    street_address = _addr[0]
+    if street_address.startswith("PO Box"):
+        street_address = ""
+    city_state = _addr[1].strip().split(",")
+    state = city_state[1].strip().split(" ")[0].strip()
+    zip_postal = " ".join(city_state[1].strip().split(" ")[1:]).strip()
+    if _.select_one("p a.website"):
+        brand_website = _.select_one("p a.website").text.strip()
+
+    return SgRecord(
+        page_url=page_url,
+        location_name=name,
+        street_address=street_address,
+        city=city_state[0].strip(),
+        state=state,
+        zip_postal=zip_postal,
+        country_code=get_country_by_code(state),
+        phone=phone,
+        latitude=latitude,
+        longitude=longitude,
+        locator_domain=locator_domain,
+        raw_address=brand_website,
+    )
 
 
 def fetch_data():
-    _data = []
     with SgRequests() as session:
         total = 0
         res = session.get(base_url, headers=_header1).text
@@ -146,7 +120,7 @@ def fetch_data():
         total += len(locations)
         logger.info(f"[total {total}] {len(locations)} found")
         for _ in locations:
-            _data.append(_detail(_, json_locations, session))
+            yield _detail(_, json_locations, session)
         while True:
             __VIEWSTATE = soup.select_one("input#__VIEWSTATE")["value"]
             __VIEWSTATEGENERATOR = soup.select_one("input#__VIEWSTATEGENERATOR")[
@@ -192,14 +166,25 @@ def fetch_data():
             total += len(locations)
             logger.info(f"[total {total}] {len(locations)} found")
             for _ in locations:
-                _data.append(_detail(_, json_locations, session))
-
-        return _data
-
-
-def scrape():
-    write_output(fetch_data())
+                yield _detail(_, json_locations, session)
 
 
 if __name__ == "__main__":
-    scrape()
+    with SgWriter(
+        SgRecordDeduper(
+            record_id=SgRecordID(
+                {
+                    SgRecord.Headers.PAGE_URL,
+                    SgRecord.Headers.LOCATION_NAME,
+                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.LATITUDE,
+                    SgRecord.Headers.LONGITUDE,
+                    SgRecord.Headers.PHONE,
+                    SgRecord.Headers.ZIP,
+                }
+            )
+        )
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)

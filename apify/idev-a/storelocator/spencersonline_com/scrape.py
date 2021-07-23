@@ -1,34 +1,49 @@
 import math
-import re
 from concurrent.futures import ThreadPoolExecutor
-from xml.etree import ElementTree as ET
 import time
 
 from sgrequests import SgRequests
 from sglogging import sglog
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
+from bs4 import BeautifulSoup as bs
+import us
+import json
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 DOMAIN = "spencersonline.com"
-website = "https://www.spencersonline.com"
-MISSING = "<MISSING>"
-
+website = "https://stores.spencersonline.com"
 
 headers = {
     "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.93 Safari/537.36"
 }
 session = SgRequests().requests_retry_session()
-log = sglog.SgLogSetup().get_logger(logger_name=website)
+log = sglog.SgLogSetup().get_logger("spencersonline")
+
+ca_provinces_codes = {
+    "AB",
+    "BC",
+    "MB",
+    "NB",
+    "NL",
+    "NS",
+    "NT",
+    "NU",
+    "ON",
+    "PE",
+    "QC",
+    "SK",
+    "YT",
+}
 
 
-max_workers = 1
+max_workers = 12
 
 
 def fetchConcurrentSingle(data):
     response = request_with_retries(data["url"])
-    return data["url"], response.text.replace(" ='", " = '").replace('"', "'").replace(
-        "='", " = '"
-    )
+    return data["url"], response.text
 
 
 def fetchConcurrentList(list, occurrence=max_workers):
@@ -54,108 +69,77 @@ def request_with_retries(url):
     return session.get(url, headers=headers)
 
 
-def fetchStores():
-    response = request_with_retries(f"{website}/sitemap/SPN_store_1.xml")
-    data = ET.fromstring(response.text)
+def fetchStates():
     urls = []
-    for element in data:
-        for el in element:
-            if el.tag == "{http://www.sitemaps.org/schemas/sitemap/0.9}loc":
-                urls.append({"url": el.text})
+    for state in us.states.STATES:
+        urls.append({"url": f"{website}/{state.name}"})
     return urls
 
 
-def getJSObject(response, varName):
-    JSObject = re.findall(f"{varName} = '(.+?);", response)
-    if JSObject is None or len(JSObject) == 0:
-        return MISSING
-    return cleanString(JSObject[0])
+def fetchUrls(obj):
+    urls = []
+    for url, response in fetchConcurrentList(obj):
+        response = request_with_retries(url)
+        data = json.loads(
+            response.text.split('"markerData":')[1].split("</script>")[0].strip()[:-2]
+        )
+        for el in data:
+            urls.append({"url": json.loads(bs(el["info"], "lxml").text)["url"]})
 
-
-def cleanString(value):
-    value = (
-        value.replace("'", "")
-        .replace("&#45;", "-")
-        .replace("&#39;", "'")
-        .replace("&#45", "-")
-        .replace("&#39", "'")
-    )
-    if value is None or len(value) == 0 or value == "0":
-        return MISSING
-    return value
+    return urls
 
 
 def fetchData():
-    stores = fetchStores()
-    log.info(f"Total stores = {len(stores)}")
+    states = fetchStates()
+    log.info(f"Total states = {len(states)}")
 
-    for page_url, response in fetchConcurrentList(stores):
-        store_number = getJSObject(response, "store.STORE_NUMBER")
-        location_name = getJSObject(response, "store.STORE_NAME")
-        al1 = getJSObject(response, "store.ADDRESS_LINE_1")
-        al2 = getJSObject(response, "store.ADDRESS_LINE_2")
-        city = getJSObject(response, "store.CITY")
-        state = getJSObject(response, "store.STATE")
-        status = getJSObject(response, "store.STORE_STATUS")
-        country_code = getJSObject(response, "store.COUNTRY_CODE")
-        phone = getJSObject(response, "store.PHONE")
-        latitude = getJSObject(response, "store.LATITUDE")
-        longitude = getJSObject(response, "store.LONGITUDE")
-        zip_postal = getJSObject(response, "store.ZIP_CODE")
+    urls = fetchUrls(states)
+    city_urls = fetchUrls(urls)
+    page_urls = fetchUrls(city_urls)
 
-        location_type = MISSING
-        street_address = al1
-        if al2 != MISSING:
-            if (
-                al1 == MISSING
-                or location_name.lower() in al1.lower()
-                or "MALL" in al1
-                or "MILL" in al1
-                or "SQUARE" in al1
-            ):
-                street_address = al2
-            else:
-                street_address = street_address.strip() + " " + al2.strip()
-
-        hours_of_operation = MISSING
-        if "CL" in status:
-            hours_of_operation = "Closed"
-        raw_address = f"{street_address}, {city}, {state} {zip_postal}"
-
-        if "X X" in raw_address:
-            street_address = MISSING
-            city = MISSING
-            raw_address = MISSING
-
-        yield SgRecord(
-            locator_domain=DOMAIN,
-            store_number=store_number,
-            page_url=page_url,
-            location_name=location_name,
-            location_type=location_type,
-            street_address=street_address,
-            city=city,
-            zip_postal=zip_postal,
-            state=state,
-            country_code=country_code,
-            phone=phone,
-            latitude=latitude,
-            longitude=longitude,
-            hours_of_operation=hours_of_operation,
-            raw_address=raw_address,
+    log.info(f"{len(page_urls)} found")
+    for page_url, response in fetchConcurrentList(page_urls):
+        log.info(page_url)
+        res = request_with_retries(page_url)
+        sp1 = bs(res.text, "lxml")
+        ss = json.loads(
+            bs(res.text, "lxml").find("script", type="application/ld+json").string
         )
-    return []
+        hours = []
+        for hh in sp1.select("div.map-list div.hours div.day-hour-row"):
+            hours.append(
+                f"{hh.select_one('.daypart').text.strip()}: {''.join(hh.select_one('.time').stripped_strings)}"
+            )
+        for _ in ss:
+            country_code = "US"
+            if _["address"]["addressRegion"] in ca_provinces_codes:
+                country_code = "CA"
+            yield SgRecord(
+                locator_domain=DOMAIN,
+                page_url=page_url,
+                location_name=sp1.select_one("span.location-name").text.strip(),
+                street_address=_["address"]["streetAddress"],
+                city=_["address"]["addressLocality"],
+                zip_postal=_["address"]["postalCode"],
+                state=_["address"]["addressRegion"],
+                country_code=country_code,
+                phone=_["address"]["telephone"],
+                latitude=_["geo"]["latitude"],
+                longitude=_["geo"]["longitude"],
+                hours_of_operation="; ".join(hours),
+            )
 
 
 def scrape():
     start = time.time()
     result = fetchData()
-    with SgWriter() as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         for rec in result:
             writer.write_row(rec)
     end = time.time()
-    log.info(f"Scrape took {end-start} seconds.")
+    log.info(f"{end-start} seconds.")
 
 
+session.close()
 if __name__ == "__main__":
     scrape()

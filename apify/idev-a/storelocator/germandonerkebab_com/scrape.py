@@ -5,6 +5,8 @@ from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
 from sgscrape.sgpostal import parse_address_intl
 import re
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 logger = SgLogSetup().get_logger("germandonerkebab")
 
@@ -21,15 +23,13 @@ def fetch_data():
         links = soup.select("div.tabs-content div.tabs-panel")
         logger.info(f"{len(links)} found")
         for link in links:
-            if link["id"] not in ["uk", "usa", "canada"]:
-                continue
             locations = link.select(".location-entry")
             logger.info(f"[{link['id']}] {len(locations)} found")
             for _ in locations:
                 if _.select_one("img.location-banner"):
                     continue
                 block = list(_.select_one(".location-details p").stripped_strings)
-                addr = parse_address_intl(block[0])
+                addr = parse_address_intl(block[0].replace("-", ","))
                 phone = ""
                 if len(block) > 1:
                     phone = block[1].replace("Tel", "").strip()
@@ -39,10 +39,6 @@ def fetch_data():
                 if street_address.replace("-", "").strip().isdigit():
                     street_address = block[0].split(",")[0]
                 zip_postal = addr.postcode
-                if not zip_postal:
-                    _zip = block[0].split(",")[-1].strip().split(" ")
-                    if len(_zip) > 1:
-                        zip_postal = " ".join(_zip[-2:])
                 _hr = _.find("strong", string=re.compile(r"NOW OPEN", re.IGNORECASE))
                 if not _hr:
                     _hr = _.find(
@@ -98,7 +94,17 @@ def fetch_data():
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.LOCATION_NAME,
+                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.PHONE,
+                }
+            )
+        )
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

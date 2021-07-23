@@ -83,11 +83,12 @@ def fetch_data():
         except:
             phone = "<MISSING>"
 
-        hours_of_operation = store["description"].split("<br />")[2]
-        if "Hours:" in hours_of_operation:
-            hours_of_operation = (
-                hours_of_operation.replace("Hours:", "").strip() + " daily"
-            )
+        hours_of_operation = "<MISSING>"
+        rows = store["description"].split("<br />")
+        for row in rows:
+            if "Hours" in row or "am " in row:
+                hours_of_operation = row.replace("Hours:", "").strip()
+                break
         latitude = store["lat"]
         longitude = store["lng"]
 

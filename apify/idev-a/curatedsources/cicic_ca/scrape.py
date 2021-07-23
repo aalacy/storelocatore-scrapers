@@ -18,6 +18,8 @@ _headers = {
 
 locator_domain = "https://www.cicic.ca"
 
+urls = []
+
 
 def _hidden(sp1, name):
     return sp1.select_one(f"input#{name}")["value"]
@@ -26,6 +28,9 @@ def _hidden(sp1, name):
 def _parse(_, session, page=1):
     td = [tt.text.strip() for tt in _.select("td")]
     page_url = locator_domain + _.a["href"]
+    if page_url in urls:
+        return None
+    urls.append(page_url)
     logger.info(page_url)
     sp3 = bs(session.get(page_url, headers=_headers).text, "lxml")
     _addr = sp3.select_one("div.postaladdress")
@@ -51,20 +56,23 @@ def _parse(_, session, page=1):
     if portion and portion == td[2].strip():
         location_name = _location_name
 
+    street_address = sp3.select_one("div.postaladdress .addressTitle").text.strip()
+    if street_address == ".":
+        street_address = ""
     return SgRecord(
         page_url=page_url,
-        store_number=td[0],
+        store_number=td[0].strip(),
         location_name=location_name,
-        street_address=sp3.select_one("div.postaladdress .addressTitle").text.strip(),
-        city=td[2],
-        state=addr[1],
-        zip_postal=td[3],
-        country_code=addr[-1],
+        street_address=street_address,
+        city=td[2].strip(),
+        state=addr[1].strip(),
+        zip_postal=td[3].strip(),
+        country_code=addr[-1].strip(),
         phone=phone,
-        location_type=td[-2],
+        location_type=td[-2].strip(),
         locator_domain=locator_domain,
-        latitude=td[4],
-        longitude=td[6],
+        latitude=td[4].strip(),
+        longitude=td[6].strip(),
     )
 
 
@@ -103,6 +111,8 @@ def fetch_data():
             sp1 = bs(
                 session.post(search_url, headers=_headers, data=form_data).text, "lxml"
             )
+            if not sp1.select_one("a.rgCurrentPage"):
+                break
             cur_page = int(sp1.select_one("a.rgCurrentPage").text.strip())
 
             locations = sp1.select("table.rgMasterTable > tbody tr")
