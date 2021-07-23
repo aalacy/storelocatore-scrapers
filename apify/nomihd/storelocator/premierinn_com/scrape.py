@@ -70,24 +70,22 @@ def fetch_data():
 
                 hours_of_operation = "<MISSING>"
 
-                if "https://www.premierinn.com/gb/en/hotels/england/" in page_url:
-
-                    yield SgRecord(
-                        locator_domain=locator_domain,
-                        page_url=page_url,
-                        location_name=location_name,
-                        street_address=street_address,
-                        city=city,
-                        state=state,
-                        zip_postal=zip,
-                        country_code=country_code,
-                        store_number=store_number,
-                        phone=phone,
-                        location_type=location_type,
-                        latitude=latitude,
-                        longitude=longitude,
-                        hours_of_operation=hours_of_operation,
-                    )
+                yield SgRecord(
+                    locator_domain=locator_domain,
+                    page_url=page_url,
+                    location_name=location_name,
+                    street_address=street_address,
+                    city=city,
+                    state=state,
+                    zip_postal=zip,
+                    country_code=country_code,
+                    store_number=store_number,
+                    phone=phone,
+                    location_type=location_type,
+                    latitude=latitude,
+                    longitude=longitude,
+                    hours_of_operation=hours_of_operation,
+                )
 
             else:
                 if "https://www.premierinn.com" not in store_url:
@@ -96,85 +94,81 @@ def fetch_data():
                     page_url = store_url
 
                 locator_domain = website
-                if page_url not in done_url:
-                    done_url.append(page_url)
-                    store_req = session.get(page_url, headers=headers)
-                    store_sel = lxml.html.fromstring(store_req.text)
 
-                    sub_stores = store_sel.xpath(
-                        '//article[@class="seo-hotel-card"]/a/@href'
+                store_req = session.get(page_url, headers=headers)
+                store_sel = lxml.html.fromstring(store_req.text)
+
+                sub_stores = store_sel.xpath(
+                    '//article[@class="seo-hotel-card"]/a/@href'
+                )
+
+                if len(sub_stores) > 0:
+                    continue
+
+                location_name = "".join(
+                    store_sel.xpath(
+                        '//h1[@class="hotel-title__heading hotel-details__title"]/text()'
                     )
+                ).strip()
+                if location_name == "":
+                    location_name = "<MISSING>"
 
-                    if len(sub_stores) > 0:
-                        continue
+                street_address = "".join(
+                    store_sel.xpath('//span[@itemprop="streetAddress"]/text()')
+                ).strip()
+                add_2 = "".join(
+                    store_sel.xpath('//span[@itemprop="addressLocality"][1]/text()')
+                ).strip()
+                if len(add_2) > 0:
+                    street_address = street_address + ", " + add_2
 
-                    location_name = "".join(
-                        store_sel.xpath(
-                            '//h1[@class="hotel-title__heading hotel-details__title"]/text()'
-                        )
-                    ).strip()
-                    if location_name == "":
-                        location_name = "<MISSING>"
+                city = "".join(
+                    store_sel.xpath('//span[@itemprop="addressLocality"][2]/text()')
+                ).strip()
+                state = county.replace("Hotels", "").strip()
+                zip = "".join(
+                    store_sel.xpath('//span[@itemprop="postalCode"]/text()')
+                ).strip()
 
-                    street_address = "".join(
-                        store_sel.xpath('//span[@itemprop="streetAddress"]/text()')
-                    ).strip()
-                    add_2 = "".join(
-                        store_sel.xpath('//span[@itemprop="addressLocality"][1]/text()')
-                    ).strip()
-                    if len(add_2) > 0:
-                        street_address = street_address + ", " + add_2
+                country_code = "GB"
 
-                    city = "".join(
-                        store_sel.xpath('//span[@itemprop="addressLocality"][2]/text()')
-                    ).strip()
-                    state = county.replace("Hotels", "").strip()
-                    zip = "".join(
-                        store_sel.xpath('//span[@itemprop="postalCode"]/text()')
-                    ).strip()
+                store_number = "".join(
+                    store_sel.xpath('//meta[@itemprop="hotelCode"]/@content')
+                ).strip()
 
-                    country_code = "GB"
+                phone = "".join(
+                    store_sel.xpath("//contact-module-responsive/@hotel-phone-number")
+                ).strip()
+                location_type = "<MISSING>"
+                hours_of_operation = "<MISSING>"
 
-                    store_number = "".join(
-                        store_sel.xpath('//meta[@itemprop="hotelCode"]/@content')
-                    ).strip()
+                latitude = "".join(
+                    store_sel.xpath(
+                        '//div[@itemprop="geo"]/meta[@itemprop="latitude"]/@content'
+                    )
+                ).strip()
+                longitude = "".join(
+                    store_sel.xpath(
+                        '//div[@itemprop="geo"]/meta[@itemprop="longitude"]/@content'
+                    )
+                ).strip()
 
-                    phone = "".join(
-                        store_sel.xpath(
-                            "//contact-module-responsive/@hotel-phone-number"
-                        )
-                    ).strip()
-                    location_type = "<MISSING>"
-                    hours_of_operation = "<MISSING>"
-
-                    latitude = "".join(
-                        store_sel.xpath(
-                            '//div[@itemprop="geo"]/meta[@itemprop="latitude"]/@content'
-                        )
-                    ).strip()
-                    longitude = "".join(
-                        store_sel.xpath(
-                            '//div[@itemprop="geo"]/meta[@itemprop="longitude"]/@content'
-                        )
-                    ).strip()
-
-                    if "https://www.premierinn.com/gb/en/hotels/england/" in page_url:
-                        yield SgRecord(
-                            locator_domain=locator_domain,
-                            page_url=page_url,
-                            location_name=location_name,
-                            street_address=street_address,
-                            city=city,
-                            state=state,
-                            zip_postal=zip,
-                            country_code=country_code,
-                            store_number=store_number,
-                            phone=phone,
-                            location_type=location_type,
-                            latitude=latitude,
-                            longitude=longitude,
-                            hours_of_operation=hours_of_operation,
-                        )
+                yield SgRecord(
+                    locator_domain=locator_domain,
+                    page_url=page_url,
+                    location_name=location_name,
+                    street_address=street_address,
+                    city=city,
+                    state=state,
+                    zip_postal=zip,
+                    country_code=country_code,
+                    store_number=store_number,
+                    phone=phone,
+                    location_type=location_type,
+                    latitude=latitude,
+                    longitude=longitude,
+                    hours_of_operation=hours_of_operation,
+                )
 
 
 def scrape():
