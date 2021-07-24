@@ -12,10 +12,12 @@ locator_domain = "https://www.ddir.com"
 base_url = "https://www.ddir.com/locations/"
 
 
-def _coord(city, zip_postal, locations):
+def _coord(street_address, city, zip_postal, locations):
     coord = ["", ""]
     for _ in locations:
-        if city in _["address"] and zip_postal in _["address"]:
+        if " ".join(street_address.split(" ")[:2]) in _["address"] or (
+            city in _["address"] and zip_postal in _["address"]
+        ):
             coord[0] = _["point"]["lat"]
             coord[1] = _["point"]["lng"]
             break
@@ -37,15 +39,16 @@ def fetch_data():
             zip_postal = (
                 addr[1].split(",")[1].replace("\xa0", " ").strip().split(" ")[1].strip()
             )
-            coord = _coord(city, zip_postal, locations)
+            street_address = addr[0].strip()
+            coord = _coord(street_address, city, zip_postal, locations)
             location_name = link.h2.text.strip()
             location_type = ""
             if "CLOSED UNTIL" in location_name:
                 location_type = "temporarily closed"
             yield SgRecord(
                 page_url=base_url,
-                location_name=location_name.split("-")[-1],
-                street_address=addr[0].strip(),
+                location_name=location_name.split("-")[0],
+                street_address=street_address,
                 state=addr[1]
                 .split(",")[1]
                 .replace("\xa0", " ")
