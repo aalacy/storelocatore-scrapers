@@ -17,7 +17,7 @@ def fetch_data(sgw: SgWriter):
     r = session.get(api_url, headers=headers)
     tree = html.fromstring(r.text)
     div = tree.xpath('//div[@id="sortMain"]/div[position()<5]//a')
-    s = set()
+
     for d in div:
 
         page_url = "".join(d.xpath(".//@href"))
@@ -69,7 +69,6 @@ def fetch_data(sgw: SgWriter):
             slug = "Thailand"
         country_code = slug
         city = "<MISSING>"
-        store_number = "<MISSING>"
         latitude = "<MISSING>"
         longitude = "<MISSING>"
         phone = "<MISSING>"
