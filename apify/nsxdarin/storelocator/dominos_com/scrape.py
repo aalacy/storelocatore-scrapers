@@ -249,7 +249,6 @@ def scrape():
         for rec in results:
             logzilla.info(f"{rec}")
             writer.write_row(rec)
-    raise
 
 
 scrape()

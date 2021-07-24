@@ -44,7 +44,7 @@ def fetch_data():
     domain = "napacanada.com"
     user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.103 Safari/537.36"
 
-    with SgChrome(is_headless=False, user_agent=user_agent).driver() as driver:
+    with SgChrome(user_agent=user_agent).driver() as driver:
         driver.get("https://www.napacanada.com/")
         driver.implicitly_wait(20)
         start_url = "https://www.napacanada.com/en/store-finder?q=H1N+3E2&page=7"
