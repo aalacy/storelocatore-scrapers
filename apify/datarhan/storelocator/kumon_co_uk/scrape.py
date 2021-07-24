@@ -57,7 +57,6 @@ def fetch_data():
                 next_page = None
 
     for store_url in list(set(all_locations)):
-        print(store_url)
         loc_response = session.get(store_url)
         loc_dom = etree.HTML(loc_response.text)
 
