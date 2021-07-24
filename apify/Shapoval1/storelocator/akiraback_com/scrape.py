@@ -1,42 +1,14 @@
-import csv
 from lxml import html
-from sgscrape.sgpostal import International_Parser, parse_address
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import RecommendedRecordIds, SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgpostal import International_Parser, parse_address
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+def fetch_data(sgw: SgWriter):
 
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    out = []
-
-    locator_domain = "https://www.akiraback.com"
     api_url = "https://www.akiraback.com/locations"
     session = SgRequests()
     headers = {
@@ -250,9 +222,19 @@ def fetch_data():
             phone = "".join(
                 tree.xpath('//h3[text()="CONTACT"]/following-sibling::div/a[2]/text()')
             ).strip()
-            hours_of_operation = "".join(
-                tree.xpath('//h3[text()="HOURS"]/following-sibling::div//text()')
-            ).strip()
+            hours_of_operation = tree.xpath(
+                '//h3[text()="HOURS"]/following-sibling::div/p/text()'
+            )
+            hours_of_operation = list(
+                filter(None, [a.strip() for a in hours_of_operation])
+            )
+            hours_of_operation = (
+                " ".join(hours_of_operation)
+                .replace("\r\n", "")
+                .replace("\n", "")
+                .replace("\r", "")
+                .strip()
+            )
             latitude = (
                 "".join(tree.xpath('//script[contains(text(), "geo")]/text()'))
                 .split('"latitude": "')[1]
@@ -449,36 +431,30 @@ def fetch_data():
             city = ad.split(",")[1].strip()
             country_code = a.country
 
-        line = ad
-        if line in s:
-            continue
-        s.add(line)
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=SgRecord.MISSING,
+            phone=phone,
+            location_type=location_type,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+        )
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    locator_domain = "https://www.akiraback.com"
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
+    ) as writer:
+        fetch_data(writer)
