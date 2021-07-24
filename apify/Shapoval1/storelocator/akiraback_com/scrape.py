@@ -221,19 +221,16 @@ def fetch_data(sgw: SgWriter):
             phone = "".join(
                 tree.xpath('//h3[text()="CONTACT"]/following-sibling::div/a[2]/text()')
             ).strip()
-            hours_of_operation = tree.xpath(
-                '//h3[text()="HOURS"]/following-sibling::div/p/text()'
-            )
-            hours_of_operation = list(
-                filter(None, [a.strip() for a in hours_of_operation])
-            )
             hours_of_operation = (
-                " ".join(hours_of_operation)
+                " ".join(
+                    tree.xpath('//h3[text()="HOURS"]/following-sibling::div/p/text()')
+                )
                 .replace("\r\n", "")
                 .replace("\n", "")
                 .replace("\r", "")
                 .strip()
             )
+
             latitude = (
                 "".join(tree.xpath('//script[contains(text(), "geo")]/text()'))
                 .split('"latitude": "')[1]
@@ -253,13 +250,18 @@ def fetch_data(sgw: SgWriter):
                     '//div[@class="hotel-adddress"]//a[contains(@href, "tel")]/text()'
                 )
             ).strip()
-            hours_of_operation = tree.xpath(
-                '//*[contains(text(), "Opening Hours")]/following-sibling::*[1]//text()'
+            hours_of_operation = (
+                " ".join(
+                    tree.xpath(
+                        '//*[contains(text(), "Opening Hours")]/following-sibling::*[1]//text()'
+                    )
+                )
+                .replace("\r\n", "")
+                .replace("\n", "")
+                .replace("\r", "")
+                .strip()
             )
-            hours_of_operation = list(
-                filter(None, [a.strip() for a in hours_of_operation])
-            )
-            hours_of_operation = " ".join(hours_of_operation)
+
             latitude = (
                 "".join(tree.xpath('//script[contains(text(), "geo")]/text()'))
                 .split('"latitude": "')[1]
@@ -409,13 +411,17 @@ def fetch_data(sgw: SgWriter):
                 .split("}")[0]
                 .strip()
             )
-            hours_of_operation = tree.xpath(
-                '//p[text()="Hours of Operation"]/following-sibling::div//div//text()'
+            hours_of_operation = (
+                " ".join(
+                    tree.xpath(
+                        '//p[text()="Hours of Operation"]/following-sibling::div//div//text()'
+                    )
+                )
+                .replace("\r\n", "")
+                .replace("\n", "")
+                .replace("\r", "")
+                .strip()
             )
-            hours_of_operation = list(
-                filter(None, [a.strip() for a in hours_of_operation])
-            )
-            hours_of_operation = " ".join(hours_of_operation)
 
         a = parse_address(International_Parser(), ad)
         street_address = (
