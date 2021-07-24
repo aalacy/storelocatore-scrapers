@@ -53,7 +53,7 @@ def fetch_data():
         state = content[2].split()[0].strip()
         zip_code = content[2].split()[1].strip()
         phone = content[3].strip()
-        hours_of_operation = content[4].strip()
+        hours_of_operation = " ".join(content[4:]).strip()
         store_number = MISSING
         country_code = "US"
         location_type = "omahasupermercado"
@@ -74,7 +74,7 @@ def fetch_data():
             location_type=location_type,
             latitude=latitude,
             longitude=longitude,
-            hours_of_operation=hours_of_operation.strip(),
+            hours_of_operation=hours_of_operation,
             raw_address=f"{street_address}, {city}, {state} {zip_code} ",
         )
 
