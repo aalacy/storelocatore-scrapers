@@ -6,7 +6,8 @@ from urllib.parse import urljoin
 from sgscrape.sgpostal import parse_address_intl
 from sgselenium import SgChrome
 import time
-
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 import ssl
 
 try:
@@ -101,7 +102,7 @@ def fetch_data():
                                     continue
                                 temp.append(aa)
                             _addr = temp
-                            street_address = state = zip_postal = ""
+                            street_address = state = city = zip_postal = ""
                             if _addr:
                                 _address = " ".join(_addr)
                                 addr = parse_address_intl(_address)
@@ -117,6 +118,9 @@ def fetch_data():
                                             street_address = aa
                                             break
                                 state = addr.state
+                                city = addr.city
+                                if country_code == "Indonesia":
+                                    city = blocks[0]
                                 zip_postal = addr.postcode
                                 if zip_postal == "00000":
                                     zip_postal = ""
@@ -124,7 +128,7 @@ def fetch_data():
                                 page_url=page_url,
                                 location_name=blocks[0],
                                 street_address=street_address,
-                                city=blocks[0],
+                                city=city,
                                 state=state,
                                 zip_postal=zip_postal,
                                 country_code=country_code,
@@ -136,7 +140,19 @@ def fetch_data():
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.LOCATION_NAME,
+                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.CITY,
+                    SgRecord.Headers.ZIP_POSTAL,
+                    SgRecord.Headers.PHONE,
+                }
+            )
+        )
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
