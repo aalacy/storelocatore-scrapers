@@ -146,7 +146,7 @@ def fetchData():
     with SgChrome(is_headless=True, user_agent=user_agent) as driver:
 
         response = getPage(website + "/locations.html")
-        # print(response.text)
+
         body = html.fromstring(response.text, "lxml")
 
         googleUrl = body.xpath('//iframe[contains(@src, "google.com/maps")]/@src')[0]
