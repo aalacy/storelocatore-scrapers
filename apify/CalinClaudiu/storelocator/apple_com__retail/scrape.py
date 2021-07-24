@@ -132,7 +132,7 @@ def determine_country(country):
 
 def get_country(search, country, session, headers, SearchableCountry, state):
     global errorz
-    errorzCopy = None
+    errorzCopy = []
     if errorz:
         if len(errorz) != 0:
             errorzCopy = errorz
@@ -189,13 +189,24 @@ def get_country(search, country, session, headers, SearchableCountry, state):
     total = 0
     for Point in search:
         found = 0
-        for record in getPoint(Point, session, country.link, headers):
-            search.found_location_at(
-                record["locationData"]["geo"][0], record["locationData"]["geo"][1]
-            )
-            record["COUNTRY"] = country
-            found += 1
-            yield record
+        try:
+            for record in getPoint(Point, session, country.link, headers):
+                search.found_location_at(
+                    record["locationData"]["geo"][0], record["locationData"]["geo"][1]
+                )
+                record["COUNTRY"] = country
+                found += 1
+                yield record
+        except Exception as e:
+            try:
+                msg = getPoint(Point, session, country.link, headers)
+            except Exception as y:
+                msg = y
+            try:
+                logzilla.error(f"Something happened with {msg} \n error is: {e}")
+            except Exception as p:
+                logzilla.error(f"SMH couldn't even print the error:{e} \n {p}")
+
         progress = str(round(100 - (search.items_remaining() / maxZ * 100), 2)) + "%"
         total += found
         logzilla.info(
@@ -206,7 +217,7 @@ def get_country(search, country, session, headers, SearchableCountry, state):
             f"Found a total of 0 results for country {country}\n this is unacceptable and possibly a country/search space mismatch\n Matched to: {SearchableCountry}"
         )
         if SearchableCountry not in known_empties:
-            errorzCopy = None
+            errorzCopy = []
             if errorz:
                 if len(errorz) != 0:
                     errorzCopy = errorz
@@ -260,7 +271,7 @@ def fetch_data():
             state.set_misc_value(key="countries", value=countries.serialize_requests())
             state.set_misc_value(key="SearchableCountry", value=None)
             state.save(override=True)
-        errorzCopy = None
+        errorzCopy = []
         if len(errorz) != 0:
             errorzCopy = errorz
         try:
@@ -299,7 +310,7 @@ def fetch_data():
                     try:
                         search = DynamicGeoSearch(
                             country_codes=[SearchableCountry],
-                            expected_search_radius_miles=50,
+                            expected_search_radius_miles=500,  # Must turn it back down to 50 after testing
                             max_search_results=None,
                             granularity=Grain_8(),
                         )
