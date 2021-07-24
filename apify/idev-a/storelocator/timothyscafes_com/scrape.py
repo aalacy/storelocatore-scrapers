@@ -24,10 +24,25 @@ def fetch_data():
             street_address = addr.street_address_1
             if addr.street_address_2:
                 street_address += " " + addr.street_address_2
-            location_name = _.location.text.replace("&#44;", ",")
+            location_name = _.location.text.replace("&#44;", ",").replace("&#39;", "'")
             location_type = ""
             if "TEMPORARILY CLOSED" in location_name:
                 location_type = "TEMPORARILY CLOSED"
+            if "(CLOSED)" in location_name:
+                location_type = "CLOSED"
+            hours = []
+            if _.operatinghours:
+                temp = list(
+                    bs(
+                        _.operatinghours.text.replace("&amp;", "&"), "lxml"
+                    ).stripped_strings
+                )
+                for hh in "; ".join(temp).split(";"):
+                    if not hh.strip() or "Hours" in hh:
+                        continue
+                    if "Good" in hh:
+                        break
+                    hours.append(hh)
             yield SgRecord(
                 page_url=page_url,
                 store_number=_.storeId.text if _.storeId else _.storeid.text,
@@ -42,9 +57,7 @@ def fetch_data():
                 phone=_.telephone.text,
                 location_type=location_type,
                 locator_domain=locator_domain,
-                hours_of_operation=_.operatingHours.text.replace("&amp;", "&")
-                if _.operatingHours
-                else "",
+                hours_of_operation="; ".join(hours),
                 raw_address=_.address.text.replace("&#44;", ","),
             )
 

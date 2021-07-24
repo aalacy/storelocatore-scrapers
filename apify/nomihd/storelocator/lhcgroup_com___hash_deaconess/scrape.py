@@ -119,9 +119,12 @@ def fetch_data():
         )
         hours_of_operation = "<MISSING>"
         if len(hours) > 0:
-            hours_of_operation = "; ".join(
-                "".join(hours[0].xpath("div/text()")).strip().split("\n")
-            ).strip()
+            hours_of_operation = (
+                "; ".join("".join(hours[0].xpath("div/text()")).strip().split("\n"))
+                .strip()
+                .replace("\r", "")
+                .strip()
+            )
 
         latitude = "".join(store.xpath("@data-lat")).strip()
         longitude = "".join(store.xpath("@data-lng")).strip()

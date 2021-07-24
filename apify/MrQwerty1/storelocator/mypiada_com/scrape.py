@@ -38,6 +38,8 @@ def fetch_data():
     out = []
     locator_domain = "https://mypiada.com/"
     page_url = "https://mypiada.com/locations?l=all"
+    location_type = "<MISSING>"
+
     session = SgRequests()
     r = session.get(page_url)
     tree = html.fromstring(r.text)
@@ -65,10 +67,14 @@ def fetch_data():
 
         store_number = j.get("oloID") or "<MISSING>"
         location_name = j.get("name")
-        phone = j.get("phone").split(">")[-1].replace("Â", "").strip() or "<MISSING>"
+        ph = j.get("phone")
+        if "Coming Soon" in ph:
+            phone = "<MISSING>"
+            location_type = "Coming Soon"
+        else:
+            phone = ph.split(">")[-1].replace("Â", "").strip() or "<MISSING>"
         loc = j.get("geo") or "<MISSING>,<MISSING>"
         latitude, longitude = loc.split(",")
-        location_type = "<MISSING>"
 
         isclosed = j.get("temporarilyClosed")
         if isclosed:
