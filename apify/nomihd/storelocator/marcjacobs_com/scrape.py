@@ -50,10 +50,10 @@ def fetch_data():
 
         store_number = store["ID"]
 
-        phone = store["phone"]
+        phone = store["phone"].split("; Cell:")[0].strip().replace("Phone:", "").strip()
 
         location_type = "<MISSING>"
-        if "Marc Jacobs" in location_name:
+        if "MARC JACOBS" in location_name:
             location_type = "boutique"
 
         page_url = "https://www.marcjacobs.com/on/demandware.store/Sites-mjsfra-Site/default/Stores-Details?StoreID={}&format=ajax".format(
