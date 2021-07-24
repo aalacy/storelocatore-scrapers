@@ -1,44 +1,19 @@
-import csv
 from lxml import etree
-from concurrent.futures import ThreadPoolExecutor, as_completed
 
-from sgscrape.sgpostal import parse_address_intl
 from sgrequests import SgRequests
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+def fetch_data():
+    session = SgRequests().requests_retry_session(retries=0, backoff_factor=0.3)
 
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_locations(session):
     start_url = "https://www.kumon.co.uk/find-a-tutor/"
-    all_locations = []
+    domain = "kumon.co.uk"
+    hdr = {"Content-Type": "application/x-www-form-urlencoded"}
+
     formdata = {
         "latlon": "0,0",
         "centre_search": "london",
@@ -56,12 +31,12 @@ def fetch_locations(session):
         "chosen_options[3][138]": "0",
         "widget_search_centres": "",
     }
-    hdr = {"Content-Type": "application/x-www-form-urlencoded"}
+
     response = session.post(start_url, data=formdata, headers=hdr)
     dom = etree.HTML(response.text)
 
     scraped_urls = []
-    all_locations += dom.xpath('//a[contains(@class, "choose-centre-button")]/@href')
+    all_locations = dom.xpath('//a[contains(@class, "choose-centre-button")]/@href')
     next_page = dom.xpath('//a[small[i[@class="fa fa-chevron-right"]]]/@href')
     while next_page:
         if next_page[0] not in scraped_urls:
@@ -81,73 +56,58 @@ def fetch_locations(session):
             if next_page and next_page[0] in scraped_urls:
                 next_page = None
 
-    return list(set(all_locations))
+    for store_url in list(set(all_locations)):
+        print(store_url)
+        loc_response = session.get(store_url)
+        loc_dom = etree.HTML(loc_response.text)
 
+        location_name = loc_dom.xpath('//h1[@class="text-center"]/text()')[0]
+        street_address = loc_dom.xpath('//span[@itemprop="streetAddress"]/text()')[0]
+        city = loc_dom.xpath('//span[@itemprop="addressLocality"]/text()')[0]
+        state = loc_dom.xpath('//span[@itemprop="addressRegion"]/text()')
+        state = state[0] if state else "<MISSING>"
+        zip_code = loc_dom.xpath('//span[@itemprop="postalCode"]/text()')[0]
+        country_code = "UK"
+        phone = loc_dom.xpath('//span[@class="number"]/text()')
+        phone = phone[0] if phone else "<MISSING>"
+        latitude = loc_dom.xpath('//meta[@itemprop="latitude"]/@content')
+        latitude = latitude[0] if latitude else "<MISSING>"
+        longitude = loc_dom.xpath('//meta[@itemprop="longitude"]/@content')
+        longitude = longitude[0] if longitude else "<MISSING>"
+        hoo = loc_dom.xpath('//table[@class="centre-timings"]//text()')
+        hoo = [elem.strip() for elem in hoo if elem.strip()]
+        hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
 
-def fetch_location(store_url, session):
-    loc_response = session.get(store_url)
-    loc_dom = etree.HTML(loc_response.text)
+        item = SgRecord(
+            locator_domain=domain,
+            page_url=store_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=zip_code,
+            country_code=country_code,
+            store_number=SgRecord.MISSING,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+        )
 
-    DOMAIN = "kumon.co.uk"
-    location_name = loc_dom.xpath('//h1[@class="text-center"]/text()')
-    location_name = location_name[0] if location_name else "<MISSING>"
-    raw_address = " ".join(loc_dom.xpath('//span[@itemprop="address"]//text()'))
-    parsed_adr = parse_address_intl(raw_address)
-    street_address = parsed_adr.street_address_1
-    if parsed_adr.street_address_2:
-        street_address += ", " + parsed_adr.street_address_2
-    city = parsed_adr.city
-    city = city if city else "<MISSING>"
-    state = parsed_adr.state
-    state = state if state else "<MISSING>"
-    zip_code = parsed_adr.postcode
-    zip_code = zip_code if zip_code else "<MISSING>"
-    country_code = parsed_adr.country
-    country_code = country_code if country_code else "<MISSING>"
-    store_number = "<MISSING>"
-    phone = loc_dom.xpath('//span[@class="number"]/text()')
-    phone = phone[0] if phone else "<MISSING>"
-    location_type = "<MISSING>"
-    latitude = loc_dom.xpath('//meta[@itemprop="latitude"]/@content')
-    latitude = latitude[0] if latitude else "<MISSING>"
-    longitude = loc_dom.xpath('//meta[@itemprop="longitude"]/@content')
-    longitude = longitude[0] if longitude else "<MISSING>"
-    hoo = loc_dom.xpath('//table[@class="centre-timings"]//text()')
-    hoo = [elem.strip() for elem in hoo if elem.strip()]
-    hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
-
-    return [
-        DOMAIN,
-        store_url,
-        location_name,
-        street_address,
-        city,
-        state,
-        zip_code,
-        country_code,
-        store_number,
-        phone,
-        location_type,
-        latitude,
-        longitude,
-        hours_of_operation,
-    ]
-
-
-def fetch_data():
-    # Your scraper here
-    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
-    locations = fetch_locations(session)
-
-    with ThreadPoolExecutor(max_workers=10) as executor:
-        futures = [executor.submit(fetch_location, url, session) for url in locations]
-        for future in as_completed(futures):
-            yield future.result()
+        yield item
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
 if __name__ == "__main__":
