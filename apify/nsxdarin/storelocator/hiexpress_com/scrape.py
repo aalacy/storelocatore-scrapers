@@ -235,6 +235,8 @@ def fetch_data():
             city = "<MISSING>"
         state = state.replace("&nbsp;", "").replace(",", "")
         city = city.replace("&nbsp;", "").replace(",", "")
+        if phone == "--":
+            phone = "<MISSING>"
         if " Hotels" not in name and name != "":
             yield [
                 website,

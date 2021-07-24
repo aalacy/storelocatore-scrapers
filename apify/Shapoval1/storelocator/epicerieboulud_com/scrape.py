@@ -54,7 +54,7 @@ def fetch_data():
 
         location_name = "".join(tree.xpath("//h1//text()"))
         location_type = "<MISSING>"
-        street_address = "".join(tree.xpath("//h1/following-sibling::p/text()[1]"))
+        street_address = "".join(tree.xpath("//h1/following-sibling::p[1]/text()[1]"))
         ad = (
             "".join(tree.xpath("//h1/following-sibling::p/text()[2]"))
             .replace("\n", "")
