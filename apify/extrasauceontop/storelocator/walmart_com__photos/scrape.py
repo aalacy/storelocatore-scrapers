@@ -1,127 +1,121 @@
 from sgrequests import SgRequests
-import pandas as pd
-from sgzip.dynamic import DynamicZipSearch, SearchableCountries
+from sgzip.static import static_zipcode_list, SearchableCountries
+from sgscrape import simple_scraper_pipeline as sp
 
-locator_domains = []
-page_urls = []
-location_names = []
-street_addresses = []
-citys = []
-states = []
-zips = []
-country_codes = []
-store_numbers = []
-phones = []
-location_types = []
-latitudes = []
-longitudes = []
-hours_of_operations = []
 
-search = DynamicZipSearch(country_codes=[SearchableCountries.USA])
-session = SgRequests()
+def get_data():
+    search = static_zipcode_list(country_code=SearchableCountries.USA, radius=20)
+    session = SgRequests()
+    for search_code in search:
+        url = (
+            "https://photos3.walmart.com/store-finder/nearest-stores.json?address="
+            + str(search_code)
+            + "&limit=20"
+        )
 
-for search_code in search:
-    url = (
-        "https://photos3.walmart.com/store-finder/nearest-stores.json?address="
-        + str(search_code)
-        + "&limit=20"
+        response = session.get(url).json()
+
+        for location in response["locations"]:
+            locator_domain = "photos3.walmart.com"
+            page_url = location["detailsPageURL"]
+            location_name = location["displayName"]
+            address = location["address"]["street"]
+            city = location["address"]["city"]
+            state = location["address"]["state"]
+            zipp = location["address"]["zipcode"]
+            country_code = location["address"]["country"]
+            store_number = location["id"]
+
+            try:
+                phone = location["servicesMap"]["PHOTO_CENTER"]["phone"]
+            except Exception:
+                phone = location["phone"]
+
+            location_type = location["storeType"]
+            latitude = location["coordinates"]["latitude"]
+            longitude = location["coordinates"]["longitude"]
+
+            hours = ""
+            for day in location["servicesMap"]["PHOTO_CENTER"][
+                "operationalHours"
+            ].keys():
+                try:
+                    open_time = location["servicesMap"]["PHOTO_CENTER"][
+                        "operationalHours"
+                    ][day]["startHr"]
+                    close = location["servicesMap"]["PHOTO_CENTER"]["operationalHours"][
+                        day
+                    ]["endHr"]
+                    hours = (
+                        hours
+                        + day.replace("Hrs", "")
+                        + " "
+                        + open_time
+                        + "-"
+                        + close
+                        + ", "
+                    )
+
+                except Exception:
+                    hours = hours + day.replace("Hrs", "") + " " + "closed" + ", "
+
+            hours = hours[:-2]
+
+            yield {
+                "locator_domain": locator_domain,
+                "page_url": page_url,
+                "location_name": location_name,
+                "latitude": latitude,
+                "longitude": longitude,
+                "city": city,
+                "store_number": store_number,
+                "street_address": address,
+                "state": state,
+                "zip": zipp,
+                "phone": phone,
+                "location_type": location_type,
+                "hours": hours,
+                "country_code": country_code,
+            }
+
+
+def scrape():
+    field_defs = sp.SimpleScraperPipeline.field_definitions(
+        locator_domain=sp.MappingField(mapping=["locator_domain"]),
+        page_url=sp.MappingField(mapping=["page_url"], part_of_record_identity=True),
+        location_name=sp.MappingField(
+            mapping=["location_name"],
+        ),
+        latitude=sp.MappingField(
+            mapping=["latitude"],
+        ),
+        longitude=sp.MappingField(
+            mapping=["longitude"],
+        ),
+        street_address=sp.MultiMappingField(
+            mapping=["street_address"], is_required=False
+        ),
+        city=sp.MappingField(
+            mapping=["city"],
+        ),
+        state=sp.MappingField(mapping=["state"], is_required=False),
+        zipcode=sp.MultiMappingField(mapping=["zip"], is_required=False),
+        country_code=sp.MappingField(mapping=["country_code"]),
+        phone=sp.MappingField(mapping=["phone"], is_required=False),
+        store_number=sp.MappingField(
+            mapping=["store_number"], part_of_record_identity=True
+        ),
+        hours_of_operation=sp.MappingField(mapping=["hours"], is_required=False),
+        location_type=sp.MappingField(mapping=["location_type"], is_required=False),
     )
 
-    response = session.get(url).json()
+    pipeline = sp.SimpleScraperPipeline(
+        scraper_name="Crawler",
+        data_fetcher=get_data,
+        field_definitions=field_defs,
+        log_stats_interval=15,
+    )
+    pipeline.run()
 
-    for location in response["locations"]:
-        locator_domain = "photos3.walmart.com"
-        page_url = location["detailsPageURL"]
-        location_name = location["displayName"]
-        address = location["address"]["street"]
-        city = location["address"]["city"]
-        state = location["address"]["state"]
-        zipp = location["address"]["zipcode"]
-        country_code = location["address"]["country"]
-        store_number = location["id"]
 
-        try:
-            phone = location["servicesMap"]["PHOTO_CENTER"]["phone"]
-
-        except Exception:
-            phone = location["phone"]
-
-        location_type = location["storeType"]
-        latitude = location["coordinates"]["latitude"]
-        longitude = location["coordinates"]["longitude"]
-        search.found_location_at(latitude, longitude)
-        hours = ""
-        for day in location["servicesMap"]["PHOTO_CENTER"]["operationalHours"].keys():
-            try:
-                open_time = location["servicesMap"]["PHOTO_CENTER"]["operationalHours"][
-                    day
-                ]["startHr"]
-                close = location["servicesMap"]["PHOTO_CENTER"]["operationalHours"][
-                    day
-                ]["endHr"]
-                hours = (
-                    hours
-                    + day.replace("Hrs", "")
-                    + " "
-                    + open_time
-                    + "-"
-                    + close
-                    + ", "
-                )
-
-            except Exception:
-                hours = hours + day.replace("Hrs", "") + " " + "closed" + ", "
-
-        hours = hours[:-2]
-
-        locator_domains.append(locator_domain)
-        page_urls.append(page_url)
-        location_names.append(location_name)
-        street_addresses.append(address)
-        citys.append(city)
-        states.append(state)
-        zips.append(zipp)
-        country_codes.append(country_code)
-        store_numbers.append(store_number)
-        phones.append(phone)
-        location_types.append(location_type)
-        latitudes.append(latitude)
-        longitudes.append(longitude)
-        hours_of_operations.append(hours)
-
-df = pd.DataFrame(
-    {
-        "locator_domain": locator_domains,
-        "page_url": page_urls,
-        "location_name": location_names,
-        "street_address": street_addresses,
-        "city": citys,
-        "state": states,
-        "zip": zips,
-        "store_number": store_numbers,
-        "phone": phones,
-        "latitude": latitudes,
-        "longitude": longitudes,
-        "hours_of_operation": hours_of_operations,
-        "country_code": country_codes,
-        "location_type": location_types,
-    }
-)
-
-df = df.fillna("<MISSING>")
-df = df.replace(r"^\s*$", "<MISSING>", regex=True)
-
-df["dupecheck"] = (
-    df["location_name"]
-    + df["street_address"]
-    + df["city"]
-    + df["state"]
-    + df["location_type"]
-)
-
-df = df.drop_duplicates(subset=["dupecheck"])
-df = df.drop(columns=["dupecheck"])
-df = df.replace(r"^\s*$", "<MISSING>", regex=True)
-df = df.fillna("<MISSING>")
-
-df.to_csv("data.csv", index=False)
+scrape()
