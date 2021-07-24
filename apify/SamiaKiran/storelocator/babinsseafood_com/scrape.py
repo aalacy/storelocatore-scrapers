@@ -32,7 +32,7 @@ def fetch_data():
             address = temp.findAll("a")
             phone = address[1].text
             address = address[0].get_text(separator="|", strip=True).split("|")
-            street_address = address[0]
+            street_address = address[0].replace(",", "")
             address = address[1].split(",")
             city = address[0]
             address = address[1].split()
@@ -42,6 +42,12 @@ def fetch_data():
                 temp.findAll("p")[1].get_text(separator="|", strip=True).split("|")[0]
             )
             country_code = "US"
+            coords = soup.find("div", {"class": "gmaps"})[
+                "data-gmaps-static-url-mobile"
+            ]
+            coords = coords.split("en¢er=")[1].split("&zoom")[0].split("%2C")
+            latitude = coords[0]
+            longitude = coords[1]
             yield SgRecord(
                 locator_domain=DOMAIN,
                 page_url=page_url,
@@ -54,8 +60,8 @@ def fetch_data():
                 store_number=MISSING,
                 phone=phone.strip(),
                 location_type=MISSING,
-                latitude=MISSING,
-                longitude=MISSING,
+                latitude=latitude,
+                longitude=longitude,
                 hours_of_operation=hours_of_operation.strip(),
             )
 
