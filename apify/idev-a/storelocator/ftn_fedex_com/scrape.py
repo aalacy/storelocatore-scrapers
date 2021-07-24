@@ -147,7 +147,7 @@ if __name__ == "__main__":
                     SgRecord.Headers.LOCATION_NAME,
                     SgRecord.Headers.STREET_ADDRESS,
                     SgRecord.Headers.CITY,
-                    SgRecord.Headers.ZIP_POSTAL,
+                    SgRecord.Headers.ZIP,
                     SgRecord.Headers.PHONE,
                 }
             )
