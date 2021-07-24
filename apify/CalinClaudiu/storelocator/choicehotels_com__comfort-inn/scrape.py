@@ -36,7 +36,10 @@ def fetch_records(http: SgRequests, search: DynamicGeoSearch) -> Iterable[SgReco
         url = str(
             f"https://www.choicehotels.com/webapi/location/hotels?adults=1&checkInDate=3021-07-15&checkOutDate=3021-07-17&favorCoOpHotels=false&hotelSortOrder=&include=&lat={lat}&lon={lng}&minors=0&optimizeResponse=&placeName=&platformType=DESKTOP&preferredLocaleCode=en-us&ratePlanCode=RACK&ratePlans=RACK%2CPREPD%2CPROMO%2CFENCD&rateType=LOW_ALL&rooms=1&searchRadius=100&siteName=us&siteOpRelevanceSortMethod=ALGORITHM_B"
         )
-        locations = http.get(url, headers=headers).json()
+        try:
+            locations = http.get(url, headers=headers).json()
+        except Exception:
+            locations = {"hotelCount": 0}
         if locations["hotelCount"] > 0:
             for record in locations["hotels"]:
                 try:
