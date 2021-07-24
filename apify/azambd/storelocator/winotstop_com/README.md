@@ -11,8 +11,8 @@ Please make sure that:
 * The resulting output passes https://github.com/SafeGraphInc/crawl-service/blob/master/scripts/validate.py
 
 
-## RND
+## R&D
 
 - found 11 Locations as of 24th July 2021 
-- data pulled from Googme Embed Maps 
+- data pulled from Google Embed Maps 
 
