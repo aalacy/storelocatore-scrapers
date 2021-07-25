@@ -7,13 +7,11 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-logger = SgLogSetup(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)).get_logger(
-    "smashburger_com"
-)
+logger = SgLogSetup().get_logger("smashburger_com")
 
 
 def write_output(data):
-    with SgWriter() as writer:
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         for row in data:
             writer.write_row(row)
 
