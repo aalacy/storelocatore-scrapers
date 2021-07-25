@@ -33,22 +33,7 @@ def fetch_data(sgw: SgWriter):
         state = j.get("stateOrProvinceName")
         postal = j.get("postalCode")
         city = j.get("city")
-        days = [
-            "sunday",
-            "saturday",
-            "tuesday",
-            "friday",
-            "wednesday",
-            "thursday",
-            "monday",
-        ]
-        tmp = []
-        for d in days:
-            days = "".join(d)
-            times = j.get("Attribute").get("WH_DAY").get(f"{d}")
-            line = f"{days} {times}"
-            tmp.append(line)
-        hours_of_operation = ";".join(tmp)
+        hours_of_operation = f'Sunday {j.get("Attribute").get("WH_DAY").get("sunday")} Saturday {j.get("Attribute").get("WH_DAY").get("saturday")} Tuesday {j.get("Attribute").get("WH_DAY").get("tuesday")} Friday {j.get("Attribute").get("WH_DAY").get("friday")} Wednesday {j.get("Attribute").get("WH_DAY").get("wednesday")} Thursday {j.get("Attribute").get("WH_DAY").get("thursday")} Monday {j.get("Attribute").get("WH_DAY").get("monday")}'
         latitude = j.get("latitude")
         longitude = j.get("longitude")
 
