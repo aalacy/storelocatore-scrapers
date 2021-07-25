@@ -2,6 +2,9 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+
 
 _headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
@@ -23,24 +26,25 @@ def fetch_data():
             if _.get("region"):
                 state = _.get("region")
             hours = []
-            for hh in bs(_["schedule"], "lxml").stripped_strings:
-                if "こちら" in hh:
-                    break
-                if "@" in hh or "現在" in hh or "opening" in hh.lower():
-                    continue
-                hh = (
-                    hh.split("当店")[0]
-                    .replace("通常営業時間", "")
-                    .replace("\\n", " ")
-                    .replace("\n", "")
-                    .replace("\r", " ")
-                    .replace("※", "")
-                    .replace("This boutique is open for services.", "")
-                    .strip()
-                )
-                if not hh.strip():
-                    continue
-                hours.append(hh)
+            if _["schedule"]:
+                for hh in bs(_["schedule"], "lxml").stripped_strings:
+                    if "こちら" in hh:
+                        break
+                    if "@" in hh or "現在" in hh or "opening" in hh.lower():
+                        continue
+                    hh = (
+                        hh.split("当店")[0]
+                        .replace("通常営業時間", "")
+                        .replace("\\n", " ")
+                        .replace("\n", "")
+                        .replace("\r", " ")
+                        .replace("※", "")
+                        .replace("This boutique is open for services.", "")
+                        .strip()
+                    )
+                    if not hh.strip():
+                        continue
+                    hours.append(hh)
             if hours and "temporarily not open" in hours[0]:
                 hours = ["temporarily closed"]
             yield SgRecord(
@@ -60,7 +64,7 @@ def fetch_data():
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
