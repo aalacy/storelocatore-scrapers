@@ -67,17 +67,17 @@ def fetch_data():
     )
     dic = {"CA": ca, "US": us}
     for country in dic:
-        cities = dic[country]
-        for city in cities:
-            url = city.get("href")
+        states = dic[country]
+        for state in states:
+            url = state.get("href")
             logger.info(url)
             res = session.get(url, headers=headers)
             soup = BeautifulSoup(res.text, "html.parser")
-            stores = soup.find("h3", {"class": "store-title"})
+            stores = soup.find_all("h3", {"class": "store-title"})
 
             for store in stores:
 
-                url = store.get("href")
+                url = store.find("a").get("href")
                 logger.info(url)
                 res = session.get(url, headers=headers)
                 soup = BeautifulSoup(res.text, "html.parser")
