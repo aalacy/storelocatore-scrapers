@@ -67,7 +67,7 @@ def fetch_data(sgw: SgWriter):
             except:
                 hours = "<MISSING>"
             if hours != "<MISSING>":
-                hours_of_operation = get_hours(hours)
+                hours_of_operation = str(get_hours(hours))
 
             line = location_name
             if line in s:
