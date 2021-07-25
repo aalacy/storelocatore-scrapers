@@ -77,10 +77,12 @@ def getJSONObjectVariable(Object, varNames, noVal=MISSING):
     return value
 
 
-def getHOO(list):
+def getHOO(list=[]):
     hoo = []
     for data in list:
-        if data["day"] and data["opening"]:
+        if data is None:
+            continue
+        if "day" in data and "opening" in data and data["day"] and data["opening"]:
             hoo.append(f"{data['day']} {data['opening']}")
     if len(hoo) > 0:
         return "; ".join(hoo)
@@ -165,7 +167,15 @@ def fetch_records(
         headers, newStores = fetchRequest(driver, http, lat, lng, headers)
         for store in newStores:
             yield getStoreDetails(store, countryCode)
-        log.debug(f"{count}. from {countryCode}: {lat, lng} stores= {len(newStores)}")
+
+        if len(newStores) == 0:
+            log.debug(
+                f"{count}. from {countryCode}: {lat, lng} stores= {len(newStores)}"
+            )
+        else:
+            log.info(
+                f"{count}. from {countryCode}: {lat, lng} stores= {len(newStores)}"
+            )
 
 
 def scrape():
@@ -173,7 +183,7 @@ def scrape():
     start = time.time()
     country_codes = SearchableCountries.ALL
     search = DynamicGeoSearch(
-        country_codes=country_codes, max_search_distance_miles=50, use_state=False
+        country_codes=country_codes, expected_search_radius_miles=50, use_state=False
     )
 
     with SgWriter(
