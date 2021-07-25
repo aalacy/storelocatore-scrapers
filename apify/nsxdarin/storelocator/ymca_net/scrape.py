@@ -19,6 +19,7 @@ search = DynamicGeoSearch(
 
 logger = SgLogSetup().get_logger("ymca_org")
 
+
 def fetch_data():
     alllocs = []
     for lat, lng in search:
@@ -156,10 +157,12 @@ def fetch_data():
         except:
             pass
 
+
 def scrape():
     results = fetch_data()
     with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         for rec in results:
             writer.write_row(rec)
+
 
 scrape()
