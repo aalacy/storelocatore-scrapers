@@ -232,6 +232,8 @@ cookies_string = (
     .replace(",", ";")
 )
 
+session = SgRequests()
+
 
 def fetch_data_for_7_child_brands():
     regions_submit_search_urls = get__regions_submit_search_urls()
@@ -252,10 +254,9 @@ def fetch_data_for_7_child_brands():
             "upgrade-insecure-requests": "1",
             "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.77 Safari/537.36",
         }
-        session = SgRequests()
 
         r1 = session.get(url_base_city_state, headers=headers_path_ak)
-        time.sleep(10)
+        time.sleep(15)
         search_list_records_total = re.findall(
             r"search_list_records_total\":\s\d+,", r1.text
         )
