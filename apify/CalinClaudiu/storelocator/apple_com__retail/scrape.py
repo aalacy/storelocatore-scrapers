@@ -425,7 +425,6 @@ def scrape():
 
 if __name__ == "__main__":
     scrape()
-    global errorz
     for i in errorz:
         logzilla.warning(i)
     raise

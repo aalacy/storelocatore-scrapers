@@ -4,4 +4,5 @@ sgvalidator==0.0.70
 sgrequests==0.1.12
 sgselenium==0.1.4
 sgscrape==0.1.11
+sgpostal==0.1.0
 sglogging==0.0.4
