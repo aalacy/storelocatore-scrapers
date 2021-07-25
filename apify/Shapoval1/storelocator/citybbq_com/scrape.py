@@ -6,6 +6,18 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgzip.static import static_coordinate_list, SearchableCountries
 
 
+def get_hours(hours: tuple):
+    tmp = []
+    for h in hours:
+        day = h.get("weekday")
+        start = "".join(h.get("start")).split()[1].strip()
+        end = "".join(h.get("end")).split()[1].strip()
+        line = f"{day} {start} - {end}"
+        tmp.append(line)
+    hours_of_operation = ";".join(tmp) or "<MISISNG>"
+    return hours_of_operation
+
+
 def fetch_data(sgw: SgWriter):
     search = static_coordinate_list(radius=50, country_code=SearchableCountries.USA)
     for lat, long in search:
@@ -47,23 +59,15 @@ def fetch_data(sgw: SgWriter):
             phone = j.get("telephone")
             latitude = j.get("latitude")
             longitude = j.get("longitude")
+            hours_of_operation = "<MISSING>"
             try:
                 hours = (
                     j.get("calendars").get("calendar")[0].get("ranges") or "<MISSING>"
                 )
             except:
                 hours = "<MISSING>"
-            tmp = []
             if hours != "<MISSING>":
-                for h in hours:
-                    day = h.get("weekday")
-                    start = "".join(h.get("start")).split()[1].strip()
-                    end = "".join(h.get("end")).split()[1].strip()
-                    line = f"{day} {start} - {end}"
-                    tmp.append(line)
-                hours_of_operation = ";".join(tmp) or "<MISISNG>"
-            else:
-                hours_of_operation = "<MISSING>"
+                hours_of_operation = get_hours(hours)
 
             line = location_name
             if line in s:
