@@ -69,7 +69,6 @@ url_api_endpoints_23_brands = {
 
 def fetch_data_for_23_child_brands_from_api_endpoints():
     session = SgRequests()
-    # s = set()
     for k, v in url_api_endpoints_23_brands.items():
         url = v
         response = session.get(url, headers=headers_api, timeout=180)
