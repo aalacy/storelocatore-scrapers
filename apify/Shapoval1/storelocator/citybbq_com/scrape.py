@@ -6,7 +6,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgzip.static import static_coordinate_list, SearchableCountries
 
 
-def get_hours(hours: tuple) -> str:
+def get_hours(hours) -> str:
     tmp = []
     for h in hours:
         day = h.get("weekday")
@@ -68,7 +68,6 @@ def fetch_data(sgw: SgWriter):
                 hours = "<MISSING>"
             if hours != "<MISSING>":
                 hours_of_operation = str(get_hours(hours))
-
             line = location_name
             if line in s:
                 continue
