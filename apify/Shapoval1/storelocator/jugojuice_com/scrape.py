@@ -50,16 +50,14 @@ def fetch_data(sgw: SgWriter):
         )
         if hours_of_operation != "<MISSING>":
             a = html.fromstring(hours_of_operation)
-            hours_of_operation = a.xpath("//*//text()")
-            hours_of_operation = list(
-                filter(None, [a.strip() for a in hours_of_operation])
-            )
             hours_of_operation = (
-                " ".join(hours_of_operation)
+                " ".join(a.xpath("//*//text()"))
                 .replace("â", "")
                 .replace("ââ", "")
                 .replace(" <br> ", " ")
                 .replace("<br>", "")
+                .replace("  ", " ")
+                .replace(" 	 ", " ")
                 .strip()
             )
         if hours_of_operation.find("*") != -1:
