@@ -13,12 +13,11 @@ headers = {
 
 search = DynamicGeoSearch(
     country_codes=[SearchableCountries.USA],
-    max_radius_miles=10,
+    max_search_distance_miles=10,
     max_search_results=None,
 )
 
 logger = SgLogSetup().get_logger("ymca_org")
-
 
 def fetch_data():
     alllocs = []
@@ -157,12 +156,10 @@ def fetch_data():
         except:
             pass
 
-
 def scrape():
     results = fetch_data()
     with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         for rec in results:
             writer.write_row(rec)
-
 
 scrape()
