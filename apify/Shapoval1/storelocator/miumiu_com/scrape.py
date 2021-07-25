@@ -44,7 +44,7 @@ def fetch_data(sgw: SgWriter):
         ]
         tmp = []
         for d in days:
-            days = d
+            days = "".join(d)
             times = j.get("Attribute").get("WH_DAY").get(f"{d}")
             line = f"{days} {times}"
             tmp.append(line)
