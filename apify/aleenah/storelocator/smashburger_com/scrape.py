@@ -4,8 +4,12 @@ from bs4 import BeautifulSoup
 from sglogging import SgLogSetup
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-logger = SgLogSetup().get_logger("smashburger_com")
+logger = SgLogSetup(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)).get_logger(
+    "smashburger_com"
+)
 
 
 def write_output(data):
