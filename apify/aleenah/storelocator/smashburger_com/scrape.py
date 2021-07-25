@@ -1,40 +1,17 @@
-import csv
 import json
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 from sglogging import SgLogSetup
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
 
 logger = SgLogSetup().get_logger("smashburger_com")
 
 
 def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-                "page_url",
-            ]
-        )
-        # Body
+    with SgWriter() as writer:
         for row in data:
-            writer.writerow(row)
+            writer.write_row(row)
 
 
 session = SgRequests()
@@ -117,24 +94,23 @@ def fetch_data():
                         + " "
                     )
                 logger.info(tim)
-                all.append(
-                    [
-                        "https://smashburger.com",
-                        loc,
-                        street,
-                        city,
-                        state,
-                        zip,
-                        country,
-                        id,  # store #
-                        phone,  # phone
-                        type,  # type
-                        lat,  # lat
-                        long,  # long
-                        tim.strip(),  # timing
-                        url,
-                    ]
+                yield SgRecord(
+                    locator_domain="https://smashburger.com",
+                    page_url=url,
+                    location_name=loc,
+                    street_address=street,
+                    city=city,
+                    state=state,
+                    zip_postal=zip,
+                    country_code=country,
+                    store_number=id,
+                    phone=phone,
+                    location_type=type,
+                    latitude=lat,
+                    longitude=long,
+                    hours_of_operation=tim.strip(),
                 )
+
     return all
 
 
