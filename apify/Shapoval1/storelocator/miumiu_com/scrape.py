@@ -1,40 +1,11 @@
-import csv
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    out = []
-
-    locator_domain = "https://www.miumiu.com/"
+def fetch_data(sgw: SgWriter):
     api_url = (
         "https://www.miumiu.com/us/en/store-locator.miumiu.getAllStoresByBrand.json"
     )
@@ -50,8 +21,10 @@ def fetch_data():
             continue
         slug = "".join(j.get("storeName"))
         page_url = f"https://www.miumiu.com/us/en/store-detail.{slug}.html"
-        location_name = j.get("Description")[0].get("displayStoreName")
-        location_type = "<MISSING>"
+        try:
+            location_name = j.get("Description")[0].get("displayStoreName")
+        except:
+            location_name = j.get("Description").get("displayStoreName")
         street_address = "".join(j.get("addressLine")[0]).replace(
             "9700 Collins Avenue,", "9700 Collins Avenue"
         )
@@ -60,7 +33,6 @@ def fetch_data():
         state = j.get("stateOrProvinceName")
         postal = j.get("postalCode")
         city = j.get("city")
-        store_number = "<MISSING>"
         days = [
             "sunday",
             "saturday",
@@ -80,31 +52,28 @@ def fetch_data():
         latitude = j.get("latitude")
         longitude = j.get("longitude")
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=SgRecord.MISSING,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+        )
 
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    locator_domain = "https://www.miumiu.com/"
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        fetch_data(writer)
