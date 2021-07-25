@@ -6,7 +6,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgzip.static import static_coordinate_list, SearchableCountries
 
 
-def get_hours(hours: tuple):
+def get_hours(hours: tuple) -> str:
     tmp = []
     for h in hours:
         day = h.get("weekday")
