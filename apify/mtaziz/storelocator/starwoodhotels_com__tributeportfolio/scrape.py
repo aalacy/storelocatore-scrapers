@@ -22,10 +22,10 @@ else:
     ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
 
 
-DOMAIN = "starwoodhotels.com/tributeportfolio"
+DOMAIN = "tribute-portfolio.marriott.com"
 URL_LOCATION = "https://www.marriott.com/hotel-search.mi"
 
-logger = SgLogSetup().get_logger("starwoodhotels_com__tributeportfolio")
+logger = SgLogSetup().get_logger("tribute-portfolio_marriott_com")
 
 headers_api = {
     "accept": "application/json, text/plain, */*",
