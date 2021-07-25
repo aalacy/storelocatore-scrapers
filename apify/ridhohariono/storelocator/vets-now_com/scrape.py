@@ -4,6 +4,10 @@ import json
 from bs4 import BeautifulSoup as bs
 from sgrequests import SgRequests
 from sglogging import sglog
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 
 DOMAIN = "vets-now.com"
@@ -82,11 +86,11 @@ def fetch_store_urls():
 def fetch_data():
     log.info("Fetching store_locator data")
     store_urls = fetch_store_urls()
-    locations = []
     for page_url in store_urls:
         soup = pull_content(page_url)
         info = parse_json(soup)["@graph"][5]
-        locator_domain = DOMAIN
+        if "name" not in info:
+            info = parse_json(soup)["@graph"][6]
         location_name = handle_missing(info["name"])
         address = info["address"].replace(",,", ",")
         address = re.sub(r"<br.*", "", address)
@@ -123,39 +127,44 @@ def fetch_data():
             hoo_content.get_text(strip=True, separator=",")
             .replace("day,", "day: ")
             .replace(",–,", " - ")
+            .replace("Open,24h", "24 Hours")
+            .replace(",from,", " from ")
             .strip()
         )
         location_type = "<MISSING>"
         latitude = handle_missing(info["geo"]["latitude"])
         longitude = handle_missing(info["geo"]["longitude"])
         log.info("Append {} => {}".format(location_name, street_address))
-        locations.append(
-            [
-                locator_domain,
-                page_url,
-                location_name,
-                street_address,
-                city,
-                state,
-                zip_code,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
+        yield SgRecord(
+            locator_domain=DOMAIN,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address.strip(),
+            city=city.strip(),
+            state=state.strip(),
+            zip_postal=zip_code.strip(),
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone.strip(),
+            location_type=location_type,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+            raw_address=f"{street_address}, {city}, {state} {zip_code} ",
         )
-    return locations
 
 
 def scrape():
-    log.info("Start {} Scraper".format(DOMAIN))
-    data = fetch_data()
-    log.info("Found {} locations".format(len(data)))
-    write_output(data)
-    log.info("Finish processed " + str(len(data)))
+    log.info("start {} Scraper".format(DOMAIN))
+    count = 0
+    with SgWriter(SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
 
 
 scrape()
