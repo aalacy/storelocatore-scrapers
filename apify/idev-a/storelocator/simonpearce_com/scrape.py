@@ -39,6 +39,23 @@ def fetch_data():
                 if "now open" in _hh.text.lower():
                     _hh = _hr.find_parent().select("p")[1]
                 hours = list(_hh.stripped_strings)
+            try:
+                coord = (
+                    sp1.find("a", string=re.compile(r"VIEW MAP"))["href"]
+                    .split("ll=")[1]
+                    .split("&")[0]
+                    .split(",")
+                )
+            except:
+                try:
+                    coord = (
+                        sp1.find("a", string=re.compile(r"VIEW MAP"))["href"]
+                        .split("/@")[1]
+                        .split("/data")[0]
+                        .split(",")
+                    )
+                except:
+                    coord = ["", ""]
             yield SgRecord(
                 page_url=page_url,
                 location_name=link.h3.text.strip(),
@@ -49,6 +66,8 @@ def fetch_data():
                 country_code="US",
                 phone=addr[-1],
                 locator_domain=locator_domain,
+                latitude=coord[0],
+                longitude=coord[1],
                 hours_of_operation="; ".join(hours).replace("–", "-"),
             )
 
