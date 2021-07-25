@@ -1,106 +1,77 @@
-import csv
-from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
-import json
+
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+
+from sgrequests import SgRequests
 
 
+def fetch_data(sgw: SgWriter):
 
-session = SgRequests()
+    session = SgRequests()
 
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-  
-    base_url= "https://pizzapit.biz/locations/"
+    base_url = "https://pizzapit.biz/locations/"
     r = session.get(base_url)
-    soup= BeautifulSoup(r.text,"lxml")
-    data = soup.find_all("div",{"class":"fl-rich-text"})
+    soup = BeautifulSoup(r.text, "lxml")
+    data = soup.find(class_="page-content").find_all("p")
 
-    phone =[]
-    street_address=[]
-    name_store=[]
-    store_detail=[]
-    return_main_object=[]
+    locator_domain = "pizzapit.biz"
 
-    base_url1= "https://pizzapit.biz/locations/wi-madison-south-fitchburg/"
-    r = session.get(base_url1)
-    soup1= BeautifulSoup(r.text,"lxml")
-    tem_var1=[]
-    name1 =[]
-    
-    phone1 = list(soup1.find("tbody").p.stripped_strings)[1]
-    street_address1 = list(soup1.find("tbody").p.stripped_strings)[2]
-    city=list(soup1.find("tbody").p.stripped_strings)[3].split( )[0]
-    state= list(soup1.find("tbody").p.stripped_strings)[3].split( )[1]
-    
-    tem_var1.append("https://pizzapit.biz")
-    tem_var1.append(list(soup1.find("tbody").p.stripped_strings)[0])
-    tem_var1.append(street_address1)
-    tem_var1.append(city)
-    tem_var1.append(state)
-    tem_var1.append("<MISSING>")
-    tem_var1.append("US")
-    tem_var1.append("<MISSING>")
-    tem_var1.append(phone1)
-    tem_var1.append("pizzapit")
-    tem_var1.append("<MISSING>")
-    tem_var1.append("<MISSING>")
-    tem_var1.append("<MISSING>")
-   
-    
-    
-    data = soup.find_all("div",{"class":"fl-rich-text"})
     for i in data:
-        std = i.find_all('p')
-        for st in std:
-            if len(list(st.stripped_strings)) !=0:
-                phone.append(list(st.stripped_strings)[1])
+        try:
+            location_name = i.strong.text.strip()
+        except:
+            continue
+        raw_address = list(i.stripped_strings)[-2:]
+        street_address = raw_address[0]
+        city_line = raw_address[-1].strip().split(",")
+        city = city_line[0].strip()
+        state = city_line[-1].strip().split()[0].strip()
+        zip_code = city_line[-1].strip().split()[1].strip()
+        country_code = "US"
+        store_number = "<MISSING>"
+        location_type = "<MISSING>"
+        phone = list(i.stripped_strings)[-3]
+        hours_of_operation = "<MISSING>"
 
-                street_address.append(list(st.stripped_strings)[2])
-       
-        name = i.find_all("strong")
-        for n in name:
-            if '  ' in n.text.replace("\n",""):
-                pass
-            else:
-                name_store.append(n.text.replace("\n","")) 
-                
-    for i in range(len(name_store)):
-        store = list()
-        store.append("https://pizzapit.biz")
-        store.append(name_store[i])
-        store.append(street_address[i])
-        store.append("<MISSING>")
-        store.append("<MISSING>")
-        store.append("<MISSING>")
-        store.append("US")
-        store.append("<MISSING>")
-        store.append(phone[i])
-        store.append("pizzapit")
-        store.append("<MISSING>")
-        store.append("<MISSING>")
-        store.append("<MISSING>")
-        return_main_object.append(store)
-    
-    del return_main_object[6]
-    return_main_object.insert(6,tem_var1)
-    return return_main_object
+        link = i.a["href"]
+        r = session.get(link)
+        base = BeautifulSoup(r.text, "lxml")
+
+        map_link = base.find(class_="fl-map").iframe["src"]
+        req = session.get(map_link)
+        map_str = BeautifulSoup(req.text, "lxml")
+        geo = (
+            re.findall(r"\[[0-9]{2}\.[0-9]+,-[0-9]{2,3}\.[0-9]+\]", str(map_str))[0]
+            .replace("[", "")
+            .replace("]", "")
+            .split(",")
+        )
+        latitude = geo[0]
+        longitude = geo[1]
+
+        sgw.write_row(
+            SgRecord(
+                locator_domain=locator_domain,
+                page_url=link,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_code,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
+        )
 
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    fetch_data(writer)
