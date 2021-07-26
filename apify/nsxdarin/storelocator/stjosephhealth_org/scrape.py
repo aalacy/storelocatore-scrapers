@@ -12,6 +12,7 @@ headers = {
 
 logger = SgLogSetup().get_logger("stjosephhealth_org")
 
+
 def fetch_data():
     locs = []
     website = "stjosephhealth.org"
