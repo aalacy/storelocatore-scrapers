@@ -1,4 +1,3 @@
-import re
 import json
 
 from sgrequests import SgRequests
@@ -14,7 +13,7 @@ def fetch_data():
     session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
 
     start_url = "https://liveapi.yext.com/v2/accounts/me/entities/geosearch?radius=500&location={}&limit=50&api_key=f758e5b45905bc090af86915406d345c&v=20181201&resolvePlaceholders=true&entityTypes=Restaurant&savedFilterIds=192172006"
-    domain = re.findall("://(.+?)/", start_url)[0].replace("www.", "")
+    domain = "condadotacos.com"
     hdr = {
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
     }
