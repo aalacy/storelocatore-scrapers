@@ -43,6 +43,7 @@ def fetch_data():
                     street_address = _["address"]["street"]
                     city = _["address"]["city"]
                     state = _["address"]["province"]
+                    zip_postal = ""
                 yield SgRecord(
                     page_url=_["permalink"],
                     location_name=_["title"].replace("’", "'").replace("–", "-"),
