@@ -28,7 +28,10 @@ def fetch_data():
             yield SgRecord(
                 page_url=page_url,
                 location_name=location_name,
-                street_address=" ".join(address[:-1]),
+                street_address=" ".join(address[:-1])
+                .replace("Wellington Green Square", "")
+                .replace("Pines City Center", "")
+                .strip(),
                 city=address[-1].split(",")[0],
                 state=address[-1].split(",")[1].strip().split(" ")[0],
                 zip_postal=address[-1].split(",")[1].strip().split(" ")[1],
