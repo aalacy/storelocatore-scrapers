@@ -41,7 +41,6 @@ def fetch_data():
     for zip in search:
         if search.items_remaining() > maxZ:
             maxZ = search.items_remaining()
-        country = search.current_country()
         logger.info(("Pulling Geo Code %s..." % zip))
         locations = bs(
             session.get(base_url.format(zip), headers=_headers).text, "lxml"
