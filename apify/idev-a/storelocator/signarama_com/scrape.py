@@ -40,9 +40,7 @@ def set_proxies():
     if "PROXY_PASSWORD" in os.environ and os.environ["PROXY_PASSWORD"].strip():
         proxy_password = os.environ["PROXY_PASSWORD"]
         url = (
-            os.environ["PROXY_URL"]
-            if "PROXY_URL" in os.environ
-            else DEFAULT_PROXY_URL
+            os.environ["PROXY_URL"] if "PROXY_URL" in os.environ else DEFAULT_PROXY_URL
         )
         return url.format(proxy_password)
     else:
