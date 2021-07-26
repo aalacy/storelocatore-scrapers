@@ -2,6 +2,9 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger("circalighting")
 
 _headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
@@ -47,6 +50,26 @@ def fetch_data():
                 city = city_state[0]
                 state = city_state[1].strip().split(" ")[0].strip()
                 zip_postal = city_state[1].strip().split(" ")[1].strip()
+            logger.info(page_url)
+            sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
+            if sp1.select_one("div.gmap iframe"):
+                try:
+                    coord = (
+                        sp1.select_one("div.gmap iframe")["src"]
+                        .split("!2d")[1]
+                        .split("!3m")[0]
+                        .split("!2m")[0]
+                        .split("!3d")
+                    )
+                except:
+                    coord = (
+                        sp1.select_one("div.gmap iframe")["src"]
+                        .split("/@")[1]
+                        .split("/data")[0]
+                        .split(",")
+                    )
+            else:
+                coord = ["", ""]
             yield SgRecord(
                 page_url=page_url,
                 location_name=block[0],
@@ -56,6 +79,8 @@ def fetch_data():
                 zip_postal=zip_postal,
                 country_code=country,
                 phone=phone,
+                latitude=coord[1],
+                longitude=coord[0],
                 locator_domain=locator_domain,
                 hours_of_operation="; ".join(hours),
             )
