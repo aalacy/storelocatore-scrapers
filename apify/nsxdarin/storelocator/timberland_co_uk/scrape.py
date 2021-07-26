@@ -101,13 +101,11 @@ def fetch_data():
     for item in json.loads(r.content)["response"]["collection"]:
         phone = item["phone"]
         store = "<MISSING>"
-        add = (
-            str(item["address1"])
-            + " "
-            + str(item["address2"])
-            + " "
-            + str(item["address3"])
-        )
+        add = str(item["address1"])
+        if item["address2"] is not None:
+            add = add + " " + str(item["address2"])
+        if item["address3"] is not None:
+            add = add + " " + str(item["address3"])
         add = add.strip()
         city = item["city"]
         state = item["province"]
@@ -129,6 +127,8 @@ def fetch_data():
                 typ = "Timberland Store"
             if "TBC" in phone:
                 phone = "<MISSING>"
+            add = add.replace("None", "").strip()
+            phone = phone.replace("Tel:", "").strip()
             yield [
                 website,
                 loc,
