@@ -1,5 +1,4 @@
 from sgrequests import SgRequests
-import pandas as pd
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 from sgscrape import simple_scraper_pipeline as sp
 
