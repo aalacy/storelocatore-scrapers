@@ -32,7 +32,6 @@ def fetch_data(sgw: SgWriter):
         postal = a.postcode or "<MISSING>"
         country_code = "CA"
         city = a.city or "<MISSING>"
-        store_number = "<MISSING>"
         phone = j.split('phone:"')[1].split('"')[0].strip()
         hours_of_operation = (
             j.split("hours:")[1]
