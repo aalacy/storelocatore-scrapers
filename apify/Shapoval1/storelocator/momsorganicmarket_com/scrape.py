@@ -89,7 +89,7 @@ def fetch_data(sgw: SgWriter):
                     b.xpath(".//div[@class='et_pb_blurb_description']/p[3]/text()")
                 )
                 hours_of_operation = b.xpath(
-                    ".//div[@class='et_pb_blurb_description']/p[6]//text()"
+                    ".//div[@class='et_pb_blurb_description']/p[5]//text()"
                 )
                 hours_of_operation = list(
                     filter(None, [a.strip() for a in hours_of_operation])
