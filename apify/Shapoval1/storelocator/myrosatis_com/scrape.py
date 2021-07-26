@@ -139,16 +139,42 @@ def fetch_data(sgw: SgWriter):
             )
             if hours_of_operation.find("15%") != -1:
                 hours_of_operation = hours_of_operation.split("15%")[0].strip()
-            if hours_of_operation.find("Please note that") != -1:
-                hours_of_operation = hours_of_operation.split("Please note that")[
-                    0
-                ].strip()
             if hours_of_operation.find("No online orders 30") != -1:
                 hours_of_operation = hours_of_operation.split("No online orders 30")[
                     0
                 ].strip()
             if hours_of_operation.find("Last order") != -1:
                 hours_of_operation = hours_of_operation.split("Last order")[0].strip()
+            if hours_of_operation == "<MISSING>":
+                hours_of_operation = (
+                    " ".join(
+                        tree.xpath(
+                            '//p[./strong[text()="Hours"]]/following-sibling::*//text()'
+                        )
+                    )
+                    .replace("\n", "")
+                    .strip()
+                    or "<MISSING>"
+                )
+
+            if hours_of_operation.find("Delivery Fee: ") != -1:
+                hours_of_operation = hours_of_operation.split("Delivery Fee: ")[
+                    0
+                ].strip()
+            if hours_of_operation.find("Please note that") != -1:
+                hours_of_operation = hours_of_operation.split("Please note that")[
+                    0
+                ].strip()
+            if hours_of_operation.find("Minimum") != -1:
+                hours_of_operation = hours_of_operation.split("Minimum")[0].strip()
+            if hours_of_operation.find("May – October: ") != -1:
+                hours_of_operation = hours_of_operation.split("May – October: ")[
+                    0
+                ].strip()
+            if hours_of_operation.find("Text ") != -1:
+                hours_of_operation = hours_of_operation.split("Text ")[0].strip()
+            if hours_of_operation.find("*No") != -1:
+                hours_of_operation = hours_of_operation.split("*No")[0].strip()
 
             row = SgRecord(
                 locator_domain=locator_domain,
