@@ -45,7 +45,7 @@ def fetch_data():
             '//div[h1[span[span[contains(text(), "Hours")]]]]/following-sibling::div[@data-testid="richTextElement"][1]//text()'
         )
         hoo = [e.strip() for e in hoo if e.strip()]
-        hoo = " ".join(hoo)
+        hoo = " ".join(hoo).split("*")[0].strip()
         if "Store hours" in hoo:
             hoo = SgRecord.MISSING
 
