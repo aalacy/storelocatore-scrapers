@@ -3,6 +3,7 @@ import json
 import html
 from sgscrape import simple_scraper_pipeline as sp
 
+
 def extract_json(html_string):
     json_objects = []
     count = 0
@@ -91,8 +92,9 @@ def get_data():
             "phone": phone,
             "location_type": location_type,
             "hours": hours,
-            "country_code": country_code
+            "country_code": country_code,
         }
+
 
 def scrape():
     field_defs = sp.SimpleScraperPipeline.field_definitions(
