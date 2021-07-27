@@ -38,7 +38,6 @@ def strip_accents(text):
 def fetch_data():
     url = "https://www.patrickmorin.com/fr/magasins"
     r = session.get(url, headers=headers)
-    soup = BeautifulSoup(r.text, "html.parser")
     loclist = r.text.split('"markers":')[1].split(',"type"')[0]
     loclist = json.loads(loclist)
     for loc in loclist:
