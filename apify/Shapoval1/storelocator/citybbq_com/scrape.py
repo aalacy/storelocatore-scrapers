@@ -19,7 +19,7 @@ def get_hours(hours) -> str:
 
 
 def fetch_data(sgw: SgWriter):
-    search = static_coordinate_list(radius=50, country_code=SearchableCountries.USA)
+    search = static_coordinate_list(radius=30, country_code=SearchableCountries.USA)
     for lat, long in search:
 
         headers = {
