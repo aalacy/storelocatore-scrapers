@@ -124,6 +124,25 @@ def fetch_data():
             hours = "<MISSING>"
         if phone == "":
             phone = "<MISSING>"
+        hours = hours.replace("Primary Care:", "").strip()
+        if "<br" in hours:
+            hours = hours.split("<br")[0]
+        if "(check" in hours:
+            hours = hours.split("(check")[0]
+        if "**" in hours:
+            hours = hours.split("**")[0].strip()
+        if "; ;" in hours:
+            hours = hours.split("; ;")[0].strip()
+        if " Current" in hours:
+            hours = hours.split(" Current")[0].strip()
+        if " - Lab" in hours:
+            hours = hours.split(" - Lab")[0].strip()
+        if "; The " in hours:
+            hours = hours.split("; The")[0].strip()
+        if " (" in hours:
+            hours = hours.split(" (")[0].strip()
+        if "; Wednesday 3" in hours:
+            hours = hours.split("; Wednesday 3")[0].strip()
         yield [
             website,
             purl,
