@@ -1,6 +1,9 @@
-import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 logger = SgLogSetup().get_logger("amtrak_com")
 
@@ -8,33 +11,6 @@ session = SgRequests()
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
-
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
 
 
 def fetch_data():
@@ -59,12 +35,12 @@ def fetch_data():
     if r.encoding is None:
         r.encoding = "utf-8"
     for line in r.iter_lines(decode_unicode=True):
-        if "<loc>https://beta.amtrak.com/stations/" in line:
-            items = line.split("<loc>https://beta.amtrak.com/stations/")
+        if "<loc>https://www.amtrak.com/stations/" in line:
+            items = line.split("<loc>https://www.amtrak.com/stations/")
             for item in items:
                 if "<?xml" not in item:
                     lurl = (
-                        "https://maps.amtrak.com/services/MapDataService/StationInfo/getStationInfo?stationCode="
+                        "https://www.amtrak.com/content/amtrak/en-us/stations/"
                         + item.split("<")[0]
                     )
                     locs.append(lurl)
@@ -82,7 +58,7 @@ def fetch_data():
         lat = "<MISSING>"
         lng = "<MISSING>"
         phone = "215-856-7924"
-        store = loc.rsplit("=", 1)[1]
+        store = loc.rsplit("/", 1)[1].split(".")[0]
         lurl = "https://www.amtrak.com/content/amtrak/en-us/stations/" + store + ".html"
         r2 = session.get(lurl, headers=headers)
         if r2.encoding is None:
@@ -141,27 +117,29 @@ def fetch_data():
         if "(" in typ:
             typ = typ.split("(")[0].strip()
         if add != "":
-            yield [
-                website,
-                lurl,
-                name,
-                add,
-                city,
-                state,
-                zc,
-                country,
-                store,
-                phone,
-                typ,
-                lat,
-                lng,
-                hours,
-            ]
+            yield SgRecord(
+                locator_domain=website,
+                page_url=lurl,
+                location_name=name,
+                street_address=add,
+                city=city,
+                state=state,
+                zip_postal=zc,
+                country_code=country,
+                phone=phone,
+                location_type=typ,
+                store_number=store,
+                latitude=lat,
+                longitude=lng,
+                hours_of_operation=hours,
+            )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()

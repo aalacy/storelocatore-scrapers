@@ -1,6 +1,9 @@
-import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 import json
 
 session = SgRequests()
@@ -9,33 +12,6 @@ headers = {
 }
 
 logger = SgLogSetup().get_logger("timberland_co_uk")
-
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
 
 
 def fetch_data():
@@ -101,13 +77,11 @@ def fetch_data():
     for item in json.loads(r.content)["response"]["collection"]:
         phone = item["phone"]
         store = "<MISSING>"
-        add = (
-            str(item["address1"])
-            + " "
-            + str(item["address2"])
-            + " "
-            + str(item["address3"])
-        )
+        add = str(item["address1"])
+        if item["address2"] is not None:
+            add = add + " " + str(item["address2"])
+        if item["address3"] is not None:
+            add = add + " " + str(item["address3"])
         add = add.strip()
         city = item["city"]
         state = item["province"]
@@ -130,27 +104,31 @@ def fetch_data():
             if "TBC" in phone:
                 phone = "<MISSING>"
             add = add.replace("None", "").strip()
-            yield [
-                website,
-                loc,
-                name,
-                add,
-                city,
-                state,
-                zc,
-                country,
-                store,
-                phone,
-                typ,
-                lat,
-                lng,
-                hours,
-            ]
+            phone = phone.replace("Tel:", "").strip()
+            name = name.replace("<br>", "")
+            yield SgRecord(
+                locator_domain=website,
+                page_url=loc,
+                location_name=name,
+                street_address=add,
+                city=city,
+                state=state,
+                zip_postal=zc,
+                country_code=country,
+                phone=phone,
+                location_type=typ,
+                store_number=store,
+                latitude=lat,
+                longitude=lng,
+                hours_of_operation=hours,
+            )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()

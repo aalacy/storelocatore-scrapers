@@ -120,9 +120,6 @@ def fetch_data():
                     country = "JP"
                 if "Berlin" in name:
                     country = "DE"
-                if "Korea" in name:
-                    country = "KR"
-                    zc = "<MISSING>"
                 if "<" in add:
                     add = add.split("<")[0]
                 if country == "CN":
@@ -167,7 +164,7 @@ def fetch_data():
                     state = "<MISSING>"
                     country = "KR"
                     zc = "<MISSING>"
-                if "<" in zc:
+                if "<" in zc and zc != "<MISSING>":
                     zc = zc.split("<")[0].strip()
                 yield [
                     website,
