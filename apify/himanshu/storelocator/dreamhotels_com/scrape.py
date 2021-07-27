@@ -53,7 +53,6 @@ def fetch_store_urls():
 def fetch_data(sgw: SgWriter):
     log.info("Fetching store_locator data")
     page_urls = fetch_store_urls()
-    locations = []
     locator_domain = DOMAIN
     for page_url in page_urls:
         soup = pull_content(page_url)
