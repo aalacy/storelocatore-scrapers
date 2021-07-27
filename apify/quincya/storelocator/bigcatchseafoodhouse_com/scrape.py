@@ -67,7 +67,7 @@ def fetch_data():
         hours_of_operation = " ".join(
             list(
                 item.find(
-                    class_="rank-math-contact-hours-details rank-math-gear-snippet-content"
+                    class_="olderdata rank-math-contact-hours-details rank-math-gear-snippet-content"
                 ).stripped_strings
             )
         )

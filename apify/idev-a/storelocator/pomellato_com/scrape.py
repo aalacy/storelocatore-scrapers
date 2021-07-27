@@ -9,6 +9,17 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
 import time
+import ssl
+
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
+
 
 logger = SgLogSetup().get_logger("pomellato")
 
@@ -76,19 +87,24 @@ def fetch_data():
         for store in locations:
             if "boutique" not in store["storeType"]:
                 continue
-            search.found_location_at(
-                store["location"]["lat"],
-                store["location"]["lon"],
-            )
             store["lat"] = store["location"]["lat"]
             store["lng"] = store["location"]["lon"]
             addr = parse_address_intl(store["street"])
             store["street_address"] = store["street"].split(",")[0].strip()
             store["state"] = addr.state
+            if not store["state"]:
+                store["state"] = "<MISSING>"
             store["zip_postal"] = addr.postcode
+            if not store["zip_postal"]:
+                store["zip_postal"] = "<MISSING>"
             store["hours_of_operation"] = (
                 "; ".join(store.get("hours", [])) or "<MISSING>"
             )
+            if (
+                "notre boutique est temporairement"
+                in store["hours_of_operation"].lower()
+            ):
+                store["hours_of_operation"] = "temporarily closed"
             store["phone"] = (
                 store["phones"][0] if store.get("phones", []) else "<MISSING>"
             )

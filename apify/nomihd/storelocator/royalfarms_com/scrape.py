@@ -162,7 +162,7 @@ def fetch_data():
                 country_code = "<MISSING>"
 
             phone = "".join(address_mobile[-1]).strip()
-            if phone == "":
+            if phone == "" or "-" not in phone:
                 phone = "<MISSING>"
 
             hours_of_operation = "".join(store.xpath("td[2]/em/text()")).strip()

@@ -58,20 +58,23 @@ def fetch_data():
         poi = json.loads(poi)
 
         location_name = poi["name"]
-        addr = " ".join(
-            loc_dom.xpath(
-                '//div[@class="b-store-locator_full-details_store_address"]/div/text()'
-            )
+        raw_address = loc_dom.xpath(
+            '//div[@class="b-store-locator_full-details_store_address"]/div/text()'
         )
+        addr = " ".join(raw_address)
         addr = parse_address_intl(addr)
         street_address = poi["address"]["streetAddress"]
+        if "unit" in raw_address[1].lower():
+            street_address += ", " + raw_address[1].split(",")[0]
         city = addr.city
         city = city if city else "<MISSING>"
-        state = poi["address"]["addressRegion"]
+        state = "<MISSING>"
         zip_code = poi["address"]["postalCode"]
         country_code = poi["address"]["addressCountry"]
         store_number = store_url.split("=")[-1]
         phone = poi["telephone"]
+        if not phone:
+            continue
         location_type = poi["@type"]
         latitude = poi["geo"]["latitude"]
         longitude = poi["geo"]["longitude"]
