@@ -4,7 +4,7 @@ from bs4 import BeautifulSoup
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
-from sgscrape import sgpostal as parser
+from sgpostal.sgpostal import parse_address_intl
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
@@ -68,7 +68,7 @@ def fetch_data():
                 address = temp_list[2:-2]
                 address = " ".join(x for x in address)
                 raw_address = street_address + " " + address
-            parsed = parser.parse_address_intl(raw_address.replace('"', ""))
+            parsed = parse_address_intl(raw_address.replace('"', ""))
             city = parsed.city if parsed.city else "<MISSING>"
             zip_postal = parsed.postcode if parsed.postcode else "<MISSING>"
             state = parsed.country if parsed.postcode else "<MISSING>"
