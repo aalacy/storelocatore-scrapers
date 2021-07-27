@@ -189,7 +189,7 @@ def get__regions_submit_search_urls():
     # "RZ Hotel" refers to "the Ritz-Carlton Hotel"
 
     session = SgRequests()
-    r_count = session.get(URL_LOCATION, headers=headers_api)
+    r_count = session.get(URL_LOCATION, headers=headers_api, timeout=120)
     logger.info("Pulling Regional Search URLs")
     time.sleep(30)
     sel_count = html.fromstring(r_count.text, "lxml")
@@ -251,7 +251,7 @@ def fetch_data_for_7_child_brands():
             "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.77 Safari/537.36",
         }
 
-        r1 = session.get(url_base_city_state, headers=headers_path_ak)
+        r1 = session.get(url_base_city_state, headers=headers_path_ak, timeout=120)
         time.sleep(15)
         search_list_records_total = re.findall(
             r"search_list_records_total\":\s\d+,", r1.text
@@ -386,6 +386,7 @@ def fetch_data_for_7_child_brands():
                         r_chicago = session.get(
                             url_base_findHotels_custom,
                             headers=headers_pagination_enabled,
+                            timeout=120,
                         )
                         time.sleep(15)
                         logger.info(
