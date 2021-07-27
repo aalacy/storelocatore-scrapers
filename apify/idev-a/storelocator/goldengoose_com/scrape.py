@@ -12,6 +12,15 @@ _headers = {
 }
 
 
+def _ss(val):
+    return (
+        val.replace("FLAGSHIP STORE", "")
+        .replace("THE DOMAIN", "")
+        .replace("BOSTON COPLEY PLACE", "")
+        .strip()
+    )
+
+
 def fetch_data():
     locator_domain = "https://www.goldengoose.com"
     country_url = "https://www.goldengoose.com/on/demandware.store/Sites-ggdb-na-Site/en_US/Stores-FindStores?showMap=true"
@@ -26,6 +35,8 @@ def fetch_data():
             for _ in locations:
                 page_url = locator_domain + _["storeDetailsLink"]
                 street_address = _["address1"]
+                if not _ss(street_address):
+                    street_address = ""
                 if _["address2"]:
                     street_address += " " + _["address2"]
                 hours = []
@@ -58,6 +69,7 @@ def fetch_data():
                     or "korea" in street_address.lower()
                     or "virginia" in street_address.lower()
                 ):
+
                     addr = parse_address_intl(street_address)
                     street_address = addr.street_address_1
                     if addr.street_address_2:
@@ -72,7 +84,7 @@ def fetch_data():
                     page_url=page_url,
                     store_number=_["ID"],
                     location_name=_["name"],
-                    street_address=street_address,
+                    street_address=street_address.strip(),
                     city=city,
                     state=state,
                     zip_postal=zip_postal,
@@ -82,7 +94,7 @@ def fetch_data():
                     phone=_.get("phone"),
                     locator_domain=locator_domain,
                     hours_of_operation="; ".join(hours).replace("–", "-"),
-                    raw_address=_["extendedAddress"],
+                    raw_address=_ss(_["extendedAddress"]),
                 )
 
 

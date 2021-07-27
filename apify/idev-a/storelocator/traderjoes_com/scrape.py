@@ -49,7 +49,9 @@ def fetch_data():
                     hours = [_.text for _ in sp2.select("div#hoursSpl p")]
                     yield SgRecord(
                         page_url=loc["href"],
-                        location_name=loc.text.strip(),
+                        location_name=loc.text.replace(
+                            "View Store Details for", ""
+                        ).strip(),
                         street_address=addr[0],
                         city=addr[1].split(",")[0].strip(),
                         state=addr[1].split(",")[1].strip().split(" ")[0].strip(),
