@@ -75,16 +75,6 @@ def fetch_data():
 
                 break
 
-        Weekday = [
-            "sunday",
-            "monday",
-            "tuesday",
-            "wednesday",
-            "thursday",
-            "friday",
-            "saturday",
-        ]
-
         if hours_found is False:
             log.info(page_url)
             store_req = session.get(page_url, headers=headers)
