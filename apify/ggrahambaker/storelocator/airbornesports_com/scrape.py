@@ -19,7 +19,6 @@ headers = {
 
 def fetch_data(sgw: SgWriter):
 
-    data = []
     url = "https://airbornesports.com/"
     r = session.get(url, headers=headers, verify=False)
     soup = BeautifulSoup(r.text, "lxml")
