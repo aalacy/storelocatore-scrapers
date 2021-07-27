@@ -4,7 +4,6 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgselenium import SgChrome
-from webdriver_manager.chrome import ChromeDriverManager
 from sgrequests import SgRequests
 import json
 import time
