@@ -42,6 +42,7 @@ def fetch_data():
     data = json.loads(data)
 
     for poi in data["markers"]:
+        print(poi)
         addr = parse_address_intl(poi["infoAddress"])
         street_address = addr.street_address_1
         if addr.street_address_2:
@@ -58,7 +59,7 @@ def fetch_data():
             city=addr.city,
             state=SgRecord.MISSING,
             zip_postal=zip_code,
-            country_code=addr.country if addr.country else SgRecord.MISSING,
+            country_code="PR",
             store_number=SgRecord.MISSING,
             phone=poi["infoPhone"],
             location_type=SgRecord.MISSING,
