@@ -42,7 +42,6 @@ def fetch_data():
     data = json.loads(data)
 
     for poi in data["markers"]:
-        print(poi)
         addr = parse_address_intl(poi["infoAddress"])
         street_address = addr.street_address_1
         if addr.street_address_2:
