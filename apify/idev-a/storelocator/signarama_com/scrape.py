@@ -44,41 +44,63 @@ def fetch_data():
             city_url = locator_domain + state["href"]
             driver.get(city_url)
             cities = bs(driver.page_source, "lxml").select(
-                "div.row.mb-5 div.col-lg-3 div.col-5 a"
+                "div.row.mb-5 div.col-lg-3 div.col-7"
             )
             logger.info(f"[{len(cities)}] {city_url}")
             for city in cities:
-                page_url = locator_domain + city["href"]
-                if "contact.php" in page_url:
-                    continue
+                page_url = locator_domain + city.a["href"]
                 logger.info(page_url)
-                driver.get(page_url)
-                if driver.current_url != page_url:
-                    continue
-                sp1 = bs(driver.page_source, "lxml")
-                _ = json.loads(
-                    sp1.find("script", type="application/ld+json")
-                    .string.replace("\n", "")
-                    .replace("\t", "")
-                )
-                hours = [
-                    f"{hh['dayOfWeek']['name']}: {hh['opens']}-{hh['closes']}"
-                    for hh in _.get("openingHoursSpecification", [])
-                ]
-                yield SgRecord(
-                    page_url=page_url,
-                    location_name=_["name"],
-                    street_address=_["address"]["streetAddress"].strip(),
-                    city=_["address"]["addressLocality"].strip(),
-                    state=_["address"]["addressRegion"].strip(),
-                    zip_postal=_["address"]["postalCode"].strip(),
-                    country_code="US",
-                    phone=_.get("telephone"),
-                    locator_domain=locator_domain,
-                    latitude=_["geo"]["latitude"],
-                    longitude=_["geo"]["longitude"],
-                    hours_of_operation="; ".join(hours).replace("–", "-"),
-                )
+                if "contact.php" in page_url:
+                    addr = list(city.select("p.m-0")[-1].stripped_strings)
+                    yield SgRecord(
+                        page_url=page_url,
+                        location_name=city.strong.text.strip(),
+                        street_address=" ".join(addr[:-1]),
+                        city=addr[-1].split(",")[0].strip(),
+                        state=addr[-1].split(",")[0].strip().split(" ")[0].strip(),
+                        zip_postal=addr[-1]
+                        .split(",")[0]
+                        .strip()
+                        .split(" ")[-1]
+                        .strip(),
+                        country_code="US",
+                        phone=city.select_one("a.text-red").text.strip(),
+                        locator_domain=locator_domain,
+                    )
+                else:
+                    try:
+                        driver.get(page_url)
+                    except:
+                        driver.get(page_url)
+
+                    if driver.current_url != page_url:
+                        import pdb
+
+                        pdb.set_trace()
+                    sp1 = bs(driver.page_source, "lxml")
+                    _ = json.loads(
+                        sp1.find("script", type="application/ld+json")
+                        .string.replace("\n", "")
+                        .replace("\t", "")
+                    )
+                    hours = [
+                        f"{hh['dayOfWeek']['name']}: {hh['opens']}-{hh['closes']}"
+                        for hh in _.get("openingHoursSpecification", [])
+                    ]
+                    yield SgRecord(
+                        page_url=page_url,
+                        location_name=_["name"],
+                        street_address=_["address"]["streetAddress"].strip(),
+                        city=_["address"]["addressLocality"].strip(),
+                        state=_["address"]["addressRegion"].strip(),
+                        zip_postal=_["address"]["postalCode"].strip(),
+                        country_code="US",
+                        phone=_.get("telephone"),
+                        locator_domain=locator_domain,
+                        latitude=_["geo"]["latitude"],
+                        longitude=_["geo"]["longitude"],
+                        hours_of_operation="; ".join(hours).replace("–", "-"),
+                    )
 
 
 if __name__ == "__main__":

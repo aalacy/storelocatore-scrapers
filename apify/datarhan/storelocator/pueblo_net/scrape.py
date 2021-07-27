@@ -58,7 +58,7 @@ def fetch_data():
             city=addr.city,
             state=SgRecord.MISSING,
             zip_postal=zip_code,
-            country_code=addr.country if addr.country else SgRecord.MISSING,
+            country_code="PR",
             store_number=SgRecord.MISSING,
             phone=poi["infoPhone"],
             location_type=SgRecord.MISSING,
