@@ -13,6 +13,7 @@ from sgscrape import sgpostal as parser
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from tenacity import Retrying, stop_after_attempt
 from time import sleep
+from typing import List
 from random import randint
 
 logger = SgLogSetup().get_logger("circlek_com")
@@ -237,7 +238,7 @@ def fetch_details(store, retry=False):
 
 def fetch_data(sgw: SgWriter):
     with ThreadPoolExecutor() as executor, SgRequests() as session:
-        tracker: list[str] = []
+        tracker: List[str] = []
         locations = fetch_locations(tracker, session)
         futures = [executor.submit(fetch_details, location) for location in locations]
         for future in as_completed(futures):
