@@ -24,7 +24,6 @@ def fetch_data():
     base_url = "https://www.doubledaves.com"
     r = session.get(base_url)
     soup = BeautifulSoup(r.text, "lxml")
-    return_main_object = []
     main = soup.find("div", {"class": "dropdown location-dropdown"}).find_all("a")
     del main[-1]
     for atag in main:
@@ -91,8 +90,8 @@ def fetch_data():
                 location_name=location_name,
                 street_address=street_address.strip(),
                 city=city.strip(),
-                state=MISSING,
-                zip_postal=MISSING,
+                state=state,
+                zip_postal=zip_postal,
                 country_code=country_code,
                 store_number=MISSING,
                 phone=phone.strip(),
