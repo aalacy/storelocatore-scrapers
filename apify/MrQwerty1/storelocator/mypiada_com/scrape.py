@@ -1,4 +1,3 @@
-import csv
 import yaml
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
