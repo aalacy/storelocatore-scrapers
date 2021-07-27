@@ -1,165 +1,90 @@
-import csv
-import json
-
-from bs4 import BeautifulSoup
-
+from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+def fetch_data(sgw: SgWriter):
+    api_url = (
+        "https://www.francescas.com/cms/files/d2780ebe-ceb4-4750-ad31-9ec6e0d044f6"
+    )
+    session1 = SgRequests()
+
+    cookies = {
+        "sb-sf-at-prod": "at=9AQlj%2FOkUGeF9XjLQn9yvUmCG9bZXk2y5hrW1x6%2F1zrazXNN9Mb3dg5AtCEl4GTZ%2BhGxre7SCMpGrWKFsYSmxRulELnh8APVsg1gS6AlJRODziLZSgLmQiycmIByx8nlscHyvl8NZMpGbHrj95je2ctn8mwlDGqYex1GN1la4rttbfHnjIjWcUunOtxCgnIds8vK3b1hrN4PLL6qSt2lJi6BvBs7VLA0gRw6ujPtt7PCwE4MK6zsxkyHi%2BwjCtZYjfQaqmhnrR%2BKZePX2l%2BatujtwY%2F0Jhj5KaN4Xutb5tJBaqTqD2FMgVi5Exc7B8m4qxoylOErFEVq2yN9ISbymw%3D%3D",
+    }
+
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:90.0) Gecko/20100101 Firefox/90.0",
+    }
+    r = session1.get(api_url, headers=headers, cookies=cookies)
+
+    tree = html.fromstring(r.content)
+    div = tree.xpath("//url/loc")
+    for d in div:
+        page_url = "".join(d.xpath(".//text()"))
+        slug = page_url.split("/store-details/")[1].split("/")[0].strip()
+
+        session2 = SgRequests()
+        r = session2.get(
+            f"https://www.francescas.com/api/commerce/storefront/locationUsageTypes/SP/locations/?startIndex=0&sortBy=Name%20asc&pageSize=1&filter=code%20eq%20{slug}&includeAttributeDefinition=true",
+            headers=headers,
+            cookies=cookies,
         )
+        js = r.json()["items"][0]
 
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-                "page_url",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-
-    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
-    headers = {"User-Agent": user_agent}
-
-    locator_domain = "https://www.francescas.com"
-    ext = "/store-locator/all-stores.do"
-
-    session = SgRequests()
-    req = session.get(locator_domain + ext, headers=headers)
-    base = BeautifulSoup(req.text, "lxml")
-
-    link_list = []
-    dup_tracker = set()
-
-    locs = base.find_all(class_="ml-storelocator-store-address")
-    for loc in locs:
-        link = locator_domain + loc.a["href"]
-
-        if link in link_list:
-            continue
-
-        got_page = False
-        try:
-            req = session.get(link, headers=headers)
-            base = BeautifulSoup(req.text, "lxml")
-            location_name = base.find("span", attrs={"itemprop": "name"}).text.strip()
-            got_page = True
-        except:
-            got_page = False
-
-        store_number = "<MISSING>"
-        hours = "<MISSING>"
-        lat = "<MISSING>"
-        longit = "<MISSING>"
-        country_code = "US"
-        location_type = "<MISSING>"
-
-        if not got_page:
-            location_name = loc.find(
-                class_="eslStore ml-storelocator-headertext"
-            ).text.strip()
-            if len(location_name.split("#")) == 2:
-                store_number = location_name.split("#")[1].split("-")[0].strip()
-            else:
-                store_number = "<MISSING>"
-            street_address = loc.find(class_="eslAddress1").text.strip()
-            city = loc.find(class_="eslCity").text.replace(",", "").strip()
-            state = loc.find(class_="eslStateCode").text.strip()
-            zip_code = loc.find(class_="eslPostalCode").text.strip()
-            phone_number = loc.find(class_="eslPhone").text.strip()
-            page_url = locator_domain + ext
-        else:
-            store_number = "<MISSING>"
-            if len(location_name.split("#")) == 2:
-                store_number = location_name.split("#")[1].split("-")[0].strip()
-            else:
-                store_number = "<MISSING>"
-
-            street_address = " ".join(
-                list(
-                    (
-                        base.find(
-                            "span", attrs={"itemprop": "streetAddress"}
-                        ).stripped_strings
-                    )
-                )
-            )
-            if street_address not in dup_tracker:
-                dup_tracker.add(street_address)
-            else:
-                continue
-            city = base.find("span", attrs={"itemprop": "addressLocality"}).text
-            state = base.find("span", attrs={"itemprop": "addressRegion"}).text
-            zip_code = base.find("span", attrs={"itemprop": "postalCode"}).text
-            if len(zip_code) == 4:
-                zip_code = "0" + zip_code
-            hours = (
-                base.find(class_="ml-storelocator-hours-details")
-                .getText(" ")
-                .replace("\n", " ")
-            )
-            phone_number = "<MISSING>"
-            try:
-                phone_number = base.find("span", attrs={"itemprop": "telephone"}).text
-            except:
-                phone_number = "<MISSING>"
-
-            loc_j = base.find_all("script")
-            for i, loc in enumerate(loc_j):
-                if "MarketLive.StoreLocator.storeLocatorDetailPageReady" in str(loc):
-                    text = str(loc)
-                    start = text.find("location")
-                    text_2 = text[start - 1 :]
-
-                    end = text_2.find("}")
-
-                    coords = json.loads(text_2[text_2.find(":") + 1 : end + 1])
-
-                    lat = coords["latitude"]
-                    longit = coords["longitude"]
-            page_url = link
-
-        yield [
-            locator_domain,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip_code,
-            country_code,
-            store_number,
-            phone_number,
-            location_type,
-            lat,
-            longit,
-            hours,
-            page_url,
+        a = js.get("address")
+        location_name = js.get("name")
+        street_address = f"{a.get('address1')} {a.get('address2')}".strip()
+        state = a.get("stateOrProvince") or "<MISSING>"
+        postal = a.get("postalOrZipCode") or "<MISSING>"
+        country_code = "USA"
+        city = a.get("cityOrTown") or "<MISSING>"
+        store_number = js.get("code") or "<MISSING>"
+        latitude = js.get("geo").get("lat") or "<MISSING>"
+        longitude = js.get("geo").get("lng") or "<MISSING>"
+        phone = js.get("phone") or "<MISSING>"
+        tmp = []
+        days = [
+            "sunday",
+            "monday",
+            "tuesday",
+            "wednesday",
+            "thursday",
+            "friday",
+            "saturday",
         ]
+        for d in days:
+            day = d
+            times = js.get("regularHours").get(f"{d}").get("label")
+            line = f"{day} {times}"
+            tmp.append(line)
+        hours_of_operation = "; ".join(tmp) or "<MISSING>"
+
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+        )
+
+        sgw.write_row(row)
 
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+if __name__ == "__main__":
+    session = SgRequests()
+    locator_domain = "https://www.francescas.com"
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        fetch_data(writer)

@@ -8,7 +8,7 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-
+from sgscrape.pause_resume import CrawlStateSingleton
 from webdriver_manager.chrome import ChromeDriverManager
 from sgselenium import SgChrome
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
@@ -159,10 +159,13 @@ def fetch_records(
 ) -> Iterable[SgRecord]:
     count = 0
 
+    state = CrawlStateSingleton.get_instance()
     headers = None
     for lat, lng in search:
         count = count + 1
         countryCode = search.current_country()
+        rec_count = state.get_misc_value(countryCode, default_factory=lambda: 0)
+        state.set_misc_value(countryCode, rec_count + 1)
 
         headers, newStores = fetchRequest(driver, http, lat, lng, headers)
         for store in newStores:
@@ -183,18 +186,25 @@ def scrape():
     start = time.time()
     country_codes = SearchableCountries.ALL
     search = DynamicGeoSearch(
-        country_codes=country_codes, expected_search_radius_miles=50, use_state=False
+        country_codes=country_codes, expected_search_radius_miles=50
     )
 
-    with SgWriter(
-        deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumberId)
-    ) as writer:
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
         with SgChrome(
             is_headless=True, executable_path=ChromeDriverManager().install()
         ) as driver:
             with SgRequests() as http:
                 for rec in fetch_records(driver, http, search):
                     writer.write_row(rec)
+
+    state = CrawlStateSingleton.get_instance()
+    log.debug("Printing number of records by country-code:")
+    for country_code in SearchableCountries.ALL:
+        log.debug(
+            country_code,
+            ": ",
+            state.get_misc_value(country_code, default_factory=lambda: 0),
+        )
 
     end = time.time()
     log.info(f"Scrape took {end-start} seconds.")
