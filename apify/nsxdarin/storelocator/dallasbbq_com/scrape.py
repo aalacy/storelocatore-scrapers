@@ -32,7 +32,6 @@ def fetch_data():
             lurl = "https://www.dallasbbq.com" + line.split('href="')[1].split('"')[0]
             if lurl != "https://www.dallasbbq.com/":
                 locs.append(lurl)
-    print("Found %s Locations." % str(len(locs)))
     for loc in locs:
         name = ""
         add = ""
@@ -43,7 +42,6 @@ def fetch_data():
         lat = ""
         lng = ""
         hours = ""
-        print("Pulling Location %s..." % loc)
         website = "dallasbbq.com"
         typ = "Restaurant"
         r2 = session.get(loc, headers=headers)
