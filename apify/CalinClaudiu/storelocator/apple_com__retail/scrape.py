@@ -7,7 +7,7 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup as b4
 from sgscrape.pause_resume import CrawlStateSingleton, CrawlState
 from dataclasses import asdict, dataclass
-from typing import Iterable, Optional
+from typing import Iterable, Optional, List
 from ordered_set import OrderedSet
 import json
 
@@ -16,7 +16,7 @@ logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
 known_empties = set()
 known_empties.add("xxxxxxx")
 
-errorz = []
+errorz: List[str] = []
 
 
 @dataclass(frozen=False)
@@ -130,8 +130,28 @@ def determine_country(country):
         return resultCode[-1][0]
 
 
-def get_country(search, country, session, headers, SearchableCountry):
+def get_country(search, country, session, headers, SearchableCountry, state):
+    global errorz
+    errorzCopy = []
+    if errorz:
+        if len(errorz) != 0:
+            errorzCopy = errorz
+        try:
+            errorz = state.get_misc_value("errorz")
+        except Exception as e:
+            logzilla.warning("Something happened along the lines of", exc_info=e)
+        if errorz and errorzCopy:
+            errorz = errorz + errorzCopy
+            state.set_misc_value("errorz", errorz)
+            state.save(override=True)
+        else:
+            if not errorz:
+                if errorzCopy:
+                    state.set_misc_value("errorz", errorzCopy)
+                    state.save(override=True)
+
     def getPoint(point, session, locale, headers):
+        global errorz
         if locale[-1] != "/":
             locale = locale + "/"
         url = "https://locate.apple.com{locale}sales/?pt=all&lat={lat}&lon={lon}&address=".format(
@@ -155,24 +175,38 @@ def get_country(search, country, session, headers, SearchableCountry):
             locs = json.loads(thescript)
             return locs["results"]
         except Exception as e:
-            errorz.append(
-                str(
-                    f"had some issues with this country and point  {country}\n{point}{url} \n Matched to: {SearchableCountry}\nIssue was\n{str(e)}"
+            try:
+                errorz.append(
+                    str(
+                        f"had some issues with this country and point  {country}\n{point}{url} \n Matched to: {SearchableCountry}\nIssue was\n{str(e)}"
+                    )
                 )
-            )
+            except Exception:
+                pass
 
     maxZ = None
     maxZ = search.items_remaining()
     total = 0
     for Point in search:
         found = 0
-        for record in getPoint(Point, session, country.link, headers):
-            search.found_location_at(
-                record["locationData"]["geo"][0], record["locationData"]["geo"][1]
-            )
-            record["COUNTRY"] = country
-            found += 1
-            yield record
+        try:
+            for record in getPoint(Point, session, country.link, headers):
+                search.found_location_at(
+                    record["locationData"]["geo"][0], record["locationData"]["geo"][1]
+                )
+                record["COUNTRY"] = country
+                found += 1
+                yield record
+        except Exception as e:
+            try:
+                msg = getPoint(Point, session, country.link, headers)
+            except Exception as y:
+                msg = y
+            try:
+                logzilla.error(f"Something happened with {msg} \n error is: {e}")
+            except Exception as p:
+                logzilla.error(f"SMH couldn't even print the error:{e} \n {p}")
+
         progress = str(round(100 - (search.items_remaining() / maxZ * 100), 2)) + "%"
         total += found
         logzilla.info(
@@ -183,11 +217,33 @@ def get_country(search, country, session, headers, SearchableCountry):
             f"Found a total of 0 results for country {country}\n this is unacceptable and possibly a country/search space mismatch\n Matched to: {SearchableCountry}"
         )
         if SearchableCountry not in known_empties:
-            errorz.append(
-                str(
-                    f"Found a total of 0 results for country {country}\n this is unacceptable and possibly a country/search space mismatch\n Matched to: {SearchableCountry}"
+            errorzCopy = []
+            if errorz:
+                if len(errorz) != 0:
+                    errorzCopy = errorz
+                try:
+                    errorz = state.get_misc_value("errorz")
+                except Exception as e:
+                    logzilla.warning(
+                        "Something happened along the lines of", exc_info=e
+                    )
+                if errorz and errorzCopy:
+                    errorz = errorz + errorzCopy
+                    state.set_misc_value("errorz", errorz)
+                    state.save(override=True)
+                else:
+                    if not errorz:
+                        if errorzCopy:
+                            state.set_misc_value("errorz", errorzCopy)
+                            state.save(override=True)
+            try:
+                errorz.append(
+                    str(
+                        f"Found a total of 0 results for country {country}\n this is unacceptable and possibly a country/search space mismatch\n Matched to: {SearchableCountry}"
+                    )
                 )
-            )
+            except Exception:
+                pass
 
 
 def fetch_data():
@@ -215,7 +271,7 @@ def fetch_data():
             state.set_misc_value(key="countries", value=countries.serialize_requests())
             state.set_misc_value(key="SearchableCountry", value=None)
             state.save(override=True)
-        errorzCopy = None
+        errorzCopy = []
         if len(errorz) != 0:
             errorzCopy = errorz
         try:
@@ -254,7 +310,7 @@ def fetch_data():
                     try:
                         search = DynamicGeoSearch(
                             country_codes=[SearchableCountry],
-                            expected_search_radius_miles=50,
+                            expected_search_radius_miles=500,  # Must turn it back down to 50 after testing
                             max_search_results=None,
                             granularity=Grain_8(),
                         )
@@ -264,7 +320,7 @@ def fetch_data():
                         )
                     if search:
                         for record in get_country(
-                            search, country, session, headers, SearchableCountry
+                            search, country, session, headers, SearchableCountry, state
                         ):
                             yield record
                         SearchableCountry = None

@@ -1,105 +1,85 @@
 import re
-import csv
+import ssl
+import json
 from lxml import etree
+from urllib.parse import unquote
 
-from sgselenium import SgFirefox
+from sgselenium import SgChrome
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
 from sgscrape.sgpostal import parse_address_intl
 
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
 
 
 def fetch_data():
-    items = []
-
-    start_url = "https://puebloweb.com/tiendas/"
+    start_url = "https://puebloweb.com/wp-json/wp/v2/pages/121"
     domain = re.findall(r"://(.+?)/", start_url)[0].replace("www.", "")
 
-    with SgFirefox() as driver:
+    with SgChrome() as driver:
         driver.get(start_url)
-        dom = etree.HTML(driver.page_source)
+        unquoted = unquote(driver.page_source)
+        unquoted = (
+            unquoted.replace("\\n", "")
+            .replace("\\t", "")
+            .replace("\\", "")
+            .replace("&gt;", ">")
+            .replace("&lt;", "<")
+            .replace("  ", " ")
+        )
+    data = re.findall(
+        "google-maps-options=(.+)  data-elfsight-google-maps-version", unquoted
+    )[0].strip()[1:-1]
+    data = json.loads(data)
 
-    all_locations = dom.xpath('//div[@class="eapps-google-maps-bar-list-item"]')
-    for poi_html in all_locations:
-        store_url = start_url
-        location_name = poi_html.xpath(
-            './/div[contains(@class, "eapps-google-maps-bar-list-item-info-title")]/text()'
-        )[0].strip()
-        raw_address = poi_html.xpath(
-            './/div[contains(@class, "item-address")]/div/text()'
-        )[0].strip()
-        addr = parse_address_intl(raw_address)
+    for poi in data["markers"]:
+        addr = parse_address_intl(poi["infoAddress"])
         street_address = addr.street_address_1
         if addr.street_address_2:
             street_address += " " + addr.street_address_2
-        city = addr.city
-        city = city if city else "<MISSING>"
-        state = addr.state
-        state = state if state else "<MISSING>"
-        zip_code = addr.postcode
-        zip_code = zip_code if zip_code else "<MISSING>"
-        country_code = addr.country
-        country_code = country_code if country_code else "<MISSING>"
-        store_number = "<MISSING>"
-        phone = poi_html.xpath('.//a[contains(@href, "tel")]/text()')
-        phone = phone[0] if phone else "<MISSING>"
-        location_type = "<MISSING>"
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
-        hours_of_operation = "<INACCESSIBLE>"
+        zip_code = poi["infoAddress"].split()[-1]
+        if not zip_code.isdigit():
+            zip_code = SgRecord.MISSING
 
-        item = [
-            domain,
-            store_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip_code,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
+        item = SgRecord(
+            locator_domain=domain,
+            page_url="https://puebloweb.com/tiendas/",
+            location_name=poi["infoTitle"],
+            street_address=street_address,
+            city=addr.city,
+            state=SgRecord.MISSING,
+            zip_postal=zip_code,
+            country_code="PR",
+            store_number=SgRecord.MISSING,
+            phone=poi["infoPhone"],
+            location_type=SgRecord.MISSING,
+            latitude=poi["coordinates"].split(", ")[0],
+            longitude=poi["coordinates"].split(", ")[-1],
+            hours_of_operation=etree.HTML(poi["infoDescription"]).xpath("//text()")[1],
+        )
 
-        items.append(item)
-
-    return items
+        yield item
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
 if __name__ == "__main__":
