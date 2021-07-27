@@ -1,8 +1,16 @@
 import csv
+from sglogging import sglog
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 
 session = SgRequests()
+website = "doubledaves_com"
+log = sglog.SgLogSetup().get_logger(logger_name=website)
+session = SgRequests()
+headers = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.66 Safari/537.36",
+    "Accept": "application/json",
+}
 
 
 def write_output(data):
@@ -49,8 +57,13 @@ def fetch_data():
         for weblink in main1:
             r2 = session.get(base_url + weblink["href"])
             page_url = base_url + weblink["href"]
+            log.info(page_url)
+            if "Coming soon" in r2.text:
+                continue
             soup2 = BeautifulSoup(r2.text, "lxml")
             main2 = soup2.find("div", {"class": "location-hours"}).find_all("p")
+            if "Coming soon" in r2.text:
+                continue
             if len(main2) == 2:
                 loc_address = list(main2[1].stripped_strings)
                 phone = main2[0].text.strip()
