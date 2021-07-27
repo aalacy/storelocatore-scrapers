@@ -132,7 +132,7 @@ def determine_country(country):
 
 def get_country(search, country, session, headers, SearchableCountry, state):
     global errorz
-    errorzCopy = None
+    errorzCopy = []
     if errorz:
         if len(errorz) != 0:
             errorzCopy = errorz
@@ -217,7 +217,7 @@ def get_country(search, country, session, headers, SearchableCountry, state):
             f"Found a total of 0 results for country {country}\n this is unacceptable and possibly a country/search space mismatch\n Matched to: {SearchableCountry}"
         )
         if SearchableCountry not in known_empties:
-            errorzCopy = None
+            errorzCopy = []
             if errorz:
                 if len(errorz) != 0:
                     errorzCopy = errorz
@@ -271,7 +271,7 @@ def fetch_data():
             state.set_misc_value(key="countries", value=countries.serialize_requests())
             state.set_misc_value(key="SearchableCountry", value=None)
             state.save(override=True)
-        errorzCopy = None
+        errorzCopy = []
         if len(errorz) != 0:
             errorzCopy = errorz
         try:
@@ -310,7 +310,7 @@ def fetch_data():
                     try:
                         search = DynamicGeoSearch(
                             country_codes=[SearchableCountry],
-                            expected_search_radius_miles=50,
+                            expected_search_radius_miles=500,  # Must turn it back down to 50 after testing
                             max_search_results=None,
                             granularity=Grain_8(),
                         )
