@@ -237,7 +237,7 @@ def fetch_details(store, retry=False):
 
 def fetch_data(sgw: SgWriter):
     with ThreadPoolExecutor() as executor, SgRequests() as session:
-        tracker = []
+        tracker = []  # type: List[str]
         locations = fetch_locations(tracker, session)
         futures = [executor.submit(fetch_details, location) for location in locations]
         for future in as_completed(futures):
