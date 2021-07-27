@@ -4,6 +4,8 @@ from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import lxml.html
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 website = "usbank.com/atm"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -100,7 +102,12 @@ def fetch_data():
                         ).strip()
 
                         store_number = "<MISSING>"
-                        location_type = "Branch and ATM"
+                        location_type = ""
+                        if "Branch and ATM" in location_name:
+                            location_type = "Branch and ATM"
+                        else:
+                            if "Branch" in location_name:
+                                location_type = "Branch"
 
                         hours = store_sel.xpath(
                             '//table[@class="lobbyTimes"]//tr[position()>1]'
@@ -203,7 +210,13 @@ def fetch_data():
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
