@@ -1,7 +1,10 @@
-import csv
 from sglogging import sglog
-from sgrequests import SgRequests
 from bs4 import BeautifulSoup
+from sgrequests import SgRequests
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
 website = "doubledaves_com"
@@ -12,32 +15,8 @@ headers = {
     "Accept": "application/json",
 }
 
-
-def write_output(data):
-    with open("data.csv", mode="w", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-                "page_url",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
+DOMAIN = "https://doubledaves.com/"
+MISSING = "<MISSING>"
 
 
 def fetch_data():
@@ -61,6 +40,9 @@ def fetch_data():
             if "Coming soon" in r2.text:
                 continue
             soup2 = BeautifulSoup(r2.text, "lxml")
+            location_name = (
+                soup2.find("div", {"class": "page-heading"}).find("h1").text.strip()
+            )
             main2 = soup2.find("div", {"class": "location-hours"}).find_all("p")
             if "Coming soon" in r2.text:
                 continue
@@ -70,10 +52,15 @@ def fetch_data():
             else:
                 loc_address = list(main2[0].stripped_strings)
                 phone = "<MISSING>"
-            address = loc_address[0].strip()
+            street_address = loc_address[0].strip()
+            if street_address in addressess:
+                continue
+            addressess.append(street_address)
             city = loc_address[1].strip().split(",")[0].strip()
             state = loc_address[1].strip().split(",")[1].strip().split(" ")[0].strip()
-            zip = loc_address[1].strip().split(",")[1].strip().split(" ")[1].strip()
+            zip_postal = (
+                loc_address[1].strip().split(",")[1].strip().split(" ")[1].strip()
+            )
             if soup2.find("div", {"class": "hours grid-cell"}):
                 mainhour = soup2.find("div", {"class": "hours grid-cell"}).find_all(
                     "div", {"class": "grid no-wrap desktop-collapse only-desktop"}
@@ -96,34 +83,40 @@ def fetch_data():
                     hour += hour + head2 + " = " + h1
             else:
                 hour = "<MISSING>"
-
-            store = []
-            store.append("https://www.doubledaves.com/")
-            store.append(
-                soup2.find("div", {"class": "page-heading"}).find("h1").text.strip()
+            hour = hour.replace("Dough Slingin' Hours = ", "").replace("::", " ")
+            country_code = "US"
+            yield SgRecord(
+                locator_domain=DOMAIN,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address.strip(),
+                city=city.strip(),
+                state=MISSING,
+                zip_postal=MISSING,
+                country_code=country_code,
+                store_number=MISSING,
+                phone=phone.strip(),
+                location_type=MISSING,
+                latitude=MISSING,
+                longitude=MISSING,
+                hours_of_operation=hour.strip(),
             )
-            store.append(address)
-            store.append(city)
-            store.append(state)
-            store.append(zip)
-            store.append("US")
-            store.append("<MISSING>")
-            store.append(phone)
-            store.append("DoubleDave's Pizzaworks")
-            store.append("<MISSING>")
-            store.append("<MISSING>")
-            store.append(hour.replace("Dough Slingin' Hours = ", "").replace("::", " "))
-            store.append(page_url)
-            if store[2] in addressess:
-                continue
-            addressess.append(store[2])
-            return_main_object.append(store)
-    return return_main_object
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    log.info("Started")
+    count = 0
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()
