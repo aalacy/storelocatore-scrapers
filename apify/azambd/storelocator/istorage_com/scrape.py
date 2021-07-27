@@ -5,10 +5,12 @@ from sglogging import sglog
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
-MISSING = "<MISSING>"
+MISSING = SgRecord.MISSING
 website = "https://www.istorage.com"
-session = SgRequests().requests_retry_session()
+session = SgRequests()
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 
 
@@ -105,6 +107,8 @@ def fetchData():
 
             try:
                 store_number = url.split("-")[len(url.split("-")) - 1]
+                if "testtoken" in str(store_number):
+                    store_number = store_number.split("||")[1]
             except:
                 store_number = MISSING
             try:
@@ -135,7 +139,10 @@ def fetchData():
             except:
                 phone = MISSING
 
-            hours_of_operation = getHourOperation(website + url)
+            if "securcareselfstorage.com" in str(url):
+                hours_of_operation = MISSING
+            else:
+                hours_of_operation = getHourOperation(website + url)
 
             yield SgRecord(
                 locator_domain=website,
@@ -158,7 +165,9 @@ def fetchData():
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumberId)
+    ) as writer:
         results = fetchData()
         for rec in results:
             writer.write_row(rec)
