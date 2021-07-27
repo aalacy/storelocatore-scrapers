@@ -4,7 +4,10 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
+from sglogging import sglog
 import json
+
+logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
 
 session = SgRequests()
 headers = {
@@ -69,15 +72,20 @@ def fetch_data():
             store = item["StoreNo"]
             phone = item["PhoneNo"]
             try:
-                add = (
-                    item["Address"]["UnitNo"]
-                    + " "
-                    + item["Address"]["StreetNo"]
-                    + " "
-                    + item["Address"]["StreetName"]
-                )
+                a1 = str(item["Address"]["UnitNo"])
             except:
-                add = "<MISSING>"
+                a1 = ""
+            try:
+                a2 = str(item["Address"]["StreetNo"])
+            except:
+                a2 = ""
+            try:
+                a3 = str(item["Address"]["StreetName"])
+            except:
+                a3 = ""
+            add = a1 + " " + a2 + " " + a3
+            add = add.strip().replace("  ", " ")
+            add = add.replace("None ", "")
             city = item["Address"]["Suburb"]
             state = "<MISSING>"
             zc = item["Address"]["PostalCode"]
