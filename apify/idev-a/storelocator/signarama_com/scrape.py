@@ -5,6 +5,8 @@ from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
 import json
 import ssl
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 try:
     _create_unverified_https_context = (
@@ -31,7 +33,9 @@ base_url = "https://signarama.com/location/locator.php"
 
 
 def fetch_data():
-    with SgChrome() as driver:
+    with SgChrome(
+        user_agent="Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1"
+    ) as driver:
         driver.get(base_url)
         soup = bs(driver.page_source, "lxml")
         states = soup.select("div.locations a")
@@ -49,6 +53,8 @@ def fetch_data():
                     continue
                 logger.info(page_url)
                 driver.get(page_url)
+                if driver.current_url != page_url:
+                    continue
                 sp1 = bs(driver.page_source, "lxml")
                 _ = json.loads(
                     sp1.find("script", type="application/ld+json")
@@ -62,12 +68,12 @@ def fetch_data():
                 yield SgRecord(
                     page_url=page_url,
                     location_name=_["name"],
-                    street_address=_["address"]["streetAddress"],
-                    city=_["address"]["addressLocality"],
-                    state=_["address"]["addressRegion"],
-                    zip_postal=_["address"]["postalCode"],
+                    street_address=_["address"]["streetAddress"].strip(),
+                    city=_["address"]["addressLocality"].strip(),
+                    state=_["address"]["addressRegion"].strip(),
+                    zip_postal=_["address"]["postalCode"].strip(),
                     country_code="US",
-                    phone=_["telephone"],
+                    phone=_.get("telephone"),
                     locator_domain=locator_domain,
                     latitude=_["geo"]["latitude"],
                     longitude=_["geo"]["longitude"],
@@ -76,7 +82,7 @@ def fetch_data():
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

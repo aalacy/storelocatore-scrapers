@@ -9,7 +9,17 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from sgselenium import SgSelenium
+import ssl
+from selenium.common.exceptions import TimeoutException
 
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
 
 DOMAIN = "surgefun.com"
 BASE_URL = "https://surgefun.com"
@@ -28,6 +38,22 @@ def pull_content(url):
     log.info("Pull content => " + url)
     soup = bs(session.get(url, headers=HEADERS).content, "lxml")
     return soup
+
+
+def scroll_until_loaded(driver):
+    check_height = driver.execute_script("return document.body.scrollHeight;")
+    while True:
+        driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+        try:
+            WebDriverWait(driver, 10).until(
+                lambda driver: driver.execute_script(
+                    "return document.body.scrollHeight;"
+                )
+                > check_height
+            )
+            check_height = driver.execute_script("return document.body.scrollHeight;")
+        except TimeoutException:
+            break
 
 
 def fetch_data():
@@ -53,6 +79,7 @@ def fetch_data():
         except:
             pass
         driver.find_element_by_xpath("/html/body/div[2]/div/div/section[2]").click()
+        scroll_until_loaded(driver)
         WebDriverWait(driver, 30).until(
             EC.presence_of_element_located(
                 (By.CSS_SELECTOR, "div#locInfo > div.container")
