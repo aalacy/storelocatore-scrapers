@@ -8,7 +8,7 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-
+from sgscrape.pause_resume import CrawlStateSingleton
 from webdriver_manager.chrome import ChromeDriverManager
 from sgselenium import SgChrome
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
@@ -77,10 +77,12 @@ def getJSONObjectVariable(Object, varNames, noVal=MISSING):
     return value
 
 
-def getHOO(list):
+def getHOO(list=[]):
     hoo = []
     for data in list:
-        if data["day"] and data["opening"]:
+        if data is None:
+            continue
+        if "day" in data and "opening" in data and data["day"] and data["opening"]:
             hoo.append(f"{data['day']} {data['opening']}")
     if len(hoo) > 0:
         return "; ".join(hoo)
@@ -157,15 +159,26 @@ def fetch_records(
 ) -> Iterable[SgRecord]:
     count = 0
 
+    state = CrawlStateSingleton.get_instance()
     headers = None
     for lat, lng in search:
         count = count + 1
         countryCode = search.current_country()
+        rec_count = state.get_misc_value(countryCode, default_factory=lambda: 0)
+        state.set_misc_value(countryCode, rec_count + 1)
 
         headers, newStores = fetchRequest(driver, http, lat, lng, headers)
         for store in newStores:
             yield getStoreDetails(store, countryCode)
-        log.debug(f"{count}. from {countryCode}: {lat, lng} stores= {len(newStores)}")
+
+        if len(newStores) == 0:
+            log.debug(
+                f"{count}. from {countryCode}: {lat, lng} stores= {len(newStores)}"
+            )
+        else:
+            log.info(
+                f"{count}. from {countryCode}: {lat, lng} stores= {len(newStores)}"
+            )
 
 
 def scrape():
@@ -173,18 +186,25 @@ def scrape():
     start = time.time()
     country_codes = SearchableCountries.ALL
     search = DynamicGeoSearch(
-        country_codes=country_codes, max_search_distance_miles=50, use_state=False
+        country_codes=country_codes, expected_search_radius_miles=50
     )
 
-    with SgWriter(
-        deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumberId)
-    ) as writer:
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
         with SgChrome(
             is_headless=True, executable_path=ChromeDriverManager().install()
         ) as driver:
             with SgRequests() as http:
                 for rec in fetch_records(driver, http, search):
                     writer.write_row(rec)
+
+    state = CrawlStateSingleton.get_instance()
+    log.debug("Printing number of records by country-code:")
+    for country_code in SearchableCountries.ALL:
+        log.debug(
+            country_code,
+            ": ",
+            state.get_misc_value(country_code, default_factory=lambda: 0),
+        )
 
     end = time.time()
     log.info(f"Scrape took {end-start} seconds.")

@@ -30,6 +30,9 @@ def fetch_data(sgw: SgWriter):
         location_name = "".join(
             tree.xpath('//h2[@class="av-special-heading-tag "]/text()')
         )
+        if location_name.find("Opening") != -1:
+            continue
+
         country_code = "US"
         ad = "".join(tree.xpath("//div[./h2]/following-sibling::div[1]//a/text()"))
         a = parse_address(USA_Best_Parser(), ad)
@@ -54,7 +57,11 @@ def fetch_data(sgw: SgWriter):
             '//div[@id="av_section_5"]//div[./div[contains(@class, "flex_column av_one_fifth")]]/div//text()'
         )
         hours_of_operation = list(filter(None, [a.strip() for a in hours_of_operation]))
-        hours_of_operation = " ".join(hours_of_operation)
+        hours_of_operation = (
+            " ".join(hours_of_operation[0:6])
+            + " "
+            + " ".join(hours_of_operation[13:18])
+        )
         row = SgRecord(
             locator_domain=locator_domain,
             page_url=page_url,
