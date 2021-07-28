@@ -1,46 +1,54 @@
 import usaddress
+import unicodedata
 from sglogging import sglog
-from bs4 import BeautifulSoup
 from sgrequests import SgRequests
-from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
-website = "flippinpizza_com"
+website = "mugshotsgrillandbar_com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
-session = SgRequests()
+
 headers = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.107 Safari/537.36",
 }
 
-DOMAIN = "https://flippinpizza.com/"
+DOMAIN = "https://www.mugshotsgrillandbar.com/"
 MISSING = "<MISSING>"
+
+
+def strip_accents(text):
+
+    text = unicodedata.normalize("NFD", text).encode("ascii", "ignore").decode("utf-8")
+
+    return str(text)
 
 
 def fetch_data():
     if True:
-        url = "https://flippinpizza.com/wp-content/plugins/superstorefinder-wp/ssf-wp-xml.php"
-        r = session.get(url, headers=headers)
-        soup = BeautifulSoup(r.text, "html.parser")
-        loclist = soup.findAll("item")
+
+        log.info("Fetching Token...")
+        token_url = "https://www.mugshotsgrillandbar.com/maps"
+        token = session.get(token_url, headers=headers)
+        token = token.text.split('<div class="elfsight-app-')[1].split('"></div>')[0]
+        url = "https://apps.elfsight.com/p/boot/?w=" + token
+        loclist = session.get(url, headers=headers).json()["data"]["widgets"][token][
+            "data"
+        ]["settings"]["markers"]
         for loc in loclist:
-            location_name = loc.find("location").text
-            page_url = loc.find("exturl").text
-            if not page_url:
+            phone = str(loc["infoPhone"]).replace("\u202d", "").replace("¬", "")
+            address = loc["position"]
+            latitude, longitude = str(loc["coordinates"]).split(",")
+            if "COMING SOON" in phone:
                 continue
-            r = session.get(page_url, headers=headers)
-            soup = BeautifulSoup(r.text, "html.parser")
-            hour_url = soup.find("div", {"class": "hours-btn"}).find("a")["href"]
-            log.info("Fetching Hours...")
-            r = session.get(hour_url, headers=headers)
-            soup = BeautifulSoup(r.text, "html.parser")
-            hours_of_operation = (
-                soup.find("table").get_text(separator="|", strip=True).replace("|", " ")
-            )
-            log.info(page_url)
-            address = loc.find("address").text
+            elif not phone:
+                continue
+            phone = strip_accents(phone)
+            location_name = loc["infoTitle"]
+            log.info(location_name)
+            country_code = "US"
             address = address.replace(",", " ")
             address = usaddress.parse(address)
             i = 0
@@ -67,13 +75,9 @@ def fetch_data():
                 if temp[1].find("ZipCode") != -1:
                     zip_postal = zip_postal + " " + temp[0]
                 i += 1
-            latitude = loc.find("latitude").text
-            longitude = loc.find("longitude").text
-            phone = loc.find("telephone").text
-            country_code = "US"
             yield SgRecord(
                 locator_domain=DOMAIN,
-                page_url=page_url,
+                page_url=url,
                 location_name=location_name,
                 street_address=street_address.strip(),
                 city=city.strip(),
@@ -85,7 +89,7 @@ def fetch_data():
                 location_type=MISSING,
                 latitude=latitude,
                 longitude=longitude,
-                hours_of_operation=hours_of_operation.strip(),
+                hours_of_operation=MISSING,
             )
 
 
@@ -93,7 +97,7 @@ def scrape():
     log.info("Started")
     count = 0
     with SgWriter(
-        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PhoneNumberId)
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.GeoSpatialId)
     ) as writer:
         results = fetch_data()
         for rec in results:

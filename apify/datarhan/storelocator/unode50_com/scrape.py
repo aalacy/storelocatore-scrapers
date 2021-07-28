@@ -44,7 +44,6 @@ def fetch_data():
     for poi in data["*"]["Magento_Ui/js/core/app"]["components"][
         "store-locator-search"
     ]["markers"]:
-        store_url = poi["url"]
         location_name = poi["name"]
         if location_name == "g":
             continue
@@ -59,6 +58,8 @@ def fetch_data():
             "None", ""
         ).strip()
         street_address = street_address if street_address else "<MISSING>"
+        if street_address == "1722":
+            street_address = raw_address[0]
         state = addr.state
         state = state if state else "<MISSING>"
         zip_code = addr.postcode
@@ -67,6 +68,7 @@ def fetch_data():
         latitude = poi["latitude"]
         longitude = poi["longitude"]
         coordinates = [(float(latitude), float(longitude))]
+        store_url = f"https://www.unode50.com/en/int/stores#{latitude},{longitude}"
         if not cull(coordinates):
             continue
 
