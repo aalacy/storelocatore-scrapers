@@ -7,6 +7,8 @@ from sgrequests import SgRequests
 from sglogging import sglog
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 from sgselenium.sgselenium import SgChrome
 from webdriver_manager.chrome import ChromeDriverManager
@@ -135,6 +137,8 @@ def fetchData():
             location_name = soup2.find_all(
                 "h2", class_="elementor-heading-title elementor-size-default"
             )[1].text
+            if "Hours" in str(location_name):
+                location_name = soup2.find_all("h2", class_="elementor-heading-title elementor-size-default")[0].text
             log.info(f"Location Name: {location_name}")
 
         location_type = MISSING
@@ -152,9 +156,7 @@ def fetchData():
         phone = soup2.find_all("span", class_="elementor-icon-list-text")[2].text
         _tmp = []
         try:
-            hoosearch = soup2.find_all(
-                "h3", class_="elementor-heading-title elementor-size-default"
-            )[2].findNext("p")
+            hoosearch = soup2.findAll(text='Hours')[0].findNext("p")
             if "Sunday" in str(hoosearch):
                 hoo = str(hoosearch).split("<br/>")
                 for h in hoo[0:4]:
@@ -198,7 +200,7 @@ def scrape():
     start = time.time()
     result = fetchData()
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         for rec in result:
             writer.write_row(rec)
             count = count + 1
