@@ -6,7 +6,8 @@ from urllib.parse import urljoin
 from sgscrape.sgpostal import parse_address_intl
 from sgselenium import SgChrome
 import time
-
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 import ssl
 
 try:
@@ -101,7 +102,7 @@ def fetch_data():
                                     continue
                                 temp.append(aa)
                             _addr = temp
-                            street_address = state = zip_postal = ""
+                            street_address = state = city = zip_postal = ""
                             if _addr:
                                 _address = " ".join(_addr)
                                 addr = parse_address_intl(_address)
@@ -117,14 +118,64 @@ def fetch_data():
                                             street_address = aa
                                             break
                                 state = addr.state
+                                city = addr.city
                                 zip_postal = addr.postcode
                                 if zip_postal == "00000":
                                     zip_postal = ""
+                            if (
+                                country_code == "Indonesia"
+                                or country_code == "Angola"
+                                or country_code == "Egypt"
+                                or country_code == "Ghana"
+                                or country_code == "Madagascar"
+                                or country_code == "Morocco"
+                                or country_code == "Mozambique"
+                                or country_code == "Australia"
+                                or country_code == "Bangladesh"
+                                or country_code == "Hong Kong"
+                                or country_code == "Singapore"
+                                or country_code == "Austria"
+                                or country_code == "Finland"
+                                or country_code == "Greece"
+                                or country_code == "Ireland"
+                                or country_code == "Norway"
+                                or country_code == "Portugal"
+                                or country_code == "Sweden"
+                                or country_code == "Jordan"
+                                or country_code == "Lebanon"
+                                or country_code == "Chile"
+                                or country_code == "Colombia"
+                                or country_code == "Costa Rica"
+                                or country_code == "Ecuador"
+                                or country_code == "El Salvador"
+                                or country_code == "Guatemala"
+                                or country_code == "Nicaragua, Peru"
+                            ):
+                                city = blocks[0]
+                            if (
+                                country_code == "Indonesia"
+                                and blocks[0] == "Seoul"
+                                or country_code == "Malaysia"
+                                and blocks[0] == "Penang"
+                                or country_code == "Philippines"
+                                and blocks[0] == "Cebu"
+                                or country_code == "India"
+                                and blocks[0] == "Bangalore"
+                                or country_code == "India"
+                                and blocks[0] == "Chennai"
+                                or country_code == "UAE"
+                                and blocks[0] == "Dubai"
+                                or country_code == "Argentina"
+                                and blocks[0] == "Ezeiza"
+                                or country_code == "Bolivia"
+                                and blocks[0] == "Cochabamba"
+                            ):
+                                city = blocks[0]
                             yield SgRecord(
                                 page_url=page_url,
                                 location_name=blocks[0],
                                 street_address=street_address,
-                                city=blocks[0],
+                                city=city,
                                 state=state,
                                 zip_postal=zip_postal,
                                 country_code=country_code,
@@ -136,7 +187,19 @@ def fetch_data():
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.LOCATION_NAME,
+                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.CITY,
+                    SgRecord.Headers.ZIP,
+                    SgRecord.Headers.PHONE,
+                }
+            )
+        )
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
