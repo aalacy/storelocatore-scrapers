@@ -94,15 +94,29 @@ def fetch_data():
         else:
             phone = MISSING
         hours_of_operation = MISSING
-        hoo = content.find("div", {"class": "paragraph--type--store-hours-group"})
+        hoo = content.find("div", {"class": "field--name-field-store-hours"})
         if hoo:
-            hours_of_operation = hoo.get_text(strip=True, separator=":")
+            hoo = hoo.find_all("div", {"class": "paragraph--type--store-hours-group"})
+            hours_of_operation = ""
+            for hours in hoo:
+                hours_of_operation += ", " + hours.get_text(strip=True, separator=":")
+        hours_of_operation = hours_of_operation.lstrip(",").strip()
         store_number = MISSING
         country_code = address.find("span", {"class": "country"}).text.strip()
         if len(location_name.split(",")) > 1:
             location_type = "STORES"
         else:
             location_type = "TO-GO"
+            street_address = (
+                "{}, {}".format(
+                    organization.text.replace("Bloomberg Children's Center", "")
+                    .replace("Philadelphia International Airport ", "")
+                    .strip(),
+                    address.find("span", {"class": "address-line1"}).text,
+                )
+                .lstrip(",")
+                .strip()
+            )
         latitude, longitude = get_latlong(soup)
         log.info("Append {} => {}".format(location_name, street_address))
         yield SgRecord(

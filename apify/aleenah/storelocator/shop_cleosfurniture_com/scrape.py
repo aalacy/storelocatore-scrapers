@@ -6,6 +6,17 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+import ssl
+
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
+
 
 session = SgRequests()
 website = " shop.cleosfurniture_com"
