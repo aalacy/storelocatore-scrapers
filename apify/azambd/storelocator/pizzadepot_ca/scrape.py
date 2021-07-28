@@ -2,7 +2,7 @@ import time
 from bs4 import BeautifulSoup as bs
 import re
 
-from sgscrape.sgpostal import parse_address_intl
+from sgpostal.sgpostal import parse_address_intl
 from sgrequests import SgRequests
 from sglogging import sglog
 from sgscrape.sgwriter import SgWriter
