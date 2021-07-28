@@ -68,7 +68,7 @@ def fetch_data(sgw: SgWriter):
                 hours = "<MISSING>"
             if hours != "<MISSING>":
                 hours_of_operation = str(get_hours(hours))
-            line = location_name
+            line = latitude
             if line in s:
                 continue
             s.add(line)
