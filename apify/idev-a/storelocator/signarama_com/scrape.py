@@ -32,6 +32,21 @@ locator_domain = "https://signarama.com"
 base_url = "https://signarama.com/location/locator.php"
 
 
+def _d(city, page_url):
+    addr = list(city.select("p.m-0")[-1].stripped_strings)
+    return SgRecord(
+        page_url=page_url,
+        location_name=city.strong.text.strip(),
+        street_address=" ".join(addr[:-1]),
+        city=addr[-1].split(",")[0].strip(),
+        state=addr[-1].split(",")[0].strip().split(" ")[0].strip(),
+        zip_postal=addr[-1].split(",")[0].strip().split(" ")[-1].strip(),
+        country_code="US",
+        phone=city.select_one("a.text-red").text.strip(),
+        locator_domain=locator_domain,
+    )
+
+
 def fetch_data():
     with SgChrome(
         user_agent="Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1"
@@ -51,22 +66,7 @@ def fetch_data():
                 page_url = locator_domain + city.a["href"]
                 logger.info(page_url)
                 if "contact.php" in page_url:
-                    addr = list(city.select("p.m-0")[-1].stripped_strings)
-                    yield SgRecord(
-                        page_url=page_url,
-                        location_name=city.strong.text.strip(),
-                        street_address=" ".join(addr[:-1]),
-                        city=addr[-1].split(",")[0].strip(),
-                        state=addr[-1].split(",")[0].strip().split(" ")[0].strip(),
-                        zip_postal=addr[-1]
-                        .split(",")[0]
-                        .strip()
-                        .split(" ")[-1]
-                        .strip(),
-                        country_code="US",
-                        phone=city.select_one("a.text-red").text.strip(),
-                        locator_domain=locator_domain,
-                    )
+                    yield _d(city, page_url)
                 else:
                     try:
                         driver.get(page_url)
@@ -74,33 +74,32 @@ def fetch_data():
                         driver.get(page_url)
 
                     if driver.current_url != page_url:
-                        import pdb
-
-                        pdb.set_trace()
-                    sp1 = bs(driver.page_source, "lxml")
-                    _ = json.loads(
-                        sp1.find("script", type="application/ld+json")
-                        .string.replace("\n", "")
-                        .replace("\t", "")
-                    )
-                    hours = [
-                        f"{hh['dayOfWeek']['name']}: {hh['opens']}-{hh['closes']}"
-                        for hh in _.get("openingHoursSpecification", [])
-                    ]
-                    yield SgRecord(
-                        page_url=page_url,
-                        location_name=_["name"],
-                        street_address=_["address"]["streetAddress"].strip(),
-                        city=_["address"]["addressLocality"].strip(),
-                        state=_["address"]["addressRegion"].strip(),
-                        zip_postal=_["address"]["postalCode"].strip(),
-                        country_code="US",
-                        phone=_.get("telephone"),
-                        locator_domain=locator_domain,
-                        latitude=_["geo"]["latitude"],
-                        longitude=_["geo"]["longitude"],
-                        hours_of_operation="; ".join(hours).replace("–", "-"),
-                    )
+                        yield _d(city, page_url)
+                    else:
+                        sp1 = bs(driver.page_source, "lxml")
+                        _ = json.loads(
+                            sp1.find("script", type="application/ld+json")
+                            .string.replace("\n", "")
+                            .replace("\t", "")
+                        )
+                        hours = [
+                            f"{hh['dayOfWeek']['name']}: {hh['opens']}-{hh['closes']}"
+                            for hh in _.get("openingHoursSpecification", [])
+                        ]
+                        yield SgRecord(
+                            page_url=page_url,
+                            location_name=_["name"],
+                            street_address=_["address"]["streetAddress"].strip(),
+                            city=_["address"]["addressLocality"].strip(),
+                            state=_["address"]["addressRegion"].strip(),
+                            zip_postal=_["address"]["postalCode"].strip(),
+                            country_code="US",
+                            phone=_.get("telephone"),
+                            locator_domain=locator_domain,
+                            latitude=_["geo"]["latitude"],
+                            longitude=_["geo"]["longitude"],
+                            hours_of_operation="; ".join(hours).replace("–", "-"),
+                        )
 
 
 if __name__ == "__main__":
