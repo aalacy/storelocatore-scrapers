@@ -72,10 +72,10 @@ def fetch_data(sgw: SgWriter):
                         or street_address.replace("-", "").isdigit()
                         or len(street_address) < 13
                     ):
-                        raw_address = list(
+                        raw_address2 = list(
                             item.find(class_="address-street").stripped_strings
                         )
-                        street_address = " ".join(raw_address[:-1])
+                        street_address = " ".join(raw_address2[:-1])
 
                 store_number = "<MISSING>"
                 phone = item.find(class_="phone").text.replace("Phone:", "").strip()
