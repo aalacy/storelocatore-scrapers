@@ -4,7 +4,7 @@ from sgscrape import simple_scraper_pipeline as sp
 
 
 def get_data():
-    searches = [
+    searche = [
         static_coordinate_list(country_code=SearchableCountries.USA, radius=50),
         static_coordinate_list(country_code=SearchableCountries.USA, radius=50),
         static_coordinate_list(country_code=SearchableCountries.USA, radius=50),
@@ -12,7 +12,7 @@ def get_data():
     url = "https://clsws.locatorsearch.net/Rest/LocatorSearchAPI.svc/GetLocations"
     session = SgRequests()
 
-    for search in searches:
+    for search in searche:
         for search_lat, search_lon in search:
 
             params = {
