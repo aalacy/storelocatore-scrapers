@@ -1,13 +1,19 @@
-import csv
 import json
 import threading
 import lxml.html
 from sglogging import SgLogSetup
+
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+
 from sgrequests import SgRequests
-from sgscrape import sgpostal as parser
+from sgpostal.sgpostal import parse_address_intl
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from tenacity import Retrying, stop_after_attempt
 from time import sleep
+from typing import List
 from random import randint
 
 logger = SgLogSetup().get_logger("circlek_com")
@@ -23,36 +29,6 @@ def get_session(reset):
     local.count += 1
     sleep(randint(2, 5))
     return local.session
-
-
-def write_output(data):
-    with open("data.csv", mode="w", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-                "page_url",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
 
 
 headers = {
@@ -74,9 +50,9 @@ headers = {
 def fetch_page(page, session):
     url = "https://www.circlek.com/stores_new.php"
     params = {
-        "lat": 43.5890,
-        "lng": -79.6441,
-        "distance": 5000,
+        "lat": 20.2386,
+        "lng": -155.8312,
+        "distance": 9999999999,
         "services": "",
         "region": "global",
         "page": page,
@@ -96,11 +72,14 @@ def fetch_locations(tracker, session, locations=[], page=0):
     for id, store in stores:
         if id in tracker or store["country"].upper() not in ["US", "CA", "CANADA"]:
             continue
+        if store["address"] + store["city"] in tracker:
+            continue
         tracker.append(id)
+        tracker.append(store["address"] + store["city"])
         locations.append(store)
-    if len(stores):
+    try:
         return fetch_locations(tracker, session, locations, page + 1)
-    else:
+    except:
         return locations
 
 
@@ -141,37 +120,64 @@ def fetch_details(store, retry=False):
             except:
                 return retryer(fetch_details, store, True)
             location_name = (
-                store.get("display_brand")
+                store_json.get("description").split(",")[0]
+                or store.get("display_brand")
                 or store.get("store_brand")
                 or store.get("name")
                 or "<MISSING>"
             )
-            if store["franchise"] == "1":
-                location_type = "Brand Store"
-            else:
-                location_type = "Dealer/Distributor/Retail Partner"
+            location_name = (
+                location_name.replace("&#039;", "'").replace("amp;", "").strip()
+            )
+
+            if location_name == "Circle K at":
+                location_name = "Circle K"
+
+            try:
+                location_type = ""
+                raw_types = store_json["hasOfferCatalog"]["itemListElement"]
+                for raw_type in raw_types:
+                    if location_type:
+                        location_type = (
+                            location_type + ", " + raw_type["itemOffered"]["name"]
+                        )
+                    else:
+                        location_type = raw_type["itemOffered"]["name"]
+
+                if not location_type:
+                    location_type = "<MISSING>"
+            except:
+                location_type = "<MISSING>"
 
             phone = store_json["telephone"]
             street_address = (
                 store_json["address"]["streetAddress"]
                 .replace("  ", " ")
-                .replace("r&#039;", "'")
+                .replace("&#039;", "'")
                 .replace("&amp;", "&")
                 .strip()
             )
             if street_address[-1:] == ",":
                 street_address = street_address[:-1]
-            city = store_json["address"]["addressLocality"].strip()
+            city = (
+                store_json["address"]["addressLocality"].replace("&#039;", "'").strip()
+            )
 
             state = ""
             zipp = store_json["address"]["postalCode"].strip()
             country_code = store["country"]
-            latitude = store_json["geo"]["latitude"]
-            longitude = store_json["geo"]["longitude"]
+            latitude = store_json["geo"]["latitude"].replace(",", ".")
+            longitude = store_json["geo"]["longitude"].replace(",", ".")
             store_number = store["cost_center"]
             raw_address = store_json["name"]
-            formatted_addr = parser.parse_address_intl(raw_address)
+            formatted_addr = parse_address_intl(raw_address)
             state = formatted_addr.state
+            if state:
+                state = state.replace("Mills", "").replace("Est", "").strip()
+            if country_code.lower()[:2] == "ca" and state == "CA":
+                state = ""
+            if state == "ON":
+                country_code = "Canada"
             hours = store_sel.xpath(
                 '//div[@class="columns large-12 middle hours-wrapper"]/div[contains(@class,"hours-item")]'
             )
@@ -230,22 +236,34 @@ def fetch_details(store, retry=False):
             ]
 
 
-def fetch_data():
+def fetch_data(sgw: SgWriter):
     with ThreadPoolExecutor() as executor, SgRequests() as session:
-        tracker = []
+        tracker: List[str] = []
         locations = fetch_locations(tracker, session)
-
         futures = [executor.submit(fetch_details, location) for location in locations]
         for future in as_completed(futures):
             poi = future.result()
 
             if poi:
-                yield poi
+                sgw.write_row(
+                    SgRecord(
+                        locator_domain=poi[0],
+                        location_name=poi[1],
+                        street_address=poi[2],
+                        city=poi[3],
+                        state=poi[4],
+                        zip_postal=poi[5],
+                        country_code=poi[6],
+                        store_number=poi[7],
+                        phone=poi[8],
+                        location_type=poi[9],
+                        latitude=poi[10],
+                        longitude=poi[11],
+                        hours_of_operation=poi[12],
+                        page_url=poi[13],
+                    )
+                )
 
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+    fetch_data(writer)
