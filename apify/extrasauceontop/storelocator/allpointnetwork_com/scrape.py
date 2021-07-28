@@ -31,7 +31,6 @@ def get_data():
                     locator_domain = "allpointnetwork.com"
                     page_url = "https://clsws.locatorsearch.net/Rest/LocatorSearchAPI.svc/GetLocations"
                     location_name = "Allpoint " + location["RetailOutlet"]
-                    print(location_name)
                     address = location["Street"]
                     city = location["City"]
                     state = location["State"]
