@@ -1,169 +1,107 @@
-import csv
-
-from concurrent import futures
-from lxml import html
+import usaddress
+from sglogging import sglog
+from bs4 import BeautifulSoup
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
+session = SgRequests()
+website = "flippinpizza_com"
+log = sglog.SgLogSetup().get_logger(logger_name=website)
+session = SgRequests()
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+}
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def get_hours(yelp_url):
-    session = SgRequests()
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:85.0) Gecko/20100101 Firefox/85.0",
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
-        "Accept-Language": "en-US;q=0.8,en;q=0.3",
-        "Referer": "https://flippinpizza.com/",
-        "Connection": "keep-alive",
-        "Upgrade-Insecure-Requests": "1",
-        "Cache-Control": "max-age=0",
-    }
-
-    r = session.get(yelp_url, headers=headers)
-    tree = html.fromstring(r.text)
-    text = "".join(
-        tree.xpath("//script[contains(text(), 'regularHours')]/text()")
-    ).replace("&quot;", '"')
-
-    _tmp = []
-    lines = text.split('"regularHours":')
-
-    for l in lines:
-        if l.find("dayOfWeekShort") == -1:
-            continue
-
-        time = l.split('["')[1].split('"]')[0]
-        day = l.split('"dayOfWeekShort":"')[1].split('"')[0]
-        _tmp.append(f"{day}: {time}")
-
-    return ";".join(_tmp) or "<MISSING>"
-
-
-def get_params():
-    params = []
-    session = SgRequests()
-    r = session.get(
-        "https://flippinpizza.com/wp-content/plugins/superstorefinder-wp/ssf-wp-xml.php"
-    )
-    tree = html.fromstring(r.content)
-    items = tree.xpath("//item")
-    for item in items:
-        source = "".join(item.xpath("./description/text()"))
-        root = html.fromstring(source)
-        url = "".join(root.xpath("//div[@class='location-btn']/a/@href")).strip()
-        lat = "".join(item.xpath("./latitude/text()")).strip() or "<MISSING>"
-        lng = "".join(item.xpath("./longitude/text()")).strip() or "<MISSING>"
-        params.append((url, (lat, lng)))
-
-    return params
-
-
-def get_data(params):
-    page_url = params[0]
-    latitude, longitude = params[1]
-    locator_domain = "https://flippinpizza.com/"
-
-    session = SgRequests()
-    r = session.get(page_url)
-    tree = html.fromstring(r.text)
-
-    iscoming = "".join(tree.xpath("//title/text()")).lower()
-    if "coming soon" in iscoming:
-        return
-
-    location_name = tree.xpath("//h1[@class='entry-title']/text()")[0].strip()
-    line = tree.xpath("//h3[text()='Location Address']/following-sibling::p[1]/text()")
-    line = list(filter(None, [l.strip() for l in line]))
-
-    street_address = ", ".join(line[:-1]).strip()
-    line = line[-1]
-    city = line.split(",")[0].strip()
-    line = line.split(",")[1].strip()
-    state = line.split()[0]
-    postal = line.split()[1]
-    country_code = "US"
-    store_number = "<MISSING>"
-    phone = (
-        "".join(tree.xpath("//p/a[contains(@href,'tel')]/text()")).strip()
-        or "<MISSING>"
-    )
-    location_type = "<MISSING>"
-
-    yelp_url = "".join(tree.xpath("//div[@class='hours-btn']/a/@href"))
-
-    if yelp_url:
-        hours_of_operation = get_hours(yelp_url)
-    else:
-        hours_of_operation = ";".join(
-            tree.xpath(
-                "//div[./strong[contains(text(), 'Hours')]]/following-sibling::div[./em]/em/text()"
-            )
-        )
-
-    row = [
-        locator_domain,
-        page_url,
-        location_name,
-        street_address,
-        city,
-        state,
-        postal,
-        country_code,
-        store_number,
-        phone,
-        location_type,
-        latitude,
-        longitude,
-        hours_of_operation,
-    ]
-
-    return row
+DOMAIN = "https://flippinpizza.com/"
+MISSING = "<MISSING>"
 
 
 def fetch_data():
-    out = []
-    params = get_params()
-
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
-        future_to_url = {executor.submit(get_data, p): p for p in params}
-        for future in futures.as_completed(future_to_url):
-            row = future.result()
-            if row:
-                out.append(row)
-
-    return out
+    if True:
+        url = "https://flippinpizza.com/wp-content/plugins/superstorefinder-wp/ssf-wp-xml.php"
+        r = session.get(url, headers=headers)
+        soup = BeautifulSoup(r.text, "html.parser")
+        loclist = soup.findAll("item")
+        for loc in loclist:
+            location_name = loc.find("location").text
+            page_url = loc.find("exturl").text
+            if not page_url:
+                continue
+            r = session.get(page_url, headers=headers)
+            soup = BeautifulSoup(r.text, "html.parser")
+            hour_url = soup.find("div", {"class": "hours-btn"}).find("a")["href"]
+            log.info("Fetching Hours...")
+            r = session.get(hour_url, headers=headers)
+            soup = BeautifulSoup(r.text, "html.parser")
+            hours_of_operation = (
+                soup.find("table").get_text(separator="|", strip=True).replace("|", " ")
+            )
+            log.info(page_url)
+            address = loc.find("address").text
+            address = address.replace(",", " ")
+            address = usaddress.parse(address)
+            i = 0
+            street_address = ""
+            city = ""
+            state = ""
+            zip_postal = ""
+            while i < len(address):
+                temp = address[i]
+                if (
+                    temp[1].find("Address") != -1
+                    or temp[1].find("Street") != -1
+                    or temp[1].find("Recipient") != -1
+                    or temp[1].find("Occupancy") != -1
+                    or temp[1].find("BuildingName") != -1
+                    or temp[1].find("USPSBoxType") != -1
+                    or temp[1].find("USPSBoxID") != -1
+                ):
+                    street_address = street_address + " " + temp[0]
+                if temp[1].find("PlaceName") != -1:
+                    city = city + " " + temp[0]
+                if temp[1].find("StateName") != -1:
+                    state = state + " " + temp[0]
+                if temp[1].find("ZipCode") != -1:
+                    zip_postal = zip_postal + " " + temp[0]
+                i += 1
+            latitude = loc.find("latitude").text
+            longitude = loc.find("longitude").text
+            phone = loc.find("telephone").text
+            country_code = "US"
+            yield SgRecord(
+                locator_domain=DOMAIN,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address.strip(),
+                city=city.strip(),
+                state=state.strip(),
+                zip_postal=zip_postal.strip(),
+                country_code=country_code,
+                store_number=MISSING,
+                phone=phone.strip(),
+                location_type=MISSING,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation.strip(),
+            )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    log.info("Started")
+    count = 0
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PhoneNumberId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
 
 
 if __name__ == "__main__":
