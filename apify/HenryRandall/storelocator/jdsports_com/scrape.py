@@ -1,4 +1,3 @@
-import csv
 import json
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
@@ -109,21 +108,24 @@ def fetch_data(sgw: SgWriter):
                             lat = SgRecord.MISSING
                             long = SgRecord.MISSING
 
-                        sgw.write_row(SgRecord(
-                            locator_domain = locator_domain,
-                            page_url = loc_url,
-                            location_name = name,
-                            city = city,
-                            state = state,
-                            zip_postal = postal,
-                            country_code = country,
-                            store_number = store_number,
-                            phone = phone,
-                            location_type = loc_type,
-                            latitude = lat,
-                            longitude = long,
-                            hours_of_operation=hoo
-                        ))
+                        sgw.write_row(
+                            SgRecord(
+                                locator_domain=locator_domain,
+                                page_url=loc_url,
+                                location_name=name,
+                                street_address=address,
+                                city=city,
+                                state=state,
+                                zip_postal=postal,
+                                country_code=country,
+                                store_number=store_number,
+                                phone=phone,
+                                location_type=loc_type,
+                                latitude=lat,
+                                longitude=long,
+                                hours_of_operation=hoo,
+                            )
+                        )
 
 
 def scrape():
