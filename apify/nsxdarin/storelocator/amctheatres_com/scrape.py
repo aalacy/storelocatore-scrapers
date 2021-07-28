@@ -87,6 +87,8 @@ def fetch_data():
             name = "AMC Oakbrook Center 4"
             lat = "41.850415"
             lng = "-87.952809"
+        name = name.replace("&amp;", "&")
+        add = add.replace("&amp;", "&")
         yield SgRecord(
             locator_domain=website,
             page_url=loc,
