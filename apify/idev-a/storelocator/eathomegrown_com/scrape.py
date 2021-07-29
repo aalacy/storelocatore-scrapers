@@ -5,6 +5,8 @@ from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
 import dirtyjson
 import re
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 logger = SgLogSetup().get_logger("millersfresh")
 
@@ -40,8 +42,9 @@ def fetch_data():
                     street_address += " " + _["street2"]
                 hours = []
                 for hh in _["hours"].split(","):
-                    if "&amp;" not in hh:
-                        hours.append(hh)
+                    if "&amp;" in hh:
+                        continue
+                    hours.append(hh)
                 yield SgRecord(
                     page_url=page_url,
                     location_name=_["storeName"].replace("&amp;", "&"),
@@ -57,9 +60,11 @@ def fetch_data():
                     hours_of_operation="; ".join(hours),
                 )
 
+            break
+
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
