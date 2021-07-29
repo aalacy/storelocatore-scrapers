@@ -181,6 +181,13 @@ def fetch_data():
             hours = hours.replace("</span>", "")
             if "Medical Oncology" in hours:
                 hours = "<MISSING>"
+            if "<em>" in hours:
+                hours = hours.split("<em>")[0].strip()
+            hours = hours.replace("&amp;", "&").replace("&ndash;", "-")
+            add = add.replace("\\u0026", "&")
+            name = name.replace("\\u0026", "&")
+            if "<span" in hours:
+                hours = "<MISSING>"
             yield SgRecord(
                 locator_domain=website,
                 page_url=loc,
