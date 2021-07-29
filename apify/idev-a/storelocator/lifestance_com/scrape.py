@@ -8,6 +8,7 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 import math
 from concurrent.futures import ThreadPoolExecutor
+from sgscrape.sgpostal import parse_address_intl
 
 logger = SgLogSetup().get_logger("lifestance")
 session = SgRequests().requests_retry_session()
@@ -58,20 +59,12 @@ def fetch_data():
         for page_url, response in fetchConcurrentList(locations):
             logger.info(f"{page_url}")
             sp1 = bs(response, "lxml")
-            addr = list(sp1.select_one("div.self-center div.p").stripped_strings)
-            if len(addr) > 1:
-                street_address = addr[0].strip()
-                city = addr[0].replace(",", "").strip()
-                state = addr[1].strip().split(" ")[0].strip()
-                zip_postal = addr[1].strip().split(" ")[-1].strip()
-            else:
-                _addr = addr[0].split(",")
-                street_address = " ".join(_addr[:-2])
-                city = _addr[-2].strip()
-                state = _addr[-1].strip().split(" ")[0].strip()
-                zip_postal = _addr[-1].strip().split(" ")[-1].strip()
-                if not zip_postal.replace("-", "").strip().isdigit():
-                    zip_postal = ""
+            addr = parse_address_intl(
+                " ".join(sp1.select_one("div.self-center div.p").stripped_strings)
+            )
+            street_address = addr.street_address_1
+            if addr.street_address_2:
+                street_address += " " + addr.street_address_2
             _hr = sp1.find("h2", string=re.compile(r"Hours Of Operation"))
             hours = []
             if _hr:
@@ -91,9 +84,9 @@ def fetch_data():
                 page_url=page_url,
                 location_name=sp1.select_one("h1.h1").text.strip(),
                 street_address=street_address,
-                city=city,
-                state=state,
-                zip_postal=zip_postal,
+                city=addr.city,
+                state=addr.state,
+                zip_postal=addr.postcode,
                 country_code="US",
                 phone=phone,
                 locator_domain=locator_domain,
