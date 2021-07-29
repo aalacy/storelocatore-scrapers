@@ -15,7 +15,6 @@ def fetch_data():
 
     session = SgRequests()
     search = DynamicZipSearch(country_codes=[SearchableCountries.BRITAIN])
-    identities = set()
     for zipcode in search:
         logzilla.info(f"{zipcode} | remaining: {search.items_remaining()}")
         cont = True
@@ -42,7 +41,7 @@ def fetch_data():
                                     .split("lat=")[1]
                                     .split("&")[0]
                                     .strip(),
-                                    str(i["url"]).split("long=")[1].strip()
+                                    str(i["url"]).split("long=")[1].strip(),
                                 )
                             except Exception:
                                 pair = ""
@@ -51,30 +50,11 @@ def fetch_data():
                         except:
                             pass
 
-                        if (
-                            str(
-                                str(i["displayName"])
-                                + str(i["line1"])
-                                + str(i["line2"])
-                                + str(i["town"])
-                                + str(i["postalCode"])
-                            )
-                            not in identities
-                        ):
-                            identities.add(
-                                str(
-                                    str(i["displayName"])
-                                    + str(i["line1"])
-                                    + str(i["line2"])
-                                    + str(i["town"])
-                                    + str(i["postalCode"])
-                                )
-                            )
-                            try:
-                                i["openings"] = i["openings"]
-                            except Exception:
-                                i["openings"] = []
-                            yield i
+                        try:
+                            i["openings"] = i["openings"]
+                        except Exception:
+                            i["openings"] = []
+                        yield i
             except Exception:
                 cont = False
 
