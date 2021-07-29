@@ -34,7 +34,7 @@ session = SgRequests()
 
 
 def fetch_data(sgw: SgWriter):
-    with SgChrome(executable_path="C:/webdrivers/chromedriver.exe") as driver:
+    with SgChrome() as driver:
         driver.get("https://shop.cleosfurniture.com/stores/store-info")
         soup = BeautifulSoup(driver.page_source, "html.parser")
         loclist = soup.findAll("div", {"class": "vc_btn3-container vc_btn3-inline"})
