@@ -83,13 +83,6 @@ def fetch_data(sgw: SgWriter):
                     if digit != 0:
                         street_address = street_address[digit:]
 
-                if country_code in ["Europe"]:
-                    country = state
-                    fin_state = "<MISSING>"
-                else:
-                    fin_state = state
-                    country = country_code
-
                 sgw.write_row(
                     SgRecord(
                         locator_domain=locator_domain,
