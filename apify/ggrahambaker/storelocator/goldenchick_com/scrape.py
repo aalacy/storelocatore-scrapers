@@ -24,7 +24,6 @@ def fetch_data():
         "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
     }
 
-    locator_domain = "http://goldenchick.com/"
     url = "http://locations.goldenchick.com/"
     r = session.get(url, headers=HEADERS)
 
@@ -64,7 +63,6 @@ def fetch_data():
             if len(loc["href"].split("/")) == 7:
                 link_list.append(loc["href"])
 
-    all_store_data = []
     for link in link_list:
         r = session.get(link, headers=HEADERS)
         log.info(link)
@@ -109,7 +107,7 @@ def fetch_data():
             state=state.strip(),
             zip_postal=zip_postal.strip(),
             country_code=country_code,
-            store_number=MISSING,
+            store_number=Store_number,
             phone=phone.strip(),
             location_type=MISSING,
             latitude=latitude,
