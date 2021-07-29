@@ -8,6 +8,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
+from sgscrape.sgpostal import parse_address_intl
 
 try:
     _create_unverified_https_context = (
@@ -40,16 +41,12 @@ def fetch_data():
             city = city[:-2]
         address_raw = poi_html.xpath('.//p[i[@class="fa fa-map-marker-alt"]]//text()')
         address_raw = [elem.strip() for elem in address_raw if elem.strip()]
-        street_address = address_raw[0]
-        street_address = " ".join(
-            [elem.capitalize() for elem in street_address.split()]
-        )
-        words = street_address.split()
-        street_address = " ".join(sorted(set(words), key=words.index))
-        if street_address.endswith(city):
-            street_address = street_address.replace(city, "")
-        state = address_raw[-1].split()[0]
-        zip_code = address_raw[-1].split()[-1]
+        addr = parse_address_intl(" ".join(address_raw))
+        street_address = addr.street_address_1
+        if addr.street_address_2:
+            street_address += " " + addr.street_address_2
+        state = addr.state
+        zip_code = addr.postcode
         phone = poi_html.xpath('.//p[i[@class="fa fa-phone-alt"]]/text()')
         phone = phone[0].strip() if phone else "<MISSING>"
         location_type = "<MISSING>"
