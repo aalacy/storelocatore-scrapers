@@ -77,6 +77,7 @@ def fetch_data():
                 latitude=latitude,
                 longitude=longitude,
                 hours_of_operation=hours_of_operation,
+                raw_address=poi["LinkAddr"],
             )
 
             yield item
