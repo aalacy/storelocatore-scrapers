@@ -109,6 +109,7 @@ def fetch_data(sgw: SgWriter):
             page_url.replace("<MISSING>", "")
             or "https://www.lesaint.com/warehouse-ecommerce-fulfillment-centers-locations/"
         )
+
         text = "".join(d.xpath('.//a[contains(text(), "Get")]/@href'))
         try:
             if text.find("ll=") != -1:
@@ -119,12 +120,36 @@ def fetch_data(sgw: SgWriter):
                 longitude = text.split("@")[1].split(",")[1]
         except IndexError:
             latitude, longitude = "<MISSING>", "<MISSING>"
+        raw_address = "<MISSING>"
         phone = "<MISSING>"
+        hours_of_operation = "<MISSING>"
         if page_url.find("tagglogistics") != -1:
             session = SgRequests()
             r = session.get(page_url, headers=headers)
             tree = html.fromstring(r.text)
             phone = " ".join(tree.xpath("//*//strong/a/text()")).split()[0].strip()
+            slug = (
+                "".join(tree.xpath("//div/@data-storerocket-location")) or "<MISSING>"
+            )
+
+            session = SgRequests()
+            r = session.get(
+                f"https://api.storerocket.io/api/user/vk8PRPA4bm/locations?location={slug}&units=miles",
+                headers=headers,
+            )
+            js = r.json()["results"]["locations"][0]
+            raw_address = js.get("address")
+            days = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"]
+            tmp = []
+            for d in days:
+                day = d.capitalize()
+                time = js.get(f"{d}")
+                line = f"{day} {time}"
+                tmp.append(line)
+            hours_of_operation = "; ".join(tmp) or "<MISSING>"
+            if latitude == "<MISSING>":
+                latitude = js.get("lat")
+                longitude = js.get("lng")
 
         row = SgRecord(
             locator_domain=locator_domain,
@@ -140,7 +165,8 @@ def fetch_data(sgw: SgWriter):
             location_type=SgRecord.MISSING,
             latitude=latitude,
             longitude=longitude,
-            hours_of_operation=SgRecord.MISSING,
+            hours_of_operation=hours_of_operation,
+            raw_address=raw_address,
         )
 
         sgw.write_row(row)
