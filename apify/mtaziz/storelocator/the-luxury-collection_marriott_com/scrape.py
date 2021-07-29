@@ -27,8 +27,6 @@ URL_LOCATION = "https://www.marriott.com/hotel-search.mi"
 
 logger = SgLogSetup().get_logger("the-luxury-collection_marriott_com")
 
-logger = SgLogSetup().get_logger("aloft-hotels_marriott_com")
-
 headers_api = {
     "accept": "application/json, text/plain, */*",
     "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.114 Safari/537.36",
