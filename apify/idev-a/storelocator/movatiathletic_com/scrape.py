@@ -23,7 +23,7 @@ def fetch_data():
                 page_url="https://movatiathletic.com/locations/",
                 store_number=_["id"],
                 location_name=_["name"],
-                street_address=street_address,
+                street_address=street_address.replace("East Kingsville Square", ""),
                 city=_["city"],
                 state=_["province"],
                 zip_postal=_["postcode"],
