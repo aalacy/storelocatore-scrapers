@@ -1,42 +1,18 @@
-import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
 from sgzip.static import static_zipcode_list
 from sgzip.dynamic import SearchableCountries
 from tenacity import retry, stop_after_attempt
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
 
 logger = SgLogSetup().get_logger("dodge_com")
-
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
 
 
 def parse_hours(json_hours):
@@ -80,7 +56,7 @@ def get_url(url):
 
 def fetch_data():
     ids = set()
-    codes = static_zipcode_list(radius=50, country_code=SearchableCountries.USA)
+    codes = static_zipcode_list(radius=10, country_code=SearchableCountries.USA)
     for code in codes:
         logger.info("Pulling Zip Code %s..." % code)
         url = (
@@ -114,27 +90,31 @@ def fetch_data():
             lat = handle_missing(dealer["dealerShowroomLatitude"])
             lng = handle_missing(dealer["dealerShowroomLongitude"])
             hours = parse_hours(dealer["departments"]["sales"]["hours"])
-            yield [
-                website,
-                purl,
-                name,
-                add,
-                city,
-                state,
-                zc,
-                country,
-                store_number,
-                phone,
-                typ,
-                lat,
-                lng,
-                hours,
-            ]
+            yield SgRecord(
+                locator_domain=website,
+                page_url=purl,
+                location_name=name,
+                street_address=add,
+                city=city,
+                state=state,
+                zip_postal=zc,
+                country_code=country,
+                phone=phone,
+                location_type=typ,
+                store_number=store_number,
+                latitude=lat,
+                longitude=lng,
+                hours_of_operation=hours,
+            )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    with SgWriter(
+        deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumberId)
+    ) as writer:
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()
