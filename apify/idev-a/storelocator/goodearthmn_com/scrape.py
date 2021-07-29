@@ -63,12 +63,6 @@ def fetch_data():
                     break
                 hours.append(hh)
 
-            coord = (
-                sp1.select_one("div#locationsInfo p a")["href"]
-                .split("ll=")[1]
-                .split("&")[0]
-                .split(",")
-            )
             yield SgRecord(
                 page_url=page_url,
                 location_name=link.text.strip(),
@@ -79,8 +73,6 @@ def fetch_data():
                 country_code="US",
                 phone=block[-1],
                 locator_domain=locator_domain,
-                latitude=coord[0],
-                longitude=coord[1],
                 hours_of_operation="; ".join(hours).replace("–", "-"),
             )
 
