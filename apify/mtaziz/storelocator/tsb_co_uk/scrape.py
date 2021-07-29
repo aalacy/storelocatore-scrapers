@@ -79,7 +79,7 @@ def fetch_data():
     s = set()
     url = "https://www.tsb.co.uk/sites/Satellite?c=Page&pagename=public%2FseBranchLocator&longitude=-4.3878&latitude=56.5685&filter=null&numBranches=1&rows=1000&isAppend=false"
     r = session.post(url, headers=headers_tsb)
-    text = html.unescape(r.content.decode('unicode-escape'))
+    text = html.unescape(r.content.decode("unicode-escape"))
     sp1 = text.split("jsonBranches = ")[-1]
     sp2 = sp1.split(";")[0]
     sp3 = sp2.replace("'", "")
