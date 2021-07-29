@@ -33,6 +33,8 @@ def fetch_data(sgw: SgWriter):
         else:
             link = div["href"] + "contact-us"
         r = session.get(link, headers=headers, verify=False)
+        r2 = session.get(div["href"], headers=headers, verify=False)
+        soup = BeautifulSoup(r2.text, "lxml")
         address = r.text.split('"address":"', 1)[1].split('"', 1)[0].replace(",", "")
         addr = parse_address_usa(address)
         street = addr.street_address_1
@@ -90,7 +92,29 @@ def fetch_data(sgw: SgWriter):
                 + hourslist[7].split('",', 1)[0]
             )
         except:
-            hours = "<MISSING>"
+            try:
+                hours = (
+                    soup.find(
+                        class_="fusion-builder-row fusion-builder-row-inner fusion-row"
+                    )
+                    .get_text(" ")
+                    .replace("\n", "")
+                )
+                hours = (re.sub(" +", " ", hours)).strip()
+            except:
+                hours = "<MISSING>"
+
+            hours = (
+                hours.replace("Open Jump (all ages)", "")
+                .replace(": Midnight  Teen Flight Night", "")
+                .replace("Weekday’s Open Til 8 PM", "")
+                .replace("Weekday’s Open Til 9 PM", "")
+                .replace("Open until 9 PM", "")
+                .replace("Open Jump Open until 11pm", "")
+                .split("Sundays")[0]
+                .strip()
+            )
+            hours = (re.sub(" +", " ", hours)).strip()
 
         sgw.write_row(
             SgRecord(
