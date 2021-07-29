@@ -25,10 +25,6 @@ _headers = {
 }
 locator_domain = "https://www.taxassist.co.uk/"
 
-session = SgRequests().requests_retry_session()
-session.proxies = set_proxies()
-max_workers = 8
-
 DEFAULT_PROXY_URL = "https://groups-RESIDENTIAL,country-us:{}@proxy.apify.com:8000/"
 
 
@@ -46,6 +42,11 @@ def set_proxies():
         return proxies
     else:
         return None
+
+
+session = SgRequests().requests_retry_session()
+session.proxies = set_proxies()
+max_workers = 8
 
 
 def fetchConcurrentSingle(page_url):
@@ -121,7 +122,7 @@ def fetch_data():
         details = [dd["href"] for dd in sp1.select("main div.mt-auto a.outline")]
         if details:
             for page_url, sp2 in fetchConcurrentList(details):
-                yield parse_detail(sp2, detail)
+                yield parse_detail(sp2, page_url)
         else:
             yield parse_detail(sp1, page_url)
 
