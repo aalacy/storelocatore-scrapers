@@ -25,7 +25,7 @@ def fetch_data():
                 location_name=_["name"],
                 street_address=street_address,
                 city=_["city"],
-                state=_["region"],
+                state=_["province"],
                 zip_postal=_["postcode"],
                 latitude=_["lat"],
                 longitude=_["lon"],
