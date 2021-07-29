@@ -62,7 +62,7 @@ def fetch_data():
             state_url = locator_domain + state["href"]
             locations = bs(
                 session.get(state_url, headers=_headers).text, "lxml"
-            ).select("div.alpha-list div.single-location")
+            ).select("div.alpha-list div.single-location div.location-details")
             for page_url, _, sp1 in fetchConcurrentList(locations):
                 logger.info(f"[{state.text}] {page_url}")
                 ss = json.loads(
