@@ -3,6 +3,7 @@ from lxml import etree
 from urllib.parse import urljoin
 
 from sgselenium import SgChrome
+from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
@@ -20,6 +21,7 @@ else:
 
 def fetch_data():
     # Your scraper here
+    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
     domain = "americantiredepot.com"
     start_url = "https://americantiredepot.com/search/store/locations"
 
@@ -54,6 +56,17 @@ def fetch_data():
         if "Coming Soon" in city:
             city = city.split("-")[0].strip()
             location_type = "Coming Soon"
+
+        loc_response = session.get(store_url)
+        loc_dom = etree.HTML(loc_response.text)
+        geo = (
+            loc_dom.xpath(
+                '//div[@class="col-md-6 col-sm-6 store-map-box"]/iframe/@src'
+            )[0]
+            .split("!2d")[-1]
+            .split("!2m")[0]
+            .split("!3d")
+        )
         hours_of_operation = poi_html.xpath(
             './/table[@class="tbl-store-hours mt-2"]//text()'
         )
@@ -73,11 +86,11 @@ def fetch_data():
             state=state,
             zip_postal=zip_code,
             country_code=SgRecord.MISSING,
-            store_number=SgRecord.MISSING,
+            store_number=store_url.split("=")[-1],
             phone=phone,
             location_type=location_type,
-            latitude=SgRecord.MISSING,
-            longitude=SgRecord.MISSING,
+            latitude=geo[-1],
+            longitude=geo[0],
             hours_of_operation=hours_of_operation,
         )
 

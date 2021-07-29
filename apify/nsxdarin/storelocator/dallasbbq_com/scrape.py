@@ -78,6 +78,8 @@ def fetch_data():
             hours = hours.split("FOR TAKE")[0].strip()
         cleanr = re.compile("<.*?>")
         hours = re.sub(cleanr, "", hours)
+        if "downtown-brooklyn" in loc:
+            phone = "(718) 643-5700"
         yield SgRecord(
             locator_domain=website,
             page_url=loc,
