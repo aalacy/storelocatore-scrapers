@@ -17,11 +17,6 @@ def fetch_data():
     domain = "freewayinsurance.com"
     start_url = "https://locations.freewayinsurance.com/?search={}&latitude=&longitude=&radio=200&time=open-any"
 
-    headers = {
-        "content-type": "application/x-www-form-urlencoded",
-        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
-    }
-
     all_locations = []
     all_codes = DynamicZipSearch(
         country_codes=[SearchableCountries.USA], expected_search_radius_miles=200
