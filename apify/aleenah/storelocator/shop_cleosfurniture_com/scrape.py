@@ -55,7 +55,6 @@ def fetch_data(sgw: SgWriter):
                 .split("!2m", 1)[0]
                 .split("!3d")
             )
-            print(latitude, longitude)
             location_name = soup.find("h1").text
             phone = temp_list[0].get_text(separator="|", strip=True).split("|")[1]
             address = temp_list[1].get_text(separator="|", strip=True).split("|")
