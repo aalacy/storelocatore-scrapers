@@ -80,8 +80,9 @@ def fetch_data(sgw: SgWriter):
 
                 if country_code in ["United States", "Canada"]:
                     if re.search(r"\d", street_address):
-                        digit = re.search(r"\d", street_address).start(0)
-                        street_address = street_address[digit:]
+                        digit = str(re.search(r"\d", street_address))
+                        start = int(digit.split("(")[1].split(",")[0])
+                        street_address = street_address[start:]
 
                 sgw.write_row(
                     SgRecord(
