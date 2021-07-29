@@ -32,8 +32,8 @@ def fetch_data():
             lng = item["fields"]["Lng"]
             lat = item["fields"]["Lat"]
             phone = item["fields"]["Phone"]
-            loc = "<MISSING>"
             store = item["fields"]["RecordId"]
+            loc = "https://www.bedbathandbeyond.com/store/pickup/store-" + store
             hours = (
                 "Sun: "
                 + str(item["fields"]["SUN_OPEN"])
@@ -82,6 +82,8 @@ def fetch_data():
                 + "-"
                 + str(item["fields"]["SAT_CLOSE"])
             )
+            hours = hours.replace(": 0-0;", ": Closed")
+            hours = hours.replace("Sat: 0-0", "Sat: Closed")
             yield SgRecord(
                 locator_domain=website,
                 page_url=loc,

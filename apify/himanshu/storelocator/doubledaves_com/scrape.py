@@ -39,6 +39,9 @@ def fetch_data():
             if "Coming soon" in r2.text:
                 continue
             soup2 = BeautifulSoup(r2.text, "lxml")
+            store_number = r2.text.split("store['id'] = ")[1].split(";")[0]
+            latitude = r2.text.split("store['latitude'] = ")[1].split(";")[0]
+            longitude = r2.text.split("store['longitude'] = ")[1].split(";")[0]
             location_name = (
                 soup2.find("div", {"class": "page-heading"}).find("h1").text.strip()
             )
@@ -47,7 +50,7 @@ def fetch_data():
                 continue
             if len(main2) == 2:
                 loc_address = list(main2[1].stripped_strings)
-                phone = main2[0].text.strip()
+                phone = main2[0].text.strip().replace("- ", "")
             else:
                 loc_address = list(main2[0].stripped_strings)
                 phone = "<MISSING>"
@@ -84,6 +87,7 @@ def fetch_data():
                 hour = "<MISSING>"
             hour = hour.replace("Dough Slingin' Hours = ", "").replace("::", " ")
             country_code = "US"
+            phone = phone.replace("DAVE", "").replace("- ", "")
             yield SgRecord(
                 locator_domain=DOMAIN,
                 page_url=page_url,
@@ -93,11 +97,11 @@ def fetch_data():
                 state=state,
                 zip_postal=zip_postal,
                 country_code=country_code,
-                store_number=MISSING,
+                store_number=store_number,
                 phone=phone.strip(),
                 location_type=MISSING,
-                latitude=MISSING,
-                longitude=MISSING,
+                latitude=latitude,
+                longitude=longitude,
                 hours_of_operation=hour.strip(),
             )
 
