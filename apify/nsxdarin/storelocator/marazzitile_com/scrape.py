@@ -23,21 +23,18 @@ def fetch_data():
             lurl = line.split('href="')[1].split('"')[0]
             states.append(lurl)
     for state in states:
-        print("Pulling State %s..." % state)
         r2 = session.get(state, headers=headers)
         for line2 in r2.iter_lines():
             line2 = str(line2.decode("utf-8"))
             if 'data-galoc="City Level' in line2:
                 cities.append(line2.split('href="')[1].split('"')[0])
     for city in cities:
-        print("Pulling City %s..." % city)
         r2 = session.get(city, headers=headers)
         for line2 in r2.iter_lines():
             line2 = str(line2.decode("utf-8"))
             if 'data-gaact="Click_to_ViewLocalPage"' in line2:
                 locs.append(line2.split('href="')[1].split('/"')[0])
     for loc in locs:
-        print("Pulling Location %s..." % loc)
         r2 = session.get(loc, headers=headers)
         name = ""
         add = ""
