@@ -5,7 +5,6 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sglogging import SgLogSetup
 import json
-import re
 import html
 
 logger = SgLogSetup().get_logger("tsb_co_uk")
@@ -69,10 +68,6 @@ def get_hours(data_hours):
     hours_of_operation = f"{tue}; {wed}; {thu}; {fri}; {sat}; {sun}; {mon}"
     hours_of_operation = hours_of_operation.replace("- - -", "Closed")
     return hours_of_operation
-
-
-# search = DynamicGeoSearch(
-#         country_codes=[SearchableCountries.BRITAIN], expected_search_radius_miles=20, use_state=False)
 
 
 def fetch_data():
