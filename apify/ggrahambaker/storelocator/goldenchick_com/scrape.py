@@ -107,7 +107,7 @@ def fetch_data():
             state=state.strip(),
             zip_postal=zip_postal.strip(),
             country_code=country_code,
-            store_number=Store_number,
+            store_number=store_number,
             phone=phone.strip(),
             location_type=MISSING,
             latitude=latitude,
