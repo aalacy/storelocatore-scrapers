@@ -79,8 +79,8 @@ def fetch_data(sgw: SgWriter):
                         pass
 
                 if country_code in ["United States", "Canada"]:
-                    digit = re.search(r"\d", street_address).start(0)
-                    if digit != 0:
+                    if re.search(r"\d", street_address):
+                        digit = re.search(r"\d", street_address).start(0)
                         street_address = street_address[digit:]
 
                 sgw.write_row(
