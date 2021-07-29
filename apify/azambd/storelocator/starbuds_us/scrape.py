@@ -112,7 +112,7 @@ def fetch_store_details(link):
             foundLocation = True
     store_number = data["props"]["seo"]["pageId"]
 
-    if foundLocation == False:
+    if foundLocation is False:
 
         for script in body.xpath('.//script[@type="application/ld+json" ]/text()'):
             if "latitude" in script:
