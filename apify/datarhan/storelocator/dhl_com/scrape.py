@@ -23,7 +23,7 @@ def fetch_latlng(lat, lng, country, session, tracker):
     data = session.get(url, params=params).json()
     if not data.get("servicePoints"):
         return []
-    print(len(data.get("servicePoints")))
+
     for location in data.get("servicePoints"):
         poi = extract(location)
         yield poi
