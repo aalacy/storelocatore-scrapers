@@ -9,7 +9,9 @@ from sgrequests.sgrequests import SgRequests
 from sgzip.dynamic import SearchableCountries, DynamicGeoSearch
 
 from sglogging import sglog
+
 logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
+
 
 def fetch_records(http: SgRequests, search: DynamicGeoSearch) -> Iterable[SgRecord]:
     headers = {}
@@ -140,11 +142,13 @@ def fetch_records(http: SgRequests, search: DynamicGeoSearch) -> Iterable[SgReco
                         raw_address=str(record),
                     )
                     found += 1
-                progress = str(round(100 - (search.items_remaining() / maxZ * 100), 2)) + "%"
+                progress = (
+                    str(round(100 - (search.items_remaining() / maxZ * 100), 2)) + "%"
+                )
                 total += found
                 logzilla.info(
-            f"{str(lat).replace('(','').replace(')','')}{str(lng).replace('(','').replace(')','')}|found: {found}|total: {total}|prog: {progress}|\nRemaining: {search.items_remaining()}"
-        )
+                    f"{str(lat).replace('(','').replace(')','')}{str(lng).replace('(','').replace(')','')}|found: {found}|total: {total}|prog: {progress}|\nRemaining: {search.items_remaining()}"
+                )
 
 
 if __name__ == "__main__":
