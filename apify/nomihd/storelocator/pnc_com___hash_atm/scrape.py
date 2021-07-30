@@ -292,9 +292,7 @@ def scrape():
         for future in as_completed(futures):
             locations.extend(future.result())
 
-        with SgChrome(
-            is_headless=True, executable_path=ChromeDriverManager().install()
-        ).driver() as driver:
+        with SgChrome().driver() as driver:
             driver.set_script_timeout(120)
             driver.get("https://pnc.com")
             for chunk in batch(locations, 5):
