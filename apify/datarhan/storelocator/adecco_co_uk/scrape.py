@@ -1,83 +1,47 @@
-import csv
+import json
+from lxml import etree
+from urllib.parse import urljoin
 
 from sgrequests import SgRequests
-from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
-
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
 
 
 def fetch_data():
-    # Your scraper here
     session = SgRequests()
 
-    items = []
-    scraped_items = []
+    domain = "adecco.co.uk"
+    start_url = "https://www.adecco.co.uk/find-a-branch/"
 
-    DOMAIN = "adecco.co.uk"
-    start_url = "https://www.adecco.co.uk/globalweb/branch/branchsearch"
+    response = session.get(start_url)
+    dom = etree.HTML(response.text)
 
-    headers = {
-        "Accept": "application/json, text/javascript, */*; q=0.01",
-        "Content-Type": "application/json; charset=utf-8",
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.67 Safari/537.36",
-        "X-Requested-With": "XMLHttpRequest",
-    }
+    all_locations = dom.xpath('//div[@id="nav-tabContent"]//li/a/@href')
+    for url in list(set(all_locations)):
+        store_url = urljoin(start_url, url)
+        if "branches" in url:
+            continue
+        print(store_url)
+        loc_response = session.get(store_url)
+        if loc_response.status_code != 200:
+            continue
+        loc_dom = etree.HTML(loc_response.text)
+        poi = loc_dom.xpath('//script[contains(text(), "branch_details =")]/text()')
+        if not poi:
+            continue
+        if (
+            poi
+            and poi[0].split("branch_details =")[-1].split(";\r\n")[0].strip() == "[]"
+        ):
+            continue
+        poi = json.loads(poi[0].split("branch_details =")[-1].split(";\r\n")[0])[0]
 
-    all_locations = []
-    all_codes = DynamicGeoSearch(
-        country_codes=[SearchableCountries.BRITAIN], max_radius_miles=5
-    )
-    for lat, lng in all_codes:
-        frm = {
-            "dto": {
-                "Latitude": str(lat),
-                "Longitude": str(lng),
-                "MaxResults": "10",
-                "Radius": "5",
-                "Industry": "ALL",
-                "RadiusUnits": "MILES",
-            }
-        }
-        response = session.post(start_url, json=frm, headers=headers).json()
-        all_locations += response["Items"]
-
-    for poi in all_locations:
-        store_url = "https://www.adeccousa.co.uk/" + poi["ItemUrl"]
-        store_url = store_url if store_url else "<MISSING>"
         location_name = poi["BranchName"]
-        location_name = location_name if location_name else "<MISSING>"
         street_address = poi["Address"]
         if poi["AddressExtension"]:
             street_address += ", " + poi["AddressExtension"]
-        street_address = street_address if street_address else "<MISSING>"
         city = poi["City"]
         city = city if city else "<MISSING>"
         state = poi["State"]
@@ -106,32 +70,36 @@ def fetch_data():
             ", ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
         )
 
-        item = [
-            DOMAIN,
-            store_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip_code,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        if store_number not in scraped_items:
-            scraped_items.append(store_number)
-            items.append(item)
+        item = SgRecord(
+            locator_domain=domain,
+            page_url=store_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=zip_code,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=location_type,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+        )
 
-    return items
+        yield item
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
 if __name__ == "__main__":
