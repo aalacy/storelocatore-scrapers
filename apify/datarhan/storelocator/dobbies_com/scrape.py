@@ -28,6 +28,8 @@ def fetch_data():
         '//a[@class="ms-store-select__location-line-shop-link"]/@href'
     )
     for store_url in list(set(all_locations)):
+        if store_url == "https://www.dobbies.com/atherstone-outlet":
+            store_url = "https://www.dobbies.com/atherstone"
         loc_response = session.get(store_url)
         if loc_response.status_code != 200:
             continue
