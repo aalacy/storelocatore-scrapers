@@ -52,7 +52,7 @@ def fetch_data():
 
     url = "https://www.choicehotels.com/webapi/location/hotels"
 
-    for lat, long in search:
+    for lat, lng in search:
 
         payload = (
             "adults=%201&checkInDate=%20"
@@ -62,7 +62,7 @@ def fetch_data():
             + "&lat=%20"
             + str(lat)
             + "&lon=%20"
-            + str(long)
+            + str(lng)
             + "&ratePlans=%20RACK%2CPREPD%2CPROMO%2CFENCD&rateType=%20LOW_ALL&searchRadius=100"
         )
 

@@ -1,5 +1,11 @@
 # Pausing and Resuming Long-Running Crawls
 
+### Library version:
+
+```
+sgscrape>=0.1.7
+```
+
 ## Rationale (Why?)
 
 - We're currently using Apify to execute our crawlers.
@@ -9,12 +15,8 @@
 
 ## Implementation (How?)
 
-### For library version:
-```
-sgscrape>=0.1.7
-```
-
 ### Best Practices & Dos And Don'ts:
+
 - Always use either an `SgWriter`, `SimpleScraperPipeline` or else an `SgCrawler` to deduplicate & persist records.
 - Never create a list of results that you return.
 - Instead, always `yield` each result as it arrives.
@@ -22,8 +24,8 @@ sgscrape>=0.1.7
 - Instead, always pass all countries to `sgzip`, via `SearchableCountries.ALL`
 - If you're initializing a persistent value, use the `default_factory` parameter of `state.get_misc_value`.
 
-
 ### Bare-bones, just requests:
+
 - This is a bare-bones example for how to implement a scraper/crawler which pause/resumes, with an initial phase that
   uses a site-map.
 - Take special note how `record_initial_requests` is being called only once via `state.get_misc_value` with the `default_factory` method.
@@ -41,7 +43,7 @@ from sgrequests.sgrequests import SgRequests
 def record_initial_requests(http: SgRequests, state: CrawlState) -> bool:
     # use the http session (or sgselenium) to fetch, and then register all (or most) requests
     # in the CrawlState, so that it persists them if/when the crawler is restarted on another machine.
-    
+
     sitemap = http.get('http://example.com/sitemap').json()
     for page in sitemap['locations']:
         # note the context dict - it's used to encode the meaning/context of each request,
@@ -54,7 +56,7 @@ def record_initial_requests(http: SgRequests, state: CrawlState) -> bool:
             state.push_request(
                 SerializableRequest(url=page['url'], context={'type': 2})
             )
-    
+
     return True  # signal that we've initialized the request queue.
 
 def fetch_records(http: SgRequests, state: CrawlState) -> Iterable[SgRecord]:
@@ -79,6 +81,7 @@ if __name__ == "__main__":
 ```
 
 ### Bare-bones, with sgzip:
+
 - There is _nothing_ special that you need to do here, aside from following the best practices at the start of the page.
 - This example will be a bit more elaborate, to showcase the capabilities of the libraries.
 - In the end, it will tell us how many locations were found in each country.
@@ -108,7 +111,7 @@ if __name__ == "__main__":
         with SgRequests() as http:
             for rec in fetch_records(http, search):
                 writer.write_row(rec)
-    
+
     state = CrawlStateSingleton.get_instance()
     print("Printing number of records by country-code:")
     for country_code in SearchableCountries.ALL:
