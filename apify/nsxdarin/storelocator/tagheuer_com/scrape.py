@@ -1,6 +1,9 @@
-import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 session = SgRequests()
 headers = {
@@ -8,33 +11,6 @@ headers = {
 }
 
 logger = SgLogSetup().get_logger("tagheuer_com")
-
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
 
 
 def fetch_data():
@@ -103,7 +79,7 @@ def fetch_data():
             infos = []
             name = ""
             logger.info("%s, Page %s..." % (cc, str(x)))
-            purl = "https://store.tagheuer.com/" + cc + "?page=" + str(page)
+            purl = "https://store.tagheuer.com/" + cc + "?page=" + str(x)
             r2 = session.get(purl, headers=headers)
             lines = r2.iter_lines()
             AFound = False
@@ -137,6 +113,8 @@ def fetch_data():
                     store = line2.split('"')[1]
                 if 'point.data.posType = "' in line2:
                     typ = line2.split('point.data.posType = "')[1].split('"')[0]
+                    if typ == "":
+                        typ = "<MISSING>"
                     coords.append(llat + "|" + llng + "|" + store + "|" + typ)
                 if 'address-basic__line"' in line2:
                     AFound = True
@@ -230,27 +208,39 @@ def fetch_data():
                         zc = zc.rsplit(" ", 1)[1].strip()
                 if store not in ids:
                     ids.append(store)
-                    yield [
-                        website,
-                        loc,
-                        name,
-                        add,
-                        city,
-                        state,
-                        zc,
-                        country,
-                        store,
-                        phone,
-                        typ,
-                        lat,
-                        lng,
-                        hours,
-                    ]
+                    if phone == "":
+                        phone = "<MISSING>"
+                    if "144998-ahmed-seddiqi-sons-city-centre-mirdif" in loc:
+                        add = "City Centre Mirdif Dubai"
+                    if "144978-ahmed-seddiqi-sons-dubai-festival-city" in loc:
+                        add = "Dubai Festival City Dubai"
+                    if "144970-ahmed-seddiqi-sons-mall-of-the-emirates" in loc:
+                        add = "Mall Of The Emirates Dubai"
+                    if "144971-ahmed-seddiqi-sons-wafi-shopping-mall" in loc:
+                        add = "Wafi Shopping Mall Dubai"
+                    yield SgRecord(
+                        locator_domain=website,
+                        page_url=loc,
+                        location_name=name,
+                        street_address=add,
+                        city=city,
+                        state=state,
+                        zip_postal=zc,
+                        country_code=country,
+                        phone=phone,
+                        location_type=typ,
+                        store_number=store,
+                        latitude=lat,
+                        longitude=lng,
+                        hours_of_operation=hours,
+                    )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()
