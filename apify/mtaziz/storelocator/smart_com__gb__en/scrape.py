@@ -1,123 +1,53 @@
 from sgrequests import SgRequests
-from sglogging import sglog
-from sgselenium import SgChrome
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support import expected_conditions as EC
-import csv
-
-logzilla = sglog.SgLogSetup().get_logger("smart_com__gb__en")
-
-
-def write_output(data):
-    with open("data.csv", mode="w", newline="", encoding="utf8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        temp_list = []  # ignoring duplicates
-        for row in data:
-            comp_list = [
-                row[1].strip(),
-                row[2].strip(),
-                row[3].strip(),
-                row[4].strip(),
-                row[5].strip(),
-                row[6].strip(),
-                row[8].strip(),
-                row[10].strip(),
-                row[11],
-            ]
-            if comp_list not in temp_list:
-                temp_list.append(comp_list)
-                writer.writerow(row)
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sglogging import SgLogSetup
+from lxml import html
+import re
 
 
-def para(tup):
-    headers = tup[1]
-    session = SgRequests()
-    k = tup[0]
-    url = "https://api.corpinter.net/dlc/dms/v2/dealers/search?marketCode=GB&fields=*&whiteList="
-    son = session.get(url + k["baseInfo"]["externalId"], headers=headers).json()
-    k = son
-    return k
+logger = SgLogSetup().get_logger("smart_com__gb__en")
+
+headers_dealer_locator = {
+    "Referer": "https://www.mercedes-benz.co.uk/",
+    "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.164 Safari/537.36",
+}
+
+LOCATION_DEALER_URL = "https://www.mercedes-benz.co.uk/passengercars/mercedes-benz-cars/dealer-locator.html"
 
 
-def get_data_using_company_id(cid):
-    headers = cid[1]
-    session = SgRequests()
-    k = cid[0]
-    url = "https://api.corpinter.net/dlc/dms/v2/dealers/search?marketCode=GB&fields=*&whiteList="
-    r_cid = session.get(url + str(k), headers=headers).json()
-    return r_cid
+def get_api_key():
+    session_js = SgRequests()
+    r_js = session_js.get(LOCATION_DEALER_URL, headers=headers_dealer_locator)
+    xpath_2 = '//iframe[@data-nn-pluginid="dlc"]/@data-nn-config-url'
+    sel_apikey = html.fromstring(r_js.text, "lxml")
+    raw_plugin_dlc_file_url = sel_apikey.xpath(xpath_2)
+    logger.info(f"Plugin DLC File Name: {raw_plugin_dlc_file_url}")
+    raw_plugin_dlc_file_url = "".join(raw_plugin_dlc_file_url)
+
+    dealerlocator_payload_pluginJSUrl = session_js.get(raw_plugin_dlc_file_url).json()[
+        "pluginJSUrl"
+    ]
+    response_pjsurl = session_js.get(dealerlocator_payload_pluginJSUrl)
+    apikey_pjsurl = re.findall(r"apiKey:(.*)whiteList", response_pjsurl.text)
+    apikey = "".join(apikey_pjsurl).split('"')[1]
+    if apikey:
+        return apikey
+    else:
+        raise Exception("Please check the dlc plugin URL to make sure it exists!!")
 
 
-def specialheaders():
+apikey = get_api_key()
+headers_with_apikey = {}
+headers_with_apikey["x-apikey"] = apikey
+headers_with_apikey[
+    "User-agent"
+] = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.164 Safari/537.36"
+headers_with_apikey["Referer"] = "https://www.mercedes-benz.co.uk/"
 
-    url = "https://www.mercedes-benz.co.uk/passengercars/mercedes-benz-cars/dealer-locator.html"
-
-    headers = {}
-    headers["x-apikey"] = ""
-    headers[
-        "User-Agent"
-    ] = "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.66 Safari/537.36"
-
-    with SgChrome() as driver:
-        driver.get(url)
-        try:
-            accept = WebDriverWait(driver, 120).until(
-                EC.visibility_of_element_located(
-                    (By.XPATH, '//*[@id="uc-btn-accept-banner"]')
-                )
-            )
-            driver.execute_script("arguments[0].click();", accept)
-        except Exception:
-            headers["x-apikey"] = ""
-
-        logzilla.info("Banner clicked with SUCCESS")
-        driver.switch_to.frame("dlc-onedlc-cont")
-        logzilla.info("switch_to frame with SUCCESS")
-
-        byname_xpath = '//button[text()="Search by name"]'
-        byname = WebDriverWait(driver, 120).until(
-            EC.visibility_of_element_located((By.XPATH, byname_xpath))
-        )
-
-        driver.execute_script("arguments[0].click();", byname)
-        logzilla.info("By Name search clicked with SUCCESS")
-        for r in driver.requests:
-            if "/dlc/dms/v2/dealers/search" in r.path:
-                logzilla.info("[/dlc/dms/v2/dealers/search] found in %s" % r.path)
-                try:
-                    headers["x-apikey"] = r.headers["x-apikey"]
-                except Exception:
-                    try:
-                        headers["x-apikey"] = r.response.headers["x-apikey"]
-                    except Exception:
-                        headers["x-apikey"] = headers["x-apikey"]
-        logzilla.info("x-apikey: %s" % headers["x-apikey"])
-
-    return headers
+logger.info(f"APIKEY based headers: {headers_with_apikey}")
 
 
 def determine_brand(k):
@@ -126,16 +56,12 @@ def determine_brand(k):
         brands.append(
             str(i["brand"]["name"]) + str("(" + str(i["brand"]["code"]) + ")")
         )
-    logzilla.info(" brands: %s" % brands)
+    logger.info(" brands: %s" % brands)
     return ", ".join(brands)
 
 
-def determine_smart(brand):
-    return "mart" in brand or "SMT" in brand
-
-
 def determine_hours(k, brand, which):
-    hours = "<MISSING>"
+    hours = SgRecord.MISSING
     h = []
     if which != "LITERALLYANYTHING" and which != "SUPERLITERALLYANYTHING":
         try:
@@ -192,7 +118,7 @@ def determine_hours(k, brand, which):
 
     if which == "SUPERLITERALLYANYTHING":
         for i in k["functions"]:
-            if hours == "<MISSING>" and len(h) == 0:
+            if hours == SgRecord.MISSING and len(h) == 0:
                 try:
                     for j in list(i["openingHours"]):
                         if i["openingHours"][j]["open"]:
@@ -231,45 +157,25 @@ def fix_comma(x):
 
 
 def fetch_data():
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.66 Safari/537.36",
-        "x-apikey": "45ab9277-3014-4c9e-b059-6c0542ad9484",
-    }
-
-    headers = specialheaders()
     resultsList = (
         "https://api.corpinter.net/dlc/dms/v2/dealers/search?marketCode=GB&fields="
     )
     session = SgRequests()
-    results = session.get(resultsList, headers=headers).json()
-    search_space = [[i, headers] for i in results["results"]]
-    company_id_list = []
-    data_list = []
-    items = []
-    for i in search_space:
-        data_from_para = para(i)
-        company_id = data_from_para["results"][0]["baseInfo"]["companyId"]
-        company_id_list.append(company_id)
-
-    logzilla.info("Number of company ID:%s\n" % len(company_id_list))
-    company_id_list = list(set(company_id_list))
-    logzilla.info("Number of unique company ID:%s\n" % len((company_id_list)))
-    company_id_based_search = [[j, headers] for j in company_id_list]
-    logzilla.info("company id based search: %s" % company_id_based_search)
-    for cidbs in company_id_based_search:
-        data_details = get_data_using_company_id(cidbs)
-        data = data_details["results"]
-        data_list.append(data)
-
-    for dl in data_list:
-        for d in dl:
+    results = session.get(resultsList, headers=headers_with_apikey).json()
+    for i in results["results"]:
+        company_id = i["baseInfo"]["externalId"]
+        url = "https://api.corpinter.net/dlc/dms/v2/dealers/search?marketCode=GB&fields=*&whiteList="
+        data_per_dealer_json = session.get(
+            url + company_id, headers=headers_with_apikey
+        ).json()
+        for d in data_per_dealer_json["results"]:
             locator_domain = "https://www.mercedes-benz.co.uk/"
-            page_url = "<MISSING>"
-            if "website" in d["contact"]:
-                page_url = d["contact"]["website"]
+            page_url_slug = d["baseInfo"]["externalId"]
+            if page_url_slug:
+                page_url = f"https://www.smart.com/gb/en/dealer/{page_url_slug}"
             else:
-                page_url = "<MISSING>"
-            location_name = d["baseInfo"]["name1"] or "<MISSING>"
+                page_url = SgRecord.MISSING
+            location_name = d["baseInfo"]["name1"] or SgRecord.MISSING
             sa = d["address"]
             if "line1" in sa:
                 l1 = sa["line1"]
@@ -281,8 +187,8 @@ def fetch_data():
                 l2 = ""
             l = l1 + ", " + l2
             l = fix_comma(l)
-            street_address = l or "<MISSING>"
-            city = d["address"]["city"] or "<MISSING>"
+            street_address = l or SgRecord.MISSING
+            city = d["address"]["city"] or SgRecord.MISSING
             if "region" in d["address"]["region"]:
                 state1 = d["address"]["region"]["region"]
             else:
@@ -300,63 +206,73 @@ def fetch_data():
             elif state2 and not state1:
                 state = state2
             else:
-                state = "<MISSING>"
+                state = SgRecord.MISSING
 
-            zip = d["address"]["zipcode"] or "<MISSING>"
+            zipcode = d["address"]["zipcode"] or SgRecord.MISSING
 
-            country_code = d["address"]["country"] or "<MISSING>"
-            store_number = d["baseInfo"]["externalId"] or "<MISSING>"
+            country_code = d["address"]["country"] or SgRecord.MISSING
+            store_number = d["baseInfo"]["externalId"] or SgRecord.MISSING
+
             if "phone" in d["contact"]:
                 phone = d["contact"]["phone"]
                 if phone:
                     if "+44" == phone:
-                        phone = "<MISSING>"
+                        phone = SgRecord.MISSING
                     else:
                         phone = phone
                 else:
-                    phone = "<MISSING>"
+                    phone = SgRecord.MISSING
             else:
-                phone = "<MISSING>"
+                phone = SgRecord.MISSING
 
             if "brands" in d:
                 location_type = determine_brand(d)
             else:
-                location_type = "<MISSING>"
+                location_type = SgRecord.MISSING
             if "latitude" in d["address"]:
                 latitude = d["address"]["latitude"]
             else:
-                latitude = "<MISSING>"
+                latitude = SgRecord.MISSING
 
             if "longitude" in d["address"]:
                 longitude = d["address"]["longitude"]
             else:
-                longitude = "<MISSING>"
+                longitude = SgRecord.MISSING
 
             hours_of_operation = determine_hours(d, "SMT", "SALES")
-
-            row = [
-                locator_domain,
-                page_url,
-                location_name,
-                street_address,
-                city,
-                state,
-                zip,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
-            items.append(row)
-    return items
+            raw_address = SgRecord.MISSING
+            yield SgRecord(
+                locator_domain=locator_domain,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zipcode,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+                raw_address=raw_address,
+            )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    logger.info("Started")
+    count = 0
+    with SgWriter(
+        deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumberId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+
+    logger.info(f"No of records being processed: {count}")
+    logger.info("Finished")
 
 
 if __name__ == "__main__":

@@ -1,6 +1,9 @@
-import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 logger = SgLogSetup().get_logger("awrestaurants_com")
 
@@ -8,33 +11,6 @@ session = SgRequests()
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
-
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
 
 
 def fetch_data():
@@ -73,6 +49,8 @@ def fetch_data():
         for line2 in lines:
             if '<div class="hours__row">' in line2:
                 g = next(lines)
+                while "<span>" in g and "<ul>" not in g and "</ul>" not in g:
+                    g = next(lines)
                 hrs = (
                     g.replace("</span><span>", ": ")
                     .replace("<span>", "")
@@ -103,27 +81,35 @@ def fetch_data():
         if hours == "":
             hours = "<MISSING>"
         if add != "":
-            yield [
-                website,
-                loc,
-                name,
-                add,
-                city,
-                state,
-                zc,
-                country,
-                store,
-                phone,
-                typ,
-                lat,
-                lng,
-                hours,
-            ]
+            add = add.replace("\\u0026", "&")
+            name = name.replace("\\u0026", "&")
+            hours = hours.replace("&nbsp;", "")
+            if ";" in hours:
+                hours = hours.split(";")[0].strip()
+            hours = hours.replace("<p>", "").replace("</p>", "").strip()
+            yield SgRecord(
+                locator_domain=website,
+                page_url=loc,
+                location_name=name,
+                street_address=add,
+                city=city,
+                state=state,
+                zip_postal=zc,
+                country_code=country,
+                phone=phone,
+                location_type=typ,
+                store_number=store,
+                latitude=lat,
+                longitude=lng,
+                hours_of_operation=hours,
+            )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()
