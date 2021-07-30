@@ -1,14 +1,17 @@
 # -*- coding: utf-8 -*-
 import csv
+import time
+import random
 import threading
 from sgrequests import SgRequests
 from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
-from sgzip.dynamic import SearchableCountries
-from sgzip.static import static_coordinate_list
 from tenacity import retry, stop_after_attempt
 import datetime
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from sgselenium import SgChrome
+from webdriver_manager.chrome import ChromeDriverManager
+from sgzip.static import static_coordinate_list, SearchableCountries
 
 website = "pnc.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -30,8 +33,18 @@ headers = {
 id_list = []
 
 
+def get_driver():
+    if not hasattr(local, "driver"):
+        local.driver = SgChrome(
+            is_headless=False,
+            executable_path=ChromeDriverManager().install(),
+        ).driver()
+        local.driver.get("https://pnc.com")
+    return local.driver
+
+
 def get_session():
-    if not hasattr(local, "session") or local.count > 5:
+    if not hasattr(local, "session") or local.count > 10:
         local.session = SgRequests()
         local.count = 0
 
@@ -42,45 +55,69 @@ def get_session():
 def retry_error_callback(retry_state):
     coord = retry_state.args[0]
     log.error(f"Failure to fetch locations for: {coord}")
-    return []
+    return None
 
 
 @retry(stop=stop_after_attempt(3), retry_error_callback=retry_error_callback)
-def fetch_locations(base_url, coord):
-    timestamp = str(datetime.datetime.now().timestamp()).split(".")[0].strip()
-    url = base_url.format(timestamp, coord[0], coord[1])
-
+def fetch_locations(url):
     return get_session().get(url, headers=headers, timeout=15).json()
 
 
+def fetch_location(url, driver):
+    return driver.execute_async_script(
+        f"""
+        var done = arguments[0]
+        return fetch("{url}")
+            .then(res => res.json())
+            .then(done)
+    """
+    )
+
+
 def fetch_records_for(coord):
-    search_url = "https://apps.pnc.com/locator-api/locator/api/v2/location/?t={}&latitude={}&longitude={}&radius=100&radiusUnits=mi&branchesOpenNow=false"
-    result = fetch_locations(search_url, coord)
+    lat, lng = coord
+    timestamp = str(datetime.datetime.now().timestamp()).split(".")[0].strip()
+    search_url = f"https://apps.pnc.com/locator-api/locator/api/v2/location/?t={timestamp}&latitude={lat}&longitude={lng}&radius=100&radiusUnits=mi&branchesOpenNow=false"
+    result = fetch_locations(search_url)
+    if not result:
+        return []
+
     stores = result["locations"]
     return process_record(stores)
 
 
-def retry_fetch_phone_error_callback(retry_state):
-    id = retry_state.args[0]
-    log.error(f"Failure to fetch phone for: {id}")
-    return None
+def get_details(store_number, driver):
+    url = f"https://apps.pnc.com/locator-api/locator/api/v2/location/details/{store_number}"
+    details = fetch_location(url, driver)
+
+    return details, url
 
 
-@retry(
-    stop=stop_after_attempt(3), retry_error_callback=retry_fetch_phone_error_callback
-)
-def fetch_phone(id):
-    timestamp = str(datetime.datetime.now().timestamp()).split(".")[0].strip()
-    url = f"https://apps.pnc.com/locator-api/locator/api/v2/location/details/{id}?t={timestamp}"
+@retry(stop=stop_after_attempt(3))
+def get_hours(data, details):
+    store = data["store"]
+    services = details.get("services", []) or []
 
-    store_json = (
-        get_session().get(url.format(timestamp), headers=headers, timeout=15).json()
-    )
-    cInfo = store_json["contactInfo"] or []
+    store["page_url"] = data["page_url"]
+    store["hours_of_operation"] = MISSING
 
-    for contact in cInfo:
-        if "External Phone" in contact["contactType"]:
-            return contact["contactInfo"]
+    for service in services:
+        if service["hours"]:
+            hours = []
+            for key, value in service["hours"].items():
+                if key == "twentyFourHours":
+                    continue
+
+                hr = value[0]
+                opening = hr["open"]
+                closing = hr["close"]
+                if opening and closing:
+                    hours.append(f"{key}: {opening}-{closing}")
+                else:
+                    hours.append(f"{key}: Closed")
+            store["hours_of_operation"] = ",".join(hours) if len(hours) else MISSING
+
+    return store
 
 
 def process_record(stores):
@@ -105,9 +142,10 @@ def process_record(stores):
         state = store["address"]["state"]
         zip = store["address"]["zip"]
         country_code = "US"
+        latitude = store["address"]["latitude"]
+        longitude = store["address"]["longitude"]
 
         phone = MISSING
-
         cInfo = store["contactInfo"] or []
         for contact in cInfo:
             if "External Phone" in contact["contactType"]:
@@ -119,14 +157,8 @@ def process_record(stores):
             location_type = "BRANCH AND ATM"
 
         hours_of_operation = MISSING
-        latitude = store["address"]["latitude"]
-        longitude = store["address"]["longitude"]
 
         if location_type == "ATM" or location_type == "BRANCH AND ATM":
-            if phone == MISSING:
-                externalId = store["externalId"]
-                phone = fetch_phone(externalId)
-
             record = SgRecord(
                 locator_domain=locator_domain,
                 page_url=page_url,
@@ -144,7 +176,7 @@ def process_record(stores):
                 hours_of_operation=hours_of_operation,
             ).as_dict()
 
-            locations.append([record[field] for field in FIELDS])
+            locations.append({"store": record, "externalId": store["externalId"]})
 
     return locations
 
@@ -168,24 +200,119 @@ FIELDS = [
 ]
 
 
+def batch(l, n):
+    for i in range(0, len(l), n):
+        yield l[i : i + n]
+
+
 def write_output(data):
     with open("data.csv", mode="w") as output_file:
         writer = csv.writer(
             output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
         )
         writer.writerow(FIELDS)
-        for rows in data:
-            writer.writerows(rows)
+        for row in data:
+            writer.writerow(row)
+
+
+def retry_refetch_hours_error_callback(retry_state):
+    return None
+
+
+@retry(
+    stop=stop_after_attempt(3), retry_error_callback=retry_refetch_hours_error_callback
+)
+def refetch_hours(location, driver):
+    id = location["externalId"]
+    page_url = f"https://apps.pnc.com/locator-api/locator/api/v2/location/details/{id}"
+    location["page_url"] = page_url
+    details = driver.execute_async_script(
+        f"""
+        var done = arguments[0]
+        fetch("{page_url}")
+            .then(res => res.json())
+            .then(done)
+    """
+    )
+
+    if details.get("httpStatusCode"):
+        raise Exception()
+
+    return details
+
+
+def batch_get_hours(locations, driver):
+    commands = []
+
+    time.sleep(random.randint(0, 4))
+    for location in locations:
+        id = location["externalId"]
+        page_url = (
+            f"https://apps.pnc.com/locator-api/locator/api/v2/location/details/{id}"
+        )
+        location["page_url"] = page_url
+        commands.append(f'fetch("{page_url}").then(res => res.json())')
+
+    result = driver.execute_async_script(
+        f"""
+        var done = arguments[0]
+        Promise.allSettled([{','.join(commands)}])
+            .then(results => done({{
+                status: 'success',
+                data: results
+            }}))
+            .catch(err => done({{
+                status: 'error',
+                error: err
+            }}))
+    """
+    )
+    if result["status"] == "error":
+        log.error(result["error"])
+
+    pois = []
+    data = result.get("data")
+    if not data:
+        return []
+
+    for idx, location in enumerate(locations):
+        details = result["data"][idx].get("value")
+        if not details:
+            log.info(result["data"][idx])
+            continue
+
+        if details.get("httpStatusCode"):
+            refetched_details = refetch_hours(location, driver)
+            if refetched_details:
+                details = refetched_details
+            else:
+                log.error(f'error fetching details: {location["page_url"]}')
+
+        pois.append(get_hours(location, details))
+
+    return pois
 
 
 def scrape():
+    log.info("start")
+    locations = []
     coords = static_coordinate_list(radius=10, country_code=SearchableCountries.USA)
 
     with ThreadPoolExecutor() as executor:
         futures = [executor.submit(fetch_records_for, coord) for coord in coords]
         for future in as_completed(futures):
-            locations = future.result()
-            yield locations
+            locations.extend(future.result())
+
+        with SgChrome(
+            is_headless=True, executable_path=ChromeDriverManager().install()
+        ).driver() as driver:
+            driver.set_script_timeout(120)
+            driver.get("https://pnc.com")
+            for chunk in batch(locations, 5):
+                pois = batch_get_hours(chunk, driver)
+                for poi in pois:
+                    yield [poi[field] for field in FIELDS]
+    log.info("end")
 
 
 if __name__ == "__main__":
