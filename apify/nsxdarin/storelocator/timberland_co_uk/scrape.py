@@ -122,6 +122,7 @@ def fetch_data():
                 longitude=lng,
                 hours_of_operation=hours,
             )
+
     url = "https://hosted.where2getit.com/timberland/timberlandeu/rest/locatorsearch?like=0.9297644562205771&lang=en_US"
     payload = {
         "request": {
@@ -134,19 +135,19 @@ def fetch_data():
                 "geolocs": {
                     "geoloc": [
                         {
-                            "addressline": "Liverpool",
+                            "addressline": "RM20",
                             "country": "UK",
-                            "latitude": 51.475,
-                            "longitude": 0.33,
+                            "latitude": 51.4778987,
+                            "longitude": 0.2760807,
                             "state": "",
-                            "province": "Merseyside",
-                            "city": "Liverpool",
+                            "province": "Thurrock",
+                            "city": "",
                             "address1": "",
-                            "postalcode": "",
+                            "postalcode": "RM20",
                         }
                     ]
                 },
-                "searchradius": "1000",
+                "searchradius": "250",
                 "radiusuom": "km",
                 "order": "retail_store,outletstore,authorized_reseller,_distance",
                 "where": {
