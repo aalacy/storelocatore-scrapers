@@ -36,7 +36,6 @@ def fetch_data():
         .split(",")
     )
     states = [x.strip(' "') for x in states]
-    states = ["https://locations.acceptanceinsurance.com/georgia"]
     for stat in states:
         log.info(stat)
         state_res = session.get(stat, headers=headers)

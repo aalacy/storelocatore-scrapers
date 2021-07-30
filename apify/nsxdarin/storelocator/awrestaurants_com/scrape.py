@@ -49,20 +49,23 @@ def fetch_data():
         for line2 in lines:
             if '<div class="hours__row">' in line2:
                 g = next(lines)
-                hrs = (
-                    g.replace("</span><span>", ": ")
-                    .replace("<span>", "")
-                    .replace("</span>", "")
-                    .replace("-->", "")
-                    .strip()
-                    .replace("\t", "")
-                    .replace("\n", "")
-                    .replace("\r", "")
-                )
-                if hours == "":
-                    hours = hrs
-                else:
-                    hours = hours + "; " + hrs
+                while "</div>" not in g:
+                    g = next(lines)
+                    if "00" in g or "30" in g:
+                        if "-->" not in g:
+                            hrs = (
+                                g.strip()
+                                .replace("\r", "")
+                                .replace("\t", "")
+                                .replace("\n", "")
+                                .replace("&nbsp;", " ")
+                            )
+                            if ">" in hrs:
+                                hrs = hrs.split(">")[1].split("<")[0]
+                            if hours == "":
+                                hours = hrs
+                            else:
+                                hours = hours + "; " + hrs
             if 'main-name"><h1>' in line2:
                 name = line2.split('main-name"><h1>')[1].split("<")[0]
             if '"store":{"address":"' in line2:
@@ -79,6 +82,8 @@ def fetch_data():
         if hours == "":
             hours = "<MISSING>"
         if add != "":
+            add = add.replace("\\u0026", "&")
+            name = name.replace("\\u0026", "&")
             yield SgRecord(
                 locator_domain=website,
                 page_url=loc,

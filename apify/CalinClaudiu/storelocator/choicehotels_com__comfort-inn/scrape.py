@@ -8,6 +8,10 @@ from sgscrape.pause_resume import CrawlStateSingleton
 from sgrequests.sgrequests import SgRequests
 from sgzip.dynamic import SearchableCountries, DynamicGeoSearch
 
+from sglogging import sglog
+
+logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
+
 
 def fetch_records(http: SgRequests, search: DynamicGeoSearch) -> Iterable[SgRecord]:
     headers = {}
@@ -28,7 +32,11 @@ def fetch_records(http: SgRequests, search: DynamicGeoSearch) -> Iterable[SgReco
         "user-agent"
     ] = "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
     state = CrawlStateSingleton.get_instance()
+    maxZ = None
+    maxZ = search.items_remaining()
+    total = 0
     for lat, lng in search:
+        found = 0
         rec_count = state.get_misc_value(
             search.current_country(), default_factory=lambda: 0
         )
@@ -38,7 +46,8 @@ def fetch_records(http: SgRequests, search: DynamicGeoSearch) -> Iterable[SgReco
         )
         try:
             locations = http.get(url, headers=headers).json()
-        except Exception:
+        except Exception as e:
+            logzilla.error(f"{e}")
             locations = {"hotelCount": 0}
         if locations["hotelCount"] > 0:
             for record in locations["hotels"]:
@@ -113,6 +122,7 @@ def fetch_records(http: SgRequests, search: DynamicGeoSearch) -> Iterable[SgReco
                         hours_of_operation=SgRecord.MISSING,
                         raw_address=SgRecord.MISSING,
                     )
+                    found += 1
                 except KeyError:
                     yield SgRecord(
                         page_url=SgRecord.MISSING,
@@ -131,6 +141,14 @@ def fetch_records(http: SgRequests, search: DynamicGeoSearch) -> Iterable[SgReco
                         hours_of_operation=SgRecord.MISSING,
                         raw_address=str(record),
                     )
+                    found += 1
+                progress = (
+                    str(round(100 - (search.items_remaining() / maxZ * 100), 2)) + "%"
+                )
+                total += found
+                logzilla.info(
+                    f"{str(lat).replace('(','').replace(')','')}{str(lng).replace('(','').replace(')','')}|found: {found}|total: {total}|prog: {progress}|\nRemaining: {search.items_remaining()}"
+                )
 
 
 if __name__ == "__main__":
