@@ -23,7 +23,6 @@ def fetch_data():
         store_url = urljoin(start_url, url)
         if "branches" in url:
             continue
-        print(store_url)
         loc_response = session.get(store_url)
         if loc_response.status_code != 200:
             continue
