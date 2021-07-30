@@ -52,17 +52,22 @@ def get_map_from_google_url(url):
 
 def get_hoo(slug):
     _tmp = []
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:88.0) Gecko/20100101 Firefox/88.0"
+    }
     session = SgRequests()
     for x in range(7):
         date = datetime.date.today() + datetime.timedelta(days=x)
         day = date.strftime("%Y-%m-%d")
         url = f"https://www.greatwolf.com/5b27c1ed2bb0ac3618d7cc55/www.greatwolf.com/v~4b.15f/content/gw-www/php-root/{slug}/en/jcr:content/root/responsivegrid_327483370/waterpark_hours.json?date={day}&wph=true"
         weekday = date.strftime("%A")
-        r = session.get(url)
+        r = session.get(url, headers=headers)
         try:
             js = r.json()["eventList"][0]
             start = js.get("startTime")
             close = js.get("endTime")
+            if not start:
+                continue
             _tmp.append(f"{weekday}: {start} - {close}")
         except:
             pass
@@ -72,7 +77,10 @@ def get_hoo(slug):
 
 def get_urls():
     session = SgRequests()
-    r = session.get("https://www.greatwolf.com/")
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:88.0) Gecko/20100101 Firefox/88.0"
+    }
+    r = session.get("https://www.greatwolf.com/", headers=headers)
     tree = html.fromstring(r.text)
 
     return tree.xpath("//li[contains(@class, 'open')]/a/@href")
@@ -81,9 +89,12 @@ def get_urls():
 def get_data(url):
     locator_domain = "https://www.greatwolf.com/"
     page_url = f"https://www.greatwolf.com{url}"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:88.0) Gecko/20100101 Firefox/88.0"
+    }
 
     session = SgRequests()
-    r = session.get(page_url)
+    r = session.get(page_url, headers=headers)
     tree = html.fromstring(r.text)
     text = "".join(
         tree.xpath("//script[contains(text(), '{}')]/text()".format('"address":'))

@@ -71,6 +71,8 @@ def fetch_data():
         zip_code = zip_code if zip_code else "<MISSING>"
         country_code = poi["@graph"][0]["address"]["addressCountry"]
         country_code = country_code if country_code else "<MISSING>"
+        if country_code != "US":
+            continue
         store_number = "<MISSING>"
         phone = poi["@graph"][0].get("telephone")
         phone = phone if phone else "<MISSING>"

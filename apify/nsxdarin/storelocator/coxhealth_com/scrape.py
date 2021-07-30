@@ -73,6 +73,7 @@ def fetch_data():
                 g = (
                     next(lines)
                     .replace("<span>", "")
+                    .replace("</p><p>", "; ")
                     .replace("</span>", "")
                     .replace("<br/>", "; ")
                 )
@@ -80,7 +81,10 @@ def fetch_data():
                     '</p><p style="text-align: left;">', "; "
                 )
                 if hours != "Open 24 Hours":
-                    hours = g.split("<p>")[1].split("</p>")[0]
+                    try:
+                        hours = g.split("<p>")[1].split("</p>")[0]
+                    except:
+                        hours = "<MISSING>"
             if "<title>" in line2:
                 name = line2.split("<title>")[1].split(" |")[0]
             if "Address</h3>" in line2:

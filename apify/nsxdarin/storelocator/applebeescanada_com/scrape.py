@@ -141,6 +141,13 @@ def fetch_data():
                     hours = hours + "; " + line2.split(">")[1].split("<")[0]
                 else:
                     hours = hours + ": " + line2.split("<")[0]
+            if "day to " in line2:
+                try:
+                    hours = line2.split('"><p>')[1].split("<")[0]
+                except:
+                    pass
+            if "day & " in line2:
+                hours = hours + "; " + line2.split("<")[0]
         if hours == "":
             hours = "<MISSING>"
         if "huron-church" in loc:
@@ -150,11 +157,15 @@ def fetch_data():
             city = "Windsor"
             state = "ON"
             zc = "<MISSING>"
-            lat = "<MISSING>"
-            lng = "<MISSING>"
+            lat = "42.275843"
+            lng = "-83.052079"
         if "applebees-crossroads" in loc:
             hours = "Sun-Sat: 11:30 PM to 9:00 PM"
         hours = hours.replace(": :", ":")
+        if "applebees-niagara-falls" in loc:
+            hours = "Sunday to Thursday: 8:00 AM to 10:00 PM; Friday to Saturday: 8:00 AM to 11:00 PM"
+        if "(" in hours:
+            hours = hours.split("(")[0].strip()
         yield [
             website,
             loc,
