@@ -190,6 +190,8 @@ def fetch_data():
             hoo = raw_address[1]
         raw_address = raw_address[0].strip()
         street_address, city, state, zip_postal = get_address(raw_address)
+        if "*opening soon*" in city:
+            city = city.replace("*opening soon*", "").strip()
         hoo = hoo.strip()
         raw_address = raw_address.split(" (")[0]
 
