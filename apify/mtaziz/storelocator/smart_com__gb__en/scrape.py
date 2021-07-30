@@ -6,7 +6,6 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sglogging import SgLogSetup
 from lxml import html
 import re
-import json
 
 
 logger = SgLogSetup().get_logger("smart_com__gb__en")
