@@ -16,7 +16,7 @@ _headers = {
 }
 
 locator_domain = "https://www.phoenix.edu"
-base_url = "https://www.phoenix.edu/api/plct/3/uopx/locations?type=site&page.size=100"
+base_url = "https://www.phoenix.edu/api/plct/3/uopx/locations?type=site&page.size=500"
 
 session = SgRequests().requests_retry_session()
 max_workers = 8
@@ -111,7 +111,7 @@ def fetch_data():
 
 
 if __name__ == "__main__":
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
