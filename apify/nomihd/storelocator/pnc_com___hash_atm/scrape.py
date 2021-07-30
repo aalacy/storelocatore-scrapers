@@ -6,6 +6,7 @@ import threading
 from sgrequests import SgRequests
 from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
 from tenacity import retry, stop_after_attempt
 import datetime
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -195,11 +196,7 @@ def batch(l, n):
 
 
 def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(FIELDS)
+    with SgWriter() as writer:
         for row in data:
             writer.writerow(row)
 
@@ -298,7 +295,22 @@ def scrape():
             for chunk in batch(locations, 5):
                 pois = batch_get_hours(chunk, driver)
                 for poi in pois:
-                    yield [poi[field] for field in FIELDS]
+                    yield SgRecord(
+                    locator_domain=poi['locator_domain'],
+                    page_url=poi['page_url'],
+                    location_name=poi['location_name'],
+                    street_address=poi['street_address'],
+                    city=poi['city'],
+                    state=poi['state'],
+                    zip_postal=poi['zip'],
+                    country_code=poi['country_code'],
+                    store_number=poi['store_number'],
+                    phone=poi['phone'],
+                    location_type=poi['location_type'],
+                    latitude=poi['latitude'],
+                    longitude=poi['longitude'],
+                    hours_of_operation=poi['hours_of_operation'],
+                )
     log.info("end")
 
 
