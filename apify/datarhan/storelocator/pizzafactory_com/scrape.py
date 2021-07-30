@@ -25,14 +25,8 @@ def fetch_data():
         loc_dom = etree.HTML(loc_response.text)
         poi = loc_dom.xpath('//script[contains(text(), "streetAddress")]/text()')[0]
         poi = json.loads(poi)
-
-        hoo = []
-        for e in poi["openingHoursSpecification"]:
-            if type(e["dayOfWeek"]) == list:
-                for day in e["dayOfWeek"]:
-                    hoo.append(f'{day} {e["opens"]} - {e["closes"]}')
-            else:
-                hoo.append(f'{e["dayOfWeek"]} {e["opens"]} - {e["closes"]}')
+        hoo = loc_dom.xpath('//div[@class="location-info__hours"]//text()')
+        hoo = [e.strip() for e in hoo if e.strip()]
         hours_of_operation = " ".join(hoo) if hoo else SgRecord.MISSING
 
         item = SgRecord(
