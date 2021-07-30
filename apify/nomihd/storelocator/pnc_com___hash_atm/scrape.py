@@ -31,6 +31,7 @@ headers = {
 
 id_list = []
 
+
 def get_session():
     if not hasattr(local, "session") or local.count > 10:
         local.session = SgRequests()
