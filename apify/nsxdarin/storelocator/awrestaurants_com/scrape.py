@@ -49,22 +49,23 @@ def fetch_data():
         for line2 in lines:
             if '<div class="hours__row">' in line2:
                 g = next(lines)
-                while "<span>" in g and "<ul>" not in g and "</ul>" not in g:
+                while "</div>" not in g:
                     g = next(lines)
-                hrs = (
-                    g.replace("</span><span>", ": ")
-                    .replace("<span>", "")
-                    .replace("</span>", "")
-                    .replace("-->", "")
-                    .strip()
-                    .replace("\t", "")
-                    .replace("\n", "")
-                    .replace("\r", "")
-                )
-                if hours == "":
-                    hours = hrs
-                else:
-                    hours = hours + "; " + hrs
+                    if "00" in g or "30" in g:
+                        if "-->" not in g:
+                            hrs = (
+                                g.strip()
+                                .replace("\r", "")
+                                .replace("\t", "")
+                                .replace("\n", "")
+                                .replace("&nbsp;", " ")
+                            )
+                            if ">" in hrs:
+                                hrs = hrs.split(">")[1].split("<")[0]
+                            if hours == "":
+                                hours = hrs
+                            else:
+                                hours = hours + "; " + hrs
             if 'main-name"><h1>' in line2:
                 name = line2.split('main-name"><h1>')[1].split("<")[0]
             if '"store":{"address":"' in line2:
@@ -83,10 +84,6 @@ def fetch_data():
         if add != "":
             add = add.replace("\\u0026", "&")
             name = name.replace("\\u0026", "&")
-            hours = hours.replace("&nbsp;", "")
-            if ";" in hours:
-                hours = hours.split(";")[0].strip()
-            hours = hours.replace("<p>", "").replace("</p>", "").strip()
             yield SgRecord(
                 locator_domain=website,
                 page_url=loc,
