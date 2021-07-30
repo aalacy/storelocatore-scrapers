@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import csv
 import time
 import random
 import threading
@@ -296,21 +295,21 @@ def scrape():
                 pois = batch_get_hours(chunk, driver)
                 for poi in pois:
                     yield SgRecord(
-                    locator_domain=poi['locator_domain'],
-                    page_url=poi['page_url'],
-                    location_name=poi['location_name'],
-                    street_address=poi['street_address'],
-                    city=poi['city'],
-                    state=poi['state'],
-                    zip_postal=poi['zip'],
-                    country_code=poi['country_code'],
-                    store_number=poi['store_number'],
-                    phone=poi['phone'],
-                    location_type=poi['location_type'],
-                    latitude=poi['latitude'],
-                    longitude=poi['longitude'],
-                    hours_of_operation=poi['hours_of_operation'],
-                )
+                        locator_domain=poi["locator_domain"],
+                        page_url=poi["page_url"],
+                        location_name=poi["location_name"],
+                        street_address=poi["street_address"],
+                        city=poi["city"],
+                        state=poi["state"],
+                        zip_postal=poi["zip"],
+                        country_code=poi["country_code"],
+                        store_number=poi["store_number"],
+                        phone=poi["phone"],
+                        location_type=poi["location_type"],
+                        latitude=poi["latitude"],
+                        longitude=poi["longitude"],
+                        hours_of_operation=poi["hours_of_operation"],
+                    )
     log.info("end")
 
 
