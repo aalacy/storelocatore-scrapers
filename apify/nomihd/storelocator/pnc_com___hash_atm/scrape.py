@@ -10,7 +10,6 @@ from tenacity import retry, stop_after_attempt
 import datetime
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from sgselenium import SgChrome
-from webdriver_manager.chrome import ChromeDriverManager
 from sgzip.static import static_coordinate_list, SearchableCountries
 
 website = "pnc.com"
@@ -31,17 +30,6 @@ headers = {
 }
 
 id_list = []
-
-
-def get_driver():
-    if not hasattr(local, "driver"):
-        local.driver = SgChrome(
-            is_headless=False,
-            executable_path=ChromeDriverManager().install(),
-        ).driver()
-        local.driver.get("https://pnc.com")
-    return local.driver
-
 
 def get_session():
     if not hasattr(local, "session") or local.count > 10:
