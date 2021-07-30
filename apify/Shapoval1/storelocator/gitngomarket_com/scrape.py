@@ -69,6 +69,8 @@ def fetch_data():
             .replace("\n", "")
             .strip()
         )
+        if hours_of_operation.find("Deli") != -1:
+            hours_of_operation = hours_of_operation.split("Deli")[0].strip()
 
         row = [
             locator_domain,
