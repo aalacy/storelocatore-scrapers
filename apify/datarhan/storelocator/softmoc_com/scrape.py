@@ -36,7 +36,6 @@ def fetch_data():
                 store_url = (
                     "https://www.softmoc.com/us/locations/" + poi["details"]["storeUrl"]
                 )
-            print(store_url)
             loc_response = session.get(store_url)
             loc_dom = etree.HTML(loc_response.text)
 
