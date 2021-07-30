@@ -44,7 +44,6 @@ def fetch_data():
         locations = html.fromstring(r_page_url.text, "lxml")
         url_api = "https://www.anthropologie.com/api/misl/v1/stores/search?brandId=54%7C04&distance=25&urbn_key=937e0cfc7d4749d6bb1ad0ac64fce4d5"
         data = session.get(url_api, headers=headers).json()
-        items = []
         for d in data["results"]:
             country_code = d["country"]
             locator_domain = locator_domain_url
