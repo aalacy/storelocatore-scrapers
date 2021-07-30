@@ -6,6 +6,9 @@ from sgrequests import SgRequests
 from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+
 from tenacity import retry, stop_after_attempt
 import datetime
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -195,7 +198,7 @@ def batch(l, n):
 
 
 def write_output(data):
-    with SgWriter() as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         for row in data:
             writer.writerow(row)
 
