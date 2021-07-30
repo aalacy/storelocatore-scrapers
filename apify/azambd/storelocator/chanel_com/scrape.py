@@ -9,7 +9,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.pause_resume import CrawlStateSingleton
-from webdriver_manager.chrome import ChromeDriverManager
+
 from sgselenium import SgChrome
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 
