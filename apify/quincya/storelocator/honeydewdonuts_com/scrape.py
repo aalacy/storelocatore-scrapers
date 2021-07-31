@@ -91,6 +91,7 @@ def fetch_data():
         else:
             raw_address = list(item.stripped_strings)
             location_name = raw_address[0]
+            street_address = location_name
             city_line = raw_address[1].strip().split(",")
             city = city_line[0].strip()
             state = city_line[-1].strip().split()[0].strip()

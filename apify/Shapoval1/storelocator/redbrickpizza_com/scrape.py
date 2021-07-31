@@ -105,6 +105,8 @@ def fetch_data():
         cms = js.get("open_or_closed")
         if cms == "coming soon":
             hours_of_operation = "Coming Soon"
+        if hours_of_operation != "Coming Soon":
+            hours_of_operation = hours_of_operation[:-1].strip()
 
         row = [
             locator_domain,
