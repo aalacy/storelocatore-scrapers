@@ -32,9 +32,10 @@ MISSING = SgRecord.MISSING
 session = SgRequests().requests_retry_session(retries=10, backoff_factor=0.3)
 
 
-# It is noted that when expected search radius miles is 100 along with granualrity ( Grain_8 ) -
-# it is found that the scrapes returns 7915 records.
-# It is also observed that with 100 miles radius, it returns 7915 records -
+# It is noted that when expected search radius miles is set to 100 miles along with granualrity ( Grain_8 ) -
+# it returns 7915 records.
+# It is also observed that with 100 miles radius, it returns 7915 records.
+# Multiple times, it was tested with different settings and it max. returns 7915 records.
 
 
 search = DynamicZipSearch(
