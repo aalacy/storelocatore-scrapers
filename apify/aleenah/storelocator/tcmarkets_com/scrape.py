@@ -12,7 +12,7 @@ logger = SgLogSetup().get_logger("tcmarkets_com")
 
 
 def get_value(item):
-    if item == None or len(item) == 0:
+    if item is None or len(item) == 0:
         item = "<MISSING>"
     return item
 
