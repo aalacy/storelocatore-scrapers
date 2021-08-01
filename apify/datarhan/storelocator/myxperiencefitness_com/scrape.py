@@ -1,6 +1,7 @@
 import re
 import ssl
 from lxml import etree
+from time import sleep
 
 from sgselenium.sgselenium import SgChrome
 from sgscrape.sgrecord import SgRecord
@@ -27,8 +28,9 @@ def fetch_data():
         dom = etree.HTML(driver.page_source)
 
         all_locations = dom.xpath("//h4/a[contains(@href, '/gyms/')]/@href")
-        for store_url in all_locations:
+        for store_url in list(set(all_locations)):
             driver.get(store_url)
+            sleep(10)
             loc_dom = etree.HTML(driver.page_source)
 
             location_name = loc_dom.xpath('//h1[@class="entry-title"]/text()')
@@ -42,7 +44,7 @@ def fetch_data():
                 state = "mn"
                 zip_code = "<MISSING>"
             country_code = "US"
-            phone = loc_dom.xpath('//a[contains(@href, "tel")]/text()')[0]
+            phone = loc_dom.xpath('//a[@class="details-phone-link"]/text()')[0]
             hoo = loc_dom.xpath(
                 '//th[i[@class="fas fa-clock"]]/following-sibling::td/text()'
             )

@@ -32,6 +32,7 @@ def fetch_data():
         main1 = soup1.find("div", {"class": "location-grid"}).find_all(
             "a", text="Website"
         )
+
         for weblink in main1:
             r2 = session.get(base_url + weblink["href"])
             page_url = base_url + weblink["href"]
@@ -39,15 +40,17 @@ def fetch_data():
             if "Coming soon" in r2.text:
                 continue
             soup2 = BeautifulSoup(r2.text, "lxml")
+            temp = r2.text.split(weblink["href"])[-1].split("locations.push(store);")[0]
+            store_number = temp.split("store['id'] = ")[1].split(";")[0]
+            latitude = temp.split("store['latitude'] = ")[1].split(";")[0]
+            longitude = temp.split("store['longitude'] = ")[1].split(";")[0]
             location_name = (
                 soup2.find("div", {"class": "page-heading"}).find("h1").text.strip()
             )
             main2 = soup2.find("div", {"class": "location-hours"}).find_all("p")
-            if "Coming soon" in r2.text:
-                continue
             if len(main2) == 2:
                 loc_address = list(main2[1].stripped_strings)
-                phone = main2[0].text.strip()
+                phone = main2[0].text.strip().replace("- ", "")
             else:
                 loc_address = list(main2[0].stripped_strings)
                 phone = "<MISSING>"
@@ -84,6 +87,7 @@ def fetch_data():
                 hour = "<MISSING>"
             hour = hour.replace("Dough Slingin' Hours = ", "").replace("::", " ")
             country_code = "US"
+            phone = phone.replace("DAVE", "").replace("- ", "")
             yield SgRecord(
                 locator_domain=DOMAIN,
                 page_url=page_url,
@@ -93,11 +97,11 @@ def fetch_data():
                 state=state,
                 zip_postal=zip_postal,
                 country_code=country_code,
-                store_number=MISSING,
+                store_number=store_number,
                 phone=phone.strip(),
                 location_type=MISSING,
-                latitude=MISSING,
-                longitude=MISSING,
+                latitude=latitude,
+                longitude=longitude,
                 hours_of_operation=hour.strip(),
             )
 
