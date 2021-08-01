@@ -74,9 +74,6 @@ def fetch_data():
         sections = sel.xpath(
             '//div[@id="locations-search-form-results"]/section[contains(@class, "locations-result")]'
         )
-        items = []
-        # for idx, section in enumerate(sections[272:275]):
-        # for idx, section in enumerate(sections[0:10]):
         for idx, section in enumerate(sections[0:]):
             locator_domain = DOMAIN
             logger.info(f"[Record:{idx}] Locator Domain: {locator_domain}")
@@ -148,7 +145,6 @@ def fetch_data():
             logger.info(f"[Record:{idx}] latitude: {latitude} | longitude: {longitude}")
 
             # Country Code: Get Country Code using Geolocator
-
             try:
                 # Adding 2 seconds padding between calls
                 reverse = RateLimiter(
