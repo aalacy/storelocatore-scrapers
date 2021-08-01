@@ -4,7 +4,6 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from lxml import html
 
 logger = SgLogSetup().get_logger(logger_name="lids_ca")
 
@@ -35,7 +34,6 @@ def fetch_data():
             logger.info(f"[{idx}] [Location Name-----] {location_name}")
 
             address_line1 = item["address"]["addressLine1"]
-            address_line2 = item["address"]["addressLine2"]
             street_address = address_line1 if address_line1 else MISSING
             logger.info(f"[{idx}] [Street Address----] {street_address}")
 
