@@ -5,7 +5,6 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgpostal import parse_address_intl
-from lxml import html
 
 
 DOMAIN = "gpminvestments.com/youngs"
@@ -52,7 +51,7 @@ def fetch_data():
             elif street_address_1 and street_address_2 is None:
                 street_address = street_address_1
             elif street_address_1 is None and street_address_2 is not None:
-                street_street = street_address_2
+                street_address = street_address_2
             else:
                 street_address = MISSING
 
