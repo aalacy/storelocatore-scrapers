@@ -5,9 +5,7 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgrequests import SgRequests
 import json
-import time
 from lxml import html
-import re
 import ssl
 
 from geopy.geocoders import Nominatim
