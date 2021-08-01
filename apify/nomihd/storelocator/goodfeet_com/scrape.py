@@ -70,7 +70,6 @@ def fetch_data():
             address_info = "".join(address_info).split(",")
 
         log.info(location_name)
-        print(address_info)
         street_address = ", ".join(address_info[0:-2]).strip()
         city = address_info[-2].split(", ")[-1].strip(' ",')
         state = address_info[-1].strip().split(" ")[0].strip()
