@@ -6,6 +6,8 @@ from sgscrape.sgwriter import SgWriter
 import lxml.html
 import re
 import us
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 website = "goodfeet.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -55,7 +57,7 @@ def fetch_data():
         html_str = store_info.split('",')[0].strip()
         page_sel = lxml.html.fromstring(html_str)
 
-        location_name = "".join(page_sel.xpath("//h4/text()"))
+        location_name = "".join(page_sel.xpath("//h4//text()"))
 
         page_url = "".join(page_sel.xpath("//a[@onclick]/@href")).split("?")[0]
         if page_url.split("/")[-1] == "test":
@@ -64,11 +66,15 @@ def fetch_data():
         phone = "".join(page_sel.xpath("//a[@href and not(./@onclick)]/text()"))
 
         address_info = page_sel.xpath('//p[./i[contains(@class,"map-marked")]]//text()')
+        if len(address_info) == 1:
+            address_info = "".join(address_info).split(",")
 
-        street_address = ", ".join(address_info[0].split(",")[:-2]).strip(' ",')
-        city = address_info[0].split(", ")[-1].strip(' ",')
-        state = address_info[1].strip().split(" ")[0].strip()
-        zip = address_info[1].strip().split(" ")[-1].strip()
+        log.info(location_name)
+        print(address_info)
+        street_address = ", ".join(address_info[0:-2]).strip()
+        city = address_info[-2].split(", ")[-1].strip(' ",')
+        state = address_info[-1].strip().split(" ")[0].strip()
+        zip = address_info[-1].strip().split(" ")[-1].strip()
 
         country_code = "US"
         if not us.states.lookup(state):
@@ -117,7 +123,9 @@ def fetch_data():
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.StoreNumberId)
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
