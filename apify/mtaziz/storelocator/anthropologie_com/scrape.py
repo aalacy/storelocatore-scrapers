@@ -4,7 +4,6 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from lxml import html
 
 logger = SgLogSetup().get_logger(logger_name="anthropologie_com")
 
