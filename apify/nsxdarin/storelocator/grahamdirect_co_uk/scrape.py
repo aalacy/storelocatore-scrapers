@@ -79,6 +79,9 @@ def fetch_data():
         store = "<MISSING>"
         add = add.replace(",</span>", "")
         city = city.replace(",", "")
+        name = name.replace("&amp;", "&")
+        add = add.replace("&amp;", "&")
+        city = city.replace("&amp;", "&")
         yield SgRecord(
             locator_domain=website,
             page_url=loc,
