@@ -1,5 +1,7 @@
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 from sgrequests import SgRequests
 
@@ -115,7 +117,7 @@ def fetch_data():
             except:
                 phone = div["mainPhone"]
             phone = phone.replace("+1", "")
-            phone = phone[0:3] + "-" + phone[3:6] + "-" + phone[6 - 10]
+            phone = phone[0:3] + "-" + phone[3:6] + "-" + phone[6:10]
             try:
                 link = div["websiteUrl"]["url"]
             except:
@@ -143,7 +145,9 @@ def fetch_data():
 
 
 def scrape():
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.GeoSpatialId)
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
