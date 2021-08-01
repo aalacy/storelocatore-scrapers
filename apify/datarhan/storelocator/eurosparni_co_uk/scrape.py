@@ -67,6 +67,8 @@ def fetch_data():
             street_address = street_address.split(city)[0].strip()
             if city.upper() in street_address:
                 street_address = street_address.split(city.upper())[0].strip()
+            if street_address.strip() == "121":
+                street_address = "121 Drumaness Road"
 
             item = SgRecord(
                 locator_domain=domain,
