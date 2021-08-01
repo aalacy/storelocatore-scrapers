@@ -46,7 +46,7 @@ def fetch_data():
                 street_address=raw_address[0],
                 city=raw_address[-1].split(", ")[0],
                 state=raw_address[-1].split(", ")[-1].split()[0],
-                zip_postal=raw_address[-1].split(", ")[-1].split()[0],
+                zip_postal=" ".join(raw_address[-1].split(", ")[-1].split()[1:]),
                 country_code=country_code,
                 store_number=SgRecord.MISSING,
                 phone=phone,
