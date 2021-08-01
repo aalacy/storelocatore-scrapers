@@ -1,6 +1,11 @@
-# Validation issues
-1. --ignore CentroidValidator, EITHER_LAT_OR_LNG_IMPRECISE
-2. --ignore StreetAddressHasNumber, ADDR_HAS_NO_NUMBER
-3. --ignore StreetAddressHasStateName, ADDR_CONTAINS_STATE_NAME
-5. --ignore StoreNumberColumnValidator
-6. --ignore StateLevelCountValidator
+# Validation issues - the following checks ignored
+- --ignore CountryCodeFillRateChecker
+- --ignore CentroidValidator
+- --ignore StreetAddressHasNumber
+- --ignore StreetAddressHasStateName
+- --ignore GeoConsistencyValidator
+- --ignore CountryValidator
+- --ignore StoreNumberColumnValidator
+- --ignore CountValidator
+- --ignore StateLevelCountValidator
+- --ignore LatLngDuplicationValidator
