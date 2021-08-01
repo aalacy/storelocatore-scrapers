@@ -59,9 +59,6 @@ def fetch_data():
                     break
                 blocks.append(block)
             hours = []
-            import pdb
-
-            pdb.set_trace()
             phone = ""
             _addr = []
             for x, block in enumerate(blocks):

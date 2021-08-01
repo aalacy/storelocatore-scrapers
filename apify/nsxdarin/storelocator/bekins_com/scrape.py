@@ -77,6 +77,10 @@ def fetch_data():
                         zc = h.split(",")[3].split("<")[0].rsplit(" ", 1)[1]
                 if "Phone:" in line2 and 'href="tel:' in line2:
                     phone = line2.split('href="tel:')[1].split('"')[0].replace("/", "")
+                if 'contact-link contact-phone" href="tel:' in line2:
+                    phone = line2.split('contact-link contact-phone" href="tel:')[
+                        1
+                    ].split('"')[0]
         if "ams-relocation" in loc:
             name = "AMS Relocation, Inc."
             add = "1873 Rollins Rd"
@@ -84,6 +88,8 @@ def fetch_data():
             state = "CA"
             zc = "94010"
             phone = "866-798-0342"
+        if "ams-relocation-inc" in loc:
+            phone = "650-697-3530"
         if "bekins-northwest-10" in loc:
             name = "Bekins Northwest"
             add = "22647 72nd Ave S"

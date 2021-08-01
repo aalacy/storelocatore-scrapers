@@ -187,8 +187,6 @@ def get_country(search, country, session, headers, SearchableCountry, state):
     maxZ = search.items_remaining()
     total = 0
     for Point in search:
-        if total > 50:
-            break
         found = 0
         try:
             for record in getPoint(Point, session, country.link, headers):
@@ -325,7 +323,7 @@ def fetch_data():
                     try:
                         search = DynamicGeoSearch(
                             country_codes=[SearchableCountry],
-                            expected_search_radius_miles=100,  # Must turn it back down to 50 after testing
+                            expected_search_radius_miles=50,  # Must turn it back down to 50 after testing
                             max_search_results=None,
                             granularity=Grain_8(),
                         )
@@ -463,8 +461,7 @@ def scrape():
                 state.save(override=True)
                 errorz = errorzCopy
     with open("data.csv", mode="a", encoding="utf-8") as file:
-        for i in errorz:
-            file.write(str(i))
+        file.writelines(errorz)
 
 
 if __name__ == "__main__":
