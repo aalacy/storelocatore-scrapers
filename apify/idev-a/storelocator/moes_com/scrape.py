@@ -70,6 +70,8 @@ def _d(sp1, page_url):
         zip_postal=sp1.select_one(".c-address-postal-code").text.strip(),
         country_code=sp1.select_one(".c-address-country-name").text.strip(),
         phone=phone,
+        latitude=sp1.select_one('meta[itemprop="latitude"]')['content'],
+        longitude=sp1.select_one('meta[itemprop="longitude"]')['content'],
         locator_domain=locator_domain,
         hours_of_operation="; ".join(hours).replace("–", "-"),
     )
