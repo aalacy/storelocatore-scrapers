@@ -6,6 +6,7 @@ from requests import exceptions  # noqa
 from urllib3 import exceptions as urllibException
 from bs4 import BeautifulSoup as bs
 import json
+import os
 
 logger = SgLogSetup().get_logger("comerica_com")
 
