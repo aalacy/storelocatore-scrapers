@@ -15,7 +15,6 @@ headers = {
 
 
 def fetch_data():
-    locs = []
     url = "https://calibercollision.com/api/locations"
     r = session.get(url, headers=headers)
     website = "calibercollision.com"
