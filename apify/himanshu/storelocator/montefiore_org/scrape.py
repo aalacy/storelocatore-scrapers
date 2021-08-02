@@ -221,7 +221,7 @@ def fetch_data(sgw: SgWriter):
                     )
                     r = session.get("https://www.cham.org" + url1["href"])
                     soup = BeautifulSoup(r.text, "html.parser")
-                    tree = html.fromstring(r.text)
+
                     loc = list(
                         soup.find_all("div", class_="freeXML")[-1]
                         .find("p")
