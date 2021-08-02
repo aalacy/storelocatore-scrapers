@@ -7,6 +7,48 @@ from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
+def get_hours(hours) -> str:
+    tmp = []
+    if hours != "<MISSING>":
+        for h in hours:
+            day = h.get("weekDay")
+            try:
+                opens = h.get("openingTime").get("formattedHour")
+            except:
+                opens = "<MISSING>"
+            try:
+                closes = h.get("closingTime").get("formattedHour")
+            except:
+                closes = "<MISSING>"
+            cls = h.get("closed")
+            line = f"{day} {opens}-{closes}"
+            if cls:
+                line = f"{day} Closed"
+            tmp.append(line)
+    hours_of_operation = "; ".join(tmp) or "<MISSING>"
+    if hours_of_operation == "<MISSING>":
+
+        if hours != "<MISSING>":
+            for h in hours:
+                day = h.get("weekDay")
+                try:
+                    opens = h.get("openingTime").get("formattedHour")
+                except:
+                    opens = "<MISSING>"
+                try:
+                    closes = h.get("closingTime").get("formattedHour")
+                except:
+                    closes = "<MISSING>"
+                cls = h.get("closed")
+                line = f"{day} {opens}-{closes}"
+                if cls:
+                    line = f"{day} Closed"
+                tmp.append(line)
+
+    hours_of_operation = "; ".join(tmp) or "<MISSING>"
+    return hours_of_operation
+
+
 def fetch_data(sgw: SgWriter):
 
     locator_domain = "https://www.thewhitecompany.com"
@@ -84,48 +126,13 @@ def fetch_data(sgw: SgWriter):
             hours = js.get("openingHours").get("weekDayOpeningList") or "<MISSING>"
         except:
             hours = "<MISSING>"
-
-        tmp = []
-        if hours != "<MISSING>":
-            for h in hours:
-                day = h.get("weekDay")
-                try:
-                    opens = h.get("openingTime").get("formattedHour")
-                except:
-                    opens = "<MISSING>"
-                try:
-                    closes = h.get("closingTime").get("formattedHour")
-                except:
-                    closes = "<MISSING>"
-                cls = h.get("closed")
-                line = f"{day} {opens}-{closes}"
-                if cls:
-                    line = f"{day} Closed"
-                tmp.append(line)
-        hours_of_operation = "; ".join(tmp) or "<MISSING>"
-        if hours_of_operation == "<MISSING>":
+        if hours == "<MISSING>":
             try:
                 hours = js.get("specialOpeningSchedule").get("weekDayOpeningList")
             except:
                 hours = "<MISSING>"
-            if hours != "<MISSING>":
-                for h in hours:
-                    day = h.get("weekDay")
-                    try:
-                        opens = h.get("openingTime").get("formattedHour")
-                    except:
-                        opens = "<MISSING>"
-                    try:
-                        closes = h.get("closingTime").get("formattedHour")
-                    except:
-                        closes = "<MISSING>"
-                    cls = h.get("closed")
-                    line = f"{day} {opens}-{closes}"
-                    if cls:
-                        line = f"{day} Closed"
-                    tmp.append(line)
 
-        hours_of_operation = "; ".join(tmp) or "<MISSING>"
+        hours_of_operation = get_hours(hours)
 
         if location_name.find("PERMANENTLY CLOSED") != -1:
             hours_of_operation = "PERMANENTLY CLOSED"
