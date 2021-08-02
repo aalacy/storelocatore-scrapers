@@ -184,8 +184,8 @@ def fetch_data():
                         longitude=lng,
                         hours_of_operation=hours,
                     )
-        x = float(float(coord[0]) - 0.25)
-        y = float(float(coord[1]) - 0.25)
+        x = float(float(xlat) - 0.25)
+        y = float(float(ylng) - 0.25)
         logger.info(("Pulling Lat-Long %s,%s..." % (str(x), str(y))))
         url = (
             "https://www.sallybeauty.com/on/demandware.store/Sites-SA-Site/default/Stores-FindStores?showMap=true&radius=50&lat="
@@ -259,8 +259,8 @@ def fetch_data():
                         longitude=lng,
                         hours_of_operation=hours,
                     )
-        x = float(float(coord[0]) + 0.25)
-        y = float(float(coord[1]) + 0.25)
+        x = float(float(xlat) + 0.25)
+        y = float(float(ylng) + 0.25)
         logger.info(("Pulling Lat-Long %s,%s..." % (str(x), str(y))))
         url = (
             "https://www.sallybeauty.com/on/demandware.store/Sites-SA-Site/default/Stores-FindStores?showMap=true&radius=50&lat="
