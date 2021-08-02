@@ -26,7 +26,7 @@ def fetch_data():
         ).select_one('meta[name="csrf"]')["content"]
         locations = session.get(json_url, headers=_headers).json()
         for _ in locations:
-            addr = parse_address_intl(_["addressPlainText"])
+            addr = parse_address_intl(_["addressPlainText"] + ", United Kingdom")
             street_address = addr.street_address_1 or ""
             if addr.street_address_2:
                 street_address += " " + addr.street_address_2
