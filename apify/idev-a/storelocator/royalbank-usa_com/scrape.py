@@ -29,7 +29,7 @@ def fetch_data():
             if not _hr:
                 _hr = link.find("strong", string=re.compile(r"Office Hours"))
             if _hr:
-                hours = list(_hr.find_parent().stripped_strings)[1:]
+                hours = list(_hr.find_parent("p").stripped_strings)[1:]
 
             city = addr[-1].split(",")[0].strip()
             phone = ""
