@@ -39,15 +39,20 @@ def fetch_data():
         )
         raw_address = [elem.strip() for elem in raw_address]
 
-        location_name = poi["name"].replace("&#8211;", "")
+        location_name = (
+            poi["name"]
+            .replace("&#8211;", "")
+            .replace(" &#038;", "")
+            .replace("&#8217;", "'")
+        )
         location_name = location_name if location_name else SgRecord.MISSING
-        street_address = poi["street"]
+        street_address = poi["street"].replace(" &#038;", "").replace("&#8217;", "'")
         city = raw_address[1].split(", ")[0]
         state = raw_address[1].split(", ")[-1].split()[0]
         zip_code = poi["zip"]
         store_number = poi["id"]
         latitude = poi["coords"].split(",")[0]
-        longitude = poi["coords"].split(",")[-1]
+        longitude = poi["coords"].split(",")[1]
         phone = poi["phone"]
         phone = phone if phone else SgRecord.MISSING
         hoo = loc_dom.xpath(
