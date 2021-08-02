@@ -81,13 +81,16 @@ def fetch_data():
     logger.info(f"{len(states)} found")
     for state_url, sp1 in fetchConcurrentList(states):
         cities = sp1.select("ul.Directory-listLinks a")
-        for city_url, sp2 in fetchConcurrentList(cities):
-            locations = sp2.select("ul.Directory-listTeasers h2 a")
-            if locations:
-                for page_url, sp3 in fetchConcurrentList(locations):
-                    yield _d(sp3, page_url)
-            else:
-                yield _d(sp2, city_url)
+        if cities:
+            for city_url, sp2 in fetchConcurrentList(cities):
+                locations = sp2.select("ul.Directory-listTeasers h2 a")
+                if locations:
+                    for page_url, sp3 in fetchConcurrentList(locations):
+                        yield _d(sp3, page_url)
+                else:
+                    yield _d(sp2, city_url)
+        else:
+            yield _d(sp1, state_url)
 
 
 if __name__ == "__main__":
