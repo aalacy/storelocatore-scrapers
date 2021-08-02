@@ -115,6 +115,8 @@ def fetch_data():
                 if "locations/aurora" in loc:
                     zc = "80014"
                 add = add.replace(zc, "").strip()
+                citystring = " " + city
+                add = add.replace(citystring, "").strip()
                 yield SgRecord(
                     locator_domain=website,
                     page_url=loc,
