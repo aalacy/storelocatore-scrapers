@@ -1,7 +1,6 @@
 from sgrequests import SgRequests
-import json
-from sgzip import sgzip
 from sglogging import SgLogSetup
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
@@ -13,6 +12,12 @@ session = SgRequests()
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
+
+search = DynamicGeoSearch(
+    country_codes=[SearchableCountries.USA],
+    max_search_distance_miles=50,
+    max_search_results=None,
+)
 
 
 def fetch_data():
@@ -102,9 +107,10 @@ def fetch_data():
                         longitude=lng,
                         hours_of_operation=hours,
                     )
-    for coord in sgzip.coords_for_radius(50):
-        x = coord[0]
-        y = coord[1]
+
+    for xlat, ylng in search:
+        x = xlat
+        y = ylng
         logger.info(("Pulling Lat-Long %s,%s..." % (str(x), str(y))))
         url = (
             "https://www.sallybeauty.com/on/demandware.store/Sites-SA-Site/default/Stores-FindStores?showMap=true&radius=50&lat="
