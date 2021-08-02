@@ -16,7 +16,7 @@ headers = {
 
 search = DynamicZipSearch(
     country_codes=[SearchableCountries.USA],
-    max_radius_miles=50,
+    expected_search_radius_miles=50,
     granularity=Grain_1_KM(),
 )
 
