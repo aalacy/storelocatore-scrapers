@@ -3,7 +3,6 @@ from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
-import re
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
@@ -54,7 +53,6 @@ def fetch_data():
             phone = ""
             blocks = list(_.select_one("div.location-text").stripped_strings)[1:-1]
             hours_of_operation = ""
-            location_type = ""
             for x, aa in enumerate(blocks):
                 if len(blocks) > 2 and _p(aa):
                     phone = aa
