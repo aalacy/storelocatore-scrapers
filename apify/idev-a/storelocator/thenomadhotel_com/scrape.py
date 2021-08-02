@@ -25,13 +25,16 @@ _headers = {
 }
 
 locator_domain = "https://thenomadhotel.com/"
-base_url = "https://thenomadhotel.com/"
+base_url = "https://www.thenomadhotel.com"
+url1 = "https://www.thenomadhotel.com/contact/"
 
 
 def fetch_data(
     user_agent="Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
 ):
     with SgChrome() as driver:
+        driver.get(url1)
+        all_locs = bs(driver.page_source, "lxml").select("div#all section.contact-info")
         driver.get(base_url)
         soup = bs(driver.page_source, "lxml")
         links = soup.select("div.nav-bar.js-sticky nav.nav a.nav-item.nav-link")
@@ -61,17 +64,31 @@ def fetch_data(
                     hours_of_operation=hours,
                 )
             except:
-                yield SgRecord(
-                    page_url=page_url,
-                    location_name=link.text.strip(),
-                    street_address=sp1.select_one(
-                        "div.detail_content address"
-                    ).text.strip(),
-                    city=link.text.strip(),
-                    country_code="US",
-                    phone=sp1.select_one("div.detail_content div a").text.strip(),
-                    locator_domain=locator_domain,
-                )
+                for loc in all_locs:
+                    addr = list(
+                        loc.select_one("div.col-md-4")
+                        .findChildren(recursive=False)[0]
+                        .stripped_strings
+                    )
+                    if link.text.strip() in addr[1]:
+                        yield SgRecord(
+                            page_url=page_url,
+                            location_name=loc.h2.text.strip(),
+                            street_address=addr[0],
+                            city=link.text.strip(),
+                            state=addr[1].split(",")[1].strip().split(" ")[0].strip(),
+                            zip_postal=addr[1]
+                            .split(",")[1]
+                            .strip()
+                            .split(" ")[-1]
+                            .strip(),
+                            country_code="US",
+                            phone=sp1.select_one(
+                                "div.detail_content div a"
+                            ).text.strip(),
+                            locator_domain=locator_domain,
+                        )
+                        break
 
 
 if __name__ == "__main__":
