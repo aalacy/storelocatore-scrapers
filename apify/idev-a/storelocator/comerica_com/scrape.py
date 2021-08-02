@@ -37,6 +37,7 @@ def set_proxies():
     else:
         return None
 
+
 def api_get(start_url, headers, timeout, attempts, maxRetries):
     error = False
     session = SgRequests()
