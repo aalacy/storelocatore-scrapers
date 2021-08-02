@@ -167,7 +167,6 @@ def fetch_data(sgw: SgWriter):
         state = a.get("state") or "<MISSING>"
         postal = a.get("postal") or "<MISSING>"
         country_code = "US"
-        store_number = "<MISSING>"
 
         location_name = (
             " ".join(
@@ -258,8 +257,6 @@ def fetch_data(sgw: SgWriter):
                 .split('"markerLng":')[1]
                 .split(",")[0]
             )
-
-        location_type = "<MISSING>"
 
         hours_of_operation = (
             " ".join(
