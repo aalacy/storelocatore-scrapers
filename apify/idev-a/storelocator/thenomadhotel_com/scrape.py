@@ -52,7 +52,7 @@ def fetch_data(
                 yield SgRecord(
                     page_url=page_url,
                     location_name=ss["name"],
-                    street_address=ss["address"]["streetAddress"],
+                    street_address=sp1.address.text.strip(),
                     city=ss["address"]["addressLocality"],
                     state=ss["address"]["addressRegion"],
                     zip_postal=ss["address"]["postalCode"],
