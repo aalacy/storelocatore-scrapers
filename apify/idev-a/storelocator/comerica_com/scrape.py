@@ -19,10 +19,28 @@ search = DynamicZipSearch(
     granularity=Grain_1_KM(),
 )
 
+DEFAULT_PROXY_URL = "https://groups-RESIDENTIAL,country-us:{}@proxy.apify.com:8000/"
+
+
+def set_proxies():
+    if "PROXY_PASSWORD" in os.environ and os.environ["PROXY_PASSWORD"].strip():
+
+        proxy_password = os.environ["PROXY_PASSWORD"]
+        url = (
+            os.environ["PROXY_URL"] if "PROXY_URL" in os.environ else DEFAULT_PROXY_URL
+        )
+        proxy_url = url.format(proxy_password)
+        proxies = {
+            "https://": proxy_url,
+        }
+        return proxies
+    else:
+        return None
 
 def api_get(start_url, headers, timeout, attempts, maxRetries):
     error = False
     session = SgRequests()
+    session.proxies = set_proxies()
     try:
         results = session.get(start_url, headers=headers, timeout=timeout)
     except exceptions.RequestException as requestsException:
@@ -56,6 +74,7 @@ def api_get(start_url, headers, timeout, attempts, maxRetries):
 def fetch_data():
     # Need to add dedupe. Added it in pipeline.
     session = SgRequests(proxy_rotation_failure_threshold=20)
+    session.proxies = set_proxies()
     maxZ = search.items_remaining()
     total = 0
     for code in search:
