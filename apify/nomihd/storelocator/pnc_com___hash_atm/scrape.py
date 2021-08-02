@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import time
 import random
+import datetime
 import threading
 from sgrequests import SgRequests
 from sglogging import sglog
@@ -10,7 +11,6 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 from tenacity import retry, stop_after_attempt
-import datetime
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from sgselenium import SgChrome
 from sgzip.static import static_coordinate_list, SearchableCountries
