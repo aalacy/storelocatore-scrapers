@@ -2,11 +2,8 @@
 from sgrequests import SgRequests
 from sglogging import sglog
 import json
-from sgscrape.simple_utils import parallelize
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
-from sgzip.dynamic import SearchableCountries
-from sgzip.dynamic import DynamicGeoSearch
 from bs4 import BeautifulSoup
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
@@ -66,16 +63,13 @@ def fetch_data():
                 state = store.get("stateCode", "<MISSING>")
                 zip = store.get("postalCode", "<MISSING>")
                 country_code = store["countryCode"]
-                if country_code == "" or country_code is None:
-                    country_code = current_country
-
                 store_number = store["ID"]
                 phone = store.get("phone", "<MISSING>")
 
                 location_type = store["category"]["displayValue"]
                 hours_of_operation = ""
                 try:
-                    hours = BeautifulSoup(loc["storeHours"], "lxml")
+                    hours = BeautifulSoup(store["storeHours"], "lxml")
                     list_hours = list(hours.stripped_strings)
                     hours_of_operation = " ".join(list_hours).strip()
                 except:
