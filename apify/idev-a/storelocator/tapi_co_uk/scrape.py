@@ -26,7 +26,7 @@ max_workers = 8
 def fetchConcurrentSingle(link):
     page_url = urljoin("https://www.tapi.co.uk/", link["href"])
     response = request_with_retries(page_url)
-    return page_url, bs(session.get(page_url, headers=_headers).text, "lxml")
+    return page_url, bs(response.text, "lxml")
 
 
 def fetchConcurrentList(list, occurrence=max_workers):
