@@ -178,9 +178,7 @@ def scrape():
         ),
         location_type=sp.MappingField(
             mapping=["featuredServices"],
-            value_transform=lambda x: "Fuel"
-            if any(i in x for i in ["FUEL", "GAS"])
-            else "<MISSING>",
+            value_transform = lambda x : "Fuel" if any(i in str(x) for i in ["FUEL","GAS"]) else "<MISSING>",
             part_of_record_identity=True,
         ),
         raw_address=sp.MissingField(),
