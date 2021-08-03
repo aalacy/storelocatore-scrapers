@@ -56,20 +56,23 @@ def _parse(_, session, page=1):
     if portion and portion == td[2].strip():
         location_name = _location_name
 
+    street_address = sp3.select_one("div.postaladdress .addressTitle").text.strip()
+    if street_address == ".":
+        street_address = ""
     return SgRecord(
         page_url=page_url,
-        store_number=td[0],
+        store_number=td[0].strip(),
         location_name=location_name,
-        street_address=sp3.select_one("div.postaladdress .addressTitle").text.strip(),
-        city=td[2],
-        state=addr[1],
-        zip_postal=td[3],
-        country_code=addr[-1],
+        street_address=street_address,
+        city=td[2].strip(),
+        state=addr[1].strip(),
+        zip_postal=td[3].strip(),
+        country_code=addr[-1].strip(),
         phone=phone,
-        location_type=td[-2],
+        location_type=td[-2].strip(),
         locator_domain=locator_domain,
-        latitude=td[4],
-        longitude=td[6],
+        latitude=td[4].strip(),
+        longitude=td[6].strip(),
     )
 
 
@@ -108,6 +111,8 @@ def fetch_data():
             sp1 = bs(
                 session.post(search_url, headers=_headers, data=form_data).text, "lxml"
             )
+            if not sp1.select_one("a.rgCurrentPage"):
+                break
             cur_page = int(sp1.select_one("a.rgCurrentPage").text.strip())
 
             locations = sp1.select("table.rgMasterTable > tbody tr")
