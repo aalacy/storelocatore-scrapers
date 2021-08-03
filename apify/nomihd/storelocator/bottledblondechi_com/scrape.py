@@ -4,6 +4,8 @@ from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import lxml.html
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 website = "bottledblondechi.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -31,82 +33,89 @@ def fetch_data():
     stores = stores_sel.xpath('//a[@class="column-link"]/@href')
     for store_url in stores:
         page_url = "https://bottledblondepizzeria.com" + store_url + "-contact/"
+        log.info(page_url)
         store_req = session.get(page_url, headers=headers)
-        store_sel = lxml.html.fromstring(store_req.text)
+        if store_req.ok:
+            store_sel = lxml.html.fromstring(store_req.text)
 
-        locator_domain = website
+            locator_domain = website
 
-        location_name = "".join(
-            store_sel.xpath("//div[@class='contact-lc-title']/text()")
-        ).strip()
+            location_name = "".join(
+                store_sel.xpath("//div[@class='contact-lc-title']/text()")
+            ).strip()
 
-        raw_list = (
-            "".join(store_sel.xpath("//p[./i[@class='fa fa-map-marker']]/span/text()"))
-            .strip()
-            .split(",")
-        )
-
-        street_address = raw_list[0].strip().split("(")[0].strip()
-        city = raw_list[1].strip()
-        state_zip = raw_list[-1].strip()
-        state = state_zip.split(" ")[0].strip()
-        zip = state_zip.split(" ")[-1].strip()
-
-        country_code = "US"
-
-        store_number = "<MISSING>"
-
-        phone = store_sel.xpath('//p[contains(text(),"Dinner Reservations")]/a/text()')
-        if len(phone) > 0:
-            phone = phone[0]
-
-        location_type = "<MISSING>"
-        hours_of_operation = (
-            "; ".join(
-                store_sel.xpath("//p[./span/b[contains(text(),'HOURS')]]//text()")
+            raw_list = (
+                "".join(
+                    store_sel.xpath("//p[./i[@class='fa fa-map-marker']]/span/text()")
+                )
+                .strip()
+                .split(",")
             )
-            .strip()
-            .replace("\n", "")
-            .replace("*Food served until closing", "")
-            .strip()
-            .replace("HOURS; ;", "")
-            .strip()
-            .replace(":;", ":")
-            .replace(": ;", ":")
-            .replace("; ;", ";")
-            .replace("day :", "day:")
-            .strip()
-        )
+            street_address = raw_list[0].strip().split("(")[0].strip()
+            city = raw_list[1].strip()
+            state_zip = raw_list[-1].strip()
+            state = state_zip.split(" ")[0].strip()
+            zip = state_zip.split(" ")[-1].strip()
 
-        latitude = "".join(
-            store_sel.xpath('//div[@class="map-marker"]/@data-lat')
-        ).strip()
-        longitude = "".join(
-            store_sel.xpath('//div[@class="map-marker"]/@data-lng')
-        ).strip()
+            country_code = "US"
 
-        yield SgRecord(
-            locator_domain=locator_domain,
-            page_url=page_url,
-            location_name=location_name,
-            street_address=street_address,
-            city=city,
-            state=state,
-            zip_postal=zip,
-            country_code=country_code,
-            store_number=store_number,
-            phone=phone,
-            location_type=location_type,
-            latitude=latitude,
-            longitude=longitude,
-            hours_of_operation=hours_of_operation,
-        )
+            store_number = "<MISSING>"
+
+            phone = store_sel.xpath(
+                '//p[contains(text(),"Dinner Reservations")]/a/text()'
+            )
+            if len(phone) > 0:
+                phone = phone[0]
+
+            location_type = "<MISSING>"
+            hours_of_operation = (
+                "; ".join(
+                    store_sel.xpath("//p[./span/b[contains(text(),'HOURS')]]//text()")
+                )
+                .strip()
+                .replace("\n", "")
+                .replace("*Food served until closing", "")
+                .strip()
+                .replace("HOURS; ;", "")
+                .strip()
+                .replace(":;", ":")
+                .replace(": ;", ":")
+                .replace("; ;", ";")
+                .replace("day :", "day:")
+                .strip()
+            )
+
+            latitude = "".join(
+                store_sel.xpath('//div[@class="map-marker"]/@data-lat')
+            ).strip()
+            longitude = "".join(
+                store_sel.xpath('//div[@class="map-marker"]/@data-lng')
+            ).strip()
+
+            yield SgRecord(
+                locator_domain=locator_domain,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
 
 
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
