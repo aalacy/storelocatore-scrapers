@@ -1,19 +1,16 @@
 from sglogging import SgLogSetup
-from sgrequests import SgRequests
-from sgscrape.sgpostal import parse_address_intl
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from sgselenium import SgFirefox
-from webdriver_manager.firefox import GeckoDriverManager
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgselenium import SgChrome
+from sgrequests import SgRequests
 import json
+import time
 from lxml import html
-from time import sleep
-
-
+import re
 import ssl
+
 
 try:
     _create_unverified_https_context = (
@@ -25,223 +22,551 @@ else:
     ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
 
 
+DOMAIN = "marriott.com/gaylord-hotels/travel.mi"
+URL_LOCATION = "https://www.marriott.com/hotel-search.mi"
+
 logger = SgLogSetup().get_logger("marriott_com__gaylord-hotels__travel_mi")
-DOMAIN = "https://www.marriott.com/"
-MISSING = "<MISSING>"
-headers = {
+
+headers_api = {
     "accept": "application/json, text/plain, */*",
     "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.114 Safari/537.36",
-    "upgrade-insecure-requests": "1",
 }
 
 
-def get_all_store_urls():
-    all_store_urls = []
-    start_url = "https://www.marriott.com/hotel-search.mi"
-    with SgFirefox(
-        executable_path=GeckoDriverManager().install(), is_headless=True
-    ) as driver:
+# Marriott Hotels has total 30 brands.
+# Note: Marriott Hotels ( MC ) contains MC and MV (Marriott Vacation Club) brands as well
+# This contributes total 23 brands out of 30 brands
+# There are 22 API_ENDPOINT URLs but it will return the data for 23 brands
+# The rest of the 7 brands will be scraped using manual scraping method
+#
 
-        driver.get(start_url)
-        sleep(10)
-
-        WebDriverWait(driver, 10).until(
-            EC.presence_of_element_located(
-                (By.XPATH, '//a[contains(text(), "View all hotels")]')
-            )
-        )
-        us = driver.find_element_by_xpath('//a[contains(text(), "View all hotels")]')
-        driver.execute_script("arguments[0].scrollIntoView();", us)
-        us.click()
-        sleep(10)
-        logger.info("View All Hotels in the US")
-
-        WebDriverWait(driver, 10).until(
-            EC.presence_of_element_located((By.XPATH, '//span[@data-target="brands"]'))
-        )
-        driver.find_element_by_xpath('//span[@data-target="brands"]').click()
-        sleep(5)
-        logger.info("brand filter gaylord applied")
-
-        WebDriverWait(driver, 10).until(
-            EC.presence_of_element_located((By.XPATH, '//a[@data-for="brands_GE"]'))
-        )
-        brand_ge = driver.find_element_by_xpath('//a[@data-for="brands_GE"]')
-        driver.execute_script("arguments[0].click();", brand_ge)
-        sleep(5)
-
-        WebDriverWait(driver, 20).until(
-            EC.presence_of_element_located(
-                (
-                    By.XPATH,
-                    '//button[@class="m-button m-button-primary l-float-right l-button-50 l-button cta-apply"]',
-                )
-            )
-        )
-        apply_button = driver.find_element_by_xpath(
-            '//button[@class="m-button m-button-primary l-float-right l-button-50 l-button cta-apply"]'
-        )
-        driver.execute_script("arguments[0].scrollIntoView();", apply_button)
-        driver.execute_script("arguments[0].click();", apply_button)
-        sleep(5)
-        logger.info(" Apply Button Clicked with Success")
-        sleep(50)
-
-        dom = html.fromstring(driver.page_source, "lxml")
-        all_locations = dom.xpath('//a[@class="t-alt-link analytics-click"]/@href')
-        logger.info(f"All Loctions: {all_locations}")
-        all_store_urls.extend(all_locations)
-    all_store_urls = [
-        "https://www.marriott.com/hotels/travel/" + url.split("/")[-2] + "/"
-        for url in all_store_urls
-    ]
-    return all_store_urls
+url_api_endpoints_23_brands = {
+    "https://ac-hotels.marriott.com/": "https://pacsys.marriott.com/data/marriott_properties_AR_en-US.json",
+    "https://aloft-hotels.marriott.com/locations/": "https://pacsys.marriott.com/data/marriott_properties_AL_en-US.json",
+    "https://autograph-hotels.marriott.com/": "https://pacsys.marriott.com/data/marriott_properties_AK_en-US.json",
+    "https://courtyard.marriott.com/": "https://pacsys.marriott.com/data/marriott_properties_CY_en-US.json",
+    "https://delta-hotels.marriott.com/": "https://pacsys.marriott.com/data/marriott_properties_DE_en-US.json",
+    "https://design-hotels.marriott.com/": "https://pacsys.marriott.com/data/marriott_properties_DS_en-US.json",
+    "https://element-hotels.marriott.com/": "https://pacsys.marriott.com/data/marriott_properties_EL_en-US.json",
+    "https://fairfield.marriott.com/": "https://pacsys.marriott.com/data/marriott_properties_FI_en-US.json",
+    "https://four-points.marriott.com/": "https://pacsys.marriott.com/data/marriott_properties_FP_en-US.json",
+    "https://jw-marriott.marriott.com/": "https://pacsys.marriott.com/data/marriott_properties_JW_en-US.json",
+    "https://marriott-hotels.marriott.com/locations/": "https://pacsys.marriott.com/data/marriott_properties_MC_en-US.json",
+    "https://moxy-hotels.marriott.com/": "https://pacsys.marriott.com/data/marriott_properties_OX_en-US.json",
+    "https://residence-inn.marriott.com/": "https://pacsys.marriott.com/data/marriott_properties_RI_en-US.json",
+    "https://sheraton.marriott.com": "https://pacsys.marriott.com/data/marriott_properties_SI_en-US.json",
+    "https://springhillsuites.marriott.com/": "https://pacsys.marriott.com/data/marriott_properties_SH_en-US.json",
+    "https://le-meridien.marriott.com/": "https://pacsys.marriott.com/data/marriott_properties_MD_en-US.json",
+    "https://the-luxury-collection.marriott.com/": "https://pacsys.marriott.com/data/marriott_properties_LC_en-US.json",
+    "https://towneplacesuites.marriott.com/": "https://pacsys.marriott.com/data/marriott_properties_TS_en-US.json",
+    "https://tribute-portfolio.marriott.com/": "https://pacsys.marriott.com/data/marriott_properties_TX_en-US.json",
+    "https://w-hotels.marriott.com/": "https://pacsys.marriott.com/data/marriott_properties_WH_en-US.json",
+    "https://westin.marriott.com/": "https://pacsys.marriott.com/data/marriott_properties_WI_en-US.json",
+    "https://st-regis.marriott.com/": "https://pacsys.marriott.com/data/marriott_properties_XR_en-US.json",
+}
 
 
-def fetch_data():
-    # Your scraper here
+def fetch_data_for_23_child_brands_from_api_endpoints():
+    session = SgRequests()
+    for k, v in url_api_endpoints_23_brands.items():
+        url = v
+        response = session.get(url, headers=headers_api, timeout=180)
+        logger.info("JSON data being loaded...")
+        response_text = response.text
+        store_list = json.loads(response_text)
+        data_8 = store_list["regions"]
+        for i in data_8:
+            for j in i["region_countries"]:
+                for k in j["country_states"]:
+                    for h in k["state_cities"]:
+                        for g in h["city_properties"]:
+                            locator_domain = DOMAIN
+                            key = g["marsha_code"]
+                            if key:
+                                page_url = f"{'https://www.marriott.com/hotels/travel/'}{str(key)}"
+                            else:
+                                page_url = SgRecord.MISSING
+                            logger.info(f"[Page URL: {page_url} ]")
+
+                            # Location Name
+                            location_name = g["name"]
+                            location_name = (
+                                location_name if location_name else SgRecord.MISSING
+                            )
+
+                            # Street Address
+                            street_address = g["address"]
+                            street_address = (
+                                street_address if street_address else SgRecord.MISSING
+                            )
+
+                            # City
+                            city = g["city"]
+                            city = city if city else SgRecord.MISSING
+
+                            # State
+                            state = g["state_name"]
+                            state = state if state else SgRecord.MISSING
+
+                            # Zip Code
+                            zip_postal = g["postal_code"]
+                            zip_postal = zip_postal if zip_postal else SgRecord.MISSING
+
+                            # Country Code
+                            country_code = g["country_name"]
+                            country_code = (
+                                country_code if country_code else SgRecord.MISSING
+                            )
+
+                            # Store Number
+                            store_number = SgRecord.MISSING
+
+                            # Phone
+                            phone = g["phone"]
+                            phone = phone if phone else SgRecord.MISSING
+
+                            # Location Type
+                            location_type = g["brand_code"]
+                            if location_type:
+                                location_type = location_type + " " + "Hotels"
+                            else:
+                                location_type = SgRecord.MISSING
+                            # Latitude
+                            latitude = g["latitude"]
+                            latitude = latitude if latitude else SgRecord.MISSING
+
+                            # Longitude
+                            longitude = g["longitude"]
+                            longitude = longitude if longitude else longitude
+
+                            # Number of Operations
+
+                            hours_of_operation = ""
+                            hours_of_operation = (
+                                hours_of_operation
+                                if hours_of_operation
+                                else SgRecord.MISSING
+                            )
+
+                            # Raw Address
+                            raw_address = ""
+                            raw_address = (
+                                raw_address if raw_address else SgRecord.MISSING
+                            )
+
+                            yield SgRecord(
+                                locator_domain=locator_domain,
+                                page_url=page_url,
+                                location_name=location_name,
+                                street_address=street_address,
+                                city=city,
+                                state=state,
+                                zip_postal=zip_postal,
+                                country_code=country_code,
+                                store_number=store_number,
+                                phone=phone,
+                                location_type=location_type,
+                                latitude=latitude,
+                                longitude=longitude,
+                                hours_of_operation=hours_of_operation,
+                                raw_address=raw_address,
+                            )
+
+
+def get__regions_submit_search_urls():
+
+    # This returns the list of URLs against each region across the world.
+    # Regional Search URLs have been filtered followed by 7 brands those not having API ENDPOINT URLs.
+    #  search URL filtered Filter followed by 7
+
+    # There are 7 brands those not having API Endpoints so we have to manually scrape
+    # "BG Hotel" refers to "Bulgari Hotel"
+    # "BR Hotel" refers to "Renaissance Hotel"
+    # "EB Hotel" refers to "EDITION Hotel"
+    # "ER Hotel" refers to "Marriott Executive Hotel"
+    # "GE Hotel" refers to "Gaylord Hotel"
+    # "PR Hotel" refers to "Protea Hotel"
+    # "RZ Hotel" refers to "the Ritz-Carlton Hotel"
 
     session = SgRequests()
+    r_count = session.get(URL_LOCATION, headers=headers_api)
+    logger.info("Pulling Regional Search URLs")
+    time.sleep(30)
+    sel_count = html.fromstring(r_count.text, "lxml")
+    lis = sel_count.xpath(
+        '//nav[@class="l-pos-relative m-navigation m-navigation-white"]/ul/li'
+    )
+    lis = sel_count.xpath('//div/a[contains(text(), "View all hotels")]/@href')
+    lis = ["https://www.marriott.com" + i for i in lis]
+    lis = [i.replace("filterApplied=false", "filterApplied=true") for i in lis]
 
-    all_locations = get_all_store_urls()
-    logger.info(f"all locations URLs: {all_locations}")
-    for url in all_locations:
-        page_url = url
-        logger.info(f"Pulling the data from: {page_url} ")
-        loc_response = session.get(page_url, headers=headers)
-        loc_dom = html.fromstring(loc_response.text, "lxml")
-        poi = loc_dom.xpath('//script[@data-component-name="schemaOrg"]/text()')
-        if poi:
-            locator_domain = DOMAIN
-            poi = json.loads(poi[0])
-            poi = [e for e in poi["@graph"] if e["@type"] == "Hotel"][0]
-            location_name = poi["name"]
-            location_name = location_name if location_name else MISSING
-            street_address = poi["address"]["streetAddress"] or MISSING
-            city = poi["address"]["addressLocality"] or MISSING
-            state = poi["address"]["addressRegion"] or MISSING
-            if state == "Tennessee":
-                state = "TN"
-            zip_postal = poi["address"]["postalCode"] or MISSING
-            country_code = poi["address"]["addressCountry"]
-            if country_code == "USA":
-                country_code = "US"
-            country_code = country_code if country_code else MISSING
-            store_number = MISSING
-            phone = poi["telephone"] or MISSING
-            phone = phone if phone else MISSING
-            location_type = "Gaylord Hotels - Marriott"
-            latitude = poi["geo"]["latitude"] or MISSING
-            longitude = poi["geo"]["longitude"] or MISSING
-            hours_of_operation = MISSING
-            raw_address = MISSING
-            yield SgRecord(
-                locator_domain=locator_domain,
-                page_url=page_url,
-                location_name=location_name,
-                street_address=street_address,
-                city=city,
-                state=state,
-                zip_postal=zip_postal,
-                country_code=country_code,
-                store_number=store_number,
-                phone=phone,
-                location_type=location_type,
-                latitude=latitude,
-                longitude=longitude,
-                hours_of_operation=hours_of_operation,
-                raw_address=raw_address,
-            )
+    # Filtered followed by 7 brands
+    lis = [i + "&" + "marriottBrands=EB,RZ,BG,BR,GE,PR,ER" for i in lis]
 
+    # Replace any white space with %20
+    lis = [url.replace(" ", "%20") for url in lis]
+
+    # If view=map set, this will return all the data
+    # If view=list set, this won't return all the data that we need
+    lis = [url + "&view=map" for url in lis]
+    return lis
+
+
+# Get the cookies from URL LOCATION
+with SgChrome() as driver:
+    driver.get(URL_LOCATION)
+    time.sleep(10)
+    test_cookies_list = driver.get_cookies()
+test_cookies_json = {}
+for cookie in test_cookies_list:
+    test_cookies_json[cookie["name"]] = cookie["value"]
+cookies_string = (
+    str(test_cookies_json)
+    .replace("{", "")
+    .replace("}", "")
+    .replace("'", "")
+    .replace(": ", "=")
+    .replace(",", ";")
+)
+
+
+def fetch_data_for_7_child_brands():
+    session = SgRequests()
+    regions_submit_search_urls = get__regions_submit_search_urls()
+    total = 0
+    for idx, url_base_city_state in enumerate(regions_submit_search_urls[0:]):
+        page_number_second = 1
+        url_base_findHotels = "https://www.marriott.com/search/findHotels.mi"
+        logger.info(f"Pulling the data from >> [{idx}] : {url_base_city_state} ")
+        path2 = url_base_city_state.replace("https://www.marriott.com", "")
+        headers_path_ak = {
+            "authority": "www.marriott.com",
+            "method": "GET",
+            "path": path2,
+            "scheme": "https",
+            "cookie": cookies_string,
+            "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+            "accept-encoding": "gzip, deflate, br",
+            "upgrade-insecure-requests": "1",
+            "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.77 Safari/537.36",
+        }
+
+        r1 = session.get(url_base_city_state, headers=headers_path_ak)
+        time.sleep(15)
+        search_list_records_total = re.findall(
+            r"search_list_records_total\":\s\d+,", r1.text
+        )
+        search_list_records_total = "".join(search_list_records_total)
+        search_list_records_total = search_list_records_total.replace(
+            'search_list_records_total":', ""
+        ).strip(",")
+        logger.info(f"Number of records found: {search_list_records_total}")
+        if not search_list_records_total:
+            continue
         else:
+            total += int(search_list_records_total)
+            if int(search_list_records_total) > 40:
+                rrns = int(search_list_records_total) / 40
+                rrns_int = int(rrns)
+                rrns_int = rrns_int + 2
+                max_page_num = rrns_int
+                logger.info(
+                    "Search list records found to be more than 40, pagination required!!!"
+                )
 
-            data_json = loc_dom.xpath(
-                '//script[contains(text(), "var dataLayer")]/text()'
-            )
-            data_json = "".join(data_json)
-            data_json = data_json.split("var dataLayer =")[-1].strip()
-            data_json = json.loads(data_json)
+                for i in range(page_number_second, max_page_num):
+                    if i == 1:
+                        url_base_findHotels_custom = url_base_city_state
+                        logger.info(
+                            f"URL Base find Hotels Custom: {url_base_findHotels_custom} "
+                        )
+                        sel_chicago = html.fromstring(r1.text, "lxml")
+                        divs = sel_chicago.xpath(
+                            '//div[contains(@class, "js-property-results")]/div/div/div[contains(@class, "l-row t-bg-standard-20 property-record-item")]'
+                        )
+                        for location in divs:
+                            locator_domain = DOMAIN
+                            slug = location.xpath("./@data-marsha")[0]
+                            data_property = location.xpath("./@data-property")[0]
+                            data_property = json.loads(data_property)
+                            logger.info(f"Data Property: {data_property}")
+                            page_url = "https://www.marriott.com/hotels/travel/" + str(
+                                slug
+                            )
+                            location_name = data_property["hotelName"]
+                            street_address = (
+                                location.xpath(
+                                    './/div[contains(@class, "m-hotel-address")]/@data-address-line1'
+                                )[0]
+                                or SgRecord.MISSING
+                            )
+                            city = location.xpath("./@data-city")[0] or SgRecord.MISSING
+                            state = (
+                                location.xpath("./@data-statecode")[0]
+                                or SgRecord.MISSING
+                            )
+                            zip_postal = (
+                                location.xpath(
+                                    './/div[contains(@class, "m-hotel-address")]/@data-postal-code'
+                                )[0]
+                                or SgRecord.MISSING
+                            )
+                            country_code = (
+                                location.xpath(
+                                    './/div[contains(@class, "m-hotel-address")]/@data-country-description'
+                                )[0]
+                                or SgRecord.MISSING
+                            )
+                            logger.info(
+                                f"Street Address: {street_address} | City: {city} | State: {state} | Zip: {zip_postal} | Country Code: {country_code}"
+                            )
+                            store_number = SgRecord.MISSING
+                            store_number = SgRecord.MISSING
+                            phone = (
+                                location.xpath(
+                                    './/div[contains(@class, "m-hotel-address")]/@data-contact'
+                                )[0]
+                                or SgRecord.MISSING
+                            )
+                            phone = phone if phone else SgRecord.MISSING
+                            location_type = (
+                                location.xpath("./@data-brand")[0] or SgRecord.MISSING
+                            )
+                            location_type = location_type + " Hotels"
+                            latitude = data_property["lat"] or SgRecord.MISSING
+                            longitude = data_property["longitude"] or SgRecord.MISSING
+                            logger.info(
+                                f"Latitude: {latitude} | Longitude: {longitude}"
+                            )
+                            hours_of_operation = SgRecord.MISSING
+                            raw_address = location.xpath(
+                                './/div[contains(@class, "m-hotel-address")]/text()'
+                            )[0]
+                            raw_address = " ".join(raw_address.split())
+                            raw_address = (
+                                raw_address if raw_address else SgRecord.MISSING
+                            )
+                            logger.info(f"Raw Address: {raw_address}")
+                            logger.info(f"Data Property: {data_property}")
+                            yield SgRecord(
+                                locator_domain=locator_domain,
+                                page_url=page_url,
+                                location_name=location_name,
+                                street_address=street_address,
+                                city=city,
+                                state=state,
+                                zip_postal=zip_postal,
+                                country_code=country_code,
+                                store_number=store_number,
+                                phone=phone,
+                                location_type=location_type,
+                                latitude=latitude,
+                                longitude=longitude,
+                                hours_of_operation=hours_of_operation,
+                                raw_address=raw_address,
+                            )
 
-            locator_domain = DOMAIN
-            location_name = data_json["prop_name"]
-            logger.info(f"Location Name: {location_name}")
+                    if i > 1:
+                        referrer_custom = f"{url_base_findHotels}?page={i-1}"
+                        url_base_findHotels_custom = f"{url_base_findHotels}?page={i}"
+                        request_headers_path = url_base_findHotels_custom.replace(
+                            "https://www.marriott.com", ""
+                        )
+                        headers_pagination_enabled = {
+                            "authority": "www.marriott.com",
+                            "method": "GET",
+                            "scheme": "https",
+                            "path": request_headers_path,
+                            "accept": "application/json, text/plain, */*",
+                            "accept-encoding": "gzip, deflate, br",
+                            "upgrade-insecure-requests": "1",
+                            "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.114 Safari/537.36",
+                            "referrer": referrer_custom,
+                        }
+                        r_chicago = session.get(
+                            url_base_findHotels_custom,
+                            headers=headers_pagination_enabled,
+                        )
+                        time.sleep(15)
+                        logger.info(
+                            f"URL Base find Hotels Custom: {url_base_findHotels_custom} "
+                        )
+                        sel_chicago = html.fromstring(r_chicago.text, "lxml")
+                        divs = sel_chicago.xpath(
+                            '//div[contains(@class, "js-property-results")]/div/div/div[contains(@class, "l-row t-bg-standard-20 property-record-item")]'
+                        )
+                        for location in divs:
+                            locator_domain = DOMAIN
+                            slug = location.xpath("./@data-marsha")[0]
+                            data_property = location.xpath("./@data-property")[0]
+                            data_property = json.loads(data_property)
+                            logger.info(f"Data Property: {data_property}")
+                            page_url = "https://www.marriott.com/hotels/travel/" + str(
+                                slug
+                            )
+                            location_name = data_property["hotelName"]
+                            street_address = (
+                                location.xpath(
+                                    './/div[contains(@class, "m-hotel-address")]/@data-address-line1'
+                                )[0]
+                                or SgRecord.MISSING
+                            )
+                            city = location.xpath("./@data-city")[0] or SgRecord.MISSING
+                            state = (
+                                location.xpath("./@data-statecode")[0]
+                                or SgRecord.MISSING
+                            )
+                            zip_postal = (
+                                location.xpath(
+                                    './/div[contains(@class, "m-hotel-address")]/@data-postal-code'
+                                )[0]
+                                or SgRecord.MISSING
+                            )
+                            country_code = (
+                                location.xpath(
+                                    './/div[contains(@class, "m-hotel-address")]/@data-country-description'
+                                )[0]
+                                or SgRecord.MISSING
+                            )
+                            logger.info(
+                                f"Street Address: {street_address} | City: {city} | State: {state} | Zip: {zip_postal} | Country Code: {country_code}"
+                            )
+                            store_number = SgRecord.MISSING
+                            store_number = SgRecord.MISSING
+                            phone = (
+                                location.xpath(
+                                    './/div[contains(@class, "m-hotel-address")]/@data-contact'
+                                )[0]
+                                or SgRecord.MISSING
+                            )
+                            phone = phone if phone else SgRecord.MISSING
+                            location_type = (
+                                location.xpath("./@data-brand")[0] or SgRecord.MISSING
+                            )
+                            location_type = location_type + " Hotels"
+                            latitude = data_property["lat"] or SgRecord.MISSING
+                            longitude = data_property["longitude"] or SgRecord.MISSING
+                            logger.info(
+                                f"Latitude: {latitude} | Longitude: {longitude}"
+                            )
+                            hours_of_operation = SgRecord.MISSING
+                            raw_address = location.xpath(
+                                './/div[contains(@class, "m-hotel-address")]/text()'
+                            )[0]
+                            raw_address = " ".join(raw_address.split())
+                            raw_address = (
+                                raw_address if raw_address else SgRecord.MISSING
+                            )
+                            logger.info(f"Raw Address: {raw_address}")
+                            logger.info(f"Data Property: {data_property}")
+                            yield SgRecord(
+                                locator_domain=locator_domain,
+                                page_url=page_url,
+                                location_name=location_name,
+                                street_address=street_address,
+                                city=city,
+                                state=state,
+                                zip_postal=zip_postal,
+                                country_code=country_code,
+                                store_number=store_number,
+                                phone=phone,
+                                location_type=location_type,
+                                latitude=latitude,
+                                longitude=longitude,
+                                hours_of_operation=hours_of_operation,
+                                raw_address=raw_address,
+                            )
 
-            address_raw = "".join(
-                loc_dom.xpath('//div[@class="getting-here__left-body"]/p[2]/text()')
-            ).strip()
-            address_raw = address_raw.replace(
-                "6700 North Gaylord Rockies Boulevard,Aurora 80019 Colorado USA",
-                "6700 North Gaylord Rockies Boulevard, Aurora Colorado 80019 USA",
-            )
-            logger.info(f"Address Raw: {address_raw}")
-
-            pai = parse_address_intl(address_raw)
-
-            street_address = pai.street_address_1
-            street_address = street_address if street_address else MISSING
-            logger.info(f"Street Address: {street_address}")
-
-            city = pai.city
-            city = city if city else MISSING
-            logger.info(f"City: {city}")
-
-            state = pai.state
-            state = state if state else MISSING
-            logger.info(f"State: {state}")
-
-            zip_postal = pai.postcode
-            zip_postal = zip_postal if zip_postal else MISSING
-            logger.info(f"Zip Code: {zip_postal}")
-
-            country_code = data_json["site_id"]
-            country_code = country_code if country_code else MISSING
-            logger.info(f"Country Code: {country_code}")
-
-            store_number = MISSING
-
-            # Phone
-            try:
-                phone = loc_dom.xpath('//a[contains(@href, "tel:")]/text()')[0]
-            except:
-                try:
-                    phone = loc_dom.xpath('//a[contains(@href, "tel:")]/text()')[1]
-                except:
-                    phone = MISSING
-
-            location_type = data_json["prop_brand_name"] + " - Marriott"
-            logger.info(f"Location Type: {location_type}")
-
-            lat_lng = data_json["prop_address_lat_long"]
-            latitude = lat_lng.split(",")[0]
-            longitude = lat_lng.split(",")[-1]
-            logger.info(f"(Latitude: {latitude} | Longitude: {longitude}")
-            hours_of_operation = MISSING
-            raw_address = address_raw if address_raw else MISSING
-            yield SgRecord(
-                locator_domain=locator_domain,
-                page_url=page_url,
-                location_name=location_name,
-                street_address=street_address,
-                city=city,
-                state=state,
-                zip_postal=zip_postal,
-                country_code=country_code,
-                store_number=store_number,
-                phone=phone,
-                location_type=location_type,
-                latitude=latitude,
-                longitude=longitude,
-                hours_of_operation=hours_of_operation,
-                raw_address=raw_address,
-            )
+            else:
+                # No need to update referrer
+                sel_chicago = html.fromstring(r1.text, "lxml")
+                divs = sel_chicago.xpath(
+                    '//div[contains(@class, "js-property-results")]/div/div/div[contains(@class, "l-row t-bg-standard-20 property-record-item")]'
+                )
+                for location in divs:
+                    locator_domain = DOMAIN
+                    slug = location.xpath("./@data-marsha")[0]
+                    data_property = location.xpath("./@data-property")[0]
+                    data_property = json.loads(data_property)
+                    logger.info(f"Data Property: {data_property}")
+                    page_url = "https://www.marriott.com/hotels/travel/" + str(slug)
+                    location_name = data_property["hotelName"]
+                    street_address = (
+                        location.xpath(
+                            './/div[contains(@class, "m-hotel-address")]/@data-address-line1'
+                        )[0]
+                        or SgRecord.MISSING
+                    )
+                    city = location.xpath("./@data-city")[0] or SgRecord.MISSING
+                    state = location.xpath("./@data-statecode")[0] or SgRecord.MISSING
+                    zip_postal = (
+                        location.xpath(
+                            './/div[contains(@class, "m-hotel-address")]/@data-postal-code'
+                        )[0]
+                        or SgRecord.MISSING
+                    )
+                    country_code = (
+                        location.xpath(
+                            './/div[contains(@class, "m-hotel-address")]/@data-country-description'
+                        )[0]
+                        or SgRecord.MISSING
+                    )
+                    logger.info(
+                        f"Street Address: {street_address} | City: {city} | State: {state} | Zip: {zip_postal} | Country Code: {country_code}"
+                    )
+                    store_number = SgRecord.MISSING
+                    store_number = SgRecord.MISSING
+                    phone = (
+                        location.xpath(
+                            './/div[contains(@class, "m-hotel-address")]/@data-contact'
+                        )[0]
+                        or SgRecord.MISSING
+                    )
+                    phone = phone if phone else SgRecord.MISSING
+                    location_type = (
+                        location.xpath("./@data-brand")[0] or SgRecord.MISSING
+                    )
+                    location_type = location_type + " Hotels"
+                    latitude = data_property["lat"] or SgRecord.MISSING
+                    longitude = data_property["longitude"] or SgRecord.MISSING
+                    logger.info(f"Latitude: {latitude} | Longitude: {longitude}")
+                    hours_of_operation = SgRecord.MISSING
+                    raw_address = location.xpath(
+                        './/div[contains(@class, "m-hotel-address")]/text()'
+                    )[0]
+                    raw_address = " ".join(raw_address.split())
+                    raw_address = raw_address if raw_address else SgRecord.MISSING
+                    logger.info(f"Raw Address: {raw_address}")
+                    logger.info(f"Data Property: {data_property}")
+                    yield SgRecord(
+                        locator_domain=locator_domain,
+                        page_url=page_url,
+                        location_name=location_name,
+                        street_address=street_address,
+                        city=city,
+                        state=state,
+                        zip_postal=zip_postal,
+                        country_code=country_code,
+                        store_number=store_number,
+                        phone=phone,
+                        location_type=location_type,
+                        latitude=latitude,
+                        longitude=longitude,
+                        hours_of_operation=hours_of_operation,
+                        raw_address=raw_address,
+                    )
+        logger.info(f"Records Found per Country or State: {total}")
+    logger.info(f"Total Records: {total}")
 
 
 def scrape():
     logger.info("Started")
     count = 0
-    with SgWriter() as writer:
-        results = fetch_data()
-        for rec in results:
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        results_23_brands = list(fetch_data_for_23_child_brands_from_api_endpoints())
+        results_7_brands = list(fetch_data_for_7_child_brands())
+        results_23_brands.extend(results_7_brands)
+        for rec in results_23_brands:
             writer.write_row(rec)
             count = count + 1
 
