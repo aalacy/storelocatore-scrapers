@@ -1,41 +1,17 @@
-import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 session = SgRequests()
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36",
-    "authorization": "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiJRQ2hpc1p1SUExdzk0MVBJTlRKTk1QSXo3bG55RlFWTmNFU2tIRVR0azlieVBEeHowNlNyeVlYZXBDalh0bVZkcmZHdm0zNGUyMG9GM0hYejBVdHBiM0dReWpBeHA1N0NYTVE5WGJoZ09aWmg2djVsQ1hIblE2SkYiLCJqdGkiOiJlZmRkYWIwZGMzZmRhODllZDc2NzZjZmM0ZjcwYWMxNGFiZDk4YTk4MzIxN2EzZjU5ZTgzOTBiMzVmYTgyYmE5NmI1YzNjNmRiMDc5ZDUxMCIsImlhdCI6MTYyNTY2ODA2MiwibmJmIjoxNjI1NjY4MDYyLCJleHAiOjE2MjU3NTQ0NjIsInN1YiI6IiIsInNjb3BlcyI6WyJhbGxlcmdpZXM6aW5kZXgiLCJhbmFseXRpY3NfZXZlbnRzOnNob3dfc2NoZW1hIiwiYmFza2V0X2xveWFsdHk6YXBwbHlfcmV3YXJkcyIsImJhc2tldF9sb3lhbHR5OmRlc3Ryb3lfcmV3YXJkIiwiYmFza2V0X2xveWFsdHk6Z2V0X2FwcGxpZWRfcmV3YXJkcyIsImJhc2tldF9sb3lhbHR5OmdldF9hdmFpbGFibGVfcmV3YXJkcyIsImJhc2tldHM6ZGVzdHJveV9wcm9tb19jb2RlIiwiYmFza2V0czpkZXN0cm95X3dhbnRlZF90aW1lIiwiYmFza2V0czpnZXRfYXZhaWxhYmxlX3dhbnRlZF90aW1lcyIsImJhc2tldHM6bGlzdF9yZXF1aXJlZF92ZXJpZmljYXRpb25zIiwiYmFza2V0czpzZXRfY29udmV5YW5jZSIsImJhc2tldHM6c2hvdyIsImJhc2tldHM6c3RvcmUiLCJiYXNrZXRzOnN0b3JlX2FsbGVyZ2llcyIsImJhc2tldHM6c3RvcmVfcHJvbW9fY29kZSIsImJhc2tldHM6c3RvcmVfd2FudGVkX3RpbWUiLCJiYXNrZXRzOnN1Ym1pdCIsImJhc2tldHM6dmFsaWRhdGVfYmFza2V0IiwiYmFza2V0czp2ZXJpZnlfYmFza2V0IiwiY29uZmlnOnNob3ciLCJncm91cDpvcmRlcmluZ19hcHAiLCJsb2NhdGlvbl9tZW51OnNob3ciLCJsb3lhbHR5OmNoZWNrX3JlZ2lzdHJhdGlvbl9zdGF0dXMiLCJsb3lhbHR5OmNyZWF0ZV9yZWRlbXB0aW9uIiwibG95YWx0eTpmb3Jnb3RfcGFzc3dvcmQiLCJsb3lhbHR5OmluZGV4X3JlZGVlbWFibGVzIiwibG95YWx0eTppbmRleF9yZWRlbXB0aW9ucyIsImxveWFsdHk6cmVnaXN0ZXIiLCJsb3lhbHR5OnJlc2V0X3Bhc3N3b3JkIiwibG95YWx0eTpzaG93X2xveWFsdHlfc3RhdGUiLCJsb3lhbHR5OnNob3dfbWUiLCJsb3lhbHR5OnVwZGF0ZV9tZSIsIm9yZGVyX2xveWFsdHk6Y2xhaW1fcmV3YXJkcyIsIm9yZGVyczpjdXN0b21lcl9hcnJpdmFsIiwib3JkZXJzOmRlc3Ryb3lfZmF2b3JpdGUiLCJvcmRlcnM6ZGlzcGF0Y2hfcmVjZWlwdF9lbWFpbCIsIm9yZGVyczppbmRleF9mYXZvcml0ZXMiLCJvcmRlcnM6aW5kZXhfbXlfb3JkZXJzIiwib3JkZXJzOnN0b3JlX2Zhdm9yaXRlIiwic3RvcmVfbG9jYXRpb25zOmRlc3Ryb3lfZmF2b3JpdGUiLCJzdG9yZV9sb2NhdGlvbnM6aW5kZXgiLCJzdG9yZV9sb2NhdGlvbnM6aW5kZXhfZmF2b3JpdGVzIiwic3RvcmVfbG9jYXRpb25zOnNob3ciLCJzdG9yZV9sb2NhdGlvbnM6c3RvcmVfZmF2b3JpdGUiLCJ0YWdzOmluZGV4IiwidXBzZWxsczpnZW5lcmF0ZSIsInVzZXJzOmRlc3Ryb3lfc3RvcmVkX2NhcmQiLCJ1c2VyczppbmRleF9zdG9yZWRfY2FyZHMiXX0.adQVVA_ErGxGTnPan12dUDy7VF5kg3pJx1DKLufIBhYmsdWZo2_Roh3LA4FfsNQAD0n89xvwCR9A8n_HsWq-_VCRvQ9Uaxa9qnXDCT7L_O-hnK61EiNBJY88H3CfkrBkXIV7Q7E_wkEiN3s6eSIZMQFg4bMD3ZRNwNf4JfHLZSY0PHCTw5Q4hO0Y-UFHqd4ml0TFcrNDF8vmnQhlNam5862Mn2vh00dcIOujrV9YeqnDdAYPd7paIT5i9DNKKZGys6-Zs-VTRvk_6LzAPSDGGSvkpLXDdHoFzpm1qoP1gxBDuS-ixSWbad0N8Sno8Ko2c-V7b2vgyTmuv-NR_89Pg5dDrg0G762tJBjmP-zbZJM5oY5A7zitnkZgpWNLTCgO_VBoW4CFT6p2_pahQ9Y7MaT0f-upMLj4nu9FIQMBSwjD-ORKyGORG89hqkLv6ACH3QAR1--ODB2Vw_luecGoich6CP7HoxKNPaos3Pdy9lG5Ui1ycNBW6uNN-WZxAxFaAJ6Z59tLDq3y7E3W1VW5I18oVG2an5yb8spseYLktDJQ-T6kiQKNJQ3AS4sxdTViB6smR4DPmS8eOGHeDR5WOVgYF_T-8b0GU8ws8s--2-QtdAMWBmnL3kOwPlWdfpB7w9qO_gVmTDDLjXYTNN7skOrQ6f1cdx9U9V_VsXBoW94",
+    "authorization": "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiJRQ2hpc1p1SUExdzk0MVBJTlRKTk1QSXo3bG55RlFWTmNFU2tIRVR0azlieVBEeHowNlNyeVlYZXBDalh0bVZkcmZHdm0zNGUyMG9GM0hYejBVdHBiM0dReWpBeHA1N0NYTVE5WGJoZ09aWmg2djVsQ1hIblE2SkYiLCJqdGkiOiIyNjNmYjllZWVlYjFkZGQ1ODNmMTc1NjBiNjE5OTU5ZGU0N2EzMTRmNmFiNTdlY2FmMDk1YzdlYzFmYWMxYjNlMmYyZGYyYjZlNDJjYTU1NSIsImlhdCI6MTYyNzkyNjg2NS4zNDI1OSwibmJmIjoxNjI3OTI2ODY1LjM0MjU5NiwiZXhwIjoxNjI4MDEzMjY1LjMyMTA3OSwic3ViIjoiIiwic2NvcGVzIjpbImFsbGVyZ2llczppbmRleCIsImFuYWx5dGljc19ldmVudHM6c2hvd19zY2hlbWEiLCJiYXNrZXRfbG95YWx0eTphcHBseV9yZXdhcmRzIiwiYmFza2V0X2xveWFsdHk6ZGVzdHJveV9yZXdhcmQiLCJiYXNrZXRfbG95YWx0eTpnZXRfYXBwbGllZF9yZXdhcmRzIiwiYmFza2V0X2xveWFsdHk6Z2V0X2F2YWlsYWJsZV9yZXdhcmRzIiwiYmFza2V0czpkZXN0cm95X3Byb21vX2NvZGUiLCJiYXNrZXRzOmRlc3Ryb3lfd2FudGVkX3RpbWUiLCJiYXNrZXRzOmdldF9hdmFpbGFibGVfd2FudGVkX3RpbWVzIiwiYmFza2V0czpsaXN0X3JlcXVpcmVkX3ZlcmlmaWNhdGlvbnMiLCJiYXNrZXRzOnNldF9jb252ZXlhbmNlIiwiYmFza2V0czpzaG93IiwiYmFza2V0czpzdG9yZSIsImJhc2tldHM6c3RvcmVfYWxsZXJnaWVzIiwiYmFza2V0czpzdG9yZV9wcm9tb19jb2RlIiwiYmFza2V0czpzdG9yZV93YW50ZWRfdGltZSIsImJhc2tldHM6c3VibWl0IiwiYmFza2V0czp2YWxpZGF0ZV9iYXNrZXQiLCJiYXNrZXRzOnZlcmlmeV9iYXNrZXQiLCJjb25maWc6c2hvdyIsImdyb3VwOm9yZGVyaW5nX2FwcCIsImxvY2F0aW9uX21lbnU6c2hvdyIsImxveWFsdHk6Y2hlY2tfcmVnaXN0cmF0aW9uX3N0YXR1cyIsImxveWFsdHk6Y3JlYXRlX3JlZGVtcHRpb24iLCJsb3lhbHR5OmZvcmdvdF9wYXNzd29yZCIsImxveWFsdHk6aW5kZXhfcmVkZWVtYWJsZXMiLCJsb3lhbHR5OmluZGV4X3JlZGVtcHRpb25zIiwibG95YWx0eTpyZWdpc3RlciIsImxveWFsdHk6cmVzZXRfcGFzc3dvcmQiLCJsb3lhbHR5OnNob3dfbG95YWx0eV9zdGF0ZSIsImxveWFsdHk6c2hvd19tZSIsImxveWFsdHk6dXBkYXRlX21lIiwib3JkZXJfbG95YWx0eTpjbGFpbV9yZXdhcmRzIiwib3JkZXJzOmN1c3RvbWVyX2Fycml2YWwiLCJvcmRlcnM6ZGVzdHJveV9mYXZvcml0ZSIsIm9yZGVyczpkaXNwYXRjaF9yZWNlaXB0X2VtYWlsIiwib3JkZXJzOmluZGV4X2Zhdm9yaXRlcyIsIm9yZGVyczppbmRleF9teV9vcmRlcnMiLCJvcmRlcnM6c3RvcmVfZmF2b3JpdGUiLCJzdG9yZV9sb2NhdGlvbnM6ZGVzdHJveV9mYXZvcml0ZSIsInN0b3JlX2xvY2F0aW9uczppbmRleCIsInN0b3JlX2xvY2F0aW9uczppbmRleF9mYXZvcml0ZXMiLCJzdG9yZV9sb2NhdGlvbnM6c2hvdyIsInN0b3JlX2xvY2F0aW9uczpzdG9yZV9mYXZvcml0ZSIsInRhZ3M6aW5kZXgiLCJ1cHNlbGxzOmdlbmVyYXRlIiwidXNlcnM6ZGVzdHJveV9zdG9yZWRfY2FyZCIsInVzZXJzOmluZGV4X3N0b3JlZF9jYXJkcyJdfQ.uJa4ll_RxJ0qc-8po9FUMFbocbb5Dr3n4GoUy-HgILE5q3-AE-PMgzJv4Pjpy9VAB96LPbWhO0nQ6w06jOJ8jWxGaT-MsTatghKjZ4f3rZbC9f0qZ8aNtJ_rIGl7QukJmA91L3X1JzgT2QHySIUVMZfMNo7wY9Bj4GyzbVoymq9NzR3JHL3fPk4WqAJUKg5I8PdQU_AbnAMz1dtLS7F5lUWCRG5YQ5WKUxk8cBjA3e3KvZOdoDKs6q0Uq4aj55qpVO_CnU19Tj8XyZOl5NqXc4JK6Jg9kCMA5eLcZqK_96LdhjaFzXqAVHD7tpvc2ZQPHYvi7E0IAoWjRgb-nQEEfwPSEHVJp5z3cxG6RMsWgdm8Gmm9quld7ea8w3nJlZ-NVu97AqOIPLQyVb3L9VH-wMPMicNpc4ugkAucWgBf-4v5InpHx5_urLG_9a5uTYp1egsQKydedMVlGzVvNIfR1rdU-BsAAnZJQlY6UIkJ5SXUgJmlZMtME8oJTuzbSv-UK8d1zr0gROhtdiqBmj-5GiWYA1Ko1CViTY85xNx3EvMuEq9o1fXCTzlq8cAkQAzkaBdSZe18tXHDkFv_RABmrtJWc7Q2ZranoVN4vhSytQK6gN_MnTuyXBL0uIUdOOJRJrPbrXnX4Pnkk9fXdw1fN2OPBalFa-imszCd5XXCTXE",
 }
 
 logger = SgLogSetup().get_logger("capriottis_com")
-
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
 
 
 def fetch_data():
@@ -71,27 +47,29 @@ def fetch_data():
                         )
                         hours = "<INACCESSIBLE>"
                         name = name.replace("\\u2019", "'")
-                        yield [
-                            website,
-                            lurl,
-                            name,
-                            add,
-                            city,
-                            state,
-                            zc,
-                            country,
-                            store,
-                            phone,
-                            typ,
-                            lat,
-                            lng,
-                            hours,
-                        ]
+                        yield SgRecord(
+                            locator_domain=website,
+                            page_url=lurl,
+                            location_name=name,
+                            street_address=add,
+                            city=city,
+                            state=state,
+                            zip_postal=zc,
+                            country_code=country,
+                            phone=phone,
+                            location_type=typ,
+                            store_number=store,
+                            latitude=lat,
+                            longitude=lng,
+                            hours_of_operation=hours,
+                        )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()

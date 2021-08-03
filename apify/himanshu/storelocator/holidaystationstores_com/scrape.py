@@ -1,102 +1,101 @@
-import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
-import re
-import json
-from sgselenium import SgSelenium
 from sglogging import SgLogSetup
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-logger = SgLogSetup().get_logger('holidaystationstores_com')
-
+logger = SgLogSetup().get_logger("holidaystationstores_com")
 
 session = SgRequests()
 
-def write_output(data):
-    with open('data.csv', mode='w', newline='') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code","store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    addressess = []
-    # driver = SgSelenium().firefox()
-    base_url = "https://www.holidaystationstores.com/"
-    data = {"Lat": 40.4172871,
-            "Lng": -82.90712300000001,
-            "Diesel": "false",
-            "E85": "false",
-            "NonOxygenated": "false",
-            "Carwash": "false",
-            "UnlimitedCarWashPass": "false",
-            "Open24Hours": "false",
-            "ATM": "false",
-            "Cub": "false",
-            "UnattendedFueling": "false",
-            "TruckStop": "false",
-            "DEF": "false",
-            "Propane": "false",
-            "CNG": "false",
-            "SearchMethod": "City",
-            "SearchValue": "OH"
-            }
+def fetch_data(sgw: SgWriter):
+    data = {
+        "Lat": 45.755799,
+        "Lng": -93.6544079,
+        "Diesel": "false",
+        "E85": "false",
+        "NonOxygenated": "false",
+        "Carwash": "false",
+        "UnlimitedCarWashPass": "false",
+        "Open24Hours": "false",
+        "ATM": "false",
+        "Cub": "false",
+        "UnattendedFueling": "false",
+        "TruckStop": "false",
+        "DEF": "false",
+        "Propane": "false",
+        "CNG": "false",
+        "SearchMethod": "City",
+        "SearchValue": "MN",
+    }
 
     headers = {
-        'Accept': 'text/html, */*; q=0.01',
-        'Accept-Encoding': 'gzip, deflate',
-        'Accept-Language': 'en-US,en;q=0.9,gu;q=0.8,es;q=0.7',
-        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.122 Safari/537.36',
-        'X-Requested-With': 'XMLHttpRequest',
+        "Accept": "text/html, */*; q=0.01",
+        "Accept-Encoding": "gzip, deflate",
+        "Accept-Language": "en-US,en;q=0.9,gu;q=0.8,es;q=0.7",
+        "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.122 Safari/537.36",
+        "X-Requested-With": "XMLHttpRequest",
     }
-    r = session.post("https://www.holidaystationstores.com/Locations/Results/", data=data, headers=headers)
-    soup = BeautifulSoup(r.text,"lxml")
-    for name in soup.find_all("a",{"class":"HolidayHoverNone"}):
-        location_name = name.find("div",{"class":"col-12 HolidayFontColorRedHover font-weight-bold"}).text.strip()
+    r = session.post(
+        "https://www.holidaystationstores.com/Locations/Results/",
+        data=data,
+        headers=headers,
+    )
+    soup = BeautifulSoup(r.text, "html.parser")
+    s = set()
+    for name in soup.find_all("a", {"class": "HolidayHoverNone"}):
+        location_name = name.find(
+            "div", {"class": "col-12 HolidayFontColorRedHover font-weight-bold"}
+        ).text.strip()
         store_number = location_name.split("#")[-1]
-        longitude = name['data-lng']
-        latitude = name['data-lat']
+        phone = "<INACCESSIBLE>"
+        hours_of_operation = "<INACCESSIBLE>"
+        longitude = name["data-lng"]
+        latitude = name["data-lat"]
+        country_code = "US"
         street_address = name.find_all("div")[1].text
         raw = name.find_all("div")[-1].text
         city = raw.split(",")[0]
         state = raw.split(",")[1].split()[0]
-        zipp = raw.split(",")[1].split()[1]
-        page_url = "https://www.holidaystationstores.com/Locations/Detail?storeNumber="+str(store_number)
-        
-        # driver.get(page_url)
-        # location_soup = BeautifulSoup(driver.page_source, "lxml")
-        # phone = location_soup.find("div",{"class":"col-lg-4 col-sm-12"}).find("div",{"class":"HolidayFontColorRed"}).text.strip()
-        # hours = " ".join(list(location_soup.find("div",{"class":"col-lg-4 col-sm-12"}).stripped_strings)).split("Hours")[1].split("Services")[0].strip()
-    
-        store = []
-        store.append(base_url)
-        store.append(location_name)
-        store.append(street_address)
-        store.append(city)
-        store.append(state)
-        store.append(zipp)   
-        store.append("US")
-        store.append(store_number)
-        store.append("<INACCESSIBLE>")
-        store.append("<MISSING>")
-        store.append(latitude )
-        store.append(longitude )
-        store.append("<INACCESSIBLE>")
-        store.append(page_url)
-        if store[2] in addressess:
+        try:
+            zipp = raw.split(",")[1].split()[1]
+        except:
+            zipp = "<MISSING>"
+        page_url = (
+            "https://www.holidaystationstores.com/Locations/Detail?storeNumber="
+            + str(store_number)
+        )
+        line = location_name
+        if line in s:
             continue
-        addressess.append(store[2])
-        store = [str(x).strip() if x else "<MISSING>" for x in store]
-        #logger.info(store)
-        yield store
+        s.add(line)
 
-    
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=zipp,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+        )
 
-scrape()
+        sgw.write_row(row)
+
+
+if __name__ == "__main__":
+    session = SgRequests()
+    locator_domain = "https://www.holidaystationstores.com/"
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        fetch_data(writer)

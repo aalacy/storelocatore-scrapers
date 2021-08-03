@@ -107,6 +107,7 @@ def fetch_data():
             hours = "<MISSING>"
         hours = hours.replace(" – ", "-")
         hours = hours.replace("&#8211;", "-")
+        hours = hours.replace("&#038;", "&")
         if city != "":
             yield [
                 website,

@@ -104,6 +104,8 @@ def fetch_data():
                 .replace("Burlington Square,", "")
                 .strip()
             )
+            if "shoppers world" in street_address.lower():
+                street_address = item.find(class_="contact_info").span.text.strip()
 
         city = item.find("meta", attrs={"property": "business:contact_data:locality"})[
             "content"
@@ -122,6 +124,8 @@ def fetch_data():
         phone = item.find(
             "meta", attrs={"property": "business:contact_data:phone_number"}
         )["content"]
+        if not phone:
+            phone = "<MISSING>"
         latitude = item.find("meta", attrs={"property": "place:location:latitude"})[
             "content"
         ]
