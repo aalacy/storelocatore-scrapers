@@ -11,6 +11,8 @@ from sgscrape.simple_scraper_pipeline import (
     MissingField,
 )
 from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 
 def fetch_data(_, http: SgRequests):
@@ -44,7 +46,7 @@ def get_hours(intervals):
 
 if __name__ == "__main__":
     crawler_domain = "jonesbootmaker.com"
-    with SgWriter() as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         SgCrawlerUsingHttpFun(
             crawler_domain=crawler_domain,
             transformer=DeclarativeTransformerAndFilter(
