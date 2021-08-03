@@ -24,7 +24,6 @@ def fetch_data():
     lat = "<MISSING>"
     lng = "<MISSING>"
     logger.info("Pulling Stores")
-    Found = False
     hrlist = []
     for line in r.iter_lines():
         line = str(line.decode("utf-8"))
