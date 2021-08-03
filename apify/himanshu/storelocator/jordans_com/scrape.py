@@ -15,7 +15,7 @@ def fetch_data(sgw: SgWriter):
     base_url = "https://www.jordans.com"
     r = session.get(base_url + "/content/about-us/store-locations")
     soup = BeautifulSoup(r.text, "lxml")
-    return_main_object = []
+
     main = soup.find("div", {"class": "left-sidebar-section-30"}).find_all("a")
     for atag in main:
         if atag.has_attr("href"):
