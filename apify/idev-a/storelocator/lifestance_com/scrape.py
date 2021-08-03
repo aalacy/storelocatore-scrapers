@@ -37,8 +37,10 @@ def set_proxies():
     else:
         return None
 
+
 session = SgRequests().requests_retry_session()
 session.proxies = set_proxies()
+
 
 def fetchConcurrentSingle(data):
     response = request_with_retries(data.text)
