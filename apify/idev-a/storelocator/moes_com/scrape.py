@@ -66,11 +66,11 @@ def _d(sp1, page_url):
         state = sp1.select_one(".c-address-state").text.strip()
     zip_postal = ""
     if sp1.select_one(".c-address-postal-code"):
-        zip_postal = (sp1.select_one(".c-address-postal-code").text.strip(),)
+        zip_postal = sp1.select_one(".c-address-postal-code").text.strip()
     return SgRecord(
         page_url=page_url,
         location_name=sp1.select_one("h1#location-name a").text.strip(),
-        street_address=street_address,
+        street_address=street_address.split(",")[0].strip(),
         city=sp1.select_one(".c-address-city").text.strip(),
         state=state,
         zip_postal=zip_postal,
