@@ -95,12 +95,12 @@ def fetch_data(sgw: SgWriter):
         output.append(base_url)
         output.append("https://zoomerzstores.com" + store["properties"]["url"])
         output.append(get_value(store["properties"]["name"]))
-        address = ", ".join(
+        addr = ", ".join(
             eliminate_space(
                 etree.HTML(store["properties"]["fulladdress"]).xpath(".//text()")
             )[:-2]
         ).replace("United States", "")
-        address = parse_address(address)
+        address = parse_address(addr)
         output.append(address["street"])
         if address["state"] != "<MISSING>":
             output.append(address["city"])
