@@ -308,7 +308,7 @@ def fetch_data(sgw: SgWriter):
                         r = session.get(url)
                         soup = BeautifulSoup(r.text, "html.parser")
                         for loc in soup.find("div", class_="content").find_all("p")[:2]:
-                            list_loc = list(loc.stripped_strings)
+                            list_loc = list(loc.stripped_strings)  # type: ignore
 
                             if len(list_loc) == 2:
                                 page_url = url
@@ -371,7 +371,7 @@ def fetch_data(sgw: SgWriter):
                         page_url = url
                         store_number = "<MISSING>"
                         hours_of_operation = "<MISSING>"
-                        if "Wakefield Campus" in loc.text:
+                        if "Wakefield Campus" in loc.text:  # type: ignore
                             add = list(
                                 soup.find("div", class_="content")
                                 .find_all("p")[2]
@@ -394,14 +394,14 @@ def fetch_data(sgw: SgWriter):
                             )
                             location_name = add[0]
                             location_name = location_name.replace("\n", " ").strip()
-                            location_type = loc.text.strip()
+                            location_type = loc.text.strip()  # type: ignore
                             street_address = add[1]
                             city = add[2].split(",")[0]
                             state = add[2].split(",")[1].split()[0]
                             zipp = add[2].split(",")[1].split()[-1]
                             phone = add[-1]
                             hours_of_operation = "24-hour"
-                        elif "Westchester Square Campus" in loc.text:
+                        elif "Westchester Square Campus" in loc.text:  # type: ignore
                             add = list(
                                 soup.find("div", class_="content")
                                 .find_all("p")[1]
@@ -409,7 +409,7 @@ def fetch_data(sgw: SgWriter):
                             )
                             location_name = add[0]
                             location_name = location_name.replace("\n", " ").strip()
-                            location_type = loc.text.strip()
+                            location_type = loc.text.strip()  # type: ignore
                             street_address = add[1]
                             city = add[2].split(",")[0]
                             state = add[2].split(",")[1].split()[0]
@@ -437,7 +437,7 @@ def fetch_data(sgw: SgWriter):
                                 .find_all("p")[-2]
                                 .stripped_strings
                             )
-                            location_type = loc.text.strip()
+                            location_type = loc.text.strip()  # type: ignore
                             location_name = add[0]
                             location_name = location_name.replace("\n", " ").strip()
                             street_address = add[1]
@@ -484,27 +484,27 @@ def fetch_data(sgw: SgWriter):
                 soup = BeautifulSoup(r.text, "html.parser")
                 for ul in soup.find_all("ul", class_="locations-list"):
                     for loc in ul.find_all("li", class_="location-item"):
-                        location_name = loc.find("h3").text.strip()
+                        location_name = loc.find("h3").text.strip()  # type: ignore
                         location_name = location_name.replace("\n", " ").strip()
                         add = list(
-                            loc.find("div", class_="address-proper").stripped_strings
+                            loc.find("div", class_="address-proper").stripped_strings  # type: ignore
                         )
                         street_address = " ".join(add[:-1])
                         city = add[-1].split(",")[0]
                         state = add[-1].split(",")[-1].split()[0]
                         zipp = add[-1].split(",")[-1].split()[-1]
                         phone = list(
-                            loc.find("div", class_="numbers phone").stripped_strings
+                            loc.find("div", class_="numbers phone").stripped_strings  # type: ignore
                         )[1].strip()
                         try:
                             location_type = (
-                                loc.find("div", class_="services")
+                                loc.find("div", class_="services")  # type: ignore
                                 .text.split("Click")[0]
                                 .strip()
                             )
                         except:
                             location_type = "<MISSING>"
-                        page_url = "https://www.burke.org" + loc.a["href"]
+                        page_url = "https://www.burke.org" + loc.a["href"]  # type: ignore
                         r_loc = session.get(page_url)
                         soup_loc = BeautifulSoup(r_loc.text, "lxml")
                         try:
@@ -547,7 +547,7 @@ def fetch_data(sgw: SgWriter):
                     loc = soup.find("div", class_="footer-area-1").find(
                         "div", class_="locations"
                     )
-                    for li in loc.find("ul").find_all("li"):
+                    for li in loc.find("ul").find_all("li"):  # type: ignore
                         add = list(li.stripped_strings)
                         if "Directions" in add[-1]:
                             del add[-1]
@@ -584,16 +584,14 @@ def fetch_data(sgw: SgWriter):
                         r = session.get(url)
                         soup = BeautifulSoup(r.text, "html.parser")
                         loc = soup.find("div", class_="schema-info half")
-                        location_name = loc.find("meta", {"itemprop": "name"})[
-                            "content"
-                        ]
+                        location_name = loc.find("meta", {"itemprop": "name"})["content"]  # type: ignore
                         location_name = location_name.replace("\n", " ").strip()
-                        for add in loc.find_all("div", class_="location-info"):
-                            street_address = list(add.stripped_strings)[0]
-                            city = list(add.stripped_strings)[1]
-                            state = list(add.stripped_strings)[-4]
-                            zipp = list(add.stripped_strings)[-3]
-                            phone = list(add.stripped_strings)[-1]
+                        for add in loc.find_all("div", class_="location-info"):  # type: ignore
+                            street_address = list(add.stripped_strings)[0]  # type: ignore
+                            city = list(add.stripped_strings)[1]  # type: ignore
+                            state = list(add.stripped_strings)[-4]  # type: ignore
+                            zipp = list(add.stripped_strings)[-3]  # type: ignore
+                            phone = list(add.stripped_strings)[-1]  # type: ignore
                             page_url = url
                             row = SgRecord(
                                 locator_domain=locator_domain,
