@@ -20,8 +20,6 @@ def fetch_data(sgw: SgWriter):
     base = BeautifulSoup(req.text, "lxml")
     locator_domain = "zerodegreescompany.com"
 
-    data = []
-
     items = base.find(id="Containerrda7c").find_all(class_="font_8")
     for i, item in enumerate(items):
         if "PLEASE SELECT" in item.text:
