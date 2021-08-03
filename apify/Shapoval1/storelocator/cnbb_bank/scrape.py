@@ -94,10 +94,13 @@ def fetch_data():
             ad = list(filter(None, [a.strip() for a in ad]))
             ad = " ".join(ad).replace("In the Market House Plaza", "").strip()
             a = usaddress.tag(ad, tag_mapping=tag)[0]
+
             location_type = "Branch"
             street_address = f"{a.get('address1')} {a.get('address2')}".replace(
                 "None", ""
             ).strip()
+            if ad.find("Second Floor Hillsdale") != -1:
+                street_address = street_address + " " + "Second Floor"
             state = a.get("state") or "<MISSING>"
             postal = a.get("postal") or "<MISSING>"
             country_code = "US"
@@ -114,7 +117,7 @@ def fetch_data():
                 phone = phone.split("or")[0].strip()
 
             hours_of_operation = b.xpath(
-                './/following-sibling::div[1]//h4[contains(text(), "Hours")]/following-sibling::p[1]//text()'
+                './/following-sibling::div[1]//h4[contains(text(), "Hours")]/following-sibling::p//text()'
             )
             hours_of_operation = list(
                 filter(None, [a.strip() for a in hours_of_operation])

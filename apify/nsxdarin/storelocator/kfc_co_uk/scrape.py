@@ -89,7 +89,6 @@ def fetch_data():
         typ = "<MISSING>"
         store = item["storeid"]
         hours = ""
-        country = "GB"
         try:
             street = (
                 item["street"].replace("\n", " ").replace("\r", "").replace("\t", "")
@@ -101,6 +100,7 @@ def fetch_data():
         zc = item["postalcode"]
         lat = item["geolocation"]["latitude"]
         lng = item["geolocation"]["longitude"]
+        country = item["countryCode"]
         hours = get_hours(item["hours"], item["status"])
         page_url = f'https://{website}{item["link"]}' if item["link"] else "<MISSING>"
         phone = "<MISSING>"

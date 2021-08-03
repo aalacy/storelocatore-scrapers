@@ -14,7 +14,9 @@ _headers = {
 def fetch_data():
     locator_domain = "https://www.suncoastcreditunion.com"
     start_url = "https://www.suncoastcreditunion.com/about-us/branch-and-atm-locator#"
-    base_url = "https://www.suncoastcreditunion.com/~/locator?address=South%20Dakota&distance=5000"
+    base_url = (
+        "https://www.suncoastcreditunion.com/~/locator?address=57301&distance=5000"
+    )
     streets = []
     with SgRequests() as session:
         hours = (
@@ -35,8 +37,10 @@ def fetch_data():
             zip_postal = ""
             if len(_zz) > 1:
                 zip_postal = " ".join(_zz[1:]).strip()
-            if zip_postal == "0":
+            if zip_postal == "0000":
                 zip_postal = ""
+            if zip_postal.endswith("-"):
+                zip_postal = zip_postal[:-1]
             _ss = (
                 _["Address"]
                 + _["Type"]
