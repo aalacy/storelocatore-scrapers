@@ -11,6 +11,7 @@ def para(url):
     }
     k = {}
     k["link"] = url
+    print(k["link"])
     session = SgRequests()
     try:
         son = session.get(url, headers=headers)
