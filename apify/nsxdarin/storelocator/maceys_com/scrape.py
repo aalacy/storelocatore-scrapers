@@ -24,6 +24,7 @@ def fetch_data():
     lat = "<MISSING>"
     lng = "<MISSING>"
     logger.info("Pulling Stores")
+    Found = False
     hrlist = []
     for line in r.iter_lines():
         line = str(line.decode("utf-8"))
@@ -59,7 +60,9 @@ def fetch_data():
                         shrs + "; Sat: " + item.split('"Saturday":"')[1].split('"')[0]
                     )
                     shrs = shrs.replace("Closed to Closed", "Closed")
-                    hrlist.append(sname + "|" + shrs)
+                    slat = item.split('"store_lat":"')[1].split('"')[0]
+                    slng = item.split('"store_lng":"')[1].split('"')[0]
+                    hrlist.append(sname + "|" + shrs + "|" + slat + "|" + slng)
     for loc in locs:
         logger.info(loc)
         r2 = session.get(loc, headers=headers)
@@ -95,6 +98,8 @@ def fetch_data():
         for item in hrlist:
             if item.split("|")[0] == name:
                 hours = item.split("|")[1]
+                lat = item.split("|")[2]
+                lng = item.split("|")[3]
         if "parleys-" in loc:
             hours = "Mon-Sat: 6 AM to 11 PM; Sunday: 7 AM to 10 PM"
         yield SgRecord(
