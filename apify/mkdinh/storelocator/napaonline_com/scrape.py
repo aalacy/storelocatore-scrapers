@@ -23,6 +23,7 @@ local = threading.local()
 def get_driver():
     if not hasattr(local, "driver"):
         local.driver = SgChrome(seleniumwire_auto_config=False).driver()
+        local.driver.set_script_timeout(120)
         load_initial_page(local.driver)
 
     return local.driver
@@ -374,6 +375,10 @@ def fetch_data():
 
             state_urls = page.get_state_links(soup)
 
+            if not len(state_urls):
+                raise Exception()
+
+            logger.info(state_urls)
             futures = [
                 executor.submit(crawl_state_url, url, page) for url in state_urls
             ]
