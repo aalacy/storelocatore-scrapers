@@ -1,4 +1,3 @@
-import csv
 import usaddress
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
