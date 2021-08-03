@@ -33,7 +33,7 @@ locator_domain = "https://signarama.com"
 base_url = "https://signarama.com/includes/get_locations_locator.php"
 
 
-def _d(loc, page_url):
+def _d(loc, page_url, location_type):
     addr = list(loc.select("p.m-0")[-1].stripped_strings)
     return SgRecord(
         page_url=page_url,
@@ -43,6 +43,7 @@ def _d(loc, page_url):
         state=addr[-1].split(",")[1].strip().split(" ")[0].strip(),
         zip_postal=addr[-1].split(",")[1].strip().split(" ")[-1].strip(),
         country_code="US",
+        location_type=location_type,
         latitude=loc["data-latitude"],
         longitude=loc["data-longitude"],
         phone=loc["data-phone"],
@@ -70,10 +71,14 @@ def fetch_data():
                     break
                 page += 1
                 for loc in locations:
+                    location_type = ""
+                    if "COMING  SOON" in loc.text.lower():
+                        location_type = "coming soon"
+                        continue
                     page_url = locator_domain + loc.a["href"]
                     logger.info(page_url)
                     if "contact.php" in page_url:
-                        yield _d(loc, page_url)
+                        yield _d(loc, page_url, location_type)
                     else:
                         try:
                             driver.get(page_url)
@@ -81,7 +86,7 @@ def fetch_data():
                             driver.get(page_url)
 
                         if driver.current_url != page_url:
-                            yield _d(loc, page_url)
+                            yield _d(loc, page_url, location_type)
                         else:
                             sp1 = bs(driver.page_source, "lxml")
                             _ = json.loads(
@@ -102,6 +107,7 @@ def fetch_data():
                                 zip_postal=_["address"]["postalCode"].strip(),
                                 country_code="US",
                                 phone=_.get("telephone"),
+                                location_type=location_type,
                                 locator_domain=locator_domain,
                                 latitude=_["geo"]["latitude"],
                                 longitude=_["geo"]["longitude"],

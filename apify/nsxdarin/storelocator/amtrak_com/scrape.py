@@ -88,7 +88,10 @@ def fetch_data():
                     csz = line2.split('card_block-address">')[1].split("<")[0].strip()
                     city = csz.split(",")[0]
                     state = csz.split(",")[1].strip().split(" ")[0]
-                    zc = csz.rsplit(" ", 1)[1]
+                    if state not in canada:
+                        zc = csz.rsplit(" ", 1)[1]
+                    else:
+                        zc = csz.rsplit(" ", 2)[1] + " " + csz.rsplit(" ", 1)[1]
             if 'station-type">' in line2:
                 typ = line2.split('station-type">')[1].split("<")[0]
             if "maps/dir//" in line2:
