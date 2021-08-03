@@ -44,50 +44,54 @@ def get_hours(intervals):
 
 if __name__ == "__main__":
     crawler_domain = "jonesbootmaker.com"
-    SgCrawlerUsingHttpFun(
-        crawler_domain=crawler_domain,
-        transformer=DeclarativeTransformerAndFilter(
-            pipeline=DeclarativePipeline(
-                crawler_domain=crawler_domain,
-                field_definitions=SSPFieldDefinitions(
-                    locator_domain=ConstantField("https://jonesbootmaker.com"),
-                    page_url=MappingField(mapping=["data", "website"]),
-                    location_name=MappingField(
-                        mapping=["data", "name"], is_required=False
+    with SgWriter() as writer:
+        SgCrawlerUsingHttpFun(
+            crawler_domain=crawler_domain,
+            transformer=DeclarativeTransformerAndFilter(
+                pipeline=DeclarativePipeline(
+                    crawler_domain=crawler_domain,
+                    field_definitions=SSPFieldDefinitions(
+                        locator_domain=ConstantField("https://jonesbootmaker.com"),
+                        page_url=MappingField(mapping=["data", "website"]),
+                        location_name=MappingField(
+                            mapping=["data", "name"], is_required=False
+                        ),
+                        street_address=MappingField(
+                            mapping=["data", "address", "line1"]
+                        ),
+                        city=MappingField(mapping=["data", "address", "city"]),
+                        state=MissingField(),
+                        zipcode=MappingField(
+                            mapping=["data", "address", "postalCode"], is_required=False
+                        ),
+                        country_code=MappingField(
+                            mapping=["data", "address", "countryCode"],
+                            is_required=False,
+                        ),
+                        store_number=MappingField(
+                            mapping=["data", "id"], part_of_record_identity=True
+                        ),
+                        phone=MappingField(
+                            mapping=["data", "mainPhone"], is_required=False
+                        ),
+                        location_type=MissingField(),
+                        latitude=MappingField(
+                            mapping=["data", "yextDisplayCoordinate", "latitude"],
+                            is_required=False,
+                        ),
+                        longitude=MappingField(
+                            mapping=["data", "yextDisplayCoordinate", "longitude"],
+                            is_required=False,
+                        ),
+                        hours_of_operation=MappingField(
+                            mapping=["data", "hours"], raw_value_transform=get_hours
+                        ),
+                        raw_address=MissingField(),
                     ),
-                    street_address=MappingField(mapping=["data", "address", "line1"]),
-                    city=MappingField(mapping=["data", "address", "city"]),
-                    state=MissingField(),
-                    zipcode=MappingField(
-                        mapping=["data", "address", "postalCode"], is_required=False
-                    ),
-                    country_code=MappingField(
-                        mapping=["data", "address", "countryCode"], is_required=False
-                    ),
-                    store_number=MappingField(
-                        mapping=["data", "id"], part_of_record_identity=True
-                    ),
-                    phone=MappingField(
-                        mapping=["data", "mainPhone"], is_required=False
-                    ),
-                    location_type=MissingField(),
-                    latitude=MappingField(
-                        mapping=["data", "yextDisplayCoordinate", "latitude"],
-                        is_required=False,
-                    ),
-                    longitude=MappingField(
-                        mapping=["data", "yextDisplayCoordinate", "longitude"],
-                        is_required=False,
-                    ),
-                    hours_of_operation=MappingField(
-                        mapping=["data", "hours"], raw_value_transform=get_hours
-                    ),
-                    raw_address=MissingField(),
-                ),
-                fail_on_outlier=False,
-            )
-        ),
-        fetch_raw_using=fetch_data,
-        make_http=lambda _: SgRequests(),
-        data_writer=SgWriter(),
-    ).run()
+                    fail_on_outlier=False,
+                )
+            ),
+            fetch_raw_using=fetch_data,
+            make_http=lambda _: SgRequests(),
+            data_writer=writer,
+        ).run()
