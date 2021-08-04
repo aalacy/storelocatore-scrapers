@@ -16,8 +16,6 @@ def fetch_data():
     with SgRequests() as session:
         locations = session.get(base_url, headers=_headers).json()
         for _ in locations:
-            if _["address"]["country"] not in ["United States", "Canada"]:
-                continue
             page_url = locator_domain + _["pagePath"]
             street_address = _["address"]["street"]
             if _["address"]["street2"]:
@@ -38,9 +36,9 @@ def fetch_data():
                 page_url=page_url,
                 location_name=_["name"],
                 street_address=street_address,
-                city=_["address"]["city"],
-                state=_["address"]["state"],
-                zip_postal=_["address"]["zipCode"],
+                city=_["address"].get("city"),
+                state=_["address"].get("state"),
+                zip_postal=_["address"].get("zipCode"),
                 latitude=_["location"]["latitude"],
                 longitude=_["location"]["longitude"],
                 country_code=_["address"]["country"],
