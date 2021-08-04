@@ -1,4 +1,3 @@
-import csv
 import json
 from urllib.parse import urljoin
 from sgscrape.sgrecord import SgRecord
@@ -88,7 +87,7 @@ def scrape():
     ) as writer:
         results = fetch_data()
         for rec in results:
-            write.writerow(rec)
+            writer.writerow(rec)
 
 
 if __name__ == "__main__":
