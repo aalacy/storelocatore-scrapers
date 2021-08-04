@@ -60,38 +60,31 @@ def fetch_data():
         logger.info(page_url)
         raw_address = link.select_one(".locations-map-item__address").text.strip()
         addr = parse_address_intl(raw_address + ", USA")
-        try:
-            x = raw_address.rfind(addr.city)
-            street_address = raw_address[:x].replace(",", "").strip()
-            hours = ""
-            _hr = sp1.find("p", string=re.compile(r"HOURS"))
-            if _hr:
-                hours = _hr.find_parent().find_next_sibling().text.strip()
-            yield SgRecord(
-                page_url=page_url,
-                store_number=link.select_one(
-                    "div.locations-map-item__number"
-                ).text.strip(),
-                location_name=link.select_one("h4").text.strip(),
-                street_address=street_address,
-                city=addr.city,
-                state=addr.state,
-                zip_postal=link["data-post-id"],
-                country_code="US",
-                locator_domain=locator_domain,
-                latitude=link["data-lat"],
-                longitude=link["data-lng"],
-                hours_of_operation=hours.replace("–", "-"),
-                raw_address=raw_address,
-            )
-        except:
-            import pdb
-
-            pdb.set_trace()
+        x = raw_address.rfind(addr.city)
+        street_address = raw_address[:x].replace(",", "").strip()
+        hours = ""
+        _hr = sp1.find("p", string=re.compile(r"HOURS"))
+        if _hr:
+            hours = _hr.find_parent().find_next_sibling().text.strip()
+        yield SgRecord(
+            page_url=page_url,
+            store_number=link.select_one("div.locations-map-item__number").text.strip(),
+            location_name=link.select_one("h4").text.strip(),
+            street_address=street_address,
+            city=addr.city,
+            state=addr.state,
+            zip_postal=link["data-post-id"],
+            country_code="US",
+            locator_domain=locator_domain,
+            latitude=link["data-lat"],
+            longitude=link["data-lng"],
+            hours_of_operation=hours.replace("–", "-"),
+            raw_address=raw_address,
+        )
 
 
 if __name__ == "__main__":
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumAndPageUrlId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
