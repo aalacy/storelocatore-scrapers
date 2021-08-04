@@ -194,6 +194,7 @@ def get_country(search, country, session, headers, SearchableCountry, state):
         logzilla.error(
             f"Found a total of 0 results for country {country}\n this is unacceptable and possibly a country/search space mismatch\n Matched to: {SearchableCountry}"
         )
+        
 
 
 state = CrawlStateSingleton.get_instance()
