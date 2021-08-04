@@ -29,11 +29,6 @@ def fetch_data():
         page = 1
         while True:
             data = {
-                "post__not_in[]": "35331",
-                "post__not_in[]": "35128",
-                "post__not_in[]": "34409",
-                "post__not_in[]": "7713",
-                "post__not_in[]": "7711",
                 "post__not_in[]": "3925",
                 "action": "wiloke_loadmore_listing_layout",
                 "posts_per_page": "100",
