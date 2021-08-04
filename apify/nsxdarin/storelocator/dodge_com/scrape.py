@@ -115,7 +115,6 @@ def fetch_records(http: SgRequests, search: DynamicZipSearch) -> Iterable[SgReco
 def scrape():
     log.info(f"Start scrapping {website} ...")
     start = time.time()
-    country_codes = SearchableCountries.USA
     search = DynamicZipSearch(
         country_codes=[SearchableCountries.USA], expected_search_radius_miles=50
     )
