@@ -1,47 +1,17 @@
 import re
-import csv
 from lxml import etree
 
 from sgrequests import SgRequests
 from sgscrape.sgpostal import parse_address_intl
-
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
 
 
 def fetch_data():
     # Your scraper here
     session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
-
-    items = []
-    scraped_items = []
 
     start_url = "https://www.miniso.com/EN/map"
     domain = re.findall("://(.+?)/", start_url)[0].replace("www.", "")
@@ -66,7 +36,6 @@ def fetch_data():
         all_locations = session.post(url, data=frm).json()
 
         for poi in all_locations:
-            store_url = start_url
             location_name = poi["StoreName"]
             location_name = location_name if location_name else "<MISSING>"
             addr = parse_address_intl(poi["LinkAddr"])
@@ -93,33 +62,37 @@ def fetch_data():
             longitude = "<MISSING>"
             hours_of_operation = "<MISSING>"
 
-            item = [
-                domain,
-                store_url,
-                location_name,
-                street_address,
-                city,
-                state,
-                zip_code,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
-            check = f"{location_name} {street_address}"
-            if check not in scraped_items:
-                scraped_items.append(check)
-                items.append(item)
+            item = SgRecord(
+                locator_domain=domain,
+                page_url=start_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_code,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+                raw_address=poi["LinkAddr"],
+            )
 
-    return items
+            yield item
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
 if __name__ == "__main__":
