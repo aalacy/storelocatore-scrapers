@@ -6,8 +6,7 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-import ssl
-ssl._create_default_https_context = ssl._create_unverified_context
+
 
 def fetch_data(sgw: SgWriter):
     headers = {
@@ -15,45 +14,56 @@ def fetch_data(sgw: SgWriter):
     }
     driver = SgSelenium().chrome()
 
-    locator_domain = 'https://www.thecapitalgrille.com/home'
+    locator_domain = "https://www.thecapitalgrille.com/home"
     url = "https://www.thecapitalgrille.com/locations-sitemap.xml"
     session = SgRequests()
     r = session.get(url, headers=headers, verify=False)
     loc_list = []
     for line in r.iter_lines():
         line = str(line.decode("utf-8"))
-        if 'href' in line:
-            loc_list.append(line.split('href="',1)[1].split('"',1)[0])
+        if "href" in line:
+            loc_list.append(line.split('href="', 1)[1].split('"', 1)[0])
 
     for loc in loc_list:
-        if 'mexico' not in loc:
+        if "mexico" not in loc:
             driver.get(loc)
             soup = bs(driver.page_source, "html.parser")
-            metadata = soup.find('script', {"type": "application/ld+json"})
-            metadata = json.loads(str(metadata).split('\n')[1].split('</')[0])
-            address = metadata['address']
-            country = address['addressCountry']
-            street = address['streetAddress']
-            zip_code = address['postalCode']
-            city = address['addressLocality']
-            state = address['addressRegion']
-            phone = metadata['telephone']
-            storeID = metadata['branchCode']
-            coords = metadata['geo']
-            lat = coords['latitude']
-            long = coords['longitude']
-            storename = metadata['name']
-            times = soup.find_all('span', {'class': 'time-holder rolling-time'})
-            today = soup.find('span', {'class': 'day-holder capitalize text-center rolling-width'})
-            otherdays = soup.find_all('span', {'class': 'day-holder capitalize text-center rolling-day-width'})
+            metadata = soup.find("script", {"type": "application/ld+json"})
+            metadata = json.loads(str(metadata).split("\n")[1].split("</")[0])
+            address = metadata["address"]
+            country = address["addressCountry"]
+            street = address["streetAddress"]
+            zip_code = address["postalCode"]
+            city = address["addressLocality"]
+            state = address["addressRegion"]
+            phone = metadata["telephone"]
+            storeID = metadata["branchCode"]
+            coords = metadata["geo"]
+            lat = coords["latitude"]
+            long = coords["longitude"]
+            storename = metadata["name"]
+            times = soup.find_all("span", {"class": "time-holder rolling-time"})
+            today = soup.find(
+                "span", {"class": "day-holder capitalize text-center rolling-width"}
+            )
+            otherdays = soup.find_all(
+                "span", {"class": "day-holder capitalize text-center rolling-day-width"}
+            )
 
-            time = times[0].text.strip().replace('\n\n\xa0',' ').replace('\xa0\n\n',' ')
-            day = today.text.strip().split('(')[1].split(')')[0]
-            hoo = day + ' ' + time + ', '
+            time = (
+                times[0].text.strip().replace("\n\n\xa0", " ").replace("\xa0\n\n", " ")
+            )
+            day = today.text.strip().split("(")[1].split(")")[0]
+            hoo = day + " " + time + ", "
             for x in range(len(otherdays)):
-                time = times[x+1].text.strip().replace('\n\n\xa0',' ').replace('\xa0\n\n',' ')
+                time = (
+                    times[x + 1]
+                    .text.strip()
+                    .replace("\n\n\xa0", " ")
+                    .replace("\xa0\n\n", " ")
+                )
                 day = otherdays[x].text.strip()
-                hoo = hoo + day + ' ' + time + ', '
+                hoo = hoo + day + " " + time + ", "
             hoo = hoo[:-2]
             location_type = SgRecord.MISSING
 
