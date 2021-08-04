@@ -1,5 +1,4 @@
 from bs4 import BeautifulSoup
-import re
 import json
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
@@ -27,9 +26,7 @@ def fetch_data():
         "section", {"class": "section-all-locations-v2 my-lg"}
     ).findAll("li", {"class": "market"})
     p = 0
-    cleanr = re.compile(r"<[^>]+>")
     for states in state_list:
-        statenow = states.find("a").text
         states = states.find("a")["href"]
         log.info(states)
         rr = session.get(states, headers=headers, verify=False)
