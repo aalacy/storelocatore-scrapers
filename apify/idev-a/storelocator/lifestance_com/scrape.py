@@ -131,5 +131,4 @@ if __name__ == "__main__":
     ) as writer:
         results = fetch_data()
         for rec in results:
-            writer.write_row(rec)
-        raise
+            logger.info(rec)
