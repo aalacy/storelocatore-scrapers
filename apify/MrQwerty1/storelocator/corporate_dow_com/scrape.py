@@ -42,10 +42,10 @@ def fetch_data(sgw: SgWriter):
         location_name = j.get("locationName")
         if not location_name:
             continue
+
         phone = j.get("telephone") or SgRecord.MISSING
         latitude = j.get("latitude") or SgRecord.MISSING
         longitude = j.get("longitude") or SgRecord.MISSING
-        hours_of_operation = "<MISSING>"
 
         row = SgRecord(
             page_url=page_url,
@@ -61,7 +61,7 @@ def fetch_data(sgw: SgWriter):
             latitude=latitude,
             longitude=longitude,
             locator_domain=locator_domain,
-            hours_of_operation=hours_of_operation,
+            hours_of_operation=SgRecord.MISSING,
             raw_address=line,
         )
 
@@ -73,7 +73,13 @@ if __name__ == "__main__":
     locator_domain = "https://corporate.dow.com/"
     with SgWriter(
         SgRecordDeduper(
-            SgRecordID({SgRecord.Headers.STREET_ADDRESS, SgRecord.Headers.PHONE})
+            SgRecordID(
+                {
+                    SgRecord.Headers.LONGITUDE,
+                    SgRecord.Headers.LATITUDE,
+                    SgRecord.Headers.LOCATION_NAME,
+                }
+            )
         )
     ) as writer:
         fetch_data(writer)
