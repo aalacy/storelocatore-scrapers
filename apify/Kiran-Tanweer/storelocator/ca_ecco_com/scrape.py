@@ -3,7 +3,6 @@ from sglogging import sglog
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as b4
 import json
-import time
 
 
 def fetch_data():
