@@ -20,10 +20,8 @@ def fetch_data(sgw: SgWriter):
             l = j.get("Location") or {}
             e = j.get("ExtraData") or {}
             a = e.get("Address") or {}
-            try:
-                longitude, latitude = l.get("coordinates")
-            except:
-                latitude, longitude = SgRecord.MISSING, SgRecord.MISSING
+            coords = l.get("coordinates") or [SgRecord.MISSING, SgRecord.MISSING]
+            longitude, latitude = coords
 
             location_name = j.get("Name") or SgRecord.MISSING
             store_number = e.get("ReferenceCode")
