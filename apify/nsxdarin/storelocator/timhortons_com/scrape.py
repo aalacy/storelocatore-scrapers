@@ -1,6 +1,9 @@
-import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 session = SgRequests()
 headers = {
@@ -8,33 +11,6 @@ headers = {
 }
 
 logger = SgLogSetup().get_logger("timhortons_com")
-
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
 
 
 def fetch_data():
@@ -70,9 +46,12 @@ def fetch_data():
                 items = line.split('{"_id":"restaurant_')
                 for item in items:
                     if '{"ms":' not in item:
-                        loc = "<MISSING>"
+                        store = item.split('"')[0]
+                        loc = (
+                            "https://www.timhortons.com/store-locator/store/restaurant_"
+                            + store
+                        )
                         website = "timhortons.com"
-                        store = item.split('"number":"')[1].split('"')[0]
                         name = item.split('"name":"')[1].split('"')[0]
                         add = (
                             item.split('"address1":"')[1].split('"')[0]
@@ -95,6 +74,90 @@ def fetch_data():
                         if phone == "":
                             phone = "<MISSING>"
                         hours = ""
+                        dthours = ""
+                        if '"driveThruHours":{"_type":"hoursOfOperation",' in item:
+                            days = item.split(
+                                '"driveThruHours":{"_type":"hoursOfOperation",'
+                            )[1].split("}")[0]
+                            try:
+                                dthours = (
+                                    "Mon: "
+                                    + days.split('"monOpen":"')[1]
+                                    .split(" ")[1]
+                                    .split(':00"')[0]
+                                    + "-"
+                                    + days.split('"monClose":"')[1]
+                                    .split(" ")[1]
+                                    .split(':00"')[0]
+                                )
+                                dthours = (
+                                    dthours
+                                    + "; Tue: "
+                                    + days.split('"tueOpen":"')[1]
+                                    .split(" ")[1]
+                                    .split(':00"')[0]
+                                    + "-"
+                                    + days.split('"tueClose":"')[1]
+                                    .split(" ")[1]
+                                    .split(':00"')[0]
+                                )
+                                dthours = (
+                                    dthours
+                                    + "; Wed: "
+                                    + days.split('"wedOpen":"')[1]
+                                    .split(" ")[1]
+                                    .split(':00"')[0]
+                                    + "-"
+                                    + days.split('"wedClose":"')[1]
+                                    .split(" ")[1]
+                                    .split(':00"')[0]
+                                )
+                                dthours = (
+                                    dthours
+                                    + "; Thu: "
+                                    + days.split('"thrOpen":"')[1]
+                                    .split(" ")[1]
+                                    .split(':00"')[0]
+                                    + "-"
+                                    + days.split('"thrClose":"')[1]
+                                    .split(" ")[1]
+                                    .split(':00"')[0]
+                                )
+                                dthours = (
+                                    dthours
+                                    + "; Fri: "
+                                    + days.split('"friOpen":"')[1]
+                                    .split(" ")[1]
+                                    .split(':00"')[0]
+                                    + "-"
+                                    + days.split('"friClose":"')[1]
+                                    .split(" ")[1]
+                                    .split(':00"')[0]
+                                )
+                                dthours = (
+                                    dthours
+                                    + "; Sat: "
+                                    + days.split('"satOpen":"')[1]
+                                    .split(" ")[1]
+                                    .split(':00"')[0]
+                                    + "-"
+                                    + days.split('"satClose":"')[1]
+                                    .split(" ")[1]
+                                    .split(':00"')[0]
+                                )
+                                dthours = (
+                                    dthours
+                                    + "; Sun: "
+                                    + days.split('"sunOpen":"')[1]
+                                    .split(" ")[1]
+                                    .split(':00"')[0]
+                                    + "-"
+                                    + days.split('"sunClose":"')[1]
+                                    .split(" ")[1]
+                                    .split(':00"')[0]
+                                )
+                            except:
+                                pass
                         if '"diningRoomHours":{"_type":"hoursOfOperation"' in item:
                             days = item.split(
                                 '"diningRoomHours":{"_type":"hoursOfOperation"'
@@ -179,30 +242,36 @@ def fetch_data():
                             except:
                                 pass
                         if hours == "":
-                            hours = "<MISSING>"
+                            hours = dthours
+                        if hours == "":
+                            hours = "<CLOSED>"
                         if store not in ids:
                             ids.append(store)
-                            yield [
-                                website,
-                                loc,
-                                name,
-                                add,
-                                city,
-                                state,
-                                zc,
-                                country,
-                                store,
-                                phone,
-                                typ,
-                                lat,
-                                lng,
-                                hours,
-                            ]
+                            yield SgRecord(
+                                locator_domain=website,
+                                page_url=loc,
+                                location_name=name,
+                                street_address=add,
+                                city=city,
+                                state=state,
+                                zip_postal=zc,
+                                country_code=country,
+                                phone=phone,
+                                location_type=typ,
+                                store_number=store,
+                                latitude=lat,
+                                longitude=lng,
+                                hours_of_operation=hours,
+                            )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    with SgWriter(
+        deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumberId)
+    ) as writer:
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()

@@ -120,8 +120,6 @@ def fetch_data():
                     country = "JP"
                 if "Berlin" in name:
                     country = "DE"
-                if "Korea" in name:
-                    country = "KR"
                 if "<" in add:
                     add = add.split("<")[0]
                 if country == "CN":
@@ -143,18 +141,18 @@ def fetch_data():
                     add = "MU47a No.383 Tianhe Rd"
                     city = "Guangzhou"
                 if "London" in city:
-                    city = "London"
                     zc = city.split("London")[1].strip()
+                    city = "London"
                     state = "<MISSING>"
                 if "Auckland" in city:
-                    city = "Auckland"
                     zc = city.split("Auckland")[1].strip()
+                    city = "Auckland"
                 if "Amsterdam" in city:
                     city = "Amsterdam"
                     zc = "1016 BZ"
                 if "Berlin" in city:
-                    city = "Berlin"
                     zc = city.split("Berlin")[0].strip()
+                    city = "Berlin"
                 if "L241" in add:
                     add = "L241, Nr. 789 West Nanjing Rd"
                     city = "Shanghai"
@@ -166,6 +164,8 @@ def fetch_data():
                     state = "<MISSING>"
                     country = "KR"
                     zc = "<MISSING>"
+                if "<" in zc and zc != "<MISSING>":
+                    zc = zc.split("<")[0].strip()
                 yield [
                     website,
                     purl,
