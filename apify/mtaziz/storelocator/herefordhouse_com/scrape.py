@@ -6,16 +6,6 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgselenium import SgFirefox
 from lxml import html
-import ssl
-
-try:
-    _create_unverified_https_context = (
-        ssl._create_unverified_context
-    )  # Legacy Python that doesn't verify HTTPS certificates by default
-except AttributeError:
-    pass
-else:
-    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
 
 
 DOMAIN = "herefordhouse.com"
@@ -27,7 +17,7 @@ LOCATION_URL = "https://herefordhouse.com/locations"
 
 def fetch_data():
     # Your scraper here
-    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
+    session = SgRequests().requests_retry_session(retries=5, backoff_factor=0.3)
     hdr = {
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
     }
@@ -37,7 +27,7 @@ def fetch_data():
     all_locations = dom.xpath(
         '//div[@class="entry-content"]/div/div[@class="wpb_column vc_column_container vc_col-sm-3"]'
     )
-    with SgFirefox(is_headless=True) as driver:
+    with SgFirefox() as driver:
         for idx, poi_html in enumerate(all_locations[0:]):
             page_url = poi_html.xpath(".//a/@href")[0]
             driver.get(page_url)
@@ -50,7 +40,6 @@ def fetch_data():
             driver.switch_to.default_content()
             logger.info("Switched back to default content!!")
 
-            # Location Name
             location_name = "".join(loc_dom.xpath('//h1[@id="page-title"]/text()'))
             location_name = location_name if location_name else MISSING
             logger.info(f"[{idx}] Location Name: {location_name}")
