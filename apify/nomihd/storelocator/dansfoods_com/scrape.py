@@ -4,9 +4,21 @@ from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import lxml.html
-from sgscrape import sgpostal as parser
+from sgpostal import sgpostal as parser
 from sgselenium import SgChrome
 import time
+import ssl
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
 
 website = "dansfoods.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -125,9 +137,10 @@ def fetch_data():
                 .strip()
             )
 
-            map_link = (
-                driver.page_source.split('<small><a href="')[1].split('"')[0].strip()
-            )
+            map_link = "".join(
+                store_sel.xpath('//iframe[contains(@src,"maps/embed?")]/@src')
+            ).strip()
+
             latitude, longitude = get_latlng(map_link)
 
             yield SgRecord(
@@ -152,7 +165,9 @@ def fetch_data():
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.StoreNumberId)
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
