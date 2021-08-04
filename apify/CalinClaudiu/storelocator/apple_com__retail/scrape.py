@@ -13,8 +13,6 @@ import json
 
 
 logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
-known_empties = set()
-known_empties.add("xxxxxxx")
 
 
 @dataclass(frozen=False)
