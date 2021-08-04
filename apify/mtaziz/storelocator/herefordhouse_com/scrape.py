@@ -5,6 +5,7 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgselenium import SgFirefox
+from webdriver_manager.firefox import GeckoDriverManager
 from lxml import html
 import ssl
 
@@ -37,7 +38,9 @@ def fetch_data():
     all_locations = dom.xpath(
         '//div[@class="entry-content"]/div/div[@class="wpb_column vc_column_container vc_col-sm-3"]'
     )
-    with SgFirefox(is_headless=True) as driver:
+    with SgFirefox(
+        executable_path=GeckoDriverManager().install(), is_headless=True
+    ) as driver:
         for idx, poi_html in enumerate(all_locations[0:]):
             page_url = poi_html.xpath(".//a/@href")[0]
             driver.get(page_url)
@@ -50,7 +53,6 @@ def fetch_data():
             driver.switch_to.default_content()
             logger.info("Switched back to default content!!")
 
-            # Location Name
             location_name = "".join(loc_dom.xpath('//h1[@id="page-title"]/text()'))
             location_name = location_name if location_name else MISSING
             logger.info(f"[{idx}] Location Name: {location_name}")
