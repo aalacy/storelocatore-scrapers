@@ -13,7 +13,6 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-
 from tenacity import retry, stop_after_attempt
 
 logger = SgLogSetup().get_logger("napaonline_com")
@@ -25,7 +24,7 @@ local = threading.local()
 
 def get_driver():
     if not hasattr(local, "driver"):
-        local.driver = SgChrome(is_headless=False).driver()
+        local.driver = SgChrome(is_headless=True).driver()
         local.driver.set_script_timeout(120)
         load_initial_page(local.driver)
 
