@@ -4,7 +4,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgselenium import SgFirefox
+from sgselenium import SgChrome
 from lxml import html
 
 
@@ -27,8 +27,8 @@ def fetch_data():
     all_locations = dom.xpath(
         '//div[@class="entry-content"]/div/div[@class="wpb_column vc_column_container vc_col-sm-3"]'
     )
-    with SgFirefox() as driver:
-        for idx, poi_html in enumerate(all_locations[0:]):
+    for idx, poi_html in enumerate(all_locations[0:]):
+        with SgChrome() as driver:
             page_url = poi_html.xpath(".//a/@href")[0]
             driver.get(page_url)
             driver.implicitly_wait(15)
