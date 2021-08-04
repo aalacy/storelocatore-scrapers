@@ -164,8 +164,6 @@ def get_country(search, country, session, headers, SearchableCountry, state):
     maxZ = search.items_remaining()
     total = 0
     for Point in search:
-        if total > 50:
-            break
         found = 0
         try:
             for record in getPoint(Point, session, country.link, headers):

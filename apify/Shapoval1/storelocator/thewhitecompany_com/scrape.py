@@ -1,43 +1,58 @@
-import csv
-from lxml import html
 import usaddress
+from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+def get_hours(hours) -> str:
+    tmp = []
+    if hours != "<MISSING>":
+        for h in hours:
+            day = h.get("weekDay")
+            try:
+                opens = h.get("openingTime").get("formattedHour")
+            except:
+                opens = "<MISSING>"
+            try:
+                closes = h.get("closingTime").get("formattedHour")
+            except:
+                closes = "<MISSING>"
+            cls = h.get("closed")
+            line = f"{day} {opens}-{closes}"
+            if cls:
+                line = f"{day} Closed"
+            tmp.append(line)
+    hours_of_operation = "; ".join(tmp) or "<MISSING>"
+    if hours_of_operation == "<MISSING>":
 
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
+        if hours != "<MISSING>":
+            for h in hours:
+                day = h.get("weekDay")
+                try:
+                    opens = h.get("openingTime").get("formattedHour")
+                except:
+                    opens = "<MISSING>"
+                try:
+                    closes = h.get("closingTime").get("formattedHour")
+                except:
+                    closes = "<MISSING>"
+                cls = h.get("closed")
+                line = f"{day} {opens}-{closes}"
+                if cls:
+                    line = f"{day} Closed"
+                tmp.append(line)
 
-        for row in data:
-            writer.writerow(row)
+    hours_of_operation = "; ".join(tmp) or "<MISSING>"
+    return hours_of_operation
 
 
-def fetch_data():
-    out = []
+def fetch_data(sgw: SgWriter):
 
     locator_domain = "https://www.thewhitecompany.com"
-    api_url = "https://www.thewhitecompany.com/uk/sitemap_Store-en_GB-GBP-7511621901403490864.xml"
+    api_url = "https://www.thewhitecompany.com/uk/sitemap_Store-en_GB-GBP-7842621379062607619.xml"
     session = SgRequests()
     tag = {
         "Recipient": "recipient",
@@ -87,7 +102,6 @@ def fetch_data():
 
         a = js.get("address")
         location_name = js.get("displayName")
-        location_type = "<MISSING>"
         ad = f"{a.get('line1')} {a.get('line2')} {a.get('town')} {a.get('postalCode')}"
 
         street_address = f"{a.get('line1')} {a.get('line2')}".strip()
@@ -103,7 +117,6 @@ def fetch_data():
             street_address = f"{b.get('address1')} {b.get('address2')}".replace(
                 "None", ""
             ).strip()
-        store_number = "<MISSING>"
         latitude = js.get("geoPoint").get("latitude") or "<MISSING>"
         longitude = js.get("geoPoint").get("longitude") or "<MISSING>"
         if latitude == longitude:
@@ -113,77 +126,41 @@ def fetch_data():
             hours = js.get("openingHours").get("weekDayOpeningList") or "<MISSING>"
         except:
             hours = "<MISSING>"
-
-        tmp = []
-        if hours != "<MISSING>":
-            for h in hours:
-                day = h.get("weekDay")
-                try:
-                    opens = h.get("openingTime").get("formattedHour")
-                except:
-                    opens = "<MISSING>"
-                try:
-                    closes = h.get("closingTime").get("formattedHour")
-                except:
-                    closes = "<MISSING>"
-                cls = h.get("closed")
-                line = f"{day} {opens}-{closes}"
-                if cls:
-                    line = f"{day} Closed"
-                tmp.append(line)
-        hours_of_operation = "; ".join(tmp) or "<MISSING>"
-        if hours_of_operation == "<MISSING>":
+        if hours == "<MISSING>":
             try:
                 hours = js.get("specialOpeningSchedule").get("weekDayOpeningList")
             except:
                 hours = "<MISSING>"
-            if hours != "<MISSING>":
-                for h in hours:
-                    day = h.get("weekDay")
-                    try:
-                        opens = h.get("openingTime").get("formattedHour")
-                    except:
-                        opens = "<MISSING>"
-                    try:
-                        closes = h.get("closingTime").get("formattedHour")
-                    except:
-                        closes = "<MISSING>"
-                    cls = h.get("closed")
-                    line = f"{day} {opens}-{closes}"
-                    if cls:
-                        line = f"{day} Closed"
-                    tmp.append(line)
 
-        hours_of_operation = "; ".join(tmp) or "<MISSING>"
+        hours_of_operation = get_hours(hours)
 
         if location_name.find("PERMANENTLY CLOSED") != -1:
             hours_of_operation = "PERMANENTLY CLOSED"
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=SgRecord.MISSING,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+        )
 
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    locator_domain = "https://www.thewhitecompany.com"
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
+    ) as writer:
+        fetch_data(writer)
