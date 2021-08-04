@@ -1,7 +1,10 @@
 import csv
 import json
 from urllib.parse import urljoin
-
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgrequests import SgRequests
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 
@@ -85,34 +88,40 @@ def fetch_data():
         longitude = poi["loc"]["longitude"]
         longitude = longitude if longitude else "<MISSING>"
         hours_of_operation = "<MISSING>"
-
-        item = [
-            DOMAIN,
-            store_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip_code,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-
-        if store_number not in scraped_items:
-            scraped_items.append(store_number)
-            items.append(item)
-
-    return items
+        yield SgRecord(
+            store_number=store_number,
+            page_url=store_url,
+            location_name=location_name,
+            location_type=location_type,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=zip_code,
+            country_code=country_code,
+            phone=phone,
+            locator_domain=DOMAIN,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+        )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.LATITUDE,
+                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.LONGITUDE,
+                    SgRecord.Headers.PAGE_URL,
+                }
+            )
+        )
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            write.writerow(rec)
 
 
 if __name__ == "__main__":
