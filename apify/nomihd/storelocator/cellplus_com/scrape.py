@@ -94,11 +94,6 @@ def fetch_data():
 
         hours_of_operation = "; ".join(hours)
 
-        latlng = "".join(
-            store_sel.xpath(
-                './/div[@class="location-map w-widget w-widget-map"]/@data-widget-latlng'
-            )
-        ).strip()
         latitude = "<MISSING>"
         longitude = "<MISSING>"
         map_link = "".join(
