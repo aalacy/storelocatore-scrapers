@@ -46,7 +46,7 @@ def set_proxies():
 
 session = SgRequests().requests_retry_session()
 session.proxies = set_proxies()
-max_workers = 8
+max_workers = 1
 
 
 def fetchConcurrentSingle(page_url):
