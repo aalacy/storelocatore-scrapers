@@ -102,6 +102,9 @@ def get_data(page_url):
     if message.lower().find("closed") != -1:
         location_type = message
 
+    if tree.xpath("//p[text()='Coming Soon']"):
+        location_type = "Coming Soon"
+
     row = [
         locator_domain,
         page_url,

@@ -1,85 +1,95 @@
-import csv
-import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('zaxbys_com')
-
-
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 session = SgRequests()
-headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
-           }
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+}
 
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-        for row in data:
-            writer.writerow(row)
+logger = SgLogSetup().get_logger("zaxbys_com")
+
 
 def fetch_data():
-    states = []
     locs = []
-    url = 'https://www.zaxbys.com/locations/'
+    url = "https://www.zaxbys.com/sitemap.xml"
     r = session.get(url, headers=headers)
-    if r.encoding is None: r.encoding = 'utf-8'
-    Found = False
-    for line in r.iter_lines(decode_unicode=True):
-        if 'SELECT STATE</option>' in line:
-            Found = True
-        if Found and '</select>' in line:
-            Found = False
-        if Found and '<option value="' in line and '<option value=""' not in line:
-            states.append('https://www.zaxbys.com/locations/' + line.split('value="')[1].split('"')[0])
-    for state in states:
-        logger.info(('Pulling State %s...' % state))
-        r2 = session.get(state, headers=headers)
-        if r2.encoding is None: r2.encoding = 'utf-8'
-        for line2 in r2.iter_lines(decode_unicode=True):
-            if 'var locations = ' in line2:
-                items = line2.split('"LongDisplay":"')
-                for item in items:
-                    if ',"OnlineOrdering":"' in item:
-                        typ = 'Restaurant'
-                        website = 'zaxbys.com'
-                        add = item.split('"Address":"')[1].split('"')[0]
-                        name = add
-                        city = item.split('"Locality":"')[1].split('"')[0]
-                        state = item.split('"Region":"')[1].split('"')[0]
-                        zc = item.split('"Postcode":"')[1].split('"')[0]
-                        try:
-                            phone = item.split('"Phone":"')[1].split('"')[0]
-                        except:
-                            phone = '<MISSING>'
-                        lat = item.split('"Latitude":"')[1].split('"')[0]
-                        lng = item.split('"Longitude":"')[1].split('"')[0]
-                        store = item.split('"StoreID":"')[1].split('"')[0]
-                        hours = item.split('"StoreHours":')[1].split('","')[0]
-                        country = 'US'
-                        loc = item.split('"Website":"')[1].split('"')[0]
-                        hours = hours.replace('";','"')
-                        hours = hours.replace('"1,','Mon: ')
-                        hours = hours.replace('"2,','Tue: ')
-                        hours = hours.replace('"3,','Wed: ')
-                        hours = hours.replace('"4,','Thu: ')
-                        hours = hours.replace('"5,','Fri: ')
-                        hours = hours.replace('"6,','Sat: ')
-                        hours = hours.replace('"7,','Sun: ')
-                        try:
-                            status = item.split('"StoreStatus":"')[1].split('"')[0]
-                        except:
-                            status = '0'
-                        hours = hours.replace(';1,','; Mon: ').replace(';2,','; Tue: ').replace(';3,','; Wed: ').replace(';4,','; Thu: ').replace(';5,','; Fri: ').replace(';6,','; Sat: ').replace(';7,','; Sun: ')
-                        if ':' not in hours:
-                            hours = '<MISSING>'
-                        if 'http' not in loc:
-                            loc = '<MISSING>'
-                        if status == '1':
-                            yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+    website = "zaxbys.com"
+    typ = "<MISSING>"
+    country = "US"
+    logger.info("Pulling Stores")
+    for line in r.iter_lines():
+        line = str(line.decode("utf-8"))
+        if "<loc>https://www.zaxbys.com/locations/" in line:
+            items = line.split("<loc>https://www.zaxbys.com/locations/")
+            for item in items:
+                if "<xmp><urlset" not in item:
+                    locs.append(
+                        "https://www.zaxbys.com/locations/" + item.split("<")[0]
+                    )
+    for loc in locs:
+        if loc != "https://www.zaxbys.com/locations/":
+            logger.info(loc)
+            name = ""
+            add = ""
+            city = ""
+            state = ""
+            zc = ""
+            store = "<MISSING>"
+            phone = ""
+            lat = ""
+            lng = ""
+            hours = ""
+            r2 = session.get(loc, headers=headers)
+            for line2 in r2.iter_lines():
+                line2 = str(line2.decode("utf-8"))
+                if "&q;Address&q;:&q;" in line2:
+                    add = line2.split("&q;Address&q;:&q;")[1].split("&q;")[0]
+                    city = line2.split("&q;City&q;:&q;")[1].split("&q")[0]
+                    state = line2.split("&q;State&q;:&q;")[1].split("&q")[0]
+                    zc = line2.split("Zip&q;:&q;")[1].split("&q")[0]
+                    lat = line2.split("Latitude&q;:&q;")[1].split("&")[0]
+                    lng = line2.split("Longitude&q;:&q;")[1].split("&")[0]
+                    phone = line2.split("&q;Phone&q;:&q;")[1].split("&")[0]
+                    hrs = line2.split("toreHours&q;:&q;")[1].split(";&q;")[0]
+                    hours = hrs.replace(";7,", "; Sunday: ")
+                    hours = hours.replace(";6,", "; Saturday: ")
+                    hours = hours.replace(";5,", "; Friday: ")
+                    hours = hours.replace(";4,", "; Thursday: ")
+                    hours = hours.replace(";3,", "; Wednesday: ")
+                    hours = hours.replace(";2,", "; Tuesday: ")
+                    hours = hours.replace("1,", "Monday: ")
+                    hours = hours.replace(",", "-")
+                    name = add
+            if "ae/quebec/" in loc:
+                country = "CA"
+            if city != "" and "q;Website&" not in hours:
+                yield SgRecord(
+                    locator_domain=website,
+                    page_url=loc,
+                    location_name=name,
+                    street_address=add,
+                    city=city,
+                    state=state,
+                    zip_postal=zc,
+                    country_code=country,
+                    phone=phone,
+                    location_type=typ,
+                    store_number=store,
+                    latitude=lat,
+                    longitude=lng,
+                    hours_of_operation=hours,
+                )
+
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        for rec in results:
+            writer.write_row(rec)
+
 
 scrape()

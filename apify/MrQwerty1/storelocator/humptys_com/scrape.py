@@ -38,7 +38,7 @@ def get_urls():
     tree = html.fromstring(r.text)
 
     return tree.xpath(
-        "//li[./a[contains(text(), 'COVID-19 hours')]]/following-sibling::li/a/@href"
+        "//li[contains(@class, 'current_page_item')]/following-sibling::li//a/@href"
     )
 
 

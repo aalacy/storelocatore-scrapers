@@ -3,7 +3,16 @@ from sglogging import sglog
 from sgselenium import SgChrome
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
+import ssl
 
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
 website = "miravalresorts.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 
@@ -21,6 +30,7 @@ def fetch_data():
             log.info(page_url)
             driver.get(page_url)
             soup = BeautifulSoup(driver.page_source, "html.parser")
+            hours_of_operation = soup.find("p", {"class": "planning-time"}).text
             temp_list = (
                 soup.findAll("div", {"class": "footer--column"})[3]
                 .get_text(separator="|", strip=True)
@@ -49,7 +59,7 @@ def fetch_data():
                 location_type=MISSING,
                 latitude=MISSING,
                 longitude=MISSING,
-                hours_of_operation=MISSING,
+                hours_of_operation=hours_of_operation.strip(),
             )
 
 
