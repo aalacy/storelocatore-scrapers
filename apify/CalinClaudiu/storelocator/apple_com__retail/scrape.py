@@ -7,16 +7,12 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup as b4
 from sgscrape.pause_resume import CrawlStateSingleton, CrawlState
 from dataclasses import asdict, dataclass
-from typing import Iterable, Optional, List
+from typing import Iterable, Optional
 from ordered_set import OrderedSet
 import json
 
 
 logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
-known_empties = set()
-known_empties.add("xxxxxxx")
-
-errorz: List[str] = []
 
 
 @dataclass(frozen=False)
@@ -131,27 +127,7 @@ def determine_country(country):
 
 
 def get_country(search, country, session, headers, SearchableCountry, state):
-    global errorz
-    errorzCopy = None
-    if errorz:
-        if len(errorz) != 0:
-            errorzCopy = errorz
-        try:
-            errorz = state.get_misc_value("errorz")
-        except Exception as e:
-            logzilla.warning("Something happened along the lines of", exc_info=e)
-        if errorz and errorzCopy:
-            errorz = errorz + errorzCopy
-            state.set_misc_value("errorz", errorz)
-            state.save(override=True)
-        else:
-            if not errorz:
-                if errorzCopy:
-                    state.set_misc_value("errorz", errorzCopy)
-                    state.save(override=True)
-
     def getPoint(point, session, locale, headers):
-        global errorz
         if locale[-1] != "/":
             locale = locale + "/"
         url = "https://locate.apple.com{locale}sales/?pt=all&lat={lat}&lon={lon}&address=".format(
@@ -176,7 +152,7 @@ def get_country(search, country, session, headers, SearchableCountry, state):
             return locs["results"]
         except Exception as e:
             try:
-                errorz.append(
+                logzilla.error(
                     str(
                         f"had some issues with this country and point  {country}\n{point}{url} \n Matched to: {SearchableCountry}\nIssue was\n{str(e)}"
                     )
@@ -216,39 +192,12 @@ def get_country(search, country, session, headers, SearchableCountry, state):
         logzilla.error(
             f"Found a total of 0 results for country {country}\n this is unacceptable and possibly a country/search space mismatch\n Matched to: {SearchableCountry}"
         )
-        if SearchableCountry not in known_empties:
-            errorzCopy = None
-            if errorz:
-                if len(errorz) != 0:
-                    errorzCopy = errorz
-                try:
-                    errorz = state.get_misc_value("errorz")
-                except Exception as e:
-                    logzilla.warning(
-                        "Something happened along the lines of", exc_info=e
-                    )
-                if errorz and errorzCopy:
-                    errorz = errorz + errorzCopy
-                    state.set_misc_value("errorz", errorz)
-                    state.save(override=True)
-                else:
-                    if not errorz:
-                        if errorzCopy:
-                            state.set_misc_value("errorz", errorzCopy)
-                            state.save(override=True)
-            try:
-                errorz.append(
-                    str(
-                        f"Found a total of 0 results for country {country}\n this is unacceptable and possibly a country/search space mismatch\n Matched to: {SearchableCountry}"
-                    )
-                )
-            except Exception:
-                pass
+
+
+state = CrawlStateSingleton.get_instance()
 
 
 def fetch_data():
-    global errorz
-    state = CrawlStateSingleton.get_instance()
     headers = {
         "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
     }
@@ -271,23 +220,6 @@ def fetch_data():
             state.set_misc_value(key="countries", value=countries.serialize_requests())
             state.set_misc_value(key="SearchableCountry", value=None)
             state.save(override=True)
-        errorzCopy = None
-        if len(errorz) != 0:
-            errorzCopy = errorz
-        try:
-            errorz = state.get_misc_value("errorz")
-        except Exception as e:
-            logzilla.warning("Something happened along the lines of", exc_info=e)
-        if errorz and errorzCopy:
-            errorz = errorz + errorzCopy
-            state.set_misc_value("errorz", errorz)
-            state.save(override=True)
-        else:
-            if not errorz:
-                if errorzCopy:
-                    state.set_misc_value("errorz", errorzCopy)
-                    state.save(override=True)
-
         country = countries.pop_country()
         while country:
             if country.special:
@@ -310,7 +242,7 @@ def fetch_data():
                     try:
                         search = DynamicGeoSearch(
                             country_codes=[SearchableCountry],
-                            expected_search_radius_miles=50,
+                            expected_search_radius_miles=50,  # Must turn it back down to 50 after testing
                             max_search_results=None,
                             granularity=Grain_8(),
                         )
@@ -425,6 +357,3 @@ def scrape():
 
 if __name__ == "__main__":
     scrape()
-    for i in errorz:
-        logzilla.warning(i)
-    raise
