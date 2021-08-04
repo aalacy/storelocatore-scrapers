@@ -33,7 +33,7 @@ def get_driver(url, class_name, driver=None):
                 EC.presence_of_element_located((By.CLASS_NAME, class_name))
             )
             break
-        except Exception as e:
+        except Exception:
             driver.quit()
             if x == 10:
                 raise Exception(
