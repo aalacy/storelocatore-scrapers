@@ -357,7 +357,6 @@ def fetch_data():
 
             state_urls = get_state_urls(page, driver)
 
-            logger.info(state_urls)
             futures = [
                 executor.submit(crawl_state_url, url, page) for url in state_urls
             ]
