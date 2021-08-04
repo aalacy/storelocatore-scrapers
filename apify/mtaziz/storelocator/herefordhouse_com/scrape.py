@@ -60,7 +60,8 @@ def fetch_data():
             state = raw_address[-1].split(", ")[-1]
             state = state if state else MISSING
             logger.info(f"[{idx}] State: {state}")
-
+            
+            logger.info(f"{loc_dom.xpath('//div[@class="address"]/text()')}")
             zip_postal = loc_dom.xpath('//div[@class="address"]/text()')[0].split()[-1]
             zip_postal = zip_postal if zip_postal else MISSING
             logger.info(f"[{idx}] Zip Postal: {zip_postal}")
