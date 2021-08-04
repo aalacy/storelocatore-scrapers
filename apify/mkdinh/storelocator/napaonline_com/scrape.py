@@ -1,55 +1,115 @@
+import os
 import re
-import csv
 import json
+import threading
 from time import sleep
 from random import randint
 from bs4 import BeautifulSoup as bs
-from datetime import datetime
+from datetime import datetime as dt
 from sglogging import SgLogSetup
+from sgscrape.sgrecord import SgRecord
 from sgselenium.sgselenium import SgChrome
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from tenacity import retry, stop_after_attempt
 
 logger = SgLogSetup().get_logger("napaonline_com")
 
-addresses = []
-base_url = "https://www.napaonline.com"
+base_url = "https://www.napaonline.com/stores"
+
+local = threading.local()
+
+
+def get_driver():
+    if not hasattr(local, "driver"):
+        local.driver = SgChrome(is_headless=True).driver()
+        local.driver.set_script_timeout(120)
+        load_initial_page(local.driver)
+
+    sleep(randint(3, 5))
+    return local.driver
+
+
+class PageConfig:
+    def __init__(
+        self,
+        name,
+        base_url,
+        location_path,
+        directory_page_selector,
+        details_link_selector,
+        dedup_tracker,
+        initial_page="",
+    ):
+        self.name = name
+        self.base_url = base_url.strip("/")
+        self.location_path = location_path.strip("/")
+        self.initial_page = initial_page.strip("/") or self.location_path
+        self.directory_page_selector = directory_page_selector
+        self.details_link_selector = details_link_selector
+        self.dedup_tracker = dedup_tracker
+
+    def has_multiple_locations(self, link):
+        if link.has_attr("data-count"):
+            return "(1)" not in link.attrs["data-count"]
+
+        return "(1)" not in link.text
+
+    def is_directory_page(self, soup):
+        return soup.find(class_=self.directory_page_selector) is not None
+
+    def get_next_url(self, path):
+        next_path = self.clean_path(path)
+
+        if self.__is_from_root__(next_path):
+            return os.path.join(self.base_url, next_path)
+
+        return os.path.join(self.get_base_location_url(), next_path)
+
+    def get_state_links(self, soup):
+        return soup.select(self.directory_page_selector)
+
+    def get_city_links(self, soup):
+        return soup.select(self.directory_page_selector)
+
+    def get_details_links(self, soup):
+        return soup.select(self.details_link_selector)
+
+    def get_tracking_id(self, store):
+        # use the store_number as unique key
+        return store.store_number()
+
+    def track_location(self, id):
+        return self.dedup_tracker.append(id)
+
+    def is_location_tracked(self, id):
+        return id in self.dedup_tracker
+
+    def get_base_location_url(self):
+        return os.path.join(self.base_url, self.location_path)
+
+    def get_initial_page(self):
+        return os.path.join(self.base_url, self.initial_page)
+
+    def clean_path(self, path):
+        return re.sub(
+            f"{self.base_url}|{self.location_path}(?!-)|\\.\\.", "", path
+        ).strip("/")
+
+    def __is_from_root__(self, path):
+        return "stores/" in path or "en/auto-parts-stores-near-me" in path
 
 
 def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-                "page_url",
-            ]
-        )
-        # Body
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         for row in data:
-            writer.writerow(row)
+            writer.write_row(row)
 
 
 def fetch(url, driver):
-    sleep(randint(2, 3))
+    sleep(randint(3, 5))
     return driver.execute_async_script(
         f"""
         var done = arguments[0]
@@ -60,79 +120,15 @@ def fetch(url, driver):
     )
 
 
-def crawl_state_url(state_url, driver):
-    city_urls = []
-    html = fetch(state_url, driver)
-    state_soup = bs(html, "lxml")
-    for url in state_soup.find("div", {"class": "store-browse-content"}).find_all("a"):
-        city_urls.append(url)
-    return city_urls
-
-
-def scrape_json(data, page_url):
-    location_name = data["name"]
-    street_address = data["address"]["streetAddress"]
-    city = data["address"]["addressLocality"]
-    state = data["address"]["addressRegion"]
-    zipp = data["address"]["postalCode"]
-    country_code = data["address"]["addressCountry"]
-    store_number = data["@id"]
-
-    try:
-        phone = data["telephone"]
-    except:
-        phone = "<MISSING>"
-    location_type = data["@type"]
-    latitude = data["geo"]["latitude"]
-    longitude = data["geo"]["longitude"]
-    hours = ""
-    for hr in data["openingHoursSpecification"]:
-        if hours != "":
-            hours += ", "
-        hours += " " + hr["dayOfWeek"][0]
-        if hr["opens"] == "00:00:00" and hr["closes"] == "00:00:00":
-            hours += " Closed"
-        else:
-            hours += (
-                " "
-                + datetime.strptime(hr["opens"], "%H:%M:%S").strftime("%I:%M %p")
-                + " - "
-                + datetime.strptime(hr["closes"], "%H:%M:%S").strftime("%I:%M %p")
-                + " "
-            )
-
-    store = [
-        base_url,
-        location_name,
-        street_address,
-        city,
-        state,
-        zipp,
-        country_code,
-        store_number,
-        phone,
-        location_type,
-        latitude,
-        longitude,
-        hours.strip(),
-        page_url,
-    ]
-    store = [
-        str(x).encode("ascii", "ignore").decode("ascii").strip() if x else "<MISSING>"
-        for x in store
-    ]
-    return store
-
-
 def scrape_store_number(soup):
     html_content = str(soup)
     match = re.search(r"\[\"entityId\"\] = \"(\d+?)\"", html_content)
-    return match.group(1) if match else "<MISSING>"
+    return match.group(1) if match else None
 
 
 def get_store_key(store):
-    # use the page_url as unique key
-    return f"{store[-1]}".lower()
+    # use the store_number as unique key
+    return f"{store[7]}".lower()
 
 
 def get_details(soup):
@@ -162,6 +158,9 @@ def scrape_html(soup, page_url):
             addr_elem["content"] if addr_elem else get(address, "streetAddress")
         )
 
+        if location_name == MISSING and street_address == MISSING:
+            return None
+
         city_elem = soup.find(itemprop="addressLocality")
         city = city_elem["content"] if city_elem else get(address, "addressLocality")
 
@@ -181,7 +180,7 @@ def scrape_html(soup, page_url):
 
         location_type = None
         main = soup.select_one("#main")
-        if main and hasattr(main, "itemtype"):
+        if main and main.has_attr("itemtype"):
             location_type = re.sub(
                 "http://schema.org/",
                 "",
@@ -204,7 +203,7 @@ def scrape_html(soup, page_url):
             hours = " ".join(list(hours_table.find("tbody").stripped_strings))
             hours = re.sub("PM ", "PM, ", hours)
         else:
-            hours = "".join(
+            hours = ", ".join(
                 f'{day["dayOfWeek"][0]}: {day["opens"]}-{day["closes"]}'
                 for day in get(details, "openingHoursSpecification", [])
             )
@@ -213,111 +212,153 @@ def scrape_html(soup, page_url):
 
         store_number = scrape_store_number(soup) or get(details, "@id")
 
-        store = [
-            base_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            zipp,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours.strip(),
-            page_url,
-        ]
-        store = [
-            str(x).encode("ascii", "ignore").decode("ascii").strip()
-            if x
-            else "<MISSING>"
-            for x in store
-        ]
-
-        return store
+        return SgRecord(
+            locator_domain="napaonline.com",
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=zipp,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=location_type,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours.strip(),
+            page_url=page_url,
+        )
     except Exception as e:
         logger.error(e)
 
 
-def scrape_one_in_city(url, driver):
-    link_url = base_url + url["href"]
+def scrape_one_in_city(url, page, driver):
+    link_url = page.get_next_url(url["href"])
     html = fetch(link_url, driver)
     soup = bs(html, "lxml")
 
     # make sure we're on a store detail page and not a listing page ...
     #   we got here by looking for "(1)" in the url link, but sometimes these links are lying
     #   and we end up at a page with multiple stores instead of one
-    is_detail_page = soup.find(class_="store-browse-content-listing") is None
-    if not is_detail_page:
-        return scrape_multiple_in_city(url, driver)
+    is_directory_page = page.is_directory_page(soup)
+    if is_directory_page:
+        return scrape_multiple_in_city(url, page, driver)
 
     store = scrape_html(soup, link_url)
 
-    store_key = get_store_key(store)
-    if store_key in addresses:
-        return None
+    if not store:
+        return []
 
-    addresses.append(store_key)
+    id = page.get_tracking_id(store)
+    if page.is_location_tracked(id):
+        return []
+
+    page.track_location(id)
     return [store]
 
 
-def scrape_multiple_in_city(url, driver):
+@retry(stop=stop_after_attempt(3), reraise=True)
+def scrape_multiple_in_city(url, page, driver):
     stores = []
-    html = fetch(base_url + url["href"], driver)
+    link_url = page.get_next_url(url["href"])
+    html = fetch(link_url, driver)
     if not html:
         return stores
     soup = bs(html, "lxml")
-    for link in soup.find_all("div", {"class": "store-browse-store-detail"}):
 
-        link_url = base_url + link.a["href"].replace("https://www.napaonline.com", "")
-        html = fetch(link_url, driver)
+    for link in page.get_details_links(soup):
+        locations_link_url = page.get_next_url(link["href"])
+        html = fetch(locations_link_url, driver)
         soup = bs(html, "lxml")
 
-        store = scrape_html(soup, link_url)
-        store_key = get_store_key(store)
-        if store_key in addresses:
+        store = scrape_html(soup, locations_link_url)
+        if not store:
             continue
 
-        addresses.append(store_key)
+        id = page.get_tracking_id(store)
+        if page.is_location_tracked(id):
+            continue
+
+        page.track_location(id)
+
         stores.append(store)
+
+    if not len(stores):
+        logger.error(f"unable to scrape multiple locations: {link_url}")
+
     return stores
 
 
-def crawl_city_url(url, driver):
+def crawl_state_url(link, page):
+    driver = get_driver()
+    state_url = page.get_next_url(link["href"])
+    html = fetch(state_url, driver)
+    soup = bs(html, "lxml")
+    return page.get_city_links(soup)
+
+
+def crawl_city_url(url, page):
+    driver = get_driver()
+
     # the url argument is of type bs4.element.Tag
-    if "(1)" in url.text:
-        return scrape_one_in_city(url, driver)
+    if page.has_multiple_locations(url):
+        return scrape_multiple_in_city(url, page, driver)
     else:
-        return scrape_multiple_in_city(url, driver)
+        return scrape_one_in_city(url, page, driver)
 
 
+@retry(stop=stop_after_attempt(3), reraise=True)
 def load_initial_page(driver):
     driver.get("https://www.napaonline.com")
     driver.execute_script('window.open("https://www.napaonline.com")')
+    sleep(15)
 
-    WebDriverWait(driver, 15).until(
-        EC.presence_of_element_located((By.CLASS_NAME, "header-branding-logo"))
-    )
+
+@retry(stop=stop_after_attempt(3), reraise=True)
+def get_state_urls(page, driver):
+    html = fetch(page.get_initial_page(), driver)
+    soup = bs(html, "lxml")
+
+    state_urls = page.get_state_links(soup)
+
+    if not len(state_urls):
+        raise Exception()
+
+    return state_urls
 
 
 def fetch_data():
-    state_urls = []
-    city_urls = []
+    tracker = []
 
-    with SgChrome(seleniumwire_auto_config=False).driver() as driver:
-        load_initial_page(driver)
+    stores_config = PageConfig(
+        name="stores",
+        base_url="https://www.napaonline.com",
+        initial_page="/stores/index.html",
+        location_path="/stores",
+        directory_page_selector=".Directory-content a",
+        details_link_selector=".Teaser-titleLink",
+        dedup_tracker=tracker,
+    )
 
-        html = fetch("https://www.napaonline.com/en/auto-parts-stores-near-me", driver)
-        soup = bs(html, "lxml")
+    near_me_config = PageConfig(
+        name="auto parts",
+        base_url="https://www.napaonline.com",
+        location_path="/en/auto-parts-stores-near-me",
+        directory_page_selector=".store-browse-content a",
+        details_link_selector=".store-browse-store-detail .store-listing-title:first-child",
+        dedup_tracker=tracker,
+    )
 
-        for link in soup.find("div", {"class": "store-browse-content"}).find_all("a"):
-            state_urls.append(base_url + link["href"])
+    with ThreadPoolExecutor(max_workers=10) as executor, get_driver() as driver:
+        for page in (near_me_config, stores_config):
+            count = 0
+            state_urls = []
+            city_urls = []
 
-        with ThreadPoolExecutor() as executor:
+            state_urls = get_state_urls(page, driver)
+
             futures = [
-                executor.submit(crawl_state_url, url, driver) for url in state_urls
+                executor.submit(crawl_state_url, url, page) for url in state_urls
             ]
             # return when all finished or after 20 min regardless
             for result in as_completed(futures):
@@ -329,22 +370,25 @@ def fetch_data():
                         f"crawl_state_url with result {result} threw exception: {ex}"
                     )
 
-        logger.info(f"found {len(city_urls)} city urls")
+            logger.info(f"found {len(city_urls)} city urls")
 
-        with ThreadPoolExecutor() as executor:
-            futures = [
-                executor.submit(crawl_city_url, url, driver) for url in city_urls
-            ]
+            futures = [executor.submit(crawl_city_url, url, page) for url in city_urls]
+
             for result in as_completed(futures):
                 locations = result.result()
                 if locations:
                     for store in locations:
+                        count += 1
                         yield store
+
+            logger.info(f"{page.name}: {count}")
 
 
 def scrape():
+    now = dt.now()
     data = fetch_data()
     write_output(data)
+    logger.info(f"duration: {dt.now() - now}")
 
 
 if __name__ == "__main__":

@@ -51,6 +51,9 @@ def fetch_data():
 
     all_locations = dom.xpath('//div[@class="iwt-content__content" and h4]')
     for poi_html in all_locations:
+        if poi_html.xpath('.//p[contains(text(), "Coming Soon")]'):
+            continue
+
         store_url = start_url
         location_name = poi_html.xpath(".//h1/text()")[0].strip()
         raw_address = poi_html.xpath(".//h1/following-sibling::a[1]/text()")[-1].strip()
@@ -65,13 +68,18 @@ def fetch_data():
         zip_code = zip_code if zip_code else "<MISSING>"
         country_code = "<MISSING>"
         store_number = "<MISSING>"
-        phone = poi_html.xpath('.//a[contains(@href, "tel")]/text()')[-1].strip()
+        phone = poi_html.xpath('.//a[contains(@href, "tel")]/text()')
+        phone = phone[-1].strip() if phone else "<MISSING>"
         location_type = "<MISSING>"
         latitude = "<MISSING>"
         longitude = "<MISSING>"
         hoo = poi_html.xpath('.//p[strong[contains(text(), "Mon –")]]//text()')
         if not hoo:
             hoo = poi_html.xpath('.//p[contains(text(), "Mon ")]//text()')
+        if not hoo:
+            hoo = poi_html.xpath(
+                './/div[@class="iwt-content__content-time"]//p//text()'
+            )
         hoo = [e.strip() for e in hoo if e.strip()]
         hours_of_operation = (
             " ".join(hoo).replace(" (Temporary)", "") if hoo else "<MISSING>"

@@ -67,7 +67,10 @@ def fetch_data():
         store_number = "<MISSING>"
         phone = poi_html.xpath('.//div[@class="hours"]/span/text()')
         phone = phone[0].strip() if phone and phone[0].strip() else "<MISSING>"
-        location_type = "<MISSING>"
+        if poi_html.xpath('.//span[@class="icon-branch-marker list"]'):
+            location_type = "Branch"
+        else:
+            location_type = "ATM"
         latitude = "<MISSING>"
         longitude = "<MISSING>"
         hoo = poi_html.xpath(

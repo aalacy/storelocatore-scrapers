@@ -69,6 +69,10 @@ def fetch_data():
         hoo = loc_dom.xpath('//div[p[span[contains(text(), "Open 7 days")]]]//text()')
         if not hoo:
             hoo = loc_dom.xpath('//p[i[@class="far fa-clock"]]/text()')
+        if not hoo:
+            hoo = loc_dom.xpath(
+                '//div[@class="fusion-text fusion-text-3 addressText"]//strong/text()'
+            )
         hoo = [e.strip() for e in hoo if e.strip()]
         hours_of_operation = " ".join(hoo).replace("……….", " ") if hoo else "<MISSING>"
 
