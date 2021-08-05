@@ -126,7 +126,7 @@ def fetch_data(http, state) -> Iterable[SgRecord]:
 def scrape():
     log.info(f"Start scrapping {website} ...")
     start = time.time()
-    state = CrawlStateSingleton.get_instance().save(override=True)
+    state = CrawlStateSingleton.get_instance()
     with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         with SgRequests() as http:
             state.get_misc_value(
