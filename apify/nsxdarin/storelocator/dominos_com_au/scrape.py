@@ -30,7 +30,6 @@ def fetch_data():
             )
             if lurl.count("/") == 4:
                 cities.append(lurl)
-                print(lurl)
     for cname in cities:
         r2 = session.get(cname, headers=headers)
         logger.info(cname)
