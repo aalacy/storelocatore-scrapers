@@ -13,6 +13,7 @@ headers = {
 
 logger = SgLogSetup().get_logger("dominos_com_mx")
 
+
 def fetch_data():
     url = "https://www.dominos.com.mx/api/stores"
     r = session.get(url, headers=headers)
@@ -24,21 +25,21 @@ def fetch_data():
     hours = "<MISSING>"
     logger.info("Pulling Stores")
     for item in json.loads(r.content):
-        store = item['storenumber']
-        name = item['name']
-        if item['streetnumber'] is None:
-            add = ''
+        store = item["storenumber"]
+        name = item["name"]
+        if item["streetnumber"] is None:
+            add = ""
         else:
-            add = item['streetnumber']
-        add = add + ' ' + item['streetname']
-        if item['unitnumber'] is not None:
-            add = add + ' ' + item['unitnumber']
-        city = item['city']
-        state = item['state']
-        zc = item['zipcode']
-        phone = item['phonenumber']
-        lat = item['latitude']
-        lng = item['longitude']
+            add = item["streetnumber"]
+        add = add + " " + item["streetname"]
+        if item["unitnumber"] is not None:
+            add = add + " " + item["unitnumber"]
+        city = item["city"]
+        state = item["state"]
+        zc = item["zipcode"]
+        phone = item["phonenumber"]
+        lat = item["latitude"]
+        lng = item["longitude"]
         hours = "<MISSING>"
         yield SgRecord(
             locator_domain=website,
@@ -60,8 +61,11 @@ def fetch_data():
 
 def scrape():
     results = fetch_data()
-    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumberId)
+    ) as writer:
         for rec in results:
             writer.write_row(rec)
+
 
 scrape()
