@@ -28,21 +28,20 @@ def fetch_data():
             lurl = (
                 "https://www.dominos.com.au" + line.split('<a href="')[1].split('"')[0]
             )
-            if lurl.count("/") == 5:
+            if lurl.count("/") == 4:
                 cities.append(lurl)
+                print(lurl)
     for cname in cities:
         r2 = session.get(cname, headers=headers)
         logger.info(cname)
         lines = r2.iter_lines()
         for line2 in lines:
             line2 = str(line2.decode("utf-8"))
-            if "<h4>" in line2:
-                g = next(lines)
-                g = str(g.decode("utf-8"))
-                if 'href="' not in g:
-                    g = next(lines)
-                    g = str(g.decode("utf-8"))
-                lurl = "https://www.dominos.com.au" + g.split('href="')[1].split('"')[0]
+            if '<a href="/store/' in line2:
+                lurl = (
+                    "https://www.dominos.com.au/store/"
+                    + line2.split('<a href="/store/')[1].split('"')[0]
+                )
                 if lurl not in locs:
                     locs.append(lurl)
     for loc in locs:
