@@ -24,7 +24,7 @@ base_url = "https://ctbcbankusav2.locatorsearch.com/GetItems.aspx"
 
 search = DynamicGeoSearch(
     country_codes=[SearchableCountries.USA],
-    expected_search_radius_miles=100,
+    expected_search_radius_miles=10,
     use_state=False,
 )
 
@@ -91,10 +91,6 @@ def fetch_data():
                         .select("tr")
                     ]
                 store["hours"] = "; ".join(hours) or SgRecord.MISSING
-                search.found_location_at(
-                    store["lat"],
-                    store["lng"],
-                )
                 yield store
         progress = str(round(100 - (search.items_remaining() / maxZ * 100), 2)) + "%"
 
