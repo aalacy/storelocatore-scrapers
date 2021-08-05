@@ -138,7 +138,8 @@ def fetch_data():
 
         hours_of_operation = (
             item.find(id="divClubHourPanel")
-            .text.replace("pm", "pm ")
+            .get_text(" ")
+            .replace("pm", "pm ")
             .replace("CLUB HOURS", "")
             .strip()
         )

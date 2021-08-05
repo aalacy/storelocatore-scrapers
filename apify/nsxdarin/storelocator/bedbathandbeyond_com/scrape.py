@@ -1,6 +1,10 @@
-import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
+import json
 
 logger = SgLogSetup().get_logger("bedbathandbeyond_com")
 
@@ -10,137 +14,101 @@ headers = {
 }
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
-
-
 def fetch_data():
-    locs = []
-    url = "https://stores.bedbathandbeyond.com/sitemap.xml"
-    r = session.get(url, headers=headers)
-    if r.encoding is None:
-        r.encoding = "utf-8"
-    for line in r.iter_lines(decode_unicode=True):
-        if "Registry</loc>" in line:
-            lurl = line.split("<loc>")[1].split("/Registry")[0].replace("&#39;", "'")
-            locs.append(lurl)
-    for loc in locs:
-        logger.info(("Pulling Location %s..." % loc))
-        website = "bedbathandbeyond.com"
-        typ = "<MISSING>"
-        hours = ""
-        add = ""
-        name = ""
-        city = ""
-        state = ""
-        zc = ""
-        phone = ""
-        lat = ""
-        lng = ""
-        store = loc.rsplit("-", 1)[1]
-        r2 = session.get(loc, headers=headers)
-        if r2.encoding is None:
-            r2.encoding = "utf-8"
-        for line2 in r2.iter_lines(decode_unicode=True):
-            if name == "" and 'location-name-brand">' in line2:
-                name = (
-                    line2.split('location-name-brand">')[1]
-                    .split("<")[0]
-                    .replace("&amp;", "&")
-                )
-                name = (
-                    name
-                    + " "
-                    + line2.split('<span class="location-name-geo">')[1]
-                    .split("<")[0]
-                    .replace("&amp;", "&")
-                )
-            if add == "" and '<span class="c-address-street-1">' in line2:
-                add = line2.split('<span class="c-address-street-1">')[1].split("<")[0]
-                try:
-                    add = (
-                        add
-                        + " "
-                        + line2.split('<span class="c-address-street-2">')[1].split(
-                            "<"
-                        )[0]
-                    )
-                except:
-                    pass
-                add = add.strip()
-                city = line2.split('itemprop="addressLocality">')[1].split("<")[0]
-                country = "US"
-                state = line2.split('itemprop="addressRegion">')[1].split("<")[0]
-                zc = line2.split('itemprop="postalCode">')[1].split("<")[0].strip()
-                phone = (
-                    line2.split('main-number-link" href="tel:')[1]
-                    .split('">')[1]
-                    .split("<")[0]
-                )
-            if 'itemprop="openingHours" content="' in line2:
-                days = line2.split('itemprop="openingHours" content="')
-                for day in days:
-                    if "<!doctype html>" not in day:
-                        hrs = day.split('"')[0]
-                        if hours == "":
-                            hours = hrs
-                        else:
-                            hours = hours + "; " + hrs
-            if '<meta itemprop="latitude" content="' in line2:
-                lat = line2.split('meta itemprop="latitude" content="')[1].split('"')[0]
-                lng = line2.split('meta itemprop="longitude" content="')[1].split('"')[
-                    0
-                ]
-        if hours == "":
-            hours = "<MISSING>"
-        if phone == "":
-            phone = "<MISSING>"
-        city = city.replace("&#39;", "'")
-        name = name.replace("&#39;", "'")
-        yield [
-            website,
-            loc,
-            name,
-            add,
-            city,
-            state,
-            zc,
-            country,
-            store,
-            phone,
-            typ,
-            lat,
-            lng,
-            hours,
-        ]
+    urls = [
+        "https://www.mapquestapi.com/search/v2/radius?key=Gmjtd%7Clu6120u8nh%2C2w%3Do5-lwt2l&inFormat=json&json=%7B%22origin%22%3A%2255441%22%2C%22hostedDataList%22%3A%5B%7B%22extraCriteria%22%3A%22(%20%5C%22display_online%5C%22%20%3D%20%3F%20)%20and%20(%20%5C%22store_type%5C%22%20%3D%20%3F%20)%22%2C%22tableName%22%3A%22mqap.34703_AllInfo%22%2C%22parameters%22%3A%5B%22Y%22%2C%2210%22%5D%2C%22columnNames%22%3A%5B%5D%7D%5D%2C%22options%22%3A%7B%22radius%22%3A2500%2C%22ambiguities%22%3A%22ignore%22%2C%22maxMatches%22%3A2000%2C%22units%22%3A%22m%22%7D%7D",
+    ]
+    for url in urls:
+        r = session.get(url, headers=headers)
+        for item in json.loads(r.content)["searchResults"]:
+            website = "bedbathandbeyond.com"
+            typ = "<MISSING>"
+            name = item["name"]
+            state = item["fields"]["state"]
+            add = item["fields"]["address"]
+            country = "US"
+            zc = item["fields"]["postal"]
+            city = item["fields"]["city"]
+            lng = item["fields"]["Lng"]
+            lat = item["fields"]["Lat"]
+            phone = item["fields"]["Phone"]
+            store = item["fields"]["RecordId"]
+            loc = "https://www.bedbathandbeyond.com/store/pickup/store-" + store
+            hours = (
+                "Sun: "
+                + str(item["fields"]["SUN_OPEN"])
+                + "-"
+                + str(item["fields"]["SUN_CLOSE"])
+            )
+            hours = (
+                hours
+                + "; Mon: "
+                + str(item["fields"]["MON_OPEN"])
+                + "-"
+                + str(item["fields"]["MON_CLOSE"])
+            )
+            hours = (
+                hours
+                + "; Tue: "
+                + str(item["fields"]["TUES_OPEN"])
+                + "-"
+                + str(item["fields"]["TUES_CLOSE"])
+            )
+            hours = (
+                hours
+                + "; Wed: "
+                + str(item["fields"]["WED_OPEN"])
+                + "-"
+                + str(item["fields"]["WED_CLOSE"])
+            )
+            hours = (
+                hours
+                + "; Thu: "
+                + str(item["fields"]["THURS_OPEN"])
+                + "-"
+                + str(item["fields"]["THURS_CLOSE"])
+            )
+            hours = (
+                hours
+                + "; Fri: "
+                + str(item["fields"]["FRI_OPEN"])
+                + "-"
+                + str(item["fields"]["FRI_CLOSE"])
+            )
+            hours = (
+                hours
+                + "; Sat: "
+                + str(item["fields"]["SAT_OPEN"])
+                + "-"
+                + str(item["fields"]["SAT_CLOSE"])
+            )
+            hours = hours.replace(": 0-0;", ": Closed")
+            hours = hours.replace("Sat: 0-0", "Sat: Closed")
+            yield SgRecord(
+                locator_domain=website,
+                page_url=loc,
+                location_name=name,
+                street_address=add,
+                city=city,
+                state=state,
+                zip_postal=zc,
+                country_code=country,
+                phone=phone,
+                location_type=typ,
+                store_number=store,
+                latitude=lat,
+                longitude=lng,
+                hours_of_operation=hours,
+            )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    with SgWriter(
+        deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumberId)
+    ) as writer:
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()

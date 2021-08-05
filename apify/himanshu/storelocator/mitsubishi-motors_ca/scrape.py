@@ -1,8 +1,11 @@
 import csv
-from bs4 import BeautifulSoup
-from sgrequests import SgRequests
 import unicodedata
+
+from bs4 import BeautifulSoup
+
 from google_trans_new import google_translator
+
+from sgrequests import SgRequests
 
 translator = google_translator()
 session = SgRequests()
@@ -50,38 +53,27 @@ def fetch_data():
         name = loc["CompanyName"].strip()
         city = loc["CompanyCity"].strip().capitalize()
         state = loc["ProvinceAbbreviation"].strip()
-        zipp = loc["CompanyPostalCode"]
+        zipp = loc["CompanyPostalCode"].replace("S4R R8R", "S4R 0X3")
         phone = loc["CompanyPhone"].strip()
         lat = loc["Latitude"]
         lng = loc["Longitude"]
         page_url = loc["PrimaryDomain"]
         storeno = loc["CompanyId"]
-        hours = "<MISSING>"
-        rm = [
-            "https://capital-mitsubishi.ca",
-            "https://girouxmitsubishi.com",
-            "https://rallye-mitsubishi.ca",
-            "https://grandeprairiemitsubishi.ca",
-        ]
-        if page_url in rm:
-            hours = "<MISSING>"
-        else:
-            try:
-                r1 = session.get(page_url, headers=headers)
-                soup1 = BeautifulSoup(r1.text, "lxml")
-            except:
-                pass
-            try:
-                hours = " ".join(
-                    list(
-                        soup1.find(
-                            "ul", {"class": "list-unstyled line-height-condensed"}
-                        ).stripped_strings
-                    )
-                )
-            except:
-                pass
 
+        hours = ""
+        r1 = session.get(page_url, headers=headers)
+        soup1 = BeautifulSoup(r1.text, "lxml")
+        try:
+            hours = " ".join(
+                list(
+                    soup1.find(
+                        "ul", {"class": "list-unstyled line-height-condensed"}
+                    ).stripped_strings
+                )
+            )
+        except:
+            pass
+        if not hours:
             try:
                 hours = " ".join(
                     list(
@@ -90,6 +82,61 @@ def fetch_data():
                 )
             except:
                 pass
+        if not hours:
+            try:
+                hours = " ".join(
+                    list(
+                        soup1.find(
+                            "div", {"class": "footer-hours-col sales-hours"}
+                        ).li.stripped_strings
+                    )
+                )
+            except:
+                pass
+        if not hours:
+            try:
+                hours = " ".join(
+                    list(soup1.find("table", {"class": "hours"}).stripped_strings)
+                )
+            except:
+                pass
+        if not hours:
+            try:
+                hours = " ".join(
+                    list(
+                        soup1.find(
+                            "div", {"id": "tabs-template-hours1"}.ul.li
+                        ).stripped_strings
+                    )
+                )
+            except:
+                pass
+        if not hours:
+            try:
+                hours = " ".join(
+                    list(
+                        soup1.find(
+                            "div", {"id": "slshours_footer_home"}
+                        ).stripped_strings
+                    )
+                )
+            except:
+                pass
+        if not hours:
+            try:
+                hours = " ".join(
+                    list(soup1.find("div", {"id": "HOPSales"}).stripped_strings)
+                )
+            except:
+                pass
+        if not hours:
+            try:
+                hours = " ".join(
+                    list(soup1.find("table", {"class": "hours_table"}).stripped_strings)
+                )
+            except:
+                pass
+        if not hours:
             try:
                 hours = " ".join(
                     list(
@@ -100,7 +147,7 @@ def fetch_data():
                 )
             except:
                 pass
-
+        if not hours:
             try:
                 hours = " ".join(
                     list(
@@ -111,7 +158,7 @@ def fetch_data():
                 )
             except:
                 pass
-
+        if not hours:
             try:
                 hours = " ".join(
                     list(
@@ -122,16 +169,18 @@ def fetch_data():
                 )
             except:
                 pass
-
+        if not hours:
             try:
                 hours = " ".join(
                     list(
-                        soup1.find("div", {"class": "map_open_hours"}).stripped_strings
+                        soup1.find(
+                            "div", {"class": "map_open_hours"}
+                        ).ul.li.stripped_strings
                     )
                 )
             except:
                 pass
-
+        if not hours:
             try:
                 hours = " ".join(
                     list(
@@ -142,7 +191,7 @@ def fetch_data():
                 )
             except:
                 pass
-
+        if not hours:
             try:
                 hours = " ".join(
                     list(
@@ -153,6 +202,7 @@ def fetch_data():
                 )
             except:
                 pass
+        if not hours:
             try:
                 hours = " ".join(
                     list(
@@ -163,6 +213,7 @@ def fetch_data():
                 )
             except:
                 pass
+        if not hours:
             try:
                 hours = " ".join(
                     list(
@@ -173,12 +224,23 @@ def fetch_data():
                 )
             except:
                 pass
+        if not hours:
             try:
                 hours = " ".join(
                     list(soup1.find("div", {"class": "hours-default"}).stripped_strings)
                 )
             except:
                 pass
+        if not hours:
+            try:
+                hours = " ".join(
+                    list(
+                        soup1.find("div", {"class": "hours1-app-root"}).stripped_strings
+                    )
+                )
+            except:
+                pass
+        if not hours:
             try:
                 hours = " ".join(
                     list(
@@ -189,16 +251,127 @@ def fetch_data():
                 )
             except:
                 pass
-            if "By Appointment" in hours:
-                hours = "<MISSING>"
+        if not hours:
+            try:
+                hours = " ".join(
+                    list(
+                        soup1.find(
+                            "div", {"class": "footer-column footer-column--hours"}.ul
+                        ).stripped_strings
+                    )
+                )
+            except:
+                pass
+        if not hours:
+            try:
+                hours = " ".join(
+                    list(soup1.find("div", {"class": "hours-list"}).stripped_strings)
+                )
+            except:
+                pass
+        if not hours:
+            try:
+                hours = " ".join(
+                    list(
+                        soup1.find(
+                            "table", {"class": "schedule-table"}
+                        ).stripped_strings
+                    )
+                )
+            except:
+                pass
+        if not hours:
+            try:
+                hours = " ".join(
+                    list(
+                        soup1.find(
+                            "div", {"id": "slshours_footer_home"}
+                        ).stripped_strings
+                    )
+                )
+            except:
+                pass
+        if not hours:
+            try:
+                hours = " ".join(
+                    list(
+                        soup1.find(
+                            "div", {"class": "footer-hours"}.find_all("p")[1]
+                        ).stripped_strings
+                    )
+                )
+            except:
+                pass
+        if not hours:
+            try:
+                hours = " ".join(
+                    list(
+                        soup1.find(
+                            "div", {"class": "hours-footer hours-footer-1"}.ul
+                        ).stripped_strings
+                    )
+                )
+            except:
+                pass
+        if not hours:
+            try:
+                hours = " ".join(
+                    list(
+                        soup1.find(
+                            "div", {"class": "footer_dealer_info_hours"}.ul
+                        ).stripped_strings
+                    )
+                )
+            except:
+                pass
+        if not hours:
+            try:
+                hours = " ".join(
+                    list(
+                        soup1.find(
+                            "div", {"class": "footer_dealer_info_hours"}.ul
+                        ).stripped_strings
+                    )
+                )
+            except:
+                pass
+        if not hours:
+            try:
+                hours = " ".join(
+                    list(
+                        soup1.find_all("ul", {"class": "footer-column__list"})[
+                            1
+                        ].stripped_strings
+                    )
+                )
+            except:
+                pass
+        hours = (
+            hours.replace("Heures d'ouverture", "")
+            .replace("Days Hours", "")
+            .replace("HOURS", "")
+            .replace("Hours", "")
+            .replace("Hours:", "")
+            .replace("Sales", "")
+            .replace("Horaires:", "")
+            .replace("Business hours", "")
+            .replace("Dealership hours of operation", "")
+            .split("Tell us")[0]
+            .split("Avisez-nous")[0]
+            .split("See All")[0]
+            .strip()
+        )
+        try:
             hours = (
                 translator.translate(hours, lang_tgt="en")
                 .split("Service")[0]
                 .replace("Opening hours", "")
-                .replace("Hours:", "")
-                .strip()
+                .replace("Business hours", "")
                 .split("Notify us of your visit!")[0]
+                .strip()
             )
+        except:
+            pass
         if city == "N.d.p, joliette":
             city = "Joliette"
             address = address + str(", N.D.P")

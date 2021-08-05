@@ -70,7 +70,7 @@ def fetch_data():
     )
 
     with SgChrome(
-        executable_path=ChromeDriverManager().install(), is_headless=False
+        executable_path=ChromeDriverManager().install(), is_headless=True
     ) as driver:
         driver.get(start_url)
         sleep(5)
@@ -88,7 +88,7 @@ def fetch_data():
             sleep(2)
             logger.info("zipcode - send_keys executed")
             driver.find_element_by_xpath('//button[contains(text(), "Search")]').click()
-            sleep(5)
+            sleep(20)
             logger.info(" Search Button Clicked")
             driver.find_element_by_xpath('//input[@name="location"]').clear()
 

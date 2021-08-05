@@ -3,6 +3,8 @@ from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 logger = SgLogSetup().get_logger("dolphincarpet")
 
@@ -12,51 +14,58 @@ _headers = {
 
 
 def fetch_data():
-    locator_domain = "https://www.dolphincarpet.com/"
-    base_url = "https://www.dolphincarpet.com/Locations"
+    locator_domain = "https://www.dolphincarpet.com"
+    base_url = "https://www.dolphincarpet.com/wp-content/uploads/bb-plugin/cache/912070-layout.js"
     with SgRequests() as session:
-        soup = bs(session.get(base_url, headers=_headers).text, "lxml")
-        locations = soup.select("ul.gradient li")
+        locations = session.get(base_url, headers=_headers).text.split("marker_point")
         logger.info(f"{len(locations)} found")
-        for _ in locations:
-            hours = []
-            for hh in _.select("p"):
-                if "Hours" in hh.text:
-                    hours = list(hh.stripped_strings)[1:]
-                    break
-
-            coord = (
-                _.select_one("div.mapright")
-                .iframe["src"]
-                .split("!2d")[1]
-                .split("!3m")[0]
-                .split("!3d")
+        for loc in locations[1:-1]:
+            if "info_window_text.push(" not in loc:
+                continue
+            _ = bs(
+                loc.split("info_window_text.push(")[1]
+                .strip()[:-1]
+                .encode("utf8")
+                .decode()
+                .replace("\\", ""),
+                "lxml",
             )
-            phone = (
-                list(_.select_one("div.tel").stripped_strings)[0]
-                .replace("Phone", "")
-                .strip()
-            )
+            hours = [
+                "".join(hh.stripped_strings)
+                for hh in _.select("ul.store-opening-hrs li")
+            ]
+            latitude = loc.split("pos['lat']")[1].split('"')[1].split('"')[0]
+            longitude = loc.split("pos['lng']")[1].split('"')[1].split('"')[0]
+            phone = _.select_one("div.phone").text.strip()
+            addr = list(_.select_one("div.address").stripped_strings)
+            url = [
+                ll.strip()
+                for ll in _.h4.text.lower()
+                .replace("-", "")
+                .replace(".", "")
+                .replace(",", "")
+                .split(" ")
+                if ll.strip()
+            ]
+            page_url = f"{locator_domain}/{'-'.join(url)}"
             yield SgRecord(
-                page_url=base_url,
-                location_name=_.h2.text.strip(),
-                street_address=_.select_one("div.adr .street-address")
-                .text.split("-")[0]
-                .strip(),
-                city=_.select_one("div.adr .locality").text.strip(),
-                state=_.select_one("div.adr .region").text.strip(),
-                zip_postal=_.select_one("div.adr .postal-code").text.strip(),
+                page_url=page_url,
+                location_name=_.h4.text.strip(),
+                street_address=" ".join(addr[:-1]),
+                city=addr[-1].split(",")[0].strip(),
+                state=addr[-1].split(",")[1].strip().split(" ")[0].strip(),
+                zip_postal=addr[-1].split(",")[1].strip().split(" ")[-1].strip(),
                 country_code="US",
                 phone=phone,
                 locator_domain=locator_domain,
-                latitude=coord[1],
-                longitude=coord[0],
+                latitude=latitude,
+                longitude=longitude,
                 hours_of_operation="; ".join(hours).replace("–", "-"),
             )
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

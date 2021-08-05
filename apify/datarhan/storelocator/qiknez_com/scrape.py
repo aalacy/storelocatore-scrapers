@@ -48,6 +48,15 @@ def fetch_data():
     hdr = {
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
     }
+
+    response = session.get("http://qiknez.com/locations/")
+    dom = etree.HTML(response.text)
+    hoo = dom.xpath(
+        '//div[h2[contains(text(), "OPERATING HOURS")]]/following-sibling::div[1]//text()'
+    )
+    hoo = [e.strip() for e in hoo if e.strip()]
+    hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
+
     response = session.get(start_url, headers=hdr)
     dom = etree.HTML(response.text)
 
@@ -71,7 +80,6 @@ def fetch_data():
         location_type = poi_html.xpath(".//productsservices/text()")[0]
         latitude = poi_html.xpath(".//latitude/text()")[0]
         longitude = poi_html.xpath(".//longitude/text()")[0]
-        hours_of_operation = "<MISSING>"
 
         item = [
             domain,

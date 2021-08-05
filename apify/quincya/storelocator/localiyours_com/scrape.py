@@ -67,7 +67,7 @@ def fetch_data():
 
         raw_data = list(item.a.stripped_strings)
 
-        street_address = " ".join(raw_data[:-1])
+        street_address = " ".join(raw_data[:-1]).split("1st Floor")[0].strip()
         city = raw_data[-1][: raw_data[-1].find(",")].strip()
         state = raw_data[-1][
             raw_data[-1].find(",") + 1 : raw_data[-1].rfind(" ")
