@@ -26,14 +26,14 @@ def fetch_stores(http, state):
     log.debug(f"total states = {len(stateUrls)}")
 
     cityUrls = []
-    for stateUrl in stateUrls[0:1]:
+    for stateUrl in stateUrls:
         response = http.get(stateUrl)
         body = html.fromstring(response.text, "lxml")
         cityUrls = cityUrls + body.xpath("//ul[@class='city-list']/li/a/@href")
     log.debug(f"total cities = {len(cityUrls)}")
 
     count = 0
-    for cityUrl in cityUrls[0:25]:
+    for cityUrl in cityUrls:
         response = http.get(cityUrl)
         body = html.fromstring(response.text, "lxml")
         for page_url in body.xpath("//a[@class='list-link details']/@href"):
@@ -126,7 +126,7 @@ def fetch_data(http, state) -> Iterable[SgRecord]:
 def scrape():
     log.info(f"Start scrapping {website} ...")
     start = time.time()
-    state = CrawlStateSingleton.get_instance().save(override=True)
+    state = CrawlStateSingleton.get_instance()
     with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         with SgRequests() as http:
             state.get_misc_value(
