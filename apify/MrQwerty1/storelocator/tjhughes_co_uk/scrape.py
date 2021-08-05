@@ -8,8 +8,11 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 def fetch_data(sgw: SgWriter):
     api_url = "https://www.tjhughes.co.uk/map"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:90.0) Gecko/20100101 Firefox/90.0"
+    }
 
-    r = session.get(api_url)
+    r = session.get(api_url, headers=headers)
     tree = html.fromstring(r.text)
     text = "".join(
         tree.xpath("//script[contains(text(),' function initialize() {')]/text()")
