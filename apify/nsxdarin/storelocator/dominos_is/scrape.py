@@ -27,12 +27,12 @@ def fetch_data():
         if '"shops":[' in line:
             items = line.split('"shops":[')[1].split('"meta":{"Id"')[0].split('"ID":')
             for item in items:
-                if '"Area":"' in item:
+                if '"Address":"' in item:
                     store = item.split(",")[0]
                     add = item.split('"Address":"')[1].split('"')[0]
                     city = item.split('"City":"')[1].split('"')[0]
                     state = "<MISSING>"
-                    name = item.split('"Area":"')[1].split('"')[0]
+                    name = add
                     hours = (
                         item.split('"OpeningHours":"')[1]
                         .split('"')[0]
