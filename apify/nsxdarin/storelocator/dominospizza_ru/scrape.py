@@ -50,8 +50,14 @@ def fetch_data():
             name = item["name"]
             add = item["address"]
             phone = item["phone"]
-            lng = item["longitude"]
-            lat = item["lattitude"]
+            try:
+                lng = item["longitude"]
+            except:
+                lng = "<MISSING>"
+            try:
+                lat = item["lattitude"]
+            except:
+                lat = "<MISSING>"
             if "г. " in add:
                 try:
                     add = add.split(",", 1)[1].strip()
