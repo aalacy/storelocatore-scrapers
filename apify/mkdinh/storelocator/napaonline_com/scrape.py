@@ -24,7 +24,9 @@ local = threading.local()
 
 def get_driver():
     if not hasattr(local, "driver"):
-        local.driver = SgChrome(seleniumwire_auto_config=False, is_headless=True).driver()
+        local.driver = SgChrome(
+            seleniumwire_auto_config=False, is_headless=True
+        ).driver()
         local.driver.set_script_timeout(120)
         load_initial_page(local.driver)
 
