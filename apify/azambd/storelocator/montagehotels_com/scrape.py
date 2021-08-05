@@ -89,7 +89,9 @@ def fetch_data():
             log.info(f"Phone: {phone}")
         except:
             phone = MISSING
-            log.info(f"Phone Number is not available in the API Endpoint")
+            log.info(
+                f"Phone Number is not available in the API Endpoint, Store Number: {store_number}"
+            )
 
         city = data["city"]
         raw_address = data["address"]
