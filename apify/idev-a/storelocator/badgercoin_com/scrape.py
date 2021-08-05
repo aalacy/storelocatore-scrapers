@@ -74,14 +74,14 @@ def fetch_data():
                     locator_domain=locator_domain,
                     hours_of_operation="; ".join(hours).replace("–", "-"),
                 )
-            except Exception as err:
+            except Exception:
                 locs = locations[x:]
                 break
 
     with SgChrome(
         user_agent="Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1"
     ) as driver:
-        for _ in urls:
+        for _ in locs:
             driver.get(_["href"])
             logger.info(_["href"])
             sp1 = bs(driver.page_source, "lxml")
