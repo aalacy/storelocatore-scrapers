@@ -4,8 +4,18 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgselenium import SgFirefox
+from sgselenium import SgChrome
 from lxml import html
+import ssl
+
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
 
 
 DOMAIN = "herefordhouse.com"
@@ -27,8 +37,8 @@ def fetch_data():
     all_locations = dom.xpath(
         '//div[@class="entry-content"]/div/div[@class="wpb_column vc_column_container vc_col-sm-3"]'
     )
-    with SgFirefox() as driver:
-        for idx, poi_html in enumerate(all_locations[0:]):
+    for idx, poi_html in enumerate(all_locations[0:]):
+        with SgChrome() as driver:
             page_url = poi_html.xpath(".//a/@href")[0]
             driver.get(page_url)
             driver.implicitly_wait(15)
@@ -60,7 +70,8 @@ def fetch_data():
             state = raw_address[-1].split(", ")[-1]
             state = state if state else MISSING
             logger.info(f"[{idx}] State: {state}")
-
+            zipString = loc_dom.xpath('//div[@class="address"]/text()')
+            logger.info(f"{zipString}")
             zip_postal = loc_dom.xpath('//div[@class="address"]/text()')[0].split()[-1]
             zip_postal = zip_postal if zip_postal else MISSING
             logger.info(f"[{idx}] Zip Postal: {zip_postal}")
