@@ -57,6 +57,9 @@ def fetch_data(sgw: SgWriter):
         )
 
         city = adr.city or SgRecord.MISSING
+        if len(city) < 3:
+            city = line.split(",")[-2].strip()
+
         state = adr.state or SgRecord.MISSING
         postal = adr.postcode or SgRecord.MISSING
         row = SgRecord(
