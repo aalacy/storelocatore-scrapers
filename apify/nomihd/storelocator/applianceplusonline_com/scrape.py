@@ -60,11 +60,11 @@ def fetch_data():
 
         page_url = store_url
         log.info(page_url)
-        page_url = (
+        api_url = (
             "https://www.applianceplusonline.com/api/rest/pages/"
             + page_url.split("/")[-1].strip()
         )
-        store_req = session.get(page_url, headers=headers)
+        store_req = session.get(api_url, headers=headers)
         store_sel = lxml.html.fromstring(store_req.json()["content"])
 
         location_type = "<MISSING>"
