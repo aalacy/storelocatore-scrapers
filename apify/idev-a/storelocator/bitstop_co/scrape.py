@@ -29,7 +29,11 @@ def fetch_data():
             street_address = _["street_address"]
             if _["street_address2"]:
                 street_address += " " + _["street_address2"]
-            page_url = f"https://bitstop.co/{_state(_['state'])}/{_['city'].replace(' ','-').lower()}/{_['slug']}-{_['city'].lower()}-bitcoin-atm"
+            _city = _["city"].replace(" ", "-").lower()
+            page_url = f"https://bitstop.co/{_state(_['state']).replace(' ','-')}/{_city}/{_['slug']}-{_city}-bitcoin-atm"
+            import pdb
+
+            pdb.set_trace()
             yield SgRecord(
                 page_url=page_url,
                 location_name=_["name"],
