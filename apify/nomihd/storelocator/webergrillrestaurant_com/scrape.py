@@ -120,6 +120,8 @@ def fetch_data():
         raw_address = "<MISSING>"
 
         latitude, longitude = get_latlng(map_link)
+        longitude = longitude.split("/")[0].strip()
+
         yield SgRecord(
             locator_domain=locator_domain,
             page_url=page_url,
