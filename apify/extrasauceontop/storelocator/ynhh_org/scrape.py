@@ -12,6 +12,7 @@ from sglogging import sglog
 ssl._create_default_https_context = ssl._create_unverified_context
 log = sglog.SgLogSetup().get_logger(logger_name="ynhh")
 
+
 def get_driver(url, class_name, driver=None):
     if driver is not None:
         driver.quit()
