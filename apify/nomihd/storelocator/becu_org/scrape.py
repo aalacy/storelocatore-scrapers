@@ -4,6 +4,8 @@ from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import lxml.html
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
 website = "becu.org"
@@ -25,7 +27,7 @@ headers = {
 
 
 def split_fulladdress(address_info):
-    street_address = " ".join(address_info[0:-1]).strip(" ,.")
+    street_address = ", ".join(address_info[0:-1]).strip(" ,.")
 
     city_state_zip = (
         address_info[-1].replace(",", " ").replace(".", " ").replace("  ", " ").strip()
@@ -162,15 +164,18 @@ def fetch_data():
                         [
                             x.strip()
                             for x in store_sel.xpath(
-                                '//*[@itemprop="openingHours"]/../text()'
+                                '//div[@class="location-hours"]//text()'
                             )
                         ],
                     )
                 )
             )
-            hours_of_operation = hours_of_operation.replace(
-                "[By Appointment Only]", ""
-            ).strip()
+            hours_of_operation = (
+                hours_of_operation.replace("[By Appointment Only]", "")
+                .strip()
+                .replace("M-F,", "M-F")
+                .strip()
+            )
         else:
             hours_of_operation = "<MISSING>"
 
@@ -229,7 +234,17 @@ def fetch_data():
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.CITY,
+                    SgRecord.Headers.ZIP,
+                }
+            )
+        )
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
