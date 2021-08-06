@@ -37,7 +37,7 @@ def get_driver(url, class_name, driver=None):
     while True:
         x = x + 1
         try:
-            driver = SgChrome(user_agent=user_agent,is_headless=True).driver()
+            driver = SgChrome(user_agent=user_agent, is_headless=True).driver()
             driver.get(url)
 
             WebDriverWait(driver, 60).until(
