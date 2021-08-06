@@ -28,7 +28,6 @@ def get_driver(url, class_name, driver=None):
                 is_headless=True,
             ).driver()
             driver.get(url)
-
             WebDriverWait(driver, 20).until(
                 EC.presence_of_element_located((By.CLASS_NAME, class_name))
             )

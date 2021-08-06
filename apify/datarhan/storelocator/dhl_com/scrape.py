@@ -7,6 +7,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
+from sgscrape.pause_resume import CrawlStateSingleton
 
 
 @retry(stop=stop_after_attempt(3))
@@ -113,6 +114,7 @@ def fetch_data():
 
 
 def scrape():
+    CrawlStateSingleton.get_instance().save(override=True)
     with SgWriter(
         SgRecordDeduper(
             SgRecordID(
