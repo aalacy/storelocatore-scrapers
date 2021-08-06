@@ -3,10 +3,8 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgselenium import SgChrome
 from sgrequests import SgRequests
 import json
-from lxml import html
 import ssl
 
 
@@ -76,8 +74,8 @@ def fetch_data_for_23_child_brands_from_api_endpoints():
                     response = session.get(url, headers=headers_api, timeout=500)
                     break
                 except Exception as e:
-                    log.info("")
-                    log.info(e)
+                    logger.info("")
+                    logger.info(e)
                     if x == 10:
                         raise Exception(
                             "Make sure this ran with a Proxy, will fail without one"
