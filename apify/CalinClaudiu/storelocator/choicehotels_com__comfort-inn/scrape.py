@@ -8,6 +8,10 @@ from sgscrape.pause_resume import CrawlStateSingleton
 from sgrequests.sgrequests import SgRequests
 from sgzip.dynamic import SearchableCountries, DynamicGeoSearch
 
+from sglogging import sglog
+
+logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
+
 
 def fetch_records(http: SgRequests, search: DynamicGeoSearch) -> Iterable[SgRecord]:
     headers = {}
@@ -18,25 +22,31 @@ def fetch_records(http: SgRequests, search: DynamicGeoSearch) -> Iterable[SgReco
     headers["accept-language"] = "en-US,en;q=0.9"
     headers["cache-control"] = "no-cache"
     headers["pragma"] = "no-cache"
-    headers["sec-ch-ua-mobile"] = "?0"
-    headers["sec-fetch-dest"] = "document"
-    headers["sec-fetch-mode"] = "navigate"
-    headers["sec-fetch-site"] = "none"
-    headers["sec-fetch-user"] = "?1"
-    headers["upgrade-insecure-requests"] = "1"
     headers[
         "user-agent"
     ] = "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
     state = CrawlStateSingleton.get_instance()
+    maxZ = None
+    maxZ = search.items_remaining()
+    total = 0
     for lat, lng in search:
+        found = 0
         rec_count = state.get_misc_value(
             search.current_country(), default_factory=lambda: 0
         )
         state.set_misc_value(search.current_country(), rec_count + 1)
         url = str(
-            f"https://www.choicehotels.com/webapi/location/hotels?adults=1&checkInDate=3021-07-15&checkOutDate=3021-07-17&favorCoOpHotels=false&hotelSortOrder=&include=&lat={lat}&lon={lng}&minors=0&optimizeResponse=&placeName=&platformType=DESKTOP&preferredLocaleCode=en-us&ratePlanCode=RACK&ratePlans=RACK%2CPREPD%2CPROMO%2CFENCD&rateType=LOW_ALL&rooms=1&searchRadius=100&siteName=us&siteOpRelevanceSortMethod=ALGORITHM_B"
+            "https://www.choicehotels.com/webapi/location/hotels?adults=1&checkInDate=3021-07-15&checkOutDate=3021-07-16&favorCoOpHotels=false&hotelSortOrder=&include="
+            + f"&lat={lat}&lon={lng}"
+            + "&minors=0&optimizeResponse=&placeName=&platformType=DESKTOP&preferredLocaleCode=en-us&ratePlanCode=RACK&ratePlans=RACK%2CPREPD%2CPROMO%2CFENCD&rateType=LOW_ALL&rooms=1&searchRadius=100"
         )
-        locations = http.get(url, headers=headers).json()
+        try:
+            locations = http.get(url, headers=headers).json()
+            errorName = None
+        except Exception as e:
+            logzilla.error(f"{e}")
+            locations = {"hotelCount": 0}
+            errorName = str(e)
         if locations["hotelCount"] > 0:
             for record in locations["hotels"]:
                 try:
@@ -108,8 +118,9 @@ def fetch_records(http: SgRequests, search: DynamicGeoSearch) -> Iterable[SgReco
                         longitude=str(record["lon"]),
                         locator_domain="https://www.choicehotels.com/",
                         hours_of_operation=SgRecord.MISSING,
-                        raw_address=SgRecord.MISSING,
+                        raw_address=errorName if errorName else SgRecord.MISSING,
                     )
+                    found += 1
                 except KeyError:
                     yield SgRecord(
                         page_url=SgRecord.MISSING,
@@ -126,13 +137,21 @@ def fetch_records(http: SgRequests, search: DynamicGeoSearch) -> Iterable[SgReco
                         longitude=SgRecord.MISSING,
                         locator_domain=SgRecord.MISSING,
                         hours_of_operation=SgRecord.MISSING,
-                        raw_address=str(record),
+                        raw_address=errorName if errorName else str(record),
                     )
+                    found += 1
+                progress = (
+                    str(round(100 - (search.items_remaining() / maxZ * 100), 2)) + "%"
+                )
+                total += found
+                logzilla.info(
+                    f"{str(lat).replace('(','').replace(')','')}{str(lng).replace('(','').replace(')','')}|found: {found}|total: {total}|prog: {progress}|\nRemaining: {search.items_remaining()}"
+                )
 
 
 if __name__ == "__main__":
     search = DynamicGeoSearch(
-        country_codes=SearchableCountries.ALL, expected_search_radius_miles=100
+        country_codes=SearchableCountries.ALL, expected_search_radius_miles=50
     )
     with SgWriter(
         deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumberId)

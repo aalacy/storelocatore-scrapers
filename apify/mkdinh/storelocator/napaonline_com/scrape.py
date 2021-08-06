@@ -1,6 +1,5 @@
 import os
 import re
-import csv
 import json
 import threading
 from time import sleep
@@ -8,9 +7,12 @@ from random import randint
 from bs4 import BeautifulSoup as bs
 from datetime import datetime as dt
 from sglogging import SgLogSetup
+from sgscrape.sgrecord import SgRecord
 from sgselenium.sgselenium import SgChrome
 from concurrent.futures import ThreadPoolExecutor, as_completed
-
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 from tenacity import retry, stop_after_attempt
 
 logger = SgLogSetup().get_logger("napaonline_com")
@@ -22,9 +24,13 @@ local = threading.local()
 
 def get_driver():
     if not hasattr(local, "driver"):
-        local.driver = SgChrome(seleniumwire_auto_config=False).driver()
+        local.driver = SgChrome(
+            seleniumwire_auto_config=False, is_headless=True
+        ).driver()
+        local.driver.set_script_timeout(120)
         load_initial_page(local.driver)
 
+    sleep(randint(3, 5))
     return local.driver
 
 
@@ -75,7 +81,7 @@ class PageConfig:
 
     def get_tracking_id(self, store):
         # use the store_number as unique key
-        return f"{store[7]}".lower()
+        return store.store_number()
 
     def track_location(self, id):
         return self.dedup_tracker.append(id)
@@ -99,37 +105,13 @@ class PageConfig:
 
 
 def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-                "page_url",
-            ]
-        )
-        # Body
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         for row in data:
-            writer.writerow(row)
+            writer.write_row(row)
 
 
 def fetch(url, driver):
-    sleep(randint(2, 3))
+    sleep(randint(3, 5))
     return driver.execute_async_script(
         f"""
         var done = arguments[0]
@@ -232,30 +214,22 @@ def scrape_html(soup, page_url):
 
         store_number = scrape_store_number(soup) or get(details, "@id")
 
-        store = [
-            "napaonline.com",
-            location_name,
-            street_address,
-            city,
-            state,
-            zipp,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours.strip(),
-            page_url,
-        ]
-        store = [
-            str(x).encode("ascii", "ignore").decode("ascii").strip()
-            if x
-            else "<MISSING>"
-            for x in store
-        ]
-
-        return store
+        return SgRecord(
+            locator_domain="napaonline.com",
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=zipp,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=location_type,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours.strip(),
+            page_url=page_url,
+        )
     except Exception as e:
         logger.error(e)
 
@@ -342,6 +316,19 @@ def load_initial_page(driver):
     sleep(15)
 
 
+@retry(stop=stop_after_attempt(3), reraise=True)
+def get_state_urls(page, driver):
+    html = fetch(page.get_initial_page(), driver)
+    soup = bs(html, "lxml")
+
+    state_urls = page.get_state_links(soup)
+
+    if not len(state_urls):
+        raise Exception()
+
+    return state_urls
+
+
 def fetch_data():
     tracker = []
 
@@ -364,15 +351,13 @@ def fetch_data():
         dedup_tracker=tracker,
     )
 
-    with ThreadPoolExecutor() as executor, get_driver() as driver:
+    with ThreadPoolExecutor(max_workers=10) as executor, get_driver() as driver:
         for page in (near_me_config, stores_config):
             count = 0
             state_urls = []
             city_urls = []
-            html = fetch(page.get_initial_page(), driver)
-            soup = bs(html, "lxml")
 
-            state_urls = page.get_state_links(soup)
+            state_urls = get_state_urls(page, driver)
 
             futures = [
                 executor.submit(crawl_state_url, url, page) for url in state_urls
@@ -386,8 +371,6 @@ def fetch_data():
                     logger.info(
                         f"crawl_state_url with result {result} threw exception: {ex}"
                     )
-
-            logger.info(f"found {len(city_urls)} city urls")
 
             futures = [executor.submit(crawl_city_url, url, page) for url in city_urls]
 
