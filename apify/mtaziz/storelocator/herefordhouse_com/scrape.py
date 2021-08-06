@@ -4,8 +4,18 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgselenium import SgFirefox
+from sgselenium import SgChrome
 from lxml import html
+import ssl
+
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
 
 
 DOMAIN = "herefordhouse.com"
@@ -27,8 +37,8 @@ def fetch_data():
     all_locations = dom.xpath(
         '//div[@class="entry-content"]/div/div[@class="wpb_column vc_column_container vc_col-sm-3"]'
     )
-    with SgFirefox() as driver:
-        for idx, poi_html in enumerate(all_locations[0:]):
+    for idx, poi_html in enumerate(all_locations[0:]):
+        with SgChrome() as driver:
             page_url = poi_html.xpath(".//a/@href")[0]
             driver.get(page_url)
             driver.implicitly_wait(15)
@@ -37,8 +47,22 @@ def fetch_data():
             driver.switch_to.frame(iframe)
             logger.info("iframe Loaded!!")
             loc_dom = html.fromstring(driver.page_source, "lxml")
-            driver.switch_to.default_content()
-            logger.info("Switched back to default content!!")
+
+            # These 4 lines of codes are for testing purpose
+            google_map_data = loc_dom.xpath(
+                '//script[contains(text(), "onEmbedLoad")]/text()'
+            )
+            logger.info(f"\n[{page_url}] Google Map URL Data: \n{google_map_data}\n\n")
+            address_from_google_entity_details = (
+                "".join(google_map_data)
+                .split("GetEntityDetails")[-1]
+                .split("reviews")[0]
+                .split("[")[-1]
+                .split("]")
+            )
+            logger.info(
+                f"\n[{page_url}] Address from Goolge entity details: \n\n{address_from_google_entity_details}\n\n"
+            )
 
             location_name = "".join(loc_dom.xpath('//h1[@id="page-title"]/text()'))
             location_name = location_name if location_name else MISSING
@@ -60,9 +84,17 @@ def fetch_data():
             state = raw_address[-1].split(", ")[-1]
             state = state if state else MISSING
             logger.info(f"[{idx}] State: {state}")
+            zipString = loc_dom.xpath('//div[@class="address"]/text()')
+            logger.info(f"[{idx}] Zip String: {zipString}")
+            zip_postal = ""
+            try:
 
-            zip_postal = loc_dom.xpath('//div[@class="address"]/text()')[0].split()[-1]
-            zip_postal = zip_postal if zip_postal else MISSING
+                zip_postal = loc_dom.xpath('//div[@class="address"]/text()')[0].split()[
+                    -1
+                ]
+                zip_postal = zip_postal if zip_postal else MISSING
+            except:
+                zip_postal = MISSING
             logger.info(f"[{idx}] Zip Postal: {zip_postal}")
 
             country_code = "US"
