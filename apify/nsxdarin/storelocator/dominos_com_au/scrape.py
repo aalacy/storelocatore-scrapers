@@ -30,6 +30,7 @@ def fetch_data():
             )
             if lurl.count("/") == 4:
                 cities.append(lurl)
+                print(lurl)
     for cname in cities:
         r2 = session.get(cname, headers=headers)
         logger.info(cname)
@@ -72,21 +73,38 @@ def fetch_data():
                     if "<br/>" not in g:
                         g = next(lines)
                         g = str(g.decode("utf-8")).replace("<Br/>", "<br/>")
-                    add = (
-                        g.rsplit("<br/>", 1)[0]
-                        .strip()
-                        .replace("\t", "")
-                        .replace("<br/>", " ")
-                        .replace(",", "")
-                    )
-                    city = (
-                        g.rsplit("<br/>", 1)[0].rsplit("<br/>", 1)[1].rsplit(" ", 2)[0]
-                    )
-                    zc = g.rsplit("<br/>", 1)[0].rsplit("<br/>", 1)[1].rsplit(" ", 1)[1]
-                    state = (
-                        g.rsplit("<br/>", 1)[0].rsplit("<br/>", 1)[1].rsplit(" ", 2)[1]
-                    )
-                    add = add.split(city)[0].strip().replace("  ", " ")
+                    if "<br/>" not in g:
+                        g = next(lines)
+                        g = str(g.decode("utf-8")).replace("<Br/>", "<br/>")
+                    if "<br/>" not in g:
+                        g = next(lines)
+                        g = str(g.decode("utf-8")).replace("<Br/>", "<br/>")
+                    try:
+                        add = (
+                            g.rsplit("<br/>", 1)[0]
+                            .strip()
+                            .replace("\t", "")
+                            .replace("<br/>", " ")
+                            .replace(",", "")
+                        )
+                        city = (
+                            g.rsplit("<br/>", 1)[0]
+                            .rsplit("<br/>", 1)[1]
+                            .rsplit(" ", 2)[0]
+                        )
+                        zc = (
+                            g.rsplit("<br/>", 1)[0]
+                            .rsplit("<br/>", 1)[1]
+                            .rsplit(" ", 1)[1]
+                        )
+                        state = (
+                            g.rsplit("<br/>", 1)[0]
+                            .rsplit("<br/>", 1)[1]
+                            .rsplit(" ", 2)[1]
+                        )
+                        add = add.split(city)[0].strip().replace("  ", " ")
+                    except:
+                        add = "<MISSING>"
                 if (
                     '<a href="tel:' in line2
                     and "mobile" not in line2
@@ -107,22 +125,23 @@ def fetch_data():
                         hours = hrs
                     else:
                         hours = hours + "; " + hrs
-            yield SgRecord(
-                locator_domain=website,
-                page_url=loc,
-                location_name=name,
-                street_address=add,
-                city=city,
-                state=state,
-                zip_postal=zc,
-                country_code=country,
-                phone=phone,
-                location_type=typ,
-                store_number=store,
-                latitude=lat,
-                longitude=lng,
-                hours_of_operation=hours,
-            )
+            if add != "<MISSING>":
+                yield SgRecord(
+                    locator_domain=website,
+                    page_url=loc,
+                    location_name=name,
+                    street_address=add,
+                    city=city,
+                    state=state,
+                    zip_postal=zc,
+                    country_code=country,
+                    phone=phone,
+                    location_type=typ,
+                    store_number=store,
+                    latitude=lat,
+                    longitude=lng,
+                    hours_of_operation=hours,
+                )
 
 
 def scrape():
