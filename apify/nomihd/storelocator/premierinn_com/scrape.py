@@ -19,21 +19,26 @@ headers = {
 
 def fetch_data():
     # Your scraper here
-    search_url = "https://www.premierinn.com/gb/en/hotels/england.html"
-    counties_req = session.get(search_url, headers=headers)
-    counties_sel = lxml.html.fromstring(counties_req.text)
-    counties = counties_sel.xpath(
-        '//ul[@class="pi-list pi-list--icon   push-double--bottom  "]/li/a'
+    search_url = "https://www.premierinn.com/gb/en/hotels.html"
+    towns_req = session.get(search_url, headers=headers)
+    towns_sel = lxml.html.fromstring(towns_req.text)
+    towns = towns_sel.xpath(
+        '//h4[@class="font-size--base pi-hotel-directory__town block"]/a'
     )
 
-    for county in counties:
-        county_url = domain + "".join(county.xpath("@href")).strip()
+    for town in towns:
+        town_url = domain + "".join(town.xpath("@href")).strip()
+        temp_country = town_url.split("hotels/")[1].strip().split("/")[0].strip()
+        if "germany" in temp_country or "republic-of-ireland" in temp_country:
+            continue
 
-        county = "".join(county.xpath("text()")).strip()
+        county = "".join(town.xpath("text()")).strip()
 
-        stores_req = session.get(county_url, headers=headers)
+        stores_req = session.get(town_url, headers=headers)
         stores_sel = lxml.html.fromstring(stores_req.text)
-        stores = stores_sel.xpath('//article[@class="seo-hotel-card"]')
+        stores = stores_sel.xpath(
+            '//article[@class="seo-hotel-card" and @itemtype="http://schema.org/Hotel"]'
+        )
         for store in stores:
             store_url = "".join(store.xpath("a/@href")).strip()
             if store_url == "https://www.premierinn.com/gb/en/hotels.html":
@@ -43,9 +48,6 @@ def fetch_data():
                 location_name = "".join(
                     store.xpath('.//h3[@class="seo-hotel-card-title"]/text()')
                 ).strip()
-
-                if location_name == "":
-                    location_name = "<MISSING>"
 
                 address = "".join(
                     store.xpath('.//address[@itemprop="address"]/text()')
@@ -93,6 +95,7 @@ def fetch_data():
                 else:
                     page_url = store_url
 
+                log.info(page_url)
                 locator_domain = website
 
                 store_req = session.get(page_url, headers=headers)
@@ -110,8 +113,6 @@ def fetch_data():
                         '//h1[@class="hotel-title__heading hotel-details__title"]/text()'
                     )
                 ).strip()
-                if location_name == "":
-                    location_name = "<MISSING>"
 
                 street_address = "".join(
                     store_sel.xpath('//span[@itemprop="streetAddress"]/text()')
@@ -173,16 +174,13 @@ def fetch_data():
 
 def scrape():
     log.info("Started")
-    count = 0
     with SgWriter(
         deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
     ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
-            count = count + 1
 
-    log.info(f"No of records being processed: {count}")
     log.info("Finished")
 
 

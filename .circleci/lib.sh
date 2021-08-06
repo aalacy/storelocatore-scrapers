@@ -206,3 +206,18 @@ check_how_records_are_written_to_file() {
   fi
   return $exit_status
 }
+
+function check_dockerfile_base_image_is_latest() {
+  exit_status=0
+  updated_crawler="$(get_updated_crawler)"
+  if ! is_node_scraper "$updated_crawler" ; then
+    docker_path="${updated_crawler}/Dockerfile"
+    docker_src="$(cat "$docker_path")"
+    using_latest_image="$(grep_and_get_exit_code "$docker_src" 'FROM safegraph/apify-python3:latest')"
+    if [ "$using_latest_image" -ne 0 ]; then
+      echo "FAIL: Dockerfile should use latest base image: FROM safegraph/apify-python3:latest"
+      exit_status=1
+    fi
+    return $exit_status
+  fi
+}
