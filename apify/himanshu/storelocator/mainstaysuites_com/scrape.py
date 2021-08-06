@@ -119,7 +119,7 @@ def fetch_records(http: SgRequests, search: DynamicGeoSearch) -> Iterable[SgReco
                 state=SgRecord.MISSING,
                 zip_postal=SgRecord.MISSING,
                 country_code=SgRecord.MISSING,
-                store_number=random(),
+                store_number=random.random(),
                 phone=SgRecord.MISSING,
                 location_type=SgRecord.MISSING,
                 latitude=SgRecord.MISSING,
