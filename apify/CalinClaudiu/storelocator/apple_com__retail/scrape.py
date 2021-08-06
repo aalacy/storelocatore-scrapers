@@ -11,7 +11,6 @@ from typing import Iterable, Optional
 from ordered_set import OrderedSet
 import json
 
-
 logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
 
 
@@ -73,6 +72,28 @@ class CountryStack:
         return req
 
 
+def get_special(session, headers, special):
+    page = session.get(
+        "https://locate.apple.com{}".format(special["link"]), headers=headers
+    )
+    soup = b4(page.text, "lxml")
+    soup = soup.find_all("script", {"type": "text/javascript"})
+    theScript = None
+    for i in soup:
+        if "window.resourceLocator.setup = " in i.text:
+            theScript = i.text
+    theScript = json.loads(
+        str(theScript.split("window.resourceLocator.setup = ", 1)[1].split("};", 1)[0])
+        + "}"
+    )
+
+    for i in theScript["channels"]["service"]["countries"]:
+        name = i["value"]
+        link = str("/" + i["code"] + "/en/")
+        special = False
+        yield {"name": name, "link": link, "special": special}
+
+
 def get_Start(session, headers):
     page = session.get("https://locate.apple.com/findlocations", headers=headers)
     soup = b4(page.text, "lxml")
@@ -101,11 +122,26 @@ def get_Start(session, headers):
         state=None,
     )
     for item in data:
-        this.push_country(
-            SerializableCountry(
-                name=item["name"], link=item["link"], special=item["special"], retries=0
+        if item["special"]:
+            for special_item in get_special(session, headers, item):
+                this.push_country(
+                    SerializableCountry(
+                        name=special_item["name"],
+                        link=special_item["link"],
+                        special=special_item["special"],
+                        retries=0,
+                    )
+                )
+
+        else:
+            this.push_country(
+                SerializableCountry(
+                    name=item["name"],
+                    link=item["link"],
+                    special=item["special"],
+                    retries=0,
+                )
             )
-        )
     return this
 
 
@@ -164,8 +200,6 @@ def get_country(search, country, session, headers, SearchableCountry, state):
     maxZ = search.items_remaining()
     total = 0
     for Point in search:
-        if total > 50:
-            break
         found = 0
         try:
             for record in getPoint(Point, session, country.link, headers):
@@ -187,12 +221,13 @@ def get_country(search, country, session, headers, SearchableCountry, state):
 
         progress = str(round(100 - (search.items_remaining() / maxZ * 100), 2)) + "%"
         total += found
-        logzilla.info(
-            f"{str(Point).replace('(','').replace(')','')}|found: {found}|total: {total}|prog: {progress}|\nRemaining: {search.items_remaining()} Searchable: {SearchableCountry}"
-        )
+        # logzilla.info(
+        #    f"{str(Point).replace('(','').replace(')','')}|found: {found}|total: {total}|prog: {progress}|\nRemaining: {search.items_remaining()} Searchable: {SearchableCountry}"
+        # )
     if total == 0:
+        errorLink = f"https://locate.apple.com{country.link}\n{country.name}"
         logzilla.error(
-            f"Found a total of 0 results for country {country}\n this is unacceptable and possibly a country/search space mismatch\n Matched to: {SearchableCountry}"
+            f"Found a total of 0 results for country {country}\n this is unacceptable and possibly a country/search space mismatch\n Matched to: {SearchableCountry}\n{errorLink}"
         )
 
 
@@ -249,8 +284,11 @@ def fetch_data():
                             granularity=Grain_8(),
                         )
                     except Exception as e:
+                        errorLink = (
+                            f"https://locate.apple.com{country.link}\n{country.name}"
+                        )
                         logzilla.warning(
-                            f"Issue with sgzip and country code: {SearchableCountry}\n{e}"
+                            f"Issue with sgzip and country code: {SearchableCountry}\n{e}\n{errorLink}"
                         )
                     if search:
                         for record in get_country(
