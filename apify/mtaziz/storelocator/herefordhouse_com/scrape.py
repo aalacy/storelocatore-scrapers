@@ -47,8 +47,22 @@ def fetch_data():
             driver.switch_to.frame(iframe)
             logger.info("iframe Loaded!!")
             loc_dom = html.fromstring(driver.page_source, "lxml")
-            driver.switch_to.default_content()
-            logger.info("Switched back to default content!!")
+
+            # These 4 lines of codes are for testing purpose
+            google_map_data = loc_dom.xpath(
+                '//script[contains(text(), "onEmbedLoad")]/text()'
+            )
+            logger.info(f"\n[{page_url}] Google Map URL Data: \n{google_map_data}\n\n")
+            address_from_google_entity_details = (
+                "".join(google_map_data)
+                .split("GetEntityDetails")[-1]
+                .split("reviews")[0]
+                .split("[")[-1]
+                .split("]")
+            )
+            logger.info(
+                f"\n[{page_url}] Address from Goolge entity details: \n\n{address_from_google_entity_details}\n\n"
+            )
 
             location_name = "".join(loc_dom.xpath('//h1[@id="page-title"]/text()'))
             location_name = location_name if location_name else MISSING
@@ -71,9 +85,16 @@ def fetch_data():
             state = state if state else MISSING
             logger.info(f"[{idx}] State: {state}")
             zipString = loc_dom.xpath('//div[@class="address"]/text()')
-            logger.info(f"{zipString}")
-            zip_postal = loc_dom.xpath('//div[@class="address"]/text()')[0].split()[-1]
-            zip_postal = zip_postal if zip_postal else MISSING
+            logger.info(f"[{idx}] Zip String: {zipString}")
+            zip_postal = ""
+            try:
+
+                zip_postal = loc_dom.xpath('//div[@class="address"]/text()')[0].split()[
+                    -1
+                ]
+                zip_postal = zip_postal if zip_postal else MISSING
+            except:
+                zip_postal = MISSING
             logger.info(f"[{idx}] Zip Postal: {zip_postal}")
 
             country_code = "US"
