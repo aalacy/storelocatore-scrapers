@@ -221,9 +221,9 @@ def get_country(search, country, session, headers, SearchableCountry, state):
 
         progress = str(round(100 - (search.items_remaining() / maxZ * 100), 2)) + "%"
         total += found
-        # logzilla.info(
-        #    f"{str(Point).replace('(','').replace(')','')}|found: {found}|total: {total}|prog: {progress}|\nRemaining: {search.items_remaining()} Searchable: {SearchableCountry}"
-        # )
+        logzilla.info(
+            f"{str(Point).replace('(','').replace(')','')}|found: {found}|total: {total}|prog: {progress}|\nRemaining: {search.items_remaining()} Searchable: {SearchableCountry}"
+        )
     if total == 0:
         errorLink = f"https://locate.apple.com{country.link}\n{country.name}"
         logzilla.error(
