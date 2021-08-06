@@ -7,8 +7,8 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgpostal.sgpostal import parse_address_intl
 
 
-DOMAIN = "gpminvestments.com/rstore"
-logger = SgLogSetup().get_logger("gpminvestments_com__rstore")
+DOMAIN = "gpminvestments.com/admiral"
+logger = SgLogSetup().get_logger("gpminvestments_com__admiral")
 MISSING = SgRecord.MISSING
 INACCESSIBLE = "<INACCESSIBLE>"
 
