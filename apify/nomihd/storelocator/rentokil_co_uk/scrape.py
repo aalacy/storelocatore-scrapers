@@ -32,14 +32,14 @@ def fetch_data():
     search_url = "https://www.rentokil.co.uk/property-care/branches/"
     stores_req = session.get(search_url, headers=headers)
     log.info("first_requst successfull")
-    stores_sel = lxml.html.fromstring(driver.page_source)
+    stores_sel = lxml.html.fromstring(stores_req.text)
     stores = stores_sel.xpath('//a[@class="link-list-module_link"]/@href')
     for store_url in stores:
         page_url = "https://www.rentokil.co.uk/property-care" + store_url
 
         log.info(page_url)
         store_req = session.get(page_url, headers=headers)
-        store_sel = lxml.html.fromstring(driver.page_source)
+        store_sel = lxml.html.fromstring(store_req.text)
 
         locator_domain = website
         location_name = "".join(
