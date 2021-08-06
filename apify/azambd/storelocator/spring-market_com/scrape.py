@@ -6,6 +6,10 @@ from sgselenium.sgselenium import SgChrome
 from webdriver_manager.chrome import ChromeDriverManager
 import pandas as pd
 
+import ssl
+
+ssl._create_default_https_context = ssl._create_unverified_context
+
 locator_domains = []
 page_urls = []
 location_names = []
@@ -33,14 +37,10 @@ def get_driver(url, class_name, driver=None):
     while True:
         x = x + 1
         try:
-            driver = SgChrome(
-                executable_path=ChromeDriverManager().install(),
-                user_agent=user_agent,
-                is_headless=True,
-            ).driver()
+            driver = SgChrome(user_agent=user_agent,is_headless=True).driver()
             driver.get(url)
 
-            WebDriverWait(driver, 30).until(
+            WebDriverWait(driver, 60).until(
                 EC.presence_of_element_located((By.CLASS_NAME, class_name))
             )
             break
@@ -57,8 +57,8 @@ def get_driver(url, class_name, driver=None):
 x = 0
 while True:
     x = x + 1
-    class_name = "store-preview__info"
-    url = "https://www.spring-market.com/stores/?coordinates=36.01301919805139,-124.22992541516308&zoom=1"
+    class_name = "store-list__select-store-text"
+    url = "https://www.spring-market.com/stores/?coordinates=36.01301919805139,-124.22992541516308&zoom=7"
     if x == 1:
         driver = get_driver(url, class_name)
     else:
