@@ -70,7 +70,7 @@ def fetch_data():
             store_sel.xpath('//input[@id="locationPageLat"]/@value')
         ).strip()
         longitude = "".join(
-            store_sel.xpath('//input[@id="locationPageLat"]/@value')
+            store_sel.xpath('//input[@id="locationPageLng"]/@value')
         ).strip()
 
         yield SgRecord(

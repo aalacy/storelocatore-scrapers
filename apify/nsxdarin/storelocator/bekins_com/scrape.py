@@ -75,6 +75,10 @@ def fetch_data():
                         city = h.split(",")[2].strip()
                         state = h.split(",")[3].strip().split(" ")[0]
                         zc = h.split(",")[3].split("<")[0].rsplit(" ", 1)[1]
+                if '<a class="contact-link contact-phone" href="tel:' in line2:
+                    phone = line2.split(
+                        '<a class="contact-link contact-phone" href="tel:'
+                    )[1].split('"')[0]
                 if "Phone:" in line2 and 'href="tel:' in line2:
                     phone = line2.split('href="tel:')[1].split('"')[0].replace("/", "")
                 if 'contact-link contact-phone" href="tel:' in line2:
