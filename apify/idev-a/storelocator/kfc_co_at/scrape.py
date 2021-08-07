@@ -30,7 +30,7 @@ def fetch_data():
             yield SgRecord(
                 page_url=_["permalink"],
                 location_name=bs(_["title"], "lxml").text.strip(),
-                street_address=_["street"],
+                street_address=" ".join(bs(_["street"], "lxml").stripped_strings),
                 city=_["city"],
                 zip_postal=_["zipcode"],
                 latitude=_["latitude"],
