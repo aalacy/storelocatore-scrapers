@@ -45,6 +45,7 @@ def fetch_data():
                 longitude=_["longitude"],
                 country_code="USA",
                 phone=_["telephone"],
+                location_type="covington-credit",
                 locator_domain=locator_domain,
                 hours_of_operation="; ".join(hours),
                 raw_address=_["address"],
