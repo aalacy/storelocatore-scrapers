@@ -21,7 +21,7 @@ def fetch_data(sgw: SgWriter):
     main = BeautifulSoup(req.text, "lxml")
 
     stores = main.tbody.find_all("tr")
-    all_store_data = []
+
     for store in stores:
         cont = store.find_all("td")
         city = cont[0].text.strip()
