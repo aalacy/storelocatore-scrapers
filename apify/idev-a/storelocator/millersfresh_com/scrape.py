@@ -38,7 +38,7 @@ def fetch_data():
             hours = []
             _hr = sp1.find("dt", string=re.compile(r"Hours of Operation"))
             if _hr:
-                hours = _hr.find_next_sibling().text.replace(",", ";")
+                hours = _hr.find_next_sibling().stripped_strings
             yield SgRecord(
                 page_url=page_url,
                 location_name=td[0].strong.text.strip(),
@@ -51,7 +51,10 @@ def fetch_data():
                 country_code="US",
                 phone=td[2].text.strip(),
                 locator_domain=locator_domain,
-                hours_of_operation=hours.replace("–", "-").replace("•", ";"),
+                hours_of_operation="; ".join(hours)
+                .replace(",", ";")
+                .replace("–", "-")
+                .replace("•", ";"),
             )
 
 
