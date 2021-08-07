@@ -70,6 +70,8 @@ def fetch_data():
                     break
                 page += 1
                 for loc in locations:
+                    if "COMING  SOON" in loc.text:
+                        continue
                     page_url = locator_domain + loc.a["href"]
                     logger.info(page_url)
                     if "contact.php" in page_url:

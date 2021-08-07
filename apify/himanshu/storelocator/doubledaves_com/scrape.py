@@ -32,6 +32,7 @@ def fetch_data():
         main1 = soup1.find("div", {"class": "location-grid"}).find_all(
             "a", text="Website"
         )
+
         for weblink in main1:
             r2 = session.get(base_url + weblink["href"])
             page_url = base_url + weblink["href"]
@@ -39,15 +40,14 @@ def fetch_data():
             if "Coming soon" in r2.text:
                 continue
             soup2 = BeautifulSoup(r2.text, "lxml")
-            store_number = r2.text.split("store['id'] = ")[1].split(";")[0]
-            latitude = r2.text.split("store['latitude'] = ")[1].split(";")[0]
-            longitude = r2.text.split("store['longitude'] = ")[1].split(";")[0]
+            temp = r2.text.split(weblink["href"])[-1].split("locations.push(store);")[0]
+            store_number = temp.split("store['id'] = ")[1].split(";")[0]
+            latitude = temp.split("store['latitude'] = ")[1].split(";")[0]
+            longitude = temp.split("store['longitude'] = ")[1].split(";")[0]
             location_name = (
                 soup2.find("div", {"class": "page-heading"}).find("h1").text.strip()
             )
             main2 = soup2.find("div", {"class": "location-hours"}).find_all("p")
-            if "Coming soon" in r2.text:
-                continue
             if len(main2) == 2:
                 loc_address = list(main2[1].stripped_strings)
                 phone = main2[0].text.strip().replace("- ", "")

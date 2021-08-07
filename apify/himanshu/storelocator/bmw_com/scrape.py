@@ -62,7 +62,7 @@ def fetch_data(sgw: SgWriter):
             if not phone:
                 phone = "<MISSING>"
             lat = value["lat"]
-            lng = value["lat"]
+            lng = value["lng"]
             store_number = value["attributes"]["distributionPartnerId"]
             link = value["attributes"]["homepage"]
             if not link:
