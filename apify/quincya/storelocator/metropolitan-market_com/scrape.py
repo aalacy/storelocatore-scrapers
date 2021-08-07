@@ -75,7 +75,6 @@ def fetch_data(sgw: SgWriter):
             longitude = latitude[latitude.rfind(",") + 1 :].strip()
             latitude = latitude[latitude.rfind("=") + 1 : latitude.rfind(",")].strip()
 
-        print(longitude)
         hours = (
             str(base.findAll("div", attrs={"class": "section_col_content"})[1])
             .replace("<p>", "")
