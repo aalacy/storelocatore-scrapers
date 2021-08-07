@@ -12,7 +12,7 @@ headers = {
 
 search = DynamicZipSearch(
     country_codes=[SearchableCountries.USA],
-    max_radius_miles=None,
+    expected_search_radius_miles=None,
     max_search_results=50,
 )
 
@@ -177,7 +177,10 @@ def scrape():
             is_required=False,
         ),
         location_type=sp.MappingField(
-            mapping=["storeType", "displayName"],
+            mapping=["featuredServices"],
+            value_transform=lambda x: "Fuel"
+            if any(i in str(x) for i in ["FUEL", "GAS"])
+            else "<MISSING>",
             part_of_record_identity=True,
         ),
         raw_address=sp.MissingField(),

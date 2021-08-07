@@ -7,16 +7,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup as b4
 from sgscrape.pause_resume import CrawlStateSingleton, CrawlState
 from dataclasses import asdict, dataclass
-from typing import Iterable, Optional, List
+from typing import Iterable, Optional
 from ordered_set import OrderedSet
 import json
 
-
 logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
-known_empties = set()
-known_empties.add("xxxxxxx")
-
-errorz: List[str] = []
 
 
 @dataclass(frozen=False)
@@ -77,6 +72,28 @@ class CountryStack:
         return req
 
 
+def get_special(session, headers, special):
+    page = session.get(
+        "https://locate.apple.com{}".format(special["link"]), headers=headers
+    )
+    soup = b4(page.text, "lxml")
+    soup = soup.find_all("script", {"type": "text/javascript"})
+    theScript = None
+    for i in soup:
+        if "window.resourceLocator.setup = " in i.text:
+            theScript = i.text
+    theScript = json.loads(
+        str(theScript.split("window.resourceLocator.setup = ", 1)[1].split("};", 1)[0])
+        + "}"
+    )
+
+    for i in theScript["channels"]["service"]["countries"]:
+        name = i["value"]
+        link = str("/" + i["code"] + "/en/")
+        special = False
+        yield {"name": name, "link": link, "special": special}
+
+
 def get_Start(session, headers):
     page = session.get("https://locate.apple.com/findlocations", headers=headers)
     soup = b4(page.text, "lxml")
@@ -105,11 +122,26 @@ def get_Start(session, headers):
         state=None,
     )
     for item in data:
-        this.push_country(
-            SerializableCountry(
-                name=item["name"], link=item["link"], special=item["special"], retries=0
+        if item["special"]:
+            for special_item in get_special(session, headers, item):
+                this.push_country(
+                    SerializableCountry(
+                        name=special_item["name"],
+                        link=special_item["link"],
+                        special=special_item["special"],
+                        retries=0,
+                    )
+                )
+
+        else:
+            this.push_country(
+                SerializableCountry(
+                    name=item["name"],
+                    link=item["link"],
+                    special=item["special"],
+                    retries=0,
+                )
             )
-        )
     return this
 
 
@@ -131,27 +163,7 @@ def determine_country(country):
 
 
 def get_country(search, country, session, headers, SearchableCountry, state):
-    global errorz
-    errorzCopy = []
-    if errorz:
-        if len(errorz) != 0:
-            errorzCopy = errorz
-        try:
-            errorz = state.get_misc_value("errorz")
-        except Exception as e:
-            logzilla.warning("Something happened along the lines of", exc_info=e)
-        if errorz and errorzCopy:
-            errorz = errorz + errorzCopy
-            state.set_misc_value("errorz", errorz)
-            state.save(override=True)
-        else:
-            if not errorz:
-                if errorzCopy:
-                    state.set_misc_value("errorz", errorzCopy)
-                    state.save(override=True)
-
     def getPoint(point, session, locale, headers):
-        global errorz
         if locale[-1] != "/":
             locale = locale + "/"
         url = "https://locate.apple.com{locale}sales/?pt=all&lat={lat}&lon={lon}&address=".format(
@@ -176,7 +188,7 @@ def get_country(search, country, session, headers, SearchableCountry, state):
             return locs["results"]
         except Exception as e:
             try:
-                errorz.append(
+                logzilla.error(
                     str(
                         f"had some issues with this country and point  {country}\n{point}{url} \n Matched to: {SearchableCountry}\nIssue was\n{str(e)}"
                     )
@@ -213,42 +225,16 @@ def get_country(search, country, session, headers, SearchableCountry, state):
             f"{str(Point).replace('(','').replace(')','')}|found: {found}|total: {total}|prog: {progress}|\nRemaining: {search.items_remaining()} Searchable: {SearchableCountry}"
         )
     if total == 0:
+        errorLink = f"https://locate.apple.com{country.link}\n{country.name}"
         logzilla.error(
-            f"Found a total of 0 results for country {country}\n this is unacceptable and possibly a country/search space mismatch\n Matched to: {SearchableCountry}"
+            f"Found a total of 0 results for country {country}\n this is unacceptable and possibly a country/search space mismatch\n Matched to: {SearchableCountry}\n{errorLink}"
         )
-        if SearchableCountry not in known_empties:
-            errorzCopy = []
-            if errorz:
-                if len(errorz) != 0:
-                    errorzCopy = errorz
-                try:
-                    errorz = state.get_misc_value("errorz")
-                except Exception as e:
-                    logzilla.warning(
-                        "Something happened along the lines of", exc_info=e
-                    )
-                if errorz and errorzCopy:
-                    errorz = errorz + errorzCopy
-                    state.set_misc_value("errorz", errorz)
-                    state.save(override=True)
-                else:
-                    if not errorz:
-                        if errorzCopy:
-                            state.set_misc_value("errorz", errorzCopy)
-                            state.save(override=True)
-            try:
-                errorz.append(
-                    str(
-                        f"Found a total of 0 results for country {country}\n this is unacceptable and possibly a country/search space mismatch\n Matched to: {SearchableCountry}"
-                    )
-                )
-            except Exception:
-                pass
+
+
+state = CrawlStateSingleton.get_instance()
 
 
 def fetch_data():
-    global errorz
-    state = CrawlStateSingleton.get_instance()
     headers = {
         "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
     }
@@ -271,23 +257,6 @@ def fetch_data():
             state.set_misc_value(key="countries", value=countries.serialize_requests())
             state.set_misc_value(key="SearchableCountry", value=None)
             state.save(override=True)
-        errorzCopy = []
-        if len(errorz) != 0:
-            errorzCopy = errorz
-        try:
-            errorz = state.get_misc_value("errorz")
-        except Exception as e:
-            logzilla.warning("Something happened along the lines of", exc_info=e)
-        if errorz and errorzCopy:
-            errorz = errorz + errorzCopy
-            state.set_misc_value("errorz", errorz)
-            state.save(override=True)
-        else:
-            if not errorz:
-                if errorzCopy:
-                    state.set_misc_value("errorz", errorzCopy)
-                    state.save(override=True)
-
         country = countries.pop_country()
         while country:
             if country.special:
@@ -310,13 +279,16 @@ def fetch_data():
                     try:
                         search = DynamicGeoSearch(
                             country_codes=[SearchableCountry],
-                            expected_search_radius_miles=500,  # Must turn it back down to 50 after testing
+                            expected_search_radius_miles=50,  # Must turn it back down to 50 after testing
                             max_search_results=None,
                             granularity=Grain_8(),
                         )
                     except Exception as e:
+                        errorLink = (
+                            f"https://locate.apple.com{country.link}\n{country.name}"
+                        )
                         logzilla.warning(
-                            f"Issue with sgzip and country code: {SearchableCountry}\n{e}"
+                            f"Issue with sgzip and country code: {SearchableCountry}\n{e}\n{errorLink}"
                         )
                     if search:
                         for record in get_country(
@@ -404,7 +376,10 @@ def scrape():
             is_required=False,
         ),
         hours_of_operation=sp.MissingField(),
-        location_type=sp.MissingField(),
+        location_type=sp.MappingField(
+            mapping=["storeURL"],
+            is_required=False,
+        ),
         raw_address=sp.MultiMappingField(
             mapping=[["locationData", "district"], ["locationData", "regionName"]],
             multi_mapping_concat_with=", ",
@@ -425,7 +400,3 @@ def scrape():
 
 if __name__ == "__main__":
     scrape()
-    global errorz
-    for i in errorz:
-        logzilla.warning(i)
-    raise
