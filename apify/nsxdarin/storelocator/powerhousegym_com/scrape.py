@@ -103,6 +103,20 @@ def fetch_data():
                     zc = add.rsplit(" ", 1)[1]
                 if "," in add:
                     add = add.split(",")[0].strip()
+                if "aldergrove-bc" in loc:
+                    country = "CA"
+                    zc = "V4W 2X3"
+                    state = "BC"
+                    city = "Aldergrove"
+                if "west-bloomfield" in loc:
+                    zc = "48323"
+                if "/syracuse" in loc:
+                    zc = "<MISSING>"
+                if "locations/aurora" in loc:
+                    zc = "80014"
+                add = add.replace(zc, "").strip()
+                citystring = " " + city
+                add = add.replace(citystring, "").strip()
                 yield SgRecord(
                     locator_domain=website,
                     page_url=loc,

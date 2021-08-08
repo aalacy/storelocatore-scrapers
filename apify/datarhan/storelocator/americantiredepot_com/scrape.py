@@ -3,10 +3,12 @@ from lxml import etree
 from urllib.parse import urljoin
 
 from sgselenium import SgChrome
+from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
+from sgscrape.sgpostal import parse_address_intl
 
 try:
     _create_unverified_https_context = (
@@ -20,6 +22,7 @@ else:
 
 def fetch_data():
     # Your scraper here
+    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
     domain = "americantiredepot.com"
     start_url = "https://americantiredepot.com/search/store/locations"
 
@@ -38,22 +41,29 @@ def fetch_data():
             city = city[:-2]
         address_raw = poi_html.xpath('.//p[i[@class="fa fa-map-marker-alt"]]//text()')
         address_raw = [elem.strip() for elem in address_raw if elem.strip()]
-        street_address = address_raw[0]
-        street_address = " ".join(
-            [elem.capitalize() for elem in street_address.split()]
-        )
-        words = street_address.split()
-        street_address = " ".join(sorted(set(words), key=words.index))
-        if street_address.endswith(city):
-            street_address = street_address.replace(city, "")
-        state = address_raw[-1].split()[0]
-        zip_code = address_raw[-1].split()[-1]
+        addr = parse_address_intl(" ".join(address_raw))
+        street_address = addr.street_address_1
+        if addr.street_address_2:
+            street_address += " " + addr.street_address_2
+        state = addr.state
+        zip_code = addr.postcode
         phone = poi_html.xpath('.//p[i[@class="fa fa-phone-alt"]]/text()')
         phone = phone[0].strip() if phone else "<MISSING>"
         location_type = "<MISSING>"
         if "Coming Soon" in city:
             city = city.split("-")[0].strip()
             location_type = "Coming Soon"
+
+        loc_response = session.get(store_url)
+        loc_dom = etree.HTML(loc_response.text)
+        geo = (
+            loc_dom.xpath(
+                '//div[@class="col-md-6 col-sm-6 store-map-box"]/iframe/@src'
+            )[0]
+            .split("!2d")[-1]
+            .split("!2m")[0]
+            .split("!3d")
+        )
         hours_of_operation = poi_html.xpath(
             './/table[@class="tbl-store-hours mt-2"]//text()'
         )
@@ -73,11 +83,11 @@ def fetch_data():
             state=state,
             zip_postal=zip_code,
             country_code=SgRecord.MISSING,
-            store_number=SgRecord.MISSING,
+            store_number=store_url.split("=")[-1],
             phone=phone,
             location_type=location_type,
-            latitude=SgRecord.MISSING,
-            longitude=SgRecord.MISSING,
+            latitude=geo[-1],
+            longitude=geo[0],
             hours_of_operation=hours_of_operation,
         )
 
