@@ -21,25 +21,27 @@ headers = {
 DOMAIN = "https://www.snipes.com/"
 MISSING = SgRecord.MISSING
 
+
 def strip_accents(text):
-    
-    text = unicodedata.normalize('NFD', text)\
-           .encode('ascii', 'ignore')\
-           .decode("utf-8")
+
+    text = unicodedata.normalize("NFD", text).encode("ascii", "ignore").decode("utf-8")
 
     return str(text)
+
 
 def fetch_data():
     if True:
         url = "https://www.snipes.com/storefinder"
         r = session.get(url, headers=headers)
-        country_list = r.text.split('data-template-attrs="')[1].split('" data-is-dialog-link')[0]
+        country_list = r.text.split('data-template-attrs="')[1].split(
+            '" data-is-dialog-link'
+        )[0]
         country_list = country_list.split("url&quot;:&quot;")[1:]
         log.info("Fetching each country's Store Locator...")
         linklist = []
         for country in country_list:
             country = country.split("&quot;")[0]
-            country = "https://"+country+"/storefinder"
+            country = "https://" + country + "/storefinder"
             if "usa" in country:
                 continue
             if country in linklist:
@@ -47,58 +49,84 @@ def fetch_data():
             linklist.append(country)
         for link in linklist:
             r = session.get(link, headers=headers)
-            country_code = r.text.split("countryName&quot;:&quot;")[-1].split("&quot;,&quot;")[0]
+            country_code = r.text.split("countryName&quot;:&quot;")[-1].split(
+                "&quot;,&quot;"
+            )[0]
             log.info(f"Fetching {country_code} Stores from {link}")
-            loclist = r.text.split('data-locations="')[1].split('data-icon=')[0].replace('}]"',"}]")
+            loclist = (
+                r.text.split('data-locations="')[1]
+                .split("data-icon=")[0]
+                .replace('}]"', "}]")
+            )
             loclist = BeautifulSoup(loclist, "html.parser")
             loclist = json.loads(str(loclist))
             for loc in loclist:
-                store_number = loc['id']
-                page_url ="https://www.snipes.com/storedetails?sid="+store_number
-                location_name = loc['name']+" Store"
-                latitude = loc['latitude']
-                longitude = loc['longitude']
-                loc = loc['infoWindowHtml']
-                loc = loc.replace("&lt;","<").replace("&gt;",">").replace("\n","").strip()
+                store_number = loc["id"]
+                page_url = "https://www.snipes.com/storedetails?sid=" + store_number
+                location_name = loc["name"] + " Store"
+                latitude = loc["latitude"]
+                longitude = loc["longitude"]
+                loc = loc["infoWindowHtml"]
+                loc = (
+                    loc.replace("&lt;", "<")
+                    .replace("&gt;", ">")
+                    .replace("\n", "")
+                    .strip()
+                )
                 soup = BeautifulSoup(loc, "html.parser")
-                address = soup.findAll("div", {"class": "b-store-locator-result-address-section"})
+                address = soup.findAll(
+                    "div", {"class": "b-store-locator-result-address-section"}
+                )
                 address = " ".join(x.text for x in address)
                 address = strip_accents(address)
                 raw_address = html.unescape(address)
                 formatted_addr = parse_address_intl(raw_address)
                 street_address = formatted_addr.street_address_1
                 if street_address is None:
-                    street_address = formatted_addr.street_address_2 
+                    street_address = formatted_addr.street_address_2
                 if formatted_addr.street_address_2:
-                    street_address = street_address + ", " + formatted_addr.street_address_2 
-                
+                    street_address = (
+                        street_address + ", " + formatted_addr.street_address_2
+                    )
+
                 city = formatted_addr.city if formatted_addr.city else SgRecord.MISSING
-                state = formatted_addr.state if formatted_addr.state else SgRecord.MISSING
+                state = (
+                    formatted_addr.state if formatted_addr.state else SgRecord.MISSING
+                )
                 zip_postal = formatted_addr.postcode
                 zip_postal = zip_postal.strip() if zip_postal else SgRecord.MISSING
                 log.info(f"{address}")
                 try:
-                    phone = soup.select_one("a[href*=tel]")['href'].replace("tel:","")
+                    phone = soup.select_one("a[href*=tel]")["href"].replace("tel:", "")
                 except:
                     phone = MISSING
-                hours_of_operation = soup.find("div", {"class": "b-store-locator-store-hours b-store-map-view-section"}).get_text(separator='|', strip=True).replace('|'," ")                
-                yield SgRecord(
-                        locator_domain=DOMAIN,
-                        page_url=page_url,
-                        location_name=location_name,
-                        street_address=street_address.strip(),
-                        city=city.strip(),
-                        state=state.strip(),
-                        zip_postal=zip_postal.strip(),
-                        country_code=country_code,
-                        store_number=store_number,
-                        phone=phone.strip(),
-                        location_type=MISSING,
-                        latitude=latitude,
-                        longitude=longitude,
-                        hours_of_operation=hours_of_operation.strip(),
-                        raw_address = raw_address
+                hours_of_operation = (
+                    soup.find(
+                        "div",
+                        {
+                            "class": "b-store-locator-store-hours b-store-map-view-section"
+                        },
                     )
+                    .get_text(separator="|", strip=True)
+                    .replace("|", " ")
+                )
+                yield SgRecord(
+                    locator_domain=DOMAIN,
+                    page_url=page_url,
+                    location_name=location_name,
+                    street_address=street_address.strip(),
+                    city=city.strip(),
+                    state=state.strip(),
+                    zip_postal=zip_postal.strip(),
+                    country_code=country_code,
+                    store_number=store_number,
+                    phone=phone.strip(),
+                    location_type=MISSING,
+                    latitude=latitude,
+                    longitude=longitude,
+                    hours_of_operation=hours_of_operation.strip(),
+                    raw_address=raw_address,
+                )
 
 
 def scrape():
@@ -107,7 +135,7 @@ def scrape():
     with SgWriter(
         deduper=SgRecordDeduper(record_id=RecommendedRecordIds.GeoSpatialId)
     ) as writer:
-        results =  fetch_data()
+        results = fetch_data()
         for rec in results:
             writer.write_row(rec)
             count = count + 1
