@@ -1,9 +1,22 @@
-from sgzip.dynamic import DynamicZipSearch, SearchableCountries
+from sgzip.dynamic import DynamicZipSearch, SearchableCountries, Grain_8
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 import json
+import ssl
+
+
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
 
 
 logger = SgLogSetup().get_logger("dollartree_com")
@@ -15,20 +28,27 @@ headers = {
 }
 
 DOMAIN = "dollartree.com"
-MISSING = "<MISSING>"
-session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
+MISSING = SgRecord.MISSING
+session = SgRequests().requests_retry_session(retries=10, backoff_factor=0.3)
+
+
+# It is noted that when expected search radius miles is set to 100 miles along with granualrity ( Grain_8 ) -
+# it returns 7915 records.
+# It is also observed that with 100 miles radius, it returns 7915 records.
+# Multiple times, it was tested with different settings and it max. returns 7915 records.
 
 
 search = DynamicZipSearch(
     country_codes=[SearchableCountries.CANADA, SearchableCountries.USA],
-    max_radius_miles=200,
-    max_search_results=None,
+    expected_search_radius_miles=200,
+    max_search_results=1000,
+    use_state=True,
+    granularity=Grain_8(),
 )
 
 
 def fetch_data():
     # Your scraper here
-    s = set()
     total = 0
     maxZ = search.items_remaining()
     location_url_state_city_with_hyphen_clientkey_part1_us = (
@@ -69,6 +89,7 @@ def fetch_data():
 
             # City
             city = poi["city"]
+
             # City name will be used to form the Page URL
             city_url = city.replace(" ", "-").lower()
             city = city if city else MISSING
@@ -119,9 +140,6 @@ def fetch_data():
             else:
                 page_url = MISSING
 
-            if store_number in s:
-                continue
-            s.add(store_number)
             yield SgRecord(
                 locator_domain=locator_domain,
                 page_url=page_url,
@@ -148,7 +166,9 @@ def fetch_data():
 def scrape():
     logger.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumberId)
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

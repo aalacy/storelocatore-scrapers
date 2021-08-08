@@ -19,7 +19,7 @@ def get_hours(hours) -> str:
 
 
 def fetch_data(sgw: SgWriter):
-    search = static_coordinate_list(radius=50, country_code=SearchableCountries.USA)
+    search = static_coordinate_list(radius=30, country_code=SearchableCountries.USA)
     for lat, long in search:
 
         headers = {
@@ -42,7 +42,7 @@ def fetch_data(sgw: SgWriter):
         session = SgRequests()
 
         r = session.get(
-            f"https://nomnom-prod-api.citybbq.com/restaurants/near?lat={lat}&long={long}&radius=20000&limit=6&nomnom=calendars&nomnom_calendars_from=20210724&nomnom_calendars_to=20210801&nomnom_exclude_extref=999",
+            f"https://nomnom-prod-api.citybbq.com/restaurants/near?lat={lat}&long={long}&radius=20000&limit=100&nomnom=calendars&nomnom_calendars_from=20210724&nomnom_calendars_to=20210801&nomnom_exclude_extref=999",
             headers=headers,
         )
         js = r.json()["restaurants"]
@@ -68,7 +68,7 @@ def fetch_data(sgw: SgWriter):
                 hours = "<MISSING>"
             if hours != "<MISSING>":
                 hours_of_operation = str(get_hours(hours))
-            line = location_name
+            line = latitude
             if line in s:
                 continue
             s.add(line)
