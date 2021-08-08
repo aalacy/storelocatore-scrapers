@@ -87,7 +87,7 @@ def scrape():
     ) as writer:
         results = fetch_data()
         for rec in results:
-            writer.writerow(rec)
+            writer.write_row(rec)
 
 
 if __name__ == "__main__":
