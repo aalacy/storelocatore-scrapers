@@ -1,3 +1,5 @@
+import demjson
+
 from sgrequests import SgRequests
 from sgzip.static import static_coordinate_list, SearchableCountries
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -21,7 +23,10 @@ def fetch_latlng(lat, lng, country, session, tracker):
         "language": "eng",
         "key": "963d867f-48b8-4f36-823d-88f311d9f6ef",
     }
-    data = session.get(url, params=params).json()
+    response = session.get(url, params=params)
+    if response.status_code != 200:
+        return []
+    data = demjson.decode(response.text)
     if not data.get("servicePoints"):
         return []
 
