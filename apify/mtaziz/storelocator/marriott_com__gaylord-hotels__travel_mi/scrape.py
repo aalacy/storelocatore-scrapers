@@ -99,10 +99,7 @@ def get__regions_submit_search_urls():
 
 
 # Get the cookies from URL LOCATION
-# with SgChrome() as driver:
-with SgChrome(
-    executable_path=ChromeDriverManager().install(), is_headless=True
-) as driver:
+with SgChrome() as driver:
     driver.get(URL_LOCATION)
     time.sleep(10)
     test_cookies_list = driver.get_cookies()
