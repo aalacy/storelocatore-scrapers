@@ -25,15 +25,19 @@ def fetch_data():
             "<p></div>"
         )[0]
         soup = BeautifulSoup(linklist, "html.parser")
-        token_list = soup.findAll("a")
-        for token in token_list:
+        linklist = soup.findAll("a")
+        for token in linklist:
             page_url = token["href"]
             log.info(page_url)
             log.info(f"Fetching restaurantGuid from {page_url}")
             r = session.get(page_url, headers=headers)
             token = r.text.split('"restaurantGuid" : "')[1].split('"')[0]
             graphql_url = "https://ws.toasttab.com/consumer-app-bff/v1/graphql"
-            payload = '[{"operationName":"RESTAURANT_INFO","variables":{"restaurantGuid":"bd5b7c06-3501-439e-8338-9a16d558673d"},"query":"query RESTAURANT_INFO($restaurantGuid: ID!) {\\n  restaurantV2(guid: $restaurantGuid) {\\n    ... on Restaurant {\\n      guid\\n      whiteLabelName\\n      description\\n      imageUrl\\n      bannerUrls {\\n        raw\\n        __typename\\n      }\\n      minimumTakeoutTime\\n      minimumDeliveryTime\\n      location {\\n        address1\\n        address2\\n        city\\n        state\\n        zip\\n        phone\\n        latitude\\n        longitude\\n        __typename\\n      }\\n      logoUrls {\\n        small\\n        __typename\\n      }\\n      schedule {\\n        asapAvailableForTakeout\\n        todaysHoursForTakeout {\\n          startTime\\n          endTime\\n          __typename\\n        }\\n        __typename\\n      }\\n      socialMediaLinks {\\n        facebookLink\\n        twitterLink\\n        instagramLink\\n        __typename\\n      }\\n      giftCardLinks {\\n        purchaseLink\\n        checkValueLink\\n        addValueEnabled\\n        __typename\\n      }\\n      giftCardConfig {\\n        redemptionAllowed\\n        __typename\\n      }\\n      specialRequestsConfig {\\n        enabled\\n        placeholderMessage\\n        __typename\\n      }\\n      spotlightConfig {\\n        headerText\\n        bodyText\\n        __typename\\n      }\\n      curbsidePickupConfig {\\n        enabled\\n        enabledV2\\n        __typename\\n      }\\n      popularItemsConfig {\\n        enabled\\n        __typename\\n      }\\n      upsellsConfig {\\n        enabled\\n        __typename\\n      }\\n      creditCardConfig {\\n        amexAccepted\\n        tipEnabled\\n        __typename\\n      }\\n      __typename\\n    }\\n    ... on GeneralError {\\n      code\\n      message\\n      __typename\\n    }\\n    __typename\\n  }\\n}\\n"},{"operationName":"DINING_OPTIONS","variables":{"input":{"restaurantGuid":"bd5b7c06-3501-439e-8338-9a16d558673d","includeBehaviors":[]}},"query":"query DINING_OPTIONS($input: DiningOptionsInput!) {\\n  diningOptions(input: $input) {\\n    guid\\n    behavior\\n    deliveryProvider {\\n      provider\\n      __typename\\n    }\\n    asapSchedule {\\n      availableNow\\n      availableAt\\n      __typename\\n    }\\n    futureSchedule {\\n      dates {\\n        date\\n        timesAndGaps {\\n          ... on FutureFulfillmentTime {\\n            time\\n            __typename\\n          }\\n          ... on FutureFulfillmentServiceGap {\\n            description\\n            __typename\\n          }\\n          __typename\\n        }\\n        __typename\\n      }\\n      __typename\\n    }\\n    __typename\\n  }\\n}\\n"}]'
+            payload = (
+                '[{"operationName":"RESTAURANT_INFO","variables":{"restaurantGuid":"'
+                + token
+                + '"},"query":"query RESTAURANT_INFO($restaurantGuid: ID!) {\\n  restaurantV2(guid: $restaurantGuid) {\\n    ... on Restaurant {\\n      guid\\n      whiteLabelName\\n      description\\n      imageUrl\\n      bannerUrls {\\n        raw\\n        __typename\\n      }\\n      minimumTakeoutTime\\n      minimumDeliveryTime\\n      location {\\n        address1\\n        address2\\n        city\\n        state\\n        zip\\n        phone\\n        latitude\\n        longitude\\n        __typename\\n      }\\n      logoUrls {\\n        small\\n        __typename\\n      }\\n      schedule {\\n        asapAvailableForTakeout\\n        todaysHoursForTakeout {\\n          startTime\\n          endTime\\n          __typename\\n        }\\n        __typename\\n      }\\n      socialMediaLinks {\\n        facebookLink\\n        twitterLink\\n        instagramLink\\n        __typename\\n      }\\n      giftCardLinks {\\n        purchaseLink\\n        checkValueLink\\n        addValueEnabled\\n        __typename\\n      }\\n      giftCardConfig {\\n        redemptionAllowed\\n        __typename\\n      }\\n      specialRequestsConfig {\\n        enabled\\n        placeholderMessage\\n        __typename\\n      }\\n      spotlightConfig {\\n        headerText\\n        bodyText\\n        __typename\\n      }\\n      curbsidePickupConfig {\\n        enabled\\n        enabledV2\\n        __typename\\n      }\\n      popularItemsConfig {\\n        enabled\\n        __typename\\n      }\\n      upsellsConfig {\\n        enabled\\n        __typename\\n      }\\n      creditCardConfig {\\n        amexAccepted\\n        tipEnabled\\n        __typename\\n      }\\n      __typename\\n    }\\n    ... on GeneralError {\\n      code\\n      message\\n      __typename\\n    }\\n    __typename\\n  }\\n}\\n"},{"operationName":"DINING_OPTIONS","variables":{"input":{"restaurantGuid":"bd5b7c06-3501-439e-8338-9a16d558673d","includeBehaviors":[]}},"query":"query DINING_OPTIONS($input: DiningOptionsInput!) {\\n  diningOptions(input: $input) {\\n    guid\\n    behavior\\n    deliveryProvider {\\n      provider\\n      __typename\\n    }\\n    asapSchedule {\\n      availableNow\\n      availableAt\\n      __typename\\n    }\\n    futureSchedule {\\n      dates {\\n        date\\n        timesAndGaps {\\n          ... on FutureFulfillmentTime {\\n            time\\n            __typename\\n          }\\n          ... on FutureFulfillmentServiceGap {\\n            description\\n            __typename\\n          }\\n          __typename\\n        }\\n        __typename\\n      }\\n      __typename\\n    }\\n    __typename\\n  }\\n}\\n"}]'
+            )
             headers_1 = {
                 "authority": "ws.toasttab.com",
                 "sec-ch-ua": '" Not;A Brand";v="99", "Google Chrome";v="91", "Chromium";v="91"',
@@ -43,7 +47,6 @@ def fetch_data():
                 "toast-customer-access": "",
                 "content-type": "application/json",
                 "accept": "*/*",
-                "apollographql-client-version": "542",
                 "toast-restaurant-external-id": token,
                 "origin": "https://www.toasttab.com",
                 "sec-fetch-site": "same-site",
@@ -71,10 +74,13 @@ def fetch_data():
                 latitude = address["latitude"]
                 longitude = address["longitude"]
                 hours_of_operation = loc["spotlightConfig"]["headerText"]
+                hours_of_operation = hours_of_operation.replace("HRS:", "").replace(
+                    "Open ", ""
+                )
                 country_code = "US"
                 yield SgRecord(
                     locator_domain=DOMAIN,
-                    page_url=url,
+                    page_url=page_url,
                     location_name=location_name,
                     street_address=street_address.strip(),
                     city=city.strip(),
