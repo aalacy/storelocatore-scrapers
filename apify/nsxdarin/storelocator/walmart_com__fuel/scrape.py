@@ -177,7 +177,7 @@ def scrape():
             is_required=False,
         ),
         location_type=sp.MappingField(
-            mapping=["featuredServices"],
+            mapping=["servicesMap"],
             value_transform=lambda x: "Fuel"
             if any(i in str(x) for i in ["FUEL", "GAS"])
             else "<MISSING>",

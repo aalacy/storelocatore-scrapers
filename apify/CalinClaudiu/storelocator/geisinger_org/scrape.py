@@ -79,23 +79,12 @@ def fetch_data():
 
             i["hours"] = old.replace(":;", "")
             try:
-                coords = soup.find("", {"href": lambda x: x and "maps" in x})["href"]
-                coords = coords.split("/@", 1)[1].split("/", 1)[0].split(",")
+                coords = soup.find(
+                    "a", {"target": True, "jstcache": "46", "href": True}
+                )["href"]
+                coords = coords.split("ll=", 1)[1].split("&", 1)[0].split(",")
             except Exception:
                 coords = ["<INACCESSIBLE>", "<INACCESSIBLE>"]
-
-            if coords[0] == "<INACCESSIBLE>":
-                try:
-                    coords = (
-                        i["OFFICEHOURS"]
-                        .split("href", 1)[1]
-                        .split("maps", 1)[1]
-                        .split("@", 1)[1]
-                        .split("/", 1)[0]
-                        .split(",")
-                    )
-                except Exception:
-                    coords = ["<INACCESSIBLE>", "<INACCESSIBLE>"]
             i["lon"] = coords[1]
             i["lat"] = coords[0]
             try:
