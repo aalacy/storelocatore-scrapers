@@ -33,9 +33,9 @@ def fetch_data():
     country = "JP"
     for loc in locs:
         logger.info(loc)
-        raw_address = ""
         store = loc.rsplit("/", 1)[1]
         name = ""
+        raw_address = ""
         add = ""
         city = ""
         state = ""
@@ -77,6 +77,25 @@ def fetch_data():
                 hours = line2.split(">")[1].split("<")[0].replace("～", "-")
         if "," in raw_address:
             add = raw_address.split(",")[0].strip()
+        if (
+            "a" not in add
+            and "e" not in add
+            and "i" not in add
+            and "o" not in add
+            and "u" not in add
+        ):
+            add = (
+                raw_address.split(",")[0].strip()
+                + " "
+                + raw_address.split(",")[1].strip()
+            )
+        if "Tokyo" in raw_address:
+            city = "Tokyo"
+        zc = "<MISSING>"
+        items = raw_address.split(",")
+        for item in items:
+            if "-Shi" in item or "-shi" in item:
+                city = item.strip()
         yield SgRecord(
             locator_domain=website,
             page_url=loc,
