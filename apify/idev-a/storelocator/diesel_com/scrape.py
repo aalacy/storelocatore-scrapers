@@ -1,87 +1,51 @@
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
-from bs4 import BeautifulSoup as bs
-from sgscrape.sgpostal import parse_address_intl
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
+_headers = {
+    "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
+}
 
-def parse_detail(data, base_url, locator_domain, country):
-    with SgRequests() as session:
-        soup = bs(session.get(base_url).text, "lxml")
-        locations = soup.select("ul.st-shortcuts--list li ul li a")
-        for location in locations:
-            page_url = location["href"]
-            if "store-detail" not in page_url:
-                continue
-            soup1 = bs(session.get(page_url).text, "lxml")
-            store_number = page_url.split("sid=")[1]
-            address = soup1.select_one(
-                "div.store-details a.store-address address.address"
-            )
-            if not address:
-                continue
-            address = (
-                soup1.select_one("div.store-details a.store-address address.address")
-                .text.replace("\n", " ")
-                .strip()
-            )
-            addr = parse_address_intl(address)
-            _phone = soup1.select_one("div.store-details a.phone")
-            phone = "<MISSING>"
-            if _phone:
-                phone = _phone["href"].replace("tel:", "").strip()
-            hours = []
-            for _ in soup1.select("#store-hours div.store-hour-box"):
-                hours.append(
-                    f'{_.h5.text.strip()}: {_.select_one("span").text.strip()}'
-                )
-            latitude = soup1.select_one(".map-canvas")["data-latitude"]
-            longitude = soup1.select_one(".map-canvas")["data-longitude"]
-
-            zip_postal = addr.postcode
-            if not zip_postal:
-                zip_postal = address.split(",")[-1]
-            data.append(
-                SgRecord(
-                    page_url=page_url,
-                    store_number=store_number,
-                    location_name=location.text,
-                    street_address=addr.street_address_1,
-                    city=addr.city,
-                    state=addr.state,
-                    latitude=latitude,
-                    longitude=longitude,
-                    zip_postal=zip_postal,
-                    phone=phone,
-                    country_code=country,
-                    locator_domain=locator_domain,
-                    hours_of_operation="; ".join(hours),
-                )
-            )
+locator_domain = "https://global.diesel.com/"
+base_url = "https://global.diesel.com/on/demandware.store/Sites-DieselNonEcommerce-Site/en_TR/StoreFinder-SearchByBoundaries?latmin=-180&latmax=180&lngmin=-180&lngmax=180"
 
 
 def fetch_data():
-    # canada
-    data = []
-    locator_domain = "https://ca.diesel.com/"
-    base_url = "https://ca.diesel.com/en/stores"
-    parse_detail(data, base_url, locator_domain, "CA")
-
-    # uk
-    locator_domain = "https://uk.diesel.com/"
-    base_url = "https://uk.diesel.com/en/stores"
-    parse_detail(data, base_url, locator_domain, "UK")
-
-    # us
-    locator_domain = "https://shop.diesel.com/"
-    base_url = "https://shop.diesel.com/en/stores"
-    parse_detail(data, base_url, locator_domain, "US")
-
-    return data
+    with SgRequests() as session:
+        locations = session.get(base_url, headers=_headers).json()["stores"]["stores"]
+        for _ in locations:
+            hours = []
+            for hh in _.get("working_days", []):
+                times = "closed"
+                if hh["hours"]:
+                    times = ",".join(hh["hours"])
+                hours.append(f"{hh['day']}: {times}")
+            page_url = f"https://global.diesel.com/store-detail?sid={_['ID']}"
+            location_type = ""
+            if _.get("isOpen", {}).get("status", "").lower() == "closed":
+                location_type = "closed"
+            yield SgRecord(
+                page_url=page_url,
+                store_number=_["ID"],
+                location_name=_["name"],
+                street_address=_["schema"]["address"]["streetAddress"],
+                city=_["city"],
+                state=_.get("stateCode"),
+                zip_postal=_["postalCode"],
+                latitude=_["latitude"],
+                longitude=_["longitude"],
+                country_code=_["countryCode"],
+                phone=_.get("phone"),
+                location_type=location_type,
+                locator_domain=locator_domain,
+                hours_of_operation="; ".join(hours),
+            )
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
