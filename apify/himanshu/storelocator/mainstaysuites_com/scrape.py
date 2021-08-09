@@ -78,8 +78,8 @@ class ExampleSearchIteration(SearchIteration):
                 try:
                     try:
                         found_location_at(
-                            str(record["coordinates"]["latitude"]),
-                            str(record["coordinates"]["longitude"]),
+                            record["coordinates"]["latitude"],
+                            record["coordinates"]["longitude"],
                         )
                     except Exception:
                         pass
