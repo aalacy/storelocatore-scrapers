@@ -49,8 +49,6 @@ def get_data():
         locator_domain = "thedump.com"
         page_url = locator_domain + grid.find("h3").find("a")["href"]
         location_name = grid.find("h3").text.strip()
-        print(location_name)
-        print(page_url)
 
         address_part = grid.find(
             "div", attrs={"class": "thedump-location-address"}
@@ -96,26 +94,22 @@ def get_data():
 
         lat_lon_soup = bs(driver.page_source, "html.parser")
 
-        with open("file.txt", "w", encoding="utf-8") as output:
-            print(lat_lon_soup, file=output)
-
         iframes = lat_lon_soup.find_all("iframe")
 
         for iframe in iframes:
             try:
-                if "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2958.101970893883!2d" in iframe["src"]:
+                if (
+                    "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2958.101970893883!2d"
+                    in iframe["src"]
+                ):
                     lat_lon_url = iframe["src"]
                     break
-            
+
             except Exception:
                 continue
 
-
         latitude = lat_lon_url.split("!3d")[1].split("!")[0]
         longitude = lat_lon_url.split("!2d")[1].split("!3d")[0]
-        print(latitude)
-        print(longitude)
-        print("")
 
         try:
             hours = (
@@ -152,6 +146,7 @@ def get_data():
             "country_code": country_code,
         }
 
+
 def scrape():
     field_defs = sp.SimpleScraperPipeline.field_definitions(
         locator_domain=sp.MappingField(mapping=["locator_domain"]),
@@ -159,7 +154,9 @@ def scrape():
         location_name=sp.MappingField(mapping=["location_name"]),
         latitude=sp.MappingField(mapping=["latitude"], part_of_record_identity=True),
         longitude=sp.MappingField(mapping=["longitude"], part_of_record_identity=True),
-        street_address=sp.MultiMappingField(mapping=["street_address"], is_required=False),
+        street_address=sp.MultiMappingField(
+            mapping=["street_address"], is_required=False
+        ),
         city=sp.MappingField(mapping=["city"], part_of_record_identity=True),
         state=sp.MappingField(mapping=["state"], is_required=False),
         zipcode=sp.MultiMappingField(mapping=["zip"], is_required=False),
@@ -177,5 +174,6 @@ def scrape():
         log_stats_interval=15,
     )
     pipeline.run()
+
 
 scrape()
