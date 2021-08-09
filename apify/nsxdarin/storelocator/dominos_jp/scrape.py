@@ -33,6 +33,7 @@ def fetch_data():
     country = "JP"
     for loc in locs:
         logger.info(loc)
+        raw_address = ""
         store = loc.rsplit("/", 1)[1]
         name = ""
         add = ""
