@@ -2,7 +2,6 @@ from sgscrape import simple_scraper_pipeline as sp
 from sgrequests import SgRequests
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 from sglogging import SgLogSetup
-from bs4 import BeautifulSoup as bs
 from sgscrape.sgrecord import SgRecord
 
 logger = SgLogSetup().get_logger("caliber")
@@ -76,40 +75,34 @@ def fetch_data():
         for store in locations:
             hours = []
             if store.get("mondayHoursOpen"):
-                try:
+                hours.append(
+                    f"Mon: {store['mondayHoursOpen'].split(' ')[-1]}-{store['mondayHoursClose'].split(' ')[-1]}"
+                )
+                hours.append(
+                    f"Tue: {store['tuesdayHoursOpen'].split(' ')[-1]}-{store['tuesdayHoursClose'].split(' ')[-1]}"
+                )
+                hours.append(
+                    f"Wed: {store['wednesdayHoursOpen'].split(' ')[-1]}-{store['wednesdayHoursClose'].split(' ')[-1]}"
+                )
+                hours.append(
+                    f"Thu: {store['thursdayHoursOpen'].split(' ')[-1]}-{store['thursdayHoursClose'].split(' ')[-1]}"
+                )
+                hours.append(
+                    f"Fri: {store['fridayHoursOpen'].split(' ')[-1]}-{store['fridayHoursClose'].split(' ')[-1]}"
+                )
+                if store.get("saturdayHoursOpen") and store.get("saturdayHoursClose"):
                     hours.append(
-                        f"Mon: {store['mondayHoursOpen'].split(' ')[-1]}-{store['mondayHoursClose'].split(' ')[-1]}"
+                        f"Sat: {store['saturdayHoursOpen'].split(' ')[-1]}-{store['saturdayHoursClose'].split(' ')[-1]}"
                     )
+                else:
+                    hours.append("Sat: Closed")
+                if store.get("sundayHoursOpen") and store.get("sunHoursClose"):
                     hours.append(
-                        f"Tue: {store['tuesdayHoursOpen'].split(' ')[-1]}-{store['tuesdayHoursClose'].split(' ')[-1]}"
+                        f"Sat: {store['sundayHoursOpen'].split(' ')[-1]}-{store['sundayHoursClose'].split(' ')[-1]}"
                     )
-                    hours.append(
-                        f"Wed: {store['wednesdayHoursOpen'].split(' ')[-1]}-{store['wednesdayHoursClose'].split(' ')[-1]}"
-                    )
-                    hours.append(
-                        f"Thu: {store['thursdayHoursOpen'].split(' ')[-1]}-{store['thursdayHoursClose'].split(' ')[-1]}"
-                    )
-                    hours.append(
-                        f"Fri: {store['fridayHoursOpen'].split(' ')[-1]}-{store['fridayHoursClose'].split(' ')[-1]}"
-                    )
-                    if store.get("saturdayHoursOpen") and store.get(
-                        "saturdayHoursClose"
-                    ):
-                        hours.append(
-                            f"Sat: {store['saturdayHoursOpen'].split(' ')[-1]}-{store['saturdayHoursClose'].split(' ')[-1]}"
-                        )
-                    else:
-                        hours.append("Sat: Closed")
-                    if store.get("sundayHoursOpen") and store.get("sunHoursClose"):
-                        hours.append(
-                            f"Sat: {store['sundayHoursOpen'].split(' ')[-1]}-{store['sundayHoursClose'].split(' ')[-1]}"
-                        )
-                    else:
-                        hours.append("Sun: Closed")
-                except:
-                    import pdb
+                else:
+                    hours.append("Sun: Closed")
 
-                    pdb.set_trace()
             store["street"] = store["address1"]
             if store.get("address2") and store["address2"] != store["address1"]:
                 store["street"] += " " + store["address2"]
