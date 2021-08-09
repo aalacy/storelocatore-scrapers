@@ -1,11 +1,12 @@
 from sgscrape.sgrecord import SgRecord
-from sgscrape.sgwriter import SgWriter
+from sgscrape.sgwriter import SgWriter 
 from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
 from sgselenium import SgFirefox
 import time
 import json
 from sgscrape.sgpostal import parse_address_intl
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 logger = SgLogSetup().get_logger("muji")
 
@@ -84,7 +85,7 @@ def fetch_data():
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
