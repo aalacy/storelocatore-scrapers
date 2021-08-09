@@ -28,7 +28,7 @@ def fetch_latlng(lat, lng, country, session, tracker):
         return []
     try:
         data = demjson.decode(response.text)
-    except Exception as e:
+    except Exception:
         return []
     if not data.get("servicePoints"):
         return []
