@@ -49,7 +49,7 @@ def fetch_data():
                     driver.get(page_url)
                     break
                 except Exception:
-                    x = x+1
+                    x = x + 1
                     if x == 10:
                         raise Exception
             exist = False
