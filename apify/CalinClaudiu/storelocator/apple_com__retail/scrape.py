@@ -376,7 +376,10 @@ def scrape():
             is_required=False,
         ),
         hours_of_operation=sp.MissingField(),
-        location_type=sp.MissingField(),
+        location_type=sp.MappingField(
+            mapping=["storeURL"],
+            is_required=False,
+        ),
         raw_address=sp.MultiMappingField(
             mapping=[["locationData", "district"], ["locationData", "regionName"]],
             multi_mapping_concat_with=", ",

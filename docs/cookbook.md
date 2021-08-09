@@ -27,6 +27,7 @@
 ### Search for Locations Using Zipcodes / Coordinates
 
 - [Our sgzip documentation.](./cookbook/sgzip.md)
+- [Parallel sgzip traversal](./cookbook/sgzip-par.md)
 
 ### Long-Running Crawls
 
