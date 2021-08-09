@@ -57,18 +57,22 @@ def fetch_data():
             if "noBorderRadiusRight" in line2:
                 day = (
                     line2.split("noBorderRadiusRight")[1]
-                    .split(">")[0]
+                    .split(">")[1]
                     .split("<")[0]
                     .strip()
                 )
             if "noBorderRadiusLeft" in line2:
                 hrs = (
-                    line2.split("noBorderRadiusLeft")[1]
-                    .split(">")[1]
-                    .strip()
-                    .replace("\r", "")
-                    .replace("\t", "")
-                    .replace("\n", "")
+                    day
+                    + ": "
+                    + (
+                        line2.split("noBorderRadiusLeft")[1]
+                        .split(">")[1]
+                        .strip()
+                        .replace("\r", "")
+                        .replace("\t", "")
+                        .replace("\n", "")
+                    )
                 )
                 g = next(lines)
                 g = str(g.decode("utf-8"))
