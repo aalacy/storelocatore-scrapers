@@ -173,7 +173,7 @@ if __name__ == "__main__":
                 search_maker=search_maker,
                 search_iteration=search_iter,
                 country_codes=SearchableCountries.ALL,
-                max_threads=2,
+                max_threads=8,
             )
 
             for rec in par_search.run():
