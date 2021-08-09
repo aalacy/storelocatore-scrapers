@@ -65,8 +65,14 @@ def fetch_data():
                 lng = line2.split("markerLng&quot;:")[1].split("&")[0]
             if "Phone</strong><br>" in line2:
                 phone = line2.split("Phone</strong><br>")[1].split("<")[0]
+            if "PHONE</strong><br>" in line2:
+                phone = line2.split("PHONE</strong><br>")[1].split("<")[0]
             if "Hours</strong><br>" in line2:
                 hours = line2.split("Hours</strong><br>")[1].split("<")[0]
+            if "HOURS</strong><br>" in line2:
+                hours = line2.split("HOURS</strong><br>")[1].split("<")[0]
+            if "HOURS</strong><br><em>" in line2:
+                hours = line2.split("HOURS</strong><br><em>")[1].split("</p")[0]
         country = "US"
         store = "<MISSING>"
         if phone == "":
@@ -78,6 +84,7 @@ def fetch_data():
             hours = hours.split("FOR TAKE")[0].strip()
         cleanr = re.compile("<.*?>")
         hours = re.sub(cleanr, "", hours)
+        hours = hours.replace(" ;", ";")
         if "downtown-brooklyn" in loc:
             phone = "(718) 643-5700"
         yield SgRecord(
