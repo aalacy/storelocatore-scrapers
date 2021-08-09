@@ -26,6 +26,11 @@ def fetch_data():
         for _ in locations:
             if not _.select_one(".et_pb_image") or not _.text.strip():
                 continue
+            if (
+                _.select_one("p.p1")
+                and _.select_one("p.p1").text.strip() == "Opent binnenkort"
+            ):
+                continue
             page_url = _.a["href"]
             logger.info(page_url)
 
