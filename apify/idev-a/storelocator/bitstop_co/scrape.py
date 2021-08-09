@@ -31,9 +31,6 @@ def fetch_data():
                 street_address += " " + _["street_address2"]
             _city = _["city"].replace(" ", "-").lower()
             page_url = f"https://bitstop.co/{_state(_['state']).replace(' ','-')}/{_city}/{_['slug']}-{_city}-bitcoin-atm"
-            import pdb
-
-            pdb.set_trace()
             yield SgRecord(
                 page_url=page_url,
                 location_name=_["name"],
@@ -45,6 +42,7 @@ def fetch_data():
                 longitude=_["longitude"],
                 country_code=_["country"],
                 phone=_["phone"],
+                location_type="atm",
                 locator_domain=locator_domain,
                 hours_of_operation="; ".join(_["hours"]),
                 raw_address=_["full_address"],
