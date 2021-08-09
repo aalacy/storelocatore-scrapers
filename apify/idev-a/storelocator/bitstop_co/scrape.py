@@ -42,6 +42,7 @@ def fetch_data():
                 longitude=_["longitude"],
                 country_code=_["country"],
                 phone=_["phone"],
+                location_type="atm",
                 locator_domain=locator_domain,
                 hours_of_operation="; ".join(_["hours"]),
                 raw_address=_["full_address"],
