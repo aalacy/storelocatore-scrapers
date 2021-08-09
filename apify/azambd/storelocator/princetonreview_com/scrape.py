@@ -153,7 +153,6 @@ def fetch_stores():
     for tr in trs:
         intl_countries = intl_countries + 1
         country_code, c_name, state_name = get_country_code(tr.xpath(".//th")[0])
-        className = tr.xpath(".//@class")[0].strip()
 
         subOrg = tr.xpath(".//div[@itemprop='subOrganization']")
         if len(subOrg) == 0:
