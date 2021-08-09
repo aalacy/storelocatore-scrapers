@@ -25,7 +25,7 @@ def fetch_data():
             continue
         loc_response = session.get(store_url)
         loc_dom = etree.HTML(loc_response.text)
-        print(store_url)
+
         data = (
             loc_dom.xpath('//script[contains(text(), "map_options")]/text()')[0]
             .split("maps(")[-1]
