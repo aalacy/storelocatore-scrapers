@@ -44,7 +44,14 @@ def fetch_data():
             page_url = link["href"]
             country_code = page_url.split("c=")[1].split("&")[0]
             logger.info(page_url)
-            driver.get(page_url)
+            while True:
+                try:
+                    driver.get(page_url)
+                    break
+                except Exception:
+                    x = x+1
+                    if x == 10:
+                        raise Exception
             exist = False
             while not exist:
                 time.sleep(1)
