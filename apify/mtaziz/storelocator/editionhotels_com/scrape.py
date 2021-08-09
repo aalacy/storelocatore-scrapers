@@ -29,7 +29,7 @@ logger = SgLogSetup().get_logger("editionhotels_com")
 
 headers_api = {
     "accept": "application/json, text/plain, */*",
-    "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.114 Safari/537.36",
+    "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.164 Safari/537.36",
 }
 
 
