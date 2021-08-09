@@ -27,7 +27,7 @@ def fetch_data(sgw: SgWriter):
         if phone == "TBD":
             phone = "<MISSING>"
         city = a.city or "<MISSING>"
-        if street_address == "32 5th Ave":
+        if street_address == "32 5Th Ave.":
             city = "Brooklyn"
 
         postal = a.postcode or "<MISSING>"
