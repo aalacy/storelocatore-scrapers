@@ -164,7 +164,7 @@ def fetch_data():
 def scrape():
     logger.info("Started")
     count = 0
-    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
