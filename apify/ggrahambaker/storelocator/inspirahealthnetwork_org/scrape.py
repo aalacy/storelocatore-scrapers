@@ -52,7 +52,9 @@ def fetch_data(sgw: SgWriter):
         zip_code = addy["postalCode"].strip()
 
         try:
-            phone_number = soup.find(class_="phone").a.text.replace("Get Directions", "").strip()
+            phone_number = (
+                soup.find(class_="phone").a.text.replace("Get Directions", "").strip()
+            )
         except:
             phone_number = "<MISSING>"
 
