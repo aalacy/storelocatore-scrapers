@@ -7,6 +7,7 @@ import time
 import json
 from sgscrape.sgpostal import parse_address_intl
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 logger = SgLogSetup().get_logger("muji")
 
