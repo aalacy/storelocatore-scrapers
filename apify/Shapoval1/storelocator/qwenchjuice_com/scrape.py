@@ -36,9 +36,6 @@ def fetch_data(sgw: SgWriter):
         if postal.isdigit():
             country_code = "US"
 
-        store_number = "<MISSING>"
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
         location_type = "<MISSING>"
         cms = "".join(
             b.xpath('.//preceding::h2[contains(text(), "Coming Soon")][1]/text()')
@@ -50,8 +47,6 @@ def fetch_data(sgw: SgWriter):
         )
         if tcls:
             location_type = "Temporarily Closed"
-
-        hours_of_operation = "<MISSING>"
 
         row = SgRecord(
             locator_domain=locator_domain,
