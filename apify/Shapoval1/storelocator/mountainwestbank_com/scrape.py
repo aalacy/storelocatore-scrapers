@@ -80,6 +80,6 @@ if __name__ == "__main__":
     session = SgRequests()
     locator_domain = "https://www.mountainwestbank.com"
     with SgWriter(
-        SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.LOCATION_NAME}))
     ) as writer:
         fetch_data(writer)
