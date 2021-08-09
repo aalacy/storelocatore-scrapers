@@ -1,7 +1,6 @@
 import time
 import json
 from typing import Iterable
-from lxml import html
 
 from sgrequests import SgRequests
 from sglogging import sglog
@@ -41,7 +40,7 @@ def get_JSON_object_variable(Object, varNames, noVal=MISSING):
             return noVal
 
     value = str(value).strip()
-    if value is "None" or len(value) == 0:
+    if value == "None" or len(value) == 0:
         return noVal
     return value
 
