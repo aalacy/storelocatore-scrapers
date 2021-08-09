@@ -23,7 +23,6 @@ def fetch_data():
         all_locations = dom.xpath('//div[@class="card-body p-sm-4 p-md-5"]')
 
         for poi_html in all_locations:
-            print(etree.tostring(poi_html))
             store_url = start_url
             location_name = poi_html.xpath(".//h2/b/text()")
             if not location_name:
