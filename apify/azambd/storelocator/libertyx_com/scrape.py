@@ -89,8 +89,8 @@ def fetch_data(http: SgRequests, search: DynamicGeoSearch) -> Iterable[SgRecord]
 
         response = http.post(json_url, headers=headers, data=data)
         data = json.loads(response.text)
-        stores = []
-        if "locations" in data:
+        stores = []  # type: List[str]
+        if "locations" in str(data):
             stores = data["locations"]
 
         total = len(stores)
