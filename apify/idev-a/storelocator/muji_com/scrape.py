@@ -44,6 +44,7 @@ def fetch_data():
             page_url = link["href"]
             country_code = page_url.split("c=")[1].split("&")[0]
             logger.info(page_url)
+            x = 0
             while True:
                 try:
                     driver.get(page_url)
