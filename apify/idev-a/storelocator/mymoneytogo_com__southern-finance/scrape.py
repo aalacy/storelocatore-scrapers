@@ -34,7 +34,7 @@ def fetch_data():
             if addr.street_address_2:
                 street_address += " " + addr.street_address_2
             location_type = _["category"][0]
-            if "Quick_Credit" != location_type:
+            if "Southern_Finance" != location_type:
                 continue
             yield SgRecord(
                 page_url=_["exturl"],
