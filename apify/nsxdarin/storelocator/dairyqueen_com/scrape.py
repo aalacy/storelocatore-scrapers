@@ -15,7 +15,7 @@ logger = SgLogSetup().get_logger("dairyqueen_com")
 
 search = DynamicGeoSearch(
     country_codes=[SearchableCountries.CANADA],
-    max_radius_miles=25,
+    max_search_distance_miles=25,
     max_search_results=None,
 )
 
