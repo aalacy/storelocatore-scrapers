@@ -74,6 +74,8 @@ def fetch_data():
                 zc = formatted_addr.postcode if formatted_addr.postcode else "<MISSING>"
             if "～" in line2 and "～～this" not in line2:
                 hours = line2.split(">")[1].split("<")[0].replace("～", "-")
+        if "," in rawadd:
+            add = rawadd.split(",")[0].strip()
         yield SgRecord(
             locator_domain=website,
             page_url=loc,
