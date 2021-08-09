@@ -63,13 +63,15 @@ if __name__ == "__main__":
         SgRecordDeduper(
             SgRecordID(
                 {
+                    SgRecord.Headers.LOCATION_NAME,
                     SgRecord.Headers.LATITUDE,
                     SgRecord.Headers.LONGITUDE,
+                    SgRecord.Headers.STREET_ADDRESS,
                     SgRecord.Headers.CITY,
                     SgRecord.Headers.ZIP,
                     SgRecord.Headers.PHONE,
-                    SgRecord.Headers.STREET_ADDRESS,
                     SgRecord.Headers.PAGE_URL,
+                    SgRecord.Headers.LOCATION_TYPE,
                 }
             )
         )
