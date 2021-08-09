@@ -45,7 +45,7 @@ def fetch_data():
             locator_domain = website
 
             log.info(page_url)
-            store_res = driver.get(page_url)
+            driver.get(page_url)
             store_sel = lxml.html.fromstring(driver.page_source)
 
             location_name = "".join(
