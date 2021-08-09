@@ -1,5 +1,5 @@
 from sgscrape.sgrecord import SgRecord
-from sgscrape.sgwriter import SgWriter 
+from sgscrape.sgwriter import SgWriter
 from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
 from sgselenium import SgFirefox
