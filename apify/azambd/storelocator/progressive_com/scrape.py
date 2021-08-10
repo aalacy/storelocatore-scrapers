@@ -15,26 +15,30 @@ website = "progressive.com"
 MISSING = "<MISSING>"
 start_url = "https://www.progressive.com/agent/local-agent"
 
+headers = {
+    "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.107 Safari/537.36"
+}
+
 
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 
 
 def fetch_stores(http, state):
-    response = http.get(start_url)
+    response = http.get(start_url, headers=headers)
     body = html.fromstring(response.text, "lxml")
     stateUrls = body.xpath("//ul[@class='state-list']/li/a/@href")
     log.debug(f"total states = {len(stateUrls)}")
 
     cityUrls = []
     for stateUrl in stateUrls:
-        response = http.get(stateUrl)
+        response = http.get(stateUrl, headers=headers)
         body = html.fromstring(response.text, "lxml")
         cityUrls = cityUrls + body.xpath("//ul[@class='city-list']/li/a/@href")
     log.debug(f"total cities = {len(cityUrls)}")
 
     count = 0
     for cityUrl in cityUrls:
-        response = http.get(cityUrl)
+        response = http.get(cityUrl, headers=headers)
         body = html.fromstring(response.text, "lxml")
         for page_url in body.xpath("//a[@class='list-link details']/@href"):
             state.push_request(SerializableRequest(url=page_url))
@@ -72,7 +76,7 @@ def fetch_data(http, state) -> Iterable[SgRecord]:
     for next_r in state.request_stack_iter():
         page_url = next_r.url
         log.info(f"Now Crawling: {page_url}")
-        response = http.get(page_url)
+        response = http.get(page_url, headers=headers)
         body = html.fromstring(response.text, "lxml")
 
         store_number = MISSING
