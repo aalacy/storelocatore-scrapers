@@ -28,12 +28,6 @@ headers_api = {
 }
 
 
-headers_api = {
-    "accept": "application/json, text/plain, */*",
-    "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.114 Safari/537.36",
-}
-
-
 # Marriott Hotels has total 30 brands.
 # Note: Marriott Hotels ( MC ) contains MC and MV (Marriott Vacation Club) brands as well
 # This contributes total 23 brands out of 30 brands
