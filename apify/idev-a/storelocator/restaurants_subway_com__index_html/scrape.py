@@ -84,7 +84,7 @@ def _d(page_url, sp1):
         phone=phone,
         locator_domain=locator_domain,
         latitude=sp1.select_one('meta[itemprop="latitude"]')["content"],
-        longitude=sp1.select_one('meta[itemprop="latitude"]')["content"],
+        longitude=sp1.select_one('meta[itemprop="longitude"]')["content"],
         hours_of_operation="; ".join(hours).replace("–", "-"),
     )
 
