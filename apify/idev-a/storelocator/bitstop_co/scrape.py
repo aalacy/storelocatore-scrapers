@@ -14,7 +14,7 @@ base_url = "https://bitstop.co/get-atms"
 
 
 def _state(abbr):
-    state = ""
+    state = "puerto rico"
     for ss in us.states.STATES:
         if ss.abbr == abbr:
             state = ss.name.lower()
