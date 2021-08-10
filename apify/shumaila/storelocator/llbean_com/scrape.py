@@ -19,7 +19,6 @@ MISSING = "<MISSING>"
 
 
 def fetch_data():
-    pattern = re.compile(r"\s\s+")
     url = "https://www.llbean.com/llb/shop/1000001703?pla1=1"
     r = session.get(url, headers=headers, verify=False)
     soup = BeautifulSoup(r.text, "html.parser")
