@@ -4,6 +4,8 @@ from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import lxml.html
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 website = "benny-co.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -50,6 +52,14 @@ def fetch_data():
         hours_of_operation = ""
         store_req = session.get(page_url, headers=headers)
         store_sel = lxml.html.fromstring(store_req.text)
+        if (
+            "OUVERTURE"
+            in "".join(
+                store_sel.xpath('//div[@class="noteHeuresOuverture"]/p/text()')
+            ).strip()
+        ):
+            log.info("skipped!!!!")
+            continue
         hours = store_sel.xpath('//div[@class="heuresOuverture"]')
         hours_list = []
         if len(hours) > 0:
@@ -91,7 +101,9 @@ def fetch_data():
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

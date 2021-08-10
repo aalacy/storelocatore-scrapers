@@ -27,8 +27,6 @@ URL_LOCATION = "https://www.marriott.com/hotel-search.mi"
 
 logger = SgLogSetup().get_logger("the-luxury-collection_marriott_com")
 
-logger = SgLogSetup().get_logger("aloft-hotels_marriott_com")
-
 headers_api = {
     "accept": "application/json, text/plain, */*",
     "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.114 Safari/537.36",
@@ -249,12 +247,11 @@ def fetch_data_for_7_child_brands():
             "cookie": cookies_string,
             "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
             "accept-encoding": "gzip, deflate, br",
-            "upgrade-insecure-requests": "1",
             "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.77 Safari/537.36",
         }
 
         r1 = session.get(url_base_city_state, headers=headers_path_ak)
-        time.sleep(15)
+        time.sleep(10)
         search_list_records_total = re.findall(
             r"search_list_records_total\":\s\d+,", r1.text
         )
