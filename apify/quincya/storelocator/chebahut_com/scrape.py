@@ -69,7 +69,7 @@ def fetch_data(sgw: SgWriter):
 
         try:
             map_link = base.find(class_="content-container").find_all("a")[-1]["href"]
-            zip_code = re.findall("\+[\d]{5}", map_link)[0].replace("+", "")
+            zip_code = re.findall(r"\+[\d]{5}", map_link)[0].replace("+", "")
         except:
             pass
         script = str(base.find(class_="wpgmza_map"))
