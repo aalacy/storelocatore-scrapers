@@ -27,11 +27,11 @@ def fetch_data(sgw: SgWriter):
         s = j.get("settings") or {}
 
         street_address = c.get("street1")
-        city = c.get("city")
+        city = c.get("city") or ""
         if "Street" in city:
             city = city.split("Street")[-1].strip()
         state = c.get("state")
-        postal = c.get("postalCode")
+        postal = c.get("postalCode") or ""
         country_code = "US"
         if len(postal.strip()) > 5:
             country_code = "CA"
