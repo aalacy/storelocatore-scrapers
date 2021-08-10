@@ -8,6 +8,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
+from sgscrape.sgpostal import parse_address_intl
 
 try:
     _create_unverified_https_context = (
@@ -35,7 +36,13 @@ def fetch_data():
 
             location_name = loc_dom.xpath('//h1[@class="entry-title"]/text()')
             location_name = location_name[0] if location_name else "<MISSING>"
-            street_address = loc_dom.xpath('//a[@class="foot-address-link"]/text()')[0]
+            raw_address = loc_dom.xpath('//a[@class="foot-address-link"]/text()')[0]
+            addr = parse_address_intl(raw_address)
+            street_address = addr.street_address_1
+            if addr.street_address_2:
+                street_address += " " + addr.street_address_2
+            if street_address.endswith("Blaine"):
+                street_address = street_address.replace(" Blaine", "")
             city = " ".join(store_url.split("/")[-2].split("-")[:-2])
             state = store_url.split("/")[-2].split("-")[-2]
             zip_code = store_url.split("/")[-2].split("-")[-1]

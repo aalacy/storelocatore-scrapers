@@ -101,6 +101,10 @@ def fetch_data():
             zc = "19805"
             city = "Wilmington"
             state = "DE"
+        name = name.replace("\\u0026", "&")
+        name = name.replace("\\u0027", "'")
+        add = add.replace("\\u0026", "&")
+        add = add.replace("\\u0027", "'")
         yield SgRecord(
             locator_domain=website,
             page_url=loc,

@@ -61,7 +61,7 @@ searchurls = [
     "AUSTRIA|https://order.golo02.dominos.com/store-locator-international/locate/store?regionCode=AT&latitude=48.262853&longitude=16.399944",
     "CZECH_REPUBLIC|https://order.golo02.dominos.com/store-locator-international/locate/store?regionCode=CZ&latitude=49.1938084&longitude=16.6076158",
     "ITALY|https://order.golo02.dominos.com/store-locator-international/locate/store?regionCode=IT&latitude=45.4654219&longitude=9.18592430000001",
-    "KOSOVO|https://order.golo02.dominos.com/store-locator-international/locations/city?countryCode=XK&regionCode=XK",
+    "KOSOVO|https://order.golo02.dominos.com/store-locator-international/locate/store?regionCode=XK&latitude=42.665411916980034&longitude=21.158615201711655",
     "PORTUGAL|https://order.golo02.dominos.com/store-locator-international/locate/store?regionCode=PT&latitude=38.740335&longitude=-9.1833424",
     "SLOVAKIA|https://order.golo02.dominos.com/store-locator-international/locate/store?regionCode=SK&latitude=48.14816&longitude=17.10674",
     "SWEDEN|https://order.golo02.dominos.com/store-locator-international/locate/store?regionCode=SE&latitude=55.5700886&longitude=12.8758906",
@@ -90,8 +90,635 @@ def fetch_data():
         "https://www.dominos.be/dynamicstoresearchapi/getlimitedstores/100/",
         "https://www.dominos.co.nz/dynamicstoresearchapi/getlimitedstores/100/",
     ]
+
+    nlcities = [
+        "Amsterdam",
+        "Rotterdam",
+        "The Hague",
+        "Utrecht",
+        "Eindhoven",
+        "Groningen",
+        "Tilburg",
+        "Almere",
+        "Breda",
+        "Nijmegen",
+        "Apeldoorn",
+        "Haarlem",
+        "Arnhem",
+        "Enschede",
+        "Amersfoort",
+        "Zaanstad",
+        "Haarlemmermeer",
+        "Den Bosch",
+        "Zwolle",
+        "Zoetermeer",
+        "Leiden",
+        "Leeuwarden",
+        "Maastricht",
+        "Dordrecht",
+        "Ede",
+        "Alphen aan den Rijn",
+        "Westland",
+        "Alkmaar",
+        "Emmen",
+        "Delft",
+        "Venlo",
+        "Deventer",
+        "Sittard Geleen",
+        "Helmond",
+        "Oss",
+        "Amstelveen",
+        "Hilversum",
+        "Sudwest Fryslan",
+        "Heerlen",
+        "Hoeksche Waard",
+        "Nissewaard",
+        "Meierijstad",
+        "Hengelo",
+        "Purmerend",
+        "Schiedam",
+        "Lelystad",
+        "Roosendaal",
+        "Leidschendam Voorburg",
+        "Gouda",
+        "Hoorn",
+        "Almelo",
+        "Vlaardingen",
+        "Velsen",
+        "Assen",
+        "Capelle aan den IJssel",
+        "Bergen op Zoom",
+        "Veenendaal",
+        "Katwijk",
+        "Stichtse Vecht",
+        "Zeist",
+        "Nieuwegein",
+        "Westerkwartier",
+        "Lansingerland",
+        "Midden Groningen",
+        "Hardenberg",
+        "Roermond",
+        "Barneveld",
+        "Gooise Meren",
+        "Doetinchem",
+        "Heerhugowaard",
+        "Krimpenerwaard",
+        "Smallingerland",
+        "Vijfheerenlanden",
+        "Hoogeveen",
+        "Oosterhout",
+        "Den Helder",
+        "Altena",
+        "Terneuzen",
+        "Pijnacker Nootdorp",
+        "Kampen",
+        "Rijswijk",
+        "Woerden",
+        "De Fryske Marren",
+        "West Betuwe",
+        "Heerenveen",
+        "Houten",
+        "Weert",
+        "Goeree Overflakkee",
+        "Utrechtse Heuvelrug",
+        "Barendrecht",
+        "Middelburg",
+        "Waalwijk",
+        "Het Hogeland",
+        "Hollands Kroon",
+        "Zutphen",
+        "Harderwijk",
+        "Overbetuwe",
+        "Noordoostpolder",
+        "Schagen",
+        "Lingewaard",
+    ]
+    dkcities = [
+        "Copenhagen",
+        "Aarhus",
+        "Odense",
+        "Aalborg",
+        "Esbjerg",
+        "Randers",
+        "Kolding",
+        "Horsens",
+        "Vejle",
+        "Roskilde",
+        "Herning",
+        "Horsholm",
+        "Helsingor",
+        "Silkeborg",
+        "Naestved",
+        "Fredericia",
+        "Viborg",
+        "Koge",
+        "Holstebro",
+        "Taastrup",
+        "Slagelse",
+        "Hillerod",
+        "Holbaek",
+        "Sonderborg",
+        "Svendborg",
+        "Hjorring",
+        "Frederikshavn",
+        "Norresundby",
+        "Ringsted",
+        "Haderslev",
+        "Olstykke-Stenlose",
+        "Skive",
+        "Birkerod",
+        "Farum",
+        "Smorumnedre",
+        "Skanderborg",
+        "Nuuk",
+        "Nyborg",
+        "Nykobing F",
+        "Lillerod",
+        "Kalundborg",
+        "Frederikssund",
+        "Aabenraa",
+        "Solrod Strand",
+        "Ikast",
+        "Middelfart",
+        "Grenaa",
+        "Korsor",
+        "Varde",
+        "Ronne",
+        "Thisted",
+        "Vaerlose",
+        "Torshavn",
+        "Nakskov",
+        "Bronderslev",
+        "Frederiksvaerk",
+        "Dragor",
+        "Vordingborg",
+        "Hedehusene",
+        "Hobro",
+        "Odder",
+        "Hedensted",
+        "Haslev",
+        "Lystrup",
+        "Struer",
+        "Jyllinge",
+        "Ringkobing",
+        "Grindsted",
+        "Vejen",
+        "Humlebaek",
+        "Nykobing M",
+        "Saeby",
+        "Hundested",
+        "Fredensborg St.by",
+        "Beder-Malling",
+        "Galten",
+        "Ribe",
+        "Aars",
+        "Helsinge",
+        "Hadsten",
+        "Skagen",
+        "Niva",
+        "Soro",
+        "Logten",
+        "Skjern",
+        "Horning",
+        "Tonder",
+        "Hinnerup",
+        "Vojens",
+        "Bjerringbro",
+        "Stovring",
+        "Ebeltoft",
+        "Svenstrup",
+        "Brande",
+        "Bramming",
+        "Faaborg",
+        "Hammel",
+        "Lemvig",
+        "Slangerup",
+        "Gilleleje",
+    ]
+    frcities = [
+        "Paris",
+        "Marseille",
+        "Lyon",
+        "Toulouse",
+        "Nice",
+        "Nantes",
+        "Strasbourg",
+        "Montpellier",
+        "Bordeaux",
+        "Lille",
+        "Rennes",
+        "Reims",
+        "Le Havre",
+        "Saint Etienne",
+        "Toulon",
+        "Grenoble",
+        "Dijon",
+        "Nimes",
+        "Angers",
+        "Villeurbanne",
+        "Le Mans",
+        "Aix en Provence",
+        "Clermont Ferrand",
+        "Brest",
+        "Tours",
+        "Limoges",
+        "Amiens",
+        "Perpignan",
+        "Metz",
+        "Boulogne Billancourt",
+        "Besancon",
+        "Orleans",
+        "Mulhouse",
+        "Saint Denis",
+        "Rouen",
+        "Argenteuil",
+        "Caen",
+        "Montreuil",
+        "Nancy",
+        "Roubaix",
+        "Tourcoing",
+        "Nanterre",
+        "Avignon",
+        "Vitry sur Seine",
+        "Creteil",
+        "Dunkirk",
+        "Poitiers",
+        "Asnieres sur Seine",
+        "Versailles",
+        "Courbevoie",
+        "Colombes",
+        "Aulnay sous Bois",
+        "Cherbourg en Cotentin",
+        "Aubervilliers",
+        "Rueil Malmaison",
+        "Pau",
+        "Champigny sur Marne",
+        "Calais",
+        "Antibes",
+        "Beziers",
+        "Saint Maur des Fosses",
+        "La Rochelle",
+        "Cannes",
+        "Saint Nazaire",
+        "Merignac",
+        "Drancy",
+        "Colmar",
+        "Ajaccio",
+        "Issy les Moulineaux",
+        "Bourges",
+        "Levallois Perret",
+        "La Seyne sur Mer",
+        "Noisy le Grand",
+        "Quimper",
+        "Cergy",
+        "Villeneuve dAscq",
+        "Venissieux",
+        "Valence",
+        "Neuilly sur Seine",
+        "Antony",
+        "Pessac",
+        "Troyes",
+        "Ivry sur Seine",
+        "Clichy",
+        "Chambery",
+        "Montauban",
+        "Niort",
+        "Villejuif",
+        "Lorient",
+        "Sarcelles",
+        "Hyeres",
+        "Saint Quentin",
+        "Epinay sur Seine",
+        "Pantin",
+        "Maisons Alfort",
+        "Beauvais",
+        "Le Blanc Mesnil",
+        "Cholet",
+        "Chelles",
+        "Evry",
+        "Meaux",
+        "Frejus",
+        "Annecy",
+        "Fontenay sous Bois",
+        "La Roche sur Yon",
+        "Bondy",
+        "Vannes",
+        "Narbonne",
+        "Arles",
+        "Clamart",
+        "Sartrouville",
+        "Bobigny",
+        "Grasse",
+        "Sevran",
+        "Laval",
+        "Belfort",
+        "Albi",
+        "Evreux",
+        "Corbeil Essonnes",
+        "Vincennes",
+        "Montrouge",
+        "Martigues",
+        "Charleville Mezieres",
+        "Suresnes",
+        "Massy",
+        "Bayonne",
+        "Cagnes sur Mer",
+        "Saint Ouen",
+        "Brive la Gaillarde",
+        "Blois",
+        "Saint Malo",
+        "Carcassonne",
+        "Meudon",
+        "Vaulx en Velin",
+        "Saint Brieuc",
+        "Aubagne",
+        "Alfortville",
+        "Chalons en Champagne",
+        "Chalon sur Saone",
+        "Mantes la Jolie",
+        "Puteaux",
+        "Chateauroux",
+        "Rosny sous Bois",
+        "Saint Priest",
+        "Saint Herblain",
+        "Salon de Provence",
+        "Sete",
+        "Livry Gargan",
+        "Valenciennes",
+        "Istres",
+    ]
+    becities = [
+        "Brussels",
+        "Antwerp",
+        "Gent",
+        "Charleroi",
+        "Liege",
+        "Brugge",
+        "Namur",
+        "Leuven",
+        "Mons",
+        "Mechelen",
+        "Aalst",
+        "La Louviere",
+        "Hasselt",
+        "Sint Niklaas",
+        "Kortrijk",
+        "Oostende",
+        "Tournai",
+        "Genk",
+        "Seraing",
+        "Roeselare",
+        "Mouscron",
+        "Verviers",
+        "Beveren",
+        "Beringen",
+        "Dendermonde",
+        "Vilvoorde",
+        "Turnhout",
+        "Deinze",
+        "Dilbeek",
+        "Heist op den Berg",
+        "Lokeren",
+        "Sint Truiden",
+        "Geel",
+        "Braine lAlleud",
+        "Herstal",
+        "Halle",
+        "Ninove",
+        "Maasmechelen",
+        "Waregem",
+        "Brasschaat",
+        "Grimbergen",
+        "Mol",
+        "Lier",
+        "Chatelet",
+        "Evergem",
+        "Tienen",
+        "Ieper",
+        "Schoten",
+        "Wavre",
+        "Zaventem",
+    ]
+    decities = [
+        "Berlin",
+        "Hamburg",
+        "Munich",
+        "Cologne",
+        "Frankfurt am Main",
+        "Stuttgart",
+        "Dusseldorf",
+        "Dortmund",
+        "Essen",
+        "Leipzig",
+        "Bremen",
+        "Dresden",
+        "Hanover",
+        "Nuremberg",
+        "Duisburg",
+        "Bochum",
+        "Wuppertal",
+        "Bielefeld",
+        "Bonn",
+        "Munster",
+        "Karlsruhe",
+        "Mannheim",
+        "Augsburg",
+        "Wiesbaden",
+        "Monchengladbach",
+        "Gelsenkirchen",
+        "Braunschweig",
+        "Kiel",
+        "Chemnitz",
+        "Aachen",
+        "Halle",
+        "Magdeburg",
+        "Freiburg im Breisgau",
+        "Krefeld",
+        "Lubeck",
+        "Mainz",
+        "Erfurt",
+        "Oberhausen",
+        "Rostock",
+        "Kassel",
+        "Hagen",
+        "Saarbrucken",
+        "Hamm",
+        "Potsdam",
+        "Mulheim an der Ruhr",
+        "Ludwigshafen am Rhein",
+        "Oldenburg",
+        "Osnabruck",
+        "Leverkusen",
+        "Heidelberg",
+        "Solingen",
+        "Darmstadt",
+        "Herne",
+        "Neuss",
+        "Regensburg",
+        "Paderborn",
+        "Ingolstadt",
+        "Offenbach am Main",
+        "Wurzburg",
+        "Furth",
+        "Ulm",
+        "Heilbronn",
+        "Pforzheim",
+        "Wolfsburg",
+        "Gottingen",
+        "Bottrop",
+        "Reutlingen",
+        "Koblenz",
+        "Recklinghausen",
+        "Bremerhaven",
+        "Bergisch Gladbach",
+        "Jena",
+        "Erlangen",
+        "Remscheid",
+        "Trier",
+        "Salzgitter",
+        "Moers",
+        "Siegen",
+        "Hildesheim",
+        "Cottbus",
+        "Kaiserslautern",
+        "Gutersloh",
+        "Witten",
+        "Hanau",
+        "Schwerin",
+        "Gera",
+        "Ludwigsburg",
+        "Esslingen am Neckar",
+        "Iserlohn",
+        "Duren",
+        "Zwickau",
+        "Tubingen",
+        "Flensburg",
+        "Giessen",
+        "Ratingen",
+        "Lunen",
+        "Villingen Schwenningen",
+        "Konstanz",
+        "Marl",
+        "Worms",
+    ]
+    nzcities = [
+        "Auckland",
+        "Christchurch",
+        "Wellington",
+        "Hamilton",
+        "Tauranga",
+        "Dunedin",
+        "Lower Hutt",
+        "Palmerston North",
+        "Hastings",
+        "Nelson",
+        "Napier",
+        "Rotorua",
+        "New Plymouth",
+        "Porirua",
+        "Whangarei",
+        "Invercargill",
+        "Kapiti",
+        "Wanganui",
+        "Upper Hutt",
+        "Gisborne",
+        "Blenheim",
+        "Timaru",
+        "Pukekohe",
+        "Taupo",
+        "Masterton",
+        "Levin",
+        "Ashburton",
+        "Whakatane",
+        "Cambridge",
+        "Te Awamutu",
+        "Rangiora",
+        "Feilding",
+        "Oamaru",
+        "Tokoroa",
+        "Queenstown",
+        "Hawera",
+        "Greymouth",
+        "Rolleston",
+        "Gore",
+        "Waiuku",
+        "Waiheke Island",
+        "Motueka",
+        "Te Puke",
+        "Matamata",
+        "Morrinsville",
+        "Huntly",
+        "Thames",
+        "Kerikeri",
+        "Waitara",
+        "Wanaka",
+        "Kawerau",
+        "Otaki",
+        "Stratford",
+        "Dannevirke",
+        "Avarua",
+        "Kaitaia",
+        "Alexandra",
+        "Carterton",
+        "Marton",
+        "Waihi",
+        "Taumarunui",
+        "Whitianga",
+        "Foxton",
+        "Dargaville",
+        "Snells Beach",
+        "Te Kuiti",
+        "Cromwell",
+        "Katikati",
+        "Picton",
+        "Wairoa",
+        "Temuka",
+        "Westport",
+        "Lincoln",
+        "Balclutha",
+        "Kaikohe",
+        "Warkworth",
+        "Te Aroha",
+        "Paeroa",
+        "Opotiki",
+        "Putaruru",
+        "Waipukurau",
+        "Whangamata",
+        "Hokitika",
+        "Inglewood",
+        "Turangi",
+        "Waimate",
+        "Woodend",
+        "Raglan",
+        "Helensville",
+        "Arorangi",
+        "Otorohanga",
+        "Arrowtown",
+        "Pahiatua",
+        "Geraldine",
+        "Featherston",
+        "Winton",
+        "Greytown",
+        "Wakefield",
+        "Mapua",
+        "Kaikoura",
+    ]
+
     for url in urls:
-        for letter in letters:
+        alllocs = letters
+        if ".be/" in url:
+            alllocs = becities
+        if ".de/" in url:
+            alllocs = decities
+        if ".fr/" in url:
+            alllocs = frcities
+        if ".dk/" in url:
+            alllocs = dkcities
+        if ".nl/" in url:
+            alllocs = nlcities + letters
+        if ".nz/" in url:
+            alllocs = nzcities
+        for letter in alllocs:
             cabb = url.split("/dynamic")[0].rsplit(".", 1)[1]
             logger.info("Pulling Letter %s, Country %s" % (letter, cabb))
             curl = url + letter
@@ -105,49 +732,52 @@ def fetch_data():
             lat = "<MISSING>"
             lng = "<MISSING>"
             logger.info("Pulling Stores")
-            for item in json.loads(r.content)["Data"]:
-                name = item["Name"]
-                store = item["StoreNo"]
-                phone = item["PhoneNo"]
-                try:
-                    a1 = str(item["Address"]["UnitNo"])
-                except:
-                    a1 = ""
-                try:
-                    a2 = str(item["Address"]["StreetNo"])
-                except:
-                    a2 = ""
-                try:
-                    a3 = str(item["Address"]["StreetName"])
-                except:
-                    a3 = ""
-                add = a1 + " " + a2 + " " + a3
-                add = add.strip().replace("  ", " ")
-                add = add.replace("None ", "")
-                city = item["Address"]["Suburb"]
-                state = "<MISSING>"
-                zc = item["Address"]["PostalCode"]
-                lat = item["GeoCoordinates"]["Latitude"]
-                lng = item["GeoCoordinates"]["Longitude"]
-                hours = str(item["OpeningHours"])
-                loc = "<MISSING>"
-                country = item["CountryCode"]
-                yield SgRecord(
-                    locator_domain=website,
-                    page_url=loc,
-                    location_name=name,
-                    street_address=add,
-                    city=city,
-                    state=state,
-                    zip_postal=zc,
-                    country_code=country,
-                    phone=phone,
-                    location_type=typ,
-                    store_number=store,
-                    latitude=lat,
-                    longitude=lng,
-                    hours_of_operation=hours,
-                )
+            try:
+                for item in json.loads(r.content)["Data"]:
+                    name = item["Name"]
+                    store = item["StoreNo"]
+                    phone = item["PhoneNo"]
+                    try:
+                        a1 = str(item["Address"]["UnitNo"])
+                    except:
+                        a1 = ""
+                    try:
+                        a2 = str(item["Address"]["StreetNo"])
+                    except:
+                        a2 = ""
+                    try:
+                        a3 = str(item["Address"]["StreetName"])
+                    except:
+                        a3 = ""
+                    add = a1 + " " + a2 + " " + a3
+                    add = add.strip().replace("  ", " ")
+                    add = add.replace("None ", "")
+                    city = item["Address"]["Suburb"]
+                    state = "<MISSING>"
+                    zc = item["Address"]["PostalCode"]
+                    lat = item["GeoCoordinates"]["Latitude"]
+                    lng = item["GeoCoordinates"]["Longitude"]
+                    hours = str(item["OpeningHours"])
+                    loc = "<MISSING>"
+                    country = item["CountryCode"]
+                    yield SgRecord(
+                        locator_domain=website,
+                        page_url=loc,
+                        location_name=name,
+                        street_address=add,
+                        city=city,
+                        state=state,
+                        zip_postal=zc,
+                        country_code=country,
+                        phone=phone,
+                        location_type=typ,
+                        store_number=store,
+                        latitude=lat,
+                        longitude=lng,
+                        hours_of_operation=hours,
+                    )
+            except:
+                pass
 
     for url in searchurls:
         lurl = url.split("|")[1]
@@ -157,58 +787,61 @@ def fetch_data():
             "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
             "DPZ-Market": cc,
         }
-        r = session.get(lurl, headers=headers2)
-        website = "dominos.br"
-        typ = "<MISSING>"
-        country = lurl.split("regionCode=")[1].split("&")[0]
-        loc = "<MISSING>"
-        store = "<MISSING>"
-        hours = "<MISSING>"
-        lat = "<MISSING>"
-        lng = "<MISSING>"
-        logger.info("Pulling Stores")
-        for item in json.loads(r.content)["Stores"]:
-            if "StoreName" in str(item):
-                name = item["StoreName"]
-                store = item["StoreID"]
-                phone = item["Phone"]
-                try:
-                    add = item["StreetName"]
-                except:
-                    add = "<MISSING>"
-                add = str(add).replace("\r", "").replace("\n", "")
-                city = str(item["City"]).replace("\r", "").replace("\n", "")
-                state = "<MISSING>"
-                zc = item["PostalCode"]
-                try:
-                    lat = item["StoreCoordinates"]["StoreLatitude"]
-                    lng = item["StoreCoordinates"]["StoreLongitude"]
-                except:
-                    lat = "<MISSING>"
-                    lng = "<MISSING>"
-                hours = (
-                    str(item["HoursDescription"])
-                    .replace("\t", "")
-                    .replace("\n", "")
-                    .replace("\r", "")
-                )
-                loc = "<MISSING>"
-                yield SgRecord(
-                    locator_domain=website,
-                    page_url=loc,
-                    location_name=name,
-                    street_address=add,
-                    city=city,
-                    state=state,
-                    zip_postal=zc,
-                    country_code=country,
-                    phone=phone,
-                    location_type=typ,
-                    store_number=store,
-                    latitude=lat,
-                    longitude=lng,
-                    hours_of_operation=hours,
-                )
+        try:
+            r = session.get(lurl, headers=headers2)
+            website = "dominos.br"
+            typ = "<MISSING>"
+            country = lurl.split("regionCode=")[1].split("&")[0]
+            loc = "<MISSING>"
+            store = "<MISSING>"
+            hours = "<MISSING>"
+            lat = "<MISSING>"
+            lng = "<MISSING>"
+            logger.info("Pulling Stores")
+            for item in json.loads(r.content)["Stores"]:
+                if "StoreName" in str(item):
+                    name = item["StoreName"]
+                    store = item["StoreID"]
+                    phone = item["Phone"]
+                    try:
+                        add = item["StreetName"]
+                    except:
+                        add = "<MISSING>"
+                    add = str(add).replace("\r", "").replace("\n", "")
+                    city = str(item["City"]).replace("\r", "").replace("\n", "")
+                    state = "<MISSING>"
+                    zc = item["PostalCode"]
+                    try:
+                        lat = item["StoreCoordinates"]["StoreLatitude"]
+                        lng = item["StoreCoordinates"]["StoreLongitude"]
+                    except:
+                        lat = "<MISSING>"
+                        lng = "<MISSING>"
+                    hours = (
+                        str(item["HoursDescription"])
+                        .replace("\t", "")
+                        .replace("\n", "")
+                        .replace("\r", "")
+                    )
+                    loc = "<MISSING>"
+                    yield SgRecord(
+                        locator_domain=website,
+                        page_url=loc,
+                        location_name=name,
+                        street_address=add,
+                        city=city,
+                        state=state,
+                        zip_postal=zc,
+                        country_code=country,
+                        phone=phone,
+                        location_type=typ,
+                        store_number=store,
+                        latitude=lat,
+                        longitude=lng,
+                        hours_of_operation=hours,
+                    )
+        except:
+            pass
 
     locs = []
     states = []
