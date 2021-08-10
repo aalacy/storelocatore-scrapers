@@ -79,23 +79,12 @@ def fetch_data():
 
             i["hours"] = old.replace(":;", "")
             try:
-                coords = soup.find("", {"href": lambda x: x and "maps" in x})["href"]
-                coords = coords.split("/@", 1)[1].split("/", 1)[0].split(",")
+                coords = soup.find(
+                    "a", {"target": True, "jstcache": "46", "href": True}
+                )["href"]
+                coords = coords.split("ll=", 1)[1].split("&", 1)[0].split(",")
             except Exception:
                 coords = ["<INACCESSIBLE>", "<INACCESSIBLE>"]
-
-            if coords[0] == "<INACCESSIBLE>":
-                try:
-                    coords = (
-                        i["OFFICEHOURS"]
-                        .split("href", 1)[1]
-                        .split("maps", 1)[1]
-                        .split("@", 1)[1]
-                        .split("/", 1)[0]
-                        .split(",")
-                    )
-                except Exception:
-                    coords = ["<INACCESSIBLE>", "<INACCESSIBLE>"]
             i["lon"] = coords[1]
             i["lat"] = coords[0]
             try:
@@ -205,6 +194,7 @@ def scrape():
             mapping=["CLINICID"],
             value_transform=lambda x: "https://locations.geisinger.org/details.cfm?id="
             + str(x),
+            part_of_record_identity=True,
         ),
         location_name=MappingField(
             mapping=["NAME"], value_transform=lambda x: x.replace("&amp; ", "")
@@ -212,7 +202,9 @@ def scrape():
         latitude=MappingField(mapping=["lat"]),
         longitude=MappingField(mapping=["lat"]),
         street_address=MultiMappingField(
-            mapping=[["ADDRESS1"], ["ADDRESS2"]], raw_value_transform=fix_address
+            mapping=[["ADDRESS1"], ["ADDRESS2"]],
+            raw_value_transform=fix_address,
+            part_of_record_identity=True,
         ),
         city=MappingField(mapping=["CITY"]),
         state=MappingField(mapping=["STATE"]),
@@ -220,11 +212,19 @@ def scrape():
             mapping=["ZIPCODE"],
             value_transform=lambda x: x.replace(" ", "").replace("*", ""),
             is_required=False,
+            part_of_record_identity=True,
         ),
         country_code=MissingField(),
         phone=MappingField(mapping=["PHONE"], is_required=False),
-        store_number=MappingField(mapping=["CLINICID"]),
-        hours_of_operation=MappingField(mapping=["hours"], is_required=False),
+        store_number=MappingField(
+            mapping=["CLINICID"],
+            part_of_record_identity=True,
+        ),
+        hours_of_operation=MappingField(
+            mapping=["hours"],
+            is_required=False,
+            part_of_record_identity=True,
+        ),
         location_type=MappingField(
             mapping=["OTHERSERVICES"], value_transform=parse_features, is_required=False
         ),
