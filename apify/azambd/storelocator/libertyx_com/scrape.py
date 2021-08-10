@@ -153,10 +153,13 @@ def scrape():
                 writer.write_row(rec)
     state = CrawlStateSingleton.get_instance()
     log.debug("Printing number of records by country-code:")
-    for country_code in SearchableCountries.ALL:
-        log.debug(
-            f"{country_code}: {state.get_misc_value(country_code, default_factory=lambda: 0)}"
-        )
+    for country_code in SearchableCountries.USA:
+        try:
+            count = state.get_misc_value(country_code, default_factory=lambda: 0)
+            log.debug(f"{country_code}: {count}")
+        except Exception as e:
+            log.info(f"Country codes: {country_code}, message={e}")
+            pass
 
     end = time.time()
     log.info(f"Scrape took {end-start} seconds.")
