@@ -91,7 +91,11 @@ def fetch_data(http: SgRequests, search: DynamicGeoSearch) -> Iterable[SgRecord]
         data = json.loads(response.text)
         stores = []  # type: ignore
         if "locations" in str(data):
-            stores = data["locations"]  # type: ignore
+            try:
+                if "locations" in data:
+                    stores = data["locations"]  # type: ignore
+            except Exception:
+                pass
 
         total = len(stores)
         log.debug(f"{count}. From <{lat}:{lng}> stores = {total}")
