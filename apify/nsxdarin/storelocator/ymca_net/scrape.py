@@ -13,7 +13,7 @@ headers = {
 
 search = DynamicGeoSearch(
     country_codes=[SearchableCountries.USA],
-    max_radius_miles=10,
+    max_search_distance_miles=10,
     max_search_results=None,
 )
 
@@ -138,6 +138,10 @@ def fetch_data():
                             phone = "<MISSING>"
                         if hours == "":
                             hours = "<MISSING>"
+                        name = name.replace("&amp;", "&")
+                        add = add.replace("&amp;", "&")
+                        city = city.replace("&amp;", "&")
+                        hours = hours.replace("&amp;", "&")
                         yield SgRecord(
                             locator_domain=website,
                             page_url=loc,
