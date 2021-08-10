@@ -14,7 +14,7 @@ base_url = "https://bitstop.co/get-atms"
 
 
 def _state(abbr):
-    state = ""
+    state = "puerto rico"
     for ss in us.states.STATES:
         if ss.abbr == abbr:
             state = ss.name.lower()
@@ -42,6 +42,7 @@ def fetch_data():
                 longitude=_["longitude"],
                 country_code=_["country"],
                 phone=_["phone"],
+                location_type="atm",
                 locator_domain=locator_domain,
                 hours_of_operation="; ".join(_["hours"]),
                 raw_address=_["full_address"],
