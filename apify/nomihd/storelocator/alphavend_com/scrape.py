@@ -105,7 +105,11 @@ def fetch_data():
             phone = "<MISSING>"
             hours_list = store.xpath("div[1]//div[strong]//text()")
             hours_of_operation = (
-                " ".join(hours_list).strip().split("Live updates")[0].strip()
+                (" ".join(hours_list).strip().split("Live updates")[0].strip())
+                .encode("ascii", "replace")
+                .decode("utf-8")
+                .replace("?", "-")
+                .strip()
             )
             map_link = "".join(store.xpath("div[2]/a/@href")).strip()
             latitude, longitude = get_latlng(map_link)
