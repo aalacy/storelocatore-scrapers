@@ -8,7 +8,6 @@ from sgrequests.sgrequests import SgRequests
 from sgzip.dynamic import SearchableCountries, Grain_8
 from sgzip.parallel import DynamicSearchMaker, ParallelDynamicSearch, SearchIteration
 from sglogging import sglog
-import random
 
 logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
 
@@ -59,7 +58,6 @@ class ExampleSearchIteration(SearchIteration):
         # here you'd use self.__http, and call `found_location_at(lat, long)` for all records you find.
         lat, lng = coord
         # just some clever accounting of locations/country:
-        found = 0
         url = str(
             "https://www.choicehotels.com/webapi/location/hotels?adults=1&checkInDate=3021-07-15&checkOutDate=3021-07-16&favorCoOpHotels=false&hotelSortOrder=&include="
             + f"&lat={lat}&lon={lng}"
