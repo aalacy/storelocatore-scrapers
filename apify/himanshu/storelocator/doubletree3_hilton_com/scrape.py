@@ -42,7 +42,6 @@ def fetch_data(sgw: SgWriter):
         k = json_data["data"]["hotelSummaryOptions"]["hotels"]
         for j in k:
             if j["address"]["country"] not in ["US", "CA"]:
-                print(j["address"]["country"])
                 continue
             if j["brandCode"] not in ("DT"):
                 continue
