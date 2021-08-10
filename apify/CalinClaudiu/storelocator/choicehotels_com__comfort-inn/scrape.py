@@ -83,7 +83,11 @@ class ExampleSearchIteration(SearchIteration):
             logzilla.error(f"{e}")
             locations = {"hotelCount": 0}
             errorName = str(e)
-        if locations["hotelCount"] > 0 or locations["hotelCount"] != "0":
+        if (
+            locations["status"] == "OK"
+            and locations["hotelCount"] > 0
+            and "NONEXISTENT_HOTEL_INFO" not in str(locations)
+        ):
             for record in locations["hotels"]:
                 try:
                     record["address"]["subdivision"] = record["address"]["subdivision"]
@@ -192,7 +196,7 @@ if __name__ == "__main__":
                 search_maker=search_maker,
                 search_iteration=search_iter,
                 country_codes=SearchableCountries.ALL,
-                max_threads=2,
+                max_threads=6,
             )
 
             for rec in par_search.run():
