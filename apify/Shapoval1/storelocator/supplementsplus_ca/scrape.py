@@ -8,7 +8,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 def fetch_data(sgw: SgWriter):
 
-    api_url = "https://www.supplementsplus.ca/static/js/14.7910fdda.chunk.js"
+    api_url = "https://www.supplementsplus.ca/static/js/14.3d33c14b.chunk.js"
     session = SgRequests()
 
     headers = {
@@ -54,6 +54,8 @@ def fetch_data(sgw: SgWriter):
             .replace("ms", "Morning Sun Health Foods")
             .replace("sp", "Supplements Plus")
         )
+        if location_type != "Supplements Plus":
+            continue
 
         row = SgRecord(
             locator_domain=locator_domain,

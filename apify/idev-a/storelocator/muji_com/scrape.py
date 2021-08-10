@@ -6,6 +6,8 @@ from sgselenium import SgFirefox
 import time
 import json
 from sgscrape.sgpostal import parse_address_intl
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 logger = SgLogSetup().get_logger("muji")
 
@@ -44,7 +46,15 @@ def fetch_data():
             page_url = link["href"]
             country_code = page_url.split("c=")[1].split("&")[0]
             logger.info(page_url)
-            driver.get(page_url)
+            x = 0
+            while True:
+                try:
+                    driver.get(page_url)
+                    break
+                except Exception:
+                    x = x + 1
+                    if x == 10:
+                        raise Exception
             exist = False
             while not exist:
                 time.sleep(1)
@@ -76,7 +86,7 @@ def fetch_data():
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

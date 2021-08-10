@@ -1,10 +1,10 @@
-import usaddress
 from lxml import html
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgpostal import International_Parser, parse_address
 
 
 def get_urls():
@@ -20,34 +20,7 @@ def get_urls():
 def fetch_data(sgw: SgWriter):
 
     session = SgRequests()
-    tag = {
-        "Recipient": "recipient",
-        "AddressNumber": "address1",
-        "AddressNumberPrefix": "address1",
-        "AddressNumberSuffix": "address1",
-        "StreetName": "address1",
-        "StreetNamePreDirectional": "address1",
-        "StreetNamePreModifier": "address1",
-        "StreetNamePreType": "address1",
-        "StreetNamePostDirectional": "address1",
-        "StreetNamePostModifier": "address1",
-        "StreetNamePostType": "address1",
-        "CornerOf": "address1",
-        "IntersectionSeparator": "address1",
-        "LandmarkName": "address1",
-        "USPSBoxGroupID": "address1",
-        "USPSBoxGroupType": "address1",
-        "USPSBoxID": "address1",
-        "USPSBoxType": "address1",
-        "BuildingName": "address2",
-        "OccupancyType": "address2",
-        "OccupancyIdentifier": "address2",
-        "SubaddressIdentifier": "address2",
-        "SubaddressType": "address2",
-        "PlaceName": "city",
-        "StateName": "state",
-        "ZipCode": "postal",
-    }
+
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:85.0) Gecko/20100101 Firefox/85.0",
     }
@@ -64,22 +37,57 @@ def fetch_data(sgw: SgWriter):
 
         tree = html.fromstring(r.text)
         info = tree.xpath(
-            '//a[contains(@href, "email")]/preceding-sibling::text() | //span[contains(text(), "78-128 Ehukai")]/text() | //span[contains(text(), "P.O. Box 173")]/text() | //span[contains(text(), "Castaway Island, Fiji")]/text() | //a[contains(@href, "email")]/preceding-sibling::*/text()'
+            '//a[contains(@href, "email")]/preceding-sibling::text() | //span[contains(text(), "78-128 Ehukai")]/text() | //span[contains(text(), "P.O. Box 173")]/text() | //span[contains(text(), "Castaway Island, Fiji")]/text() | //a[contains(@href, "email")]/preceding-sibling::*/text() | //p[@style="font-weight: 500; text-align: left;"]/text()'
         )
 
         info = list(filter(None, [a.strip() for a in info]))
         ad = " ".join(info[:2])
-        a = usaddress.tag(ad, tag_mapping=tag)[0]
-        street_address = (
-            f"{a.get('address1')} {a.get('address2')}".replace("None", "").strip()
-            or "<MISSING>"
-        )
+        a = parse_address(International_Parser(), ad)
+
+        street_address = f"{a.street_address_1} {a.street_address_2}".replace(
+            "None", ""
+        ).strip()
         if street_address == "69-250 Waikoloa Beach Drive":
             street_address = street_address + " " + "".join(info[2]).strip()
-        city = a.get("city") or "<MISSING>"
-        state = a.get("state") or "<MISSING>"
-        postal = a.get("postal") or "<MISSING>"
+        city = a.city or "<MISSING>"
+        state = a.state or "<MISSING>"
+        postal = a.postcode or "<MISSING>"
+        if (
+            page_url
+            == "https://www.outrigger.com/hotels-resorts/thailand/outrigger-khao-lak-beach-resort"
+        ):
+            postal = "82190"
+        if (
+            page_url.find(
+                "https://www.outrigger.com/hotels-resorts/thailand/outrigger-koh-samui-beach-resort"
+            )
+            != -1
+        ):
+            state = "Suratthani"
+            postal = "84310"
+        if (
+            page_url.find(
+                "https://www.outrigger.com/hotels-resorts/thailand/phuket-manathai-by-outrigger"
+            )
+            != -1
+        ):
+            city = "Phuket"
+            postal = "83110"
+        if (
+            page_url.find(
+                "https://www.outrigger.com/hotels-resorts/fiji/viti-levu/outrigger-fiji-beach-resort"
+            )
+            != -1
+        ):
+            street_address = "P.O. Box 173"
+
         country_code = "US"
+        if page_url.find("thailand") != -1:
+            country_code = "Thailand"
+        if page_url.find("fiji") != -1:
+            country_code = "fiji"
+        if page_url.find("island-of-mauritius") != -1:
+            country_code = "island-of-mauritius"
         location_name = "".join(tree.xpath("//h1/text()")) or "<MISSING>"
         if location_name.find("Ocean ViewOcean") != -1:
             location_name = location_name.split("Ocean ViewOcean")[0].strip()

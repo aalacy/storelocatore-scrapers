@@ -1,58 +1,28 @@
 import re
-import csv
 import demjson
 from lxml import etree
 
 from sgrequests import SgRequests
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 from sgscrape.sgpostal import parse_address_intl
-
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
 
 
 def fetch_data():
     # Your scraper here
     session = SgRequests()
 
-    items = []
-    scraped_items = []
-
-    DOMAIN = "eurosparni.co.uk"
+    domain = "eurosparni.co.uk"
     start_url = "https://www.eurosparni.co.uk/nearest-store?postcode={}"
 
     all_codes = DynamicZipSearch(
-        country_codes=[SearchableCountries.BRITAIN], max_radius_miles=50
+        country_codes=[SearchableCountries.BRITAIN], expected_search_radius_miles=10
     )
     for code in all_codes:
-        store_url = start_url.format(code + "%201D0")
+        store_url = start_url.format(code)
         response = session.get(store_url)
         dom = etree.HTML(response.text)
         all_locations = dom.xpath(
@@ -73,15 +43,12 @@ def fetch_data():
             street_address = raw_address.split(",")[0]
             city = addr.city
             city = city if city else "<MISSING>"
-            state = "<MISSING>"
             zip_code = " ".join(raw_address.split()[-2:])
             zip_code = zip_code if zip_code else "<MISSING>"
             country_code = addr.country
             country_code = country_code if country_code else "<MISSING>"
-            store_number = "<MISSING>"
             phone = poi_html.xpath('.//a[contains(@href, "tel")]/@href')
             phone = phone[0].split(":")[-1] if phone else "<MISSING>"
-            location_type = "<MISSING>"
             geo = re.findall(r"location\d = (.+?);", response.text)[i]
             geo = demjson.decode(geo)
             latitude = geo["lat"]
@@ -100,34 +67,39 @@ def fetch_data():
             street_address = street_address.split(city)[0].strip()
             if city.upper() in street_address:
                 street_address = street_address.split(city.upper())[0].strip()
+            if street_address.strip() == "121":
+                street_address = "121 Drumaness Road"
 
-            item = [
-                DOMAIN,
-                store_url,
-                location_name,
-                street_address,
-                city,
-                state,
-                zip_code,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
-            check = f"{location_name} {street_address}"
-            if check not in scraped_items:
-                scraped_items.append(check)
-                items.append(item)
+            item = SgRecord(
+                locator_domain=domain,
+                page_url=store_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=SgRecord.MISSING,
+                zip_postal=zip_code,
+                country_code=country_code,
+                store_number=SgRecord.MISSING,
+                phone=phone,
+                location_type=SgRecord.MISSING,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
 
-    return items
+            yield item
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
 if __name__ == "__main__":

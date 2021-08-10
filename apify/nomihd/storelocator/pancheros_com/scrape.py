@@ -52,7 +52,7 @@ def fetch_data():
             location_name = store["geomodifier"]
 
             street_address = store["address"]["line1"].strip()
-            if "line2" in store and store["address"]:
+            if "line2" in store["address"] and store["address"]["line2"]:
                 street_address = (
                     street_address + ", " + store["address"]["line2"]
                 ).strip(", .")
@@ -66,8 +66,6 @@ def fetch_data():
             phone = store["mainPhone"]
 
             location_type = "<MISSING>"
-            log.info(x)
-            log.info(store_number)
             hours_list = []
             for day in store["hours"].keys():
                 time = ""
@@ -92,8 +90,8 @@ def fetch_data():
 
             hours_of_operation = "; ".join(hours_list).strip()
 
-            latitude = store["cityCoordinate"]["latitude"]
-            longitude = store["cityCoordinate"]["longitude"]
+            latitude = store["yextDisplayCoordinate"]["latitude"]
+            longitude = store["yextDisplayCoordinate"]["longitude"]
 
             raw_address = "<MISSING>"
             yield SgRecord(
