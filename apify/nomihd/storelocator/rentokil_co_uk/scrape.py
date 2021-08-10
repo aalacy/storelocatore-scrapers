@@ -1,15 +1,18 @@
 # -*- coding: utf-8 -*-
-from sgrequests import SgRequests
 from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import lxml.html
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgselenium.sgselenium import SgChrome
+from webdriver_manager.chrome import ChromeDriverManager
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 
 website = "rentokil.co.uk"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
-session = SgRequests()
 
 headers = {
     "authority": "www.rentokil.co.uk",
@@ -27,19 +30,52 @@ headers = {
 }
 
 
+def get_driver(url, class_name, driver=None):
+    if driver is not None:
+        driver.quit()
+
+    user_agent = (
+        "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:89.0) Gecko/20100101 Firefox/89.0"
+    )
+    x = 0
+    while True:
+        x = x + 1
+        try:
+            driver = SgChrome(
+                executable_path=ChromeDriverManager().install(),
+                user_agent=user_agent,
+                is_headless=True,
+            ).driver()
+            driver.get(url)
+
+            WebDriverWait(driver, 30).until(
+                EC.presence_of_element_located((By.ID, class_name))
+            )
+            break
+        except Exception:
+            driver.quit()
+            if x == 10:
+                raise Exception(
+                    "Make sure this ran with a Proxy, will fail without one"
+                )
+            continue
+    return driver
+
+
 def fetch_data():
     # Your scraper here
+
     search_url = "https://www.rentokil.co.uk/property-care/branches/"
-    stores_req = session.get(search_url, headers=headers)
-    log.info("first_requst successfull")
-    stores_sel = lxml.html.fromstring(stores_req.text)
-    stores = stores_sel.xpath('//a[@class="link-list-module_link"]/@href')
+    class_name = "menu"
+    driver = get_driver(search_url, class_name)
+    stores_sel = lxml.html.fromstring(driver.page_source)
+    stores = stores_sel.xpath('//select[@id="menu"]/option[position()>1]/@value')
     for store_url in stores:
-        page_url = "https://www.rentokil.co.uk/property-care" + store_url
+        page_url = "https://www.rentokil.co.uk" + store_url
 
         log.info(page_url)
-        store_req = session.get(page_url, headers=headers)
-        store_sel = lxml.html.fromstring(store_req.text)
+        driver.get(page_url)
+        store_sel = lxml.html.fromstring(driver.page_source)
 
         locator_domain = website
         location_name = "".join(
