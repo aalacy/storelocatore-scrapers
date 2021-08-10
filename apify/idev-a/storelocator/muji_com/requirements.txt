@@ -4,4 +4,4 @@ sgzip==0.10.1
 sgscrape==0.1.13
 sglogging==0.0.4
 beautifulsoup4==4.9.3
-sgzip==0.10.1
+sgpostal==0.1.0
