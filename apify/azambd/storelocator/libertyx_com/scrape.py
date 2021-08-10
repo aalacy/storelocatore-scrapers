@@ -153,7 +153,7 @@ def scrape():
                 writer.write_row(rec)
     state = CrawlStateSingleton.get_instance()
     log.debug("Printing number of records by country-code:")
-    for country_code in SearchableCountries.ALL:
+    for country_code in SearchableCountries.USA:
         log.debug(
             f"{country_code}: {state.get_misc_value(country_code, default_factory=lambda: 0)}"
         )
