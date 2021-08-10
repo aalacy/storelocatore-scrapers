@@ -4,7 +4,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgscrape.sgpostal import parse_address_intl
 from sglogging import SgLogSetup
 
 logger = SgLogSetup().get_logger("kfc")
@@ -27,20 +26,18 @@ def fetch_data():
                 break
             page += 1
             for _ in locations:
-                addr = parse_address_intl(
-                    " ".join(_.select_one(".outlet-address").stripped_strings)
-                    + ", India"
-                )
-                street_address = addr.street_address_1 or ""
-                if addr.street_address_2:
-                    street_address += " " + addr.street_address_2
+                addr = [
+                    aa.text.strip()
+                    for aa in _.select_one(".outlet-address .info-text").findChildren(
+                        "span", recursive=False
+                    )
+                ]
                 yield SgRecord(
                     page_url=_.select_one("a.btn-website")["href"],
                     location_name=_.select_one(".outlet-name").text.strip(),
-                    street_address=street_address,
-                    city=addr.city,
-                    state=addr.state,
-                    zip_postal=addr.postcode,
+                    street_address=" ".join(addr[:-1]),
+                    city=addr[-1].split("-")[0].strip(),
+                    zip_postal=addr[-1].split("-")[-1].strip(),
                     country_code="India",
                     phone=_.select_one(".outlet-phone").text.strip(),
                     latitude=_.select_one("input.outlet-latitude")["value"],
