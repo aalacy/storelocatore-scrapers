@@ -6,6 +6,7 @@ from bs4 import BeautifulSoup as bs
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sglogging import SgLogSetup
+from sgscrape.sgpostal import parse_address_intl
 
 logger = SgLogSetup().get_logger("carluccios")
 
@@ -37,12 +38,7 @@ def fetch_data():
             html = json.loads(res.text)["html"]
             if not html:
                 break
-            try:
-                store_list = bs(html, "lxml").select("div.column")
-            except:
-                import pdb
-
-                pdb.set_trace()
+            store_list = bs(html, "lxml").select("div.column")
             if not store_list:
                 break
             page += 1
@@ -50,14 +46,12 @@ def fetch_data():
             for store in store_list:
                 page_url = store.select_one("a")["href"]
                 location_name = store.select_one("h4.is-title").text
-                address_detail = store.select_one(
-                    "div.all-restaurants__address"
-                ).text.split("\n")
-                address_detail = [x for x in address_detail if x]
-                city_zip = address_detail.pop()
-                zip = city_zip.split(", ").pop()
-                city = ", ".join(city_zip.split(", ")[:-1])
-                street_address = " ".join(address_detail)
+                addr = parse_address_intl(
+                    store.select_one("div.all-restaurants__address").text
+                )
+                street_address = addr.street_address_1 or ""
+                if addr.street_address_2:
+                    street_address += " " + addr.street_address_2
                 phone = ""
                 if store.select_one("div.all-restaurants__phone"):
                     phone = store.select_one("div.all-restaurants__phone").text.replace(
@@ -92,8 +86,9 @@ def fetch_data():
                     page_url=page_url,
                     location_name=location_name,
                     street_address=street_address,
-                    city=city,
-                    zip_postal=zip,
+                    city=addr.city,
+                    state=addr.state,
+                    zip_postal=addr.postcode,
                     phone=phone,
                     locator_domain=locator_domain,
                     latitude=latitude,
