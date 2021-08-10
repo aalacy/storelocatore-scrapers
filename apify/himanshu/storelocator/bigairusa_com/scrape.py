@@ -61,7 +61,6 @@ def fetch_data():
         hoo = " ".join([e.strip() for e in hoo if e.strip()])
 
         dir_url = store_url + "direction/"
-        print(dir_url)
         loc_response = session.get(dir_url)
         loc_dom = etree.HTML(loc_response.text)
 
