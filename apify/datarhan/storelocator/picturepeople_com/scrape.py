@@ -1,5 +1,6 @@
 from lxml import etree
 from requests_toolbelt import MultipartEncoder
+
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
@@ -18,7 +19,7 @@ def fetch_data():
     }
 
     response = session.get(
-        "https://tpp.mystratus.com/21.05/(S(3o22wngui024ac5aho1fh0gb))/OnlineBooking/LocationSelection.aspx?loginoption=defaultnew&ReferenceGUID=2af09639166346abac7b38bd1247e155",
+        "https://tpp.mystratus.com/21.07/(S(hykrg13jfpdr4q1kfwzfz3vj))/OnlineBooking/LocationSelection.aspx?loginoption=defaultnew&ReferenceGUID=449336912b0041bc8625f63e52e3fcb7",
         headers=headers,
     )
     dom = etree.HTML(response.text)
@@ -60,7 +61,7 @@ def fetch_data():
 
     all_locations = []
     all_codes = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA], expected_search_radius_miles=200
+        country_codes=[SearchableCountries.USA], expected_search_radius_miles=50
     )
     for code in all_codes:
         formdata = {
