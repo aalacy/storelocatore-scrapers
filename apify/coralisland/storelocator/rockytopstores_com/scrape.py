@@ -26,6 +26,8 @@ def fetch_data():
         loclist = soup.find("div", {"class": "changeloc"}).findAll("option")[1:]
         for loc in loclist:
             location_name = loc.text
+            store_number = location_name.split("#")[1]
+            print(store_number)
             page_url = "https://rockytopstores.com" + loc["value"]
             log.info(page_url)
             r = session.get(page_url, headers=headers)
@@ -53,7 +55,7 @@ def fetch_data():
                 state=state.strip(),
                 zip_postal=zip_postal.strip(),
                 country_code=country_code,
-                store_number=MISSING,
+                store_number=store_number,
                 phone=MISSING,
                 location_type=MISSING,
                 latitude=MISSING,
