@@ -59,7 +59,7 @@ def get_data():
             ),
             "html.parser",
         ).text.strip()
-        print(address_part)
+
         if "Newport News" in address_part:
             address_pieces = address_part.split(",")[0].split(" ")
             address = ""
