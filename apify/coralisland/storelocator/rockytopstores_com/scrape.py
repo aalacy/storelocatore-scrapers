@@ -27,7 +27,6 @@ def fetch_data():
         for loc in loclist:
             location_name = loc.text
             store_number = location_name.split("#")[1]
-            print(store_number)
             page_url = "https://rockytopstores.com" + loc["value"]
             log.info(page_url)
             r = session.get(page_url, headers=headers)
