@@ -7,6 +7,9 @@ from bs4 import BeautifulSoup as b4
 from sgrequests import SgRequests
 import json
 
+from sgselenium import SgChrome
+import time
+
 
 def fetch_data():
     with SgRequests() as session:
@@ -21,15 +24,24 @@ def fetch_data():
         k = '{"stores":[' + k + "}]}"
         son = json.loads(k)
         for i in son["stores"]:
-            soup = session.get(
-                str(
-                    "https://locations.geisinger.org/details.cfm?id="
-                    + str(i["CLINICID"])
+            pageText = None
+            with SgChrome(is_headless=False) as driver:
+                driver.get(
+                    str(
+                        "https://locations.geisinger.org/details.cfm?id="
+                        + str(i["CLINICID"])
+                    )
                 )
-            )
-            backup = soup.text.replace("<b>", '"').replace("</b>", '"')
+                element = driver.find_element_by_tag_name("iframe")
+                driver.execute_script("arguments[0].scrollIntoView();", element)
+                time.sleep(1)
+                pageText = driver.page_source
+                driver.switch_to.frame(element)
+                coordText = driver.page_source
+            backup = pageText.replace("<b>", '"').replace("</b>", '"')
             soupy = b4(backup, "lxml")
-            soup = b4(soup.text, "lxml")
+            soup = b4(pageText, "lxml")
+            coordSoup = b4(coordText, "lxml")
             try:
                 i["hours"] = "; ".join(
                     list(
@@ -79,23 +91,13 @@ def fetch_data():
 
             i["hours"] = old.replace(":;", "")
             try:
-                coords = soup.find("", {"href": lambda x: x and "maps" in x})["href"]
-                coords = coords.split("/@", 1)[1].split("/", 1)[0].split(",")
+                links = coordSoup.find_all("a", {"href": True})
+                for link in links:
+                    if "maps?ll=" in link["href"]:
+                        coords = link["href"]
+                        coords = coords.split("ll=", 1)[1].split("&", 1)[0].split(",")
             except Exception:
                 coords = ["<INACCESSIBLE>", "<INACCESSIBLE>"]
-
-            if coords[0] == "<INACCESSIBLE>":
-                try:
-                    coords = (
-                        i["OFFICEHOURS"]
-                        .split("href", 1)[1]
-                        .split("maps", 1)[1]
-                        .split("@", 1)[1]
-                        .split("/", 1)[0]
-                        .split(",")
-                    )
-                except Exception:
-                    coords = ["<INACCESSIBLE>", "<INACCESSIBLE>"]
             i["lon"] = coords[1]
             i["lat"] = coords[0]
             try:
@@ -205,14 +207,17 @@ def scrape():
             mapping=["CLINICID"],
             value_transform=lambda x: "https://locations.geisinger.org/details.cfm?id="
             + str(x),
+            part_of_record_identity=True,
         ),
         location_name=MappingField(
             mapping=["NAME"], value_transform=lambda x: x.replace("&amp; ", "")
         ),
         latitude=MappingField(mapping=["lat"]),
-        longitude=MappingField(mapping=["lat"]),
+        longitude=MappingField(mapping=["lon"]),
         street_address=MultiMappingField(
-            mapping=[["ADDRESS1"], ["ADDRESS2"]], raw_value_transform=fix_address
+            mapping=[["ADDRESS1"], ["ADDRESS2"]],
+            raw_value_transform=fix_address,
+            part_of_record_identity=True,
         ),
         city=MappingField(mapping=["CITY"]),
         state=MappingField(mapping=["STATE"]),
@@ -220,11 +225,19 @@ def scrape():
             mapping=["ZIPCODE"],
             value_transform=lambda x: x.replace(" ", "").replace("*", ""),
             is_required=False,
+            part_of_record_identity=True,
         ),
         country_code=MissingField(),
         phone=MappingField(mapping=["PHONE"], is_required=False),
-        store_number=MappingField(mapping=["CLINICID"]),
-        hours_of_operation=MappingField(mapping=["hours"], is_required=False),
+        store_number=MappingField(
+            mapping=["CLINICID"],
+            part_of_record_identity=True,
+        ),
+        hours_of_operation=MappingField(
+            mapping=["hours"],
+            is_required=False,
+            part_of_record_identity=True,
+        ),
         location_type=MappingField(
             mapping=["OTHERSERVICES"], value_transform=parse_features, is_required=False
         ),
