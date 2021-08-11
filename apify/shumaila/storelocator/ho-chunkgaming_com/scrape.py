@@ -12,7 +12,6 @@ headers = {
 }
 
 
-
 def fetch_data():
 
     pattern = re.compile(r"\s\s+")
@@ -39,95 +38,101 @@ def fetch_data():
         phone = maindiv[3]
         hours = ""
         if len(hours) < 2:
-            print('0')
-            hourslist  = soup.findAll('p',{'class':'footerp-p'})
-            hours = ''
+            print("0")
+            hourslist = soup.findAll("p", {"class": "footerp-p"})
+            hours = ""
             for st in hourslist:
-                if ('open hours' in st.text.lower()): 
-                    hours = hours + ' '+ st.text
-            
+                if "open hours" in st.text.lower():
+                    hours = hours + " " + st.text
         if len(hours) < 2:
-            print('3')
-            hourslist = soup.findAll('b')
-            hours = ''
+            print("3")
+            hourslist = soup.findAll("b")
+            hours = ""
             for st in hourslist:
-                if ('hours of operation' in st.text.lower()): 
-                    hours = hours + ' '+ st.text
+                if "hours of operation" in st.text.lower():
+                    hours = hours + " " + st.text
             try:
-                hours = hours.split(': ',1)[1]
+                hours = hours.split(": ", 1)[1]
             except:
                 pass
-            hours =hours.replace('Hours of operation:','').strip()
+            hours = hours.replace("Hours of operation:", "").strip()
             if len(hours) < 3:
-                hours = ''
+                hours = ""
         if len(hours) < 2:
-            print('1')
-            hourslist = soup.findAll('strong')
-            hours = ''
+            print("1")
+            hourslist = soup.findAll("strong")
+            hours = ""
             for st in hourslist:
-                if ('open' in st.text.lower() and 'hours' in st.text.lower()) or ('open' in st.text.lower() and 'am ' in st.text.lower()) or   ('mon' in st.text.lower() or 'tue' in st.text.lower()):
-                    hours = hours + ' '+ st.text
-            if '6 MONTH POINT' in hours:
-                hours = ''
-            
+                if (
+                    ("open" in st.text.lower() and "hours" in st.text.lower())
+                    or ("open" in st.text.lower() and "am " in st.text.lower())
+                    or ("mon" in st.text.lower() or "tue" in st.text.lower())
+                ):
+                    hours = hours + " " + st.text
+            if "6 MONTH POINT" in hours:
+                hours = ""
         if len(hours) < 2:
-            print('2')
-            hourslist = soup.findAll('p')
-            hours = ''
+            print("2")
+            hourslist = soup.findAll("p")
+            hours = ""
             for st in hourslist:
-                if ('sun ' in st.text.lower() and 'am ' in st.text.lower()) or ('fri' in st.text.lower() and 'am ' in st.text.lower()):
-                    hours = hours + ' '+ st.text
-        
+                if ("sun " in st.text.lower() and "am " in st.text.lower()) or (
+                    "fri" in st.text.lower() and "am " in st.text.lower()
+                ):
+                    hours = hours + " " + st.text
         if hours.find("ing yet. ") > -1:
             hours = "<MISSING>"
         else:
-            hours = hours.replace("â\x80\x93", "-").replace("\n", "").replace('Yes, ','').replace('Â','')
-
+            hours = (
+                hours.replace("â\x80\x93", "-")
+                .replace("\n", "")
+                .replace("Yes, ", "")
+                .replace("Â", "")
+            )
         try:
-            hours = hours.split('NEW &',1)[1]
+            hours = hours.split("NEW &", 1)[1]
         except:
             pass
         try:
-            hours = hours.split('!',1)[0]
+            hours = hours.split("!", 1)[0]
         except:
             pass
         try:
-            hours = hours.split('.',1)[0]
+            hours = hours.split(".", 1)[0]
         except:
             pass
-
         try:
-            hours = hours.split('Open')[0] + ' ' +hours.split('Open')[1]
+            hours = hours.split("Open")[0] + " " + hours.split("Open")[1]
         except:
             pass
-        print(link,hours)
+        print(link, hours)
         input()
 
         yield SgRecord(
-                locator_domain="https://www.ho-chunkgaming.com/",
-                page_url=link,
-                location_name=title,
-                street_address=street.strip(),
-                city=city.strip(),
-                state=state.strip(),
-                zip_postal=pcode.strip(),
-                country_code="US",
-                store_number="<MISSING>",
-                phone=phone.strip(),
-                location_type="<MISSING>",
-                latitude="<MISSING>",
-                longitude="<MISSING>",
-                hours_of_operation=hours,
-            )
-        
+            locator_domain="https://www.ho-chunkgaming.com/",
+            page_url=link,
+            location_name=title,
+            street_address=street.strip(),
+            city=city.strip(),
+            state=state.strip(),
+            zip_postal=pcode.strip(),
+            country_code="US",
+            store_number="<MISSING>",
+            phone=phone.strip(),
+            location_type="<MISSING>",
+            latitude="<MISSING>",
+            longitude="<MISSING>",
+            hours_of_operation=hours,
+        )
+
 
 def scrape():
-    with SgWriter( deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)) as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
 
 
 scrape()
-
-
