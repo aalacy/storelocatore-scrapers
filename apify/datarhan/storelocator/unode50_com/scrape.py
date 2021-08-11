@@ -50,16 +50,27 @@ def fetch_data():
         if "., .," in poi["address"]:
             continue
         raw_address = poi["address"].replace("\n", ", ").replace("\t", ", ").split(", ")
-        raw_address = " ".join([elem.strip() for elem in raw_address if elem.strip()])
-        addr = parse_address_intl(raw_address)
+        raw_address = [elem.strip() for elem in raw_address if elem.strip()]
+        addr = parse_address_intl(" ".join(raw_address))
         city = addr.city
+        if not city:
+            city = raw_address[-2]
         city = city if city else "<MISSING>"
-        street_address = f"{addr.street_address_1} {addr.street_address_2}".replace(
-            "None", ""
-        ).strip()
-        street_address = street_address if street_address else "<MISSING>"
-        if street_address == "1722":
-            street_address = raw_address[0]
+        street_check = " ".join([e.capitalize() for e in poi["address"].split()]).split(
+            city
+        )
+        if len(street_check) == 2:
+            street_address = (
+                " ".join([e.capitalize() for e in poi["address"].split()])
+                .split(city)[0]
+                .strip()
+            )
+        else:
+            street_address = " ".join([e.capitalize() for e in raw_address[0].split()])
+        if street_address.endswith(","):
+            street_address = street_address[:-1]
+        if street_address == "South Market":
+            street_address = "South Market, Bay 34"
         state = addr.state
         state = state if state else "<MISSING>"
         zip_code = addr.postcode
@@ -87,6 +98,7 @@ def fetch_data():
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=SgRecord.MISSING,
+            raw_address=poi["address"].replace("\n", ", ").replace("\t", ", "),
         )
 
         yield item
