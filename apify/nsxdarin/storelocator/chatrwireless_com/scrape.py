@@ -39,7 +39,6 @@ def fetch_data():
     logger.info("Pulling Stores")
     for line in r.iter_lines():
         line = str(line.decode("utf-8"))
-        print(line)
         if '"Record_ID":"' in line:
             items = line.split('"Record_ID":"')
             for item in items:
