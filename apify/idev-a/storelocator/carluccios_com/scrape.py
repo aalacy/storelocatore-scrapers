@@ -46,12 +46,16 @@ def fetch_data():
             for store in store_list:
                 page_url = store.select_one("a")["href"]
                 location_name = store.select_one("h4.is-title").text
-                addr = parse_address_intl(
-                    store.select_one("div.all-restaurants__address").text + ", UK"
+                _addr = " ".join(
+                    store.select_one("div.all-restaurants__address").stripped_strings
                 )
+                addr = parse_address_intl(_addr + ", United Kingdom")
                 street_address = addr.street_address_1 or ""
                 if addr.street_address_2:
                     street_address += " " + addr.street_address_2
+                zip_postal = addr.postcode
+                if len(zip_postal) < 6:
+                    zip_postal = _addr.split(",")[-1].strip()
                 phone = ""
                 if store.select_one("div.all-restaurants__phone"):
                     phone = store.select_one("div.all-restaurants__phone").text.replace(
@@ -88,13 +92,14 @@ def fetch_data():
                     street_address=street_address,
                     city=addr.city,
                     state=addr.state,
-                    zip_postal=addr.postcode,
+                    zip_postal=zip_postal,
                     phone=phone,
                     country_code="UK",
                     locator_domain=locator_domain,
                     latitude=latitude,
                     longitude=longitude,
                     hours_of_operation=" ".join(hours),
+                    raw_address=_addr,
                 )
 
 
