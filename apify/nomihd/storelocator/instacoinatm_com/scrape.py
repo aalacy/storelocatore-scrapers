@@ -44,7 +44,7 @@ def fetch_data():
 
         page_url = "https://www.instacoinatm.com/" + store_json["loc_page_en"]
 
-        location_name = store_json["name"]
+        location_name = store_json["name"].replace("&amp;", "&").strip()
         location_type = "<MISSING>"
         locator_domain = website
 

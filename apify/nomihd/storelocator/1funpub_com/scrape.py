@@ -82,8 +82,19 @@ def fetch_data():
 
         hours = list(filter(str, hours_sel.xpath('//div[@class="hours-text"]/text()')))
         hours_of_operation = (
-            "; ".join(hours).strip().replace("Hours of Operation:;", "").strip()
+            "; ".join(hours)
+            .strip()
+            .replace("Hours of Operation:;", "")
+            .strip()
+            .encode("ascii", "replace")
+            .decode("utf-8")
+            .replace("?", "")
+            .strip()
         )
+
+        if hours_of_operation:
+            if hours_of_operation[-1] == ";":
+                hours_of_operation = "".join(hours_of_operation[:-1]).strip()
 
         latlng = "".join(
             store.xpath(

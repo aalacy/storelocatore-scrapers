@@ -1,38 +1,13 @@
-import csv
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
+def fetch_data(sgw: SgWriter):
 
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    out = []
     locator_domain = "https://www.luckysmarket.com/"
     api_url = "https://www.luckysmarket.com/"
     session = SgRequests()
@@ -70,11 +45,9 @@ def fetch_data():
         state = ad.split(",")[1].split()[0].strip()
         country_code = "US"
         postal = ad.split(",")[1].split()[1].strip()
-        store_number = "<MISSING>"
 
         latitude = "<MISSING>"
         longitude = "<MISSING>"
-        location_type = "<MISSING>"
         hours_of_operation = (
             " ".join(
                 tree.xpath(
@@ -84,18 +57,16 @@ def fetch_data():
             .replace("\n", "")
             .strip()
         )
-        hours_of_operation = (
-            hours_of_operation.replace("Open Daily", "")
-            .replace("Take Out & Indoor Dining Daily", "")
-            .replace("Daily", "")
-            .strip()
-        )
+        hours_of_operation = hours_of_operation.replace(
+            "Take Out & Indoor Dining", ""
+        ).strip()
         phone = "".join(
             tree.xpath(
                 '//p[.//span[contains(text(), "PHONE")]]/following-sibling::p[1]//text()'
             )
         )
-        api_url2 = "https://api.freshop.com/1/stores?app_key=luckys_market&has_address=true&limit=10&token=ffb339b6b8130b794d7ff50aef5abf20"
+        store_number = "<MISSING>"
+        api_url2 = "https://api.freshop.com/1/stores?app_key=luckys_market&has_address=true&limit=10&token=355d3f4fb7329e1bc1767cefec756e85"
         session = SgRequests()
         r = session.get(api_url2, headers=headers)
         js = r.json()["items"]
@@ -106,31 +77,28 @@ def fetch_data():
                 longitude = j.get("longitude")
                 store_number = j.get("store_number")
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+        )
 
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    locator_domain = "https://www.luckysmarket.com/"
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        fetch_data(writer)
