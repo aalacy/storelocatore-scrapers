@@ -7,7 +7,7 @@ import time
 import json
 from sgscrape.sgpostal import parse_address_intl
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 
 logger = SgLogSetup().get_logger("muji")
 
@@ -86,7 +86,19 @@ def fetch_data():
 
 
 if __name__ == "__main__":
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.LATITUDE,
+                    SgRecord.Headers.LONGITUDE,
+                    SgRecord.Headers.CITY,
+                    SgRecord.Headers.PHONE,
+                    SgRecord.Headers.STREET_ADDRESS,
+                }
+            )
+        )
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
