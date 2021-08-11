@@ -28,10 +28,8 @@ headers = {
 
 def fetch_data():
     # Your scraper here
-    search_url = "https://pizzahut.com.pa/index/getrestaurantformap"
-    search_req = session.get(
-        "https://www.pizzahutdelivery.ro/ro/contact/locatii", headers=headers
-    )
+    search_url = "https://www.pizzahutdelivery.ro/ro/contact/locatii"
+    search_req = session.get(search_url, headers=headers)
     json_str = (
         search_req.text.split(':locations="')[1]
         .strip()
