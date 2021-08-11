@@ -16,7 +16,6 @@ def fetch_data():
 
     pattern = re.compile(r"\s\s+")
     url = "https://ho-chunkgaming.com/"
-    p = 0
     r = session.get(url, headers=headers, verify=False)
     soup = BeautifulSoup(r.text, "html.parser")
     mainul = soup.find("nav", {"id": "menu"})
@@ -38,14 +37,14 @@ def fetch_data():
         phone = maindiv[3]
         hours = ""
         if len(hours) < 2:
-            print("0")
+
             hourslist = soup.findAll("p", {"class": "footerp-p"})
             hours = ""
             for st in hourslist:
                 if "open hours" in st.text.lower():
                     hours = hours + " " + st.text
         if len(hours) < 2:
-            print("3")
+
             hourslist = soup.findAll("b")
             hours = ""
             for st in hourslist:
@@ -59,7 +58,7 @@ def fetch_data():
             if len(hours) < 3:
                 hours = ""
         if len(hours) < 2:
-            print("1")
+
             hourslist = soup.findAll("strong")
             hours = ""
             for st in hourslist:
@@ -72,7 +71,7 @@ def fetch_data():
             if "6 MONTH POINT" in hours:
                 hours = ""
         if len(hours) < 2:
-            print("2")
+
             hourslist = soup.findAll("p")
             hours = ""
             for st in hourslist:
@@ -105,9 +104,6 @@ def fetch_data():
             hours = hours.split("Open")[0] + " " + hours.split("Open")[1]
         except:
             pass
-        print(link, hours)
-        input()
-
         yield SgRecord(
             locator_domain="https://www.ho-chunkgaming.com/",
             page_url=link,
