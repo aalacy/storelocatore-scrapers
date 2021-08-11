@@ -3,7 +3,7 @@ from sgscrape.sgwriter import SgWriter
 from bs4 import BeautifulSoup as bs
 from sgrequests import SgRequests
 from urllib.parse import urljoin
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 import math
 from concurrent.futures import ThreadPoolExecutor
@@ -19,7 +19,7 @@ _headers = {
 base_url = "https://restaurants.subway.com/index.html"
 locator_domain = "https://restaurants.subway.com/"
 session = SgRequests().requests_retry_session()
-max_workers = 12
+max_workers = 24
 
 
 def fetchConcurrentSingle(link):
@@ -116,7 +116,18 @@ def fetch_data():
 
 
 if __name__ == "__main__":
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.PHONE,
+                    SgRecord.Headers.PAGE_URL,
+                    SgRecord.Headers.CITY,
+                    SgRecord.Headers.STREET_ADDRESS,
+                }
+            )
+        )
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
