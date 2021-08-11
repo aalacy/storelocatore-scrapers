@@ -67,6 +67,15 @@ def fetch_data():
                             street_address = addr.street_address_1
                             if addr.street_address_2:
                                 street_address += " " + addr.street_address_2
+                            if country_code == "jp":
+                                street_address = " ".join(
+                                    _["shopaddress"].split(",")[:-1]
+                                )
+                            phone = _["tel"].replace("\u3000", "").strip()
+                            if phone:
+                                phone = phone.split(" ")[0]
+                            if phone == "-":
+                                phone = ""
                             yield SgRecord(
                                 page_url=page_url,
                                 location_name=_["shopname"],
@@ -75,14 +84,16 @@ def fetch_data():
                                 state=addr.state,
                                 zip_postal=addr.postcode,
                                 country_code=country_code,
-                                phone=_["tel"].replace("\u3000", " ").strip(),
+                                phone=phone,
                                 locator_domain=locator_domain,
                                 latitude=_["latitude"],
                                 longitude=_["longitude"],
                                 hours_of_operation=_h(_["opentime"]),
+                                raw_address=_["shopaddress"],
                             )
 
                         break
+                        del driver.requests
 
 
 if __name__ == "__main__":
@@ -90,6 +101,7 @@ if __name__ == "__main__":
         SgRecordDeduper(
             SgRecordID(
                 {
+                    SgRecord.Headers.PAGE_URL,
                     SgRecord.Headers.LATITUDE,
                     SgRecord.Headers.LONGITUDE,
                     SgRecord.Headers.CITY,
