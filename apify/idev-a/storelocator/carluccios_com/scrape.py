@@ -47,7 +47,7 @@ def fetch_data():
                 page_url = store.select_one("a")["href"]
                 location_name = store.select_one("h4.is-title").text
                 addr = parse_address_intl(
-                    store.select_one("div.all-restaurants__address").text
+                    store.select_one("div.all-restaurants__address").text + ", UK"
                 )
                 street_address = addr.street_address_1 or ""
                 if addr.street_address_2:
@@ -90,6 +90,7 @@ def fetch_data():
                     state=addr.state,
                     zip_postal=addr.postcode,
                     phone=phone,
+                    country_code="UK",
                     locator_domain=locator_domain,
                     latitude=latitude,
                     longitude=longitude,
