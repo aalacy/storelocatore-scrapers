@@ -77,6 +77,9 @@ def fetch_data():
             for day, time in hoo_dict.items():
                 hoo.append(f'{day} {time["opens"]} - {time["closes"]}')
             hours_of_operation = " ".join(hoo)
+            phone = poi["phoneNumber"]
+            if str(phone) == "0":
+                phone = SgRecord.MISSING
 
             item = SgRecord(
                 locator_domain=domain,
@@ -88,7 +91,7 @@ def fetch_data():
                 zip_postal=poi["physicalAddress"]["postalCode"],
                 country_code=poi["physicalAddress"]["country"],
                 store_number=page_url.split("_")[-1],
-                phone=poi["phoneNumber"],
+                phone=phone,
                 location_type=SgRecord.MISSING,
                 latitude=poi["latitude"],
                 longitude=poi["longitude"],
