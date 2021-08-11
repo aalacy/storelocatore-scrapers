@@ -45,7 +45,6 @@ def fetch_data():
                 .text.replace("(Press1)", "")
                 .replace("(CAFE)", "")
             )
-            print(phone)
             address = (
                 temp[2]
                 .find("div")
