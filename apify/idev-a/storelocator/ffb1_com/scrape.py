@@ -30,6 +30,8 @@ def fetch_data():
             location_type = "branch"
             if _.select_one("span.hasATM"):
                 location_type += ", atm"
+            if "ATM Only" in _["data-title"]:
+                location_type = "atm"
             page_url = ""
             if _.select_one("a.seeDetails"):
                 page_url = locator_domain + _.select_one("a.seeDetails")["href"]
