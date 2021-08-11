@@ -56,17 +56,21 @@ def fetch_data():
         if not city:
             city = raw_address[-2]
         city = city if city else "<MISSING>"
-        street_address = addr.street_address_1
-        if street_address and addr.street_address_2:
-            street_address += " " + addr.street_address_2
-        elif not street_address and addr.street_address_2:
-            street_address = addr.street_address_2
-        if street_address == "6191 84107":
-            street_address = raw_address[0]
-        if not street_address:
-            street_address = raw_address[0]
-        if len(street_address.split()) == 1:
-            street_address = raw_address[0]
+        street_check = " ".join([e.capitalize() for e in poi["address"].split()]).split(
+            city
+        )
+        if len(street_check) == 2:
+            street_address = (
+                " ".join([e.capitalize() for e in poi["address"].split()])
+                .split(city)[0]
+                .strip()
+            )
+        else:
+            street_address = " ".join([e.capitalize() for e in raw_address[0].split()])
+        if street_address.endswith(","):
+            street_address = street_address[:-1]
+        if street_address == "South Market":
+            street_address = "South Market, Bay 34"
         state = addr.state
         state = state if state else "<MISSING>"
         zip_code = addr.postcode
@@ -94,6 +98,7 @@ def fetch_data():
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=SgRecord.MISSING,
+            raw_address=poi["address"].replace("\n", ", ").replace("\t", ", "),
         )
 
         yield item
