@@ -1,5 +1,3 @@
-from urllib.parse import urljoin
-
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
