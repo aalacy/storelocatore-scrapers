@@ -1,7 +1,10 @@
 from bs4 import BeautifulSoup
-import csv
 import re
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
 headers = {
@@ -9,39 +12,9 @@ headers = {
 }
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
 
 def fetch_data():
 
-    data = []
     pattern = re.compile(r"\s\s+")
     url = "https://ho-chunkgaming.com/"
     p = 0
@@ -65,56 +38,96 @@ def fetch_data():
         state, pcode = state.lstrip().split(" ", 1)
         phone = maindiv[3]
         hours = ""
-        try:
-            hours = soup.find("div", {"class": "container-answer"}).text
-            if hours != "":
-                hours = re.sub(pattern, " ", hours)
-                try:
-                    hours = hours.split(":")[1].lstrip()
-                except:
-                    try:
-                        hours = hours.split("open")[1].lstrip()
-                    except:
-                        if (
-                            hours.find("Unfortunately") > -1
-                            or hours.find("has made changes to the program") > -1
-                        ):
-                            hours = "<MISSING>"
-            else:
-                hours = "<MISSING>"
-        except:
-            pass
-        if len(hours) < 2 or hours.find("ing yet. ") > -1:
+        if len(hours) < 2:
+            print('0')
+            hourslist  = soup.findAll('p',{'class':'footerp-p'})
+            hours = ''
+            for st in hourslist:
+                if ('open hours' in st.text.lower()): 
+                    hours = hours + ' '+ st.text
+            
+        if len(hours) < 2:
+            print('3')
+            hourslist = soup.findAll('b')
+            hours = ''
+            for st in hourslist:
+                if ('hours of operation' in st.text.lower()): 
+                    hours = hours + ' '+ st.text
+            try:
+                hours = hours.split(': ',1)[1]
+            except:
+                pass
+            hours =hours.replace('Hours of operation:','').strip()
+            if len(hours) < 3:
+                hours = ''
+        if len(hours) < 2:
+            print('1')
+            hourslist = soup.findAll('strong')
+            hours = ''
+            for st in hourslist:
+                if ('open' in st.text.lower() and 'hours' in st.text.lower()) or ('open' in st.text.lower() and 'am ' in st.text.lower()) or   ('mon' in st.text.lower() or 'tue' in st.text.lower()):
+                    hours = hours + ' '+ st.text
+            if '6 MONTH POINT' in hours:
+                hours = ''
+            
+        if len(hours) < 2:
+            print('2')
+            hourslist = soup.findAll('p')
+            hours = ''
+            for st in hourslist:
+                if ('sun ' in st.text.lower() and 'am ' in st.text.lower()) or ('fri' in st.text.lower() and 'am ' in st.text.lower()):
+                    hours = hours + ' '+ st.text
+        
+        if hours.find("ing yet. ") > -1:
             hours = "<MISSING>"
         else:
-            hours = hours.replace("â\x80\x93", "-").replace("\n", "")
-        data.append(
-            [
-                "https://www.ho-chunkgaming.com/",
-                link,
-                title,
-                street,
-                city,
-                state,
-                pcode,
-                "US",
-                "<MISSING>",
-                phone,
-                "<MISSING>",
-                "<MISSING>",
-                "<MISSING>",
-                hours,
-            ]
-        )
+            hours = hours.replace("â\x80\x93", "-").replace("\n", "").replace('Yes, ','').replace('Â','')
 
-        p += 1
-    return data
+        try:
+            hours = hours.split('NEW &',1)[1]
+        except:
+            pass
+        try:
+            hours = hours.split('!',1)[0]
+        except:
+            pass
+        try:
+            hours = hours.split('.',1)[0]
+        except:
+            pass
 
+        try:
+            hours = hours.split('Open')[0] + ' ' +hours.split('Open')[1]
+        except:
+            pass
+        print(link,hours)
+        input()
+
+        yield SgRecord(
+                locator_domain="https://www.ho-chunkgaming.com/",
+                page_url=link,
+                location_name=title,
+                street_address=street.strip(),
+                city=city.strip(),
+                state=state.strip(),
+                zip_postal=pcode.strip(),
+                country_code="US",
+                store_number="<MISSING>",
+                phone=phone.strip(),
+                location_type="<MISSING>",
+                latitude="<MISSING>",
+                longitude="<MISSING>",
+                hours_of_operation=hours,
+            )
+        
 
 def scrape():
-
-    data = fetch_data()
-    write_output(data)
+    with SgWriter( deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()
+
+
