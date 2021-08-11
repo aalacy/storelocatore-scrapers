@@ -26,7 +26,10 @@ def fetch_latlng(lat, lng, country, session, tracker):
     response = session.get(url, params=params)
     if response.status_code != 200:
         return []
-    data = demjson.decode(response.text)
+    try:
+        data = demjson.decode(response.text)
+    except Exception:
+        return []
     if not data.get("servicePoints"):
         return []
 
