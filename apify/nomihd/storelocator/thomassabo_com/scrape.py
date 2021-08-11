@@ -28,9 +28,12 @@ headers = {
 
 
 def fetch_data():
-    data = session.get(
-        "https://raw.githubusercontent.com/datasets/geo-countries/master/data/countries.geojson"
-    ).json()
+    data = json.loads(
+        session.get(
+            "https://raw.githubusercontent.com/datasets/geo-countries/master/data/countries.geojson"
+        ).text,
+        strict=False,
+    )
 
     for feature in data["features"]:
         coordinates = feature["geometry"]["coordinates"][0][0]
@@ -51,13 +54,17 @@ def fetch_data():
                 page_url = "<MISSING>"
                 locator_domain = website
                 location_name = store["name"]
-                street_address = store["address1"]
-                if (
-                    "address2" in store
-                    and store["address2"] is not None
-                    and len(store["address2"]) > 0
-                ):
-                    street_address = street_address + ", " + store["address2"]
+                if "address1" in store:
+                    street_address = store["address1"]
+                    if (
+                        "address2" in store
+                        and store["address2"] is not None
+                        and len(store["address2"]) > 0
+                    ):
+                        street_address = street_address + ", " + store["address2"]
+                else:
+                    if "address2" in store:
+                        street_address = store["address2"]
 
                 city = store.get("city", "<MISSING>")
                 state = store.get("stateCode", "<MISSING>")
