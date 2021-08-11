@@ -14,9 +14,7 @@ headers = {
 
 
 def fetch_data():
-    data = []
     url = "https://www.extremepizza.com/store-locator/"
-    p = 0
     cleanr = re.compile(r"<[^>]+>")
     r = session.get(url, headers=headers, verify=False)
     loclist = r.text.split('{"@type": "FoodEstablishment", ')
