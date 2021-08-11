@@ -53,7 +53,7 @@ def fetch_data():
             for store in stores:
                 page_url = "<MISSING>"
                 locator_domain = website
-                location_name = store["name"]
+                location_name = store.get("name", "<MISSING>")
                 if "address1" in store:
                     street_address = store["address1"]
                     if (
@@ -69,11 +69,15 @@ def fetch_data():
                 city = store.get("city", "<MISSING>")
                 state = store.get("stateCode", "<MISSING>")
                 zip = store.get("postalCode", "<MISSING>")
-                country_code = store["countryCode"]
+                country_code = store.get("countryCode", "<MISSING>")
                 store_number = store["ID"]
                 phone = store.get("phone", "<MISSING>")
 
-                location_type = store["category"]["displayValue"]
+                location_type = "<MISSING>"
+                try:
+                    location_type = store["category"]["displayValue"]
+                except:
+                    pass
                 hours_of_operation = ""
                 try:
                     hours = BeautifulSoup(store["storeHours"], "lxml")
@@ -82,8 +86,8 @@ def fetch_data():
                 except:
                     pass
 
-                latitude = store["latitude"]
-                longitude = store["longitude"]
+                latitude = store.get("latitude", "<MISSING>")
+                longitude = store.get("longitude", "<MISSING>")
 
                 yield SgRecord(
                     locator_domain=locator_domain,
