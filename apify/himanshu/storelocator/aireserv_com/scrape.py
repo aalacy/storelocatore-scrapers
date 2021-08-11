@@ -17,7 +17,6 @@ def fetch_data(sgw: SgWriter):
         base_url + "/locations/?CallAjax=GetLocations", headers=headers
     ).json()
 
-    return_main_object = []
     for i in range(len(stores)):
         store_data = stores[i]
         if store_data["Country"] == "USA":
