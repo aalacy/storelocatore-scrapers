@@ -16,7 +16,7 @@ headers = {
 
 def fetch_data():
     ids = []
-    for x in range(40, 70):
+    for x in range(20, 70):
         for y in range(-130, -65):
             logger.info("%s - %s..." % (str(x), str(y)))
             midlat = str(x)
