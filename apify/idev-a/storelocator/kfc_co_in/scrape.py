@@ -25,6 +25,7 @@ def fetch_data():
             if not locations:
                 break
             page += 1
+            logger.info(f"[page {page}] {len(locations)} found")
             for _ in locations:
                 addr = [
                     aa.text.strip()
@@ -32,10 +33,13 @@ def fetch_data():
                         "span", recursive=False
                     )
                 ]
+                hours = (
+                    _.select_one(".outlet-phone").find_next_sibling("li").text.strip()
+                )
                 yield SgRecord(
                     page_url=_.select_one("a.btn-website")["href"],
                     location_name=_.select_one(".outlet-name").text.strip(),
-                    street_address=" ".join(addr[:-1]),
+                    street_address=" ".join(addr[:-1]).replace("\n", " "),
                     city=addr[-1].split("-")[0].strip(),
                     zip_postal=addr[-1].split("-")[-1].strip(),
                     country_code="India",
@@ -43,7 +47,7 @@ def fetch_data():
                     latitude=_.select_one("input.outlet-latitude")["value"],
                     longitude=_.select_one("input.outlet-longitude")["value"],
                     locator_domain=locator_domain,
-                    hours_of_operation=": ".join(_.select("li")[-3].stripped_strings),
+                    hours_of_operation=hours,
                 )
 
 
