@@ -103,6 +103,7 @@ def fetch_data():
             phone = "<MISSING>"
         if "{: Closed; MONDAY: Closed" in hours:
             hours = "Sun-Sat: Closed"
+        hours = hours.replace("</div></div></div></div><div class=;", "").strip()
         name = name.replace("&#39;", "'")
         add = add.replace("&#39;", "'")
         city = city.replace("&#39;", "'")
