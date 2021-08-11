@@ -28,9 +28,12 @@ headers = {
 
 
 def fetch_data():
-    data = session.get(
-        "https://raw.githubusercontent.com/datasets/geo-countries/master/data/countries.geojson"
-    ).json()
+    data = json.loads(
+        session.get(
+            "https://raw.githubusercontent.com/datasets/geo-countries/master/data/countries.geojson"
+        ).text,
+        strict=False,
+    )
 
     for feature in data["features"]:
         coordinates = feature["geometry"]["coordinates"][0][0]
