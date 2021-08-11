@@ -6,6 +6,16 @@ from sglogging import SgLogSetup
 from sgscrape.sgpostal import parse_address_intl
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+import ssl
+
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
 
 logger = SgLogSetup().get_logger("monsoonlondon")
 
@@ -58,7 +68,7 @@ if __name__ == "__main__":
                 {
                     SgRecord.Headers.LOCATION_NAME,
                     SgRecord.Headers.STREET_ADDRESS,
-                    SgRecord.Headers.ZIP_POSTAL,
+                    SgRecord.Headers.ZIP,
                 }
             )
         )
