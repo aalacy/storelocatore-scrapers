@@ -30,6 +30,8 @@ def fetch_data():
             location_type = "branch"
             if _.select_one("span.hasATM"):
                 location_type += ", atm"
+            if "ATM Only" in _["data-title"]:
+                location_type = "atm"
             page_url = ""
             if _.select_one("a.seeDetails"):
                 page_url = locator_domain + _.select_one("a.seeDetails")["href"]
@@ -63,13 +65,15 @@ if __name__ == "__main__":
         SgRecordDeduper(
             SgRecordID(
                 {
+                    SgRecord.Headers.LOCATION_NAME,
                     SgRecord.Headers.LATITUDE,
                     SgRecord.Headers.LONGITUDE,
+                    SgRecord.Headers.STREET_ADDRESS,
                     SgRecord.Headers.CITY,
                     SgRecord.Headers.ZIP,
                     SgRecord.Headers.PHONE,
-                    SgRecord.Headers.STREET_ADDRESS,
                     SgRecord.Headers.PAGE_URL,
+                    SgRecord.Headers.LOCATION_TYPE,
                 }
             )
         )
