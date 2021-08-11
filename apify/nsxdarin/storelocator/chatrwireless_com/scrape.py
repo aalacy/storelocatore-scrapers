@@ -39,6 +39,7 @@ def fetch_data():
     logger.info("Pulling Stores")
     for line in r.iter_lines():
         line = str(line.decode("utf-8"))
+        print(line)
         if '"Record_ID":"' in line:
             items = line.split('"Record_ID":"')
             for item in items:
@@ -79,6 +80,10 @@ def fetch_data():
                     phone = item.split('"Business_Phone":"')[1].split('"')[0]
                     if phone == "":
                         phone = "<MISSING>"
+                    if phone == "0":
+                        phone = "<MISSING>"
+                    if "Sun: 0; Mon: 0; " in hours:
+                        hours = "<MISSING>"
                     yield SgRecord(
                         locator_domain=website,
                         page_url=loc,
