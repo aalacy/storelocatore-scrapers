@@ -46,9 +46,9 @@ def fetch_data(sgw: SgWriter):
             .find("button")
             .text.strip()
         )
-        hour = list(soup1.find("div", {"class": "storeHours"}).stripped_strings)
-        del hour[0]
-        hour = " ".join(hour)
+        hour = " ".join(
+            list(soup1.find("div", {"class": "storeHours"}).stripped_strings)[1:]
+        )
 
         name = soup1.find("div", {"class": "tireBrand"}).find("h1").text.strip()
 
