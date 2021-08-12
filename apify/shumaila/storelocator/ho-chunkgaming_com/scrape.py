@@ -16,13 +16,13 @@ def fetch_data():
 
     pattern = re.compile(r"\s\s+")
     url = "https://ho-chunkgaming.com/"
+    p = 0
     r = session.get(url, headers=headers, verify=False)
     soup = BeautifulSoup(r.text, "html.parser")
     mainul = soup.find("nav", {"id": "menu"})
     linklist = mainul.findAll("a")
     for link in linklist:
         link = link["href"]
-
         try:
             r = session.get(link, headers=headers, verify=False)
         except:
@@ -36,15 +36,13 @@ def fetch_data():
         state, pcode = state.lstrip().split(" ", 1)
         phone = maindiv[3]
         hours = ""
-        if len(hours) < 2:
-
+        if len(hours) < 2:            
             hourslist = soup.findAll("p", {"class": "footerp-p"})
             hours = ""
             for st in hourslist:
                 if "open hours" in st.text.lower():
                     hours = hours + " " + st.text
-        if len(hours) < 2:
-
+        if len(hours) < 2:           
             hourslist = soup.findAll("b")
             hours = ""
             for st in hourslist:
@@ -57,8 +55,7 @@ def fetch_data():
             hours = hours.replace("Hours of operation:", "").strip()
             if len(hours) < 3:
                 hours = ""
-        if len(hours) < 2:
-
+        if len(hours) < 2:            
             hourslist = soup.findAll("strong")
             hours = ""
             for st in hourslist:
@@ -70,8 +67,7 @@ def fetch_data():
                     hours = hours + " " + st.text
             if "6 MONTH POINT" in hours:
                 hours = ""
-        if len(hours) < 2:
-
+        if len(hours) < 2:           
             hourslist = soup.findAll("p")
             hours = ""
             for st in hourslist:
@@ -104,6 +100,25 @@ def fetch_data():
             hours = hours.split("Open")[0] + " " + hours.split("Open")[1]
         except:
             pass
+        hours = re.sub(pattern,' ',hours).strip()
+       
+        
+        try:
+            coord = soup.select_one("a[href*=maps]")['href']
+            lat,longt = coord.split('@',1)[1].split('data',1)[0].split(',',1)
+            longt = longt.split(',',1)[0]
+        except:
+            try:
+                coord = soup.select_one("a[href*=maps]")['href']
+                lat,longt = coord.split('&sll=',1)[1].split(',')
+            except:
+                try:
+                    r.text.split('&sll=',1)[1].split('"',1)[0].split(',')
+                except:
+                    lat = longt = '<MISSING>'
+            
+      
+
         yield SgRecord(
             locator_domain="https://www.ho-chunkgaming.com/",
             page_url=link,
@@ -116,8 +131,8 @@ def fetch_data():
             store_number="<MISSING>",
             phone=phone.strip(),
             location_type="<MISSING>",
-            latitude="<MISSING>",
-            longitude="<MISSING>",
+            latitude=lat,
+            longitude=longt,
             hours_of_operation=hours,
         )
 
