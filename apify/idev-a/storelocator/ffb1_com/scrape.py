@@ -25,7 +25,7 @@ def fetch_data():
             street_address = _["data-address1"]
             if _["data-address2"]:
                 street_address += " " + _["data-address2"]
-            if street_address == "NA" or street_address.startswith("PO Box"):
+            if street_address == "NA":
                 street_address = ""
             location_type = "branch"
             if _.select_one("span.hasATM"):

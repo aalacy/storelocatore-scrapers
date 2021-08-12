@@ -1,13 +1,10 @@
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
-from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
-from sgselenium import SgFirefox
-import time
-import json
+from sgrequests import SgRequests
 from sgscrape.sgpostal import parse_address_intl
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 logger = SgLogSetup().get_logger("muji")
 
@@ -35,82 +32,46 @@ def _h(val):
 
 def fetch_data():
     locator_domain = "https://www.muji.com/"
-    base_url = "https://www.muji.com/storelocator/"
-    json_url = "https://www.muji.com/storelocator/?_ACTION="
-    with SgFirefox() as driver:
-        driver.get(base_url)
-        soup = bs(driver.page_source, "lxml")
-        links = soup.select("div.countriesList ul li a")
-        logger.info(f"{len(links)} found")
-        for link in links:
-            page_url = link["href"]
-            country_code = page_url.split("c=")[1].split("&")[0]
-            logger.info(page_url)
-            x = 0
-            while True:
-                try:
-                    driver.get(page_url)
-                    break
-                except Exception:
-                    x = x + 1
-                    if x == 10:
-                        raise Exception
-            exist = False
-            while not exist:
-                time.sleep(1)
-                for rr in driver.requests[::-1]:
-                    if rr.url.startswith(json_url) and rr.response:
-                        exist = True
-                        locations = json.loads(rr.response.body)
-                        for _ in locations:
-                            addr = parse_address_intl(_["shopaddress"])
-                            street_address = addr.street_address_1
-                            if addr.street_address_2:
-                                street_address += " " + addr.street_address_2
-                            if country_code == "jp":
-                                street_address = " ".join(
-                                    _["shopaddress"].split(",")[:-1]
-                                )
-                            phone = _["tel"].replace("\u3000", "").strip()
-                            if phone:
-                                phone = phone.split(" ")[0]
-                            if phone == "-":
-                                phone = ""
-                            yield SgRecord(
-                                page_url=page_url,
-                                location_name=_["shopname"],
-                                street_address=street_address,
-                                city=addr.city,
-                                state=addr.state,
-                                zip_postal=addr.postcode,
-                                country_code=country_code,
-                                phone=phone,
-                                locator_domain=locator_domain,
-                                latitude=_["latitude"],
-                                longitude=_["longitude"],
-                                hours_of_operation=_h(_["opentime"]),
-                                raw_address=_["shopaddress"],
-                            )
-
-                        break
-                        del driver.requests
+    base_url = "https://www.muji.com/storelocator/?_ACTION=_SEARCH&c=in&lang=EN&swLat=-87.59969385055629&swLng=-180&neLat=87.5996938505563&neLng=180"
+    with SgRequests() as session:
+        locations = session.get(base_url, headers=_headers).json()
+        for _ in locations:
+            country_code = _["shopid"][:2]
+            if country_code.isdigit():
+                country_code = ""
+            _addr = _["shopaddress"]
+            if country_code:
+                _addr += ", " + country_code
+            addr = parse_address_intl(_addr)
+            street_address = addr.street_address_1 or ""
+            if addr.street_address_2:
+                street_address += " " + addr.street_address_2
+            if country_code == "JP":
+                street_address = " ".join(_["shopaddress"].split(",")[:-1])
+            phone = _["tel"].replace("\u3000", "").strip()
+            if phone:
+                phone = phone.split(" ")[0]
+            if phone == "-":
+                phone = ""
+            yield SgRecord(
+                location_name=_["shopname"],
+                store_number=_["shopid"],
+                street_address=street_address,
+                city=addr.city,
+                state=addr.state,
+                zip_postal=addr.postcode,
+                country_code=country_code,
+                phone=phone,
+                locator_domain=locator_domain,
+                latitude=_["latitude"],
+                longitude=_["longitude"],
+                hours_of_operation=_h(_["opentime"]),
+                raw_address=_["shopaddress"],
+            )
 
 
 if __name__ == "__main__":
-    with SgWriter(
-        SgRecordDeduper(
-            SgRecordID(
-                {
-                    SgRecord.Headers.PAGE_URL,
-                    SgRecord.Headers.LATITUDE,
-                    SgRecord.Headers.LONGITUDE,
-                    SgRecord.Headers.CITY,
-                    SgRecord.Headers.PHONE,
-                    SgRecord.Headers.STREET_ADDRESS,
-                }
-            )
-        )
-    ) as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
