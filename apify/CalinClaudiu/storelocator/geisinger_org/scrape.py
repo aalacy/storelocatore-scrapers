@@ -6,9 +6,11 @@ from sgscrape.simple_scraper_pipeline import MissingField
 from bs4 import BeautifulSoup as b4
 from sgrequests import SgRequests
 import json
-
 from sgselenium import SgChrome
 import time
+import ssl
+
+ssl._create_default_https_context = ssl._create_unverified_context
 
 
 def fetch_data():
@@ -25,7 +27,7 @@ def fetch_data():
         son = json.loads(k)
         for i in son["stores"]:
             pageText = None
-            with SgChrome(is_headless=False) as driver:
+            with SgChrome() as driver:
                 driver.get(
                     str(
                         "http://locations.geisinger.org/details.cfm?id="
