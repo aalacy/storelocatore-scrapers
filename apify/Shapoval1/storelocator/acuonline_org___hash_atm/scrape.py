@@ -1,75 +1,61 @@
-import csv
-from concurrent import futures
+import json
+from sgzip.dynamic import SearchableCountries, DynamicGeoSearch
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
-from sgzip.static import static_coordinate_list, SearchableCountries
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from concurrent import futures
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def get_data(coord):
-    rows = []
+def get_data(coord, sgw: SgWriter):
     lat, lng = coord
+    print(lat)
     locator_domain = "https://www.citybbq.com/"
 
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:89.0) Gecko/20100101 Firefox/89.0",
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:90.0) Gecko/20100101 Firefox/90.0",
         "Accept": "*/*",
         "Accept-Language": "ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3",
         "Content-Type": "application/json; charset=UTF-8",
         "Origin": "https://03919locator.wave2.io",
         "Connection": "keep-alive",
         "Referer": "https://03919locator.wave2.io/",
-        "TE": "Trailers",
+        "Sec-Fetch-Dest": "empty",
+        "Sec-Fetch-Mode": "cors",
+        "Sec-Fetch-Site": "same-site",
+        "TE": "trailers",
     }
 
-    data = (
-        '{"Latitude":"'
-        + lat
-        + '","Longitude":"'
-        + lng
-        + '","Address":"","City":"","State":"","Zipcode":"","Country":"","Action":"initload","ActionOverwrite":"","Filters":"FCS,FIITM,FIATM,ATMSF,ATMDP,ESC,"}'
-    )
+    data = {
+        "Latitude": f"{lat}",
+        "Longitude": f"{lng}",
+        "Address": "",
+        "City": "",
+        "State": "",
+        "Zipcode": "",
+        "Country": "",
+        "Action": "textsearch",
+        "ActionOverwrite": "",
+        "Filters": "FCS,FIITM,FIATM,ATMSF,ATMDP,ESC,",
+    }
+    print(data)
 
     session = SgRequests()
 
     r = session.post(
         "https://locationapi.wave2.io/api/client/getlocations",
         headers=headers,
-        data=data,
+        data=json.dumps(data),
     )
-    js = r.json()["Features"]
+    try:
+        js = r.json()["Features"]
+    except:
+        return
 
     for j in js:
         a = j.get("Properties")
         page_url = "https://www.acuonline.org/home/resources/locations"
-
         street_address = "".join(a.get("Address")).capitalize() or "<MISSING>"
         city = a.get("City") or "<MISSING>"
         state = a.get("State") or "<MISSING>"
@@ -103,49 +89,43 @@ def get_data(coord):
         if hours_of_operation.find("<MISSING>") != -1:
             hours_of_operation = "<MISSING>"
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        rows.append(row)
+        row = SgRecord(
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=location_type,
+            latitude=latitude,
+            longitude=longitude,
+            locator_domain=locator_domain,
+            hours_of_operation=hours_of_operation,
+        )
 
-    return rows
+        sgw.write_row(row)
 
 
-def fetch_data():
-    out = []
-    s = set()
-    coords = static_coordinate_list(radius=1, country_code=SearchableCountries.USA)
+def fetch_data(sgw: SgWriter):
+    coords = DynamicGeoSearch(
+        country_codes=[SearchableCountries.USA],
+        max_search_distance_miles=100,
+        expected_search_radius_miles=1,
+        max_search_results=None,
+    )
 
     with futures.ThreadPoolExecutor(max_workers=7) as executor:
-        future_to_url = {executor.submit(get_data, coord): coord for coord in coords}
+        future_to_url = {executor.submit(get_data, url, sgw): url for url in coords}
         for future in futures.as_completed(future_to_url):
-            rows = future.result()
-            for row in rows:
-                _id = row[8]
-                if _id not in s:
-                    s.add(_id)
-                    out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+            future.result()
 
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.STORE_NUMBER}))
+    ) as writer:
+        fetch_data(writer)
