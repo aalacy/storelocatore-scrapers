@@ -15,7 +15,7 @@ ssl._create_default_https_context = ssl._create_unverified_context
 
 def fetch_data():
     with SgRequests() as session:
-        url = "https://locations.geisinger.org/?utm_source=Locations%20Page&utm_medium=Web&utm_campaign=Locations%20CTA"
+        url = "http://locations.geisinger.org/?utm_source=Locations%20Page&utm_medium=Web&utm_campaign=Locations%20CTA"
         soup = session.get(url)
         # json location
         soup = b4(soup.text, "lxml")
@@ -30,7 +30,7 @@ def fetch_data():
             with SgChrome() as driver:
                 driver.get(
                     str(
-                        "https://locations.geisinger.org/details.cfm?id="
+                        "http://locations.geisinger.org/details.cfm?id="
                         + str(i["CLINICID"])
                     )
                 )
