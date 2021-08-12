@@ -2,7 +2,6 @@ from bs4 import BeautifulSoup
 import json
 import re
 from sgrequests import SgRequests
-from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import RecommendedRecordIds
