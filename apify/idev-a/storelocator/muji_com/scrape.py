@@ -6,6 +6,8 @@ from sgselenium import SgFirefox
 import time
 import json
 from sgscrape.sgpostal import parse_address_intl
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
 
 logger = SgLogSetup().get_logger("muji")
 
@@ -44,7 +46,15 @@ def fetch_data():
             page_url = link["href"]
             country_code = page_url.split("c=")[1].split("&")[0]
             logger.info(page_url)
-            driver.get(page_url)
+            x = 0
+            while True:
+                try:
+                    driver.get(page_url)
+                    break
+                except Exception:
+                    x = x + 1
+                    if x == 10:
+                        raise Exception
             exist = False
             while not exist:
                 time.sleep(1)
@@ -57,6 +67,15 @@ def fetch_data():
                             street_address = addr.street_address_1
                             if addr.street_address_2:
                                 street_address += " " + addr.street_address_2
+                            if country_code == "jp":
+                                street_address = " ".join(
+                                    _["shopaddress"].split(",")[:-1]
+                                )
+                            phone = _["tel"].replace("\u3000", "").strip()
+                            if phone:
+                                phone = phone.split(" ")[0]
+                            if phone == "-":
+                                phone = ""
                             yield SgRecord(
                                 page_url=page_url,
                                 location_name=_["shopname"],
@@ -65,18 +84,33 @@ def fetch_data():
                                 state=addr.state,
                                 zip_postal=addr.postcode,
                                 country_code=country_code,
-                                phone=_["tel"].replace("\u3000", " ").strip(),
+                                phone=phone,
                                 locator_domain=locator_domain,
                                 latitude=_["latitude"],
                                 longitude=_["longitude"],
                                 hours_of_operation=_h(_["opentime"]),
+                                raw_address=_["shopaddress"],
                             )
 
                         break
+                        del driver.requests
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.PAGE_URL,
+                    SgRecord.Headers.LATITUDE,
+                    SgRecord.Headers.LONGITUDE,
+                    SgRecord.Headers.CITY,
+                    SgRecord.Headers.PHONE,
+                    SgRecord.Headers.STREET_ADDRESS,
+                }
+            )
+        )
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
