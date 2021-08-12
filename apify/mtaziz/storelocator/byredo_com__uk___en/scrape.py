@@ -3,6 +3,8 @@ from sglogging import SgLogSetup
 from sgscrape.sgpostal import parse_address_intl
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
 import phonenumbers
 from lxml import html
 import ssl
@@ -780,7 +782,11 @@ def fetch_data_korea():
 def scrape():
     logger.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID({SgRecord.Headers.PAGE_URL, SgRecord.Headers.STREET_ADDRESS})
+        )
+    ) as writer:
         global_data = list(fetch_data_global())
 
         china_data = list(fetch_data_china())
