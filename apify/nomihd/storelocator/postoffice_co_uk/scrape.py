@@ -3,6 +3,8 @@ from typing import Iterable, Tuple, Callable
 from sgrequests import SgRequests
 from sglogging import sglog
 import json
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
 from sgpostal import sgpostal as parser
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
