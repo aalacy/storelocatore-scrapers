@@ -41,7 +41,7 @@ def fetch_data():
             hours = (
                 BeautifulSoup(r.text, "html.parser")
                 .find("table", {"class": "hours-table"})
-                .text.replace("\n", "")
+                .text.replace("\n", " ")
                 .replace("day", "day ")
                 .replace(":00", ":00 ")
                 .replace(":30", ":30 ")
