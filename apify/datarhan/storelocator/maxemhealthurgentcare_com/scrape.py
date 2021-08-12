@@ -61,7 +61,7 @@ def fetch_data():
             zip_postal=poi["location"]["postal_code"],
             country_code=poi["location"]["country"],
             store_number=SgRecord.MISSING,
-            phone=phone,
+            phone=phone.replace("Ph: ", ""),
             location_type=SgRecord.MISSING,
             latitude=poi["location"]["lat"],
             longitude=poi["location"]["lng"],
