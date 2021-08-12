@@ -56,9 +56,9 @@ def fetch_data():
         for hr in hourlist:
             if (
                 "am " in hr.text.lower()
-                or "day" in hr.text.lower()
+                or "day " in hr.text.lower()
                 or "am -" in hr.text.lower()
-                or "pm -" in hr.text.lower()
+                or "pm" in hr.text.lower()
             ):
 
                 hrnow = re.sub(cleanr, " ", str(hr)).strip()
@@ -84,15 +84,15 @@ def fetch_data():
         except:
             pass
         try:
+            hours = hours.split("PINTS", 1)[0]
+        except:
+            pass
+        try:
             hours = hours.split("We ", 1)[0]
         except:
             pass
         if "Order Online" in phone:
             phone = "<MISSING>"
-        check = hours.split("Sun")
-        if len(check) > 1 and "Closed on Sundays" not in hours:
-            hours = hours.split("Sun")[1]
-            hours = "Sun" + hours
         yield SgRecord(
             locator_domain="https://www.extremepizza.com/",
             page_url=link,
