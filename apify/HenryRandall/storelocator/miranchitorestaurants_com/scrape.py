@@ -83,8 +83,6 @@ def fetch_data(sgw: SgWriter):
             )
         )
 
-    return data
-
 
 def scrape():
     with SgWriter(SgRecordDeduper(RecommendedRecordIds.PhoneNumberId)) as writer:
