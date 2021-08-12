@@ -59,7 +59,6 @@ def fetch_data():
         store_number = poi["id"]
         latitude = poi["latitude"]
         longitude = poi["longitude"]
-        coordinates = [(float(latitude), float(longitude))]
         store_url = f"https://www.unode50.com/en/int/stores#{latitude},{longitude}"
 
         item = SgRecord(
