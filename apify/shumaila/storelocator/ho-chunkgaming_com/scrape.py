@@ -16,7 +16,6 @@ def fetch_data():
 
     pattern = re.compile(r"\s\s+")
     url = "https://ho-chunkgaming.com/"
-    p = 0
     r = session.get(url, headers=headers, verify=False)
     soup = BeautifulSoup(r.text, "html.parser")
     mainul = soup.find("nav", {"id": "menu"})
