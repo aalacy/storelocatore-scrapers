@@ -9,7 +9,9 @@ import json
 from sgselenium import SgChrome
 import time
 import ssl
+
 ssl._create_default_https_context = ssl._create_unverified_context
+
 
 def fetch_data():
     with SgRequests() as session:
@@ -26,10 +28,12 @@ def fetch_data():
         for i in son["stores"]:
             pageText = None
             with SgChrome() as driver:
-                driver.get(str(
-                    "https://locations.geisinger.org/details.cfm?id="
-                    + str(i["CLINICID"])
-                ))
+                driver.get(
+                    str(
+                        "https://locations.geisinger.org/details.cfm?id="
+                        + str(i["CLINICID"])
+                    )
+                )
                 element = driver.find_element_by_tag_name("iframe")
                 driver.execute_script("arguments[0].scrollIntoView();", element)
                 time.sleep(1)
@@ -89,9 +93,7 @@ def fetch_data():
 
             i["hours"] = old.replace(":;", "")
             try:
-                links = coordSoup.find_all(
-                    "a", {"href": True}
-                )
+                links = coordSoup.find_all("a", {"href": True})
                 for link in links:
                     if "maps?ll=" in link["href"]:
                         coords = link["href"]
