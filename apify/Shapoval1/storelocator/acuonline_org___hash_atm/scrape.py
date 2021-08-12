@@ -10,7 +10,6 @@ from concurrent import futures
 
 def get_data(coord, sgw: SgWriter):
     lat, lng = coord
-    print(lat)
     locator_domain = "https://www.citybbq.com/"
 
     headers = {
@@ -39,7 +38,6 @@ def get_data(coord, sgw: SgWriter):
         "ActionOverwrite": "",
         "Filters": "FCS,FIITM,FIATM,ATMSF,ATMDP,ESC,",
     }
-    print(data)
 
     session = SgRequests()
 
