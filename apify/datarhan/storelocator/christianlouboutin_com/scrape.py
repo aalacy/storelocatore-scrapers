@@ -6,6 +6,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
+from sgpostal.sgpostal import parse_address_intl
 
 
 def fetch_data():
@@ -37,9 +38,7 @@ def fetch_data():
         poi = json.loads(poi[0])
 
         location_name = poi["name"]
-        street_address = (
-            loc_dom.xpath('//div[@class="details"]/text()')[0].split("|")[0].strip()
-        )
+        street_address = poi["address"]["streetAddress"]
         city = SgRecord.MISSING
         if poi["address"]["addressLocality"]:
             city = poi["address"]["addressLocality"].split(",")[0].strip()
