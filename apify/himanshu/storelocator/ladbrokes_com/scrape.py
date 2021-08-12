@@ -16,7 +16,6 @@ def fetch_data(sgw: SgWriter):
         "content-type": "application/x-www-form-urlencoded",
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.88 Safari/537.36",
     }
-    base_url = "http://ladbrokes.com"
     r_list = [
         "https://viewer.blipstar.com/searchdbnew?uid=2470030&lat=54.630057&lng=-3.550830&type=nearest&value=100000&keyword=&max=10000&sp=CA14%203QB&ha=no&htf=1&son=&product=&product2=&product3=&cnt=&acc=&mb=false&state=&ooc=0&r=0.1969129058158794",
         "https://viewer.blipstar.com/searchdbnew?uid=2470030&lat=51.5284541234394&lng=-0.154586637827429&type=nearest&value=100000&keyword=&max=100000&sp=NW1&ha=no&htf=1&son=&product=&product2=&product3=&cnt=&acc=&mb=false&state=&ooc=0&r=0.1874606795247602",
@@ -27,7 +26,6 @@ def fetch_data(sgw: SgWriter):
 
         for index, anchor in enumerate(r):
             if index >= 1:
-                soup = BeautifulSoup(anchor["a"], "lxml")
 
                 adr = BeautifulSoup(anchor["a"], "lxml")
                 city = (
