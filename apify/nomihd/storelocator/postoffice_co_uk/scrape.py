@@ -2,16 +2,12 @@
 from typing import Iterable, Tuple, Callable
 from sgrequests import SgRequests
 from sglogging import sglog
-from sgscrape.sgrecord import SgRecord
-from sgscrape.sgwriter import SgWriter
 import json
 from sgpostal import sgpostal as parser
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgscrape.sgrecord import SgRecord
-from sgscrape.sgwriter import SgWriter
 from sgscrape.pause_resume import CrawlStateSingleton
-from sgzip.dynamic import SearchableCountries, DynamicGeoSearch, Grain_8
+from sgzip.dynamic import Grain_8
 from sgzip.parallel import DynamicSearchMaker, ParallelDynamicSearch, SearchIteration
 
 
