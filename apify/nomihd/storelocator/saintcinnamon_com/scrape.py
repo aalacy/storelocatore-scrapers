@@ -4,7 +4,9 @@ from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import lxml.html
-from sgscrape import sgpostal as parser
+from sgpostal import sgpostal as parser
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 website = "saintcinnamon.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -53,6 +55,9 @@ def fetch_data():
         city = formatted_addr.city
         state = formatted_addr.state
         zip = formatted_addr.postcode
+        if zip is not None and zip == "1405":
+            zip = "<MISSING>"
+            street_address = street_address + " 1405"
 
         country_code = (
             "CA"
@@ -94,7 +99,17 @@ def fetch_data():
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.CITY,
+                    SgRecord.Headers.ZIP,
+                }
+            )
+        )
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

@@ -85,6 +85,14 @@ def fetch_data():
                     phone = line2.split('contact-link contact-phone" href="tel:')[
                         1
                     ].split('"')[0]
+        if "ams-relocation" in loc or "bekins-northwest" in loc:
+            r2 = session.get(loc, headers=headers)
+            for line2 in r2.iter_lines():
+                line2 = str(line2.decode("utf-8"))
+                if 'contact-link contact-phone" href="tel:' in line2:
+                    phone = line2.split('contact-link contact-phone" href="tel:')[
+                        1
+                    ].split('"')[0]
         if "ams-relocation" in loc:
             name = "AMS Relocation, Inc."
             add = "1873 Rollins Rd"
