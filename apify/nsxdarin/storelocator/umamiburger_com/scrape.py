@@ -61,11 +61,12 @@ def fetch_data():
             line2 = str(line2.decode("utf-8"))
             if "><h4>" in line2 and add == "":
                 name = line2.split("><h4>")[1].split("<")[0]
-                add = line2.split("<h4>")[1].split("<span>")[1].split("<")[0]
+                add = line2.split("<h4>")[1].split("<span>")[1].split("</span")[0]
                 csz = line2.split("<h4>")[1].split("br/>")[1].split("<")[0]
                 city = csz.split(",")[0]
                 zc = csz.rsplit(" ", 1)[1]
                 state = csz.split(",")[1].strip().split(" ")[0]
+                add = add.replace("<!-- -->", " ").replace("  ", " ").replace("  ", " ")
             if '"lat":' in line2:
                 lat = line2.rsplit('"lat":', 1)[1].split(",")[0]
                 lng = line2.rsplit('"lng":', 1)[1].split(",")[0]
