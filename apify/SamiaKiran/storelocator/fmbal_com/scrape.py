@@ -7,7 +7,7 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
-website = "silverfoxcafe_com"
+website = "fmbal_com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 session = SgRequests()
 headers = {
@@ -15,36 +15,37 @@ headers = {
     "Accept": "application/json",
 }
 
-DOMAIN = "https://silverfoxcafe.com/"
+DOMAIN = "https://fmbal.com/"
 MISSING = SgRecord.MISSING
 
 
 def fetch_data():
     if True:
-        url = "https://www.silverfoxcafe.com/locations/"
+        url = "https://www.fmbal.com/about/our-locations/"
         r = session.get(url, headers=headers)
-        soup = BeautifulSoup(r.text, "html.parser")
-        loclist = soup.findAll(
-            "div", {"class": "vc_col-md-4 wpb_column vc_column_container"}
-        )
+        loclist = r.text.split("var myLatLng = new google.maps.LatLng(")[1:]
         for loc in loclist:
-            page_url = loc.find("a")["href"]
-            log.info(page_url)
-            r = session.get(page_url, headers=headers)
-            soup = BeautifulSoup(r.text, "html.parser")
-            location_name = soup.find("h1").text
-            hours_of_operation = (
-                soup.findAll("div", {"class": "wpb_wrapper"})[9]
+            latitude, longitude = loc.split(");")[0].split(",")
+            loc = loc.split('<div class="row one-location">')[1].split("</table>")[0]
+            loc = '<div class="row one-location">' + loc + "</table>"
+            soup = BeautifulSoup(loc, "html.parser")
+            location_name = soup.find("h2").text
+            if "ATM" in location_name:
+                continue
+            log.info(location_name)
+            temp = soup.findAll("p")
+            address = temp[0].text.strip().split("\n")
+            phone = (
+                temp[1]
                 .get_text(separator="|", strip=True)
-                .replace("|", " ")
-                .replace("HOURS ", "")
+                .split("|")[0]
+                .replace("phone", "")
             )
-            temp = soup.find("div", {"class": "address"})
-            latitude, longitude = temp.find("a")["href"].rsplit("/")[-1].split(",")
-            address = temp.get_text(separator="|", strip=True).split("|")
-            phone = address[-1]
-            street_address = address[1]
-            address = address[2].split(",")
+            hours_of_operation = (
+                soup.find("table").get_text(separator="|", strip=True).replace("|", " ")
+            )
+            street_address = address[0]
+            address = address[1].split(",")
             city = address[0]
             address = address[1].split()
             state = address[0]
@@ -52,7 +53,7 @@ def fetch_data():
             country_code = "US"
             yield SgRecord(
                 locator_domain=DOMAIN,
-                page_url=page_url,
+                page_url=url,
                 location_name=location_name,
                 street_address=street_address.strip(),
                 city=city.strip(),
@@ -72,7 +73,7 @@ def scrape():
     log.info("Started")
     count = 0
     with SgWriter(
-        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PhoneNumberId)
     ) as writer:
         results = fetch_data()
         for rec in results:
