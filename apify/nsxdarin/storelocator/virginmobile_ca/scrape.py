@@ -114,7 +114,7 @@ def fetch_data():
                         longitude=lng,
                         hours_of_operation=hours,
                     )
-        time.sleep(3)
+        time.sleep(7)
 
 
 def scrape():
