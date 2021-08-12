@@ -48,7 +48,6 @@ def get_driver(url, class_name, driver=None):
 
 
 def fetch_data(sgw: SgWriter):
-    data = []
     class_name = "container-fluid"
     url = "http://www.miranchitorestaurants.com/"
     driver = get_driver(url, class_name)
