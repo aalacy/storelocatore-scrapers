@@ -25,11 +25,14 @@ def fetch_data():
             trs = [tr for tr in _.select("table tr") if tr.text.strip()]
             _addr = list(trs[0].stripped_strings)
             addr = parse_address_intl(" ".join(_addr) + ", Peru")
+            street_address = addr.street_address_1
+            if addr.street_address_2:
+                street_address += " " + addr.street_address_2
             yield SgRecord(
                 page_url=base_url,
                 store_number=_["id"],
                 location_name=_.select_one("h5 a").text.strip(),
-                street_address=addr[0],
+                street_address=street_address,
                 city=addr.city,
                 state=addr.state,
                 country_code="Peru",
