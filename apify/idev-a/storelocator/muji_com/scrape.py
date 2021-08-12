@@ -36,20 +36,18 @@ def fetch_data():
     with SgRequests() as session:
         locations = session.get(base_url, headers=_headers).json()
         for _ in locations:
-            country_code = _['shopid'][:2]
+            country_code = _["shopid"][:2]
             if country_code.isdigit():
-                country_code = ''
+                country_code = ""
             _addr = _["shopaddress"]
             if country_code:
-                _addr += ', ' + country_code
+                _addr += ", " + country_code
             addr = parse_address_intl(_addr)
-            street_address = addr.street_address_1 or ''
+            street_address = addr.street_address_1 or ""
             if addr.street_address_2:
                 street_address += " " + addr.street_address_2
             if country_code == "JP":
-                street_address = " ".join(
-                    _["shopaddress"].split(",")[:-1]
-                )
+                street_address = " ".join(_["shopaddress"].split(",")[:-1])
             phone = _["tel"].replace("\u3000", "").strip()
             if phone:
                 phone = phone.split(" ")[0]
@@ -57,7 +55,7 @@ def fetch_data():
                 phone = ""
             yield SgRecord(
                 location_name=_["shopname"],
-                store_number=_['shopid'],
+                store_number=_["shopid"],
                 street_address=street_address,
                 city=addr.city,
                 state=addr.state,
