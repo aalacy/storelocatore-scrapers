@@ -15,7 +15,7 @@ headers = {
     "Accept": "application/json",
 }
 
-DOMAIN = "https://www.mustardseedmarket.com/"
+DOMAIN = "https://silverfoxcafe.com/"
 MISSING = SgRecord.MISSING
 
 
@@ -37,12 +37,11 @@ def fetch_data():
                 soup.findAll("div", {"class": "wpb_wrapper"})[9]
                 .get_text(separator="|", strip=True)
                 .replace("|", " ")
+                .replace("HOURS ", "")
             )
-            address = (
-                soup.find("div", {"class": "address"})
-                .get_text(separator="|", strip=True)
-                .split("|")
-            )
+            temp = soup.find("div", {"class": "address"})
+            latitude, longitude = temp.find("a")["href"].rsplit("/")[-1].split(",")
+            address = temp.get_text(separator="|", strip=True).split("|")
             phone = address[-1]
             street_address = address[1]
             address = address[2].split(",")
@@ -63,8 +62,8 @@ def fetch_data():
                 store_number=MISSING,
                 phone=phone.strip(),
                 location_type=MISSING,
-                latitude=MISSING,
-                longitude=MISSING,
+                latitude=latitude,
+                longitude=longitude,
                 hours_of_operation=hours_of_operation.strip(),
             )
 
