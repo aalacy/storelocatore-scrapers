@@ -8,7 +8,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 def fetch_data(sgw: SgWriter):
 
-    api_url = "https://www.morningsunhealthfoods.ca/static/js/14.7910fdda.chunk.js"
+    api_url = "https://www.morningsunhealthfoods.ca/static/js/14.3d33c14b.chunk.js"
     session = SgRequests()
 
     headers = {
