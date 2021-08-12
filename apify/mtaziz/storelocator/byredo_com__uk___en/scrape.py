@@ -3,6 +3,8 @@ from sglogging import SgLogSetup
 from sgscrape.sgpostal import parse_address_intl
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
 import phonenumbers
 from lxml import html
 import ssl
@@ -46,8 +48,7 @@ def fetch_data_global():
 
     for urlnum, base_url in enumerate(urls_for_all_countries[0:]):
         if (
-            "china" in base_url
-            or "france" in base_url
+            "france" in base_url
             or "sweden" in base_url
             or "united-kingdom" in base_url
             or "united-states" in base_url
@@ -134,6 +135,152 @@ def fetch_data_global():
                     phone = phonenumbers.format_number(
                         match.number, phonenumbers.PhoneNumberFormat.INTERNATIONAL
                     )
+                phone = phone if phone else MISSING
+                location_type = "<MISSING>"
+                if country_code == "US":
+                    if "@" in latlng_from_googlemap_url_deduped[idx1]:
+                        latitude = (
+                            latlng_from_googlemap_url_deduped[idx1]
+                            .split("@")[1]
+                            .split(",")[0]
+                            or "<MISSING>"
+                        )
+                        longitude = (
+                            latlng_from_googlemap_url_deduped[idx1]
+                            .split("@")[1]
+                            .split(",")[1]
+                            or "<MISSING>"
+                        )
+                    else:
+                        latitude = "<MISSING>"
+                        longitude = "<MISSING>"
+                else:
+                    latitude = (
+                        latlng_from_googlemap_url_deduped[idx1]
+                        .split("@")[1]
+                        .split(",")[0]
+                        or "<MISSING>"
+                    )
+                    longitude = (
+                        latlng_from_googlemap_url_deduped[idx1]
+                        .split("@")[1]
+                        .split(",")[1]
+                        or "<MISSING>"
+                    )
+                hours_of_operation = MISSING
+                logger.info(f"hours of operation raw: {hours_of_operation}")
+                raw_address = address_wpd
+                yield SgRecord(
+                    locator_domain=locator_domain,
+                    page_url=page_url,
+                    location_name=location_name,
+                    street_address=street_address,
+                    city=city,
+                    state=state,
+                    zip_postal=zip_postal,
+                    country_code=country_code,
+                    store_number=store_number,
+                    phone=phone,
+                    location_type=location_type,
+                    latitude=latitude,
+                    longitude=longitude,
+                    hours_of_operation=hours_of_operation,
+                    raw_address=raw_address,
+                )
+
+
+def fetch_data_china():
+    session = SgRequests()
+
+    for urlnum, base_url in enumerate(urls_for_all_countries[0:]):
+        if "china" in base_url:
+            r = session.get(base_url, headers=headers)
+            tree = html.fromstring(r.text, "lxml")
+            tds = tree.xpath('//div[@class="column main"]//table/tbody')
+            for idxuk, td in enumerate(tds):
+                location_names = td.xpath("//tr/td/h3//descendant::text()")
+                address_data = td.xpath(
+                    "//tr/td//text()[count(preceding-sibling::h2)=$count]",
+                    count="{}".format(idxuk),
+                )
+                address_data1 = " ".join(address_data)
+                logger.info(f"Address Data UK: {address_data1}")
+                address_data2 = address_data1.split("Map")
+                address_data3 = [" ".join(i.split()) for i in address_data2 if i]
+                address_data3 = [i for i in address_data3 if i]
+                logger.info(f"Number of Addresses Found: {address_data3}")
+                address_data4 = [
+                    " ".join(i.split("China")[-1].split()).lstrip(",").strip()
+                    for i in address_data3
+                ]
+                phone_numbers = []
+                for i in address_data4:
+                    if "+" in i:
+                        phone_numbers.append(i)
+                    else:
+                        j = i.split(" ")[-1]
+                        phone_numbers.append(j)
+                logger.info(f"Phone Numbers: {idxuk}: \n{phone_numbers}")
+                latlng_from_googlemap_url = td.xpath(
+                    '//a[contains(text(), "Map")]/@href'
+                )
+                logger.info(f"latlng data: {latlng_from_googlemap_url}")
+                latlng_from_googlemap_url_deduped = list(
+                    dict.fromkeys(latlng_from_googlemap_url)
+                )
+
+            for idx1, address in enumerate(address_data3):
+                logger.info(f"Parsing the address: {idx1}: {address}")
+                address_without_phone_data = address.replace(
+                    phone_numbers[idx1], ""
+                ).strip()
+
+                address_wpd = address_without_phone_data.strip()
+                logger.info(f"Address without Phone data: {idx1}: {address_wpd}")
+
+                address_wpd1 = address_wpd.split("Temporarily closed")[0].strip()
+                paddress = parse_address_intl(address_wpd1)
+                logger.info(f"Parsed Address: {paddress}")
+
+                street_address = paddress.street_address_1 or "<MISSING>"
+                logger.info(f"Street Address: {street_address}")
+
+                city = paddress.city or "<MISSING>"
+                state = paddress.state or "<MISSING>"
+                zip_postal = paddress.postcode or "<MISSING>"
+                locator_domain = DOMAIN
+                page_url = base_url
+                page_url = page_url if page_url else MISSING
+
+                try:
+                    location_name = location_names[idx1]
+                except:
+                    location_name = MISSING
+                logger.info(f"Location Name: {idx1}: {location_name}")
+
+                country_code = r.url.split("/")[-1]
+                if country_code == "china":
+                    country_code = "CH"
+                if country_code == "france":
+                    country_code = "FR"
+                if country_code == "korea":
+                    country_code = "KR"
+                if country_code == "russia":
+                    country_code = "RU"
+                if country_code == "sweden":
+                    country_code = "SE"
+                if country_code == "united-arab-emirates":
+                    country_code = "AE"
+                if country_code == "united-kingdom":
+                    country_code = "UK"
+                if country_code == "united-states":
+                    country_code = "US"
+                if country_code == "store-germany":
+                    country_code = "DE"
+
+                store_number = "<MISSING>"
+
+                phone = phone_numbers[idx1]
                 phone = phone if phone else MISSING
                 location_type = "<MISSING>"
                 if country_code == "US":
@@ -635,8 +782,16 @@ def fetch_data_korea():
 def scrape():
     logger.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID({SgRecord.Headers.PAGE_URL, SgRecord.Headers.STREET_ADDRESS})
+        )
+    ) as writer:
         global_data = list(fetch_data_global())
+
+        china_data = list(fetch_data_china())
+        global_data.extend(china_data)
+
         russia_data = list(fetch_data_russia())
         global_data.extend(russia_data)
         uae_data = list(fetch_data_uae())
