@@ -2,7 +2,7 @@ import json
 from lxml import etree
 
 from sgrequests import SgRequests
-from sgscrape.sgpostal import parse_address_intl
+from sgpostal.sgpostal import parse_address_intl
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
@@ -10,25 +10,6 @@ from sgscrape.sgwriter import SgWriter
 
 
 def fetch_data():
-    # http://en.wikipedia.org/wiki/Extreme_points_of_the_United_States#Westernmost
-
-    top = 49.3457868  # north lat
-    left = -124.7844079  # west long
-    right = -66.9513812  # east long
-    bottom = 24.7433195  # south lat
-
-    def cull(latlngs):
-        """Accepts a list of lat/lng tuples.
-        returns the list of tuples that are within the bounding box for the US.
-        NB. THESE ARE NOT NECESSARILY WITHIN THE US BORDERS!
-        """
-        inside_box = []
-        for (lat, lng) in latlngs:
-            if bottom <= lat <= top and left <= lng <= right:
-                inside_box.append((lat, lng))
-        return inside_box
-
-    # Your scraper here
     session = SgRequests()
 
     domain = "unode50.com"
@@ -80,8 +61,6 @@ def fetch_data():
         longitude = poi["longitude"]
         coordinates = [(float(latitude), float(longitude))]
         store_url = f"https://www.unode50.com/en/int/stores#{latitude},{longitude}"
-        if not cull(coordinates):
-            continue
 
         item = SgRecord(
             locator_domain=domain,
