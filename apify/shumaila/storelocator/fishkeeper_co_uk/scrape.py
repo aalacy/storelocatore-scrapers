@@ -40,14 +40,13 @@ def fetch_data():
         try:
             hours = (
                 BeautifulSoup(r.text, "html.parser")
-                .find("div", {"class": "store-finder__main"})
-                .find("div", {"class": "time"})
+                .find("table", {"class": "hours-table"})
                 .text.replace("\n", "")
+                .replace("day", "day ")
+                .replace(":00", ":00 ")
+                .replace(":30", ":30 ")
+                .strip()
             )
-            try:
-                hours = hours.split("-")[0]
-            except:
-                pass
         except:
             hours = "<MISSING>"
         if "Due to" in hours:
