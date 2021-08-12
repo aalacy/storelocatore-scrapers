@@ -1,4 +1,3 @@
-from sgrequests import SgRequests
 from sgzip.dynamic import SearchableCountries
 from sgzip.static import static_zipcode_list
 from sgrequests import SgRequests
