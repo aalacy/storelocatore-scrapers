@@ -84,6 +84,11 @@ def fetch_data():
         for raw in temp_address:
             if len("".join(raw).strip()) > 0:
                 raw_list.append("".join(raw).strip())
+                if (
+                    "Everyday" in "".join(raw).strip()
+                    or "Everday" in "".join(raw).strip()
+                ):
+                    break
 
         raw_address = ", ".join(raw_list[:-1]).strip()
         formatted_addr = parser.parse_address_usa(raw_address)

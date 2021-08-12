@@ -7,8 +7,10 @@ from bs4 import BeautifulSoup as bs
 from sgscrape import simple_scraper_pipeline as sp
 import time
 import ssl
+from sglogging import sglog
 
 ssl._create_default_https_context = ssl._create_unverified_context
+log = sglog.SgLogSetup().get_logger(logger_name="ynhh")
 
 
 def get_driver(url, class_name, driver=None):
@@ -28,12 +30,13 @@ def get_driver(url, class_name, driver=None):
                 is_headless=True,
             ).driver()
             driver.get(url)
-
             WebDriverWait(driver, 20).until(
                 EC.presence_of_element_located((By.CLASS_NAME, class_name))
             )
             break
-        except Exception:
+        except Exception as e:
+            log.info("")
+            log.info(e)
             driver.quit()
             if x == 10:
                 raise Exception(
@@ -49,6 +52,7 @@ def get_data():
     while True:
         start_url = "https://www.ynhh.org/find-a-location.aspx?page=1&keyword=&sortBy=&distance=0&cz=&locs=0&within=Yale+New+Haven+Hospital&avail=0#sort=relevancy&numberOfResults=25&f:deliverynetwork=[Yale%20New%20Haven%20Hospital]"
         driver = get_driver(start_url, "map-location")
+        log.info("got driver")
         for num in range(page_number):
             num = num
             try:
