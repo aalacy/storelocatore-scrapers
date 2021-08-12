@@ -1,40 +1,13 @@
-import csv
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+def fetch_data(sgw: SgWriter):
 
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    out = []
-    locator_domain = "https://geodis.com/"
     session = SgRequests()
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:88.0) Gecko/20100101 Firefox/88.0",
@@ -44,7 +17,6 @@ def fetch_data():
         "https://geodis.com/geodis_custom_ajax_get_all_locations", headers=headers
     )
     js = r.json()
-    s = set()
     for j in js:
         node_id = j.get("node_id")
         latitude = j.get("coordinates")[0]
@@ -71,6 +43,10 @@ def fetch_data():
             .strip()
             or "<MISSING>"
         )
+        if city.find("Cedex") != -1:
+            city = city.split("Cedex")[0].strip()
+        if city.find("cedex") != -1:
+            city = city.split("cedex")[0].strip()
         state = (
             " ".join(tree.xpath('//span[@class="administrative-area"]/text()'))
             .replace("\n", "")
@@ -124,7 +100,6 @@ def fetch_data():
             state = " ".join(po.split()[:-1])
             postal = po.split()[-1].strip()
         store_number = node_id
-        location_type = "<MISSING>"
         hours_of_operation = (
             " ".join(tree.xpath('//div[1][@class="group-clock-view"]/div/text()'))
             .replace("\n", "")
@@ -144,36 +119,30 @@ def fetch_data():
         if phone == "0" or phone == "2":
             phone = "<MISSING>"
 
-        line = street_address
-        if line in s:
-            continue
-        s.add(line)
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+        )
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    locator_domain = "https://geodis.com/"
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
+    ) as writer:
+        fetch_data(writer)
