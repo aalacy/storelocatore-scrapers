@@ -1,4 +1,5 @@
---extra-index-url https://dl.cloudsmith.io/KVaWma76J5VNwrOm/crawl/crawl/python/simple/usaddress==0.5.10
+--extra-index-url https://dl.cloudsmith.io/KVaWma76J5VNwrOm/crawl/crawl/python/simple/
+usaddress==0.5.10
 sgrequests==0.1.12
 sglogging==0.0.4
 sgvalidator==0.0.71
