@@ -27,7 +27,7 @@ def fetch_data(sgw: SgWriter):
     for j in js:
         page_url = "https://mysprintfs.com/locations"
         location_name = j.get("title")
-        street_address = j.get("address")
+        street_address = "".join(j.get("address")).replace(",", "").strip()
         state = "<MISSING>"
         postal = j.get("zip")
         country_code = "USA"
