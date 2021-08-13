@@ -41,6 +41,8 @@ def fetch_data():
 
     for poi in all_locations:
         store_url = urljoin(start_url, poi["_source"]["url"][0])
+        if "applyohio.com" in store_url:
+            continue
         loc_response = session.get(store_url, headers=headers)
         loc_dom = etree.HTML(loc_response.text)
 
