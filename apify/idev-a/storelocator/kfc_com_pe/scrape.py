@@ -29,7 +29,7 @@ def fetch_data():
                 page_url=base_url,
                 store_number=_["id"],
                 location_name=_.select_one("h5 a").text.strip(),
-                street_address=addr[0],
+                street_address=_addr[0],
                 city=addr.city,
                 state=addr.state,
                 country_code="Peru",
