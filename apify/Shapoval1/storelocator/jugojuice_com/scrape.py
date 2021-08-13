@@ -1,3 +1,4 @@
+import re
 from lxml import html
 from sgrequests import SgRequests
 from sgscrape.sgpostal import International_Parser, parse_address
@@ -8,7 +9,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
 def fetch_data(sgw: SgWriter):
-    api_url = "https://jugojuice.com/wp-content/plugins/superstorefinder-wp/ssf-wp-xml.php?wpml_lang=en&t=1626731353763"
+    api_url = "https://jugojuice.com/wp-content/plugins/superstorefinder-wp/ssf-wp-xml.php?wpml_lang=en&t=1628874552097"
 
     session = SgRequests()
 
@@ -27,9 +28,7 @@ def fetch_data(sgw: SgWriter):
         )
         ad = "".join(d.xpath(".//address/text()[1]")).replace("&#44;", ",")
         a = parse_address(International_Parser(), ad)
-        street_address = f"{a.street_address_1} {a.street_address_2}".replace(
-            "None", ""
-        ).strip()
+        street_address = f"{a.street_address_1} {a.street_address_2}"
         if street_address == "15":
             street_address = ad.split(",")[0].strip()
         state = a.state or "<MISSING>"
