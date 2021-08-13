@@ -6,6 +6,7 @@ from bs4 import BeautifulSoup as bs
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sglogging import SgLogSetup
+from sgscrape.sgpostal import parse_address_intl
 
 logger = SgLogSetup().get_logger("carluccios")
 
@@ -37,12 +38,7 @@ def fetch_data():
             html = json.loads(res.text)["html"]
             if not html:
                 break
-            try:
-                store_list = bs(html, "lxml").select("div.column")
-            except:
-                import pdb
-
-                pdb.set_trace()
+            store_list = bs(html, "lxml").select("div.column")
             if not store_list:
                 break
             page += 1
@@ -50,14 +46,17 @@ def fetch_data():
             for store in store_list:
                 page_url = store.select_one("a")["href"]
                 location_name = store.select_one("h4.is-title").text
-                address_detail = store.select_one(
-                    "div.all-restaurants__address"
-                ).text.split("\n")
-                address_detail = [x for x in address_detail if x]
-                city_zip = address_detail.pop()
-                zip = city_zip.split(", ").pop()
-                city = ", ".join(city_zip.split(", ")[:-1])
-                street_address = " ".join(address_detail)
+                _addr = " ".join(
+                    store.select_one("div.all-restaurants__address").stripped_strings
+                )
+                addr = parse_address_intl(_addr + ", United Kingdom")
+                street_address = addr.street_address_1 or ""
+                if addr.street_address_2:
+                    street_address += " " + addr.street_address_2
+                zip_postal = _addr.split(",")[-1].strip()
+                city = addr.city
+                if len(location_name.split(",")) > 1:
+                    city = location_name.split(",")[0]
                 phone = ""
                 if store.select_one("div.all-restaurants__phone"):
                     phone = store.select_one("div.all-restaurants__phone").text.replace(
@@ -93,12 +92,15 @@ def fetch_data():
                     location_name=location_name,
                     street_address=street_address,
                     city=city,
-                    zip_postal=zip,
+                    state=addr.state,
+                    zip_postal=zip_postal,
                     phone=phone,
+                    country_code="UK",
                     locator_domain=locator_domain,
                     latitude=latitude,
                     longitude=longitude,
                     hours_of_operation=" ".join(hours),
+                    raw_address=_addr,
                 )
 
 
