@@ -1,4 +1,3 @@
-import re
 from lxml import html
 from sgrequests import SgRequests
 from sgscrape.sgpostal import International_Parser, parse_address
