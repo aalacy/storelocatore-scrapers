@@ -8,40 +8,29 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 def fetch_data(sgw: SgWriter):
 
-    api_url = "https://mysprintfs.com/locations"
+    api_url = "https://grubkitchenandbar.com/wp-admin/admin-ajax.php?action=store_search&lat=30.635106&lng=-96.322857&max_results=25&search_radius=50000&autoload=1"
     session = SgRequests()
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
     }
     r = session.get(api_url, headers=headers)
-    tree = html.fromstring(r.text)
-    jsblock = (
-        "".join(tree.xpath('//script[contains(text(), "locations")]/text()'))
-        .split("locations = [")[1]
-        .split("];")[0]
-        .strip()
-    )
-    jsblock = " ".join(jsblock.split())
-    js = eval(jsblock)
-
+    js = r.json()
     for j in js:
-        page_url = "https://mysprintfs.com/locations"
-        location_name = j.get("title")
-        street_address = "".join(j.get("address")).replace(",", "").strip()
-        state = "<MISSING>"
+
+        page_url = j.get("permalink")
+        location_name = "".join(j.get("store")).replace("&#8211;", "–").strip()
+        street_address = f"{j.get('address')} {j.get('address2')}".strip()
+        state = j.get("state")
         postal = j.get("zip")
-        country_code = "USA"
-        city = "".join(j.get("city")) or "<MISSING>"
-        if city.find(",") != -1:
-            city = city.split(",")[0].strip()
-        ad = "".join(j.get("city"))
-        if ad.find(",") != -1:
-            state = ad.split(",")[1].strip()
-        store_number = j.get("count")
-        latitude = j.get("coordinates")[0]
-        longitude = j.get("coordinates")[1]
+        country_code = j.get("country")
+        city = j.get("city")
+        store_number = j.get("id")
+        latitude = j.get("lat")
+        longitude = j.get("lng")
         phone = j.get("phone")
         hours_of_operation = j.get("hours")
+        a = html.fromstring(hours_of_operation)
+        hours_of_operation = " ".join(a.xpath("//*//text()")).replace("\n", "").strip()
 
         row = SgRecord(
             locator_domain=locator_domain,
@@ -65,7 +54,7 @@ def fetch_data(sgw: SgWriter):
 
 if __name__ == "__main__":
     session = SgRequests()
-    locator_domain = "https://mysprintfs.com"
+    locator_domain = "https://grubkitchenandbar.com"
     with SgWriter(
         SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
     ) as writer:
