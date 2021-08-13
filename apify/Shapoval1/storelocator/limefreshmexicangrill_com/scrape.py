@@ -40,20 +40,18 @@ def fetch_data(sgw: SgWriter):
         longitude = "".join(j.get("lng"))
         page_url = "https://limefreshmexicangrill.com/locations/"
         hours = "".join(j.get("description"))
-        hours = html.fromstring(hours)
+        a = html.fromstring(hours)
         hours_of_operation = (
-            " ".join(hours.xpath('//*[contains(text(), "AM")]/text()')).replace(
-                "\r\n", ""
-            )
+            " ".join(a.xpath('//*[contains(text(), "AM")]/text()')).replace("\r\n", "")
             or "<MISSING>"
         )
         if location_name.find("Orlando") != -1:
             line = j.get("description")
-            line = html.fromstring(line)
+            b = html.fromstring(line)
             add = line.xpath("//p[1]//text()")
             city = "".join(add[1]).split(",")[0]
             state = "".join(add[1]).split(",")[1].strip().split()[0]
-            hours_of_operation = " ".join(line.xpath("//p[2]//text()"))
+            hours_of_operation = " ".join(b.xpath("//p[2]//text()"))
 
         row = SgRecord(
             locator_domain=locator_domain,
