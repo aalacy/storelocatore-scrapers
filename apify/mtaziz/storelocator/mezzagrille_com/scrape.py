@@ -36,7 +36,6 @@ headers = {
 def get_google_map_urls():
     store_google_map_urls = []
     locnames_and_phones = []
-    phones = []
     with SgFirefox(
         executable_path=GeckoDriverManager().install(), is_headless=True
     ) as driver:
@@ -153,7 +152,7 @@ def get_google_map_urls():
         locnames_and_phones.append((ln4, ph4))
         # Close the Window
         driver.find_element_by_xpath(close_gif_xpath).click()
-    logger.info(f"Grabbing Google Map URL Finished!!")
+    logger.info("Grabbing Google Map URL Finished!!")
     return (locnames_and_phones, store_google_map_urls)
 
 
@@ -170,7 +169,6 @@ def get_ordered_locnames_and_gurls():
     gmb_data = json.loads(gmb_data)
     locname_and_place_id = []
     for i in gmb_data["1227"]["map_markers"]:
-        print(i)
         gmb_data_dict = {"title": i["title"], "place_id": i["place_id"]}
         locname_and_place_id.append(gmb_data_dict)
     gmap_urls1 = list(set(gmap_urls))
@@ -194,7 +192,6 @@ def fetch_data():
 
             # We need to transform the data into JSON format
             r1 = session.get(gurl[0], headers=headers)
-            sel_get_place_details = html.fromstring(r1.text, "lxml")
             data_raw1 = "{" + r1.text.split("( {")[-1]
             data_raw2 = data_raw1.lstrip().rstrip(")").split()
             data_raw2 = " ".join(data_raw2)
