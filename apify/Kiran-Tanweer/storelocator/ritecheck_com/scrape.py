@@ -69,7 +69,6 @@ def fetch_data():
         hours = loc.findAll("p")[1].text
         for addr in addresses:
             address = addr.text
-            print()
             hours = hours
             hours = hours.replace("â", "-")
             address = re.sub(pattern, " ", address)
