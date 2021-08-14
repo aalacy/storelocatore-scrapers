@@ -28,12 +28,15 @@ def pull_content(url):
 def fetch_data():
     log.info("Fetching store_locator data")
     soup = pull_content(LOCATION_URL)
-    content = soup.find_all("div", {"class": "grid-item small--one-whole one-quarter"})
-    store_info = [content[1], content[3]]
+    content = soup.find_all(
+        "div", {"class": "site-footer-block-item site-footer-block-rich-text"}
+    )
+    store_info = content[1].find_all("p")
     for row in store_info:
+        if len(row) == 0:
+            continue
         address = (
-            row.find("p")
-            .get_text(strip=True, separator=",")
+            row.get_text(strip=True, separator=",")
             .replace("Our Store:,", "")
             .replace("Phone:,", "")
             .replace("Hours:,", "")
