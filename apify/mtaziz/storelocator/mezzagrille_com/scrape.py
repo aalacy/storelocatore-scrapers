@@ -178,17 +178,26 @@ def get_ordered_locnames_and_gurls():
             if i["place_id"] in j:
                 k = (j, i["title"])
                 ordered_gmap_urls_and__locnames.append(k)
-    return ordered_gmap_urls_and__locnames
+    locname_and_description = []
+    for i in gmb_data["1227"]["map_markers"]:
+        try:
+            gmb_coming_soon = {"title": i["title"], "coming_soon": i["description"]}
+        except KeyError:
+            gmb_coming_soon = {"title": i["title"], "coming_soon": MISSING}
+
+        locname_and_description.append(gmb_coming_soon)
+
+    return (locname_and_description, ordered_gmap_urls_and__locnames)
 
 
-ordered_gmap_urls_and_location_names = get_ordered_locnames_and_gurls()
+loctype, ordered_gmap_urls_and_location_names = get_ordered_locnames_and_gurls()
 
 
 def fetch_data():
     with SgRequests() as session:
         for idx, gurl in enumerate(ordered_gmap_urls_and_location_names[0:]):
             locator_domain = DOMAIN
-            page_url = MISSING
+            page_url = LOCATION_URL
 
             # We need to transform the data into JSON format
             r1 = session.get(gurl[0], headers=headers)
@@ -238,7 +247,11 @@ def fetch_data():
             phone = phone if phone else MISSING
             logger.info(f"[{idx}] Phone: {phone}")
 
-            location_type = MISSING
+            location_type = loctype[idx]["coming_soon"]
+            if "coming soon" in location_type.lower():
+                location_type = location_type
+            else:
+                location_type = MISSING
 
             latitude = data_json["result"]["geometry"]["location"]["lat"]
             latitude = latitude if latitude else MISSING
