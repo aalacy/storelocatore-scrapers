@@ -39,6 +39,7 @@ def fetch_data():
     session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
 
     items = []
+    scraped_items = []
 
     DOMAIN = "jomalone.ca"
     start_url = (
@@ -60,16 +61,19 @@ def fetch_data():
         location_name = poi["DOORNAME"]
         location_name = location_name if location_name else "<MISSING>"
         street_address = poi["ADDRESS"]
+        street_address = street_address if street_address else "<MISSING>"
         city = poi["CITY"]
         city = city if city else "<MISSING>"
         state = poi["STATE_OR_PROVINCE"]
         state = state if state else "<MISSING>"
         zip_code = poi["ZIP_OR_POSTAL"]
         zip_code = zip_code if zip_code else "<MISSING>"
+        if zip_code in ["0", "."]:
+            zip_code = "<MISSING>"
+        if len(zip_code) == 2:
+            zip_code = "<MISSING>"
         country_code = poi["COUNTRY"]
         country_code = country_code if country_code else "<MISSING>"
-        if country_code not in ["United States", "UK", "Canada"]:
-            continue
         store_number = poi["DOOR_ID"]
         store_number = store_number if store_number else "<MISSING>"
         phone = poi["PHONE1"]
@@ -100,8 +104,10 @@ def fetch_data():
             longitude,
             hours_of_operation,
         ]
-
-        items.append(item)
+        check = f"{location_name} {street_address}"
+        if check not in scraped_items:
+            scraped_items.append(check)
+            items.append(item)
 
     return items
 

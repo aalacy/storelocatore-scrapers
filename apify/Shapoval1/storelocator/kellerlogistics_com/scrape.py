@@ -57,7 +57,7 @@ def fetch_data():
     )
 
     locations = json.loads(
-        cleaned.split('var _pageData = "')[1].split('";</script>')[0][:-1]
+        cleaned.split('var _pageData = "')[1].split('";</script>')[0]
     )[1][6][0][12][0][13][0]
     for l in locations:
 
