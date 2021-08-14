@@ -7,6 +7,8 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgzip.dynamic import SearchableCountries
 from sgzip.dynamic import DynamicGeoSearch
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 website = "longchamp.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -125,7 +127,9 @@ def process_record(raw_results_from_one_coordinate):
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.StoreNumberId)
+    ) as writer:
         countries = (
             SearchableCountries.WITH_ZIPCODE_AND_COORDS
             + SearchableCountries.WITH_COORDS_ONLY
@@ -134,7 +138,9 @@ def scrape():
         currentCountryCount = 0
         for country in countries:
             try:
-                search = DynamicGeoSearch(max_radius_miles=100, country_codes=[country])
+                search = DynamicGeoSearch(
+                    expected_search_radius_miles=100, country_codes=[country]
+                )
                 results = parallelize(
                     search_space=[
                         (
