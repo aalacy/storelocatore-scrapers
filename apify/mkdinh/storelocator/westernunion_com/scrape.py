@@ -1,4 +1,3 @@
-import csv
 import threading
 from datetime import datetime as dt
 from sgrequests import SgRequests
@@ -8,6 +7,10 @@ import requests_random_user_agent  # ignore_check # noqa F401
 from tenacity import retry, stop_after_attempt
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from sgzip.static import static_zipcode_list, SearchableCountries
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 logger = SgLogSetup().get_logger("westernunion_com")
 
@@ -32,13 +35,11 @@ FIELDS = [
 
 
 def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(FIELDS)
-        for rows in data:
-            writer.writerows(rows)
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.LOCATION_NAME}))
+    ) as writer:
+        for row in data:
+            writer.write_row(row)
 
 
 def fetch(session, postal, country_code, tracker):
@@ -102,22 +103,22 @@ def extract(location):
     phone = get(location, "phone")
     hours_of_operation = get_hours(location)
 
-    return {
-        "locator_domain": locator_domain,
-        "location_type": location_type,
-        "location_name": location_name,
-        "store_number": store_number,
-        "page_url": page_url,
-        "street_address": street_address,
-        "city": city,
-        "state": state,
-        "zip": postal,
-        "country_code": country_code,
-        "latitude": latitude,
-        "longitude": longitude,
-        "phone": phone,
-        "hours_of_operation": hours_of_operation,
-    }
+    SgRecord(
+        locator_domain=locator_domain,
+        location_type=location_type,
+        location_name=location_name,
+        store_number=store_number,
+        page_url=page_url,
+        street_address=street_address,
+        city=city,
+        state=state,
+        zip_postal=postal,
+        country_code=country_code,
+        latitude=latitude,
+        longitude=longitude,
+        phone=phone,
+        hours_of_operation=hours_of_operation,
+    )
 
 
 @retry(stop=stop_after_attempt(3))

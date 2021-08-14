@@ -5,3 +5,4 @@ requests-random-user-agent==2021.5.29
 sgzip==0.10.2
 tenacity==7.0.0
 sglogging==0.0.4
+sgscrape==0.1.13
