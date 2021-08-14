@@ -23,8 +23,8 @@ def fetch_data():
         links = soup.select("div.dd-store__detail.js-store")
         logger.info(f"{len(links)} found")
         for link in links:
-            raw_address=link.select_one("div.dd-detail__address address").text.strip()
-            addr = parse_address_intl(raw_address + ', ประเทศไทย')
+            raw_address = link.select_one("div.dd-detail__address address").text.strip()
+            addr = parse_address_intl(raw_address + ", ประเทศไทย")
             street_address = addr.street_address_1
             if addr.street_address_2:
                 street_address += " " + addr.street_address_2
@@ -39,7 +39,7 @@ def fetch_data():
                 zip_postal=addr.postcode,
                 country_code="Thailand",
                 locator_domain=locator_domain,
-                raw_address=raw_address
+                raw_address=raw_address,
             )
 
 
