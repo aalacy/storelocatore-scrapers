@@ -5,7 +5,6 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgrequests import SgRequests
 from lxml import html
-import json
 import re
 import ssl
 
