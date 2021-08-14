@@ -25,7 +25,6 @@ def fetch_data(sgw: SgWriter):
             .replace("&#038;", "&")
             .strip()
         )
-        location_type = "<MISSING>"
         street_address = f"{j.get('address')} {j.get('address2')}".strip()
         state = j.get("state")
         postal = j.get("zip")
