@@ -267,6 +267,7 @@ def fetch_data():
                 raw_address=raw_address,
             )
             time.sleep(1)
+    driver.quit()
 
 
 def scrape():
@@ -274,7 +275,13 @@ def scrape():
     count = 0
     with SgWriter(
         SgRecordDeduper(
-            SgRecordID({SgRecord.Headers.PAGE_URL, SgRecord.Headers.STREET_ADDRESS})
+            SgRecordID(
+                {
+                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.CITY,
+                    SgRecord.Headers.PHONE,
+                }
+            )
         )
     ) as writer:
         results = fetch_data()
