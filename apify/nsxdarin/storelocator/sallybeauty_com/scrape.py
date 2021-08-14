@@ -62,10 +62,10 @@ def fetch_data():
                 city = line.split('"city": "')[1].split('"')[0]
             if '"postalCode": "' in line:
                 zc = line.split('"postalCode": "')[1].split('"')[0]
-            if '"latitude": "' in line:
-                lat = line.split('"latitude": "')[1].split('"')[0]
-            if '"longitude": "' in line:
-                lng = line.split('"longitude": "')[1].split('"')[0]
+            if '"latitude": ' in line:
+                lat = line.split('"latitude": ')[1].split(",")[0]
+            if '"longitude": ' in line:
+                lng = line.split('"longitude": ')[1].split(",")[0]
             if '"phone": "' in line:
                 phone = line.split('"phone": "')[1].split('"')[0]
             if '"stateCode": "' in line:
@@ -91,6 +91,13 @@ def fetch_data():
                     hours = "<MISSING>"
                     if store == "store_10777":
                         zc = "06473"
+                    if "." in lat and "." in lng:
+                        loc = (
+                            "https://www.sallybeauty.com/store-details/?showMap=true&horizontalView=true&lat="
+                            + lat
+                            + "&long="
+                            + lng
+                        )
                     yield SgRecord(
                         locator_domain=website,
                         page_url=loc,
@@ -147,10 +154,10 @@ def fetch_data():
                 city = line.split('"city": "')[1].split('"')[0]
             if '"postalCode": "' in line:
                 zc = line.split('"postalCode": "')[1].split('"')[0]
-            if '"latitude": "' in line:
-                lat = line.split('"latitude": "')[1].split('"')[0]
-            if '"longitude": "' in line:
-                lng = line.split('"longitude": "')[1].split('"')[0]
+            if '"latitude": ' in line:
+                lat = line.split('"latitude": ')[1].split(",")[0]
+            if '"longitude": ' in line:
+                lng = line.split('"longitude": ')[1].split(",")[0]
             if '"phone": "' in line:
                 phone = line.split('"phone": "')[1].split('"')[0]
             if '"stateCode": "' in line:
@@ -168,6 +175,13 @@ def fetch_data():
                         phone = "<MISSING>"
                     if store == "store_10777":
                         zc = "06473"
+                    if "." in lat and "." in lng:
+                        loc = (
+                            "https://www.sallybeauty.com/store-details/?showMap=true&horizontalView=true&lat="
+                            + lat
+                            + "&long="
+                            + lng
+                        )
                     yield SgRecord(
                         locator_domain=website,
                         page_url=loc,
@@ -222,10 +236,10 @@ def fetch_data():
                 city = line.split('"city": "')[1].split('"')[0]
             if '"postalCode": "' in line:
                 zc = line.split('"postalCode": "')[1].split('"')[0]
-            if '"latitude": "' in line:
-                lat = line.split('"latitude": "')[1].split('"')[0]
-            if '"longitude": "' in line:
-                lng = line.split('"longitude": "')[1].split('"')[0]
+            if '"latitude": ' in line:
+                lat = line.split('"latitude": ')[1].split(",")[0]
+            if '"longitude": ' in line:
+                lng = line.split('"longitude": ')[1].split(",")[0]
             if '"phone": "' in line:
                 phone = line.split('"phone": "')[1].split('"')[0]
             if '"stateCode": "' in line:
@@ -243,6 +257,13 @@ def fetch_data():
                         phone = "<MISSING>"
                     if store == "store_10777":
                         zc = "06473"
+                    if "." in lat and "." in lng:
+                        loc = (
+                            "https://www.sallybeauty.com/store-details/?showMap=true&horizontalView=true&lat="
+                            + lat
+                            + "&long="
+                            + lng
+                        )
                     yield SgRecord(
                         locator_domain=website,
                         page_url=loc,
@@ -297,10 +318,10 @@ def fetch_data():
                 city = line.split('"city": "')[1].split('"')[0]
             if '"postalCode": "' in line:
                 zc = line.split('"postalCode": "')[1].split('"')[0]
-            if '"latitude": "' in line:
-                lat = line.split('"latitude": "')[1].split('"')[0]
-            if '"longitude": "' in line:
-                lng = line.split('"longitude": "')[1].split('"')[0]
+            if '"latitude": ' in line:
+                lat = line.split('"latitude": ')[1].split(",")[0]
+            if '"longitude": ' in line:
+                lng = line.split('"longitude": ')[1].split(",")[0]
             if '"phone": "' in line:
                 phone = line.split('"phone": "')[1].split('"')[0]
             if '"stateCode": "' in line:
@@ -318,6 +339,13 @@ def fetch_data():
                         phone = "<MISSING>"
                     if store == "store_10777":
                         zc = "06473"
+                    if "." in lat and "." in lng:
+                        loc = (
+                            "https://www.sallybeauty.com/store-details/?showMap=true&horizontalView=true&lat="
+                            + lat
+                            + "&long="
+                            + lng
+                        )
                     yield SgRecord(
                         locator_domain=website,
                         page_url=loc,
