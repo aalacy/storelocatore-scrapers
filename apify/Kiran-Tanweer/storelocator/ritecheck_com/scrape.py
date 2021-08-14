@@ -69,30 +69,33 @@ def fetch_data():
         hours = loc.findAll("p")[1].text
         for addr in addresses:
             address = addr.text
+            print()
             hours = hours
             hours = hours.replace("â", "-")
             address = re.sub(pattern, " ", address)
             address = re.sub(cleanr, " ", address)
-        hours = hours.replace(",", "")
 
-        data.append(
-            [
-                "https://ritecheck.com/",
-                "https://ritecheck.com/",
-                "<MISSING>",
-                address,
-                "<MISSING>",
-                "<MISSING>",
-                "<MISSING>",
-                "US",
-                "<MISSING>",
-                "<MISSING>",
-                "<MISSING>",
-                "<MISSING>",
-                "<MISSING>",
-                hours,
-            ]
-        )
+            hours = hours.replace(",", "")
+            hours = hours.strip()
+
+            data.append(
+                [
+                    "https://ritecheck.com/",
+                    "https://ritecheck.com/",
+                    "<MISSING>",
+                    address,
+                    "<MISSING>",
+                    "<MISSING>",
+                    "<MISSING>",
+                    "US",
+                    "<MISSING>",
+                    "<MISSING>",
+                    "<MISSING>",
+                    "<MISSING>",
+                    "<MISSING>",
+                    hours,
+                ]
+            )
     return data
 
 
