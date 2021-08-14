@@ -4,7 +4,9 @@ from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import lxml.html
-from sgscrape import sgpostal as parser
+from sgpostal import sgpostal as parser
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
 website = "chezashton.ca"
@@ -76,8 +78,9 @@ def fetch_data():
                 0
             ].strip()
 
+        hours_of_operation = hours_of_operation.replace("\r", "").strip()
         latitude = "".join(restaurant.xpath("./@data-restaurant-lat")).strip()
-        longitude = "".join(restaurant.xpath("./@data-restaurant-lat")).strip()
+        longitude = "".join(restaurant.xpath("./@data-restaurant-lng")).strip()
 
         yield SgRecord(
             locator_domain=locator_domain,
@@ -101,7 +104,9 @@ def fetch_data():
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.GeoSpatialId)
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
