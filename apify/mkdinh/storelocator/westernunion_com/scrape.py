@@ -146,7 +146,7 @@ def fetch_pages(session, postal, country_code, locations, page=None):
 def scrape():
     session = SgRequests()
     tracker = []
-    us_search = static_zipcode_list(30, SearchableCountries.USA)
+    us_search = static_zipcode_list(10, SearchableCountries.USA)
     ca_search = static_zipcode_list(30, SearchableCountries.CANADA)
     gb_search = static_zipcode_list(30, SearchableCountries.BRITAIN)
 
