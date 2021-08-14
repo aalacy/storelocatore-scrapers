@@ -20,7 +20,6 @@ def fetch_data(sgw: SgWriter):
     for d in div:
 
         location_name = "".join(d.xpath('.//span[@itemprop="name"]/text()')).strip()
-        location_type = "<MISSING>"
         street_address = "".join(
             d.xpath('.//span[@itemprop="streetAddress"]/text()')
         ).strip()
