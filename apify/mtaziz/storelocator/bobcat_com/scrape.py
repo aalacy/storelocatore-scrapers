@@ -32,6 +32,7 @@ search = DynamicZipSearch(
 )
 
 
+
 headers2 = {
     "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.164 Safari/537.36",
     "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
@@ -46,6 +47,7 @@ def fetch_data():
         for zipcode in search:
             url = f"https://bobcat.know-where.com/bobcat/cgi/selection?option=T&option=R&option=E&option=M&option=G&option=W&option=X&option=U&option=P&option=V&option=D&place={zipcode}&lang=en&ll=&stype=place&async=results"
             rt = session.get(url, headers=headers2)
+            # Check if requests gets through, if so then we can check if there is any data for the store
             if rt.status_code == 200:
                 selt = html.fromstring(rt.text, "lxml")
                 kw_search_status = selt.xpath('//script[@id="kwSearchStatus"]/text()')
