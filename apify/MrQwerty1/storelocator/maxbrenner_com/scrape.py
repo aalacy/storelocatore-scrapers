@@ -31,9 +31,9 @@ def fetch_data(sgw: SgWriter):
         line = raw.split(", ")
         street_address = line.pop(0)
         city = line.pop(0)
-        line = line.pop(0)
-        state = line.split()[0]
-        postal = line.split()[1]
+        sz = line.pop(0)
+        state = sz.split()[0]
+        postal = sz.split()[1]
         country_code = "US"
         hours_of_operation = ";".join(
             d.xpath(".//div[@class='home-map__sub-text u-small rte']/p/text()")
