@@ -37,18 +37,19 @@ def fetch_data():
     all_locations = dom.xpath(
         '//div[@class="entry-content"]/div/div[@class="wpb_column vc_column_container vc_col-sm-3"]'
     )
-    for idx, poi_html in enumerate(all_locations[0:]):
-        with SgChrome() as driver:
+
+    with SgChrome(is_headless=True) as driver:
+        for idx, poi_html in enumerate(all_locations[0:]):
             page_url = poi_html.xpath(".//a/@href")[0]
+            page_url = poi_html.xpath(".//a/@href")[0]
+            logger.info(f"Page URL: {page_url}")
             driver.get(page_url)
             driver.implicitly_wait(15)
-            logger.info("Page being loaded!!")
             iframe = driver.find_element_by_xpath("//iframe[contains(@src, 'google')]")
             driver.switch_to.frame(iframe)
-            logger.info("iframe Loaded!!")
-            loc_dom = html.fromstring(driver.page_source, "lxml")
+            pgsrc = driver.page_source
+            loc_dom = html.fromstring(pgsrc, "lxml")
 
-            # These 4 lines of codes are for testing purpose
             google_map_data = loc_dom.xpath(
                 '//script[contains(text(), "onEmbedLoad")]/text()'
             )
@@ -64,37 +65,37 @@ def fetch_data():
                 f"\n[{page_url}] Address from Goolge entity details: \n\n{address_from_google_entity_details}\n\n"
             )
 
-            location_name = "".join(loc_dom.xpath('//h1[@id="page-title"]/text()'))
+            gmd1 = (
+                "".join(google_map_data)
+                .split("[[[")[2]
+                .split("review")[0]
+                .split("[[")[-1]
+            )
+            gmd2 = gmd1.split(",")
+            gmd2 = [
+                i.replace('"', "").strip().replace("[", "").replace("]", "")
+                for i in gmd2
+            ]
+            logger.info(f"[{idx}] Raw Data from GMap: {gmd2}")
+
+            location_name = gmd2[1]
             location_name = location_name if location_name else MISSING
             logger.info(f"[{idx}] Location Name: {location_name}")
 
-            raw_address = poi_html.xpath('.//p[@style="text-align: center;"]/text()')
-            raw_address = [e.strip() for e in raw_address if e.strip()]
-
-            # Raw address being parsed here
-            street_address = raw_address[0].strip()
-            if street_address.endswith(","):
-                street_address = street_address[:-1]
+            street_address = gmd2[2]
+            street_address = street_address if street_address else MISSING
             logger.info(f"[{idx}] Street Address: {street_address}")
 
-            city = raw_address[-1].split(", ")[0]
+            city = gmd2[3]
             city = city if city else MISSING
             logger.info(f"[{idx}] City: {city}")
 
-            state = raw_address[-1].split(", ")[-1]
+            state = gmd2[4].split(" ")[0].strip()
             state = state if state else MISSING
             logger.info(f"[{idx}] State: {state}")
-            zipString = loc_dom.xpath('//div[@class="address"]/text()')
-            logger.info(f"[{idx}] Zip String: {zipString}")
-            zip_postal = ""
-            try:
 
-                zip_postal = loc_dom.xpath('//div[@class="address"]/text()')[0].split()[
-                    -1
-                ]
-                zip_postal = zip_postal if zip_postal else MISSING
-            except:
-                zip_postal = MISSING
+            zip_postal = gmd2[4].split(" ")[1].strip()
+            zip_postal = zip_postal if zip_postal else MISSING
             logger.info(f"[{idx}] Zip Postal: {zip_postal}")
 
             country_code = "US"
@@ -106,25 +107,28 @@ def fetch_data():
             logger.info(f"[{idx}] Phone: {phone}")
 
             location_type = MISSING
-            latlng = "".join(
-                loc_dom.xpath('//div[@jsaction="placeCard.directions"]/a/@href')
-            )
-            latlng = latlng.split("@")[1].split(",")
-
-            latitude = latlng[0]
+            latitude = gmd2[5]
             latitude = latitude if latitude else MISSING
             logger.info(f"[{idx}] Latitude: {latitude}")
 
-            longitude = latlng[1]
+            longitude = gmd2[6]
             longitude = longitude if longitude else MISSING
             logger.info(f"[{idx}] Longitude: {longitude}")
-            hoo = loc_dom.xpath(
-                '//h4[contains(text(), "Dine-in Hours:")]/following-sibling::p//text()'
-            )
-            hoo = [e.strip() for e in hoo if e.strip()]
-            hours_of_operation = " ".join(hoo) if hoo else MISSING
+
+            # Hours of Operations
+            ya = "".join(google_map_data).split("[[[")[3].split("\n")
+            ya1 = [i for i in ya[0].split('"') if i]
+            ya2 = ya1[0::2]
+            ya3 = ya2[0:14]
+            hoo = []
+            for i in range(0, 7):
+                j = ya3[0::2][i] + " " + ya3[1::2][i]
+                hoo.append(j)
+            hours_of_operation = "; ".join(hoo)
             logger.info(f"[{idx}] HOO: {hours_of_operation}")
 
+            raw_address = poi_html.xpath('.//p[@style="text-align: center;"]/text()')
+            raw_address = [e.strip() for e in raw_address if e.strip()]
             raw_address = [i.lstrip(",").rstrip(",") for i in raw_address]
             raw_address = ", ".join(raw_address)
             raw_address = raw_address if raw_address else MISSING
