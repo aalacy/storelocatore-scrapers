@@ -37,7 +37,7 @@ def fetch_data():
             address = temp[0].get_text(separator="|", strip=True).split("|")
             street_address = address[0]
             address = address[1].split(",")
-            city = address[0]
+            city = address[0].replace("#60", "").replace("\n", "")
             state = address[1]
             zip_postal = MISSING
             country_code = "US"
