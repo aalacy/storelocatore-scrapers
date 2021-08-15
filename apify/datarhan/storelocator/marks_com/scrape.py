@@ -11,14 +11,16 @@ from sgscrape.sgwriter import SgWriter
 
 
 def make_request(session, Point):
+    print(Point)
     headers = {
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.114 Safari/537.36",
-        "x-xsrf-token": "a6c567ef-6128-4cce-8b78-7c92e80892fb",
+        "service-client": "mk/web",
+        "Accept": "application/json, text/javascript, */*; q=0.01",
     }
     url = "https://api.marks.com/hy/v1/marks/storelocators/near?code=&productIds=&count=20&location={}".format(
-        *Point
+        Point[:3] + " " + Point[3:]
     )
-    return session.get(url, headers=headers).json()
+    return session.get(url, headers=headers, verify=False).json()
 
 
 def clean_record(poi):
@@ -80,7 +82,7 @@ def clean_record(poi):
 
 def fetch_data():
     with SgRequests(
-        retry_behavior=Retry(total=3, connect=3, read=3, backoff_factor=0.1),
+        retry_behavior=Retry(total=0, connect=3, read=3, backoff_factor=0.1),
         proxy_rotation_failure_threshold=0,
     ) as session:
         search = DynamicZipSearch(
@@ -94,6 +96,8 @@ def fetch_data():
                 maxZ = search.items_remaining()
             data = make_request(session, Point)
             if "error.storelocator.find.nostores.error" not in str(data):
+                if not data.get("storeLocatorPageData"):
+                    continue
                 for fullRecord in data["storeLocatorPageData"]["results"]:
                     record = clean_record(fullRecord)
                     yield record
