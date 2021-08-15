@@ -123,15 +123,12 @@ def extract(location):
 
 @retry(stop=stop_after_attempt(3))
 def fetch_page(session, country_code, postal, page):
-    logger.info(f"{postal}")
     res = session.get(
         f"https://location.westernunion.com/api/locations?country={country_code}&q={postal}&page={page}"
     ).json()
 
     results = res.get("results")
     count = res.get("resultCount")
-
-    logger.info(f"{postal} {page}: {count} results")
 
     return count, results
 
