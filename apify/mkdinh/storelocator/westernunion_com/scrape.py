@@ -123,12 +123,15 @@ def extract(location):
 
 @retry(stop=stop_after_attempt(3))
 def fetch_page(session, country_code, postal, page):
+    logger.info(f"{postal}")
     res = session.get(
         f"https://location.westernunion.com/api/locations?country={country_code}&q={postal}&page={page}"
     ).json()
 
     results = res.get("results")
     count = res.get("resultCount")
+
+    logger.info(f"{postal} {page}: {count} results")
 
     return count, results
 
@@ -147,7 +150,7 @@ def fetch_pages(session, postal, country_code, locations, page=None):
 def scrape():
     session = SgRequests()
     tracker = []
-    us_search = static_zipcode_list(10, SearchableCountries.USA)
+    us_search = static_zipcode_list(20, SearchableCountries.USA)
     ca_search = static_zipcode_list(30, SearchableCountries.CANADA)
     gb_search = static_zipcode_list(30, SearchableCountries.BRITAIN)
 
