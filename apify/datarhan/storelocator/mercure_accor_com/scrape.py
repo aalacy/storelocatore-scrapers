@@ -60,7 +60,6 @@ def fetch_data():
             '//script[@type="application/ld+json" and contains(text(), "addressCountry")]/text()'
         )
         if not poi:
-            print(store_url)
             continue
         poi = json.loads(poi[0])
 
