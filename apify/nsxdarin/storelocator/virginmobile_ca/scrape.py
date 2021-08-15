@@ -1,7 +1,10 @@
-import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 import time
 
 headers = {
@@ -11,45 +14,18 @@ headers = {
 logger = SgLogSetup().get_logger("virginmobile_ca")
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
-
-
 def fetch_data():
     ids = []
     search = DynamicGeoSearch(
         country_codes=[SearchableCountries.CANADA],
-        max_radius_miles=None,
-        max_search_results=None,
+        max_search_distance_miles=None,
+        max_search_results=25,
     )
     for lat, lng in search:
         session = SgRequests()
         logger.info(str(lat) + "-" + str(lng) + "...")
         url = (
-            "https://virgin.know-where.com/virginmobile/cgi/selection?lang=en&ll="
+            "https://virgin.know-where.com/virginplus/cgi/selection?place=&lang=en&ll="
             + str(lat)
             + "%2C"
             + str(lng)
@@ -122,28 +98,32 @@ def fetch_data():
                         hours = "<MISSING>"
                     if phone == "":
                         phone = "<MISSING>"
-                    yield [
-                        website,
-                        loc,
-                        name,
-                        add,
-                        city,
-                        state,
-                        zc,
-                        country,
-                        store,
-                        phone,
-                        typ,
-                        lat,
-                        lng,
-                        hours,
-                    ]
+                    yield SgRecord(
+                        locator_domain=website,
+                        page_url=loc,
+                        location_name=name,
+                        street_address=add,
+                        city=city,
+                        state=state,
+                        zip_postal=zc,
+                        country_code=country,
+                        phone=phone,
+                        location_type=typ,
+                        store_number=store,
+                        latitude=lat,
+                        longitude=lng,
+                        hours_of_operation=hours,
+                    )
         time.sleep(7)
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    with SgWriter(
+        deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumberId)
+    ) as writer:
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()

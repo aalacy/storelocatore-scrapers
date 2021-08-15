@@ -4,7 +4,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgscrape.sgpostal import parse_address_intl
 from sglogging import SgLogSetup
 
 logger = SgLogSetup().get_logger("kfc")
@@ -14,34 +13,42 @@ _headers = {
 }
 
 locator_domain = "https://online.kfc.co.in/"
-base_url = "https://restaurants.kfc.co.in/"
+base_url = "https://restaurants.kfc.co.in/?page={}"
 
 
 def fetch_data():
     with SgRequests() as session:
-        soup = bs(session.get(base_url, headers=_headers).text, "lxml")
-        locations = soup.select("div.store-info-box")
-        for _ in locations:
-            addr = parse_address_intl(
-                " ".join(_.select_one(".outlet-address").stripped_strings) + ", India"
-            )
-            street_address = addr.street_address_1 or ""
-            if addr.street_address_2:
-                street_address += " " + addr.street_address_2
-            yield SgRecord(
-                page_url=_.select_one("a.btn-website")["href"],
-                location_name=_.select_one(".outlet-name").text.strip(),
-                street_address=street_address,
-                city=addr.city,
-                state=addr.state,
-                zip_postal=addr.postcode,
-                country_code="India",
-                phone=_.select_one(".outlet-phone").text.strip(),
-                latitude=_.select_one("input.outlet-latitude")["value"],
-                longitude=_.select_one("input.outlet-longitude")["value"],
-                locator_domain=locator_domain,
-                hours_of_operation=": ".join(_.select("li")[-3].stripped_strings),
-            )
+        page = 1
+        while True:
+            soup = bs(session.get(base_url.format(page), headers=_headers).text, "lxml")
+            locations = soup.select("div.store-info-box")
+            if not locations:
+                break
+            page += 1
+            logger.info(f"[page {page}] {len(locations)} found")
+            for _ in locations:
+                addr = [
+                    aa.text.strip()
+                    for aa in _.select_one(".outlet-address .info-text").findChildren(
+                        "span", recursive=False
+                    )
+                ]
+                hours = (
+                    _.select_one(".outlet-phone").find_next_sibling("li").text.strip()
+                )
+                yield SgRecord(
+                    page_url=_.select_one("a.btn-website")["href"],
+                    location_name=_.select_one(".outlet-name").text.strip(),
+                    street_address=" ".join(addr[:-1]).replace("\n", " "),
+                    city=addr[-1].split("-")[0].strip(),
+                    zip_postal=addr[-1].split("-")[-1].strip(),
+                    country_code="India",
+                    phone=_.select_one(".outlet-phone").text.strip(),
+                    latitude=_.select_one("input.outlet-latitude")["value"],
+                    longitude=_.select_one("input.outlet-longitude")["value"],
+                    locator_domain=locator_domain,
+                    hours_of_operation=hours,
+                )
 
 
 if __name__ == "__main__":
