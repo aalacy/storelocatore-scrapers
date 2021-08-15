@@ -64,7 +64,7 @@ def fetch_data():
                 .replace("Regular opening hour", "")
                 .replace("Temporary Opening Hours", "")
             )
-            country_code = "US"
+            country_code = "UK"
             yield SgRecord(
                 locator_domain=DOMAIN,
                 page_url=page_url,

@@ -17,6 +17,21 @@ _headers = {
 locator_domain = "https://monsterminigolf.com"
 base_url = "https://monsterminigolf.com/events/"
 
+months = [
+    "jan",
+    "feb",
+    "mar",
+    "apr",
+    "may",
+    "jun",
+    "jul",
+    "aug",
+    "sep",
+    "oct",
+    "nov",
+    "dev",
+]
+
 
 def fetch_data():
     with SgRequests() as session:
@@ -29,7 +44,14 @@ def fetch_data():
             phone = _.select_one("div.phoney a").text.strip()
             if "coming soon" in phone.lower():
                 continue
-            addr = parse_address_intl(_.p.text.strip())
+            country_code = "US"
+            if "canada" in _.h2.text.lower():
+                country_code = "Canada"
+            if sp1.select_one("div.address p"):
+                _addr = list(sp1.select_one("div.address p").stripped_strings)[:-1]
+            else:
+                _addr = list(_.p.stripped_strings)
+            addr = parse_address_intl(" ".join(_addr))
             street_address = addr.street_address_1
             if addr.street_address_2:
                 street_address += " " + addr.street_address_2
@@ -37,18 +59,26 @@ def fetch_data():
             if sp1.select_one("div.hours"):
                 if "coming soon" in sp1.select_one("div.hours").text.lower():
                     continue
+                is_break = False
                 for hh in sp1.select("div.hours p"):
+                    if is_break:
+                        break
                     for hr in hh.stripped_strings:
                         _hh = hr.lower()
                         if (
-                            "we" in _hh
-                            or "see" in _hh
-                            or "hours" in _hh
+                            "see" in _hh
                             or "now open" in _hh
+                            or (hours and hr.split(" ")[0][:3] in hours[0])
                         ):
+                            is_break = True
                             break
-                        if "beginning" in _hh or (
-                            "open" in _hh and "open 7 days" not in _hh
+                        if (
+                            "we" in _hh
+                            or "hours" in _hh
+                            or "beginning" in _hh
+                            or "/" in _hh
+                            or ("open" in _hh and "open 7 days" not in _hh)
+                            or _hh.split(" ")[0] in months
                         ):
                             continue
                         hours.append(hr.strip())
@@ -67,20 +97,31 @@ def fetch_data():
                             continue
                         hours.append(hh)
 
-            country_code = "US"
-            if "canada" in _.h2.text.lower():
-                country_code = "Canada"
+            try:
+                coord = (
+                    sp1.select("a.purple-btn")[-1]["href"]
+                    .split("/@")[1]
+                    .split("/data")[0]
+                    .split(",")
+                )
+            except:
+                coord = ["", ""]
             yield SgRecord(
                 page_url=page_url,
                 location_name=_.h2.text.strip(),
-                street_address=street_address,
+                street_address=street_address.replace(
+                    "Cole Street Parking Lot 4Th Level", ""
+                ),
                 city=addr.city,
                 state=addr.state,
                 zip_postal=addr.postcode,
                 country_code=country_code,
                 phone=phone.split(":")[-1],
+                latitude=coord[0],
+                longitude=coord[1],
                 locator_domain=locator_domain,
                 hours_of_operation="; ".join(hours).replace("–", "-"),
+                raw_address=" ".join(_addr),
             )
 
 
