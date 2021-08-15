@@ -46,6 +46,7 @@ def fetch_data():
         for zipcode in search:
             url = f"https://bobcat.know-where.com/bobcat/cgi/selection?option=T&option=R&option=E&option=M&option=G&option=W&option=X&option=U&option=P&option=V&option=D&place={zipcode}&lang=en&ll=&stype=place&async=results"
             rt = session.get(url, headers=headers2)
+            # Check if requests gets through, if so then we can check if there is any data for the store
             if rt.status_code == 200:
                 selt = html.fromstring(rt.text, "lxml")
                 kw_search_status = selt.xpath('//script[@id="kwSearchStatus"]/text()')
