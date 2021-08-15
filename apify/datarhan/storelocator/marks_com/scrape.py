@@ -11,7 +11,6 @@ from sgscrape.sgwriter import SgWriter
 
 
 def make_request(session, Point):
-    print(Point)
     headers = {
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.114 Safari/537.36",
         "service-client": "mk/web",
