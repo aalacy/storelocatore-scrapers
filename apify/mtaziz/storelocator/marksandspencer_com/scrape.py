@@ -5,6 +5,7 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgrequests import SgRequests
 import json
+import re
 import ssl
 
 
@@ -61,6 +62,24 @@ def fetch_data():
         location_name = location_name.replace("TEMPORARY CLOSED", "").replace(
             "Temporary Closed", ""
         )
+
+        # There are some location_names that say SIMPLY FOO or SIMPLY F (it’s like this on the site).
+        # This creates two patterns or rules to find "SIMPLY FOO" or "SIMPLY F" replaced
+        # with "SIMPLY FOOD".
+
+        pattern1_simply_foo = r"\bSIMPLY\sFOO\b"
+        simply_foo_found = re.findall(pattern1_simply_foo, location_name)
+        if simply_foo_found:
+            location_name = location_name.replace("SIMPLY FOO", "SIMPLY FOOD")
+        else:
+            location_name = location_name
+
+        pattern2_simply_f = r"\bSIMPLY\sF\b"
+        simply_f_found = re.findall(pattern2_simply_f, location_name)
+        if simply_f_found:
+            location_name = location_name.replace("SIMPLY F", "SIMPLY FOOD")
+        else:
+            location_name = location_name
 
         street_address = d["address"]["addressLine2"]
         street_address = street_address if street_address else MISSING

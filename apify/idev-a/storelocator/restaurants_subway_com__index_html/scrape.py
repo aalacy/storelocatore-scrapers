@@ -18,8 +18,8 @@ _headers = {
 
 base_url = "https://restaurants.subway.com/index.html"
 locator_domain = "https://restaurants.subway.com/"
-session = SgRequests().requests_retry_session()
-max_workers = 24
+session = SgRequests(proxy_rotation_failure_threshold=20).requests_retry_session()
+max_workers = 36
 
 
 def fetchConcurrentSingle(link):
@@ -56,7 +56,9 @@ def request_with_retries(url):
 
 
 def _d(page_url, sp1):
-    street_address = sp1.select_one(".c-address-street-1").text.strip()
+    street_address = ""
+    if sp1.select_one(".c-address-street-1"):
+        street_address = sp1.select_one(".c-address-street-1").text.strip()
     if sp1.select_one(".c-address-street-2"):
         street_address += " " + sp1.select_one(".c-address-street-2").text.strip()
     zip_postal = state = city = phone = ""
