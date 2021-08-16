@@ -47,6 +47,7 @@ def set_proxies():
 
 def fetch_data():
     with SgRequests() as session:
+        session.proxies = set_proxies()
         payload = {
             "location": {
                 "SelectedOrderMode": "null",
