@@ -1,7 +1,10 @@
-import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 session = SgRequests()
 headers = {
@@ -10,39 +13,11 @@ headers = {
 
 logger = SgLogSetup().get_logger("dairyqueen_com")
 
-
 search = DynamicGeoSearch(
     country_codes=[SearchableCountries.CANADA],
-    max_radius_miles=25,
+    max_search_distance_miles=25,
     max_search_results=None,
 )
-
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
 
 
 def fetch_data():
@@ -105,7 +80,10 @@ def fetch_data():
                 lng = line2.split('"latlong":"')[1].split(",")[1].replace('"', "")
                 city = line2.split('"city":"')[1].split('"')[0]
                 state = line2.split('"stateProvince":"')[1].split('"')[0]
-                zc = line2.split('"postalCode":"')[1].split('"')[0]
+                try:
+                    zc = line2.split('"postalCode":"')[1].split('"')[0]
+                except:
+                    zc = "<MISSING>"
                 try:
                     phone = line2.split('"phone":"')[1].split('"')[0]
                 except:
@@ -146,27 +124,29 @@ def fetch_data():
             hours = "<MISSING>"
         name = name.replace("&amp;", "&").replace("&amp", "&")
         add = add.replace("&amp;", "&").replace("&amp", "&")
-        yield [
-            website,
-            loc,
-            name,
-            add,
-            city,
-            state,
-            zc,
-            country,
-            store,
-            phone,
-            typ,
-            lat,
-            lng,
-            hours,
-        ]
+        yield SgRecord(
+            locator_domain=website,
+            page_url=loc,
+            location_name=name,
+            street_address=add,
+            city=city,
+            state=state,
+            zip_postal=zc,
+            country_code=country,
+            phone=phone,
+            location_type=typ,
+            store_number=store,
+            latitude=lat,
+            longitude=lng,
+            hours_of_operation=hours,
+        )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()
