@@ -152,9 +152,6 @@ def fetch_data(sgw: SgWriter):
                     .replace("  ", " ")
                     .strip()
                 )
-                store_number = "<MISSING>"
-                latitude = "<MISSING>"
-                longitude = "<MISSING>"
 
                 row = SgRecord(
                     locator_domain=locator_domain,
@@ -168,8 +165,8 @@ def fetch_data(sgw: SgWriter):
                     store_number=SgRecord.MISSING,
                     phone=phone,
                     location_type=location_type,
-                    latitude=latitude,
-                    longitude=longitude,
+                    latitude=SgRecord.MISSING,
+                    longitude=SgRecord.MISSING,
                     hours_of_operation=hours_of_operation,
                 )
 
