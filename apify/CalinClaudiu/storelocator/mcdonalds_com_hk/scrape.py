@@ -1,7 +1,7 @@
 from sgscrape import simple_scraper_pipeline as sp
 from sglogging import sglog
 from sgrequests import SgRequests
-from sgscrape import sgpostal as parser
+import sgpostal as parser
 
 logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
 
