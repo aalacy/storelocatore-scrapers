@@ -8,12 +8,12 @@ from sgrequests.sgrequests import SgRequests
 from sgzip.dynamic import SearchableCountries, Grain_8
 from sgzip.parallel import DynamicSearchMaker, ParallelDynamicSearch, SearchIteration
 from sglogging import sglog
-import random
 
 logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
 
 
 def fix_comma(x):
+    x = x.replace("None", "")
     h = []
     try:
         for i in x.split(","):
@@ -68,27 +68,24 @@ class ExampleSearchIteration(SearchIteration):
         ] = "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
         try:
             locations = http.get(url, headers=headers).json()
-            errorName = None
         except Exception as e:
             logzilla.error(f"{e}")
             locations = {"paging": {"total": 0}}
-            errorName = str(e)
             yield SgRecord(
-                page_url="<ERROR>",
+                page_url=url,
                 location_name="<ERROR>",
                 street_address="<ERROR>",
                 city="<ERROR>",
                 state="<ERROR>",
                 zip_postal="<ERROR>",
                 country_code="<ERROR>",
-                store_number=random.random(),
                 phone="<ERROR>",
                 location_type="<ERROR>",
                 latitude=lat,
                 longitude=lng,
                 locator_domain="<ERROR>",
                 hours_of_operation="<ERROR>",
-                raw_address=errorName,
+                raw_address=str(e),
             )
         if locations["paging"]["total"] > 0:
             for record in locations["stores"]:
@@ -129,10 +126,10 @@ class ExampleSearchIteration(SearchIteration):
                         longitude=str(record["coordinates"]["longitude"]),
                         locator_domain="https://www.starbuck.com/",
                         hours_of_operation=str(record["schedule"]),
-                        raw_address=errorName if errorName else SgRecord.MISSING,
+                        raw_address=SgRecord.MISSING,
                     )
                     found += 1
-                except KeyError:
+                except KeyError as e:
                     yield SgRecord(
                         page_url=SgRecord.MISSING,
                         location_name=SgRecord.MISSING,
@@ -148,7 +145,7 @@ class ExampleSearchIteration(SearchIteration):
                         longitude=SgRecord.MISSING,
                         locator_domain=SgRecord.MISSING,
                         hours_of_operation=SgRecord.MISSING,
-                        raw_address=errorName if errorName else "<ERROR>",
+                        raw_address=str(e),
                     )
                     found += 1
                 progress = "??.?%"
