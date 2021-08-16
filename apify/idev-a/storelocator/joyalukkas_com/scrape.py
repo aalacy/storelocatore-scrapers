@@ -40,7 +40,7 @@ def fetch_data():
                     .replace("Qatar", "")
                     .replace("Oman", "")
                 )
-            if street_address.isdigit():
+            if street_address and street_address.isdigit():
                 street_address = link["data-store_address_1"]
             yield SgRecord(
                 page_url=base_url,
