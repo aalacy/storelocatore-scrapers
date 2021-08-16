@@ -28,7 +28,6 @@ def fetch_data():
         statelist = soup.find("div", {"class": "light-gray"}).findAll("a")
         for state in statelist:
             stiteMap_url = "https://www.extraspace.com" + state["href"]
-            print(stiteMap_url)
             r = session.get(stiteMap_url, headers=headers)
             soup = BeautifulSoup(r.text, "html.parser")
             loclist = soup.findAll("a", {"class": "electric-gray"})
@@ -44,7 +43,6 @@ def fetch_data():
                         .replace("|", " ")
                     )
                 except:
-                    print("BOOOM")
                     continue
                 address = address.replace(",", " ")
                 address = usaddress.parse(address)
@@ -91,10 +89,7 @@ def fetch_data():
                 except:
                     latitude = r.text.split('"latitude":')[1].split('"')[0]
                     longitude = r.text.split('"longitude":')[1].split('"')[0]
-                try:
-                    store_number = page_url.rsplit("/")[-2]
-                except:
-                    store_number = MISSING
+                store_number = MISSING
                 hours_of_operation = hours_of_operation.replace("Storage", "")
                 country_code = "US"
                 yield SgRecord(
@@ -119,7 +114,7 @@ def scrape():
     log.info("Started")
     count = 0
     with SgWriter(
-        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.StoreNumberId)
     ) as writer:
         results = fetch_data()
         for rec in results:
