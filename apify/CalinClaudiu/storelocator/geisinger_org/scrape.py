@@ -4,11 +4,11 @@ from sgscrape.simple_scraper_pipeline import MappingField
 from sgscrape.simple_scraper_pipeline import MultiMappingField
 from sgscrape.simple_scraper_pipeline import MissingField
 from bs4 import BeautifulSoup as b4
-from sgrequests import SgRequests
-import json
 from sgselenium import SgChrome
 import time
 import ssl
+from sgrequests import SgRequests
+import json
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
