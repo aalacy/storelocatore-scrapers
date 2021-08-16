@@ -104,6 +104,10 @@ def fetch_data():
             add = "133 S State St"
         if "journeys-626-broadway" in loc:
             add = "626 Broadway"
+        if "journeys-34-w-34th-street" in loc:
+            add = "34 W 34th Street"
+        if "journeys-42b-w-14th-st" in loc:
+            add = "42B W 14th St"
         yield [
             website,
             loc,

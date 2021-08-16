@@ -31,24 +31,10 @@ def fetch_data():
             ps = desc.select("p")
             if "This location is an" in ps[0].text or "DINE IN" in ps[0].text:
                 del ps[0]
-            block = list(ps[0].stripped_strings)
-            hours = []
-            for hh in block:
-                if "Delivery" in hh:
-                    break
-                if "Dine In" in hh:
-                    continue
-                text = (
-                    hh.replace("–", "-")
-                    .replace("&", "-")
-                    .replace("|", ":")
-                    .replace("\xa0", " ")
-                )
-                if text.split("-")[0].strip() in days:
-                    hours.append(text)
-                elif hours:
-                    last = hours.pop()
-                    hours.append(last + text)
+            hours = [
+                ": ".join(hh.stripped_strings)
+                for hh in bs(_["hours"], "lxml").select("table tr")
+            ]
             page_url = ""
             if desc.select("a.yelpReview"):
                 page_url = desc.select("a.yelpReview")[1]["href"]
