@@ -1,12 +1,20 @@
-import csv
+import json
+
 from bs4 import BeautifulSoup as bs
-from sgrequests import SgRequests
+
 from sglogging import sglog
+
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+
+from sgrequests import SgRequests
 
 
 DOMAIN = "dreamhotels.com"
 BASE_URL = "https://www.dreamhotels.com/"
-LOCATION_URL = "https://www.dreamhotels.com/default-en.html"
+LOCATION_URL = "https://www.dreamhotels.com/destinations"
 HEADERS = {
     "Accept": "application/json, text/plain, */*",
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
@@ -14,52 +22,6 @@ HEADERS = {
 log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
 
 session = SgRequests()
-
-
-accept_country = [
-    {"US": ["United States"]},
-    {
-        "UK": [
-            "United Kingdom",
-            "Wales",
-            "Greece",
-            "England",
-            "Northen Ireland",
-            "Scotland",
-        ]
-    },
-    {"CA": ["Canada"]},
-]
-
-
-def write_output(data):
-    log.info("Write Output of " + DOMAIN)
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
 
 
 def pull_content(url):
@@ -78,86 +40,62 @@ def fetch_store_urls():
     log.info("Fetching store URL")
     store_urls = []
     soup = pull_content(LOCATION_URL)
-    content = soup.find("div", {"class": "secondlevel"}).find(
-        "ul", {"class": "destproperties"}
-    )
-    links = content.find("li", {"class": "firstpropertie withprop country"}).find_all(
-        "a", {"href": True}
-    )
-    for link in links:
-        if len(link["href"]) > 2:
-            store_urls.append(link["href"])
+    links = soup.find_all("div", {"class": "m-content-object__content"})
+    for i in links:
+        link = i.a["href"]
+        if "http" not in link:
+            link = "https://www.dreamhotels.com" + i.a["href"]
+        store_urls.append(link)
     log.info("Found {} URL ".format(len(store_urls)))
     return store_urls
 
 
-def fetch_data():
+def fetch_data(sgw: SgWriter):
     log.info("Fetching store_locator data")
     page_urls = fetch_store_urls()
-    locations = []
+    locator_domain = DOMAIN
     for page_url in page_urls:
         soup = pull_content(page_url)
-        address = (
-            soup.select(".footer-directions-text")[0]
-            .get_text()
-            .strip()
-            .replace("\n", ",")
-            .split(",")
-        )
-        locator_domain = DOMAIN
-        location_name = address[0]
-        if len(address) == 3:
-            street_address = " ".join(address[-2].split(" ")[:-2])
-            city = address[-2].split(" ")[-3]
-            state = address[-2].split(" ")[-2].upper()
-            zip_code = address[-2].split(" ")[-1]
-            phone = address[-1].split(":")[1].strip()
-        elif len(address) == 5:
-            street_address = " ".join(address[:-2])
-            city = address[-3].strip()
-            state = address[-2].split(" ")[-2].upper()
-            zip_code = address[-2].split(" ")[-1]
-            if "or" in address[-1].split(":")[1].strip():
-                phone = address[-1].split(":")[1].strip().split("or")[0].strip()
-            else:
-                phone = address[-1].split(":")[1].strip()
-        street_address = (
-            street_address.replace(city, "").replace(location_name, "").strip()
-        )
-        country_code = "USA"
-        store_number = "<MISSING>"
-        location_type = "Dream Hotels"
-        hours_of_operation = "<MISSING>"
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
-        log.info("Append {} => {}".format(location_name, street_address))
-        locations.append(
-            [
-                locator_domain,
-                page_url,
-                location_name,
-                street_address,
-                city,
-                state,
-                zip_code,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
+        store = json.loads(
+            soup.find_all("script", attrs={"type": "application/ld+json"})[-1].contents[
+                0
             ]
         )
-    return locations
+        location_name = store["name"]
+        street_address = store["address"]["streetAddress"]
+        city = store["address"]["addressLocality"]
+        state = store["address"]["addressRegion"]
+        zip_code = store["address"]["postalCode"]
+        country_code = store["address"]["addressCountry"]
+        if "States" not in country_code:
+            continue
+        phone = soup.find(class_="page-footer__contact").p.a.text
+        store_number = "<MISSING>"
+        location_type = "<MISSING>"
+        hours_of_operation = "<MISSING>"
+        latitude = store["hasMap"].split("=")[-1].split(",")[0].strip()
+        longitude = store["hasMap"].split("=")[-1].split(",")[1].strip()
+        log.info("Append {} => {}".format(location_name, street_address))
+
+        sgw.write_row(
+            SgRecord(
+                locator_domain=locator_domain,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_code,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
+        )
 
 
-def scrape():
-    log.info("Start {} Scraper".format(DOMAIN))
-    data = fetch_data()
-    log.info("Found {} locations".format(len(data)))
-    write_output(data)
-    log.info("Finish processed " + str(len(data)))
-
-
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    fetch_data(writer)

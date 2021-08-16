@@ -1,43 +1,13 @@
-import csv
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
 import dirtyjson as json
 import re
-
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-                "brand_website",
-                "raw_address",
-            ]
-        )
-        # Body
-        for row in data:
-            if row:
-                writer.writerow(row)
-
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgpostal import parse_address_intl
 
 logger = SgLogSetup().get_logger("findawarehouse")
 
@@ -91,6 +61,23 @@ locator_domain = "https://www.findawarehouse.org/"
 base_url = "https://www.findawarehouse.org/SearchFAW"
 
 
+def _p(val):
+    return (
+        val.lower()
+        .split("ext")[0]
+        .split("x")[0]
+        .replace("(", "")
+        .replace(")", "")
+        .replace("+", "")
+        .replace("-", "")
+        .replace(".", " ")
+        .replace("to", "")
+        .replace(" ", "")
+        .strip()
+        .isdigit()
+    )
+
+
 def _ll(street, json_locations):
     latitude = longitude = phone = ""
     for loc in json_locations:
@@ -98,6 +85,8 @@ def _ll(street, json_locations):
             latitude = loc["Lat"]
             longitude = loc["Lng"]
             phone = loc["Phone"]
+            if phone:
+                phone = phone.lower().split("ext")[0].split("x")[0]
 
     return latitude, longitude, phone
 
@@ -116,36 +105,50 @@ def _detail(_, json_locations, session):
     if _addr[0] == _.p.b.text.strip():
         del _addr[0]
     latitude, longitude, phone = _ll(_addr[0], json_locations)
-    street_address = _addr[0]
-    city_state = _addr[1].strip().split(",")
-    state = city_state[1].strip().split(" ")[0].strip()
-    zip_postal = " ".join(city_state[1].strip().split(" ")[1:]).strip()
-    brand_website = "<MISSING>"
+    if "True" in _addr[-1] or "False" in _addr[-1]:
+        del _addr[-1]
+    if "Headquarter" in _addr[-1]:
+        del _addr[-1]
     if _.select_one("p a.website"):
         brand_website = _.select_one("p a.website").text.strip()
+    if _addr[-1].startswith("http"):
+        del _addr[-1]
+    if _p(_addr[-1]):
+        del _addr[-1]
+    addr = parse_address_intl(" ".join(_addr))
+    city = addr.city
+    if city:
+        x = " ".join(_addr).lower().rfind(city.lower())
+        street_address = " ".join(_addr)[:x].strip()
+    else:
+        street_address = _addr[0]
+    if street_address and street_address.startswith("PO Box"):
+        street_address = ""
 
-    return [
-        locator_domain,
-        page_url,
-        name,
-        street_address or "<MISSING>",
-        city_state[0].strip(),
-        state,
-        zip_postal,
-        get_country_by_code(state),
-        "<MISSING>",
-        phone,
-        "<MISSING>",
-        latitude,
-        longitude,
-        "<MISSING>",
-        brand_website,
-        "<MISSING>",
-    ]
+    if street_address.isdigit():
+        street_address = _addr[0]
+        city = _addr[1].split(",")[0].strip()
+    if street_address:
+        street_address = (
+            street_address.split("PO Box")[0].split("P.O. Box")[0].split("P O Box")[0]
+        )
+    return SgRecord(
+        page_url=page_url,
+        location_name=name,
+        street_address=street_address,
+        city=city,
+        state=addr.state,
+        zip_postal=addr.postcode,
+        country_code=get_country_by_code(addr.state),
+        phone=phone,
+        latitude=latitude,
+        longitude=longitude,
+        locator_domain=locator_domain,
+        raw_address=brand_website,
+    )
 
 
 def fetch_data():
-    _data = []
     with SgRequests() as session:
         total = 0
         res = session.get(base_url, headers=_header1).text
@@ -155,7 +158,7 @@ def fetch_data():
         total += len(locations)
         logger.info(f"[total {total}] {len(locations)} found")
         for _ in locations:
-            _data.append(_detail(_, json_locations, session))
+            yield _detail(_, json_locations, session)
         while True:
             __VIEWSTATE = soup.select_one("input#__VIEWSTATE")["value"]
             __VIEWSTATEGENERATOR = soup.select_one("input#__VIEWSTATEGENERATOR")[
@@ -201,14 +204,25 @@ def fetch_data():
             total += len(locations)
             logger.info(f"[total {total}] {len(locations)} found")
             for _ in locations:
-                _data.append(_detail(_, json_locations, session))
-
-        return _data
-
-
-def scrape():
-    write_output(fetch_data())
+                yield _detail(_, json_locations, session)
 
 
 if __name__ == "__main__":
-    scrape()
+    with SgWriter(
+        SgRecordDeduper(
+            record_id=SgRecordID(
+                {
+                    SgRecord.Headers.PAGE_URL,
+                    SgRecord.Headers.LOCATION_NAME,
+                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.LATITUDE,
+                    SgRecord.Headers.LONGITUDE,
+                    SgRecord.Headers.PHONE,
+                    SgRecord.Headers.ZIP,
+                }
+            )
+        )
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)

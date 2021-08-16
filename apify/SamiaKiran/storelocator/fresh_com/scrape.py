@@ -1,14 +1,22 @@
 from sglogging import sglog
 from bs4 import BeautifulSoup
 from sgrequests import SgRequests
-from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-session = SgRequests()
+
 website = "fresh_com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 session = SgRequests()
-session = SgRequests()
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+}
+
+DOMAIN = "https://fresh.com/"
+MISSING = SgRecord.MISSING
+
 headers = {
     "authority": "www.fresh.com",
     "method": "GET",
@@ -42,8 +50,18 @@ def fetch_data():
                 location_name = loc.find(
                     "p", {"class": "subheader1 privacy-info-question"}
                 )
-                page_url = location_name.find("a")["href"]
+                try:
+                    page_url = location_name.find("a")["href"]
+                except:
+                    continue
                 log.info(page_url)
+                r = session.get(page_url, headers=headers, verify=False)
+                soup = BeautifulSoup(r.text, "html.parser")
+                hours_of_operation = (
+                    soup.find("table")
+                    .get_text(separator="|", strip=True)
+                    .replace("|", " ")
+                )
                 location_name = location_name.text
                 address = (
                     loc.findAll("div")[1].get_text(separator="|", strip=True).split("|")
@@ -55,13 +73,12 @@ def fetch_data():
                 address = address[1].split()
                 state = address[0]
                 zip_postal = address[1]
-                hours_of_operation = "<INACCESSIBLE>"
                 r = session.get(page_url, headers=headers, verify=False)
                 coords = r.text.split("center=")[1].split("&amp;", 1)[0]
                 latitude = coords.split("%2C")[0]
                 longitude = coords.split("%2C")[1]
                 yield SgRecord(
-                    locator_domain="https://www.fresh.com/",
+                    locator_domain=DOMAIN,
                     page_url=page_url,
                     location_name=location_name,
                     street_address=street_address.strip(),
@@ -69,9 +86,9 @@ def fetch_data():
                     state=state.strip(),
                     zip_postal=zip_postal.strip(),
                     country_code="US",
-                    store_number="<MISSING>",
+                    store_number=MISSING,
                     phone=phone.strip(),
-                    location_type="<MISSING>",
+                    location_type=MISSING,
                     latitude=latitude,
                     longitude=longitude,
                     hours_of_operation=hours_of_operation,
@@ -81,7 +98,9 @@ def fetch_data():
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.GeoSpatialId)
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
