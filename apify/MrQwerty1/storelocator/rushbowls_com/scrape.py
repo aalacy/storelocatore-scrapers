@@ -42,7 +42,13 @@ def fetch_data(sgw: SgWriter):
         root = html.fromstring(source)
         hours = root.xpath("//text()")
         for h in hours:
-            if not h.strip() or "COVID" in h or "2021" in h:
+            if (
+                not h.strip()
+                or "COVID" in h
+                or "2021" in h
+                or "July" in h
+                or "4/4" in h
+            ):
                 continue
             if "*" in h or "Under" in h or "Hours" in h:
                 break
