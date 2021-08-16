@@ -30,19 +30,11 @@ DEFAULT_PROXY_URL = "https://groups-RESIDENTIAL,country-au:{}@proxy.apify.com:80
 
 
 def set_proxies():
-    if "PROXY_PASSWORD" in os.environ and os.environ["PROXY_PASSWORD"].strip():
-
-        proxy_password = os.environ["PROXY_PASSWORD"]
-        url = (
-            os.environ["PROXY_URL"] if "PROXY_URL" in os.environ else DEFAULT_PROXY_URL
-        )
-        proxy_url = url.format(proxy_password)
-        proxies = {
-            "https://": proxy_url,
-        }
-        return proxies
-    else:
-        return None
+    proxy_url = DEFAULT_PROXY_URL.format(proxy_password)
+    proxies = {
+        "https://": proxy_url,
+    }
+    return proxies
 
 
 def fetch_data():
