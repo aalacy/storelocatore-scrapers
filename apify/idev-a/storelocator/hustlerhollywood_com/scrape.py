@@ -37,10 +37,6 @@ def fetch_data():
                         "div.hours-row"
                     )
                 ]
-            if not hours:
-                import pdb
-
-                pdb.set_trace()
             yield SgRecord(
                 page_url=page_url,
                 location_name=ss["name"],
