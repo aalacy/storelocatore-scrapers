@@ -33,10 +33,14 @@ def fetch_data():
             if _.select("div.store-item__hours"):
                 hours = [
                     ": ".join(hh.stripped_strings)
-                    for hh in _.select("div.store-item__hours")[0].select(
-                        "div.hours-sort-container div.hours-row"
+                    for hh in _.select("div.hours-sort-container")[0].select(
+                        "div.hours-row"
                     )
                 ]
+            if not hours:
+                import pdb
+
+                pdb.set_trace()
             yield SgRecord(
                 page_url=page_url,
                 location_name=ss["name"],
