@@ -36,7 +36,7 @@ def fetch_data():
                 )
                 element = driver.find_element_by_tag_name("iframe")
                 driver.execute_script("arguments[0].scrollIntoView();", element)
-                time.sleep(1)
+                time.sleep(3)
                 pageText = driver.page_source
                 driver.switch_to.frame(element)
                 coordText = driver.page_source
@@ -92,6 +92,7 @@ def fetch_data():
                         i["hours"] = "<MISSING>"
 
             i["hours"] = old.replace(":;", "")
+            coords = None
             try:
                 links = coordSoup.find_all("a", {"href": True})
                 for link in links:
@@ -100,8 +101,12 @@ def fetch_data():
                         coords = coords.split("ll=", 1)[1].split("&", 1)[0].split(",")
             except Exception:
                 coords = ["<INACCESSIBLE>", "<INACCESSIBLE>"]
-            i["lon"] = coords[1]
-            i["lat"] = coords[0]
+            try:
+                i["lon"] = coords[1]
+                i["lat"] = coords[0]
+            except Exception:
+                i["lon"] = coords
+                i["lat"] = coords
             try:
                 i["hours"] = i["hours"].split(";")
                 h = []
