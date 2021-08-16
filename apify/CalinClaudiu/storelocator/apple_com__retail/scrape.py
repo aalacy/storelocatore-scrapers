@@ -8,7 +8,9 @@ from bs4 import BeautifulSoup as b4
 from sgscrape.pause_resume import CrawlStateSingleton, CrawlState
 from dataclasses import asdict, dataclass
 from typing import Iterable, Optional
+from sgzip.utils import earth_distance
 from ordered_set import OrderedSet
+from csv import reader
 import json
 
 logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
@@ -162,6 +164,54 @@ def determine_country(country):
         return resultCode[-1][0]
 
 
+class HKData:
+    def __init__(self):
+        self._filename = "hk_data.csv"
+        self._row = None
+        self._lastSearch = None
+        self.__max_distance_observed = -1
+        self.__cur_centroid = None
+        with open(self._filename, "r", encoding="utf-8") as csvFile:
+            file = reader(csvFile)
+            self._items_remaining = sum(1 for row in file) - 1
+
+    def max_observed_distance(self):
+        return self.__max_distance_observed
+
+    def items_remaining(self):
+        return self._items_remaining
+
+    def found_location_at(self, lat, lng):
+        with open("Found_location_at", mode="a", encoding="utf-8") as file:
+            if self._lastSearch != self._row:
+                file.write(str(self._row + ",search\n"))
+                self._lastSearch = self._row
+            file.write(str(str(lat) + "," + str(lng) + ",found\n"))
+        cur_dist = earth_distance((float(lat), float(lng)), self.__cur_centroid)
+        self.__max_distance_observed = max(self.__max_distance_observed, cur_dist)
+
+    def __iter__(self):
+        with open(self._filename, "r", encoding="utf-8") as csvFile:
+            file = reader(csvFile)
+            keys = next(file)
+            for index, row in enumerate(file):
+                try:
+                    row = zip(keys, row)
+                    row = dict(row)
+                    self._row = str(row["latitude"]) + "," + str(row["longitude"])
+                    self._items_remaining -= 1
+                    #
+                    self.__cur_centroid = (
+                        float(row["latitude"]),
+                        float(row["longitude"]),
+                    )
+                    yield (row["latitude"], row["longitude"])
+                except Exception as e:
+                    logzilla.error(e)
+                    continue
+                # need to improve on this in config if I ever need it outside of testing
+
+
 def get_country(search, country, session, headers, SearchableCountry, state):
     def getPoint(point, session, locale, headers):
         if locale[-1] != "/":
@@ -290,6 +340,8 @@ def fetch_data():
                         logzilla.warning(
                             f"Issue with sgzip and country code: {SearchableCountry}\n{e}\n{errorLink}"
                         )
+                    if SearchableCountry == "hk":
+                        search = HKData()
                     if search:
                         for record in get_country(
                             search, country, session, headers, SearchableCountry, state
