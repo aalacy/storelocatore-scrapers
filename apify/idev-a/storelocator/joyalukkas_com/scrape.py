@@ -29,10 +29,19 @@ def fetch_data():
             if link["data-store_address_2"]:
                 _addr.append(link["data-store_address_2"])
             _addr.append(link["data-store_country"])
-            addr = parse_address_intl(", ".join(_addr))
+            raw_address = ", ".join(_addr).replace("IL60659", "IL 60659")
+            addr = parse_address_intl(raw_address)
             street_address = addr.street_address_1
             if addr.street_address_2:
                 street_address += " " + addr.street_address_2
+            if street_address:
+                street_address = (
+                    street_address.replace("Uae", "")
+                    .replace("Qatar", "")
+                    .replace("Oman", "")
+                )
+            if street_address and street_address.isdigit():
+                street_address = link["data-store_address_1"]
             yield SgRecord(
                 page_url=base_url,
                 street_address=street_address,
@@ -44,6 +53,7 @@ def fetch_data():
                 locator_domain=locator_domain,
                 latitude=link["data-longitude"],
                 longitude=link["data-latitude"],
+                raw_address=raw_address,
             )
 
 
