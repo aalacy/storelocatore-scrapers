@@ -10,6 +10,7 @@ import ssl
 from sgrequests import SgRequests
 import json
 
+logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
 ssl._create_default_https_context = ssl._create_unverified_context
 import os
 import os.path
@@ -64,6 +65,9 @@ def fetch_data():
         k = '{"stores":[' + k + "}]}"
         son = json.loads(k)
         for i in son["stores"]:
+            logzilla.info(
+                f'http://locations.geisinger.org/details.cfm?id={str(i["CLINICID"])}'
+            )
             pageText = None
             with SgChrome() as driver:
                 driver.get(
