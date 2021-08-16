@@ -7,6 +7,17 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 import re
 import time
 from sglogging import SgLogSetup
+import ssl
+
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
+
 
 logger = SgLogSetup().get_logger("badgercoin")
 
@@ -26,7 +37,7 @@ def fetch_data():
     locations = soup.select("section#location-list a")
     for x, _ in enumerate(locations):
         count += 1
-        if count % 7 == 0:
+        if count % 5 == 0:
             driver = SgChrome().driver()
         driver.get(_["href"])
         logger.info(_["href"])

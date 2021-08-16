@@ -23,7 +23,12 @@ def fetch_data():
                 street_address += " " + store["Address2"]
             page_url = ""
             if sp1.select_one("div.links a.btn"):
-                page_url = locator_domain + sp1.select_one("div.links a.btn")["href"]
+                page_url = sp1.select_one("div.links a.btn")["href"]
+                if not page_url.startswith("http"):
+                    page_url = (
+                        locator_domain + sp1.select_one("div.links a.btn")["href"]
+                    )
+
             yield SgRecord(
                 page_url=page_url,
                 store_number=store["ID"],
