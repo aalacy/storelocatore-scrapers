@@ -1,6 +1,7 @@
 from sgscrape.simple_scraper_pipeline import SimpleScraperPipeline
 from sgscrape.simple_scraper_pipeline import ConstantField
 from sgscrape.simple_scraper_pipeline import MappingField
+from sglogging import sglog
 from sgscrape.simple_scraper_pipeline import MultiMappingField
 from sgscrape.simple_scraper_pipeline import MissingField
 from bs4 import BeautifulSoup as b4
