@@ -152,6 +152,10 @@ class ExampleSearchIteration(SearchIteration):
                 logzilla.info(
                     f"{str(lat).replace('(','').replace(')','')}{str(lng).replace('(','').replace(')','')}|found: {found}|total: ??|prog: {progress}|\nRemaining: {items_remaining}"
                 )
+        rec_count = self.__state.get_misc_value(
+            current_country, default_factory=lambda: 0
+        )
+        self.__state.set_misc_value(current_country, rec_count + 1)
 
 
 if __name__ == "__main__":
