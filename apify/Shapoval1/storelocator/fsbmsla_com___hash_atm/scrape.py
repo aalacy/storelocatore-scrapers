@@ -19,6 +19,17 @@ def fetch_data(sgw: SgWriter):
         page_url = "https://www.fsbmsla.com/locations"
         location_name = j.get("name")
         location_type = "ATM"
+        net_name = j.get("networkName")
+        if (
+            net_name == "First Security Bank ATMs"
+            and location_name.find("First Security Bank") == -1
+        ):
+            location_name = "First Security Bank" + " " + location_name
+        if (
+            net_name != "First Security Bank ATMs"
+            and location_name.find("First Security Bank") != -1
+        ):
+            location_name = location_name.replace("First Security Bank", "").strip()
         street_address = "".join(j.get("address"))
         if street_address.find("\n") != -1:
             street_address = street_address.split("\n")[1].strip()
