@@ -10,7 +10,7 @@ from bs4 import BeautifulSoup as b4
 from sgzip.utils import earth_distance
 import json
 import os
-from sgscrape import sgpostal as parser
+import sgpostal as parser
 
 logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
 os.environ["HTTPX_LOG_LEVEL"] = "trace"
