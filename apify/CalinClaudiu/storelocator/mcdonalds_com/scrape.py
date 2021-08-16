@@ -209,14 +209,25 @@ class CleanRecord:
                 cleanRecord["locator_domain"], country, locale, identifier
             )
         else:
-            cleanRecord["page_url"] = "https://{}/{}/{}/location/{}.html".format(
-                cleanRecord["locator_domain"],
-                country,
-                locale,
-                badRecord["properties"]["identifiers"]["storeIdentifier"][1][
-                    "identifierValue"
-                ],
-            )
+            try:
+                cleanRecord["page_url"] = "https://{}/{}/{}/location/{}.html".format(
+                    cleanRecord["locator_domain"],
+                    country,
+                    locale,
+                    badRecord["properties"]["identifiers"]["storeIdentifier"][1][
+                        "identifierValue"
+                    ],
+                )
+            except Exception:
+                cleanRecord["page_url"] = "https://{}/{}/{}/location/{}.html".format(
+                    cleanRecord["locator_domain"],
+                    country,
+                    locale,
+                    badRecord["properties"]["identifiers"]["storeIdentifier"][0][
+                        "identifierValue"
+                    ],
+                )
+
         return cleanRecord
 
     def DEDUPE(badRecord):
