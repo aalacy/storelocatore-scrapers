@@ -101,9 +101,8 @@ if __name__ == "__main__":
     )
 
     with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
-        with SgRequests() as http:
+        with SgRequests(proxy_country="us") as http:
             http.clear_cookies()
-            http.proxies = set_proxies()
             search_iter = ExampleSearchIteration(http=http)
             par_search = ParallelDynamicSearch(
                 search_maker=search_maker,
