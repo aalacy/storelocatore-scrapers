@@ -3,7 +3,6 @@ import ssl
 from lxml import etree
 from time import sleep
 
-from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
@@ -22,8 +21,6 @@ else:
 
 
 def fetch_data():
-    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
-
     start_url = "https://www.burgerking.co.jp/#/store"
     domain = re.findall(r"://(.+?)/", start_url)[0].replace("www.", "")
 
