@@ -27,7 +27,7 @@ DOMAIN = "bobcat.com"
 
 search = DynamicZipSearch(
     country_codes=[SearchableCountries.USA],
-    expected_search_radius_miles=100,
+    expected_search_radius_miles=10,
     use_state=False,
 )
 
