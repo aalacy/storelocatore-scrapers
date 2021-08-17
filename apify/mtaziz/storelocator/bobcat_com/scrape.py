@@ -1,4 +1,4 @@
-from sgzip.dynamic import DynamicZipSearch, SearchableCountries
+from sgzip.dynamic import DynamicZipSearch, SearchableCountries, Grain_1_KM
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
 from sgscrape.sgrecord import SgRecord
@@ -27,6 +27,7 @@ DOMAIN = "bobcat.com"
 
 search = DynamicZipSearch(
     country_codes=[SearchableCountries.USA],
+    granularity=Grain_1_KM(),
     expected_search_radius_miles=10,
     use_state=False,
 )

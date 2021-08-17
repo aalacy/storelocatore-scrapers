@@ -42,7 +42,7 @@ def fetch_data(sgw: SgWriter):
                 street_address = adr.text.strip().replace(city, "").replace(zipp, "")
                 location_name = anchor["n"]
                 store_number = location_name.split()[-1].strip()
-                page_url = "<MISSING>"
+                page_url = "https://help.ladbrokes.com/en/retail/shoplocator"
                 phone = anchor["p"]
                 hours = (
                     "mon "
