@@ -43,8 +43,9 @@ def fetch_data():
         for url in all_locations:
             page_url = urljoin(start_url, url)
             driver.get(page_url)
+            sleep(10)
             loc_dom = etree.HTML(driver.page_source)
-            poi = loc_dom.xpath('//script[contains(text(), "postal")]/text()')[0]
+            poi = loc_dom.xpath('//script[contains(text(), "address")]/text()')[0]
             poi = json.loads(poi)
             location_name = loc_dom.xpath(
                 '//h1[@class="vtex-yext-store-locator-0-x-storeTitle tc"]/text()'

@@ -1,9 +1,11 @@
-from sgscrape.sgrecord import SgRecord
-from sgscrape.sgwriter import SgWriter
 from bs4 import BeautifulSoup as bs
 from sgrequests import SgRequests
 from urllib.parse import urljoin
 from sgscrape.sgpostal import parse_address_intl
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 ca_provinces_codes = {
     "AB",
@@ -20,6 +22,12 @@ ca_provinces_codes = {
     "SK",
     "YT",
 }
+
+
+def write_output(data):
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+        for row in data:
+            writer.write_row(row)
 
 
 def _valid(val):
@@ -59,13 +67,8 @@ def fetch_data():
             ):
                 hours_of_operation = "Temporarily closed"
             else:
-                tags = soup1.select("table.hours tr")
-                hours = []
-                for tag in tags:
-                    hours.append(
-                        f"{tag.select_one('td.day').text.strip()} {tag.select_one('td.opening').text.strip()}-{tag.select_one('td.closing').text}"
-                    )
-                hours_of_operation = "; ".join(hours)
+                tags = soup1.select("table.hours tbody tr")
+                hours_of_operation = ",".join(tag["content"] for tag in tags)
 
             yield SgRecord(
                 page_url=page_url,
@@ -84,7 +87,5 @@ def fetch_data():
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
-        results = fetch_data()
-        for rec in results:
-            writer.write_row(rec)
+    data = fetch_data()
+    write_output(data)

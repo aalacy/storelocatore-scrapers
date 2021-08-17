@@ -5,7 +5,6 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 import json
 from bs4 import BeautifulSoup as bs
-import os
 
 header1 = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
@@ -26,27 +25,8 @@ base_url = "https://www.kfc.com.au/find-store"
 json_url = "https://www.kfc.com.au/KFCALocation/FindaKFCbyLatLong"
 
 
-DEFAULT_PROXY_URL = "https://groups-RESIDENTIAL,country-au:{}@proxy.apify.com:8000/"
-
-
-def set_proxies():
-    if "PROXY_PASSWORD" in os.environ and os.environ["PROXY_PASSWORD"].strip():
-
-        proxy_password = os.environ["PROXY_PASSWORD"]
-        url = (
-            os.environ["PROXY_URL"] if "PROXY_URL" in os.environ else DEFAULT_PROXY_URL
-        )
-        proxy_url = url.format(proxy_password)
-        proxies = {
-            "https://": proxy_url,
-        }
-        return proxies
-    else:
-        return None
-
-
 def fetch_data():
-    with SgRequests() as session:
+    with SgRequests(proxy_country="AU") as session:
         payload = {
             "location": {
                 "SelectedOrderMode": "null",
