@@ -25,14 +25,12 @@ base_url = "https://www.kfc.com.au/find-store"
 json_url = "https://www.kfc.com.au/KFCALocation/FindaKFCbyLatLong"
 
 
-DEFAULT_PROXY_URL = "https://groups-RESIDENTIAL,country-au:{}@proxy.apify.com:8000/"
-PROXY_PASSWORD = "HKT2ZAHSvokX3hLibngLgo5nT"
+DEFAULT_PROXY_URL = "http://groups-RESIDENTIAL,country-AU:HKT2ZAHSvokX3hLibngLgo5nT@proxy.apify.com:8000/"
 
 
 def set_proxies():
-    proxy_url = DEFAULT_PROXY_URL.format(PROXY_PASSWORD)
     proxies = {
-        "https://": proxy_url,
+        "https://": DEFAULT_PROXY_URL,
     }
     return proxies
 
