@@ -27,22 +27,15 @@ json_url = "https://www.kfc.com.au/KFCALocation/FindaKFCbyLatLong"
 
 
 DEFAULT_PROXY_URL = "https://groups-RESIDENTIAL,country-au:{}@proxy.apify.com:8000/"
+PROXY_PASSWORD = "HKT2ZAHSvokX3hLibngLgo5nT"
 
 
 def set_proxies():
-    if "PROXY_PASSWORD" in os.environ and os.environ["PROXY_PASSWORD"].strip():
-
-        proxy_password = os.environ["PROXY_PASSWORD"]
-        url = (
-            os.environ["PROXY_URL"] if "PROXY_URL" in os.environ else DEFAULT_PROXY_URL
-        )
-        proxy_url = url.format(proxy_password)
-        proxies = {
-            "https://": proxy_url,
-        }
-        return proxies
-    else:
-        return None
+    proxy_url = DEFAULT_PROXY_URL.format(PROXY_PASSWORD)
+    proxies = {
+        "https://": proxy_url,
+    }
+    return proxies
 
 
 def fetch_data():
