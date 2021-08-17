@@ -7,7 +7,7 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
-from sgzip.dynamic import DynamicZipSearch, SearchableCountries, Grain_8
+from sgzip.dynamic import DynamicZipSearch, SearchableCountries, Grain_2
 from sgscrape.pause_resume import CrawlStateSingleton
 
 from sgselenium.sgselenium import SgChrome
@@ -212,9 +212,9 @@ def scrape():
     start = time.time()
     search = DynamicZipSearch(
         country_codes=[SearchableCountries.USA],
-        max_search_distance_miles=100,
-        max_search_results=30,
-        granularity=Grain_8(),
+        max_search_distance_miles=None,
+        max_search_results=None,
+        granularity=Grain_2(),
     )
     with SgWriter(
         deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumberId)
