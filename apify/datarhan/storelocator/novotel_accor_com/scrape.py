@@ -64,7 +64,6 @@ def fetch_data():
         )
         if poi:
             poi = json.loads(poi[0])
-
             location_name = poi["name"]
             street = loc_dom.xpath('//meta[@property="og:street-address"]/@content')
             street = street[0] if street else "<MISSING>"
