@@ -1,3 +1,5 @@
-sgrequests
-bs4==0.0.1
-usaddress
+--extra-index-url https://dl.cloudsmith.io/KVaWma76J5VNwrOm/crawl/crawl/python/simple/
+sgscrape==0.1.11
+sgvalidator==0.0.71
+sgrequests==0.1.12
+beautifulsoup4==4.9.3
