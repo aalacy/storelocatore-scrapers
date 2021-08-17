@@ -25,19 +25,8 @@ base_url = "https://www.kfc.com.au/find-store"
 json_url = "https://www.kfc.com.au/KFCALocation/FindaKFCbyLatLong"
 
 
-DEFAULT_PROXY_URL = "http://groups-RESIDENTIAL,country-AU:HKT2ZAHSvokX3hLibngLgo5nT@proxy.apify.com:8000/"
-
-
-def set_proxies():
-    proxies = {
-        "https://": DEFAULT_PROXY_URL,
-    }
-    return proxies
-
-
 def fetch_data():
-    with SgRequests() as session:
-        session.proxies = set_proxies()
+    with SgRequests(proxy_country="AU") as session:
         payload = {
             "location": {
                 "SelectedOrderMode": "null",
