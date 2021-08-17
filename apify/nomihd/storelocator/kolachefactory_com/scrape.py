@@ -51,7 +51,7 @@ def fetch_data():
 
             location_name = store.get("name", "Kolache Factory")
             if "coming soon" in location_name.lower():
-                break
+                continue
             street_address = store["address"]["line1"].strip()
             if "line2" in store and store["address"]:
                 street_address = (
