@@ -10,7 +10,7 @@ from bs4 import BeautifulSoup as b4
 from sgzip.utils import earth_distance
 import json
 import os
-from sgscrape import sgpostal as parser
+import sgpostal as parser
 
 logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
 os.environ["HTTPX_LOG_LEVEL"] = "trace"
@@ -209,14 +209,25 @@ class CleanRecord:
                 cleanRecord["locator_domain"], country, locale, identifier
             )
         else:
-            cleanRecord["page_url"] = "https://{}/{}/{}/location/{}.html".format(
-                cleanRecord["locator_domain"],
-                country,
-                locale,
-                badRecord["properties"]["identifiers"]["storeIdentifier"][1][
-                    "identifierValue"
-                ],
-            )
+            try:
+                cleanRecord["page_url"] = "https://{}/{}/{}/location/{}.html".format(
+                    cleanRecord["locator_domain"],
+                    country,
+                    locale,
+                    badRecord["properties"]["identifiers"]["storeIdentifier"][1][
+                        "identifierValue"
+                    ],
+                )
+            except Exception:
+                cleanRecord["page_url"] = "https://{}/{}/{}/location/{}.html".format(
+                    cleanRecord["locator_domain"],
+                    country,
+                    locale,
+                    badRecord["properties"]["identifiers"]["storeIdentifier"][0][
+                        "identifierValue"
+                    ],
+                )
+
         return cleanRecord
 
     def DEDUPE(badRecord):

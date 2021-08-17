@@ -60,6 +60,8 @@ def fetch_data():
 
         full_address = store_info[:-1]
         raw_address = " ".join(full_address).strip()
+        zip = raw_address.split(",")[-1].strip()
+        raw_address = raw_address.replace(zip, "").strip()
 
         formatted_addr = parser.parse_address_intl(raw_address)
         street_address = formatted_addr.street_address_1
@@ -67,13 +69,13 @@ def fetch_data():
             street_address = street_address + ", " + formatted_addr.street_address_2
 
         state = "<MISSING>"
-        zip = raw_address.split(",")[-1].strip()
-        street_address = street_address.replace(zip, "").strip()
         country_code = "IE"
 
         location_name = " ".join(store.xpath(".//text()")).strip()
         city = location_name.split(" ")[0].strip()
-
+        street_address = (
+            street_address.replace(city, "").strip().replace("  ", " ").strip()
+        )
         phone = store_info[-1].strip()
 
         store_number = "<MISSING>"
