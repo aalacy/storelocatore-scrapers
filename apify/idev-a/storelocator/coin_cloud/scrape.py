@@ -39,6 +39,7 @@ def fetch_data():
                 phone=_["phone"],
                 locator_domain=locator_domain,
                 hours_of_operation="; ".join(hours),
+                raw_address=_['address']
             )
 
 
