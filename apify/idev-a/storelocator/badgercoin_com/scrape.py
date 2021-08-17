@@ -37,7 +37,7 @@ def fetch_data():
     locations = soup.select("section#location-list a")
     for x, _ in enumerate(locations):
         count += 1
-        if count % 7 == 0:
+        if count % 5 == 0:
             driver = SgChrome().driver()
         driver.get(_["href"])
         logger.info(_["href"])
