@@ -212,8 +212,6 @@ def scrape():
     start = time.time()
     search = DynamicZipSearch(
         country_codes=[SearchableCountries.USA],
-        max_search_distance_miles=None,
-        max_search_results=None,
         granularity=Grain_2(),
     )
     with SgWriter(
