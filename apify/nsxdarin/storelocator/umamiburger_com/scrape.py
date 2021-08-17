@@ -97,7 +97,7 @@ def fetch_data():
                             hours = hours + "; " + hrs
         if phone == "":
             phone = "<MISSING>"
-        hours = hours.replace("<MISSING>;", "").strip()
+        add = add.strip().replace("  ", " ").replace("  ", " ")
         yield SgRecord(
             locator_domain=website,
             page_url=loc,
