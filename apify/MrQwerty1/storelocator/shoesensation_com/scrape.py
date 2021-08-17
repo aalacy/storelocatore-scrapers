@@ -7,10 +7,6 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
 def fetch_data(sgw: SgWriter):
-
-    locator_domain = "https://www.shoesensation.com/"
-
-    session = SgRequests()
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:88.0) Gecko/20100101 Firefox/88.0",
         "Accept": "text/html, */*; q=0.01",
@@ -31,13 +27,11 @@ def fetch_data(sgw: SgWriter):
     for d in div:
         page_url = "".join(d.xpath(".//@data-href"))
 
-        session = SgRequests()
-
         r = session.get(page_url)
         tree = html.fromstring(r.text)
 
         location_name = "".join(
-            tree.xpath("//h2[@class='mw-sl__details__name']/text()")
+            tree.xpath("//h1[@class='mw-sl__details__name']/text()")
         ).strip()
         line = tree.xpath(
             "//li[@class='mw-sl__details__item mw-sl__details__item--location']/div[@class='info']/text()"
@@ -84,9 +78,9 @@ def fetch_data(sgw: SgWriter):
 
         _tmp = []
         divs = tree.xpath("//div[@class='mw-sl__infotable__row']")
-        for d in divs:
-            day = "".join(d.xpath("./span[1]/text()")).replace("|", "").strip()
-            time = "".join(d.xpath("./span[2]/text()")).strip()
+        for di in divs:
+            day = "".join(di.xpath("./span[1]/text()")).replace("|", "").strip()
+            time = "".join(di.xpath("./span[2]/text()")).strip()
             _tmp.append(f"{day}: {time}")
 
         hours_of_operation = ";".join(_tmp).replace("<br />", " ") or "<MISSING>"

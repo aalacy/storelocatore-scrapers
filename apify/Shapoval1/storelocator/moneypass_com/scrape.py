@@ -1,59 +1,35 @@
-import csv
 import json
-from concurrent import futures
+from sgzip.dynamic import SearchableCountries, DynamicZipSearch
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
-from sgzip.static import static_zipcode_list, SearchableCountries
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from concurrent import futures
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def get_data(_zip):
-    rows = []
+def get_data(_zip, sgw: SgWriter):
     locator_domain = "https://www.moneypass.com/"
     page_url = "https://www.moneypass.com/atm-locator.html"
 
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:88.0) Gecko/20100101 Firefox/88.0",
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:90.0) Gecko/20100101 Firefox/90.0",
         "Accept": "*/*",
-        "Accept-Language": "uk-UA,uk;q=0.8,en-US;q=0.5,en;q=0.3",
+        "Accept-Language": "ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3",
         "Content-Type": "application/json; charset=UTF-8",
-        "Origin": "https://moneypasslocator.wave2.io",
+        "Origin": "https://moneypas slocator.wave2.io",
         "Connection": "keep-alive",
         "Referer": "https://moneypasslocator.wave2.io/",
-        "TE": "Trailers",
+        "Sec-Fetch-Dest": "empty",
+        "Sec-Fetch-Mode": "cors",
+        "Sec-Fetch-Site": "same-site",
+        "TE": "trailers",
     }
 
     data = {
         "Latitude": "",
         "Longitude": "",
-        "Address": _zip,
+        "Address": f"{_zip}",
         "City": "",
         "State": "",
         "Zipcode": "",
@@ -69,8 +45,10 @@ def get_data(_zip):
         headers=headers,
         data=json.dumps(data),
     )
-    js = r.json()["Features"]
-
+    try:
+        js = r.json()["Features"]
+    except:
+        return
     for j in js:
         a = j.get("Properties")
         location_name = a.get("LocationName") or "<MISSING>"
@@ -90,51 +68,41 @@ def get_data(_zip):
             j.get("LocationFeatures").get("TwentyFourHours") or "<MISSING>"
         )
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        rows.append(row)
+        row = SgRecord(
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=location_type,
+            latitude=latitude,
+            longitude=longitude,
+            locator_domain=locator_domain,
+            hours_of_operation=hours_of_operation,
+        )
 
-    return rows
+        sgw.write_row(row)
 
 
-def fetch_data():
-    out = []
-    s = set()
-    postals = static_zipcode_list(radius=20, country_code=SearchableCountries.USA)
+def fetch_data(sgw: SgWriter):
+    postals = DynamicZipSearch(
+        country_codes=[SearchableCountries.USA],
+        max_search_distance_miles=100,
+        expected_search_radius_miles=40,
+        max_search_results=None,
+    )
 
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
-        future_to_url = {
-            executor.submit(get_data, postal): postal for postal in postals
-        }
+    with futures.ThreadPoolExecutor(max_workers=5) as executor:
+        future_to_url = {executor.submit(get_data, url, sgw): url for url in postals}
         for future in futures.as_completed(future_to_url):
-            rows = future.result()
-            for row in rows:
-                check = tuple(row[2:6])
-                if check not in s:
-                    s.add(check)
-                    out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+            future.result()
 
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
+        fetch_data(writer)
