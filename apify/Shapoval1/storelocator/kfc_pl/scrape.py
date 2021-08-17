@@ -32,7 +32,7 @@ def fetch_data(sgw: SgWriter):
         location_type = j.get("restaurantType")
         street_address = f"{j.get('addressStreetNo')} {j.get('addressStreet')}"
         postal = j.get("addressPostalCode")
-        country_code = "US"
+        country_code = "PL"
         city = j.get("addressCity")
         store_number = j.get("id")
         latitude = j.get("geoLat")
