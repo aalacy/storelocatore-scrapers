@@ -1,7 +1,7 @@
 from bs4 import BeautifulSoup as bs
 from sgrequests import SgRequests
 from urllib.parse import urljoin
-from sgscrape.sgpostal import parse_address_intl
+from sgscrape.sgpostal import parse_address, International_Parser
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import RecommendedRecordIds
@@ -25,7 +25,7 @@ ca_provinces_codes = {
 
 
 def write_output(data):
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         for row in data:
             writer.write_row(row)
 
@@ -56,7 +56,9 @@ def fetch_data():
             soup1 = bs(session.get(page_url).text, "lxml")
             location_name = soup1.select_one("h1.title span").text.strip()
             contact_info = soup1.select_one("div.contact-info p a")
-            addr = parse_address_intl(" ".join(list(contact_info.stripped_strings)))
+            addr = parse_address(
+                International_Parser(), " ".join(list(contact_info.stripped_strings))
+            )
             phone = soup1.select("div.contact-info p")[1].a.text
             direction = contact_info["href"].split("/")[-1].strip().split(",")
             hours_of_operation = soup1.select_one("h2.subtitle").text
