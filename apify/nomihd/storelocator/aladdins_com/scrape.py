@@ -81,8 +81,6 @@ def fetch_data():
         hours_of_operation = (
             "; ".join(hours).replace("Now Open!;", "").replace(":;", ":").strip()
         )
-        map_link = "".join(store.xpath('.//a[contains(@href,"maps")]/@href'))
-
         latitude, longitude = "".join(store.xpath("./@data-lat")), "".join(
             store.xpath("./@data-lng")
         )
