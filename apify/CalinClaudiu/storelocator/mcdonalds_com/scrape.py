@@ -10,7 +10,7 @@ from bs4 import BeautifulSoup as b4
 from sgzip.utils import earth_distance
 import json
 import os
-import sgpostal as parser
+from sgpostal.sgpostal import parse_address_intl
 
 logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
 os.environ["HTTPX_LOG_LEVEL"] = "trace"
@@ -297,7 +297,7 @@ class CleanRecord:
             cleanRecord["raw_address"] = ""
         else:
             newdata = copy
-            parsed = parser.parse_address_intl(
+            parsed = parse_address_intl(
                 newdata.replace(",", " ").replace("\r", "").replace("\n", "")
             )
             cleanRecord = {}
