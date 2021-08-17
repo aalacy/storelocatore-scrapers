@@ -43,6 +43,7 @@ def fetch_data():
         for url in all_locations:
             page_url = urljoin(start_url, url)
             driver.get(page_url)
+            sleep(10)
             loc_dom = etree.HTML(driver.page_source)
             poi = loc_dom.xpath('//script[contains(text(), "address")]/text()')[0]
             poi = json.loads(poi)
