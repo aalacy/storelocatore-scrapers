@@ -5,6 +5,7 @@ from sgpostal.sgpostal import parse_address_intl
 
 logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
 
+
 def OneLink():
     def getPage():
         url = "https://www.mcdonalds.com.hk/wp-admin/admin-ajax.php?action=get_restaurants"
