@@ -8,9 +8,8 @@ from sgrequests.sgrequests import SgRequests
 from sgzip.dynamic import SearchableCountries, Grain_4
 from sgzip.parallel import DynamicSearchMaker, ParallelDynamicSearch, SearchIteration
 from sglogging import SgLogSetup
-import os
 
-logger = SgLogSetup().get_logger("massimodutti")
+logger = SgLogSetup().get_logger("fatburger")
 
 _headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
@@ -28,25 +27,6 @@ hr_obj = {
     "6": "Saturday",
     "7": "Sunday",
 }
-
-
-DEFAULT_PROXY_URL = "https://groups-RESIDENTIAL,country-au:{}@proxy.apify.com:8000/"
-
-
-def set_proxies():
-    if "PROXY_PASSWORD" in os.environ and os.environ["PROXY_PASSWORD"].strip():
-
-        proxy_password = os.environ["PROXY_PASSWORD"]
-        url = (
-            os.environ["PROXY_URL"] if "PROXY_URL" in os.environ else DEFAULT_PROXY_URL
-        )
-        proxy_url = url.format(proxy_password)
-        proxies = {
-            "https://": proxy_url,
-        }
-        return proxies
-    else:
-        return None
 
 
 def _time(val):
@@ -121,9 +101,8 @@ if __name__ == "__main__":
     )
 
     with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
-        with SgRequests() as http:
+        with SgRequests(proxy_country="us") as http:
             http.clear_cookies()
-            http.proxies = set_proxies()
             search_iter = ExampleSearchIteration(http=http)
             par_search = ParallelDynamicSearch(
                 search_maker=search_maker,
