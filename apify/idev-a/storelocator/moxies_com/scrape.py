@@ -59,13 +59,8 @@ def fetch_data():
             ):
                 hours_of_operation = "Temporarily closed"
             else:
-                tags = soup1.select("table.hours tr")
-                hours = []
-                for tag in tags:
-                    hours.append(
-                        f"{tag.select_one('td.day').text.strip()} {tag.select_one('td.opening').text.strip()}-{tag.select_one('td.closing').text}"
-                    )
-                hours_of_operation = "; ".join(hours)
+                tags = soup1.select("table.hours tbody tr")
+                hours_of_operation = ",".join(tag["content"] for tag in tags)
 
             yield SgRecord(
                 page_url=page_url,
