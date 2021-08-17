@@ -1,106 +1,136 @@
+from typing import Iterable, Tuple, Callable
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
-from sgrequests import SgRequests
-from bs4 import BeautifulSoup as bs
+from sgscrape.pause_resume import CrawlStateSingleton
+from sgrequests.sgrequests import SgRequests
+from sgzip.dynamic import SearchableCountries, Grain_4
+from sgzip.parallel import DynamicSearchMaker, ParallelDynamicSearch, SearchIteration
 from sglogging import SgLogSetup
-from urllib.parse import urljoin
+import os
 
-
-logger = SgLogSetup().get_logger("fatburger")
+logger = SgLogSetup().get_logger("massimodutti")
 
 _headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
 }
 
 locator_domain = "https://fatburger.com/"
-base_url = "https://locations.fatburger.com/index.html"
-url = "https://locations.fatburger.com/"
+base_url = "https://api.momentfeed.com/v1/analytics/api/llp.json?auth_token=BBOAPSVZOXCPKFUV&center={},{}&coordinates={},{},{},{}&multi_account=true&page=1&pageSize=1000"
+
+hr_obj = {
+    "1": "Monday",
+    "2": "Tuesday",
+    "3": "Wednesday",
+    "4": "Thursday",
+    "5": "Friday",
+    "6": "Saturday",
+    "7": "Sunday",
+}
 
 
-def fetch_data():
-    with SgRequests() as session:
-        soup = bs(session.get(base_url, headers=_headers).text, "lxml")
-        links = soup.select("ul.Directory-listLinks li a")
-        logger.info(f"{len(links)} found")
-        for link in links:
-            country_url = urljoin(url, link["href"])
-            states = bs(session.get(country_url, headers=_headers).text, "lxml").select(
-                "ul.Directory-listLinks li a"
+DEFAULT_PROXY_URL = "https://groups-RESIDENTIAL,country-au:{}@proxy.apify.com:8000/"
+
+
+def set_proxies():
+    if "PROXY_PASSWORD" in os.environ and os.environ["PROXY_PASSWORD"].strip():
+
+        proxy_password = os.environ["PROXY_PASSWORD"]
+        url = (
+            os.environ["PROXY_URL"] if "PROXY_URL" in os.environ else DEFAULT_PROXY_URL
+        )
+        proxy_url = url.format(proxy_password)
+        proxies = {
+            "https://": proxy_url,
+        }
+        return proxies
+    else:
+        return None
+
+
+def _time(val):
+    val = str(val)
+    if len(val) == 3:
+        val = "0" + val
+    return val[:2] + ":" + val[2:]
+
+
+class ExampleSearchIteration(SearchIteration):
+    def __init__(self, http: SgRequests):
+        self._http = http
+        self.__state = CrawlStateSingleton.get_instance()
+
+    def do(
+        self,
+        coord: Tuple[float, float],
+        zipcode: str,
+        current_country: str,
+        items_remaining: int,
+        found_location_at: Callable[[float, float], None],
+    ) -> Iterable[SgRecord]:
+
+        # here you'd use self.__http, and call `found_location_at(lat, long)` for all records you find.
+        a1 = coord[0] - 1.42754794932
+        b1 = coord[1] + 1.71661376953
+        a2 = coord[0] + 1.42754794932
+        b2 = coord[1] - 1.71661376953
+        locations = self._http.get(
+            base_url.format(coord[0], coord[1], a1, b1, a2, b2), headers=_headers
+        ).json()
+        for store in locations:
+            if store["status"] != "open":
+                continue
+            _ = store["store_info"]
+            street_address = _["address"]
+            if _["address_extended"]:
+                street_address += " " + _["address_extended"]
+            hours = []
+            if _.get("store_hours"):
+                for hh in _["store_hours"].split(";"):
+                    if not hh:
+                        continue
+                    hr = hh.split(",")
+                    hours.append(f"{hr_obj[hr[0]]}: {_time(hr[1])}-{_time(hr[2])}")
+            yield SgRecord(
+                page_url=_["website"],
+                location_name=_["name"],
+                street_address=street_address,
+                city=_["locality"],
+                state=_.get("region"),
+                zip_postal=_.get("postcode"),
+                latitude=_["latitude"],
+                longitude=_["longitude"],
+                country_code=_["country"],
+                phone=_["phone"],
+                location_type=_["brand_name"],
+                locator_domain=locator_domain,
+                hours_of_operation="; ".join(hours),
             )
-            logger.info(f'{link["href"]} [{len(states)}]')
-            for state in states:
-                state_url = urljoin(url, state["href"])
-                cities = bs(
-                    session.get(state_url, headers=_headers).text, "lxml"
-                ).select("ul.Directory-listLinks li a")
-                logger.info(f'{state["href"]} [{len(cities)}]')
-                for city in cities:
-                    city_url = urljoin(url, city["href"])
-                    locs = bs(
-                        session.get(city_url, headers=_headers).text, "lxml"
-                    ).select("li.Directory-listTeaser h2 a")
-                    if locs:
-                        for loc in locs:
-                            page_url = urljoin(url, loc["href"])
-                            logger.info(page_url)
-                            sp1 = bs(
-                                session.get(page_url, headers=_headers).text, "lxml"
-                            )
-                            state = zip_postal = city = street_address = ""
-                            if sp1.select_one(".c-address-state"):
-                                state = sp1.select_one(".c-address-state").text.strip()
-                            if sp1.select_one(".c-address-postal-code"):
-                                zip_postal = sp1.select_one(
-                                    ".c-address-postal-code"
-                                ).text.strip()
-                            if sp1.select_one('meta[itemprop="streetAddress"]'):
-                                street_address = sp1.select_one(
-                                    'meta[itemprop="streetAddress"]'
-                                )["content"]
-                            if sp1.select_one('meta[itemprop="addressLocality"]'):
-                                city = sp1.select_one(
-                                    'meta[itemprop="addressLocality"]'
-                                )["content"]
-                            phone = ""
-                            if sp1.select_one("span#telephone"):
-                                phone = sp1.select_one("span#telephone").text.strip()
-                            try:
-                                coord = (
-                                    sp1.select_one('link[itemprop="hasMap"]')["href"]
-                                    .split("center=")[1]
-                                    .split("&")[0]
-                                    .split("%2C")
-                                )
-                            except:
-                                coord = ["", ""]
-                            hours = [
-                                hh["content"]
-                                for hh in sp1.select(
-                                    "table.c-location-hours-details tbody tr"
-                                )
-                            ]
-                            yield SgRecord(
-                                page_url=page_url,
-                                location_name=loc.text.strip(),
-                                street_address=street_address,
-                                city=city,
-                                state=state,
-                                zip_postal=zip_postal,
-                                country_code=link.text.strip(),
-                                phone=phone,
-                                locator_domain=locator_domain,
-                                latitude=coord[0],
-                                longitude=coord[1],
-                                hours_of_operation="; ".join(hours).replace("–", "-"),
-                            )
-                    else:
-                        import pdb
-
-                        pdb.set_trace()
+        logger.info(f"[{current_country}] {len(locations)}")
+        # just some clever accounting of locations/country:
+        rec_count = self.__state.get_misc_value(
+            current_country, default_factory=lambda: 0
+        )
+        self.__state.set_misc_value(current_country, rec_count + len(locations))
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
-        results = fetch_data()
-        for rec in results:
-            writer.write_row(rec)
+    search_maker = DynamicSearchMaker(
+        use_state=False, search_type="DynamicGeoSearch", granularity=Grain_4()
+    )
+
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        with SgRequests() as http:
+            http.clear_cookies()
+            http.proxies = set_proxies()
+            search_iter = ExampleSearchIteration(http=http)
+            par_search = ParallelDynamicSearch(
+                search_maker=search_maker,
+                search_iteration=search_iter,
+                country_codes=SearchableCountries.ALL,
+                max_threads=8,
+            )
+
+            for rec in par_search.run():
+                writer.write_row(rec)

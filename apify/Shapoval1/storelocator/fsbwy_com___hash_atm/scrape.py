@@ -19,6 +19,12 @@ def fetch_data(sgw: SgWriter):
         page_url = "https://www.fsbwy.com/locations"
         location_name = j.get("name")
         location_type = "ATM"
+        net_name = j.get("networkName")
+        if (
+            net_name == "First State Bank of Wheatland ATMs"
+            and location_name.find("First State Bank of Wheatland") == -1
+        ):
+            location_name = "First State Bank of Wheatland" + " " + location_name
         street_address = "".join(j.get("address"))
         if street_address.find("\n") != -1:
             street_address = street_address.split("\n")[1].strip()
