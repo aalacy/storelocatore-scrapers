@@ -9,7 +9,6 @@ from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgrequests import SgRequests
-from sgselenium import SgChrome
 from sgselenium.sgselenium import SgChrome
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.support import expected_conditions as EC
