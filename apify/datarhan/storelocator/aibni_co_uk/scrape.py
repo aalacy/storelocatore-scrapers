@@ -31,6 +31,8 @@ def fetch_data():
             raw_address = poi_html.xpath('.//div[@class="mb-0"]/p[1]/text()')[0].split(
                 ", "
             )
+            if "Meadowbank" in raw_address[0]:
+                raw_address = [", ".join(raw_address[:2])] + raw_address[2:]
             phone = (
                 poi_html.xpath('.//div[@class="mb-0"]/p[3]/text()')[0]
                 .replace(":\xa0", "")
