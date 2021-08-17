@@ -34,7 +34,7 @@ def fetch_data():
             for hh in _.get("takeaway_schedule", []):
                 hours.append(f"{hh['day']}: {hh['from']}-{hh['to']}")
             yield SgRecord(
-                page_url="",
+                page_url=base_url,
                 store_number=_["id"],
                 location_name=_["title"],
                 street_address=street_address,
@@ -53,7 +53,7 @@ def fetch_data():
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.store_number)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
