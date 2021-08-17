@@ -13,8 +13,8 @@ headers = {
 
 search = DynamicGeoSearch(
     country_codes=[SearchableCountries.USA],
-    max_search_distance_miles=10,
-    max_search_results=None,
+    max_search_distance_miles=None,
+    max_search_results=10,
 )
 
 logger = SgLogSetup().get_logger("ymca_org")
@@ -29,7 +29,7 @@ def fetch_data():
             coords = []
             infos = []
             url = (
-                "https://www.ymca.org/find-your-y?distance=175&lat="
+                "https://www.ymca.org/find-your-y?distance=250&lat="
                 + str(x)
                 + "&lng="
                 + str(y)
