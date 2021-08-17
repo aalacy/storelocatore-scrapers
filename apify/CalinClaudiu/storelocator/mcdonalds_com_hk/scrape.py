@@ -1,10 +1,9 @@
 from sgscrape import simple_scraper_pipeline as sp
 from sglogging import sglog
 from sgrequests import SgRequests
-import sgpostal as parser
+from sgpostal.sgpostal import parse_address_intl
 
 logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
-
 
 def OneLink():
     def getPage():
@@ -20,7 +19,7 @@ def OneLink():
             return response.json()
 
     def record_cleaner(record):
-        parsed = parser.parse_address_intl(record["address"])
+        parsed = parse_address_intl(record["address"])
         record["country"] = parsed.country if parsed.country else "<MISSING>"
         record["state"] = parsed.state if parsed.state else "<MISSING>"
         record["city"] = parsed.city if parsed.city else "<MISSING>"
