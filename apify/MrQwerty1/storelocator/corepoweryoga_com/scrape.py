@@ -1,4 +1,3 @@
-from lxml import html
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
@@ -9,7 +8,6 @@ from concurrent import futures
 
 def get_urls():
     urls = []
-    session = SgRequests()
     r = session.get("https://d7mth1zoj92fj.cloudfront.net/data/all-locations")
     js = r.json().values()
     for j in js:
