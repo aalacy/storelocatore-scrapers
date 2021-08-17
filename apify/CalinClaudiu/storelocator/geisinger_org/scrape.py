@@ -1,16 +1,61 @@
 from sgscrape.simple_scraper_pipeline import SimpleScraperPipeline
 from sgscrape.simple_scraper_pipeline import ConstantField
 from sgscrape.simple_scraper_pipeline import MappingField
+from sglogging import sglog
 from sgscrape.simple_scraper_pipeline import MultiMappingField
 from sgscrape.simple_scraper_pipeline import MissingField
 from bs4 import BeautifulSoup as b4
+from sgselenium import SgChrome
+import time
+import ssl
 from sgrequests import SgRequests
 import json
+
+logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
+ssl._create_default_https_context = ssl._create_unverified_context
+import os
+import os.path
+import ssl
+import stat
+import subprocess
+import sys
+
+STAT_0o775 = (
+    stat.S_IRUSR
+    | stat.S_IWUSR
+    | stat.S_IXUSR
+    | stat.S_IRGRP
+    | stat.S_IWGRP
+    | stat.S_IXGRP
+    | stat.S_IROTH
+    | stat.S_IXOTH
+)
+
+
+def fixSSL():
+    openssl_dir, openssl_cafile = os.path.split(
+        ssl.get_default_verify_paths().openssl_cafile
+    )
+
+    subprocess.check_call(
+        [sys.executable, "-E", "-s", "-m", "pip", "install", "--upgrade", "certifi"]
+    )
+
+    import certifi
+
+    os.chdir(openssl_dir)
+    relpath_to_certifi_cafile = os.path.relpath(certifi.where())
+    try:
+        os.remove(openssl_cafile)
+    except FileNotFoundError:
+        pass
+    os.symlink(relpath_to_certifi_cafile, openssl_cafile)
+    os.chmod(openssl_cafile, STAT_0o775)
 
 
 def fetch_data():
     with SgRequests() as session:
-        url = "https://locations.geisinger.org/?utm_source=Locations%20Page&utm_medium=Web&utm_campaign=Locations%20CTA"
+        url = "http://locations.geisinger.org/?utm_source=Locations%20Page&utm_medium=Web&utm_campaign=Locations%20CTA"
         soup = session.get(url)
         # json location
         soup = b4(soup.text, "lxml")
@@ -21,15 +66,30 @@ def fetch_data():
         k = '{"stores":[' + k + "}]}"
         son = json.loads(k)
         for i in son["stores"]:
-            soup = session.get(
-                str(
-                    "https://locations.geisinger.org/details.cfm?id="
-                    + str(i["CLINICID"])
-                )
+            logzilla.info(
+                f'http://locations.geisinger.org/details.cfm?id={str(i["CLINICID"])}'
             )
-            backup = soup.text.replace("<b>", '"').replace("</b>", '"')
+            pageText = None
+            try:
+                with SgChrome() as driver:
+                    driver.get(
+                        str(
+                            "http://locations.geisinger.org/details.cfm?id="
+                            + str(i["CLINICID"])
+                        )
+                    )
+                    element = driver.find_element_by_tag_name("iframe")
+                    driver.execute_script("arguments[0].scrollIntoView();", element)
+                    time.sleep(3)
+                    pageText = driver.page_source
+                    driver.switch_to.frame(element)
+                    coordText = driver.page_source
+            except Exception:
+                pass
+            backup = pageText.replace("<b>", '"').replace("</b>", '"')
             soupy = b4(backup, "lxml")
-            soup = b4(soup.text, "lxml")
+            soup = b4(pageText, "lxml")
+            coordSoup = b4(coordText, "lxml")
             try:
                 i["hours"] = "; ".join(
                     list(
@@ -78,15 +138,21 @@ def fetch_data():
                         i["hours"] = "<MISSING>"
 
             i["hours"] = old.replace(":;", "")
+            coords = None
             try:
-                coords = soup.find(
-                    "a", {"target": True, "jstcache": "46", "href": True}
-                )["href"]
-                coords = coords.split("ll=", 1)[1].split("&", 1)[0].split(",")
+                links = coordSoup.find_all("a", {"href": True})
+                for link in links:
+                    if "maps?ll=" in link["href"]:
+                        coords = link["href"]
+                        coords = coords.split("ll=", 1)[1].split("&", 1)[0].split(",")
             except Exception:
                 coords = ["<INACCESSIBLE>", "<INACCESSIBLE>"]
-            i["lon"] = coords[1]
-            i["lat"] = coords[0]
+            try:
+                i["lon"] = coords[1]
+                i["lat"] = coords[0]
+            except Exception:
+                i["lon"] = coords
+                i["lat"] = coords
             try:
                 i["hours"] = i["hours"].split(";")
                 h = []
@@ -194,14 +260,17 @@ def scrape():
             mapping=["CLINICID"],
             value_transform=lambda x: "https://locations.geisinger.org/details.cfm?id="
             + str(x),
+            part_of_record_identity=True,
         ),
         location_name=MappingField(
             mapping=["NAME"], value_transform=lambda x: x.replace("&amp; ", "")
         ),
         latitude=MappingField(mapping=["lat"]),
-        longitude=MappingField(mapping=["lat"]),
+        longitude=MappingField(mapping=["lon"]),
         street_address=MultiMappingField(
-            mapping=[["ADDRESS1"], ["ADDRESS2"]], raw_value_transform=fix_address
+            mapping=[["ADDRESS1"], ["ADDRESS2"]],
+            raw_value_transform=fix_address,
+            part_of_record_identity=True,
         ),
         city=MappingField(mapping=["CITY"]),
         state=MappingField(mapping=["STATE"]),
@@ -209,11 +278,19 @@ def scrape():
             mapping=["ZIPCODE"],
             value_transform=lambda x: x.replace(" ", "").replace("*", ""),
             is_required=False,
+            part_of_record_identity=True,
         ),
         country_code=MissingField(),
         phone=MappingField(mapping=["PHONE"], is_required=False),
-        store_number=MappingField(mapping=["CLINICID"]),
-        hours_of_operation=MappingField(mapping=["hours"], is_required=False),
+        store_number=MappingField(
+            mapping=["CLINICID"],
+            part_of_record_identity=True,
+        ),
+        hours_of_operation=MappingField(
+            mapping=["hours"],
+            is_required=False,
+            part_of_record_identity=True,
+        ),
         location_type=MappingField(
             mapping=["OTHERSERVICES"], value_transform=parse_features, is_required=False
         ),

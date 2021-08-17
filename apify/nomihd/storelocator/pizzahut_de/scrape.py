@@ -33,7 +33,9 @@ def fetch_data():
     stores = json.loads(stores_req.text)
     for store in stores:
 
-        page_url = "https://pizzahut.de/restaurants/" + store["url"]
+        page_url = "<MISSING>"
+        if store["url"]:
+            page_url = "https://pizzahut.de/restaurants/" + store["url"]
         location_name = store["name"]
         location_type = "<MISSING>"
         locator_domain = website
