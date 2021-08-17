@@ -25,7 +25,6 @@ def fetch_data(sgw: SgWriter):
         location_name = "".join(
             d.xpath('.//a[text()="כתובת"]/preceding::p[1]/text()')
         ).strip()
-        ad = "".join(d.xpath('.//a[text()="כתובת"]/following::p[1]/text()')).strip()
         street_address = (
             "".join(d.xpath('.//a[text()="כתובת"]/following::p[1]/text()')).strip()
             or "<MISSING>"
