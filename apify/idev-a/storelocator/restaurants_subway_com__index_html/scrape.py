@@ -19,7 +19,7 @@ _headers = {
 base_url = "https://restaurants.subway.com/index.html"
 locator_domain = "https://restaurants.subway.com/"
 session = SgRequests(proxy_rotation_failure_threshold=20).requests_retry_session()
-max_workers = 36
+max_workers = 12
 
 
 def fetchConcurrentSingle(link):
