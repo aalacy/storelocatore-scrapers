@@ -29,29 +29,28 @@ def fetch_data():
             logger.info(page_url)
             sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
             ss = json.loads(sp1.find("script", string=re.compile('"geo"')).string)
-            hours = [
-                ": ".join(hh.stripped_strings)
-                for hh in _.select("div.hours-sort-container div.hours-row")
-            ]
-            try:
-                yield SgRecord(
-                    page_url=page_url,
-                    location_name=ss["name"],
-                    street_address=ss["address"]["streetAddress"],
-                    city=ss["address"]["addressLocality"],
-                    state=ss["address"]["addressRegion"],
-                    zip_postal=ss["address"]["postalCode"],
-                    country_code=ss["address"]["addressCountry"],
-                    phone=ss["telephone"],
-                    latitude=ss["geo"]["latitude"],
-                    longitude=ss["geo"]["longitude"],
-                    locator_domain=locator_domain,
-                    hours_of_operation="; ".join(hours),
-                )
-            except:
-                import pdb
-
-                pdb.set_trace()
+            hours = []
+            if _.select("div.store-item__hours"):
+                hours = [
+                    ": ".join(hh.stripped_strings)
+                    for hh in _.select("div.hours-sort-container")[0].select(
+                        "div.hours-row"
+                    )
+                ]
+            yield SgRecord(
+                page_url=page_url,
+                location_name=ss["name"],
+                street_address=ss["address"]["streetAddress"],
+                city=ss["address"]["addressLocality"],
+                state=ss["address"]["addressRegion"],
+                zip_postal=ss["address"]["postalCode"],
+                country_code=ss["address"]["addressCountry"],
+                phone=ss["telephone"],
+                latitude=ss["geo"]["latitude"],
+                longitude=ss["geo"]["longitude"],
+                locator_domain=locator_domain,
+                hours_of_operation="; ".join(hours),
+            )
 
 
 if __name__ == "__main__":
