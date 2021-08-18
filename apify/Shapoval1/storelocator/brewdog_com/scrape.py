@@ -57,6 +57,12 @@ def fetch_data(sgw: SgWriter):
             )
             or "<MISSING>"
         )
+        cms = "".join(
+            b.xpath(
+                './/img[@src="//images.ctfassets.net/b0qgo9rl751g/7DSPQnbuuQAA0enZ9b3uIH/041c62f2e724e3a08f5f9263246349d5/Bar_shields_for_website.png"]/@src'
+            )
+        )
+
         page_url = "".join(
             b.xpath(
                 './/div[@class="bar-listing__results__bar__buttons md:text-left"]/a[@class="button button--tertiary bar-listing__results__bar__buttons__view"]/@href'
@@ -105,6 +111,16 @@ def fetch_data(sgw: SgWriter):
         )
         if hours_of_operation.count("Closed") == 7:
             hours_of_operation = "Closed"
+
+        tcls = "".join(
+            tres.xpath(
+                '//p[text()=" Currently closed "]/text() | //p[text()="We have no kitchen at this time "]/text()'
+            )
+        )
+        if tcls:
+            hours_of_operation = "Currently closed"
+        if cms:
+            hours_of_operation = "Coming Soon"
 
         row = SgRecord(
             locator_domain=locator_domain,
