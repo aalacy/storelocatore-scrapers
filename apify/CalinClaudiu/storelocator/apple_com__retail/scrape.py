@@ -1,6 +1,6 @@
 from sgscrape import simple_scraper_pipeline as sp
 from sglogging import sglog
-from sgzip.dynamic import DynamicGeoSearch, Grain_8
+from sgzip.dynamic import DynamicGeoSearch, Grain_4
 from sgzip.utils import country_names_by_code
 from fuzzywuzzy import process
 from sgrequests import SgRequests
