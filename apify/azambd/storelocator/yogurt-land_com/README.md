@@ -12,5 +12,5 @@ Please make sure that:
 
 
 ## Info: 
-- Bypassed CAPTCHA
+- Bypassed CloudFlare Protection
 - Total Locations 236 as of 18th August 2021
