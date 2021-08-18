@@ -43,6 +43,7 @@ def fetch_data():
             city = poi["address"]["addressLocality"].split(",")[0].strip()
         zip_code = poi["address"].get("postalCode")
         zip_code = zip_code if zip_code else "<MISSING>"
+        street_address = street_address.replace(zip_code, "").strip()
         country_code = poi["address"]["addressCountry"]
         country_code = country_code if country_code else "<MISSING>"
         store_number = "<MISSING>"
