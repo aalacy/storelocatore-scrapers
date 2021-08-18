@@ -4,11 +4,8 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 import json
 import re
-from sgscrape.sgpostal import parse_address_intl
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-import math
-from concurrent.futures import ThreadPoolExecutor
 from sglogging import SgLogSetup
 import os
 
@@ -46,35 +43,6 @@ def set_proxies():
 
 session = SgRequests().requests_retry_session()
 session.proxies = set_proxies()
-max_workers = 1
-
-
-def fetchConcurrentSingle(page_url):
-    response = request_with_retries(page_url)
-    return page_url, bs(response.text, "lxml")
-
-
-def fetchConcurrentList(list, occurrence=max_workers):
-    output = []
-    total = len(list)
-    reminder = math.floor(total / 50)
-    if reminder < occurrence:
-        reminder = occurrence
-
-    count = 0
-    with ThreadPoolExecutor(
-        max_workers=occurrence, thread_name_prefix="fetcher"
-    ) as executor:
-        for result in executor.map(fetchConcurrentSingle, list):
-            count = count + 1
-            if count % reminder == 0:
-                logger.debug(f"Concurrent Operation count = {count}")
-            output.append(result)
-    return output
-
-
-def request_with_retries(url):
-    return session.get(url, headers=_headers)
 
 
 def _fix(original):
@@ -97,13 +65,12 @@ def parse_detail(soup2, link):
     hours_of_operation = "; ".join(hours)
     if re.search(r"please contact", hours_of_operation, re.IGNORECASE):
         hours_of_operation = ""
-    addr = parse_address_intl(soup2.select_one("address").text.strip())
     return SgRecord(
         page_url=link,
         location_type=location["@type"],
         location_name=location["name"],
-        street_address=addr.street_address_1,
-        city=location["address"]["addressLocality"] or addr.city,
+        street_address=location["address"]["streetAddress"],
+        city=location["address"]["addressLocality"],
         zip_postal=location["address"]["postalCode"],
         country_code="uk",
         latitude=location["geo"]["latitude"],
@@ -118,11 +85,15 @@ def fetch_data():
     base_url = "https://www.taxassist.co.uk/locations"
     soup = bs(session.get(base_url).text, "lxml")
     links = [link["href"] for link in soup.select("main div.row a.primary.outline")]
-    for page_url, sp1 in fetchConcurrentList(links):
+    for page_url in links:
+        logger.info(page_url)
+        sp1 = bs(session.get(page_url).text, "lxml")
         details = [dd["href"] for dd in sp1.select("main div.mt-auto a.outline")]
         if details:
-            for page_url, sp2 in fetchConcurrentList(details):
-                yield parse_detail(sp2, page_url)
+            for url in details:
+                logger.info(url)
+                sp2 = bs(session.get(url).text, "lxml")
+                yield parse_detail(sp2, url)
         else:
             yield parse_detail(sp1, page_url)
 
