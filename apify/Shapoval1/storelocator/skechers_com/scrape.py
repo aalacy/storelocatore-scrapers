@@ -1,40 +1,12 @@
-import csv
 from lxml import html
-from sgscrape.sgpostal import International_Parser, parse_address
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    out = []
+def fetch_data(sgw: SgWriter):
 
     locator_domain = "https://www.skechers.com/"
     headers = {
@@ -65,17 +37,9 @@ def fetch_data():
         tree = html.fromstring(r.content)
         div = tree.xpath("//poi")
         for d in div:
-            ad = "".join(d.xpath(".//address1/text()")) or "<MISSING>"
 
-            street_address = "<MISSING>"
-            if ad != "<MISSING>":
-                a = parse_address(International_Parser(), ad)
-                street_address = (
-                    f"{a.street_address_1} {a.street_address_2}".replace(
-                        "None", ""
-                    ).strip()
-                    or "<MISSING>"
-                )
+            street_address = "".join(d.xpath(".//address1/text()")) or "<MISSING>"
+
             city = "".join(d.xpath(".//city/text()")) or "<MISSING>"
             postal = "".join(d.xpath(".//postalcode/text()")) or "<MISSING>"
             state = (
@@ -95,7 +59,6 @@ def fetch_data():
             location_name = "".join(d.xpath(".//name/text()")) or "<MISSING>"
             latitude = "".join(d.xpath(".//latitude/text()")) or "<MISSING>"
             longitude = "".join(d.xpath(".//longitude/text()")) or "<MISSING>"
-            location_type = "<MISSING>"
             page_url = "https://www.skechers.com/store-locator.html"
             days = ["mon", "tues", "wed", "thurs", "fri", "sat", "sun"]
             tmp = []
@@ -113,31 +76,29 @@ def fetch_data():
             ):
                 hours_of_operation = "Closed"
 
-            row = [
-                locator_domain,
-                page_url,
-                location_name,
-                street_address,
-                city,
-                state,
-                postal,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
-            out.append(row)
+            row = SgRecord(
+                locator_domain=locator_domain,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=postal,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=SgRecord.MISSING,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
 
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+            sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.LOCATION_NAME}))
+    ) as writer:
+        fetch_data(writer)

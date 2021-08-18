@@ -30,11 +30,18 @@ def fetch_data():
         for _ in locations:
             hours_of_operation = ""
             if _.get("hours"):
-                hours_of_operation = _["hours"].replace("\r\n", ";").replace("–", "-")
+                hours_of_operation = (
+                    _["hours"]
+                    .replace("\r\n", "; ")
+                    .replace("–", "-")
+                    .strip()
+                    .replace(",", "; ")
+                    .replace("Unknown", "")
+                )
             yield SgRecord(
                 page_url=base_url,
                 location_name=_["name"],
-                street_address=_["address"],
+                street_address=_["address"].replace(",", ""),
                 city=_["city"],
                 state=_["state"],
                 zip_postal=_["zip"],
