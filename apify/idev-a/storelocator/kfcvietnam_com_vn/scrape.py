@@ -87,6 +87,13 @@ def fetch_data():
             if addr.street_address_2:
                 street_address += " " + addr.street_address_2
             coord = res["restaurant"][key]
+            latitude = coord[1]
+            longitude = coord[2]
+            if float(latitude) < -90 or float(latitude) > 90:
+                latitude = str(latitude)[:2] + "." + str(latitude)[2:]
+            if float(longitude) < -180 or float(longitude) > 180:
+                longitude = str(longitude)[:3] + "." + str(longitude)[3:]
+
             hours = list(_.select_one("div.find_store_des").stripped_strings)[1:]
             yield SgRecord(
                 page_url=res["url"],
@@ -98,8 +105,8 @@ def fetch_data():
                 zip_postal=addr.postcode,
                 country_code="Vietnam",
                 locator_domain=locator_domain,
-                latitude=coord[1],
-                longitude=coord[2],
+                latitude=latitude,
+                longitude=longitude,
                 hours_of_operation="; ".join(hours).replace("–", "-"),
             )
 
