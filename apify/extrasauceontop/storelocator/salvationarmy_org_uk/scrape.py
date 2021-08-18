@@ -11,7 +11,6 @@ def get_data():
     session = SgRequests()
 
     for zip_code in search:
-        # print(zip_code)
         url = (
             "https://www.salvationarmy.org.uk/map-page?near%5Bvalue%5D="
             + str(zip_code)
