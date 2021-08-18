@@ -62,7 +62,6 @@ def fetch_data():
                     store = "<MISSING>"
                 hours = ""
                 name = ""
-                Outlet = False
                 add = ""
                 city = ""
                 state = ""
