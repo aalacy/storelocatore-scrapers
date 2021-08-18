@@ -103,22 +103,27 @@ def fetch_data():
                         if phone == "":
                             phone = "<MISSING>"
                         phone = phone.replace("&#40;", "(").replace("&#41;", ")")
-                        yield SgRecord(
-                            locator_domain=website,
-                            page_url=loc,
-                            location_name=name,
-                            street_address=add,
-                            city=city,
-                            state=state,
-                            zip_postal=zc,
-                            country_code=country,
-                            phone=phone,
-                            location_type=typ,
-                            store_number=store,
-                            latitude=lat,
-                            longitude=lng,
-                            hours_of_operation=hours,
-                        )
+                        if " outlet" in name.lower():
+                            name = "Coach Outlet"
+                        else:
+                            name = "Coach"
+                        if "popup" not in name.lower() and "pop-up" not in name.lower():
+                            yield SgRecord(
+                                locator_domain=website,
+                                page_url=loc,
+                                location_name=name,
+                                street_address=add,
+                                city=city,
+                                state=state,
+                                zip_postal=zc,
+                                country_code=country,
+                                phone=phone,
+                                location_type=typ,
+                                store_number=store,
+                                latitude=lat,
+                                longitude=lng,
+                                hours_of_operation=hours,
+                            )
     main_url = "https://www.coach.com/stores/"
     locs = []
     r = session.get(main_url, headers=headers)
@@ -215,22 +220,23 @@ def fetch_data():
             typ = "Coach Outlet"
         else:
             typ = "Coach"
-        yield SgRecord(
-            locator_domain=website,
-            page_url=loc,
-            location_name=name,
-            street_address=add,
-            city=city,
-            state=state,
-            zip_postal=zc,
-            country_code=country,
-            phone=phone,
-            location_type=typ,
-            store_number=store,
-            latitude=lat,
-            longitude=lng,
-            hours_of_operation=hours,
-        )
+        if "popup" not in name.lower() and "pop-up" not in name.lower():
+            yield SgRecord(
+                locator_domain=website,
+                page_url=loc,
+                location_name=name,
+                street_address=add,
+                city=city,
+                state=state,
+                zip_postal=zc,
+                country_code=country,
+                phone=phone,
+                location_type=typ,
+                store_number=store,
+                latitude=lat,
+                longitude=lng,
+                hours_of_operation=hours,
+            )
 
     states = []
     cities = []
@@ -331,22 +337,23 @@ def fetch_data():
             typ = "Coach Outlet"
         else:
             typ = "Coach"
-        yield SgRecord(
-            locator_domain=website,
-            page_url=loc,
-            location_name=name,
-            street_address=add,
-            city=city,
-            state=state,
-            zip_postal=zc,
-            country_code=country,
-            phone=phone,
-            location_type=typ,
-            store_number=store,
-            latitude=lat,
-            longitude=lng,
-            hours_of_operation=hours,
-        )
+        if "popup" not in name.lower() and "pop-up" not in name.lower():
+            yield SgRecord(
+                locator_domain=website,
+                page_url=loc,
+                location_name=name,
+                street_address=add,
+                city=city,
+                state=state,
+                zip_postal=zc,
+                country_code=country,
+                phone=phone,
+                location_type=typ,
+                store_number=store,
+                latitude=lat,
+                longitude=lng,
+                hours_of_operation=hours,
+            )
 
 
 def scrape():
