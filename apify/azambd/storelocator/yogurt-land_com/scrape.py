@@ -62,7 +62,7 @@ def fetch_data():
         driver.get(website)
         start_url = "https://www.yogurt-land.com/api/1.1/locations/search.json?app_mode=1&include-html=1&location-selector-type=&zip-code-or-address-hidden=&page=1&lng=&lat=&favorite-location=0&search="
         time.sleep(10)
-        log.info(f"Now crawling page#1")
+        log.info("Now crawling page#1")
         data = fetch_like_js(start_url, driver)
         locs = data["locations"]
         next_page = data["has_more"]
