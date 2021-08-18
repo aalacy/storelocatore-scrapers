@@ -70,19 +70,22 @@ def fetch_data():
                 f'http://locations.geisinger.org/details.cfm?id={str(i["CLINICID"])}'
             )
             pageText = None
-            with SgChrome() as driver:
-                driver.get(
-                    str(
-                        "http://locations.geisinger.org/details.cfm?id="
-                        + str(i["CLINICID"])
+            try:
+                with SgChrome() as driver:
+                    driver.get(
+                        str(
+                            "http://locations.geisinger.org/details.cfm?id="
+                            + str(i["CLINICID"])
+                        )
                     )
-                )
-                element = driver.find_element_by_tag_name("iframe")
-                driver.execute_script("arguments[0].scrollIntoView();", element)
-                time.sleep(3)
-                pageText = driver.page_source
-                driver.switch_to.frame(element)
-                coordText = driver.page_source
+                    element = driver.find_element_by_tag_name("iframe")
+                    driver.execute_script("arguments[0].scrollIntoView();", element)
+                    time.sleep(3)
+                    pageText = driver.page_source
+                    driver.switch_to.frame(element)
+                    coordText = driver.page_source
+            except Exception:
+                pass
             backup = pageText.replace("<b>", '"').replace("</b>", '"')
             soupy = b4(backup, "lxml")
             soup = b4(pageText, "lxml")
