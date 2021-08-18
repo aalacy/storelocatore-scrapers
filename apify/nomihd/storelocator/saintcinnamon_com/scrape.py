@@ -7,7 +7,7 @@ import lxml.html
 from sgpostal import sgpostal as parser
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-import re
+
 
 website = "saintcinnamon.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -80,7 +80,7 @@ def get_location_data():
             # This had to be hard-coded as that the data on the page source
             # is unstructured.
             log.info("Match not found with the listed countries! ")
-            raise Exceptions(
+            raise Exception(
                 "Please check the page source if there was new country/state added, if so, the code needs to be updated accordingly!!"
             )
 
