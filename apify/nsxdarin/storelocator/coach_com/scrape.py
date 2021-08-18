@@ -218,8 +218,10 @@ def fetch_data():
                 phone = line2.split('id="phone-main">')[1].split("<")[0]
         if "Outlet In" in name:
             typ = "Coach Outlet"
+            name = "Coach Outlet"
         else:
             typ = "Coach"
+            name = "Coach"
         if "popup" not in name.lower() and "pop-up" not in name.lower():
             yield SgRecord(
                 locator_domain=website,
@@ -335,8 +337,10 @@ def fetch_data():
                 phone = line2.split('id="phone-main">')[1].split("<")[0]
         if "Outlet In" in name:
             typ = "Coach Outlet"
+            name = "Coach Outlet"
         else:
             typ = "Coach"
+            name = "Coach"
         if "popup" not in name.lower() and "pop-up" not in name.lower():
             yield SgRecord(
                 locator_domain=website,
