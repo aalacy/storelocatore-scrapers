@@ -117,9 +117,8 @@ def fetch_data():
             )
 
 
-# SgRecordDeduper(SgRecordID({SgRecord.Headers.LATITUDE,SgRecord.Headers.LONGITUDE, SgRecord.Headers.PAGE_URL}))
 if __name__ == "__main__":
-    with SgWriter() as writer:
+    with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.LATITUDE,SgRecord.Headers.LONGITUDE, SgRecord.Headers.PAGE_URL}))) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
