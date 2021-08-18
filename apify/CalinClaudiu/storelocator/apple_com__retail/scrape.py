@@ -329,9 +329,9 @@ def fetch_data():
                     try:
                         search = DynamicGeoSearch(
                             country_codes=[SearchableCountry],
-                            expected_search_radius_miles=30,  # Must turn it back down to 50 after testing
-                            max_search_results=None,
-                            granularity=Grain_8(),
+                            expected_search_radius_miles=20,  # Must turn it back down to 50 after testing
+                            max_search_results=99,
+                            granularity=Grain_4(),
                         )
                     except Exception as e:
                         errorLink = (
