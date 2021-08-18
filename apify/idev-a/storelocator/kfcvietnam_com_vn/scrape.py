@@ -32,7 +32,7 @@ base_url = "https://kfcvietnam.com.vn/vi/nha-hang.html"
 locator_domain = "https://kfcvietnam.com.vn"
 detail_url = "https://kfcvietnam.com.vn/vi/load_restaurant"
 session = SgRequests().requests_retry_session()
-max_workers = 4
+max_workers = 2
 
 
 def fetchConcurrentSingle(link):
