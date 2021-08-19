@@ -6,7 +6,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
-from sgpostal.sgpostal import parse_address_intl
+from sgpostal.sgpostal import parse_address_usa
 
 
 def fetch_data():
@@ -27,11 +27,22 @@ def fetch_data():
         raw_addr = poi_html.xpath(
             './/div[@class="elementor-widget-container"]/p/text()'
         )[0]
-        addr = parse_address_intl(raw_addr)
-        street_address = addr.street_address_1
-        if addr.street_address_2:
-            street_address += " " + addr.street_address_2
+        addr = parse_address_usa(raw_addr)
         city = addr.city
+        if not city and len(raw_addr.split(", ")) > 1:
+            city = raw_addr.split(", ")[1]
+        street_address = raw_addr.split(city)[0].strip()
+        if street_address.endswith(","):
+            street_address = street_address[:-1]
+        if not city:
+            street_address = raw_addr
+        if city and ", " in city:
+            street_address += ", " + city.split(", ")[0]
+            city = city.split(", ")[-1]
+        if len(street_address.split()) == 1:
+            street_address = raw_addr.split(", ")[0]
+        if city and street_address.endswith(city):
+            street_address = street_address[: len(city)].strip()
         state = addr.state
         zip_code = addr.postcode
         country_code = addr.country
