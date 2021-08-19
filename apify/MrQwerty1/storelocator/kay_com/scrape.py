@@ -11,7 +11,7 @@ def fetch_data(_zip, sgw: SgWriter):
         api = f"https://www.kay.com/store-finder/find?q={_zip}&page={i}&includeKayStores=true&includeKayOutletStores=true"
 
         r = session.get(api, headers=headers)
-        js = r.json()["data"]
+        js = r.json().get("data") or []
 
         for j in js:
             location_name = "Kay Jewelers"
@@ -35,7 +35,7 @@ def fetch_data(_zip, sgw: SgWriter):
             _tmp = []
             items = j.get("openings") or {}
             for k, v in items.items():
-                _tmp.append(f"{k}: {v}")
+                _tmp.append(f"{k} {v}")
 
             hours_of_operation = ";".join(_tmp)
             row = SgRecord(
@@ -69,6 +69,6 @@ if __name__ == "__main__":
     }
     with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
         for _z in DynamicZipSearch(
-            country_codes=SearchableCountries.USA, max_search_distance_miles=100
+            country_codes=[SearchableCountries.USA], max_search_distance_miles=100
         ):
             fetch_data(_z, writer)
