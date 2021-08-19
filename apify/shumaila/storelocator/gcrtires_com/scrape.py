@@ -92,6 +92,8 @@ def fetch_data():
                         + " pm "
                     )
             link = "https://www.gcrtires.com/stores" + loc["externalPath"]
+            if "--" in phone.strip():
+                phone = SgRecord.MISSING
             yield SgRecord(
                 locator_domain="https://www.gcrtires.com/",
                 page_url=link,
@@ -100,7 +102,7 @@ def fetch_data():
                 city=city.strip(),
                 state=state.strip(),
                 zip_postal=pcode.strip(),
-                country_code="US",
+                country_code=ccode,
                 store_number=store,
                 phone=phone.strip(),
                 location_type=SgRecord.MISSING,
