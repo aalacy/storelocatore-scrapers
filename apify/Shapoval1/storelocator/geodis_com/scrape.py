@@ -75,6 +75,7 @@ def fetch_data(sgw: SgWriter):
             .replace("NY-", "")
             .strip()
         )
+
         if postal.find("Santiago") != -1:
             postal = "<MISSING>"
 
@@ -118,6 +119,22 @@ def fetch_data(sgw: SgWriter):
             phone = phone.split("(Wittelsheim)")[1].strip()
         if phone == "0" or phone == "2":
             phone = "<MISSING>"
+        if state.find("EX5") != -1:
+            state = "<MISSING>"
+            postal = "EX5 2UL"
+            country_code = "UK"
+        if state == "HP12":
+            state = "<MISSING>"
+            postal = "HP12 3TA"
+            country_code = "UK"
+        if state == "HU4":
+            state = "<MISSING>"
+            postal = "HU4 7DW"
+            country_code = "UK"
+        if state == "NN17":
+            state = "<MISSING>"
+            postal = "NN17 9RS"
+            country_code = "UK"
 
         row = SgRecord(
             locator_domain=locator_domain,
