@@ -34,7 +34,6 @@ def fetch_data(sgw: SgWriter):
         city = "".join(
             root.xpath("//span[contains(@class, 'branch-city')]/text()")
         ).strip()
-        state = "<INACCESSIBLE>"
         postal = "".join(
             root.xpath("//span[contains(@class, 'branch-postcode')]/text()")
         ).strip()
@@ -62,7 +61,7 @@ def fetch_data(sgw: SgWriter):
             location_name=location_name,
             street_address=street_address,
             city=city,
-            state=state,
+            state=SgRecord.MISSING,
             zip_postal=postal,
             country_code=country_code,
             store_number=store_number,
