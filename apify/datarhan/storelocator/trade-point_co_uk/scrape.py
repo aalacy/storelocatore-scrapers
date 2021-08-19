@@ -81,9 +81,12 @@ def fetch_data():
         longitude = longitude if longitude else "<MISSING>"
         hours_of_operation = []
         for elem in poi["attributes"]["store"]["openingHoursSpecifications"]:
-            opens = ":".join(elem["opens"].split(":")[:2])
-            closes = ":".join(elem["closes"].split(":")[:2])
-            hours_of_operation.append(f'{elem["dayOfWeek"]} {opens} - {closes}')
+            if elem.get("opens"):
+                opens = ":".join(elem["opens"].split(":")[:2])
+                closes = ":".join(elem["closes"].split(":")[:2])
+                hours_of_operation.append(f'{elem["dayOfWeek"]} {opens} - {closes}')
+            else:
+                hours_of_operation.append(f'{elem["dayOfWeek"]} closed')
         hours_of_operation = (
             " ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
         )

@@ -1,85 +1,127 @@
-import csv
-from sgrequests import SgRequests
-from bs4 import BeautifulSoup
 import re
+import csv
 import json
+from lxml import etree
+from urllib.parse import urljoin
 
-session = SgRequests()
+from sgrequests import SgRequests
+
 
 def write_output(data):
-    with open('data.csv', mode='w', encoding="utf-8") as output_file:
-        writer = csv.writer(output_file, delimiter=',',
-                            quotechar='"', quoting=csv.QUOTE_ALL)
+    with open("data.csv", mode="w", encoding="utf-8") as output_file:
+        writer = csv.writer(
+            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+        )
+
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation",
-                         "page_url"])
+        writer.writerow(
+            [
+                "locator_domain",
+                "page_url",
+                "location_name",
+                "street_address",
+                "city",
+                "state",
+                "zip",
+                "country_code",
+                "store_number",
+                "phone",
+                "location_type",
+                "latitude",
+                "longitude",
+                "hours_of_operation",
+            ]
+        )
         # Body
         for row in data:
             writer.writerow(row)
 
 
-
-
 def fetch_data():
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.90 Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3',
-    }
-    return_main_object = []
-    base_url = "https://www.outrigger.com"
-    locator_domain = "https://www.outrigger.com"
-    location_name = ""
-    street_address = "<MISSING>"
-    city = "<MISSING>"
-    state = "<MISSING>"
-    zipp = "<MISSING>"
-    country_code = "US"
-    store_number = "<MISSING>"
-    phone = "<MISSING>"
-    location_type = "outrigger"
-    latitude = "<MISSING>"
-    longitude = "<MISSING>"
-    raw_address = ""
-    hours_of_operation = "<MISSING>"
-    page_url = "<MISSING>"
-    r = session.get(
-        "https://www.outrigger.com/hotels-resorts", headers=headers)
-    soup = BeautifulSoup(r.text, "lxml")
-    for view in soup.find_all('a',class_="promo-cta"):
-        page_url = base_url + view['href']
-        r1 = session.get(base_url+view['href'],headers = headers)
-        soup_r1 = BeautifulSoup(r1.text,'lxml')
-        dav= "https://schema.milestoneinternet.com/schema/"
-        link = (dav+soup_r1.find("link",{"rel":"canonical"})['href'].split("https://www.")[1]+"/schema.json")
-        if "https://www.outrigger.com/hotels-resorts/fiji/castaway-island/castaway-island-fiji" in base_url+view['href']:
-            link = "https://schema.milestoneinternet.com/schema/outrigger.com/hotels-resorts/fiji/castaway-island/castaway-island-fiji/schema.json"
-        r2 = session.get(link,headers = headers).json()
-        for adr in r2:
-            if "address" in adr:
-                location_name = " ".join(adr['name'])
-                phone = adr['telephone'].replace(" Toll-free ",'').replace(" or +1 808 823 1402",'').replace("+1 808 923 071","+1 808 923 0711").replace("+1 808 923 311","+1 808 923 3111").replace("+1 808 922 464","+1 808 922 4646")
-                city = adr['address']['addressLocality']
-                street_address = adr['address']['streetAddress'].replace("\n",' ').strip()
-                zipp = adr['address']['postalCode'].replace("Islands","<MISSING>").replace("of","<MISSING>")
-                state = adr['address']['addressRegion']
-                if "Fiji" in state or "Phuket" in state or "Koh" in state or "Mauritius" in state or "Republic" in state:
-                    continue
-                page_url=base_url+view['href']
-                if "https://www.outrigger.com/hotels-resorts/hawaii/maui/honua-kai" in page_url:
-                    street_address ="130 Kai Malina Parkway"
+    # Your scraper here
+    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
 
-                if "https://www.outrigger.com/hotels-resorts/hawaii/maui/napili-shores-maui-by-outrigger" in page_url:
-                    street_address ="5315 Lower Honoapiilani Road"
+    items = []
 
-                if "https://www.outrigger.com/hotels-resorts/hawaii/maui/the-kapalua-villas" in page_url:
-                    street_address ="300 Kapalua Drive"
-                
-                store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
-                        store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
-                store = ["<MISSING>" if x == "" else x for x in store]
-                store = [str(x).strip() if x else "<MISSING>" for x in store]
-                yield store
+    start_url = "https://www.outrigger.com/hotels-resorts"
+    domain = re.findall("://(.+?)/", start_url)[0].replace("www.", "")
+    response = session.get(start_url)
+    dom = etree.HTML(response.text)
+
+    all_locations = dom.xpath(
+        '//div[@class="promo-cta-content"]/a[@class="promo-cta"]/@href'
+    )
+    for url in all_locations:
+        store_url = urljoin(start_url, url)
+        data_url = f"https://schema.milestoneinternet.com/schema/outrigger.com{url}/schema.json"
+        d_response = session.get(data_url)
+        if d_response.status_code == 200:
+            poi = json.loads(d_response.text)
+
+            location_name = poi[2]["name"][0]
+            street_address = poi[2]["address"]["streetAddress"]
+            street_address = (
+                street_address.strip() if street_address.strip() else "<MISSING>"
+            )
+            city = poi[2]["address"]["addressLocality"]
+            state = poi[2]["address"]["addressRegion"]
+            zip_code = poi[2]["address"]["postalCode"].strip()
+            zip_code = zip_code if zip_code else "<MISSING>"
+            if zip_code == "Islands":
+                zip_code = "<MISSING>"
+            country_code = "<MISSING>"
+            store_number = "<MISSING>"
+            phone = poi[2]["telephone"]
+            phone = phone.strip() if phone else "<MISSING>"
+            location_type = poi[2]["@type"]
+            latitude = "<MISSING>"
+            longitude = "<MISSING>"
+            hours_of_operation = "<MISSING>"
+        else:
+            loc_response = session.get(store_url)
+            loc_dom = etree.HTML(loc_response.text)
+            raw_address = loc_dom.xpath(
+                '//div[@class="col-md-4"]/p/span[@style="font-weight: 500;"]/text()'
+            )[:2]
+            location_name = loc_dom.xpath('//div[@class="no-image"]/h1/text()')[0]
+            street_address = raw_address[0].strip()
+            city = raw_address[1].split(",")[0].strip()
+            state = raw_address[1].split(",")[-1].split()[0]
+            zip_code = raw_address[1].split(",")[-1].split()[-1]
+            country_code = "<MISSING>"
+            store_number = "<MISSING>"
+            phone = loc_dom.xpath(
+                '//div[@class="col-md-4"]/p/span[@style="font-weight: 500;"]/a[contains(@href, "tel")]/text()'
+            )
+            phone = phone[0].strip() if phone else "<MISSING>"
+            location_type = "<MISSING>"
+            latitude = "<MISSING>"
+            longitude = "<MISSING>"
+            hours_of_operation = "<MISSING>"
+
+        if state in ["Fiji", "Mauritius"]:
+            continue
+
+        item = [
+            domain,
+            store_url,
+            location_name,
+            street_address,
+            city,
+            state,
+            zip_code,
+            country_code,
+            store_number,
+            phone,
+            location_type,
+            latitude,
+            longitude,
+            hours_of_operation,
+        ]
+
+        items.append(item)
+
+    return items
 
 
 def scrape():
@@ -87,4 +129,5 @@ def scrape():
     write_output(data)
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()

@@ -2,6 +2,7 @@
 from sgrequests import SgRequests
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 import pandas as pd
+import re
 
 
 def getdata():
@@ -42,7 +43,6 @@ def getdata():
 
         response = session.get(base_url, params=params).json()
 
-        coords = []
         for location in response["objects"]:
             location_domain = "salvationarmyusa.org"
             country_code = "US"
@@ -68,11 +68,20 @@ def getdata():
             phone = location["phoneNumber"]
             if phone == "":
                 phone == "<MISSING>"
+            else:
+                phone = re.sub("[^0-9]", "", str(phone))
+                phone = phone[:10]
+
+            if phone == "1800" or phone == "800":
+                phone = "1800SATRUCK"
             current_lat = location["location"]["latitude"]
             current_lng = location["location"]["longitude"]
 
             # Create copies of location data for each service offered at a location
-            servenum = len(location["services"])
+            try:
+                servenum = len(location["services"])
+            except Exception:
+                servenum = 0
 
             if servenum > 0:
                 for service in location["services"]:
@@ -111,10 +120,7 @@ def getdata():
 
                 location_types.append("<MISSING>")
 
-            current_coords = [current_lat, current_lng]
-            coords.append(current_coords)
-
-        search.mark_found(coords)
+            search.found_location_at(current_lat, current_lng)
 
         # if x == 500:
         #     break

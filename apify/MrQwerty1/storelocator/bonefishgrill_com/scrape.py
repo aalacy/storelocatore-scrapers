@@ -1,90 +1,139 @@
 import csv
-import json
 
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent import futures
 from lxml import html
 from sgrequests import SgRequests
 
 
 def write_output(data):
-    with open('data.csv', mode='w', encoding='utf8', newline='') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
+        writer = csv.writer(
+            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+        )
 
         writer.writerow(
-            ["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code",
-             "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+            [
+                "locator_domain",
+                "page_url",
+                "location_name",
+                "street_address",
+                "city",
+                "state",
+                "zip",
+                "country_code",
+                "store_number",
+                "phone",
+                "location_type",
+                "latitude",
+                "longitude",
+                "hours_of_operation",
+            ]
+        )
 
         for row in data:
             writer.writerow(row)
 
 
-def get_urls():
+def generate_links():
+    urls = []
     session = SgRequests()
-    r = session.get(f'https://www.bonefishgrill.com/locations/all')
+    r = session.get("https://locations.bonefishgrill.com/")
     tree = html.fromstring(r.text)
-    return tree.xpath("//li[@class='location-row']/a/@href")
+    states = tree.xpath("//a[@class='Directory-listLink']/@href")
+    for s in states:
+        if s.find("/") != -1:
+            s = s.split("/")[0]
+        r = session.get(f"https://locations.bonefishgrill.com/{s}.json")
+        js = r.json()["directoryHierarchy"]
+        urls += list(get_urls(js))
+
+    return urls
 
 
-def get_data(u):
-    locator_domain = 'https://bonefishgrill.com/'
-    url = f'https://bonefishgrill.com{u}'
-    page_url = url
+def get_urls(states):
+    for state in states.values():
+        children = state["children"]
+        if children is None:
+            yield f"https://locations.bonefishgrill.com/{state['url']}.json"
+        else:
+            yield from get_urls(children)
 
-    # some of pages are broken
-    # e. g. https://bonefishgrill.com/locations/fl/ft.-lauderdale
-    if u.find('.') != -1:
-        return
 
+def get_data(url):
     session = SgRequests()
     r = session.get(url)
-    tree = html.fromstring(r.text)
+    j = r.json()["profile"]
 
-    text = ''.join(tree.xpath("//script[contains(text(), '{ initLocationDetail')]/text()"))
-    line = ','.join(text.split(',')[1:]).split(');')[0].strip()
-    j = json.loads(line)
+    locator_domain = "https://www.bonefishgrill.com/"
+    page_url = url.replace(".json", "")
+    location_name = j.get("name") or "<MISSING>"
 
-    location_name = f"BONEFISH GRILL {j.get('Name')}"
-    street_address = j.get('Address') or '<MISSING>'
-    city = j.get('City') or '<MISSING>'
-    state = j.get('State') or '<MISSING>'
-    postal = j.get('Zip') or '<MISSING>'
-    country_code = 'US'
-    store_number = j.get('UnitId') or '<MISSING>'
-    phone = j.get('Phone') or '<MISSING>'
-    location_type = '<MISSING>'
-    latitude = j.get('Latitude') or '<MISSING>'
-    longitude = j.get('Longitude') or '<MISSING>'
+    a = j.get("address", {}) or {}
+    street_address = f"{a.get('line1')} {a.get('line2') or ''}".strip() or "<MISSING>"
+    city = a.get("city") or "<MISSING>"
+    state = a.get("region") or "<MISSING>"
+    postal = a.get("postalCode") or "<MISSING>"
+    country_code = a.get("countryCode") or "<MISSING>"
+    store_number = "<MISSING>"
+    phone = j.get("mainPhone").get("display") if j.get("mainPhone") else "<MISSING>"
+    loc = j.get("yextDisplayCoordinate", {}) or {}
+    latitude = loc.get("lat") or "<MISSING>"
+    longitude = loc.get("long") or "<MISSING>"
+    location_type = "<MISSING>"
+    days = j.get("hours", {}).get("normalHours") or []
 
     _tmp = []
-    hours = j.get('StoreHours', []) or []
+    for d in days:
+        day = d.get("day")[:3].capitalize()
+        try:
+            interval = d.get("intervals")[0]
+            start = str(interval.get("start"))
+            end = str(interval.get("end"))
 
-    for h in hours:
-        day = h.get('Key')
-        time = h.get('Value')
-        if time:
-            _tmp.append(f'{day} {time}')
-        else:
-            _tmp.append(f'{day} Closed')
+            if len(start) == 3:
+                start = f"0{start}"
 
-    hours_of_operation = ';'.join(_tmp) or '<MISSING>'
+            if len(end) == 3:
+                end = f"0{end}"
 
-    row = [locator_domain, page_url, location_name, street_address, city, state, postal,
-           country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation]
+            line = f"{day}  {start[:2]}:{start[2:]} - {end[:2]}:{end[2:]}"
+        except IndexError:
+            line = f"{day}  Closed"
+
+        _tmp.append(line)
+
+    hours_of_operation = ";".join(_tmp) or "<MISSING>"
+
+    row = [
+        locator_domain,
+        page_url,
+        location_name,
+        street_address,
+        city,
+        state,
+        postal,
+        country_code,
+        store_number,
+        phone,
+        location_type,
+        latitude,
+        longitude,
+        hours_of_operation,
+    ]
+
     return row
 
 
 def fetch_data():
     out = []
-    threads = []
-    urls = get_urls()
-    with ThreadPoolExecutor(max_workers=10) as executor:
-        for url in urls:
-            threads.append(executor.submit(get_data, url))
+    ids = generate_links()
 
-    for task in as_completed(threads):
-        row = task.result()
-        if row:
-            out.append(row)
+    with futures.ThreadPoolExecutor(max_workers=10) as executor:
+        future_to_url = {executor.submit(get_data, _id): _id for _id in ids}
+        for future in futures.as_completed(future_to_url):
+            row = future.result()
+            if row:
+                out.append(row)
 
     return out
 

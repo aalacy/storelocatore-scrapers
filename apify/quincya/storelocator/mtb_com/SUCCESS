@@ -1,3 +1,3 @@
 VALIDATOR_VERSION: 0.0.71
-COMMAND: validate.py data.csv --ignore CentroidValidator --ignore StreetAddressHasNumber --ignore StreetAddressHasStateName --ignore CountValidator --ignore StateLevelCountValidator
+COMMAND: validate.py data.csv --ignore CentroidValidator --ignore StreetAddressHasNumber --ignore StreetAddressHasStateName --ignore GeoConsistencyValidator
 PYTHON_VERSION: sys.version_info(major=3, minor=8, micro=6, releaselevel='final', serial=0)

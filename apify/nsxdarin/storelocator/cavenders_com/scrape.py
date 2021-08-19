@@ -52,7 +52,7 @@ def fetch_data():
     lines = r.iter_lines()
     for line in lines:
         line = str(line.decode("utf-8"))
-        if '<span class="store-name">' in line:
+        if '<span class="store-name"' in line:
             add = ""
             city = ""
             state = ""
@@ -60,11 +60,7 @@ def fetch_data():
             phone = ""
             hours = ""
             store = ""
-            name = (
-                line.split('<span class="store-name">')[1]
-                .split("<")[0]
-                .replace("&#39;", "'")
-            )
+            name = line.split('">')[1].split("<")[0].replace("&#39;", "'")
         if '<a href="tel:' in line:
             phone = (
                 line.split('<a href="tel:')[1]
@@ -113,6 +109,10 @@ def fetch_data():
         if '"index":""' in line:
             if phone == "":
                 phone = "<MISSING>"
+            if zc == "":
+                zc = "<MISSING>"
+            if state == "Texas":
+                state = "TX"
             yield [
                 website,
                 loc,

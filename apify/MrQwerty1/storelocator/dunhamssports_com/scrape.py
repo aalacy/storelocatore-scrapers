@@ -61,7 +61,9 @@ def fetch_data():
         postal = j.get("postalCode") or "<MISSING>"
         country_code = "US"
         store_number = j.get("id") or "<MISSING>"
-        page_url = j.get("weeklyCircular") or "<MISSING>"
+        page_url = (
+            f" https://www.dunhamssports.com/weekly-ads.html?store_code={store_number}"
+        )
         phone = j.get("phone") or "<MISSING>"
         latitude = j.get("lat") or "<MISSING>"
         longitude = j.get("lng") or "<MISSING>"

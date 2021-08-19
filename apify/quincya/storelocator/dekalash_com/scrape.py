@@ -103,7 +103,7 @@ def fetch_data():
 
             latitude = store["loc_lat"]
             longitude = store["loc_long"]
-            search.mark_found([latitude, longitude])
+            search.found_location_at(latitude, longitude)
 
             log.info(link)
             req = session.get(link, headers=headers)

@@ -2,6 +2,7 @@ import csv
 import json
 
 from sgrequests import SgRequests
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 
 
 def write_output(data):
@@ -39,14 +40,21 @@ def fetch_data():
     session = SgRequests()
 
     items = []
+    scraped_items = []
 
     DOMAIN = "hometownpet.com"
-    start_url = "https://rebase.global.ssl.fastly.net/api/places/index.json?api_key=ab770520133faf5ce0c905bdacb4d05f&lat=36.059&lng=-86.671"
+    start_url = "https://rebase.global.ssl.fastly.net/api/places/index.json?api_key=ab770520133faf5ce0c905bdacb4d05f&lat={}&lng={}"
 
-    response = session.get(start_url)
-    data = json.loads(response.text)
+    all_locations = []
+    all_coords = DynamicGeoSearch(
+        country_codes=[SearchableCountries.USA], max_radius_miles=200
+    )
+    for lat, lng in all_coords:
+        response = session.get(start_url.format(lat, lng))
+        data = json.loads(response.text)
+        all_locations += data["locations"]
 
-    for poi in data["locations"]:
+    for poi in all_locations:
         poi_name = poi["info"]["name"]
         poi_url = "<MISSING>"
         street = poi["info"]["location"]["street"]
@@ -108,8 +116,9 @@ def fetch_data():
             longitude,
             hoo,
         ]
-
-        items.append(item)
+        if poi_number not in scraped_items:
+            scraped_items.append(poi_number)
+            items.append(item)
 
     return items
 

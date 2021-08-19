@@ -1,15 +1,11 @@
 import csv
 import re
-import time
 
 from bs4 import BeautifulSoup
 
 from sglogging import SgLogSetup
 
 from sgrequests import SgRequests
-
-from sgselenium import SgChrome
-
 
 logger = SgLogSetup().get_logger("johnnywas_com")
 
@@ -46,31 +42,42 @@ def write_output(data):
 
 def fetch_data():
 
-    base_link = "https://www.johnnywas.com/store-locator"
-    driver = SgChrome().chrome()
+    session = SgRequests()
 
-    driver.get(base_link)
-    time.sleep(10)
-    base = BeautifulSoup(driver.page_source, "lxml")
+    base_link = "https://www.johnnywas.com/store_locator/location/updatemainpage"
 
-    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36"
-    headers = {"User-Agent": user_agent}
+    headers = {
+        "authority": "www.johnnywas.com",
+        "method": "POST",
+        "origin": "https://www.johnnywas.com",
+        "accept": "application/json",
+        "accept-encoding": "gzip, deflate, br",
+        "referer": "https://www.johnnywas.com/store-locator",
+        "sec-fetch-dest": "empty",
+        "sec-fetch-mode": "cors",
+        "sec-fetch-site": "same-origin",
+        "sec-fetch-user": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.141 Safari/537.36",
+        "x-requested-with": "XMLHttpRequest",
+    }
+    response = session.post(base_link, headers=headers)
+    base = BeautifulSoup(response.text, "lxml")
+
+    raw_text = str(base).split("</script>")[1].split("var locations")[0]
+    base = BeautifulSoup(raw_text, "lxml")
+
+    items = base.find_all("a", string="Store Page")
+    locator_domain = "johnnywas.com"
 
     session = SgRequests()
 
-    data = []
-
-    items = base.find_all(class_="mw-sl__store__info__name")
-    locator_domain = "johnnywas.com"
+    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36"
+    headers1 = {"User-Agent": user_agent}
 
     for item in items:
-        try:
-            link = item.a["href"]
-        except:
-            continue
+        link = item["href"]
 
         logger.info(link)
-        req = session.get(link, headers=headers)
+        req = session.get(link, headers=headers1)
         base = BeautifulSoup(req.text, "lxml")
 
         location_name = base.h2.text.strip()
@@ -111,7 +118,7 @@ def fetch_data():
         all_scripts = base.find_all("script")
         for script in all_scripts:
             if "var location" in str(script):
-                fin_script = script.text.replace("\n", "").strip()
+                fin_script = str(script)
                 break
         try:
             geo = re.findall(
@@ -125,30 +132,22 @@ def fetch_data():
             latitude = "<MISSING>"
             longitude = "<MISSING>"
 
-        if street_address == "3510 Galleria Suite 3325":
-            latitude = "44.8770921"
-            longitude = "-93.3612937"
-
-        data.append(
-            [
-                locator_domain,
-                link,
-                location_name,
-                street_address,
-                city,
-                state,
-                zip_code,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
-        )
-    driver.close()
-    return data
+        yield [
+            locator_domain,
+            link,
+            location_name,
+            street_address,
+            city,
+            state,
+            zip_code,
+            country_code,
+            store_number,
+            phone,
+            location_type,
+            latitude,
+            longitude,
+            hours_of_operation,
+        ]
 
 
 def scrape():

@@ -1,15 +1,15 @@
 import re
 import csv
-from time import sleep
-from sgselenium import SgSelenium
+import time
+from sgselenium import SgChrome
 from sglogging import SgLogSetup
 
 logger = SgLogSetup().get_logger("craft_co")
 user_agent = "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.125 Safari/537.36"
 
-driver = SgSelenium().chrome(user_agent=user_agent)
+driver = SgChrome(user_agent=user_agent).driver()
 driver.set_page_load_timeout(2 * 60 * 60)
-driver.set_script_timeout(60)
+driver.set_script_timeout(120)
 
 fields = [
     "locator_domain",
@@ -39,10 +39,10 @@ def write_output(data):
             writer.writerows(rows)
 
 
-def get_fortune_100_companies():
-    with open("fortune_100.csv") as file:
+def get_fortune_500_companies():
+    with open("fortune_500.csv") as file:
         reader = csv.reader(file, delimiter=",")
-        header = next(reader)
+        next(reader)
         return [record for record in reader]
 
 
@@ -60,7 +60,7 @@ def fetch_company(slug):
                 "operationName": "getCompany",
                 "variables":{{
                         "slug":"{slug}"
-                    }}  
+                    }}
                 }})
             }})
             .then(res => res.json())
@@ -93,7 +93,6 @@ def get_country_code(location, company):
 
 def fetch_company_locations(company):
     slug = company.get("slug")
-    hq_id = company.get("hqLocation").get("id")
     # bypassing same origin constraints
     query = driver.execute_async_script(
         f"""
@@ -106,11 +105,11 @@ def fetch_company_locations(company):
             body: JSON.stringify({{
               "operationName": "getCompanyLocations",
               "variables":{{
-                    "countryCodes":["CA", "US"],
+                    "countryCodes":["CA", "US", "GB"],
                     "page":1,
-                    "per":1000,   
+                    "per":1000,
                     "slug":"{slug}"
-                  }}  
+                  }}
             }})
         }})
         .then(res => res.json())
@@ -131,15 +130,13 @@ def get_address(location, name):
     if not address:
         return name
 
-    city = location.get("city")
-    state = location.get("state")
+    city = location.get("city") or ""
+    state = location.get("state") or ""
     # cases where city names are joined with the rest of the address
-    address = re.sub(f"\d{city}", "", address, re.IGNORECASE)
+    address = re.sub(fr"\d{city}", "", address, re.IGNORECASE)
 
     components = address.split(", ")
-    length = len(components)
     # cases where the address has the format of "City, State, Country" ex: Albany, NY, USA
-
     components = list(
         filter(
             lambda x: not re.match(f"USA|CANADA|{city}|{state}", x, re.IGNORECASE),
@@ -152,8 +149,8 @@ def get_address(location, name):
 
     # cases where the address may have city information
     last_component = components[-1]
-    if re.match(last_component, city, re.IGNORECASE) or re.match(
-        city, last_component, re.IGNORECASE
+    if re.match(re.escape(last_component), city, re.IGNORECASE) or re.match(
+        re.escape(city), last_component, re.IGNORECASE
     ):
         components.pop()
 
@@ -195,19 +192,22 @@ def fetch_locations(slug, name):
         company = fetch_company(slug)
         locations = fetch_company_locations(company)
         return [extract(company, location, name) for location in locations]
-    except Exception as ex:
-        logger.info(f"retrying: {slug}")
+    except Exception as e:
+        logger.info(f"retrying: {slug} >>> {e}")
         return fetch_locations(slug, name)
 
 
 def fetch_data():
-    driver.get(f"https://craft.co")
-    failed = []
-    fortune_100_companies = get_fortune_100_companies()
-    slugs = [company[0] for company in fortune_100_companies]
+    base_url = "https://craft.co"
+    fortune_500_companies = get_fortune_500_companies()
 
-    for slug, url, name, rank in fortune_100_companies:
-        yield fetch_locations(slug, name)
+    driver.get(base_url)
+    # bypass cloudflare bot detection
+    driver.execute_script(f'window.open("{base_url}")')
+    time.sleep(5)
+    for slug, url, name, rank in fortune_500_companies:
+        pois = fetch_locations(slug, name)
+        yield pois
 
 
 def scrape():

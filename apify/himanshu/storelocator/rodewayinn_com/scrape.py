@@ -1,3 +1,4 @@
+from bs4 import BeautifulSoup
 import csv
 from sgrequests import SgRequests
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
@@ -87,6 +88,32 @@ def fetch_data():
             longitude = addr["lon"]
             hours_of_operation = "<MISSING>"
             page_url = "https://www.choicehotels.com/" + addr["id"]
+            if "Rodeway Inn Fairgrounds-Casino" in location_name:
+                location_name = "<MISSING>"
+                street_address = "<MISSING>"
+                city = "<MISSING>"
+                state = "<MISSING>"
+                zipp = "<MISSING>"
+                country_code = "<MISSING>"
+                store_number = "<MISSING>"
+                phone = "<MISSING>"
+                location_type = "<MISSING>"
+                latitude = "<MISSING>"
+                longitude = "<MISSING>"
+                hours_of_operation = "<MISSING>"
+            if "Rodeway Inn Near Ybor City - Casino" in location_name:
+                location_name = "<MISSING>"
+                street_address = "<MISSING>"
+                city = "<MISSING>"
+                state = "<MISSING>"
+                zipp = "<MISSING>"
+                country_code = "<MISSING>"
+                store_number = "<MISSING>"
+                phone = "<MISSING>"
+                location_type = "<MISSING>"
+                latitude = "<MISSING>"
+                longitude = "<MISSING>"
+                hours_of_operation = "<MISSING>"
             if latitude + longitude in addressesess:
                 continue
             addressesess.append(latitude + longitude)
@@ -106,6 +133,14 @@ def fetch_data():
             store.append(longitude)
             store.append(hours_of_operation)
             store.append(page_url)
+            [
+                str(x).strip().replace("\n", "").replace("\t", "").replace("\r", "")
+                for x in store
+            ]
+            req = session.get(page_url, headers=headers)
+            soup = BeautifulSoup(req.text, "lxml")
+            if soup.find("strong", {"class", "text-uppercase"}):
+                continue
             yield store
 
     r = session.get(
@@ -129,6 +164,32 @@ def fetch_data():
         longitude = value["lon"]
         hours_of_operation = "<MISSING>"
         page_url = "https://www.choicehotels.com/" + str(value["id"])
+        if "Rodeway Inn Fairgrounds-Casino" in location_name:
+            location_name = "<MISSING>"
+            street_address = "<MISSING>"
+            city = "<MISSING>"
+            state = "<MISSING>"
+            zipp = "<MISSING>"
+            country_code = "<MISSING>"
+            store_number = "<MISSING>"
+            phone = "<MISSING>"
+            location_type = "<MISSING>"
+            latitude = "<MISSING>"
+            longitude = "<MISSING>"
+            hours_of_operation = "<MISSING>"
+        if "Rodeway Inn Near Ybor City - Casino" in location_name:
+            location_name = "<MISSING>"
+            street_address = "<MISSING>"
+            city = "<MISSING>"
+            state = "<MISSING>"
+            zipp = "<MISSING>"
+            country_code = "<MISSING>"
+            store_number = "<MISSING>"
+            phone = "<MISSING>"
+            location_type = "<MISSING>"
+            latitude = "<MISSING>"
+            longitude = "<MISSING>"
+            hours_of_operation = "<MISSING>"
         if latitude + longitude in addressesess:
             continue
         addressesess.append(latitude + longitude)
@@ -147,6 +208,14 @@ def fetch_data():
         store.append(longitude if longitude else "<MISSING>")
         store.append(hours_of_operation if hours_of_operation else "<MISSING>")
         store.append(page_url if page_url else "<MISSING>")
+        [
+            str(x).strip().replace("\n", "").replace("\t", "").replace("\r", "")
+            for x in store
+        ]
+        req = session.get(page_url, headers=headers)
+        soup = BeautifulSoup(req.text, "lxml")
+        if soup.find("strong", {"class", "text-uppercase"}):
+            continue
         yield store
 
 

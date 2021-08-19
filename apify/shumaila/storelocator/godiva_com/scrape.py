@@ -46,6 +46,7 @@ def fetch_data():
         "https://stores.godiva.com/pr/pr/san-juan/525-f-d--roosevelt.html",
     ]
     for url in urllist:
+
         r = session.get(url, headers=headers, verify=False)
         soup = BeautifulSoup(r.text, "html.parser")
         mycheck = 0
@@ -91,11 +92,14 @@ def fetch_data():
                     try:
                         title = soup.find("div", {"class": "info-subtitle"}).text
                     except:
-                        title = (
-                            soup.find("meta", {"property": "og:title"})["content"]
-                            .split(",", 1)[0]
-                            .split("in ", 1)[1]
-                        )
+                        try:
+                            title = (
+                                soup.find("meta", {"property": "og:title"})["content"]
+                                .split(",", 1)[0]
+                                .split("in ", 1)[1]
+                            )
+                        except:
+                            continue
                     street = soup.find("span", {"itemprop": "streetAddress"}).text
                     city = soup.find("span", {"itemprop": "addressLocality"}).text
                     state = soup.find("span", {"itemprop": "addressRegion"}).text

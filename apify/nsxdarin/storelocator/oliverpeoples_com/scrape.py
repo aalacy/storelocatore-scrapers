@@ -58,7 +58,7 @@ def fetch_data():
         )
         r = session.get(url, headers=headers)
         website = "oliverpeoples.com"
-        typ = "<MISSING>"
+        typ = "Hospital"
         logger.info("Pulling Stores")
         for item in json.loads(r.content)["records"]:
             hours = ""
@@ -68,7 +68,6 @@ def fetch_data():
             state = item["address"]["state"]
             zc = item["address"]["postalCode"]
             lat = item["latitude"]
-            hours2 = ""
             lng = item["longitude"]
             try:
                 loc = "https://www.oliverpeoples.com/usa" + item["url"]
@@ -89,27 +88,8 @@ def fetch_data():
                     hours = hrs
                 else:
                     hours = hours + "; " + hrs
-            if loc != "<MISSING>":
-                logger.info(loc)
-                r2 = session.get(loc, headers=headers)
-                for line2 in r2.iter_lines():
-                    line2 = str(line2.decode("utf-8"))
-                    if "Hours</p>" in line2:
-                        print(line2)
-                        hours2 = line2.split("Hours</p>")[1].split("</div>")[0]
-                        hours2 = (
-                            hours2.replace("<p>", "")
-                            .replace("</p>", "")
-                            .replace("<br>", "; ")
-                            .strip()
-                        )
-                        if "<" in hours2:
-                            hours2 = hours2.split("<")[0]
-                        hours2 = hours2.strip()
             if phone == "" or phone is None:
                 phone = "<MISSING>"
-            if hours == "" or hours2 != "":
-                hours = hours2
             if hours == "":
                 hours = "<MISSING>"
             if store not in ids:
@@ -156,7 +136,6 @@ def fetch_data():
             city = item["address"]["city"]
             state = item["address"]["state"]
             zc = item["address"]["postalCode"]
-            hours2 = ""
             lat = item["latitude"]
             lng = item["longitude"]
             try:
@@ -178,25 +157,8 @@ def fetch_data():
                     hours = hrs
                 else:
                     hours = hours + "; " + hrs
-            if loc != "<MISSING>":
-                r2 = session.get(loc, headers=headers)
-                for line2 in r2.iter_lines():
-                    line2 = str(line2.decode("utf-8"))
-                    if "Hours</p>" in line2:
-                        hours2 = line2.split("Hours</p>")[1].split("</div>")[0]
-                        hours2 = (
-                            hours.replace("<p>", "")
-                            .replace("</p>", "")
-                            .replace("<br>", "; ")
-                            .strip()
-                        )
-                        if "<" in hours2:
-                            hours2 = hours2.split("<")[0]
-                        hours2 = hours2.strip()
             if phone == "" or phone is None:
                 phone = "<MISSING>"
-            if hours == "" or hours2 != "":
-                hours = hours2
             if hours == "":
                 hours = "<MISSING>"
             if store not in ids:

@@ -1,7 +1,6 @@
 import csv
-import usaddress
+import json
 
-from lxml import html
 from sgrequests import SgRequests
 
 
@@ -37,64 +36,49 @@ def write_output(data):
 def fetch_data():
     out = []
     locator_domain = "http://countryfairstores.com/"
-    api_url = "http://countryfairstores.com/wp-content/plugins/superstorefinder-wp/ssf-wp-xml.php"
-    tag = {
-        "Recipient": "recipient",
-        "AddressNumber": "address1",
-        "AddressNumberPrefix": "address1",
-        "AddressNumberSuffix": "address1",
-        "StreetName": "address1",
-        "StreetNamePreDirectional": "address1",
-        "StreetNamePreModifier": "address1",
-        "StreetNamePreType": "address1",
-        "StreetNamePostDirectional": "address1",
-        "StreetNamePostModifier": "address1",
-        "StreetNamePostType": "address1",
-        "CornerOf": "address1",
-        "IntersectionSeparator": "address1",
-        "LandmarkName": "address1",
-        "USPSBoxGroupID": "address1",
-        "USPSBoxGroupType": "address1",
-        "USPSBoxID": "address1",
-        "USPSBoxType": "address1",
-        "BuildingName": "address2",
-        "OccupancyType": "address2",
-        "OccupancyIdentifier": "address2",
-        "SubaddressIdentifier": "address2",
-        "SubaddressType": "address2",
-        "PlaceName": "city",
-        "StateName": "state",
-        "ZipCode": "postal",
-    }
-
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:84.0) Gecko/20100101 Firefox/84.0",
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
-    }
+    page_url = "http://countryfairstores.com/stores/"
+    api_url = "https://countryfairstores.com/wp-admin/admin-ajax.php?action=asl_load_stores&load_all=1"
 
     session = SgRequests()
-    r = session.get(api_url, headers=headers)
-    tree = html.fromstring(r.content)
-    items = tree.xpath("//item")
+    r = session.get(api_url)
+    js = r.json()
 
-    for i in items:
-        line = "".join(i.xpath("./address/text()"))
-        a = usaddress.tag(line, tag_mapping=tag)[0]
-        street_address = f"{a.get('address1')} {a.get('address2') or ''}".strip()
-        if street_address == "None":
-            street_address = "<MISSING>"
-        city = a.get("city") or "<INACCESSIBLE>"
-        state = a.get("state") or "<INACCESSIBLE>"
-        postal = a.get("postal") or "<INACCESSIBLE>"
+    for j in js:
+
+        street_address = j.get("street") or "<MISSING>"
+        city = j.get("city") or "<MISSING>"
+        state = j.get("state") or "<MISSING>"
+        postal = j.get("postal_code") or "<MISSING>"
         country_code = "US"
-        page_url = "http://countryfairstores.com/stores/"
-        location_name = "".join(i.xpath("./location/text()"))
+        location_name = j.get("title") or "<MISSING>"
         store_number = location_name.split()[-1]
-        phone = "".join(i.xpath("./telephone/text()")) or "<MISSING>"
-        latitude = "".join(i.xpath("./latitude/text()")) or "<MISSING>"
-        longitude = "".join(i.xpath("./longitude/text()")) or "<MISSING>"
+        phone = j.get("phone") or "<MISSING>"
+        latitude = j.get("lat") or "<MISSING>"
+        longitude = j.get("lng") or "<MISSING>"
         location_type = "<MISSING>"
-        hours_of_operation = "".join(i.xpath("./operatinghours/text()")) or "<MISSING>"
+
+        _tmp = []
+        days = [
+            "Monday",
+            "Tuesday",
+            "Wednesday",
+            "Thursday",
+            "Friday",
+            "Saturday",
+            "Sunday",
+        ]
+        hours = j.get("open_hours") or "{}"
+        _js = json.loads(hours)
+        for d in days:
+            part = d.lower()[:3]
+            time = "".join(_js.get(part))
+            if len(time) > 1:
+                _tmp.append(f"{d}: {time}")
+            else:
+                _tmp = ["24 hours"]
+                break
+
+        hours_of_operation = ";".join(_tmp) or "<MISSING>"
 
         row = [
             locator_domain,

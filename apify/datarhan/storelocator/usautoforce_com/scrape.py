@@ -61,7 +61,10 @@ def fetch_data():
         state = address_raw[-1].split(", ")[-1].split()[0]
         zip_code = address_raw[-1].split(", ")[-1].split()[-1]
         country_code = "<MISSING>"
-        location_type = "<MISSING>"
+        if poi_html.xpath("@class")[0].endswith("red"):
+            location_type = "Tire's Warehouse"
+        else:
+            location_type = "U.S. AutoForce"
         store_number = "<MISSING>"
         phone = "<MISSING>"
         latitude = "<MISSING>"

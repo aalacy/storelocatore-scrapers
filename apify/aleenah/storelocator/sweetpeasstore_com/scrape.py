@@ -1,67 +1,83 @@
 import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
-import re
-import json
 
 
 def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+    with open("data.csv", mode="w") as output_file:
+        writer = csv.writer(
+            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+        )
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation",
-                         "page_url"])
+        writer.writerow(
+            [
+                "locator_domain",
+                "location_name",
+                "street_address",
+                "city",
+                "state",
+                "zip",
+                "country_code",
+                "store_number",
+                "phone",
+                "location_type",
+                "latitude",
+                "longitude",
+                "hours_of_operation",
+                "page_url",
+            ]
+        )
         # Body
         for row in data:
             writer.writerow(row)
 
+
 session = SgRequests()
 
-all=[]
+all = []
+
+
 def fetch_data():
     # Your scraper here
 
-    res = session.get('https://sweetpeasstore.com/locations/')
-    soup = BeautifulSoup(res.text, 'html.parser')
-    stores=json.loads(re.findall(r'wpgmaps_localize_marker_data = ([^;]+)',str(soup))[0])
+    res = session.get("https://sweetpeasstore.com/locations/")
+    soup = BeautifulSoup(res.text, "html.parser")
 
-    for store in stores:
+    ps = soup.find_all("div", {"class": "textwidget"})[2].find_all("p")
 
-        addr=stores[store]['address'].replace(', USA','').split(',')
-        sz=addr[-1]
-        zip=re.findall('[\d]{5}',sz)
-        if zip ==[]:
-            zip='<MISSING>'
-        else:
-            zip=zip[0]
-        state=sz.replace(zip,'').strip()
+    for p in ps:
+
+        addr = p.text.strip().split(", ")
+        sz = addr[-1].strip().split(" ")
+        zip = sz[-1]
+        state = sz[0]
         del addr[-1]
-        city= addr[-1].strip()
+        city = addr[-1]
         del addr[-1]
-        street=', '.join(addr)
+        street = ", ".join(addr)
 
-        lat=stores[store]['lat']
-        long=stores[store]['lng']
-
-        all.append([
+        all.append(
+            [
                 "https://sweetpeasstore.com",
-                '<MISSING>',
+                "<MISSING>",
                 street,
                 city,
                 state,
                 zip,
-                'US',
-                '<MISSING>',  # store #
-                '<MISSING>',  # phone
+                "US",
+                "<MISSING>",  # store #
+                "<MISSING>",  # phone
                 "<MISSING>",  # type
-                lat,  # lat
-                long,  # long
-                '<MISSING>',  # timing
-                'https://sweetpeasstore.com/locations/'])
+                "<MISSING>",  # lat
+                "<MISSING>",  # long
+                "<MISSING>",  # timing
+                "https://sweetpeasstore.com/locations/",
+            ]
+        )
 
     return all
+
 
 def scrape():
     data = fetch_data()

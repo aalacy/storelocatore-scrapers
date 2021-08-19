@@ -77,7 +77,14 @@ def fetch_data():
                 name = line2.split("<title>")[1].split("<")[0]
                 if "|" in name:
                     name = name.split("|")[0].strip()
-            if add == "" and "</strong></p>" in line2 and CS is False:
+            if (
+                add == ""
+                and "</strong></p>" in line2
+                and CS is False
+                and "locations/financialdistrict" not in loc
+                and "locations/santamonica" not in loc
+                and "locations/redondobeach" not in loc
+            ):
                 g = next(lines)
                 h = next(lines)
                 g = str(g.decode("utf-8"))
@@ -103,26 +110,72 @@ def fetch_data():
                     hours = hrs
                 else:
                     hours = hours + "; " + hrs
-        if CS is False:
-            if lat == "":
-                lat = "<MISSING>"
-                lng = "<MISSING>"
-            yield [
-                website,
-                loc,
-                name,
-                add,
-                city,
-                state,
-                zc,
-                country,
-                store,
-                phone,
-                typ,
-                lat,
-                lng,
-                hours,
-            ]
+        if lat == "":
+            lat = "<MISSING>"
+            lng = "<MISSING>"
+        if CS is True:
+            hours = "Coming Soon"
+        if add == "":
+            add = "<INACCESSIBLE>"
+        if city == "":
+            city = "<INACCESSIBLE>"
+        if state == "":
+            state = "<INACCESSIBLE>"
+        if zc == "":
+            zc = "<INACCESSIBLE>"
+        if "locations/marin" in loc:
+            add = "220 Corte Madera Town Center"
+            city = "Corte Madera"
+            state = "CA"
+            zc = "94925"
+        if "locations/financialdistrict" in loc:
+            add = "555 California Street"
+            city = "San Francisco"
+            state = "CA"
+            zc = "94104"
+        if "locations/southsanfrancisco" in loc:
+            add = "501 Carter Street"
+            city = "Daly City"
+            state = "CA"
+            zc = "94014"
+        if "locations/redondobeach" in loc:
+            add = "819 North Harbor Drive"
+            city = "Redondo Beach"
+            state = "CA"
+            zc = "90277"
+        if "locations/santamonica" in loc:
+            add = "2425 Olympic Boulevard"
+            city = "Santa Monica"
+            state = "CA"
+            zc = "90404"
+        if "locations/broadwaytennis" in loc:
+            add = "60 Edwards Court"
+            city = "Burlingame"
+            state = "CA"
+            zc = "94010"
+        if "locations/financialdistrict" in loc:
+            add = "555 California Street"
+            city = "San Francisco"
+            state = "CA"
+            zc = "94104"
+        if hours == "":
+            hours = "<MISSING>"
+        yield [
+            website,
+            loc,
+            name,
+            add,
+            city,
+            state,
+            zc,
+            country,
+            store,
+            phone,
+            typ,
+            lat,
+            lng,
+            hours,
+        ]
 
 
 def scrape():

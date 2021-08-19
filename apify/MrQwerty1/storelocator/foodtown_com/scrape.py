@@ -31,20 +31,37 @@ def write_output(data):
             writer.writerow(row)
 
 
+def get_token():
+    session = SgRequests()
+    data = {"app_key": "foodtown", "referrer": "https://www.foodtown.com/"}
+    r = session.post("https://api.freshop.com/2/sessions/create", data=data)
+
+    return r.json()["token"]
+
+
 def fetch_data():
     out = []
     locator_domain = "https://www.foodtown.com/"
-    api_url = "https://api.freshop.com/1/stores?app_key=foodtown&has_address=true&is_selectable=true&limit=100&token=d2dc3e06d9870614a5555a325f86885f"
+    token = get_token()
+    api_url = f"https://api.freshop.com/1/stores?app_key=foodtown&has_address=true&is_selectable=true&limit=-1&token={token}"
 
     session = SgRequests()
     r = session.get(api_url)
     js = r.json()["items"]
 
     for j in js:
-        street_address = (
-            f"{j.get('address_1')} {j.get('address_2') or ''}".strip() or "<MISSING>"
-        )
+        adr0 = j.get("address_0") or ""
+        adr1 = j.get("address_1") or ""
+        adr2 = j.get("address_2") or ""
+        if adr0.lower().find("shopping") != -1:
+            adr0 = ""
+        if adr2.lower().find("shopping") != -1:
+            adr2 = ""
+
+        street_address = f"{adr0} {adr1} {adr2}".strip()
         city = j.get("city") or "<MISSING>"
+        if city.find(",") != -1:
+            city = city.split(",")[-1].strip()
         state = j.get("state") or "<MISSING>"
         postal = j.get("postal_code") or "<MISSING>"
         country_code = "US"

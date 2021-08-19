@@ -32,10 +32,12 @@ def write_output(data):
 
 def fetch_data():
 
-    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36"
+    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
     headers = {"User-Agent": user_agent}
 
-    base_link = "https://storerocket.global.ssl.fastly.net/api/user/6wgpr528XB/locations?radius=100&units=miles"
+    base_link = (
+        "https://api.storerocket.io/api/user/6wgpr528XB/locations?radius=20&units=miles"
+    )
 
     session = SgRequests()
     stores = session.get(base_link, headers=headers).json()["results"]["locations"]

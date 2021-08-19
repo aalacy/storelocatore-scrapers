@@ -1,126 +1,80 @@
-# Import libraries
-import requests
+from sglogging import sglog
 from bs4 import BeautifulSoup
-import csv
-import string
-import re, time
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('hymiler_com')
-
-
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
-headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
-           }
+website = "hymiler_com"
+log = sglog.SgLogSetup().get_logger(logger_name=website)
+session = SgRequests()
+headers = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.107 Safari/537.36",
+}
 
-
-def write_output(data):
-    with open('data.csv', mode='w', encoding='utf-8') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-
-        # Header
-        writer.writerow(["locator_domain","page_url",  "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
+DOMAIN = "https://hymiler.com/"
+MISSING = SgRecord.MISSING
 
 
 def fetch_data():
-    # Your scraper here
-    data = []
-    p = 0
-    url = 'https://hymiler.com/locations/hy-miler-2224-townsend-road'
-    r = session.get(url, headers=headers, verify=False)
-    time.sleep(3)    
-    soup = BeautifulSoup(r.text,"html.parser")
-    mainselect = soup.find('select')
-    poption = mainselect.findAll('option')
-    logger.info(len(poption))
-    
-    locs = []
-    titles = []
-
-    for n in range(1, len(poption)):
-        link = poption[n]['value']
-        link = "https://hymiler.com" + link
-        locs.append(link)
-        titles.append(poption[n].text)
-    locs.append('https://hymiler.com/locations/hy-miler-2224-townsend-road')
-    titles.append('Hy-Miler #2224, Townsend Road')
-
-    
-    cleanr = re.compile(r'<[^>]+>')
-    for n in range(0, len(locs)):
-        link = locs[n]
-        title = titles[n]
-        
-          
-        time.sleep(2)
-        start = title.find("#") + 1
-        end = title.find(",", start)
-        store = title[start:end]
-        r = session.get(link, headers=headers, verify=False)
-        soup = BeautifulSoup(r.text,"html.parser")
-        maindiv = soup.find('span',{'class':'locationaddress'})
-        detail = cleanr.sub('\n', str(maindiv))
-        
-        detail = detail.splitlines()
-        street = detail[1]
-        city,state = detail[2].split(',', 1)
-        pcode = detail[3]
-        pcode = pcode.replace('United States ','')
-        
-        phone = detail[5]
-
-        
-        detail = str(soup)
-        start = detail.find('"coordinates"')
-        start = detail.find('[', start)+ 1
-        end = detail.find(",", start)
-        longt = detail[start:end]
-        start = end + 1
-        end = detail.find(']',start)
-        lat = detail[start:end]               
-        if detail.find("Open 24 hours") > -1:
-            hours = "Open 24 hours"
-        else:
-            hours = "<MISSING>"
-        lat = lat[0:8]
-        longt = longt[0:8]
-        title = title.replace(",", "")
-
-       
-        
-        
-        data.append([
-            'https://hymiler.com',
-            link,
-            title,
-            street,
-            city,
-            state,
-            pcode,
-            'US',
-            store,
-            phone,
-            "<MISSING>",
-            lat,
-            longt,
-            hours
-        ])
-        #logger.info(p,data[p])
-        p += 1
-        
-    return data
+    if True:
+        url = "https://hymiler.com/index.php/locations/hy-miler-2202-columbus-ave"
+        r = session.get(url, headers=headers)
+        soup = BeautifulSoup(r.text, "html.parser")
+        loclist = soup.find("div", {"class": "changeloc"}).findAll("option")[1:]
+        for loc in loclist:
+            location_name = loc.text
+            page_url = "https://hymiler.com" + loc["value"]
+            log.info(page_url)
+            r = session.get(page_url, headers=headers)
+            soup = BeautifulSoup(r.text, "html.parser")
+            address = (
+                soup.find("span", {"class": "locationaddress"})
+                .get_text(separator="|", strip=True)
+                .split("|")
+            )
+            phone = address[-1]
+            street_address = address[0]
+            temp = address[1].split(",")
+            city = temp[0]
+            state = temp[1]
+            temp = address[2].split()
+            zip_postal = temp[-1]
+            country_code = "US"
+            yield SgRecord(
+                locator_domain=DOMAIN,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address.strip(),
+                city=city.strip(),
+                state=state.strip(),
+                zip_postal=zip_postal.strip(),
+                country_code=country_code,
+                store_number=MISSING,
+                phone=phone.strip(),
+                location_type=MISSING,
+                latitude=MISSING,
+                longitude=MISSING,
+                hours_of_operation=MISSING,
+            )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    log.info("Started")
+    count = 0
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()

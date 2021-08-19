@@ -1,75 +1,176 @@
 import csv
-import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
-import json
 from sglogging import SgLogSetup
 
-logger = SgLogSetup().get_logger('chuckecheese_com')
-
-
-
 session = SgRequests()
-headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36',
-           'Content-Type': 'application/json; charset=UTF-8',
-           'Authorization': 'Basic TG9jYXRpb246OUQ2QjFCREEtRDVDNC00Q0VDLTgxQTktOEUzRTU2OUVCNENC'
-           }
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+}
+
+logger = SgLogSetup().get_logger("chuckecheese_com")
+
 
 def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+    with open("data.csv", mode="w") as output_file:
+        writer = csv.writer(
+            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+        )
+        writer.writerow(
+            [
+                "locator_domain",
+                "page_url",
+                "location_name",
+                "street_address",
+                "city",
+                "state",
+                "zip",
+                "country_code",
+                "store_number",
+                "phone",
+                "location_type",
+                "latitude",
+                "longitude",
+                "hours_of_operation",
+            ]
+        )
         for row in data:
             writer.writerow(row)
 
+
 def fetch_data():
     locs = []
-    coord = ['60,-150','20,-155','45,-115','35,-115','45,-105','35,-105','45,-95','35,-95','45,-85','35,-85','45,-75','35,-75']
-    for xy in coord:
-        x = xy.split(',')[0]
-        y = xy.split(',')[1]
-        logger.info(('%s-%s...' % (x, y)))
-        url = 'https://z1-prod-cec-services-location.azurewebsites.net/api/cec/locations/search'
-        payload = {"latitude":x,"longitude":y,"radius":"500"}
-        r = session.post(url, headers=headers, data=json.dumps(payload))
-        if r.encoding is None: r.encoding = 'utf-8'
-        for line in r.iter_lines(decode_unicode=True):
-            if '"website":"' in line:
-                items = line.split('"account_id":"')
+    cities = []
+    states = []
+    website = "chuckecheese.com"
+    typ = "<MISSING>"
+    countries = [
+        "https://locations.chuckecheese.com/ca",
+        "https://locations.chuckecheese.com/pr",
+        "https://locations.chuckecheese.com/us",
+    ]
+    logger.info("Pulling Stores")
+    for cty in countries:
+        r = session.get(cty, headers=headers)
+        for line in r.iter_lines():
+            line = str(line.decode("utf-8"))
+            if '"Directory-listLink" href="' in line:
+                items = line.split('"Directory-listLink" href="')
                 for item in items:
-                    if 'yelp_accuracy_score' in item:
-                        store = item.split('"storeId":')[1].split(',')[0]
-                        if store not in locs:
-                            locs.append(store)
-                            website = 'chuckecheese.com'
-                            add = item.split('"address":"')[1].split('"')[0]
-                            country = 'US'
-                            city = item.split('"locality":"')[1].split('"')[0]
-                            state = item.split('"region":"')[1].split('"')[0]
-                            lat = item.split('"latitude":"')[1].split('"')[0]
-                            lng = item.split('"longitude":"')[1].split('"')[0]
-                            phone = item.split('"phone":"')[1].split('"')[0]
-                            loc = item.split('"website":"')[1].split('"')[0]
-                            zc = item.split('"postcode":"')[1].split('"')[0]
-                            typ = '<MISSING>'
-                            name = 'Chuck E. Cheese ' + city + ', ' + state
-                            hours = item.split('"store_hours":"')[1].split('"')[0]
-                            hours = hours.replace('1,','Mon: ')
-                            hours = hours.replace(';2,','; Tue: ')
-                            hours = hours.replace(';3,','; Wed: ')
-                            hours = hours.replace(';4,','; Thu: ')
-                            hours = hours.replace(';5,','; Fri: ')
-                            hours = hours.replace(';6,','; Sat: ')
-                            hours = hours.replace(';7,','; Sun: ')
-                            hours = hours.replace(',','-')
-                            hours = hours[:-1]
-                            if hours == '':
-                                hours = '<MISSING>'
-                            yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+                    if 'data-ya-track="directorylink"' in item:
+                        purl = (
+                            "https://locations.chuckecheese.com/" + item.split('"')[0]
+                        )
+                        count = item.split('data-count="(')[1].split(")")[0]
+                        if count == "1":
+                            locs.append(purl)
+                        else:
+                            states.append(purl)
+    for surl in states:
+        logger.info(surl)
+        r = session.get(surl, headers=headers)
+        for line in r.iter_lines():
+            line = str(line.decode("utf-8"))
+            if '"Directory-listLink" href="../' in line:
+                items = line.split('"Directory-listLink" href="../')
+                for item in items:
+                    if 'data-ya-track="directorylink"' in item:
+                        purl = (
+                            "https://locations.chuckecheese.com/" + item.split('"')[0]
+                        )
+                        count = item.split('data-count="(')[1].split(")")[0]
+                        if count == "1":
+                            locs.append(purl)
+                        else:
+                            cities.append(purl)
+    for curl in cities:
+        logger.info(curl)
+        r = session.get(curl, headers=headers)
+        for line in r.iter_lines():
+            line = str(line.decode("utf-8"))
+            if '<a class="Teaser-link" href="../../' in line:
+                items = line.split('<a class="Teaser-link" href="../../')
+                for item in items:
+                    if 'data-ya-track="visitpage">View' in item:
+                        purl = (
+                            "https://locations.chuckecheese.com/" + item.split('"')[0]
+                        )
+                        locs.append(purl)
+    for loc in locs:
+        logger.info(loc)
+        loc = loc.replace("&amp;", "&").replace("&#39;", "'")
+        if (
+            "https://locations.chuckecheese.com/us" in loc
+            or "https://locations.chuckecheese.com/pr" in loc
+        ):
+            country = "US"
+        else:
+            country = "CA"
+        name = ""
+        add = ""
+        city = ""
+        state = ""
+        zc = ""
+        store = "<MISSING>"
+        phone = ""
+        lat = ""
+        lng = ""
+        hours = ""
+        r2 = session.get(loc, headers=headers)
+        for line2 in r2.iter_lines():
+            line2 = str(line2.decode("utf-8"))
+            if "(count = 1)', '" in line2:
+                name = line2.split("(count = 1)', '")[1].split("'")[0]
+            if 'itemprop="streetAddress" content="' in line2:
+                add = line2.split('itemprop="streetAddress" content="')[1].split('"')[0]
+                zc = line2.split('temprop="postalCode">')[1].split("<")[0]
+                city = line2.split('><span class="c-address-city">')[1].split("<")[0]
+                if "/pr/" not in loc:
+                    state = line2.split('<span class="c-address-state" >')[1].split(
+                        "<"
+                    )[0]
+                else:
+                    state = "PR"
+            if 'id="phone-main">' in line2:
+                phone = line2.split('id="phone-main">')[1].split("<")[0]
+            if 'itemprop="latitude" content="' in line2:
+                lat = line2.split('itemprop="latitude" content="')[1].split('"')[0]
+                lng = line2.split('itemprop="longitude" content="')[1].split('"')[0]
+            if 'itemprop="openingHours" content="' in line2:
+                days = line2.split('itemprop="openingHours" content="')
+                dc = 0
+                for day in days:
+                    if '<link id="page-url"' not in day:
+                        dc = dc + 1
+                        hrs = day.split('"')[0]
+                        if dc <= 7:
+                            if hours == "":
+                                hours = hrs
+                            else:
+                                hours = hours + "; " + hrs
+        name = name.replace("&#39;", "'").replace("&amp;", "&")
+        add = add.replace("&#39;", "'").replace("&amp;", "&")
+        city = city.replace("&#39;", "'").replace("&amp;", "&")
+        yield [
+            website,
+            loc,
+            name,
+            add,
+            city,
+            state,
+            zc,
+            country,
+            store,
+            phone,
+            typ,
+            lat,
+            lng,
+            hours,
+        ]
 
-        logger.info(('Found %s Locations...' % str(len(locs))))
 
 def scrape():
     data = fetch_data()
     write_output(data)
+
 
 scrape()

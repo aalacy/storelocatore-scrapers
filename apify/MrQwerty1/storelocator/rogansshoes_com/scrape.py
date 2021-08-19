@@ -41,7 +41,7 @@ def get_urls():
 
     return set(
         tree.xpath(
-            "//div[@class='ContentPage Faq']//a[@title and contains(@href,'../')]/@href"
+            "//div[@class='ContentPage Faq']//a[@title and contains(@href,'../rogans')]/@href"
         )
     )
 
@@ -54,16 +54,28 @@ def get_data(url):
     r = session.get(page_url)
     tree = html.fromstring(r.text)
 
-    location_name = tree.xpath("//*[@itemprop='name']/text()")[0].strip()
-    street_address = (
-        tree.xpath("//*[@itemprop='address']/text()")[0].strip() or "<MISSING>"
-    )
-    city = (
-        tree.xpath("//*[@itemprop='address']/text()")[1].replace(",", "").strip()
-        or "<MISSING>"
-    )
-    state = tree.xpath("//*[@itemprop='address']/text()")[2].strip() or "<MISSING>"
-    postal = tree.xpath("//*[@itemprop='address']/text()")[3].strip() or "<MISSING>"
+    location_name = tree.xpath(
+        "//*[@itemprop='name']/text()|//div[@class='StorePage']/h2/text()"
+    )[0].strip()
+    try:
+        street_address = tree.xpath("//*[@itemprop='address']/text()")[0].strip()
+    except IndexError:
+        street_address = "<MISSING>"
+
+    try:
+        city = tree.xpath("//*[@itemprop='address']/text()")[1].replace(",", "").strip()
+    except IndexError:
+        city = "<MISSING>"
+
+    try:
+        state = tree.xpath("//*[@itemprop='address']/text()")[2].strip()
+    except IndexError:
+        state = "<MISSING>"
+
+    try:
+        postal = tree.xpath("//*[@itemprop='address']/text()")[3].strip()
+    except IndexError:
+        postal = "<MISSING>"
     country_code = "US"
     store_number = "<MISSING>"
     phone = (

@@ -60,8 +60,6 @@ def write_output(data):
 
 def fetch_data():
     # Your scraper here
-    loc_list = []
-
     search_url = "https://www.bestwayrto.com/wp-admin/admin-ajax.php"
 
     search = DynamicGeoSearch(
@@ -116,9 +114,7 @@ def fetch_data():
             latitude = store["lat"]
             longitude = store["lng"]
 
-            latlng_tuple = (latitude, longitude)
-            latlng_list = [latlng_tuple]
-            search.mark_found(latlng_list)
+            search.found_location_at(latitude, longitude)
 
             page_url = "<MISSING>"
 
@@ -181,10 +177,7 @@ def fetch_data():
                 longitude,
                 hours_of_operation,
             ]
-            loc_list.append(curr_list)
-
-        # break
-    return loc_list
+            yield curr_list
 
 
 def scrape():

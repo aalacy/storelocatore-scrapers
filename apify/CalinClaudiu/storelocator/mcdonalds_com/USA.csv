@@ -1,0 +1,41 @@
+{'text': 'Canada', 'page': 'http://www.mcdonalds.ca/ca/en.html'}
+/ca/en-ca/restaurant-locator.html
+
+{'text': 'United States', 'page': 'https://www.mcdonalds.com/us/en-us.html'}
+/us/en-us/restaurant-locator.html
+
+{'text': 'Ireland', 'page': 'https://www.mcdonalds.ie/iehome/home.html'}
+/ie/en-ie/restaurant-locator.html
+
+{'text': 'Netherlands', 'page': 'https://www.mcdonalds.com/nl/nl-nl.html'}
+/nl/nl-nl/restaurant-locator.html
+
+{'text': 'Sweden', 'page': 'https://www.mcdonalds.com/se/sv-se.html'}
+/se/sv-se/restaurant-locator.html
+
+{'text': 'Switzerland', 'page': 'https://www.mcdonalds.ch/de/'}
+/ch/de-ch/restaurant-locator.html
+
+{'text': 'United Kingdom', 'page': 'https://www.mcdonalds.com/gb/en-gb.html'}
+/gb/en-gb/restaurant-locator.html
+
+{'text': 'Bahrain', 'page': 'https://www.mcdonalds.com/bh/en-bh.html'}
+/bh/en-bh/restaurant-locator.html
+
+{'text': 'Kuwait', 'page': 'https://www.mcdonalds.com/kw/en-kw.html'}
+/kw/en-kw/restaurant-locator.html
+
+{'text': 'Oman', 'page': 'https://www.mcdonalds.com/om/en-om.html'}
+/om/en-om/restaurant-locator.html
+
+{'text': 'Qatar', 'page': 'https://www.mcdonalds.com/qa/en-qa.html'}
+/qa/en-qa/restaurant-locator.html
+
+{'text': 'Saudi Arabia', 'page': 'https://www.mcdonalds.com/sa/en-sa/riyadh.html'}
+/sa/en-sa/riyadh/restaurant-locator.html
+
+{'text': 'Taiwan', 'page': 'https://www.mcdonalds.com/tw/zh-tw.html'}
+/tw/zh-tw/restaurant-locator.html
+
+{'text': 'United Arab Emirates', 'page': 'https://www.mcdonalds.com/ae/en-ae.html'}
+/ae/en-ae/restaurant-locator.html

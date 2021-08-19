@@ -44,7 +44,9 @@ def fetch_data():
     DOMAIN = "yogurt-land.com"
     start_url = "https://www.yogurt-land.com/api/1.1/locations/search.json?include-html=1&location-selector-type=&zip-code-or-address-hidden=&page=1&lng=&lat=&favorite-location=0&search="
     headers = {
-        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.67 Safari/537.36"
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.114 Safari/537.36",
+        "x-api-key": "QeKEiECfiACR",
+        "x-requested-with": "XMLHttpRequest",
     }
 
     response = session.get(start_url, headers=headers)

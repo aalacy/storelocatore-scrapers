@@ -53,21 +53,31 @@ def get_data(url):
     r = session.get(api_url)
     tree = html.fromstring(r.text)
     text = "".join(tree.xpath("//script[contains(text(), 'var data =')]/text()"))
-    text = text.split("var data = { data: ")[1].split(" }")[0]
+    text = text.split("var data = { data:")[1].split(" }")[0]
     js = json.loads(text)
 
     for j in js:
         location_name = j.get("name").strip()
-        street_address = (
-            f"{j.get('address1')} {j.get('address2') or ''}".strip() or "<MISSING>"
-        )
+
+        adr1 = j.get("address1")
+        adr2 = j.get("address2") or ""
+        street_address = f"{adr1} {adr2}".strip() or "<MISSING>"
+        if "events" in adr1.lower() and adr2:
+            street_address = adr2
+        elif "events" in adr1.lower() and not adr2:
+            street_address = adr1.split("EVENTS")[-1]
+        if "events" in adr2.lower():
+            street_address = adr1
         city = j.get("city") or "<MISSING>"
         state = j.get("state") or "<MISSING>"
         postal = j.get("zip") or "<MISSING>"
         country_code = "US"
         store_number = j.get("store_num") or "<MISSING>"
         slug = j.get("store_url") or ""
-        page_url = f"https://www.mrsfields.com{slug}"
+        page_url = "<MISSING>"
+        if slug:
+            page_url = f"https://www.mrsfields.com{slug}"
+
         phone = j.get("phone") or "<MISSING>"
         if phone == "0000000000":
             phone = "<MISSING>"
@@ -75,9 +85,12 @@ def get_data(url):
         longitude = j.get("lng") or "<MISSING>"
         location_type = "<MISSING>"
         hours_of_operation = j.get("store_hours") or "<MISSING>"
-        if not slug:
-            page_url = "<MISSING>"
-            hours_of_operation = "Coming soon"
+
+        status = j.get("store_status") or ""
+        if "temp" in status:
+            hours_of_operation = "Temporarily Closed"
+        elif "coming" in status:
+            hours_of_operation = "Coming Soon"
 
         row = [
             locator_domain,

@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
-import csv
 from sgrequests import SgRequests
 from sglogging import sglog
 import json
-import lxml.html
-import us
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 website = "freepeople.com"
-domain = "https://www.freepeople.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 session = SgRequests()
 headers = {
@@ -16,73 +16,17 @@ headers = {
 }
 
 
-def write_output(data):
-    with open("data.csv", mode="w", newline="", encoding="utf8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        temp_list = []  # ignoring duplicates
-        for row in data:
-            comp_list = [
-                row[2].strip(),
-                row[3].strip(),
-                row[4].strip(),
-                row[5].strip(),
-                row[6].strip(),
-                row[8].strip(),
-                row[10].strip(),
-            ]
-            if comp_list not in temp_list:
-                temp_list.append(comp_list)
-                writer.writerow(row)
-
-        log.info(f"No of records being processed: {len(temp_list)}")
-
-
 def get_api_key(resp):
 
     json_config = (
-        resp.split("window.urbn.runtimeConfig =")[1]
+        resp.split("window.urbn.config =")[1]
         .strip()
         .split('JSON.parse("')[1]
         .strip()
         .split('");')[0]
-        .strip()
-        .replace('"', '"')
-        .strip()
-        .split("<link")[0]
-        .strip()
-        + resp.split("window.urbn.runtimeConfig =")[1]
-        .strip()
-        .split('JSON.parse("')[1]
-        .strip()
-        .split('");')[0]
-        .strip()
-        .strip()
-        .split(">")[1]
         .strip()
     )
+
     json_config = json_config.replace(r"\"", '"')
     return json_config
 
@@ -125,204 +69,101 @@ def append_zero(zip):
 def fetch_data():
     # Your scraper here
     locator_domain = website
-    page_url = ""
-    location_name = ""
-    street_address = ""
-    city = ""
-    state = ""
-    zip = ""
-    country_code = ""
-    store_number = ""
-    phone = ""
-    location_type = ""
-    latitude = ""
-    longitude = ""
-    hours_of_operation = ""
-    loc_list = []
-
     api_resp = session.get("https://www.freepeople.com/stores/", headers=headers)
     json_config = get_api_key(api_resp.text)
     API_KEY = json.loads(json_config)["misl"]["apiKey"]
-
-    locations_resp = session.get(
-        "https://www.freepeople.com/stores/#?viewAll=true",
+    stores_resp = session.get(
+        (
+            "https://www.freepeople.com/api/misl/v1/stores/search?brandId=08%7C09&distance=25&urbn_key={}"
+        ).format(API_KEY),
         headers=headers,
     )
-    locations_sel = lxml.html.fromstring(locations_resp.text)
-    stores = locations_sel.xpath('//a[@itemprop="url"]')
-    stores_info = locations_sel.xpath(
-        '//div[@itemtype="http://schema.org/LocalBusiness"]'
-    )
-    for index in range(0, len(stores)):
-        page_url = domain + "".join(stores[index].xpath("@href")).strip()
-        slug = page_url.split("/stores/")[-1].strip()
-        if "/stores" in slug:
 
-            page_url = "<MISSING>"
-            location_name = temp_location = "".join(
-                stores[index].xpath("span/text()")
-            ).strip()
-            if " - " in temp_location:
-                location_name = temp_location.split(" - ")[0].strip()
-                location_type = temp_location.split(" - ")[1].strip()
+    stores = json.loads(stores_resp.text)["results"]
+    for store_json in stores:
+        page_url = "<MISSING>"
+        if "slug" in store_json:
+            page_url = "https://www.freepeople.com/stores/" + store_json["slug"]
+        location_name = store_json["addresses"]["marketing"]["name"]
 
-            street_address = "".join(
-                stores_info[index].xpath(
-                    'div[@itemprop="address"]/span[@itemprop="streetAddress"]/text()'
-                )
-            ).strip()
-            city = "".join(
-                stores_info[index].xpath(
-                    'div[@itemprop="address"]/span[@itemprop="addressLocality"]/text()'
-                )
-            ).strip()
-            state = "".join(
-                stores_info[index].xpath(
-                    'div[@itemprop="address"]/span[@itemprop="addressRegion"]/text()'
-                )
-            ).strip()
-            if state == "":
-                state = "<MISSING>"
+        street_address = store_json["addresses"]["marketing"]["addressLineOne"]
+        city = store_json["addresses"]["marketing"]["city"]
+        state = store_json["addresses"]["marketing"]["state"]
 
-            zip = "".join(
-                stores_info[index].xpath(
-                    'div[@itemprop="address"]/span[@itemprop="postalCode"]/text()'
-                )
-            ).strip()
+        zip = store_json["addresses"]["marketing"]["zip"]
+        location_type = store_json["brandName"]
+        latitude = ""
+        longitude = ""
+        try:
+            latitude = store_json["loc"][1]
+        except:
+            pass
 
-            if location_type == "":
-                location_type = "<MISSING>"
+        try:
+            longitude = store_json["loc"][0]
+        except:
+            pass
 
-            latitude = "<MISSING>"
-            longitude = "<MISSING>"
+        country_code = store_json["addresses"]["iso2"]["country"]
+        store_number = store_json["storeNumber"]
+        phone = "<MISSING>"
+        try:
+            phone = store_json["addresses"]["marketing"]["phoneNumber"]
+        except:
+            pass
 
-            if us.states.lookup(state):
-                country_code = "US"
-            else:
-                country_code = "<MISSING>"
-
-            store_number = "<MISSING>"
+        if phone == "(???)???-???":
             phone = "<MISSING>"
 
-            hours_of_operation = "<MISSING>"
-            if country_code == "US":
-                zip = append_zero(zip)
-
-                curr_list = [
-                    locator_domain,
-                    page_url,
-                    location_name,
-                    street_address,
-                    city,
-                    state,
-                    zip,
-                    country_code,
-                    store_number,
-                    phone,
-                    location_type,
-                    latitude,
-                    longitude,
-                    hours_of_operation,
-                ]
-                loc_list.append(curr_list)
-        else:
-
-            stores_resp = session.get(
-                (
-                    "https://www.freepeople.com/api/misl/v1/stores/search?brandId=08%7C09"
-                    "&slug={}&urbn_key={}"
-                    "StoreLocatorService/getStoreDetailsByID"
-                ).format(slug, API_KEY),
-                headers=headers,
+        hours_of_operation = ""
+        workingHours = store_json["hours"]
+        for day, time in workingHours.items():
+            week_day = get_day(day)
+            hours_of_operation = (
+                hours_of_operation
+                + week_day
+                + " "
+                + workingHours[day]["open"]
+                + "-"
+                + workingHours[day]["close"]
+                + " "
             )
 
-            store_json = json.loads(stores_resp.text)["results"]
-            if len(store_json) == 1:
-                store_json = store_json[0]
-                location_name = temp_location = store_json["addresses"]["marketing"][
-                    "name"
-                ]
-                if " - " in temp_location:
-                    location_name = temp_location.split(" - ")[0].strip()
-                    location_type = temp_location.split(" - ")[1].strip()
+        hours_of_operation = hours_of_operation.strip()
 
-                street_address = store_json["addresses"]["marketing"]["addressLineOne"]
-                city = store_json["addresses"]["marketing"]["city"]
-                state = store_json["addresses"]["marketing"]["state"]
-                if state == "":
-                    state = "<MISSING>"
+        if country_code == "US":
+            zip = append_zero(zip)
 
-                zip = store_json["addresses"]["marketing"]["zip"]
-                if len(zip) == 4:
-                    zip = "0" + zip
-
-                if location_type == "":
-                    location_type = "<MISSING>"
-
-                latitude = store_json["loc"][1]
-                longitude = store_json["loc"][0]
-
-                country_code = store_json["addresses"]["iso2"]["country"]
-                if country_code == "":
-                    country_code = "<MISSING>"
-
-                store_number = store_json["storeNumber"]
-                phone = store_json["addresses"]["marketing"]["phoneNumber"]
-                if phone == "":
-                    phone = "<MISSING>"
-
-                hours_of_operation = ""
-                workingHours = store_json["hours"]
-                for day, time in workingHours.items():
-                    week_day = get_day(day)
-                    hours_of_operation = (
-                        hours_of_operation
-                        + week_day
-                        + " "
-                        + workingHours[day]["open"]
-                        + "-"
-                        + workingHours[day]["close"]
-                        + " "
-                    )
-
-                hours_of_operation = hours_of_operation.strip()
-                if hours_of_operation == "":
-                    hours_of_operation = "<MISSING>"
-
-                if country_code == "US" or country_code == "CA":
-                    if country_code == "US":
-                        zip = append_zero(zip)
-                    curr_list = [
-                        locator_domain,
-                        page_url,
-                        location_name,
-                        street_address,
-                        city,
-                        state,
-                        zip,
-                        country_code,
-                        store_number,
-                        phone,
-                        location_type,
-                        latitude,
-                        longitude,
-                        hours_of_operation,
-                    ]
-                    loc_list.append(curr_list)
-                else:
-                    log.info(f"ignored because country is: {country_code}")
-            else:
-                log.info(f"\n{page_url} does not have any data to show\n")
-
-        # break
-
-    return loc_list
+        yield SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=zip,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=location_type,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+        )
 
 
 def scrape():
     log.info("Started")
-    data = fetch_data()
-    write_output(data)
+    count = 0
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.StoreNumberId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+
+    log.info(f"No of records being processed: {count}")
     log.info("Finished")
 
 

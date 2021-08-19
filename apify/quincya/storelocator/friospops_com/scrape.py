@@ -57,18 +57,16 @@ def fetch_data():
         final_links.append(item.a["href"])
 
     data = []
-    for i, final_link in enumerate(final_links):
-        logger.info("Link %s of %s" % (i + 1, len(final_links)))
+    for final_link in final_links:
         logger.info(final_link)
 
         req = session.get(final_link, headers=headers)
         base = BeautifulSoup(req.text, "lxml")
 
         locator_domain = "friospops.com"
-        location_name = (
-            "Frios Gourmet Pops - "
-            + base.find_all(class_="elementor-text-editor elementor-clearfix")[0].text
-        )
+        location_name = "Frios Gourmet Pops - " + base.find_all(
+            class_="elementor-text-editor elementor-clearfix"
+        )[0].text.replace("\t", "").replace("\n", "")
 
         try:
             raw_address = base.find_all(
@@ -79,8 +77,16 @@ def fetch_data():
                 class_="elementor-text-editor elementor-clearfix"
             )[2].text
 
+        try:
+            if not raw_address.strip():
+                continue
+        except:
+            pass
+
+        location_type = "<MISSING>"
+
         if raw_address != "Historic Downtown McKinney":
-            if "coming soon" in raw_address[0].lower():
+            if "coming soon" in str(raw_address).lower():
                 continue
             try:
                 street_address = raw_address[-3].strip() + " " + raw_address[-2].strip()
@@ -88,11 +94,12 @@ def fetch_data():
                 try:
                     street_address = raw_address[-2].strip()
                 except:
-                    continue
+                    street_address = "<MISSING>"
 
             city_line = raw_address[-1].split(",")
             city = city_line[0].strip()
-
+            if len(city) > 30:
+                continue
             zip_code = city_line[-1][-6:].strip()
             if zip_code.isnumeric():
                 state = city_line[1].split()[0].strip()
@@ -129,9 +136,24 @@ def fetch_data():
         if "569 1st St" in street_address:
             zip_code = "35007"
 
+        if "241 W Main" in street_address:
+            street_address = "241 W Main St."
+
+        if street_address != "<MISSING>":
+            location_type = "The Frios Location"
+        if (
+            "The Frios Mobile" in street_address
+            or "Frios Cart" in street_address
+            or "we come to you" in base.text.lower()
+        ):
+            street_address = "<MISSING>"
+            location_type = "The Frios Mobile"
+
+        street_address = street_address.replace(
+            "TBD", "<MISSING>".replace("Frios Cart", "<MISSING>")
+        )
         country_code = "US"
         store_number = "<MISSING>"
-        location_type = "<MISSING>"
         phone = base.find_all(class_="elementor-text-editor elementor-clearfix")[
             3
         ].text.strip()
@@ -148,10 +170,11 @@ def fetch_data():
 
         hours_of_operation = hours_of_operation.replace("–", "-")
 
-        if "tbd" in hours_of_operation.lower():
+        if "TBD" in phone.upper():
+            phone = "<MISSING>"
+        if city.lower() == "city":
             continue
-
-        if "purchase pops" in hours_of_operation:
+        if "purchase pops" in hours_of_operation.lower():
             hours_of_operation = "<MISSING>"
 
         latitude = "<MISSING>"

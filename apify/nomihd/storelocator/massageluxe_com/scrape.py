@@ -3,7 +3,6 @@ import csv
 from sgrequests import SgRequests
 from sglogging import sglog
 import json
-import us
 
 website = "massageluxe.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -62,35 +61,25 @@ def fetch_data():
     # Your scraper here
     loc_list = []
 
-    search_url = "https://massageluxe.com/locations/"
+    search_url = "https://massageluxe.com/wp-admin/admin-ajax.php?action=asl_load_stores&nonce=d03bf26e86&load_all=1&layout=1"
     stores_req = session.get(search_url, headers=headers)
-    stores = json.loads(
-        stores_req.text.split('"places":')[1].strip().split("}],")[0].strip() + "}]"
-    )
+    stores = json.loads(stores_req.text)
 
     for store in stores:
-        page_url = (
-            store["location"]["extra_fields"]["booking-url"]
-            .split('href="')[1]
-            .strip()
-            .split('">')[0]
-            .strip()
-        )
-
+        page_url = store["website"]
         locator_domain = website
         location_name = store["title"]
         if location_name == "":
             location_name = "<MISSING>"
 
-        street_address = store["address"]
-        city = store["location"]["city"]
-        state = store["location"]["state"].replace(".", "").strip()
-        zip = store["location"]["postal_code"]
+        street_address = store["street"]
+        if len(street_address.split(",")) == 4:
+            street_address = street_address.split(",")[0].strip()
+        city = store["city"]
+        state = store["state"].replace(".", "").strip()
+        zip = store["postal_code"]
 
-        country_code = "<MISSING>"
-        if us.states.lookup(state):
-            country_code = "US"
-
+        country_code = store["country"]
         if street_address == "" or street_address is None:
             street_address = "<MISSING>"
 
@@ -104,13 +93,24 @@ def fetch_data():
             zip = "<MISSING>"
 
         store_number = str(store["id"])
-        phone = store["location"]["extra_fields"]["phone-number"]
+        phone = store["phone"]
 
         location_type = "<MISSING>"
-        hours_of_operation = store["location"]["extra_fields"]["hours"]
+        hours = json.loads(store["open_hours"])
+        hours_list = []
+        for day in hours.keys():
+            if isinstance(hours[day], list):
+                hours_list.append(day + ":" + hours[day][0])
+            elif isinstance(hours[day], str):
+                if hours[day] == "0":
+                    hours_list.append(day + ":Closed")
+                else:
+                    hours_list.append(day + ":" + hours[day])
 
-        latitude = store["location"]["lat"]
-        longitude = store["location"]["lng"]
+        hours_of_operation = "; ".join(hours_list).strip()
+
+        latitude = store["lat"]
+        longitude = store["lng"]
 
         if latitude == "" or latitude is None:
             latitude = "<MISSING>"

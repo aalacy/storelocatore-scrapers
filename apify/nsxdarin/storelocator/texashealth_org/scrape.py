@@ -1,9 +1,11 @@
-import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 logger = SgLogSetup().get_logger("texashealth_org")
-
 
 session = SgRequests()
 headers = {
@@ -11,37 +13,12 @@ headers = {
 }
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
-
-
 def fetch_data():
     locs = []
     locinfo = []
-    url = "https://www.texashealth.org//sxa/search/results/?s={E6D4398E-5377-4F52-A622-BA5985AA0E05}|{489713F2-2F53-486A-A99A-125A4921BB4F}&itemid={AF045BC3-3192-47D4-9F02-14F252C53DC8}&sig=location-search&g=32.735687%7C-97.10806559999997&o=DistanceMi%2CAscending&p=2000&e=0&v=%7B46E173AB-F518-41E7-BFB5-00206EDBA9E6%7D"
+    alllocs = []
+    allurls = []
+    url = "https://www.texashealth.org//sxa/search/results/?s={E6D4398E-5377-4F52-A622-BA5985AA0E05}|{489713F2-2F53-486A-A99A-125A4921BB4F}&itemid={AF045BC3-3192-47D4-9F02-14F252C53DC8}&sig=location-search&g=30.26%7C-97.71&o=DistanceMi%2CAscending&p=500&e=0&v=%7B46E173AB-F518-41E7-BFB5-00206EDBA9E6%7D"
     r = session.get(url, headers=headers)
     website = "texashealth.org"
     for line in r.iter_lines():
@@ -78,12 +55,48 @@ def fetch_data():
         ll = []
         logger.info(loc.split("|")[0])
         r2 = session.get(loc.split("|")[0], headers=headers)
-        for line2 in r2.iter_lines():
+        lines = r2.iter_lines()
+        for line2 in lines:
             line2 = str(line2.decode("utf-8"))
             if "<title>" in line2:
                 name = line2.split("<title>")[1].split("<")[0]
                 if "|" in name:
                     name = name.split("|")[0].strip()
+            if (
+                "<a href='https://www.google.com/maps/place/" in line2
+                and "Get Directions" not in line2
+            ):
+                g = next(lines)
+                g = str(g.decode("utf-8"))
+                if ">" not in g:
+                    g = next(lines)
+                    g = str(g.decode("utf-8"))
+                h = next(lines)
+                h = str(h.decode("utf-8"))
+                i = next(lines)
+                i = str(i.decode("utf-8"))
+                try:
+                    add = (
+                        g.split(">")[1].split("<")[0]
+                        + " "
+                        + h.split(">")[1].split("<")[0]
+                    )
+                    add = add.strip()
+                except:
+                    add = "<MISSING>"
+                try:
+                    csz = i.split(">")[1].split("<")[0].strip()
+                    city = csz.split(",")[0]
+                    state = csz.split(",")[1].strip().split(" ")[0]
+                    zc = csz.rsplit(" ", 1)[1]
+                except:
+                    city = "<MISSING>"
+                    state = "<MISSING>"
+                    zc = "<MISSING>"
+                phone = "(682) 549-7916"
+                locinfo.append(
+                    name + "|" + add + "|" + city + "|" + state + "|" + zc + "|" + phone
+                )
             if '<div class="row profile-details">' in line2:
                 items = line2.split('<div class="row profile-details">')
                 for item in items:
@@ -94,17 +107,14 @@ def fetch_data():
                         add = item.split('<div class="field-address-line-1">')[1].split(
                             "<"
                         )[0]
-                        try:
-                            add = (
-                                add
-                                + " "
-                                + line2.split('<div class="field-address-line-2">')[
-                                    1
-                                ].split("<")[0]
-                            )
-                            add = add.strip()
-                        except:
-                            pass
+                        add = (
+                            add
+                            + " "
+                            + line2.split('<div class="field-address-line-2">')[
+                                1
+                            ].split("<")[0]
+                        )
+                        add = add.strip()
                         city = item.split('<span class="field-city">')[1].split("<")[0]
                         state = item.split('<span class="field-state">')[1].split("<")[
                             0
@@ -146,34 +156,46 @@ def fetch_data():
             state = locinfo[x].split("|")[3]
             zc = locinfo[x].split("|")[4]
             phone = locinfo[x].split("|")[5]
-            lat = ll[x].split("|")[0]
-            lng = ll[x].split("|")[1]
+            try:
+                lat = ll[x].split("|")[0]
+                lng = ll[x].split("|")[1]
+            except:
+                lat = "<MISSING>"
+                lng = "<MISSING>"
             if phone == "":
                 phone = "<MISSING>"
-            info = name + "|" + add + "|" + phone
-            if info not in locinfo:
-                locinfo.append(info)
-                yield [
-                    website,
-                    loc.split("|")[0],
-                    name,
-                    add,
-                    city,
-                    state,
-                    zc,
-                    country,
-                    store,
-                    phone,
-                    typ,
-                    lat,
-                    lng,
-                    hours,
-                ]
+            addtext = add + "|" + city + "|" + state
+            if addtext not in alllocs and loc.split("|")[0] not in allurls:
+                alllocs.append(addtext)
+                allurls.append(loc.split("|")[0])
+                name = (
+                    name.replace("&amp;", "&")
+                    .replace("&quot;", '"')
+                    .replace("&#39;", "'")
+                )
+                yield SgRecord(
+                    locator_domain=website,
+                    page_url=loc.split("|")[0],
+                    location_name=name,
+                    street_address=add,
+                    city=city,
+                    state=state,
+                    zip_postal=zc,
+                    country_code=country,
+                    phone=phone,
+                    location_type=typ,
+                    store_number=store,
+                    latitude=lat,
+                    longitude=lng,
+                    hours_of_operation=hours,
+                )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()

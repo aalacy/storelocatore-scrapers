@@ -1,4 +1,3 @@
-import re
 import csv
 import json
 from lxml import etree
@@ -103,10 +102,12 @@ def fetch_data():
         latitude = "<MISSING>"
         longitude = "<MISSING>"
         if geo_data:
-            geo_data = re.findall("markers=(.+),dod", poi["map"])[0].split(",")
-            latitude = geo_data[-1]
-            longitude = geo_data[0]
-
+            geo = geo_data.split("center=")[-1].split("&")[0].split(",")
+            latitude = geo[0]
+            longitude = geo[1]
+            if latitude == "-10":
+                latitude = "<MISSING>"
+                longitude = "<MISSING>"
         store_response = session.get(store_url, headers=hdr)
         store_dom = etree.HTML(store_response.text)
         hours_of_operation = store_dom.xpath(

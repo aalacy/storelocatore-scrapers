@@ -35,13 +35,19 @@ def write_output(data):
 def fetch_data():
     out = []
     locator_domain = "https://frischs.com/"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:89.0) Gecko/20100101 Firefox/89.0",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+        "Connection": "keep-alive",
+        "Upgrade-Insecure-Requests": "1",
+        "Cache-Control": "max-age=0",
+    }
 
     session = SgRequests()
     for i in range(0, 100000, 50):
-        r = session.get(
-            f"https://liveapi.yext.com/v2/accounts/me/entities/geosearch?radius=2500&location=68801"
-            f"&limit=50&api_key=14efc7d52bdeb902194f4a9a47528a6f&v=20181201&offset={i}&searchIds=4385"
-        )
+        url = f"https://liveapi.yext.com/v2/accounts/me/entities/geosearch?radius=1000&location=45011&limit=50&api_key=14efc7d52bdeb902194f4a9a47528a6f&v=20181201&resolvePlaceholders=true&searchIds=4385&offset={i}"
+
+        r = session.get(url, headers=headers)
         js = r.json()["response"]["entities"]
 
         for j in js:
@@ -58,13 +64,13 @@ def fetch_data():
             state = a.get("region") or "<MISSING>"
             postal = a.get("postalCode") or "<MISSING>"
             country_code = a.get("countryCode") or "<MISSING>"
-            store_number = "<MISSING>"
+            store_number = j.get("id") or "<MISSING>"
             phone = j.get("mainPhone") or "<MISSING>"
             latitude = j.get("yextDisplayCoordinate", {}).get("latitude") or "<MISSING>"
             longitude = (
                 j.get("yextDisplayCoordinate", {}).get("longitude") or "<MISSING>"
             )
-            location_type = "<MISSING>"
+            location_type = j.get("type") or "<MISSING>"
 
             hours = j.get("hours")
             _tmp = []
@@ -73,11 +79,16 @@ def fetch_data():
                     continue
 
                 day = k
-                interval = v.get("openIntervals")[0]
-                start = interval.get("start")
-                end = interval.get("end")
-                line = f"{day.capitalize()}: {start} - {end}"
-                _tmp.append(line)
+                isclosed = v.get("isClosed")
+                if not isclosed:
+                    interval = v.get("openIntervals")[0]
+                    start = interval.get("start")
+                    end = interval.get("end")
+                    line = f"{day.capitalize()}: {start} - {end}"
+                    _tmp.append(line)
+                else:
+                    _tmp.append("Closed")
+                    break
 
             hours_of_operation = ";".join(_tmp) or "<MISSING>"
 

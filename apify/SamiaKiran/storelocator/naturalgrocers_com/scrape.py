@@ -59,9 +59,29 @@ def write_output(data):
 
 def get_store_data(loc):
     pattern = re.compile(r"\s\s+")
-    title = loc.find("div", {"class", "card-text"}).find("h3").text
+    title = loc.find("div", {"class", "card-text"}).find("h3").text.replace("–", "")
     link = loc.find("div", {"class", "author-name text-center"}).find("a")["href"]
+    if link in unique_locations:
+        return None
+    unique_locations.append(link)
+
     link = "https://www.naturalgrocers.com" + link
+    storenum_text = "<MISSING>"
+    r = session.get(link, headers=headers, verify=False)
+    soup = BeautifulSoup(r.text, "html.parser")
+    log.info(link)
+    if soup.find("div", {"class": "field--name-field-google-maps-link"}):
+        storenum_text = (
+            soup.find("div", {"class": "field--name-field-google-maps-link"})
+            .find("a")
+            .text.replace("GET DIRECTIONS TO OUR STORE ", "")
+            .replace("Review us on Google", "")
+            .strip()
+        )
+    else:
+        storenum_text = "<MISSING>"
+    if storenum_text == "":
+        storenum_text = "<MISSING>"
     street = loc.find("span", {"class", "address-line1"}).text
     city = loc.find("span", {"class", "locality"}).text
     state = loc.find("span", {"class", "administrative-area"}).text
@@ -80,14 +100,18 @@ def get_store_data(loc):
         except:
             phone = loc.find("div", {"class", "store_telephone_number"}).text
         pcode = loc.find("span", {"class", "postal-code"}).text
-        hourlist = loc.find("div", {"class", "office-hours"}).findAll(
-            "div", {"class", "office-hours__item"}
-        )
         hours = ""
-        for hour in hourlist:
-            day = hour.find("span", {"class", "office-hours__item-label"}).text
-            time = hour.find("span", {"class", "office-hours__item-slots"}).text
-            hours = hours + day + " " + time + " "
+        if loc.find("div", {"class", "office-hours"}):
+            hourlist = loc.find("div", {"class", "office-hours"}).findAll(
+                "div", {"class", "office-hours__item"}
+            )
+
+            for hour in hourlist:
+                day = hour.find("span", {"class", "office-hours__item-label"}).text
+                time = hour.find("span", {"class", "office-hours__item-slots"}).text
+                hours = hours + day + " " + time + " "
+        else:
+            hours = "<MISSING>"
     data = [
         "https://www.naturalgrocers.com/",
         link,
@@ -97,7 +121,7 @@ def get_store_data(loc):
         state.strip(),
         pcode.strip(),
         "US",
-        "<MISSING>",
+        storenum_text,
         phone.strip(),
         "<MISSING>",
         lat.strip(),
@@ -111,6 +135,8 @@ def get_store_data(loc):
 def fetch_data():
     # Your scraper here
     final_data = []
+    global unique_locations
+    unique_locations = []
 
     if True:
         url = "https://www.naturalgrocers.com/store-directory"
@@ -138,12 +164,17 @@ def fetch_data():
                     loclist = soup.findAll("div", {"class": "views-row"})
                     for loc in loclist:
                         store_list = get_store_data(loc)
+                        if store_list is None:
+                            continue
                         final_data.append(store_list)
             else:
                 loclist = soup.findAll("div", {"class": "views-row"})
                 for loc in loclist:
                     store_list = get_store_data(loc)
-                    final_data.append(store_list)
+                    if store_list is None:
+                        continue
+                    if store_list not in final_data:
+                        final_data.append(store_list)
         return final_data
 
 

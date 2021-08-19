@@ -1,6 +1,9 @@
-import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 session = SgRequests()
 headers = {
@@ -10,50 +13,55 @@ headers = {
 logger = SgLogSetup().get_logger("homesense_co_uk")
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
-
-
 def fetch_data():
     locs = []
-    url = "https://www.homesense.com/find-a-store"
-    r = session.get(url, headers=headers)
+    cities = [
+        "London",
+        "Edinburgh",
+        "Birmingham",
+        "Leeds",
+        "Glasgow",
+        "Belfast",
+        "Sheffield",
+        "Bradford",
+        "Plymouth",
+        "Manchester",
+        "Liverpool",
+        "Wakefield",
+        "Southend",
+        "Leicester",
+        "Cardiff",
+        "Stoke",
+        "Bristol",
+        "Nottingham",
+        "Hull",
+        "Newcastle",
+        "Southampton",
+        "Derby",
+    ]
     website = "homesense.co.uk"
     typ = "<MISSING>"
     country = "GB"
-    logger.info("Pulling Stores")
-    for line in r.iter_lines():
-        line = str(line.decode("utf-8"))
-        if "\\u0022\\/stores\\/" in line:
-            items = line.split("\\u0022\\/stores\\/")
-            for item in items:
-                if "View store info" in item:
-                    locs.append(
-                        "https://www.homesense.com/stores/" + item.split("\\")[0]
-                    )
+    for cname in cities:
+        url = "https://www.homesense.com/find-a-store?address=" + cname
+        r = session.get(url, headers=headers)
+        logger.info(cname)
+        for line in r.iter_lines():
+            line = str(line.decode("utf-8"))
+            if "2view-store-info\\u0022 href=\\u0022\\" in line:
+                items = line.split("2view-store-info\\u0022 href=\\u0022\\")
+                for item in items:
+                    if "EView store info" in item:
+                        lurl = "https://www.homesense.com" + item.split("\\u0022")[
+                            0
+                        ].replace("\\", "").replace(" ", "_")
+                        lurl = (
+                            lurl.replace("%20", "_")
+                            .replace("%28", "")
+                            .replace("%29", "")
+                        )
+                        if lurl not in locs:
+                            locs.append(lurl)
     for loc in locs:
         logger.info(loc)
         name = ""
@@ -106,27 +114,30 @@ def fetch_data():
             city = "Manchester"
         if "Staples" in name:
             city = "London"
-        yield [
-            website,
-            loc,
-            name,
-            add,
-            city,
-            state,
-            zc,
-            country,
-            store,
-            phone,
-            typ,
-            lat,
-            lng,
-            hours,
-        ]
+        if add != "":
+            yield SgRecord(
+                locator_domain=website,
+                page_url=loc,
+                location_name=name,
+                street_address=add,
+                city=city,
+                state=state,
+                zip_postal=zc,
+                country_code=country,
+                phone=phone,
+                location_type=typ,
+                store_number=store,
+                latitude=lat,
+                longitude=lng,
+                hours_of_operation=hours,
+            )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()
