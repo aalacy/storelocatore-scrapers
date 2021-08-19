@@ -4,6 +4,8 @@ COPY . ./
 
 USER root
 
+RUN pip3 install -r requirements.txt
+
 # Install Java.
 RUN \
     apt-get update && \
@@ -14,7 +16,5 @@ RUN \
 ENV JAVA_HOME /usr/lib/jvm/java-8-openjdk-amd64
 
 RUN export java=usr/lib/java
-
-RUN pip3 install -r requirements.txt
 
 CMD npm start
