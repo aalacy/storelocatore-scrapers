@@ -81,6 +81,8 @@ def fetch_data():
             pass
 
         country_code = "IE"
+        if "Northern Ireland" in raw_address:
+            country_code = "GB"
 
         location_name = store_list[store_key]["name"].strip()
 
