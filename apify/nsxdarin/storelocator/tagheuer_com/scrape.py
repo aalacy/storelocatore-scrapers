@@ -4,8 +4,8 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
+import time
 
-session = SgRequests()
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
@@ -59,6 +59,8 @@ def fetch_data():
     ]
     for cc in countries:
         page = 1
+        session = SgRequests()
+        time.sleep(5)
         url = "https://store.tagheuer.com/" + cc + "?page=" + str(page)
         r = session.get(url, headers=headers)
         website = "tagheuer.com"
@@ -80,8 +82,10 @@ def fetch_data():
             name = ""
             logger.info("%s, Page %s..." % (cc, str(x)))
             purl = "https://store.tagheuer.com/" + cc + "?page=" + str(x)
+            session = SgRequests()
             r2 = session.get(purl, headers=headers)
             lines = r2.iter_lines()
+            time.sleep(5)
             AFound = False
             for line2 in lines:
                 line2 = str(line2.decode("utf-8"))
