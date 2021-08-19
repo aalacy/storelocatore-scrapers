@@ -43,9 +43,9 @@ def fetch_data():
             store = "<MISSING>"
             days = item.split('"dayOfWeek":["')
             for day in days:
-                if ',"opens": "' in day:
+                if ',"opens":"' in day:
                     hrs = (
-                        day.split('"]')[0].replace('", "', "-")
+                        day.split('"]')[0].replace('","', "-")
                         + ": "
                         + day.split(',"opens":"')[1].split('"')[0]
                         + "-"
@@ -56,22 +56,30 @@ def fetch_data():
                         hours = hrs
                     else:
                         hours = hours + "; " + hrs
-            yield SgRecord(
-                locator_domain=website,
-                page_url=loc,
-                location_name=name,
-                street_address=add,
-                city=city,
-                state=state,
-                zip_postal=zc,
-                country_code=country,
-                phone=phone,
-                location_type=typ,
-                store_number=store,
-                latitude=lat,
-                longitude=lng,
-                hours_of_operation=hours,
-            )
+            logger.info(loc)
+            r2 = session.get(loc, headers=headers)
+            for line2 in r2.iter_lines():
+                line2 = str(line2.decode("utf-8"))
+                if "Address</h3><div>" in line2:
+                    add = line2.split("Address</h3><div>")[1].split("<")[0].strip()
+            if "austin-tx" not in loc:
+                add = add.replace("Old Orchard Village East,", "").strip()
+                yield SgRecord(
+                    locator_domain=website,
+                    page_url=loc,
+                    location_name=name,
+                    street_address=add,
+                    city=city,
+                    state=state,
+                    zip_postal=zc,
+                    country_code=country,
+                    phone=phone,
+                    location_type=typ,
+                    store_number=store,
+                    latitude=lat,
+                    longitude=lng,
+                    hours_of_operation=hours,
+                )
 
 
 def scrape():
