@@ -54,7 +54,7 @@ def fetch_data():
                         country = item.split('"country":"')[1].split('"')[0]
                         zc = item.split('"postCode":"')[1].split('"')[0]
                         name = item.split('"line1":"')[1].split('"')[0]
-                        phone = "0345 734 5345"
+                        phone = "<MISSING>"
                         hours = (
                             "Sun: "
                             + item.split('"sunday":{"openTime":"')[1].split('"')[0]
@@ -119,7 +119,7 @@ def fetch_data():
                         )
                         hours = hours.replace("00:00-00:00", "Closed")
                         if store not in ids:
-                            loc = "<MISSING>"
+                            loc = "https://www.barclays.co.uk/branch-finder"
                             country = "GB"
                             ids.append(store)
                             add = (
