@@ -79,6 +79,10 @@ def fetch_data():
                     phone = item.split('"Business_Phone":"')[1].split('"')[0]
                     if phone == "":
                         phone = "<MISSING>"
+                    if phone == "0":
+                        phone = "<MISSING>"
+                    if "Sun: 0; Mon: 0; " in hours:
+                        hours = "<MISSING>"
                     yield SgRecord(
                         locator_domain=website,
                         page_url=loc,
