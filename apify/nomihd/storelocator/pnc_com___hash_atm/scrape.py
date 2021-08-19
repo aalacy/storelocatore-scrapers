@@ -200,7 +200,7 @@ def batch(l, n):
 def write_output(data):
     with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         for row in data:
-            writer.writerow(row)
+            writer.write_row(row)
 
 
 def retry_refetch_hours_error_callback(retry_state):

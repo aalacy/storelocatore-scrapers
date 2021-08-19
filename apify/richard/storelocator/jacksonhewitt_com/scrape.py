@@ -1,8 +1,10 @@
-import csv
-from sgrequests import SgRequests
 from sgzip.dynamic import SearchableCountries
 from sgzip.static import static_zipcode_list
-
+from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
 headers = {
@@ -22,39 +24,8 @@ headers = {
 }
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
 def fetch_data():
-    p = 0
-    data = []
+
     titlelist = []
     zips = static_zipcode_list(radius=30, country_code=SearchableCountries.USA)
     for zip_code in zips:
@@ -76,11 +47,16 @@ def fetch_data():
                 pass
             try:
                 ltype = loc["TypeName"]
+                if len(ltype) < 3:
+                    ltype = "<MISSING>"
             except:
                 ltype = "<MISSING>"
             state = loc["State"]
             pcode = loc["ZipCode"]
-            phone = loc["Phone"]
+            try:
+                phone = loc["Phone"].strip()
+            except:
+                phone = "<MISSING>"
             hourslist = loc["OfficeHours"]
             title = "Hackson Hewitt" + " " + loc["City"]
             link = "https://www.jacksonhewitt.com/" + loc["DetailsUrl"]
@@ -90,33 +66,32 @@ def fetch_data():
             if link in titlelist:
                 continue
             titlelist.append(link)
-            data.append(
-                [
-                    "https://www.jacksonhewitt.com/",
-                    link,
-                    title,
-                    street,
-                    city,
-                    state,
-                    pcode,
-                    "US",
-                    store,
-                    phone,
-                    ltype,
-                    lat,
-                    longt,
-                    hours,
-                ]
-            )
 
-            p += 1
-    return data
+            yield SgRecord(
+                locator_domain="https://www.jacksonhewitt.com/",
+                page_url=link,
+                location_name=title,
+                street_address=street.replace(" None", "").strip(),
+                city=city.strip(),
+                state=state.strip(),
+                zip_postal=pcode.strip(),
+                country_code="US",
+                store_number=store,
+                phone=phone,
+                location_type=ltype,
+                latitude=lat,
+                longitude=longt,
+                hours_of_operation=hours,
+            )
 
 
 def scrape():
-
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()
