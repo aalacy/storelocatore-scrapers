@@ -214,10 +214,6 @@ def fetch_data():
 
         street_address = street_address.replace(f",{zip_postal}", "").replace(",", ", ")
         street_address = " ".join(street_address.split())
-        if state == MISSING:
-            raw_address = f"{street_address}, {city} {zip_postal}"
-        else:
-            raw_address = f"{street_address}, {city}, {state} {zip_postal}"
 
         hours_of_operation = store["hoo"]
 
