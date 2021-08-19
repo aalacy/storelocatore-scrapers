@@ -19,9 +19,11 @@ def fetch_data(sgw: SgWriter):
     for j in js["items"]:
         page_url = j.get("url")
         location_name = j.get("name")
-        street_address = f"{j.get('address_1')} {j.get('address_2')}".replace(
-            "None", ""
-        ).strip()
+        street_address = (
+            f"{j.get('address_1')} {j.get('address_2')}".replace("None", "")
+            .replace("P.O. Box 286", "")
+            .strip()
+        )
         phone = j.get("phone_md")
         state = j.get("state")
         postal = j.get("postal_code")
