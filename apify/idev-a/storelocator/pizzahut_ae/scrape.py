@@ -1,13 +1,11 @@
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
-from bs4 import BeautifulSoup as bs
 from sgrequests import SgRequests
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 import math
 from concurrent.futures import ThreadPoolExecutor
 from sglogging import SgLogSetup
-from datetime import datetime
 from sgscrape.sgpostal import parse_address_intl
 
 logger = SgLogSetup().get_logger("pizzahut")
@@ -24,7 +22,6 @@ max_workers = 12
 
 
 def fetchConcurrentSingle(city):
-    now = datetime.now().strftime("%m/%d/%Y")
     page_url = f"https://www.pizzahut.ae/api//cities/{city['id']}/stores?deliveryMode=H&langCode=en"
     locs = request_with_retries(page_url).json()["body"]
     return locs
