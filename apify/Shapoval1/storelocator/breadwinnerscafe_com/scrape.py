@@ -23,7 +23,6 @@ def fetch_data(sgw: SgWriter):
         location_name = "".join(d.xpath(".//text()"))
         if location_name.find("CATERING") != -1 or location_name.find("emplo") != -1:
             continue
-        location_type = "<MISSING>"
         street_address = "".join(
             d.xpath('.//following::h2[@style="font-size:13px"][1]//text()')
         )
@@ -38,9 +37,6 @@ def fetch_data(sgw: SgWriter):
         postal = ad.split(",")[2].strip().capitalize()
         country_code = "US"
         city = ad.split(",")[0].strip().capitalize()
-        store_number = "<MISSING>"
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
         hours_of_operation = (
             "".join(d.xpath('.//following::span[@style="font-weight:bold"][1]//text()'))
             + " "
@@ -101,9 +97,9 @@ def fetch_data(sgw: SgWriter):
             country_code=country_code,
             store_number=SgRecord.MISSING,
             phone=phone,
-            location_type=location_type,
-            latitude=latitude,
-            longitude=longitude,
+            location_type=SgRecord.MISSING,
+            latitude=SgRecord.MISSING,
+            longitude=SgRecord.MISSING,
             hours_of_operation=hours_of_operation,
         )
 
