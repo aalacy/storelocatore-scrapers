@@ -59,7 +59,10 @@ def search_all(session, search, hdr):
             search.current_country(), *point
         )
         data = session.get(url, headers=hdr)
-        return data.json()
+        try:
+            return data.json()
+        except Exception:
+            return []
 
     for Point in search:
         found = 0
