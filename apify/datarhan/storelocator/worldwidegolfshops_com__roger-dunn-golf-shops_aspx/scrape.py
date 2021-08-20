@@ -71,7 +71,7 @@ def fetch_data():
                 location_name = poi["location"]["addressTitle"]
                 street_address = poi["location"]["addressLine1"]
                 city = poi["location"]["addressLine2"].split(", ")[0]
-                state = poi["location"]["addressLine2"].split(", ")[-1].split()[0]
+                state = "HI"
                 zip_code = poi["location"]["addressLine2"].split(", ")[-1].split()[-1]
                 store_number = SgRecord.MISSING
                 phone = loc_dom.xpath(
