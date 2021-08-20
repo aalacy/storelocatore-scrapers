@@ -10,7 +10,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 
 from sgselenium.sgselenium import SgChrome
-from webdriver_manager.chrome import ChromeDriverManager
+
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
@@ -18,6 +18,8 @@ from selenium.webdriver.common.by import By
 import ssl
 
 ssl._create_default_https_context = ssl._create_unverified_context
+
+user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.107 Safari/537.36"
 
 DOMAIN = "ralphlauren.com"
 website = "https://www.ralphlauren.com"
@@ -91,10 +93,7 @@ def fetch_stores():
     while True:
         x = x + 1
         try:
-            driver = SgChrome(
-                executable_path=ChromeDriverManager().install(),
-                is_headless=False,
-            ).driver()
+            driver = SgChrome(user_agent=user_agent).driver()
 
             log.debug("Loading store page ...")
             driver.get(f"{website}/stores")
