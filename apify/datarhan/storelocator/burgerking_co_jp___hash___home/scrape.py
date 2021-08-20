@@ -26,7 +26,7 @@ def fetch_data():
 
     with SgChrome() as driver:
         driver.get(start_url)
-        sleep(15)
+        sleep(30)
         dom = etree.HTML(driver.page_source)
 
     all_locations = dom.xpath('//ul[@class="list02"]/li')
