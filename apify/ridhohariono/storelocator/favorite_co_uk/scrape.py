@@ -135,6 +135,13 @@ CITIES = [
     "Dunstable",
     "Rainham",
     "Snodland",
+    "Stampford",
+    "STAMFORD HILL",
+    "Walthamstow",
+    "Horley",
+    "Blackheath",
+    "Battersea",
+    "Hammersmith",
 ]
 
 
@@ -211,12 +218,12 @@ def fetch_data():
         driver.find_element_by_xpath('//*[@id="findstore-submit"]').click()
         time.sleep(1)
         soup = bs(driver.page_source, "lxml")
-        main = soup.find("div", {"class": "row row-store mb0"})
-        if not main or len(main) > 50:
+        main = soup.find_all("div", {"class": "row row-store mb0"})
+        if not main:
             continue
         for row in main:
             page_url = driver.current_url
-            content = main.find("div", {"class": "col-12 mb0"})
+            content = row.find("div", {"class": "col-12 mb0"})
             location_name = (
                 content.find("div", {"class": "store-name"})
                 .get_text(strip=True, separator=",")
@@ -226,7 +233,7 @@ def fetch_data():
                 content.find("div", {"class": "store-name"})
                 .get_text(strip=True, separator=",")
                 .split(",")[2:]
-            )
+            ).replace("\n", " ")
             street_address, city, state, zip_postal = getAddress(raw_address)
             country_code = "UK"
             store_number = "<MISSING>"
@@ -258,7 +265,7 @@ def fetch_data():
                 .strip()
             )
             latitude, longitude = get_latlong(page_url)
-            log.info("Found Location{} => {}".format(location_name, street_address))
+            log.info("Found Location {} => {}".format(location_name, street_address))
             yield SgRecord(
                 locator_domain=DOMAIN,
                 page_url=page_url,
@@ -289,7 +296,7 @@ def scrape():
                 {
                     SgRecord.Headers.STREET_ADDRESS,
                     SgRecord.Headers.CITY,
-                    SgRecord.Headers.PHONE,
+                    SgRecord.Headers.ZIP,
                 }
             )
         )

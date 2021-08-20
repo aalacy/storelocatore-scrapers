@@ -3,81 +3,64 @@ from sgrequests import SgRequests
 from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
-import lxml.html
+import json
+from bs4 import BeautifulSoup as BS
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 website = "danier.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 session = SgRequests()
 headers = {
-    "authority": "danier.com",
-    "cache-control": "max-age=0",
-    "sec-ch-ua": '" Not;A Brand";v="99", "Google Chrome";v="91", "Chromium";v="91"',
+    "Connection": "keep-alive",
+    "sec-ch-ua": '"Chromium";v="92", " Not A;Brand";v="99", "Google Chrome";v="92"',
+    "Accept": "application/json, text/javascript, */*; q=0.01",
     "sec-ch-ua-mobile": "?0",
-    "upgrade-insecure-requests": "1",
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
-    "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-    "sec-fetch-site": "cross-site",
-    "sec-fetch-mode": "navigate",
-    "sec-fetch-user": "?1",
-    "sec-fetch-dest": "document",
-    "accept-language": "en-US,en-GB;q=0.9,en;q=0.8",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.107 Safari/537.36",
+    "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+    "Origin": "https://danier.com",
+    "Sec-Fetch-Site": "cross-site",
+    "Sec-Fetch-Mode": "cors",
+    "Sec-Fetch-Dest": "empty",
+    "Referer": "https://danier.com/",
+    "Accept-Language": "en-US,en-GB;q=0.9,en;q=0.8",
 }
 
 
 def fetch_data():
     # Your scraper here
-    search_url = "https://danier.com/apps/store-locator"
-    stores_req = session.get(search_url, headers=headers)
-    stores = stores_req.text.split("markersCoords.push(")[1:-2]
+    data = {"shopData": "danier-canada.myshopify.com"}
+
+    search_url = "https://storelocator.metizapps.com/stores/storeDataGet"
+    stores_req = session.post(search_url, headers=headers, data=data)
+    stores = json.loads(stores_req.text)["data"]["result"]
     for store in stores:
-        raw_data = store.split(");")[0].strip()
-        store_number = raw_data.split("id:")[1].strip().split(",")[0].strip()
+        store_number = store["id"]
 
-        page_url = search_url
-        log.info(f"Pulling data for store ID: {store_number}")
-        store_req = session.get(
-            "https://stores.boldapps.net/front-end/get_store_info.php?shop=danier-canada.myshopify.com&data=detailed&store_id={}".format(
-                store_number
-            ),
-            headers=headers,
-        )
-        store_sel = lxml.html.fromstring(store_req.json()["data"])
-
+        page_url = "https://danier.com/a/storelocator"
         locator_domain = website
 
-        location_name = "".join(store_sel.xpath("//span[@class='name']/text()")).strip()
+        location_name = store["storename"]
 
-        street_address = "".join(
-            store_sel.xpath('//span[@class="address"]/text()')
-        ).strip()
+        street_address = store["address"]
+        if len(store["address2"]) > 0:
+            street_address = street_address + ", " + store["address2"]
 
-        add_2 = "".join(store_sel.xpath('//span[@class="address2"]/text()')).strip()
-        if len(add_2) > 0:
-            street_address = street_address + ", " + add_2
+        city = store["cityname"]
+        state = store["statename"]
+        if state is None or len(state) <= 0:
+            continue
+        zip = store["zipcode"]
 
-        city = "".join(store_sel.xpath('//span[@class="city"]/text()')).strip()
-        state = "".join(store_sel.xpath('//span[@class="prov_state"]/text()')).strip()
-        zip = "".join(store_sel.xpath('//span[@class="postal_zip"]/text()')).strip()
+        country_code = store["countryname"]
 
-        country_code = "".join(
-            store_sel.xpath('//span[@class="country"]/text()')
-        ).strip()
+        phone = store["phone"]
 
-        phone = "".join(store_sel.xpath('//span[@class="phone"]/text()')).strip()
+        location_type = "<MISSING>"
+        hours_of_operation = BS(store["hour_of_operation"], "lxml").get_text()
 
-        location_type = "".join(
-            store_sel.xpath('//span[@class="hours"]/span/text()')
-        ).strip()
-        hours = store_sel.xpath("//span[@class='hours']/text()")
-        hours_list = []
-        for hour in hours:
-            if len("".join(hour).strip()) > 0:
-                hours_list.append("".join(hour).strip())
-
-        hours_of_operation = "; ".join(hours_list).strip()
-
-        latitude = raw_data.split("lat:")[1].strip().split(",")[0].strip()
-        longitude = raw_data.split("lng:")[1].strip().split(",")[0].strip()
+        latitude = store["mapLatitude"]
+        longitude = store["mapLongitude"]
 
         yield SgRecord(
             locator_domain=locator_domain,
@@ -100,7 +83,9 @@ def fetch_data():
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.StoreNumberId)
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
