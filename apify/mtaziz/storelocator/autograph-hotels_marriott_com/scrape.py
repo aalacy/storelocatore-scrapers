@@ -64,6 +64,7 @@ url_api_endpoints_23_brands = {
 
 
 def fetch_data_for_23_child_brands_from_api_endpoints():
+    # This scrapes the data for 23 child brands
     with SgRequests() as session:
         for k, v in url_api_endpoints_23_brands.items():
             url = v
