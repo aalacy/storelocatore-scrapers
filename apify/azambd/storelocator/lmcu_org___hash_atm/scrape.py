@@ -11,7 +11,6 @@ from sgzip.dynamic import DynamicZipSearch, SearchableCountries, Grain_4
 from sgscrape.pause_resume import CrawlStateSingleton
 
 from sgselenium.sgselenium import SgChrome
-from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
