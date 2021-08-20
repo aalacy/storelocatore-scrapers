@@ -38,7 +38,6 @@ def fetch_data():
                 longitude=_["longitude"],
                 country_code="Czech Republic",
                 phone=_["telephone"],
-                location_type=location_type,
                 locator_domain=locator_domain,
                 hours_of_operation="; ".join(hours),
             )
