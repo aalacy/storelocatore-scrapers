@@ -3,7 +3,8 @@ import csv
 from sgrequests import SgRequests
 from sglogging import sglog
 import lxml.html
-from sgzip.dynamic import DynamicZipSearch, SearchableCountries
+from sgzip.dynamic import SearchableCountries
+from sgzip.static import static_zipcode_list
 
 website = "krispykreme.co.uk"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -60,16 +61,16 @@ def write_output(data):
 
 def fetch_data():
     # Your scraper here
-    loc_list = []
 
     search_url = (
         "https://www.krispykreme.co.uk/find-store?store-search={}&store-search-type="
     )
 
-    search = DynamicZipSearch(country_codes=[SearchableCountries.BRITAIN])
+    zips = static_zipcode_list(radius=50, country_code=SearchableCountries.BRITAIN)
 
-    for zipcode in search:
-        log.info(f"{zipcode} | remaining: {search.items_remaining()}")
+    url_list = []
+    for zipcode in zips:
+        log.info(f"Pulling results for: {zipcode}")
         stores_req = session.get(search_url.format(zipcode), headers=headers)
         stores_sel = lxml.html.fromstring(stores_req.text)
         stores = stores_sel.xpath(
@@ -78,6 +79,9 @@ def fetch_data():
 
         for store_url in stores:
             page_url = store_url
+            if page_url in url_list:
+                continue
+            url_list.append(page_url)
             log.info(page_url)
             locator_domain = website
 
@@ -146,10 +150,6 @@ def fetch_data():
                     direction_link.split("&query=")[1].strip().split(",")[1].strip()
                 )
 
-                latlng_tuple = (latitude, longitude)
-                latlng_list = [latlng_tuple]
-                search.mark_found(latlng_list)
-
             if latitude == "":
                 latitude = "<MISSING>"
             if longitude == "":
@@ -176,9 +176,7 @@ def fetch_data():
                 longitude,
                 hours_of_operation,
             ]
-            loc_list.append(curr_list)
-
-    return loc_list
+            yield curr_list
 
 
 def scrape():

@@ -47,7 +47,7 @@ def fetch_data():
     nonceSource = s.get("https://www.labelshopper.com/find-stores/").text
 
     nonceScript = bs4.BeautifulSoup(nonceSource, features="lxml").find(
-        "script", {"id": "fvm-footer-0-js-extra"}
+        "script", {"id": "wpgmza-js-extra"}
     )
 
     nonceVariable = re.search(
@@ -84,10 +84,10 @@ def fetch_data():
         address = ""
         if "Unit" in string.split(",")[-2] or "Suite" in string.split(",")[-2]:
             state = string.split(",")[-2].split(" ")[-1]
-            address = string.replace(state, "").replace(",", "")[:-1]
+            address = string.replace(",", "")[:-1]
         else:
             state = string.split(",")[-2].replace(" ", "", 1)
-            address = string.replace(state, "").replace(",", "")[:-1]
+            address = string.replace(",", "")[:-1]
         return [state, address]
 
     for store in storeSource:
@@ -127,13 +127,18 @@ def fetch_data():
             .replace("<li>", "")
             .replace("</li>", ", ")[:-2]
         )
+        address = addressJSON["address"].strip()
+        city = addressJSON["city"]
+        if address.endswith(city):
+            rreplacement = city[::-1]
+            address = address[::-1].replace(rreplacement, "", 1)[::-1].strip()
         result.append(
             [
                 locator_domain,
                 pageURL,
                 store["title"],
-                addressJSON["address"],
-                addressJSON["city"],
+                address,
+                city,
                 addressJSON["state"],
                 addressJSON["zip"],
                 missingString,

@@ -1,0 +1,4 @@
+beautifulsoup4==4.9.3
+lxml==4.6.2
+bypass-req==0.0.2
+req==0.0.1

@@ -1,6 +1,5 @@
 import csv
 import json
-from lxml import etree
 
 from sgrequests import SgRequests
 
@@ -42,28 +41,24 @@ def fetch_data():
     items = []
 
     DOMAIN = "ledopizza.com"
-    start_url = "https://order.ledopizza.com/locations"
+    start_url = "https://order.ledopizza.com/api/vendors/regions?excludeCities=true"
     headers = {
-        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36"
+        "__requestverificationtoken": "",
+        "accept": "*/*",
+        "accept-encoding": "gzip, deflate, br",
+        "accept-language": "ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7,pt;q=0.6",
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36",
+        "x-olo-request": "1",
+        "x-olo-viewport": "Desktop",
+        "x-requested-with": "XMLHttpRequest",
     }
 
     all_locations = []
     response = session.get(start_url, headers=headers)
-    dom = etree.HTML(response.text)
-    token = dom.xpath("//input/@value")[0]
-    states = ["MD", "WV", "VA", "NC", "SC", "FL", "DC"]
-    for state in states:
-        url = "https://order.ledopizza.com/api/vendors/search/{}".format(state)
-        headers = {
-            "__requestverificationtoken": token,
-            "accept": "*/*",
-            "accept-encoding": "gzip, deflate, br",
-            "accept-language": "ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7,pt;q=0.6",
-            "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
-            "x-olo-request": "1",
-            "x-olo-viewport": "Desktop",
-            "x-requested-with": "XMLHttpRequest",
-        }
+    data = json.loads(response.text)
+
+    for state in data:
+        url = "https://order.ledopizza.com/api/vendors/search/{}".format(state["code"])
         response = session.get(url, headers=headers)
         data = json.loads(response.text)
         all_locations += data["vendor-search-results"]
@@ -74,7 +69,7 @@ def fetch_data():
         street_address = poi["streetAddress"]
         city = poi["city"]
         state = poi["state"]
-        zip_code = poi.get("postalCode")
+        zip_code = poi["address"]["postalCode"]
         zip_code = zip_code if zip_code else "<MISSING>"
         country_code = poi.get("country")
         country_code = country_code if country_code else "<MISSING>"

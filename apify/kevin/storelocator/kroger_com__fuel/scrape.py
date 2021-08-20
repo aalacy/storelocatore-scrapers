@@ -142,7 +142,7 @@ def get(url, attempt=1):
     try:
         sleep()
         session = get_session()
-        # session.session.cookies.clear()
+        # session.get_session().cookies.clear()
         # log(f'getting {url}')
         # need override_sgrequests_get() in order to honor the timeout passed in below
         r = session.get(url, headers=headers, timeout=10, verify=False) 

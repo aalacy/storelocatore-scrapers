@@ -60,26 +60,27 @@ def write_output(data):
 
 def fetch_data():
     # Your scraper here
-    loc_list = []
-
     search_url = "https://www.horizononline.com/store-locations/"
     stores_req = session.get(search_url, headers=headers)
     stores_sel = lxml.html.fromstring(stores_req.text)
-    stores = stores_sel.xpath('//a[@class="lazy bg"]/@href')
+    stores = stores_sel.xpath(
+        '//div[@class="col-lg-3 col-md-6 col-sm-6"]/a[@class="text-dark"]/@href'
+    )
     for store_url in stores:
         page_url = "https://www.horizononline.com" + store_url
+        log.info(page_url)
         locator_domain = website
 
         store_req = session.get(page_url, headers=headers)
         store_sel = lxml.html.fromstring(store_req.text)
         location_name = "".join(
-            store_sel.xpath('//div[@class="store-details constrain"]//h1/text()')
+            store_sel.xpath('//div[contains(@class,"store-details")]//h2/text()')
         ).strip()
         if location_name == "":
             location_name = "<MISSING>"
 
         address = store_sel.xpath(
-            '//div[@class="store-details constrain"]//address/text()'
+            '//div[contains(@class,"store-details")]//address/text()'
         )
 
         add_list = []
@@ -109,12 +110,12 @@ def fetch_data():
         store_number = "<MISSING>"
         phone = "".join(
             store_sel.xpath(
-                '//div[@class="store-details constrain"]//p/a[contains(@href,"tel:")]/text()'
+                '//div[contains(@class,"store-details")]//p/a[contains(@href,"tel:")]/text()'
             )
         ).strip()
 
         location_type = "<MISSING>"
-        temp_hours = store_sel.xpath('//div[@class="store-details constrain"]//p')
+        temp_hours = store_sel.xpath('//div[contains(@class,"store-details")]//p')
         hours_of_operation = ""
         hours_list = []
         for temp in temp_hours:
@@ -127,7 +128,7 @@ def fetch_data():
         hours_of_operation = ";".join(hours_list).strip()
 
         map_img = "".join(
-            store_sel.xpath('//div[@class="unit1of2 gmap"]/img/@src')
+            store_sel.xpath('//div[@class="col position-relative"]/img/@src')
         ).strip()
 
         latitude = map_img.split("%7C")[1].strip().split(",")[0].strip()
@@ -161,9 +162,7 @@ def fetch_data():
             longitude,
             hours_of_operation,
         ]
-        loc_list.append(curr_list)
-        # break
-    return loc_list
+        yield curr_list
 
 
 def scrape():

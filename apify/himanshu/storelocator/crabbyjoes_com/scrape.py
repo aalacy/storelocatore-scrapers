@@ -1,68 +1,128 @@
-import csv
-from sgrequests import SgRequests
-from bs4 import BeautifulSoup
 import re
-import json
+import csv
+from bs4 import BeautifulSoup as bs
+from sgrequests import SgRequests
+from sglogging import sglog
+
+
+DOMAIN = "crabbyjoes.com"
+BASE_URL = "https://www.crabbyjoes.com"
+LOCATION_URL = "https://www.crabbyjoes.com/locations/"
+HEADERS = {
+    "Accept": "application/json, text/plain, */*",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
+}
+log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
+
 session = SgRequests()
+
+
 def write_output(data):
-    with open('data.csv', mode='w', newline="") as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+    log.info("Write Output of " + DOMAIN)
+    with open("data.csv", mode="w") as output_file:
+        writer = csv.writer(
+            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+        )
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
+        writer.writerow(
+            [
+                "locator_domain",
+                "page_url",
+                "location_name",
+                "street_address",
+                "city",
+                "state",
+                "zip",
+                "country_code",
+                "store_number",
+                "phone",
+                "location_type",
+                "latitude",
+                "longitude",
+                "hours_of_operation",
+            ]
+        )
         # Body
         for row in data:
             writer.writerow(row)
+
+
+def pull_content(url):
+    log.info("Pull content => " + url)
+    soup = bs(session.get(url, headers=HEADERS).content, "lxml")
+    return soup
+
+
+def handle_missing(field):
+    if field is None or (isinstance(field, str) and len(field.strip()) == 0):
+        return "<MISSING>"
+    return field
+
+
 def fetch_data():
-    base_url= "https://www.crabbyjoes.com/locations/"
-    r = session.get(base_url)
-    soup= BeautifulSoup(r.text,"lxml")
-    hours = []
-    name_store=[]
-    store_detail=[]
-    phone=[]
-    return_main_object=[]
-    k=(soup.find_all("div",{"id":"locations","class":"locations2"}))
-    for i in k:
-        p =i.find_all("li",{"class":"equal"})
-        for j in p:
-            if "9155.29 KM" in list(j.stripped_strings)[1] :
-                continue
-            latitude = (j.attrs['onclick'].split('(')[1].split(");")[0].split(',')[0])
-            longitude  = (j.attrs['onclick'].split('(')[1].split(");")[0].split(',')[1])
-            tem_var=[]
-            name = list(j.stripped_strings)[0]
-            st = list(j.stripped_strings)[2]
-            city = list(j.stripped_strings)[3].split(',')[0]
-            state = list(j.stripped_strings)[3].split(',')[1].split( )[0]
-            zipcode =" ".join(list(j.stripped_strings)[3].split(',')[1].split( )[1:])
-            phone =list(j.stripped_strings)[7]
-            hours = " ".join(list(j.stripped_strings)[10:][:-1])
-            if len(zipcode)!=5:
-                coutry = "CA"
-            else:
-                coutry = "US"
-            tem_var.append("https://www.crabbyjoes.com")
-            tem_var.append(name)
-            tem_var.append(st)
-            tem_var.append(city)
-            tem_var.append(state)
-            tem_var.append(zipcode)
-            tem_var.append(coutry)
-            tem_var.append("<MISSING>")
-            tem_var.append(phone)
-            tem_var.append("crabbyjoes")
-            tem_var.append(latitude)
-            tem_var.append(longitude)
-            tem_var.append(hours if hours else "<MISSING>")
-            tem_var.append("https://www.crabbyjoes.com/locations/")
-            yield tem_var
+    log.info("Fetching store_locator data")
+    soup = pull_content(LOCATION_URL)
+    store_content = soup.find_all("div", {"class": "locations-row"})
+    locations = []
+    for row in store_content:
+        page_url = LOCATION_URL
+        locator_domain = DOMAIN
+        location_name = handle_missing(row.find("h3").text.strip())
+        full_addr = handle_missing(
+            row.find("p", {"class": "font-weight-bold"})
+            .get_text(strip=True, separator=",")
+            .strip()
+            .split(",")
+        )
+        if len(full_addr) > 4:
+            street_address = handle_missing(", ".join(full_addr[:2]))
+            city = handle_missing(full_addr[2])
+            state = handle_missing(full_addr[3].split(" ")[1])
+            zip_code = handle_missing(full_addr[3].replace(state, "").strip())
+        else:
+            street_address = handle_missing(full_addr[0])
+            city = handle_missing(full_addr[1])
+            state = handle_missing(full_addr[2].split(" ")[1])
+            zip_code = handle_missing(full_addr[2].replace(state, "").strip())
+        country_code = "CA"
+        store_number = "<MISSING>"
+        location_type = "<MISSING>"
+        hours_of_operation = handle_missing(
+            row.find("p", {"class": "m-0"}).text.replace("–", "-").strip()
+        )
+        phone = handle_missing(
+            row.find("a", {"href": re.compile(r"tel:.*")}).text.strip()
+        )
+        latitude = "<MISSING>"
+        longitude = "<MISSING>"
+        log.info("Append {} => {}".format(location_name, street_address))
+        locations.append(
+            [
+                locator_domain,
+                page_url,
+                location_name,
+                street_address,
+                city,
+                state,
+                zip_code,
+                country_code,
+                store_number,
+                phone,
+                location_type,
+                latitude,
+                longitude,
+                hours_of_operation,
+            ]
+        )
+    return locations
+
+
 def scrape():
+    log.info("Start {} Scraper".format(DOMAIN))
     data = fetch_data()
+    log.info("Found {} locations".format(len(data)))
     write_output(data)
+    log.info("Finish processed " + str(len(data)))
+
+
 scrape()
-
-
-
-
-

@@ -45,9 +45,10 @@ def fetch_data():
         js = r.json()["response"]["entities"]
 
         for j in js:
-
             a = j.get("address")
-            street_address = f"{a.get('line1')}".strip() or "<MISSING>"
+            street_address = (
+                f"{a.get('line1')} {a.get('line2') or ''}".strip() or "<MISSING>"
+            )
             city = a.get("city") or "<MISSING>"
             location_name = f"{j.get('name')} {j.get('c_mallName')}"
             page_url = j.get("landingPageUrl") or "<MISSING>"
@@ -70,6 +71,8 @@ def fetch_data():
             _tmp = []
             for k, v in hours.items():
                 if k == "holidayHours":
+                    continue
+                if type(v) == str:
                     continue
 
                 day = k

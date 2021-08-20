@@ -51,6 +51,9 @@ def get_data(url):
     r = session.get(page_url)
     tree = html.fromstring(r.text)
     text = "".join(tree.xpath("//script[contains(text(), 'window.__NUXT__')]/text()"))
+    if not text:
+        return
+
     name, street, city, state, _zip, phone, owner, status = (
         "n",
         "str",

@@ -1,9 +1,15 @@
 import csv
-from sgselenium import SgChrome
-from sgzip.static import static_coordinate_list, SearchableCountries
-from sglogging import SgLogSetup
+import time
+
 from bs4 import BeautifulSoup
+
 from concurrent.futures import ThreadPoolExecutor, as_completed
+
+from sgselenium import SgChrome
+from sgzip.dynamic import SearchableCountries
+from sgzip.static import static_coordinate_list
+
+from sglogging import SgLogSetup
 
 logger = SgLogSetup().get_logger("gamestop_com")
 
@@ -73,7 +79,6 @@ def fetch_stores(driver, data):
 
 def fetch_locations(coord, csrf_token, driver, tracker):
     lat, lng = coord
-
     data = fetch_stores(
         driver, {"radius": 100, "lat": lat, "long": lng, "csrf_token": csrf_token}
     )
@@ -136,25 +141,25 @@ def fetch_locations(coord, csrf_token, driver, tracker):
 def get_driver():
     headers = {
         "accept": "*/*",
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36",
+        "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36",
         "referer": "https://www.gamestop.com/stores/?showMap=true&horizontalView=true&isForm=true",
     }
 
     driver = SgChrome(user_agent=headers["User-Agent"]).driver()
-    driver.set_script_timeout(300)
+    driver.set_script_timeout(500)
     return driver
 
 
 def fetch_data():
     tracker = []
 
-    search = static_coordinate_list(100, SearchableCountries.USA)
-    search.extend(static_coordinate_list(100, SearchableCountries.CANADA))
+    search = static_coordinate_list(radius=100, country_code=SearchableCountries.USA)
 
     driver = get_driver()
     driver.get(
         "https://www.gamestop.com/stores/?showMap=true&horizontalView=true&isForm=true"
     )
+    time.sleep(10)
     csrf_token = extract_csrf_token(driver)
 
     with ThreadPoolExecutor() as executor:

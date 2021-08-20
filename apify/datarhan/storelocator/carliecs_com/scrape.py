@@ -41,9 +41,15 @@ def fetch_data():
     items = []
 
     DOMAIN = "carliecs.com"
-    start_url = "https://api.freshop.com/1/stores?app_key=carlie_c_s&has_address=true&is_selectable=true&limit=100&token=0afb14f1dbfdb5fc2c6c96195e399ebd"
+    start_url = "https://api.freshop.com/1/stores?app_key=carlie_c_s&has_address=true&limit=-1&token={}"
 
-    response = session.get(start_url)
+    frm = {
+        "app_key": "carlie_c_s",
+        "referrer": "https://www.carliecs.com/",
+        "utc": "1626174932446",
+    }
+    token = session.post("https://api.freshop.com/2/sessions/create", data=frm).json()
+    response = session.get(start_url.format(token["token"]))
     data = json.loads(response.text)
 
     for poi in data["items"]:
@@ -72,7 +78,7 @@ def fetch_data():
                 longitude = [elem["lat_lng"] for elem in areas if elem.get("lat_lng")][
                     0
                 ][0][-1]
-        hoo = poi["hours_md"].replace("\n", " ")
+        hoo = poi["hours_md"].replace("\n", " ").split("Senior")[0].strip()
         hours_of_operation = hoo if hoo else "<MISSING>"
 
         item = [

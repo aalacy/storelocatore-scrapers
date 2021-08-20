@@ -138,6 +138,24 @@ def fetch_data():
                 street = missingString
             if name == "None":
                 name = missingString
+            if "Galeries St-Hyacinthe" in name:
+                city = "Saint-Hyacinthe"
+                zipc = "J2S 4Z5"
+            if "Cf Markville" in name:
+                city = "Markham"
+                zipc = "L3R 4M9"
+            if "Bramalea CCity Center" in name:
+                city = "Brampton"
+                zipc = "L6T 3R5"
+            if "Mcarthurglen Vancouver" in name:
+                state = "BC"
+                zipc = "V7B 0B7"
+            if "Outlet Collection Winnipeg" in name:
+                city = "Winnipeg"
+                zipc = "R3P 2T3"
+                state = "MB"
+            if "Metropolis At Metrotown" in name:
+                city = "Burnaby"
             result.append(
                 [
                     locator_domain,

@@ -78,11 +78,16 @@ def fetch_data():
         if location_name == "":
             location_name = "<MISSING>"
 
-        street_address = "".join(
-            store.xpath(
-                'div[@class="location-content"]//p[@class="address"]/span[@class="address-line1"]/text()'
+        street_address = (
+            "".join(
+                store.xpath(
+                    'div[@class="location-content"]//p[@class="address"]/span[@class="address-line1"]/text()'
+                )
             )
-        ).strip()
+            .strip()
+            .replace("(also accessible from Tupper Rd)", "")
+            .strip()
+        )
         city = "".join(
             store.xpath(
                 'div[@class="location-content"]//p[@class="address"]/span[@class="locality"]/text()'

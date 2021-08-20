@@ -1,0 +1,18 @@
+.idea
+*.log
+node_modules
+yarn.lock
+package-lock.json
+
+# data
+apify_storage
+data.csv
+
+# scripts
+run_scraper.sh
+apify_to_csv.py
+validate.py
+csv-differ.py
+
+# venv
+cw_venv

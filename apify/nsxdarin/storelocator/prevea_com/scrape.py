@@ -99,7 +99,7 @@ def get_western_locations(csrf_token, view_state):
         '_fbp': 'fb.1.1593059756640.1874687172',
         '_gat_UA-901569-1': '1'
     }
-    add_dict_to_cookiejar(session.session.cookies, add_cookies)
+    add_dict_to_cookiejar(session.get_session().cookies, add_cookies)
 
     url = 'https://www.prevea.com/providers?loadmap=1'
     r = session.post(url, headers=headers, data=post_data)

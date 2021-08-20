@@ -78,8 +78,11 @@ def fetch_data():
                 state = store["address"]["addressRegion"]
                 store_number = "<MISSING>"
                 location_type = "<MISSING>"
-                latitude = "<MISSING>"
-                longitude = "<MISSING>"
+                geo = (
+                    r2.text.split("new google.maps.LatLng(")[1].split(")")[0].split(",")
+                )
+                latitude = geo[0].strip() or "<MISSING>"
+                longitude = geo[1].strip() or "<MISSING>"
                 hours_of_operation = (
                     soup2.select_one("section#location-hours dl")
                     .text.replace("\n", "")

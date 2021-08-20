@@ -1,167 +1,140 @@
 # -*- coding: utf-8 -*-
-import csv
 from sgrequests import SgRequests
 from sglogging import sglog
-import json
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
 import lxml.html
 
+
 website = "homebase_co.uk"
-domain = "https://www.homebase.co.uk"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 session = SgRequests()
 headers = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.66 Safari/537.36",
-    "Accept": "application/json",
+    "authority": "store.homebase.co.uk",
+    "sec-ch-ua": '" Not A;Brand";v="99", "Chromium";v="90", "Google Chrome";v="90"',
+    "sec-ch-ua-mobile": "?0",
+    "upgrade-insecure-requests": "1",
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.93 Safari/537.36",
+    "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+    "sec-fetch-site": "none",
+    "sec-fetch-mode": "navigate",
+    "sec-fetch-user": "?1",
+    "sec-fetch-dest": "document",
+    "accept-language": "en-US,en;q=0.9,ar;q=0.8",
 }
-
-
-def write_output(data):
-    with open("data.csv", mode="w", newline="", encoding="utf8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        temp_list = []  # ignoring duplicates
-        for row in data:
-            comp_list = [
-                row[2].strip(),
-                row[3].strip(),
-                row[4].strip(),
-                row[5].strip(),
-                row[6].strip(),
-                row[8].strip(),
-                row[10].strip(),
-            ]
-            if comp_list not in temp_list:
-                temp_list.append(comp_list)
-                writer.writerow(row)
-
-        log.info(f"No of records being processed: {len(temp_list)}")
 
 
 def fetch_data():
     # Your scraper here
-    loc_list = []
+    base = "https://store.homebase.co.uk/"
+    search_url = "https://store.homebase.co.uk/index.html"
+    search_res = session.get(search_url, headers=headers)
 
-    search_url = "https://www.homebase.co.uk/stores"
-    stores_req = session.get(search_url, headers=headers)
-    stores_json_text = (
-        stores_req.text.split("var com_bunnings_locations_mapLocations =")[1]
-        .strip()
-        .split("</script>")[0]
-        .strip()
-        .split("];")[0]
-        .strip()
-        + "]"
-    )
+    search_sel = lxml.html.fromstring(search_res.text)
 
-    stores = json.loads(stores_json_text)
+    store_list = list(search_sel.xpath('//li[contains(@class,"list")]//a/@href'))
 
-    for store in stores:
-        page_url = domain + store["Store"]["StoreUrl"]
+    for store in store_list:
 
+        page_url = base + store
         locator_domain = website
-        location_name = store["Store"]["StoreName"]
-        if location_name == "":
-            location_name = "<MISSING>"
+        log.info(page_url)
+        store_res = session.get(page_url, headers=headers)
+        store_sel = lxml.html.fromstring(store_res.text)
 
-        street_address = store["Store"]["Address"]["Address"]
-        if store["Store"]["Address"]["AddressLineTwo"] is not None:
-            street_address = (
-                street_address + ", " + store["Store"]["Address"]["AddressLineTwo"]
+        locations = store_sel.xpath('//li[contains(@class,"list")]//h2/a/@href')
+
+        if not locations:
+            # append dummy location
+            locations.append("dummy_location")
+
+        for location in locations:
+            if location != "dummy_location":
+                # send new request and update the selector
+                page_url = base + location  # update page_url
+                log.info(page_url)
+                store_res = session.get(page_url, headers=headers)
+                store_sel = lxml.html.fromstring(store_res.text)  # update page_url
+
+            location_name = "".join(
+                store_sel.xpath('//*[contains(@id,"location-name")]//text()')
             )
-        city = store["Store"]["Address"]["Suburb"]
-        state = store["Store"]["Address"]["State"]
-        zip = store["Store"]["Address"]["Postcode"]
 
-        country_code = store["Store"]["Address"]["Country"]
+            street_address = "".join(
+                store_sel.xpath('//*[contains(@itemprop,"streetAddress")]/@content')
+            )
 
-        if street_address == "" or street_address is None:
-            street_address = "<MISSING>"
-
-        if city == "" or city is None:
-            city = "<MISSING>"
-
-        if state == "" or state is None:
+            city = "".join(
+                store_sel.xpath(
+                    '//*[contains(@itemprop,"address")]//*[contains(@class,"city")]//text()'
+                )
+            )
             state = "<MISSING>"
+            zip = "".join(
+                store_sel.xpath(
+                    '//*[contains(@itemprop,"address")]//*[contains(@class,"postalCode")]//text()'
+                )
+            )
 
-        if zip == "" or zip is None:
-            zip = "<MISSING>"
+            country_code = "GB"
 
-        if country_code == "" or country_code is None:
-            country_code = "<MISSING>"
+            store_number = "<MISSING>"
 
-        store_number = str(store["Store"]["StoreID"])
-        phone = store["Store"]["Phone"]
+            phone = "".join(
+                store_sel.xpath('//*[contains(@itemprop,"telephone")]//text()')
+            ).strip()
 
-        location_type = store["Store"]["StoreType"]
+            location_type = store_sel.xpath(
+                '//span[@class="Core-heroPromoHeading"]/text()'
+            )
 
-        latitude = store["Store"]["Location"]["Latitude"]
-        longitude = store["Store"]["Location"]["Longitude"]
+            if len(location_type) > 0:
+                location_type = location_type[0].strip()
+                if "Click & Collect at this store" in location_type:
+                    location_type = "<MISSING>"
 
-        if latitude == "" or latitude is None:
-            latitude = "<MISSING>"
-        if longitude == "" or longitude is None:
-            longitude = "<MISSING>"
+            hours_of_operation = "; ".join(
+                store_sel.xpath('//*[contains(@itemprop,"openingHours")]/@content')
+            )
 
-        store_req = session.get(page_url, headers=headers)
-        store_sel = lxml.html.fromstring(store_req.text)
+            latitude = "".join(
+                store_sel.xpath('//*[contains(@itemprop,"latitude")]/@content')
+            )
+            longitude = "".join(
+                store_sel.xpath('//*[contains(@itemprop,"longitude")]/@content')
+            )
 
-        hours_of_operation = "; ".join(
-            store_sel.xpath('//time[@itemprop="openingHours"]/@datetime')
-        ).strip()
+            raw_address = "<MISSING>"
 
-        if hours_of_operation == "":
-            hours_of_operation = "<MISSING>"
-
-        if phone == "" or phone is None:
-            phone = "<MISSING>"
-
-        curr_list = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        loc_list.append(curr_list)
-
-    return loc_list
+            yield SgRecord(
+                locator_domain=locator_domain,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+                raw_address=raw_address,
+            )
 
 
 def scrape():
     log.info("Started")
-    data = fetch_data()
-    write_output(data)
+    count = 0
+    with SgWriter() as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+
+    log.info(f"No of records being processed: {count}")
     log.info("Finished")
 
 

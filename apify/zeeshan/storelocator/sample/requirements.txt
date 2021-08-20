@@ -1,6 +1,0 @@
-lxml==4.3.4
-phonenumbers==8.10.14
-requests==2.11.1
-us==1.0.0
-zipcodes==1.0.5
-sgvalidator==0.0.19

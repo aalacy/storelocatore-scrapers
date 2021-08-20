@@ -2,6 +2,7 @@ import csv
 import sgrequests
 import json
 import bs4
+import re
 
 
 def write_output(data):
@@ -49,6 +50,11 @@ def fetch_data():
 
     result = []
 
+    tA = ["Sat", "Sun", "Mon", "Tue", "Wed", "Thu", "Fri"]
+
+    def checkTime(t):
+        return re.findall("[A-Z][^A-Z]*", tA[t.index("Today")])[0]
+
     for el in stores["stores"]:
         name = el["address"]["name"]
         city = el["address"]["city"]
@@ -61,40 +67,53 @@ def fetch_data():
             sgrequests.SgRequests().get(locator_domain + "/" + el["slug"]).text,
             features="lxml",
         )
-        addr = s.findAll("p", {"class": "hcard-address"})[0].text
-        zp = (
-            s.findAll("p", {"class": "hcard-address"})[-2]
-            .text.replace(city, "")
-            .replace(",", "")
-        )
-        phone = s.findAll("p", {"class": "hcard-address"})[-1].text
+        addr = s.find("address").get_text(separator="\n").strip().split("\n")
+        addr.remove(",")
+        addr.remove(" ")
+        street = addr[0]
+        zp = addr[-2]
+        phone = addr[-1]
         hours = missingString
         timeArr = []
         loc_type = missingString
-        if (
-            "We’re temporarily closed."
-            in s.find(
-                "div", {"class": "special-message typography-intro-elevated"}
-            ).text
-        ):
-            hours = missingString
-            loc_type = "Temporarily closed"
-        else:
-            for e in s.findAll("tr", {"class": "store-hours-line"}):
-                timeArr.append(
-                    "{} : {}".format(
-                        e.find("td", {"class": "store-hours-day"}).text,
-                        e.find("td", {"class": "store-hours-time"}).text,
+        dayTimes = []
+        for e in s.find("div", {"class": "store-hours"}):
+            if not e.find("span", {"class": "visuallyhidden"}):
+                pass
+            else:
+                for tr in e.find("tbody"):
+                    dayTimes.append(tr.find("span", {"aria-hidden": "true"}).text)
+                    timeArr.append(
+                        "{} : {}".format(
+                            tr.find("td", {"class": "store-hours-table-day"}).text,
+                            tr.find("td", {"class": "store-hours-table-hours"})
+                            .text.strip()
+                            .replace("*", "")
+                            .replace("–", "-")
+                            .replace(u"\xa0", u""),
+                        )
                     )
-                )
-            hours = ", ".join(timeArr)
-
+        hours = ", ".join(timeArr)
+        if hours == "":
+            hours = missingString
+        hours = (
+            hours.replace("Today", "TODAY", 1)
+            .replace("TODAY", checkTime(dayTimes))
+            .replace("Monday", "")
+            .replace("Tuesday", "")
+            .replace("Wednesday", "")
+            .replace("Thursday", "")
+            .replace("Friday", "")
+            .replace("Saturday", "")
+            .replace("Sunday", "")
+            .replace("Today", "")
+        )
         result.append(
             [
                 locator_domain,
                 locator_domain + "/" + el["slug"],
                 name,
-                addr,
+                street,
                 city,
                 country,
                 zp,
