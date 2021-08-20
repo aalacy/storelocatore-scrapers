@@ -7,7 +7,6 @@ import re
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sglogging import SgLogSetup
-import os
 
 logger = SgLogSetup().get_logger("taxassist")
 
@@ -22,27 +21,7 @@ _headers = {
 }
 locator_domain = "https://www.taxassist.co.uk/"
 
-DEFAULT_PROXY_URL = "https://groups-RESIDENTIAL,country-us:{}@proxy.apify.com:8000/"
-
-
-def set_proxies():
-    if "PROXY_PASSWORD" in os.environ and os.environ["PROXY_PASSWORD"].strip():
-
-        proxy_password = os.environ["PROXY_PASSWORD"]
-        url = (
-            os.environ["PROXY_URL"] if "PROXY_URL" in os.environ else DEFAULT_PROXY_URL
-        )
-        proxy_url = url.format(proxy_password)
-        proxies = {
-            "https://": proxy_url,
-        }
-        return proxies
-    else:
-        return None
-
-
-session = SgRequests().requests_retry_session()
-session.proxies = set_proxies()
+session = SgRequests(proxy_country="us").requests_retry_session()
 
 
 def _fix(original):

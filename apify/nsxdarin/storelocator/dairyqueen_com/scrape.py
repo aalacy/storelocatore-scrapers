@@ -5,8 +5,8 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
+import time
 
-session = SgRequests()
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
@@ -29,6 +29,7 @@ def fetch_data():
             + "&long="
             + str(lng)
         )
+        session = SgRequests()
         r = session.get(url, headers=headers)
         logger.info(str(lat) + "-" + str(lng))
         for line in r.iter_lines():
@@ -44,6 +45,7 @@ def fetch_data():
                         if lurl not in locs:
                             locs.append(lurl)
     url = "https://www.dairyqueen.com/en-us/sitemap.xml"
+    session = SgRequests()
     r = session.get(url, headers=headers)
     website = "dairyqueen.com"
     typ = "<MISSING>"
@@ -57,6 +59,12 @@ def fetch_data():
         ):
             locs.append(line.split("<loc>")[1].split("<")[0])
     for loc in locs:
+        time.sleep(1)
+        loc = loc + "/"
+        loc = loc.replace("https://", "HTTPS")
+        loc = loc.replace("//", "/")
+        loc = loc.replace("HTTPS", "https://")
+        Closed = False
         logger.info(loc)
         name = ""
         add = ""
@@ -69,9 +77,12 @@ def fetch_data():
         lat = ""
         lng = ""
         hours = ""
+        session = SgRequests()
         r2 = session.get(loc, headers=headers)
         for line2 in r2.iter_lines():
             line2 = str(line2.decode("utf-8"))
+            if "this page doesn't exist" in line2:
+                Closed = True
             if '<h1 class="my-1 h2">' in line2:
                 name = line2.split('<h1 class="my-1 h2">')[1].split("<")[0]
             if '"address3":"' in line2:
@@ -124,22 +135,24 @@ def fetch_data():
             hours = "<MISSING>"
         name = name.replace("&amp;", "&").replace("&amp", "&")
         add = add.replace("&amp;", "&").replace("&amp", "&")
-        yield SgRecord(
-            locator_domain=website,
-            page_url=loc,
-            location_name=name,
-            street_address=add,
-            city=city,
-            state=state,
-            zip_postal=zc,
-            country_code=country,
-            phone=phone,
-            location_type=typ,
-            store_number=store,
-            latitude=lat,
-            longitude=lng,
-            hours_of_operation=hours,
-        )
+        add = add.replace("\\u0026", "&")
+        if Closed is False:
+            yield SgRecord(
+                locator_domain=website,
+                page_url=loc,
+                location_name=name,
+                street_address=add,
+                city=city,
+                state=state,
+                zip_postal=zc,
+                country_code=country,
+                phone=phone,
+                location_type=typ,
+                store_number=store,
+                latitude=lat,
+                longitude=lng,
+                hours_of_operation=hours,
+            )
 
 
 def scrape():
