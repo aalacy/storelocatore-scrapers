@@ -1,0 +1,88 @@
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+from sgrequests import SgRequests
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+import json
+from bs4 import BeautifulSoup as bs
+from sglogging import SgLogSetup
+import math
+from concurrent.futures import ThreadPoolExecutor
+
+logger = SgLogSetup().get_logger("mcdonalds")
+
+
+_headers = {
+    "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
+}
+
+locator_domain = "https://www.mcdonalds.pt"
+base_url = "https://www.mcdonalds.pt/restaurantes?t=&d="
+max_workers = 32
+session = SgRequests().requests_retry_session()
+
+
+def fetchConcurrentSingle(link):
+    page_url = locator_domain + link["Url"]
+    response = request_with_retries(page_url)
+    return page_url, link, bs(response.text, "lxml")
+
+
+def fetchConcurrentList(list, occurrence=max_workers):
+    output = []
+    total = len(list)
+    reminder = math.floor(total / 50)
+    if reminder < occurrence:
+        reminder = occurrence
+
+    count = 0
+    with ThreadPoolExecutor(
+        max_workers=occurrence, thread_name_prefix="fetcher"
+    ) as executor:
+        for result in executor.map(fetchConcurrentSingle, list):
+            if result:
+                count = count + 1
+                if count % reminder == 0:
+                    logger.debug(f"Concurrent Operation count = {count}")
+                output.append(result)
+    return output
+
+
+def request_with_retries(url):
+    return session.get(url, headers=_headers)
+
+
+def fetch_data():
+    with SgRequests() as session:
+        locations = json.loads(
+            session.get(base_url, headers=_headers)
+            .text.split("var restaurantsJson =")[1]
+            .split("</script>")[0]
+            .strip()[1:-1]
+        )
+        for page_url, _, sp1 in fetchConcurrentList(locations):
+            logger.info(page_url)
+            hours = []
+            for hh in sp1.select("div.restaurantSchedule__service")[0].select("ul li"):
+                if "Véspera Feriado" in hh.text:
+                    continue
+                hours.append(": ".join(hh.stripped_strings))
+            yield SgRecord(
+                page_url=page_url,
+                location_name=_["Name"],
+                street_address=_["Location"],
+                city=_["City"],
+                zip_postal=_["PostalCode"],
+                latitude=_["Lat"],
+                longitude=_["Lng"],
+                country_code="Portugal",
+                locator_domain=locator_domain,
+                hours_of_operation="; ".join(hours),
+            )
+
+
+if __name__ == "__main__":
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
