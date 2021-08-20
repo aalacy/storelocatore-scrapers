@@ -55,6 +55,9 @@ def fetch_data():
 
         street_address = store_json["address"]["streetAddress"]
         city = store_json["address"]["addressLocality"]
+        if "Arrondissement" in city:
+            city = city.split(" ")[0].strip()
+
         state = store_json["address"]["addressRegion"]
         zip = store_json["address"]["postalCode"]
 
