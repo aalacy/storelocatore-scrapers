@@ -5,6 +5,7 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgrequests import SgRequests
 import json
+import re
 import ssl
 
 
@@ -38,10 +39,47 @@ def fetch_data():
         data = data["results"]
     for d in data:
         locator_domain = "marksandspencer.com"
-        page_url = MISSING
+        page_url = ""
         location_name = d["name"]
-
         location_name = location_name if location_name else MISSING
+
+        # Action Item # 1: create a somewhat “custom” location name -
+        # which we’ll then pass through to production.
+        # Append "M&S" to the front of the location_names -
+        # [if "M&S" or "Mark & Spencer" are not already included].
+        # if the name contains TEMPORARY CLOSED, -
+        # truncate this portion (since we don’t want the name to change when it’s no longer temporarily closed).
+
+        if "<MISSING>" not in location_name:
+            if (
+                "M&S".lower() in location_name.lower()
+                or "Mark & Spencer".lower() in location_name.lower()
+            ):
+                location_name = location_name
+            else:
+                location_name = "M&S " + location_name
+
+        location_name = location_name.replace("TEMPORARY CLOSED", "").replace(
+            "Temporary Closed", ""
+        )
+
+        # There are some location_names that say SIMPLY FOO or SIMPLY F (it’s like this on the site).
+        # This creates two patterns or rules to find "SIMPLY FOO" or "SIMPLY F" replaced
+        # with "SIMPLY FOOD".
+
+        pattern1_simply_foo = r"\bSIMPLY\sFOO\b"
+        simply_foo_found = re.findall(pattern1_simply_foo, location_name)
+        if simply_foo_found:
+            location_name = location_name.replace("SIMPLY FOO", "SIMPLY FOOD")
+        else:
+            location_name = location_name
+
+        pattern2_simply_f = r"\bSIMPLY\sF\b"
+        simply_f_found = re.findall(pattern2_simply_f, location_name)
+        if simply_f_found:
+            location_name = location_name.replace("SIMPLY F", "SIMPLY FOOD")
+        else:
+            location_name = location_name
 
         street_address = d["address"]["addressLine2"]
         street_address = street_address if street_address else MISSING
@@ -60,6 +98,16 @@ def fetch_data():
 
         store_number = d["id"]
         store_number = store_number if store_number else MISSING
+
+        # Action Item 2: Is there a way to validate if the page_urls associated -
+        # to the locations from API actually load & provide results?
+        # Should those that don’t load be filtered out?
+        # Form the page_url based on store number.
+
+        if "<MISSING>" not in str(store_number):
+            page_url = f"https://www.marksandspencer.com/MSResStoreFinderGlobalBaseCmd?storeId=10151&langId=-24&SAPStoreId={str(store_number)}&extid=local"
+        else:
+            page_url = MISSING
 
         if "phone" in d:
             phone = d["phone"].strip()

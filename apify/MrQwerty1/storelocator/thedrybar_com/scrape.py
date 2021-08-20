@@ -38,7 +38,7 @@ def fetch_data(sgw: SgWriter):
         phone = c.get("phoneNumber") or ""
         if not phone.strip():
             phone = SgRecord.MISSING
-        longitude, latitude = c.get("coordinates") or [
+        latitude, longitude = c.get("coordinates") or [
             SgRecord.MISSING,
             SgRecord.MISSING,
         ]

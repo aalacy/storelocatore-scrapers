@@ -1,253 +1,101 @@
-import re
-import json
-import csv
-import usaddress
-from bs4 import BeautifulSoup as bs
+# --extra-index-url https://dl.cloudsmith.io/KVaWma76J5VNwrOm/crawl/crawl/python/simple/
+from lxml import etree
+
 from sgrequests import SgRequests
-from sglogging import sglog
-
-DOMAIN = "slimchickens.com"
-BASE_URL = "https://slimchickens.com"
-LOCATION_URL = "https://slimchickens.com/location-Menus/"
-HEADERS = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
-}
-log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
-session = SgRequests()
-
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
-def pull_content(url):
-    soup = bs(session.get(url, headers=HEADERS).content, "lxml")
-    return soup
-
-
-def handle_missing(field):
-    if field is None or (isinstance(field, str) and len(field.strip()) == 0):
-        return "<MISSING>"
-    return field
-
-
-def parse_json(link_url, js_variable):
-    log.info("Pull content => " + link_url)
-    soup = pull_content(link_url)
-    pattern = re.compile(
-        r"var\s+" + js_variable + "\\s*=\\s*(\\{.*?\\});", re.MULTILINE | re.DOTALL
-    )
-    script = soup.find("script", text=pattern)
-    if script:
-        info = script.string.replace("/* <![CDATA[ */", "").replace("/* ]]> */", "")
-    else:
-        return False
-    parse = re.search(r"(?s)var\s+" + js_variable + "\\s*=\\s*(\\{.*?\\});", info)
-    data = json.loads(parse.group(1))
-    return data
-
-
-def get_postal(address, country_code):
-    if country_code == "US":
-        check_postal = re.findall(r".*(\d{5}(\-\d{4})?)$", address)
-        if check_postal:
-            zip_code = check_postal[0][0]
-        else:
-            zip_code = None
-    else:
-        check_postal = re.findall(r"[A-Z]{1,2}[0-9R][0-9A-Z]? [0-9][A-Z]{2}", address)
-        if check_postal:
-            zip_code = check_postal[0]
-        else:
-            zip_code = None
-    return zip_code
-
-
-def get_address(full_address, country_code):
-    log.info("Fetching store adress: {} => {}".format(country_code, full_address))
-    data = full_address.encode().decode("utf-8").replace(u"\u2022", ",")
-    split_addr = data.split(",")
-    if country_code == "US":
-        zip_code = get_postal(full_address, country_code)
-        if not zip_code:
-            zip_code = re.findall(r"\d+", split_addr[-1])[0]
-        if len(split_addr) > 4:
-            street_address = ",".join(split_addr[2:4])
-            city = split_addr[0]
-            state = split_addr[1]
-        else:
-            if len(split_addr) <= 3:
-                parsed_addr = usaddress.parse(full_address)
-                dict_address = dict(parsed_addr)
-                split_addr = ",".join(dict_address).split(",")
-                city = split_addr[0]
-                state = split_addr[1]
-                street_address = " ".join(split_addr[2:]).replace(zip_code, "")
-            else:
-                street_address = split_addr[2]
-                city = split_addr[0]
-                state = split_addr[1]
-    else:
-        city = split_addr[0]
-        state = split_addr[1]
-        if len(split_addr) > 4:
-            street_address = ",".join(split_addr[2:4])
-        else:
-            street_address = split_addr[2]
-        check_postal = re.findall(
-            r"[A-Z]{1,2}[0-9R][0-9A-Z]? [0-9][A-Z]{2}", full_address
-        )
-        if check_postal:
-            zip_code = check_postal[0]
-        else:
-            zip_code = None
-    return {
-        "street_address": street_address,
-        "city": city,
-        "state": state.replace(" ", ""),
-        "zip_code": zip_code,
-    }
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
+from sgpostal.sgpostal import parse_address_intl
 
 
 def fetch_data():
-    log.info("Fetching store URL")
-    locations = []
-    info = parse_json(LOCATION_URL, "maplistScriptParamsKo")
-    for data in info["KOObject"][0]["locations"]:
-        if "coming-soon" not in data["cssClass"]:
-            location_name = handle_missing(
-                data["title"].encode().decode("utf-8").replace(u"\u2022", ",")
-            )
-            latitude = handle_missing(data["latitude"])
-            longitude = handle_missing(data["longitude"])
-            page_url = data["locationUrl"]
-            country_code = "US"
-            if data["categories"]:
-                check_country = usaddress.tag(data["categories"][0]["title"])
-                if (
-                    "CountryName" in check_country[0]
-                    and check_country[0]["CountryName"] != "Kansas"
-                ):
-                    country_code = check_country[0]["CountryName"]
-            if "Kuwait" not in country_code:
-                parsed_addr = get_address(location_name, country_code)
-                street_address = handle_missing(parsed_addr["street_address"])
-                city = handle_missing(parsed_addr["city"])
-                if data["categories"]:
-                    state = handle_missing(data["categories"][0]["title"])
-                else:
-                    state = state = re.sub(
-                        r"•.*", "", data["title"].split(",")[1]
-                    ).strip()
-                zip_code = re.sub(r"\(.*", "", handle_missing(parsed_addr["zip_code"]))
-                location_type = "<MISSING>"
-                store_number = data["cssClass"].split("loc-", 1)[1]
-                if country_code == "US":
-                    soup = bs(data["description"], "html.parser")
-                    phone_pattren = r"(\d{3}[-\.\s]??\d{3}[-\.\s]??\d{4}|\(\d{3}\)\s*\d{3}[-\.\s]??\d{4}|\d{3}[-\.\s]??\d{4})"
-                    get_phone = soup.find(text=re.compile(phone_pattren))
-                    if get_phone:
-                        phone = get_phone.strip()
-                    else:
-                        content = soup.find_all("p")
-                        get_phone = (
-                            content[0].get_text(strip=True).replace("Phone:", "")
-                        )
-                        phone = "<MISSING>" if len(get_phone) > 15 else get_phone
-                    hours = soup.find(text=re.compile(r".*([0-9]+)am.*", re.IGNORECASE))
-                    if hours:
-                        hours_of_operation = handle_missing(
-                            re.sub(r".?(7 days/week).*", "", hours).strip()
-                        )
-                    else:
-                        hours_of_operation = "<MISSING>"
-                else:
-                    if "location" in page_url:
-                        soup = pull_content(page_url)
-                        content = soup.find_all(
-                            "div",
-                            {"class": "wpb_column vc_column_container vc_col-sm-4"},
-                        )
-                        if content:
-                            hours_of_operation = handle_missing(
-                                content[0]
-                                .find("div", {"class": "vc_column-inner"})
-                                .find(
-                                    "div",
-                                    {"class": "wpb_text_column wpb_content_element"},
-                                )
-                                .get_text(strip=True)
-                                .replace("HOURS:", "")
-                            )
-                            phone = handle_missing(
-                                content[1]
-                                .find("div", {"class": "vc_column-inner"})
-                                .find(
-                                    "div",
-                                    {"class": "wpb_text_column wpb_content_element"},
-                                )
-                                .get_text(strip=True)
-                                .replace("PHONE:", "")
-                            )
-                        else:
-                            hours_of_operation = "<MISSING>"
-                            phone = "<MISSING>"
-                if "Coming Soon" in phone:
-                    phone = "<MISSING>"
-                    location_type = "COMING_SOON"
-                log.info("Append info to locations => " + location_name)
-                locations.append(
-                    [
-                        DOMAIN,
-                        page_url,
-                        location_name,
-                        street_address,
-                        city,
-                        state,
-                        zip_code,
-                        country_code,
-                        store_number,
-                        phone,
-                        location_type,
-                        latitude,
-                        longitude,
-                        hours_of_operation,
-                    ]
-                )
-    return locations
+    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
+
+    start_url = (
+        "https://storerocket.io/api/user/56wpZ22pAn/locations?radius=50&units=miles"
+    )
+    domain = "slimchickens.com"
+    hdr = {
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
+    }
+    data = session.get(start_url, headers=hdr).json()
+
+    all_locations = data["results"]["locations"]
+    for poi in all_locations:
+        page_url = f'https://slimchickens.com/location/{poi["slug"]}'
+        if "coming-soon" in page_url:
+            continue
+        loc_response = session.get(page_url, headers=hdr)
+        loc_dom = etree.HTML(loc_response.text)
+        if loc_dom.xpath('//h1[contains(text(), "Coming Soon")]'):
+            continue
+
+        street_address = poi["address_line_1"]
+        if poi["address_line_2"]:
+            street_address += " " + poi["address_line_2"]
+        phone = [e for e in poi["fields"] if e["name"] == "Phone"]
+        phone = phone[0]["pivot_field_value"] if phone else SgRecord.MISSING
+        hours_of_operation = [e for e in poi["fields"] if e["name"] == "Hours"]
+        hours_of_operation = (
+            hours_of_operation[0]["pivot_field_value"].replace("</br>", " ")
+            if hours_of_operation
+            else SgRecord.MISSING
+        )
+        city = poi["city"]
+        state = poi["state"]
+        zip_code = poi["postcode"]
+        if not street_address:
+            addr = parse_address_intl(poi["address"])
+            street_address = addr.street_address_1
+            if addr.street_address_2:
+                street_address += " " + addr.street_address_2
+            city = addr.city
+            state = addr.state
+            zip_code = addr.postcode
+        if not street_address:
+            addr = parse_address_intl(loc_dom.xpath("//h1/text()")[0])
+            city = addr.city
+            state = addr.state
+            zip_code = addr.postcode
+        if loc_response.status_code == 200:
+            street_address = loc_dom.xpath("//h1/text()")[0].split(",")
+            if len(street_address) == 5:
+                street_address = ", ".join(street_address[:2])
+            else:
+                street_address = street_address[0]
+
+        item = SgRecord(
+            locator_domain=domain,
+            page_url=page_url,
+            location_name=poi["name"],
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=zip_code,
+            country_code=poi["country"],
+            store_number=poi["id"],
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=poi["lat"],
+            longitude=poi["lng"],
+            hours_of_operation=hours_of_operation,
+        )
+
+        yield item
 
 
 def scrape():
-    log.info("Start {} Scraper".format(DOMAIN))
-    data = fetch_data()
-    log.info("Found {} locations".format(len(data)))
-    write_output(data)
-    log.info("Finish processed " + str(len(data)))
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()
