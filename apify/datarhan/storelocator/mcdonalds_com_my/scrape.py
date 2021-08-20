@@ -2,7 +2,6 @@ import json
 from lxml import etree
 from time import sleep
 
-from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
@@ -12,8 +11,6 @@ from sgpostal.sgpostal import parse_address_intl
 
 
 def fetch_data():
-    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
-
     start_url = "https://www.mcdonalds.com.my/locate-us"
     domain = "mcdonalds.com.my"
     with SgFirefox() as driver:
