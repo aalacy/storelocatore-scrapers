@@ -18,7 +18,6 @@ def fetch_data(sgw: SgWriter):
     session = SgRequests()
     stores = session.get(base_link, headers=headers).json()["pharmacies"]
 
-    data = []
     locator_domain = "medicineshoppe.ca"
 
     for store in stores:
