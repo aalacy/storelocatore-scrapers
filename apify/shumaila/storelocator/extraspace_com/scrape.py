@@ -63,7 +63,6 @@ def fetch_data():
                 zip_postal = pa.postcode
                 zip_postal = zip_postal.strip() if zip_postal else MISSING
                 location_name = soup.find("h1").text
-                temp = soup.find("div", {"class": "phone-container"})
                 phone = (
                     soup.find("div", {"class": "current-customer-container"})
                     .find("a")
